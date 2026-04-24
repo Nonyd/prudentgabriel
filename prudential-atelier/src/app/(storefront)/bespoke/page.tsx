@@ -42,7 +42,7 @@ export default function BespokePage() {
       </div>
       <div className="bg-off-white py-16 md:py-[100px]">
         <div className="mx-auto grid max-w-site gap-10 px-4 md:grid-cols-4 md:gap-6 md:px-8">
-          {["Consultation", "Design & Fabric", "Fitting", "Delivery"].map((t) => (
+          {["Consultation", "Design & Fabric", "Fitting", "Delivery"].map((t, i) => (
             <div key={t} className="text-center md:text-left">
               <p className="font-display text-[56px] font-normal italic leading-none text-olive/20 md:text-[64px]">
                 0{i + 1}
