@@ -122,21 +122,34 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 md:flex-row">
-          <p className="font-body text-[11px] text-white/25">© {new Date().getFullYear()} Prudent Gabriel. All Rights Reserved.</p>
-          <div className="flex flex-wrap items-center justify-center gap-6">
-            {(
-              [
-                ["Privacy Policy", "/legal/privacy"],
-                ["Terms", "/legal/terms"],
-                ["Returns", "/legal/returns"],
-              ] as const
-            ).map(([label, href]) => (
-              <Link key={href} href={href} className="font-body text-[11px] text-white/25 transition-colors hover:text-white/60">
-                {label}
-              </Link>
-            ))}
+        <div className="mt-16 flex flex-col items-center gap-4 border-t border-white/10 pt-6">
+          <div className="flex w-full flex-col items-center justify-between gap-4 md:flex-row">
+            <p className="font-body text-[11px] text-white/25">© {new Date().getFullYear()} Prudent Gabriel. All Rights Reserved.</p>
+            <div className="flex flex-wrap items-center justify-center gap-6">
+              {(
+                [
+                  ["Privacy Policy", "/legal/privacy"],
+                  ["Terms", "/legal/terms"],
+                  ["Returns", "/legal/returns"],
+                ] as const
+              ).map(([label, href]) => (
+                <Link key={href} href={href} className="font-body text-[11px] text-white/25 transition-colors hover:text-white/60">
+                  {label}
+                </Link>
+              ))}
+            </div>
           </div>
+          <p className="font-body text-[11px] text-white/25">
+            Designed with love by{" "}
+            <a
+              href="https://sonshubmedia.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/40 underline-offset-2 transition-colors hover:text-white/70 hover:underline"
+            >
+              SonsHub Media
+            </a>
+          </p>
         </div>
       </div>
     </footer>

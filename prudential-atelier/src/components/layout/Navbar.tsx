@@ -15,7 +15,7 @@ import { MobileMenu } from "./MobileMenu";
 
 const DESKTOP_LINKS: { label: string; href: string; active: (pathname: string, category: string | null) => boolean }[] = [
   { label: "Home", href: "/", active: (p) => p === "/" },
-  { label: "Atelier", href: "/our-story", active: (p) => p.startsWith("/our-story") },
+  { label: "Atelier", href: "/#atelier", active: () => false },
   {
     label: "Bridals",
     href: "/shop?category=BRIDAL",
@@ -34,17 +34,11 @@ function NavLink({ href, label, active }: { href: string; label: string; active:
     <Link
       href={href}
       className={cn(
-        "font-body text-[11px] font-medium uppercase tracking-[0.15em] transition-colors duration-200",
+        "whitespace-nowrap font-body text-[10px] font-medium uppercase tracking-[0.12em] transition-colors duration-200 xl:text-[11px] xl:tracking-[0.15em]",
         active ? "border-b border-olive text-olive" : "border-b border-transparent text-charcoal hover:text-olive",
       )}
     >
-      {label === "Ready to Wear" ? (
-        <>
-          Ready to Wear <span className="text-[9px]">▾</span>
-        </>
-      ) : (
-        label
-      )}
+      {label}
     </Link>
   );
 }
@@ -78,13 +72,26 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const [routeHash, setRouteHash] = useState("");
+  useEffect(() => {
+    const sync = () => setRouteHash(typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "");
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, [pathname]);
+
   const activeMap = useMemo(
     () =>
-      DESKTOP_LINKS.map((item) => ({
-        ...item,
-        isActive: item.active(pathname, category),
-      })),
-    [pathname, category],
+      DESKTOP_LINKS.map((item) => {
+        let isActive = item.active(pathname, category);
+        if (item.label === "Home") {
+          isActive = pathname === "/" && routeHash !== "atelier";
+        } else if (item.label === "Atelier") {
+          isActive = pathname === "/" && routeHash === "atelier";
+        }
+        return { ...item, isActive };
+      }),
+    [pathname, category, routeHash],
   );
 
   return (
@@ -95,8 +102,8 @@ export function Navbar() {
           scrolled && "bg-[var(--white)]/98 shadow-[0_1px_0_0_var(--mid-grey)] backdrop-blur-sm",
         )}
       >
-        <div className="mx-auto grid h-[60px] max-w-site grid-cols-3 items-center px-4 lg:h-[72px] lg:px-8">
-          <div className="flex items-center justify-start gap-2">
+        <div className="mx-auto flex h-[60px] max-w-site items-center justify-between gap-2 px-4 lg:h-[72px] lg:gap-4 lg:px-8">
+          <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
@@ -110,20 +117,20 @@ export function Navbar() {
             </Link>
           </div>
 
-          <div className="flex items-center justify-center">
+          <div className="flex min-w-0 flex-1 items-center justify-center">
             <Link href="/" className="relative block h-10 w-10 shrink-0 lg:hidden">
               <BrandLogo width={40} height={40} priority />
             </Link>
-            <nav className="hidden items-center justify-center gap-6 lg:flex lg:gap-8">
+            <nav className="hidden min-w-0 flex-nowrap items-center justify-center gap-x-3 xl:gap-x-5 2xl:gap-x-6 lg:flex">
               {activeMap.map((item) => (
-                <NavLink key={item.href} href={item.href} label={item.label} active={item.isActive} />
+                <NavLink key={item.label} href={item.href} label={item.label} active={item.isActive} />
               ))}
             </nav>
           </div>
 
-          <div className="flex items-center justify-end gap-5">
-            <div className="hidden items-center gap-5 lg:flex">
-              <CurrencySwitcher variant="compact" />
+          <div className="flex shrink-0 items-center justify-end gap-3 lg:gap-5">
+            <div className="hidden items-center gap-3 lg:flex xl:gap-5">
+              <CurrencySwitcher variant="dropdown" />
               <button
                 type="button"
                 onClick={openSearch}

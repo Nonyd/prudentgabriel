@@ -12,7 +12,7 @@ export function AtelierStory({
   portraitImage?: string;
 }) {
   return (
-    <section className="bg-off-white py-[100px] md:py-[120px]">
+    <section id="atelier" className="bg-off-white py-[100px] md:py-[120px]">
       <div className="mx-auto max-w-3xl px-6 text-center md:px-8">
         <p className="font-body text-[10px] font-medium uppercase tracking-[0.25em] text-olive">The Atelier</p>
         <h2 className="mt-4 font-display text-[32px] font-normal italic leading-[1.05] text-black md:text-[52px]">
