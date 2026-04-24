@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { OrderStatus } from "@prisma/client";
 import { ProductDetailClient } from "@/components/product/ProductDetailClient";
 import { CompleteTheLook } from "@/components/product/CompleteTheLook";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -115,18 +114,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
     user: r.user,
   }));
 
-  let canWriteReview = false;
-  if (session?.user?.id) {
-    const order = await prisma.order.findFirst({
-      where: {
-        userId: session.user.id,
-        status: { notIn: [OrderStatus.CANCELLED, OrderStatus.REFUNDED] },
-        items: { some: { productId: product.id } },
-      },
-    });
-    canWriteReview = Boolean(order);
-  }
-
   const relatedRaw = await prisma.product.findMany({
     where: {
       category: product.category,
@@ -194,7 +181,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
           averageRating={averageRating}
           reviewCount={reviewCount}
           productId={product.id}
-          canWriteReview={canWriteReview}
+          productSlug={product.slug}
+          isLoggedIn={Boolean(session?.user?.id)}
         />
         <CompleteTheLook products={bundleProducts} />
         <RelatedProducts products={relatedProducts} />

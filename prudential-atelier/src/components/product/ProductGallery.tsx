@@ -8,6 +8,7 @@ import { FreeMode } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/free-mode";
 import { cn } from "@/lib/utils";
+import { PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/product-image-url";
 
 export interface GalleryImage {
   id: string;
@@ -16,10 +17,12 @@ export interface GalleryImage {
 }
 
 export function ProductGallery({ images }: { images: GalleryImage[] }) {
+  const display: GalleryImage[] =
+    images.length > 0
+      ? images
+      : [{ id: "placeholder", url: PRODUCT_IMAGE_PLACEHOLDER, alt: "Prudent Gabriel" }];
   const [idx, setIdx] = useState(0);
-  const main = images[idx] ?? images[0];
-
-  if (!images.length) return null;
+  const main = display[idx] ?? display[0];
 
   return (
     <div>
@@ -46,13 +49,13 @@ export function ProductGallery({ images }: { images: GalleryImage[] }) {
           </motion.div>
         </AnimatePresence>
         <div className="absolute bottom-3 right-3 rounded-sm bg-charcoal/70 px-2 py-1 font-label text-[10px] text-ivory">
-          {idx + 1} / {images.length}
+          {idx + 1} / {display.length}
         </div>
       </div>
 
       <div className="mt-3 hidden md:block">
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {images.map((im, i) => (
+          {display.map((im, i) => (
             <button
               key={im.id}
               type="button"
@@ -70,7 +73,7 @@ export function ProductGallery({ images }: { images: GalleryImage[] }) {
 
       <div className="mt-3 md:hidden">
         <Swiper modules={[FreeMode]} spaceBetween={8} slidesPerView="auto" freeMode>
-          {images.map((im, i) => (
+          {display.map((im, i) => (
             <SwiperSlide key={im.id} style={{ width: 72 }}>
               <button
                 type="button"

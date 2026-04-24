@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { getImageSettings } from "@/lib/settings";
 import type { ConsultantWithOfferings } from "@/lib/consultation";
 import { ConsultationBookingFlow } from "@/components/consultation/ConsultationBookingFlow";
 import { SectionLabel } from "@/components/ui/SectionLabel";
@@ -20,7 +21,18 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+const DEFAULT_CONSULT_HERO =
+  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1600&q=90";
+
 export default async function ConsultationPage() {
+  let consultHero = DEFAULT_CONSULT_HERO;
+  try {
+    const img = await getImageSettings();
+    if (img.img_consultation_hero?.trim()) consultHero = img.img_consultation_hero;
+  } catch {
+    /* use default */
+  }
+
   const rows = await prisma.consultant.findMany({
     where: { isActive: true },
     orderBy: { displayOrder: "asc" },
@@ -35,7 +47,7 @@ export default async function ConsultationPage() {
     <div className="bg-white">
       <section className="relative flex h-[300px] flex-col justify-center overflow-hidden md:h-[500px]">
         <Image
-          src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1600&q=90"
+          src={consultHero}
           alt=""
           fill
           priority

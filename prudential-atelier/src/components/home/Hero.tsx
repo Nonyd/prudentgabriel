@@ -5,13 +5,14 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
-const HERO_IMG = "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1600&q=90";
+const DEFAULT_HERO =
+  "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1600&q=90";
 
-export function Hero() {
+export function Hero({ heroImage = DEFAULT_HERO }: { heroImage?: string }) {
   return (
     <section className="relative min-h-[100svh] overflow-hidden">
       <Image
-        src={HERO_IMG}
+        src={heroImage || DEFAULT_HERO}
         alt="Prudent Gabriel — SS 2025"
         fill
         priority

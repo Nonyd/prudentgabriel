@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as Accordion from "@radix-ui/react-accordion";
+import * as Slider from "@radix-ui/react-slider";
+import { ProductCategory } from "@prisma/client";
 import { cn } from "@/lib/utils";
 
 const SORTS = [
@@ -13,7 +15,17 @@ const SORTS = [
   { value: "featured", label: "Featured" },
 ];
 
-const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "Custom", "UK8", "UK10", "UK12"];
+const CATEGORIES: { value: ProductCategory | ""; label: string }[] = [
+  { value: "", label: "All" },
+  { value: ProductCategory.BRIDAL, label: "Bridal" },
+  { value: ProductCategory.EVENING_WEAR, label: "Evening Wear" },
+  { value: ProductCategory.FORMAL, label: "Formal" },
+  { value: ProductCategory.CASUAL, label: "Casual" },
+  { value: ProductCategory.KIDDIES, label: "Kiddies" },
+  { value: ProductCategory.ACCESSORIES, label: "Accessories" },
+];
+
+const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "UK8", "UK10", "UK12", "Custom"];
 const TAGS = ["Bridal", "Evening", "Modest", "Corporate", "Kiddies", "Traditional"];
 
 function useQs() {
@@ -45,6 +57,7 @@ function toggleCsv(current: string | undefined, val: string) {
 export function FilterPanel({ className }: { className?: string }) {
   const { sp, set } = useQs();
   const sort = sp.get("sort") ?? "newest";
+  const category = sp.get("category") ?? "";
   const type = sp.get("type") ?? "";
   const tags = sp.get("tags") ?? "";
   const sizes = sp.get("sizes") ?? "";
@@ -54,6 +67,7 @@ export function FilterPanel({ className }: { className?: string }) {
   const inStock = sp.get("inStock") !== "false";
 
   const active =
+    Boolean(category) ||
     Boolean(type) ||
     Boolean(tags) ||
     Boolean(sizes) ||
@@ -67,25 +81,42 @@ export function FilterPanel({ className }: { className?: string }) {
       <div className="flex items-center justify-between">
         <h2 className="font-display text-xl text-charcoal">Refine</h2>
         {active && (
-          <Link href="/shop" className="font-label text-[10px] uppercase tracking-wider text-wine hover:underline">
+          <Link href="/shop" className="font-label text-[10px] uppercase tracking-wider text-olive hover:underline">
             Clear All
           </Link>
         )}
       </div>
 
-      <Accordion.Root type="multiple" defaultValue={["sort", "type", "price", "size", "tags", "sale"]}>
+      <Accordion.Root type="multiple" defaultValue={["sort", "category", "type", "price", "size", "tags", "sale"]}>
         <AccItem value="sort" title="Sort">
           <div className="space-y-2">
             {SORTS.map((s) => (
-              <label key={s.value} className="flex cursor-pointer items-center gap-2 text-sm text-charcoal">
+              <label key={s.value} className="flex cursor-pointer items-center gap-2 font-body text-[13px] text-charcoal">
                 <input
                   type="radio"
                   name="sort"
                   checked={sort === s.value}
                   onChange={() => set({ sort: s.value })}
-                  className="accent-wine"
+                  className="accent-olive"
                 />
                 {s.label}
+              </label>
+            ))}
+          </div>
+        </AccItem>
+
+        <AccItem value="category" title="Category">
+          <div className="space-y-2">
+            {CATEGORIES.map((c) => (
+              <label key={c.label} className="flex cursor-pointer items-center gap-2 font-body text-[13px] text-charcoal">
+                <input
+                  type="radio"
+                  name="category"
+                  checked={(category || "") === c.value}
+                  onChange={() => set({ category: c.value || null })}
+                  className="accent-olive"
+                />
+                {c.label}
               </label>
             ))}
           </div>
@@ -104,7 +135,7 @@ export function FilterPanel({ className }: { className?: string }) {
                   name="type"
                   checked={type === o.v}
                   onChange={() => set({ type: o.v || null })}
-                  className="accent-wine"
+                  className="accent-olive"
                 />
                 {o.l}
               </label>
@@ -113,7 +144,7 @@ export function FilterPanel({ className }: { className?: string }) {
         </AccItem>
 
         <AccItem value="price" title="Price Range (₦)">
-          <PriceApply minP={minP} maxP={maxP} onApply={(a, b) => set({ minPrice: a, maxPrice: b })} />
+          <PriceSlider minP={minP} maxP={maxP} onApply={(a, b) => set({ minPrice: a, maxPrice: b })} />
         </AccItem>
 
         <AccItem value="size" title="Size">
@@ -126,8 +157,8 @@ export function FilterPanel({ className }: { className?: string }) {
                   type="button"
                   onClick={() => set({ sizes: toggleCsv(sizes, sz) || null })}
                   className={cn(
-                    "rounded-sm border px-2 py-1 font-label text-[10px] uppercase tracking-wide",
-                    on ? "border-wine bg-wine text-ivory" : "border-border text-charcoal hover:border-wine",
+                    "border px-3 py-1 font-body text-[11px] uppercase tracking-wide",
+                    on ? "border-olive bg-olive text-white" : "border-mid-grey text-charcoal hover:border-olive",
                   )}
                 >
                   {sz}
@@ -147,8 +178,8 @@ export function FilterPanel({ className }: { className?: string }) {
                   type="button"
                   onClick={() => set({ tags: toggleCsv(tags, tg) || null })}
                   className={cn(
-                    "rounded-sm border px-2 py-1 font-label text-[10px] uppercase tracking-wide",
-                    on ? "border-wine bg-wine text-ivory" : "border-border text-charcoal hover:border-wine",
+                    "border px-2 py-1 font-label text-[10px] uppercase tracking-wide",
+                    on ? "border-olive bg-olive text-white" : "border-border text-charcoal hover:border-olive",
                   )}
                 >
                   {tg}
@@ -164,7 +195,7 @@ export function FilterPanel({ className }: { className?: string }) {
               type="checkbox"
               checked={sale}
               onChange={(e) => set({ sale: e.target.checked ? "true" : null })}
-              className="accent-wine"
+              className="accent-olive"
             />
             Show sale items only
           </label>
@@ -173,7 +204,7 @@ export function FilterPanel({ className }: { className?: string }) {
               type="checkbox"
               checked={inStock}
               onChange={(e) => set({ inStock: e.target.checked ? "true" : "false" })}
-              className="accent-wine"
+              className="accent-olive"
             />
             In stock only
           </label>
@@ -183,7 +214,7 @@ export function FilterPanel({ className }: { className?: string }) {
   );
 }
 
-function PriceApply({
+function PriceSlider({
   minP,
   maxP,
   onApply,
@@ -192,32 +223,45 @@ function PriceApply({
   maxP: string;
   onApply: (min: string, max: string) => void;
 }) {
-  const [a, setA] = useState(minP);
-  const [b, setB] = useState(maxP);
+  const minN = Math.max(0, Math.min(1_000_000, parseInt(minP, 10) || 0));
+  const maxN = Math.max(minN, Math.min(1_000_000, parseInt(maxP, 10) || 1_000_000));
+  const [range, setRange] = useState([minN, maxN]);
   useEffect(() => {
-    setA(minP);
-    setB(maxP);
-  }, [minP, maxP]);
+    setRange([minN, maxN]);
+  }, [minN, maxN]);
+
   return (
-    <div className="space-y-2">
-      <div className="flex gap-2">
-        <input
-          className="w-full rounded-sm border border-border bg-cream px-2 py-2 text-sm"
-          value={a}
-          onChange={(e) => setA(e.target.value)}
+    <div className="space-y-4">
+      <p className="font-body text-[13px] text-charcoal">
+        ₦{range[0].toLocaleString("en-NG")} — ₦{range[1].toLocaleString("en-NG")}
+      </p>
+      <Slider.Root
+        className="relative flex h-5 w-full touch-none select-none items-center"
+        min={0}
+        max={1_000_000}
+        step={10_000}
+        value={range}
+        onValueChange={(v) => setRange(v)}
+        minStepsBetweenThumbs={1}
+      >
+        <Slider.Track className="relative h-1 grow rounded-full bg-mid-grey">
+          <Slider.Range className="absolute h-full rounded-full bg-olive" />
+        </Slider.Track>
+        <Slider.Thumb
+          className="block h-4 w-4 border border-olive bg-white focus:outline-none focus:ring-2 focus:ring-olive/40"
+          aria-label="Minimum price"
         />
-        <input
-          className="w-full rounded-sm border border-border bg-cream px-2 py-2 text-sm"
-          value={b}
-          onChange={(e) => setB(e.target.value)}
+        <Slider.Thumb
+          className="block h-4 w-4 border border-olive bg-white focus:outline-none focus:ring-2 focus:ring-olive/40"
+          aria-label="Maximum price"
         />
-      </div>
+      </Slider.Root>
       <button
         type="button"
-        className="font-label text-[10px] uppercase tracking-wider text-wine hover:underline"
-        onClick={() => onApply(a, b)}
+        className="font-body text-[12px] text-dark-grey underline-offset-2 hover:text-olive hover:underline"
+        onClick={() => onApply(String(range[0]), String(range[1]))}
       >
-        Apply range
+        Apply price range
       </button>
     </div>
   );
@@ -235,7 +279,7 @@ function AccItem({
   return (
     <Accordion.Item value={value} className="border-b border-border">
       <Accordion.Header>
-        <Accordion.Trigger className="flex w-full items-center justify-between py-3 font-label text-[11px] uppercase tracking-wider text-charcoal hover:text-wine">
+        <Accordion.Trigger className="flex w-full items-center justify-between py-3 font-body text-[10px] uppercase tracking-[0.14em] text-dark-grey hover:text-olive">
           {title}
         </Accordion.Trigger>
       </Accordion.Header>

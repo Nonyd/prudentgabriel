@@ -15,7 +15,7 @@ export function mapProductToListItem(p: {
   tags: string[];
   images: { url: string; alt: string | null; isPrimary: boolean }[];
   variants: { id: string; size: string; priceNGN: number; salePriceNGN: number | null; stock: number }[];
-  colors: { id: string; name: string; hex: string }[];
+  colors: { id: string; name: string; hex: string; imageUrl?: string | null }[];
   _count: { reviews: number };
 }): ProductListItem {
   return {

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 
-const CELLS = [
+const DEFAULT_CELLS = [
   {
     title: "Bridal",
     sub: "BRIDAL",
@@ -33,7 +33,22 @@ const CELLS = [
   },
 ];
 
-export function CollectionsGrid() {
+export function CollectionsGrid({
+  bridalImage,
+  eveningImage,
+  formalImage,
+  rtwImage,
+}: {
+  bridalImage?: string;
+  eveningImage?: string;
+  formalImage?: string;
+  rtwImage?: string;
+}) {
+  const imgs = [bridalImage, eveningImage, formalImage, rtwImage];
+  const CELLS = DEFAULT_CELLS.map((c, i) => ({
+    ...c,
+    img: imgs[i]?.trim() ? (imgs[i] as string) : c.img,
+  }));
   return (
     <section className="py-section-mobile md:py-section">
       <div className="mx-auto max-w-site px-4 text-center">

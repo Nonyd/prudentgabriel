@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Bell, Menu } from "lucide-react";
+import { DarkModeToggle } from "@/components/common/DarkModeToggle";
 
 function pageTitleFromPath(pathname: string): string {
   if (pathname === "/admin") return "Dashboard";
@@ -73,6 +74,12 @@ export function AdminTopbar({
             />
           ) : null}
         </Link>
+        <div
+          className="flex items-center justify-center p-1"
+          title="Toggle storefront dark mode (customer preview)"
+        >
+          <DarkModeToggle />
+        </div>
         <span className="hidden h-4 w-px bg-[#EBEBEA] sm:block" aria-hidden />
         <div className="flex items-center gap-2.5">
           <div

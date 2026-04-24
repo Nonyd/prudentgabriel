@@ -28,6 +28,7 @@ model User {
   addresses           Address[]
   wishlist            WishlistItem[]
   reviews             Review[]
+  reviewHelpfulVotes  ReviewHelpfulVote[]
   pointsHistory       PointsTransaction[]
   sessions            Session[]
   accounts            Account[]
@@ -540,6 +541,79 @@ model Review {
   helpfulCount Int      @default(0)
   orderId      String?
   createdAt    DateTime @default(now())
+
+  helpfulVotes ReviewHelpfulVote[]
+}
+
+model ReviewHelpfulVote {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewId  String
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, reviewId])
+}
+
+model SiteSetting {
+  id         String        @id @default(cuid())
+  key        String        @unique
+  value      String        @db.Text
+  group      SettingGroup
+  label      String
+  type       SettingType
+  isPublic   Boolean       @default(false)
+  sortOrder  Int           @default(0)
+  updatedAt  DateTime      @updatedAt
+  updatedBy  String?
+
+  @@index([group])
+  @@index([isPublic])
+}
+
+model MediaItem {
+  id          String   @id @default(cuid())
+  url         String
+  publicId    String   @unique
+  filename    String
+  mimeType    String
+  width       Int?
+  height      Int?
+  sizeBytes   Int?
+  folder      String   @default("prudent-gabriel")
+  alt         String?
+  caption     String?
+  uploadedBy  String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([folder])
+}
+
+enum SettingGroup {
+  STORE
+  PAYMENTS
+  EMAIL
+  SMS
+  SHIPPING
+  APPEARANCE
+  SOCIAL
+  NOTIFICATIONS
+  LOYALTY
+  SEO
+}
+
+enum SettingType {
+  TEXT
+  TEXTAREA
+  PASSWORD
+  IMAGE
+  BOOLEAN
+  NUMBER
+  JSON
+  COLOR
+  SELECT
 }
 
 enum Role {

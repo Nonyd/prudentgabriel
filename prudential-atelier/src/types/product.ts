@@ -18,6 +18,7 @@ export interface ProductListColor {
   id: string;
   name: string;
   hex: string;
+  imageUrl?: string | null;
 }
 
 export interface ProductListItem {

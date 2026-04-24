@@ -147,7 +147,7 @@ export async function queryProductList(
           orderBy: { priceNGN: "asc" },
           select: { id: true, size: true, priceNGN: true, salePriceNGN: true, stock: true },
         },
-        colors: { select: { id: true, name: true, hex: true } },
+        colors: { select: { id: true, name: true, hex: true, imageUrl: true } },
         _count: { select: { reviews: true } },
       },
     }),

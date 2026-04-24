@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
 
-const IMG = "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&q=90";
+const DEFAULT_IMG = "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&q=90";
 
 const STEPS = [
   {
@@ -25,7 +25,7 @@ const STEPS = [
   },
 ];
 
-export function BespokeCouture() {
+export function BespokeCouture({ bespokeImage = DEFAULT_IMG }: { bespokeImage?: string }) {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -38,7 +38,13 @@ export function BespokeCouture() {
       <div className="mx-auto grid max-w-[1400px] items-stretch gap-0 px-0 md:grid-cols-2 md:px-8">
         <div className="relative min-h-[70vw] md:min-h-0 md:aspect-[4/5]">
           <motion.div style={{ y }} className="absolute inset-x-0 top-[-5%] h-[110%] w-full">
-            <Image src={IMG} alt="Bespoke couture" fill className="object-cover object-top" sizes="(max-width:768px) 100vw, 50vw" />
+            <Image
+              src={bespokeImage || DEFAULT_IMG}
+              alt="Bespoke couture"
+              fill
+              className="object-cover object-top"
+              sizes="(max-width:768px) 100vw, 50vw"
+            />
           </motion.div>
         </div>
 

@@ -13,6 +13,8 @@ import {
   ConsultationSessionType,
   ConsultationDeliveryMode,
   ConsultationStatus,
+  SettingGroup,
+  SettingType,
 } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -950,6 +952,123 @@ async function main() {
       });
     }
   }
+
+  const defaultSettings: {
+    key: string;
+    value: string;
+    group: SettingGroup;
+    label: string;
+    type: SettingType;
+    isPublic: boolean;
+    sortOrder: number;
+  }[] = [
+    { key: "store_name", value: "Prudent Gabriel", group: SettingGroup.STORE, label: "Store Name", type: SettingType.TEXT, isPublic: true, sortOrder: 1 },
+    { key: "store_tagline", value: "Luxury Nigerian Fashion", group: SettingGroup.STORE, label: "Tagline", type: SettingType.TEXT, isPublic: true, sortOrder: 2 },
+    { key: "store_email", value: "hello@prudentgabriel.com", group: SettingGroup.STORE, label: "Contact Email", type: SettingType.TEXT, isPublic: true, sortOrder: 3 },
+    { key: "store_phone", value: "+234 000 000 0000", group: SettingGroup.STORE, label: "Phone Number", type: SettingType.TEXT, isPublic: true, sortOrder: 4 },
+    { key: "store_address", value: "Lagos, Nigeria", group: SettingGroup.STORE, label: "Address", type: SettingType.TEXTAREA, isPublic: true, sortOrder: 5 },
+    { key: "store_currency_default", value: "NGN", group: SettingGroup.STORE, label: "Default Currency", type: SettingType.SELECT, isPublic: true, sortOrder: 6 },
+    { key: "free_shipping_lagos", value: "150000", group: SettingGroup.STORE, label: "Free Shipping Threshold — Lagos (₦)", type: SettingType.NUMBER, isPublic: false, sortOrder: 7 },
+    { key: "free_shipping_nigeria", value: "250000", group: SettingGroup.STORE, label: "Free Shipping Threshold — Nigeria (₦)", type: SettingType.NUMBER, isPublic: false, sortOrder: 8 },
+    { key: "paystack_public_key", value: "", group: SettingGroup.PAYMENTS, label: "Paystack Public Key", type: SettingType.TEXT, isPublic: true, sortOrder: 1 },
+    { key: "paystack_secret_key", value: "", group: SettingGroup.PAYMENTS, label: "Paystack Secret Key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 2 },
+    { key: "flutterwave_public_key", value: "", group: SettingGroup.PAYMENTS, label: "Flutterwave Public Key", type: SettingType.TEXT, isPublic: true, sortOrder: 3 },
+    { key: "flutterwave_secret_key", value: "", group: SettingGroup.PAYMENTS, label: "Flutterwave Secret Key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 4 },
+    { key: "stripe_public_key", value: "", group: SettingGroup.PAYMENTS, label: "Stripe Public Key", type: SettingType.TEXT, isPublic: true, sortOrder: 5 },
+    { key: "stripe_secret_key", value: "", group: SettingGroup.PAYMENTS, label: "Stripe Secret Key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 6 },
+    { key: "stripe_webhook_secret", value: "", group: SettingGroup.PAYMENTS, label: "Stripe Webhook Secret", type: SettingType.PASSWORD, isPublic: false, sortOrder: 7 },
+    { key: "monnify_api_key", value: "", group: SettingGroup.PAYMENTS, label: "Monnify API Key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 8 },
+    { key: "monnify_secret_key", value: "", group: SettingGroup.PAYMENTS, label: "Monnify Secret Key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 9 },
+    { key: "monnify_contract_code", value: "", group: SettingGroup.PAYMENTS, label: "Monnify Contract Code", type: SettingType.TEXT, isPublic: false, sortOrder: 10 },
+    { key: "monnify_environment", value: "sandbox", group: SettingGroup.PAYMENTS, label: "Monnify Environment", type: SettingType.SELECT, isPublic: false, sortOrder: 11 },
+    { key: "email_from_name", value: "Prudent Gabriel", group: SettingGroup.EMAIL, label: "From Name", type: SettingType.TEXT, isPublic: false, sortOrder: 1 },
+    { key: "email_from_address", value: "hello@prudentgabriel.com", group: SettingGroup.EMAIL, label: "From Email", type: SettingType.TEXT, isPublic: false, sortOrder: 2 },
+    { key: "email_provider", value: "resend", group: SettingGroup.EMAIL, label: "Email Provider", type: SettingType.SELECT, isPublic: false, sortOrder: 3 },
+    { key: "brevo_api_key", value: "", group: SettingGroup.EMAIL, label: "Brevo API Key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 4 },
+    { key: "resend_api_key", value: "", group: SettingGroup.EMAIL, label: "Resend API Key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 5 },
+    { key: "smtp_host", value: "", group: SettingGroup.EMAIL, label: "SMTP Host", type: SettingType.TEXT, isPublic: false, sortOrder: 6 },
+    { key: "smtp_port", value: "587", group: SettingGroup.EMAIL, label: "SMTP Port", type: SettingType.NUMBER, isPublic: false, sortOrder: 7 },
+    { key: "smtp_username", value: "", group: SettingGroup.EMAIL, label: "SMTP Username", type: SettingType.TEXT, isPublic: false, sortOrder: 8 },
+    { key: "smtp_password", value: "", group: SettingGroup.EMAIL, label: "SMTP Password", type: SettingType.PASSWORD, isPublic: false, sortOrder: 9 },
+    { key: "smtp_use_ssl", value: "true", group: SettingGroup.EMAIL, label: "SMTP Use TLS/SSL", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 10 },
+    { key: "admin_notification_email", value: "admin@prudentgabriel.com", group: SettingGroup.EMAIL, label: "Admin Notification Email", type: SettingType.TEXT, isPublic: false, sortOrder: 11 },
+    { key: "sms_provider", value: "termii", group: SettingGroup.SMS, label: "SMS Provider", type: SettingType.SELECT, isPublic: false, sortOrder: 1 },
+    { key: "sms_api_key", value: "", group: SettingGroup.SMS, label: "SMS API Key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 2 },
+    { key: "sms_sender_id", value: "PrudentGab", group: SettingGroup.SMS, label: "SMS Sender ID", type: SettingType.TEXT, isPublic: false, sortOrder: 3 },
+    { key: "sms_order_confirmed", value: "true", group: SettingGroup.SMS, label: "Send SMS on Order Confirmed", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 4 },
+    { key: "sms_order_shipped", value: "true", group: SettingGroup.SMS, label: "Send SMS on Order Shipped", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 5 },
+    { key: "sms_consultation_confirmed", value: "true", group: SettingGroup.SMS, label: "Send SMS on Consultation Confirmed", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 6 },
+    { key: "img_hero", value: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1600", group: SettingGroup.APPEARANCE, label: "Homepage Hero Image", type: SettingType.IMAGE, isPublic: true, sortOrder: 1 },
+    { key: "img_bride_hero", value: "https://images.unsplash.com/photo-1594463750939-ebb28c3f7f75?w=1600", group: SettingGroup.APPEARANCE, label: "Prudential Bride Hero Image", type: SettingType.IMAGE, isPublic: true, sortOrder: 2 },
+    { key: "img_bride_portrait", value: "https://images.unsplash.com/photo-1519741347686-c1e331ec5e96?w=800", group: SettingGroup.APPEARANCE, label: "Prudential Bride Portrait", type: SettingType.IMAGE, isPublic: true, sortOrder: 3 },
+    { key: "img_bespoke", value: "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800", group: SettingGroup.APPEARANCE, label: "Bespoke Section Image", type: SettingType.IMAGE, isPublic: true, sortOrder: 4 },
+    { key: "img_atelier_wide", value: "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=1200", group: SettingGroup.APPEARANCE, label: "Atelier Story Wide Image", type: SettingType.IMAGE, isPublic: true, sortOrder: 5 },
+    { key: "img_atelier_portrait", value: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800", group: SettingGroup.APPEARANCE, label: "Atelier Story Portrait Image", type: SettingType.IMAGE, isPublic: true, sortOrder: 6 },
+    { key: "img_consultation_hero", value: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1600", group: SettingGroup.APPEARANCE, label: "Consultation Page Hero", type: SettingType.IMAGE, isPublic: true, sortOrder: 7 },
+    { key: "img_bespoke_hero", value: "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=1600", group: SettingGroup.APPEARANCE, label: "Bespoke Page Hero", type: SettingType.IMAGE, isPublic: true, sortOrder: 8 },
+    { key: "img_collection_bridal", value: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=800", group: SettingGroup.APPEARANCE, label: "Collections Grid — Bridal", type: SettingType.IMAGE, isPublic: true, sortOrder: 9 },
+    { key: "img_collection_evening", value: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800", group: SettingGroup.APPEARANCE, label: "Collections Grid — Evening", type: SettingType.IMAGE, isPublic: true, sortOrder: 10 },
+    { key: "img_collection_formal", value: "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800", group: SettingGroup.APPEARANCE, label: "Collections Grid — Formal", type: SettingType.IMAGE, isPublic: true, sortOrder: 11 },
+    { key: "img_collection_rtw", value: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800", group: SettingGroup.APPEARANCE, label: "Collections Grid — RTW", type: SettingType.IMAGE, isPublic: true, sortOrder: 12 },
+    { key: "img_our_story_hero", value: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1400", group: SettingGroup.APPEARANCE, label: "Our Story Hero", type: SettingType.IMAGE, isPublic: true, sortOrder: 13 },
+    { key: "favicon_url", value: "/images/logo.svg", group: SettingGroup.APPEARANCE, label: "Favicon URL", type: SettingType.IMAGE, isPublic: true, sortOrder: 14 },
+    { key: "social_instagram", value: "@prudent_gabriel", group: SettingGroup.SOCIAL, label: "Instagram Handle", type: SettingType.TEXT, isPublic: true, sortOrder: 1 },
+    { key: "social_tiktok", value: "@prudentgabriel", group: SettingGroup.SOCIAL, label: "TikTok Handle", type: SettingType.TEXT, isPublic: true, sortOrder: 2 },
+    { key: "social_facebook", value: "prudentgabriel", group: SettingGroup.SOCIAL, label: "Facebook Page", type: SettingType.TEXT, isPublic: true, sortOrder: 3 },
+    { key: "social_youtube", value: "", group: SettingGroup.SOCIAL, label: "YouTube Channel", type: SettingType.TEXT, isPublic: true, sortOrder: 4 },
+    { key: "social_whatsapp", value: "", group: SettingGroup.SOCIAL, label: "WhatsApp Business Number", type: SettingType.TEXT, isPublic: true, sortOrder: 5 },
+    { key: "points_per_100_naira", value: "1", group: SettingGroup.LOYALTY, label: "Points per ₦100 spent", type: SettingType.NUMBER, isPublic: false, sortOrder: 1 },
+    { key: "points_referral_referrer", value: "250", group: SettingGroup.LOYALTY, label: "Points for referrer on signup", type: SettingType.NUMBER, isPublic: false, sortOrder: 2 },
+    { key: "points_referral_new_user", value: "500", group: SettingGroup.LOYALTY, label: "Points for new referred user", type: SettingType.NUMBER, isPublic: false, sortOrder: 3 },
+    { key: "points_review", value: "50", group: SettingGroup.LOYALTY, label: "Points for leaving a review", type: SettingType.NUMBER, isPublic: false, sortOrder: 4 },
+    { key: "seo_title_template", value: "%s | Prudent Gabriel", group: SettingGroup.SEO, label: "Page Title Template (%s = page name)", type: SettingType.TEXT, isPublic: true, sortOrder: 1 },
+    { key: "seo_default_description", value: "Luxury Nigerian fashion — bespoke couture and ready-to-wear by Mrs. Prudent Gabriel-Okopi. Ships worldwide.", group: SettingGroup.SEO, label: "Default Meta Description", type: SettingType.TEXTAREA, isPublic: true, sortOrder: 2 },
+    { key: "seo_og_image", value: "", group: SettingGroup.SEO, label: "Default OG Share Image", type: SettingType.IMAGE, isPublic: true, sortOrder: 3 },
+    { key: "notify_new_order", value: "true", group: SettingGroup.NOTIFICATIONS, label: "Email on new order", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 1 },
+    { key: "notify_new_bespoke", value: "true", group: SettingGroup.NOTIFICATIONS, label: "Email on new bespoke request", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 2 },
+    { key: "notify_new_consultation", value: "true", group: SettingGroup.NOTIFICATIONS, label: "Email on new consultation booking", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 3 },
+    { key: "notify_low_stock", value: "true", group: SettingGroup.NOTIFICATIONS, label: "Email when variant stock ≤ lowStockAt", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 4 },
+    { key: "slack_webhook_url", value: "", group: SettingGroup.NOTIFICATIONS, label: "Slack Webhook URL (for alerts)", type: SettingType.PASSWORD, isPublic: false, sortOrder: 5 },
+  ];
+
+  for (const setting of defaultSettings) {
+    await prisma.siteSetting.upsert({
+      where: { key: setting.key },
+      update: {},
+      create: setting,
+    });
+  }
+
+  const emailTemplates: { key: string; label: string; sortOrder: number }[] = [
+    { key: "email_tpl_welcome", label: "Welcome Email", sortOrder: 100 },
+    { key: "email_tpl_order_confirmation", label: "Order Confirmation", sortOrder: 101 },
+    { key: "email_tpl_order_shipped", label: "Order Shipped", sortOrder: 102 },
+    { key: "email_tpl_bespoke_confirmation", label: "Bespoke Confirmation", sortOrder: 103 },
+    { key: "email_tpl_password_reset", label: "Password Reset", sortOrder: 104 },
+    { key: "email_tpl_referral_success", label: "Referral Success", sortOrder: 105 },
+    { key: "email_tpl_back_in_stock", label: "Back In Stock", sortOrder: 106 },
+    { key: "email_tpl_consultation_pending", label: "Consultation Pending", sortOrder: 107 },
+    { key: "email_tpl_consultation_confirmed", label: "Consultation Confirmed", sortOrder: 108 },
+    { key: "email_tpl_consultation_cancelled", label: "Consultation Cancelled", sortOrder: 109 },
+  ];
+  const tplDefault = JSON.stringify({ subject: "", body: "" });
+  for (const t of emailTemplates) {
+    await prisma.siteSetting.upsert({
+      where: { key: t.key },
+      update: {},
+      create: {
+        key: t.key,
+        value: tplDefault,
+        group: SettingGroup.EMAIL,
+        label: t.label,
+        type: SettingType.JSON,
+        isPublic: false,
+        sortOrder: t.sortOrder,
+      },
+    });
+  }
+
+  console.log("  ✅ Site settings seeded (upsert, existing values preserved).");
 
   const [productCount, orderCount, bespokeCount, couponCount] = await Promise.all([
     prisma.product.count(),

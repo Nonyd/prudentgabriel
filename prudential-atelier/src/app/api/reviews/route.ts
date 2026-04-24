@@ -2,18 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { OrderStatus } from "@prisma/client";
+import { PaymentStatus } from "@prisma/client";
+import { getSetting } from "@/lib/settings";
+import { awardReviewPoints } from "@/lib/points";
 
 const bodySchema = z.object({
   productId: z.string().min(1),
   rating: z.number().int().min(1).max(5),
-  title: z.string().max(200).optional(),
-  body: z.string().min(10).max(5000),
+  title: z.string().max(80).optional(),
+  body: z.string().min(10).max(1000),
 });
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user?.id) {
+  const userId = session?.user?.id;
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -30,27 +33,55 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
-  const order = await prisma.order.findFirst({
-    where: {
-      userId: session.user.id,
-      status: { notIn: [OrderStatus.CANCELLED, OrderStatus.REFUNDED] },
-      items: { some: { productId } },
-    },
+  const duplicate = await prisma.review.findFirst({
+    where: { userId, productId },
     select: { id: true },
   });
+  if (duplicate) {
+    return NextResponse.json({ error: "You have already reviewed this product" }, { status: 409 });
+  }
 
-  await prisma.review.create({
-    data: {
-      userId: session.user.id,
+  const orderItem = await prisma.orderItem.findFirst({
+    where: {
       productId,
-      rating,
-      title: title ?? null,
-      body,
-      isVerified: Boolean(order),
-      isApproved: false,
-      orderId: order?.id ?? null,
+      order: { userId, paymentStatus: PaymentStatus.PAID },
     },
+    select: { orderId: true },
   });
 
-  return NextResponse.json({ success: true });
+  if (!orderItem) {
+    return NextResponse.json(
+      { error: "Only verified buyers can review this product" },
+      { status: 403 },
+    );
+  }
+
+  const pointsRaw = await getSetting("points_review");
+  const pointsAward = Math.max(0, parseInt(pointsRaw ?? "50", 10) || 0);
+
+  let pointsGranted = 0;
+  await prisma.$transaction(async (tx) => {
+    await tx.review.create({
+      data: {
+        userId,
+        productId,
+        rating,
+        title: title ?? null,
+        body,
+        isVerified: true,
+        isApproved: false,
+        orderId: orderItem.orderId,
+      },
+    });
+
+    if (pointsAward > 0) {
+      pointsGranted = await awardReviewPoints(userId, pointsAward, productId, tx);
+    }
+  });
+
+  return NextResponse.json({
+    success: true,
+    message: "Review submitted for approval",
+    pointsAwarded: pointsGranted,
+  });
 }

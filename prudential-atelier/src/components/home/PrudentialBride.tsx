@@ -1,14 +1,27 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const IMG_HERO = "https://images.unsplash.com/photo-1594463750939-ebb28c3f7f75?w=1600&q=90";
-const IMG_SIDE = "https://images.unsplash.com/photo-1519741347686-c1e331ec5e96?w=800&q=90";
+const DEF_HERO = "https://images.unsplash.com/photo-1594463750939-ebb28c3f7f75?w=1600&q=90";
+const DEF_SIDE = "https://images.unsplash.com/photo-1519741347686-c1e331ec5e96?w=800&q=90";
 
-export function PrudentialBride() {
+export function PrudentialBride({
+  heroImage = DEF_HERO,
+  portraitImage = DEF_SIDE,
+}: {
+  heroImage?: string;
+  portraitImage?: string;
+}) {
   return (
     <section className="bg-bride-bg">
       <div className="relative h-[60vh] w-full md:h-[80vh]">
-        <Image src={IMG_HERO} alt="Prudential Bride" fill className="object-cover object-center" sizes="100vw" priority />
+        <Image
+          src={heroImage || DEF_HERO}
+          alt="Prudential Bride"
+          fill
+          className="object-cover object-center"
+          sizes="100vw"
+          priority
+        />
       </div>
 
       <div className="mx-auto max-w-[1400px] px-6 py-14 md:px-12 md:py-20">
@@ -43,7 +56,13 @@ export function PrudentialBride() {
           </div>
           <div>
             <div className="relative aspect-[3/4] w-full overflow-hidden">
-              <Image src={IMG_SIDE} alt="Bridal detail" fill className="object-cover object-top" sizes="(max-width:768px) 100vw, 50vw" />
+              <Image
+                src={portraitImage || DEF_SIDE}
+                alt="Bridal detail"
+                fill
+                className="object-cover object-top"
+                sizes="(max-width:768px) 100vw, 50vw"
+              />
             </div>
             <p className="mt-3 font-body text-[11px] italic text-dark-grey">Custom Bridal Gown · Prudential Bride 2024</p>
           </div>

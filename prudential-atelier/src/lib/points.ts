@@ -42,6 +42,33 @@ export async function awardPurchasePoints(
   return points;
 }
 
+export async function awardReviewPoints(
+  userId: string,
+  points: number,
+  productId: string,
+  db: PointsDb = prisma,
+): Promise<number> {
+  if (points <= 0) return 0;
+
+  const updated = await db.user.update({
+    where: { id: userId },
+    data: { pointsBalance: { increment: points } },
+    select: { pointsBalance: true },
+  });
+
+  await db.pointsTransaction.create({
+    data: {
+      userId,
+      type: PointsType.EARNED_REVIEW,
+      amount: points,
+      balanceAfter: updated.pointsBalance,
+      description: `Points for verified product review (${productId})`,
+    },
+  });
+
+  return points;
+}
+
 export async function redeemPoints(
   userId: string,
   pointsToRedeem: number,

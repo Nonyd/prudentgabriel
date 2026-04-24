@@ -3,15 +3,26 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import { PFABanner } from "@/components/common/PFABanner";
 import { BrandStats } from "@/components/home/BrandStats";
 import { Testimonials } from "@/components/home/Testimonials";
+import { getImageSettings } from "@/lib/settings";
 
 export const revalidate = 86400;
 
-export default function OurStoryPage() {
+const DEF_STORY = "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1400";
+
+export default async function OurStoryPage() {
+  let storyHero = DEF_STORY;
+  try {
+    const img = await getImageSettings();
+    if (img.img_our_story_hero?.trim()) storyHero = img.img_our_story_hero;
+  } catch {
+    /* default */
+  }
+
   return (
     <div>
       <div className="relative h-[min(85vh,900px)] min-h-[420px]">
         <Image
-          src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1400"
+          src={storyHero}
           alt=""
           fill
           className="object-cover object-center"

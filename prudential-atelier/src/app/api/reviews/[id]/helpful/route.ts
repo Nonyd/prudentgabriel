@@ -20,6 +20,17 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  try {
+    await prisma.reviewHelpfulVote.create({
+      data: {
+        userId: session.user.id,
+        reviewId: params.id,
+      },
+    });
+  } catch {
+    return NextResponse.json({ error: "Already marked helpful" }, { status: 409 });
+  }
+
   await prisma.review.update({
     where: { id: params.id },
     data: { helpfulCount: { increment: 1 } },

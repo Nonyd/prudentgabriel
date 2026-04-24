@@ -1,10 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const IMG_L = "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=1200&q=90";
-const IMG_R = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&q=90";
+const DEF_L = "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=1200&q=90";
+const DEF_R = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&q=90";
 
-export function AtelierStory() {
+export function AtelierStory({
+  wideImage = DEF_L,
+  portraitImage = DEF_R,
+}: {
+  wideImage?: string;
+  portraitImage?: string;
+}) {
   return (
     <section className="bg-off-white py-[100px] md:py-[120px]">
       <div className="mx-auto max-w-3xl px-6 text-center md:px-8">
@@ -29,7 +35,7 @@ export function AtelierStory() {
       <div className="mx-auto mt-16 grid max-w-[1400px] grid-cols-1 gap-0.5 px-0 md:grid-cols-[3fr_2fr] md:px-8">
         <div className="group relative h-[280px] overflow-hidden md:h-[400px]">
           <Image
-            src={IMG_L}
+            src={wideImage || DEF_L}
             alt="Atelier craft"
             fill
             className="object-cover transition-transform duration-[600ms] ease-out group-hover:scale-[1.02]"
@@ -38,7 +44,7 @@ export function AtelierStory() {
         </div>
         <div className="group relative h-[280px] overflow-hidden md:h-[400px]">
           <Image
-            src={IMG_R}
+            src={portraitImage || DEF_R}
             alt="Editorial"
             fill
             className="object-cover transition-transform duration-[600ms] ease-out group-hover:scale-[1.02]"

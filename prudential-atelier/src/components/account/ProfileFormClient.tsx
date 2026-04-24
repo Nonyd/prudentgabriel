@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { DarkModeToggle } from "@/components/common/DarkModeToggle";
 
 export function ProfileFormClient({
   initial,
@@ -32,6 +33,7 @@ export function ProfileFormClient({
   }
 
   return (
+    <>
     <form onSubmit={saveProfile} className="mt-8 space-y-4 rounded-sm border border-border bg-cream p-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm">
@@ -73,6 +75,19 @@ export function ProfileFormClient({
 
       <PasswordSection />
     </form>
+
+    <div className="mt-8 rounded-sm border border-border bg-cream p-5">
+      <p className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-dark-grey">Display preferences</p>
+      <div className="mt-4 flex items-start justify-between gap-4">
+        <div>
+          <p className="font-body text-sm text-charcoal">Dark mode</p>
+          <p className="mt-0.5 font-body text-xs text-dark-grey">Switch between light and dark appearance</p>
+        </div>
+        <DarkModeToggle />
+      </div>
+      <p className="mt-4 font-body text-[11px] text-dark-grey">Your preference is saved automatically.</p>
+    </div>
+    </>
   );
 }
 

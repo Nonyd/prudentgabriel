@@ -21,7 +21,7 @@ export default async function ShopPage({
   const session = await auth();
   const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN";
   const u = flattenSearchParams(searchParams);
-  if (!u.get("limit")) u.set("limit", "24");
+  if (!u.get("limit")) u.set("limit", "20");
 
   const { products, total, page, totalPages, hasNext, hasPrev } = await queryProductList(u, { isAdmin });
 
