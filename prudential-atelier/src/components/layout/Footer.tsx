@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { BrandLogo } from "@/components/common/BrandLogo";
 import { FacebookIcon, InstagramIcon, TikTokIcon, YouTubeIcon } from "@/components/icons/SocialIcons";
 
 const SHOP_LINKS = [
@@ -33,8 +33,8 @@ export function Footer() {
       <div className="mx-auto max-w-[1400px] px-6 py-16 md:px-8 lg:py-20">
         <div className="grid grid-cols-2 gap-10 md:grid-cols-3 lg:grid-cols-5 lg:gap-8">
           <div className="col-span-2 lg:col-span-2">
-            <Link href="/" className="inline-block" style={{ filter: "brightness(0) invert(1)" }}>
-              <Image src="/images/logo.svg" alt="Prudent Gabriel" width={36} height={36} className="object-contain" />
+            <Link href="/" className="inline-block">
+              <BrandLogo width={36} height={36} variant="onDark" />
             </Link>
             <p className="mt-4 font-body text-[11px] font-medium uppercase tracking-[0.2em] text-white/40">Prudent Gabriel</p>
             <p className="mt-1 font-body text-[12px] font-light text-white/30">Lagos, Nigeria</p>

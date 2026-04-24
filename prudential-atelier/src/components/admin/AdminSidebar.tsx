@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { BrandLogo } from "@/components/common/BrandLogo";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import type { Session } from "next-auth";
@@ -87,7 +87,7 @@ export function AdminSidebar({ session, onNavigate }: { session: Session; onNavi
     >
       <div className="px-5 pb-0 pt-6">
         <Link href="/admin" className="block" onClick={() => onNavigate?.()}>
-          <Image src="/images/logo.svg" alt="Prudent Gabriel" width={32} height={32} className="object-contain" style={{ filter: "brightness(0)" }} />
+          <BrandLogo width={32} height={32} variant="admin" />
         </Link>
         <p className="mt-3 font-body text-[9px] font-medium uppercase tracking-[0.2em] text-[#A8A8A4]">Prudent Gabriel</p>
       </div>

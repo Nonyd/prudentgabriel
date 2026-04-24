@@ -14,6 +14,9 @@ export const useThemeStore = create<ThemeStore>()(
       toggle: () => set((s) => ({ isDark: !s.isDark })),
       setDark: (dark) => set({ isDark: dark }),
     }),
-    { name: "pg-theme" },
+    {
+      name: "pg-theme",
+      partialize: (state) => ({ isDark: state.isDark }),
+    },
   ),
 );

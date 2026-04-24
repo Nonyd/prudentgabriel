@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { BrandLogo } from "@/components/common/BrandLogo";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Search, Heart, User, ShoppingBag, Menu } from "lucide-react";
@@ -106,27 +106,13 @@ export function Navbar() {
               <Menu size={18} strokeWidth={1.75} />
             </button>
             <Link href="/" className="relative hidden h-11 w-11 shrink-0 lg:block">
-              <Image
-                src="/images/logo.svg"
-                alt="Prudent Gabriel"
-                width={44}
-                height={44}
-                className="object-contain"
-                priority
-              />
+              <BrandLogo width={44} height={44} priority />
             </Link>
           </div>
 
           <div className="flex items-center justify-center">
             <Link href="/" className="relative block h-10 w-10 shrink-0 lg:hidden">
-              <Image
-                src="/images/logo.svg"
-                alt="Prudent Gabriel"
-                width={40}
-                height={40}
-                className="object-contain"
-                priority
-              />
+              <BrandLogo width={40} height={40} priority />
             </Link>
             <nav className="hidden items-center justify-center gap-6 lg:flex lg:gap-8">
               {activeMap.map((item) => (

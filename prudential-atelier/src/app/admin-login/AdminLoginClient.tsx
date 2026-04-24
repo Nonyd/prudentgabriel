@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { BrandLogo } from "@/components/common/BrandLogo";
 import { useRouter } from "next/navigation";
 import { signIn, signOut, getSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
@@ -47,7 +47,7 @@ export function AdminLoginClient() {
   return (
     <div className="mx-auto mt-[15vh] w-full max-w-sm px-6">
       <div className="text-center">
-        <Image src="/images/logo.svg" alt="" width={40} height={40} className="mx-auto object-contain" style={{ filter: "brightness(0)" }} />
+        <BrandLogo width={40} height={40} variant="admin" className="mx-auto" />
         <p className="mt-3 font-body text-[11px] font-medium uppercase tracking-[0.2em] text-black">Prudent Gabriel</p>
         <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">Admin Portal</p>
       </div>

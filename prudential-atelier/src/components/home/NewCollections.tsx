@@ -45,7 +45,7 @@ function ProductCell({
           sizes="(max-width: 768px) 50vw, 33vw"
         />
       </div>
-      <div className="absolute inset-x-0 bottom-0 translate-y-full bg-white p-4 transition-transform duration-[350ms] ease-out group-hover:translate-y-0">
+      <div className="absolute inset-x-0 bottom-0 translate-y-full bg-[var(--white)] p-4 transition-transform duration-[350ms] ease-out group-hover:translate-y-0">
         <p className="font-body text-[13px] font-normal text-charcoal line-clamp-1">{product.name}</p>
         <p className="mt-0.5 font-body text-[12px] font-light text-dark-grey">
           {multi ? "From " : ""}
@@ -93,7 +93,7 @@ export function NewCollections() {
   const [a, b, c, d, e] = list;
 
   return (
-    <section className="bg-white py-[100px]">
+    <section className="bg-[var(--white)] py-[100px]">
       <div className="mx-auto flex max-w-[1400px] items-end justify-between px-6 md:px-8">
         <span className="font-body text-[10px] font-medium uppercase tracking-[0.25em] text-olive">Ready to Wear</span>
         <span className="hidden w-8 md:block" />

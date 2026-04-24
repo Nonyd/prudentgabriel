@@ -55,7 +55,7 @@ export default function BespokePage() {
           ))}
         </div>
       </div>
-      <div className="mx-auto max-w-2xl bg-white px-4 py-16 md:px-8 md:py-20">
+      <div className="mx-auto max-w-2xl bg-[var(--white)] px-4 py-16 md:px-8 md:py-20">
         <BespokeForm />
       </div>
     </div>

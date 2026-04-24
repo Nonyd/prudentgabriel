@@ -23,8 +23,14 @@ const jost = Jost({
 
 const siteUrl = getPublicAppUrl();
 
+const themeInitScript = `(function(){try{var r=localStorage.getItem("pg-theme");if(!r)return;var p=JSON.parse(r);if(p&&p.state&&p.state.isDark)document.documentElement.classList.add("dark");}catch(e){}})();`;
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  icons: {
+    icon: "/images/logo.png",
+    apple: "/images/logo.png",
+  },
   title: {
     template: "%s | Prudent Gabriel",
     default: "Prudent Gabriel — Luxury Nigerian Fashion & Bespoke Couture",
@@ -66,7 +72,10 @@ export default async function RootLayout({
   const session = await auth();
 
   return (
-    <html lang="en" className={`${bodoni.variable} ${jost.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${bodoni.variable} ${jost.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-screen">
         <RootProvider session={session}>
           <LenisProvider>{children}</LenisProvider>

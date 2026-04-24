@@ -23,6 +23,11 @@
 html {
   scroll-behavior: smooth;
   font-size: 16px;
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 [data-lenis-prevent] {

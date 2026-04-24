@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { BrandLogo } from "@/components/common/BrandLogo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -47,8 +47,8 @@ export function RegisterContent() {
   return (
     <div className="grid min-h-screen lg:grid-cols-[40%_60%]">
       <div className="relative hidden flex-col justify-between bg-olive p-12 text-white lg:flex">
-        <Link href="/" className="inline-block" style={{ filter: "brightness(0) invert(1)" }}>
-          <Image src="/images/logo.svg" alt="Prudent Gabriel" width={48} height={48} />
+        <Link href="/" className="inline-block">
+          <BrandLogo width={48} height={48} variant="multiply" />
         </Link>
         <div>
           <p className="max-w-sm font-display text-[32px] font-normal italic leading-tight">
@@ -60,10 +60,10 @@ export function RegisterContent() {
 
       <div className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-16">
         <div className="mx-auto w-full max-w-sm">
-          <Link href="/" className="mb-8 inline-block lg:hidden" style={{ filter: "brightness(0)" }}>
-            <Image src="/images/logo.svg" alt="Prudent Gabriel" width={36} height={36} />
+          <Link href="/" className="mb-8 inline-block lg:hidden">
+            <BrandLogo width={36} height={36} />
           </Link>
-          <h2 className="font-display text-[32px] text-black">Create Account.</h2>
+          <h2 className="font-display text-[32px] text-charcoal">Create Account.</h2>
           <p className="mt-2 font-body text-[14px] font-light text-dark-grey">
             Already have an account?{" "}
             <Link href="/auth/login" className="text-olive hover:underline">

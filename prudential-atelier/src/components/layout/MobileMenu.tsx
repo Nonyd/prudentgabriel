@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
+import { BrandLogo } from "@/components/common/BrandLogo";
 import { FacebookIcon, InstagramIcon, TikTokIcon, YouTubeIcon } from "@/components/icons/SocialIcons";
 import { CurrencySwitcher } from "@/components/common/CurrencySwitcher";
 import { DarkModeToggle } from "@/components/common/DarkModeToggle";
@@ -42,7 +42,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         >
           <div className="flex shrink-0 items-center justify-between border-b border-mid-grey px-6 py-4">
             <Link href="/" onClick={onClose} className="relative block h-11 w-11">
-              <Image src="/images/logo.svg" alt="Prudent Gabriel" width={44} height={44} className="object-contain" />
+              <BrandLogo width={44} height={44} />
             </Link>
             <button type="button" onClick={onClose} className="p-2 text-olive" aria-label="Close menu">
               <X size={22} strokeWidth={1.5} />
@@ -60,7 +60,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                 <Link
                   href={link.href}
                   onClick={onClose}
-                  className="block py-3 font-display text-[32px] italic leading-tight text-black"
+                  className="block py-3 font-display text-[32px] italic leading-tight text-charcoal"
                 >
                   {link.label}
                 </Link>
