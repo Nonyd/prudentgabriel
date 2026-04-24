@@ -23,9 +23,10 @@ Add the following in the Vercel project settings:
 |----------|--------|
 | `DATABASE_URL` | Neon pooled URL |
 | `DIRECT_URL` | Neon direct URL |
-| `NEXTAUTH_SECRET` | e.g. `openssl rand -base64 32` |
+| `NEXTAUTH_SECRET` | e.g. `openssl rand -base64 32` (required in production) |
+| `AUTH_SECRET` | Optional — Auth.js v5 name; the app also reads `NEXTAUTH_SECRET` if this is unset |
 | `NEXTAUTH_URL` | Production site origin, e.g. `https://prudentgabriel.com` (must match the URL users open) |
-| `NEXT_PUBLIC_APP_URL` | Same value as `NEXTAUTH_URL` in production (canonical public site URL) |
+| `NEXT_PUBLIC_APP_URL` | Same origin as `NEXTAUTH_URL` in production (`https://…`). Host-only values are normalized to `https://` so `metadataBase` never throws; on Vercel, `VERCEL_URL` is used if this is unset |
 | `GOOGLE_CLIENT_ID` | Optional (OAuth) |
 | `GOOGLE_CLIENT_SECRET` | Optional |
 | `CLOUDINARY_CLOUD_NAME` | Optional — upload API falls back without keys |

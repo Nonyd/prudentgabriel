@@ -10,6 +10,8 @@ const googleEnabled =
   Boolean(process.env.GOOGLE_CLIENT_ID?.length) && Boolean(process.env.GOOGLE_CLIENT_SECRET?.length);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Auth.js v5 reads AUTH_SECRET; many deployments still set NEXTAUTH_SECRET only.
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   adapter: PrismaAdapter(prisma),
   trustHost: true,
   session: { strategy: "jwt" },
