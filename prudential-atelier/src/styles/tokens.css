@@ -1,0 +1,63 @@
+/* src/styles/tokens.css */
+:root {
+  /* ── Brand Colors ── */
+  --wine: #6b1c2a;
+  --wine-hover: #7d2233;
+  --wine-dark: #4a1019;
+  --wine-muted: rgba(107, 28, 42, 0.1);
+
+  --gold: #c9a84c;
+  --gold-hover: #d9bb62;
+  --gold-muted: rgba(201, 168, 76, 0.15);
+  --gold-dark: #a8893a;
+
+  --ivory: #faf6ef;
+  --ivory-dark: #f0e8d8;
+  --ivory-deeper: #e8d9c0;
+
+  --charcoal: #1a1a1a;
+  --charcoal-mid: #3d3d3d;
+  --charcoal-light: #6b6b6b;
+
+  --cream: #fefaf3;
+  --border: #e8ddd0;
+  --border-dark: #c8b89a;
+
+  /* ── Semantic Colors ── */
+  --success: #2d6a4f;
+  --error: #c1121f;
+  --warning: #e76f51;
+  --info: #457b9d;
+
+  /* ── Typography ── */
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --font-label: "Cormorant SC", Georgia, serif;
+
+  /* ── Spacing Scale ── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --space-2xl: 64px;
+  --space-3xl: 96px;
+  --space-4xl: 128px;
+
+  /* ── Border Radius ── */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 16px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 3px rgba(26, 26, 26, 0.08);
+  --shadow-md: 0 4px 16px rgba(26, 26, 26, 0.1);
+  --shadow-lg: 0 8px 40px rgba(26, 26, 26, 0.14);
+  --shadow-gold: 0 4px 24px rgba(201, 168, 76, 0.2);
+
+  /* ── Transitions ── */
+  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --duration: 300ms;
+}

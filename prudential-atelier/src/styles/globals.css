@@ -1,0 +1,107 @@
+@import "./tokens.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-wine: #6b1c2a;
+  --color-wine-light: #8b2d3e;
+  --color-wine-dark: #4a1019;
+  --color-gold: #c9a84c;
+  --color-gold-light: #e2c470;
+  --color-gold-muted: #a8893a;
+  --color-ivory: #faf6ef;
+  --color-ivory-dark: #f0e8d8;
+  --color-charcoal: #1a1a1a;
+  --color-charcoal-mid: #3d3d3d;
+  --color-cream: #fefaf3;
+  --color-border: #e8ddd0;
+  --section-y: 120px;
+  --section-y-mobile: 80px;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--ivory);
+  color: var(--charcoal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer base {
+  body {
+    @apply min-h-screen;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--wine);
+    outline-offset: 2px;
+  }
+
+  .admin-area *:focus-visible {
+    outline-color: var(--gold);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+::selection {
+  background-color: var(--wine);
+  color: var(--ivory);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--wine) var(--ivory);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--ivory);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--wine);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--wine-hover);
+}

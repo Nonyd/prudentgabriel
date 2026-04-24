@@ -1,0 +1,11 @@
+# Nested app (patterns also in prudential-atelier/.gitignore)
+prudential-atelier/node_modules/
+prudential-atelier/.next/
+prudential-atelier/out/
+prudential-atelier/.vercel/
+prudential-atelier/.env
+prudential-atelier/.env.local
+prudential-atelier/*.tsbuildinfo
+prudential-atelier/next-env.d.ts
+
+.DS_Store
