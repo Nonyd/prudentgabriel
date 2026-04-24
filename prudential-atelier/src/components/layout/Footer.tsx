@@ -25,7 +25,15 @@ const CONSULT_LINKS = [
   { label: "Home Visit", href: "/consultation" },
 ];
 
-export function Footer() {
+export function Footer({
+  tagline = "Lagos, Nigeria",
+  copyrightLine,
+}: {
+  tagline?: string;
+  copyrightLine?: string;
+}) {
+  const copy =
+    copyrightLine ?? `© ${new Date().getFullYear()} Prudent Gabriel. All Rights Reserved.`;
   return (
     <footer className="bg-black text-white/60">
       <div className="h-0.5 w-full bg-olive" />
@@ -37,7 +45,7 @@ export function Footer() {
               <BrandLogo width={36} height={36} variant="onDark" />
             </Link>
             <p className="mt-4 font-body text-[11px] font-medium uppercase tracking-[0.2em] text-white/40">Prudent Gabriel</p>
-            <p className="mt-1 font-body text-[12px] font-light text-white/30">Lagos, Nigeria</p>
+            <p className="mt-1 font-body text-[12px] font-light text-white/30">{tagline}</p>
             <div className="mt-6 flex items-center gap-4 text-white/50">
               <a href="https://instagram.com/prudent_gabriel" target="_blank" rel="noopener noreferrer" className="hover:text-white">
                 <InstagramIcon size={18} />
@@ -124,7 +132,7 @@ export function Footer() {
 
         <div className="mt-16 flex flex-col items-center gap-4 border-t border-white/10 pt-6">
           <div className="flex w-full flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="font-body text-[11px] text-white/25">© {new Date().getFullYear()} Prudent Gabriel. All Rights Reserved.</p>
+            <p className="font-body text-[11px] text-white/25">{copy}</p>
             <div className="flex flex-wrap items-center justify-center gap-6">
               {(
                 [

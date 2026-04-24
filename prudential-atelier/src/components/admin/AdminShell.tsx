@@ -7,11 +7,10 @@ import { AdminTopbar } from "./AdminTopbar";
 
 type AdminShellProps = {
   session: Session;
-  pendingBespokeCount: number;
   children: React.ReactNode;
 };
 
-export function AdminShell({ session, pendingBespokeCount, children }: AdminShellProps) {
+export function AdminShell({ session, children }: AdminShellProps) {
   const [mobileNav, setMobileNav] = useState(false);
 
   return (
@@ -32,7 +31,7 @@ export function AdminShell({ session, pendingBespokeCount, children }: AdminShel
         <AdminSidebar session={session} onNavigate={() => setMobileNav(false)} />
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <AdminTopbar pendingBespokeCount={pendingBespokeCount} onOpenNav={() => setMobileNav(true)} />
+        <AdminTopbar onOpenNav={() => setMobileNav(true)} />
         <main className="min-h-0 flex-1 overflow-y-auto bg-white p-4 md:p-8">{children}</main>
       </div>
     </div>

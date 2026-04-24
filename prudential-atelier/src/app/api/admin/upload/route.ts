@@ -3,7 +3,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { cloudinary } from "@/lib/cloudinary";
 
 const MAX_BYTES = 5 * 1024 * 1024;
-const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
+const ALLOWED_IMAGE = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 const PLACEHOLDER =
   "https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80&auto=format";
@@ -29,7 +29,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing file field" }, { status: 400 });
   }
 
-  if (!ALLOWED.has(file.type)) {
+  const allowPdf = form.get("allowPdf") === "true";
+  const isPdf = file.type === "application/pdf";
+  if (allowPdf && isPdf) {
+    if (file.size > MAX_BYTES) {
+      return NextResponse.json({ error: "PDF must be 5MB or smaller" }, { status: 400 });
+    }
+  } else if (!ALLOWED_IMAGE.has(file.type)) {
     return NextResponse.json({ error: "Only JPEG, PNG, or WebP images are allowed" }, { status: 400 });
   }
 
@@ -39,7 +45,7 @@ export async function POST(req: NextRequest) {
 
   if (!configured) {
     return NextResponse.json({
-      url: PLACEHOLDER,
+      url: isPdf ? "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" : PLACEHOLDER,
       publicId: `dev-${Date.now()}`,
     });
   }
@@ -56,7 +62,8 @@ export async function POST(req: NextRequest) {
   try {
     const uploaded = await cloudinary.uploader.upload(base64, {
       folder,
-      transformation: [{ width: 1200, crop: "limit" }, { quality: "auto" }],
+      resource_type: isPdf ? "raw" : "image",
+      ...(isPdf ? {} : { transformation: [{ width: 1200, crop: "limit" }, { quality: "auto" }] }),
     });
     return NextResponse.json({
       url: uploaded.secure_url,

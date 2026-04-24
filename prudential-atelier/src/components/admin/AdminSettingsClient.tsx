@@ -32,7 +32,7 @@ const TABS: { id: string; label: string; groups: SettingGroup[] }[] = [
   { id: "media", label: "Media", groups: [] },
 ];
 
-async function patchGroup(group: SettingGroup, updates: { key: string; value: string }[]) {
+export async function patchGroup(group: SettingGroup, updates: { key: string; value: string }[]) {
   const res = await fetch(`/api/admin/settings/${group}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -45,7 +45,7 @@ async function patchGroup(group: SettingGroup, updates: { key: string; value: st
   return res.json() as Promise<{ paymentKeysChanged?: boolean }>;
 }
 
-function FieldInput({
+export function FieldInput({
   row,
   onChange,
 }: {
@@ -146,7 +146,7 @@ function FieldInput({
   );
 }
 
-function SettingsGroupCard({
+export function SettingsGroupCard({
   title,
   group,
   rows,

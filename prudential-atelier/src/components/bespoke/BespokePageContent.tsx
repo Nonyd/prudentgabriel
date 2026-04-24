@@ -7,8 +7,15 @@ import { BespokeForm } from "@/components/bespoke/BespokeForm";
 
 const DEFAULT_HERO = "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=1600";
 
-export function BespokePageContent({ heroImage }: { heroImage?: string }) {
+export function BespokePageContent({
+  heroImage,
+  pageHeadline = "Your Vision,\nOur Craft.",
+}: {
+  heroImage?: string;
+  pageHeadline?: string;
+}) {
   const src = heroImage?.trim() || DEFAULT_HERO;
+  const hl = pageHeadline.split("\n");
   return (
     <div>
       <div className="relative h-[420px] overflow-hidden bg-black">
@@ -24,9 +31,12 @@ export function BespokePageContent({ heroImage }: { heroImage?: string }) {
         <div className="absolute bottom-0 left-0 z-[1] max-w-xl p-8 pb-12 md:p-20 md:pb-20">
           <SectionLabel className="text-olive">The Atelier</SectionLabel>
           <h1 className="mt-3 font-display text-[48px] font-normal italic leading-[0.95] text-white md:text-[72px]">
-            Your Vision,
-            <br />
-            Our Craft.
+            {hl.map((line, i) => (
+              <span key={i}>
+                {line}
+                {i < hl.length - 1 ? <br /> : null}
+              </span>
+            ))}
           </h1>
         </div>
       </div>

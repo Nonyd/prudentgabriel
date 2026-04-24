@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { BespokeRequest, BespokeStatus } from "@prisma/client";
 import { useState } from "react";
@@ -70,7 +71,11 @@ export function BespokeAdminTable({ initial }: { initial: BespokeRequest[] }) {
           <tbody>
             {filtered.map((r) => (
               <tr key={r.id} className="border-t border-[#EBEBEA]">
-                <td className="p-3 font-label text-gold">{r.requestNumber}</td>
+                <td className="p-3 font-label text-gold">
+                  <Link href={`/admin/bespoke/${r.id}`} className="underline hover:text-charcoal">
+                    {r.requestNumber}
+                  </Link>
+                </td>
                 <td className="p-3">
                   <div>{r.name}</div>
                   <div className="text-xs text-[#A8A8A4]">{r.email}</div>

@@ -15,6 +15,7 @@ import {
   ConsultationStatus,
   SettingGroup,
   SettingType,
+  GalleryCategory,
 } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -1039,6 +1040,59 @@ async function main() {
     });
   }
 
+  const contentSettings: {
+    key: string;
+    value: string;
+    group: SettingGroup;
+    label: string;
+    type: SettingType;
+    isPublic: boolean;
+    sortOrder: number;
+  }[] = [
+    { key: "content_hero_label", value: "SS 2025 COLLECTION", group: SettingGroup.CONTENT, label: "Hero — Label", type: SettingType.TEXT, isPublic: true, sortOrder: 1 },
+    { key: "content_hero_headline", value: "The New\nEdit.", group: SettingGroup.CONTENT, label: "Hero — Headline (use \\n for line break)", type: SettingType.TEXTAREA, isPublic: true, sortOrder: 2 },
+    { key: "content_hero_subtext", value: "Designed for the woman who commands every room she enters.", group: SettingGroup.CONTENT, label: "Hero — Subtext", type: SettingType.TEXTAREA, isPublic: true, sortOrder: 3 },
+    { key: "content_hero_cta1", value: "SHOP THE COLLECTION", group: SettingGroup.CONTENT, label: "Hero — Button 1 Text", type: SettingType.TEXT, isPublic: true, sortOrder: 4 },
+    { key: "content_hero_cta2", value: "BOOK BESPOKE", group: SettingGroup.CONTENT, label: "Hero — Button 2 Text", type: SettingType.TEXT, isPublic: true, sortOrder: 5 },
+    { key: "content_rtw_label", value: "READY TO WEAR", group: SettingGroup.CONTENT, label: "RTW Section — Label", type: SettingType.TEXT, isPublic: true, sortOrder: 10 },
+    { key: "content_rtw_headline", value: "New Collections", group: SettingGroup.CONTENT, label: "RTW Section — Headline", type: SettingType.TEXT, isPublic: true, sortOrder: 11 },
+    { key: "content_bride_label", value: "PRUDENTIAL BRIDE", group: SettingGroup.CONTENT, label: "Bride Section — Label", type: SettingType.TEXT, isPublic: true, sortOrder: 20 },
+    { key: "content_bride_headline", value: "For the Bride\nWho Dares to\nBe Remembered.", group: SettingGroup.CONTENT, label: "Bride Section — Headline", type: SettingType.TEXTAREA, isPublic: true, sortOrder: 21 },
+    { key: "content_bride_body", value: "Prudential Bride is our most intimate offering. Each gown is a singular creation — hand-crafted in our Lagos atelier, built around your story.", group: SettingGroup.CONTENT, label: "Bride Section — Body Text", type: SettingType.TEXTAREA, isPublic: true, sortOrder: 22 },
+    { key: "content_bride_cta1", value: "EXPLORE BRIDAL COLLECTION", group: SettingGroup.CONTENT, label: "Bride Section — Button 1", type: SettingType.TEXT, isPublic: true, sortOrder: 23 },
+    { key: "content_bride_cta2", value: "BOOK BRIDAL CONSULTATION", group: SettingGroup.CONTENT, label: "Bride Section — Button 2", type: SettingType.TEXT, isPublic: true, sortOrder: 24 },
+    { key: "content_bespoke_label", value: "BESPOKE COUTURE", group: SettingGroup.CONTENT, label: "Bespoke Section — Label", type: SettingType.TEXT, isPublic: true, sortOrder: 30 },
+    { key: "content_bespoke_headline", value: "One Piece.\nOne Story.\nYours.", group: SettingGroup.CONTENT, label: "Bespoke Section — Headline", type: SettingType.TEXTAREA, isPublic: true, sortOrder: 31 },
+    { key: "content_bespoke_body", value: "From the first sketch to the final stitch — every bespoke piece is conceived, designed, and hand-crafted exclusively for you.", group: SettingGroup.CONTENT, label: "Bespoke Section — Body", type: SettingType.TEXTAREA, isPublic: true, sortOrder: 32 },
+    { key: "content_atelier_label", value: "THE ATELIER", group: SettingGroup.CONTENT, label: "Atelier Section — Label", type: SettingType.TEXT, isPublic: true, sortOrder: 40 },
+    { key: "content_atelier_headline", value: "Built in Lagos.\nWorn Worldwide.", group: SettingGroup.CONTENT, label: "Atelier Section — Headline", type: SettingType.TEXTAREA, isPublic: true, sortOrder: 41 },
+    { key: "content_atelier_body", value: "Prudent Gabriel began as a single vision in Lagos, Nigeria. Today, our pieces are worn at weddings, galas, and boardrooms across four continents.", group: SettingGroup.CONTENT, label: "Atelier Section — Body", type: SettingType.TEXTAREA, isPublic: true, sortOrder: 42 },
+    { key: "content_newsletter_headline", value: "Join the Inner Circle.", group: SettingGroup.CONTENT, label: "Newsletter — Headline", type: SettingType.TEXT, isPublic: true, sortOrder: 50 },
+    { key: "content_newsletter_subtext", value: "New collections, exclusive access, and stories from the atelier.", group: SettingGroup.CONTENT, label: "Newsletter — Subtext", type: SettingType.TEXT, isPublic: true, sortOrder: 51 },
+    { key: "content_shop_headline", value: "The Edit.", group: SettingGroup.CONTENT, label: "Shop — Headline", type: SettingType.TEXT, isPublic: true, sortOrder: 60 },
+    { key: "content_shop_subtext", value: "Ready-to-Wear · Bespoke · Bridal", group: SettingGroup.CONTENT, label: "Shop — Subtext", type: SettingType.TEXT, isPublic: true, sortOrder: 61 },
+    { key: "content_consult_label", value: "BOOK A CONSULTATION", group: SettingGroup.CONTENT, label: "Consultation — Label", type: SettingType.TEXT, isPublic: true, sortOrder: 70 },
+    { key: "content_consult_headline", value: "Your Vision,\nOur Craft.", group: SettingGroup.CONTENT, label: "Consultation — Headline", type: SettingType.TEXTAREA, isPublic: true, sortOrder: 71 },
+    { key: "content_consult_subtext", value: "Choose your consultant. Select your session. Begin the journey.", group: SettingGroup.CONTENT, label: "Consultation — Subtext", type: SettingType.TEXT, isPublic: true, sortOrder: 72 },
+    { key: "content_bespoke_page_headline", value: "Your Vision,\nOur Craft.", group: SettingGroup.CONTENT, label: "Bespoke Page — Headline", type: SettingType.TEXTAREA, isPublic: true, sortOrder: 80 },
+    { key: "content_pfa_label", value: "PRUDENTIAL FASHION ACADEMY", group: SettingGroup.CONTENT, label: "PFA Banner — Label", type: SettingType.TEXT, isPublic: true, sortOrder: 90 },
+    { key: "content_pfa_text", value: "Over 5,000 designers trained. The school behind the brand.", group: SettingGroup.CONTENT, label: "PFA Banner — Text", type: SettingType.TEXT, isPublic: true, sortOrder: 91 },
+    { key: "content_pfa_cta", value: "EXPLORE PFA →", group: SettingGroup.CONTENT, label: "PFA Banner — Button Text", type: SettingType.TEXT, isPublic: true, sortOrder: 92 },
+    { key: "content_announce_1", value: "FREE SHIPPING ON ORDERS OVER ₦150,000 WITHIN LAGOS", group: SettingGroup.CONTENT, label: "Announcement Bar — Message 1", type: SettingType.TEXT, isPublic: true, sortOrder: 100 },
+    { key: "content_announce_2", value: "NEW COLLECTION — THE EDIT IS NOW LIVE", group: SettingGroup.CONTENT, label: "Announcement Bar — Message 2", type: SettingType.TEXT, isPublic: true, sortOrder: 101 },
+    { key: "content_announce_3", value: "BOOK YOUR BESPOKE CONSULTATION TODAY", group: SettingGroup.CONTENT, label: "Announcement Bar — Message 3", type: SettingType.TEXT, isPublic: true, sortOrder: 102 },
+    { key: "content_footer_tagline", value: "Lagos, Nigeria", group: SettingGroup.CONTENT, label: "Footer — Tagline below logo", type: SettingType.TEXT, isPublic: true, sortOrder: 110 },
+    { key: "content_footer_copyright", value: "© 2025 Prudent Gabriel. All Rights Reserved.", group: SettingGroup.CONTENT, label: "Footer — Copyright text", type: SettingType.TEXT, isPublic: true, sortOrder: 111 },
+  ];
+
+  for (const s of contentSettings) {
+    await prisma.siteSetting.upsert({
+      where: { key: s.key },
+      update: {},
+      create: s,
+    });
+  }
+
   const emailTemplates: { key: string; label: string; sortOrder: number }[] = [
     { key: "email_tpl_welcome", label: "Welcome Email", sortOrder: 100 },
     { key: "email_tpl_order_confirmation", label: "Order Confirmation", sortOrder: 101 },
@@ -1064,6 +1118,66 @@ async function main() {
         type: SettingType.JSON,
         isPublic: false,
         sortOrder: t.sortOrder,
+      },
+    });
+  }
+
+  const atelierGallerySeed: { url: string; alt: string; caption?: string }[] = [
+    { url: "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800", alt: "Atelier workspace", caption: "The workshop where every piece begins" },
+    { url: "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=600", alt: "Design team at work", caption: "Our team in Lagos" },
+    { url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800", alt: "Fabric selection" },
+    { url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600", alt: "Editorial fashion shot" },
+    { url: "https://images.unsplash.com/photo-1594463750939-ebb28c3f7f75?w=800", alt: "Bridal gown detail" },
+    { url: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600", alt: "Fashion editorial" },
+    { url: "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800", alt: "Formal wear" },
+    { url: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600", alt: "Ready to wear" },
+    { url: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800", alt: "Wardrobe curation" },
+    { url: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=600", alt: "Style consultation" },
+    { url: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=800", alt: "Bridal collection" },
+    { url: "https://images.unsplash.com/photo-1529636798458-92182e662485?w=600", alt: "Wedding preparation" },
+  ];
+
+  const bridalGallerySeed: { url: string; alt: string; caption?: string }[] = [
+    { url: "https://images.unsplash.com/photo-1594463750939-ebb28c3f7f75?w=800", alt: "Prudential Bride gown", caption: "Amore Collection 2024" },
+    { url: "https://images.unsplash.com/photo-1519741347686-c1e331ec5e96?w=600", alt: "Bride portrait" },
+    { url: "https://images.unsplash.com/photo-1529636798458-92182e662485?w=800", alt: "Bridal gown detail" },
+    { url: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=600", alt: "Wedding collection" },
+    { url: "https://images.unsplash.com/photo-1560180474-e8563fd75bab?w=800", alt: "Bride silhouette" },
+    { url: "https://images.unsplash.com/photo-1585241645927-c7a8e5840c42?w=600", alt: "Bridal accessories" },
+    { url: "https://images.unsplash.com/photo-1594463750939-ebb28c3f7f75?w=700", alt: "Traditional bridal" },
+    { url: "https://images.unsplash.com/photo-1519741347686-c1e331ec5e96?w=800", alt: "White wedding gown" },
+  ];
+
+  for (let i = 0; i < atelierGallerySeed.length; i++) {
+    const img = atelierGallerySeed[i];
+    await prisma.galleryImage.upsert({
+      where: { publicId: `seed-atelier-${i}` },
+      update: {},
+      create: {
+        url: img.url,
+        publicId: `seed-atelier-${i}`,
+        alt: img.alt,
+        caption: img.caption ?? null,
+        category: GalleryCategory.ATELIER,
+        sortOrder: i,
+        isPublished: true,
+      },
+    });
+  }
+
+  for (let i = 0; i < bridalGallerySeed.length; i++) {
+    const img = bridalGallerySeed[i];
+    await prisma.galleryImage.upsert({
+      where: { publicId: `seed-bridal-${i}` },
+      update: {},
+      create: {
+        url: img.url,
+        publicId: `seed-bridal-${i}`,
+        alt: img.alt,
+        caption: img.caption ?? null,
+        category: GalleryCategory.BRIDAL,
+        sortOrder: i,
+        isPublished: true,
       },
     });
   }

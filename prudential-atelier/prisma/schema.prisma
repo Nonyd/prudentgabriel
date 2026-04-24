@@ -435,11 +435,16 @@ model BespokeRequest {
   budgetRange     String?
   timeline        String?
   measurements    Json?
-  referenceImages String[]
+  referenceImages String[]      @default([])
+  sketchUrls      String[]      @default([])
   status          BespokeStatus @default(PENDING)
   adminNotes      String?
   preferredDate   DateTime?
   estimatedPrice  Float?
+  agreedPrice     Float?
+  depositPaid     Float?
+  paymentMethod   String?
+  entrySource     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -602,6 +607,55 @@ enum SettingGroup {
   NOTIFICATIONS
   LOYALTY
   SEO
+  CONTENT
+}
+
+model GalleryImage {
+  id          String          @id @default(cuid())
+  url         String
+  publicId    String          @unique
+  alt         String?
+  caption     String?
+  category    GalleryCategory
+  width       Int?
+  height      Int?
+  sortOrder   Int             @default(0)
+  isPublished Boolean         @default(true)
+  uploadedBy  String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([category, isPublished])
+  @@index([sortOrder])
+}
+
+enum GalleryCategory {
+  ATELIER
+  BRIDAL
+}
+
+model AdminNotification {
+  id        String                @id @default(cuid())
+  type      AdminNotificationType
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean               @default(false)
+  entityId  String?
+  createdAt DateTime              @default(now())
+
+  @@index([isRead, createdAt])
+}
+
+enum AdminNotificationType {
+  NEW_ORDER
+  NEW_BESPOKE
+  NEW_CONSULTATION
+  REVIEW_PENDING
+  LOW_STOCK
+  PAYMENT_FAILED
+  NEW_CUSTOMER
+  COUPON_EXPIRING
 }
 
 enum SettingType {

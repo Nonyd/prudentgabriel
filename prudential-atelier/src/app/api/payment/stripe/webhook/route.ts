@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { verifyWebhookEvent } from "@/lib/payments/stripe";
 import { fulfillPaidOrder } from "@/lib/order-payment";
+import { notifyPaymentFailed } from "@/lib/notifications";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
 
 export const runtime = "nodejs";
@@ -54,6 +55,11 @@ export async function POST(req: NextRequest) {
         where: { id: orderId, paymentStatus: PaymentStatus.PENDING },
         data: { paymentStatus: PaymentStatus.FAILED },
       });
+      const failedOrder = await prisma.order.findUnique({
+        where: { id: orderId },
+        select: { id: true, orderNumber: true },
+      });
+      if (failedOrder) void notifyPaymentFailed(failedOrder);
     }
   }
 

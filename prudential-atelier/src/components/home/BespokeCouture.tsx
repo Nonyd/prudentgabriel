@@ -25,7 +25,26 @@ const STEPS = [
   },
 ];
 
-export function BespokeCouture({ bespokeImage = DEFAULT_IMG }: { bespokeImage?: string }) {
+function lines(text: string | undefined, fallback: string) {
+  const t = text?.trim() ? text : fallback;
+  return t.split("\n");
+}
+
+export function BespokeCouture({
+  bespokeImage = DEFAULT_IMG,
+  label = "BESPOKE COUTURE",
+  headline,
+  body,
+}: {
+  bespokeImage?: string;
+  label?: string;
+  headline?: string;
+  body?: string;
+}) {
+  const displayHeadline = lines(headline, "One Piece.\nOne Story.\nYours.");
+  const displayBody =
+    body ??
+    "From the first sketch to the final stitch — every bespoke piece is conceived, designed, and hand-crafted exclusively for you.";
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -49,18 +68,16 @@ export function BespokeCouture({ bespokeImage = DEFAULT_IMG }: { bespokeImage?: 
         </div>
 
         <div className="flex flex-col justify-center px-6 py-12 md:py-0 md:pl-16 md:pr-20 lg:pl-20">
-          <p className="font-body text-[10px] font-medium uppercase tracking-[0.25em] text-olive">Bespoke Couture</p>
+          <p className="font-body text-[10px] font-medium uppercase tracking-[0.25em] text-olive">{label}</p>
           <h2 className="mt-4 font-display text-[32px] font-normal italic leading-none text-white md:text-[56px]">
-            One Piece.
-            <br />
-            One Story.
-            <br />
-            Yours.
+            {displayHeadline.map((line, i) => (
+              <span key={i}>
+                {line}
+                {i < displayHeadline.length - 1 ? <br /> : null}
+              </span>
+            ))}
           </h2>
-          <p className="mt-6 max-w-md font-body text-[15px] font-light leading-[1.8] text-white/65">
-            From the first sketch to the final stitch — every bespoke piece is conceived, designed, and hand-crafted exclusively
-            for you. No two are alike.
-          </p>
+          <p className="mt-6 max-w-md font-body text-[15px] font-light leading-[1.8] text-white/65">{displayBody}</p>
 
           <ul className="mt-10 flex flex-col gap-6">
             {STEPS.map((s) => (

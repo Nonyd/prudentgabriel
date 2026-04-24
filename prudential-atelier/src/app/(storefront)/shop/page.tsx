@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { queryProductList } from "@/lib/products-list-query";
 import { ShopBrowse } from "@/components/shop/ShopBrowse";
+import { getContent, getContentSettings } from "@/lib/settings";
 
 export const revalidate = 300;
 
@@ -25,6 +26,16 @@ export default async function ShopPage({
 
   const { products, total, page, totalPages, hasNext, hasPrev } = await queryProductList(u, { isAdmin });
 
+  let shopHeadline = "The Edit.";
+  let shopSub = "Ready-to-Wear · Bespoke · Bridal";
+  try {
+    const c = await getContentSettings();
+    shopHeadline = getContent(c, "content_shop_headline", shopHeadline);
+    shopSub = getContent(c, "content_shop_subtext", shopSub);
+  } catch {
+    /* defaults */
+  }
+
   return (
     <ShopBrowse
       products={products}
@@ -33,6 +44,8 @@ export default async function ShopPage({
       totalPages={totalPages}
       hasNext={hasNext}
       hasPrev={hasPrev}
+      heroHeadline={shopHeadline}
+      heroSubtext={shopSub}
     />
   );
 }

@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateBespokeNumber } from "@/lib/order-number";
 import { sendBespokeConfirmationEmail, sendAdminNotificationEmail } from "@/lib/email";
+import { notifyNewBespoke } from "@/lib/notifications";
 import { bespokeRequestSchema } from "@/validations/bespoke";
 
 export async function POST(req: NextRequest) {
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
   const d = parsed.data;
   const requestNumber = generateBespokeNumber();
 
-  await prisma.bespokeRequest.create({
+  const created = await prisma.bespokeRequest.create({
     data: {
       requestNumber,
       userId: session?.user?.id ?? null,
@@ -39,8 +40,11 @@ export async function POST(req: NextRequest) {
       measurements: d.measurements ? (d.measurements as object) : undefined,
       referenceImages: d.referenceImages ?? [],
       preferredDate: d.preferredDate ?? null,
+      entrySource: "WEBSITE",
     },
   });
+
+  void notifyNewBespoke(created);
 
   void sendBespokeConfirmationEmail(
     d.email,

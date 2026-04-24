@@ -32,6 +32,11 @@ export async function POST(req: NextRequest) {
     .map((c) => c as ProductCategory)
     .filter((c) => (Object.values(ProductCategory) as string[]).includes(c));
 
+  const exists = await prisma.coupon.findUnique({ where: { code: d.code } });
+  if (exists) {
+    return NextResponse.json({ error: "A coupon with this code already exists" }, { status: 409 });
+  }
+
   try {
     const c = await prisma.coupon.create({
       data: {

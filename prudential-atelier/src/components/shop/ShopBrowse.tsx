@@ -23,6 +23,8 @@ interface ShopBrowseProps {
   totalPages: number;
   hasNext: boolean;
   hasPrev: boolean;
+  heroHeadline?: string;
+  heroSubtext?: string;
 }
 
 export function ShopBrowse({
@@ -31,6 +33,8 @@ export function ShopBrowse({
   page: initialPage,
   totalPages: _totalPagesIgnored,
   hasNext: initialHasNext,
+  heroHeadline = "The Edit.",
+  heroSubtext = "Ready-to-Wear · Bespoke · Bridal",
 }: ShopBrowseProps) {
   void _totalPagesIgnored;
   const sp = useSearchParams();
@@ -86,9 +90,9 @@ export function ShopBrowse({
         <div className="mx-auto w-full max-w-[1400px] text-center md:px-8">
           <p className="font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/50">Prudent Gabriel</p>
           <h1 className="mt-3 font-display text-[36px] font-normal italic leading-[0.95] text-white md:text-[56px]">
-            The Edit.
+            {heroHeadline}
           </h1>
-          <p className="mt-3 font-body text-[13px] font-light text-white/55">Ready-to-Wear · Bespoke · Bridal</p>
+          <p className="mt-3 font-body text-[13px] font-light text-white/55">{heroSubtext}</p>
         </div>
       </section>
 

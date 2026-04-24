@@ -121,3 +121,33 @@ body {
 *::-webkit-scrollbar-thumb:hover {
   background: var(--olive-hover);
 }
+
+/* Session 10 — gallery masonry (CSS columns) */
+.masonry-grid {
+  columns: 4;
+  column-gap: 4px;
+}
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 4px;
+  display: block;
+}
+@media (max-width: 1024px) {
+  .masonry-grid {
+    columns: 3;
+  }
+}
+@media (max-width: 768px) {
+  .masonry-grid {
+    columns: 2;
+  }
+}
+.masonry-grid-admin {
+  columns: 3;
+  column-gap: 4px;
+}
+@media (max-width: 768px) {
+  .masonry-grid-admin {
+    columns: 2;
+  }
+}

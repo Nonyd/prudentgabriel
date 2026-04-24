@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { PaymentStatus } from "@prisma/client";
 import { getSetting } from "@/lib/settings";
 import { awardReviewPoints } from "@/lib/points";
+import { notifyReviewPending } from "@/lib/notifications";
 
 const bodySchema = z.object({
   productId: z.string().min(1),
@@ -60,8 +61,8 @@ export async function POST(req: NextRequest) {
   const pointsAward = Math.max(0, parseInt(pointsRaw ?? "50", 10) || 0);
 
   let pointsGranted = 0;
-  await prisma.$transaction(async (tx) => {
-    await tx.review.create({
+  const review = await prisma.$transaction(async (tx) => {
+    const r = await tx.review.create({
       data: {
         userId,
         productId,
@@ -77,7 +78,10 @@ export async function POST(req: NextRequest) {
     if (pointsAward > 0) {
       pointsGranted = await awardReviewPoints(userId, pointsAward, productId, tx);
     }
+    return r;
   });
+
+  void notifyReviewPending(review, product.name);
 
   return NextResponse.json({
     success: true,

@@ -21,6 +21,7 @@ import {
   TrendingUp,
   UserCircle,
   Users,
+  Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +41,7 @@ const SECTIONS: {
       { href: "/admin/consultations", label: "Consultations", icon: CalendarDays },
       { href: "/admin/consultants", label: "Consultants", icon: UserCircle },
       { href: "/admin/reviews", label: "Reviews", icon: Star },
+      { href: "/admin/gallery", label: "Gallery", icon: Images },
     ],
   },
   {

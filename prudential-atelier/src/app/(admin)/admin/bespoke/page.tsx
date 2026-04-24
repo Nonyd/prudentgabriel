@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { BespokeAdminTable } from "@/components/admin/BespokeAdminTable";
+import { ManualBespokeForm } from "@/components/admin/ManualBespokeForm";
 
 export default async function AdminBespokePage() {
   const rows = await prisma.bespokeRequest.findMany({
@@ -8,7 +9,10 @@ export default async function AdminBespokePage() {
   });
   return (
     <div>
-      <h1 className="font-display text-2xl text-ivory">Bespoke requests</h1>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <h1 className="font-display text-2xl text-black">Bespoke requests</h1>
+        <ManualBespokeForm />
+      </div>
       <BespokeAdminTable initial={rows} />
     </div>
   );

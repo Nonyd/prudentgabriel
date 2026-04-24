@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { DarkModeToggle } from "@/components/common/DarkModeToggle";
+import { NotificationBell } from "@/components/admin/NotificationBell";
 
 function pageTitleFromPath(pathname: string): string {
   if (pathname === "/admin") return "Dashboard";
@@ -30,13 +30,7 @@ function initials(name: string | null | undefined, email: string | null | undefi
   return e.slice(0, 2).toUpperCase() || "AD";
 }
 
-export function AdminTopbar({
-  pendingBespokeCount,
-  onOpenNav,
-}: {
-  pendingBespokeCount: number;
-  onOpenNav?: () => void;
-}) {
+export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
   const pathname = usePathname();
   const { data } = useSession();
   const title = pageTitleFromPath(pathname);
@@ -61,19 +55,7 @@ export function AdminTopbar({
         </p>
       </div>
       <div className="flex items-center gap-3 md:gap-4">
-        <Link
-          href="/admin/bespoke"
-          className="relative p-1.5 text-[#6B6B68] transition-colors hover:text-olive"
-          aria-label="Notifications"
-        >
-          <Bell size={16} strokeWidth={1.5} />
-          {pendingBespokeCount > 0 ? (
-            <span
-              className="absolute right-0.5 top-0.5 block h-1.5 w-1.5 rounded-full bg-[#37392d]"
-              aria-hidden
-            />
-          ) : null}
-        </Link>
+        <NotificationBell />
         <div
           className="flex items-center justify-center p-1"
           title="Toggle storefront dark mode (customer preview)"

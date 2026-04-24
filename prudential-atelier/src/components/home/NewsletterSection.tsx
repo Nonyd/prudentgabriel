@@ -8,7 +8,13 @@ import { z } from "zod";
 const schema = z.object({ email: z.string().email() });
 type Form = z.infer<typeof schema>;
 
-export function NewsletterSection() {
+export function NewsletterSection({
+  headline = "Join the Inner Circle.",
+  subtext = "New collections, exclusive access, and stories from the atelier.",
+}: {
+  headline?: string;
+  subtext?: string;
+}) {
   const [done, setDone] = useState(false);
   const { register, handleSubmit, formState } = useForm<Form>({
     resolver: zodResolver(schema),
@@ -28,10 +34,8 @@ export function NewsletterSection() {
     <section className="bg-olive py-16 md:py-20">
       <div className="mx-auto max-w-lg px-8 text-center">
         <p className="font-body text-[10px] font-medium uppercase tracking-[0.25em] text-white/50">Stay Connected</p>
-        <h2 className="mt-3 font-display text-[40px] font-normal italic leading-[1.1] text-white">Join the Inner Circle.</h2>
-        <p className="mt-4 font-body text-[14px] font-light text-white/65">
-          New collections, exclusive access, and stories from the atelier.
-        </p>
+        <h2 className="mt-3 font-display text-[40px] font-normal italic leading-[1.1] text-white">{headline}</h2>
+        <p className="mt-4 font-body text-[14px] font-light text-white/65">{subtext}</p>
         {done ? (
           <p className="mt-8 font-body text-[14px] text-white/90">You&apos;re on the list. Thank you.</p>
         ) : (

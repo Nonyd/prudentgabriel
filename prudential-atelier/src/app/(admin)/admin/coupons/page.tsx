@@ -1,12 +1,15 @@
 import { prisma } from "@/lib/prisma";
-import { CouponsAdminClient } from "@/components/admin/CouponsAdminClient";
+import { CouponsClient } from "@/components/admin/CouponsClient";
 
 export default async function AdminCouponsPage() {
-  const coupons = await prisma.coupon.findMany({ orderBy: { createdAt: "desc" } });
+  const coupons = await prisma.coupon.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { _count: { select: { usages: true } } },
+  });
   return (
     <div>
-      <h1 className="font-display text-2xl text-ivory">Coupons</h1>
-      <CouponsAdminClient coupons={coupons} />
+      <h1 className="font-display text-2xl text-black">Coupons</h1>
+      <CouponsClient coupons={coupons} />
     </div>
   );
 }

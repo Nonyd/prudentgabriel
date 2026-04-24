@@ -15,12 +15,8 @@ import { MobileMenu } from "./MobileMenu";
 
 const DESKTOP_LINKS: { label: string; href: string; active: (pathname: string, category: string | null) => boolean }[] = [
   { label: "Home", href: "/", active: (p) => p === "/" },
-  { label: "Atelier", href: "/#atelier", active: () => false },
-  {
-    label: "Bridals",
-    href: "/shop?category=BRIDAL",
-    active: (p, cat) => p.startsWith("/shop") && cat === "BRIDAL",
-  },
+  { label: "Atelier", href: "/atelier", active: (p) => p.startsWith("/atelier") },
+  { label: "Bridesals", href: "/bridesals", active: (p) => p.startsWith("/bridesals") },
   {
     label: "Ready to Wear",
     href: "/shop",
@@ -72,26 +68,13 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const [routeHash, setRouteHash] = useState("");
-  useEffect(() => {
-    const sync = () => setRouteHash(typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "");
-    sync();
-    window.addEventListener("hashchange", sync);
-    return () => window.removeEventListener("hashchange", sync);
-  }, [pathname]);
-
   const activeMap = useMemo(
     () =>
-      DESKTOP_LINKS.map((item) => {
-        let isActive = item.active(pathname, category);
-        if (item.label === "Home") {
-          isActive = pathname === "/" && routeHash !== "atelier";
-        } else if (item.label === "Atelier") {
-          isActive = pathname === "/" && routeHash === "atelier";
-        }
-        return { ...item, isActive };
-      }),
-    [pathname, category, routeHash],
+      DESKTOP_LINKS.map((item) => ({
+        ...item,
+        isActive: item.active(pathname, category),
+      })),
+    [pathname, category],
   );
 
   return (

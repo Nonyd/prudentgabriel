@@ -13,8 +13,8 @@ import { useThemeStore } from "@/store/themeStore";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
-  { label: "Atelier", href: "/#atelier" },
-  { label: "Bridals", href: "/shop?category=BRIDAL" },
+  { label: "Atelier", href: "/atelier" },
+  { label: "Bridesals", href: "/bridesals" },
   { label: "Ready to Wear", href: "/shop" },
   { label: "Book a Consultation", href: "/consultation" },
 ];

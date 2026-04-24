@@ -13,6 +13,7 @@ import {
   ymdCompare,
 } from "@/lib/consultation";
 import { consultationBookingSchema } from "@/validations/consultation";
+import { notifyNewConsultation } from "@/lib/notifications";
 
 function parseDateParamToUtcDay(ymd: string): Date {
   const [y, mo, d] = ymd.split("-").map(Number);
@@ -118,6 +119,8 @@ export async function POST(req: NextRequest) {
       },
     });
   });
+
+  void notifyNewConsultation(booking);
 
   return NextResponse.json({
     bookingId: booking.id,

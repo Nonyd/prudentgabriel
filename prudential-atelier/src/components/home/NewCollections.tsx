@@ -71,7 +71,13 @@ function SkeletonGrid() {
   );
 }
 
-export function NewCollections() {
+export function NewCollections({
+  label = "READY TO WEAR",
+  headline = "New Collections",
+}: {
+  label?: string;
+  headline?: string;
+}) {
   const [products, setProducts] = useState<ProductListItem[] | null>(null);
 
   useEffect(() => {
@@ -95,7 +101,12 @@ export function NewCollections() {
   return (
     <section className="bg-[var(--white)] py-[100px]">
       <div className="mx-auto flex max-w-[1400px] items-end justify-between px-6 md:px-8">
-        <span className="font-body text-[10px] font-medium uppercase tracking-[0.25em] text-olive">Ready to Wear</span>
+        <div>
+          <span className="font-body text-[10px] font-medium uppercase tracking-[0.25em] text-olive">{label}</span>
+          <h2 className="mt-2 font-display text-[28px] font-normal italic leading-none text-charcoal md:text-[40px]">
+            {headline}
+          </h2>
+        </div>
         <span className="hidden w-8 md:block" />
         <Link
           href="/shop"

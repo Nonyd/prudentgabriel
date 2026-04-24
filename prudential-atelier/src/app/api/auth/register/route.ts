@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/validations/auth";
 import { awardReferralPoints } from "@/lib/points";
 import { sendWelcomeEmail } from "@/lib/email";
+import { notifyNewCustomer } from "@/lib/notifications";
 
 const SIGNUP_POINTS = 50;
 
@@ -79,8 +80,11 @@ export async function POST(request: Request) {
 
   const createdUser = await prisma.user.findUnique({
     where: { email: email.toLowerCase() },
-    select: { referralCode: true },
+    select: { id: true, name: true, email: true, referralCode: true },
   });
+  if (createdUser) {
+    void notifyNewCustomer(createdUser);
+  }
   void sendWelcomeEmail(
     email.toLowerCase(),
     firstName,

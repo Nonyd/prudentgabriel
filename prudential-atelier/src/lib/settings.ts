@@ -2,6 +2,8 @@ import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import type { SettingGroup, SettingType } from "@prisma/client";
 
+let contentSettingsCache: { data: Record<string, string>; expiresAt: number } | null = null;
+
 const ALGORITHM = "aes-256-cbc";
 const IV_LENGTH = 16;
 const PREFIX = "v1:";
@@ -58,6 +60,10 @@ export function clearSettingCacheKey(key: string) {
 
 export function clearPublicSettingsCache() {
   publicSettingsCache = null;
+}
+
+export function clearContentSettingsCache() {
+  contentSettingsCache = null;
 }
 
 export async function getSetting(key: string): Promise<string | null> {
@@ -140,6 +146,7 @@ export async function setSetting(key: string, value: string, updatedBy: string):
   });
   clearSettingCacheKey(key);
   clearPublicSettingsCache();
+  clearContentSettingsCache();
 }
 
 export async function getImageSetting(key: string, fallback: string): Promise<string> {
@@ -164,6 +171,29 @@ const APPEARANCE_IMAGE_KEYS = [
   "favicon_url",
   "seo_og_image",
 ] as const;
+
+export async function getContentSettings(): Promise<Record<string, string>> {
+  if (contentSettingsCache && Date.now() < contentSettingsCache.expiresAt) {
+    return contentSettingsCache.data;
+  }
+
+  const rows = await prisma.siteSetting.findMany({
+    where: { group: "CONTENT", isPublic: true },
+    select: { key: true, value: true },
+  });
+  const data: Record<string, string> = {};
+  for (const r of rows) {
+    data[r.key] = r.value;
+  }
+  contentSettingsCache = { data, expiresAt: Date.now() + CACHE_TTL_MS };
+  return data;
+}
+
+/** Use after `await getContentSettings()` — reads from the resolved map. */
+export function getContent(settings: Record<string, string>, key: string, fallback: string): string {
+  const v = settings[key];
+  return v != null && String(v).trim().length > 0 ? v : fallback;
+}
 
 export async function getImageSettings(): Promise<Record<string, string>> {
   const rows = await prisma.siteSetting.findMany({

@@ -3,6 +3,7 @@ import { PaymentGateway } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verifyWebhookSignature } from "@/lib/payments/paystack";
 import { fulfillPaidOrder } from "@/lib/order-payment";
+import { notifyPaymentFailed } from "@/lib/notifications";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
 
 export async function POST(req: NextRequest) {
@@ -49,6 +50,11 @@ export async function POST(req: NextRequest) {
       where: { id: orderId, paymentStatus: "PENDING" },
       data: { paymentStatus: "FAILED" },
     });
+    const failedOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, orderNumber: true },
+    });
+    if (failedOrder) void notifyPaymentFailed(failedOrder);
   }
 
   if (event.event === "charge.failed" && isConsultation && bookingId) {

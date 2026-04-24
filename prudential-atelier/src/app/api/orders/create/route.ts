@@ -7,6 +7,7 @@ import { calculateShippingOptions } from "@/lib/shipping";
 import { generateOrderNumber } from "@/lib/order-number";
 import { redeemPoints } from "@/lib/points";
 import { sendOrderConfirmationEmail } from "@/lib/email";
+import { notifyLowStock, notifyNewOrder } from "@/lib/notifications";
 import { orderCreateBodySchema, type AddressInput } from "@/validations/order";
 
 function snapshotFromAddress(a: AddressInput) {
@@ -395,6 +396,18 @@ export async function POST(req: NextRequest) {
       pointsDiscNGN: order.pointsDiscountNGN,
       addressSnapshot: addressSnapshot as Record<string, string>,
     });
+
+    void notifyNewOrder(order);
+
+    for (const line of lines) {
+      const v = await prisma.productVariant.findUnique({
+        where: { id: line.variantId },
+        include: { product: { select: { name: true } } },
+      });
+      if (v && v.stock <= v.lowStockAt) {
+        void notifyLowStock(v.product, v);
+      }
+    }
 
     return NextResponse.json({
       orderId: order.id,
