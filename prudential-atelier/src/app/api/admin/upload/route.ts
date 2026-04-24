@@ -44,12 +44,18 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  const folderField = form.get("folder");
+  const folder =
+    typeof folderField === "string" && folderField.trim().length > 0
+      ? folderField.replace(/[^a-zA-Z0-9/_-]/g, "").slice(0, 120)
+      : "prudential-atelier/products";
+
   const buffer = Buffer.from(await file.arrayBuffer());
   const base64 = `data:${file.type};base64,${buffer.toString("base64")}`;
 
   try {
     const uploaded = await cloudinary.uploader.upload(base64, {
-      folder: "prudential-atelier/products",
+      folder,
       transformation: [{ width: 1200, crop: "limit" }, { quality: "auto" }],
     });
     return NextResponse.json({

@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { setSetting } from "@/lib/settings";
-import type { SettingGroup } from "@prisma/client";
+import { clearPublicSettingsCache, clearSettingCacheKey, setSetting } from "@/lib/settings";
+import { EMAIL_TEMPLATE_META } from "@/lib/email-templates";
+import { SettingType, type SettingGroup } from "@prisma/client";
 
 const GROUPS = new Set<string>([
   "STORE",
@@ -87,7 +88,35 @@ export async function PATCH(
       where: { key },
       select: { group: true, type: true },
     });
-    if (!row || row.group !== (group as SettingGroup)) {
+
+    if (!row) {
+      if (
+        (group as SettingGroup) === "EMAIL" &&
+        key.startsWith("email_tpl_") &&
+        EMAIL_TEMPLATE_META[key]
+      ) {
+        const meta = EMAIL_TEMPLATE_META[key];
+        await prisma.siteSetting.create({
+          data: {
+            key,
+            value,
+            group: "EMAIL",
+            label: meta.label,
+            type: SettingType.JSON,
+            isPublic: false,
+            sortOrder: meta.sortOrder,
+            updatedBy: userId,
+          },
+        });
+        clearSettingCacheKey(key);
+        clearPublicSettingsCache();
+        updated += 1;
+        continue;
+      }
+      return NextResponse.json({ error: `Invalid key for group: ${key}` }, { status: 400 });
+    }
+
+    if (row.group !== (group as SettingGroup)) {
       return NextResponse.json({ error: `Invalid key for group: ${key}` }, { status: 400 });
     }
 

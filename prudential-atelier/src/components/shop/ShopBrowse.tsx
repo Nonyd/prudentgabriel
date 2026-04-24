@@ -29,16 +29,16 @@ export function ShopBrowse({
   products: initialProducts,
   total,
   page: initialPage,
-  totalPages: initialTotalPages,
+  totalPages: _totalPagesIgnored,
   hasNext: initialHasNext,
 }: ShopBrowseProps) {
+  void _totalPagesIgnored;
   const sp = useSearchParams();
   const router = useRouter();
   const [filterOpen, setFilterOpen] = useState(false);
   const [view, setView] = useState<"grid" | "list">("grid");
   const [items, setItems] = useState<ProductListItem[]>(initialProducts);
   const [page, setPage] = useState(initialPage);
-  const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [hasNext, setHasNext] = useState(initialHasNext);
   const [loadingMore, setLoadingMore] = useState(false);
 
@@ -47,9 +47,8 @@ export function ShopBrowse({
   useEffect(() => {
     setItems(initialProducts);
     setPage(initialPage);
-    setTotalPages(initialTotalPages);
     setHasNext(initialHasNext);
-  }, [initialProducts, initialPage, initialTotalPages, initialHasNext, queryKey]);
+  }, [initialProducts, initialPage, initialHasNext, queryKey]);
 
   const loadMore = useCallback(async () => {
     if (!hasNext || loadingMore) return;
@@ -64,12 +63,10 @@ export function ShopBrowse({
         products: ProductListItem[];
         hasNext: boolean;
         page: number;
-        totalPages: number;
       };
       setItems((prev) => [...prev, ...data.products]);
       setPage(data.page);
       setHasNext(data.hasNext);
-      setTotalPages(data.totalPages);
     } catch {
       /* ignore */
     } finally {

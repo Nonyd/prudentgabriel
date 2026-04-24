@@ -5,6 +5,9 @@ import * as Tabs from "@radix-ui/react-tabs";
 import * as Accordion from "@radix-ui/react-accordion";
 import toast from "react-hot-toast";
 import type { SettingGroup, SettingType } from "@prisma/client";
+import { AppearanceSettingsCard } from "@/components/admin/settings/AppearanceSettingsCard";
+import { EmailTemplatesEditor } from "@/components/admin/settings/EmailTemplatesEditor";
+import { MediaLibraryTab } from "@/components/admin/settings/MediaLibraryTab";
 
 type Row = {
   key: string;
@@ -205,55 +208,6 @@ function SettingsGroupCard({
   );
 }
 
-function MediaTab() {
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState<{ items: { id: string; url: string; filename: string; createdAt: string }[]; totalPages: number } | null>(null);
-
-  const load = useCallback(async () => {
-    const res = await fetch(`/api/admin/media?page=${page}`);
-    if (res.ok) setData(await res.json());
-  }, [page]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  return (
-    <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
-      <p className="font-body text-sm text-charcoal">Media library</p>
-      <p className="mt-1 font-body text-xs text-[#6B6B68]">Upload from Appearance image slots or drag files here (coming soon). Listed items are stored in the database.</p>
-      <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {(data?.items ?? []).map((m) => (
-          <div key={m.id} className="border border-[#EBEBEA] p-2">
-            <div
-              className="aspect-square w-full bg-[#F5F5F3] bg-cover bg-center"
-              style={{ backgroundImage: `url(${m.url})` }}
-              role="img"
-              aria-label={m.filename}
-            />
-            <p className="mt-1 truncate font-body text-[10px] text-[#6B6B68]">{m.filename}</p>
-          </div>
-        ))}
-      </div>
-      {data && data.totalPages > 1 && (
-        <div className="mt-4 flex gap-2">
-          <button type="button" className="text-xs text-olive" disabled={page < 2} onClick={() => setPage((p) => p - 1)}>
-            Prev
-          </button>
-          <button
-            type="button"
-            className="text-xs text-olive"
-            disabled={page >= data.totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Next
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function AdminSettingsClient() {
   const [tab, setTab] = useState("store");
   const [settings, setSettings] = useState<Partial<Record<SettingGroup, Row[]>> | null>(null);
@@ -288,7 +242,36 @@ export function AdminSettingsClient() {
   const tabContent = useMemo(() => {
     if (!settings) return <p className="p-6 text-sm text-[#6B6B68]">Loading…</p>;
 
-    if (tab === "media") return <MediaTab />;
+    if (tab === "media") return <MediaLibraryTab />;
+
+    if (tab === "appearance") {
+      return <AppearanceSettingsCard rows={rowsFor("APPEARANCE")} onSaved={load} />;
+    }
+
+    if (tab === "email") {
+      const emailConfig = rowsFor("EMAIL").filter((r) => !r.key.startsWith("email_tpl_"));
+      return (
+        <div className="space-y-6">
+          <SettingsGroupCard title="Email" group="EMAIL" rows={emailConfig} onSaved={load} />
+          <SettingsGroupCard title="SMS" group="SMS" rows={rowsFor("SMS")} onSaved={load} />
+          <EmailTemplatesEditor emailRows={rowsFor("EMAIL")} onSaved={load} />
+          <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+            <button
+              type="button"
+              className="text-sm text-olive underline"
+              onClick={async () => {
+                const res = await fetch("/api/admin/emails/test", { method: "POST" });
+                const j = await res.json().catch(() => ({}));
+                if (res.ok) toast.success((j as { message?: string }).message ?? "Sent");
+                else toast.error((j as { error?: string }).error ?? "Failed");
+              }}
+            >
+              Send test email
+            </button>
+          </div>
+        </div>
+      );
+    }
 
     if (tab === "payments") {
       return (
@@ -330,22 +313,6 @@ export function AdminSettingsClient() {
         {def.groups.map((g) => (
           <SettingsGroupCard key={g} title={g} group={g} rows={rowsFor(g)} onSaved={load} />
         ))}
-        {tab === "email" && (
-          <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
-            <button
-              type="button"
-              className="text-sm text-olive underline"
-              onClick={async () => {
-                const res = await fetch("/api/admin/emails/test", { method: "POST" });
-                const j = await res.json().catch(() => ({}));
-                if (res.ok) toast.success((j as { message?: string }).message ?? "Sent");
-                else toast.error((j as { error?: string }).error ?? "Failed");
-              }}
-            >
-              Send test email
-            </button>
-          </div>
-        )}
       </div>
     );
   }, [tab, settings, rowsFor, load]);
