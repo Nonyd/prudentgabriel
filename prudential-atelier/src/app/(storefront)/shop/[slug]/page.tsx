@@ -1,4 +1,4 @@
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { auth } from "@/auth";
@@ -14,11 +14,13 @@ import type { ProductListItem } from "@/types/product";
 import type { ReviewItem } from "@/components/product/ReviewsSection";
 import { mapProductToListItem } from "@/lib/map-product-list-item";
 
-const ReviewsSection = dynamic(() => import("@/components/product/ReviewsSection").then((m) => ({ default: m.ReviewsSection })), {
+export const dynamic = "force-dynamic";
+
+const ReviewsSection = nextDynamic(() => import("@/components/product/ReviewsSection").then((m) => ({ default: m.ReviewsSection })), {
   loading: () => <Skeleton className="h-64 w-full rounded-sm" />,
 });
 
-const RelatedProducts = dynamic(() => import("@/components/product/RelatedProducts").then((m) => ({ default: m.RelatedProducts })), {
+const RelatedProducts = nextDynamic(() => import("@/components/product/RelatedProducts").then((m) => ({ default: m.RelatedProducts })), {
   loading: () => (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
       {[0, 1, 2, 3].map((i) => (
