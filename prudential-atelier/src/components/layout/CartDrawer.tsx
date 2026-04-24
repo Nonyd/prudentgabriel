@@ -48,13 +48,13 @@ export function CartDrawer() {
             onClick={closeCart}
           />
           <motion.aside
-            className="fixed bottom-0 right-0 top-0 z-50 flex w-full max-w-[420px] flex-col border-l border-mid-grey bg-white shadow-xl"
+            className="fixed bottom-0 right-0 top-0 z-50 flex h-full min-h-0 w-full max-w-[420px] flex-col border-l border-[var(--border)] bg-[var(--white)] shadow-xl"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.35, ease: "easeOut" }}
           >
-            <header className="flex shrink-0 items-center justify-between border-b border-mid-grey px-5 py-4">
+            <header className="flex shrink-0 items-center justify-between border-b border-[var(--border)] px-5 py-4">
               <h2 className="font-body text-[12px] font-medium uppercase tracking-[0.12em] text-charcoal">
                 Your Bag ({totalItems})
               </h2>
@@ -68,7 +68,10 @@ export function CartDrawer() {
               </button>
             </header>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+            <div
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4"
+              data-lenis-prevent
+            >
               {items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <svg
@@ -148,7 +151,7 @@ export function CartDrawer() {
             </div>
 
             {items.length > 0 && (
-              <footer className="shrink-0 border-t border-mid-grey bg-white px-5 py-5">
+              <footer className="shrink-0 border-t border-[var(--border)] bg-[var(--off-white)] px-5 py-5">
                 {points > 0 && (
                   <div className="mb-3 inline-flex bg-olive-light px-3 py-1 font-body text-[10px] font-medium uppercase tracking-wide text-charcoal">
                     🌟 You&apos;ll earn ~{points} points with this order

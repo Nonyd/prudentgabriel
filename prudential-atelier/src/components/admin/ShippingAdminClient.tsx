@@ -16,9 +16,9 @@ export function ShippingAdminClient({ zones }: { zones: ShippingZone[] }) {
   }
 
   return (
-    <div className="mt-8 overflow-x-auto rounded-sm border border-gold/10 bg-[#1E1E1E]">
-      <table className="w-full text-left text-sm text-ivory/90">
-        <thead className="text-[#8A8A8A]">
+    <div className="mt-8 overflow-x-auto rounded-sm border border-[#EBEBEA] bg-white">
+      <table className="w-full text-left text-sm text-charcoal">
+        <thead className="text-[#A8A8A4]">
           <tr>
             <th className="p-3">Name</th>
             <th className="p-3">Countries</th>
@@ -30,7 +30,7 @@ export function ShippingAdminClient({ zones }: { zones: ShippingZone[] }) {
         </thead>
         <tbody>
           {zones.map((z) => (
-            <tr key={z.id} className="border-t border-gold/10">
+            <tr key={z.id} className="border-t border-[#EBEBEA]">
               <td className="p-3">{z.name}</td>
               <td className="p-3 text-xs">{z.countries.join(", ")}</td>
               <td className="p-3">{z.flatRateNGN}</td>

@@ -61,9 +61,9 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
           if (e.key === "Enter") router.push(`/shop/${product.slug}`);
         }}
         onClick={() => router.push(`/shop/${product.slug}`)}
-        className={cn("group relative cursor-pointer bg-white", compact && "text-left")}
+        className={cn("group relative cursor-pointer bg-[var(--white)]", compact && "text-left")}
       >
-        <div className="relative aspect-[3/4] overflow-hidden bg-light-grey">
+        <div className="relative aspect-[3/4] overflow-hidden bg-[var(--light-grey)]">
           <Image
             src={primary?.url ?? PLACEHOLDER}
             alt={primary?.alt || product.name}
@@ -98,7 +98,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
           </div>
 
           {!compact && (
-            <div className="absolute bottom-0 left-0 right-0 flex h-10 translate-y-full items-center justify-center bg-white/90 transition-transform duration-300 group-hover:translate-y-0">
+            <div className="absolute bottom-0 left-0 right-0 flex h-10 translate-y-full items-center justify-center bg-white/90 transition-transform duration-300 group-hover:translate-y-0 dark:bg-black/90">
               <button
                 type="button"
                 onClick={(e) => {

@@ -12,7 +12,6 @@ import {
   LayoutDashboard,
   MapPin,
   Package,
-  Settings,
   ShoppingBag,
   User,
   Users,
@@ -52,8 +51,11 @@ export function AccountLayout({
   const pts = session.user?.pointsBalance ?? 0;
 
   return (
-    <div className="flex min-h-screen bg-ivory">
-      <aside className="hidden w-[260px] shrink-0 flex-col bg-charcoal text-ivory lg:flex">
+    <div className="flex h-screen overflow-hidden bg-ivory">
+      <aside
+        className="hidden h-screen w-[260px] shrink-0 flex-col overflow-y-auto overflow-x-hidden bg-charcoal text-ivory lg:flex"
+        style={{ overscrollBehavior: "contain" }}
+      >
         <div className="border-b border-charcoal-mid p-6">
           <div className="flex items-center gap-3">
             {session.user?.image ? (
@@ -80,7 +82,7 @@ export function AccountLayout({
             </div>
           </div>
         </div>
-        <nav className="flex flex-1 flex-col gap-1 p-4">
+        <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-4" style={{ overscrollBehavior: "contain" }}>
           {NAV.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || (href !== "/account" && pathname.startsWith(href));
             return (
@@ -105,15 +107,6 @@ export function AccountLayout({
             <ShoppingBag className="h-4 w-4" />
             Back to Shop
           </Link>
-          {isAdmin && (
-            <Link
-              href="/admin"
-              className="flex items-center gap-3 rounded-sm px-4 py-2.5 text-sm text-ivory/60 hover:bg-charcoal-mid hover:text-ivory"
-            >
-              <Settings className="h-4 w-4" />
-              Admin Panel
-            </Link>
-          )}
         </nav>
         <div className="p-4">
           <button
@@ -127,14 +120,14 @@ export function AccountLayout({
         </div>
       </aside>
 
-      <div className="flex min-h-screen flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex items-center gap-3 border-b border-border bg-ivory px-4 py-3 lg:hidden">
           <button type="button" onClick={() => router.back()} className="text-charcoal" aria-label="Back">
             ←
           </button>
           <span className="font-display text-lg text-olive">Account</span>
         </header>
-        <main className="flex-1 px-5 py-8 lg:px-10 lg:py-10">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto px-5 py-8 lg:px-10 lg:py-10">{children}</main>
       </div>
     </div>
   );

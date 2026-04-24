@@ -25,9 +25,9 @@ export default async function AdminConsultationsPage() {
           {pendingConfirm} booking(s) awaiting manual confirmation
         </p>
       )}
-      <div className="mt-6 overflow-x-auto rounded-sm border border-[rgba(201,168,76,0.2)]">
+      <div className="mt-6 overflow-x-auto rounded-sm border border-[#EBEBEA]">
         <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="bg-[#252525] font-label text-[10px] uppercase tracking-wider text-gold/70">
+          <thead className="bg-[#FAFAFA] font-label text-[10px] uppercase tracking-wider text-gold/70">
             <tr>
               <th className="px-3 py-2">Booking</th>
               <th className="px-3 py-2">Client</th>

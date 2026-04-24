@@ -1,9 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Bell, Menu } from "lucide-react";
-import Link from "next/link";
 
 function pageTitleFromPath(pathname: string): string {
   if (pathname === "/admin") return "Dashboard";
@@ -40,42 +40,48 @@ export function AdminTopbar({
   const { data } = useSession();
   const title = pageTitleFromPath(pathname);
   const user = data?.user;
+  const displayName = user?.name ?? user?.email ?? "Admin";
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b border-gold/10 bg-[#1A1A1A] px-4 md:px-6">
-      <div className="flex items-center gap-3">
+    <header className="flex h-[52px] shrink-0 items-center justify-between border-b border-[#EBEBEA] bg-white px-4 md:px-8">
+      <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
-          className="rounded-sm p-2 text-[#8A8A8A] hover:bg-[#252525] hover:text-gold md:hidden"
+          className="p-2 text-[#6B6B68] transition-colors hover:bg-[#F5F5F3] hover:text-black md:hidden"
           onClick={() => onOpenNav?.()}
           aria-label="Toggle navigation"
         >
-          <Menu size={22} />
+          <Menu size={20} strokeWidth={1.5} />
         </button>
-        <p className="font-body text-sm text-[#8A8A8A]">
-        <span className="text-ivory/60">Admin</span>
-        <span className="mx-2 text-gold/30">/</span>
-        <span className="text-ivory">{title}</span>
-      </p>
+        <p className="flex min-w-0 items-center font-body">
+          <span className="text-[11px] text-[#A8A8A4]">Admin</span>
+          <span className="mx-2 text-[11px] text-[#EBEBEA]">/</span>
+          <span className="truncate text-xs font-medium text-black">{title}</span>
+        </p>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 md:gap-4">
         <Link
           href="/admin/bespoke"
-          className="relative rounded-sm p-2 text-[#8A8A8A] transition-colors hover:bg-[#252525] hover:text-gold"
-          aria-label="Bespoke notifications"
+          className="relative p-1.5 text-[#6B6B68] transition-colors hover:text-olive"
+          aria-label="Notifications"
         >
-          <Bell size={20} />
+          <Bell size={16} strokeWidth={1.5} />
           {pendingBespokeCount > 0 ? (
-            <span className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-wine px-1 text-[10px] font-medium text-gold">
-              {pendingBespokeCount > 9 ? "9+" : pendingBespokeCount}
-            </span>
+            <span
+              className="absolute right-0.5 top-0.5 block h-1.5 w-1.5 rounded-full bg-[#37392d]"
+              aria-hidden
+            />
           ) : null}
         </Link>
-        <div
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-wine text-xs font-medium text-gold"
-          title={user?.email ?? ""}
-        >
-          {initials(user?.name, user?.email)}
+        <span className="hidden h-4 w-px bg-[#EBEBEA] sm:block" aria-hidden />
+        <div className="flex items-center gap-2.5">
+          <div
+            className="flex h-7 w-7 shrink-0 items-center justify-center bg-[#37392d] font-body text-[11px] font-medium text-white"
+            title={user?.email ?? ""}
+          >
+            {initials(user?.name, user?.email)}
+          </div>
+          <span className="hidden max-w-[140px] truncate font-body text-xs text-black md:inline">{displayName}</span>
         </div>
       </div>
     </header>

@@ -116,18 +116,21 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
   const canShip = order.status === "PROCESSING";
 
   return (
-    <div className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
+    <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
       <Dialog.Root open={refundOpen} onOpenChange={setRefundOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-sm border border-gold/20 bg-[#1E1E1E] p-6 text-ivory shadow-xl">
+          <Dialog.Content
+            data-lenis-prevent
+            className="fixed left-1/2 top-1/2 z-[101] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain rounded-sm border border-[#EBEBEA] bg-white p-6 text-charcoal shadow-xl"
+          >
             <div className="flex items-start justify-between gap-4">
-              <Dialog.Title className="font-display text-xl text-gold">Issue Refund — #{order.orderNumber}</Dialog.Title>
-              <Dialog.Close className="rounded-sm p-1 text-[#8A8A8A] hover:text-ivory" aria-label="Close refund dialog">
+              <Dialog.Title className="font-display text-xl text-black">Issue Refund — #{order.orderNumber}</Dialog.Title>
+              <Dialog.Close className="rounded-sm p-1 text-[#A8A8A4] hover:text-charcoal" aria-label="Close refund dialog">
                 <X className="h-5 w-5" />
               </Dialog.Close>
             </div>
-            <Dialog.Description className="mt-2 text-sm text-[#8A8A8A]">
+            <Dialog.Description className="mt-2 text-sm text-[#6B6B68]">
               Refunds are processed manually in your payment gateway dashboard.
             </Dialog.Description>
             <div className="mt-4 space-y-3 text-sm">
@@ -145,26 +148,26 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
                   min={1}
                   value={refundAmount}
                   onChange={(e) => setRefundAmount(e.target.value)}
-                  className="mt-1 w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-ivory"
+                  className="mt-1 w-full border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
                 />
               ) : null}
-              <label className="block text-xs uppercase text-[#8A8A8A]">
+              <label className="block text-xs uppercase text-[#A8A8A4]">
                 Reason (required)
                 <textarea
                   value={refundReason}
                   onChange={(e) => setRefundReason(e.target.value)}
                   rows={3}
-                  className="mt-1 w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-sm text-ivory"
+                  className="mt-1 w-full border border-[#EBEBEA] bg-white px-3 py-2 text-sm text-charcoal"
                 />
               </label>
             </div>
-            <div className="mt-4 rounded-sm border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-100">
+            <div className="mt-4 border border-[#FFF8E7] bg-[#FFF8E7] p-3 text-xs text-[#92660A]">
               This records the refund in Prudential Atelier. You must also issue the refund in your {gatewayLabel(order.paymentGateway)}{" "}
               dashboard separately.
             </div>
             <div className="mt-6 flex justify-end gap-2">
               <Dialog.Close asChild>
-                <button type="button" className="rounded-sm border border-gold/30 px-4 py-2 text-xs text-gold">
+                <button type="button" className="border border-[#EBEBEA] px-4 py-2 text-xs text-olive">
                   Cancel
                 </button>
               </Dialog.Close>
@@ -172,7 +175,7 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
                 type="button"
                 disabled={busy}
                 onClick={() => void submitRefund()}
-                className="rounded-sm bg-wine px-4 py-2 text-xs text-gold hover:bg-wine-hover disabled:opacity-50"
+                className="bg-olive px-4 py-2 text-xs text-white hover:bg-olive-hover disabled:opacity-50"
               >
                 Record Refund
               </button>
@@ -181,7 +184,7 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
         </Dialog.Portal>
       </Dialog.Root>
 
-      <p className="font-label text-xs uppercase text-[#8A8A8A]">Admin</p>
+      <p className="font-label text-xs uppercase text-[#A8A8A4]">Admin</p>
       <div className="mt-3 flex flex-wrap items-end gap-3">
         {options.map((o) => (
           <button
@@ -199,7 +202,7 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
                 void patch({ status: o.value });
               }
             }}
-            className="rounded-sm bg-wine px-3 py-2 text-xs text-gold hover:bg-wine-hover disabled:opacity-50"
+            className="bg-olive px-3 py-2 text-xs text-white hover:bg-olive-hover disabled:opacity-50"
           >
             {o.label}
           </button>
@@ -210,13 +213,13 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
               value={tracking}
               onChange={(e) => setTracking(e.target.value)}
               placeholder="Tracking #"
-              className="rounded-sm border border-gold/15 bg-[#0F0F0F] px-2 py-1 text-xs text-ivory"
+              className="border border-[#EBEBEA] bg-white px-2 py-1 text-xs text-charcoal"
             />
             <input
               value={carrier}
               onChange={(e) => setCarrier(e.target.value)}
               placeholder="Carrier"
-              className="rounded-sm border border-gold/15 bg-[#0F0F0F] px-2 py-1 text-xs text-ivory"
+              className="border border-[#EBEBEA] bg-white px-2 py-1 text-xs text-charcoal"
             />
           </div>
         ) : null}
@@ -232,14 +235,14 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
           <button
             type="button"
             disabled={busy}
-            className="rounded-sm border border-gold/30 px-3 py-2 text-xs text-gold hover:bg-gold/10"
+            className="border border-[#EBEBEA] px-3 py-2 text-xs text-olive hover:bg-[#FAFAFA]"
             onClick={() => setRefundOpen(true)}
           >
             Issue Refund
           </button>
         ) : null}
       </div>
-      <label className="mt-4 block text-xs text-[#8A8A8A]">
+      <label className="mt-4 block text-xs text-[#6B6B68]">
         Internal notes
         <textarea
           value={notes}
@@ -248,7 +251,7 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
             if (notes !== (order.adminNotes ?? "")) void patch({ adminNotes: notes });
           }}
           rows={3}
-          className="mt-1 w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-sm text-ivory"
+          className="mt-1 w-full border border-[#EBEBEA] bg-white px-3 py-2 text-sm text-charcoal"
           placeholder="Not visible to customer"
         />
       </label>

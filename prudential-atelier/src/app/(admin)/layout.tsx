@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user || !isAdminRole(session.user.role)) {
-    redirect("/auth/login?callbackUrl=/admin");
+    redirect("/admin-login");
   }
 
   const pendingBespoke = await prisma.bespokeRequest.count({

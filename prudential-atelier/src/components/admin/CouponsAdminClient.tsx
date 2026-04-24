@@ -45,12 +45,12 @@ export function CouponsAdminClient({ coupons }: { coupons: Coupon[] }) {
 
   return (
     <div className="mt-8 space-y-6">
-      <div className="flex flex-wrap gap-2 rounded-sm border border-gold/10 bg-[#1E1E1E] p-4">
+      <div className="flex flex-wrap gap-2 rounded-sm border border-[#EBEBEA] bg-white p-4">
         <input
           value={code}
           onChange={(e) => setCode(e.target.value)}
           placeholder="New code (e.g. SAVE10)"
-          className="min-w-[160px] flex-1 rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-sm text-ivory"
+          className="min-w-[160px] flex-1 rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-sm text-charcoal"
         />
         <button
           type="button"
@@ -60,9 +60,9 @@ export function CouponsAdminClient({ coupons }: { coupons: Coupon[] }) {
           Quick create 10%
         </button>
       </div>
-      <div className="overflow-x-auto rounded-sm border border-gold/10 bg-[#1E1E1E]">
+      <div className="overflow-x-auto rounded-sm border border-[#EBEBEA] bg-white">
         <table className="w-full text-left text-sm">
-          <thead className="text-[#8A8A8A]">
+          <thead className="text-[#A8A8A4]">
             <tr>
               <th className="p-3">Code</th>
               <th className="p-3">Type</th>
@@ -73,7 +73,7 @@ export function CouponsAdminClient({ coupons }: { coupons: Coupon[] }) {
           </thead>
           <tbody>
             {coupons.map((c) => (
-              <tr key={c.id} className="border-t border-gold/10">
+              <tr key={c.id} className="border-t border-[#EBEBEA]">
                 <td className="p-3 font-mono text-gold">{c.code}</td>
                 <td className="p-3 text-xs">{c.type}</td>
                 <td className="p-3">{c.value}</td>

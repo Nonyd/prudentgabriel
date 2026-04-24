@@ -191,17 +191,17 @@ export function ProductsTable({
         loading={isDeleting}
       />
 
-      <div className="flex flex-wrap items-center gap-3 rounded-sm border border-gold/10 bg-[#1E1E1E] p-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-sm border border-[#EBEBEA] bg-white p-4">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search name or slug…"
-          className="min-w-[200px] flex-1 rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-sm text-ivory placeholder:text-[#8A8A8A]"
+          className="min-w-[200px] flex-1 rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-sm text-charcoal placeholder:text-[#A8A8A4]"
         />
         <select
           value={category}
           onChange={(e) => pushFilters({ category: e.target.value })}
-          className="rounded-sm border border-gold/15 bg-[#0F0F0F] px-2 py-2 text-sm text-ivory"
+          className="rounded-sm border border-[#EBEBEA] bg-white px-2 py-2 text-sm text-charcoal"
         >
           <option value="">All categories</option>
           {Object.values(["BRIDAL", "EVENING_WEAR", "CASUAL", "FORMAL", "KIDDIES", "ACCESSORIES"]).map((c) => (
@@ -213,7 +213,7 @@ export function ProductsTable({
         <select
           value={type}
           onChange={(e) => pushFilters({ type: e.target.value })}
-          className="rounded-sm border border-gold/15 bg-[#0F0F0F] px-2 py-2 text-sm text-ivory"
+          className="rounded-sm border border-[#EBEBEA] bg-white px-2 py-2 text-sm text-charcoal"
         >
           <option value="">All types</option>
           <option value="RTW">RTW</option>
@@ -222,7 +222,7 @@ export function ProductsTable({
         <select
           value={published}
           onChange={(e) => pushFilters({ published: e.target.value })}
-          className="rounded-sm border border-gold/15 bg-[#0F0F0F] px-2 py-2 text-sm text-ivory"
+          className="rounded-sm border border-[#EBEBEA] bg-white px-2 py-2 text-sm text-charcoal"
         >
           <option value="">All statuses</option>
           <option value="true">Published</option>
@@ -231,7 +231,7 @@ export function ProductsTable({
         <select
           value={stock}
           onChange={(e) => pushFilters({ stock: e.target.value })}
-          className="rounded-sm border border-gold/15 bg-[#0F0F0F] px-2 py-2 text-sm text-ivory"
+          className="rounded-sm border border-[#EBEBEA] bg-white px-2 py-2 text-sm text-charcoal"
         >
           <option value="">All stock</option>
           <option value="in">In stock</option>
@@ -240,32 +240,32 @@ export function ProductsTable({
       </div>
 
       {selected.size > 0 ? (
-        <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-sm border border-gold/20 bg-[#252525] p-3 text-sm text-ivory shadow-md">
+        <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border border-olive bg-olive p-3 text-sm text-white shadow-md">
           <span className="font-medium">{selected.size} selected</span>
           <button
             type="button"
-            className="rounded-sm border border-gold/30 px-3 py-1 text-xs hover:bg-gold/10"
+            className="border border-white/40 px-3 py-1 text-xs text-white hover:bg-white/10"
             onClick={() => void bulkPatch({ isPublished: true })}
           >
             Publish
           </button>
           <button
             type="button"
-            className="rounded-sm border border-gold/30 px-3 py-1 text-xs hover:bg-gold/10"
+            className="border border-white/40 px-3 py-1 text-xs text-white hover:bg-white/10"
             onClick={() => void bulkPatch({ isPublished: false })}
           >
             Unpublish
           </button>
           <button
             type="button"
-            className="rounded-sm border border-gold/30 px-3 py-1 text-xs hover:bg-gold/10"
+            className="border border-white/40 px-3 py-1 text-xs text-white hover:bg-white/10"
             onClick={() => void bulkPatch({ isNewArrival: true })}
           >
             Mark as New Arrival
           </button>
           <button
             type="button"
-            className="rounded-sm border border-red-500/40 px-3 py-1 text-xs text-red-400 hover:bg-red-500/10"
+            className="border border-white/40 px-3 py-1 text-xs text-white hover:bg-red-600/30"
             onClick={() => setDeleteState({ mode: "bulk", ids: Array.from(selected) })}
           >
             Delete selected
@@ -273,9 +273,9 @@ export function ProductsTable({
         </div>
       ) : null}
 
-      <div className="-mx-4 overflow-x-auto rounded-sm border border-gold/10 bg-[#1E1E1E] px-4 md:mx-0 md:px-0">
-        <table className="w-full min-w-[700px] text-left text-sm text-ivory/90">
-          <thead className="border-b border-gold/10 font-label text-[11px] uppercase tracking-wide text-[#8A8A8A]">
+      <div className="-mx-4 overflow-x-auto rounded-sm border border-[#EBEBEA] bg-white px-4 md:mx-0 md:px-0">
+        <table className="w-full min-w-[700px] text-left text-sm text-charcoal">
+          <thead className="border-b border-[#EBEBEA] font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">
             <tr>
               <th className="w-10 p-3">
                 <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} aria-label="Select all on page" />
@@ -297,7 +297,7 @@ export function ProductsTable({
               <tr
                 key={p.id}
                 className={cn(
-                  "border-b border-gold/5 transition-colors hover:bg-[#252525]",
+                  "border-b border-[#F5F5F3] transition-colors hover:bg-[#FAFAFA]",
                   pending && "opacity-60",
                 )}
               >
@@ -305,17 +305,17 @@ export function ProductsTable({
                   <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} aria-label={`Select ${p.name}`} />
                 </td>
                 <td className="p-2">
-                  <div className="relative h-[52px] w-10 overflow-hidden rounded-sm bg-[#0F0F0F]">
+                  <div className="relative h-[52px] w-10 overflow-hidden rounded-sm border border-[#EBEBEA] bg-white">
                     {p.primaryImage ? (
                       <Image src={p.primaryImage} alt="" fill className="object-cover" sizes="40px" />
                     ) : null}
                   </div>
                 </td>
                 <td className="max-w-[200px] p-2">
-                  <Link href={`/admin/products/${p.id}/edit`} className="block font-medium text-ivory hover:text-gold">
+                  <Link href={`/admin/products/${p.id}/edit`} className="block font-medium text-charcoal hover:text-olive">
                     {p.name}
                   </Link>
-                  <span className="block truncate font-mono text-xs text-gold/80">{p.slug}</span>
+                  <span className="block truncate font-mono text-xs text-olive/80">{p.slug}</span>
                 </td>
                 <td className="hidden p-2 text-xs md:table-cell">{p.category.replace(/_/g, " ")}</td>
                 <td className="hidden p-2 text-xs md:table-cell">{p.type}</td>
@@ -355,7 +355,7 @@ export function ProductsTable({
                   />
                 </td>
                 <td className="p-2">
-                  <Link href={`/admin/products/${p.id}/edit`} className="text-gold hover:underline">
+                  <Link href={`/admin/products/${p.id}/edit`} className="text-olive hover:underline">
                     Edit
                   </Link>
                   <button
@@ -372,7 +372,7 @@ export function ProductsTable({
         </table>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-[#8A8A8A]">
+      <div className="flex items-center justify-between text-sm text-[#A8A8A4]">
         <span>
           Page {page} of {totalPages} · {total} products
         </span>
@@ -380,7 +380,7 @@ export function ProductsTable({
           <button
             type="button"
             disabled={page <= 1}
-            className="rounded-sm border border-gold/20 px-3 py-1 disabled:opacity-40"
+            className="rounded-sm border border-[#E8E8E4] px-3 py-1 disabled:opacity-40"
             onClick={() => {
               const p = new URLSearchParams(params.toString());
               p.set("page", String(page - 1));
@@ -392,7 +392,7 @@ export function ProductsTable({
           <button
             type="button"
             disabled={page >= totalPages}
-            className="rounded-sm border border-gold/20 px-3 py-1 disabled:opacity-40"
+            className="rounded-sm border border-[#E8E8E4] px-3 py-1 disabled:opacity-40"
             onClick={() => {
               const p = new URLSearchParams(params.toString());
               p.set("page", String(page + 1));

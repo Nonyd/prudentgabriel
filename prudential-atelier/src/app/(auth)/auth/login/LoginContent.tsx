@@ -54,7 +54,7 @@ export function LoginContent() {
         <p className="font-body text-[11px] text-white/30">© {new Date().getFullYear()} Prudent Gabriel</p>
       </div>
 
-      <div className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-16">
+      <div className="flex flex-col justify-center bg-white px-6 py-12 dark:bg-[#0A0A0A] sm:px-12 lg:px-16">
         <div className="mx-auto w-full max-w-sm">
           <Link href="/" className="mb-8 inline-block lg:hidden" style={{ filter: "brightness(0)" }}>
             <Image src="/images/logo.svg" alt="Prudent Gabriel" width={36} height={36} />

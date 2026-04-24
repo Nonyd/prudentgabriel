@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import {
   Area,
   AreaChart,
@@ -72,52 +72,59 @@ function formatNGN(n: number): string {
   return `₦${Math.round(n).toLocaleString("en-NG")}`;
 }
 
+function yAxisMoney(v: number): string {
+  if (v >= 1_000_000) return `₦${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1000) return `₦${(v / 1000).toFixed(0)}k`;
+  return `₦${Math.round(v)}`;
+}
+
 function statusBadgeClass(status: OrderStatus): string {
   switch (status) {
     case "DELIVERED":
-      return "bg-emerald-500/15 text-emerald-300";
+      return "bg-[#E8F5E9] text-[#1B5E20]";
     case "SHIPPED":
-      return "bg-blue-500/15 text-blue-300";
+      return "bg-[#F0E8FF] text-[#6B3FAD]";
     case "PROCESSING":
+      return "bg-[#FFF3E0] text-[#C45E0A]";
     case "CONFIRMED":
-      return "bg-gold/15 text-gold";
+      return "bg-[#E8F4FF] text-[#1A5FAD]";
     case "PENDING":
-      return "bg-amber-500/15 text-amber-200";
+      return "bg-[#FFF8E7] text-[#92660A]";
     case "CANCELLED":
     case "REFUNDED":
-      return "bg-red-500/15 text-red-300";
+      return "bg-[#FDECEA] text-[#8B1A1A]";
     default:
-      return "bg-[#252525] text-[#8A8A8A]";
+      return "bg-[#FAFAFA] text-[#A8A8A4]";
   }
 }
 
 function paymentBadgeClass(s: PaymentStatus): string {
   switch (s) {
     case "PAID":
-      return "bg-emerald-500/15 text-emerald-300";
+      return "bg-[#E8F5E9] text-[#1B5E20]";
     case "PENDING":
-      return "bg-amber-500/15 text-amber-200";
+      return "bg-[#FFF8E7] text-[#92660A]";
     case "FAILED":
-      return "bg-red-500/15 text-red-300";
+      return "bg-[#FDECEA] text-[#8B1A1A]";
     case "REFUNDED":
-      return "bg-violet-500/15 text-violet-200";
+      return "bg-[#F0E8FF] text-[#6B3FAD]";
     default:
-      return "bg-[#252525] text-[#8A8A8A]";
+      return "bg-[#FAFAFA] text-[#A8A8A4]";
   }
 }
 
 function gatewayBadgeClass(g: PaymentGateway | null): string {
   switch (g) {
     case "PAYSTACK":
-      return "bg-emerald-500/15 text-emerald-300";
+      return "bg-[#E8F5E9] text-[#1B5E20]";
     case "FLUTTERWAVE":
-      return "bg-sky-500/15 text-sky-300";
+      return "bg-[#E8F0FF] text-[#1A3FAD]";
     case "STRIPE":
-      return "bg-violet-500/15 text-violet-200";
+      return "bg-[#F0E8FF] text-[#6B3FAD]";
     case "MONNIFY":
-      return "bg-orange-500/15 text-orange-200";
+      return "bg-[#FFF3E0] text-[#C45E0A]";
     default:
-      return "bg-[#252525] text-[#8A8A8A]";
+      return "bg-[#FAFAFA] text-[#A8A8A4]";
   }
 }
 
@@ -149,127 +156,163 @@ export function AnalyticsDashboard({
           ? "/admin/orders"
           : "/admin";
 
+  const todayLabel = format(new Date(), "EEEE, d MMMM yyyy");
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="font-display text-[28px] text-black">Dashboard</h1>
+          <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">{todayLabel}</p>
+        </div>
+        <span className="inline-flex w-fit border border-[#EBEBEA] px-3 py-1 font-body text-[11px] text-[#6B6B68]">
+          Last 30 days
+        </span>
+      </header>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="relative rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
-          <p className="font-label text-xs uppercase tracking-wide text-[#8A8A8A]">Revenue (30 days)</p>
-          <p className="mt-2 font-display text-3xl text-white">{formatNGN(revenue30)}</p>
-          <p className={cn("mt-1 text-sm", growth >= 0 ? "text-emerald-400" : "text-red-400")}>
+        <div className="relative border border-[#EBEBEA] bg-white p-6">
+          <div className="flex items-start justify-between">
+            <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">Revenue (30 days)</p>
+            <TrendingUp className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
+          </div>
+          <p className="mt-2 font-display text-[32px] text-black">{formatNGN(revenue30)}</p>
+          <p className={cn("mt-1 font-body text-xs font-light", growth >= 0 ? "text-olive" : "text-[#8B1A1A]")}>
             {growth >= 0 ? "+" : ""}
             {growth.toFixed(1)}% vs prev 30 days
           </p>
-          <TrendingUp className="absolute right-5 top-5 h-6 w-6 text-gold/80" aria-hidden />
         </div>
-        <div className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
-          <p className="font-label text-xs uppercase tracking-wide text-[#8A8A8A]">Total orders (30 days)</p>
-          <p className="mt-2 font-display text-3xl text-white">{orders30Count} orders</p>
-          <p className="mt-1 text-sm text-[#8A8A8A]">{ordersPendingPayment} pending payment</p>
-          <ShoppingBag className="float-right -mt-10 h-6 w-6 text-gold/50" aria-hidden />
+        <div className="border border-[#EBEBEA] bg-white p-6">
+          <div className="flex items-start justify-between">
+            <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">Total orders (30 days)</p>
+            <ShoppingBag className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
+          </div>
+          <p className="mt-2 font-display text-[32px] text-black">{orders30Count}</p>
+          <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">{ordersPendingPayment} pending payment</p>
         </div>
-        <div className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
-          <p className="font-label text-xs uppercase tracking-wide text-[#8A8A8A]">New customers (30 days)</p>
-          <p className="mt-2 font-display text-3xl text-white">{newCustomers30}</p>
-          <p className="mt-1 text-sm text-[#8A8A8A]">{newCustomersReferral30} via referral</p>
-          <Users className="float-right -mt-10 h-6 w-6 text-gold/50" aria-hidden />
+        <div className="border border-[#EBEBEA] bg-white p-6">
+          <div className="flex items-start justify-between">
+            <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">New customers (30 days)</p>
+            <Users className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
+          </div>
+          <p className="mt-2 font-display text-[32px] text-black">{newCustomers30}</p>
+          <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">{newCustomersReferral30} via referral</p>
         </div>
         <Link
           href={urgentHref}
-          className="block rounded-sm border border-gold/10 bg-[#1E1E1E] p-6 transition-colors hover:border-gold/30"
+          className="block border border-[#EBEBEA] bg-white p-6 transition-colors hover:bg-[#FAFAFA]"
         >
-          <p className="font-label text-xs uppercase tracking-wide text-[#8A8A8A]">Pending actions</p>
-          <p className={cn("mt-2 font-display text-3xl", pendingActions > 0 ? "text-red-400" : "text-white")}>
+          <div className="flex items-start justify-between">
+            <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">Pending actions</p>
+            <AlertCircle className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
+          </div>
+          <p className={cn("mt-2 font-display text-[32px]", pendingActions > 0 ? "text-[#8B1A1A]" : "text-black")}>
             {pendingActions}
           </p>
-          <p className="mt-1 text-sm text-[#8A8A8A]">
+          <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">
             {pendingBespoke} bespoke · {pendingReviews} reviews · {pendingOrdersFulfilment} orders
           </p>
-          <AlertCircle className="float-right -mt-10 h-6 w-6 text-gold/50" aria-hidden />
         </Link>
       </div>
 
-      <div className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
-        <h2 className="font-display text-lg text-ivory">Revenue</h2>
-        <div className="mt-4 h-[280px] w-full">
+      <div className="border border-[#EBEBEA] bg-white p-6">
+        <h2 className="mb-4 font-body text-xs font-medium uppercase tracking-wide text-black">Revenue</h2>
+        <div className="h-[280px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id="revGold" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#C9A84C" stopOpacity={0.25} />
-                  <stop offset="100%" stopColor="#C9A84C" stopOpacity={0} />
+                <linearGradient id="revOlive" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#37392d" stopOpacity={0.08} />
+                  <stop offset="100%" stopColor="#37392d" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
-              <XAxis dataKey="label" tick={{ fill: "#8A8A8A", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis
-                tickFormatter={(v) => `₦${(v / 1000).toFixed(0)}k`}
-                tick={{ fill: "#8A8A8A", fontSize: 11 }}
+              <CartesianGrid strokeDasharray="3 3" stroke="#F5F5F3" vertical={false} />
+              <XAxis
+                dataKey="label"
+                tick={{ fill: "#A8A8A4", fontSize: 11, fontFamily: "var(--font-jost)" }}
                 axisLine={false}
                 tickLine={false}
               />
-              <Tooltip
-                contentStyle={{
-                  background: "#252525",
-                  border: "1px solid rgba(201,168,76,0.35)",
-                  borderRadius: 4,
-                  color: "#FAF6EF",
-                }}
-                formatter={(value) => [formatNGN(Number(value)), "Revenue"]}
+              <YAxis
+                tickFormatter={yAxisMoney}
+                tick={{ fill: "#A8A8A4", fontSize: 11, fontFamily: "var(--font-jost)" }}
+                axisLine={false}
+                tickLine={false}
+                width={64}
               />
-              <Area type="monotone" dataKey="amount" stroke="#C9A84C" strokeWidth={2} fill="url(#revGold)" dot={false} />
+              <Tooltip
+                formatter={(value) => {
+                  const n = typeof value === "number" ? value : Number(value);
+                  return [`₦${n.toLocaleString("en-NG")}`, "Revenue"];
+                }}
+                contentStyle={{
+                  background: "white",
+                  border: "1px solid #EBEBEA",
+                  borderRadius: 0,
+                  fontFamily: "var(--font-jost)",
+                  fontSize: 12,
+                  color: "#0A0A0A",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="amount"
+                stroke="#37392d"
+                strokeWidth={1.5}
+                fill="url(#revOlive)"
+                dot={false}
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      <div className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-lg text-ivory">Recent orders</h2>
-          <Link href="/admin/orders" className="font-label text-xs uppercase tracking-wide text-gold hover:underline">
-            View all
+      <div className="overflow-hidden border border-[#EBEBEA] bg-white">
+        <div className="flex items-center justify-between border-b border-[#EBEBEA] px-6 py-4">
+          <h2 className="font-body text-xs font-medium uppercase tracking-wide text-black">Recent Orders</h2>
+          <Link href="/admin/orders" className="font-body text-[11px] text-olive hover:underline">
+            View All →
           </Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead>
-              <tr className="border-b border-gold/10 font-label text-[11px] uppercase tracking-wide text-[#8A8A8A]">
-                <th className="pb-3 pr-3">Order #</th>
-                <th className="pb-3 pr-3">Customer</th>
-                <th className="pb-3 pr-3">Items</th>
-                <th className="pb-3 pr-3">Total</th>
-                <th className="pb-3 pr-3">Gateway</th>
-                <th className="pb-3 pr-3">Status</th>
-                <th className="pb-3">Date</th>
+              <tr className="border-b border-[#EBEBEA] bg-[#FAFAFA] font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">
+                <th className="px-6 py-2.5">Order #</th>
+                <th className="px-6 py-2.5">Customer</th>
+                <th className="px-6 py-2.5">Items</th>
+                <th className="px-6 py-2.5">Total</th>
+                <th className="px-6 py-2.5">Gateway</th>
+                <th className="px-6 py-2.5">Status</th>
+                <th className="px-6 py-2.5">Date</th>
               </tr>
             </thead>
             <tbody>
               {recentOrders.map((o) => (
-                <tr
-                  key={o.id}
-                  className="border-b border-gold/5 transition-colors hover:bg-[#252525]"
-                >
-                  <td className="py-3 pr-3">
-                    <Link href={`/admin/orders/${o.id}`} className="font-label text-gold hover:underline">
+                <tr key={o.id} className="border-b border-[#F5F5F3] transition-colors hover:bg-[#FAFAFA]">
+                  <td className="px-6 py-3.5">
+                    <Link href={`/admin/orders/${o.id}`} className="font-body text-[11px] font-medium text-olive hover:underline">
                       #{o.orderNumber}
                     </Link>
                   </td>
-                  <td className="max-w-[180px] truncate py-3 pr-3 text-ivory/90">{o.customerLabel}</td>
-                  <td className="max-w-[200px] truncate py-3 pr-3 text-[#8A8A8A]">{o.itemSummary}</td>
-                  <td className="py-3 pr-3 text-ivory">{formatNGN(o.total)}</td>
-                  <td className="py-3 pr-3">
+                  <td className="max-w-[180px] truncate px-6 py-3.5 font-body text-[13px] text-black">{o.customerLabel}</td>
+                  <td className="max-w-[200px] truncate px-6 py-3.5 font-body text-[13px] text-[#6B6B68]">{o.itemSummary}</td>
+                  <td className="px-6 py-3.5 font-body text-[13px] text-black">{formatNGN(o.total)}</td>
+                  <td className="px-6 py-3.5">
                     <span
                       className={cn(
-                        "inline-block rounded-sm px-2 py-0.5 font-label text-[10px] uppercase",
+                        "inline-block px-2 py-0.5 font-body text-[9px] font-medium uppercase",
                         gatewayBadgeClass(o.gateway),
                       )}
                     >
                       {o.gateway ?? "—"}
                     </span>
                   </td>
-                  <td className="py-3 pr-3">
+                  <td className="px-6 py-3.5">
                     <span
                       className={cn(
-                        "inline-block rounded-sm px-2 py-0.5 font-label text-[10px] uppercase",
+                        "inline-block px-2 py-0.5 font-body text-[9px] font-medium uppercase",
                         statusBadgeClass(o.status),
                       )}
                     >
@@ -277,14 +320,14 @@ export function AnalyticsDashboard({
                     </span>
                     <span
                       className={cn(
-                        "ml-1 inline-block rounded-sm px-2 py-0.5 font-label text-[10px] uppercase",
+                        "ml-1 inline-block px-2 py-0.5 font-body text-[9px] font-medium uppercase",
                         paymentBadgeClass(o.paymentStatus),
                       )}
                     >
                       {o.paymentStatus}
                     </span>
                   </td>
-                  <td className="py-3 text-[#8A8A8A]" title={new Date(o.createdAt).toISOString()}>
+                  <td className="px-6 py-3.5 font-body text-[13px] text-[#A8A8A4]" title={new Date(o.createdAt).toISOString()}>
                     {formatDistanceToNow(new Date(o.createdAt), { addSuffix: true })}
                   </td>
                 </tr>
@@ -295,24 +338,23 @@ export function AnalyticsDashboard({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-5">
+        <div className="border border-[#EBEBEA] bg-white p-5">
           <div className="flex items-center justify-between">
-            <h3 className="font-display text-base text-ivory">Out of stock</h3>
+            <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-black">Out of stock</h3>
             {oosVariants.length > 0 ? (
-              <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-xs text-red-300">{oosVariants.length}</span>
+              <span className="bg-[#FDECEA] px-2 py-0.5 font-body text-[9px] text-[#8B1A1A]">{oosVariants.length}</span>
             ) : null}
           </div>
-          <ul className="mt-4 space-y-3">
+          <ul className="mt-4 divide-y divide-[#F5F5F3]">
             {oosVariants.length === 0 ? (
-              <li className="text-sm text-emerald-400">All variants are in stock ✓</li>
+              <li className="py-3 font-body text-xs text-[#1B5E20]">All variants are in stock ✓</li>
             ) : (
               oosVariants.map((r, i) => (
-                <li key={`${r.slug}-${r.size}-${i}`} className="flex items-center justify-between gap-2 text-sm">
-                  <span className="min-w-0 truncate text-ivory/90">
-                    {r.productName}{" "}
-                    <span className="text-[#8A8A8A]">({r.size})</span>
+                <li key={`${r.slug}-${r.size}-${i}`} className="flex items-center justify-between gap-2 py-3 font-body text-xs text-black">
+                  <span className="min-w-0 truncate">
+                    {r.productName} <span className="text-[#6B6B68]">({r.size})</span>
                   </span>
-                  <Link href={`/admin/products/${r.productId}/edit`} className="shrink-0 text-gold hover:underline">
+                  <Link href={`/admin/products/${r.productId}/edit`} className="shrink-0 font-body text-[11px] text-olive hover:underline">
                     Edit
                   </Link>
                 </li>
@@ -320,40 +362,37 @@ export function AnalyticsDashboard({
             )}
           </ul>
         </div>
-        <div className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-5">
+        <div className="border border-[#EBEBEA] bg-white p-5">
           <div className="flex items-center justify-between">
-            <h3 className="font-display text-base text-ivory">Bespoke requests</h3>
+            <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-black">Bespoke requests</h3>
             {bespokePendingList.length > 0 ? (
-              <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs text-amber-200">
-                {bespokePendingList.length}
-              </span>
+              <span className="bg-[#FFF8E7] px-2 py-0.5 font-body text-[9px] text-[#92660A]">{bespokePendingList.length}</span>
             ) : null}
           </div>
-          <ul className="mt-4 space-y-3">
+          <ul className="mt-4 divide-y divide-[#F5F5F3]">
             {bespokePendingList.slice(0, 5).map((b) => (
-              <li key={b.id} className="text-sm text-ivory/90">
-                <span className="font-label text-gold">#{b.requestNumber}</span> · {b.name} · {b.occasion}
-                <span className="block text-xs text-[#8A8A8A]">
+              <li key={b.id} className="py-3 font-body text-xs text-black">
+                <span className="font-medium text-olive">#{b.requestNumber}</span> · {b.name} · {b.occasion}
+                <span className="mt-1 block font-body text-[11px] text-[#6B6B68]">
                   {formatDistanceToNow(new Date(b.createdAt), { addSuffix: true })}
                 </span>
               </li>
             ))}
           </ul>
-          <Link href="/admin/bespoke" className="mt-4 inline-block text-sm text-gold hover:underline">
+          <Link href="/admin/bespoke" className="mt-4 inline-block font-body text-[11px] text-olive hover:underline">
             Review all
           </Link>
         </div>
-        <div className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-5">
-          <h3 className="font-display text-base text-ivory">Coupons expiring soon</h3>
-          <p className="mt-1 text-xs text-[#8A8A8A]">Within 7 days</p>
-          <ul className="mt-4 space-y-3">
+        <div className="border border-[#EBEBEA] bg-white p-5">
+          <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-black">Coupons expiring soon</h3>
+          <p className="mt-1 font-body text-[11px] text-[#6B6B68]">Within 7 days</p>
+          <ul className="mt-4 divide-y divide-[#F5F5F3]">
             {expiringCoupons.length === 0 ? (
-              <li className="text-sm text-emerald-400">No coupons expiring soon ✓</li>
+              <li className="py-3 font-body text-xs text-[#1B5E20]">No coupons expiring soon ✓</li>
             ) : (
               expiringCoupons.map((c) => (
-                <li key={c.id} className="text-sm text-ivory/90">
-                  <span className="font-mono text-gold">{c.code}</span> · {new Date(c.expiresAt).toLocaleDateString()}{" "}
-                  · {c.remainingUses}
+                <li key={c.id} className="py-3 font-body text-xs text-black">
+                  <span className="font-mono text-olive">{c.code}</span> · {new Date(c.expiresAt).toLocaleDateString()} · {c.remainingUses}
                 </li>
               ))
             )}

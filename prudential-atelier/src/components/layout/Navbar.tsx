@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import { Search, Heart, User, ShoppingBag, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CurrencySwitcher } from "@/components/common/CurrencySwitcher";
+import { DarkModeToggle } from "@/components/common/DarkModeToggle";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { MobileMenu } from "./MobileMenu";
@@ -90,8 +91,8 @@ export function Navbar() {
     <>
       <header
         className={cn(
-          "border-b border-mid-grey bg-white transition-all duration-200",
-          scrolled && "bg-white/98 shadow-[0_1px_0_0_var(--mid-grey)] backdrop-blur-sm",
+          "border-b border-mid-grey bg-[var(--white)] transition-all duration-200",
+          scrolled && "bg-[var(--white)]/98 shadow-[0_1px_0_0_var(--mid-grey)] backdrop-blur-sm",
         )}
       >
         <div className="mx-auto grid h-[60px] max-w-site grid-cols-3 items-center px-4 lg:h-[72px] lg:px-8">
@@ -145,6 +146,7 @@ export function Navbar() {
               >
                 <Search size={18} strokeWidth={1.5} />
               </button>
+              <DarkModeToggle />
               <Link
                 href="/account/wishlist"
                 className="relative text-charcoal transition-colors duration-200 hover:text-olive"
@@ -160,14 +162,6 @@ export function Navbar() {
               >
                 <User size={18} strokeWidth={1.5} />
               </Link>
-              {(session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN") && (
-                <Link
-                  href="/admin"
-                  className="font-body text-[10px] font-medium uppercase tracking-wide text-olive hover:underline"
-                >
-                  Admin
-                </Link>
-              )}
               <button
                 type="button"
                 onClick={openCart}

@@ -5,7 +5,8 @@ export default auth((req) => {
   const { nextUrl, auth: session } = req;
 
   const isLoggedIn = !!session;
-  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN";
+  const isAdmin =
+    session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN";
 
   const isAccountRoute = nextUrl.pathname.startsWith("/account");
   const isAdminRoute = nextUrl.pathname.startsWith("/admin");
@@ -16,9 +17,7 @@ export default auth((req) => {
   }
 
   if (isAdminRoute && !isAdmin) {
-    const loginUrl = new URL("/auth/login", nextUrl.origin);
-    loginUrl.searchParams.set("callbackUrl", nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL("/admin-login", nextUrl.origin));
   }
 
   return NextResponse.next();

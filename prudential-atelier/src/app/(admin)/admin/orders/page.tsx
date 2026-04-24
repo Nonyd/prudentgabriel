@@ -1,9 +1,32 @@
 import Link from "next/link";
-import { OrderStatus, PaymentStatus, Prisma } from "@prisma/client";
+import { OrderStatus, PaymentGateway, PaymentStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AdminOrdersCsvExport } from "@/components/admin/AdminOrdersCsvExport";
 
 const PAGE = 20;
+
+function gatewayBadgeClass(g: PaymentGateway | null): string {
+  switch (g) {
+    case "PAYSTACK":
+      return "bg-[#E8F5E9] text-[#1B5E20]";
+    case "FLUTTERWAVE":
+      return "bg-[#E8F0FF] text-[#1A3FAD]";
+    case "STRIPE":
+      return "bg-[#F0E8FF] text-[#6B3FAD]";
+    case "MONNIFY":
+      return "bg-[#FFF3E0] text-[#C45E0A]";
+    default:
+      return "bg-[#FAFAFA] text-[#A8A8A4]";
+  }
+}
+
+function GatewayPill({ gateway }: { gateway: PaymentGateway | null }) {
+  return (
+    <span className={`inline-block px-2 py-0.5 font-body text-[9px] font-medium uppercase ${gatewayBadgeClass(gateway)}`}>
+      {gateway ?? "—"}
+    </span>
+  );
+}
 
 type SP = Record<string, string | string[] | undefined>;
 
@@ -61,7 +84,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-2xl text-ivory">Orders</h1>
+        <h1 className="font-display text-2xl text-charcoal">Orders</h1>
         <AdminOrdersCsvExport query={exportQuery.toString()} />
       </div>
       <form className="mt-6 flex flex-wrap gap-2 text-sm" method="get">
@@ -69,9 +92,9 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
           name="search"
           defaultValue={search}
           placeholder="Order # or email"
-          className="min-w-[200px] flex-1 rounded-sm border border-gold/15 bg-[#1E1E1E] px-3 py-2 text-ivory"
+          className="min-w-[200px] flex-1 rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
         />
-        <select name="status" defaultValue={status} className="rounded-sm border border-gold/15 bg-[#1E1E1E] px-2 py-2 text-ivory">
+        <select name="status" defaultValue={status} className="rounded-sm border border-[#EBEBEA] bg-white px-2 py-2 text-charcoal">
           <option value="">All statuses</option>
           {Object.values(OrderStatus).map((s) => (
             <option key={s} value={s}>
@@ -82,7 +105,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
         <select
           name="paymentStatus"
           defaultValue={paymentStatus}
-          className="rounded-sm border border-gold/15 bg-[#1E1E1E] px-2 py-2 text-ivory"
+          className="rounded-sm border border-[#EBEBEA] bg-white px-2 py-2 text-charcoal"
         >
           <option value="">All payments</option>
           {Object.values(PaymentStatus).map((s) => (
@@ -91,14 +114,14 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
             </option>
           ))}
         </select>
-        <button type="submit" className="rounded-sm bg-wine px-4 py-2 text-gold">
+        <button type="submit" className="bg-olive px-4 py-2 font-body text-xs uppercase tracking-wide text-white">
           Filter
         </button>
       </form>
 
-      <div className="-mx-4 mt-8 overflow-x-auto rounded-sm border border-gold/10 bg-[#1E1E1E] px-4 md:mx-0 md:px-0">
-        <table className="w-full min-w-[700px] text-left text-sm text-ivory/90">
-          <thead className="border-b border-gold/10 text-[11px] uppercase text-[#8A8A8A]">
+      <div className="-mx-4 mt-8 overflow-x-auto rounded-sm border border-[#EBEBEA] bg-white px-4 md:mx-0 md:px-0">
+        <table className="w-full min-w-[700px] text-left text-sm text-charcoal">
+          <thead className="border-b border-[#EBEBEA] text-[11px] uppercase text-[#A8A8A4]">
             <tr>
               <th className="p-3">Order</th>
               <th className="p-3">Customer</th>
@@ -117,22 +140,24 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
               const name = o.user?.name ?? o.guestName ?? "Guest";
               const first = o.items[0]?.product.name ?? "—";
               return (
-                <tr key={o.id} className="border-b border-gold/5 hover:bg-[#252525]">
-                  <td className="p-3 font-label text-gold">{o.orderNumber}</td>
+                <tr key={o.id} className="border-b border-[#F5F5F3] hover:bg-[#FAFAFA]">
+                  <td className="p-3 font-body text-[11px] font-medium text-olive">{o.orderNumber}</td>
                   <td className="p-3">
-                    <div className="font-medium">{name}</div>
-                    <div className="text-xs text-[#8A8A8A]">{email}</div>
+                    <div className="font-medium text-black">{name}</div>
+                    <div className="text-xs text-[#A8A8A4]">{email}</div>
                   </td>
-                  <td className="hidden p-3 text-xs md:table-cell">
+                  <td className="hidden p-3 text-xs text-[#6B6B68] md:table-cell">
                     {o._count.items} · {first}
                   </td>
-                  <td className="p-3">₦{Math.round(o.total).toLocaleString("en-NG")}</td>
-                  <td className="hidden p-3 text-xs lg:table-cell">{o.paymentGateway ?? "—"}</td>
+                  <td className="p-3 font-body text-[13px] text-black">₦{Math.round(o.total).toLocaleString("en-NG")}</td>
+                  <td className="hidden p-3 text-xs lg:table-cell">
+                    <GatewayPill gateway={o.paymentGateway} />
+                  </td>
                   <td className="hidden p-3 text-xs md:table-cell">{o.paymentStatus}</td>
                   <td className="p-3 text-xs">{o.status}</td>
-                  <td className="p-3 text-xs text-[#8A8A8A]">{o.createdAt.toLocaleDateString("en-NG")}</td>
+                  <td className="p-3 text-xs text-[#A8A8A4]">{o.createdAt.toLocaleDateString("en-NG")}</td>
                   <td className="p-3">
-                    <Link href={`/admin/orders/${o.id}`} className="text-gold hover:underline">
+                    <Link href={`/admin/orders/${o.id}`} className="font-body text-[11px] text-olive hover:underline">
                       View
                     </Link>
                   </td>
@@ -142,17 +167,17 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
           </tbody>
         </table>
       </div>
-      <p className="mt-4 text-sm text-[#8A8A8A]">
+      <p className="mt-4 text-sm text-[#A8A8A4]">
         {total} orders · page {page} of {Math.max(1, Math.ceil(total / PAGE))}
       </p>
       <div className="mt-2 flex gap-2">
         {page > 1 ? (
-          <Link href={pageHref(page - 1)} className="text-sm text-gold">
+          <Link href={pageHref(page - 1)} className="text-sm text-olive hover:underline">
             Previous
           </Link>
         ) : null}
         {page * PAGE < total ? (
-          <Link href={pageHref(page + 1)} className="text-sm text-gold">
+          <Link href={pageHref(page + 1)} className="text-sm text-olive hover:underline">
             Next
           </Link>
         ) : null}

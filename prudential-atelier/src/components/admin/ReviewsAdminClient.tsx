@@ -35,27 +35,32 @@ export function ReviewsAdminClient({ pending }: { pending: Row[] }) {
   }
 
   if (!pending.length) {
-    return <p className="mt-8 text-emerald-400">No reviews awaiting moderation ✓</p>;
+    return <p className="mt-8 font-body text-sm text-[#1B5E20]">No reviews awaiting moderation ✓</p>;
   }
 
   return (
     <div className="mt-8 space-y-4">
       {pending.map((r) => (
-        <div key={r.id} className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-4 text-sm text-ivory/90">
-          <p className="font-medium text-gold">{r.product.name}</p>
-          <p className="text-xs text-[#8A8A8A]">{r.user.name} · {r.rating}★</p>
+        <div
+          key={r.id}
+          className="border border-[#EBEBEA] border-l-[3px] border-l-[#F59E0B] bg-white p-4 text-sm text-charcoal"
+        >
+          <p className="font-medium text-olive">{r.product.name}</p>
+          <p className="text-xs text-[#A8A8A4]">
+            {r.user.name} · {r.rating}★
+          </p>
           <p className="mt-2">{r.body ?? r.title}</p>
           <div className="mt-3 flex gap-2">
             <button
               type="button"
-              className="rounded-sm bg-emerald-900/40 px-3 py-1 text-xs text-emerald-300"
+              className="bg-[#E8F5E9] px-3 py-1.5 font-body text-[11px] text-[#1B5E20] transition-colors hover:bg-[#22C55E] hover:text-white"
               onClick={() => void approve(r.id)}
             >
               Approve
             </button>
             <button
               type="button"
-              className="rounded-sm bg-red-900/30 px-3 py-1 text-xs text-red-300"
+              className="bg-[#FDECEA] px-3 py-1.5 font-body text-[11px] text-[#8B1A1A] transition-colors hover:bg-[#8B1A1A] hover:text-white"
               onClick={() => void reject(r.id)}
             >
               Reject

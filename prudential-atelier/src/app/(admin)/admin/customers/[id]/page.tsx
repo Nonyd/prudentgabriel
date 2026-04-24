@@ -22,18 +22,18 @@ export default async function AdminCustomerDetailPage({ params }: { params: Prom
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
-      <Link href="/admin/customers" className="text-sm text-[#8A8A8A] hover:text-gold">
+      <Link href="/admin/customers" className="text-sm text-[#A8A8A4] hover:text-gold">
         ← Customers
       </Link>
       <div>
-        <h1 className="font-display text-2xl text-ivory">{user.name}</h1>
-        <p className="text-sm text-[#8A8A8A]">{user.email}</p>
+        <h1 className="font-display text-2xl text-charcoal">{user.name}</h1>
+        <p className="text-sm text-[#A8A8A4]">{user.email}</p>
         <p className="mt-2 text-sm text-ivory/80">
           Points: {user.pointsBalance} · Orders: {user.orders.length} · Spent: ₦
           {Math.round(spent._sum.total ?? 0).toLocaleString("en-NG")}
         </p>
       </div>
-      <div className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
+      <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
         <h2 className="font-display text-lg text-gold">Recent orders</h2>
         <ul className="mt-3 space-y-2 text-sm">
           {user.orders.map((o) => (
@@ -46,7 +46,7 @@ export default async function AdminCustomerDetailPage({ params }: { params: Prom
           ))}
         </ul>
       </div>
-      <div className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
+      <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
         <h2 className="font-display text-lg text-gold">Points history</h2>
         <ul className="mt-3 space-y-2 text-xs text-ivory/80">
           {user.pointsHistory.map((p) => (

@@ -7,7 +7,9 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { FacebookIcon, InstagramIcon, TikTokIcon, YouTubeIcon } from "@/components/icons/SocialIcons";
 import { CurrencySwitcher } from "@/components/common/CurrencySwitcher";
+import { DarkModeToggle } from "@/components/common/DarkModeToggle";
 import { useCartStore } from "@/store/cartStore";
+import { useThemeStore } from "@/store/themeStore";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -26,6 +28,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const { data: session } = useSession();
   const openSearch = useCartStore((s) => s.openSearch);
   const openCart = useCartStore((s) => s.openCart);
+  const isDark = useThemeStore((s) => s.isDark);
 
   return (
     <AnimatePresence>
@@ -35,7 +38,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-50 flex flex-col bg-white"
+          className="fixed inset-0 z-50 flex flex-col bg-[var(--white)]"
         >
           <div className="flex shrink-0 items-center justify-between border-b border-mid-grey px-6 py-4">
             <Link href="/" onClick={onClose} className="relative block h-11 w-11">
@@ -113,6 +116,13 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               </button>
             </motion.div>
           </nav>
+
+          <div className="flex shrink-0 items-center justify-between border-t border-mid-grey px-6 py-4">
+            <span className="font-body text-sm uppercase tracking-widest text-dark-grey">
+              {isDark ? "Dark Mode" : "Light Mode"}
+            </span>
+            <DarkModeToggle />
+          </div>
 
           <div className="shrink-0 border-t border-mid-grey px-8 py-6">
             <p className="mb-4 font-body text-[11px] uppercase tracking-[0.15em] text-dark-grey">Currency</p>

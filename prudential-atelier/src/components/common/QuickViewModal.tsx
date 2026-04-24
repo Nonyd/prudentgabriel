@@ -125,7 +125,8 @@ export function QuickViewModal({ productSlug, onClose }: QuickViewModalProps) {
             </Dialog.Overlay>
             <Dialog.Content forceMount asChild>
               <motion.div
-                className="fixed inset-4 z-[71] mx-auto flex max-h-[90vh] max-w-3xl flex-col overflow-hidden rounded-sm bg-cream shadow-xl md:inset-y-12 md:left-1/2 md:w-full md:-translate-x-1/2"
+                data-lenis-prevent
+                className="fixed inset-4 z-[71] mx-auto flex max-h-[85vh] max-w-3xl flex-col overflow-y-auto overscroll-contain rounded-sm bg-[var(--white)] shadow-xl md:inset-y-12 md:left-1/2 md:w-full md:-translate-x-1/2"
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.96 }}

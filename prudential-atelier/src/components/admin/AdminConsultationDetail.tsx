@@ -73,7 +73,7 @@ export function AdminConsultationDetail({ booking }: { booking: Booking }) {
   return (
     <div className="grid gap-8 lg:grid-cols-2">
       <div className="space-y-4 text-sm text-[#eaeaea]">
-        <div className="rounded-sm border border-[rgba(201,168,76,0.2)] bg-[#252525] p-4">
+        <div className="rounded-sm border border-[#EBEBEA] bg-[#FAFAFA] p-4">
           <h2 className="font-label text-gold">Client</h2>
           <p className="mt-2">{booking.clientName}</p>
           <a href={`mailto:${booking.clientEmail}`} className="text-gold underline">
@@ -82,14 +82,14 @@ export function AdminConsultationDetail({ booking }: { booking: Booking }) {
           <p className="mt-1">{booking.clientPhone}</p>
           <p className="text-[#aaa]">{booking.clientCountry}</p>
         </div>
-        <div className="rounded-sm border border-[rgba(201,168,76,0.2)] bg-[#252525] p-4">
+        <div className="rounded-sm border border-[#EBEBEA] bg-[#FAFAFA] p-4">
           <h2 className="font-label text-gold">Session</h2>
           <p className="mt-2">{booking.consultant.name}</p>
           <p className="text-xs text-[#aaa]">{getSessionTypeLabel(booking.offering.sessionType)}</p>
           <p className="text-xs text-[#aaa]">{getDeliveryModeLabel(booking.offering.deliveryMode)}</p>
           <p className="mt-2 text-xs">Fee ₦{booking.feeNGN.toLocaleString("en-NG")}</p>
         </div>
-        <div className="rounded-sm border border-[rgba(201,168,76,0.2)] bg-[#252525] p-4">
+        <div className="rounded-sm border border-[#EBEBEA] bg-[#FAFAFA] p-4">
           <h2 className="font-label text-gold">Scheduling</h2>
           {booking.preferredDate1 && (
             <p className="mt-2 text-xs">
@@ -105,7 +105,7 @@ export function AdminConsultationDetail({ booking }: { booking: Booking }) {
         <p className="text-xs text-[#888]">{booking.description}</p>
       </div>
 
-      <div className="space-y-4 rounded-sm border border-[rgba(201,168,76,0.2)] bg-[#1e1e1e] p-4">
+      <div className="space-y-4 rounded-sm border border-[#EBEBEA] bg-[#1e1e1e] p-4">
         <p className="font-display text-lg text-gold">Status: {booking.status}</p>
 
         {booking.status === ConsultationStatus.PENDING_CONFIRMATION && (
@@ -154,7 +154,7 @@ export function AdminConsultationDetail({ booking }: { booking: Booking }) {
                   meetingPlatform: meetingPlatform || undefined,
                 })
               }
-              className="w-full rounded-sm bg-wine py-2 text-sm text-ivory"
+              className="w-full rounded-sm bg-wine py-2 text-sm text-charcoal"
             >
               Confirm & send email
             </button>
@@ -219,7 +219,7 @@ export function AdminConsultationDetail({ booking }: { booking: Booking }) {
             <button
               type="button"
               onClick={() => void patch({ status: ConsultationStatus.COMPLETED })}
-              className="w-full rounded-sm bg-emerald-900 py-2 text-sm text-ivory"
+              className="w-full rounded-sm bg-emerald-900 py-2 text-sm text-charcoal"
             >
               Mark completed
             </button>

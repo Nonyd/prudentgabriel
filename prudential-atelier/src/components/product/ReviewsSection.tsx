@@ -83,7 +83,10 @@ export function ReviewsSection({
           </Dialog.Trigger>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 z-[80] bg-charcoal/50" />
-            <Dialog.Content className="fixed left-1/2 top-1/2 z-[81] max-h-[90vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-sm bg-cream p-6 shadow-xl">
+            <Dialog.Content
+              data-lenis-prevent
+              className="fixed left-1/2 top-1/2 z-[81] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain rounded-sm bg-[var(--white)] p-6 shadow-xl"
+            >
               <Dialog.Title className="font-display text-xl text-charcoal">Write a review</Dialog.Title>
               <div className="mt-4">
                 <ReviewForm productId={productId} onDone={() => setOpenForm(false)} />

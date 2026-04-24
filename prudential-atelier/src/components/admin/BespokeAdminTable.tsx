@@ -39,23 +39,23 @@ export function BespokeAdminTable({ initial }: { initial: BespokeRequest[] }) {
 
   return (
     <div className="mt-8">
-      <div className="flex flex-wrap gap-2 border-b border-gold/10 pb-3">
+      <div className="flex flex-wrap gap-2 border-b border-[#EBEBEA] pb-3">
         {tabs.map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setTab(t)}
             className={`rounded-sm px-3 py-1 text-xs uppercase ${
-              tab === t ? "bg-wine text-gold" : "text-[#8A8A8A] hover:text-ivory"
+              tab === t ? "bg-wine text-gold" : "text-[#A8A8A4] hover:text-charcoal"
             }`}
           >
             {t}
           </button>
         ))}
       </div>
-      <div className="-mx-4 overflow-x-auto rounded-sm border border-gold/10 bg-[#1E1E1E] px-4 md:mx-0 md:px-0">
-        <table className="w-full min-w-[700px] text-left text-sm text-ivory/90">
-          <thead className="text-[11px] uppercase text-[#8A8A8A]">
+      <div className="-mx-4 overflow-x-auto rounded-sm border border-[#EBEBEA] bg-white px-4 md:mx-0 md:px-0">
+        <table className="w-full min-w-[700px] text-left text-sm text-charcoal">
+          <thead className="text-[11px] uppercase text-[#A8A8A4]">
             <tr>
               <th className="p-3">#</th>
               <th className="p-3">Client</th>
@@ -69,20 +69,20 @@ export function BespokeAdminTable({ initial }: { initial: BespokeRequest[] }) {
           </thead>
           <tbody>
             {filtered.map((r) => (
-              <tr key={r.id} className="border-t border-gold/10">
+              <tr key={r.id} className="border-t border-[#EBEBEA]">
                 <td className="p-3 font-label text-gold">{r.requestNumber}</td>
                 <td className="p-3">
                   <div>{r.name}</div>
-                  <div className="text-xs text-[#8A8A8A]">{r.email}</div>
+                  <div className="text-xs text-[#A8A8A4]">{r.email}</div>
                 </td>
                 <td className="p-3 max-w-[200px] truncate">{r.occasion}</td>
                 <td className="hidden max-w-[120px] truncate p-3 text-xs md:table-cell">{r.budgetRange ?? r.budget ?? "—"}</td>
                 <td className="hidden max-w-[100px] truncate p-3 text-xs md:table-cell">{r.timeline ?? "—"}</td>
                 <td className="p-3 text-xs">{r.status}</td>
-                <td className="p-3 text-xs text-[#8A8A8A]">{r.createdAt.toLocaleDateString("en-NG")}</td>
+                <td className="p-3 text-xs text-[#A8A8A4]">{r.createdAt.toLocaleDateString("en-NG")}</td>
                 <td className="p-3">
                   <select
-                    className="rounded-sm border border-gold/15 bg-[#0F0F0F] px-2 py-1 text-xs text-ivory"
+                    className="rounded-sm border border-[#EBEBEA] bg-white px-2 py-1 text-xs text-charcoal"
                     value={r.status}
                     onChange={(e) => void updateStatus(r.id, e.target.value as BespokeStatus)}
                   >

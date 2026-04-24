@@ -7,6 +7,7 @@ import { useState } from "react";
 import type { Session } from "next-auth";
 import { CurrencyProvider } from "@/providers/CurrencyProvider";
 import { CartSyncProvider } from "@/providers/CartSyncProvider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 
 interface RootProviderProps {
   children: React.ReactNode;
@@ -28,37 +29,39 @@ export function RootProvider({ children, session }: RootProviderProps) {
 
   return (
     <SessionProvider session={session ?? undefined}>
-      <QueryClientProvider client={queryClient}>
-        <CurrencyProvider>
-          <CartSyncProvider>{children}</CartSyncProvider>
-        </CurrencyProvider>
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: "var(--charcoal)",
-              color: "var(--ivory)",
-              fontFamily: "var(--font-body)",
-              fontSize: "14px",
-              borderRadius: "var(--radius-md)",
-              border: "1px solid var(--border)",
-            },
-            success: {
-              iconTheme: {
-                primary: "var(--gold)",
-                secondary: "var(--charcoal)",
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <CurrencyProvider>
+            <CartSyncProvider>{children}</CartSyncProvider>
+          </CurrencyProvider>
+          <Toaster
+            position="bottom-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: "var(--charcoal)",
+                color: "var(--ivory)",
+                fontFamily: "var(--font-body)",
+                fontSize: "14px",
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--border)",
               },
-            },
-            error: {
-              iconTheme: {
-                primary: "var(--error)",
-                secondary: "var(--ivory)",
+              success: {
+                iconTheme: {
+                  primary: "var(--gold)",
+                  secondary: "var(--charcoal)",
+                },
               },
-            },
-          }}
-        />
-      </QueryClientProvider>
+              error: {
+                iconTheme: {
+                  primary: "var(--error)",
+                  secondary: "var(--ivory)",
+                },
+              },
+            }}
+          />
+        </QueryClientProvider>
+      </ThemeProvider>
     </SessionProvider>
   );
 }

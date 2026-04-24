@@ -75,3 +75,41 @@
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
   --duration: 200ms;
 }
+
+/* ── DARK MODE (storefront only; .admin-area resets below) ── */
+html.dark {
+  --white: #0a0a0a;
+  --off-white: #111110;
+  --light-grey: #1a1a18;
+  --mid-grey: #2a2a28;
+  --dark-grey: #6a6a65;
+  --charcoal: #e8e8e4;
+  --black: #f8f8f6;
+  --border: #2a2a28;
+  --border-dark: #3a3a38;
+  --olive: #37392d;
+  --olive-hover: #4a4d3a;
+  --olive-light: #37392d30;
+  --olive-mid: #6b6e58;
+  --bride-bg: #1a1512;
+  --bride-accent: #c8a97a;
+  --bride-dark: #f5f0e8;
+}
+
+html.dark .admin-area {
+  --white: #ffffff;
+  --off-white: #f8f8f6;
+  --light-grey: #f2f2f0;
+  --mid-grey: #e8e8e4;
+  --charcoal: #2a2a28;
+  --black: #0a0a0a;
+  --border: #e8e8e4;
+  --border-dark: #c8c8c4;
+  --olive: #37392d;
+  --olive-hover: #2c2e24;
+  --olive-light: #37392d18;
+  --olive-mid: #5a5d4a;
+  --bride-bg: #faf7f4;
+  --bride-accent: #c8a97a;
+  --bride-dark: #2a1f1a;
+}

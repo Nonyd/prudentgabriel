@@ -1,24 +1,26 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import type { Session } from "next-auth";
 import type { LucideIcon } from "lucide-react";
 import {
+  ArrowLeft,
   CalendarDays,
-  UserCircle,
   LayoutDashboard,
+  LogOut,
   Package,
   Scissors,
-  Star,
+  Settings,
   ShoppingCart,
+  Star,
   Tag,
   Truck,
-  Users,
   TrendingUp,
-  Settings,
-  LogOut,
+  UserCircle,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -79,23 +81,22 @@ export function AdminSidebar({ session, onNavigate }: { session: Session; onNavi
 
   return (
     <aside
-      className="flex h-full w-[240px] shrink-0 flex-col overflow-y-auto border-r border-[rgba(201,168,76,0.15)] bg-[#1A1A1A]"
+      className="flex h-screen w-[220px] shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-[#EBEBEA] bg-[#FAFAFA]"
+      style={{ overscrollBehavior: "contain" }}
       aria-label="Admin navigation"
     >
-      <div className="px-4 pt-6">
-        <Link href="/admin" className="block text-center font-display text-lg font-medium tracking-wide text-white">
-          Prudential Atelier
+      <div className="px-5 pb-0 pt-6">
+        <Link href="/admin" className="block" onClick={() => onNavigate?.()}>
+          <Image src="/images/logo.svg" alt="Prudent Gabriel" width={32} height={32} className="object-contain" style={{ filter: "brightness(0)" }} />
         </Link>
-        <div className="mx-auto mt-4 h-px w-12 bg-gold/40" />
+        <p className="mt-3 font-body text-[9px] font-medium uppercase tracking-[0.2em] text-[#A8A8A4]">Prudent Gabriel</p>
       </div>
 
-      <nav className="mt-6 flex-1 px-3 pb-6">
+      <nav className="mt-8 flex flex-1 flex-col overflow-y-auto px-3 pb-4" style={{ overscrollBehavior: "contain" }}>
         {SECTIONS.map((section, si) => (
           <div key={section.label} className={cn(si > 0 && "mt-6")}>
-            <p className="px-3 font-label text-[10px] font-normal uppercase tracking-[0.2em] text-gold/40">
-              {section.label}
-            </p>
-            <ul className="mt-2 space-y-0.5">
+            <p className="mb-1 px-2 font-body text-[9px] font-medium uppercase tracking-[0.15em] text-[#A8A8A4]">{section.label}</p>
+            <ul className="space-y-0.5">
               {section.items.map((item) => {
                 const active =
                   item.href === "/admin"
@@ -108,14 +109,13 @@ export function AdminSidebar({ session, onNavigate }: { session: Session; onNavi
                       href={item.href}
                       onClick={() => onNavigate?.()}
                       className={cn(
-                        "flex items-center gap-3 rounded-sm px-3 py-2.5 text-[13px] text-[#8A8A8A] transition-colors",
-                        "hover:bg-[#252525] hover:text-ivory/80",
-                        active &&
-                          "border-l-2 border-olive bg-olive/15 pl-[10px] text-olive hover:text-olive",
-                        !active && "border-l-2 border-transparent",
+                        "flex items-center gap-2.5 px-2.5 py-2 font-body text-xs transition-colors duration-150 ease-out",
+                        active
+                          ? "bg-[#37392d] text-white"
+                          : "text-[#6B6B68] hover:bg-[#F5F5F3] hover:text-black",
                       )}
                     >
-                      <Icon size={16} className="shrink-0" />
+                      <Icon size={15} className={cn("shrink-0", active ? "text-white" : "text-[#A8A8A4]")} />
                       {item.label}
                     </Link>
                   </li>
@@ -126,30 +126,31 @@ export function AdminSidebar({ session, onNavigate }: { session: Session; onNavi
         ))}
       </nav>
 
-      <div className="mt-auto border-t border-gold/10 px-3 pb-6 pt-4">
-        <div className="flex items-center gap-3 px-1">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-olive text-xs font-medium text-white">
+      <div className="mt-auto border-t border-[#EBEBEA] px-5 py-4">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center bg-[#F0F0EE] font-body text-[11px] text-black">
             {initials(user?.name, user?.email)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm text-ivory/90">{displayName}</p>
-            <span className="inline-block bg-olive/25 px-1.5 py-0.5 font-body text-[9px] font-medium uppercase tracking-wide text-bride-accent">
+            <p className="truncate font-body text-xs text-black">{displayName}</p>
+            <p className="font-body text-[10px] text-[#A8A8A4]">
               {user?.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}
-            </span>
+            </p>
           </div>
         </div>
         <Link
           href="/"
-          className="mt-4 block px-1 text-[13px] text-[#8A8A8A] transition-colors hover:text-gold"
+          className="mt-2 flex items-center gap-1.5 font-body text-[11px] text-[#A8A8A4] transition-colors hover:text-olive"
         >
-          ← Back to Store
+          <ArrowLeft size={12} strokeWidth={1.5} aria-hidden />
+          Back to Store
         </Link>
         <button
           type="button"
           onClick={() => void signOut({ callbackUrl: "/" })}
-          className="mt-2 flex w-full items-center gap-2 px-1 text-left text-[13px] text-[#8A8A8A] transition-colors hover:text-red-400"
+          className="mt-2 flex w-full items-center gap-1.5 text-left font-body text-[11px] text-[#A8A8A4] transition-colors hover:text-red-500"
         >
-          <LogOut size={16} />
+          <LogOut size={12} strokeWidth={1.5} aria-hidden />
           Sign Out
         </button>
       </div>

@@ -22,12 +22,12 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
-      <Link href="/admin/orders" className="text-sm text-[#8A8A8A] hover:text-gold">
+      <Link href="/admin/orders" className="text-sm text-[#A8A8A4] hover:text-gold">
         ← Orders
       </Link>
       <div>
         <h1 className="font-display text-3xl text-wine">{order.orderNumber}</h1>
-        <p className="mt-1 text-sm text-[#8A8A8A]">
+        <p className="mt-1 text-sm text-[#A8A8A4]">
           {order.paymentStatus} · {order.status} · {order.paymentGateway ?? "—"}
         </p>
       </div>
@@ -44,13 +44,13 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         }}
       />
 
-      <div className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
+      <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
         <OrderTimeline status={order.status} />
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
+      <div className="overflow-x-auto rounded-sm border border-[#EBEBEA] bg-white p-6">
         <table className="w-full text-left text-sm">
-          <thead className="text-[#8A8A8A]">
+          <thead className="text-[#A8A8A4]">
             <tr>
               <th className="pb-2">Item</th>
               <th className="pb-2">Variant</th>
@@ -62,14 +62,14 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             {order.items.map((it) => {
               const img = it.product.images.find((i) => i.isPrimary) ?? it.product.images[0];
               return (
-                <tr key={it.id} className="border-t border-gold/10">
+                <tr key={it.id} className="border-t border-[#EBEBEA]">
                   <td className="flex items-center gap-3 py-3">
                     {img?.url ? (
                       <Image src={img.url} alt="" width={48} height={60} className="rounded-sm object-cover" />
                     ) : null}
-                    <span className="text-ivory">{it.product.name}</span>
+                    <span className="text-charcoal">{it.product.name}</span>
                   </td>
-                  <td className="py-3 text-xs text-[#8A8A8A]">{it.variant?.id ?? "—"}</td>
+                  <td className="py-3 text-xs text-[#A8A8A4]">{it.variant?.id ?? "—"}</td>
                   <td className="py-3">{it.quantity}</td>
                   <td className="py-3 text-right">₦{Math.round(it.lineTotal).toLocaleString("en-NG")}</td>
                 </tr>
@@ -80,7 +80,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6 text-sm text-ivory/90">
+        <div className="rounded-sm border border-[#EBEBEA] bg-white p-6 text-sm text-charcoal">
           <h2 className="font-display text-lg text-gold">Pricing</h2>
           <p className="mt-2">Subtotal: ₦{Math.round(order.subtotal).toLocaleString("en-NG")}</p>
           <p>Shipping: ₦{Math.round(order.shippingAmount).toLocaleString("en-NG")}</p>
@@ -88,7 +88,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           <p>Points: ₦{Math.round(order.pointsDiscountNGN).toLocaleString("en-NG")}</p>
           <p className="mt-2 font-display text-xl text-gold">₦{Math.round(order.total).toLocaleString("en-NG")}</p>
         </div>
-        <div className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6 text-sm text-ivory/90">
+        <div className="rounded-sm border border-[#EBEBEA] bg-white p-6 text-sm text-charcoal">
           <h2 className="font-display text-lg text-gold">Customer</h2>
           {order.user ? (
             <>
@@ -106,9 +106,9 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       </div>
 
       {snap && (
-        <div className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6 text-sm text-ivory/90">
+        <div className="rounded-sm border border-[#EBEBEA] bg-white p-6 text-sm text-charcoal">
           <h2 className="font-display text-lg text-gold">Address</h2>
-          <pre className="mt-2 whitespace-pre-wrap font-body text-xs text-[#8A8A8A]">{JSON.stringify(snap, null, 2)}</pre>
+          <pre className="mt-2 whitespace-pre-wrap font-body text-xs text-[#A8A8A4]">{JSON.stringify(snap, null, 2)}</pre>
         </div>
       )}
     </div>

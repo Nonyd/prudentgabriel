@@ -114,7 +114,7 @@ export function SearchModal() {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[60] bg-white/98 backdrop-blur-md"
+          className="fixed inset-0 z-[60] bg-[var(--white)]/98 backdrop-blur-md"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -126,7 +126,10 @@ export function SearchModal() {
             aria-label="Close search"
             onClick={closeSearch}
           />
-          <div className="relative mx-auto max-w-2xl px-4 pb-8 pt-20">
+          <div
+            className="relative mx-auto max-h-[85vh] max-w-2xl overflow-y-auto overscroll-contain px-4 pb-8 pt-20"
+            data-lenis-prevent
+          >
             <button
               type="button"
               onClick={closeSearch}

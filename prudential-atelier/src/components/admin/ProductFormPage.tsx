@@ -277,10 +277,10 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
     <div className="mx-auto max-w-6xl space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link href="/admin/products" className="text-sm text-[#8A8A8A] hover:text-gold">
+          <Link href="/admin/products" className="text-sm text-[#A8A8A4] hover:text-gold">
             ← Products
           </Link>
-          <h1 className="mt-2 font-display text-2xl text-ivory">
+          <h1 className="mt-2 font-display text-2xl text-charcoal">
             {mode === "create" ? "Add new product" : `Edit: ${product?.name}`}
           </h1>
         </div>
@@ -288,7 +288,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
           <button
             type="button"
             onClick={() => void saveDraft()}
-            className="rounded-sm border border-gold/30 px-4 py-2 text-sm text-gold hover:bg-gold/10"
+            className="rounded-sm border border-[#EBEBEA] px-4 py-2 text-sm text-gold hover:bg-gold/10"
           >
             Save draft
           </button>
@@ -304,58 +304,58 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
 
       <form onSubmit={submit} className="grid gap-8 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <section className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
+          <section className="rounded-sm border border-[#EBEBEA] bg-white p-6">
             <h2 className="font-display text-lg text-gold">Basic information</h2>
-            <label className="mt-4 block text-xs uppercase tracking-wide text-[#8A8A8A]">
+            <label className="mt-4 block text-xs uppercase tracking-wide text-[#A8A8A4]">
               Product name
               <input
                 {...form.register("name", { onBlur: onBlurName })}
-                className="mt-1 w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-ivory"
+                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
               />
             </label>
             {form.formState.errors.name && (
               <p className="mt-1 text-xs text-red-400">{form.formState.errors.name.message}</p>
             )}
-            <label className="mt-4 block text-xs uppercase tracking-wide text-[#8A8A8A]">
+            <label className="mt-4 block text-xs uppercase tracking-wide text-[#A8A8A4]">
               Slug
               <input
                 {...form.register("slug")}
-                className="mt-1 w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 font-mono text-sm text-ivory"
+                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 font-mono text-sm text-charcoal"
               />
             </label>
             <p className="mt-1 text-xs text-gold/80">
               {getPublicAppUrl().replace(/^https?:\/\//, "")}/shop/{slugWatch || "[slug]"}
             </p>
-            <label className="mt-4 block text-xs uppercase tracking-wide text-[#8A8A8A]">
+            <label className="mt-4 block text-xs uppercase tracking-wide text-[#A8A8A4]">
               Short description (max 200)
               <textarea
                 {...form.register("description")}
                 maxLength={200}
                 rows={3}
-                className="mt-1 w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-ivory"
+                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
               />
             </label>
-            <label className="mt-4 block text-xs uppercase tracking-wide text-[#8A8A8A]">
+            <label className="mt-4 block text-xs uppercase tracking-wide text-[#A8A8A4]">
               Full description
               <textarea
                 {...form.register("details")}
                 rows={8}
-                className="mt-1 w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-ivory"
+                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
               />
             </label>
-            <label className="mt-4 block text-xs uppercase tracking-wide text-[#8A8A8A]">
+            <label className="mt-4 block text-xs uppercase tracking-wide text-[#A8A8A4]">
               Materials &amp; care
               <textarea
                 {...form.register("details")}
                 rows={6}
-                className="mt-1 w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-ivory"
+                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
               />
             </label>
           </section>
 
-          <section className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
+          <section className="rounded-sm border border-[#EBEBEA] bg-white p-6">
             <h2 className="font-display text-lg text-gold">Media</h2>
-            <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-gold/30 px-6 py-10 text-sm text-[#8A8A8A] hover:border-gold/50">
+            <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-[#EBEBEA] px-6 py-10 text-sm text-[#A8A8A4] hover:border-[#F5F5F3]0">
               <input
                 type="file"
                 accept="image/*"
@@ -368,7 +368,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
             </label>
             <div className="mt-4 grid grid-cols-3 gap-3">
               {images.map((im, idx) => (
-                <div key={`${im.url}-${idx}`} className="relative rounded-sm border border-gold/10 p-1">
+                <div key={`${im.url}-${idx}`} className="relative rounded-sm border border-[#EBEBEA] p-1">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={im.url} alt="" className="h-28 w-full rounded-sm object-cover" />
                   <div className="mt-1 flex justify-between gap-1">
@@ -377,7 +377,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                       onClick={() => setPrimary(idx)}
                       className={cn(
                         "text-xs",
-                        im.isPrimary ? "text-gold" : "text-[#8A8A8A]",
+                        im.isPrimary ? "text-gold" : "text-[#A8A8A4]",
                       )}
                     >
                       {im.isPrimary ? "★ Primary" : "☆ Set primary"}
@@ -391,43 +391,43 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
             </div>
           </section>
 
-          <section className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
+          <section className="rounded-sm border border-[#EBEBEA] bg-white p-6">
             <h2 className="font-display text-lg text-gold">Variants &amp; pricing</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-3">
-              <label className="text-xs uppercase text-[#8A8A8A]">
+              <label className="text-xs uppercase text-[#A8A8A4]">
                 Base ₦
                 <input
                   type="number"
                   {...form.register("basePriceNGN", { valueAsNumber: true })}
-                  className="mt-1 w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-ivory"
+                  className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
                 />
               </label>
-              <label className="text-xs uppercase text-[#8A8A8A]">
+              <label className="text-xs uppercase text-[#A8A8A4]">
                 Base $
                 <input
                   type="number"
                   step="any"
                   {...form.register("basePriceUSD")}
-                  className="mt-1 w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-ivory"
+                  className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
                 />
               </label>
-              <label className="text-xs uppercase text-[#8A8A8A]">
+              <label className="text-xs uppercase text-[#A8A8A4]">
                 Base £
                 <input
                   type="number"
                   step="any"
                   {...form.register("basePriceGBP")}
-                  className="mt-1 w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-ivory"
+                  className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
                 />
               </label>
             </div>
-            <p className="mt-2 text-xs text-[#8A8A8A]">Leave USD/GBP blank to use live exchange rates on the storefront.</p>
+            <p className="mt-2 text-xs text-[#A8A8A4]">Leave USD/GBP blank to use live exchange rates on the storefront.</p>
             <div className="mt-4 flex items-center gap-3">
               <Controller
                 control={form.control}
                 name="isOnSale"
                 render={({ field }) => (
-                  <label className="flex items-center gap-2 text-sm text-ivory/90">
+                  <label className="flex items-center gap-2 text-sm text-charcoal">
                     <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
                     Product is on sale
                   </label>
@@ -451,11 +451,11 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
             )}
           </section>
 
-          <section className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
+          <section className="rounded-sm border border-[#EBEBEA] bg-white p-6">
             <h2 className="font-display text-lg text-gold">Colours</h2>
             <button
               type="button"
-              className="mt-3 rounded-sm border border-gold/30 px-3 py-1 text-xs text-gold"
+              className="mt-3 rounded-sm border border-[#EBEBEA] px-3 py-1 text-xs text-gold"
               onClick={() => appendColor({ name: "New", hex: "#000000", imageUrl: null })}
             >
               + Add colour
@@ -465,13 +465,13 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                 <div key={field.id} className="flex flex-wrap items-end gap-2">
                   <input
                     {...form.register(`colors.${i}.name`)}
-                    className="min-w-[100px] flex-1 rounded-sm border border-gold/15 bg-[#0F0F0F] px-2 py-1 text-sm text-ivory"
+                    className="min-w-[100px] flex-1 rounded-sm border border-[#EBEBEA] bg-white px-2 py-1 text-sm text-charcoal"
                     placeholder="Name"
                   />
                   <input type="color" {...form.register(`colors.${i}.hex`)} className="h-9 w-12 cursor-pointer bg-transparent" />
                   <input
                     {...form.register(`colors.${i}.imageUrl`)}
-                    className="min-w-[160px] flex-1 rounded-sm border border-gold/15 bg-[#0F0F0F] px-2 py-1 text-xs text-ivory"
+                    className="min-w-[160px] flex-1 rounded-sm border border-[#EBEBEA] bg-white px-2 py-1 text-xs text-charcoal"
                     placeholder="Image URL (optional)"
                   />
                   <button type="button" className="text-red-400" onClick={() => removeColor(i)}>
@@ -482,23 +482,23 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
             </div>
           </section>
 
-          <section className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
+          <section className="rounded-sm border border-[#EBEBEA] bg-white p-6">
             <h2 className="font-display text-lg text-gold">Complete the Look</h2>
-            <p className="mt-2 text-xs text-[#8A8A8A]">Link up to 4 published pieces shoppers may add alongside this product.</p>
+            <p className="mt-2 text-xs text-[#A8A8A4]">Link up to 4 published pieces shoppers may add alongside this product.</p>
             <div className="relative mt-4">
               <input
                 value={bundleSearch}
                 onChange={(e) => setBundleSearch(e.target.value)}
                 disabled={bundleIds.length >= 4}
                 placeholder={bundleIds.length >= 4 ? "Maximum 4 products" : "Search published products…"}
-                className="w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-sm text-ivory placeholder:text-[#8A8A8A] disabled:opacity-50"
+                className="w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-sm text-charcoal placeholder:text-[#A8A8A4] disabled:opacity-50"
               />
               {bundleSearch.trim().length >= 2 && bundleIds.length < 4 ? (
-                <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-sm border border-gold/20 bg-[#252525] py-1 shadow-lg">
+                <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-sm border border-[#E8E8E4] bg-[#FAFAFA] py-1 shadow-lg">
                   {bundleSearching ? (
-                    <p className="px-3 py-2 text-xs text-[#8A8A8A]">Searching…</p>
+                    <p className="px-3 py-2 text-xs text-[#A8A8A4]">Searching…</p>
                   ) : bundleResults.length === 0 ? (
-                    <p className="px-3 py-2 text-xs text-[#8A8A8A]">No matches</p>
+                    <p className="px-3 py-2 text-xs text-[#A8A8A4]">No matches</p>
                   ) : (
                     bundleResults.map((p) => {
                       const img = p.images.find((i) => i.isPrimary) ?? p.images[0];
@@ -508,13 +508,13 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                           type="button"
                           onClick={() => addBundle(p)}
                           disabled={bundleIds.includes(p.id)}
-                          className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-[#1E1E1E] disabled:opacity-40"
+                          className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:border border-[#EBEBEA] bg-white disabled:opacity-40"
                         >
-                          <div className="relative h-12 w-9 shrink-0 overflow-hidden rounded-sm bg-[#0F0F0F]">
+                          <div className="relative h-12 w-9 shrink-0 overflow-hidden rounded-sm border border-[#EBEBEA] bg-white">
                             {img?.url ? <Image src={img.url} alt="" fill className="object-cover" sizes="36px" /> : null}
                           </div>
                           <div className="min-w-0">
-                            <div className="truncate text-ivory">{p.name}</div>
+                            <div className="truncate text-charcoal">{p.name}</div>
                             <div className="text-[11px] text-gold/80">{p.category.replace(/_/g, " ")}</div>
                           </div>
                         </button>
@@ -530,7 +530,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                 return (
                   <span
                     key={bid}
-                    className="inline-flex items-center gap-2 rounded-full border border-gold/20 bg-[#0F0F0F] py-1 pl-1 pr-2 text-xs text-ivory"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#E8E8E4] border border-[#EBEBEA] bg-white py-1 pl-1 pr-2 text-xs text-charcoal"
                   >
                     {meta.thumb ? (
                       <span className="relative h-8 w-6 shrink-0 overflow-hidden rounded-sm">
@@ -547,28 +547,28 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
             </div>
           </section>
 
-          <section className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
+          <section className="rounded-sm border border-[#EBEBEA] bg-white p-6">
             <h2 className="font-display text-lg text-gold">SEO</h2>
-            <label className="mt-3 block text-xs uppercase text-[#8A8A8A]">
+            <label className="mt-3 block text-xs uppercase text-[#A8A8A4]">
               Meta title
-              <input {...form.register("metaTitle")} maxLength={60} className="mt-1 w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-ivory" />
+              <input {...form.register("metaTitle")} maxLength={60} className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal" />
             </label>
-            <label className="mt-3 block text-xs uppercase text-[#8A8A8A]">
+            <label className="mt-3 block text-xs uppercase text-[#A8A8A4]">
               Meta description
               <textarea
                 {...form.register("metaDescription")}
                 maxLength={160}
                 rows={3}
-                className="mt-1 w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-ivory"
+                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
               />
             </label>
           </section>
         </div>
 
         <div className="space-y-6">
-          <section className="sticky top-6 rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
+          <section className="sticky top-6 rounded-sm border border-[#EBEBEA] bg-white p-6">
             <h2 className="font-display text-lg text-gold">Status</h2>
-            <div className="mt-4 space-y-3 text-sm text-ivory/90">
+            <div className="mt-4 space-y-3 text-sm text-charcoal">
               <Controller
                 control={form.control}
                 name="isPublished"
@@ -611,17 +611,17 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
               />
             </div>
             {product && (
-              <p className="mt-4 text-xs text-[#8A8A8A]">
+              <p className="mt-4 text-xs text-[#A8A8A4]">
                 Updated {new Date(product.updatedAt).toLocaleString()}
               </p>
             )}
           </section>
 
-          <section className="rounded-sm border border-gold/10 bg-[#1E1E1E] p-6">
+          <section className="rounded-sm border border-[#EBEBEA] bg-white p-6">
             <h2 className="font-display text-lg text-gold">Organisation</h2>
-            <label className="mt-3 block text-xs uppercase text-[#8A8A8A]">
+            <label className="mt-3 block text-xs uppercase text-[#A8A8A4]">
               Category
-              <select {...form.register("category")} className="mt-1 w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-ivory">
+              <select {...form.register("category")} className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal">
                 {CATEGORY_OPTIONS.map((c) => (
                   <option key={c} value={c}>
                     {c.replace(/_/g, " ")}
@@ -629,8 +629,8 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                 ))}
               </select>
             </label>
-            <fieldset className="mt-4 text-sm text-ivory/90">
-              <legend className="text-xs uppercase text-[#8A8A8A]">Product type</legend>
+            <fieldset className="mt-4 text-sm text-charcoal">
+              <legend className="text-xs uppercase text-[#A8A8A4]">Product type</legend>
               <label className="mr-4 mt-2 inline-flex items-center gap-2">
                 <input type="radio" value={PT.RTW} {...form.register("type")} />
                 RTW
@@ -640,10 +640,10 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                 Bespoke
               </label>
             </fieldset>
-            <label className="mt-4 block text-xs uppercase text-[#8A8A8A]">
+            <label className="mt-4 block text-xs uppercase text-[#A8A8A4]">
               Tags (comma-separated)
               <input
-                className="mt-1 w-full rounded-sm border border-gold/15 bg-[#0F0F0F] px-3 py-2 text-ivory"
+                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
                 defaultValue={defaults.tags.join(", ")}
                 onBlur={(e) =>
                   form.setValue(
