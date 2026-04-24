@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { SectionLabel } from "@/components/ui/SectionLabel";
-import { Button } from "@/components/ui/Button";
 
 const schema = z.object({ email: z.string().email() });
 type Form = z.infer<typeof schema>;
@@ -27,37 +25,33 @@ export function NewsletterSection() {
   };
 
   return (
-    <section className="relative overflow-hidden bg-wine py-20">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.08]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-        }}
-      />
-      <div className="relative z-10 mx-auto max-w-lg px-5 text-center">
-        <SectionLabel light className="text-ivory/70">
-          INNER CIRCLE
-        </SectionLabel>
-        <h2 className="mt-4 font-display text-3xl italic text-gold md:text-4xl">Join the Atelier Community</h2>
-        <p className="mt-4 font-body text-ivory/70">
-          Early access to collections, exclusive offers, and stories from the atelier.
+    <section className="bg-olive py-16 md:py-20">
+      <div className="mx-auto max-w-lg px-8 text-center">
+        <p className="font-body text-[10px] font-medium uppercase tracking-[0.25em] text-white/50">Stay Connected</p>
+        <h2 className="mt-3 font-display text-[40px] font-normal italic leading-[1.1] text-white">Join the Inner Circle.</h2>
+        <p className="mt-4 font-body text-[14px] font-light text-white/65">
+          New collections, exclusive access, and stories from the atelier.
         </p>
         {done ? (
-          <p className="mt-8 font-body text-ivory">✓ You&apos;re on the list. Welcome to the inner circle.</p>
+          <p className="mt-8 font-body text-[14px] text-white/90">You&apos;re on the list. Thank you.</p>
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-8 flex w-full max-w-md mx-auto border-b border-white/40 focus-within:border-white">
             <input
               type="email"
-              placeholder="Email address"
-              className="flex-1 rounded-sm border border-ivory/40 bg-transparent px-4 py-3 text-ivory placeholder:text-ivory/40 focus:border-gold focus:outline-none"
+              placeholder="Your email address"
+              className="h-12 min-w-0 flex-1 border-0 bg-transparent px-4 font-body text-[13px] font-light text-white placeholder:text-white/40 focus:outline-none"
               {...register("email")}
             />
-            <Button type="submit" variant="gold" loading={formState.isSubmitting}>
+            <button
+              type="submit"
+              disabled={formState.isSubmitting}
+              className="h-12 shrink-0 bg-white px-7 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-olive transition-colors hover:bg-off-white disabled:opacity-60"
+            >
               Subscribe
-            </Button>
+            </button>
           </form>
         )}
-        <p className="mt-4 text-xs text-ivory/40">No spam, ever. Unsubscribe anytime.</p>
+        <p className="mt-4 font-body text-[11px] text-white/35">No spam. Unsubscribe at any time.</p>
       </div>
     </section>
   );

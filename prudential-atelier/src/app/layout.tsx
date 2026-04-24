@@ -1,30 +1,23 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Cormorant_SC, DM_Sans } from "next/font/google";
+import { Bodoni_Moda, Jost } from "next/font/google";
 import "@/styles/globals.css";
 import { auth } from "@/auth";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { LenisProvider } from "@/providers/LenisProvider";
 import { RootProvider } from "@/providers/RootProvider";
 
-const cormorant = Cormorant_Garamond({
+const bodoni = Bodoni_Moda({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  style: ["normal", "italic"],
+  variable: "--font-bodoni",
+  display: "swap",
+});
+
+const jost = Jost({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
-  style: ["normal", "italic"],
-  variable: "--font-cormorant",
-  display: "swap",
-});
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["300", "400", "500"],
-  variable: "--font-dm-sans",
-  display: "swap",
-});
-
-const cormorantSC = Cormorant_SC({
-  subsets: ["latin"],
-  weight: ["500"],
-  variable: "--font-cormorant-sc",
+  variable: "--font-jost",
   display: "swap",
 });
 
@@ -33,8 +26,8 @@ const siteUrl = getPublicAppUrl();
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    template: "%s | Prudential Atelier",
-    default: "Prudential Atelier — Luxury Nigerian Fashion & Bespoke Couture",
+    template: "%s | Prudent Gabriel",
+    default: "Prudent Gabriel — Luxury Nigerian Fashion & Bespoke Couture",
   },
   description:
     "Bespoke couture and ready-to-wear by Mrs. Prudent Gabriel-Okopi. Luxury Nigerian fashion for the modern woman — bridal, evening, formal, and casual wear. Ships worldwide.",
@@ -51,8 +44,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_NG",
     url: siteUrl,
-    siteName: "Prudential Atelier",
-    title: "Prudential Atelier — Luxury Nigerian Fashion",
+    siteName: "Prudent Gabriel",
+    title: "Prudent Gabriel — Luxury Nigerian Fashion",
     description:
       "Bespoke couture and ready-to-wear for the woman who commands every room. Lagos, Nigeria.",
   },
@@ -60,7 +53,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@prudent_gabriel",
     creator: "@prudent_gabriel",
-    title: "Prudential Atelier",
+    title: "Prudent Gabriel",
     description: "Where culture meets couture. Every stitch is a story.",
   },
 };
@@ -73,7 +66,7 @@ export default async function RootLayout({
   const session = await auth();
 
   return (
-    <html lang="en" className={`${cormorant.variable} ${dmSans.variable} ${cormorantSC.variable}`}>
+    <html lang="en" className={`${bodoni.variable} ${jost.variable}`}>
       <body className="min-h-screen">
         <RootProvider session={session}>
           <LenisProvider>{children}</LenisProvider>

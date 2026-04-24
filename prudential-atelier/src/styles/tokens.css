@@ -1,40 +1,55 @@
-/* src/styles/tokens.css */
+/* src/styles/tokens.css — Session 7 luxury editorial palette */
 :root {
-  /* ── Brand Colors ── */
-  --wine: #6b1c2a;
-  --wine-hover: #7d2233;
-  --wine-dark: #4a1019;
-  --wine-muted: rgba(107, 28, 42, 0.1);
+  /* Primary palette */
+  --white: #ffffff;
+  --off-white: #f8f8f6;
+  --light-grey: #f2f2f0;
+  --mid-grey: #e8e8e4;
+  --dark-grey: #8a8a85;
+  --charcoal: #2a2a28;
+  --black: #0a0a0a;
 
-  --gold: #c9a84c;
-  --gold-hover: #d9bb62;
-  --gold-muted: rgba(201, 168, 76, 0.15);
-  --gold-dark: #a8893a;
+  /* Accent — olive */
+  --olive: #37392d;
+  --olive-hover: #2c2e24;
+  --olive-light: #37392d18;
+  --olive-mid: #5a5d4a;
 
-  --ivory: #faf6ef;
-  --ivory-dark: #f0e8d8;
-  --ivory-deeper: #e8d9c0;
+  /* Prudential Bride */
+  --bride-bg: #faf7f4;
+  --bride-accent: #c8a97a;
+  --bride-dark: #2a1f1a;
 
-  --charcoal: #1a1a1a;
-  --charcoal-mid: #3d3d3d;
-  --charcoal-light: #6b6b6b;
-
-  --cream: #fefaf3;
-  --border: #e8ddd0;
-  --border-dark: #c8b89a;
-
-  /* ── Semantic Colors ── */
-  --success: #2d6a4f;
-  --error: #c1121f;
+  /* Functional */
+  --success: #2d5016;
+  --error: #8b1a1a;
   --warning: #e76f51;
   --info: #457b9d;
+  --border: #e8e8e4;
+  --border-dark: #c8c8c4;
 
-  /* ── Typography ── */
-  --font-display: "Cormorant Garamond", Georgia, serif;
-  --font-body: "DM Sans", system-ui, sans-serif;
-  --font-label: "Cormorant SC", Georgia, serif;
+  /* Typography (overridden by next/font variables on html) */
+  --font-display: "Bodoni Moda", "Didot", "Times New Roman", serif;
+  --font-body: "Jost", "Helvetica Neue", system-ui, sans-serif;
+  --font-label: "Jost", system-ui, sans-serif;
 
-  /* ── Spacing Scale ── */
+  /* Legacy names → new system (keep components working) */
+  --wine: var(--olive);
+  --wine-hover: var(--olive-hover);
+  --wine-dark: var(--olive-hover);
+  --wine-muted: var(--olive-light);
+  --gold: var(--bride-accent);
+  --gold-hover: #d4b68a;
+  --gold-muted: rgba(200, 169, 122, 0.22);
+  --gold-dark: #a88b5c;
+  --ivory: var(--off-white);
+  --ivory-dark: var(--light-grey);
+  --ivory-deeper: var(--mid-grey);
+  --cream: var(--off-white);
+  --charcoal-mid: #5c5c58;
+  --charcoal-light: var(--dark-grey);
+
+  /* Spacing scale */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
@@ -44,20 +59,19 @@
   --space-3xl: 96px;
   --space-4xl: 128px;
 
-  /* ── Border Radius ── */
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 8px;
-  --radius-xl: 16px;
+  /* Radius — site is square-edged */
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
 
-  /* ── Shadows ── */
-  --shadow-sm: 0 1px 3px rgba(26, 26, 26, 0.08);
-  --shadow-md: 0 4px 16px rgba(26, 26, 26, 0.1);
-  --shadow-lg: 0 8px 40px rgba(26, 26, 26, 0.14);
-  --shadow-gold: 0 4px 24px rgba(201, 168, 76, 0.2);
+  /* Shadows — minimal */
+  --shadow-sm: 0 1px 2px rgba(10, 10, 10, 0.06);
+  --shadow-md: 0 4px 16px rgba(10, 10, 10, 0.08);
+  --shadow-lg: 0 8px 32px rgba(10, 10, 10, 0.1);
+  --shadow-gold: 0 4px 24px rgba(200, 169, 122, 0.15);
 
-  /* ── Transitions ── */
   --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --duration: 300ms;
+  --duration: 200ms;
 }

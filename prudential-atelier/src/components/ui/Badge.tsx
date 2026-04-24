@@ -11,11 +11,11 @@ interface BadgeProps {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  wine: "bg-wine text-ivory",
-  gold: "bg-gold text-charcoal",
-  success: "bg-success text-ivory",
+  wine: "bg-olive text-white",
+  gold: "bg-charcoal text-white",
+  success: "bg-success text-white",
   "outline-gold": "border border-gold bg-transparent text-gold",
-  "outline-wine": "border border-wine bg-transparent text-wine",
+  "outline-wine": "border border-olive bg-transparent text-olive",
   grey: "bg-charcoal/10 text-charcoal-mid",
 };
 
@@ -28,8 +28,7 @@ export function Badge({ children, variant = "wine", size = "md", className }: Ba
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-sm",
-        "font-label uppercase",
+        "inline-flex items-center font-label uppercase",
         sizeClasses[size],
         variantClasses[variant],
         className,

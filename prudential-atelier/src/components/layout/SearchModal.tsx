@@ -114,7 +114,7 @@ export function SearchModal() {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[60] bg-charcoal/95 backdrop-blur-sm"
+          className="fixed inset-0 z-[60] bg-white/98 backdrop-blur-md"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -130,7 +130,7 @@ export function SearchModal() {
             <button
               type="button"
               onClick={closeSearch}
-              className="absolute right-4 top-6 text-ivory hover:text-gold"
+              className="absolute right-4 top-6 text-charcoal hover:text-olive"
               aria-label="Close search"
             >
               <X className="h-6 w-6" />
@@ -140,18 +140,18 @@ export function SearchModal() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search for a piece..."
-              className="h-12 w-full border-0 border-b border-ivory/20 bg-transparent font-display text-2xl text-ivory placeholder:text-ivory/40 focus:border-gold focus:outline-none focus:ring-0"
+              className="h-14 w-full border-0 border-b border-mid-grey bg-transparent font-display text-2xl italic text-charcoal placeholder:text-dark-grey focus:border-olive focus:outline-none focus:ring-0 md:text-[32px]"
             />
 
             {showRecent && (
               <div className="mt-10">
                 <div className="mb-3 flex items-center justify-between">
-                  <span className="font-label text-[11px] uppercase tracking-[0.2em] text-ivory/60">
+                  <span className="font-body text-[11px] font-medium uppercase tracking-[0.2em] text-dark-grey">
                     RECENT SEARCHES
                   </span>
                   <button
                     type="button"
-                    className="font-label text-[10px] uppercase tracking-wider text-gold hover:underline"
+                    className="font-body text-[10px] font-medium uppercase tracking-wider text-olive hover:underline"
                     onClick={() => {
                       localStorage.removeItem(RECENT_KEY);
                       setRecent([]);
@@ -166,7 +166,7 @@ export function SearchModal() {
                       key={r}
                       type="button"
                       onClick={() => setQ(r)}
-                      className="rounded-full border border-ivory/30 px-3 py-1.5 font-body text-sm text-ivory hover:border-gold"
+                      className="border border-mid-grey px-3 py-1.5 font-body text-sm text-charcoal hover:border-olive"
                     >
                       {r}
                     </button>
@@ -177,7 +177,7 @@ export function SearchModal() {
 
             {showFeatured && (
               <div className="mt-10">
-                <span className="font-label text-[11px] uppercase tracking-[0.2em] text-ivory/60">
+                <span className="font-body text-[11px] font-medium uppercase tracking-[0.2em] text-dark-grey">
                   FEATURED PIECES
                 </span>
                 <div className="mt-6 grid grid-cols-2 gap-4">
@@ -188,7 +188,7 @@ export function SearchModal() {
                       onClick={() => goProduct(p.slug)}
                       className="text-left"
                     >
-                      <div className="relative aspect-[3/4] overflow-hidden rounded-sm bg-ivory-dark">
+                      <div className="relative aspect-[3/4] overflow-hidden bg-light-grey">
                         {p.images[0] && (
                           <Image
                             src={p.images[0].url}
@@ -199,8 +199,8 @@ export function SearchModal() {
                           />
                         )}
                       </div>
-                      <p className="mt-2 font-display text-sm text-ivory line-clamp-1">{p.name}</p>
-                      <p className="text-xs text-ivory/70">{fmt(lowest(p))}</p>
+                      <p className="mt-2 font-body text-sm text-charcoal line-clamp-1">{p.name}</p>
+                      <p className="text-xs text-dark-grey">{fmt(lowest(p))}</p>
                     </button>
                   ))}
                 </div>
@@ -222,7 +222,7 @@ export function SearchModal() {
                     ))}
                   </div>
                 ) : results.length === 0 ? (
-                  <p className="italic text-ivory/60">No pieces found for &apos;{debounced}&apos;</p>
+                  <p className="italic text-dark-grey">No pieces found for &apos;{debounced}&apos;</p>
                 ) : (
                   <ul className="space-y-3">
                     {results.map((p) => (
@@ -230,9 +230,9 @@ export function SearchModal() {
                         <button
                           type="button"
                           onClick={() => goProduct(p.slug, debounced)}
-                          className="flex w-full gap-3 rounded-sm p-2 text-left transition-colors hover:bg-ivory/10"
+                          className="flex w-full gap-3 p-2 text-left transition-colors hover:bg-light-grey"
                         >
-                          <div className="relative h-[60px] w-12 shrink-0 overflow-hidden rounded-sm bg-ivory-dark">
+                          <div className="relative h-[60px] w-12 shrink-0 overflow-hidden bg-light-grey">
                             {p.images[0] && (
                               <Image
                                 src={p.images[0].url}
@@ -244,10 +244,10 @@ export function SearchModal() {
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="font-display text-sm text-ivory line-clamp-1">{p.name}</p>
+                            <p className="font-body text-sm text-charcoal line-clamp-1">{p.name}</p>
                             <BadgeGold>{String(p.category).replace(/_/g, " ")}</BadgeGold>
                           </div>
-                          <span className="shrink-0 text-sm text-ivory">{fmt(lowest(p))}</span>
+                          <span className="shrink-0 text-sm text-olive">{fmt(lowest(p))}</span>
                         </button>
                       </li>
                     ))}
@@ -264,7 +264,7 @@ export function SearchModal() {
 
 function BadgeGold({ children }: { children: React.ReactNode }) {
   return (
-    <span className="mt-1 inline-block font-label text-[9px] uppercase tracking-wider text-gold">
+    <span className="mt-1 inline-block font-body text-[9px] font-medium uppercase tracking-wider text-olive">
       {children}
     </span>
   );

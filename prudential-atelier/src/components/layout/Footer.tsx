@@ -1,62 +1,65 @@
+import Image from "next/image";
 import Link from "next/link";
-import { FacebookIcon, InstagramIcon } from "@/components/icons/SocialIcons";
+import { FacebookIcon, InstagramIcon, TikTokIcon, YouTubeIcon } from "@/components/icons/SocialIcons";
 
 const SHOP_LINKS = [
-  { label: "New Arrivals", href: "/shop?filter=newArrival" },
-  { label: "RTW Collection", href: "/shop?type=RTW" },
-  { label: "Bespoke Couture", href: "/bespoke" },
-  { label: "Book Consultation", href: "/consultation" },
-  { label: "Bridal", href: "/shop?category=BRIDAL" },
+  { label: "New Arrivals", href: "/shop?newArrival=true" },
+  { label: "Ready to Wear", href: "/shop" },
+  { label: "Prudential Bride", href: "/shop?category=BRIDAL" },
+  { label: "Bespoke", href: "/bespoke" },
+  { label: "Sale", href: "/shop?sale=true" },
 ];
 
 const COMPANY_LINKS: { label: string; href: string; external?: boolean }[] = [
   { label: "Our Story", href: "/our-story" },
   { label: "Press", href: "/press" },
-  { label: "Contact Us", href: "/contact" },
+  { label: "Careers", href: "/contact" },
+  { label: "Contact", href: "/contact" },
   { label: "PFA Academy ↗", href: "https://pfacademy.ng", external: true },
+];
+
+const CONSULT_LINKS = [
+  { label: "Book a Consultation", href: "/consultation" },
+  { label: "Style Session", href: "/consultation" },
+  { label: "Bridal Consult", href: "/consultation" },
+  { label: "Home Visit", href: "/consultation" },
 ];
 
 export function Footer() {
   return (
-    <footer className="bg-charcoal text-ivory/70">
-      <div className="h-px w-full bg-gold/30" />
+    <footer className="bg-black text-white/60">
+      <div className="h-0.5 w-full bg-olive" />
 
-      <div className="mx-auto max-w-site px-6 py-16 lg:px-10">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-16">
-          <div className="lg:col-span-1">
-            <p className="mb-4 font-display text-xl uppercase tracking-[0.1em] text-ivory">Prudential Atelier</p>
-            <p className="mb-6 font-body text-sm leading-relaxed text-ivory/60">
-              Luxury Nigerian fashion for the woman who commands every room.
-            </p>
-            <div className="flex items-center gap-4">
-              <a
-                href="https://instagram.com/prudent_gabriel"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-ivory/40 transition-colors hover:text-gold"
-              >
+      <div className="mx-auto max-w-[1400px] px-6 py-16 md:px-8 lg:py-20">
+        <div className="grid grid-cols-2 gap-10 md:grid-cols-3 lg:grid-cols-5 lg:gap-8">
+          <div className="col-span-2 lg:col-span-2">
+            <Link href="/" className="inline-block" style={{ filter: "brightness(0) invert(1)" }}>
+              <Image src="/images/logo.svg" alt="Prudent Gabriel" width={36} height={36} className="object-contain" />
+            </Link>
+            <p className="mt-4 font-body text-[11px] font-medium uppercase tracking-[0.2em] text-white/40">Prudent Gabriel</p>
+            <p className="mt-1 font-body text-[12px] font-light text-white/30">Lagos, Nigeria</p>
+            <div className="mt-6 flex items-center gap-4 text-white/50">
+              <a href="https://instagram.com/prudent_gabriel" target="_blank" rel="noopener noreferrer" className="hover:text-white">
                 <InstagramIcon size={18} />
               </a>
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-ivory/40 transition-colors hover:text-gold"
-              >
+              <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">
+                <TikTokIcon size={18} />
+              </a>
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">
                 <FacebookIcon size={18} />
+              </a>
+              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">
+                <YouTubeIcon size={18} />
               </a>
             </div>
           </div>
 
           <div>
-            <p className="mb-4 font-label text-[11px] uppercase tracking-[0.18em] text-gold">Shop</p>
-            <ul className="space-y-3">
+            <p className="mb-4 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/40">Shop</p>
+            <ul className="space-y-2">
               {SHOP_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="font-body text-sm text-ivory/60 transition-colors hover:text-ivory"
-                  >
+                <li key={link.label}>
+                  <Link href={link.href} className="font-body text-[13px] font-light leading-loose text-white/60 hover:text-white">
                     {link.label}
                   </Link>
                 </li>
@@ -65,24 +68,21 @@ export function Footer() {
           </div>
 
           <div>
-            <p className="mb-4 font-label text-[11px] uppercase tracking-[0.18em] text-gold">Company</p>
-            <ul className="space-y-3">
+            <p className="mb-4 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/40">Company</p>
+            <ul className="space-y-2">
               {COMPANY_LINKS.map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   {link.external ? (
                     <a
                       href={link.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-body text-sm text-ivory/60 transition-colors hover:text-gold"
+                      className="font-body text-[13px] font-light leading-loose text-white/60 hover:text-white"
                     >
                       {link.label}
                     </a>
                   ) : (
-                    <Link
-                      href={link.href}
-                      className="font-body text-sm text-ivory/60 transition-colors hover:text-ivory"
-                    >
+                    <Link href={link.href} className="font-body text-[13px] font-light leading-loose text-white/60 hover:text-white">
                       {link.label}
                     </Link>
                   )}
@@ -92,32 +92,39 @@ export function Footer() {
           </div>
 
           <div>
-            <p className="mb-4 font-label text-[11px] uppercase tracking-[0.18em] text-gold">Inner Circle</p>
-            <p className="mb-4 font-display text-lg italic text-ivory">&quot;Join the Atelier Community&quot;</p>
-            <p className="mb-4 font-body text-xs text-ivory/50">
-              Early access to collections, exclusive offers, and stories from the atelier.
+            <p className="mb-4 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/40">Consultations</p>
+            <ul className="space-y-2">
+              {CONSULT_LINKS.map((link) => (
+                <li key={link.label}>
+                  <Link href={link.href} className="font-body text-[13px] font-light leading-loose text-white/60 hover:text-white">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="col-span-2 lg:col-span-1">
+            <p className="mb-4 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/40">Newsletter</p>
+            <p className="mb-3 max-w-xs font-body text-[12px] font-light text-white/50">
+              Subscribe for early access and atelier stories.
             </p>
-            <div className="flex gap-2">
+            <div className="flex max-w-xs border-b border-white/20">
               <input
                 type="email"
-                placeholder="Your email"
-                className="flex-1 rounded-sm border border-charcoal-mid bg-charcoal-mid px-3 py-2 font-body text-sm text-ivory outline-none transition-colors placeholder:text-ivory/30 focus:border-gold"
+                placeholder="Email"
+                className="min-w-0 flex-1 border-0 bg-transparent py-2 font-body text-[12px] text-white placeholder:text-white/30 focus:outline-none"
               />
-              <button
-                type="button"
-                className="rounded-sm bg-gold px-4 py-2 font-label text-[11px] uppercase tracking-[0.1em] text-charcoal transition-colors hover:bg-gold-hover"
-              >
-                Join
+              <button type="button" className="shrink-0 px-2 font-body text-lg text-white/70 hover:text-white" aria-label="Subscribe">
+                →
               </button>
             </div>
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-charcoal-mid pt-8 md:flex-row">
-          <p className="font-body text-xs text-ivory/40">
-            © {new Date().getFullYear()} Prudential Atelier · All Rights Reserved
-          </p>
-          <div className="flex items-center gap-6">
+        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 md:flex-row">
+          <p className="font-body text-[11px] text-white/25">© {new Date().getFullYear()} Prudent Gabriel. All Rights Reserved.</p>
+          <div className="flex flex-wrap items-center justify-center gap-6">
             {(
               [
                 ["Privacy Policy", "/legal/privacy"],
@@ -125,16 +132,11 @@ export function Footer() {
                 ["Returns", "/legal/returns"],
               ] as const
             ).map(([label, href]) => (
-              <Link
-                key={href}
-                href={href}
-                className="font-body text-xs text-ivory/40 transition-colors hover:text-ivory/70"
-              >
+              <Link key={href} href={href} className="font-body text-[11px] text-white/25 transition-colors hover:text-white/60">
                 {label}
               </Link>
             ))}
           </div>
-          <p className="font-body text-xs text-ivory/30">Made with ♡ in Lagos</p>
         </div>
       </div>
     </footer>

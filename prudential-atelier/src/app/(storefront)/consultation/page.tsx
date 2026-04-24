@@ -11,10 +11,10 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
   const base = getPublicAppUrl();
   return {
-    title: "Book a Consultation — Prudential Atelier",
-    description: "Choose your consultant and book a private session with Prudential Atelier.",
+    title: "Book a Consultation — Prudent Gabriel",
+    description: "Choose your consultant and book a private session with Prudent Gabriel.",
     openGraph: {
-      title: "Book a Consultation — Prudential Atelier",
+      title: "Book a Consultation — Prudent Gabriel",
       url: `${base}/consultation`,
     },
   };
@@ -32,34 +32,29 @@ export default async function ConsultationPage() {
   const consultants = rows as ConsultantWithOfferings[];
 
   return (
-    <div className="bg-ivory">
-      <section className="relative flex min-h-[300px] flex-col justify-center overflow-hidden md:min-h-[500px]">
+    <div className="bg-white">
+      <section className="relative flex h-[300px] flex-col justify-center overflow-hidden md:h-[500px]">
         <Image
-          src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=1400"
+          src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1600&q=90"
           alt=""
           fill
           priority
-          className="object-cover"
+          className="object-cover object-center"
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-charcoal/75" />
-        <div className="relative z-10 mx-auto max-w-site px-6 py-16 text-center lg:px-10">
-          <SectionLabel className="text-gold">BOOK A CONSULTATION</SectionLabel>
-          <h1 className="mt-4 font-display text-4xl italic leading-tight text-ivory md:text-5xl">
-            Your Vision Starts
+        <div className="absolute inset-0 bg-charcoal/70" />
+        <div className="relative z-10 mx-auto max-w-site px-6 py-12 text-center md:px-10">
+          <SectionLabel light className="text-white/50">
+            Book a Consultation
+          </SectionLabel>
+          <h1 className="mt-3 font-display text-[36px] font-normal italic leading-[0.95] text-white md:text-[64px]">
+            Your Vision,
             <br />
-            With a Conversation.
+            Our Craft.
           </h1>
-          <p className="mx-auto mt-4 max-w-lg text-sm text-ivory/70 md:text-base">
-            Choose your consultant, select your session, and begin the journey to your most exquisite piece.
+          <p className="mx-auto mt-4 max-w-lg font-body text-[14px] font-light text-white/60 md:text-[15px]">
+            Choose your consultant. Select your session. Begin the journey.
           </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-4 font-label text-[11px] text-ivory/60">
-            <span>Secure payment</span>
-            <span className="text-gold/50">|</span>
-            <span>Expert guidance</span>
-            <span className="text-gold/50">|</span>
-            <span>Flexible scheduling</span>
-          </div>
         </div>
       </section>
       <ConsultationBookingFlow consultants={consultants} />

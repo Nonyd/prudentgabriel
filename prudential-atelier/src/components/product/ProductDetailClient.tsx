@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import * as Accordion from "@radix-ui/react-accordion";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Divider } from "@/components/ui/Divider";
 import { StarRating } from "@/components/ui/StarRating";
@@ -123,8 +122,8 @@ export function ProductDetailClient({
 
   return (
     <div className="mx-auto max-w-site px-4 pb-20">
-      <nav className="py-4 text-xs text-charcoal-light">
-        <Link href="/shop" className="hover:text-wine">
+      <nav className="py-4 font-body text-[11px] font-medium uppercase tracking-[0.08em] text-dark-grey">
+        <Link href="/shop" className="hover:text-olive">
           Shop
         </Link>
         <span className="mx-2">/</span>
@@ -137,10 +136,10 @@ export function ProductDetailClient({
         <ProductGallery images={product.images} />
 
         <div className="lg:sticky lg:top-32 lg:self-start">
-          <Badge variant="gold" className="mb-3">
+          <p className="mb-2 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-olive">
             {String(product.category).replace(/_/g, " ")}
-          </Badge>
-          <h1 className="font-display text-4xl text-charcoal md:text-5xl">{product.name}</h1>
+          </p>
+          <h1 className="font-display text-4xl font-normal text-charcoal md:text-[40px]">{product.name}</h1>
 
           <button
             type="button"
@@ -174,10 +173,10 @@ export function ProductDetailClient({
                     key={c.id}
                     type="button"
                     onClick={() => setColorId(c.id)}
-                    className="h-7 w-7 rounded-full ring-2 ring-offset-2 ring-offset-cream transition-shadow"
+                    className="h-5 w-5 rounded-full ring-1 ring-offset-2 ring-offset-white transition-shadow"
                     style={{
                       backgroundColor: c.hex,
-                      boxShadow: colorId === c.id ? "0 0 0 2px var(--wine)" : undefined,
+                      boxShadow: colorId === c.id ? "0 0 0 1px var(--charcoal)" : undefined,
                     }}
                     title={c.name}
                   />
@@ -189,7 +188,7 @@ export function ProductDetailClient({
           <div className="mb-2 flex items-center justify-between">
             <p className="font-label text-xs uppercase text-charcoal-mid">Size</p>
             <SizeGuideModal>
-              <button type="button" className="font-label text-[10px] uppercase text-wine underline">
+              <button type="button" className="font-body text-[10px] font-medium uppercase tracking-wide text-olive underline">
                 Size Guide
               </button>
             </SizeGuideModal>
@@ -204,12 +203,12 @@ export function ProductDetailClient({
                   setVariantId(v.id);
                   setQty(1);
                 }}
-                className={`rounded-sm border px-3 py-2 font-label text-[11px] uppercase ${
+                className={`border px-3 py-2 font-body text-[11px] font-medium uppercase tracking-wide ${
                   variantId === v.id
-                    ? "border-wine bg-wine text-ivory"
+                    ? "border-olive bg-olive text-white"
                     : v.stock === 0
-                      ? "cursor-not-allowed border-border text-charcoal-light/50 line-through"
-                      : "border-border text-charcoal hover:border-wine"
+                      ? "cursor-not-allowed border-mid-grey text-dark-grey/50 line-through"
+                      : "border-mid-grey text-charcoal hover:border-olive"
                 }`}
                 title={v.stock === 0 ? "Sold Out" : undefined}
               >
@@ -218,7 +217,7 @@ export function ProductDetailClient({
             ))}
           </div>
           {lowStock > 0 && (
-            <p className="mt-2 font-label text-[10px] uppercase text-gold">Only {lowStock} left!</p>
+            <p className="mt-2 font-body text-[10px] font-medium uppercase tracking-wide text-olive">Only {lowStock} left!</p>
           )}
           {variant && variant.stock === 0 && (
             <StockAlertForm productId={product.id} variantId={variant.id} />
@@ -229,7 +228,7 @@ export function ProductDetailClient({
             <div className="mt-2 flex items-center gap-3">
               <button
                 type="button"
-                className="flex h-9 w-9 items-center justify-center rounded-sm border border-border hover:border-wine"
+                className="flex h-9 w-9 items-center justify-center rounded-sm border border-border hover:border-olive"
                 disabled={qty <= 1}
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
               >
@@ -238,7 +237,7 @@ export function ProductDetailClient({
               <span className="w-8 text-center">{qty}</span>
               <button
                 type="button"
-                className="flex h-9 w-9 items-center justify-center rounded-sm border border-border hover:border-wine"
+                className="flex h-9 w-9 items-center justify-center rounded-sm border border-border hover:border-olive"
                 disabled={!variant || qty >= variant.stock}
                 onClick={() => setQty((q) => (variant ? Math.min(variant.stock, q + 1) : q))}
               >
@@ -251,9 +250,9 @@ export function ProductDetailClient({
             Add to Bag
           </Button>
 
-          <div className="mt-4 flex w-full items-center justify-center gap-2 rounded-sm border border-wine py-3">
+          <div className="mt-4 flex w-full items-center justify-center gap-2 border border-charcoal py-3">
             <WishlistButton productId={product.id} />
-            <span className="font-label text-[11px] uppercase tracking-wider text-wine">Add to Wishlist</span>
+            <span className="font-body text-[11px] font-medium uppercase tracking-wider text-charcoal">Add to Wishlist</span>
           </div>
 
           <div className="mt-6 flex flex-wrap justify-center gap-4 text-center text-[11px] text-charcoal-light">
@@ -286,7 +285,7 @@ export function ProductDetailClient({
               </Accordion.Header>
               <Accordion.Content className="space-y-3 pb-4 text-sm text-charcoal-mid">
                 <SizeGuideModal>
-                  <button type="button" className="font-label text-wine underline">
+                  <button type="button" className="font-body text-[11px] font-medium uppercase tracking-wide text-olive underline">
                     View Full Size Guide
                   </button>
                 </SizeGuideModal>
@@ -314,7 +313,7 @@ export function ProductDetailClient({
                 <Accordion.Content className="space-y-3 pb-4 text-sm text-charcoal-mid">
                   <p>Have this piece made to your exact measurements.</p>
                   <p>Lead time: 3–6 weeks. Starts from ₦{Math.round(product.basePriceNGN * 1.3).toLocaleString()}</p>
-                  <Link href="/bespoke" className="font-label text-wine underline">
+                  <Link href="/bespoke" className="font-body text-[11px] font-medium uppercase tracking-wide text-olive underline">
                     Book Bespoke Consultation
                   </Link>
                 </Accordion.Content>

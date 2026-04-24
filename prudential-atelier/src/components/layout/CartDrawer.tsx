@@ -48,20 +48,20 @@ export function CartDrawer() {
             onClick={closeCart}
           />
           <motion.aside
-            className="fixed bottom-0 right-0 top-0 z-50 flex w-full max-w-[420px] flex-col bg-cream shadow-xl"
+            className="fixed bottom-0 right-0 top-0 z-50 flex w-full max-w-[420px] flex-col border-l border-mid-grey bg-white shadow-xl"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.35, ease: "easeOut" }}
           >
-            <header className="flex shrink-0 items-center justify-between border-b border-gold/40 px-5 py-4">
-              <h2 className="font-display text-xl text-charcoal">
-                Your Bag <span className="text-charcoal-mid">({totalItems})</span>
+            <header className="flex shrink-0 items-center justify-between border-b border-mid-grey px-5 py-4">
+              <h2 className="font-body text-[12px] font-medium uppercase tracking-[0.12em] text-charcoal">
+                Your Bag ({totalItems})
               </h2>
               <button
                 type="button"
                 onClick={closeCart}
-                className="rounded-sm p-2 text-charcoal hover:bg-wine-muted"
+                className="p-2 text-charcoal hover:bg-light-grey"
                 aria-label="Close cart"
               >
                 <X className="h-5 w-5" />
@@ -72,7 +72,7 @@ export function CartDrawer() {
               {items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <svg
-                    className="mb-4 h-16 w-16 text-wine/80"
+                    className="mb-4 h-16 w-16 text-olive/80"
                     viewBox="0 0 64 64"
                     fill="none"
                     stroke="currentColor"
@@ -101,7 +101,7 @@ export function CartDrawer() {
                       <button
                         type="button"
                         onClick={() => removeItem(item.id)}
-                        className="absolute right-0 top-0 text-charcoal-light hover:text-wine"
+                        className="absolute right-0 top-0 text-dark-grey hover:text-olive"
                         aria-label="Remove"
                       >
                         <X className="h-4 w-4" />
@@ -113,7 +113,7 @@ export function CartDrawer() {
                       </div>
                       <div className="min-w-0 flex-1 pr-6">
                         <p className="font-display text-sm text-charcoal">{item.productName}</p>
-                        <p className="mt-1 font-label text-[11px] uppercase tracking-wider text-gold">
+                        <p className="mt-1 font-body text-[11px] font-medium uppercase tracking-wider text-dark-grey">
                           {item.size}
                         </p>
                         {item.color && (
@@ -148,9 +148,9 @@ export function CartDrawer() {
             </div>
 
             {items.length > 0 && (
-              <footer className="shrink-0 border-t border-border bg-cream px-5 py-5">
+              <footer className="shrink-0 border-t border-mid-grey bg-white px-5 py-5">
                 {points > 0 && (
-                  <div className="mb-3 inline-flex rounded-full bg-gold/20 px-3 py-1 font-label text-[10px] uppercase tracking-wide text-charcoal">
+                  <div className="mb-3 inline-flex bg-olive-light px-3 py-1 font-body text-[10px] font-medium uppercase tracking-wide text-charcoal">
                     🌟 You&apos;ll earn ~{points} points with this order
                   </div>
                 )}
@@ -174,7 +174,7 @@ export function CartDrawer() {
                   <button
                     type="button"
                     onClick={closeCart}
-                    className="font-label text-[11px] uppercase tracking-wider text-gold underline-offset-4 hover:underline"
+                    className="font-body text-[11px] font-medium uppercase tracking-wider text-olive underline-offset-4 hover:underline"
                   >
                     Continue Shopping
                   </button>

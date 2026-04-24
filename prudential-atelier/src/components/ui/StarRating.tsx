@@ -40,16 +40,16 @@ export function StarRating({
             onClick={interactive ? () => onChange?.(i) : undefined}
             onMouseEnter={interactive ? () => setHover(i) : undefined}
             className={cn(
-              "relative text-gold",
+              "relative text-olive",
               interactive &&
-                "cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gold",
+                "cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-olive",
               !interactive && "pointer-events-none",
             )}
             aria-label={`${i} stars`}
           >
-            <span className={cn("text-ivory-dark/40", filled && "text-gold")}>★</span>
+            <span className={cn("text-mid-grey", filled && "text-olive")}>★</span>
             {half && (
-              <span className="absolute inset-0 w-1/2 overflow-hidden text-gold" aria-hidden>
+              <span className="absolute inset-0 w-1/2 overflow-hidden text-olive" aria-hidden>
                 ★
               </span>
             )}

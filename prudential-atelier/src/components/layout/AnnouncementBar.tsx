@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 const MESSAGES = [
-  "Free shipping on orders over ₦150,000 within Lagos",
-  "New collection now available — Shop The Edit",
-  "Book a bespoke consultation today",
+  "FREE SHIPPING ON ORDERS OVER ₦150,000 WITHIN LAGOS",
+  "NEW COLLECTION — THE EDIT IS NOW LIVE",
+  "BOOK YOUR BESPOKE CONSULTATION TODAY",
 ];
 
 const DISMISSED_KEY = "pa_announcement_dismissed";
@@ -29,8 +29,8 @@ export function AnnouncementBar() {
   if (!visible) return null;
 
   return (
-    <div className="relative bg-wine px-4 py-2 text-center">
-      <p className="pr-6 font-label text-[11px] uppercase tracking-[0.15em] text-gold/90">
+    <div className="relative flex h-9 shrink-0 items-center justify-center bg-olive px-10 text-center">
+      <p className="pr-8 font-body text-[11px] font-normal uppercase tracking-[0.1em] text-white">
         {MESSAGES[index]}
       </p>
       <button
@@ -39,7 +39,7 @@ export function AnnouncementBar() {
           setVisible(false);
           localStorage.setItem(DISMISSED_KEY, "1");
         }}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gold/60 transition-colors hover:text-gold"
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 transition-colors hover:text-white"
         aria-label="Dismiss announcement"
       >
         <X size={14} />

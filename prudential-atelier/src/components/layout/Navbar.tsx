@@ -1,170 +1,196 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Search, Heart, User, ShoppingBag, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CurrencySwitcher } from "@/components/common/CurrencySwitcher";
 import { useCartStore } from "@/store/cartStore";
+import { useWishlistStore } from "@/store/wishlistStore";
 import { MobileMenu } from "./MobileMenu";
 
-const NAV_LINKS = [
-  { label: "Shop", href: "/shop" },
-  { label: "Bespoke", href: "/bespoke" },
-  { label: "Consultation", href: "/consultation" },
-  { label: "Our Story", href: "/our-story" },
-  { label: "Press", href: "/press" },
+const DESKTOP_LINKS: { label: string; href: string; active: (pathname: string, category: string | null) => boolean }[] = [
+  { label: "Home", href: "/", active: (p) => p === "/" },
+  { label: "Atelier", href: "/our-story", active: (p) => p.startsWith("/our-story") },
+  {
+    label: "Bridals",
+    href: "/shop?category=BRIDAL",
+    active: (p, cat) => p.startsWith("/shop") && cat === "BRIDAL",
+  },
+  {
+    label: "Ready to Wear",
+    href: "/shop",
+    active: (p, cat) => p.startsWith("/shop") && cat !== "BRIDAL",
+  },
+  { label: "Book a Consultation", href: "/consultation", active: (p) => p.startsWith("/consultation") },
 ];
+
+function NavLink({ href, label, active }: { href: string; label: string; active: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "font-body text-[11px] font-medium uppercase tracking-[0.15em] transition-colors duration-200",
+        active ? "border-b border-olive text-olive" : "border-b border-transparent text-charcoal hover:text-olive",
+      )}
+    >
+      {label === "Ready to Wear" ? (
+        <>
+          Ready to Wear <span className="text-[9px]">▾</span>
+        </>
+      ) : (
+        label
+      )}
+    </Link>
+  );
+}
+
+function CountBadge({ count }: { count: number }) {
+  if (count < 1) return null;
+  return (
+    <span
+      className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-[14px] items-center justify-center bg-olive px-0.5 font-body text-[9px] font-medium leading-none text-white"
+      aria-hidden
+    >
+      {count > 9 ? "9+" : count}
+    </span>
+  );
+}
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const category = searchParams.get("category");
   const { data: session } = useSession();
   const { totalItems, openCart, openSearch } = useCartStore();
+  const wishlistCount = useWishlistStore((s) => s.ids.length);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 50);
+    const onScroll = () => setScrolled(window.scrollY > 0);
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const activeMap = useMemo(
+    () =>
+      DESKTOP_LINKS.map((item) => ({
+        ...item,
+        isActive: item.active(pathname, category),
+      })),
+    [pathname, category],
+  );
 
   return (
     <>
       <header
         className={cn(
-          "fixed left-0 right-0 top-0 z-40 transition-all duration-300",
-          scrolled
-            ? "border-b border-border bg-cream/95 shadow-sm backdrop-blur-sm"
-            : "bg-transparent",
+          "border-b border-mid-grey bg-white transition-all duration-200",
+          scrolled && "bg-white/98 shadow-[0_1px_0_0_var(--mid-grey)] backdrop-blur-sm",
         )}
       >
-        <div className="mx-auto max-w-site px-6 lg:px-10">
-          <div className="flex h-16 items-center justify-between lg:h-20">
-            <nav className="hidden items-center gap-8 lg:flex">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "font-label text-[11px] uppercase tracking-[0.15em] transition-colors duration-200",
-                    "relative after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 after:bg-gold",
-                    "after:transition-all after:duration-300 hover:after:w-full",
-                    scrolled ? "text-charcoal hover:text-wine" : "text-ivory/90 hover:text-ivory",
-                  )}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-
+        <div className="mx-auto grid h-[60px] max-w-site grid-cols-3 items-center px-4 lg:h-[72px] lg:px-8">
+          <div className="flex items-center justify-start gap-2">
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
-              className={cn("p-2 transition-colors lg:hidden", scrolled ? "text-charcoal" : "text-ivory")}
+              className="p-2 text-olive transition-opacity hover:opacity-80 lg:hidden"
               aria-label="Open menu"
             >
-              <Menu size={22} />
+              <Menu size={18} strokeWidth={1.75} />
             </button>
-
-            <Link
-              href="/"
-              className={cn(
-                "absolute left-1/2 -translate-x-1/2 font-display text-xl font-medium uppercase tracking-[0.1em] transition-colors duration-300 lg:text-2xl",
-                scrolled ? "text-wine" : "text-ivory",
-              )}
-            >
-              Prudential Atelier
+            <Link href="/" className="relative hidden h-11 w-11 shrink-0 lg:block">
+              <Image
+                src="/images/logo.svg"
+                alt="Prudent Gabriel"
+                width={44}
+                height={44}
+                className="object-contain"
+                priority
+              />
             </Link>
+          </div>
 
-            <div className="flex items-center gap-1 lg:gap-3">
-              <div className="hidden lg:block">
-                <CurrencySwitcher />
-              </div>
+          <div className="flex items-center justify-center">
+            <Link href="/" className="relative block h-10 w-10 shrink-0 lg:hidden">
+              <Image
+                src="/images/logo.svg"
+                alt="Prudent Gabriel"
+                width={40}
+                height={40}
+                className="object-contain"
+                priority
+              />
+            </Link>
+            <nav className="hidden items-center justify-center gap-6 lg:flex lg:gap-8">
+              {activeMap.map((item) => (
+                <NavLink key={item.href} href={item.href} label={item.label} active={item.isActive} />
+              ))}
+            </nav>
+          </div>
 
+          <div className="flex items-center justify-end gap-5">
+            <div className="hidden items-center gap-5 lg:flex">
+              <CurrencySwitcher variant="compact" />
               <button
                 type="button"
                 onClick={openSearch}
-                className={cn(
-                  "rounded-sm p-2 transition-colors hover:bg-wine-muted",
-                  scrolled ? "text-charcoal hover:text-wine" : "text-ivory/90 hover:text-ivory",
-                )}
+                className="text-charcoal transition-colors duration-200 hover:text-olive"
                 aria-label="Search"
               >
-                <Search size={18} />
+                <Search size={18} strokeWidth={1.5} />
               </button>
-
               <Link
                 href="/account/wishlist"
-                className={cn(
-                  "rounded-sm p-2 transition-colors hover:bg-wine-muted",
-                  scrolled ? "text-charcoal hover:text-wine" : "text-ivory/90 hover:text-ivory",
-                )}
-                aria-label="View wishlist"
+                className="relative text-charcoal transition-colors duration-200 hover:text-olive"
+                aria-label="Wishlist"
               >
-                <Heart size={18} />
+                <Heart size={18} strokeWidth={1.5} />
+                <CountBadge count={wishlistCount} />
               </Link>
-
               <Link
                 href={session ? "/account" : "/auth/login"}
-                className={cn(
-                  "rounded-sm p-2 transition-colors hover:bg-wine-muted",
-                  scrolled ? "text-charcoal hover:text-wine" : "text-ivory/90 hover:text-ivory",
-                )}
+                className="text-charcoal transition-colors duration-200 hover:text-olive"
                 aria-label="Account"
               >
-                <User size={18} />
+                <User size={18} strokeWidth={1.5} />
               </Link>
-
               {(session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN") && (
                 <Link
                   href="/admin"
-                  className={cn(
-                    "hidden rounded-sm px-2 py-1 font-label text-[10px] uppercase tracking-wide text-gold hover:underline sm:block",
-                    scrolled ? "text-gold" : "text-gold",
-                  )}
+                  className="font-body text-[10px] font-medium uppercase tracking-wide text-olive hover:underline"
                 >
                   Admin
                 </Link>
               )}
-
               <button
                 type="button"
                 onClick={openCart}
-                className={cn(
-                  "relative rounded-sm p-2 transition-colors hover:bg-wine-muted",
-                  scrolled ? "text-charcoal hover:text-wine" : "text-ivory/90 hover:text-ivory",
-                )}
+                className="relative text-charcoal transition-colors duration-200 hover:text-olive"
                 aria-label="Open cart"
               >
-                <ShoppingBag size={18} />
+                <ShoppingBag size={18} strokeWidth={1.5} />
                 <span className="sr-only" aria-live="polite">
                   {totalItems} items in cart
                 </span>
-                {totalItems > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-gold text-[10px] font-bold leading-none text-charcoal" aria-hidden>
-                    {totalItems > 9 ? "9+" : totalItems}
-                  </span>
-                )}
+                <CountBadge count={totalItems} />
               </button>
             </div>
+            <button
+              type="button"
+              onClick={openCart}
+              className="relative p-2 text-charcoal lg:hidden"
+              aria-label="Open cart"
+            >
+              <ShoppingBag size={18} strokeWidth={1.5} />
+              <CountBadge count={totalItems} />
+            </button>
           </div>
-        </div>
-
-        <div
-          className={cn(
-            "hidden justify-end px-10 pb-1 transition-opacity duration-300 lg:flex",
-            scrolled ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
-          )}
-        >
-          <a
-            href="https://pfacademy.ng"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-label text-[10px] uppercase tracking-[0.15em] text-gold transition-colors hover:text-gold-hover"
-          >
-            Fashion Academy ↗
-          </a>
         </div>
       </header>
 

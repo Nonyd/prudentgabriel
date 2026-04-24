@@ -41,15 +41,15 @@ const DATA = [
 export function Testimonials() {
   const swiperRef = useRef<SwiperType | null>(null);
   return (
-    <section className="bg-ivory py-section-mobile md:py-section">
+    <section className="bg-off-white py-section-mobile md:py-section">
       <div className="mx-auto max-w-site px-4 text-center">
-        <SectionLabel>CLIENT LOVE</SectionLabel>
-        <h2 className="mt-4 font-display text-4xl text-charcoal md:text-5xl">From Our Women</h2>
+        <SectionLabel>Client Love</SectionLabel>
+        <h2 className="mt-4 font-display text-4xl font-normal italic text-charcoal md:text-5xl">From Our Women</h2>
       </div>
       <div className="relative mx-auto mt-12 max-w-3xl px-4">
         <button
           type="button"
-          className="absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 border border-wine p-2 text-wine md:block"
+          className="absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 border border-olive p-2 text-olive md:block"
           aria-label="Previous"
           onClick={() => swiperRef.current?.slidePrev()}
         >
@@ -57,7 +57,7 @@ export function Testimonials() {
         </button>
         <button
           type="button"
-          className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 border border-wine p-2 text-wine md:block"
+          className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 border border-olive p-2 text-olive md:block"
           aria-label="Next"
           onClick={() => swiperRef.current?.slideNext()}
         >
@@ -77,12 +77,12 @@ export function Testimonials() {
           {DATA.map((t) => (
             <SwiperSlide key={t.name}>
               <div className="relative px-4 pb-8 pt-8 text-center md:px-12">
-                <span className="pointer-events-none absolute left-4 top-0 font-display text-[120px] leading-none text-gold/25">
+                <span className="pointer-events-none absolute left-4 top-0 font-display text-[120px] leading-none text-olive/15">
                   “
                 </span>
                 <p className="relative z-10 font-display text-xl italic text-charcoal md:text-2xl">{t.quote}</p>
-                <p className="mt-6 font-label text-sm text-charcoal">{t.name}</p>
-                <p className="mt-1 font-body text-xs text-gold">{t.occasion}</p>
+                <p className="mt-6 font-body text-sm font-medium text-charcoal">{t.name}</p>
+                <p className="mt-1 font-body text-xs text-olive">{t.occasion}</p>
                 <div className="mt-3 flex justify-center">
                   <StarRating rating={5} size="sm" />
                 </div>

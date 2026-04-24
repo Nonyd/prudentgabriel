@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -44,25 +45,28 @@ export function RegisterContent() {
   };
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="hidden flex-col justify-between bg-wine p-12 text-ivory lg:flex">
-        <p className="font-label text-[11px] tracking-[0.2em] text-gold">Prudential Atelier</p>
+    <div className="grid min-h-screen lg:grid-cols-[40%_60%]">
+      <div className="relative hidden flex-col justify-between bg-olive p-12 text-white lg:flex">
+        <Link href="/" className="inline-block" style={{ filter: "brightness(0) invert(1)" }}>
+          <Image src="/images/logo.svg" alt="Prudent Gabriel" width={48} height={48} />
+        </Link>
         <div>
-          <h1 className="font-display text-4xl font-medium italic leading-tight">Join the atelier</h1>
-          <p className="mt-4 max-w-sm font-body text-sm text-ivory/80">
-            Create an account for orders, wishlists, rewards, and bespoke consultations.
+          <p className="max-w-sm font-display text-[32px] font-normal italic leading-tight">
+            Join the inner circle — orders, wishlists, and bespoke consultations.
           </p>
         </div>
-        <p className="font-body text-xs text-ivory/50">© {new Date().getFullYear()} Prudential Atelier</p>
+        <p className="font-body text-[11px] text-white/30">© {new Date().getFullYear()} Prudent Gabriel</p>
       </div>
 
       <div className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-16">
-        <div className="mx-auto w-full max-w-md">
-          <p className="font-label text-[11px] tracking-[0.2em] text-gold lg:hidden">Prudential Atelier</p>
-          <h2 className="mt-2 font-display text-3xl text-charcoal">Register</h2>
-          <p className="mt-2 font-body text-sm text-charcoal-light">
+        <div className="mx-auto w-full max-w-sm">
+          <Link href="/" className="mb-8 inline-block lg:hidden" style={{ filter: "brightness(0)" }}>
+            <Image src="/images/logo.svg" alt="Prudent Gabriel" width={36} height={36} />
+          </Link>
+          <h2 className="font-display text-[32px] text-black">Create Account.</h2>
+          <p className="mt-2 font-body text-[14px] font-light text-dark-grey">
             Already have an account?{" "}
-            <Link href="/auth/login" className="text-wine underline-offset-4 hover:underline">
+            <Link href="/auth/login" className="text-olive hover:underline">
               Sign in
             </Link>
           </p>
@@ -79,7 +83,7 @@ export function RegisterContent() {
                   First name
                 </label>
                 <input
-                  className="mt-2 w-full border border-border bg-cream px-3 py-2.5 font-body text-sm outline-none focus:border-wine"
+                  className="mt-1 w-full border-0 border-b border-mid-grey bg-transparent py-2.5 font-body text-sm outline-none focus:border-olive"
                   {...register("firstName")}
                 />
                 {errors.firstName && (
@@ -91,7 +95,7 @@ export function RegisterContent() {
                   Last name
                 </label>
                 <input
-                  className="mt-2 w-full border border-border bg-cream px-3 py-2.5 font-body text-sm outline-none focus:border-wine"
+                  className="mt-1 w-full border-0 border-b border-mid-grey bg-transparent py-2.5 font-body text-sm outline-none focus:border-olive"
                   {...register("lastName")}
                 />
                 {errors.lastName && (
@@ -104,7 +108,7 @@ export function RegisterContent() {
               <input
                 type="email"
                 autoComplete="email"
-                className="mt-2 w-full border border-border bg-cream px-3 py-2.5 font-body text-sm outline-none focus:border-wine"
+                className="mt-1 w-full border-0 border-b border-mid-grey bg-transparent py-2.5 font-body text-sm outline-none focus:border-olive"
                 {...register("email")}
               />
               {errors.email && <p className="mt-1 font-body text-xs text-error">{errors.email.message}</p>}
@@ -113,7 +117,7 @@ export function RegisterContent() {
               <label className="font-label text-[10px] uppercase tracking-[0.15em] text-charcoal-mid">Phone</label>
               <input
                 type="tel"
-                className="mt-2 w-full border border-border bg-cream px-3 py-2.5 font-body text-sm outline-none focus:border-wine"
+                className="mt-1 w-full border-0 border-b border-mid-grey bg-transparent py-2.5 font-body text-sm outline-none focus:border-olive"
                 {...register("phone")}
               />
               {errors.phone && <p className="mt-1 font-body text-xs text-error">{errors.phone.message}</p>}
@@ -123,7 +127,7 @@ export function RegisterContent() {
                 Referral code (optional)
               </label>
               <input
-                className="mt-2 w-full border border-border bg-cream px-3 py-2.5 font-body text-sm outline-none focus:border-wine"
+                className="mt-1 w-full border-0 border-b border-mid-grey bg-transparent py-2.5 font-body text-sm outline-none focus:border-olive"
                 {...register("referralCode")}
               />
             </div>
@@ -132,7 +136,7 @@ export function RegisterContent() {
               <input
                 type="password"
                 autoComplete="new-password"
-                className="mt-2 w-full border border-border bg-cream px-3 py-2.5 font-body text-sm outline-none focus:border-wine"
+                className="mt-1 w-full border-0 border-b border-mid-grey bg-transparent py-2.5 font-body text-sm outline-none focus:border-olive"
                 {...register("password")}
               />
               {errors.password && (
@@ -146,7 +150,7 @@ export function RegisterContent() {
               <input
                 type="password"
                 autoComplete="new-password"
-                className="mt-2 w-full border border-border bg-cream px-3 py-2.5 font-body text-sm outline-none focus:border-wine"
+                className="mt-1 w-full border-0 border-b border-mid-grey bg-transparent py-2.5 font-body text-sm outline-none focus:border-olive"
                 {...register("confirmPassword")}
               />
               {errors.confirmPassword && (

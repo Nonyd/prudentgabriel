@@ -24,7 +24,7 @@ export default async function WalletPage() {
       <div
         className="rounded-sm p-10 text-ivory"
         style={{
-          background: "linear-gradient(135deg, #6B1C2A, #4A1019)",
+          background: "linear-gradient(135deg, var(--olive), var(--olive-hover))",
         }}
       >
         <p className="font-label text-xs uppercase tracking-wider text-ivory/60">Your loyalty wallet</p>
@@ -43,7 +43,7 @@ export default async function WalletPage() {
       </div>
 
       <div className="mt-8 rounded-sm border border-border bg-cream p-6 text-sm text-charcoal">
-        <p className="font-medium text-wine">How points work</p>
+        <p className="font-medium text-olive">How points work</p>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-charcoal-mid">
           <li>Earn 1 point per ₦100 spent</li>
           <li>250 pts when a friend signs up with your link</li>
@@ -63,7 +63,7 @@ export default async function WalletPage() {
                 <p className="text-xs text-charcoal-light">{new Date(t.createdAt).toLocaleString()}</p>
               </div>
               <div className="text-right">
-                <p className={t.amount >= 0 ? "text-gold" : "text-wine"}>
+                <p className={t.amount >= 0 ? "text-olive" : "text-error"}>
                   {t.amount >= 0 ? "+" : ""}
                   {t.amount}
                 </p>

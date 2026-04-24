@@ -3,88 +3,76 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { SectionLabel } from "@/components/ui/SectionLabel";
+import { ArrowRight } from "lucide-react";
 
-const HERO_IMG =
-  "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=1400&q=80";
+const HERO_IMG = "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1600&q=90";
 
 export function Hero() {
   return (
     <section className="relative min-h-[100svh] overflow-hidden">
       <Image
         src={HERO_IMG}
-        alt="Prudential Atelier — Luxury Nigerian Fashion"
+        alt="Prudent Gabriel — SS 2025"
         fill
         priority
         className="object-cover object-top"
         sizes="100vw"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-charcoal/20 to-transparent" />
-      <div className="absolute bottom-[15%] left-1/2 w-full max-w-3xl -translate-x-1/2 px-4 text-center">
-        <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.2 } } }}>
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 30 },
-              show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
-            }}
-          >
-            <SectionLabel light className="text-ivory">
-              THE NEW COLLECTION
-            </SectionLabel>
-          </motion.div>
-          <motion.h1
-            className="mt-4 font-display text-4xl italic leading-none text-ivory md:text-6xl"
-            variants={{
-              hidden: { opacity: 0, y: 30 },
-              show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
-            }}
-          >
-            Dressed in Stories,
-            <br />
-            Draped in Legacy.
-          </motion.h1>
-          <motion.p
-            className="mx-auto mt-4 max-w-lg font-body text-lg text-ivory/80"
-            variants={{
-              hidden: { opacity: 0, y: 30 },
-              show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
-            }}
-          >
-            Bespoke couture and ready-to-wear for the woman who commands every room.
-          </motion.p>
-          <motion.div
-            className="mt-8 flex flex-wrap justify-center gap-4"
-            variants={{
-              hidden: { opacity: 0, y: 30 },
-              show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
-            }}
-          >
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(10,10,10,0.6)] from-0% via-transparent to-transparent to-50%" />
+
+      <div className="absolute bottom-8 left-6 md:bottom-16 md:left-16">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
+          className="font-body text-[11px] font-medium uppercase tracking-[0.2em] text-white/70"
+        >
+          SS 2025 COLLECTION
+        </motion.p>
+        <motion.h1
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
+          className="mt-3 max-w-[14rem] font-display text-[44px] font-normal italic leading-[0.95] text-white md:max-w-none md:text-[80px]"
+        >
+          The New
+          <br />
+          Edit.
+        </motion.h1>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7, duration: 0.6, ease: "easeOut" }}
+        >
+          <p className="mt-4 max-w-xs font-body text-[15px] font-light leading-relaxed text-white/75">
+            Designed for the woman who commands every room she enters.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center gap-6">
             <Link
               href="/shop"
-              className={cn(
-                "inline-flex items-center justify-center px-8 py-4 font-label uppercase tracking-[0.14em]",
-                "rounded-sm bg-wine text-ivory transition-colors hover:bg-wine-hover",
-              )}
+              className="inline-flex border border-white px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white transition-colors duration-200 hover:bg-white hover:text-black"
             >
-              Shop The Collection
+              Shop the Collection
             </Link>
             <Link
               href="/bespoke"
-              className={cn(
-                "inline-flex items-center justify-center px-8 py-4 font-label uppercase tracking-[0.14em]",
-                "rounded-sm border border-ivory/60 text-ivory transition-colors hover:bg-ivory/10",
-              )}
+              className="inline-flex items-center gap-2 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white/60 transition-colors hover:text-white"
             >
               Book Bespoke
+              <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
             </Link>
-          </motion.div>
+          </div>
         </motion.div>
       </div>
-      <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-wine">
-        <div className="h-10 w-px animate-pulse bg-wine" />
-        <ArrowDown className="h-4 w-4" />
+
+      <div className="pointer-events-none absolute bottom-8 right-8 hidden items-center gap-3 md:flex">
+        <div className="h-10 w-px bg-white/40" />
+        <span
+          className="font-body text-[9px] font-medium uppercase tracking-[0.2em] text-white/40 [writing-mode:vertical-rl] [text-orientation:mixed]"
+          style={{ transform: "rotate(180deg)" }}
+        >
+          Scroll
+        </span>
       </div>
     </section>
   );

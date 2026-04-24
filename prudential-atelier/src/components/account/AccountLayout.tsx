@@ -65,7 +65,7 @@ export function AccountLayout({
                 className="rounded-full object-cover"
               />
             ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-wine font-display text-lg text-gold">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-olive font-display text-lg text-white">
                 {initials}
               </div>
             )}
@@ -89,7 +89,7 @@ export function AccountLayout({
                 href={href}
                 className={clsx(
                   "flex items-center gap-3 rounded-sm px-4 py-2.5 text-sm transition-colors",
-                  active ? "bg-wine text-ivory" : "text-ivory/60 hover:bg-charcoal-mid hover:text-ivory",
+                  active ? "bg-olive text-white" : "text-ivory/60 hover:bg-charcoal-mid hover:text-ivory",
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -132,7 +132,7 @@ export function AccountLayout({
           <button type="button" onClick={() => router.back()} className="text-charcoal" aria-label="Back">
             ←
           </button>
-          <span className="font-display text-lg text-wine">Account</span>
+          <span className="font-display text-lg text-olive">Account</span>
         </header>
         <main className="flex-1 px-5 py-8 lg:px-10 lg:py-10">{children}</main>
       </div>

@@ -12,12 +12,11 @@ import { useCurrencyStore } from "@/store/currencyStore";
 import type { ProductListItem } from "@/types/product";
 
 const PLACEHOLDER =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='1067'%3E%3Crect width='100%25' height='100%25' fill='%23E8DDD0'/%3E%3C/svg%3E";
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='1067'%3E%3Crect width='100%25' height='100%25' fill='%23F2F2F0'/%3E%3C/svg%3E";
 
 export interface ProductCardProps {
   product: ProductListItem;
   priority?: boolean;
-  /** Minimal layout for search modal featured grid */
   compact?: boolean;
 }
 
@@ -62,12 +61,9 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
           if (e.key === "Enter") router.push(`/shop/${product.slug}`);
         }}
         onClick={() => router.push(`/shop/${product.slug}`)}
-        className={cn(
-          "group relative cursor-pointer transition-all duration-250",
-          !compact && "hover:-translate-y-1 hover:shadow-lg",
-        )}
+        className={cn("group relative cursor-pointer bg-white", compact && "text-left")}
       >
-        <div className="relative aspect-[3/4] overflow-hidden rounded-sm bg-ivory-dark">
+        <div className="relative aspect-[3/4] overflow-hidden bg-light-grey">
           <Image
             src={primary?.url ?? PLACEHOLDER}
             alt={primary?.alt || product.name}
@@ -98,23 +94,21 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
           </div>
 
           <div className="absolute right-2 top-2" onClick={(e) => e.stopPropagation()}>
-            <WishlistButton productId={product.id} className="bg-cream/80 backdrop-blur-sm" />
+            <WishlistButton productId={product.id} className="h-auto w-auto min-h-0 min-w-0 bg-transparent hover:bg-transparent" />
           </div>
 
           {!compact && (
-            <div className="absolute bottom-0 left-0 right-0 translate-y-full bg-gradient-to-t from-charcoal/80 to-transparent transition-transform duration-300 group-hover:translate-y-0">
-              <div className="flex justify-center pb-4 pt-10">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setQv(product.slug);
-                  }}
-                  className="rounded-sm border border-ivory/60 px-4 py-2 font-label text-[11px] uppercase tracking-wider text-ivory transition-colors hover:border-ivory"
-                >
-                  Quick View
-                </button>
-              </div>
+            <div className="absolute bottom-0 left-0 right-0 flex h-10 translate-y-full items-center justify-center bg-white/90 transition-transform duration-300 group-hover:translate-y-0">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setQv(product.slug);
+                }}
+                className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-charcoal"
+              >
+                Quick View
+              </button>
             </div>
           )}
         </div>
@@ -122,39 +116,38 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
         <div className={cn("py-3", compact && "py-2")}>
           <h3
             className={cn(
-              "font-display text-charcoal line-clamp-1",
-              compact ? "text-sm text-ivory" : "text-base",
+              "font-body text-[13px] font-normal text-charcoal line-clamp-1",
+              compact && "text-sm text-white",
             )}
           >
             {product.name}
           </h3>
           <div className={cn("mt-1", compact && "text-ivory")}>
             {product.isOnSale && lowestSale != null ? (
-              <p className="text-sm">
-                <span className="text-charcoal-light line-through">From {formatN(lowestOrig)}</span>{" "}
-                <span className="font-medium text-wine">{formatN(lowestSale)}</span>
+              <p className="font-body text-[12px] font-light">
+                <span className="text-dark-grey line-through">From {formatN(lowestOrig)}</span>{" "}
+                <span className="font-normal text-olive">{formatN(lowestSale)}</span>
               </p>
             ) : multi ? (
-              <p className="text-sm text-charcoal">
-                From <span className="font-medium">{formatN(lowestEff)}</span>
+              <p className="font-body text-[12px] font-light text-charcoal">
+                From <span className="font-normal">{formatN(lowestEff)}</span>
               </p>
             ) : (
-              <p className="text-sm font-medium text-charcoal">{formatN(lowestEff)}</p>
+              <p className="font-body text-[12px] font-light text-charcoal">{formatN(lowestEff)}</p>
             )}
           </div>
 
           {!compact && product.colors.length > 0 && (
-            <div className="mt-2 flex items-center gap-1">
+            <div className="mt-1.5 flex items-center gap-1.5">
               {product.colors.slice(0, 4).map((c) => (
                 <span
                   key={c.id}
-                  title={c.name}
-                  className="h-3 w-3 rounded-full ring-1 ring-border"
+                  className="h-2.5 w-2.5 rounded-full ring-1 ring-mid-grey"
                   style={{ backgroundColor: c.hex }}
                 />
               ))}
               {product.colors.length > 4 && (
-                <span className="text-xs text-charcoal-light">+{product.colors.length - 4}</span>
+                <span className="text-xs text-dark-grey">+{product.colors.length - 4}</span>
               )}
             </div>
           )}

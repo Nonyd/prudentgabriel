@@ -111,7 +111,7 @@ export function AdminSidebar({ session, onNavigate }: { session: Session; onNavi
                         "flex items-center gap-3 rounded-sm px-3 py-2.5 text-[13px] text-[#8A8A8A] transition-colors",
                         "hover:bg-[#252525] hover:text-ivory/80",
                         active &&
-                          "border-l-2 border-gold bg-[#6B1C2A]/20 pl-[10px] text-[#C9A84C] hover:text-[#C9A84C]",
+                          "border-l-2 border-olive bg-olive/15 pl-[10px] text-olive hover:text-olive",
                         !active && "border-l-2 border-transparent",
                       )}
                     >
@@ -128,12 +128,12 @@ export function AdminSidebar({ session, onNavigate }: { session: Session; onNavi
 
       <div className="mt-auto border-t border-gold/10 px-3 pb-6 pt-4">
         <div className="flex items-center gap-3 px-1">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-wine text-xs font-medium text-gold">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-olive text-xs font-medium text-white">
             {initials(user?.name, user?.email)}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm text-ivory/90">{displayName}</p>
-            <span className="inline-block rounded-sm bg-wine/30 px-1.5 py-0.5 font-label text-[9px] uppercase tracking-wide text-gold/90">
+            <span className="inline-block bg-olive/25 px-1.5 py-0.5 font-body text-[9px] font-medium uppercase tracking-wide text-bride-accent">
               {user?.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}
             </span>
           </div>

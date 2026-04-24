@@ -31,7 +31,8 @@ export async function queryProductList(
   const page = parseIntParam(searchParams.get("page"), 1);
   const limit = parseIntParam(searchParams.get("limit"), 24, 48);
   const search = searchParams.get("search")?.trim();
-  const newArrival = searchParams.get("newArrival") === "true";
+  const newArrival =
+    searchParams.get("newArrival") === "true" || searchParams.get("isNewArrival") === "true";
   const featured = searchParams.get("featured") === "true";
   const sale = searchParams.get("sale") === "true";
   const idsParam = searchParams.get("ids");

@@ -1,23 +1,22 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
-
 export function PFABanner() {
   return (
-    <section className="border-t border-gold/20 bg-charcoal py-5">
-      <div className="mx-auto flex max-w-site flex-col items-center gap-4 px-4 text-center md:flex-row md:justify-between md:text-left">
-        <p className="font-display text-xl italic text-gold">Aspire to Create</p>
-        <p className="max-w-xl font-body text-sm text-ivory md:text-left">
-          Learn from the master. Prudential Fashion Academy has trained over 5,000 designers.
-        </p>
-        <Button
+    <section className="border-y border-mid-grey bg-light-grey py-10 md:py-12">
+      <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-6 px-6 text-center md:flex-row md:px-8 md:text-left">
+        <div className="max-w-xl">
+          <p className="font-body text-[10px] font-medium uppercase tracking-[0.25em] text-olive">Prudential Fashion Academy</p>
+          <p className="mt-2 font-body text-[15px] font-light leading-relaxed text-charcoal">
+            Over 5,000 designers trained. The school behind the brand.
+          </p>
+        </div>
+        <button
           type="button"
-          variant="secondary"
-          size="sm"
           onClick={() => window.open("https://pfacademy.ng", "_blank")}
+          className="shrink-0 border border-black px-8 py-3 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-black transition-colors duration-200 hover:bg-black hover:text-white"
         >
-          Explore PFA Academy →
-        </Button>
+          Explore PFA →
+        </button>
       </div>
     </section>
   );

@@ -1,14 +1,18 @@
 "use client";
 
 const TEXT =
-  "PRUDENTIAL ATELIER · BESPOKE COUTURE · LAGOS, NIGERIA · EST. 2019 · OVER 5,000 DESIGNERS TRAINED · ";
+  "PRUDENT GABRIEL · LAGOS, NIGERIA · BESPOKE COUTURE · READY TO WEAR · EST. 2019 · ";
 
 export function BrandMarquee() {
   return (
-    <div className="relative h-12 overflow-hidden border-y border-gold/30 bg-wine">
-      <div className="flex w-max animate-marquee whitespace-nowrap">
-        <div className="font-label text-[11px] tracking-[0.2em] text-gold">{TEXT}</div>
-        <div className="font-label text-[11px] tracking-[0.2em] text-gold">{TEXT}</div>
+    <div className="relative h-11 overflow-hidden bg-olive">
+      <div className="flex w-max animate-marquee-slow whitespace-nowrap">
+        <div className="flex items-center py-3 font-body text-[10px] font-medium uppercase tracking-[0.25em] text-white/80">
+          {TEXT}
+        </div>
+        <div className="flex items-center py-3 font-body text-[10px] font-medium uppercase tracking-[0.25em] text-white/80">
+          {TEXT}
+        </div>
       </div>
     </div>
   );

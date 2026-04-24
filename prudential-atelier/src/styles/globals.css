@@ -4,18 +4,18 @@
 @tailwind utilities;
 
 :root {
-  --color-wine: #6b1c2a;
-  --color-wine-light: #8b2d3e;
-  --color-wine-dark: #4a1019;
-  --color-gold: #c9a84c;
-  --color-gold-light: #e2c470;
-  --color-gold-muted: #a8893a;
-  --color-ivory: #faf6ef;
-  --color-ivory-dark: #f0e8d8;
-  --color-charcoal: #1a1a1a;
-  --color-charcoal-mid: #3d3d3d;
-  --color-cream: #fefaf3;
-  --color-border: #e8ddd0;
+  --color-wine: var(--olive);
+  --color-wine-light: var(--olive-mid);
+  --color-wine-dark: var(--olive-hover);
+  --color-gold: var(--bride-accent);
+  --color-gold-light: #d4b68a;
+  --color-gold-muted: var(--bride-dark);
+  --color-ivory: var(--off-white);
+  --color-ivory-dark: var(--light-grey);
+  --color-charcoal: var(--charcoal);
+  --color-charcoal-mid: var(--charcoal-mid);
+  --color-cream: var(--off-white);
+  --color-border: var(--border);
   --section-y: 120px;
   --section-y-mobile: 80px;
 }
@@ -40,7 +40,8 @@ html.lenis body {
 
 body {
   font-family: var(--font-body);
-  background-color: var(--ivory);
+  font-weight: 300;
+  background-color: var(--white);
   color: var(--charcoal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -52,12 +53,12 @@ body {
   }
 
   *:focus-visible {
-    outline: 2px solid var(--wine);
+    outline: 2px solid var(--olive);
     outline-offset: 2px;
   }
 
   .admin-area *:focus-visible {
-    outline-color: var(--gold);
+    outline-color: var(--olive-mid);
   }
 }
 
@@ -73,8 +74,8 @@ body {
 }
 
 ::selection {
-  background-color: var(--wine);
-  color: var(--ivory);
+  background-color: var(--olive);
+  color: var(--white);
 }
 
 @layer utilities {
@@ -85,23 +86,23 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--wine) var(--ivory);
+  scrollbar-color: var(--olive) var(--off-white);
 }
 
 *::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 4px;
+  height: 4px;
 }
 
 *::-webkit-scrollbar-track {
-  background: var(--ivory);
+  background: var(--off-white);
 }
 
 *::-webkit-scrollbar-thumb {
-  background: var(--wine);
-  border-radius: 4px;
+  background: var(--olive);
+  border-radius: 0;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: var(--wine-hover);
+  background: var(--olive-hover);
 }

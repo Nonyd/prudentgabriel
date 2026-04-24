@@ -337,26 +337,26 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
                 type="button"
                 onClick={() => selectConsultant(c)}
                 className={clsx(
-                  "rounded-sm border-2 p-4 text-left transition-colors",
-                  consultant?.id === c.id ? "border-wine bg-wine/5" : "border-border hover:border-wine/40",
+                  "border bg-white p-8 text-left transition-colors",
+                  consultant?.id === c.id ? "border-2 border-olive bg-off-white" : "border-mid-grey hover:border-olive/50",
                 )}
               >
-                <div className="flex gap-3">
+                <div className="flex gap-4">
                   {c.image ? (
-                    <Image src={c.image} alt="" width={80} height={80} className="h-20 w-20 rounded-full object-cover" />
+                    <Image src={c.image} alt="" width={80} height={80} className="h-20 w-20 shrink-0 rounded-full object-cover" />
                   ) : (
-                    <div className="h-20 w-20 rounded-full bg-charcoal-mid/20" />
+                    <div className="h-20 w-20 shrink-0 rounded-full bg-mid-grey" />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="font-display text-lg font-semibold text-charcoal">{c.name}</p>
-                    <p className="font-label text-[11px] uppercase tracking-wider text-gold">{c.title}</p>
+                    <p className="font-display text-[22px] font-medium text-charcoal">{c.name}</p>
+                    <p className="mt-1 font-body text-[11px] font-medium uppercase tracking-[0.15em] text-olive">{c.title}</p>
                     {c.isFlagship && (
-                      <span className="mt-1 inline-block rounded-sm bg-wine px-2 py-0.5 font-label text-[10px] text-ivory">
-                        Flagship · By request only
+                      <span className="mt-2 inline-block border border-olive px-2.5 py-0.5 font-body text-[9px] font-medium uppercase tracking-[0.08em] text-olive">
+                        Flagship · By Appointment
                       </span>
                     )}
-                    <p className="mt-2 line-clamp-3 text-xs text-charcoal-mid">{c.bio}</p>
-                    <p className="mt-2 text-right text-sm font-medium text-gold">
+                    <p className="mt-2 line-clamp-4 font-body text-[13px] font-light leading-relaxed text-dark-grey">{c.bio}</p>
+                    <p className="mt-3 font-display text-[20px] text-charcoal">
                       From ₦{Math.min(...c.offerings.map((o) => o.feeNGN)).toLocaleString("en-NG")}
                     </p>
                   </div>

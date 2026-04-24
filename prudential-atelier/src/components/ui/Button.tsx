@@ -16,12 +16,11 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-wine text-ivory hover:bg-wine-hover border border-wine hover:border-wine-hover",
-  secondary: "bg-transparent text-wine border border-wine hover:bg-wine hover:text-ivory",
-  ghost:
-    "bg-transparent text-charcoal border border-transparent hover:text-wine hover:border-wine",
-  gold: "bg-gold text-charcoal border border-gold hover:bg-gold-hover hover:border-gold-hover",
-  danger: "bg-error text-ivory border border-error hover:opacity-90",
+    "border border-olive bg-olive text-white hover:border-olive-hover hover:bg-olive-hover",
+  secondary: "border border-black bg-transparent text-black hover:bg-black hover:text-white",
+  ghost: "border border-transparent bg-transparent text-black hover:border-black hover:text-olive",
+  gold: "border border-bride-accent bg-bride-accent text-bride-dark hover:opacity-90",
+  danger: "border border-error bg-error text-white hover:opacity-90",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -38,8 +37,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || loading}
         className={cn(
           "relative inline-flex items-center justify-center gap-2",
-          "font-label uppercase transition-all duration-200",
-          "rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2",
+          "font-body font-medium uppercase tracking-[0.12em] transition-all duration-200",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-olive focus-visible:ring-offset-2",
           "disabled:cursor-not-allowed disabled:opacity-50",
           "overflow-hidden",
           "before:absolute before:inset-0 before:-translate-x-full",
