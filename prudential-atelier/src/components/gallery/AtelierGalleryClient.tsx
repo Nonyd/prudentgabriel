@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import type { GalleryImage } from "@prisma/client";
 import { optimizeImageUrl } from "@/lib/utils";
+import { GalleryLightbox } from "@/components/gallery/GalleryLightbox";
 
 function splitLines(text: string) {
   const lines = text.split("\n");
@@ -27,6 +28,7 @@ export function AtelierGalleryClient({
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loading, setLoading] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const total = initialTotal;
 
   const loadMore = useCallback(async () => {
@@ -60,12 +62,25 @@ export function AtelierGalleryClient({
 
       <section className="bg-canvas py-14 md:py-16">
         <div className="mx-auto max-w-[1400px] px-4">
-          <p className="mb-6 text-right font-body text-[11px] font-medium uppercase tracking-[0.12em] text-charcoal-mid">
-            {total} works
-          </p>
+          <div className="mb-6 flex items-center justify-between">
+            <p className="font-body text-[11px] font-medium uppercase tracking-[0.12em] text-charcoal-mid">{total} works</p>
+            <a
+              href="https://instagram.com/prudential_atelier"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-body text-[10px] uppercase tracking-[0.12em] text-olive"
+            >
+              @prudential_atelier ↗
+            </a>
+          </div>
           <div className="columns-2 gap-1 px-4 pt-8 md:columns-3 lg:columns-4" style={{ columnGap: "4px" }}>
-            {images.map((img) => (
-              <div key={img.id} className="group relative" style={{ breakInside: "avoid", marginBottom: "4px", display: "block" }}>
+            {images.map((img, index) => (
+              <div
+                key={img.id}
+                className="group relative cursor-pointer"
+                style={{ breakInside: "avoid", marginBottom: "4px", display: "block" }}
+                onClick={() => setLightboxIndex(index)}
+              >
                 <img
                   src={optimizeImageUrl(img.url, 600)}
                   alt={img.alt || "Prudent Gabriel Atelier"}
@@ -105,6 +120,12 @@ export function AtelierGalleryClient({
           </div>
         </div>
       </section>
+      <GalleryLightbox
+        images={images}
+        initialIndex={lightboxIndex ?? 0}
+        isOpen={lightboxIndex !== null}
+        onClose={() => setLightboxIndex(null)}
+      />
     </div>
   );
 }

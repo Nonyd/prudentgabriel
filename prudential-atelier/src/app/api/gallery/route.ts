@@ -8,9 +8,15 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const catRaw = searchParams.get("category")?.toUpperCase();
   const category =
-    catRaw === "BRIDAL" ? GalleryCategory.BRIDAL : catRaw === "ATELIER" ? GalleryCategory.ATELIER : null;
+    catRaw === "BRIDAL"
+      ? GalleryCategory.BRIDAL
+      : catRaw === "ATELIER"
+        ? GalleryCategory.ATELIER
+        : catRaw === "KIDS"
+          ? GalleryCategory.KIDS
+          : null;
   if (!category) {
-    return NextResponse.json({ error: "category must be ATELIER or BRIDAL" }, { status: 400 });
+    return NextResponse.json({ error: "category must be ATELIER, BRIDAL, or KIDS" }, { status: 400 });
   }
 
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);

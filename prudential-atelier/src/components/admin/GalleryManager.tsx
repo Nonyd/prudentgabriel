@@ -240,7 +240,7 @@ export function GalleryManager() {
     <div className="mt-8 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex gap-1 border-b border-[#EBEBEA]">
-          {(["ATELIER", "BRIDAL"] as const).map((c) => (
+          {(["ATELIER", "BRIDAL", "KIDS"] as const).map((c) => (
             <button
               key={c}
               type="button"
@@ -249,7 +249,7 @@ export function GalleryManager() {
                 tab === c ? "border-b-2 border-[#37392d] text-ink" : "text-charcoal-mid"
               }`}
             >
-              {c === "ATELIER" ? "Atelier" : "Bridal"}
+              {c === "ATELIER" ? "Atelier" : c === "BRIDAL" ? "Bridal" : "Kids"}
             </button>
           ))}
         </div>
@@ -501,7 +501,9 @@ export function GalleryManager() {
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
           <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] max-h-[min(90vh,640px)] w-[min(90vw,520px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-[#EBEBEA] bg-canvas p-6 shadow-lg">
             <Dialog.Title className="font-display text-xl text-ink">Upload images</Dialog.Title>
-            <p className="mt-2 font-body text-xs text-[#6B6B68]">Uploading to: {tab === "ATELIER" ? "Atelier" : "Bridal"}</p>
+            <p className="mt-2 font-body text-xs text-[#6B6B68]">
+              Uploading to: {tab === "ATELIER" ? "Atelier" : tab === "BRIDAL" ? "Bridal" : "Kids"}
+            </p>
             <label
               className="mt-6 flex cursor-pointer flex-col items-center justify-center border border-dashed border-[#EBEBEA] bg-[#fafafa] px-6 py-12 transition-colors hover:border-[#37392d]/40"
               onDragOver={(e) => {

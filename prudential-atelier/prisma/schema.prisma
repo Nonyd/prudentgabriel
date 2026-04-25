@@ -638,6 +638,7 @@ model GalleryImage {
 enum GalleryCategory {
   ATELIER
   BRIDAL
+  KIDS
 }
 
 model AdminNotification {

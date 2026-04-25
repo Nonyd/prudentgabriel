@@ -5,9 +5,17 @@ import { FacebookIcon, InstagramIcon, TikTokIcon, YouTubeIcon } from "@/componen
 const SHOP_LINKS = [
   { label: "New Arrivals", href: "/rtw?sort=newest" },
   { label: "Ready to Wear", href: "/rtw" },
-  { label: "Bridal", href: "/bridesals" },
+  { label: "Bridal", href: "/bridal" },
+  { label: "Kids", href: "/kids" },
   { label: "Bespoke", href: "/bespoke" },
   { label: "Sale", href: "/shop?sale=true" },
+];
+
+const SOCIAL_HANDLES = [
+  { label: "Ready to Wear", handle: "@the_prudentgabriel", href: "https://instagram.com/the_prudentgabriel" },
+  { label: "Atelier", handle: "@prudential_atelier", href: "https://instagram.com/prudential_atelier" },
+  { label: "Bridal", handle: "@prudential_bridal", href: "https://instagram.com/prudential_bridal" },
+  { label: "Kids", handle: "@prudential_kids", href: "https://instagram.com/prudential_kids" },
 ];
 
 const COMPANY_LINKS: { label: string; href: string; external?: boolean }[] = [
@@ -47,7 +55,7 @@ export function Footer({
             <p className="mt-4 font-body text-[11px] font-medium uppercase tracking-[0.2em] text-white/40">Prudent Gabriel</p>
             <p className="mt-1 font-body text-[12px] font-light text-white/30">{tagline}</p>
             <div className="mt-6 flex items-center gap-4 text-white/50">
-              <a href="https://instagram.com/prudent_gabriel" target="_blank" rel="noopener noreferrer" className="hover:text-white">
+              <a href="https://instagram.com/the_prudentgabriel" target="_blank" rel="noopener noreferrer" className="hover:text-white">
                 <InstagramIcon size={18} />
               </a>
               <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">
@@ -113,6 +121,16 @@ export function Footer({
           </div>
 
           <div className="col-span-2 lg:col-span-1">
+            <p className="mb-4 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/40">Follow Us</p>
+            <ul className="space-y-2">
+              {SOCIAL_HANDLES.map((item) => (
+                <li key={item.href}>
+                  <a href={item.href} target="_blank" rel="noopener noreferrer" className="font-body text-[12px] text-white/60 hover:text-white">
+                    {item.handle} — {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
             <p className="mb-4 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/40">Newsletter</p>
             <p className="mb-3 max-w-xs font-body text-[12px] font-light text-white/50">
               Subscribe for early access and atelier stories.

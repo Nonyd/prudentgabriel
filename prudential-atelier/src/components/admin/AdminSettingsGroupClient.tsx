@@ -7,6 +7,7 @@ import type { SettingGroup, SettingType } from "@prisma/client";
 import { AppearanceSettingsForm } from "@/components/admin/settings/AppearanceSettingsForm";
 import { ContentSettingsForm } from "@/components/admin/settings/ContentSettingsForm";
 import { EmailTemplatesEditor } from "@/components/admin/settings/EmailTemplatesEditor";
+import { SocialSettingsForm } from "@/components/admin/settings/SocialSettingsForm";
 import { SettingsGroupCard } from "@/components/admin/AdminSettingsClient";
 
 type Row = {
@@ -64,7 +65,7 @@ export function AdminSettingsGroupClient({ groupSlug }: { groupSlug: AdminSettin
     }
 
     if (groupSlug === "social") {
-      return <SettingsGroupCard title="Social media" group="SOCIAL" rows={rowsFor("SOCIAL")} onSaved={load} />;
+      return <SocialSettingsForm rows={rowsFor("SOCIAL")} onSaved={load} />;
     }
 
     if (groupSlug === "loyalty") {

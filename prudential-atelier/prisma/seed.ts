@@ -1013,7 +1013,7 @@ async function main() {
     { key: "img_collection_rtw", value: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800", group: SettingGroup.APPEARANCE, label: "Collections Grid — RTW", type: SettingType.IMAGE, isPublic: true, sortOrder: 12 },
     { key: "img_our_story_hero", value: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1400", group: SettingGroup.APPEARANCE, label: "Our Story Hero", type: SettingType.IMAGE, isPublic: true, sortOrder: 13 },
     { key: "favicon_url", value: "/images/logo.svg", group: SettingGroup.APPEARANCE, label: "Favicon URL", type: SettingType.IMAGE, isPublic: true, sortOrder: 14 },
-    { key: "social_instagram", value: "@prudent_gabriel", group: SettingGroup.SOCIAL, label: "Instagram Handle", type: SettingType.TEXT, isPublic: true, sortOrder: 1 },
+    { key: "social_instagram", value: "@the_prudentgabriel", group: SettingGroup.SOCIAL, label: "Instagram Handle", type: SettingType.TEXT, isPublic: true, sortOrder: 1 },
     { key: "social_tiktok", value: "@prudentgabriel", group: SettingGroup.SOCIAL, label: "TikTok Handle", type: SettingType.TEXT, isPublic: true, sortOrder: 2 },
     { key: "social_facebook", value: "prudentgabriel", group: SettingGroup.SOCIAL, label: "Facebook Page", type: SettingType.TEXT, isPublic: true, sortOrder: 3 },
     { key: "social_youtube", value: "", group: SettingGroup.SOCIAL, label: "YouTube Channel", type: SettingType.TEXT, isPublic: true, sortOrder: 4 },
@@ -1033,6 +1033,43 @@ async function main() {
   ];
 
   for (const setting of defaultSettings) {
+    await prisma.siteSetting.upsert({
+      where: { key: setting.key },
+      update: {},
+      create: setting,
+    });
+  }
+
+  const extraSocial = [
+    {
+      key: "social_instagram_atelier",
+      value: "@prudential_atelier",
+      group: SettingGroup.SOCIAL,
+      label: "Instagram — Atelier",
+      type: SettingType.TEXT,
+      isPublic: true,
+      sortOrder: 6,
+    },
+    {
+      key: "social_instagram_bridal",
+      value: "@prudential_bridal",
+      group: SettingGroup.SOCIAL,
+      label: "Instagram — Bridal",
+      type: SettingType.TEXT,
+      isPublic: true,
+      sortOrder: 7,
+    },
+    {
+      key: "social_instagram_kids",
+      value: "@prudential_kids",
+      group: SettingGroup.SOCIAL,
+      label: "Instagram — Kids",
+      type: SettingType.TEXT,
+      isPublic: true,
+      sortOrder: 8,
+    },
+  ];
+  for (const setting of extraSocial) {
     await prisma.siteSetting.upsert({
       where: { key: setting.key },
       update: {},
@@ -1148,6 +1185,17 @@ async function main() {
     { url: "https://images.unsplash.com/photo-1519741347686-c1e331ec5e96?w=800", alt: "White wedding gown" },
   ];
 
+  const kidsGallerySeed: { url: string; alt: string; caption?: string }[] = [
+    { url: "https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=800", alt: "Little princess gown", caption: "Prudential Kids — Flower Girl Collection" },
+    { url: "https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=800", alt: "Kids fashion editorial" },
+    { url: "https://images.unsplash.com/photo-1472162072942-cd5147eb3902?w=600", alt: "Children's traditional wear" },
+    { url: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800", alt: "Kids party dress", caption: "Birthday Collection" },
+    { url: "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=600", alt: "Little gentleman suit" },
+    { url: "https://images.unsplash.com/photo-1476234251651-f353703a034d?w=800", alt: "Flower girl dress" },
+    { url: "https://images.unsplash.com/photo-1502781252888-9143ba7f074e?w=600", alt: "Kids trad wear", caption: "Traditional Collection" },
+    { url: "https://images.unsplash.com/photo-1488716820095-cbe80883c496?w=800", alt: "Children editorial" },
+  ];
+
   for (let i = 0; i < atelierGallerySeed.length; i++) {
     const img = atelierGallerySeed[i];
     await prisma.galleryImage.upsert({
@@ -1176,6 +1224,23 @@ async function main() {
         alt: img.alt,
         caption: img.caption ?? null,
         category: GalleryCategory.BRIDAL,
+        sortOrder: i,
+        isPublished: true,
+      },
+    });
+  }
+
+  for (let i = 0; i < kidsGallerySeed.length; i++) {
+    const img = kidsGallerySeed[i];
+    await prisma.galleryImage.upsert({
+      where: { publicId: `seed-kids-${i}` },
+      update: {},
+      create: {
+        url: img.url,
+        publicId: `seed-kids-${i}`,
+        alt: img.alt,
+        caption: img.caption ?? null,
+        category: GalleryCategory.KIDS,
         sortOrder: i,
         isPublished: true,
       },

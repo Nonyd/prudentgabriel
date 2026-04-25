@@ -14,7 +14,8 @@ import { useThemeStore } from "@/store/themeStore";
 const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Atelier", href: "/atelier" },
-  { label: "Bridal", href: "/bridesals" },
+  { label: "Bridal", href: "/bridal" },
+  { label: "Kids", href: "/kids" },
   { label: "Ready to Wear", href: "/rtw" },
   { label: "Book a Consultation", href: "/consultation" },
 ];
@@ -152,9 +153,9 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             <p className="mb-4 font-body text-[11px] uppercase tracking-[0.15em] text-dark-grey">Currency</p>
             <CurrencySwitcher variant="compact-pills" />
             <div className="mt-8 flex items-center justify-between">
-              <span className="font-body text-[12px] text-charcoal">@prudent_gabriel</span>
+              <span className="font-body text-[12px] text-charcoal">@the_prudentgabriel</span>
               <div className="flex items-center gap-4 text-charcoal">
-                <a href="https://instagram.com/prudent_gabriel" target="_blank" rel="noopener noreferrer" className="hover:text-olive">
+                <a href="https://instagram.com/the_prudentgabriel" target="_blank" rel="noopener noreferrer" className="hover:text-olive">
                   <InstagramIcon size={18} />
                 </a>
                 <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="hover:text-olive">

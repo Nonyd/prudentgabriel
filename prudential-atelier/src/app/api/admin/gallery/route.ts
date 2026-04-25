@@ -10,6 +10,7 @@ function parseCategory(v: string | null): GalleryCategory | null {
   const u = v?.toUpperCase();
   if (u === "ATELIER") return GalleryCategory.ATELIER;
   if (u === "BRIDAL") return GalleryCategory.BRIDAL;
+  if (u === "KIDS") return GalleryCategory.KIDS;
   return null;
 }
 

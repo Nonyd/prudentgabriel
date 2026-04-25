@@ -69,7 +69,8 @@ export function Navbar() {
     () => ({
       home: pathname === "/",
       atelier: pathname.startsWith("/atelier"),
-      bridal: pathname.startsWith("/bridesals"),
+      bridal: pathname.startsWith("/bridal") || pathname.startsWith("/bridesals"),
+      kids: pathname.startsWith("/kids"),
       rtw: rtwActive,
       consultation: pathname.startsWith("/consultation"),
     }),
@@ -106,7 +107,8 @@ export function Navbar() {
             <nav className="hidden min-w-0 flex-nowrap items-center justify-center gap-x-3 xl:gap-x-5 2xl:gap-x-6 lg:flex">
               <NavLink href="/" label="Home" active={desktopActive.home} />
               <NavLink href="/atelier" label="Atelier" active={desktopActive.atelier} />
-              <NavLink href="/bridesals" label="Bridal" active={desktopActive.bridal} />
+              <NavLink href="/bridal" label="Bridal" active={desktopActive.bridal} />
+              <NavLink href="/kids" label="Kids" active={desktopActive.kids} />
               <div className="group relative before:absolute before:left-0 before:top-full before:z-40 before:h-3 before:w-full before:content-['']">
                 <Link
                   href="/rtw"
