@@ -65,7 +65,7 @@ const PRODUCTS: ProductSeed[] = [
     isFeatured: true,
     isNewArrival: true,
     isBespokeAvail: true,
-    tags: ["Bridal", "Evening"],
+    tags: ["Bridal", "Evening", "dress"],
     images: [
       { url: IMG.bridal, alt: "Amore Bridal Gown", isPrimary: true, sortOrder: 0 },
       { url: IMG.bridal2, alt: "Amore detail", isPrimary: false, sortOrder: 1 },
@@ -91,7 +91,7 @@ const PRODUCTS: ProductSeed[] = [
     isFeatured: true,
     isOnSale: true,
     saleEndsAt: saleEnd,
-    tags: ["Evening", "Bridal"],
+    tags: ["Evening", "Bridal", "dress"],
     images: [
       { url: IMG.evening, alt: "Ebony Evening Dress", isPrimary: true, sortOrder: 0 },
       { url: IMG.formal, alt: "Ebony alternate", isPrimary: false, sortOrder: 1 },
@@ -112,7 +112,7 @@ const PRODUCTS: ProductSeed[] = [
     type: ProductType.RTW,
     basePriceNGN: 285_000,
     isNewArrival: true,
-    tags: ["Corporate", "Evening"],
+    tags: ["Corporate", "Evening", "suit"],
     images: [{ url: IMG.formal, alt: "Lagos Power Suit", isPrimary: true, sortOrder: 0 }],
     variants: [
       { size: "UK8", priceNGN: 285_000, stock: 6 },
@@ -131,7 +131,7 @@ const PRODUCTS: ProductSeed[] = [
     category: ProductCategory.EVENING_WEAR,
     type: ProductType.RTW,
     basePriceNGN: 520_000,
-    tags: ["Evening"],
+    tags: ["Evening", "dress"],
     images: [{ url: IMG.evening, alt: "Celestial Sequin Gown", isPrimary: true, sortOrder: 0 }],
     variants: [
       { size: "S", priceNGN: 520_000, stock: 2 },
@@ -146,7 +146,7 @@ const PRODUCTS: ProductSeed[] = [
     category: ProductCategory.CASUAL,
     type: ProductType.RTW,
     basePriceNGN: 125_000,
-    tags: ["Casual"],
+    tags: ["Casual", "set"],
     images: [{ url: IMG.casual, alt: "Ivy Casual Set", isPrimary: true, sortOrder: 0 }],
     variants: [
       { size: "XS", priceNGN: 125_000, stock: 8 },
@@ -161,7 +161,7 @@ const PRODUCTS: ProductSeed[] = [
     category: ProductCategory.KIDDIES,
     type: ProductType.RTW,
     basePriceNGN: 68_000,
-    tags: ["Kiddies"],
+    tags: ["Kiddies", "dress"],
     images: [{ url: IMG.kiddies, alt: "Kiddies Party Dress", isPrimary: true, sortOrder: 0 }],
     variants: [
       { size: "Age 4-5", priceNGN: 68_000, stock: 5 },
@@ -176,7 +176,7 @@ const PRODUCTS: ProductSeed[] = [
     category: ProductCategory.ACCESSORIES,
     type: ProductType.RTW,
     basePriceNGN: 45_000,
-    tags: ["Traditional"],
+    tags: ["Traditional", "accessories"],
     images: [{ url: IMG.accessories, alt: "Silk Scarf", isPrimary: true, sortOrder: 0 }],
     variants: [
       { size: "One Size", priceNGN: 45_000, stock: 20 },
@@ -190,7 +190,7 @@ const PRODUCTS: ProductSeed[] = [
     type: ProductType.BESPOKE,
     basePriceNGN: 380_000,
     isBespokeAvail: true,
-    tags: ["Traditional", "Corporate"],
+    tags: ["Traditional", "Corporate", "dress"],
     images: [{ url: IMG.formal, alt: "Aso-Ebi Formal Gown", isPrimary: true, sortOrder: 0 }],
     variants: [
       { size: "UK8", priceNGN: 380_000, stock: 3 },
@@ -205,7 +205,7 @@ const PRODUCTS: ProductSeed[] = [
     category: ProductCategory.EVENING_WEAR,
     type: ProductType.RTW,
     basePriceNGN: 195_000,
-    tags: ["Evening"],
+    tags: ["Evening", "dress"],
     images: [{ url: IMG.evening, alt: "Cocktail Midi", isPrimary: true, sortOrder: 0 }],
     variants: [
       { size: "S", priceNGN: 195_000, stock: 4 },
@@ -220,7 +220,7 @@ const PRODUCTS: ProductSeed[] = [
     category: ProductCategory.CASUAL,
     type: ProductType.RTW,
     basePriceNGN: 98_000,
-    tags: ["Casual", "Modest"],
+    tags: ["Casual", "Modest", "dress"],
     images: [{ url: IMG.casual, alt: "Linen Shirt Dress", isPrimary: true, sortOrder: 0 }],
     variants: [
       { size: "XS", priceNGN: 98_000, stock: 5 },
@@ -235,7 +235,7 @@ const PRODUCTS: ProductSeed[] = [
     category: ProductCategory.ACCESSORIES,
     type: ProductType.RTW,
     basePriceNGN: 85_000,
-    tags: ["Evening", "Bridal"],
+    tags: ["Evening", "Bridal", "accessories"],
     images: [{ url: IMG.accessories, alt: "Pearl Clutch", isPrimary: true, sortOrder: 0 }],
     variants: [{ size: "One Size", priceNGN: 85_000, stock: 12 }],
   },
@@ -247,7 +247,7 @@ const PRODUCTS: ProductSeed[] = [
     type: ProductType.BESPOKE,
     basePriceNGN: 220_000,
     isBespokeAvail: true,
-    tags: ["Traditional"],
+    tags: ["Traditional", "set"],
     images: [{ url: IMG.casual, alt: "Buba Set", isPrimary: true, sortOrder: 0 }],
     variants: [
       { size: "S", priceNGN: 220_000, stock: 2 },
@@ -262,7 +262,7 @@ const PRODUCTS: ProductSeed[] = [
     category: ProductCategory.CASUAL,
     type: ProductType.RTW,
     basePriceNGN: 112_000,
-    tags: ["Modest", "Corporate"],
+    tags: ["Modest", "Corporate", "dress"],
     images: [{ url: IMG.casual, alt: "Modest Wrap Dress", isPrimary: true, sortOrder: 0 }],
     variants: [
       { size: "XS", priceNGN: 112_000, stock: 3 },
@@ -278,7 +278,7 @@ const PRODUCTS: ProductSeed[] = [
     type: ProductType.BESPOKE,
     basePriceNGN: 155_000,
     isBespokeAvail: true,
-    tags: ["Kiddies", "Bridal"],
+    tags: ["Kiddies", "Bridal", "dress"],
     images: [{ url: IMG.kiddies, alt: "Mini-Me", isPrimary: true, sortOrder: 0 }],
     variants: [
       { size: "Age 4-5", priceNGN: 155_000, stock: 2 },

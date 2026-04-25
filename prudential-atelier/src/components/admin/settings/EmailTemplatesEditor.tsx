@@ -97,7 +97,7 @@ export function EmailTemplatesEditor({
   };
 
   return (
-    <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+    <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
       <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">Email templates</h2>
       <p className="mt-2 font-body text-xs text-[#6B6B68]">
         Customise transactional emails. If not customised here, the app uses its built-in defaults. Variables such as{" "}
@@ -126,7 +126,7 @@ export function EmailTemplatesEditor({
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[90] bg-black/50" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-[91] max-h-[90vh] w-[min(96vw,480px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-[#EBEBEA] bg-white p-6 shadow-lg">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-[91] max-h-[90vh] w-[min(96vw,480px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-[#EBEBEA] bg-canvas p-6 shadow-lg">
             <Dialog.Title className="font-display text-lg text-charcoal">
               {editingKey && EMAIL_TEMPLATE_META[editingKey]?.label}
             </Dialog.Title>

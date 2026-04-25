@@ -38,11 +38,11 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
   const displayName = user?.name ?? user?.email ?? "Admin";
 
   return (
-    <header className="flex h-[52px] shrink-0 items-center justify-between border-b border-[#EBEBEA] bg-white px-4 md:px-8">
+    <header className="flex h-[52px] shrink-0 items-center justify-between border-b border-[#EBEBEA] bg-canvas px-4 md:px-8">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
-          className="p-2 text-[#6B6B68] transition-colors hover:bg-[#F5F5F3] hover:text-black md:hidden"
+          className="p-2 text-[#6B6B68] transition-colors hover:bg-[#F5F5F3] hover:text-ink md:hidden"
           onClick={() => onOpenNav?.()}
           aria-label="Toggle navigation"
         >
@@ -51,7 +51,7 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
         <p className="flex min-w-0 items-center font-body">
           <span className="text-[11px] text-[#A8A8A4]">Admin</span>
           <span className="mx-2 text-[11px] text-[#EBEBEA]">/</span>
-          <span className="truncate text-xs font-medium text-black">{title}</span>
+          <span className="truncate text-xs font-medium text-ink">{title}</span>
         </p>
       </div>
       <div className="flex items-center gap-3 md:gap-4">
@@ -70,7 +70,7 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
           >
             {initials(user?.name, user?.email)}
           </div>
-          <span className="hidden max-w-[140px] truncate font-body text-xs text-black md:inline">{displayName}</span>
+          <span className="hidden max-w-[140px] truncate font-body text-xs text-ink md:inline">{displayName}</span>
         </div>
       </div>
     </header>

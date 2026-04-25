@@ -446,6 +446,10 @@ model BespokeRequest {
   paymentMethod   String?
   entrySource     String?
 
+  /// Paystack reference used for the “pay balance online” link (manual admin flow).
+  balancePaystackRef   String?
+  balancePaymentStatus PaymentStatus?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

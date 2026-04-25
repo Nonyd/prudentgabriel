@@ -103,7 +103,7 @@ export function ActiveFilters({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "flex w-full gap-2 overflow-x-auto border-b border-mid-grey bg-white px-6 py-2 md:px-8",
+        "flex w-full gap-2 overflow-x-auto border-b border-mid-grey bg-canvas px-6 py-2 md:px-8",
         className,
       )}
     >

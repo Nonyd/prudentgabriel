@@ -31,7 +31,7 @@ export function AtelierStory({
     <section id="atelier" className="bg-off-white py-[100px] md:py-[120px]">
       <div className="mx-auto max-w-3xl px-6 text-center md:px-8">
         <p className="font-body text-[10px] font-medium uppercase tracking-[0.25em] text-olive">{label}</p>
-        <h2 className="mt-4 font-display text-[32px] font-normal italic leading-[1.05] text-black md:text-[52px]">
+        <h2 className="mt-4 font-display text-[32px] font-normal italic leading-[1.05] text-ink md:text-[52px]">
           {displayHeadline.map((line, i) => (
             <span key={i}>
               {line}
@@ -42,7 +42,7 @@ export function AtelierStory({
         <p className="mx-auto mt-6 max-w-xl font-body text-[16px] font-light leading-[1.85] text-dark-grey">{displayBody}</p>
         <Link
           href="/our-story"
-          className="mt-10 inline-block border-b border-black pb-0.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-black transition-colors hover:border-olive hover:text-olive"
+          className="mt-10 inline-block border-b border-ink pb-0.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-ink transition-colors hover:border-olive hover:text-olive"
         >
           Our Story →
         </Link>

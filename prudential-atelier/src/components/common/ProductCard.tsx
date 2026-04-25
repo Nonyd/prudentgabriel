@@ -55,7 +55,8 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
   const primary = primaryFromColor
     ? { url: primaryFromColor, alt: product.name }
     : product.images[0];
-  const secondary = !primaryFromColor ? product.images[1] : undefined;
+  const secondary =
+    !primaryFromColor && product.images[1]?.url ? product.images[1] : undefined;
 
   const formatN = (ngn: number) => formatPrice(convertFromNGN(ngn, currency, rates), currency);
 
@@ -103,7 +104,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
         onKeyDown={(e) => {
           if (e.key === "Enter") router.push(`/shop/${product.slug}`);
         }}
-        className={cn("group relative cursor-pointer bg-white", compact && "text-left")}
+        className={cn("group relative cursor-pointer bg-canvas", compact && "text-left")}
       >
         <div
           className="relative aspect-[3/4] overflow-hidden bg-[var(--light-grey)]"
@@ -115,8 +116,10 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
             fill
             sizes="(max-width: 768px) 50vw, 33vw"
             className={cn(
-              "object-cover object-top transition-[opacity,transform] duration-[600ms] ease-out",
-              secondary ? "group-hover:opacity-0" : "group-hover:scale-105",
+              "object-cover object-top",
+              secondary
+                ? "transition-opacity duration-500 ease-out group-hover:opacity-0"
+                : "transition-transform duration-700 ease-out group-hover:scale-[1.04]",
             )}
             priority={priority}
           />
@@ -126,7 +129,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
               alt={secondary.alt || product.name}
               fill
               sizes="(max-width: 768px) 50vw, 33vw"
-              className="absolute inset-0 object-cover object-top opacity-0 transition-opacity duration-[600ms] ease-out group-hover:opacity-100"
+              className="absolute inset-0 object-cover object-top opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100"
             />
           )}
 
@@ -152,7 +155,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
 
           {!compact && (
             <div
-              className="absolute bottom-0 left-0 right-0 translate-y-full bg-white/95 px-4 pb-4 pt-4 backdrop-blur-sm transition-transform duration-[350ms] ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:translate-y-0 dark:bg-black/90"
+              className="absolute bottom-0 left-0 right-0 translate-y-full bg-white px-4 pb-4 pt-4 transition-transform duration-[400ms] ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:translate-y-0"
               onClick={(e) => e.stopPropagation()}
             >
               {oneSizeOnly ? (
@@ -210,7 +213,10 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
           )}
         </div>
 
-        <div onClick={() => router.push(`/shop/${product.slug}`)} className={cn("py-3.5", compact && "py-2")}>
+        <div
+          onClick={() => router.push(`/shop/${product.slug}`)}
+          className={cn("pb-5 pt-3.5", compact && "py-2")}
+        >
           <h3
             className={cn(
               "font-body text-[14px] font-normal text-charcoal line-clamp-1 transition-colors duration-200 group-hover:text-olive",
@@ -223,12 +229,12 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
             {product.isOnSale && lowestSale != null ? (
               <>
                 <del className="font-body text-[13px] font-light text-dark-grey">{formatN(lowestOrig)}</del>
-                <span className="font-body text-[14px] font-medium text-olive">{formatN(lowestSale)}</span>
+                <span className="font-body text-[13px] font-medium text-olive">{formatN(lowestSale)}</span>
               </>
             ) : (
-              <span className="font-body text-[14px] font-light text-charcoal">
+              <span className="font-body text-[13px] font-light text-charcoal">
                 {multi ? "From " : ""}
-                <span className={multi ? "font-light" : "font-light"}>{formatN(lowestEff)}</span>
+                <span className="font-light">{formatN(lowestEff)}</span>
               </span>
             )}
           </div>

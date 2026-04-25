@@ -96,7 +96,7 @@ export function AdminSettingsGroupClient({ groupSlug }: { groupSlug: AdminSettin
           <SettingsGroupCard title="Email" group="EMAIL" rows={emailConfig} onSaved={load} />
           <SettingsGroupCard title="SMS" group="SMS" rows={rowsFor("SMS")} onSaved={load} />
           <EmailTemplatesEditor emailRows={rowsFor("EMAIL")} onSaved={load} />
-          <div className="border border-[#EBEBEA] bg-white p-6">
+          <div className="border border-[#EBEBEA] bg-canvas p-6">
             <button
               type="button"
               className="font-body text-sm text-olive underline"
@@ -122,7 +122,7 @@ export function AdminSettingsGroupClient({ groupSlug }: { groupSlug: AdminSettin
           </div>
           <Accordion.Root type="multiple" className="space-y-2">
             {(["paystack", "flutterwave", "stripe", "monnify"] as const).map((gw) => (
-              <Accordion.Item key={gw} value={gw} className="border border-[#EBEBEA] bg-white">
+              <Accordion.Item key={gw} value={gw} className="border border-[#EBEBEA] bg-canvas">
                 <Accordion.Header>
                   <Accordion.Trigger className="flex w-full items-center justify-between px-4 py-3 font-body text-sm font-medium capitalize">
                     {gw}

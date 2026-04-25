@@ -14,7 +14,7 @@ export function AdminShell({ session, children }: AdminShellProps) {
   const [mobileNav, setMobileNav] = useState(false);
 
   return (
-    <div className="admin-area flex h-screen overflow-hidden bg-white">
+    <div className="admin-area flex h-screen overflow-hidden bg-canvas">
       {mobileNav ? (
         <button
           type="button"
@@ -32,7 +32,7 @@ export function AdminShell({ session, children }: AdminShellProps) {
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <AdminTopbar onOpenNav={() => setMobileNav(true)} />
-        <main className="min-h-0 flex-1 overflow-y-auto bg-white p-4 md:p-8">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto bg-canvas p-4 md:p-8">{children}</main>
       </div>
     </div>
   );

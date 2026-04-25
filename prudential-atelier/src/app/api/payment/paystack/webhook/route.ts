@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PaymentGateway } from "@prisma/client";
+import { PaymentGateway, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verifyWebhookSignature } from "@/lib/payments/paystack";
 import { fulfillPaidOrder } from "@/lib/order-payment";
 import { notifyPaymentFailed } from "@/lib/notifications";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
+import { fulfillPaidBespokeBalance } from "@/lib/bespoke-payment";
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
     data?: {
       status?: string;
       reference?: string;
-      metadata?: { orderId?: string; bookingId?: string; type?: string };
+      metadata?: { orderId?: string; bookingId?: string; bespokeRequestId?: string; type?: string };
     };
   };
   try {
@@ -30,11 +31,19 @@ export async function POST(req: NextRequest) {
 
   const orderId = event.data?.metadata?.orderId;
   const bookingId = event.data?.metadata?.bookingId;
+  const bespokeRequestId = event.data?.metadata?.bespokeRequestId;
   const isConsultation = event.data?.metadata?.type === "consultation";
+  const isBespokeBalance = event.data?.metadata?.type === "bespoke_balance";
   const ref = event.data?.reference;
 
   if (event.event === "charge.success" && ref && event.data?.status === "success") {
-    if (isConsultation && bookingId) {
+    if (isBespokeBalance && bespokeRequestId) {
+      await fulfillPaidBespokeBalance({
+        bespokeRequestId,
+        paymentRef: ref,
+        gateway: PaymentGateway.PAYSTACK,
+      });
+    } else if (isConsultation && bookingId) {
       await fulfillPaidConsultationBooking({
         bookingId,
         paymentRef: ref,
@@ -47,8 +56,8 @@ export async function POST(req: NextRequest) {
 
   if (event.event === "charge.failed" && orderId) {
     await prisma.order.updateMany({
-      where: { id: orderId, paymentStatus: "PENDING" },
-      data: { paymentStatus: "FAILED" },
+      where: { id: orderId, paymentStatus: PaymentStatus.PENDING },
+      data: { paymentStatus: PaymentStatus.FAILED },
     });
     const failedOrder = await prisma.order.findUnique({
       where: { id: orderId },
@@ -59,8 +68,15 @@ export async function POST(req: NextRequest) {
 
   if (event.event === "charge.failed" && isConsultation && bookingId) {
     await prisma.consultationBooking.updateMany({
-      where: { id: bookingId, paymentStatus: "PENDING" },
-      data: { paymentStatus: "FAILED" },
+      where: { id: bookingId, paymentStatus: PaymentStatus.PENDING },
+      data: { paymentStatus: PaymentStatus.FAILED },
+    });
+  }
+
+  if (event.event === "charge.failed" && isBespokeBalance && bespokeRequestId) {
+    await prisma.bespokeRequest.updateMany({
+      where: { id: bespokeRequestId, balancePaymentStatus: PaymentStatus.PENDING },
+      data: { balancePaymentStatus: PaymentStatus.FAILED },
     });
   }
 

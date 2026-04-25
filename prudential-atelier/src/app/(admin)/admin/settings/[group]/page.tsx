@@ -45,11 +45,11 @@ export default async function AdminSettingsGroupPage({ params }: { params: Promi
     <div>
       <Link
         href="/admin/settings"
-        className="mb-6 inline-block font-body text-[11px] font-medium uppercase tracking-[0.12em] text-[#6B6B68] hover:text-black"
+        className="mb-6 inline-block font-body text-[11px] font-medium uppercase tracking-[0.12em] text-[#6B6B68] hover:text-ink"
       >
         ← Settings
       </Link>
-      <h1 className="font-display text-2xl text-black">{title}</h1>
+      <h1 className="font-display text-2xl text-ink">{title}</h1>
       <div className="mt-8">
         <AdminSettingsGroupClient groupSlug={slug} />
       </div>

@@ -49,7 +49,7 @@ export function NewsletterSection({
             <button
               type="submit"
               disabled={formState.isSubmitting}
-              className="h-12 shrink-0 bg-white px-7 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-olive transition-colors hover:bg-off-white disabled:opacity-60"
+              className="h-12 shrink-0 bg-[#ffffff] px-7 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-olive transition-colors hover:bg-off-white disabled:opacity-60"
             >
               Subscribe
             </button>

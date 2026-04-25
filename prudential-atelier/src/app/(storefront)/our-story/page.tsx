@@ -39,7 +39,7 @@ export default async function OurStoryPage() {
         </div>
       </div>
 
-      <section className="mx-auto grid max-w-site items-center gap-12 bg-white px-6 py-20 md:px-8 lg:grid-cols-2">
+      <section className="mx-auto grid max-w-site items-center gap-12 bg-canvas px-6 py-20 md:px-8 lg:grid-cols-2">
         <div>
           <h2 className="font-display text-3xl font-medium text-charcoal md:text-4xl">From Ajah to the World</h2>
           <p className="mt-4 font-body text-[15px] font-light leading-[1.85] text-dark-grey">
@@ -97,7 +97,7 @@ export default async function OurStoryPage() {
           href="https://pfacademy.ng"
           target="_blank"
           rel="noreferrer"
-          className="mt-8 inline-block border border-black px-8 py-3 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-black transition-colors hover:bg-black hover:text-white"
+          className="mt-8 inline-block border border-ink px-8 py-3 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-ink transition-colors hover:bg-ink hover:text-[#ffffff]"
         >
           Visit PFA Academy →
         </a>

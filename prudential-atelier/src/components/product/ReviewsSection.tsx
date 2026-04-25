@@ -126,7 +126,7 @@ export function ReviewsSection({
             <Dialog.Overlay className="fixed inset-0 z-[80] bg-charcoal/50" />
             <Dialog.Content
               data-lenis-prevent
-              className="fixed left-1/2 top-1/2 z-[81] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain border border-mid-grey bg-white p-6 shadow-xl"
+              className="fixed left-1/2 top-1/2 z-[81] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain border border-mid-grey bg-canvas p-6 shadow-xl"
             >
               <Dialog.Title className="font-display text-xl text-charcoal">Write a review</Dialog.Title>
               <div className="mt-4">
@@ -168,7 +168,7 @@ export function ReviewsSection({
               )}
               <span className="font-body text-[11px] text-dark-grey">{format(new Date(r.createdAt), "MMM d, yyyy")}</span>
             </div>
-            {r.title && <p className="mt-2 font-body text-[14px] font-medium text-black">{r.title}</p>}
+            {r.title && <p className="mt-2 font-body text-[14px] font-medium text-ink">{r.title}</p>}
             {r.body && <p className="mt-2 font-body text-[14px] font-light leading-[1.75] text-charcoal">{r.body}</p>}
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
               <span className="font-body text-[13px] text-charcoal">{displayName(r.user.name)}</span>

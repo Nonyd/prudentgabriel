@@ -78,7 +78,7 @@ export function Hero({
           <div className="mt-8 flex flex-wrap items-center gap-6">
             <Link
               href="/shop"
-              className="inline-flex border border-white px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white transition-colors duration-200 hover:bg-white hover:text-black"
+              className="inline-flex border border-white px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white transition-colors duration-200 hover:bg-[#ffffff] hover:text-[#0a0a0a]"
             >
               {btn1}
             </Link>

@@ -337,7 +337,7 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
                 type="button"
                 onClick={() => selectConsultant(c)}
                 className={clsx(
-                  "border bg-white p-8 text-left transition-colors",
+                  "border bg-canvas p-8 text-left transition-colors",
                   consultant?.id === c.id ? "border-2 border-olive bg-off-white" : "border-mid-grey hover:border-olive/50",
                 )}
               >

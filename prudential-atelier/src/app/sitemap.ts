@@ -4,6 +4,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[0]["changeFrequency"]; priority: number }[] = [
   { path: "", changeFrequency: "weekly", priority: 1 },
   { path: "/shop", changeFrequency: "daily", priority: 0.9 },
+  { path: "/rtw", changeFrequency: "daily", priority: 0.9 },
   { path: "/bespoke", changeFrequency: "monthly", priority: 0.8 },
   { path: "/consultation", changeFrequency: "weekly", priority: 0.85 },
   { path: "/contact", changeFrequency: "monthly", priority: 0.7 },

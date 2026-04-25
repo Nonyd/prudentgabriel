@@ -25,8 +25,9 @@ export async function queryProductList(
   hasPrev: boolean;
 }> {
   const categoryParam = searchParams.get("category");
+  const excludeCategoryParam = searchParams.get("excludeCategory");
   const typeParam = searchParams.get("type");
-  const tagsParam = searchParams.get("tags");
+  const tagsParam = searchParams.get("tags") ?? searchParams.get("tag");
   const sortParam = searchParams.get("sort") ?? "newest";
   const page = parseIntParam(searchParams.get("page"), 1);
   const limit = parseIntParam(searchParams.get("limit"), 24, 48);
@@ -49,6 +50,11 @@ export async function queryProductList(
 
   if (categoryParam && CATEGORIES.has(categoryParam as ProductCategory)) {
     where.category = categoryParam as ProductCategory;
+  } else if (
+    excludeCategoryParam &&
+    CATEGORIES.has(excludeCategoryParam as ProductCategory)
+  ) {
+    where.category = { not: excludeCategoryParam as ProductCategory };
   }
 
   if (typeParam && TYPES.has(typeParam as "RTW" | "BESPOKE")) {
@@ -65,7 +71,8 @@ export async function queryProductList(
       .map((t) => t.trim())
       .filter(Boolean);
     if (tags.length) {
-      where.AND = tags.map((tag) => ({ tags: { has: tag } }));
+      /** Comma-separated tags use OR logic (match any listed tag). */
+      where.tags = { hasSome: tags };
     }
   }
 

@@ -162,7 +162,7 @@ export function AnalyticsDashboard({
     <div className="space-y-6">
       <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-[28px] text-black">Dashboard</h1>
+          <h1 className="font-display text-[28px] text-ink">Dashboard</h1>
           <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">{todayLabel}</p>
         </div>
         <span className="inline-flex w-fit border border-[#EBEBEA] px-3 py-1 font-body text-[11px] text-[#6B6B68]">
@@ -171,42 +171,42 @@ export function AnalyticsDashboard({
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="relative border border-[#EBEBEA] bg-white p-6">
+        <div className="relative border border-[#EBEBEA] bg-canvas p-6">
           <div className="flex items-start justify-between">
             <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">Revenue (30 days)</p>
             <TrendingUp className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
           </div>
-          <p className="mt-2 font-display text-[32px] text-black">{formatNGN(revenue30)}</p>
+          <p className="mt-2 font-display text-[32px] text-ink">{formatNGN(revenue30)}</p>
           <p className={cn("mt-1 font-body text-xs font-light", growth >= 0 ? "text-olive" : "text-[#8B1A1A]")}>
             {growth >= 0 ? "+" : ""}
             {growth.toFixed(1)}% vs prev 30 days
           </p>
         </div>
-        <div className="border border-[#EBEBEA] bg-white p-6">
+        <div className="border border-[#EBEBEA] bg-canvas p-6">
           <div className="flex items-start justify-between">
             <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">Total orders (30 days)</p>
             <ShoppingBag className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
           </div>
-          <p className="mt-2 font-display text-[32px] text-black">{orders30Count}</p>
+          <p className="mt-2 font-display text-[32px] text-ink">{orders30Count}</p>
           <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">{ordersPendingPayment} pending payment</p>
         </div>
-        <div className="border border-[#EBEBEA] bg-white p-6">
+        <div className="border border-[#EBEBEA] bg-canvas p-6">
           <div className="flex items-start justify-between">
             <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">New customers (30 days)</p>
             <Users className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
           </div>
-          <p className="mt-2 font-display text-[32px] text-black">{newCustomers30}</p>
+          <p className="mt-2 font-display text-[32px] text-ink">{newCustomers30}</p>
           <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">{newCustomersReferral30} via referral</p>
         </div>
         <Link
           href={urgentHref}
-          className="block border border-[#EBEBEA] bg-white p-6 transition-colors hover:bg-[#FAFAFA]"
+          className="block border border-[#EBEBEA] bg-canvas p-6 transition-colors hover:bg-[#FAFAFA]"
         >
           <div className="flex items-start justify-between">
             <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">Pending actions</p>
             <AlertCircle className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
           </div>
-          <p className={cn("mt-2 font-display text-[32px]", pendingActions > 0 ? "text-[#8B1A1A]" : "text-black")}>
+          <p className={cn("mt-2 font-display text-[32px]", pendingActions > 0 ? "text-[#8B1A1A]" : "text-ink")}>
             {pendingActions}
           </p>
           <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">
@@ -215,8 +215,8 @@ export function AnalyticsDashboard({
         </Link>
       </div>
 
-      <div className="border border-[#EBEBEA] bg-white p-6">
-        <h2 className="mb-4 font-body text-xs font-medium uppercase tracking-wide text-black">Revenue</h2>
+      <div className="border border-[#EBEBEA] bg-canvas p-6">
+        <h2 className="mb-4 font-body text-xs font-medium uppercase tracking-wide text-ink">Revenue</h2>
         <div className="h-[280px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -268,9 +268,9 @@ export function AnalyticsDashboard({
         </div>
       </div>
 
-      <div className="overflow-hidden border border-[#EBEBEA] bg-white">
+      <div className="overflow-hidden border border-[#EBEBEA] bg-canvas">
         <div className="flex items-center justify-between border-b border-[#EBEBEA] px-6 py-4">
-          <h2 className="font-body text-xs font-medium uppercase tracking-wide text-black">Recent Orders</h2>
+          <h2 className="font-body text-xs font-medium uppercase tracking-wide text-ink">Recent Orders</h2>
           <Link href="/admin/orders" className="font-body text-[11px] text-olive hover:underline">
             View All →
           </Link>
@@ -296,9 +296,9 @@ export function AnalyticsDashboard({
                       #{o.orderNumber}
                     </Link>
                   </td>
-                  <td className="max-w-[180px] truncate px-6 py-3.5 font-body text-[13px] text-black">{o.customerLabel}</td>
+                  <td className="max-w-[180px] truncate px-6 py-3.5 font-body text-[13px] text-ink">{o.customerLabel}</td>
                   <td className="max-w-[200px] truncate px-6 py-3.5 font-body text-[13px] text-[#6B6B68]">{o.itemSummary}</td>
-                  <td className="px-6 py-3.5 font-body text-[13px] text-black">{formatNGN(o.total)}</td>
+                  <td className="px-6 py-3.5 font-body text-[13px] text-ink">{formatNGN(o.total)}</td>
                   <td className="px-6 py-3.5">
                     <span
                       className={cn(
@@ -338,9 +338,9 @@ export function AnalyticsDashboard({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="border border-[#EBEBEA] bg-white p-5">
+        <div className="border border-[#EBEBEA] bg-canvas p-5">
           <div className="flex items-center justify-between">
-            <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-black">Out of stock</h3>
+            <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-ink">Out of stock</h3>
             {oosVariants.length > 0 ? (
               <span className="bg-[#FDECEA] px-2 py-0.5 font-body text-[9px] text-[#8B1A1A]">{oosVariants.length}</span>
             ) : null}
@@ -350,7 +350,7 @@ export function AnalyticsDashboard({
               <li className="py-3 font-body text-xs text-[#1B5E20]">All variants are in stock ✓</li>
             ) : (
               oosVariants.map((r, i) => (
-                <li key={`${r.slug}-${r.size}-${i}`} className="flex items-center justify-between gap-2 py-3 font-body text-xs text-black">
+                <li key={`${r.slug}-${r.size}-${i}`} className="flex items-center justify-between gap-2 py-3 font-body text-xs text-ink">
                   <span className="min-w-0 truncate">
                     {r.productName} <span className="text-[#6B6B68]">({r.size})</span>
                   </span>
@@ -362,16 +362,16 @@ export function AnalyticsDashboard({
             )}
           </ul>
         </div>
-        <div className="border border-[#EBEBEA] bg-white p-5">
+        <div className="border border-[#EBEBEA] bg-canvas p-5">
           <div className="flex items-center justify-between">
-            <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-black">Bespoke requests</h3>
+            <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-ink">Bespoke requests</h3>
             {bespokePendingList.length > 0 ? (
               <span className="bg-[#FFF8E7] px-2 py-0.5 font-body text-[9px] text-[#92660A]">{bespokePendingList.length}</span>
             ) : null}
           </div>
           <ul className="mt-4 divide-y divide-[#F5F5F3]">
             {bespokePendingList.slice(0, 5).map((b) => (
-              <li key={b.id} className="py-3 font-body text-xs text-black">
+              <li key={b.id} className="py-3 font-body text-xs text-ink">
                 <span className="font-medium text-olive">#{b.requestNumber}</span> · {b.name} · {b.occasion}
                 <span className="mt-1 block font-body text-[11px] text-[#6B6B68]">
                   {formatDistanceToNow(new Date(b.createdAt), { addSuffix: true })}
@@ -383,15 +383,15 @@ export function AnalyticsDashboard({
             Review all
           </Link>
         </div>
-        <div className="border border-[#EBEBEA] bg-white p-5">
-          <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-black">Coupons expiring soon</h3>
+        <div className="border border-[#EBEBEA] bg-canvas p-5">
+          <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-ink">Coupons expiring soon</h3>
           <p className="mt-1 font-body text-[11px] text-[#6B6B68]">Within 7 days</p>
           <ul className="mt-4 divide-y divide-[#F5F5F3]">
             {expiringCoupons.length === 0 ? (
               <li className="py-3 font-body text-xs text-[#1B5E20]">No coupons expiring soon ✓</li>
             ) : (
               expiringCoupons.map((c) => (
-                <li key={c.id} className="py-3 font-body text-xs text-black">
+                <li key={c.id} className="py-3 font-body text-xs text-ink">
                   <span className="font-mono text-olive">{c.code}</span> · {new Date(c.expiresAt).toLocaleDateString()} · {c.remainingUses}
                 </li>
               ))

@@ -48,11 +48,11 @@ export function AdminLoginClient() {
     <div className="mx-auto mt-[15vh] w-full max-w-sm px-6">
       <div className="text-center">
         <BrandLogo width={40} height={40} variant="admin" className="mx-auto" />
-        <p className="mt-3 font-body text-[11px] font-medium uppercase tracking-[0.2em] text-black">Prudent Gabriel</p>
+        <p className="mt-3 font-body text-[11px] font-medium uppercase tracking-[0.2em] text-ink">Prudent Gabriel</p>
         <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">Admin Portal</p>
       </div>
       <div className="my-8 h-px bg-[#E8E8E4]" />
-      <h1 className="mb-6 font-display text-[28px] text-black">Sign In</h1>
+      <h1 className="mb-6 font-display text-[28px] text-ink">Sign In</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {errors.root ? (
           <p className="text-center font-body text-[13px] text-[#8B1A1A]" role="alert">

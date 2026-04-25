@@ -19,7 +19,7 @@ export function PFABanner({
         <button
           type="button"
           onClick={() => window.open("https://pfacademy.ng", "_blank")}
-          className="shrink-0 border border-black px-8 py-3 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-black transition-colors duration-200 hover:bg-black hover:text-white"
+          className="shrink-0 border border-ink px-8 py-3 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-ink transition-colors duration-200 hover:bg-ink hover:text-[#ffffff]"
         >
           {ctaText}
         </button>

@@ -6,7 +6,45 @@ import * as Dialog from "@radix-ui/react-dialog";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import type { GalleryCategory, GalleryImage } from "@prisma/client";
 import toast from "react-hot-toast";
-import { Eye, EyeOff, Trash2, Pencil, ChevronUp, ChevronDown } from "lucide-react";
+import { Eye, EyeOff, Trash2, Pencil, ChevronUp, ChevronDown, Loader2 } from "lucide-react";
+
+type UploadJob = {
+  id: string;
+  name: string;
+  progress: number;
+  status: "queued" | "uploading" | "done" | "error";
+  error?: string;
+};
+
+function newJobId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+}
+
+function uploadGalleryFile(
+  file: File,
+  category: GalleryCategory,
+  onProgress: (pct: number) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/admin/gallery");
+    xhr.withCredentials = true;
+    xhr.upload.onprogress = (ev) => {
+      if (!ev.lengthComputable) return;
+      onProgress(Math.min(100, Math.round((ev.loaded / ev.total) * 100)));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
+      else reject(new Error(xhr.responseText || "Upload failed"));
+    };
+    xhr.onerror = () => reject(new Error("Network error"));
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("category", category);
+    xhr.send(fd);
+  });
+}
 
 async function fetchPage(category: GalleryCategory, page: number) {
   const res = await fetch(`/api/admin/gallery?category=${category}&page=${page}&limit=30`);
@@ -24,6 +62,8 @@ export function GalleryManager() {
   const [page, setPage] = useState(1);
   const [data, setData] = useState<{ images: GalleryImage[]; total: number; totalPages: number } | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadJobs, setUploadJobs] = useState<UploadJob[]>([]);
+  const [uploadInFlight, setUploadInFlight] = useState(false);
   const [reorder, setReorder] = useState(false);
   const [editing, setEditing] = useState<GalleryImage | null>(null);
   const [editAlt, setEditAlt] = useState("");
@@ -108,18 +148,48 @@ export function GalleryManager() {
     }
   };
 
-  const onUploadFiles = async (files: FileList | null) => {
-    if (!files?.length) return;
-    for (const file of Array.from(files)) {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("category", tab);
-      const res = await fetch("/api/admin/gallery", { method: "POST", body: fd });
-      if (!res.ok) toast.error(`Failed: ${file.name}`);
-      else toast.success(`Uploaded ${file.name}`);
-    }
-    setUploadOpen(false);
+  const onUploadFiles = async (files: FileList | File[] | null) => {
+    const list = files ? Array.from(files) : [];
+    if (!list.length) return;
+
+    const jobs: UploadJob[] = list.map((file) => ({
+      id: newJobId(),
+      name: file.name,
+      progress: 0,
+      status: "queued",
+    }));
+    setUploadJobs(jobs);
+    setUploadInFlight(true);
+
+    let ok = 0;
+    let fail = 0;
+    await Promise.all(
+      list.map(async (file, i) => {
+        const jobId = jobs[i].id;
+        setUploadJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, status: "uploading" as const } : j)));
+        try {
+          await uploadGalleryFile(file, tab, (pct) => {
+            setUploadJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, progress: pct } : j)));
+          });
+          setUploadJobs((prev) =>
+            prev.map((j) => (j.id === jobId ? { ...j, status: "done" as const, progress: 100 } : j)),
+          );
+          ok += 1;
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Upload failed";
+          setUploadJobs((prev) =>
+            prev.map((j) => (j.id === jobId ? { ...j, status: "error" as const, error: msg, progress: 0 } : j)),
+          );
+          fail += 1;
+          toast.error(`${file.name}: ${msg}`);
+        }
+      }),
+    );
+
+    setUploadInFlight(false);
     void load();
+    if (ok > 0 && fail === 0) toast.success(`${ok} image${ok === 1 ? "" : "s"} uploaded`);
+    else if (ok > 0 && fail > 0) toast(`Finished with errors: ${ok} ok, ${fail} failed`, { icon: "⚠️" });
   };
 
   const images = data?.images ?? [];
@@ -135,7 +205,7 @@ export function GalleryManager() {
               type="button"
               onClick={() => setTab(c)}
               className={`px-4 py-2 font-body text-xs font-medium uppercase tracking-wide ${
-                tab === c ? "border-b-2 border-[#37392d] text-black" : "text-[#6B6B68]"
+                tab === c ? "border-b-2 border-[#37392d] text-ink" : "text-charcoal-mid"
               }`}
             >
               {c === "ATELIER" ? "Atelier" : "Bridal"}
@@ -174,7 +244,7 @@ export function GalleryManager() {
                     <div className="flex gap-1">
                       <button
                         type="button"
-                        className="bg-white/90 p-1 text-charcoal"
+                        className="bg-canvas/90 p-1 text-charcoal"
                         onClick={() => void move(idx, -1)}
                         aria-label="Move up"
                       >
@@ -182,7 +252,7 @@ export function GalleryManager() {
                       </button>
                       <button
                         type="button"
-                        className="bg-white/90 p-1 text-charcoal"
+                        className="bg-canvas/90 p-1 text-charcoal"
                         onClick={() => void move(idx, 1)}
                         aria-label="Move down"
                       >
@@ -194,7 +264,7 @@ export function GalleryManager() {
                   )}
                   <button
                     type="button"
-                    className="bg-white/90 p-1 text-charcoal"
+                    className="bg-canvas/90 p-1 text-charcoal"
                     onClick={() => void togglePublished(img)}
                     aria-label="Toggle published"
                   >
@@ -204,7 +274,7 @@ export function GalleryManager() {
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
-                    className="bg-white/90 p-1 text-charcoal"
+                    className="bg-canvas/90 p-1 text-charcoal"
                     onClick={() => {
                       setEditing(img);
                       setEditAlt(img.alt ?? "");
@@ -217,13 +287,13 @@ export function GalleryManager() {
                   </button>
                   <AlertDialog.Root>
                     <AlertDialog.Trigger asChild>
-                      <button type="button" className="bg-white/90 p-1 text-red-700">
+                      <button type="button" className="bg-canvas/90 p-1 text-red-700">
                         <Trash2 size={16} />
                       </button>
                     </AlertDialog.Trigger>
                     <AlertDialog.Portal>
                       <AlertDialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
-                      <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 border border-[#EBEBEA] bg-white p-6 shadow-lg">
+                      <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 border border-[#EBEBEA] bg-canvas p-6 shadow-lg">
                         <AlertDialog.Title className="font-body text-sm font-medium">Delete image?</AlertDialog.Title>
                         <div className="mt-6 flex justify-end gap-2">
                           <AlertDialog.Cancel asChild>
@@ -268,25 +338,90 @@ export function GalleryManager() {
         </div>
       ) : null}
 
-      <Dialog.Root open={uploadOpen} onOpenChange={setUploadOpen}>
+      <Dialog.Root
+        open={uploadOpen}
+        onOpenChange={(o) => {
+          setUploadOpen(o);
+          if (!o) {
+            setUploadJobs([]);
+            setUploadInFlight(false);
+          }
+        }}
+      >
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(90vw,520px)] -translate-x-1/2 -translate-y-1/2 border border-[#EBEBEA] bg-white p-6 shadow-lg">
-            <Dialog.Title className="font-display text-xl text-black">Upload images</Dialog.Title>
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] max-h-[min(90vh,640px)] w-[min(90vw,520px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-[#EBEBEA] bg-canvas p-6 shadow-lg">
+            <Dialog.Title className="font-display text-xl text-ink">Upload images</Dialog.Title>
             <p className="mt-2 font-body text-xs text-[#6B6B68]">Uploading to: {tab === "ATELIER" ? "Atelier" : "Bridal"}</p>
-            <label className="mt-6 flex cursor-pointer flex-col items-center justify-center border border-dashed border-[#EBEBEA] bg-[#fafafa] px-6 py-12">
+            <label
+              className="mt-6 flex cursor-pointer flex-col items-center justify-center border border-dashed border-[#EBEBEA] bg-[#fafafa] px-6 py-12 transition-colors hover:border-[#37392d]/40"
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (uploadInFlight) return;
+                const dt = e.dataTransfer.files;
+                if (dt?.length) void onUploadFiles(dt);
+              }}
+            >
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 multiple
+                disabled={uploadInFlight}
                 className="hidden"
-                onChange={(e) => void onUploadFiles(e.target.files)}
+                onChange={(e) => {
+                  void onUploadFiles(e.target.files);
+                  e.target.value = "";
+                }}
               />
               <span className="font-body text-sm text-charcoal">Drop files or click to select</span>
             </label>
+
+            {uploadJobs.length > 0 ? (
+              <ul className="mt-6 space-y-3 border-t border-[#EBEBEA] pt-4">
+                {uploadJobs.map((job) => (
+                  <li key={job.id} className="font-body text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 flex-1 truncate text-charcoal">{job.name}</span>
+                      {job.status === "uploading" ? (
+                        <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-[#37392d]" aria-hidden />
+                      ) : null}
+                      {job.status === "done" ? (
+                        <span className="shrink-0 text-[#1B5E20]">Done</span>
+                      ) : null}
+                      {job.status === "error" ? (
+                        <span className="shrink-0 text-red-700" title={job.error}>
+                          Error
+                        </span>
+                      ) : null}
+                      {job.status === "queued" ? (
+                        <span className="shrink-0 text-[#A8A8A4]">Queued</span>
+                      ) : null}
+                    </div>
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden bg-[#EBEBEA]">
+                      <div
+                        className={`h-full transition-[width] duration-150 ${
+                          job.status === "error" ? "bg-red-400" : "bg-[#37392d]"
+                        }`}
+                        style={{ width: `${job.status === "done" ? 100 : job.progress}%` }}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+
             <Dialog.Close asChild>
-              <button type="button" className="mt-6 w-full border border-[#EBEBEA] py-2 text-xs uppercase">
-                Close
+              <button
+                type="button"
+                disabled={uploadInFlight}
+                className="mt-6 w-full border border-[#EBEBEA] py-2 text-xs uppercase disabled:opacity-50"
+              >
+                {uploadInFlight ? "Uploading…" : "Close"}
               </button>
             </Dialog.Close>
           </Dialog.Content>
@@ -296,7 +431,7 @@ export function GalleryManager() {
       <Dialog.Root open={Boolean(editing)} onOpenChange={(o) => !o && setEditing(null)}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
-          <Dialog.Content className="fixed right-0 top-0 z-[101] flex h-full w-[min(100vw,380px)] flex-col border-l border-[#EBEBEA] bg-white p-6 shadow-lg">
+          <Dialog.Content className="fixed right-0 top-0 z-[101] flex h-full w-[min(100vw,380px)] flex-col border-l border-[#EBEBEA] bg-canvas p-6 shadow-lg">
             <Dialog.Title className="font-display text-lg">Edit image</Dialog.Title>
             <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Alt</label>
             <input

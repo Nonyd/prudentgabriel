@@ -186,7 +186,7 @@ export function ReviewForm({
           Title (optional)
         </label>
         <input
-          className="mt-1 w-full border border-mid-grey bg-white px-3 py-2 font-body text-sm text-charcoal outline-none focus:border-olive"
+          className="mt-1 w-full border border-mid-grey bg-canvas px-3 py-2 font-body text-sm text-charcoal outline-none focus:border-olive"
           placeholder="Summarise your experience"
           maxLength={80}
           {...register("title")}
@@ -195,7 +195,7 @@ export function ReviewForm({
       <div>
         <label className="font-body text-[11px] font-medium uppercase tracking-[0.12em] text-dark-grey">Review *</label>
         <textarea
-          className="mt-1 min-h-[120px] w-full border border-mid-grey bg-white px-3 py-2 font-body text-sm text-charcoal outline-none focus:border-olive"
+          className="mt-1 min-h-[120px] w-full border border-mid-grey bg-canvas px-3 py-2 font-body text-sm text-charcoal outline-none focus:border-olive"
           placeholder="Tell others about the fit, quality, and delivery..."
           maxLength={1000}
           {...register("body")}

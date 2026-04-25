@@ -116,16 +116,16 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
   const canShip = order.status === "PROCESSING";
 
   return (
-    <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+    <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
       <Dialog.Root open={refundOpen} onOpenChange={setRefundOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm" />
           <Dialog.Content
             data-lenis-prevent
-            className="fixed left-1/2 top-1/2 z-[101] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain rounded-sm border border-[#EBEBEA] bg-white p-6 text-charcoal shadow-xl"
+            className="fixed left-1/2 top-1/2 z-[101] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain rounded-sm border border-[#EBEBEA] bg-canvas p-6 text-charcoal shadow-xl"
           >
             <div className="flex items-start justify-between gap-4">
-              <Dialog.Title className="font-display text-xl text-black">Issue Refund — #{order.orderNumber}</Dialog.Title>
+              <Dialog.Title className="font-display text-xl text-ink">Issue Refund — #{order.orderNumber}</Dialog.Title>
               <Dialog.Close className="rounded-sm p-1 text-[#A8A8A4] hover:text-charcoal" aria-label="Close refund dialog">
                 <X className="h-5 w-5" />
               </Dialog.Close>
@@ -148,7 +148,7 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
                   min={1}
                   value={refundAmount}
                   onChange={(e) => setRefundAmount(e.target.value)}
-                  className="mt-1 w-full border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
+                  className="mt-1 w-full border border-[#EBEBEA] bg-canvas px-3 py-2 text-charcoal"
                 />
               ) : null}
               <label className="block text-xs uppercase text-[#A8A8A4]">
@@ -157,7 +157,7 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
                   value={refundReason}
                   onChange={(e) => setRefundReason(e.target.value)}
                   rows={3}
-                  className="mt-1 w-full border border-[#EBEBEA] bg-white px-3 py-2 text-sm text-charcoal"
+                  className="mt-1 w-full border border-[#EBEBEA] bg-canvas px-3 py-2 text-sm text-charcoal"
                 />
               </label>
             </div>
@@ -213,13 +213,13 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
               value={tracking}
               onChange={(e) => setTracking(e.target.value)}
               placeholder="Tracking #"
-              className="border border-[#EBEBEA] bg-white px-2 py-1 text-xs text-charcoal"
+              className="border border-[#EBEBEA] bg-canvas px-2 py-1 text-xs text-charcoal"
             />
             <input
               value={carrier}
               onChange={(e) => setCarrier(e.target.value)}
               placeholder="Carrier"
-              className="border border-[#EBEBEA] bg-white px-2 py-1 text-xs text-charcoal"
+              className="border border-[#EBEBEA] bg-canvas px-2 py-1 text-xs text-charcoal"
             />
           </div>
         ) : null}
@@ -251,7 +251,7 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
             if (notes !== (order.adminNotes ?? "")) void patch({ adminNotes: notes });
           }}
           rows={3}
-          className="mt-1 w-full border border-[#EBEBEA] bg-white px-3 py-2 text-sm text-charcoal"
+          className="mt-1 w-full border border-[#EBEBEA] bg-canvas px-3 py-2 text-sm text-charcoal"
           placeholder="Not visible to customer"
         />
       </label>

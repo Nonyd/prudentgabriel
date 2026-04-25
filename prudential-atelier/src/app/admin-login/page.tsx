@@ -10,7 +10,7 @@ export default async function AdminLoginPage() {
   }
 
   return (
-    <div className="admin-area min-h-screen bg-white text-charcoal">
+    <div className="admin-area min-h-screen bg-canvas text-charcoal">
       <AdminLoginClient />
     </div>
   );

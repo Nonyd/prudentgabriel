@@ -99,7 +99,7 @@ function ImageSlotRow({
             </Dialog.Trigger>
             <Dialog.Portal>
               <Dialog.Overlay className="fixed inset-0 z-[90] bg-black/50" />
-              <Dialog.Content className="fixed left-1/2 top-1/2 z-[91] w-[min(90vw,320px)] -translate-x-1/2 -translate-y-1/2 border border-[#EBEBEA] bg-white p-5 shadow-lg">
+              <Dialog.Content className="fixed left-1/2 top-1/2 z-[91] w-[min(90vw,320px)] -translate-x-1/2 -translate-y-1/2 border border-[#EBEBEA] bg-canvas p-5 shadow-lg">
                 <Dialog.Title className="font-body text-sm font-medium text-charcoal">Preview</Dialog.Title>
                 <div className="relative mx-auto mt-4 h-[200px] w-[200px] overflow-hidden bg-[#F5F5F3]">
                   {canPreview && (
@@ -153,7 +153,7 @@ export function AppearanceSettingsCard({
   };
 
   return (
-    <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+    <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
       <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">Site images</h2>
       <p className="mt-2 font-body text-xs text-[#6B6B68]">
         Replace static images across the site. Upload fills the URL automatically; you can still paste a CDN URL manually.

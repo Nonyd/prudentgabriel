@@ -8,7 +8,7 @@ export default async function AdminCouponsPage() {
   });
   return (
     <div>
-      <h1 className="font-display text-2xl text-black">Coupons</h1>
+      <h1 className="font-display text-2xl text-ink">Coupons</h1>
       <CouponsClient coupons={coupons} />
     </div>
   );

@@ -6,7 +6,7 @@ import { BridalGalleryClient } from "@/components/gallery/BridalGalleryClient";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Bridesals | Prudential Bride | Prudent Gabriel",
+  title: "Bridal | Prudential Bride | Prudent Gabriel",
   description: "Prudential Bride gallery — couture bridal moments from our Lagos atelier.",
 };
 

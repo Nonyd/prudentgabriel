@@ -109,6 +109,47 @@ export async function sendBespokeConfirmationEmail(
   });
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Email sent when an admin creates a manual bespoke order and generates a Paystack balance link. */
+export async function sendBespokeBalancePaymentLinkEmail(params: {
+  to: string;
+  clientName: string;
+  requestNumber: string;
+  amountNGN: number;
+  payUrl: string;
+}): Promise<void> {
+  const href = params.payUrl.replace(/"/g, "%22");
+  const inner = `
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Dear ${escapeHtml(params.clientName)},</p>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">
+      Your bespoke order <strong>${escapeHtml(params.requestNumber)}</strong> is ready for payment.
+      Please complete the secure checkout for the outstanding balance of
+      <strong>₦${params.amountNGN.toLocaleString("en-NG")}</strong>.
+    </p>
+    <p style="margin:24px 0;">
+      <a href="${href}" style="display:inline-block;background:#37392d;color:#fff;padding:14px 28px;text-decoration:none;font-size:14px;">
+        Pay now
+      </a>
+    </p>
+    <p style="margin:16px 0 0;font-size:13px;color:#6B6B68;line-height:1.5;">
+      If the button does not work, copy and paste this link into your browser:<br/>
+      <span style="word-break:break-all;">${escapeHtml(params.payUrl)}</span>
+    </p>
+  `;
+  await sendEmail({
+    to: params.to,
+    subject: `Complete payment — ${params.requestNumber} | Prudential Atelier`,
+    html: wrapHtml("Prudential Atelier", inner),
+  });
+}
+
 export async function sendReferralSuccessEmail(
   to: string,
   referrerName: string,

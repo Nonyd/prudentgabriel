@@ -14,16 +14,16 @@ export default async function AdminBespokeDetailPage({ params }: { params: Promi
 
   return (
     <div>
-      <Link href="/admin/bespoke" className="font-body text-[11px] uppercase text-[#6B6B68] hover:text-black">
+      <Link href="/admin/bespoke" className="font-body text-[11px] uppercase text-[#6B6B68] hover:text-ink">
         ← Bespoke requests
       </Link>
-      <h1 className="mt-4 font-display text-2xl text-black">{row.requestNumber}</h1>
+      <h1 className="mt-4 font-display text-2xl text-ink">{row.requestNumber}</h1>
       <p className="mt-1 font-body text-sm text-[#6B6B68]">
         {row.name} · {row.email} · {row.phone}
       </p>
 
       {agreed != null ? (
-        <div className="mt-8 border border-[#EBEBEA] bg-white p-6">
+        <div className="mt-8 border border-[#EBEBEA] bg-canvas p-6">
           <p className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Pricing</p>
           <dl className="mt-4 grid gap-2 font-body text-sm sm:grid-cols-2">
             <div>
@@ -72,7 +72,7 @@ export default async function AdminBespokeDetailPage({ params }: { params: Promi
         </div>
       ) : null}
 
-      <div className="mt-10 border border-[#EBEBEA] bg-white p-6">
+      <div className="mt-10 border border-[#EBEBEA] bg-canvas p-6">
         <p className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Description</p>
         <p className="mt-2 whitespace-pre-wrap font-body text-sm text-charcoal">{row.description}</p>
       </div>

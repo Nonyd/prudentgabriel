@@ -22,6 +22,7 @@ import {
   UserCircle,
   Users,
   Images,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -48,6 +49,7 @@ const SECTIONS: {
     label: "Commerce",
     items: [
       { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+      { href: "/admin/payments", label: "Payments", icon: CreditCard },
       { href: "/admin/coupons", label: "Coupons", icon: Tag },
       { href: "/admin/shipping", label: "Shipping Zones", icon: Truck },
     ],
@@ -114,7 +116,7 @@ export function AdminSidebar({ session, onNavigate }: { session: Session; onNavi
                         "flex items-center gap-2.5 px-2.5 py-2 font-body text-xs transition-colors duration-150 ease-out",
                         active
                           ? "bg-[#37392d] text-white"
-                          : "text-[#6B6B68] hover:bg-[#F5F5F3] hover:text-black",
+                          : "text-charcoal-mid hover:bg-light-grey hover:text-ink",
                       )}
                     >
                       <Icon size={15} className={cn("shrink-0", active ? "text-white" : "text-[#A8A8A4]")} />
@@ -130,11 +132,11 @@ export function AdminSidebar({ session, onNavigate }: { session: Session; onNavi
 
       <div className="mt-auto border-t border-[#EBEBEA] px-5 py-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center bg-[#F0F0EE] font-body text-[11px] text-black">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center bg-mid-grey font-body text-[11px] text-ink">
             {initials(user?.name, user?.email)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-body text-xs text-black">{displayName}</p>
+            <p className="truncate font-body text-xs text-ink">{displayName}</p>
             <p className="font-body text-[10px] text-[#A8A8A4]">
               {user?.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}
             </p>

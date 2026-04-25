@@ -45,10 +45,10 @@ export function FilterDrawer({
         <Dialog.Overlay className="fixed inset-0 z-50 bg-charcoal/40 data-[state=open]:animate-in data-[state=closed]:animate-out" />
         <Dialog.Content
           data-lenis-prevent
-          className="fixed left-0 top-0 z-50 flex h-full w-full max-w-[300px] flex-col border-r border-mid-grey bg-white shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out max-sm:max-w-none"
+          className="fixed left-0 top-0 z-50 flex h-full w-full max-w-[300px] flex-col border-r border-mid-grey bg-canvas shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out max-sm:max-w-none"
         >
           <div className="flex shrink-0 items-center justify-between border-b border-mid-grey px-5 py-5">
-            <Dialog.Title className="font-body text-[11px] font-medium uppercase tracking-[0.2em] text-black">
+            <Dialog.Title className="font-body text-[11px] font-medium uppercase tracking-[0.2em] text-ink">
               Filter
             </Dialog.Title>
             <Dialog.Close
@@ -61,7 +61,7 @@ export function FilterDrawer({
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
             <FilterPanel />
           </div>
-          <div className="shrink-0 border-t border-mid-grey bg-white p-4">
+          <div className="shrink-0 border-t border-mid-grey bg-canvas p-4">
             <Dialog.Close asChild>
               <button
                 type="button"

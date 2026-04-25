@@ -60,22 +60,22 @@ export function BridalGalleryClient({
           className="mt-3 font-display text-[40px] font-normal italic leading-[0.95] md:text-[72px]"
           style={{ color: "var(--bride-dark)" }}
         >
-          Bridesals.
+          Bridal.
         </h1>
         <p className="mt-4 max-w-md font-body text-sm font-light text-charcoal/70">
           Every bride is a masterpiece. Every gown, a legacy.
         </p>
       </section>
 
-      <section className="bg-white py-14 md:py-16">
+      <section className="bg-canvas py-14 md:py-16">
         <div className="mx-auto max-w-[1400px] px-4">
-          <p className="mb-6 text-right font-body text-[11px] font-medium uppercase tracking-[0.12em] text-[#6B6B68]">
+          <p className="mb-6 text-right font-body text-[11px] font-medium uppercase tracking-[0.12em] text-charcoal-mid">
             {total} works
           </p>
           <div className="masonry-grid">
             {images.map((img) => (
               <div key={img.id} className="group masonry-item relative">
-                <div className="relative w-full overflow-hidden bg-[#faf7f4]">
+                <div className="relative w-full overflow-hidden bg-bride-bg">
                   {img.width && img.height ? (
                     <Image
                       src={img.url}
@@ -116,7 +116,7 @@ export function BridalGalleryClient({
                 {loading ? "Loading…" : "Load more"}
               </button>
             ) : images.length > 0 ? (
-              <p className="font-body text-[11px] uppercase tracking-[0.1em] text-[#6B6B68]">— End of Gallery —</p>
+              <p className="font-body text-[11px] uppercase tracking-[0.1em] text-charcoal-mid">— End of Gallery —</p>
             ) : null}
           </div>
         </div>

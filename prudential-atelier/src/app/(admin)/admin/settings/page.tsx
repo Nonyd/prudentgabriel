@@ -127,7 +127,7 @@ export default async function AdminSettingsOverviewPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-black">Settings</h1>
+      <h1 className="font-display text-2xl text-ink">Settings</h1>
       <p className="mt-1 font-body text-[13px] text-[#6B6B68]">Manage your store configuration</p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -145,12 +145,12 @@ export default async function AdminSettingsOverviewPage() {
             <Link
               key={card.slug}
               href={card.href}
-              className="group flex border border-[#EBEBEA] bg-white p-6 transition-colors hover:bg-[#FAFAFA]"
+              className="group flex border border-[#EBEBEA] bg-canvas p-6 transition-colors hover:bg-[#FAFAFA]"
             >
               <div className="flex min-w-0 flex-1 gap-4">
                 <Icon className="h-8 w-8 shrink-0 text-[#37392d]" strokeWidth={1.25} aria-hidden />
                 <div className="min-w-0 flex-1">
-                  <p className="font-body text-sm font-medium text-black">{card.title}</p>
+                  <p className="font-body text-sm font-medium text-ink">{card.title}</p>
                   <p className="mt-1 font-body text-[13px] leading-snug text-[#6B6B68]">{card.description}</p>
                 </div>
               </div>

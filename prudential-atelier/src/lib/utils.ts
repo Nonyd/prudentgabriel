@@ -103,3 +103,30 @@ export function formatLocaleDate(date: Date | string): string {
 export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+/** CDN-friendly URLs for product grids (Cloudinary / Unsplash). */
+export function optimizeImageUrl(url: string, width = 600): string {
+  if (!url || url.startsWith("data:")) return url;
+
+  if (url.includes("res.cloudinary.com")) {
+    const marker = "/upload/";
+    const idx = url.indexOf(marker);
+    if (idx === -1) return url;
+    const after = url.slice(idx + marker.length);
+    if (/^(q_auto|f_auto|w_\d|c_fill|v\d)/.test(after)) return url;
+    return `${url.slice(0, idx + marker.length)}c_fill,g_top,w_${width},q_auto,f_auto/${after.replace(/^\/+/, "")}`;
+  }
+
+  if (url.includes("images.unsplash.com")) {
+    try {
+      const u = new URL(url);
+      u.searchParams.set("w", String(width));
+      u.searchParams.set("q", "85");
+      return u.toString();
+    } catch {
+      return url;
+    }
+  }
+
+  return url;
+}

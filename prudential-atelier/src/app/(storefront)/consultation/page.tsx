@@ -55,7 +55,7 @@ export default async function ConsultationPage() {
   const consultants = rows as ConsultantWithOfferings[];
 
   return (
-    <div className="bg-white">
+    <div className="bg-canvas">
       <section className="relative flex h-[300px] flex-col justify-center overflow-hidden md:h-[500px]">
         <Image
           src={consultHero}

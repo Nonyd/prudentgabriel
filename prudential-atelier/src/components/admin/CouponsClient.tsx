@@ -72,19 +72,19 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="border border-[#EBEBEA] bg-white p-4">
+        <div className="border border-[#EBEBEA] bg-canvas p-4">
           <p className="font-body text-[11px] uppercase text-[#6B6B68]">Active</p>
           <p className="mt-1 font-display text-2xl">{coupons.filter((c) => c.isActive).length}</p>
         </div>
-        <div className="border border-[#EBEBEA] bg-white p-4">
+        <div className="border border-[#EBEBEA] bg-canvas p-4">
           <p className="font-body text-[11px] uppercase text-[#6B6B68]">Total uses</p>
           <p className="mt-1 font-display text-2xl">{totalUses}</p>
         </div>
-        <div className="border border-[#EBEBEA] bg-white p-4">
+        <div className="border border-[#EBEBEA] bg-canvas p-4">
           <p className="font-body text-[11px] uppercase text-[#6B6B68]">Revenue saved</p>
           <p className="mt-1 font-display text-2xl">—</p>
         </div>
-        <div className="border border-[#EBEBEA] bg-white p-4">
+        <div className="border border-[#EBEBEA] bg-canvas p-4">
           <p className="font-body text-[11px] uppercase text-[#6B6B68]">Expiring soon</p>
           <p className="mt-1 font-display text-2xl">
             {
@@ -111,7 +111,7 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
         ))}
       </div>
 
-      <div className="overflow-x-auto border border-[#EBEBEA] bg-white">
+      <div className="overflow-x-auto border border-[#EBEBEA] bg-canvas">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="font-body text-[11px] uppercase text-[#A8A8A4]">
             <tr>
@@ -143,7 +143,7 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      className="text-charcoal hover:text-black"
+                      className="text-charcoal hover:text-ink"
                       aria-label="Edit"
                       onClick={() => {
                         setEditing(c);
@@ -160,7 +160,7 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
                       </AlertDialog.Trigger>
                       <AlertDialog.Portal>
                         <AlertDialog.Overlay className="fixed inset-0 z-[130] bg-black/40" />
-                        <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[131] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 border border-[#EBEBEA] bg-white p-6 shadow-lg">
+                        <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[131] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 border border-[#EBEBEA] bg-canvas p-6 shadow-lg">
                           <AlertDialog.Title className="font-body text-sm">Delete coupon?</AlertDialog.Title>
                           <div className="mt-6 flex justify-end gap-2">
                             <AlertDialog.Cancel asChild>

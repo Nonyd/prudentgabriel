@@ -33,7 +33,7 @@ export default async function AdminCustomerDetailPage({ params }: { params: Prom
           {Math.round(spent._sum.total ?? 0).toLocaleString("en-NG")}
         </p>
       </div>
-      <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+      <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
         <h2 className="font-display text-lg text-gold">Recent orders</h2>
         <ul className="mt-3 space-y-2 text-sm">
           {user.orders.map((o) => (
@@ -46,7 +46,7 @@ export default async function AdminCustomerDetailPage({ params }: { params: Prom
           ))}
         </ul>
       </div>
-      <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+      <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
         <h2 className="font-display text-lg text-gold">Points history</h2>
         <ul className="mt-3 space-y-2 text-xs text-ivory/80">
           {user.pointsHistory.map((p) => (

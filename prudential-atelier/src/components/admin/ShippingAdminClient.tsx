@@ -16,7 +16,7 @@ export function ShippingAdminClient({ zones }: { zones: ShippingZone[] }) {
   }
 
   return (
-    <div className="mt-8 overflow-x-auto rounded-sm border border-[#EBEBEA] bg-white">
+    <div className="mt-8 overflow-x-auto rounded-sm border border-[#EBEBEA] bg-canvas">
       <table className="w-full text-left text-sm text-charcoal">
         <thead className="text-[#A8A8A4]">
           <tr>

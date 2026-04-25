@@ -95,7 +95,7 @@ export function BespokeCouture({
 
           <Link
             href="/bespoke"
-            className="mt-12 inline-flex border border-white px-10 py-4 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white transition-colors duration-200 hover:bg-white hover:text-black"
+            className="mt-12 inline-flex border border-white px-10 py-4 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white transition-colors duration-200 hover:bg-[#ffffff] hover:text-[#0a0a0a]"
           >
             Begin Your Bespoke Journey
           </Link>

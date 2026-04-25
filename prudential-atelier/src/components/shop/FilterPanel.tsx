@@ -248,11 +248,11 @@ function PriceSlider({
           <Slider.Range className="absolute h-full rounded-full bg-olive" />
         </Slider.Track>
         <Slider.Thumb
-          className="block h-4 w-4 border border-olive bg-white focus:outline-none focus:ring-2 focus:ring-olive/40"
+          className="block h-4 w-4 border border-olive bg-canvas focus:outline-none focus:ring-2 focus:ring-olive/40"
           aria-label="Minimum price"
         />
         <Slider.Thumb
-          className="block h-4 w-4 border border-olive bg-white focus:outline-none focus:ring-2 focus:ring-olive/40"
+          className="block h-4 w-4 border border-olive bg-canvas focus:outline-none focus:ring-2 focus:ring-olive/40"
           aria-label="Maximum price"
         />
       </Slider.Root>

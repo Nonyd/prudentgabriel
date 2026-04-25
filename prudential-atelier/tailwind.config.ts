@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 const config: Config = {
   darkMode: "class",
@@ -19,11 +20,15 @@ const config: Config = {
         "cormorant-sc": ["var(--font-jost)", "system-ui", "sans-serif"],
       },
       colors: {
+        /** Page / card surfaces — follows `tokens.css` light & `html.dark` */
+        canvas: "var(--white)",
+        /** Primary heading / ink color — flips in dark mode */
+        ink: "var(--black)",
         white: "#FFFFFF",
-        "off-white": "#F8F8F6",
-        "light-grey": "#F2F2F0",
-        "mid-grey": "#E8E8E4",
-        "dark-grey": "#8A8A85",
+        "off-white": "var(--off-white)",
+        "light-grey": "var(--light-grey)",
+        "mid-grey": "var(--mid-grey)",
+        "dark-grey": "var(--dark-grey)",
         charcoal: {
           DEFAULT: "var(--charcoal)",
           mid: "var(--charcoal-mid)",
@@ -37,9 +42,9 @@ const config: Config = {
           mid: "var(--olive-mid)",
         },
         bride: {
-          bg: "#FAF7F4",
-          accent: "#C8A97A",
-          dark: "#2A1F1A",
+          bg: "var(--bride-bg)",
+          accent: "var(--bride-accent)",
+          dark: "var(--bride-dark)",
         },
         wine: {
           DEFAULT: "var(--wine)",
@@ -119,7 +124,17 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(({ addUtilities }) => {
+      addUtilities({
+        ".scrollbar-hide": {
+          "-ms-overflow-style": "none",
+          "scrollbar-width": "none",
+          "&::-webkit-scrollbar": { display: "none" },
+        },
+      });
+    }),
+  ],
 };
 
 export default config;

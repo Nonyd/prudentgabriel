@@ -28,6 +28,7 @@ export function ManualBespokeForm() {
   const [agreedPrice, setAgreedPrice] = useState("");
   const [depositPaid, setDepositPaid] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
+  const isOnlinePayment = paymentMethod === "Online Payment";
   const [adminNotes, setAdminNotes] = useState("");
   const [status, setStatus] = useState<BespokeStatus>("CONFIRMED");
 
@@ -84,6 +85,18 @@ export function ManualBespokeForm() {
       toast.error("Please complete required fields");
       return;
     }
+    if (isOnlinePayment) {
+      const em = email.trim();
+      if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+        toast.error("A valid client email is required to send the payment link");
+        return;
+      }
+      const bal = Math.max(0, price - (parseFloat(depositPaid) || 0));
+      if (bal <= 0) {
+        toast.error("Outstanding balance must be greater than zero for online payment");
+        return;
+      }
+    }
     const dep = parseFloat(depositPaid) || 0;
     setSaving(true);
     try {
@@ -109,12 +122,27 @@ export function ManualBespokeForm() {
           status,
         }),
       });
-      const j = (await res.json()) as { success?: boolean; requestNumber?: string; error?: unknown };
+      const j = (await res.json()) as {
+        success?: boolean;
+        requestNumber?: string;
+        paymentLinkSent?: boolean;
+        error?: string;
+      };
       if (!res.ok) {
-        toast.error("Could not save");
+        const msg = typeof j.error === "string" ? j.error : "Could not save";
+        toast.error(msg);
+        if (j.requestNumber) {
+          toast(`Request #${j.requestNumber} was created; fix Paystack or try again from the bespoke record.`, {
+            icon: "⚠️",
+          });
+        }
         return;
       }
-      toast.success(`Bespoke request #${j.requestNumber ?? ""} created ✓`);
+      if (j.paymentLinkSent) {
+        toast.success(`Payment link sent to ${email.trim()} · #${j.requestNumber ?? ""}`);
+      } else {
+        toast.success(`Bespoke request #${j.requestNumber ?? ""} created ✓`);
+      }
       setOpen(false);
       reset();
       router.refresh();
@@ -136,10 +164,10 @@ export function ManualBespokeForm() {
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[120] bg-black/40" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-[121] max-h-[92vh] w-[min(96vw,640px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-[#EBEBEA] bg-white p-6 shadow-lg">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-[121] max-h-[92vh] w-[min(96vw,640px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-[#EBEBEA] bg-canvas p-6 shadow-lg">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <Dialog.Title className="font-display text-[22px] text-black">Add manual bespoke request</Dialog.Title>
+                <Dialog.Title className="font-display text-[22px] text-ink">Add manual bespoke request</Dialog.Title>
                 <p className="mt-1 font-body text-xs text-[#6B6B68]">For clients who placed orders offline or by phone.</p>
               </div>
               <Dialog.Close className="text-charcoal" aria-label="Close">
@@ -151,7 +179,12 @@ export function ManualBespokeForm() {
               <p className="text-[11px] font-medium uppercase text-[#6B6B68]">Client</p>
               <input className="w-full border border-[#EBEBEA] px-3 py-2" placeholder="Full name *" value={name} onChange={(e) => setName(e.target.value)} />
               <input className="w-full border border-[#EBEBEA] px-3 py-2" placeholder="Phone *" value={phone} onChange={(e) => setPhone(e.target.value)} />
-              <input className="w-full border border-[#EBEBEA] px-3 py-2" placeholder="Email (optional)" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <input
+                className="w-full border border-[#EBEBEA] px-3 py-2"
+                placeholder={isOnlinePayment ? "Client email (required for payment link) *" : "Email (optional)"}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
               <select className="w-full border border-[#EBEBEA] px-3 py-2" value={country} onChange={(e) => setCountry(e.target.value)}>
                 <option>Nigeria</option>
                 <option>Other</option>
@@ -190,10 +223,16 @@ export function ManualBespokeForm() {
               <p className="pt-2 text-[11px] font-medium uppercase text-[#6B6B68]">Pricing</p>
               <input className="w-full border border-[#EBEBEA] px-3 py-2" placeholder="Agreed price (₦) *" value={agreedPrice} onChange={(e) => setAgreedPrice(e.target.value)} />
               <select className="w-full border border-[#EBEBEA] px-3 py-2" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-                {["Cash", "Bank Transfer", "POS", "Paid Online", "Pending"].map((o) => (
+                {["Cash", "Bank Transfer", "POS", "Online Payment", "Paid Online", "Pending"].map((o) => (
                   <option key={o}>{o}</option>
                 ))}
               </select>
+              {isOnlinePayment ? (
+                <p className="text-xs text-[#6B6B68]">
+                  We email the client a secure Paystack checkout link for the outstanding balance (agreed price minus
+                  deposit). Paystack must be configured on the server.
+                </p>
+              ) : null}
               <input className="w-full border border-[#EBEBEA] px-3 py-2" placeholder="Deposit paid (₦)" value={depositPaid} onChange={(e) => setDepositPaid(e.target.value)} />
               <p className="text-xs text-[#37392d]">
                 Balance: ₦
@@ -226,7 +265,7 @@ export function ManualBespokeForm() {
                 onClick={() => void submit()}
                 className="bg-[#37392d] px-6 py-2 text-xs uppercase text-white disabled:opacity-50"
               >
-                {saving ? "Saving…" : "Save manual request"}
+                {saving ? "Working…" : isOnlinePayment ? "Generate payment link" : "Save manual request"}
               </button>
             </div>
           </Dialog.Content>

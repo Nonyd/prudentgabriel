@@ -140,11 +140,11 @@ export function NotificationBell() {
         <Popover.Content
           sideOffset={8}
           align="end"
-          className="z-[200] w-[380px] max-h-[480px] overflow-y-auto border border-[#EBEBEA] bg-white shadow-lg outline-none"
+          className="z-[200] w-[380px] max-h-[480px] overflow-y-auto border border-[#EBEBEA] bg-canvas shadow-lg outline-none"
         >
           <div className="border-b border-[#EBEBEA] px-4 py-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="font-body text-xs font-medium uppercase tracking-[0.1em] text-black">Notifications</p>
+              <p className="font-body text-xs font-medium uppercase tracking-[0.1em] text-ink">Notifications</p>
               <span className="font-body text-[11px] text-[#37392d]">{panelUnread} unread</span>
             </div>
           </div>
@@ -162,7 +162,7 @@ export function NotificationBell() {
                   <button
                     type="button"
                     className={`flex w-full gap-3 px-4 py-3.5 text-left transition-colors ${
-                      !n.isRead ? "border-l-[3px] border-l-[#37392d] bg-[#FAFAF8]" : "bg-white"
+                      !n.isRead ? "border-l-[3px] border-l-[#37392d] bg-[#FAFAF8]" : "bg-canvas"
                     }`}
                     onClick={() => {
                       if (n.link) router.push(n.link);
@@ -171,7 +171,7 @@ export function NotificationBell() {
                   >
                     {iconFor(n.type)}
                     <div className="min-w-0 flex-1">
-                      <p className="font-body text-[13px] font-medium text-black">{n.title}</p>
+                      <p className="font-body text-[13px] font-medium text-ink">{n.title}</p>
                       <p className="mt-0.5 line-clamp-2 font-body text-xs font-light text-[#6B6B68]">{n.message}</p>
                       <p className="mt-1 text-right font-body text-[11px] text-[#6B6B68]/80">
                         {timeLabel(n.createdAt.toString())}

@@ -85,9 +85,9 @@ export function ContentSettingsForm() {
       const list = rowsForSection(rows, sec.match);
       if (!list.length) return null;
       return (
-        <Accordion.Item key={sec.id} value={sec.id} className="border border-[#EBEBEA] bg-white px-4">
+        <Accordion.Item key={sec.id} value={sec.id} className="border border-[#EBEBEA] bg-canvas px-4">
           <Accordion.Header>
-            <Accordion.Trigger className="flex w-full items-center justify-between py-4 font-body text-xs font-medium uppercase tracking-[0.12em] text-black">
+            <Accordion.Trigger className="flex w-full items-center justify-between py-4 font-body text-xs font-medium uppercase tracking-[0.12em] text-ink">
               {sec.title}
               <span className="text-[11px] font-normal normal-case tracking-normal text-[#6B6B68]">
                 {list.length} field{list.length === 1 ? "" : "s"}

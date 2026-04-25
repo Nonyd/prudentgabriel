@@ -304,13 +304,13 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
 
       <form onSubmit={submit} className="grid gap-8 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <section className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+          <section className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
             <h2 className="font-display text-lg text-gold">Basic information</h2>
             <label className="mt-4 block text-xs uppercase tracking-wide text-[#A8A8A4]">
               Product name
               <input
                 {...form.register("name", { onBlur: onBlurName })}
-                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
+                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 text-charcoal"
               />
             </label>
             {form.formState.errors.name && (
@@ -320,7 +320,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
               Slug
               <input
                 {...form.register("slug")}
-                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 font-mono text-sm text-charcoal"
+                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 font-mono text-sm text-charcoal"
               />
             </label>
             <p className="mt-1 text-xs text-gold/80">
@@ -332,7 +332,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                 {...form.register("description")}
                 maxLength={200}
                 rows={3}
-                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
+                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 text-charcoal"
               />
             </label>
             <label className="mt-4 block text-xs uppercase tracking-wide text-[#A8A8A4]">
@@ -340,7 +340,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
               <textarea
                 {...form.register("details")}
                 rows={8}
-                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
+                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 text-charcoal"
               />
             </label>
             <label className="mt-4 block text-xs uppercase tracking-wide text-[#A8A8A4]">
@@ -348,12 +348,12 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
               <textarea
                 {...form.register("details")}
                 rows={6}
-                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
+                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 text-charcoal"
               />
             </label>
           </section>
 
-          <section className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+          <section className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
             <h2 className="font-display text-lg text-gold">Media</h2>
             <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-[#EBEBEA] px-6 py-10 text-sm text-[#A8A8A4] hover:border-[#F5F5F3]0">
               <input
@@ -391,7 +391,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
             </div>
           </section>
 
-          <section className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+          <section className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
             <h2 className="font-display text-lg text-gold">Variants &amp; pricing</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-3">
               <label className="text-xs uppercase text-[#A8A8A4]">
@@ -399,7 +399,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                 <input
                   type="number"
                   {...form.register("basePriceNGN", { valueAsNumber: true })}
-                  className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
+                  className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 text-charcoal"
                 />
               </label>
               <label className="text-xs uppercase text-[#A8A8A4]">
@@ -408,7 +408,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                   type="number"
                   step="any"
                   {...form.register("basePriceUSD")}
-                  className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
+                  className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 text-charcoal"
                 />
               </label>
               <label className="text-xs uppercase text-[#A8A8A4]">
@@ -417,7 +417,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                   type="number"
                   step="any"
                   {...form.register("basePriceGBP")}
-                  className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
+                  className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 text-charcoal"
                 />
               </label>
             </div>
@@ -451,7 +451,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
             )}
           </section>
 
-          <section className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+          <section className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
             <h2 className="font-display text-lg text-gold">Colours</h2>
             <button
               type="button"
@@ -465,13 +465,13 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                 <div key={field.id} className="flex flex-wrap items-end gap-2">
                   <input
                     {...form.register(`colors.${i}.name`)}
-                    className="min-w-[100px] flex-1 rounded-sm border border-[#EBEBEA] bg-white px-2 py-1 text-sm text-charcoal"
+                    className="min-w-[100px] flex-1 rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-1 text-sm text-charcoal"
                     placeholder="Name"
                   />
                   <input type="color" {...form.register(`colors.${i}.hex`)} className="h-9 w-12 cursor-pointer bg-transparent" />
                   <input
                     {...form.register(`colors.${i}.imageUrl`)}
-                    className="min-w-[160px] flex-1 rounded-sm border border-[#EBEBEA] bg-white px-2 py-1 text-xs text-charcoal"
+                    className="min-w-[160px] flex-1 rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-1 text-xs text-charcoal"
                     placeholder="Image URL (optional)"
                   />
                   <button type="button" className="text-red-400" onClick={() => removeColor(i)}>
@@ -482,7 +482,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
             </div>
           </section>
 
-          <section className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+          <section className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
             <h2 className="font-display text-lg text-gold">Complete the Look</h2>
             <p className="mt-2 text-xs text-[#A8A8A4]">Link up to 4 published pieces shoppers may add alongside this product.</p>
             <div className="relative mt-4">
@@ -491,7 +491,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                 onChange={(e) => setBundleSearch(e.target.value)}
                 disabled={bundleIds.length >= 4}
                 placeholder={bundleIds.length >= 4 ? "Maximum 4 products" : "Search published products…"}
-                className="w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-sm text-charcoal placeholder:text-[#A8A8A4] disabled:opacity-50"
+                className="w-full rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 text-sm text-charcoal placeholder:text-[#A8A8A4] disabled:opacity-50"
               />
               {bundleSearch.trim().length >= 2 && bundleIds.length < 4 ? (
                 <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-sm border border-[#E8E8E4] bg-[#FAFAFA] py-1 shadow-lg">
@@ -508,9 +508,9 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                           type="button"
                           onClick={() => addBundle(p)}
                           disabled={bundleIds.includes(p.id)}
-                          className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:border border-[#EBEBEA] bg-white disabled:opacity-40"
+                          className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:border border-[#EBEBEA] bg-canvas disabled:opacity-40"
                         >
-                          <div className="relative h-12 w-9 shrink-0 overflow-hidden rounded-sm border border-[#EBEBEA] bg-white">
+                          <div className="relative h-12 w-9 shrink-0 overflow-hidden rounded-sm border border-[#EBEBEA] bg-canvas">
                             {img?.url ? <Image src={img.url} alt="" fill className="object-cover" sizes="36px" /> : null}
                           </div>
                           <div className="min-w-0">
@@ -530,7 +530,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                 return (
                   <span
                     key={bid}
-                    className="inline-flex items-center gap-2 rounded-full border border-[#E8E8E4] border border-[#EBEBEA] bg-white py-1 pl-1 pr-2 text-xs text-charcoal"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#E8E8E4] border border-[#EBEBEA] bg-canvas py-1 pl-1 pr-2 text-xs text-charcoal"
                   >
                     {meta.thumb ? (
                       <span className="relative h-8 w-6 shrink-0 overflow-hidden rounded-sm">
@@ -547,11 +547,11 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
             </div>
           </section>
 
-          <section className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+          <section className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
             <h2 className="font-display text-lg text-gold">SEO</h2>
             <label className="mt-3 block text-xs uppercase text-[#A8A8A4]">
               Meta title
-              <input {...form.register("metaTitle")} maxLength={60} className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal" />
+              <input {...form.register("metaTitle")} maxLength={60} className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 text-charcoal" />
             </label>
             <label className="mt-3 block text-xs uppercase text-[#A8A8A4]">
               Meta description
@@ -559,14 +559,14 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                 {...form.register("metaDescription")}
                 maxLength={160}
                 rows={3}
-                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
+                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 text-charcoal"
               />
             </label>
           </section>
         </div>
 
         <div className="space-y-6">
-          <section className="sticky top-6 rounded-sm border border-[#EBEBEA] bg-white p-6">
+          <section className="sticky top-6 rounded-sm border border-[#EBEBEA] bg-canvas p-6">
             <h2 className="font-display text-lg text-gold">Status</h2>
             <div className="mt-4 space-y-3 text-sm text-charcoal">
               <Controller
@@ -617,11 +617,11 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
             )}
           </section>
 
-          <section className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+          <section className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
             <h2 className="font-display text-lg text-gold">Organisation</h2>
             <label className="mt-3 block text-xs uppercase text-[#A8A8A4]">
               Category
-              <select {...form.register("category")} className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal">
+              <select {...form.register("category")} className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 text-charcoal">
                 {CATEGORY_OPTIONS.map((c) => (
                   <option key={c} value={c}>
                     {c.replace(/_/g, " ")}
@@ -643,7 +643,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
             <label className="mt-4 block text-xs uppercase text-[#A8A8A4]">
               Tags (comma-separated)
               <input
-                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-charcoal"
+                className="mt-1 w-full rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 text-charcoal"
                 defaultValue={defaults.tags.join(", ")}
                 onBlur={(e) =>
                   form.setValue(

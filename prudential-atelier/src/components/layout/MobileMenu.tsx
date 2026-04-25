@@ -14,9 +14,18 @@ import { useThemeStore } from "@/store/themeStore";
 const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Atelier", href: "/atelier" },
-  { label: "Bridesals", href: "/bridesals" },
-  { label: "Ready to Wear", href: "/shop" },
+  { label: "Bridal", href: "/bridesals" },
+  { label: "Ready to Wear", href: "/rtw" },
   { label: "Book a Consultation", href: "/consultation" },
+];
+
+const RTW_SUBLINKS = [
+  { label: "All Ready to Wear", href: "/rtw" },
+  { label: "New Arrivals", href: "/rtw?sort=newest" },
+  { label: "Dresses", href: "/rtw?tags=dress" },
+  { label: "Jumpsuits", href: "/rtw?tags=jumpsuit" },
+  { label: "Sets", href: "/rtw?tags=set" },
+  { label: "Suits", href: "/rtw?tags=suit" },
 ];
 
 interface MobileMenuProps {
@@ -52,7 +61,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           <nav className="flex min-h-0 flex-1 flex-col gap-0 overflow-y-auto px-8 pb-8 pt-10">
             {NAV_LINKS.map((link, i) => (
               <motion.div
-                key={link.href}
+                key={link.href + link.label}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.06 + 0.05, duration: 0.45, ease: [0, 0, 0.2, 1] }}
@@ -64,6 +73,21 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                 >
                   {link.label}
                 </Link>
+                {link.label === "Ready to Wear" && (
+                  <ul className="mb-2 ml-1 space-y-2 border-l border-mid-grey pl-4">
+                    {RTW_SUBLINKS.map((s) => (
+                      <li key={s.href + s.label}>
+                        <Link
+                          href={s.href}
+                          onClick={onClose}
+                          className="font-body text-[13px] font-medium uppercase tracking-[0.1em] text-dark-grey hover:text-olive"
+                        >
+                          {s.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </motion.div>
             ))}
 

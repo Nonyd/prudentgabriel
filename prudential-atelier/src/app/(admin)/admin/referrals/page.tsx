@@ -25,11 +25,11 @@ export default async function AdminReferralsPage() {
     <div>
       <h1 className="font-display text-2xl text-charcoal">Referral analytics</h1>
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+        <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
           <p className="text-xs uppercase text-[#A8A8A4]">Points issued (referrals & signup)</p>
           <p className="mt-2 font-display text-2xl text-gold">{issued._sum.amount ?? 0}</p>
         </div>
-        <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+        <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
           <p className="text-xs uppercase text-[#A8A8A4]">Points redeemed</p>
           <p className="mt-2 font-display text-2xl text-wine">
             {Math.abs(redeemed._sum.amount ?? 0)}

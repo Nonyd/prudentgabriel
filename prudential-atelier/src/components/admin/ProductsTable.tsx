@@ -191,17 +191,17 @@ export function ProductsTable({
         loading={isDeleting}
       />
 
-      <div className="flex flex-wrap items-center gap-3 rounded-sm border border-[#EBEBEA] bg-white p-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-sm border border-[#EBEBEA] bg-canvas p-4">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search name or slug…"
-          className="min-w-[200px] flex-1 rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 text-sm text-charcoal placeholder:text-[#A8A8A4]"
+          className="min-w-[200px] flex-1 rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 text-sm text-charcoal placeholder:text-[#A8A8A4]"
         />
         <select
           value={category}
           onChange={(e) => pushFilters({ category: e.target.value })}
-          className="rounded-sm border border-[#EBEBEA] bg-white px-2 py-2 text-sm text-charcoal"
+          className="rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-2 text-sm text-charcoal"
         >
           <option value="">All categories</option>
           {Object.values(["BRIDAL", "EVENING_WEAR", "CASUAL", "FORMAL", "KIDDIES", "ACCESSORIES"]).map((c) => (
@@ -213,7 +213,7 @@ export function ProductsTable({
         <select
           value={type}
           onChange={(e) => pushFilters({ type: e.target.value })}
-          className="rounded-sm border border-[#EBEBEA] bg-white px-2 py-2 text-sm text-charcoal"
+          className="rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-2 text-sm text-charcoal"
         >
           <option value="">All types</option>
           <option value="RTW">RTW</option>
@@ -222,7 +222,7 @@ export function ProductsTable({
         <select
           value={published}
           onChange={(e) => pushFilters({ published: e.target.value })}
-          className="rounded-sm border border-[#EBEBEA] bg-white px-2 py-2 text-sm text-charcoal"
+          className="rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-2 text-sm text-charcoal"
         >
           <option value="">All statuses</option>
           <option value="true">Published</option>
@@ -231,7 +231,7 @@ export function ProductsTable({
         <select
           value={stock}
           onChange={(e) => pushFilters({ stock: e.target.value })}
-          className="rounded-sm border border-[#EBEBEA] bg-white px-2 py-2 text-sm text-charcoal"
+          className="rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-2 text-sm text-charcoal"
         >
           <option value="">All stock</option>
           <option value="in">In stock</option>
@@ -244,21 +244,21 @@ export function ProductsTable({
           <span className="font-medium">{selected.size} selected</span>
           <button
             type="button"
-            className="border border-white/40 px-3 py-1 text-xs text-white hover:bg-white/10"
+            className="border border-white/40 px-3 py-1 text-xs text-white hover:bg-canvas/10"
             onClick={() => void bulkPatch({ isPublished: true })}
           >
             Publish
           </button>
           <button
             type="button"
-            className="border border-white/40 px-3 py-1 text-xs text-white hover:bg-white/10"
+            className="border border-white/40 px-3 py-1 text-xs text-white hover:bg-canvas/10"
             onClick={() => void bulkPatch({ isPublished: false })}
           >
             Unpublish
           </button>
           <button
             type="button"
-            className="border border-white/40 px-3 py-1 text-xs text-white hover:bg-white/10"
+            className="border border-white/40 px-3 py-1 text-xs text-white hover:bg-canvas/10"
             onClick={() => void bulkPatch({ isNewArrival: true })}
           >
             Mark as New Arrival
@@ -273,7 +273,7 @@ export function ProductsTable({
         </div>
       ) : null}
 
-      <div className="-mx-4 overflow-x-auto rounded-sm border border-[#EBEBEA] bg-white px-4 md:mx-0 md:px-0">
+      <div className="-mx-4 overflow-x-auto rounded-sm border border-[#EBEBEA] bg-canvas px-4 md:mx-0 md:px-0">
         <table className="w-full min-w-[700px] text-left text-sm text-charcoal">
           <thead className="border-b border-[#EBEBEA] font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">
             <tr>
@@ -305,7 +305,7 @@ export function ProductsTable({
                   <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} aria-label={`Select ${p.name}`} />
                 </td>
                 <td className="p-2">
-                  <div className="relative h-[52px] w-10 overflow-hidden rounded-sm border border-[#EBEBEA] bg-white">
+                  <div className="relative h-[52px] w-10 overflow-hidden rounded-sm border border-[#EBEBEA] bg-canvas">
                     {p.primaryImage ? (
                       <Image src={p.primaryImage} alt="" fill className="object-cover" sizes="40px" />
                     ) : null}

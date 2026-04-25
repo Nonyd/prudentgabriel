@@ -43,7 +43,7 @@ export function ReviewsAdminClient({ pending }: { pending: Row[] }) {
       {pending.map((r) => (
         <div
           key={r.id}
-          className="border border-[#EBEBEA] border-l-[3px] border-l-[#F59E0B] bg-white p-4 text-sm text-charcoal"
+          className="border border-[#EBEBEA] border-l-[3px] border-l-[#F59E0B] bg-canvas p-4 text-sm text-charcoal"
         >
           <p className="font-medium text-olive">{r.product.name}</p>
           <p className="text-xs text-[#A8A8A4]">

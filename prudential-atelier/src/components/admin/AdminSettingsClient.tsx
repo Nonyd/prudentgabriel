@@ -184,7 +184,7 @@ export function SettingsGroupCard({
   };
 
   return (
-    <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+    <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
       <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">{title}</h2>
       <div className="mt-6 space-y-5">
         {local.map((row) => (
@@ -255,7 +255,7 @@ export function AdminSettingsClient() {
           <SettingsGroupCard title="Email" group="EMAIL" rows={emailConfig} onSaved={load} />
           <SettingsGroupCard title="SMS" group="SMS" rows={rowsFor("SMS")} onSaved={load} />
           <EmailTemplatesEditor emailRows={rowsFor("EMAIL")} onSaved={load} />
-          <div className="rounded-sm border border-[#EBEBEA] bg-white p-6">
+          <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
             <button
               type="button"
               className="text-sm text-olive underline"
@@ -282,7 +282,7 @@ export function AdminSettingsClient() {
           </div>
           <Accordion.Root type="multiple" className="space-y-2">
             {(["paystack", "flutterwave", "stripe", "monnify"] as const).map((gw) => (
-              <Accordion.Item key={gw} value={gw} className="rounded-sm border border-[#EBEBEA] bg-white">
+              <Accordion.Item key={gw} value={gw} className="rounded-sm border border-[#EBEBEA] bg-canvas">
                 <Accordion.Header>
                   <Accordion.Trigger className="flex w-full items-center justify-between px-4 py-3 font-body text-sm font-medium capitalize">
                     {gw}
@@ -325,7 +325,7 @@ export function AdminSettingsClient() {
             <Tabs.Trigger
               key={t.id}
               value={t.id}
-              className="px-3 py-2 text-left font-body text-[11px] font-medium uppercase tracking-[0.1em] text-[#6B6B68] data-[state=active]:bg-[#F5F5F3] data-[state=active]:text-black lg:w-full"
+              className="px-3 py-2 text-left font-body text-[11px] font-medium uppercase tracking-[0.1em] text-[#6B6B68] data-[state=active]:bg-[#F5F5F3] data-[state=active]:text-ink lg:w-full"
             >
               {t.label}
             </Tabs.Trigger>

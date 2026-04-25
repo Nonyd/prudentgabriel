@@ -80,14 +80,14 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
               <tr key={i} className="border-b border-[#F5F5F3]">
                 <td className="p-1">
                   <input
-                    className="w-full rounded-sm border border-[#EBEBEA] bg-white px-2 py-1 text-charcoal"
+                    className="w-full rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-1 text-charcoal"
                     value={v.size}
                     onChange={(e) => update(i, { size: e.target.value })}
                   />
                 </td>
                 <td className="p-1">
                   <input
-                    className="w-full rounded-sm border border-[#EBEBEA] bg-white px-2 py-1 font-mono text-[11px] text-charcoal"
+                    className="w-full rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-1 font-mono text-[11px] text-charcoal"
                     value={v.sku}
                     onChange={(e) => update(i, { sku: e.target.value })}
                     placeholder={slug ? buildDefaultProductSku(slug, v.size || "SIZE") : ""}
@@ -96,7 +96,7 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
                 <td className="p-1">
                   <input
                     type="number"
-                    className="w-full rounded-sm border border-[#EBEBEA] bg-white px-2 py-1 text-charcoal"
+                    className="w-full rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-1 text-charcoal"
                     value={v.priceNGN}
                     onChange={(e) => update(i, { priceNGN: Number(e.target.value) || 0 })}
                   />
@@ -104,7 +104,7 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
                 <td className="p-1">
                   <input
                     type="number"
-                    className="w-full rounded-sm border border-[#EBEBEA] bg-white px-2 py-1 text-charcoal"
+                    className="w-full rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-1 text-charcoal"
                     value={v.priceUSD ?? ""}
                     onChange={(e) =>
                       update(i, {
@@ -116,7 +116,7 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
                 <td className="p-1">
                   <input
                     type="number"
-                    className="w-full rounded-sm border border-[#EBEBEA] bg-white px-2 py-1 text-charcoal"
+                    className="w-full rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-1 text-charcoal"
                     value={v.priceGBP ?? ""}
                     onChange={(e) =>
                       update(i, {
@@ -128,7 +128,7 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
                 <td className="p-1">
                   <input
                     type="number"
-                    className="w-full rounded-sm border border-[#EBEBEA] bg-white px-2 py-1 text-charcoal"
+                    className="w-full rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-1 text-charcoal"
                     value={v.salePriceNGN ?? ""}
                     onChange={(e) =>
                       update(i, {
@@ -140,7 +140,7 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
                 <td className="p-1">
                   <input
                     type="number"
-                    className="w-full rounded-sm border border-[#EBEBEA] bg-white px-2 py-1 text-charcoal"
+                    className="w-full rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-1 text-charcoal"
                     value={v.stock}
                     onChange={(e) => update(i, { stock: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
                   />
@@ -148,7 +148,7 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
                 <td className="p-1">
                   <input
                     type="number"
-                    className="w-full rounded-sm border border-[#EBEBEA] bg-white px-2 py-1 text-charcoal"
+                    className="w-full rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-1 text-charcoal"
                     value={v.lowStockAt}
                     onChange={(e) => update(i, { lowStockAt: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
                   />

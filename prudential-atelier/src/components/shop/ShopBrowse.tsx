@@ -96,7 +96,7 @@ export function ShopBrowse({
         </div>
       </section>
 
-      <header className="sticky top-0 z-40 flex h-12 items-center justify-between border-b border-mid-grey bg-white px-4 md:px-6">
+      <header className="sticky top-0 z-40 flex h-12 items-center justify-between border-b border-mid-grey bg-canvas px-4 md:px-6">
         <div className="flex min-w-0 items-center gap-2">
           <button
             type="button"
@@ -159,7 +159,7 @@ export function ShopBrowse({
         ) : view === "grid" ? (
           <div className="grid grid-cols-2 gap-0.5 bg-mid-grey md:grid-cols-3">
             {items.map((p, i) => (
-              <div key={`${p.id}-${i}`} className="bg-white">
+              <div key={`${p.id}-${i}`} className="bg-canvas">
                 <ProductCard product={p} priority={i < 6} />
               </div>
             ))}
@@ -190,7 +190,7 @@ function ShopListRows({ products }: { products: ProductListItem[] }) {
   const currency = useCurrencyStore((s) => s.currency);
   const rates = useCurrencyStore((s) => s.rates);
   return (
-    <ul className="border border-mid-grey bg-white">
+    <ul className="border border-mid-grey bg-canvas">
       {products.map((p) => {
         const prices = p.variants.map((v) => (v.salePriceNGN != null ? v.salePriceNGN : v.priceNGN));
         const low = Math.min(...prices);
@@ -239,7 +239,7 @@ function SortSelect() {
         <Select.Value placeholder="Sort" />
       </Select.Trigger>
       <Select.Portal>
-        <Select.Content className="z-50 min-w-[10rem] border border-mid-grey bg-white shadow-md">
+        <Select.Content className="z-50 min-w-[10rem] border border-mid-grey bg-canvas shadow-md">
           <Select.Viewport className="p-1">
             {[
               ["newest", "Newest"],
