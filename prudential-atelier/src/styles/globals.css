@@ -143,8 +143,13 @@ body {
   }
 }
 .masonry-grid-admin {
-  columns: 3;
+  columns: 6;
   column-gap: 4px;
+}
+@media (max-width: 1280px) {
+  .masonry-grid-admin {
+    columns: 4;
+  }
 }
 @media (max-width: 768px) {
   .masonry-grid-admin {

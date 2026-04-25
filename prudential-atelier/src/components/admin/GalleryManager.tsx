@@ -232,6 +232,9 @@ export function GalleryManager() {
 
   const images = data?.images ?? [];
   const total = data?.total ?? 0;
+  const pageIds = images.map((x) => x.id);
+  const allOnPageSelected =
+    selectMode && pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
 
   return (
     <div className="mt-8 space-y-6">
@@ -286,6 +289,18 @@ export function GalleryManager() {
           >
             Select
           </button>
+          {selectMode && pageIds.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (allOnPageSelected) setSelectedIds([]);
+                else setSelectedIds([...pageIds]);
+              }}
+              className="border border-[#EBEBEA] px-3 py-2 font-body text-[11px] uppercase tracking-wide text-charcoal"
+            >
+              {allOnPageSelected ? "Deselect all" : "Select all"}
+            </button>
+          ) : null}
           {selectMode && selectedIds.length > 0 ? (
             <AlertDialog.Root>
               <AlertDialog.Trigger asChild>
@@ -338,7 +353,14 @@ export function GalleryManager() {
         {images.map((img, idx) => (
           <div key={img.id} className="group masonry-item relative border border-[#EBEBEA] bg-[#fafafa]">
             <div className="relative aspect-[3/4] w-full overflow-hidden">
-              <Image src={img.url} alt="" fill className="object-cover" sizes="200px" unoptimized />
+              <Image
+                src={img.url}
+                alt=""
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 16vw"
+                unoptimized
+              />
               {selectMode && !reorder ? (
                 <>
                   <button
