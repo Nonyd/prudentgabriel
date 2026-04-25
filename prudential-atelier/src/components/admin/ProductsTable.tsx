@@ -19,6 +19,8 @@ export type ProductRow = {
   isPublished: boolean;
   isFeatured: boolean;
   isNewArrival: boolean;
+  basePriceNGN: number;
+  defaultVariantId: string | null;
   primaryImage: string | null;
   variantCount: number;
   minPriceNGN: number;
@@ -35,6 +37,7 @@ type ProductsTableProps = {
   category: string;
   type: string;
   published: string;
+  needsPrice: string;
   stock: string;
 };
 
@@ -56,6 +59,7 @@ export function ProductsTable({
   category,
   type,
   published,
+  needsPrice,
   stock,
 }: ProductsTableProps) {
   const router = useRouter();
@@ -66,6 +70,7 @@ export function ProductsTable({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleteState, setDeleteState] = useState<DeleteState>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editingPrice, setEditingPrice] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setSearch(initialSearch);
@@ -106,6 +111,28 @@ export function ProductsTable({
       toast.error("Update failed");
       return;
     }
+    router.refresh();
+  };
+
+  const saveInlinePrice = async (product: ProductRow, inputValue: string) => {
+    const parsed = Number(inputValue.replace(/[^0-9.]/g, ""));
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      toast.error("Enter a valid price");
+      return;
+    }
+    const res = await fetch(`/api/admin/products/${product.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        basePriceNGN: parsed,
+        variantId: product.defaultVariantId,
+      }),
+    });
+    if (!res.ok) {
+      toast.error("Failed to save price");
+      return;
+    }
+    toast.success("Price saved ✓");
     router.refresh();
   };
 
@@ -221,12 +248,19 @@ export function ProductsTable({
         </select>
         <select
           value={published}
-          onChange={(e) => pushFilters({ published: e.target.value })}
+          onChange={(e) => {
+            if (e.target.value === "needs-price") {
+              pushFilters({ published: "", needsPrice: "true" });
+              return;
+            }
+            pushFilters({ published: e.target.value, needsPrice: "" });
+          }}
           className="rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-2 text-sm text-charcoal"
         >
           <option value="">All statuses</option>
           <option value="true">Published</option>
           <option value="false">Draft</option>
+          <option value="needs-price">Needs Price</option>
         </select>
         <select
           value={stock}
@@ -285,6 +319,7 @@ export function ProductsTable({
               <th className="hidden p-3 md:table-cell">Category</th>
               <th className="hidden p-3 md:table-cell">Type</th>
               <th className="hidden p-3 lg:table-cell">Variants</th>
+              <th className="p-3">Price</th>
               <th className="p-3">Stock</th>
               <th className="hidden p-3 sm:table-cell">Featured</th>
               <th className="p-3">Published</th>
@@ -315,12 +350,36 @@ export function ProductsTable({
                   <Link href={`/admin/products/${p.id}/edit`} className="block font-medium text-charcoal hover:text-olive">
                     {p.name}
                   </Link>
+                  {!p.isPublished && p.basePriceNGN === 0 ? (
+                    <span className="mt-1 inline-block rounded-sm bg-amber-100 px-2 py-0.5 text-[10px] text-amber-900">
+                      ⚠ Price needed
+                    </span>
+                  ) : null}
                   <span className="block truncate font-mono text-xs text-olive/80">{p.slug}</span>
                 </td>
                 <td className="hidden p-2 text-xs md:table-cell">{p.category.replace(/_/g, " ")}</td>
                 <td className="hidden p-2 text-xs md:table-cell">{p.type}</td>
                 <td className="hidden p-2 text-xs lg:table-cell">
                   {p.variantCount} sizes · From {formatNGN(p.minPriceNGN)}
+                </td>
+                <td className="p-2 text-xs">
+                  {p.basePriceNGN === 0 ? (
+                    <input
+                      value={editingPrice[p.id] ?? ""}
+                      onChange={(e) => setEditingPrice((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                      onBlur={() => void saveInlinePrice(p, editingPrice[p.id] ?? "")}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void saveInlinePrice(p, editingPrice[p.id] ?? "");
+                        }
+                      }}
+                      placeholder="₦ Set price"
+                      className="w-28 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-charcoal placeholder:text-amber-500"
+                    />
+                  ) : (
+                    <span>{formatNGN(p.basePriceNGN)}</span>
+                  )}
                 </td>
                 <td
                   className={cn(
@@ -376,6 +435,7 @@ export function ProductsTable({
         <span>
           Page {page} of {totalPages} · {total} products
         </span>
+        {needsPrice === "true" ? <span className="text-amber-500">Needs Price filter active</span> : null}
         <div className="flex gap-2">
           <button
             type="button"

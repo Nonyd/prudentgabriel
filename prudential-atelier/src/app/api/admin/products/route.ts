@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
   const category = searchParams.get("category") as ProductCategory | null;
   const type = searchParams.get("type") as ProductType | null;
   const published = searchParams.get("published");
+  const needsPrice = searchParams.get("needsPrice");
   const stock = searchParams.get("stock");
   const sort = searchParams.get("sort") ?? "newest";
 
@@ -37,6 +38,10 @@ export async function GET(req: NextRequest) {
   }
   if (published === "true") where.isPublished = true;
   if (published === "false") where.isPublished = false;
+  if (needsPrice === "true") {
+    where.isPublished = false;
+    where.basePriceNGN = 0;
+  }
 
   if (stock === "out") {
     where.variants = { some: { stock: 0 } };
@@ -60,7 +65,10 @@ export async function GET(req: NextRequest) {
       take,
       include: {
         images: { where: { isPrimary: true }, take: 1 },
-        variants: { select: { priceNGN: true, salePriceNGN: true, stock: true } },
+        variants: {
+          select: { id: true, priceNGN: true, salePriceNGN: true, stock: true },
+          orderBy: { sortOrder: "asc" },
+        },
         _count: { select: { orderItems: true } },
       },
     }),
@@ -78,6 +86,9 @@ export async function GET(req: NextRequest) {
       type: p.type,
       isPublished: p.isPublished,
       isFeatured: p.isFeatured,
+      isNewArrival: p.isNewArrival,
+      basePriceNGN: p.basePriceNGN,
+      defaultVariantId: p.variants[0]?.id ?? null,
       primaryImage: p.images[0]?.url ?? null,
       variantCount: p.variants.length,
       minPriceNGN: minPrice,

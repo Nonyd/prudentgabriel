@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import { CustomerProfileDrawer } from "@/components/account/CustomerProfileDrawer";
+import { DarkModeToggle } from "@/components/common/DarkModeToggle";
 
 const NAV = [
   { href: "/account", label: "Overview", icon: LayoutDashboard },
@@ -133,6 +134,7 @@ export function AccountLayout({
           </div>
           <div className="hidden lg:block" />
           <div className="ml-auto flex items-center gap-3">
+            <DarkModeToggle />
             <button
               type="button"
               onClick={() => setProfileOpen(true)}

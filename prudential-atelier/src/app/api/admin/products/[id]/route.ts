@@ -39,6 +39,48 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 
   if (body && typeof body === "object" && !("variants" in body)) {
+    if ("basePriceNGN" in body) {
+      const payload = body as { basePriceNGN?: unknown; variantId?: unknown };
+      const basePrice = Number(payload.basePriceNGN);
+      if (!Number.isFinite(basePrice) || basePrice <= 0) {
+        return NextResponse.json({ error: "basePriceNGN must be a positive number" }, { status: 400 });
+      }
+      const variantId = typeof payload.variantId === "string" ? payload.variantId : undefined;
+      const updated = await prisma.$transaction(async (tx) => {
+        await tx.product.update({
+          where: { id },
+          data: { basePriceNGN: basePrice, priceNGN: basePrice },
+          select: { id: true },
+        });
+        const existingVariant = variantId
+          ? await tx.productVariant.findFirst({
+              where: { id: variantId, productId: id },
+              select: { id: true },
+            })
+          : null;
+        if (existingVariant) {
+          await tx.productVariant.update({
+            where: { id: existingVariant.id },
+            data: { priceNGN: basePrice },
+          });
+        } else {
+          const fallback = await tx.productVariant.findFirst({
+            where: { productId: id },
+            orderBy: { sortOrder: "asc" },
+            select: { id: true },
+          });
+          if (fallback) {
+            await tx.productVariant.update({
+              where: { id: fallback.id },
+              data: { priceNGN: basePrice },
+            });
+          }
+        }
+        return { id, basePriceNGN: basePrice };
+      });
+      return NextResponse.json(updated);
+    }
+
     const toggle = productToggleSchema.safeParse(body);
     if (
       toggle.success &&

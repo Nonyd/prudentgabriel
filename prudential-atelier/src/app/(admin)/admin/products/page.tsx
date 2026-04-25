@@ -14,6 +14,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   const category = (Array.isArray(sp.category) ? sp.category[0] : sp.category) as ProductCategory | undefined;
   const type = (Array.isArray(sp.type) ? sp.type[0] : sp.type) as ProductType | undefined;
   const published = Array.isArray(sp.published) ? sp.published[0] : sp.published;
+  const needsPrice = Array.isArray(sp.needsPrice) ? sp.needsPrice[0] : sp.needsPrice;
   const stock = Array.isArray(sp.stock) ? sp.stock[0] : sp.stock;
 
   const where: Prisma.ProductWhereInput = {};
@@ -27,6 +28,10 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   if (type && Object.values(ProductType).includes(type)) where.type = type;
   if (published === "true") where.isPublished = true;
   if (published === "false") where.isPublished = false;
+  if (needsPrice === "true") {
+    where.isPublished = false;
+    where.basePriceNGN = 0;
+  }
   if (stock === "out") where.variants = { some: { stock: 0 } };
   if (stock === "in") where.NOT = { variants: { some: { stock: 0 } } };
 
@@ -39,7 +44,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       take: PAGE_SIZE,
       include: {
         images: { where: { isPrimary: true }, take: 1 },
-        variants: { select: { priceNGN: true, salePriceNGN: true, stock: true } },
+        variants: { select: { id: true, priceNGN: true, salePriceNGN: true, stock: true }, orderBy: { sortOrder: "asc" } },
         _count: { select: { orderItems: true } },
       },
     }),
@@ -61,6 +66,8 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       primaryImage: p.images[0]?.url ?? null,
       variantCount: p.variants.length,
       minPriceNGN: minPrice,
+      basePriceNGN: p.basePriceNGN,
+      defaultVariantId: p.variants[0]?.id ?? null,
       totalStock,
       orderItemsCount: p._count.orderItems,
     };
@@ -86,6 +93,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
         category={category ?? ""}
         type={type ?? ""}
         published={published ?? ""}
+        needsPrice={needsPrice ?? ""}
         stock={stock ?? ""}
       />
     </div>
