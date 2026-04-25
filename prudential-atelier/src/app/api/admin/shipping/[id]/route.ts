@@ -34,6 +34,16 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
   const gate = await requireAdminApi();
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
+  const activeOrder = await prisma.order.findFirst({
+    where: {
+      shippingZoneId: id,
+      status: { in: ["PENDING", "CONFIRMED", "PROCESSING"] },
+    },
+    select: { id: true },
+  });
+  if (activeOrder) {
+    return NextResponse.json({ error: "Cannot delete — active orders use this zone" }, { status: 409 });
+  }
   await prisma.shippingZone.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }

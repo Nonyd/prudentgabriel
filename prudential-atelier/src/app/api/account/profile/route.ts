@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PaymentGateway } from "@prisma/client";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -8,6 +9,7 @@ const patchSchema = z.object({
   lastName: z.string().min(1).optional(),
   phone: z.string().optional(),
   image: z.string().url().optional().or(z.literal("")),
+  preferredGateway: z.nativeEnum(PaymentGateway).nullable().optional(),
 });
 
 export async function GET() {
@@ -25,6 +27,7 @@ export async function GET() {
       image: true,
       pointsBalance: true,
       referralCode: true,
+      preferredGateway: true,
     },
   });
 
@@ -42,6 +45,7 @@ export async function GET() {
     image: user.image,
     pointsBalance: user.pointsBalance,
     referralCode: user.referralCode,
+    preferredGateway: user.preferredGateway,
   });
 }
 
@@ -63,7 +67,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { firstName, lastName, phone, image } = parsed.data;
+  const { firstName, lastName, phone, image, preferredGateway } = parsed.data;
   const name =
     firstName != null || lastName != null
       ? `${firstName ?? ""} ${lastName ?? ""}`.trim() || undefined
@@ -75,6 +79,7 @@ export async function PATCH(req: NextRequest) {
       ...(name ? { name } : {}),
       ...(phone !== undefined ? { phone: phone || null } : {}),
       ...(image !== undefined ? { image: image || null } : {}),
+      ...(preferredGateway !== undefined ? { preferredGateway } : {}),
     },
     select: {
       name: true,
@@ -83,6 +88,7 @@ export async function PATCH(req: NextRequest) {
       image: true,
       pointsBalance: true,
       referralCode: true,
+      preferredGateway: true,
     },
   });
 
@@ -95,5 +101,6 @@ export async function PATCH(req: NextRequest) {
     image: updated.image,
     pointsBalance: updated.pointsBalance,
     referralCode: updated.referralCode,
+    preferredGateway: updated.preferredGateway,
   });
 }

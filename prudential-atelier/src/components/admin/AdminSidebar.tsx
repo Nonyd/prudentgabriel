@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { BrandLogo } from "@/components/common/BrandLogo";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import type { Session } from "next-auth";
@@ -23,6 +24,7 @@ import {
   Users,
   Images,
   CreditCard,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -63,7 +65,11 @@ const SECTIONS: {
   },
   {
     label: "System",
-    items: [{ href: "/admin/settings", label: "Settings", icon: Settings }],
+    items: [
+      { href: "/admin/team", label: "Team", icon: Users },
+      { href: "/admin/notifications", label: "Notifications", icon: Bell },
+      { href: "/admin/settings", label: "Settings", icon: Settings },
+    ],
   },
 ];
 
@@ -82,6 +88,19 @@ export function AdminSidebar({ session, onNavigate }: { session: Session; onNavi
   const pathname = usePathname();
   const user = session.user;
   const displayName = user?.name ?? user?.email ?? "Admin";
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const run = async () => {
+      const res = await fetch("/api/admin/notifications/count");
+      if (!res.ok) return;
+      const data = (await res.json()) as { count: number };
+      setUnreadCount(data.count);
+    };
+    void run();
+    const intervalId = window.setInterval(() => void run(), 30_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   return (
     <aside
@@ -120,7 +139,14 @@ export function AdminSidebar({ session, onNavigate }: { session: Session; onNavi
                       )}
                     >
                       <Icon size={15} className={cn("shrink-0", active ? "text-white" : "text-[#A8A8A4]")} />
-                      {item.label}
+                      <span className="inline-flex items-center gap-1.5">
+                        {item.label}
+                        {item.href === "/admin/notifications" && unreadCount > 0 ? (
+                          <span className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-semibold", active ? "bg-white text-[#37392d]" : "bg-[#37392d] text-white")}>
+                            {unreadCount > 99 ? "99+" : unreadCount}
+                          </span>
+                        ) : null}
+                      </span>
                     </Link>
                   </li>
                 );

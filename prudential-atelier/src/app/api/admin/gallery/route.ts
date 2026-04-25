@@ -73,27 +73,23 @@ export async function POST(req: NextRequest) {
     Boolean(process.env.CLOUDINARY_API_SECRET?.length) &&
     Boolean(process.env.CLOUDINARY_CLOUD_NAME?.length);
 
-  let url: string;
-  let publicId: string;
-  let width: number | null = null;
-  let height: number | null = null;
-
   if (!configured) {
-    url =
-      "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=800&q=80&auto=format";
-    publicId = `dev-gallery-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-  } else {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const base64 = `data:${file.type};base64,${buffer.toString("base64")}`;
-    const uploaded = await cloudinary.uploader.upload(base64, {
-      folder,
-      transformation: [{ width: 1600, crop: "limit" }, { quality: "auto" }],
-    });
-    url = uploaded.secure_url;
-    publicId = uploaded.public_id;
-    width = uploaded.width ?? null;
-    height = uploaded.height ?? null;
+    return NextResponse.json(
+      { error: "Cloudinary is not configured. Please add CLOUDINARY credentials in Settings." },
+      { status: 400 },
+    );
   }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const base64 = `data:${file.type};base64,${buffer.toString("base64")}`;
+  const uploaded = await cloudinary.uploader.upload(base64, {
+    folder,
+    transformation: [{ width: 1600, crop: "limit" }, { quality: "auto" }],
+  });
+  const url = uploaded.secure_url;
+  const publicId = uploaded.public_id;
+  const width = uploaded.width ?? null;
+  const height = uploaded.height ?? null;
 
   const maxSort = await prisma.galleryImage.aggregate({
     where: { category },

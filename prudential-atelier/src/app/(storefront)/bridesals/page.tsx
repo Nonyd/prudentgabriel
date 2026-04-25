@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: "Prudential Bride gallery — couture bridal moments from our Lagos atelier.",
 };
 
-const LIMIT = 50;
+const LIMIT = 24;
 
 export default async function BridesalsPage() {
   const where = { isPublished: true, category: GalleryCategory.BRIDAL };

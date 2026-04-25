@@ -1,10 +1,13 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
-import { Menu } from "lucide-react";
+import { ChevronDown, LogOut, Menu } from "lucide-react";
 import { DarkModeToggle } from "@/components/common/DarkModeToggle";
 import { NotificationBell } from "@/components/admin/NotificationBell";
+import { AdminProfileDrawer } from "@/components/admin/AdminProfileDrawer";
+import { useState } from "react";
 
 function pageTitleFromPath(pathname: string): string {
   if (pathname === "/admin") return "Dashboard";
@@ -33,6 +36,7 @@ function initials(name: string | null | undefined, email: string | null | undefi
 export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
   const pathname = usePathname();
   const { data } = useSession();
+  const [profileOpen, setProfileOpen] = useState(false);
   const title = pageTitleFromPath(pathname);
   const user = data?.user;
   const displayName = user?.name ?? user?.email ?? "Admin";
@@ -63,16 +67,36 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
           <DarkModeToggle />
         </div>
         <span className="hidden h-4 w-px bg-[#EBEBEA] sm:block" aria-hidden />
-        <div className="flex items-center gap-2.5">
+        <button
+          type="button"
+          onClick={() => setProfileOpen(true)}
+          className="flex items-center gap-2.5 hover:opacity-90"
+          title="Open profile"
+        >
           <div
-            className="flex h-7 w-7 shrink-0 items-center justify-center bg-[#37392d] font-body text-[11px] font-medium text-white"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#37392d] font-body text-[11px] font-medium text-white"
             title={user?.email ?? ""}
           >
             {initials(user?.name, user?.email)}
           </div>
           <span className="hidden max-w-[140px] truncate font-body text-xs text-ink md:inline">{displayName}</span>
-        </div>
+          <ChevronDown size={12} className="hidden text-[#6B6B68] md:block" />
+        </button>
+        <button
+          type="button"
+          onClick={() => void signOut({ callbackUrl: "/admin-login" })}
+          className="inline-flex items-center gap-1 font-body text-[11px] text-[#6B6B68] hover:text-red-500"
+        >
+          <LogOut size={14} />
+          Logout
+        </button>
       </div>
+      <AdminProfileDrawer
+        isOpen={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        initialName={displayName}
+        initialEmail={user?.email ?? ""}
+      />
     </header>
   );
 }

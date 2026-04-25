@@ -44,6 +44,10 @@ function statusTextClass(label: string): string {
 }
 
 export default async function AdminPaymentsPage() {
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+
   const [orders, bookings, bespokes] = await Promise.all([
     prisma.order.findMany({
       orderBy: { createdAt: "desc" },
@@ -164,6 +168,20 @@ export default async function AdminPaymentsPage() {
   }
 
   rows.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  const paidRows = rows.filter((row) => row.statusLabel.toUpperCase().includes("PAID") || row.statusLabel.toUpperCase().includes("SETTLED"));
+  const totalRevenue = paidRows.reduce((sum, row) => sum + row.amountNGN, 0);
+  const monthRevenue = paidRows.filter((row) => row.createdAt >= monthStart).reduce((sum, row) => sum + row.amountNGN, 0);
+  const avgOrderValue = paidRows.length ? totalRevenue / paidRows.length : 0;
+  const refundsIssued = rows.filter((row) => row.statusLabel.toUpperCase().includes("REFUND")).reduce((sum, row) => sum + row.amountNGN, 0);
+  const gateways: PaymentGateway[] = ["PAYSTACK", "FLUTTERWAVE", "STRIPE", "MONNIFY"];
+  const gatewaySummary = gateways.map((gateway) => {
+    const matches = rows.filter((row) => row.gateway === gateway);
+    return {
+      gateway,
+      count: matches.length,
+      total: matches.reduce((sum, row) => sum + row.amountNGN, 0),
+    };
+  });
 
   const kindLabel = (k: RowKind) => {
     if (k === "SHOP") return "Shop";
@@ -178,6 +196,38 @@ export default async function AdminPaymentsPage() {
         Recent checkout and fee activity: shop orders, consultation payments, and bespoke agreements (including
         online balance collection).
       </p>
+
+      <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <div className="border border-[#EBEBEA] bg-white p-4">
+          <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Total Revenue</p>
+          <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(totalRevenue).toLocaleString("en-NG")}</p>
+        </div>
+        <div className="border border-[#EBEBEA] bg-white p-4">
+          <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Revenue This Month</p>
+          <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(monthRevenue).toLocaleString("en-NG")}</p>
+        </div>
+        <div className="border border-[#EBEBEA] bg-white p-4">
+          <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Avg Order Value</p>
+          <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(avgOrderValue).toLocaleString("en-NG")}</p>
+        </div>
+        <div className="border border-[#EBEBEA] bg-white p-4">
+          <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Refunds Issued</p>
+          <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(refundsIssued).toLocaleString("en-NG")}</p>
+        </div>
+      </div>
+
+      <div className="mt-5 border border-[#EBEBEA] bg-white p-4">
+        <p className="mb-3 font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Gateway Breakdown</p>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+          {gatewaySummary.map((item) => (
+            <div key={item.gateway} className="border border-[#F0F0EE] px-3 py-2">
+              <p className="font-body text-xs text-[#6B6B68]">{item.gateway}</p>
+              <p className="font-body text-sm font-medium text-ink">{item.count} transactions</p>
+              <p className="font-body text-xs text-[#37392d]">₦{Math.round(item.total).toLocaleString("en-NG")}</p>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="mt-8 overflow-x-auto border border-[#EBEBEA]">
         <table className="w-full min-w-[720px] border-collapse font-body text-sm">

@@ -5,11 +5,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import type { Session } from "next-auth";
+import { useState } from "react";
 import {
   Calendar,
-  ChevronRight,
   Heart,
   LayoutDashboard,
+  LogOut,
   MapPin,
   Package,
   ShoppingBag,
@@ -18,6 +19,7 @@ import {
   Wallet,
 } from "lucide-react";
 import clsx from "clsx";
+import { CustomerProfileDrawer } from "@/components/account/CustomerProfileDrawer";
 
 const NAV = [
   { href: "/account", label: "Overview", icon: LayoutDashboard },
@@ -49,6 +51,7 @@ export function AccountLayout({
   const role = session.user?.role;
   const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
   const pts = session.user?.pointsBalance ?? 0;
+  const [profileOpen, setProfileOpen] = useState(false);
 
   return (
     <div className="flex h-screen overflow-hidden bg-ivory">
@@ -112,22 +115,55 @@ export function AccountLayout({
           <button
             type="button"
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="flex w-full items-center justify-center gap-2 rounded-sm py-2 text-sm text-ivory/60 hover:text-ivory"
+            className="flex w-full items-center justify-center gap-2 rounded-sm border border-charcoal-mid py-2 text-sm text-ivory/60 hover:bg-red-50 hover:text-red-400"
           >
-            Sign out
-            <ChevronRight className="h-4 w-4" />
+            <LogOut className="h-4 w-4" />
+            Logout
           </button>
         </div>
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex items-center gap-3 border-b border-border bg-ivory px-4 py-3 lg:hidden">
-          <button type="button" onClick={() => router.back()} className="text-charcoal" aria-label="Back">
-            ←
-          </button>
-          <span className="font-display text-lg text-olive">Account</span>
+        <header className="flex items-center justify-between gap-3 border-b border-border bg-ivory px-4 py-3">
+          <div className="flex items-center gap-3 lg:hidden">
+            <button type="button" onClick={() => router.back()} className="text-charcoal" aria-label="Back">
+              ←
+            </button>
+            <span className="font-display text-lg text-olive">Account</span>
+          </div>
+          <div className="hidden lg:block" />
+          <div className="ml-auto flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setProfileOpen(true)}
+              className="flex items-center gap-2"
+            >
+              {session.user?.image ? (
+                <Image src={session.user.image} alt="" width={32} height={32} className="rounded-full object-cover" />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#6B1C2A] font-body text-[11px] font-medium text-white">
+                  {initials}
+                </div>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="inline-flex items-center gap-1 font-body text-[12px] text-[#6B6B68] hover:text-red-600"
+            >
+              <LogOut size={14} />
+              Logout
+            </button>
+          </div>
         </header>
         <main className="min-h-0 flex-1 overflow-y-auto px-5 py-8 lg:px-10 lg:py-10">{children}</main>
+        <CustomerProfileDrawer
+          isOpen={profileOpen}
+          onClose={() => setProfileOpen(false)}
+          name={name}
+          email={session.user?.email ?? ""}
+          pointsBalance={pts}
+        />
       </div>
     </div>
   );

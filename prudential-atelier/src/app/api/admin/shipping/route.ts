@@ -17,7 +17,7 @@ const zoneSchema = z.object({
 export async function GET() {
   const gate = await requireAdminApi();
   if (!gate.ok) return gate.response;
-  const zones = await prisma.shippingZone.findMany({ orderBy: { sortOrder: "asc" } });
+  const zones = await prisma.shippingZone.findMany({ orderBy: { name: "asc" } });
   return NextResponse.json({ items: zones });
 }
 

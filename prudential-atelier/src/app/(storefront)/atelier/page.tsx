@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: "Step inside our Lagos atelier — craft, hands, and story behind every Prudent Gabriel piece.",
 };
 
-const LIMIT = 50;
+const LIMIT = 24;
 
 export default async function AtelierPage() {
   const where = { isPublished: true, category: GalleryCategory.ATELIER };
