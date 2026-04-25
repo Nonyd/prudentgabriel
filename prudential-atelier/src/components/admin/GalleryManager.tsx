@@ -65,6 +65,9 @@ export function GalleryManager() {
   const [uploadJobs, setUploadJobs] = useState<UploadJob[]>([]);
   const [uploadInFlight, setUploadInFlight] = useState(false);
   const [reorder, setReorder] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [editing, setEditing] = useState<GalleryImage | null>(null);
   const [editAlt, setEditAlt] = useState("");
   const [editCaption, setEditCaption] = useState("");
@@ -87,6 +90,15 @@ export function GalleryManager() {
   useEffect(() => {
     setPage(1);
   }, [tab]);
+
+  useEffect(() => {
+    setSelectedIds([]);
+    setSelectMode(false);
+  }, [tab]);
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [page]);
 
   const move = async (index: number, dir: -1 | 1) => {
     if (!data) return;
@@ -124,8 +136,34 @@ export function GalleryManager() {
     if (!res.ok) toast.error("Delete failed");
     else {
       toast.success("Removed");
+      setSelectedIds((prev) => prev.filter((x) => x !== id));
       void load();
     }
+  };
+
+  const toggleImageSelected = (id: string) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const removeSelected = async () => {
+    if (selectedIds.length === 0) return;
+    setBulkDeleting(true);
+    const results = await Promise.allSettled(
+      selectedIds.map((id) => fetch(`/api/admin/gallery/${id}`, { method: "DELETE" }).then((r) => ({ id, ok: r.ok }))),
+    );
+    setBulkDeleting(false);
+    let ok = 0;
+    let fail = 0;
+    for (const r of results) {
+      if (r.status === "fulfilled" && r.value.ok) ok += 1;
+      else fail += 1;
+    }
+    setSelectedIds([]);
+    setSelectMode(false);
+    void load();
+    if (fail === 0) toast.success(`${ok} image${ok === 1 ? "" : "s"} removed`);
+    else if (ok > 0) toast.error(`Removed ${ok}; ${fail} failed`);
+    else toast.error("Delete failed");
   };
 
   const saveEdit = async () => {
@@ -216,13 +254,76 @@ export function GalleryManager() {
           <span className="font-body text-xs text-[#6B6B68]">{total} images</span>
           <button
             type="button"
-            onClick={() => setReorder((r) => !r)}
+            onClick={() => {
+              setReorder((r) => {
+                const next = !r;
+                if (next) {
+                  setSelectMode(false);
+                  setSelectedIds([]);
+                }
+                return next;
+              });
+            }}
             className={`border px-3 py-2 font-body text-[11px] uppercase tracking-wide ${
               reorder ? "border-[#37392d] bg-[#37392d] text-white" : "border-[#EBEBEA] text-charcoal"
             }`}
           >
             Reorder
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectMode((m) => {
+                const next = !m;
+                if (next) setReorder(false);
+                if (!next) setSelectedIds([]);
+                return next;
+              });
+            }}
+            className={`border px-3 py-2 font-body text-[11px] uppercase tracking-wide ${
+              selectMode ? "border-[#37392d] bg-[#37392d] text-white" : "border-[#EBEBEA] text-charcoal"
+            }`}
+          >
+            Select
+          </button>
+          {selectMode && selectedIds.length > 0 ? (
+            <AlertDialog.Root>
+              <AlertDialog.Trigger asChild>
+                <button
+                  type="button"
+                  disabled={bulkDeleting}
+                  className="border border-red-800 bg-red-800 px-3 py-2 font-body text-[11px] uppercase tracking-wide text-white disabled:opacity-50"
+                >
+                  {bulkDeleting ? "Deleting…" : `Delete (${selectedIds.length})`}
+                </button>
+              </AlertDialog.Trigger>
+              <AlertDialog.Portal>
+                <AlertDialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
+                <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 border border-[#EBEBEA] bg-canvas p-6 shadow-lg">
+                  <AlertDialog.Title className="font-body text-sm font-medium">
+                    Delete {selectedIds.length} image{selectedIds.length === 1 ? "" : "s"}?
+                  </AlertDialog.Title>
+                  <p className="mt-2 font-body text-xs text-[#6B6B68]">This cannot be undone.</p>
+                  <div className="mt-6 flex justify-end gap-2">
+                    <AlertDialog.Cancel asChild>
+                      <button type="button" className="border border-[#EBEBEA] px-4 py-2 text-xs uppercase">
+                        Cancel
+                      </button>
+                    </AlertDialog.Cancel>
+                    <AlertDialog.Action asChild>
+                      <button
+                        type="button"
+                        className="bg-red-700 px-4 py-2 text-xs uppercase text-white"
+                        onClick={() => void removeSelected()}
+                      >
+                        Delete all
+                      </button>
+                    </AlertDialog.Action>
+                  </div>
+                </AlertDialog.Content>
+              </AlertDialog.Portal>
+            </AlertDialog.Root>
+          ) : null}
           <button
             type="button"
             onClick={() => setUploadOpen(true)}
@@ -238,7 +339,33 @@ export function GalleryManager() {
           <div key={img.id} className="group masonry-item relative border border-[#EBEBEA] bg-[#fafafa]">
             <div className="relative aspect-[3/4] w-full overflow-hidden">
               <Image src={img.url} alt="" fill className="object-cover" sizes="200px" unoptimized />
-              <div className="absolute inset-0 flex flex-col justify-between bg-black/0 p-2 opacity-0 transition-opacity group-hover:bg-black/40 group-hover:opacity-100">
+              {selectMode && !reorder ? (
+                <>
+                  <button
+                    type="button"
+                    className="absolute inset-0 z-[1] cursor-pointer border-0 bg-transparent p-0"
+                    onClick={() => toggleImageSelected(img.id)}
+                    aria-label={selectedIds.includes(img.id) ? "Deselect image" : "Select image"}
+                  />
+                  <label
+                    className="absolute left-2 top-2 z-10 flex cursor-pointer items-center gap-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(img.id)}
+                      onChange={() => toggleImageSelected(img.id)}
+                      className="h-4 w-4 border-[#EBEBEA] accent-[#37392d]"
+                      aria-label={selectedIds.includes(img.id) ? "Deselect image" : "Select image"}
+                    />
+                  </label>
+                </>
+              ) : null}
+              <div
+                className={`absolute inset-0 flex flex-col justify-between bg-black/0 p-2 transition-opacity group-hover:bg-black/40 ${
+                  selectMode && !reorder ? "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100" : "opacity-0 group-hover:opacity-100"
+                }`}
+              >
                 <div className="flex justify-between">
                   {reorder ? (
                     <div className="flex gap-1">
