@@ -61,6 +61,11 @@ export async function POST(req: NextRequest) {
             try {
               const imageResponse = await fetch(imageUrl, {
                 signal: AbortSignal.timeout(10_000),
+                headers: {
+                  Accept: "image/*,*/*;q=0.8",
+                  "User-Agent":
+                    "Mozilla/5.0 (compatible; PrudentGabrielProductImport/1.0; +https://prudentgabriel.com)",
+                },
               });
               if (!imageResponse.ok) continue;
               const mimeType = imageResponse.headers.get("content-type") || "image/jpeg";

@@ -33,6 +33,81 @@ function pick(row: CsvRow, keys: string[]) {
   return "";
 }
 
+/** WooCommerce uses comma-separated URLs in the Images column. */
+function parseImageUrls(imageRaw: string): string[] {
+  return imageRaw
+    .split(",")
+    .map((u) => u.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+}
+
+/**
+ * Variation rows usually have an empty Images column; gallery URLs live on the
+ * parent variable product row. WooCommerce "Parent" is typically the parent's SKU
+ * or post ID; some exports use the parent product title.
+ */
+function buildParentImageLookups(rows: CsvRow[]) {
+  const byId = new Map<string, string[]>();
+  const bySku = new Map<string, string[]>();
+  const bySlug = new Map<string, string[]>();
+  const byName = new Map<string, string[]>();
+
+  for (const row of rows) {
+    const urls = parseImageUrls(pick(row, ["Images", "images", "image"]));
+    if (urls.length === 0) continue;
+
+    const id = pick(row, ["ID", "id"]);
+    const sku = pick(row, ["SKU", "sku"]);
+    const name = pick(row, ["Name", "name", "post_title"]).trim();
+    const slugCol = pick(row, ["Slug", "slug"]);
+    const slugFromName = name ? slugifyText(name) : "";
+    const slugFromCol = slugCol ? slugifyText(slugCol) : "";
+
+    if (id) byId.set(id, urls);
+    if (sku) bySku.set(sku, urls);
+    if (slugFromName) bySlug.set(slugFromName, urls);
+    if (slugFromCol && slugFromCol !== slugFromName) bySlug.set(slugFromCol, urls);
+    if (slugCol && slugCol !== slugFromName) bySlug.set(slugCol, urls);
+    if (name) byName.set(name, urls);
+  }
+
+  return { byId, bySku, bySlug, byName };
+}
+
+function resolveVariationImages(
+  row: CsvRow,
+  lookups: ReturnType<typeof buildParentImageLookups>,
+  allRows: CsvRow[],
+): string[] {
+  const direct = parseImageUrls(pick(row, ["Images", "images", "image"]));
+  if (direct.length > 0) return direct;
+
+  const parentRef = pick(row, ["Parent", "parent"]);
+  if (!parentRef) return [];
+
+  const { byId, bySku, bySlug, byName } = lookups;
+  const fromSku = bySku.get(parentRef);
+  if (fromSku?.length) return fromSku;
+  const fromId = byId.get(parentRef);
+  if (fromId?.length) return fromId;
+  const fromSlugRaw = bySlug.get(parentRef);
+  if (fromSlugRaw?.length) return fromSlugRaw;
+  const slugKey = slugifyText(parentRef);
+  const fromSlug = slugKey ? bySlug.get(slugKey) : undefined;
+  if (fromSlug?.length) return fromSlug;
+  const fromName = byName.get(parentRef);
+  if (fromName?.length) return fromName;
+
+  const parentRow = allRows.find((r) => pick(r, ["Name", "name", "post_title"]).trim() === parentRef);
+  if (parentRow) {
+    const fromParentRow = parseImageUrls(pick(parentRow, ["Images", "images", "image"]));
+    if (fromParentRow.length > 0) return fromParentRow;
+  }
+
+  return [];
+}
+
 export async function POST(req: NextRequest) {
   const gate = await requireAdminApi();
   if (!gate.ok) return gate.response;
@@ -62,18 +137,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid CSV format" }, { status: 400 });
   }
 
+  const parentImageLookups = buildParentImageLookups(parsedRows);
+
   const previewProducts = parsedRows
     .map((row, index) => {
       const name = pick(row, ["Name", "name", "post_title"]).trim();
       if (!name) return null;
       const slug = slugifyText(name);
       if (!slug) return null;
-      const imageRaw = pick(row, ["Images", "images", "image"]);
-      const imageUrls = imageRaw
-        .split(",")
-        .map((u) => u.trim())
-        .filter(Boolean)
-        .slice(0, 5);
+      const imageUrls = resolveVariationImages(row, parentImageLookups, parsedRows);
       const description = cleanText(pick(row, ["Description", "description"])).slice(0, 500);
       const shortDesc = cleanText(pick(row, ["Short description", "short_description"])).slice(0, 500);
       const sku = pick(row, ["SKU", "sku"]);
