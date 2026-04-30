@@ -22,6 +22,13 @@ const RTW_SUBLINKS: { label: string; href: string }[] = [
   { label: "Suits", href: "/rtw?tags=suit" },
 ];
 
+const COLLECTIONS_SUBLINKS: { label: string; href: string }[] = [
+  { label: "All collections", href: "/collections" },
+  { label: "Rich & Regal", href: "/collections/rich-regal" },
+  { label: "Church Girl", href: "/collections/church-girl" },
+  { label: "La Femme", href: "/collections/la-femme" },
+];
+
 function NavLink({ href, label, active }: { href: string; label: string; active: boolean }) {
   return (
     <Link
@@ -64,6 +71,7 @@ export function Navbar() {
   }, []);
 
   const rtwActive = pathname.startsWith("/rtw");
+  const collectionsActive = pathname.startsWith("/collections");
 
   const desktopActive = useMemo(
     () => ({
@@ -71,10 +79,11 @@ export function Navbar() {
       atelier: pathname.startsWith("/atelier"),
       bridal: pathname.startsWith("/bridal") || pathname.startsWith("/bridesals"),
       kids: pathname.startsWith("/kids"),
+      collections: collectionsActive,
       rtw: rtwActive,
       consultation: pathname.startsWith("/consultation"),
     }),
-    [pathname, rtwActive],
+    [pathname, rtwActive, collectionsActive],
   );
 
   return (
@@ -109,6 +118,35 @@ export function Navbar() {
               <NavLink href="/atelier" label="Atelier" active={desktopActive.atelier} />
               <NavLink href="/bridal" label="Bridal" active={desktopActive.bridal} />
               <NavLink href="/kids" label="Kids" active={desktopActive.kids} />
+              <div className="group relative before:absolute before:left-0 before:top-full before:z-40 before:h-3 before:w-full before:content-['']">
+                <Link
+                  href="/collections"
+                  className={cn(
+                    "inline-flex items-center gap-0.5 whitespace-nowrap border-b font-body text-[10px] font-medium uppercase tracking-[0.12em] transition-colors duration-200 xl:text-[11px] xl:tracking-[0.15em]",
+                    desktopActive.collections
+                      ? "border-olive text-olive"
+                      : "border-transparent text-charcoal hover:text-olive",
+                  )}
+                >
+                  Collections
+                  <ChevronDown className="h-3 w-3 shrink-0 opacity-60" strokeWidth={1.75} aria-hidden />
+                </Link>
+                <div
+                  className="invisible absolute left-0 top-full z-50 w-[220px] border-x border-b border-mid-grey bg-white opacity-0 shadow-sm transition-[opacity,visibility] duration-150 group-hover:visible group-hover:opacity-100"
+                  role="menu"
+                >
+                  {COLLECTIONS_SUBLINKS.map((s) => (
+                    <Link
+                      key={s.href + s.label}
+                      href={s.href}
+                      role="menuitem"
+                      className="block px-5 py-2.5 font-body text-[12px] text-charcoal transition-colors hover:bg-[#FAFAFA] hover:text-olive"
+                    >
+                      {s.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
               <div className="group relative before:absolute before:left-0 before:top-full before:z-40 before:h-3 before:w-full before:content-['']">
                 <Link
                   href="/rtw"

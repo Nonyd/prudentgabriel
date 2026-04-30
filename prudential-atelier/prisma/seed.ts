@@ -91,7 +91,7 @@ const PRODUCTS: ProductSeed[] = [
     isFeatured: true,
     isOnSale: true,
     saleEndsAt: saleEnd,
-    tags: ["Evening", "Bridal", "dress"],
+    tags: ["Evening", "Bridal", "dress", "rich-regal"],
     images: [
       { url: IMG.evening, alt: "Ebony Evening Dress", isPrimary: true, sortOrder: 0 },
       { url: IMG.formal, alt: "Ebony alternate", isPrimary: false, sortOrder: 1 },
@@ -131,7 +131,7 @@ const PRODUCTS: ProductSeed[] = [
     category: ProductCategory.EVENING_WEAR,
     type: ProductType.RTW,
     basePriceNGN: 520_000,
-    tags: ["Evening", "dress"],
+    tags: ["Evening", "dress", "la-femme"],
     images: [{ url: IMG.evening, alt: "Celestial Sequin Gown", isPrimary: true, sortOrder: 0 }],
     variants: [
       { size: "S", priceNGN: 520_000, stock: 2 },
@@ -262,7 +262,7 @@ const PRODUCTS: ProductSeed[] = [
     category: ProductCategory.CASUAL,
     type: ProductType.RTW,
     basePriceNGN: 112_000,
-    tags: ["Modest", "Corporate", "dress"],
+    tags: ["Modest", "Corporate", "dress", "church-girl"],
     images: [{ url: IMG.casual, alt: "Modest Wrap Dress", isPrimary: true, sortOrder: 0 }],
     variants: [
       { size: "XS", priceNGN: 112_000, stock: 3 },
@@ -299,6 +299,8 @@ async function main() {
   await prisma.stockAlert.deleteMany();
   await prisma.wishlistItem.deleteMany();
   await prisma.review.deleteMany();
+  await prisma.collectionProduct.deleteMany();
+  await prisma.collection.deleteMany();
   await prisma.productImage.deleteMany();
   await prisma.productVariant.deleteMany();
   await prisma.productColor.deleteMany();
@@ -1248,6 +1250,53 @@ async function main() {
   }
 
   console.log("  ✅ Site settings seeded (upsert, existing values preserved).");
+
+  const defaultCollections = [
+    {
+      name: "Rich & Regal",
+      slug: "rich-regal",
+      excerpt: "Where opulence meets everyday elegance.",
+      description:
+        "The Rich & Regal collection reimagines luxury for the modern Nigerian woman. Each piece commands attention with rich fabrics, bold silhouettes, and intricate detailing.",
+      autoTag: "rich-regal",
+      coverImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200",
+      isFeatured: true,
+      isPublished: true,
+      displayOrder: 0,
+    },
+    {
+      name: "Church Girl Collection",
+      slug: "church-girl",
+      excerpt: "Modest, beautiful, and unmistakably Prudent Gabriel.",
+      description:
+        "Grace and modesty elevated to high fashion. The Church Girl Collection celebrates covered elegance — long sleeves, flowing silhouettes, and refined details for the woman who dresses with intention.",
+      autoTag: "church-girl",
+      coverImage: "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=1200",
+      isFeatured: true,
+      isPublished: true,
+      displayOrder: 1,
+    },
+    {
+      name: "La Femme",
+      slug: "la-femme",
+      excerpt: "For the woman who defines her own standard.",
+      description:
+        "La Femme is our most editorial collection — dramatic cuts, unexpected fabrics, and a silhouette that turns every room into a runway.",
+      autoTag: "la-femme",
+      coverImage: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1200",
+      isFeatured: false,
+      isPublished: true,
+      displayOrder: 2,
+    },
+  ];
+
+  for (const col of defaultCollections) {
+    await prisma.collection.upsert({
+      where: { slug: col.slug },
+      update: {},
+      create: col,
+    });
+  }
 
   const [productCount, orderCount, bespokeCount, couponCount] = await Promise.all([
     prisma.product.count(),

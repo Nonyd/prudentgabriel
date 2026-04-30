@@ -3,6 +3,7 @@ import { BrandLogo } from "@/components/common/BrandLogo";
 import { FacebookIcon, InstagramIcon, TikTokIcon, YouTubeIcon } from "@/components/icons/SocialIcons";
 
 const SHOP_LINKS = [
+  { label: "Collections", href: "/collections" },
   { label: "New Arrivals", href: "/rtw?sort=newest" },
   { label: "Ready to Wear", href: "/rtw" },
   { label: "Bridal", href: "/bridal" },

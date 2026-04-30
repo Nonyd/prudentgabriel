@@ -274,9 +274,47 @@ model Product {
   bundleItems    BundleItem[]     @relation("BundleSource")
   inBundles      BundleItem[]     @relation("BundleTarget")
   cartItems      CartItem[]
+  collections    CollectionProduct[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Collection {
+  id              String    @id @default(cuid())
+  name            String
+  slug            String    @unique
+  description     String?   @db.Text
+  excerpt         String?
+  coverImage      String?
+  coverImageAlt   String?
+  autoTag         String?
+  isFeatured      Boolean   @default(false)
+  isPublished     Boolean   @default(true)
+  displayOrder    Int       @default(0)
+  season          String?
+  year            Int?
+  metaTitle       String?
+  metaDescription String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  products        CollectionProduct[]
+
+  @@index([slug])
+  @@index([isPublished, isFeatured])
+}
+
+model CollectionProduct {
+  id           String     @id @default(cuid())
+  collectionId String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+
+  @@unique([collectionId, productId])
+  @@index([collectionId])
 }
 
 model ProductImage {

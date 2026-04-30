@@ -26,6 +26,7 @@ import {
   CreditCard,
   Bell,
   Upload,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +42,7 @@ const SECTIONS: {
     label: "Catalogue",
     items: [
       { href: "/admin/products", label: "Products", icon: Package },
+      { href: "/admin/collections", label: "Collections", icon: Layers },
       { href: "/admin/import", label: "Import Products", icon: Upload },
       { href: "/admin/bespoke", label: "Bespoke Requests", icon: Scissors },
       { href: "/admin/consultations", label: "Consultations", icon: CalendarDays },

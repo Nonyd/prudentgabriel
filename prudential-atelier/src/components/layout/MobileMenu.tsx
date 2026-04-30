@@ -16,8 +16,16 @@ const NAV_LINKS = [
   { label: "Atelier", href: "/atelier" },
   { label: "Bridal", href: "/bridal" },
   { label: "Kids", href: "/kids" },
+  { label: "Collections", href: "/collections" },
   { label: "Ready to Wear", href: "/rtw" },
   { label: "Book a Consultation", href: "/consultation" },
+];
+
+const COLLECTIONS_SUBLINKS = [
+  { label: "All collections", href: "/collections" },
+  { label: "Rich & Regal", href: "/collections/rich-regal" },
+  { label: "Church Girl", href: "/collections/church-girl" },
+  { label: "La Femme", href: "/collections/la-femme" },
 ];
 
 const RTW_SUBLINKS = [
@@ -74,6 +82,21 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                 >
                   {link.label}
                 </Link>
+                {link.label === "Collections" && (
+                  <ul className="mb-2 ml-1 space-y-2 border-l border-mid-grey pl-4">
+                    {COLLECTIONS_SUBLINKS.map((s) => (
+                      <li key={s.href + s.label}>
+                        <Link
+                          href={s.href}
+                          onClick={onClose}
+                          className="font-body text-[13px] font-medium uppercase tracking-[0.1em] text-dark-grey hover:text-olive"
+                        >
+                          {s.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 {link.label === "Ready to Wear" && (
                   <ul className="mb-2 ml-1 space-y-2 border-l border-mid-grey pl-4">
                     {RTW_SUBLINKS.map((s) => (

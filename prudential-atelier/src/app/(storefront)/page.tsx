@@ -5,6 +5,9 @@ import { PrudentialBride } from "@/components/home/PrudentialBride";
 import { BespokeCouture } from "@/components/home/BespokeCouture";
 import { AtelierStory } from "@/components/home/AtelierStory";
 import { CollectionsGrid } from "@/components/home/CollectionsGrid";
+import { FeaturedCollections } from "@/components/home/FeaturedCollections";
+import { prisma } from "@/lib/prisma";
+import { uniqueProductCountForCollection } from "@/lib/collection-products";
 import { PFABanner } from "@/components/common/PFABanner";
 import { NewsletterSection } from "@/components/home/NewsletterSection";
 import { getContent, getContentSettings, getImageSettings } from "@/lib/settings";
@@ -21,6 +24,35 @@ export default async function HomePage() {
   } catch {
     images = {};
     content = {};
+  }
+
+  let featuredCollections: {
+    id: string;
+    name: string;
+    slug: string;
+    excerpt: string | null;
+    coverImage: string | null;
+    coverImageAlt: string | null;
+    productCount: number;
+  }[] = [];
+  try {
+    const fc = await prisma.collection.findMany({
+      where: { isFeatured: true, isPublished: true },
+      orderBy: { displayOrder: "asc" },
+      take: 3,
+    });
+    const fcCounts = await Promise.all(fc.map((c) => uniqueProductCountForCollection(c.id, c.autoTag)));
+    featuredCollections = fc.map((c, i) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      excerpt: c.excerpt,
+      coverImage: c.coverImage,
+      coverImageAlt: c.coverImageAlt,
+      productCount: fcCounts[i] ?? 0,
+    }));
+  } catch {
+    featuredCollections = [];
   }
 
   const announce = [
@@ -48,11 +80,14 @@ export default async function HomePage() {
         label={getContent(content, "content_rtw_label", "READY TO WEAR")}
         headline={getContent(content, "content_rtw_headline", "New Collections")}
       />
-      <CollectionsGrid
-        bridalImage={images.img_collection_bridal}
-        eveningImage={images.img_collection_evening}
-        formalImage={images.img_collection_formal}
-        rtwImage={images.img_collection_rtw}
+      <FeaturedCollections
+        collections={featuredCollections}
+        fallbackGrid={{
+          bridalImage: images.img_collection_bridal,
+          eveningImage: images.img_collection_evening,
+          formalImage: images.img_collection_formal,
+          rtwImage: images.img_collection_rtw,
+        }}
       />
       <PrudentialBride
         label={getContent(content, "content_bride_label", "PRUDENTIAL BRIDE")}
