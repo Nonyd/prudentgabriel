@@ -1,6 +1,4 @@
-import { Suspense } from "react";
-import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
-import { Navbar } from "@/components/layout/Navbar";
+import { StorefrontSiteHeader } from "@/components/layout/StorefrontSiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/layout/CartDrawer";
 import { SearchModal } from "@/components/layout/SearchModal";
@@ -21,16 +19,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
 
   return (
     <>
-      <div className="sticky top-0 z-40 bg-[var(--white)]">
-        <AnnouncementBar messages={announce} />
-        <Suspense
-          fallback={
-            <div className="h-[60px] border-b border-mid-grey bg-[var(--white)] lg:h-[72px]" aria-hidden />
-          }
-        >
-          <Navbar />
-        </Suspense>
-      </div>
+      <StorefrontSiteHeader messages={announce} />
       <main className="min-h-screen">{children}</main>
       <Footer
         tagline={getContent(content, "content_footer_tagline", "Lagos, Nigeria")}
