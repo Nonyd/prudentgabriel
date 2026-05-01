@@ -77,7 +77,7 @@ export function CollectionDetailAdmin({
     const map = new Map<string, CollectionProductWithMeta>();
     for (const m of manualOrder) map.set(m.product.id, m.product);
     for (const p of autoProducts) if (!map.has(p.id)) map.set(p.id, p);
-    return [...map.values()];
+    return Array.from(map.values());
   }, [manualOrder, autoProducts]);
 
   async function persistOrder(ids: string[]) {

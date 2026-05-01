@@ -4,7 +4,6 @@ import { NewCollections } from "@/components/home/NewCollections";
 import { PrudentialBride } from "@/components/home/PrudentialBride";
 import { BespokeCouture } from "@/components/home/BespokeCouture";
 import { AtelierStory } from "@/components/home/AtelierStory";
-import { CollectionsGrid } from "@/components/home/CollectionsGrid";
 import { FeaturedCollections } from "@/components/home/FeaturedCollections";
 import { prisma } from "@/lib/prisma";
 import { uniqueProductCountForCollection } from "@/lib/collection-products";

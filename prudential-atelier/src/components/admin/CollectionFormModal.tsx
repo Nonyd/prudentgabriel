@@ -248,7 +248,8 @@ export function CollectionFormModal({
       const body = {
         ...values,
         slug: values.slug?.trim() ? slugifyText(values.slug) : undefined,
-        coverImage: values.coverImage ?? null,
+        coverImage:
+          values.coverImage === "" || values.coverImage === undefined ? null : values.coverImage,
       };
       if (isEdit && editing) {
         const res = await fetch(`/api/admin/collections/${editing.id}`, {

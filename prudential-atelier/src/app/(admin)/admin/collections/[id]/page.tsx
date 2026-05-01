@@ -4,6 +4,7 @@ import {
   collectionListProductInclude,
   mapProductToListItemWithMeta,
   uniqueProductCountForCollection,
+  type CollectionListProduct,
 } from "@/lib/collection-products";
 import type { Prisma } from "@prisma/client";
 import { CollectionDetailAdmin } from "@/components/admin/CollectionDetailAdmin";
@@ -25,7 +26,7 @@ export default async function AdminCollectionDetailPage({ params }: { params: Pr
 
   const manualIds = collection.products.map((p) => p.productId);
   const autoTagTrim = collection.autoTag?.trim();
-  let autoProducts: Awaited<ReturnType<typeof prisma.product.findMany>> = [];
+  let autoProducts: CollectionListProduct[] = [];
   if (autoTagTrim) {
     const autoWhere: Prisma.ProductWhereInput = {
       isPublished: true,

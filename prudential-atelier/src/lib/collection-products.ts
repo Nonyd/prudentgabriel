@@ -66,7 +66,7 @@ export async function uniqueProductCountForCollection(
       tags: { has: tag },
     };
     if (ids.size > 0) {
-      extraWhere.id = { notIn: [...ids] };
+      extraWhere.id = { notIn: Array.from(ids) };
     }
     const autoRows = await prisma.product.findMany({
       where: extraWhere,
@@ -99,7 +99,7 @@ export async function mergePublishedCollectionProducts(
       tags: { has: tag },
     };
     if (manualIds.size > 0) {
-      autoWhere.id = { notIn: [...manualIds] };
+      autoWhere.id = { notIn: Array.from(manualIds) };
     }
     const autoRows = await prisma.product.findMany({
       where: autoWhere,
