@@ -99,7 +99,10 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfModel }) {
         <View style={styles.headerRow}>
           <View>
             {data.business.logoUrl ? (
-              <Image src={data.business.logoUrl} alt="" style={styles.logo} />
+              <View>
+                {/* eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer Image is not an HTML img; API has no alt */}
+                <Image src={data.business.logoUrl} style={styles.logo} />
+              </View>
             ) : (
               <View style={{ height: 40 }} />
             )}
