@@ -5,7 +5,6 @@ import Link from "next/link";
 import type { GalleryImage } from "@prisma/client";
 import { optimizeImageUrl } from "@/lib/utils";
 import { GalleryLightbox } from "@/components/gallery/GalleryLightbox";
-import { usePublicSettings } from "@/hooks/usePublicSettings";
 
 export function BridalGalleryPage({
   initialImages,
@@ -21,8 +20,6 @@ export function BridalGalleryPage({
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loading, setLoading] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const settings = usePublicSettings();
-  const bridalLogo = (settings.img_logo_bridal ?? "").trim();
 
   const loadMore = useCallback(async () => {
     setLoading(true);
@@ -42,25 +39,7 @@ export function BridalGalleryPage({
     <div className="bg-[#FAF7F4]">
       <section className="px-6 pb-16 pt-20 text-center">
         <p className="font-body text-[9px] uppercase tracking-[0.3em] text-[#C8A97A]">PRUDENTIAL BRIDE</p>
-        {bridalLogo ? (
-          // eslint-disable-next-line @next/next/no-img-element -- hero logo from public settings
-          <img
-            src={bridalLogo}
-            alt="Prudential Bride"
-            className="mt-3"
-            style={{
-              height: "56px",
-              width: "auto",
-              objectFit: "contain",
-              filter: "brightness(0)",
-              display: "block",
-              margin: "0 auto 16px",
-            }}
-          />
-        ) : null}
-        <h1 className={`font-display text-[44px] italic leading-[0.9] text-[#2A1F1A] md:text-[80px] ${bridalLogo ? "" : "mt-3"}`}>
-          Bridal.
-        </h1>
+        <h1 className="mt-3 font-display text-[44px] italic leading-[0.9] text-[#2A1F1A] md:text-[80px]">Bridal.</h1>
         <p className="mx-auto mt-4 max-w-sm font-body text-[14px] font-light text-charcoal/60">
           Every bride is a masterpiece. Every gown, a legacy.
         </p>

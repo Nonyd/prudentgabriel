@@ -1017,7 +1017,7 @@ async function main() {
     { key: "img_collection_rtw", value: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800", group: SettingGroup.APPEARANCE, label: "Collections Grid — RTW", type: SettingType.IMAGE, isPublic: true, sortOrder: 12 },
     { key: "img_our_story_hero", value: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1400", group: SettingGroup.APPEARANCE, label: "Our Story Hero", type: SettingType.IMAGE, isPublic: true, sortOrder: 13 },
     { key: "favicon_url", value: "/images/logo.svg", group: SettingGroup.APPEARANCE, label: "Favicon URL", type: SettingType.IMAGE, isPublic: true, sortOrder: 14 },
-    { key: "img_logo_atelier", value: "/images/atelier-logo.png", group: SettingGroup.APPEARANCE, label: "Atelier Page — Sub-brand Logo", type: SettingType.IMAGE, isPublic: true, sortOrder: 20 },
+    { key: "img_logo_atelier", value: "", group: SettingGroup.APPEARANCE, label: "Atelier Page — Sub-brand Logo", type: SettingType.IMAGE, isPublic: true, sortOrder: 20 },
     { key: "img_logo_bridal", value: "", group: SettingGroup.APPEARANCE, label: "Bridal Page — Sub-brand Logo", type: SettingType.IMAGE, isPublic: true, sortOrder: 21 },
     { key: "img_logo_kids", value: "", group: SettingGroup.APPEARANCE, label: "Kids Page — Sub-brand Logo", type: SettingType.IMAGE, isPublic: true, sortOrder: 22 },
     { key: "social_instagram", value: "@the_prudentgabriel", group: SettingGroup.SOCIAL, label: "Instagram Handle", type: SettingType.TEXT, isPublic: true, sortOrder: 1 },

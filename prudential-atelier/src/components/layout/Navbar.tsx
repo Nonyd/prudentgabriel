@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { BrandLogo } from "@/components/common/BrandLogo";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { usePublicSettings } from "@/hooks/usePublicSettings";
 import { Search, Heart, User, ShoppingBag, Menu, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CurrencySwitcher } from "@/components/common/CurrencySwitcher";
@@ -62,6 +64,14 @@ export function Navbar() {
   const { data: session } = useSession();
   const { totalItems, openCart, openSearch } = useCartStore();
   const wishlistCount = useWishlistStore((s) => s.ids.length);
+  const settings = usePublicSettings();
+  const atelierLogo = settings["img_logo_atelier"] ?? "";
+  const bridalLogo = settings["img_logo_bridal"] ?? "";
+  const kidsLogo = settings["img_logo_kids"] ?? "";
+  const subBrandLogoRaw =
+    pathname === "/atelier" ? atelierLogo : pathname === "/bridal" ? bridalLogo : pathname === "/kids" ? kidsLogo : null;
+  const subBrandLogo =
+    subBrandLogoRaw != null && subBrandLogoRaw.trim() !== "" ? subBrandLogoRaw.trim() : null;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 0);
@@ -104,14 +114,72 @@ export function Navbar() {
             >
               <Menu size={18} strokeWidth={1.75} />
             </button>
-            <Link href="/" className="relative hidden h-11 w-11 shrink-0 lg:block">
-              <BrandLogo width={44} height={44} priority />
+            <Link
+              href="/"
+              className={cn(
+                "relative hidden shrink-0 lg:flex lg:items-center lg:justify-center",
+                subBrandLogo ? "h-11 max-w-[200px] min-w-0 px-1" : "h-11 w-11",
+              )}
+            >
+              <motion.div
+                key={subBrandLogo || "default"}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="relative flex items-center justify-center"
+              >
+                {subBrandLogo ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- appearance setting (Cloudinary URL)
+                  <img
+                    src={subBrandLogo}
+                    alt="Sub-brand logo"
+                    style={{
+                      height: "32px",
+                      width: "auto",
+                      objectFit: "contain",
+                      filter: "brightness(0)",
+                      transition: "opacity 300ms ease",
+                    }}
+                  />
+                ) : (
+                  <BrandLogo width={44} height={44} priority />
+                )}
+              </motion.div>
             </Link>
           </div>
 
           <div className="flex min-w-0 flex-1 items-center justify-center">
-            <Link href="/" className="relative block h-10 w-10 shrink-0 lg:hidden">
-              <BrandLogo width={40} height={40} priority />
+            <Link
+              href="/"
+              className={cn(
+                "relative flex shrink-0 items-center justify-center lg:hidden",
+                subBrandLogo ? "h-10 max-w-[180px] min-w-0" : "h-10 w-10",
+              )}
+            >
+              <motion.div
+                key={subBrandLogo || "default"}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="relative flex items-center justify-center"
+              >
+                {subBrandLogo ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- appearance setting (Cloudinary URL)
+                  <img
+                    src={subBrandLogo}
+                    alt="Sub-brand logo"
+                    style={{
+                      height: "32px",
+                      width: "auto",
+                      objectFit: "contain",
+                      filter: "brightness(0)",
+                      transition: "opacity 300ms ease",
+                    }}
+                  />
+                ) : (
+                  <BrandLogo width={40} height={40} priority />
+                )}
+              </motion.div>
             </Link>
             <nav className="hidden min-w-0 flex-nowrap items-center justify-center gap-x-3 xl:gap-x-5 2xl:gap-x-6 lg:flex">
               <NavLink href="/" label="Home" active={desktopActive.home} />

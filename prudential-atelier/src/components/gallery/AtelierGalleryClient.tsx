@@ -4,7 +4,6 @@ import { useCallback, useState } from "react";
 import type { GalleryImage } from "@prisma/client";
 import { optimizeImageUrl } from "@/lib/utils";
 import { GalleryLightbox } from "@/components/gallery/GalleryLightbox";
-import { usePublicSettings } from "@/hooks/usePublicSettings";
 
 function splitLines(text: string) {
   const lines = text.split("\n");
@@ -31,8 +30,6 @@ export function AtelierGalleryClient({
   const [loading, setLoading] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const total = initialTotal;
-  const settings = usePublicSettings();
-  const atelierLogo = (settings.img_logo_atelier ?? "").trim();
 
   const loadMore = useCallback(async () => {
     setLoading(true);
@@ -55,24 +52,7 @@ export function AtelierGalleryClient({
     <div>
       <section className="flex min-h-[400px] flex-col items-center justify-center bg-black px-4 py-16 text-center">
         <p className="font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/50">Prudent Gabriel</p>
-        {atelierLogo ? (
-          // eslint-disable-next-line @next/next/no-img-element -- hero logo URL from settings (CDN or /public)
-          <img
-            src={atelierLogo}
-            alt="Prudential Atelier"
-            className="mt-3"
-            style={{
-              height: "48px",
-              width: "auto",
-              objectFit: "contain",
-              filter: "brightness(0) invert(1)",
-              marginBottom: "24px",
-            }}
-          />
-        ) : null}
-        <h1
-          className={`font-display text-[40px] font-normal italic leading-[0.95] text-white md:text-[72px] ${atelierLogo ? "" : "mt-3"}`}
-        >
+        <h1 className="mt-3 font-display text-[40px] font-normal italic leading-[0.95] text-white md:text-[72px]">
           The Atelier.
         </h1>
         <p className="mt-4 max-w-md font-body text-sm font-light text-white/60">
