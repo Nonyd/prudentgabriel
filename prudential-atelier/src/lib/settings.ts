@@ -170,6 +170,9 @@ const APPEARANCE_IMAGE_KEYS = [
   "img_our_story_hero",
   "favicon_url",
   "seo_og_image",
+  "img_logo_atelier",
+  "img_logo_bridal",
+  "img_logo_kids",
 ] as const;
 
 export async function getContentSettings(): Promise<Record<string, string>> {
