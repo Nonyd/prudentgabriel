@@ -11,6 +11,15 @@ const patchSchema = z.object({
   estimatedPrice: z.number().optional().nullable(),
 });
 
+export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const gate = await requireAdminApi();
+  if (!gate.ok) return gate.response;
+  const { id } = await ctx.params;
+  const row = await prisma.bespokeRequest.findUnique({ where: { id } });
+  if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json(row);
+}
+
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi();
   if (!gate.ok) return gate.response;

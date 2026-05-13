@@ -2,15 +2,25 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { BespokeStatus } from "@prisma/client";
+import { GenerateInvoiceButton } from "@/components/admin/GenerateInvoiceButton";
 
 export default async function AdminBespokeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const row = await prisma.bespokeRequest.findUnique({ where: { id } });
   if (!row) notFound();
 
+  const existingInvoice = await prisma.invoice.findFirst({
+    where: { bespokeRequestId: id },
+    select: { id: true },
+  });
+
   const agreed = row.agreedPrice ?? row.estimatedPrice;
   const deposit = row.depositPaid ?? 0;
   const balance = agreed != null ? Math.max(0, agreed - deposit) : null;
+
+  const showGenerate =
+    (row.status === BespokeStatus.CONFIRMED || row.status === BespokeStatus.IN_PROGRESS) && !existingInvoice;
 
   return (
     <div>
@@ -21,6 +31,8 @@ export default async function AdminBespokeDetailPage({ params }: { params: Promi
       <p className="mt-1 font-body text-sm text-[#6B6B68]">
         {row.name} · {row.email} · {row.phone}
       </p>
+
+      {showGenerate ? <GenerateInvoiceButton bespokeId={row.id} /> : null}
 
       {agreed != null ? (
         <div className="mt-8 border border-[#EBEBEA] bg-canvas p-6">

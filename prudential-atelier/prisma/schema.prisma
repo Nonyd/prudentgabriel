@@ -490,8 +490,85 @@ model BespokeRequest {
   balancePaystackRef   String?
   balancePaymentStatus PaymentStatus?
 
+  invoices Invoice[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Invoice {
+  id               String          @id @default(cuid())
+  invoiceNumber    String          @unique
+  bespokeRequestId String?
+  bespokeRequest   BespokeRequest? @relation(fields: [bespokeRequestId], references: [id], onDelete: SetNull)
+
+  clientName      String
+  clientEmail     String
+  clientPhone     String?
+  clientAddress   String?
+  clientCity      String?
+  clientCountry   String   @default("Nigeria")
+  clientInstagram String?
+
+  currency     String  @default("NGN")
+  exchangeRate Float   @default(1)
+
+  status InvoiceStatus @default(DRAFT)
+
+  lineItems Json
+
+  subtotal       Float
+  discountType   String?
+  discountValue  Float   @default(0)
+  discountAmount Float   @default(0)
+  vatEnabled     Boolean @default(false)
+  vatPercent     Float   @default(0)
+  vatAmount      Float   @default(0)
+  total          Float
+
+  depositRequired Float @default(0)
+  depositPaid     Float @default(0)
+  balanceDue      Float @default(0)
+
+  paymentTerms    String?   @db.Text
+  dueDate         DateTime?
+  paidAt          DateTime?
+  paymentMethod   String?
+  paymentRef      String?
+
+  notes      String? @db.Text
+  clientNote String? @db.Text
+
+  showVat      Boolean @default(false)
+  showRcNumber Boolean @default(false)
+
+  sentAt    DateTime?
+  viewedAt  DateTime?
+  viewCount Int       @default(0)
+
+  publicToken String @unique @default(cuid())
+
+  /// Append-only log for admin payment history UI: [{ recordedAt, amount, method, reference? }]
+  paymentHistory Json @default("[]")
+
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([clientEmail])
+  @@index([bespokeRequestId])
+  @@index([publicToken])
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  VIEWED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
 }
 
 model Coupon {
@@ -652,6 +729,7 @@ enum SettingGroup {
   LOYALTY
   SEO
   CONTENT
+  INVOICE
 }
 
 model GalleryImage {

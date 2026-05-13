@@ -12,6 +12,7 @@ import ConsultationPendingEmail from "@/emails/ConsultationPendingEmail";
 import ConsultationConfirmedEmail from "@/emails/ConsultationConfirmedEmail";
 import ConsultationCancelledEmail from "@/emails/ConsultationCancelledEmail";
 import ConsultationRescheduleEmail from "@/emails/ConsultationRescheduleEmail";
+import InvoiceEmail, { subjectInvoiceEmail } from "@/emails/InvoiceEmail";
 import { getPublicAppUrl } from "@/lib/app-url";
 const FROM = "Prudential Atelier <hello@prudentgabriel.com>";
 
@@ -355,6 +356,40 @@ export async function sendConsultationRescheduleEmail(params: {
   await sendEmail({
     to: params.to,
     subject: `New Date Proposed — #${params.bookingNumber}`,
+    html,
+  });
+}
+
+export async function sendInvoiceEmail(params: {
+  to: string;
+  clientName: string;
+  invoiceNumber: string;
+  total: string;
+  currency: string;
+  dueDate?: string;
+  depositRequired?: string;
+  publicLink: string;
+  clientNote?: string;
+  footerNote?: string;
+  businessName?: string;
+}): Promise<void> {
+  const businessName = params.businessName ?? "Prudential Atelier";
+  const props = {
+    invoiceNumber: params.invoiceNumber,
+    clientName: params.clientName,
+    businessName,
+    total: params.total,
+    currency: params.currency,
+    dueDate: params.dueDate,
+    depositRequired: params.depositRequired,
+    publicLink: params.publicLink,
+    clientNote: params.clientNote,
+    footerNote: params.footerNote,
+  };
+  const html = await render(<InvoiceEmail {...props} />);
+  await sendEmail({
+    to: params.to,
+    subject: subjectInvoiceEmail(props),
     html,
   });
 }

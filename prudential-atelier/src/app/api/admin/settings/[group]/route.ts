@@ -18,6 +18,7 @@ const GROUPS = new Set<string>([
   "LOYALTY",
   "SEO",
   "CONTENT",
+  "INVOICE",
 ]);
 
 const PASSWORD_MASK = "••••••••";

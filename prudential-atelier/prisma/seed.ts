@@ -16,6 +16,7 @@ import {
   SettingGroup,
   SettingType,
   GalleryCategory,
+  InvoiceStatus,
 } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -290,6 +291,7 @@ const PRODUCTS: ProductSeed[] = [
 async function main() {
   await prisma.couponUsage.deleteMany();
   await prisma.order.deleteMany();
+  await prisma.invoice.deleteMany();
   await prisma.bespokeRequest.deleteMany();
   await prisma.coupon.deleteMany();
   await prisma.shippingZone.deleteMany();
@@ -1042,6 +1044,52 @@ async function main() {
     });
   }
 
+  const invoiceSettings: {
+    key: string;
+    value: string;
+    group: SettingGroup;
+    label: string;
+    type: SettingType;
+    isPublic: boolean;
+    sortOrder: number;
+  }[] = [
+    { key: "invoice_business_name", value: "Prudential Atelier", group: SettingGroup.INVOICE, label: "Business Name on Invoice", type: SettingType.TEXT, isPublic: false, sortOrder: 1 },
+    { key: "invoice_tagline", value: "A Division of Prudent Gabriel", group: SettingGroup.INVOICE, label: "Tagline (below business name)", type: SettingType.TEXT, isPublic: false, sortOrder: 2 },
+    { key: "invoice_address_line1", value: "14 Atelier Close", group: SettingGroup.INVOICE, label: "Address Line 1", type: SettingType.TEXT, isPublic: false, sortOrder: 3 },
+    { key: "invoice_address_line2", value: "Victoria Island", group: SettingGroup.INVOICE, label: "Address Line 2", type: SettingType.TEXT, isPublic: false, sortOrder: 4 },
+    { key: "invoice_city", value: "Lagos, Nigeria", group: SettingGroup.INVOICE, label: "City / State / Country", type: SettingType.TEXT, isPublic: false, sortOrder: 5 },
+    { key: "invoice_phone", value: "+234 000 000 0000", group: SettingGroup.INVOICE, label: "Phone Number", type: SettingType.TEXT, isPublic: false, sortOrder: 6 },
+    { key: "invoice_email", value: "hello@prudentgabriel.com", group: SettingGroup.INVOICE, label: "Invoice Email", type: SettingType.TEXT, isPublic: false, sortOrder: 7 },
+    { key: "invoice_website", value: "www.prudentgabriel.com", group: SettingGroup.INVOICE, label: "Website", type: SettingType.TEXT, isPublic: false, sortOrder: 8 },
+    { key: "invoice_rc_number", value: "RC 0000000", group: SettingGroup.INVOICE, label: "CAC/RC Number", type: SettingType.TEXT, isPublic: false, sortOrder: 9 },
+    { key: "invoice_show_rc", value: "false", group: SettingGroup.INVOICE, label: "Show RC Number on Invoice", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 10 },
+    { key: "invoice_bank_name_ngn", value: "First Bank of Nigeria", group: SettingGroup.INVOICE, label: "Bank Name (NGN)", type: SettingType.TEXT, isPublic: false, sortOrder: 20 },
+    { key: "invoice_account_name_ngn", value: "Prudential Atelier Ltd", group: SettingGroup.INVOICE, label: "Account Name (NGN)", type: SettingType.TEXT, isPublic: false, sortOrder: 21 },
+    { key: "invoice_account_number_ngn", value: "0000000000", group: SettingGroup.INVOICE, label: "Account Number (NGN)", type: SettingType.TEXT, isPublic: false, sortOrder: 22 },
+    { key: "invoice_bank_name_usd", value: "Wise (TransferWise)", group: SettingGroup.INVOICE, label: "Bank Name (USD)", type: SettingType.TEXT, isPublic: false, sortOrder: 23 },
+    { key: "invoice_account_name_usd", value: "Prudential Atelier Ltd", group: SettingGroup.INVOICE, label: "Account Name (USD)", type: SettingType.TEXT, isPublic: false, sortOrder: 24 },
+    { key: "invoice_account_number_usd", value: "0000000000", group: SettingGroup.INVOICE, label: "Account Number / IBAN (USD)", type: SettingType.TEXT, isPublic: false, sortOrder: 25 },
+    { key: "invoice_sort_code_usd", value: "", group: SettingGroup.INVOICE, label: "Sort Code / Routing Number (USD)", type: SettingType.TEXT, isPublic: false, sortOrder: 26 },
+    { key: "invoice_bank_name_gbp", value: "Wise (TransferWise)", group: SettingGroup.INVOICE, label: "Bank Name (GBP)", type: SettingType.TEXT, isPublic: false, sortOrder: 27 },
+    { key: "invoice_account_name_gbp", value: "Prudential Atelier Ltd", group: SettingGroup.INVOICE, label: "Account Name (GBP)", type: SettingType.TEXT, isPublic: false, sortOrder: 28 },
+    { key: "invoice_account_number_gbp", value: "0000000000", group: SettingGroup.INVOICE, label: "Account Number / IBAN (GBP)", type: SettingType.TEXT, isPublic: false, sortOrder: 29 },
+    { key: "invoice_sort_code_gbp", value: "", group: SettingGroup.INVOICE, label: "Sort Code (GBP)", type: SettingType.TEXT, isPublic: false, sortOrder: 30 },
+    { key: "invoice_default_vat", value: "0", group: SettingGroup.INVOICE, label: "Default VAT % (0 = no VAT)", type: SettingType.NUMBER, isPublic: false, sortOrder: 40 },
+    { key: "invoice_default_due_days", value: "7", group: SettingGroup.INVOICE, label: "Default Payment Due (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 41 },
+    { key: "invoice_default_currency", value: "NGN", group: SettingGroup.INVOICE, label: "Default Invoice Currency", type: SettingType.SELECT, isPublic: false, sortOrder: 42 },
+    { key: "invoice_footer_note", value: "Thank you for choosing Prudential Atelier. We look forward to creating something extraordinary for you.", group: SettingGroup.INVOICE, label: "Invoice Footer Note", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 43 },
+    { key: "invoice_deposit_terms", value: "50% deposit required to commence. Balance due before delivery.", group: SettingGroup.INVOICE, label: "Default Payment Terms", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 44 },
+    { key: "invoice_logo_url", value: "/images/atelier-logo.png", group: SettingGroup.INVOICE, label: "Invoice Logo URL", type: SettingType.IMAGE, isPublic: false, sortOrder: 45 },
+    { key: "invoice_prefix", value: "PA-INV", group: SettingGroup.INVOICE, label: "Invoice Number Prefix", type: SettingType.TEXT, isPublic: false, sortOrder: 46 },
+  ];
+  for (const s of invoiceSettings) {
+    await prisma.siteSetting.upsert({
+      where: { key: s.key },
+      update: {},
+      create: s,
+    });
+  }
+
   const extraSocial = [
     {
       key: "social_instagram_atelier",
@@ -1245,6 +1293,70 @@ async function main() {
         category: GalleryCategory.KIDS,
         sortOrder: i,
         isPublished: true,
+      },
+    });
+  }
+
+  const seedYear = new Date().getFullYear();
+  const demoInvoiceNumber = `PA-INV-${seedYear}-0001`;
+  const demoBespokeForInvoice = await prisma.bespokeRequest.findFirst({ orderBy: { createdAt: "asc" } });
+  if (demoBespokeForInvoice) {
+    const payEntry = { recordedAt: new Date().toISOString(), amount: 637500, method: "Bank Transfer", reference: "SEED-DEP-001" };
+    await prisma.invoice.upsert({
+      where: { invoiceNumber: demoInvoiceNumber },
+      update: {},
+      create: {
+        invoiceNumber: demoInvoiceNumber,
+        bespokeRequestId: demoBespokeForInvoice.id,
+        clientName: "Mrs. Amara Okafor",
+        clientEmail: "amara@example.com",
+        clientPhone: "+234 801 234 5678",
+        clientCity: "Lagos, Nigeria",
+        clientCountry: "Nigeria",
+        currency: "NGN",
+        status: InvoiceStatus.PARTIALLY_PAID,
+        lineItems: [
+          {
+            id: "item-001",
+            description: "Custom White Wedding Gown",
+            details: "Cathedral train, hand-beaded bodice, French lace overlay, removable sleeves",
+            quantity: 1,
+            unitPrice: 850000,
+            amount: 850000,
+          },
+          {
+            id: "item-002",
+            description: "Traditional Attire — Iro & Buba",
+            details: "Embroidered gold aso-oke with matching gele and ipele",
+            quantity: 1,
+            unitPrice: 350000,
+            amount: 350000,
+          },
+          {
+            id: "item-003",
+            description: "Fitting Sessions (3)",
+            details: "Three in-atelier fitting sessions included",
+            quantity: 3,
+            unitPrice: 25000,
+            amount: 75000,
+          },
+        ],
+        subtotal: 1275000,
+        discountType: null,
+        discountValue: 0,
+        discountAmount: 0,
+        vatEnabled: false,
+        vatPercent: 0,
+        vatAmount: 0,
+        total: 1275000,
+        depositRequired: 637500,
+        depositPaid: 637500,
+        balanceDue: 637500,
+        paymentTerms: "50% deposit required to commence. Balance due 3 days before delivery.",
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        clientNote: "Thank you for choosing Prudential Atelier for your special day. We are honoured to dress you.",
+        sentAt: new Date(),
+        paymentHistory: [payEntry],
       },
     });
   }

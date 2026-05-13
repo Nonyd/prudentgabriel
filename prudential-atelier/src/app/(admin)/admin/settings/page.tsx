@@ -12,6 +12,7 @@ import {
   Share2,
   Star,
   Type,
+  Wallet,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
@@ -95,6 +96,14 @@ const CARDS: {
     icon: Search,
     countGroups: ["SEO"],
     href: "/admin/settings/seo",
+  },
+  {
+    slug: "invoice",
+    title: "Invoice settings",
+    description: "Business details, bank accounts, VAT, invoice numbering",
+    icon: Wallet,
+    countGroups: ["INVOICE"],
+    href: "/admin/settings/invoice",
   },
   {
     slug: "media",

@@ -9,9 +9,17 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
+  const search = searchParams.get("search")?.trim();
   const where: Prisma.BespokeRequestWhereInput = {};
   if (status && status !== "all" && (Object.values(BespokeStatus) as string[]).includes(status)) {
     where.status = status as BespokeStatus;
+  }
+  if (search) {
+    where.OR = [
+      { requestNumber: { contains: search, mode: "insensitive" } },
+      { name: { contains: search, mode: "insensitive" } },
+      { email: { contains: search, mode: "insensitive" } },
+    ];
   }
 
   const rows = await prisma.bespokeRequest.findMany({
