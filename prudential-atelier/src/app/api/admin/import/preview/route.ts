@@ -139,6 +139,7 @@ export async function POST(req: NextRequest) {
 
   const parentImageLookups = buildParentImageLookups(parsedRows);
 
+  let skippedNoImage = 0;
   const previewProducts = parsedRows
     .map((row, index) => {
       const name = pick(row, ["Name", "name", "post_title"]).trim();
@@ -146,6 +147,10 @@ export async function POST(req: NextRequest) {
       const slug = slugifyText(name);
       if (!slug) return null;
       const imageUrls = resolveVariationImages(row, parentImageLookups, parsedRows);
+      if (imageUrls.length === 0) {
+        skippedNoImage += 1;
+        return null;
+      }
       const description = cleanText(pick(row, ["Description", "description"])).slice(0, 500);
       const shortDesc = cleanText(pick(row, ["Short description", "short_description"])).slice(0, 500);
       const sku = pick(row, ["SKU", "sku"]);
@@ -183,6 +188,7 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     total: products.length,
+    skippedNoImage,
     warning: truncated ? "CSV exceeds 500 rows. Only first 500 shown." : undefined,
     products,
   });

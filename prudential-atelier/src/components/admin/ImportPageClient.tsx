@@ -20,6 +20,7 @@ type PreviewProduct = {
 
 type PreviewResponse = {
   total: number;
+  skippedNoImage?: number;
   warning?: string;
   products: PreviewProduct[];
 };
@@ -294,6 +295,13 @@ export function ImportPageClient() {
           {duplicatesCount > 0 ? (
             <div className="mb-4 rounded-sm border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
               {duplicatesCount} products appear to already exist. Duplicates are unchecked by default.
+            </div>
+          ) : null}
+
+          {(previewData.skippedNoImage ?? 0) > 0 ? (
+            <div className="mb-4 rounded-sm border border-amber-400 bg-amber-50 p-3 text-xs text-amber-900">
+              ℹ️ {previewData.skippedNoImage} products were skipped because they have no images in the CSV. Products
+              without images are not imported.
             </div>
           ) : null}
 
