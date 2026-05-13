@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { productAdminSchema, productToggleSchema } from "@/validations/product";
 import { buildDefaultProductSku } from "@/lib/product-sku";
+import { revalidateProduct } from "@/lib/revalidate";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi();
@@ -78,6 +79,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         }
         return { id, basePriceNGN: basePrice };
       });
+      const slugRow = await prisma.product.findUnique({ where: { id }, select: { slug: true } });
+      if (slugRow) await revalidateProduct(slugRow.slug);
       return NextResponse.json(updated);
     }
 
@@ -95,8 +98,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           ...(toggle.data.isFeatured !== undefined ? { isFeatured: toggle.data.isFeatured } : {}),
           ...(toggle.data.isNewArrival !== undefined ? { isNewArrival: toggle.data.isNewArrival } : {}),
         },
-        select: { id: true, isPublished: true, isFeatured: true, isNewArrival: true },
+        select: { id: true, slug: true, isPublished: true, isFeatured: true, isNewArrival: true },
       });
+      await revalidateProduct(updated.slug);
       return NextResponse.json(updated);
     }
   }
@@ -236,6 +240,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       }
     });
 
+    await revalidateProduct(data.slug);
+
     return NextResponse.json({ ok: true });
   } catch (e) {
     if (e instanceof Error && e.message === "VARIANT_IN_USE") {
@@ -267,6 +273,8 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
     );
   }
 
+  const slugRow = await prisma.product.findUnique({ where: { id }, select: { slug: true } });
   await prisma.product.delete({ where: { id } });
+  if (slugRow) await revalidateProduct(slugRow.slug);
   return NextResponse.json({ ok: true });
 }

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { productAdminSchema } from "@/validations/product";
 import { buildDefaultProductSku } from "@/lib/product-sku";
+import { revalidateProduct } from "@/lib/revalidate";
 
 const PAGE_SIZE_DEFAULT = 20;
 
@@ -217,6 +218,8 @@ export async function POST(req: NextRequest) {
 
       return p;
     });
+
+    await revalidateProduct(product.slug);
 
     return NextResponse.json({ id: product.id, slug: product.slug });
   } catch (e) {

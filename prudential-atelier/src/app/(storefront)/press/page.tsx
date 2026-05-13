@@ -3,7 +3,7 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import { PFABanner } from "@/components/common/PFABanner";
 import { cn } from "@/lib/utils";
 
-export const revalidate = 86400;
+export const revalidate = 300;
 
 const PRESS_ITEMS = [
   {

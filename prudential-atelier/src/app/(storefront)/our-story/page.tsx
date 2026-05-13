@@ -5,7 +5,7 @@ import { BrandStats } from "@/components/home/BrandStats";
 import { Testimonials } from "@/components/home/Testimonials";
 import { getImageSettings } from "@/lib/settings";
 
-export const revalidate = 86400;
+export const revalidate = 300;
 
 const DEF_STORY = "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1400";
 

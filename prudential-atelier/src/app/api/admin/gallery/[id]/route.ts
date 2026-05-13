@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { cloudinary } from "@/lib/cloudinary";
+import { revalidateGallery } from "@/lib/revalidate";
 
 const patchSchema = z.object({
   alt: z.string().nullable().optional(),
@@ -31,6 +32,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       ...(parsed.data.sortOrder !== undefined ? { sortOrder: parsed.data.sortOrder } : {}),
     },
   });
+  await revalidateGallery(row.category as "ATELIER" | "BRIDAL" | "KIDS");
   return NextResponse.json(row);
 }
 
@@ -59,5 +61,6 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
   }
 
   await prisma.galleryImage.delete({ where: { id } });
+  await revalidateGallery(row.category as "ATELIER" | "BRIDAL" | "KIDS");
   return NextResponse.json({ ok: true });
 }

@@ -11,7 +11,7 @@ import { PFABanner } from "@/components/common/PFABanner";
 import { NewsletterSection } from "@/components/home/NewsletterSection";
 import { getContent, getContentSettings, getImageSettings } from "@/lib/settings";
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 export default async function HomePage() {
   let images: Record<string, string> = {};

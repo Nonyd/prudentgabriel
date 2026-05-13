@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { clearPublicSettingsCache, clearSettingCacheKey, setSetting } from "@/lib/settings";
+import { revalidateSettings } from "@/lib/revalidate";
 import { EMAIL_TEMPLATE_META } from "@/lib/email-templates";
 import { SettingType, type SettingGroup } from "@prisma/client";
 
@@ -136,6 +137,8 @@ export async function PATCH(
     await setSetting(key, value, userId);
     updated += 1;
   }
+
+  await revalidateSettings();
 
   return NextResponse.json({
     success: true,

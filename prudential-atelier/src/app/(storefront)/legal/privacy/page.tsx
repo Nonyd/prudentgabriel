@@ -1,4 +1,4 @@
-export const revalidate = 604800;
+export const revalidate = 3600;
 
 export default function PrivacyPage() {
   return (

@@ -1,6 +1,8 @@
 import { BespokePageContent } from "@/components/bespoke/BespokePageContent";
 import { getContent, getContentSettings, getImageSettings } from "@/lib/settings";
 
+export const revalidate = 300;
+
 export default async function BespokePage() {
   let hero = "";
   let pageHeadline = "Your Vision,\nOur Craft.";

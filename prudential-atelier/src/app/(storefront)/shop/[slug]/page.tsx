@@ -29,7 +29,7 @@ const RelatedProducts = nextDynamic(() => import("@/components/product/RelatedPr
   ),
 });
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 export async function generateStaticParams() {
   if (!process.env.DATABASE_URL?.trim()) return [];

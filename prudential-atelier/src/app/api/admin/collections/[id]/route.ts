@@ -5,6 +5,8 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { collectionAdminPatchSchema } from "@/validations/collection";
 import { slugifyText } from "@/lib/utils";
 import { collectionListProductInclude, mapProductToListItemWithMeta } from "@/lib/collection-products";
+import { revalidateCollection } from "@/lib/revalidate";
+import { revalidatePath } from "next/cache";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi();
@@ -95,6 +97,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       where: { id },
       data,
     });
+    await revalidateCollection(updated.slug);
+    revalidatePath("/");
     return NextResponse.json(updated);
   } catch (e: unknown) {
     const code = typeof e === "object" && e && "code" in e ? String((e as { code: string }).code) : "";
@@ -111,6 +115,12 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
 
+  const existing = await prisma.collection.findUnique({ where: { id }, select: { slug: true } });
+  if (!existing) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
   await prisma.collection.delete({ where: { id } });
+  await revalidateCollection(existing.slug);
+  revalidatePath("/");
   return NextResponse.json({ ok: true });
 }

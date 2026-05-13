@@ -3,11 +3,13 @@
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
-import { ChevronDown, LogOut, Menu } from "lucide-react";
+import { ChevronDown, LogOut, Menu, RefreshCw } from "lucide-react";
 import { DarkModeToggle } from "@/components/common/DarkModeToggle";
 import { NotificationBell } from "@/components/admin/NotificationBell";
 import { AdminProfileDrawer } from "@/components/admin/AdminProfileDrawer";
 import { useState } from "react";
+import toast from "react-hot-toast";
+import { cn } from "@/lib/utils";
 
 function pageTitleFromPath(pathname: string): string {
   if (pathname === "/admin") return "Dashboard";
@@ -37,6 +39,7 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
   const pathname = usePathname();
   const { data } = useSession();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [revalidating, setRevalidating] = useState(false);
   const title = pageTitleFromPath(pathname);
   const user = data?.user;
   const displayName = user?.name ?? user?.email ?? "Admin";
@@ -60,6 +63,33 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
       </div>
       <div className="flex items-center gap-3 md:gap-4">
         <NotificationBell />
+        <button
+          type="button"
+          title="Refresh site cache"
+          disabled={revalidating}
+          onClick={() => {
+            void (async () => {
+              setRevalidating(true);
+              try {
+                const res = await fetch("/api/admin/revalidate-all", { method: "POST" });
+                const j = (await res.json().catch(() => ({}))) as { error?: string };
+                if (!res.ok) {
+                  toast.error(j.error ?? "Could not refresh cache");
+                  return;
+                }
+                toast.success("Site updated", { duration: 2000, icon: "✓" });
+              } catch {
+                toast.error("Could not refresh cache");
+              } finally {
+                setRevalidating(false);
+              }
+            })();
+          }}
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#6B6B68] transition-colors hover:bg-[#F5F5F3] hover:text-ink disabled:opacity-50"
+          aria-label="Refresh site cache"
+        >
+          <RefreshCw size={16} strokeWidth={1.75} className={cn(revalidating && "animate-spin")} />
+        </button>
         <div
           className="flex items-center justify-center p-1"
           title="Toggle storefront dark mode (customer preview)"

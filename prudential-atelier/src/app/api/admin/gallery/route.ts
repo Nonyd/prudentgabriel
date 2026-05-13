@@ -4,6 +4,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { cloudinary } from "@/lib/cloudinary";
 import { resolveImageMimeType } from "@/lib/image-upload-mime";
+import { revalidateGallery } from "@/lib/revalidate";
 
 const PAGE_DEFAULT = 30;
 
@@ -122,6 +123,8 @@ export async function POST(req: NextRequest) {
       uploadedBy: gate.session.user?.id ?? null,
     },
   });
+
+  await revalidateGallery(category);
 
   return NextResponse.json(row);
 }

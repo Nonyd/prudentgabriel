@@ -4,6 +4,8 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { collectionAdminSchema } from "@/validations/collection";
 import { slugifyText } from "@/lib/utils";
 import { uniqueProductCountForCollection } from "@/lib/collection-products";
+import { revalidateCollection } from "@/lib/revalidate";
+import { revalidatePath } from "next/cache";
 
 export async function GET() {
   const gate = await requireAdminApi();
@@ -65,6 +67,8 @@ export async function POST(req: NextRequest) {
         metaDescription: d.metaDescription?.trim() || null,
       },
     });
+    await revalidateCollection(created.slug);
+    revalidatePath("/");
     return NextResponse.json(created);
   } catch (e: unknown) {
     const code = typeof e === "object" && e && "code" in e ? String((e as { code: string }).code) : "";

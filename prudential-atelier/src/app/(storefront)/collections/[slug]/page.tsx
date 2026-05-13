@@ -9,7 +9,7 @@ import {
 import { CollectionDetailPage } from "@/components/collections/CollectionDetailPage";
 import { optimizeImageUrl } from "@/lib/utils";
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 const PAGE_LIMIT = 24;
 

@@ -4,6 +4,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { cloudinary } from "@/lib/cloudinary";
 import { slugifyText } from "@/lib/utils";
+import { revalidateAfterBulkImport } from "@/lib/revalidate";
 
 type PreviewProduct = {
   rowIndex: number;
@@ -159,6 +160,8 @@ export async function POST(req: NextRequest) {
           });
         }
       }
+
+      await revalidateAfterBulkImport();
 
       send({ type: "complete", imported: selectedProducts.length });
       controller.close();
