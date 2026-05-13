@@ -398,7 +398,7 @@ export function InvoiceFormPage({ mode, invoiceId }: { mode: Mode; invoiceId?: s
           <section className="border border-[#EBEBEA] bg-canvas p-5">
             <h2 className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Line items</h2>
             <div className="mt-4 space-y-3">
-              {lineItems.map((li, idx) => (
+              {lineItems.map((li) => (
                 <div key={li.id} className="grid gap-2 border border-[#EBEBEA] bg-white p-3 sm:grid-cols-12">
                   <input
                     className="sm:col-span-4 border border-[#EBEBEA] px-2 py-1 text-sm"
