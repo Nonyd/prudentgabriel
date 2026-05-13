@@ -3,6 +3,7 @@ import { GalleryCategory } from "@prisma/client";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { cloudinary } from "@/lib/cloudinary";
+import { resolveImageMimeType } from "@/lib/image-upload-mime";
 
 const PAGE_DEFAULT = 30;
 
@@ -50,10 +51,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
   }
 
-  const file = form.get("file");
-  if (!(file instanceof File)) {
+  const raw = form.get("file");
+  const isBlob = typeof raw === "object" && raw !== null && typeof (raw as Blob).arrayBuffer === "function";
+  if (!isBlob) {
     return NextResponse.json({ error: "Missing file" }, { status: 400 });
   }
+  const file = raw as Blob & { name?: string };
+  const fileName = typeof file.name === "string" ? file.name : undefined;
 
   const category = parseCategory(String(form.get("category") ?? ""));
   if (!category) {
@@ -63,8 +67,8 @@ export async function POST(req: NextRequest) {
   const alt = typeof form.get("alt") === "string" ? (form.get("alt") as string).trim() || null : null;
   const caption = typeof form.get("caption") === "string" ? (form.get("caption") as string).trim() || null : null;
 
-  const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
-  if (!allowed.has(file.type)) {
+  const mime = resolveImageMimeType(file.type ?? "", fileName, { allowGif: false });
+  if (!mime) {
     return NextResponse.json({ error: "Only JPEG, PNG, or WebP" }, { status: 400 });
   }
 
@@ -82,11 +86,17 @@ export async function POST(req: NextRequest) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const base64 = `data:${file.type};base64,${buffer.toString("base64")}`;
-  const uploaded = await cloudinary.uploader.upload(base64, {
-    folder,
-    transformation: [{ width: 1600, crop: "limit" }, { quality: "auto" }],
-  });
+  const base64 = `data:${mime};base64,${buffer.toString("base64")}`;
+  let uploaded;
+  try {
+    uploaded = await cloudinary.uploader.upload(base64, {
+      folder,
+      transformation: [{ width: 1600, crop: "limit" }, { quality: "auto" }],
+    });
+  } catch (e) {
+    console.error("[admin/gallery POST]", e);
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+  }
   const url = uploaded.secure_url;
   const publicId = uploaded.public_id;
   const width = uploaded.width ?? null;

@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cloudinary } from "@/lib/cloudinary";
+import { resolveImageMimeType } from "@/lib/image-upload-mime";
 
 const MAX_BYTES = 5 * 1024 * 1024;
-const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
 const PLACEHOLDER =
   "https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80&auto=format";
+
+function isFileLike(v: unknown): v is Blob & { name?: string } {
+  return typeof v === "object" && v !== null && typeof (v as Blob).arrayBuffer === "function";
+}
 
 export async function POST(req: NextRequest) {
   const configured =
@@ -19,16 +23,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
   }
 
-  const file = form.get("file");
-  if (!(file instanceof File)) {
+  const raw = form.get("file");
+  if (!isFileLike(raw)) {
     return NextResponse.json({ error: "Missing file field" }, { status: 400 });
   }
 
-  if (!ALLOWED.has(file.type)) {
+  const fileName = "name" in raw && typeof raw.name === "string" ? raw.name : undefined;
+  const mime = resolveImageMimeType(raw.type ?? "", fileName, { allowGif: false });
+  if (!mime) {
     return NextResponse.json({ error: "Only JPEG, PNG, or WebP images are allowed" }, { status: 400 });
   }
 
-  if (file.size > MAX_BYTES) {
+  if (raw.size > MAX_BYTES) {
     return NextResponse.json({ error: "Image must be 5MB or smaller" }, { status: 400 });
   }
 
@@ -36,8 +42,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: PLACEHOLDER, publicId: `consult-dev-${Date.now()}` });
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const base64 = `data:${file.type};base64,${buffer.toString("base64")}`;
+  const buffer = Buffer.from(await raw.arrayBuffer());
+  const base64 = `data:${mime};base64,${buffer.toString("base64")}`;
 
   try {
     const uploaded = await cloudinary.uploader.upload(base64, {

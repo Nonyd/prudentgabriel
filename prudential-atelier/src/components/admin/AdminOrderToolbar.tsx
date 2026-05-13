@@ -6,6 +6,7 @@ import type { OrderStatus, PaymentGateway, PaymentStatus } from "@prisma/client"
 import toast from "react-hot-toast";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import { AlertDialog } from "@/components/ui/AlertDialog";
 
 type ToolbarOrder = {
   id: string;
@@ -56,6 +57,8 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
   const [tracking, setTracking] = useState("");
   const [carrier, setCarrier] = useState("");
   const [busy, setBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   const patch = async (body: Record<string, unknown>) => {
     setBusy(true);
@@ -109,6 +112,23 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
       toast.error(e instanceof Error ? e.message : "Error");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const confirmDeleteOrder = async () => {
+    setDeleteBusy(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}`, { method: "DELETE", credentials: "include" });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Delete failed");
+      toast.success("Order deleted");
+      setDeleteOpen(false);
+      router.push("/admin/orders");
+      router.refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Error");
+    } finally {
+      setDeleteBusy(false);
     }
   };
 
@@ -184,6 +204,17 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
         </Dialog.Portal>
       </Dialog.Root>
 
+      <AlertDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete this order?"
+        description={`Permanently remove order ${order.orderNumber} and its line items from the database. This cannot be undone.`}
+        variant="danger"
+        confirmLabel="Delete order"
+        onConfirm={confirmDeleteOrder}
+        loading={deleteBusy}
+      />
+
       <p className="font-label text-xs uppercase text-[#A8A8A4]">Admin</p>
       <div className="mt-3 flex flex-wrap items-end gap-3">
         {options.map((o) => (
@@ -255,6 +286,17 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
           placeholder="Not visible to customer"
         />
       </label>
+      <div className="mt-6 border-t border-[#EBEBEA] pt-4">
+        <p className="font-label text-xs uppercase text-red-600/90">Danger zone</p>
+        <button
+          type="button"
+          disabled={busy || deleteBusy}
+          className="mt-2 rounded-sm border border-red-500/50 px-3 py-2 text-xs text-red-600 hover:bg-red-500/10 disabled:opacity-50"
+          onClick={() => setDeleteOpen(true)}
+        >
+          Delete order permanently
+        </button>
+      </div>
     </div>
   );
 }

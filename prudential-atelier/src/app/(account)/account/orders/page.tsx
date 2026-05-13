@@ -1,7 +1,7 @@
-import Link from "next/link";
-import Image from "next/image";
 import { auth } from "@/auth";
+import { PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { AccountOrdersList } from "@/components/account/AccountOrdersList";
 
 export default async function OrdersPage() {
   const session = await auth();
@@ -18,52 +18,22 @@ export default async function OrdersPage() {
     },
   });
 
+  const rows = orders.map((o) => ({
+    id: o.id,
+    orderNumber: o.orderNumber,
+    createdAt: o.createdAt.toISOString(),
+    total: o.total,
+    status: o.status,
+    paymentStatus: o.paymentStatus,
+    previewImages: o.items.map((it) => it.product.images[0]?.url).filter((u): u is string => Boolean(u)),
+    canDelete: o.paymentStatus === PaymentStatus.PENDING || o.paymentStatus === PaymentStatus.FAILED,
+  }));
+
   return (
     <div>
       <h1 className="font-display text-3xl text-wine">My orders</h1>
       <p className="mt-1 text-sm text-charcoal-mid">{orders.length} orders</p>
-      <div className="mt-8 space-y-4">
-        {orders.length === 0 ? (
-          <p className="text-charcoal-mid">
-            No orders yet.{" "}
-            <Link href="/shop" className="text-wine underline">
-              Browse collection
-            </Link>
-          </p>
-        ) : (
-          orders.map((o) => (
-            <Link
-              key={o.id}
-              href={`/account/orders/${o.id}`}
-              className="flex flex-wrap items-center justify-between gap-4 rounded-sm border border-border bg-cream p-4 hover:border-wine/30"
-            >
-              <div>
-                <p className="font-label text-xs text-gold">{o.orderNumber}</p>
-                <p className="text-sm text-charcoal-light">{new Date(o.createdAt).toLocaleString()}</p>
-              </div>
-              <div className="flex -space-x-2">
-                {o.items.map((it) => {
-                  const img = it.product.images[0]?.url;
-                  return img ? (
-                    <Image
-                      key={it.id}
-                      src={img}
-                      alt=""
-                      width={40}
-                      height={48}
-                      className="relative rounded-sm border-2 border-ivory object-cover"
-                    />
-                  ) : null;
-                })}
-              </div>
-              <div className="text-right">
-                <p className="font-medium">₦{Math.round(o.total).toLocaleString()}</p>
-                <span className="text-xs uppercase text-charcoal-mid">{o.status}</span>
-              </div>
-            </Link>
-          ))
-        )}
-      </div>
+      <AccountOrdersList orders={rows} />
     </div>
   );
 }

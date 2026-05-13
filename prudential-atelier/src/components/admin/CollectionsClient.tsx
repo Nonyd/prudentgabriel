@@ -4,10 +4,10 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 import { optimizeImageUrl } from "@/lib/utils";
 import { CollectionFormModal } from "@/components/admin/CollectionFormModal";
+import { AlertDialog as ConfirmDialog } from "@/components/ui/AlertDialog";
 
 export type AdminCollectionRow = {
   id: string;
@@ -28,7 +28,9 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<AdminCollectionRow | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<AdminCollectionRow | null>(null);
+  const [deleteState, setDeleteState] = useState<{ mode: "single"; row: AdminCollectionRow } | { mode: "bulk"; ids: string[] } | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   const sorted = useMemo(
     () => [...collections].sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name)),
@@ -72,12 +74,66 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
   }
 
   async function confirmDelete() {
-    if (!deleteTarget) return;
-    const res = await fetch(`/api/admin/collections/${deleteTarget.id}`, { method: "DELETE" });
-    if (!res.ok) toast.error("Delete failed");
+    if (!deleteState) return;
+    const ids = deleteState.mode === "single" ? [deleteState.row.id] : deleteState.ids;
+    setDeleteBusy(true);
+    try {
+      for (const id of ids) {
+        const res = await fetch(`/api/admin/collections/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          toast.error("Delete failed");
+          return;
+        }
+      }
+      toast.success(ids.length > 1 ? `${ids.length} collections removed` : "Collection removed");
+      setDeleteState(null);
+      setSelected(new Set());
+      router.refresh();
+    } finally {
+      setDeleteBusy(false);
+    }
+  }
+
+  const sortedIds = useMemo(() => sorted.map((r) => r.id), [sorted]);
+  const allSortedSelected = sorted.length > 0 && sorted.every((r) => selected.has(r.id));
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  };
+
+  const toggleSelectAllSorted = () => {
+    if (allSortedSelected) {
+      setSelected((prev) => {
+        const n = new Set(prev);
+        for (const id of sortedIds) n.delete(id);
+        return n;
+      });
+    } else {
+      setSelected((prev) => new Set([...Array.from(prev), ...sortedIds]));
+    }
+  };
+
+  async function bulkPublish(published: boolean) {
+    if (selected.size === 0) return;
+    const ids = Array.from(selected);
+    const results = await Promise.all(
+      ids.map((id) =>
+        fetch(`/api/admin/collections/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isPublished: published }),
+        }),
+      ),
+    );
+    if (results.some((r) => !r.ok)) toast.error("Some updates failed");
     else {
-      toast.success("Collection removed");
-      setDeleteTarget(null);
+      toast.success(published ? "Published" : "Unpublished");
+      setSelected(new Set());
       router.refresh();
     }
   }
@@ -98,10 +154,32 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
         </button>
       </div>
 
+      {selected.size > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-sm border border-olive bg-olive p-3 text-sm text-white">
+          <span className="font-medium">{selected.size} selected</span>
+          <button type="button" className="border border-white/40 px-3 py-1 text-xs hover:bg-white/10" onClick={() => void bulkPublish(true)}>
+            Publish
+          </button>
+          <button type="button" className="border border-white/40 px-3 py-1 text-xs hover:bg-white/10" onClick={() => void bulkPublish(false)}>
+            Unpublish
+          </button>
+          <button
+            type="button"
+            className="border border-white/40 bg-red-900/40 px-3 py-1 text-xs hover:bg-red-900/60"
+            onClick={() => setDeleteState({ mode: "bulk", ids: Array.from(selected) })}
+          >
+            Delete selected
+          </button>
+        </div>
+      ) : null}
+
       <div className="overflow-x-auto border border-[#EBEBEA] bg-white">
         <table className="w-full min-w-[900px] border-collapse text-left font-body text-[13px]">
           <thead>
             <tr className="border-b border-[#EBEBEA] bg-[#FAFAFA] text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">
+              <th className="w-10 px-3 py-3">
+                <input type="checkbox" checked={allSortedSelected} onChange={toggleSelectAllSorted} aria-label="Select all" />
+              </th>
               <th className="px-3 py-3">Order</th>
               <th className="px-3 py-3">Cover</th>
               <th className="px-3 py-3">Name</th>
@@ -124,6 +202,14 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
                   setModalOpen(true);
                 }}
               >
+                <td className="px-3 py-2 align-middle" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    checked={selected.has(row.id)}
+                    onChange={() => toggleSelect(row.id)}
+                    aria-label={`Select ${row.name}`}
+                  />
+                </td>
                 <td className="px-3 py-2 align-middle" onClick={(e) => e.stopPropagation()}>
                   <div className="flex flex-col gap-0.5">
                     <button
@@ -225,7 +311,7 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
                       type="button"
                       className="p-1 text-[#6B6B68] hover:text-red-700"
                       aria-label="Delete"
-                      onClick={() => setDeleteTarget(row)}
+                      onClick={() => setDeleteState({ mode: "single", row })}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -254,35 +340,20 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
         }}
       />
 
-      <AlertDialog.Root open={Boolean(deleteTarget)} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <AlertDialog.Portal>
-          <AlertDialog.Overlay className="fixed inset-0 bg-black/40" />
-          <AlertDialog.Content className="fixed left-1/2 top-1/2 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 border border-[#EBEBEA] bg-white p-6 shadow-lg">
-            <AlertDialog.Title className="font-display text-lg text-ink">
-              Delete {deleteTarget?.name ?? "collection"}?
-            </AlertDialog.Title>
-            <AlertDialog.Description className="mt-2 font-body text-[13px] text-[#6B6B68]">
-              Products will not be deleted, just unassigned from this collection.
-            </AlertDialog.Description>
-            <div className="mt-6 flex justify-end gap-3">
-              <AlertDialog.Cancel asChild>
-                <button type="button" className="border border-[#EBEBEA] px-4 py-2 text-[12px]">
-                  Cancel
-                </button>
-              </AlertDialog.Cancel>
-              <AlertDialog.Action asChild>
-                <button
-                  type="button"
-                  onClick={() => void confirmDelete()}
-                  className="bg-red-700 px-4 py-2 text-[12px] text-white"
-                >
-                  Delete
-                </button>
-              </AlertDialog.Action>
-            </div>
-          </AlertDialog.Content>
-        </AlertDialog.Portal>
-      </AlertDialog.Root>
+      <ConfirmDialog
+        open={deleteState !== null}
+        onOpenChange={(o) => !o && setDeleteState(null)}
+        title={
+          deleteState?.mode === "bulk"
+            ? `Delete ${deleteState.ids.length} collections?`
+            : `Delete ${deleteState?.mode === "single" ? deleteState.row.name : "collection"}?`
+        }
+        description="Products will not be deleted, just unassigned from these collections."
+        variant="danger"
+        confirmLabel={deleteState?.mode === "bulk" ? "Delete selected" : "Delete"}
+        onConfirm={confirmDelete}
+        loading={deleteBusy}
+      />
     </div>
   );
 }

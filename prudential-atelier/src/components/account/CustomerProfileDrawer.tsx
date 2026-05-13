@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import type { PaymentGateway } from "@prisma/client";
 import { LogOut, X } from "lucide-react";
 import { signOut } from "next-auth/react";
+import toast from "react-hot-toast";
 import { DarkModeToggle } from "@/components/common/DarkModeToggle";
 
 type SafeMethod = {
@@ -85,10 +86,12 @@ export function CustomerProfileDrawer({
   async function uploadAvatar(file: File) {
     const form = new FormData();
     form.append("file", file);
-    form.append("folder", "prudential-atelier/avatars/customer");
-    const response = await fetch("/api/admin/upload", { method: "POST", body: form });
-    if (!response.ok) return;
-    const json = (await response.json()) as { url?: string };
+    const response = await fetch("/api/account/upload", { method: "POST", body: form });
+    const json = (await response.json()) as { url?: string; error?: string };
+    if (!response.ok) {
+      toast.error(json.error ?? "Could not upload photo");
+      return;
+    }
     if (json.url) {
       setImage(json.url);
       await fetch("/api/account/profile", {
@@ -96,6 +99,7 @@ export function CustomerProfileDrawer({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: json.url }),
       });
+      toast.success("Photo updated");
     }
   }
 

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/admin-auth";
+import { auth } from "@/auth";
 import { cloudinary } from "@/lib/cloudinary";
 import { resolveImageMimeType } from "@/lib/image-upload-mime";
 
 const MAX_BYTES = 5 * 1024 * 1024;
+const FOLDER = "prudential-atelier/avatars/customer";
 
 const PLACEHOLDER =
   "https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80&auto=format";
@@ -13,8 +14,10 @@ function isFileLike(v: unknown): v is Blob & { name?: string } {
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi();
-  if (!gate.ok) return gate.response;
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const configured =
     Boolean(process.env.CLOUDINARY_API_KEY?.length) &&
@@ -34,18 +37,9 @@ export async function POST(req: NextRequest) {
   }
 
   const fileName = "name" in raw && typeof raw.name === "string" ? raw.name : undefined;
-  const allowPdf = form.get("allowPdf") === "true";
-  const isPdf = raw.type === "application/pdf";
-
-  if (allowPdf && isPdf) {
-    if (raw.size > MAX_BYTES) {
-      return NextResponse.json({ error: "PDF must be 5MB or smaller" }, { status: 400 });
-    }
-  } else {
-    const mime = resolveImageMimeType(raw.type ?? "", fileName, { allowGif: false });
-    if (!mime) {
-      return NextResponse.json({ error: "Only JPEG, PNG, or WebP images are allowed" }, { status: 400 });
-    }
+  const mime = resolveImageMimeType(raw.type ?? "", fileName, { allowGif: false });
+  if (!mime) {
+    return NextResponse.json({ error: "Only JPEG, PNG, or WebP images are allowed" }, { status: 400 });
   }
 
   if (raw.size > MAX_BYTES) {
@@ -53,34 +47,23 @@ export async function POST(req: NextRequest) {
   }
 
   if (!configured) {
-    return NextResponse.json({
-      url: isPdf ? "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" : PLACEHOLDER,
-      publicId: `dev-${Date.now()}`,
-    });
+    return NextResponse.json({ url: PLACEHOLDER, publicId: `avatar-dev-${Date.now()}` });
   }
 
-  const folderField = form.get("folder");
-  const folder =
-    typeof folderField === "string" && folderField.trim().length > 0
-      ? folderField.replace(/[^a-zA-Z0-9/_-]/g, "").slice(0, 120)
-      : "prudential-atelier/products";
-
   const buffer = Buffer.from(await raw.arrayBuffer());
-  const dataMime = isPdf ? "application/pdf" : resolveImageMimeType(raw.type ?? "", fileName, { allowGif: false })!;
-  const base64 = `data:${dataMime};base64,${buffer.toString("base64")}`;
+  const base64 = `data:${mime};base64,${buffer.toString("base64")}`;
 
   try {
     const uploaded = await cloudinary.uploader.upload(base64, {
-      folder,
-      resource_type: isPdf ? "raw" : "image",
-      ...(isPdf ? {} : { transformation: [{ width: 1200, crop: "limit" }, { quality: "auto" }] }),
+      folder: FOLDER,
+      transformation: [{ width: 800, crop: "limit" }, { quality: "auto" }],
     });
     return NextResponse.json({
       url: uploaded.secure_url,
       publicId: uploaded.public_id,
     });
   } catch (e) {
-    console.error("[admin/upload]", e);
+    console.error("[account/upload]", e);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

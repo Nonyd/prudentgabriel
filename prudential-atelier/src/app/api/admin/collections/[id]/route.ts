@@ -71,7 +71,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   if (d.slug !== undefined) data.slug = slugifyText(d.slug);
   if (d.description !== undefined) data.description = d.description?.trim() || null;
   if (d.excerpt !== undefined) data.excerpt = d.excerpt?.trim() || null;
-  if (d.coverImage !== undefined) data.coverImage = d.coverImage;
+  if (d.coverImage !== undefined) {
+    data.coverImage = d.coverImage === "" ? null : d.coverImage;
+  }
   if (d.coverImageAlt !== undefined) data.coverImageAlt = d.coverImageAlt?.trim() || null;
   if (d.autoTag !== undefined) data.autoTag = d.autoTag?.trim() || null;
   if (d.isFeatured !== undefined) data.isFeatured = d.isFeatured;

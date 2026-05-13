@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { cloudinary } from "@/lib/cloudinary";
+import { resolveImageMimeType } from "@/lib/image-upload-mime";
 
 const PAGE_SIZE = 20;
 const MAX_BYTES = 8 * 1024 * 1024;
-const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
-
 export async function GET(req: NextRequest) {
   const gate = await requireAdminApi();
   if (!gate.ok) return gate.response;
@@ -54,12 +53,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
   }
 
-  const file = form.get("file");
-  if (!(file instanceof File)) {
+  const raw = form.get("file");
+  const isBlob = typeof raw === "object" && raw !== null && typeof (raw as Blob).arrayBuffer === "function";
+  if (!isBlob) {
     return NextResponse.json({ error: "Missing file field" }, { status: 400 });
   }
+  const file = raw as Blob & { name?: string };
+  const fileName = typeof file.name === "string" ? file.name : undefined;
 
-  if (!ALLOWED.has(file.type)) {
+  const mime = resolveImageMimeType(file.type ?? "", fileName, { allowGif: true });
+  if (!mime) {
     return NextResponse.json({ error: "Unsupported file type" }, { status: 400 });
   }
 
@@ -75,7 +78,7 @@ export async function POST(req: NextRequest) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const base64 = `data:${file.type};base64,${buffer.toString("base64")}`;
+  const base64 = `data:${mime};base64,${buffer.toString("base64")}`;
 
   try {
     const uploaded = await cloudinary.uploader.upload(base64, {
@@ -87,8 +90,8 @@ export async function POST(req: NextRequest) {
       data: {
         url: uploaded.secure_url,
         publicId: uploaded.public_id,
-        filename: file.name || "upload",
-        mimeType: file.type,
+        filename: fileName || "upload",
+        mimeType: mime,
         width: uploaded.width ?? null,
         height: uploaded.height ?? null,
         sizeBytes: uploaded.bytes ?? file.size,

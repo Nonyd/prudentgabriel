@@ -1,9 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { PaymentStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderTimeline } from "@/components/account/OrderTimeline";
+import { CustomerOrderDeleteButton } from "@/components/account/CustomerOrderDeleteButton";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -17,6 +19,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   });
 
   if (!order) notFound();
+
+  const canDeleteOrder =
+    order.paymentStatus === PaymentStatus.PENDING || order.paymentStatus === PaymentStatus.FAILED;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -74,6 +79,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           Shipping: {order.shippingZone.name} · {order.shippingZone.estimatedDays}
         </p>
       )}
+
+      <CustomerOrderDeleteButton orderId={order.id} orderNumber={order.orderNumber} canDelete={canDeleteOrder} />
 
       <a
         className="mt-8 inline-block text-sm text-wine hover:underline"

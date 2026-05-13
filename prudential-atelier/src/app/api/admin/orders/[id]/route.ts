@@ -5,6 +5,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { canTransitionOrder } from "@/lib/order-status";
 import { awardPurchasePoints } from "@/lib/points";
 import { sendOrderShippedEmail } from "@/lib/email";
+import { deleteOrdersByIds } from "@/lib/order-delete";
 import { z } from "zod";
 
 const patchSchema = z.object({
@@ -141,4 +142,21 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 
   return NextResponse.json(updated);
+}
+
+export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const gate = await requireAdminApi();
+  if (!gate.ok) return gate.response;
+  const { id } = await ctx.params;
+
+  try {
+    const deleted = await deleteOrdersByIds([id]);
+    if (deleted === 0) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    return NextResponse.json({ ok: true, deleted });
+  } catch (e) {
+    console.error("[admin/orders DELETE]", e);
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Delete failed" }, { status: 500 });
+  }
 }

@@ -201,7 +201,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
       for (const file of Array.from(files)) {
         const fd = new FormData();
         fd.set("file", file);
-        const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+        const res = await fetch("/api/admin/upload", { method: "POST", body: fd, credentials: "include" });
         const data = (await res.json()) as { url?: string; error?: string };
         if (!res.ok) throw new Error(data.error ?? "Upload failed");
         const imgs = form.getValues("images");

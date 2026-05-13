@@ -211,11 +211,18 @@ export function CollectionFormModal({
       const fd = new FormData();
       fd.set("file", file);
       fd.set("folder", "prudential-atelier/collections");
-      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-      if (!res.ok) throw new Error("upload failed");
-      const data = (await res.json()) as { url: string };
-      form.setValue("coverImage", data.url);
-      toast.success("Image uploaded");
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd, credentials: "include" });
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok) {
+        toast.error(typeof data.error === "string" ? data.error : "Upload failed");
+        return;
+      }
+      if (data.url) {
+        form.setValue("coverImage", data.url, { shouldValidate: true, shouldDirty: true });
+        toast.success("Image uploaded");
+      } else {
+        toast.error("Upload failed");
+      }
     } catch {
       toast.error("Upload failed");
     } finally {
@@ -437,7 +444,7 @@ export function CollectionFormModal({
                 </div>
                 <label className="mt-2 inline-block cursor-pointer border border-[#37392d] px-3 py-1.5 font-body text-[11px] uppercase tracking-wide text-[#37392d]">
                   {uploading ? "Uploading…" : "Upload image"}
-                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onPickFile} />
+                  <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp,.jpg,.jpeg,.png,.webp" className="hidden" onChange={onPickFile} />
                 </label>
                 <input
                   {...form.register("coverImage")}
