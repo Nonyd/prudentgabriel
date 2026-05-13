@@ -7,6 +7,8 @@ import { LogOut, X } from "lucide-react";
 import { signOut } from "next-auth/react";
 import toast from "react-hot-toast";
 import { DarkModeToggle } from "@/components/common/DarkModeToggle";
+import { uploadAccountImage } from "@/lib/admin-upload-xhr";
+import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 
 type SafeMethod = {
   id: string;
@@ -45,6 +47,7 @@ export function CustomerProfileDrawer({
   const [image, setImage] = useState<string | null>(null);
   const [preferredGateway, setPreferredGateway] = useState<PaymentGateway>("PAYSTACK");
   const [methods, setMethods] = useState<SafeMethod[]>([]);
+  const [avatarProgress, setAvatarProgress] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -84,22 +87,20 @@ export function CustomerProfileDrawer({
   }
 
   async function uploadAvatar(file: File) {
-    const form = new FormData();
-    form.append("file", file);
-    const response = await fetch("/api/account/upload", { method: "POST", body: form });
-    const json = (await response.json()) as { url?: string; error?: string };
-    if (!response.ok) {
-      toast.error(json.error ?? "Could not upload photo");
-      return;
-    }
-    if (json.url) {
-      setImage(json.url);
+    setAvatarProgress(0);
+    try {
+      const url = await uploadAccountImage(file, (p) => setAvatarProgress(p));
+      setImage(url);
       await fetch("/api/account/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: json.url }),
+        body: JSON.stringify({ image: url }),
       });
       toast.success("Photo updated");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not upload photo");
+    } finally {
+      setAvatarProgress(null);
     }
   }
 
@@ -183,6 +184,9 @@ export function CustomerProfileDrawer({
                   if (file) void uploadAvatar(file);
                 }} />
                 <button type="button" onClick={() => fileInputRef.current?.click()} className="mt-2 font-body text-[11px] text-[#6B6B68]">Change Photo</button>
+                <div className="mt-2 w-full max-w-[200px]">
+                  <UploadProgressBar value={avatarProgress} />
+                </div>
                 <p className="mt-2 font-display text-[18px] text-ink">{name}</p>
                 <p className="font-body text-xs text-[#6B6B68]">{email}</p>
                 <span className="mt-1 bg-[#37392d] px-2 py-0.5 font-body text-[10px] text-white">{pointsBalance} pts</span>

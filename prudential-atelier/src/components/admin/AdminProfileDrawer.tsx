@@ -4,8 +4,11 @@ import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import toast from "react-hot-toast";
 import { Lock, X } from "lucide-react";
 import { DarkModeToggle } from "@/components/common/DarkModeToggle";
+import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
+import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 
 function getInitials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -32,6 +35,7 @@ export function AdminProfileDrawer({
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [avatarProgress, setAvatarProgress] = useState<number | null>(null);
 
   async function saveProfile() {
     await fetch("/api/account/profile", {
@@ -54,13 +58,16 @@ export function AdminProfileDrawer({
   }
 
   async function uploadAvatar(file: File) {
-    const form = new FormData();
-    form.append("file", file);
-    form.append("folder", "prudential-atelier/avatars/admin");
-    const response = await fetch("/api/admin/upload", { method: "POST", body: form });
-    if (!response.ok) return;
-    const json = (await response.json()) as { url?: string };
-    if (json.url) setImage(json.url);
+    setAvatarProgress(0);
+    try {
+      const url = await uploadAdminAsset(file, "prudential-atelier/avatars/admin", (p) => setAvatarProgress(p));
+      setImage(url);
+      toast.success("Photo ready — save profile to keep it");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setAvatarProgress(null);
+    }
   }
 
   return (
@@ -111,6 +118,9 @@ export function AdminProfileDrawer({
                 <button type="button" onClick={() => fileInputRef.current?.click()} className="mt-2 font-body text-[11px] text-[#6B6B68] hover:text-ink">
                   Change Photo
                 </button>
+                <div className="mt-2 w-full max-w-[200px] px-2">
+                  <UploadProgressBar value={avatarProgress} />
+                </div>
                 <p className="mt-3 text-center font-display text-[20px] text-ink">{`${firstName} ${lastName}`.trim() || initialName}</p>
                 <span className="mt-1 border border-[#37392d] px-2 py-0.5 font-body text-[10px] uppercase tracking-[0.08em] text-[#37392d]">SUPER ADMIN</span>
               </div>

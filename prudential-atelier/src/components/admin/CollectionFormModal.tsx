@@ -10,6 +10,8 @@ import Image from "next/image";
 import { collectionAdminSchema } from "@/validations/collection";
 import type { z } from "zod";
 import { slugifyText } from "@/lib/utils";
+import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
+import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 import type { AdminCollectionRow } from "@/components/admin/CollectionsClient";
 import type { ProductListItem } from "@/types/product";
 
@@ -36,6 +38,7 @@ export function CollectionFormModal({
   const [searchHits, setSearchHits] = useState<ProductListItem[]>([]);
   const [seoOpen, setSeoOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [baselineManual, setBaselineManual] = useState<string[]>([]);
   const [editLoading, setEditLoading] = useState(false);
 
@@ -207,26 +210,16 @@ export function CollectionFormModal({
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
+    setUploadProgress(0);
     try {
-      const fd = new FormData();
-      fd.set("file", file);
-      fd.set("folder", "prudential-atelier/collections");
-      const res = await fetch("/api/admin/upload", { method: "POST", body: fd, credentials: "include" });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok) {
-        toast.error(typeof data.error === "string" ? data.error : "Upload failed");
-        return;
-      }
-      if (data.url) {
-        form.setValue("coverImage", data.url, { shouldValidate: true, shouldDirty: true });
-        toast.success("Image uploaded");
-      } else {
-        toast.error("Upload failed");
-      }
-    } catch {
-      toast.error("Upload failed");
+      const url = await uploadAdminAsset(file, "prudential-atelier/collections", (p) => setUploadProgress(p));
+      form.setValue("coverImage", url, { shouldValidate: true, shouldDirty: true });
+      toast.success("Image uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
+      setUploadProgress(null);
       e.target.value = "";
     }
   };
@@ -305,8 +298,8 @@ export function CollectionFormModal({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/50" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] max-h-[92vh] w-[700px] max-w-[96vw] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-[#EBEBEA] bg-white shadow-xl">
-          <div className="flex items-center justify-between border-b border-[#EBEBEA] px-6 py-4">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] flex max-h-[92vh] w-[700px] max-w-[96vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden border border-[#EBEBEA] bg-white shadow-xl">
+          <div className="flex shrink-0 items-center justify-between border-b border-[#EBEBEA] px-6 py-4">
             <Dialog.Title className="font-display text-xl text-ink">
               {isEdit ? `Edit: ${editing?.name ?? ""}` : "Create collection"}
             </Dialog.Title>
@@ -315,7 +308,9 @@ export function CollectionFormModal({
             </Dialog.Close>
           </div>
 
-          <form onSubmit={onSubmit} className="grid gap-0 md:grid-cols-[3fr_2fr]">
+          <form onSubmit={onSubmit} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+              <div className="grid gap-0 pb-4 md:grid-cols-[3fr_2fr]">
             <div className="space-y-6 border-b border-[#EBEBEA] p-6 md:border-b-0 md:border-r">
               <div>
                 <label className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">
@@ -434,7 +429,7 @@ export function CollectionFormModal({
               </div>
             </div>
 
-            <div className="flex flex-col gap-6 p-6 md:sticky md:top-0 md:self-start">
+            <div className="flex flex-col gap-6 p-6">
               <div>
                 <p className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">Cover image</p>
                 <div className="relative mt-2 aspect-[3/4] w-full max-w-[220px] bg-[#F2F2F0]">
@@ -453,6 +448,9 @@ export function CollectionFormModal({
                 />
                 <input {...form.register("coverImageAlt")} className="mt-2 w-full border border-[#EBEBEA] px-2 py-1 text-[12px]" placeholder="Alt text" />
                 <p className="mt-1 text-[10px] text-[#8A8A86]">Portrait editorial (3:4) works best.</p>
+                <div className="mt-2 max-w-[220px]">
+                  <UploadProgressBar value={uploadProgress} />
+                </div>
               </div>
 
               <div className="space-y-3 border-t border-[#EBEBEA] pt-4">
@@ -491,13 +489,21 @@ export function CollectionFormModal({
                 {seoOpen ? (
                   <div className="mt-3 space-y-2">
                     <input {...form.register("metaTitle")} maxLength={60} className="w-full border border-[#EBEBEA] px-2 py-1 text-[12px]" placeholder="Meta title" />
-                    <textarea {...form.register("metaDescription")} maxLength={160} rows={3} className="w-full border border-[#EBEBEA] px-2 py-1 text-[12px]" placeholder="Meta description" />
+                    <textarea
+                      {...form.register("metaDescription")}
+                      maxLength={160}
+                      rows={3}
+                      className="max-h-40 min-h-[4.5rem] w-full resize-y border border-[#EBEBEA] px-2 py-1 text-[12px]"
+                      placeholder="Meta description"
+                    />
                   </div>
                 ) : null}
               </div>
             </div>
+              </div>
+            </div>
 
-            <div className="col-span-full flex justify-end gap-3 border-t border-[#EBEBEA] px-6 py-4">
+            <div className="relative z-20 flex shrink-0 justify-end gap-3 border-t border-[#EBEBEA] bg-white px-6 py-4">
               <Dialog.Close asChild>
                 <button type="button" className="border border-[#EBEBEA] px-4 py-2 font-body text-[12px]">
                   Cancel

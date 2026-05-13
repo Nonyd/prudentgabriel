@@ -16,6 +16,8 @@ import { VariantManager } from "./VariantManager";
 import { buildDefaultProductSku } from "@/lib/product-sku";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { cn } from "@/lib/utils";
+import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
+import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 
 type FullProduct = Product & {
   images: ProductImage[];
@@ -132,6 +134,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
   });
 
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [bundleSearch, setBundleSearch] = useState("");
   const [bundleResults, setBundleResults] = useState<ProductListItem[]>([]);
   const [bundleSearching, setBundleSearching] = useState(false);
@@ -197,25 +200,27 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
   const uploadFiles = async (files: FileList | null) => {
     if (!files?.length) return;
     setUploading(true);
+    setUploadProgress(0);
     try {
-      for (const file of Array.from(files)) {
-        const fd = new FormData();
-        fd.set("file", file);
-        const res = await fetch("/api/admin/upload", { method: "POST", body: fd, credentials: "include" });
-        const data = (await res.json()) as { url?: string; error?: string };
-        if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      const list = Array.from(files);
+      let done = 0;
+      for (const file of list) {
+        const url = await uploadAdminAsset(file, "prudential-atelier/products", (p) => {
+          const slice = 100 / list.length;
+          setUploadProgress(Math.round(done * slice + (p / 100) * slice));
+        });
         const imgs = form.getValues("images");
         const isFirst = imgs.length === 0;
-        form.setValue("images", [
-          ...imgs,
-          { url: data.url!, alt: "", isPrimary: isFirst, sortOrder: imgs.length },
-        ]);
+        form.setValue("images", [...imgs, { url, alt: "", isPrimary: isFirst, sortOrder: imgs.length }]);
+        done += 1;
+        setUploadProgress(Math.round((100 * done) / list.length));
       }
       toast.success("Images uploaded");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -366,6 +371,9 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
               />
               {uploading ? "Uploading…" : "Drop images here or click to upload"}
             </label>
+            <div className="mt-2 max-w-md">
+              <UploadProgressBar value={uploadProgress} />
+            </div>
             <div className="mt-4 grid grid-cols-3 gap-3">
               {images.map((im, idx) => (
                 <div key={`${im.url}-${idx}`} className="relative rounded-sm border border-[#EBEBEA] p-1">

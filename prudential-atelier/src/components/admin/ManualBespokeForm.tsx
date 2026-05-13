@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { X } from "lucide-react";
 import type { BespokeStatus } from "@prisma/client";
+import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
+import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 
 type UploadItem = { url: string; name: string; isPdf: boolean };
 
@@ -31,26 +33,24 @@ export function ManualBespokeForm() {
   const isOnlinePayment = paymentMethod === "Online Payment";
   const [adminNotes, setAdminNotes] = useState("");
   const [status, setStatus] = useState<BespokeStatus>("CONFIRMED");
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   async function uploadFile(file: File, folder: string): Promise<UploadItem> {
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("folder", folder);
-    if (file.type === "application/pdf") fd.append("allowPdf", "true");
-    const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-    const j = (await res.json()) as { url?: string; error?: string };
-    if (!res.ok || !j.url) throw new Error(j.error ?? "Upload failed");
-    return { url: j.url, name: file.name, isPdf: file.type === "application/pdf" };
+    const url = await uploadAdminAsset(file, folder, (p) => setUploadProgress(p));
+    return { url, name: file.name, isPdf: file.type === "application/pdf" };
   }
 
   const onSketches = async (files: FileList | null) => {
     if (!files?.length) return;
     for (const f of Array.from(files).slice(0, 10)) {
+      setUploadProgress(0);
       try {
         const u = await uploadFile(f, "prudent-gabriel/bespoke-sketches");
         setSketches((s) => [...s, u]);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Upload failed");
+      } finally {
+        setUploadProgress(null);
       }
     }
   };
@@ -58,11 +58,14 @@ export function ManualBespokeForm() {
   const onRefs = async (files: FileList | null) => {
     if (!files?.length) return;
     for (const f of Array.from(files).slice(0, 5)) {
+      setUploadProgress(0);
       try {
         const u = await uploadFile(f, "prudent-gabriel/bespoke-refs");
         setRefs((s) => [...s, u]);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Upload failed");
+      } finally {
+        setUploadProgress(null);
       }
     }
   };
@@ -242,7 +245,32 @@ export function ManualBespokeForm() {
               <p className="pt-2 text-[11px] font-medium uppercase text-[#6B6B68]">Sketches / refs</p>
               <input type="file" multiple accept="image/*,application/pdf" className="text-xs" onChange={(e) => void onSketches(e.target.files)} />
               <input type="file" multiple accept="image/*" className="text-xs" onChange={(e) => void onRefs(e.target.files)} />
+              <UploadProgressBar value={uploadProgress} />
               <p className="text-[11px] text-[#6B6B68]">{sketches.length} sketch files · {refs.length} reference images</p>
+              {(sketches.length > 0 || refs.length > 0) && (
+                <div className="flex flex-wrap gap-2">
+                  {sketches.map((s) => (
+                    <div
+                      key={`sk-${s.url}`}
+                      className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-sm border border-[#EBEBEA] bg-[#FAFAFA] text-[9px] text-[#6B6B68]"
+                      title={s.name}
+                    >
+                      {s.isPdf ? (
+                        <span>PDF</span>
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={s.url} alt="" className="h-full w-full object-cover" />
+                      )}
+                    </div>
+                  ))}
+                  {refs.map((r) => (
+                    <div key={`rf-${r.url}`} className="h-14 w-14 overflow-hidden rounded-sm border border-[#EBEBEA]" title={r.name}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={r.url} alt="" className="h-full w-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <textarea className="min-h-[72px] w-full border border-[#EBEBEA] px-3 py-2" placeholder="Internal admin notes" value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} />
 
