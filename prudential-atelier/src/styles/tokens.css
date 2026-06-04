@@ -33,7 +33,7 @@
   --radius-lg: 6px;
   --radius-xl: 8px;
 
-  --font-display: var(--font-cormorant), "Cormorant", serif;
+  --font-display: var(--font-cormorant), "Cormorant Garamond", serif;
   --font-body: var(--font-lora), "Lora", serif;
   --font-ui: var(--font-jost), "Jost", sans-serif;
 

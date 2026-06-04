@@ -35,7 +35,7 @@ const config: Config = {
         "dark-nut": "#3a1f0c",
       },
       fontFamily: {
-        serif: ["var(--font-cormorant)", "Cormorant", "serif"],
+        serif: ["var(--font-cormorant)", "Cormorant Garamond", "serif"],
         sans: ["var(--font-jost)", "Jost", "sans-serif"],
         body: ["var(--font-lora)", "Lora", "serif"],
       },

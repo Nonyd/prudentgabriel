@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant, Jost, Lora } from "next/font/google";
+import { Cormorant_Garamond, Jost, Lora } from "next/font/google";
 import "@/styles/globals.css";
 import { auth } from "@/auth";
 import { getPublicAppUrl } from "@/lib/app-url";
@@ -9,18 +9,11 @@ import { RootProvider } from "@/providers/RootProvider";
 
 const themeInitScript = `(function(){try{var t=localStorage.getItem("pg-theme");var theme="light";if(t==="dark"||t==="light")theme=t;else if(t){try{var p=JSON.parse(t);if(p&&p.state&&p.state.isDark)theme="dark";}catch(e){}}document.documentElement.setAttribute("data-theme",theme);}catch(e){}})();`;
 
-const cormorant = Cormorant({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
-  variable: "--font-cormorant",
-  display: "swap",
-});
-
-const jost = Jost({
+const cormorantGaramond = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
-  variable: "--font-jost",
+  style: ["normal", "italic"],
+  variable: "--font-cormorant",
   display: "swap",
 });
 
@@ -29,6 +22,13 @@ const lora = Lora({
   weight: ["400", "500"],
   style: ["normal", "italic"],
   variable: "--font-lora",
+  display: "swap",
+});
+
+const jost = Jost({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-jost",
   display: "swap",
 });
 
@@ -61,7 +61,11 @@ export default async function RootLayout({
   const logos = await getLogoSettings();
 
   return (
-    <html lang="en" className={`${cormorant.variable} ${jost.variable} ${lora.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${cormorantGaramond.variable} ${lora.variable} ${jost.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
