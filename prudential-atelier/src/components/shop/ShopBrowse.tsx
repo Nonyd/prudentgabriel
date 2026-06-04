@@ -5,16 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as Select from "@radix-ui/react-select";
-import { LayoutGrid, List, SlidersHorizontal } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useInView } from "react-intersection-observer";
-import { ProductCard } from "@/components/common/ProductCard";
-import { FilterDrawer } from "@/components/shop/FilterDrawer";
-import { ActiveFilters } from "@/components/shop/ActiveFilters";
 import { optimizeProductCardImageUrl, PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/product-image-url";
 import { convertFromNGN, formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import { cn } from "@/lib/utils";
 import type { ProductListItem } from "@/types/product";
+import type { ProductCategory } from "@prisma/client";
 
 interface ShopBrowseProps {
   products: ProductListItem[];
@@ -27,20 +25,76 @@ interface ShopBrowseProps {
   heroSubtext?: string;
 }
 
+const FILTERS = [
+  { id: "all", label: "ALL", params: {} },
+  { id: "rtw", label: "READY-TO-WEAR", params: { type: "RTW" } },
+  { id: "bridal", label: "BRIDAL", params: { category: "BRIDAL" } },
+  { id: "kids", label: "KIDS", params: { category: "KIDDIES" } },
+] as const;
+
+const CATEGORY_LABELS: Record<ProductCategory, string> = {
+  BRIDAL: "BRIDAL",
+  EVENING_WEAR: "EVENING WEAR",
+  CASUAL: "CASUAL",
+  FORMAL: "FORMAL",
+  KIDDIES: "KIDS",
+  ACCESSORIES: "ACCESSORIES",
+};
+
+function ShopProductCard({ product, priority }: { product: ProductListItem; priority?: boolean }) {
+  const currency = useCurrencyStore((s) => s.currency);
+  const rates = useCurrencyStore((s) => s.rates);
+  const prices = product.variants.map((v) => (v.salePriceNGN != null ? v.salePriceNGN : v.priceNGN));
+  const lowest = Math.min(...prices);
+  const multi = product.variants.length > 1;
+  const img = optimizeProductCardImageUrl(product.images[0]?.url || PRODUCT_IMAGE_PLACEHOLDER);
+  const showBestSeller = product.isFeatured;
+  const showNew = product.isNewArrival && !showBestSeller;
+
+  return (
+    <Link href={`/shop/${product.slug}`} className="group block">
+      <div className="relative aspect-square overflow-hidden rounded-sm bg-sand/30">
+        <Image
+          src={img}
+          alt={product.images[0]?.alt || product.name}
+          fill
+          sizes="(max-width: 768px) 50vw, 25vw"
+          className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
+          priority={priority}
+        />
+        {showBestSeller ? (
+          <span className="absolute left-3 top-3 rounded-sm bg-wine px-2 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-cream">
+            Best seller
+          </span>
+        ) : null}
+        {showNew ? (
+          <span className="absolute left-3 top-3 rounded-sm border border-[0.5px] border-sand bg-cream px-2 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-choc">
+            New in
+          </span>
+        ) : null}
+      </div>
+      <div className="pt-4">
+        <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">
+          {product.type === "RTW" ? "READY-TO-WEAR" : CATEGORY_LABELS[product.category]}
+        </p>
+        <h3 className="mt-1.5 font-serif text-[20px] text-choc transition-colors group-hover:text-nut">{product.name}</h3>
+        <p className="mt-1 font-sans text-[14px] text-text-mid">
+          {multi ? "From " : ""}
+          {formatPrice(convertFromNGN(lowest, currency, rates), currency)}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
 export function ShopBrowse({
   products: initialProducts,
   total,
   page: initialPage,
-  totalPages: _totalPagesIgnored,
   hasNext: initialHasNext,
-  heroHeadline = "The Edit.",
-  heroSubtext = "Ready-to-Wear · Bespoke · Bridal",
 }: ShopBrowseProps) {
-  void _totalPagesIgnored;
   const sp = useSearchParams();
   const router = useRouter();
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [view, setView] = useState<"grid" | "list">("grid");
   const [items, setItems] = useState<ProductListItem[]>(initialProducts);
   const [page, setPage] = useState(initialPage);
   const [hasNext, setHasNext] = useState(initialHasNext);
@@ -54,6 +108,15 @@ export function ShopBrowse({
     setHasNext(initialHasNext);
   }, [initialProducts, initialPage, initialHasNext, queryKey]);
 
+  const activeFilter = useMemo(() => {
+    const cat = sp.get("category");
+    const type = sp.get("type");
+    if (cat === "BRIDAL") return "bridal";
+    if (cat === "KIDDIES") return "kids";
+    if (type === "RTW") return "rtw";
+    return "all";
+  }, [sp]);
+
   const loadMore = useCallback(async () => {
     if (!hasNext || loadingMore) return;
     setLoadingMore(true);
@@ -63,11 +126,7 @@ export function ShopBrowse({
       u.set("page", String(next));
       const res = await fetch(`/api/products?${u.toString()}`);
       if (!res.ok) throw new Error("fetch failed");
-      const data = (await res.json()) as {
-        products: ProductListItem[];
-        hasNext: boolean;
-        page: number;
-      };
+      const data = (await res.json()) as { products: ProductListItem[]; hasNext: boolean; page: number };
       setItems((prev) => [...prev, ...data.products]);
       setPage(data.page);
       setHasNext(data.hasNext);
@@ -84,150 +143,99 @@ export function ShopBrowse({
     if (inView) void loadMore();
   }, [inView, loadMore]);
 
-  return (
-    <div>
-      <section className="relative flex h-[240px] flex-col justify-center bg-black px-6 md:h-[280px]">
-        <div className="mx-auto w-full max-w-[1400px] text-center md:px-8">
-          <p className="font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/50">Prudent Gabriel</p>
-          <h1 className="mt-3 font-display text-[36px] font-normal italic leading-[0.95] text-white md:text-[56px]">
-            {heroHeadline}
-          </h1>
-          <p className="mt-3 font-body text-[13px] font-light text-white/55">{heroSubtext}</p>
-        </div>
-      </section>
+  function applyFilter(filterId: (typeof FILTERS)[number]["id"]) {
+    const f = FILTERS.find((x) => x.id === filterId)!;
+    const n = new URLSearchParams();
+    for (const [k, v] of Object.entries(f.params)) n.set(k, v);
+    n.set("limit", sp.get("limit") ?? "20");
+    const sort = sp.get("sort");
+    if (sort) n.set("sort", sort);
+    router.push(`/shop?${n.toString()}`);
+  }
 
-      <header className="sticky top-0 z-40 flex h-12 items-center justify-between border-b border-mid-grey bg-canvas px-4 md:px-6">
-        <div className="flex min-w-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setFilterOpen(true)}
-            className="inline-flex items-center gap-2 font-body text-[11px] font-medium uppercase tracking-[0.14em] text-charcoal hover:text-olive"
-          >
-            <SlidersHorizontal className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden />
-            <span className="hidden sm:inline">Filter</span>
-          </button>
-        </div>
-        <p className="truncate px-2 text-center font-body text-[11px] text-dark-grey">
-          Showing {items.length}
-          {total > items.length ? ` of ${total}` : ""} pieces
-        </p>
-        <div className="flex shrink-0 items-center gap-2">
-          <SortSelect />
-          <div className="flex border border-mid-grey">
-            <button
-              type="button"
-              aria-label="Grid view"
-              onClick={() => setView("grid")}
-              className={cn(
-                "p-2 text-charcoal transition-colors",
-                view === "grid" ? "bg-olive text-white" : "hover:bg-light-grey",
-              )}
-            >
-              <LayoutGrid className="h-4 w-4" strokeWidth={1.5} />
-            </button>
-            <button
-              type="button"
-              aria-label="List view"
-              onClick={() => setView("list")}
-              className={cn(
-                "border-l border-mid-grey p-2 text-charcoal transition-colors",
-                view === "list" ? "bg-olive text-white" : "hover:bg-light-grey",
-              )}
-            >
-              <List className="h-4 w-4" strokeWidth={1.5} />
-            </button>
-          </div>
-        </div>
+  return (
+    <div className="bg-ivory">
+      <header className="px-4 py-14 text-center md:py-16">
+        <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">THE SHOP</p>
+        <h1 className="mt-3 font-serif text-[40px] font-normal text-choc md:text-[56px]">Ready-to-Wear</h1>
       </header>
 
-      <FilterDrawer open={filterOpen} onOpenChange={setFilterOpen} showTrigger={false} />
+      <div className="border-y border-[0.5px] border-sand bg-ivory px-4 py-4 md:px-8">
+        <div className="mx-auto flex max-w-site flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap gap-2">
+            {FILTERS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => applyFilter(f.id)}
+                className={cn(
+                  "rounded-full px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.12em] transition-colors",
+                  activeFilter === f.id
+                    ? "bg-choc text-cream"
+                    : "border border-[0.5px] border-sand text-text-mid hover:border-nut/50",
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="font-sans text-[11px] uppercase tracking-[0.1em] text-text-light">
+              {total} {total === 1 ? "piece" : "pieces"}
+            </span>
+            <SortSelect />
+          </div>
+        </div>
+      </div>
 
-      <ActiveFilters />
-
-      <div className="mx-auto max-w-[1400px] px-6 py-8 md:px-8">
+      <div className="mx-auto max-w-site px-4 py-10 md:px-8">
         {items.length === 0 ? (
           <div className="flex flex-col items-center py-20 text-center">
-            <p className="font-display text-lg text-charcoal">No pieces match your search</p>
+            <p className="font-serif text-lg text-choc">No pieces match your filters</p>
             <button
               type="button"
               onClick={() => router.push("/shop")}
-              className="mt-6 font-body text-[11px] font-medium uppercase tracking-wider text-olive underline"
+              className="mt-6 font-sans text-[11px] font-medium uppercase tracking-wider text-nut underline"
             >
-              Clear All Filters
+              View all pieces
             </button>
           </div>
-        ) : view === "grid" ? (
-          <div className="grid grid-cols-2 gap-0.5 bg-mid-grey md:grid-cols-3">
+        ) : (
+          <div className="grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
             {items.map((p, i) => (
-              <div key={`${p.id}-${i}`} className="bg-canvas">
-                <ProductCard product={p} priority={i < 6} />
-              </div>
+              <ShopProductCard key={`${p.id}-${i}`} product={p} priority={i < 4} />
             ))}
           </div>
-        ) : (
-          <ShopListRows products={items} />
         )}
 
         {hasNext && (
           <div ref={sentinelRef} className="flex justify-center py-10">
             {loadingMore ? (
-              <p className="font-body text-[11px] text-dark-grey">Loading more…</p>
+              <p className="font-sans text-[11px] text-text-light">Loading more…</p>
             ) : (
               <span className="h-8 w-8" aria-hidden />
             )}
           </div>
-        )}
-
-        {!hasNext && items.length > 0 && items.length === total && (
-          <p className="pb-8 text-center font-body text-[11px] text-dark-grey">Showing all {total} pieces</p>
         )}
       </div>
     </div>
   );
 }
 
-function ShopListRows({ products }: { products: ProductListItem[] }) {
-  const currency = useCurrencyStore((s) => s.currency);
-  const rates = useCurrencyStore((s) => s.rates);
-  return (
-    <ul className="border border-mid-grey bg-canvas">
-      {products.map((p) => {
-        const prices = p.variants.map((v) => (v.salePriceNGN != null ? v.salePriceNGN : v.priceNGN));
-        const low = Math.min(...prices);
-        const multi = p.variants.length > 1;
-        const fmt = formatPrice(convertFromNGN(low, currency, rates), currency);
-        const img = optimizeProductCardImageUrl(p.images[0]?.url || PRODUCT_IMAGE_PLACEHOLDER);
-        return (
-          <li key={p.id} className="flex gap-4 border-b border-mid-grey p-4 last:border-b-0">
-            <Link href={`/shop/${p.slug}`} className="relative block h-24 w-[4.5rem] shrink-0 overflow-hidden bg-light-grey">
-              <Image src={img} alt={p.images[0]?.alt || p.name} fill className="object-cover object-top" sizes="80px" />
-            </Link>
-            <div className="min-w-0 flex-1">
-              <Link
-                href={`/shop/${p.slug}`}
-                className="font-body text-[14px] text-charcoal transition-colors hover:text-olive line-clamp-2"
-              >
-                {p.name}
-              </Link>
-              <p className="mt-1 font-body text-[13px] font-light text-dark-grey">
-                {multi ? "From " : ""}
-                {fmt}
-              </p>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
 function SortSelect() {
   const sp = useSearchParams();
   const router = useRouter();
-  const sort = sp.get("sort") ?? "newest";
+  const sort = sp.get("sort") ?? "featured";
+  const labels: Record<string, string> = {
+    featured: "Featured",
+    "price-asc": "Price Low–High",
+    "price-desc": "Price High–Low",
+    newest: "Newest",
+  };
+
   return (
     <Select.Root
-      value={sort}
+      value={sort === "newest" ? "newest" : sort}
       onValueChange={(v) => {
         const n = new URLSearchParams(sp.toString());
         n.set("sort", v);
@@ -235,22 +243,24 @@ function SortSelect() {
         router.push(`/shop?${n.toString()}`);
       }}
     >
-      <Select.Trigger className="inline-flex items-center gap-1 border-0 bg-transparent font-body text-[11px] font-medium text-charcoal outline-none hover:text-olive">
-        <Select.Value placeholder="Sort" />
+      <Select.Trigger className="inline-flex items-center gap-1.5 font-sans text-[11px] uppercase tracking-[0.1em] text-text-mid outline-none">
+        <span className="text-text-light">Sort</span>
+        <Select.Value>{labels[sort] ?? "Featured"}</Select.Value>
+        <ChevronDown className="h-3.5 w-3.5" />
       </Select.Trigger>
       <Select.Portal>
-        <Select.Content className="z-50 min-w-[10rem] border border-mid-grey bg-canvas shadow-md">
+        <Select.Content className="z-50 min-w-[10rem] rounded-sm border border-sand bg-white shadow-md">
           <Select.Viewport className="p-1">
             {[
-              ["newest", "Newest"],
-              ["price-asc", "Price: Low to High"],
-              ["price-desc", "Price: High to Low"],
               ["featured", "Featured"],
+              ["price-asc", "Price Low–High"],
+              ["price-desc", "Price High–Low"],
+              ["newest", "Newest"],
             ].map(([value, label]) => (
               <Select.Item
                 key={value}
                 value={value}
-                className="cursor-pointer px-3 py-2 font-body text-[12px] text-charcoal hover:bg-light-grey"
+                className="cursor-pointer rounded-sm px-3 py-2 font-sans text-[12px] text-choc outline-none hover:bg-sand/30"
               >
                 {label}
               </Select.Item>

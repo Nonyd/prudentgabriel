@@ -32,6 +32,22 @@ export const STAGE_LABELS: Record<BespokeStage, string> = {
   DELIVERY: "13. Delivery / Collection",
 };
 
+export const STAGE_DESCRIPTIONS: Record<BespokeStage, string> = {
+  CONSULTATION_BOOKING: "Your consultation slot is reserved and confirmed.",
+  CONSULTATION_SESSION: "We meet to understand your vision, occasion, and preferences.",
+  INVOICE_ISSUANCE: "A detailed quotation is prepared for your approval.",
+  PAYMENT_CONFIRMATION: "Your deposit or full payment is verified and recorded.",
+  SKETCHING_CONCEPT: "Initial sketches and design concepts are developed for review.",
+  FABRIC_SOURCING: "Premium fabrics are selected and sourced for your commission.",
+  DESIGN_APPROVAL: "Final design, fabric, and embellishments are approved by you.",
+  TAILORING: "Our artisans construct your garment with precision and care.",
+  FIRST_FITTING: "Your first fitting ensures the silhouette and structure are correct.",
+  ALTERATIONS: "Adjustments are made based on fitting feedback.",
+  BEADING_FINISHING: "Hand-beading, embroidery, and finishing details are applied.",
+  FINAL_FITTING: "A final fitting confirms the perfect fit before delivery.",
+  DELIVERY: "Your completed commission is delivered or ready for collection.",
+};
+
 export const STAGE_SHORT_LABELS: Record<BespokeStage, string> = {
   CONSULTATION_BOOKING: "Consultation Booking",
   CONSULTATION_SESSION: "Consultation Session",

@@ -1,24 +1,24 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import { useSession } from "next-auth/react";
 import clsx from "clsx";
-import { Calendar, Check, Clock, Home, MapPin, Phone, Video } from "lucide-react";
+import { Check } from "lucide-react";
 import toast from "react-hot-toast";
 import type { ConsultantWithOfferings } from "@/lib/consultation";
 import {
   addDaysToWatYmd,
-  getDeliveryModeLabel,
-  getSessionTypeLabel,
   getWatYmd,
   isManualFlow,
   isVirtualDelivery,
 } from "@/lib/consultation";
-import type { ConsultantOffering, ConsultationDeliveryMode, ConsultationSessionType, Currency } from "@prisma/client";
+import type { ConsultantOffering, Currency } from "@prisma/client";
+import { ConsultationDeliveryMode as DeliveryMode } from "@prisma/client";
 import { StripePayBlock } from "@/components/checkout/StripePayBlock";
+
 type Gateway = "PAYSTACK" | "FLUTTERWAVE" | "STRIPE" | "MONNIFY";
 type ShopCur = "NGN" | "USD" | "GBP";
+type CardKey = "signature" | "design-team" | "virtual";
 
 const OCCASIONS = [
   "White Wedding",
@@ -34,28 +34,117 @@ const OCCASIONS = [
   "Other",
 ];
 
-const SESSION_ICONS: Partial<Record<ConsultationSessionType, string>> = {
-  BESPOKE_DESIGN: "✂️",
-  BRIDAL_CONSULTATION: "💍",
-  STYLING_SESSION: "👗",
-  WARDROBE_CONSULTATION: "🪞",
-  GROUP_SESSION: "👥",
-  DISCOVERY_CALL: "🌟",
+const VIRTUAL_PLATFORMS = ["Zoom", "Google Meet", "WhatsApp Call", "WhatsApp Video"] as const;
+
+const CARD_UI: Record<
+  CardKey,
+  {
+    typeLabel: string;
+    title: string;
+    description: string;
+    features: string[];
+    badge?: string;
+    match: (c: ConsultantWithOfferings, o: ConsultantOffering) => boolean;
+  }
+> = {
+  signature: {
+    typeLabel: "SIGNATURE",
+    title: "In-Person with Mrs. Prudent",
+    description: "A private session with the Creative Director herself. The full atelier experience.",
+    features: ["Direct with the Creative Director", "Premium fabric library access", "Up to 90 minutes"],
+    badge: "SIGNATURE",
+    match: (c, o) =>
+      c.isFlagship &&
+      (o.deliveryMode === DeliveryMode.INPERSON_ATELIER_PRUDENT ||
+        o.deliveryMode === DeliveryMode.INPERSON_HOME_PRUDENT),
+  },
+  "design-team": {
+    typeLabel: "IN-PERSON",
+    title: "With the Design Team",
+    description: "Sit with our senior designers in the Lagos atelier to shape your commission.",
+    features: ["Senior design team", "In-atelier fabric viewing", "Up to 60 minutes"],
+    match: (c, o) =>
+      !c.isFlagship &&
+      (o.deliveryMode === DeliveryMode.INPERSON_ATELIER ||
+        o.deliveryMode === DeliveryMode.INPERSON_HOME_TEAM),
+  },
+  virtual: {
+    typeLabel: "VIRTUAL",
+    title: "Virtual Consultation",
+    description: "Meet us from anywhere — Zoom, Google Meet or WhatsApp. Link sent an hour before.",
+    features: ["Zoom · Meet · WhatsApp", "Screen-shared lookbook", "Up to 45 minutes"],
+    match: (c, o) =>
+      !c.isFlagship &&
+      (o.deliveryMode === DeliveryMode.VIRTUAL_STANDARD ||
+        o.deliveryMode === DeliveryMode.VIRTUAL_WITH_TEAM ||
+        o.deliveryMode === DeliveryMode.PHONE_CALL),
+  },
 };
 
-function deliveryIcon(mode: ConsultationDeliveryMode) {
-  if (mode.includes("VIRTUAL") || mode === "PHONE_CALL") return Video;
-  if (mode.includes("HOME")) return Home;
-  if (mode.includes("INPERSON")) return MapPin;
-  return Phone;
+function resolveCard(
+  consultants: ConsultantWithOfferings[],
+  key: CardKey,
+): { consultant: ConsultantWithOfferings; offering: ConsultantOffering } | null {
+  const cfg = CARD_UI[key];
+  for (const c of consultants) {
+    const offering = c.offerings.find((o) => o.isActive && cfg.match(c, o));
+    if (offering) return { consultant: c, offering };
+  }
+  for (const c of consultants) {
+    if (key === "signature" && c.isFlagship && c.offerings[0]) {
+      return { consultant: c, offering: c.offerings[0] };
+    }
+    if (key === "design-team" && !c.isFlagship && c.offerings[0]) {
+      return { consultant: c, offering: c.offerings[0] };
+    }
+    if (key === "virtual" && !c.isFlagship && c.offerings[0]) {
+      return { consultant: c, offering: c.offerings[0] };
+    }
+  }
+  return null;
+}
+
+function StepIndicator({ step }: { step: number }) {
+  const steps = [
+    { n: 1, label: "CHOOSE" },
+    { n: 2, label: "SCHEDULE" },
+    { n: 3, label: "CONFIRM" },
+  ];
+  return (
+    <div className="mb-12 flex items-center justify-center gap-0">
+      {steps.map((s, i) => (
+        <div key={s.n} className="flex items-center">
+          <div className="flex flex-col items-center">
+            <div
+              className={clsx(
+                "flex h-3 w-3 items-center justify-center rounded-full border",
+                step >= s.n ? "border-choc bg-choc" : "border-sand bg-white",
+              )}
+            />
+            <span
+              className={clsx(
+                "mt-2 font-sans text-[10px] uppercase tracking-[0.14em]",
+                step === s.n ? "font-semibold text-choc" : "font-normal text-text-light",
+              )}
+            >
+              {s.n} {s.label}
+            </span>
+          </div>
+          {i < steps.length - 1 ? (
+            <div className={clsx("mx-4 mb-5 h-px w-16 sm:w-24", step > s.n ? "bg-choc" : "bg-sand")} />
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function ConsultationBookingFlow({ consultants }: { consultants: ConsultantWithOfferings[] }) {
   const { data: session } = useSession();
   const [step, setStep] = useState(1);
+  const [selectedCard, setSelectedCard] = useState<CardKey | null>(null);
   const [consultant, setConsultant] = useState<ConsultantWithOfferings | null>(null);
   const [offering, setOffering] = useState<ConsultantOffering | null>(null);
-  const [sessionType, setSessionType] = useState<ConsultationSessionType | null>(null);
   const [manualFlow, setManualFlow] = useState(false);
 
   const [selectedYmd, setSelectedYmd] = useState<string | null>(null);
@@ -66,18 +155,19 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
   const [pref1, setPref1] = useState("");
   const [pref2, setPref2] = useState("");
   const [pref3, setPref3] = useState("");
+  const [virtualPlatform, setVirtualPlatform] = useState<string>(VIRTUAL_PLATFORMS[0]);
 
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
-  const [clientCountry, setClientCountry] = useState("NG");
-  const [clientInstagram, setClientInstagram] = useState("");
+  const clientCountry = "NG";
+  const clientInstagram = "";
   const [occasion, setOccasion] = useState("");
   const [description, setDescription] = useState("");
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  const [currency, setCurrency] = useState<ShopCur>("NGN");
+  const currency: ShopCur = "NGN";
   const [gateway, setGateway] = useState<Gateway | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [bookingNumber, setBookingNumber] = useState<string | null>(null);
@@ -90,17 +180,17 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
     if (session?.user?.email) setClientEmail(session.user.email);
   }, [session]);
 
-  const sessionTypesForConsultant = useMemo(() => {
-    if (!consultant) return [];
-    const set = new Set<ConsultationSessionType>();
-    consultant.offerings.forEach((o) => set.add(o.sessionType));
-    return Array.from(set);
-  }, [consultant]);
-
-  const offeringsForSession = useMemo(() => {
-    if (!consultant || !sessionType) return [];
-    return consultant.offerings.filter((o) => o.sessionType === sessionType);
-  }, [consultant, sessionType]);
+  function selectCard(key: CardKey) {
+    const resolved = resolveCard(consultants, key);
+    if (!resolved) {
+      toast.error("This consultation type is not available right now.");
+      return;
+    }
+    setSelectedCard(key);
+    setConsultant(resolved.consultant);
+    setOffering(resolved.offering);
+    setManualFlow(isManualFlow(resolved.offering.deliveryMode, resolved.consultant.isFlagship));
+  }
 
   const loadAvailableDates = useCallback(async () => {
     if (!consultant || !offering || manualFlow) return;
@@ -149,18 +239,6 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
     if (selectedYmd && step === 2 && !manualFlow) void loadSlots(selectedYmd);
   }, [selectedYmd, step, manualFlow, loadSlots]);
 
-  function selectConsultant(c: ConsultantWithOfferings) {
-    setConsultant(c);
-    setOffering(null);
-    setSessionType(null);
-    setManualFlow(c.isFlagship);
-  }
-
-  function pickOffering(o: ConsultantOffering) {
-    setOffering(o);
-    setManualFlow(isManualFlow(o.deliveryMode, consultant?.isFlagship ?? false));
-  }
-
   async function uploadRef(file: File) {
     if (referenceImages.length >= 5) return;
     setUploading(true);
@@ -203,7 +281,10 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
         clientCountry,
         clientInstagram: clientInstagram || undefined,
         occasion,
-        description,
+        description:
+          offering && isVirtualDelivery(offering.deliveryMode) && virtualPlatform
+            ? `${description}\n\nPreferred platform: ${virtualPlatform}`
+            : description,
         referenceImages,
         confirmedDate,
         confirmedTime: !manualFlow ? selectedTime ?? undefined : undefined,
@@ -288,7 +369,7 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
 
   const stepValid =
     step === 1
-      ? Boolean(consultant && offering)
+      ? Boolean(selectedCard && consultant && offering)
       : step === 2
         ? manualFlow
           ? Boolean(pref1)
@@ -298,202 +379,150 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
             clientEmail.includes("@") &&
             clientPhone.length >= 7 &&
             occasion &&
-            description.length >= 20
-          : Boolean(gateway);
+            description.length >= 20 &&
+            Boolean(gateway)
+          : false;
+
+  const cardKeys: CardKey[] = ["signature", "design-team", "virtual"];
+  const showVirtualPlatform = offering && isVirtualDelivery(offering.deliveryMode);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
-      <div className="mb-10 flex items-center justify-between gap-2">
-        {[1, 2, 3, 4].map((n) => (
-          <div key={n} className="flex flex-1 items-center">
-            <div
-              className={clsx(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-sm font-medium",
-                step > n && "border-wine bg-wine text-ivory",
-                step === n && "border-gold text-wine shadow-[0_0_12px_rgba(201,168,76,0.4)]",
-                step < n && "border-border text-charcoal-mid",
-              )}
-            >
-              {step > n ? <Check className="h-4 w-4" /> : n}
-            </div>
-            {n < 4 && (
-              <div
-                className={clsx("mx-1 hidden h-0.5 flex-1 sm:block", step > n ? "bg-wine" : "bg-border")}
-                aria-hidden
-              />
-            )}
-          </div>
-        ))}
-      </div>
+    <div className="bg-ivory px-4 py-12 md:py-16">
+      <div className="mx-auto max-w-5xl">
+        <header className="mb-10 text-center">
+          <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">
+            BOOK A CONSULTATION
+          </p>
+          <h1 className="mt-3 font-serif text-[40px] font-normal leading-tight text-choc md:text-[56px]">
+            Sit with us
+          </h1>
+          <p className="mx-auto mt-4 max-w-[480px] font-body text-[15px] leading-relaxed text-text-mid">
+            Tell us the occasion, and we&apos;ll design around your story. Payment is taken at booking to reserve your
+            time.
+          </p>
+        </header>
 
-      {step === 1 && (
-        <div>
-          <h2 className="font-display text-2xl text-charcoal">Who would you like to consult with?</h2>
-          <p className="mt-2 text-sm text-charcoal-mid">Each consultant brings a different level of expertise.</p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {consultants.map((c) => (
+        <StepIndicator step={step} />
+
+        {step === 1 && (
+          <div>
+            <div className="grid gap-5 md:grid-cols-3">
+              {cardKeys.map((key) => {
+                const cfg = CARD_UI[key];
+                const resolved = resolveCard(consultants, key);
+                const price = resolved?.offering.feeNGN ?? 0;
+                const selected = selectedCard === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => selectCard(key)}
+                    className={clsx(
+                      "relative rounded-lg border bg-white p-8 text-left transition-shadow",
+                      selected
+                        ? "border-[1.5px] border-choc shadow-[0_4px_24px_rgba(68,41,19,0.08)]"
+                        : "border-[0.5px] border-sand hover:border-nut/40",
+                    )}
+                  >
+                    {cfg.badge ? (
+                      <span className="absolute left-4 top-4 rounded-full bg-gold px-2.5 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-white">
+                        {cfg.badge}
+                      </span>
+                    ) : null}
+                    <p className={clsx("font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr", cfg.badge && "mt-6")}>
+                      {cfg.typeLabel}
+                    </p>
+                    <h3 className="mt-2 font-serif text-[24px] leading-snug text-choc md:text-[28px]">{cfg.title}</h3>
+                    <p className="mt-3 font-body text-[13px] leading-relaxed text-text-mid">{cfg.description}</p>
+                    <ul className="mt-5 space-y-2">
+                      {cfg.features.map((f) => (
+                        <li key={f} className="flex items-start gap-2 font-body text-[13px] text-text-mid">
+                          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-nut" strokeWidth={2.5} />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-6 flex items-end justify-between">
+                      <p className="font-serif text-[28px] text-choc">
+                        ₦{price.toLocaleString("en-NG")}
+                      </p>
+                      <span className="font-sans text-[10px] uppercase tracking-[0.14em] text-text-light">
+                        {selected ? "SELECTED" : "SELECT"}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-10 flex justify-center">
               <button
-                key={c.id}
                 type="button"
-                onClick={() => selectConsultant(c)}
+                disabled={!stepValid}
+                onClick={() => setStep(2)}
                 className={clsx(
-                  "border bg-canvas p-8 text-left transition-colors",
-                  consultant?.id === c.id ? "border-2 border-olive bg-off-white" : "border-mid-grey hover:border-olive/50",
+                  "rounded-sm px-12 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-cream transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+                  stepValid ? "bg-nut hover:bg-choc" : "bg-sand text-text-mid",
                 )}
               >
-                <div className="flex gap-4">
-                  {c.image ? (
-                    <Image src={c.image} alt="" width={80} height={80} className="h-20 w-20 shrink-0 rounded-full object-cover" />
-                  ) : (
-                    <div className="h-20 w-20 shrink-0 rounded-full bg-mid-grey" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="font-display text-[22px] font-medium text-charcoal">{c.name}</p>
-                    <p className="mt-1 font-body text-[11px] font-medium uppercase tracking-[0.15em] text-olive">{c.title}</p>
-                    {c.isFlagship && (
-                      <span className="mt-2 inline-block border border-olive px-2.5 py-0.5 font-body text-[9px] font-medium uppercase tracking-[0.08em] text-olive">
-                        Flagship · By Appointment
-                      </span>
-                    )}
-                    <p className="mt-2 line-clamp-4 font-body text-[13px] font-light leading-relaxed text-dark-grey">{c.bio}</p>
-                    <p className="mt-3 font-display text-[20px] text-charcoal">
-                      From ₦{Math.min(...c.offerings.map((o) => o.feeNGN)).toLocaleString("en-NG")}
-                    </p>
-                  </div>
-                </div>
+                Continue to schedule →
               </button>
-            ))}
-          </div>
-
-          {consultant && (
-            <div className="mt-10 space-y-6">
-              <div>
-                <p className="mb-3 font-label text-[11px] uppercase tracking-wider text-gold">
-                  What would you like to focus on?
-                </p>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {sessionTypesForConsultant.map((st) => {
-                    const stKey = st as ConsultationSessionType;
-                    return (
-                    <button
-                      key={stKey}
-                      type="button"
-                      onClick={() => {
-                        setSessionType(stKey);
-                        setOffering(null);
-                      }}
-                      className={clsx(
-                        "rounded-sm border p-3 text-left text-sm",
-                        sessionType === stKey ? "border-wine bg-wine/5" : "border-border",
-                      )}
-                    >
-                      <span className="mr-2">{SESSION_ICONS[stKey] ?? "•"}</span>
-                      {getSessionTypeLabel(stKey)}
-                    </button>
-                  );
-                  })}
-                </div>
-              </div>
-
-              {sessionType && (
-                <div>
-                  <p className="mb-3 font-label text-[11px] uppercase tracking-wider text-gold">
-                    How would you like to meet?
-                  </p>
-                  <div className="grid gap-2">
-                    {offeringsForSession.map((o) => {
-                      const Icon = deliveryIcon(o.deliveryMode);
-                      return (
-                        <button
-                          key={o.id}
-                          type="button"
-                          onClick={() => pickOffering(o)}
-                          className={clsx(
-                            "flex items-center justify-between gap-3 rounded-sm border p-3 text-left",
-                            offering?.id === o.id ? "border-wine bg-wine/5" : "border-border",
-                          )}
-                        >
-                          <div className="flex items-start gap-2">
-                            <Icon className="mt-0.5 h-4 w-4 shrink-0 text-wine" />
-                            <div>
-                              <p className="text-sm font-medium text-charcoal">{getDeliveryModeLabel(o.deliveryMode)}</p>
-                              <p className="text-xs text-charcoal-mid">{o.durationMinutes} minutes</p>
-                            </div>
-                          </div>
-                          <p className="font-display text-wine">₦{o.feeNGN.toLocaleString("en-NG")}</p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
-          )}
+          </div>
+        )}
 
-          <button
-            type="button"
-            disabled={!stepValid}
-            onClick={() => setStep(2)}
-            className="mt-10 w-full rounded-sm bg-wine py-3 text-sm font-medium text-ivory disabled:opacity-40"
-          >
-            Continue to schedule
-          </button>
-        </div>
-      )}
+        {step === 2 && consultant && offering && (
+          <div className="mx-auto max-w-xl">
+            <h2 className="text-center font-serif text-[32px] text-choc">Choose your time</h2>
+            <p className="mt-2 text-center font-body text-sm text-text-mid">
+              All times are West Africa Time (WAT · UTC+1)
+            </p>
 
-      {step === 2 && consultant && offering && (
-        <div>
-          {manualFlow ? (
-            <>
-              <h2 className="font-display text-2xl text-charcoal">Submit your preferred dates</h2>
-              <div className="mt-4 rounded-sm border border-gold/30 bg-wine/5 p-4 text-sm text-charcoal">
-                As Mrs. Gabriel-Okopi personally conducts these sessions, scheduling is coordinated with her team.
-                Submit up to three preferred dates; we will confirm within 24–48 hours.
-              </div>
-              <div className="mt-6 space-y-4">
+            {manualFlow ? (
+              <div className="mt-8 space-y-4">
+                <div className="rounded-lg border border-sand bg-white p-4 font-body text-sm text-text-mid">
+                  As Mrs. Prudent personally conducts these sessions, scheduling is coordinated with her team. Submit
+                  up to three preferred dates; we will confirm within 24–48 hours.
+                </div>
                 <label className="block text-sm">
-                  <span className="text-charcoal-mid">1st preference (required)</span>
+                  <span className="font-sans text-text-mid">1st preference (required)</span>
                   <input
                     type="date"
                     min={minManualDate}
                     value={pref1}
                     onChange={(e) => setPref1(e.target.value)}
-                    className="mt-1 w-full rounded-sm border border-border bg-ivory px-3 py-2 text-sm"
+                    className="input-field mt-1 w-full"
                   />
                 </label>
                 <label className="block text-sm">
-                  <span className="text-charcoal-mid">2nd preference</span>
+                  <span className="font-sans text-text-mid">2nd preference</span>
                   <input
                     type="date"
                     min={minManualDate}
                     value={pref2}
                     onChange={(e) => setPref2(e.target.value)}
-                    className="mt-1 w-full rounded-sm border border-border bg-ivory px-3 py-2 text-sm"
+                    className="input-field mt-1 w-full"
                   />
                 </label>
                 <label className="block text-sm">
-                  <span className="text-charcoal-mid">3rd preference</span>
+                  <span className="font-sans text-text-mid">3rd preference</span>
                   <input
                     type="date"
                     min={minManualDate}
                     value={pref3}
                     onChange={(e) => setPref3(e.target.value)}
-                    className="mt-1 w-full rounded-sm border border-border bg-ivory px-3 py-2 text-sm"
+                    className="input-field mt-1 w-full"
                   />
                 </label>
               </div>
-            </>
-          ) : (
-            <>
-              <h2 className="font-display text-2xl text-charcoal">Select date & time</h2>
-              <p className="mt-2 text-sm text-charcoal-mid">All times are West Africa Time (WAT · UTC+1)</p>
-              <div className="mt-6">
-                <p className="font-label text-[11px] uppercase text-gold">Pick a date</p>
-                {calLoading && step === 2 ? (
-                  <p className="mt-2 text-sm text-charcoal-mid">Loading…</p>
+            ) : (
+              <div className="mt-8">
+                <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Select date</p>
+                {calLoading && !selectedYmd ? (
+                  <p className="mt-3 font-body text-sm text-text-mid">Loading calendar…</p>
                 ) : (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {availableDates.slice(0, 20).map((d) => (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {availableDates.slice(0, 28).map((d) => (
                       <button
                         key={d}
                         type="button"
@@ -502,8 +531,8 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
                           setSelectedTime(null);
                         }}
                         className={clsx(
-                          "rounded-sm border px-3 py-2 text-xs",
-                          selectedYmd === d ? "border-wine bg-wine text-ivory" : "border-border",
+                          "rounded-sm border px-3 py-2 font-sans text-xs transition-colors",
+                          selectedYmd === d ? "border-choc bg-choc text-cream" : "border-sand bg-white text-text-mid",
                         )}
                       >
                         {d}
@@ -511,261 +540,179 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
                     ))}
                   </div>
                 )}
-              </div>
-              {selectedYmd && (
-                <div className="mt-6">
-                  <p className="font-label text-[11px] uppercase text-gold">Available times</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {slots.map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setSelectedTime(t)}
-                        className={clsx(
-                          "rounded-sm border px-3 py-2 text-xs",
-                          selectedTime === t ? "border-wine bg-wine text-ivory" : "border-border",
-                        )}
-                      >
-                        {t} WAT
-                      </button>
-                    ))}
-                  </div>
-                  {!slots.length && <p className="mt-2 text-sm text-charcoal-mid">No times on this date.</p>}
-                </div>
-              )}
-            </>
-          )}
-          <div className="mt-10 flex gap-3">
-            <button type="button" onClick={() => setStep(1)} className="rounded-sm border border-border px-4 py-2 text-sm">
-              Back
-            </button>
-            <button
-              type="button"
-              disabled={!stepValid}
-              onClick={() => setStep(3)}
-              className="flex-1 rounded-sm bg-wine py-3 text-sm font-medium text-ivory disabled:opacity-40"
-            >
-              Continue to details
-            </button>
-          </div>
-        </div>
-      )}
 
-      {step === 3 && consultant && offering && (
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="space-y-4">
-            <h2 className="font-display text-2xl text-charcoal lg:col-span-2">Your details</h2>
-            <input
-              placeholder="Full name"
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              className="w-full rounded-sm border border-border bg-ivory px-3 py-2 text-sm"
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              value={clientEmail}
-              onChange={(e) => setClientEmail(e.target.value)}
-              className="w-full rounded-sm border border-border bg-ivory px-3 py-2 text-sm"
-            />
-            <input
-              placeholder="Phone"
-              value={clientPhone}
-              onChange={(e) => setClientPhone(e.target.value)}
-              className="w-full rounded-sm border border-border bg-ivory px-3 py-2 text-sm"
-            />
-            <label className="block text-sm">
-              <span className="text-charcoal-mid">Country</span>
-              <select
-                className="mt-1 w-full rounded-sm border border-border bg-ivory px-3 py-2 text-sm"
-                value={clientCountry}
-                onChange={(e) => setClientCountry(e.target.value)}
-              >
-                <option value="NG">Nigeria</option>
-                <option value="US">United States</option>
-                <option value="GB">United Kingdom</option>
-                <option value="GH">Ghana</option>
-                <option value="OTHER">Other</option>
-              </select>
-            </label>
-            <input
-              placeholder="@instagram (optional)"
-              value={clientInstagram}
-              onChange={(e) => setClientInstagram(e.target.value)}
-              className="w-full rounded-sm border border-border bg-ivory px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="space-y-4">
-            <label className="block text-sm">
-              <span className="text-charcoal-mid">Occasion</span>
-              <select
-                className="mt-1 w-full rounded-sm border border-border bg-ivory px-3 py-2 text-sm"
-                value={occasion}
-                onChange={(e) => setOccasion(e.target.value)}
-              >
-                <option value="">Select…</option>
-                {OCCASIONS.map((o) => (
-                  <option key={o} value={o}>
-                    {o}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-sm">
-              <span className="text-charcoal-mid">Tell us about your vision (min 20 characters)</span>
-              <textarea
-                className="mt-1 min-h-[140px] w-full rounded-sm border border-border bg-ivory px-3 py-2 text-sm"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                maxLength={2000}
-              />
-              <span className="text-xs text-charcoal-mid">{description.length} / 2000</span>
-            </label>
-            <div>
-              <p className="text-xs text-charcoal-mid">Reference images (optional, max 5)</p>
-              <input
-                type="file"
-                accept="image/*"
-                className="mt-2 text-sm"
-                disabled={uploading || referenceImages.length >= 5}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) void uploadRef(f);
-                  e.target.value = "";
-                }}
-              />
-              <div className="mt-2 flex flex-wrap gap-2">
-                {referenceImages.map((u) => (
-                  <div key={u} className="relative h-16 w-16 overflow-hidden rounded-sm border">
-                    <Image src={u} alt="" fill className="object-cover" />
+                {selectedYmd ? (
+                  <div className="mt-8">
+                    <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Available times</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {slots.map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setSelectedTime(t)}
+                          className={clsx(
+                            "rounded-sm border px-3 py-2 font-sans text-xs transition-colors",
+                            selectedTime === t ? "border-choc bg-choc text-cream" : "border-sand bg-white text-text-mid",
+                          )}
+                        >
+                          {t} WAT
+                        </button>
+                      ))}
+                    </div>
+                    {!slots.length && !calLoading ? (
+                      <p className="mt-2 font-body text-sm text-text-mid">No times on this date.</p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            {showVirtualPlatform ? (
+              <div className="mt-8">
+                <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Meeting platform</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {VIRTUAL_PLATFORMS.map((p) => (
                     <button
+                      key={p}
                       type="button"
-                      className="absolute right-0 top-0 bg-charcoal/80 px-1 text-xs text-ivory"
-                      onClick={() => setReferenceImages((p) => p.filter((x) => x !== u))}
+                      onClick={() => setVirtualPlatform(p)}
+                      className={clsx(
+                        "rounded-sm border px-4 py-2 font-sans text-xs transition-colors",
+                        virtualPlatform === p ? "border-choc bg-choc text-cream" : "border-sand bg-white text-text-mid",
+                      )}
                     >
-                      ×
+                      {p}
                     </button>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="mt-10 flex gap-3">
+              <button type="button" onClick={() => setStep(1)} className="btn-ghost-light px-6 py-3 text-[10px]">
+                Back
+              </button>
+              <button
+                type="button"
+                disabled={!stepValid}
+                onClick={() => setStep(3)}
+                className="flex-1 rounded-sm bg-nut py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-cream disabled:opacity-40"
+              >
+                Continue to confirm →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && consultant && offering && selectedCard && (
+          <div className="mx-auto max-w-2xl space-y-8">
+            <div className="rounded-lg border border-sand bg-white p-6">
+              <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Booking summary</p>
+              <h3 className="mt-2 font-serif text-xl text-choc">{CARD_UI[selectedCard].title}</h3>
+              <p className="mt-2 font-body text-sm text-text-mid">
+                {!manualFlow && selectedYmd
+                  ? `${selectedYmd} at ${selectedTime ?? "—"} WAT`
+                  : manualFlow
+                    ? "Preferred dates pending confirmation"
+                    : "—"}
+              </p>
+              {showVirtualPlatform ? (
+                <p className="mt-1 font-body text-sm text-text-mid">Platform: {virtualPlatform}</p>
+              ) : null}
+              <p className="mt-4 font-serif text-[28px] text-choc">₦{offering.feeNGN.toLocaleString("en-NG")}</p>
+            </div>
+
+            <div className="space-y-4 rounded-lg border border-sand bg-white p-6">
+              <h3 className="font-serif text-xl text-choc">Your details</h3>
+              <input
+                placeholder="Full name"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                className="input-field w-full"
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={clientEmail}
+                onChange={(e) => setClientEmail(e.target.value)}
+                className="input-field w-full"
+              />
+              <input
+                placeholder="Phone"
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+                className="input-field w-full"
+              />
+              <label className="block text-sm">
+                <span className="font-sans text-text-mid">Occasion</span>
+                <select className="input-field mt-1 w-full" value={occasion} onChange={(e) => setOccasion(e.target.value)}>
+                  <option value="">Select…</option>
+                  {OCCASIONS.map((o) => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-sm">
+                <span className="font-sans text-text-mid">Tell us about your vision (min 20 characters)</span>
+                <textarea
+                  className="input-field mt-1 min-h-[120px] w-full"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={2000}
+                />
+              </label>
+              <div>
+                <p className="font-sans text-xs text-text-light">Reference images (optional, max 5)</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="mt-2 text-sm"
+                  disabled={uploading || referenceImages.length >= 5}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void uploadRef(f);
+                    e.target.value = "";
+                  }}
+                />
               </div>
             </div>
-          </div>
-          <div className="rounded-sm border border-border bg-cream p-4 lg:col-span-2">
-            <p className="font-display text-lg text-wine">Summary</p>
-            <p className="text-sm text-charcoal">
-              {consultant.name} · {getSessionTypeLabel(offering.sessionType)} · {getDeliveryModeLabel(offering.deliveryMode)}
-            </p>
-            <p className="mt-1 text-sm text-charcoal-mid">
-              {!manualFlow && selectedYmd
-                ? `${selectedYmd} at ${selectedTime ?? "—"} WAT`
-                : manualFlow
-                  ? "Preferred dates pending confirmation"
-                  : ""}
-            </p>
-            <p className="mt-2 font-display text-wine">₦{offering.feeNGN.toLocaleString("en-NG")}</p>
-          </div>
-          <div className="flex gap-3 lg:col-span-2">
-            <button type="button" onClick={() => setStep(2)} className="rounded-sm border border-border px-4 py-2 text-sm">
-              Back
-            </button>
-            <button
-              type="button"
-              disabled={!stepValid}
-              onClick={() => setStep(4)}
-              className="flex-1 rounded-sm bg-wine py-3 text-sm font-medium text-ivory disabled:opacity-40"
-            >
-              Continue to payment
-            </button>
-          </div>
-        </div>
-      )}
 
-      {step === 4 && consultant && offering && (
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="rounded-sm border border-border bg-cream p-6">
-            <p className="font-display text-xl text-wine">Booking summary</p>
-            <p className="mt-4 text-sm text-charcoal">
-              {consultant.name} — {getSessionTypeLabel(offering.sessionType)}
-            </p>
-            <p className="mt-2 flex items-center gap-2 text-sm text-charcoal-mid">
-              {isVirtualDelivery(offering.deliveryMode) ? <Video className="h-4 w-4" /> : <MapPin className="h-4 w-4" />}
-              {getDeliveryModeLabel(offering.deliveryMode)}
-            </p>
-            <p className="mt-2 flex items-center gap-2 text-sm text-charcoal-mid">
-              <Clock className="h-4 w-4" />
-              {offering.durationMinutes} minutes
-            </p>
-            <p className="mt-2 flex items-center gap-2 text-sm text-charcoal-mid">
-              <Calendar className="h-4 w-4" />
-              {!manualFlow && selectedYmd
-                ? `${selectedYmd} ${selectedTime ?? ""} WAT`
-                : "Pending confirmation"}
-            </p>
-            <p className="mt-4 text-2xl font-medium text-wine">₦{offering.feeNGN.toLocaleString("en-NG")}</p>
-          </div>
-          <div className="space-y-4">
-            <p className="font-label text-[11px] uppercase text-gold">Currency</p>
-            <div className="flex gap-2">
-              {(["NGN", "USD", "GBP"] as const).map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => {
-                    setCurrency(c);
-                    setGateway(null);
-                  }}
-                  className={clsx(
-                    "rounded-sm border px-3 py-2 text-xs",
-                    currency === c ? "border-wine bg-wine/10" : "border-border",
-                  )}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-            <p className="font-label text-[11px] uppercase text-gold">Payment method</p>
-            <div className="space-y-2">
-              {currency === "NGN" && (
-                <>
-                  <label className="flex cursor-pointer items-center gap-2 rounded-sm border border-border p-3 text-sm">
-                    <input type="radio" name="gw" checked={gateway === "PAYSTACK"} onChange={() => setGateway("PAYSTACK")} />
-                    Paystack
-                  </label>
-                  <label className="flex cursor-pointer items-center gap-2 rounded-sm border border-border p-3 text-sm">
-                    <input type="radio" name="gw" checked={gateway === "MONNIFY"} onChange={() => setGateway("MONNIFY")} />
-                    Monnify
-                  </label>
-                </>
-              )}
-              <label className="flex cursor-pointer items-center gap-2 rounded-sm border border-border p-3 text-sm">
-                <input type="radio" name="gw" checked={gateway === "FLUTTERWAVE"} onChange={() => setGateway("FLUTTERWAVE")} />
-                Flutterwave
-              </label>
-              {(currency === "USD" || currency === "GBP") && (
-                <label className="flex cursor-pointer items-center gap-2 rounded-sm border border-border p-3 text-sm">
-                  <input type="radio" name="gw" checked={gateway === "STRIPE"} onChange={() => setGateway("STRIPE")} />
-                  Stripe (card)
+            <div className="rounded-lg border border-sand bg-white p-6">
+              <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Payment method</p>
+              <div className="mt-4 space-y-2">
+                <label className="flex cursor-pointer items-center gap-3 rounded-sm border border-sand p-4">
+                  <input type="radio" name="gw" checked={gateway === "PAYSTACK"} onChange={() => setGateway("PAYSTACK")} />
+                  <span className="font-body text-sm text-choc">Paystack</span>
                 </label>
-              )}
+                <label className="flex cursor-pointer items-center gap-3 rounded-sm border border-sand p-4">
+                  <input type="radio" name="gw" checked={gateway === "MONNIFY"} onChange={() => setGateway("MONNIFY")} />
+                  <span className="font-body text-sm text-choc">Bank Transfer</span>
+                </label>
+              </div>
             </div>
+
             {stripeClientSecret && stripePk ? (
               <StripePayBlock clientSecret={stripeClientSecret} publishableKey={stripePk} returnUrl={stripeReturnUrl} />
             ) : (
-              <button
-                type="button"
-                disabled={!gateway || submitting}
-                onClick={() => void pay()}
-                className="w-full rounded-sm bg-wine py-3 text-sm font-medium text-ivory disabled:opacity-40"
-              >
-                {submitting ? "Please wait…" : "Confirm booking & pay"}
-              </button>
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setStep(2)} className="btn-ghost-light px-6 py-3 text-[10px]">
+                  Back
+                </button>
+                <button
+                  type="button"
+                  disabled={!stepValid || submitting}
+                  onClick={() => void pay()}
+                  className="flex-1 rounded-sm bg-nut py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-cream disabled:opacity-40"
+                >
+                  {submitting ? "Please wait…" : "Confirm & pay →"}
+                </button>
+              </div>
             )}
-            <button type="button" onClick={() => setStep(3)} className="w-full rounded-sm border border-border py-2 text-sm">
-              Back
-            </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

@@ -2,6 +2,9 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { BespokeStageTracker } from "@/components/bespoke/BespokeStageTracker";
+import { TrackOrderActions } from "@/components/track/TrackOrderActions";
+import { TrackSearchForm } from "@/components/track/TrackSearchForm";
+import { getStageProgress } from "@/lib/bespoke-stages";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -30,19 +33,11 @@ export default async function TrackOrderPage({ params }: Props) {
   if (!order) {
     return (
       <div className="min-h-screen bg-ivory">
-        <header className="border-b border-sand bg-choc px-6 py-5">
-          <Link href="/" className="font-serif text-lg tracking-[0.12em] text-cream">
-            Prudential Atelier
-          </Link>
-        </header>
-        <div className="mx-auto max-w-lg px-6 py-24 text-center">
-          <h1 className="font-display text-3xl text-choc">Order not found</h1>
-          <p className="mt-4 font-sans text-sm text-text-mid">
-            This tracking link may be invalid or expired. Contact us if you need assistance.
-          </p>
+        <TrackSearchForm notFound />
+        <div className="pb-16 text-center">
           <Link
             href="/contact"
-            className="mt-8 inline-block border border-nut px-6 py-3 font-sans text-xs font-semibold uppercase tracking-wider text-nut"
+            className="inline-block border border-choc px-6 py-3 font-sans text-[10px] font-semibold uppercase tracking-wider text-choc"
           >
             Contact the atelier
           </Link>
@@ -52,48 +47,49 @@ export default async function TrackOrderPage({ params }: Props) {
   }
 
   const firstName = order.clientName.split(" ")[0] ?? order.clientName;
+  const outfitName = order.outfitDescription?.split("\n")[0]?.slice(0, 80) || "Bespoke commission";
+  const stagesComplete = getStageProgress(order.currentStage);
 
   return (
     <div className="min-h-screen bg-ivory">
-      <header className="border-b border-sand bg-choc px-6 py-5">
-        <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <Link href="/" className="font-serif text-lg tracking-[0.12em] text-cream">
-            Prudential Atelier
-          </Link>
-          <Link href="/" className="font-sans text-xs text-cream/70 hover:text-cream">
-            Back to site
+      <div className="border-b border-sand bg-ivory px-4 py-12">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">ORDER TRACKING</p>
+          <h1 className="mt-3 font-serif text-[40px] font-normal text-choc md:text-[52px]">Follow your commission</h1>
+          <p className="mt-2 font-body text-[14px] text-text-light">No login required — just your order reference.</p>
+          <Link
+            href="/track"
+            className="mt-4 inline-block font-sans text-[10px] uppercase tracking-wider text-nut hover:underline"
+          >
+            Track another order
           </Link>
         </div>
-      </header>
+      </div>
 
-      <main className="mx-auto max-w-3xl px-6 py-12">
-        <div className="card-surface p-8">
-          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr">
-            Order tracking
-          </p>
-          <h1 className="mt-2 font-display text-3xl text-choc">{order.orderRef}</h1>
-          <p className="mt-2 font-sans text-sm text-text-mid">
-            Hello {firstName}
-            {order.occasionType ? ` · ${order.occasionType}` : ""}
-          </p>
-          {order.deliveryDate ? (
-            <p className="mt-1 font-sans text-sm text-nut">
-              Expected delivery: {formatDate(order.deliveryDate)}
-            </p>
-          ) : null}
+      <main className="mx-auto max-w-2xl px-4 pb-16 md:px-6">
+        <div className="rounded-lg bg-choc px-7 py-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-lightbr">Order {order.orderRef}</p>
+              <h2 className="mt-2 font-serif text-[26px] leading-snug text-cream">{outfitName}</h2>
+              <p className="mt-2 font-sans text-[12px] text-sand">
+                Bespoke commission for {firstName}
+                {order.deliveryDate ? ` · Est. delivery ${formatDate(order.deliveryDate)}` : ""}
+              </p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="font-serif text-[42px] leading-none text-cream">
+                {stagesComplete}
+                <span className="text-[22px] text-sand/70">/13</span>
+              </p>
+              <p className="mt-1 font-sans text-[9px] uppercase tracking-[0.14em] text-sand">Stages complete</p>
+            </div>
+          </div>
         </div>
 
         <BespokeStageTracker currentStage={order.currentStage} stageHistory={order.stageHistory} />
 
-        <div className="mt-12 border border-sand bg-bg p-8 text-center">
-          <p className="font-display text-xl text-choc">Want to book another piece?</p>
-          <Link
-            href="/bespoke"
-            className="mt-4 inline-block bg-nut px-8 py-3 font-sans text-[10px] font-semibold uppercase tracking-wider text-cream"
-          >
-            Start a new enquiry
-          </Link>
-        </div>
+        <TrackOrderActions />
       </main>
     </div>
   );
