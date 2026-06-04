@@ -27,7 +27,16 @@ export function FooterNewsletter() {
 
   return (
     <div>
-      <p className="mb-4 font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr/80">
+      <p
+        className="mb-4 uppercase"
+        style={{
+          fontFamily: "var(--font-body)",
+          fontSize: "10px",
+          fontWeight: 600,
+          letterSpacing: "0.2em",
+          color: "var(--lightbr)",
+        }}
+      >
         The Newsletter
       </p>
       <p className="mb-5 max-w-xs font-sans text-[13px] font-light leading-relaxed text-cream/75">

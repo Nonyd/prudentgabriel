@@ -1,19 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
-import { useThemeStore } from "@/store/themeStore";
+import { ThemeProvider } from "@/components/ui/ThemeProvider";
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const isDark = useThemeStore((s) => s.isDark);
+export { ThemeProvider, useTheme } from "@/components/ui/ThemeProvider";
 
-  useEffect(() => {
-    const root = document.documentElement;
-    if (isDark) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-  }, [isDark]);
-
-  return <>{children}</>;
+/** @deprecated Import from `@/components/ui/ThemeProvider` */
+export function LegacyThemeProvider({ children }: { children: React.ReactNode }) {
+  return <ThemeProvider>{children}</ThemeProvider>;
 }

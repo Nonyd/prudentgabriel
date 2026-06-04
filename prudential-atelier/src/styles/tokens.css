@@ -1,15 +1,27 @@
 :root {
+  /* Light theme (default) */
+  --bg-page: #f7f2ec;
+  --bg-surface: #f0e8dd;
+  --bg-card: #ffffff;
   --choc: #442913;
   --nut: #5c3422;
   --lightbr: #98755b;
   --cream: #e2d1c2;
   --sand: #d4bbac;
   --ivory: #f7f2ec;
-  --bg: #f0e8dd;
-
-  --text-dark: #2a1a0e;
+  --text-primary: #2a1a0e;
   --text-mid: #6b4c35;
   --text-light: #a08060;
+  --border-color: rgba(212, 187, 172, 0.6);
+  --hero-bg: #442913;
+  --sidebar-bg: #442913;
+  --footer-bg: #1a0f08;
+
+  /* Aliases for existing tokens */
+  --bg: var(--bg-surface);
+  --text-dark: var(--text-primary);
+  --border: 0.5px solid var(--border-color);
+  --border-dark: 0.5px solid rgba(152, 117, 91, 0.3);
 
   --success: #2d7d4f;
   --warning: #b87333;
@@ -21,11 +33,32 @@
   --radius-lg: 6px;
   --radius-xl: 8px;
 
-  --border: 0.5px solid var(--sand);
-  --border-dark: 0.5px solid rgba(152, 117, 91, 0.3);
-
   --font-display: var(--font-cormorant), "Cormorant", serif;
-  --font-body: var(--font-montserrat), "Montserrat", sans-serif;
+  --font-body: var(--font-lora), "Lora", serif;
+  --font-ui: var(--font-jost), "Jost", sans-serif;
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-theme="dark"] {
+  --bg-page: #1a0f08;
+  --bg-surface: #221408;
+  --bg-card: #2a1a0e;
+  --choc: #e2d1c2;
+  --nut: #d4bbac;
+  --lightbr: #c9a88a;
+  --cream: #f7f2ec;
+  --sand: #6b4c35;
+  --ivory: #1a0f08;
+  --text-primary: #f7f2ec;
+  --text-mid: #d4bbac;
+  --text-light: #98755b;
+  --border-color: rgba(107, 76, 53, 0.4);
+  --hero-bg: #0f0804;
+  --sidebar-bg: #0f0804;
+  --footer-bg: #0f0804;
+
+  --bg: var(--bg-surface);
+  --text-dark: var(--text-primary);
+  --border: 0.5px solid var(--border-color);
 }

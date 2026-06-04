@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { RegisterContent } from "@/app/(auth)/auth/register/RegisterContent";
+import { RegisterModalRedirect } from "./RegisterModalRedirect";
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-ivory" />}>
-      <RegisterContent />
+    <Suspense fallback={null}>
+      <RegisterModalRedirect />
     </Suspense>
   );
 }

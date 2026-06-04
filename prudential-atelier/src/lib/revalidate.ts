@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 /** Call after any admin save operation; pass extra paths as needed. */
 export async function revalidateStorefront(paths: string[] = []) {
@@ -37,6 +37,7 @@ export async function revalidateCollection(slug: string) {
 
 export async function revalidateSettings() {
   revalidatePath("/", "layout");
+  revalidateTag("logo-settings");
 }
 
 export async function revalidateGallery(category: "ATELIER" | "BRIDAL" | "KIDS") {

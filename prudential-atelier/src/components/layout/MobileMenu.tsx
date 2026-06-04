@@ -9,7 +9,7 @@ import { FacebookIcon, InstagramIcon, TikTokIcon, YouTubeIcon } from "@/componen
 import { CurrencySwitcher } from "@/components/common/CurrencySwitcher";
 import { DarkModeToggle } from "@/components/common/DarkModeToggle";
 import { useCartStore } from "@/store/cartStore";
-import { useThemeStore } from "@/store/themeStore";
+import { useTheme } from "@/components/ui/ThemeProvider";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -46,7 +46,8 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const { data: session } = useSession();
   const openSearch = useCartStore((s) => s.openSearch);
   const openCart = useCartStore((s) => s.openCart);
-  const isDark = useThemeStore((s) => s.isDark);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   return (
     <AnimatePresence>

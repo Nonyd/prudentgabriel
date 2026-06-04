@@ -37,7 +37,7 @@ export async function BlogPreview() {
   if (posts.length === 0) return null;
 
   return (
-    <section className="bg-ivory px-6 py-20 lg:px-10">
+    <section className="px-6 py-20 lg:px-10" style={{ backgroundColor: "var(--ivory)" }}>
       <div className="mx-auto max-w-site">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -63,7 +63,7 @@ export async function BlogPreview() {
               href={`/journal/${post.slug}`}
               className="group block"
             >
-              <div className="relative aspect-video overflow-hidden bg-bg">
+              <div className="img-portrait relative overflow-hidden bg-bg">
                 {post.featuredImage ? (
                   <Image
                     src={post.featuredImage}

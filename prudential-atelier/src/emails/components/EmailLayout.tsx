@@ -3,6 +3,7 @@ import {
   Container,
   Head,
   Html,
+  Img,
   Link,
   Preview,
   Section,
@@ -10,15 +11,19 @@ import {
 } from "@react-email/components";
 import type { ReactNode } from "react";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { emailLogoWhiteUrl } from "@/lib/email-branding";
 
 const APP = getPublicAppUrl();
 
 type EmailLayoutProps = {
   children: ReactNode;
   previewText?: string;
+  logoUrl?: string;
 };
 
-export default function EmailLayout({ children, previewText }: EmailLayoutProps) {
+export default function EmailLayout({ children, previewText, logoUrl }: EmailLayoutProps) {
+  const headerLogo = logoUrl ?? emailLogoWhiteUrl;
+
   return (
     <Html lang="en">
       <Head>
@@ -28,18 +33,28 @@ export default function EmailLayout({ children, previewText }: EmailLayoutProps)
       {previewText ? <Preview>{previewText}</Preview> : null}
       <Body style={{ margin: 0, backgroundColor: "#FAF6EF", fontFamily: "Georgia, serif" }}>
         <Container style={{ maxWidth: 600, margin: "0 auto" }}>
-          <Section style={{ backgroundColor: "#6B1C2A", padding: 24, textAlign: "center" as const }}>
-            <Text
-              style={{
-                margin: 0,
-                color: "#C9A84C",
-                letterSpacing: 4,
-                fontSize: 14,
-                textTransform: "uppercase" as const,
-              }}
-            >
-              Prudential Atelier
-            </Text>
+          <Section style={{ backgroundColor: "#442913", padding: 24, textAlign: "center" as const }}>
+            {headerLogo ? (
+              <Img
+                src={headerLogo}
+                alt="Prudential Atelier"
+                width={160}
+                height={56}
+                style={{ margin: "0 auto", objectFit: "contain" as const }}
+              />
+            ) : (
+              <Text
+                style={{
+                  margin: 0,
+                  color: "#C9A84C",
+                  letterSpacing: 4,
+                  fontSize: 14,
+                  textTransform: "uppercase" as const,
+                }}
+              >
+                Prudential Atelier
+              </Text>
+            )}
             <div style={{ height: 1, width: 80, margin: "16px auto 0", backgroundColor: "rgba(201,168,76,0.5)" }} />
           </Section>
           <Section style={{ backgroundColor: "#ffffff", padding: "40px 48px" }}>{children}</Section>

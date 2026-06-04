@@ -16,7 +16,7 @@ export type BestSellerProduct = {
 
 export function BestSellersGrid({ products }: { products: BestSellerProduct[] }) {
   return (
-    <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
       {products.map((product, index) => (
         <motion.div
           key={product.id}
@@ -27,7 +27,17 @@ export function BestSellersGrid({ products }: { products: BestSellerProduct[] })
           whileHover={{ y: -4 }}
         >
           <Link href={`/rtw/${product.slug}`} className="group block">
-            <div className="relative aspect-square overflow-hidden bg-bg">
+            <p
+              className="mb-3 uppercase"
+              style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: "10px",
+                color: "var(--lightbr)",
+              }}
+            >
+              {product.category}
+            </p>
+            <div className="img-portrait relative bg-bg">
               {product.images[0] ? (
                 <Image
                   src={product.images[0]}
@@ -37,25 +47,47 @@ export function BestSellersGrid({ products }: { products: BestSellerProduct[] })
                   sizes="(max-width: 640px) 50vw, 25vw"
                 />
               ) : (
-                <div className="flex h-full items-center justify-center font-serif text-lg text-lightbr">
+                <div
+                  className="flex h-full items-center justify-center font-serif text-lg"
+                  style={{ color: "var(--lightbr)" }}
+                >
                   No image
                 </div>
               )}
-              <span className="absolute left-3 top-3 rounded-full bg-wine px-2.5 py-1 font-sans text-[9px] font-semibold uppercase tracking-[0.12em] text-cream">
+              <span
+                className="absolute left-3 top-3 rounded-full px-2.5 py-1 uppercase"
+                style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "9px",
+                  fontWeight: 600,
+                  letterSpacing: "0.12em",
+                  backgroundColor: "#6B1C2A",
+                  color: "var(--cream)",
+                }}
+              >
                 Best Seller
               </span>
             </div>
-            <div className="mt-4">
-              <p className="font-sans text-[10px] font-medium uppercase tracking-[0.16em] text-lightbr">
-                {product.category}
-              </p>
-              <p className="mt-1 font-serif text-lg font-medium text-choc group-hover:text-nut">
-                {product.name}
-              </p>
-              <p className="mt-1 font-sans text-[13px] text-text-mid">
-                {formatPrice(product.price, "NGN")}
-              </p>
-            </div>
+            <p
+              className="mt-4"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "18px",
+                color: "var(--choc)",
+              }}
+            >
+              {product.name}
+            </p>
+            <p
+              className="mt-1"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "13px",
+                color: "var(--text-mid)",
+              }}
+            >
+              {formatPrice(product.price, "NGN")}
+            </p>
           </Link>
         </motion.div>
       ))}

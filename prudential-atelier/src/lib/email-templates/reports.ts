@@ -2,7 +2,7 @@ const WRAPPER = (title: string, body: string, ctaHref?: string, ctaLabel?: strin
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<body style="margin:0;background:#F0E8DD;font-family:Montserrat,Arial,sans-serif;">
+<body style="margin:0;background:#F0E8DD;font-family:Jost,Arial,sans-serif;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
     <div style="background:#F7F2EC;border:1px solid #D4BBAC;padding:32px;">
       <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#98755B;">Prudential Atelier</p>

@@ -117,7 +117,7 @@ export function FeaturedCollections({
                 <CollectionCard
                   item={a}
                   className="md:col-span-2"
-                  aspectClass="aspect-[4/5] min-h-[360px] md:min-h-[520px]"
+                  aspectClass="aspect-[3/4] min-h-[360px] md:min-h-[520px]"
                 />
               ) : null}
               <div className="flex flex-col gap-4 md:gap-6">

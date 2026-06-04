@@ -334,7 +334,7 @@ export function CollectionDetailPage({
               const cover = o.coverImage ? optimizeImageUrl(o.coverImage, 800) : PRODUCT_IMAGE_PLACEHOLDER;
               return (
                 <Link key={o.slug} href={`/collections/${o.slug}`} className="group block">
-                  <div className="relative aspect-[4/5] overflow-hidden bg-[#EAEAE8]">
+                  <div className="img-portrait relative overflow-hidden bg-[#EAEAE8]">
                     <Image
                       src={cover}
                       alt={o.name}

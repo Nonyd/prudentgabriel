@@ -1003,6 +1003,8 @@ async function main() {
     { key: "sms_order_confirmed", value: "true", group: SettingGroup.SMS, label: "Send SMS on Order Confirmed", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 4 },
     { key: "sms_order_shipped", value: "true", group: SettingGroup.SMS, label: "Send SMS on Order Shipped", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 5 },
     { key: "sms_consultation_confirmed", value: "true", group: SettingGroup.SMS, label: "Send SMS on Consultation Confirmed", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 6 },
+    { key: "logo_dark", value: "", group: SettingGroup.APPEARANCE, label: "Logo (Light theme)", type: SettingType.IMAGE, isPublic: true, sortOrder: 0 },
+    { key: "logo_white", value: "", group: SettingGroup.APPEARANCE, label: "Logo (Dark theme)", type: SettingType.IMAGE, isPublic: true, sortOrder: 1 },
     { key: "img_hero", value: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1600", group: SettingGroup.APPEARANCE, label: "Homepage Hero Image", type: SettingType.IMAGE, isPublic: true, sortOrder: 1 },
     { key: "img_bride_hero", value: "https://images.unsplash.com/photo-1594463750939-ebb28c3f7f75?w=1600", group: SettingGroup.APPEARANCE, label: "Prudential Bride Hero Image", type: SettingType.IMAGE, isPublic: true, sortOrder: 2 },
     { key: "img_bride_portrait", value: "https://images.unsplash.com/photo-1519741347686-c1e331ec5e96?w=800", group: SettingGroup.APPEARANCE, label: "Prudential Bride Portrait", type: SettingType.IMAGE, isPublic: true, sortOrder: 3 },

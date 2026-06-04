@@ -26,7 +26,7 @@ export function ProductGallery({ images }: { images: GalleryImage[] }) {
 
   return (
     <div>
-      <div className="relative aspect-[3/4] overflow-hidden bg-ivory-dark">
+      <div className="img-portrait relative overflow-hidden bg-ivory-dark">
         <AnimatePresence mode="wait">
           <motion.div
             key={main.id}

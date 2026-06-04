@@ -36,7 +36,7 @@ function ProductCell({
       href={`/shop/${product.slug}`}
       className={`group relative block overflow-hidden bg-light-grey ${className ?? ""}`}
     >
-      <div className={tall ? "aspect-[3/4]" : "aspect-square"}>
+      <div className={tall ? "aspect-[3/4]" : "aspect-[3/4]"}>
         <Image
           src={img?.url ?? PLACEHOLDER}
           alt={img?.alt || product.name}
@@ -62,11 +62,10 @@ function ProductCell({
 function SkeletonGrid() {
   return (
     <div className="mt-12 grid grid-cols-2 gap-px md:grid-cols-[2fr_1fr_1fr] md:grid-rows-2 md:gap-px">
-      <div className="aspect-[3/4] animate-pulse bg-light-grey md:row-span-2" />
-      <div className="aspect-square animate-pulse bg-light-grey" />
-      <div className="aspect-square animate-pulse bg-light-grey" />
-      <div className="aspect-square animate-pulse bg-light-grey max-md:hidden" />
-      <div className="aspect-square animate-pulse bg-light-grey max-md:hidden" />
+      <div className="aspect-[3/4] animate-pulse bg-light-grey" />
+      <div className="aspect-[3/4] animate-pulse bg-light-grey" />
+      <div className="aspect-[3/4] animate-pulse bg-light-grey max-md:hidden" />
+      <div className="aspect-[3/4] animate-pulse bg-light-grey max-md:hidden" />
     </div>
   );
 }

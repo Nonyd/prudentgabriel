@@ -55,7 +55,7 @@ export function BespokeCouture({
   return (
     <section ref={ref} className="overflow-hidden bg-black py-[100px] md:py-[120px]">
       <div className="mx-auto grid max-w-[1400px] items-stretch gap-0 px-0 md:grid-cols-2 md:px-8">
-        <div className="relative min-h-[70vw] md:min-h-0 md:aspect-[4/5]">
+        <div className="relative min-h-[70vw] md:min-h-0 img-portrait">
           <motion.div style={{ y }} className="absolute inset-x-0 top-[-5%] h-[110%] w-full">
             <Image
               src={bespokeImage || DEFAULT_IMG}

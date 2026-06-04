@@ -58,7 +58,11 @@ const STAGE_INTROS: Record<BespokeStage, string> = {
     "Your bespoke outfit is ready! We cannot wait for you to experience the finished piece. Details for collection or delivery are below.",
 };
 
-function emailWrapper(content: string): string {
+function emailWrapper(content: string, logoUrl?: string): string {
+  const header = logoUrl
+    ? `<img src="${logoUrl}" alt="Prudential Atelier" width="160" style="max-width:160px;height:auto;margin:0 auto;display:block;" />`
+    : `<p style="margin:0;font-size:22px;letter-spacing:0.15em;color:#442913;">PRUDENTIAL ATELIER</p>`;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
@@ -67,7 +71,7 @@ function emailWrapper(content: string): string {
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:1px solid #D4BBAC;">
         <tr><td style="padding:32px 40px 16px;text-align:center;">
-          <p style="margin:0;font-size:22px;letter-spacing:0.15em;color:#442913;">PRUDENTIAL ATELIER</p>
+          ${header}
           <div style="height:2px;width:60px;background:#98755B;margin:16px auto 0;"></div>
         </td></tr>
         <tr><td style="padding:8px 40px 32px;">${content}</td></tr>
@@ -110,7 +114,7 @@ export function getBespokeStageEmailSubject(stage: BespokeStage, orderRef: strin
   return STAGE_SUBJECTS[stage].replace("{orderRef}", orderRef);
 }
 
-export function getBespokeStageEmail(stage: BespokeStage, data: StageEmailData): string {
+export function getBespokeStageEmail(stage: BespokeStage, data: StageEmailData, logoUrl?: string): string {
   const intro = STAGE_INTROS[stage];
   const stageLabel = STAGE_LABELS[stage];
   const deliveryLine = data.deliveryDate
@@ -133,7 +137,7 @@ export function getBespokeStageEmail(stage: BespokeStage, data: StageEmailData):
     </p>
   `;
 
-  return emailWrapper(content);
+  return emailWrapper(content, logoUrl);
 }
 
 export function buildStageEmailData(params: {

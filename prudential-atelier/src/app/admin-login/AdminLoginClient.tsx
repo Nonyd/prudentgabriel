@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/validations/auth";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Logo } from "@/components/ui/Logo";
 
 export function AdminLoginClient() {
   const router = useRouter();
@@ -44,13 +45,10 @@ export function AdminLoginClient() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-choc px-6 py-12">
-      <div className="w-full max-w-md rounded-lg border border-lightbr/30 bg-choc p-8 shadow-xl">
-        <div className="text-center">
-          <p className="font-serif text-2xl font-medium tracking-[0.12em]">
-            <span className="text-cream">Prudent</span>{" "}
-            <span className="text-lightbr">Gabriel</span>
-          </p>
+    <div className="flex min-h-screen items-center justify-center bg-sidebar-bg px-6 py-12">
+      <div className="w-full max-w-md rounded-lg border border-lightbr/30 bg-sidebar-bg p-8 shadow-xl">
+        <div className="flex flex-col items-center text-center">
+          <Logo variant="white" size="md" themeAdaptive={false} href={undefined} />
           <p className="mt-2 font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr/70">
             Operations Suite
           </p>

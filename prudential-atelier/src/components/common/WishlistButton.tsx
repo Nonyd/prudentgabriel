@@ -1,11 +1,12 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Heart } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { useWishlistStore } from "@/store/wishlistStore";
+import { useAuthModalStore } from "@/store/authModalStore";
 
 interface WishlistButtonProps {
   productId: string;
@@ -13,7 +14,6 @@ interface WishlistButtonProps {
 }
 
 export function WishlistButton({ productId, className }: WishlistButtonProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const { status } = useSession();
   const inList = useWishlistStore((s) => s.isInWishlist(productId));
@@ -25,7 +25,7 @@ export function WishlistButton({ productId, className }: WishlistButtonProps) {
     e.preventDefault();
     e.stopPropagation();
     if (status !== "authenticated") {
-      router.push(`/auth/login?callbackUrl=${encodeURIComponent(pathname || "/")}`);
+      useAuthModalStore.getState().openLogin(pathname || "/");
       return;
     }
 

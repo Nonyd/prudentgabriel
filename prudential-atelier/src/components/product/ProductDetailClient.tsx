@@ -271,7 +271,7 @@ export function ProductDetailClient({
                 </Accordion.Header>
                 <Accordion.Content className="pb-4">
                   <div
-                    className="space-y-2 text-sm leading-relaxed text-charcoal-mid [&_p]:mb-2"
+                    className="copy-body space-y-2 text-sm leading-relaxed text-charcoal-mid [&_p]:mb-2"
                     dangerouslySetInnerHTML={{ __html: product.details }}
                   />
                 </Accordion.Content>
@@ -289,7 +289,7 @@ export function ProductDetailClient({
                     View Full Size Guide
                   </button>
                 </SizeGuideModal>
-                <p>If between sizes, size up. Cut is fitted.</p>
+                <p className="copy-body">If between sizes, size up. Cut is fitted.</p>
               </Accordion.Content>
             </Accordion.Item>
             <Accordion.Item value="del" className="border-b border-border">

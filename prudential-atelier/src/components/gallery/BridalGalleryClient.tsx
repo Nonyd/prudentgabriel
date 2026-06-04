@@ -74,11 +74,10 @@ export function BridalGalleryClient({
           </p>
           <div className="columns-2 gap-1 px-4 pt-8 md:columns-3 lg:columns-4" style={{ columnGap: "4px" }}>
             {images.map((img) => (
-              <div key={img.id} className="group relative" style={{ breakInside: "avoid", marginBottom: "4px", display: "block" }}>
+              <div key={img.id} className="group relative img-portrait" style={{ breakInside: "avoid", marginBottom: "4px", display: "block" }}>
                 <img
                   src={optimizeImageUrl(img.url, 600)}
                   alt={img.alt || "Prudential Bride"}
-                  style={{ width: "100%", height: "auto", display: "block" }}
                   loading="lazy"
                 />
                 {img.caption ? (

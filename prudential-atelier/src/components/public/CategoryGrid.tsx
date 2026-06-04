@@ -8,31 +8,47 @@ const COLLECTIONS = [
     href: "/bespoke",
     title: "The Bespoke Atelier",
     subtitle: "Commissions designed entirely around you.",
-    bg: "bg-choc",
+    bg: "var(--hero-bg)",
   },
   {
     href: "/bridal",
     title: "Bridal & Ceremony",
     subtitle: "For the day you'll remember forever.",
-    bg: "bg-nut",
+    bg: "var(--nut)",
   },
   {
     href: "/shop",
     title: "Ready-to-Wear",
     subtitle: "House signatures, ready to ship.",
-    bg: "bg-dark-nut",
+    bg: "var(--sidebar-bg)",
   },
 ];
 
 export function CategoryGrid() {
   return (
-    <section className="bg-ivory px-6 py-20 lg:px-10">
+    <section className="px-6 py-20 lg:px-10" style={{ backgroundColor: "var(--ivory)" }}>
       <div className="mx-auto max-w-site">
         <div className="text-center">
-          <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">
+          <p
+            className="uppercase"
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: "10px",
+              fontWeight: 500,
+              letterSpacing: "0.2em",
+              color: "var(--lightbr)",
+            }}
+          >
             Explore
           </p>
-          <h2 className="mt-3 font-serif text-[42px] font-medium leading-tight text-choc">
+          <h2
+            className="mt-3 leading-tight"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "42px",
+              color: "var(--choc)",
+            }}
+          >
             Three ways to wear the house
           </h2>
         </div>
@@ -48,13 +64,41 @@ export function CategoryGrid() {
             >
               <Link
                 href={card.href}
-                className={`group flex h-[280px] flex-col items-center justify-center px-10 py-10 text-center ${card.bg}`}
+                className="group flex h-[280px] flex-col text-center"
+                style={{ backgroundColor: card.bg }}
               >
-                <h3 className="font-serif text-[28px] font-medium text-cream">{card.title}</h3>
-                <p className="mt-3 max-w-[240px] font-sans text-xs font-light leading-relaxed text-sand">
-                  {card.subtitle}
-                </p>
-                <span className="mt-8 font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-cream underline decoration-lightbr/60 underline-offset-[6px] transition-colors group-hover:text-sand">
+                <div className="flex flex-1 flex-col items-center justify-center px-8">
+                  <h3
+                    className="font-medium"
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontSize: "28px",
+                      color: "var(--cream)",
+                    }}
+                  >
+                    {card.title}
+                  </h3>
+                  <p
+                    className="mt-3 max-w-[240px] font-light leading-relaxed"
+                    style={{
+                      fontFamily: "var(--font-body)",
+                      fontSize: "12px",
+                      color: "var(--sand)",
+                    }}
+                  >
+                    {card.subtitle}
+                  </p>
+                </div>
+                <span
+                  className="pb-8 uppercase underline decoration-[var(--lightbr)] underline-offset-[6px] transition-opacity group-hover:opacity-80"
+                  style={{
+                    fontFamily: "var(--font-ui)",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    letterSpacing: "0.16em",
+                    color: "var(--cream)",
+                  }}
+                >
                   Discover
                 </span>
               </Link>

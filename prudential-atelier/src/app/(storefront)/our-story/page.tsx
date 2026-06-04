@@ -50,14 +50,14 @@ export default async function OurStoryPage() {
             &ldquo;I didn&apos;t plan to be a fashion designer. I just couldn&apos;t let a spoiled dress defeat me.&rdquo;
           </p>
         </div>
-        <div className="relative aspect-[3/4] overflow-hidden bg-light-grey">
+        <div className="img-portrait relative overflow-hidden bg-light-grey">
           <Image src="https://images.unsplash.com/photo-1519741497674-611481863552?w=800" alt="Atelier" fill className="object-cover" />
         </div>
       </section>
 
       <section className="bg-black py-20 text-off-white">
         <div className="mx-auto grid max-w-site gap-12 px-6 md:px-8 lg:grid-cols-2 lg:items-center">
-          <div className="relative aspect-[3/4] max-h-[520px] overflow-hidden bg-light-grey">
+          <div className="relative aspect-[3/4] max-h-[520px] overflow-hidden bg-light-grey img-portrait">
             <Image src="https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=800" alt="Founder" fill className="object-cover" />
           </div>
           <div>

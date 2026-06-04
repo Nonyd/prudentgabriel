@@ -75,7 +75,7 @@ export function JournalArticleClient({ slug }: { slug: string }) {
       </Link>
 
       {item.featuredImage ? (
-        <div className="relative mt-8 aspect-[21/9] overflow-hidden rounded-lg bg-sand/20">
+        <div className="relative mt-8 img-portrait overflow-hidden rounded-lg bg-sand/20">
           <img
             src={optimizeImageUrl(item.featuredImage, 1200)}
             alt=""
@@ -101,7 +101,7 @@ export function JournalArticleClient({ slug }: { slug: string }) {
       </header>
 
       <div
-        className="prose prose-sm mx-auto mt-10 max-w-3xl font-sans text-text-mid prose-headings:font-serif prose-headings:text-choc prose-a:text-nut"
+        className="prose prose-sm mx-auto mt-10 max-w-3xl font-body text-text-mid prose-headings:font-serif prose-headings:text-choc prose-a:text-nut"
         dangerouslySetInnerHTML={{ __html: item.content }}
       />
 

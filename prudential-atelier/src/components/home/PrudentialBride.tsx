@@ -73,7 +73,7 @@ export function PrudentialBride({
             </div>
           </div>
           <div>
-            <div className="relative aspect-[3/4] w-full overflow-hidden">
+            <div className="relative aspect-[3/4] w-full overflow-hidden img-portrait">
               <Image
                 src={portraitImage || DEF_SIDE}
                 alt="Prudential Bride portrait"

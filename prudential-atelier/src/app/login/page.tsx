@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { LoginContent } from "@/app/(auth)/auth/login/LoginContent";
+import { LoginModalRedirect } from "./LoginModalRedirect";
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-ivory" />}>
-      <LoginContent />
+    <Suspense fallback={null}>
+      <LoginModalRedirect />
     </Suspense>
   );
 }

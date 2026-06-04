@@ -53,7 +53,7 @@ export function JournalListClient() {
       <h1 className="mt-3 font-serif text-[clamp(2rem,4vw,3rem)] font-medium text-choc">
         Style &amp; Stories
       </h1>
-      <p className="mt-4 max-w-xl font-sans text-sm font-light leading-relaxed text-text-mid">
+      <p className="mt-4 max-w-xl copy-body text-sm font-light leading-relaxed text-text-mid">
         Stories from the atelier, styling notes, and behind-the-scenes craft.
       </p>
 
@@ -101,7 +101,7 @@ export function JournalListClient() {
               className="group mt-12 grid gap-6 overflow-hidden rounded-lg border border-sand bg-ivory/40 lg:grid-cols-2"
             >
               {featured.featuredImage ? (
-                <div className="relative aspect-[16/10] overflow-hidden bg-sand/20">
+                <div className="img-portrait relative overflow-hidden bg-sand/20">
                   <img
                     src={optimizeImageUrl(featured.featuredImage, 900)}
                     alt=""
@@ -119,7 +119,7 @@ export function JournalListClient() {
                   {featured.title}
                 </h2>
                 {featured.excerpt ? (
-                  <p className="mt-4 font-sans text-sm font-light leading-relaxed text-text-mid">
+                  <p className="mt-4 copy-body text-sm font-light leading-relaxed text-text-mid">
                     {featured.excerpt}
                   </p>
                 ) : null}
@@ -140,7 +140,7 @@ export function JournalListClient() {
                 className="group overflow-hidden rounded-lg border border-sand bg-ivory/30"
               >
                 {post.featuredImage ? (
-                  <div className="relative aspect-[4/3] overflow-hidden bg-sand/20">
+                  <div className="img-portrait relative overflow-hidden bg-sand/20">
                     <img
                       src={optimizeImageUrl(post.featuredImage, 600)}
                       alt=""
@@ -148,7 +148,7 @@ export function JournalListClient() {
                     />
                   </div>
                 ) : (
-                  <div className="aspect-[4/3] bg-sand/20" />
+                  <div className="img-portrait bg-sand/20" />
                 )}
                 <div className="p-5">
                   {post.category ? (
@@ -160,7 +160,7 @@ export function JournalListClient() {
                     {post.title}
                   </h3>
                   {post.excerpt ? (
-                    <p className="mt-2 line-clamp-2 font-sans text-xs font-light text-text-mid">
+                    <p className="mt-2 line-clamp-2 copy-body text-xs font-light text-text-mid">
                       {post.excerpt}
                     </p>
                   ) : null}

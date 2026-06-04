@@ -9,58 +9,55 @@ const DEFAULT_HERO =
 
 export function HeroSectionClient({ heroImage = DEFAULT_HERO }: { heroImage?: string }) {
   return (
-    <section className="relative grid min-h-[100svh] bg-choc lg:grid-cols-2">
-      <motion.div
-        className="flex flex-col justify-center px-6 py-16 lg:py-0 lg:pl-[140px] lg:pr-12"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        viewport={{ once: true, margin: "-80px" }}
-      >
-        <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">
-          SPRING / SUMMER 2026 · THE ATELIER
-        </p>
-        <h1 className="mt-6 font-serif text-[clamp(3rem,7vw,5.5rem)] font-normal italic leading-none text-cream">
-          Couture, considered.
-        </h1>
-        <p className="mt-6 max-w-[380px] font-sans text-sm font-light leading-[1.8] text-sand">
-          Bespoke and ready-to-wear, made in the Prudential Atelier for the moments you&apos;ll
-          remember.
-        </p>
-        <div className="mt-10 flex flex-wrap gap-4">
-          <Link
-            href="/shop"
-            className="inline-flex items-center justify-center bg-lightbr px-7 py-[14px] font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-white transition-colors hover:bg-nut"
-            style={{ borderRadius: "2px" }}
-          >
-            Explore the Collection
-          </Link>
-          <Link
-            href="/bespoke"
-            className="inline-flex items-center justify-center border border-lightbr bg-transparent px-7 py-[14px] font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-cream transition-colors hover:border-cream hover:text-cream"
-            style={{ borderRadius: "2px" }}
-          >
-            Begin a Commission →
-          </Link>
-        </div>
-      </motion.div>
+    <section className="bg-hero-bg text-cream">
+      <div className="mx-auto grid max-w-site gap-10 px-6 py-16 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-10 lg:py-24">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          viewport={{ once: true, margin: "-80px" }}
+        >
+          <p className="eyebrow text-lightbr">Prudential Atelier · Lagos</p>
+          <h1 className="mt-4 font-serif text-[clamp(2.5rem,5vw,4.5rem)] font-medium leading-[1.05] text-cream">
+            Crafted for the Woman Who Commands the Room
+          </h1>
+          <p className="mt-6 max-w-md copy-body text-sm font-light leading-[1.8] text-cream/85">
+            Bespoke couture and ready-to-wear — each piece conceived in our Lagos atelier and
+            finished by hand for weddings, galas, and everyday elegance.
+          </p>
+          <div className="mt-10 flex flex-wrap gap-4">
+            <Link href="/shop" className="btn-primary">
+              Shop Collection
+            </Link>
+            <Link href="/consultation" className="btn-ghost-dark">
+              Book Consultation
+            </Link>
+          </div>
+        </motion.div>
 
-      <motion.div
-        className="relative min-h-[50vh] lg:min-h-[100svh]"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-        viewport={{ once: true, margin: "-80px" }}
-      >
-        <Image
-          src={heroImage || DEFAULT_HERO}
-          alt="Prudential Atelier couture"
-          fill
-          className="object-cover object-top"
-          sizes="(max-width: 1024px) 100vw, 50vw"
-          priority
-        />
-      </motion.div>
+        <motion.div
+          className="img-portrait relative overflow-hidden rounded-lg border border-lightbr/30"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+          viewport={{ once: true, margin: "-80px" }}
+        >
+          <Image
+            src={heroImage || DEFAULT_HERO}
+            alt="Luxury couture gown"
+            fill
+            className="object-cover object-top"
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            priority
+          />
+          <div className="absolute bottom-6 left-6 border border-lightbr/40 bg-choc/90 px-5 py-4 backdrop-blur-sm">
+            <p className="font-serif text-2xl font-medium text-cream">15+</p>
+            <p className="mt-1 font-sans text-[9px] font-semibold uppercase tracking-[0.14em] text-lightbr">
+              Years of Couture
+            </p>
+          </div>
+        </motion.div>
+      </div>
     </section>
   );
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { InstagramIcon, PinterestIcon, TikTokIcon } from "@/components/icons/SocialIcons";
 import { FooterNewsletter } from "./FooterNewsletter";
+import { Logo } from "@/components/ui/Logo";
 
 const HOUSE_LINKS = [
   { href: "/atelier", label: "The Atelier" },
@@ -19,16 +19,7 @@ const CLIENT_LINKS = [
 ];
 
 function BrandWordmark() {
-  return (
-    <Link href="/" className="group inline-block">
-      <span className="block font-serif text-[clamp(1.5rem,2.5vw,2rem)] font-medium uppercase tracking-[0.28em] text-cream transition-colors group-hover:text-sand">
-        Prudential
-      </span>
-      <span className="mt-1 block font-sans text-[9px] font-medium uppercase tracking-[0.38em] text-sand/80">
-        Atelier
-      </span>
-    </Link>
-  );
+  return <Logo variant="white" size="lg" themeAdaptive={false} />;
 }
 
 function FooterColumn({
@@ -40,7 +31,16 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <p className="mb-4 font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr/80">
+      <p
+        className="mb-4 uppercase"
+        style={{
+          fontFamily: "var(--font-body)",
+          fontSize: "10px",
+          fontWeight: 600,
+          letterSpacing: "0.2em",
+          color: "var(--lightbr)",
+        }}
+      >
         {title}
       </p>
       <ul className="space-y-2.5">
@@ -51,14 +51,24 @@ function FooterColumn({
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-sans text-[13px] font-light text-cream/75 transition-colors hover:text-cream"
+                className="font-light transition-colors hover:text-cream"
+                style={{
+                  fontFamily: "var(--font-body)",
+                  fontSize: "13px",
+                  color: "rgba(226, 209, 194, 0.75)",
+                }}
               >
                 {link.label}
               </a>
             ) : (
               <Link
                 href={link.href}
-                className="font-sans text-[13px] font-light text-cream/75 transition-colors hover:text-cream"
+                className="font-light transition-colors hover:text-cream"
+                style={{
+                  fontFamily: "var(--font-body)",
+                  fontSize: "13px",
+                  color: "rgba(226, 209, 194, 0.75)",
+                }}
               >
                 {link.label}
               </Link>
@@ -74,57 +84,38 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-footer-dark text-sand">
-      <div className="mx-auto grid max-w-site gap-12 px-6 py-16 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr] lg:gap-10 lg:px-10 lg:py-20">
-        <div>
+    <footer className="bg-footer-bg">
+      <div className="mx-auto max-w-site px-6 py-16 lg:px-10 lg:py-20">
+        <div className="flex justify-center pb-12">
           <BrandWordmark />
-          <p className="mt-6 max-w-sm font-sans text-[13px] font-light leading-relaxed text-cream/70">
-            International luxury couture. Bespoke, ready-to-wear and bridal, made with love in
-            Lagos for the world.
-          </p>
-          <div className="mt-6 flex items-center gap-4">
-            <a
-              href="https://instagram.com/prudent_gabriel"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sand transition-colors hover:text-cream"
-              aria-label="Instagram"
-            >
-              <InstagramIcon size={16} className="h-4 w-4" />
-            </a>
-            <a
-              href="https://pinterest.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sand transition-colors hover:text-cream"
-              aria-label="Pinterest"
-            >
-              <PinterestIcon size={16} className="h-4 w-4" />
-            </a>
-            <a
-              href="https://tiktok.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sand transition-colors hover:text-cream"
-              aria-label="TikTok"
-            >
-              <TikTokIcon size={16} className="h-4 w-4" />
-            </a>
-          </div>
         </div>
 
-        <FooterColumn title="The House" links={HOUSE_LINKS} />
-        <FooterColumn title="Client Care" links={CLIENT_LINKS} />
-        <FooterNewsletter />
+        <div className="grid gap-10 md:grid-cols-3 lg:gap-12">
+          <FooterColumn title="The House" links={HOUSE_LINKS} />
+          <FooterColumn title="Client Care" links={CLIENT_LINKS} />
+          <FooterNewsletter />
+        </div>
       </div>
 
-      <div className="border-t border-cream/10">
+      <div style={{ borderTop: "1px solid rgba(226, 209, 194, 0.1)" }}>
         <div className="mx-auto flex max-w-site flex-col gap-3 px-6 py-6 lg:px-10">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="font-sans text-[11px] text-cream/40">
+            <p
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: "11px",
+                color: "rgba(226, 209, 194, 0.4)",
+              }}
+            >
               © {year} Prudential Atelier. All rights reserved.
             </p>
-            <p className="font-sans text-[11px] text-cream/40">
+            <p
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: "11px",
+                color: "rgba(226, 209, 194, 0.4)",
+              }}
+            >
               <Link href="/legal/privacy" className="transition-colors hover:text-cream/60">
                 Privacy
               </Link>
@@ -135,7 +126,14 @@ export function Footer() {
               {" · ₦ NGN"}
             </p>
           </div>
-          <p className="text-center font-sans text-[10px] italic text-lightbr/60">
+          <p
+            className="text-center italic"
+            style={{
+              fontFamily: "var(--font-body)",
+              fontSize: "10px",
+              color: "rgba(152, 117, 91, 0.5)",
+            }}
+          >
             Developed with love by SonsHub Media Ltd
           </p>
         </div>

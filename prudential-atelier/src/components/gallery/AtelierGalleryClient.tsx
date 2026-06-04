@@ -77,14 +77,13 @@ export function AtelierGalleryClient({
             {images.map((img, index) => (
               <div
                 key={img.id}
-                className="group relative cursor-pointer"
+                className="group relative img-portrait cursor-pointer"
                 style={{ breakInside: "avoid", marginBottom: "4px", display: "block" }}
                 onClick={() => setLightboxIndex(index)}
               >
                 <img
                   src={optimizeImageUrl(img.url, 600)}
                   alt={img.alt || "Prudent Gabriel Atelier"}
-                  style={{ width: "100%", height: "auto", display: "block" }}
                   loading="lazy"
                 />
                 {img.caption ? (

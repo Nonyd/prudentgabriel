@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Bell, Mail, Menu, Search } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { getInitials } from "@/lib/utils";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 function pageTitleFromPath(pathname: string): string {
   if (pathname === "/admin") return "Dashboard";
@@ -52,6 +53,7 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
         <button type="button" className="hidden text-text-mid sm:inline-flex" aria-label="Mail">
           <Mail className="h-[18px] w-[18px]" strokeWidth={1.5} />
         </button>
+        <ThemeToggle />
         <div
           className="flex h-8 w-8 items-center justify-center rounded-full bg-choc font-sans text-[10px] font-medium text-cream"
           title={user?.email ?? ""}

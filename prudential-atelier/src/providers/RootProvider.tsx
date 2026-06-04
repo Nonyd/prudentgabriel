@@ -7,14 +7,19 @@ import { useState } from "react";
 import type { Session } from "next-auth";
 import { CurrencyProvider } from "@/providers/CurrencyProvider";
 import { CartSyncProvider } from "@/providers/CartSyncProvider";
-import { ThemeProvider } from "@/providers/ThemeProvider";
+import { ThemeProvider } from "@/components/ui/ThemeProvider";
+import { LogoProvider } from "@/components/ui/LogoProvider";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { AuthLinkInterceptor } from "@/components/auth/AuthLinkInterceptor";
+import type { LogoSettings } from "@/lib/logos";
 
 interface RootProviderProps {
   children: React.ReactNode;
   session?: Session | null;
+  logos: LogoSettings;
 }
 
-export function RootProvider({ children, session }: RootProviderProps) {
+export function RootProvider({ children, session, logos }: RootProviderProps) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -30,37 +35,43 @@ export function RootProvider({ children, session }: RootProviderProps) {
   return (
     <SessionProvider session={session ?? undefined}>
       <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <CurrencyProvider>
-            <CartSyncProvider>{children}</CartSyncProvider>
-          </CurrencyProvider>
-          <Toaster
-            position="bottom-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: "var(--choc)",
-                color: "var(--cream)",
-                fontFamily: "var(--font-body)",
-                fontSize: "13px",
-                borderRadius: "var(--radius-md)",
-                border: "var(--border)",
-              },
-              success: {
-                iconTheme: {
-                  primary: "var(--lightbr)",
-                  secondary: "var(--cream)",
+        <LogoProvider logos={logos}>
+          <QueryClientProvider client={queryClient}>
+            <CurrencyProvider>
+              <CartSyncProvider>
+                <AuthLinkInterceptor />
+                {children}
+                <AuthModal />
+              </CartSyncProvider>
+            </CurrencyProvider>
+            <Toaster
+              position="bottom-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: "var(--choc)",
+                  color: "var(--cream)",
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "13px",
+                  borderRadius: "var(--radius-md)",
+                  border: "var(--border)",
                 },
-              },
-              error: {
-                iconTheme: {
-                  primary: "var(--danger)",
-                  secondary: "var(--cream)",
+                success: {
+                  iconTheme: {
+                    primary: "var(--lightbr)",
+                    secondary: "var(--cream)",
+                  },
                 },
-              },
-            }}
-          />
-        </QueryClientProvider>
+                error: {
+                  iconTheme: {
+                    primary: "var(--danger)",
+                    secondary: "var(--cream)",
+                  },
+                },
+              }}
+            />
+          </QueryClientProvider>
+        </LogoProvider>
       </ThemeProvider>
     </SessionProvider>
   );

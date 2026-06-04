@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { isSuperAdmin } from "@/lib/roles";
+import { Logo } from "@/components/ui/Logo";
 
 type NavItem = { href: string; label: string; icon: LucideIcon; badgeKey?: string };
 
@@ -95,20 +96,15 @@ export function AdminSidebar({
 
   return (
     <aside
-      className="flex h-screen w-[228px] shrink-0 flex-col overflow-y-auto bg-choc text-cream"
+      className="flex h-screen w-[228px] shrink-0 flex-col overflow-y-auto bg-sidebar-bg text-cream"
       style={{ overscrollBehavior: "contain" }}
       aria-label="Admin navigation"
     >
       <div className="border-b border-lightbr/20 px-5 py-6">
-        <Link href="/admin" onClick={() => onNavigate?.()} className="block">
-          <p className="font-serif text-lg font-medium tracking-[0.12em]">
-            <span className="text-cream">Prudent</span>{" "}
-            <span className="text-lightbr">Gabriel</span>
-          </p>
-          <p className="mt-1 font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-lightbr/60">
-            Operations Suite
-          </p>
-        </Link>
+        <Logo variant="white" size="sm" themeAdaptive={false} href="/admin" />
+        <p className="mt-2 font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-lightbr/60">
+          Operations Suite
+        </p>
       </div>
 
       <div className="flex items-center gap-3 border-b border-lightbr/20 px-5 py-4">

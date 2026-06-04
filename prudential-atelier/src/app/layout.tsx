@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
-import { Cormorant, Montserrat } from "next/font/google";
+import { Cormorant, Jost, Lora } from "next/font/google";
 import "@/styles/globals.css";
 import { auth } from "@/auth";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { getLogoSettings } from "@/lib/logos";
 import { SmoothScroll } from "@/components/public/SmoothScroll";
 import { RootProvider } from "@/providers/RootProvider";
+
+const themeInitScript = `(function(){try{var t=localStorage.getItem("pg-theme");var theme="light";if(t==="dark"||t==="light")theme=t;else if(t){try{var p=JSON.parse(t);if(p&&p.state&&p.state.isDark)theme="dark";}catch(e){}}document.documentElement.setAttribute("data-theme",theme);}catch(e){}})();`;
 
 const cormorant = Cormorant({
   subsets: ["latin"],
@@ -14,10 +17,18 @@ const cormorant = Cormorant({
   display: "swap",
 });
 
-const montserrat = Montserrat({
+const jost = Jost({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
-  variable: "--font-montserrat",
+  variable: "--font-jost",
+  display: "swap",
+});
+
+const lora = Lora({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  style: ["normal", "italic"],
+  variable: "--font-lora",
   display: "swap",
 });
 
@@ -47,11 +58,15 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
+  const logos = await getLogoSettings();
 
   return (
-    <html lang="en" className={`${cormorant.variable} ${montserrat.variable}`}>
+    <html lang="en" className={`${cormorant.variable} ${jost.variable} ${lora.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-screen font-sans antialiased">
-        <RootProvider session={session}>
+        <RootProvider session={session} logos={logos}>
           <SmoothScroll>{children}</SmoothScroll>
         </RootProvider>
       </body>

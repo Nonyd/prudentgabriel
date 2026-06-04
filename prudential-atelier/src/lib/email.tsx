@@ -1,4 +1,5 @@
 import { render } from "@react-email/render";
+import type { ReactElement } from "react";
 import { Resend } from "resend";
 import WelcomeEmail, { subject as welcomeSubject } from "@/emails/WelcomeEmail";
 import OrderConfirmationEmail from "@/emails/OrderConfirmationEmail";
@@ -14,7 +15,13 @@ import ConsultationCancelledEmail from "@/emails/ConsultationCancelledEmail";
 import ConsultationRescheduleEmail from "@/emails/ConsultationRescheduleEmail";
 import InvoiceEmail, { subjectInvoiceEmail } from "@/emails/InvoiceEmail";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { primeEmailBranding, emailLogoWhiteUrl } from "@/lib/email-branding";
 const FROM = "Prudential Atelier <hello@prudentgabriel.com>";
+
+async function renderBrandedEmail(element: ReactElement) {
+  await primeEmailBranding();
+  return render(element);
+}
 
 function getResend(): Resend | null {
   const key = process.env.RESEND_API_KEY;
@@ -41,7 +48,7 @@ export async function sendWelcomeEmail(
   pointsBalance: number,
   referralCode: string,
 ): Promise<void> {
-  const html = await render(
+  const html = await renderBrandedEmail(
     <WelcomeEmail firstName={firstName} pointsBalance={pointsBalance} referralCode={referralCode} />,
   );
   await sendEmail({ to, subject: welcomeSubject(firstName), html });
@@ -63,7 +70,7 @@ export async function sendOrderConfirmationEmail(params: {
   const subtotal =
     params.subtotalNGN ??
     params.items.reduce((s, i) => s + i.priceNGN * i.qty, 0);
-  const html = await render(
+  const html = await renderBrandedEmail(
     <OrderConfirmationEmail
       firstName={params.firstName}
       orderNumber={params.orderNumber}
@@ -85,7 +92,7 @@ export async function sendOrderConfirmationEmail(params: {
 }
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
-  const html = await render(<PasswordResetEmail resetUrl={resetUrl} />);
+  const html = await renderBrandedEmail(<PasswordResetEmail resetUrl={resetUrl} />);
   await sendEmail({
     to,
     subject: "Reset your Prudential Atelier password",
@@ -100,7 +107,7 @@ export async function sendBespokeConfirmationEmail(
   occasion: string,
   timeline: string,
 ): Promise<void> {
-  const html = await render(
+  const html = await renderBrandedEmail(
     <BespokeConfirmationEmail name={name} requestNumber={requestNumber} occasion={occasion} timeline={timeline} />,
   );
   await sendEmail({
@@ -126,6 +133,7 @@ export async function sendBespokeBalancePaymentLinkEmail(params: {
   amountNGN: number;
   payUrl: string;
 }): Promise<void> {
+  await primeEmailBranding();
   const href = params.payUrl.replace(/"/g, "%22");
   const inner = `
     <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Dear ${escapeHtml(params.clientName)},</p>
@@ -158,7 +166,7 @@ export async function sendReferralSuccessEmail(
   pointsEarned: number,
   newBalance: number,
 ): Promise<void> {
-  const html = await render(
+  const html = await renderBrandedEmail(
     <ReferralSuccessEmail
       referrerName={referrerName}
       friendFirstName={friendFirstName}
@@ -181,7 +189,7 @@ export async function sendOrderShippedEmail(params: {
   carrier?: string;
   estimatedDays?: string;
 }): Promise<void> {
-  const html = await render(
+  const html = await renderBrandedEmail(
     <OrderShippedEmail
       firstName={params.firstName}
       orderNumber={params.orderNumber}
@@ -204,7 +212,7 @@ export async function sendBackInStockEmail(params: {
   productSlug: string;
   priceNGN: number;
 }): Promise<void> {
-  const html = await render(
+  const html = await renderBrandedEmail(
     <BackInStockEmail
       productName={params.productName}
       size={params.size}
@@ -220,10 +228,13 @@ export async function sendBackInStockEmail(params: {
 }
 
 function wrapHtml(title: string, inner: string): string {
+  const logoBlock = emailLogoWhiteUrl
+    ? `<img src="${emailLogoWhiteUrl}" alt="${title}" width="160" style="max-width:160px;height:auto;display:block;margin:0 auto;" />`
+    : `<span style="color:#C9A84C;font-size:18px;">${title}</span>`;
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/></head>
 <body style="margin:0;background:#FAF6EF;font-family:Georgia,serif;color:#2d2d2d;">
-<div style="background:#6B1C2A;padding:20px;text-align:center;">
-  <span style="color:#C9A84C;font-size:18px;">${title}</span>
+<div style="background:#442913;padding:20px;text-align:center;">
+  ${logoBlock}
 </div>
 <div style="padding:28px 24px;max-width:560px;margin:0 auto;">${inner}</div>
 </body></html>`;
@@ -235,6 +246,7 @@ export async function sendAdminNotificationEmail(subject: string, htmlInner: str
     console.log("[EMAIL admin]", subject);
     return;
   }
+  await primeEmailBranding();
   await sendEmail({ to: admin, subject, html: wrapHtml("Admin", htmlInner) });
 }
 
@@ -250,7 +262,7 @@ export async function sendConsultationPendingEmail(params: {
   preferredDate2?: Date;
   preferredDate3?: Date;
 }): Promise<void> {
-  const html = await render(
+  const html = await renderBrandedEmail(
     <ConsultationPendingEmail
       clientName={params.clientName}
       bookingNumber={params.bookingNumber}
@@ -291,7 +303,7 @@ export async function sendConsultationConfirmedEmail(params: {
     year: "numeric",
     timeZone: "Africa/Lagos",
   }).format(params.confirmedDate);
-  const html = await render(
+  const html = await renderBrandedEmail(
     <ConsultationConfirmedEmail
       clientName={params.clientName}
       bookingNumber={params.bookingNumber}
@@ -321,7 +333,7 @@ export async function sendConsultationCancelledEmail(params: {
   consultantName: string;
   reason?: string;
 }): Promise<void> {
-  const html = await render(
+  const html = await renderBrandedEmail(
     <ConsultationCancelledEmail
       clientName={params.clientName}
       bookingNumber={params.bookingNumber}
@@ -344,7 +356,7 @@ export async function sendConsultationRescheduleEmail(params: {
   proposedDates: string[];
   adminMessage?: string;
 }): Promise<void> {
-  const html = await render(
+  const html = await renderBrandedEmail(
     <ConsultationRescheduleEmail
       clientName={params.clientName}
       bookingNumber={params.bookingNumber}
@@ -386,7 +398,7 @@ export async function sendInvoiceEmail(params: {
     clientNote: params.clientNote,
     footerNote: params.footerNote,
   };
-  const html = await render(<InvoiceEmail {...props} />);
+  const html = await renderBrandedEmail(<InvoiceEmail {...props} />);
   await sendEmail({
     to: params.to,
     subject: subjectInvoiceEmail(props),

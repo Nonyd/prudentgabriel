@@ -18,6 +18,7 @@ import {
   User,
 } from "lucide-react";
 import { TIER_LABELS } from "@/lib/loyalty";
+import { Logo } from "@/components/ui/Logo";
 
 type NavItem = {
   href: string;
@@ -125,7 +126,10 @@ export function AccountSidebar({
 
   return (
     <>
-      <aside className="hidden w-[220px] shrink-0 flex-col bg-choc lg:flex">
+      <aside className="hidden w-[220px] shrink-0 flex-col bg-sidebar-bg lg:flex">
+        <div className="border-b border-sand/20 px-6 py-5">
+          <Logo variant="white" size="sm" themeAdaptive={false} />
+        </div>
         <div className="border-b border-sand/20 p-6">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-lightbr font-display text-lg text-cream">
@@ -146,7 +150,7 @@ export function AccountSidebar({
         </nav>
       </aside>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-sand bg-choc lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-sand bg-sidebar-bg lg:hidden">
         {MOBILE_TABS.map(({ href, label, icon: Icon }) => {
           const active =
             pathname === href || (href !== "/account" && pathname.startsWith(href));

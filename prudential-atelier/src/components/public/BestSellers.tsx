@@ -53,27 +53,57 @@ export async function BestSellers() {
   }
 
   return (
-    <section className="bg-ivory px-6 py-20 lg:px-10">
+    <section className="px-6 py-20 lg:px-10" style={{ backgroundColor: "var(--ivory)" }}>
       <div className="mx-auto max-w-site">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">
+            <p
+              className="uppercase"
+              style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: "10px",
+                fontWeight: 500,
+                letterSpacing: "0.2em",
+                color: "var(--lightbr)",
+              }}
+            >
               Most Desired
             </p>
-            <h2 className="mt-3 font-serif text-[42px] font-medium leading-tight text-choc">
+            <h2
+              className="mt-3 leading-tight"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "42px",
+                color: "var(--choc)",
+              }}
+            >
               Best sellers
             </h2>
           </div>
           <Link
             href="/shop"
-            className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-nut transition-colors hover:text-choc"
+            className="uppercase transition-opacity hover:opacity-80"
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: "10px",
+              fontWeight: 600,
+              letterSpacing: "0.16em",
+              color: "var(--nut)",
+            }}
           >
             Shop All →
           </Link>
         </div>
 
         {products.length === 0 ? (
-          <p className="mt-10 font-sans text-sm font-light text-text-mid">
+          <p
+            className="mt-10 font-light"
+            style={{
+              fontFamily: "var(--font-body)",
+              fontSize: "14px",
+              color: "var(--text-mid)",
+            }}
+          >
             New arrivals coming soon — explore our collections above.
           </p>
         ) : (
