@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BespokeStage, ConsultationStatus, EmploymentType, PaymentStatus } from "@prisma/client";
 import { CalendarDays, CreditCard, Scissors, TrendingUp } from "lucide-react";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ExecutiveKPICard } from "@/components/admin/ExecutiveKPICard";
 import { ExecutiveRevenueChart, type RevenueChartPoint } from "@/components/admin/ExecutiveRevenueChart";
@@ -33,9 +34,17 @@ function greetingForHour(h: number): string {
   return "Good evening";
 }
 
+function greetingDisplayName(name: string | null | undefined, email: string | null | undefined): string {
+  const trimmed = name?.trim();
+  if (trimmed) return trimmed.replace(/\.$/, "");
+  if (email) return email.split("@")[0] ?? "Admin";
+  return "Admin";
+}
+
 const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 
 export default async function AdminDashboardPage() {
+  const session = await auth();
   const now = new Date();
   const dayStart = startOfDay(now);
   const dayEnd = endOfDay(now);
@@ -268,6 +277,7 @@ export default async function AdminDashboardPage() {
   const consultDelta = consultationsThisWeek - consultationsLastWeek;
   const chartTotal = revenueChart.reduce((a, d) => a + d.bespoke + d.rtw + d.consultations, 0);
   const greeting = greetingForHour(now.getHours());
+  const displayName = greetingDisplayName(session?.user?.name, session?.user?.email);
   const dateLabel = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
 
   return (
@@ -279,7 +289,7 @@ export default async function AdminDashboardPage() {
               Daily report · {dateLabel}
             </p>
             <h2 className="mt-2 font-serif text-[28px] font-normal text-cream md:text-[32px]">
-              {greeting}, Mrs. Prudent.
+              {greeting}, {displayName}.
             </h2>
             <p className="mt-3 font-sans text-[13px] text-cream/80">
               {ordersAdvancedToday} orders advanced · {deliveriesToday} delivery scheduled today ·{" "}

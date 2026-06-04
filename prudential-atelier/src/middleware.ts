@@ -20,6 +20,10 @@ function canAccessAdminPath(role: string | undefined, pathname: string, email?: 
   if (!role || !isAdminRole(role)) return false;
   if (isSuperAdmin(role, email)) return true;
 
+  if (pathname.startsWith("/admin/account-settings")) {
+    return isAdminRole(role);
+  }
+
   if (pathname.startsWith("/admin/settings/developer")) {
     return false;
   }

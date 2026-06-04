@@ -50,12 +50,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role: Role }).role;
         token.referralCode = (user as { referralCode: string }).referralCode;
         token.pointsBalance = (user as { pointsBalance: number }).pointsBalance;
+        token.name = user.name;
+        token.picture = user.image;
+      }
+      if (trigger === "update" && session) {
+        const patch = session as { name?: string; image?: string };
+        if (patch.name !== undefined) token.name = patch.name;
+        if (patch.image !== undefined) token.picture = patch.image;
       }
       return token;
     },
@@ -65,6 +72,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.role = token.role as string;
         session.user.referralCode = token.referralCode as string;
         session.user.pointsBalance = token.pointsBalance as number;
+        if (token.name) session.user.name = token.name as string;
+        if (token.picture) session.user.image = token.picture as string;
       }
       return session;
     },

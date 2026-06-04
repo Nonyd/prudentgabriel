@@ -19,12 +19,13 @@ import {
   ShoppingBag,
   TrendingUp,
   UserCircle,
+  UserRoundCog,
   Users,
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import type { Session } from "next-auth";
 import { cn, getInitials } from "@/lib/utils";
 import {
@@ -156,10 +157,12 @@ export function AdminSidebar({
   badges?: Record<string, number>;
 }) {
   const pathname = usePathname();
-  const user = session.user;
+  const { data: liveSession } = useSession();
+  const user = liveSession?.user ?? session.user;
   const displayName = user?.name ?? user?.email ?? "Admin";
-  const role = user?.role ?? "ADMIN";
-  const email = user?.email;
+  const avatarUrl = user?.image;
+  const role = user?.role ?? session.user?.role ?? "ADMIN";
+  const email = user?.email ?? session.user?.email;
 
   return (
     <aside
@@ -220,8 +223,13 @@ export function AdminSidebar({
 
       <div className="border-t border-lightbr/20 p-4">
         <div className="flex items-center gap-3 px-2 py-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-lightbr/20 font-sans text-[11px] font-medium text-cream">
-            {getInitials(displayName)}
+          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-lightbr/20 font-sans text-[11px] font-medium text-cream">
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              getInitials(displayName)
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate font-sans text-[11px] text-cream">{displayName}</p>
@@ -230,6 +238,19 @@ export function AdminSidebar({
             </p>
           </div>
         </div>
+        <Link
+          href="/admin/account-settings"
+          onClick={() => onNavigate?.()}
+          className={cn(
+            "mt-1 flex items-center gap-2 rounded-sm px-2 py-2 font-sans text-[11px] transition-colors",
+            pathname.startsWith("/admin/account-settings")
+              ? "border-r-2 border-lightbr bg-[rgba(152,117,91,0.18)] text-cream"
+              : "text-[rgba(226,209,194,0.65)] hover:bg-lightbr/10 hover:text-cream",
+          )}
+        >
+          <UserRoundCog className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+          Account Settings
+        </Link>
         <button
           type="button"
           onClick={() => void signOut({ callbackUrl: "/admin-login" })}
