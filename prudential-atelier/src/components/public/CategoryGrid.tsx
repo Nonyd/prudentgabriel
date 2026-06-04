@@ -8,19 +8,19 @@ const COLLECTIONS = [
     href: "/bespoke",
     title: "The Bespoke Atelier",
     subtitle: "Commissions designed entirely around you.",
-    bg: "var(--hero-bg)",
+    bg: "#442913",
   },
   {
     href: "/bridal",
     title: "Bridal & Ceremony",
     subtitle: "For the day you'll remember forever.",
-    bg: "var(--nut)",
+    bg: "#5C3422",
   },
   {
     href: "/shop",
     title: "Ready-to-Wear",
     subtitle: "House signatures, ready to ship.",
-    bg: "var(--sidebar-bg)",
+    bg: "#3a1f0c",
   },
 ];
 

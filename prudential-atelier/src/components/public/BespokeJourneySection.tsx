@@ -8,7 +8,7 @@ export function BespokeJourneySection() {
     <section className="grid min-h-[380px] lg:grid-cols-2">
       <motion.div
         className="flex flex-col justify-center px-8 py-16 lg:px-[60px] lg:py-[80px]"
-        style={{ backgroundColor: "var(--choc)" }}
+        style={{ backgroundColor: "#442913" }}
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
