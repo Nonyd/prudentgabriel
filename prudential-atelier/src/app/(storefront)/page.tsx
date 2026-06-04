@@ -1,8 +1,9 @@
 import { HeroSection } from "@/components/public/HeroSection";
-import { CategoryGrid } from "@/components/public/CategoryGrid";
 import { BestSellers } from "@/components/public/BestSellers";
-import { ConsultationWidget } from "@/components/public/ConsultationWidget";
-import { LoyaltyStrip } from "@/components/public/LoyaltyStrip";
+import { CategoryGrid } from "@/components/public/CategoryGrid";
+import { BespokeJourney } from "@/components/public/BespokeJourney";
+import { BrandQuoteSection } from "@/components/public/BrandQuoteSection";
+import { PFACrosslinkBanner } from "@/components/public/PFACrosslinkBanner";
 import { BlogPreview } from "@/components/public/BlogPreview";
 
 export const revalidate = 300;
@@ -11,10 +12,11 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
-      <CategoryGrid />
       <BestSellers />
-      <ConsultationWidget />
-      <LoyaltyStrip />
+      <CategoryGrid />
+      <BespokeJourney />
+      <BrandQuoteSection />
+      <PFACrosslinkBanner />
       <BlogPreview />
     </>
   );

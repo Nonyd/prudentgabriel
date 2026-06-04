@@ -8,11 +8,9 @@ export async function BlogPreview() {
     id: string;
     title: string;
     slug: string;
-    excerpt: string | null;
     featuredImage: string | null;
     category: string | null;
     readTime: number | null;
-    publishedAt: Date | null;
   }[] = [];
 
   try {
@@ -27,11 +25,9 @@ export async function BlogPreview() {
         id: true,
         title: true,
         slug: true,
-        excerpt: true,
         featuredImage: true,
         category: true,
         readTime: true,
-        publishedAt: true,
       },
     });
   } catch {
@@ -41,20 +37,22 @@ export async function BlogPreview() {
   if (posts.length === 0) return null;
 
   return (
-    <section className="bg-bg px-6 py-20 lg:px-10">
+    <section className="bg-ivory px-6 py-20 lg:px-10">
       <div className="mx-auto max-w-site">
-        <div className="flex items-end justify-between gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="eyebrow">Journal</p>
-            <h2 className="mt-3 font-serif text-[clamp(2rem,3vw,2.625rem)] font-medium text-choc">
-              From the Atelier
+            <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">
+              Latest from the Journal
+            </p>
+            <h2 className="mt-3 font-serif text-[42px] font-medium leading-tight text-choc">
+              Stories from the atelier
             </h2>
           </div>
           <Link
             href="/journal"
-            className="hidden font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-nut sm:inline-flex"
+            className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-nut transition-colors hover:text-choc"
           >
-            View all
+            Read All →
           </Link>
         </div>
 
@@ -63,9 +61,9 @@ export async function BlogPreview() {
             <Link
               key={post.id}
               href={`/journal/${post.slug}`}
-              className="group block overflow-hidden border border-sand/60 bg-ivory transition hover:border-lightbr"
+              className="group block"
             >
-              <div className="relative aspect-[4/3] bg-sand/30">
+              <div className="relative aspect-video overflow-hidden bg-bg">
                 {post.featuredImage ? (
                   <Image
                     src={post.featuredImage}
@@ -80,32 +78,21 @@ export async function BlogPreview() {
                   </div>
                 )}
               </div>
-              <div className="p-5">
+              <div className="mt-4">
                 {post.category ? (
-                  <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-lightbr">
+                  <p className="font-sans text-[10px] font-medium uppercase tracking-[0.16em] text-lightbr">
                     {post.category}
                   </p>
                 ) : null}
                 <h3 className="mt-2 font-serif text-xl font-medium text-choc group-hover:text-nut">
                   {post.title}
                 </h3>
-                {post.excerpt ? (
-                  <p className="mt-2 line-clamp-2 font-sans text-sm font-light leading-relaxed text-text-mid">
-                    {post.excerpt}
-                  </p>
-                ) : null}
-                <p className="mt-3 font-sans text-[10px] uppercase tracking-wider text-text-light">
+                <p className="mt-2 font-sans text-[11px] font-light text-text-light">
                   {post.readTime ? `${post.readTime} min read` : "Read article"}
                 </p>
               </div>
             </Link>
           ))}
-        </div>
-
-        <div className="mt-10 text-center sm:hidden">
-          <Link href="/journal" className="btn-ghost-light inline-flex">
-            View all
-          </Link>
         </div>
       </div>
     </section>

@@ -24,6 +24,10 @@ const config: Config = {
         warning: "#B87333",
         danger: "#8B2020",
         info: "#1A5C8B",
+        wine: "#6B1C2A",
+        gold: "#C9A84C",
+        "footer-dark": "#1A0F08",
+        "dark-nut": "#3a1f0c",
       },
       fontFamily: {
         serif: ["var(--font-cormorant)", "Cormorant", "serif"],
