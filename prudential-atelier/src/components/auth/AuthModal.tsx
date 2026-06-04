@@ -6,23 +6,15 @@ import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
-import { z } from "zod";
 import {
   loginSchema,
-  registerSchema,
+  registerModalSchema,
   type LoginInput,
   type RegisterInput,
+  type RegisterModalInput,
 } from "@/validations/auth";
 import { useAuthModalStore } from "@/store/authModalStore";
 import { Logo } from "@/components/ui/Logo";
-
-const registerModalSchema = registerSchema
-  .omit({ firstName: true, lastName: true })
-  .extend({
-    name: z.string().min(2, "Please enter your full name"),
-  });
-
-type RegisterModalInput = z.infer<typeof registerModalSchema>;
 
 function GoogleIcon() {
   return (
