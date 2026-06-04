@@ -5,27 +5,9 @@ import { getLoyaltyRulePoints } from "@/lib/loyalty";
 import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
 import { sendWelcomeCredentialsEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
-
-const TEMP_WORDS = [
-  "AMBER",
-  "CORAL",
-  "IVORY",
-  "VELVET",
-  "SILK",
-  "LINEN",
-  "SATIN",
-  "PEARL",
-  "ROUGE",
-  "EBONY",
-];
+import { generateTempPassword } from "@/lib/temp-password";
 
 export type OnboardSource = "CONSULTATION" | "RTW_ORDER" | "BESPOKE_ORDER";
-
-function generateTempPassword(): string {
-  const word = TEMP_WORDS[Math.floor(Math.random() * TEMP_WORDS.length)];
-  const num = Math.floor(1000 + Math.random() * 9000);
-  return `${word}-${num}`;
-}
 
 function firstNameFromName(name: string): string {
   return name.trim().split(/\s+/)[0] ?? name;

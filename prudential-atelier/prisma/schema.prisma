@@ -43,6 +43,8 @@ model User {
   updatedAt DateTime @updatedAt
   preferredGateway PaymentGateway?
   mustResetPassword Boolean @default(false)
+  isActive          Boolean  @default(true)
+  lastLogin         DateTime?
 }
 
 model Consultant {

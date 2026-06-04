@@ -122,6 +122,12 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
         icon: Lock,
         superAdminOnly: true,
       },
+      {
+        href: "/admin/settings/users",
+        label: "Users & Roles",
+        icon: UserRoundCog,
+        superAdminOnly: true,
+      },
     ],
   },
 ];

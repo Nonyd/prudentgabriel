@@ -28,6 +28,10 @@ function canAccessAdminPath(role: string | undefined, pathname: string, email?: 
     return false;
   }
 
+  if (pathname.startsWith("/admin/settings/users")) {
+    return false;
+  }
+
   if (pathname.startsWith("/admin/logs")) {
     return canAccessLogs(role, email);
   }
@@ -126,6 +130,7 @@ export default auth((req) => {
   const isAccountRoute = pathname.startsWith("/account");
   const isAdminRoute = pathname.startsWith("/admin");
   const isDeveloperSettings = pathname.startsWith("/admin/settings/developer");
+  const isUsersSettings = pathname.startsWith("/admin/settings/users");
 
   if ((isAccountRoute || pathname === "/reset-password") && !isLoggedIn) {
     const loginUrl = new URL("/login", nextUrl.origin);
@@ -145,7 +150,7 @@ export default auth((req) => {
     return NextResponse.redirect(resetUrl);
   }
 
-  if (isDeveloperSettings) {
+  if (isDeveloperSettings || isUsersSettings) {
     if (!isLoggedIn || !isSuperAdmin(role, email)) {
       return new NextResponse(null, { status: 404 });
     }
