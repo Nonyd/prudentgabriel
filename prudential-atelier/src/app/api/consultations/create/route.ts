@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ConsultationStatus, PaymentStatus } from "@prisma/client";
+import { ConsultationStatus, PaymentGateway, PaymentStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { generatePaymentReference } from "@/lib/payments/index";
 import {
   addDaysToWatYmd,
   dateToWatYmd,
@@ -92,6 +93,17 @@ export async function POST(req: NextRequest) {
     !manual && data.confirmedDate ? parseDateParamToUtcDay(dateToWatYmd(data.confirmedDate)) : null;
   const confirmedTime = !manual ? data.confirmedTime ?? null : null;
 
+  const gatewayMap: Record<string, PaymentGateway> = {
+    PAYSTACK: PaymentGateway.PAYSTACK,
+    FLUTTERWAVE: PaymentGateway.FLUTTERWAVE,
+    STRIPE: PaymentGateway.STRIPE,
+    MONNIFY: PaymentGateway.MONNIFY,
+    BANK_TRANSFER: PaymentGateway.BANK_TRANSFER,
+  };
+  const paymentGateway = gatewayMap[data.gateway];
+  const paymentRef =
+    data.gateway === "BANK_TRANSFER" ? generatePaymentReference("CONSULT") : undefined;
+
   const booking = await prisma.$transaction(async (tx) => {
     return tx.consultationBooking.create({
       data: {
@@ -114,6 +126,8 @@ export async function POST(req: NextRequest) {
         confirmedTime,
         feeNGN: offering.feeNGN,
         currency: data.currency,
+        paymentGateway,
+        paymentRef: paymentRef ?? null,
         paymentStatus: PaymentStatus.PENDING,
         status: ConsultationStatus.PENDING_PAYMENT,
       },

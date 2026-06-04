@@ -9,11 +9,12 @@ import clsx from "clsx";
 import { useCartStore } from "@/store/cartStore";
 import { useCurrencyStore } from "@/store/currencyStore";
 import type { ShopCurrency } from "@/lib/currency";
+import type { AddressInput } from "@/validations/order";
 import { OrderSummary } from "@/components/checkout/OrderSummary";
 import { StripePayBlock } from "@/components/checkout/StripePayBlock";
-import type { AddressInput } from "@/validations/order";
-
-type Gateway = "PAYSTACK" | "FLUTTERWAVE" | "STRIPE" | "MONNIFY";
+import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
+import type { PaymentGatewayType } from "@/lib/payments/index";
+import { formatPrice } from "@/lib/currency";
 
 interface ShipOpt {
   zoneId: string;
@@ -61,7 +62,8 @@ export function CheckoutClient() {
   const [zoneId, setZoneId] = useState<string | null>(null);
   const [shipLoading, setShipLoading] = useState(false);
 
-  const [gateway, setGateway] = useState<Gateway | null>(null);
+  const [gateway, setGateway] = useState<PaymentGatewayType | null>(null);
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<{ id: string; number: string; guestEmail?: string | null } | null>(
     null,
@@ -238,6 +240,28 @@ export function CheckoutClient() {
       const orderId = data.orderId as string;
       const orderNumber = data.orderNumber as string;
       setCreatedOrder({ id: orderId, number: orderNumber, guestEmail: guestEmail || session?.user?.email });
+
+      if (gateway === "BANK_TRANSFER") {
+        if (!receiptUrl) {
+          toast.error("Upload your payment receipt");
+          setSubmitting(false);
+          return;
+        }
+        const bt = await fetch("/api/checkout/bank-transfer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId,
+            receiptUrl,
+            guestEmail: guestEmail || undefined,
+          }),
+        });
+        const btj = await bt.json();
+        if (!bt.ok) throw new Error((btj as { error?: string }).error ?? "Could not submit receipt");
+        useCartStore.getState().clearCart();
+        window.location.href = (btj as { redirectUrl: string }).redirectUrl;
+        return;
+      }
 
       if (gateway === "PAYSTACK") {
         const pr = await fetch("/api/payment/paystack/initiate", {
@@ -505,33 +529,38 @@ export function CheckoutClient() {
                 </button>
               ))}
             </div>
-            <div className="space-y-2">
-              {currency === "NGN" && (
-                <label className="flex gap-2 rounded-sm border p-3">
-                  <input type="radio" name="gw" checked={gateway === "PAYSTACK"} onChange={() => setGateway("PAYSTACK")} />
-                  Paystack
-                </label>
-              )}
-              <label className="flex gap-2 rounded-sm border p-3">
-                <input type="radio" name="gw" checked={gateway === "FLUTTERWAVE"} onChange={() => setGateway("FLUTTERWAVE")} />
-                Flutterwave
-              </label>
-              {(currency === "USD" || currency === "GBP") && (
-                <label className="flex gap-2 rounded-sm border p-3">
-                  <input type="radio" name="gw" checked={gateway === "STRIPE"} onChange={() => setGateway("STRIPE")} />
-                  Stripe (cards)
-                </label>
-              )}
-              {currency === "NGN" && (
-                <label className="flex gap-2 rounded-sm border p-3">
-                  <input type="radio" name="gw" checked={gateway === "MONNIFY"} onChange={() => setGateway("MONNIFY")} />
-                  Monnify
-                </label>
-              )}
-            </div>
+            <PaymentMethodSelector
+              currency={currency}
+              amount={
+                subtotalNGN +
+                (shipCost ?? 0) -
+                (couponResult?.valid ? couponResult.discountNGN : 0) -
+                pointsToRedeem
+              }
+              selected={gateway}
+              onSelect={(g) => {
+                setGateway(g);
+                if (g !== "BANK_TRANSFER") setReceiptUrl(null);
+              }}
+              receiptUrl={receiptUrl}
+              onReceiptUploaded={setReceiptUrl}
+            />
             {!stripeClientSecret && (
               <button type="button" disabled={submitting || !gateway} onClick={submitOrder} className="w-full bg-wine py-3 text-ivory disabled:opacity-50">
-                {submitting ? "Please wait…" : "Place order & pay"}
+                {submitting
+                  ? "Please wait…"
+                  : gateway === "BANK_TRANSFER"
+                    ? "Confirm order"
+                    : `Pay ${formatPrice(
+                        Math.max(
+                          0,
+                          subtotalNGN +
+                            (shipCost ?? 0) -
+                            (couponResult?.valid ? couponResult.discountNGN : 0) -
+                            pointsToRedeem,
+                        ),
+                        currency,
+                      )}`}
               </button>
             )}
             {stripeClientSecret && stripePk && createdOrder && stripeReturnUrl && (

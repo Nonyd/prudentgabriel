@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { clearPublicSettingsCache, clearSettingCacheKey, setSetting } from "@/lib/settings";
+import { ensurePaymentSettingKeys } from "@/lib/payment-settings-bootstrap";
 import { revalidateSettings } from "@/lib/revalidate";
 import { EMAIL_TEMPLATE_META } from "@/lib/email-templates";
 import { SettingType, type SettingGroup } from "@prisma/client";
@@ -40,6 +41,10 @@ export async function GET(
     return NextResponse.json({ error: "Invalid group" }, { status: 400 });
   }
 
+  if (group === "PAYMENTS") {
+    await ensurePaymentSettingKeys();
+  }
+
   const rows = await prisma.siteSetting.findMany({
     where: { group: group as SettingGroup },
     orderBy: { sortOrder: "asc" },
@@ -74,6 +79,10 @@ export async function PATCH(
   const group = params.group.toUpperCase();
   if (!GROUPS.has(group)) {
     return NextResponse.json({ error: "Invalid group" }, { status: 400 });
+  }
+
+  if (group === "PAYMENTS") {
+    await ensurePaymentSettingKeys();
   }
 
   const json = await req.json().catch(() => null);

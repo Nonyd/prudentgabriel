@@ -1,41 +1,42 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import bcrypt from "bcryptjs";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { resetPasswordSchema } from "@/validations/auth";
 
-export async function POST(request: Request) {
+const bodySchema = z
+  .object({
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let body: unknown;
   try {
-    body = await request.json();
+    body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const parsed = resetPasswordSchema.safeParse(body);
+  const parsed = bodySchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
 
-  const { token, password } = parsed.data;
-
-  const record = await prisma.passwordResetToken.findUnique({
-    where: { token },
-    include: { user: true },
+  const hashed = await bcrypt.hash(parsed.data.password, 12);
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { password: hashed, mustResetPassword: false },
   });
-
-  if (!record || record.expiresAt < new Date()) {
-    return NextResponse.json({ error: "Invalid or expired token" }, { status: 400 });
-  }
-
-  const hashed = await bcrypt.hash(password, 12);
-
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: record.userId },
-      data: { password: hashed },
-    }),
-    prisma.passwordResetToken.delete({ where: { id: record.id } }),
-  ]);
 
   return NextResponse.json({ success: true });
 }

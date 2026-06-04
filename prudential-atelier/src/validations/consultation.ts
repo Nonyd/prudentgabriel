@@ -9,7 +9,7 @@ export const consultationBookingSchema = z.object({
   offeringId: z.string().min(1),
   consultantId: z.string().min(1),
   currency: z.nativeEnum(Currency).default(Currency.NGN),
-  gateway: z.enum(["PAYSTACK", "FLUTTERWAVE", "STRIPE", "MONNIFY"]),
+  gateway: z.enum(["PAYSTACK", "FLUTTERWAVE", "STRIPE", "MONNIFY", "BANK_TRANSFER"]),
 
   clientName: z.string().min(2).max(100),
   clientEmail: z.string().email(),

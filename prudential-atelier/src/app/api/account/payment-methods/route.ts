@@ -4,6 +4,7 @@ import { PaymentGateway } from "@prisma/client";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getPaystackSecret, getStripeSecret } from "@/lib/payments/config";
 
 function toSafeMethod(method: {
   id: string;
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   if (parsed.data.gateway === "PAYSTACK") {
-    const secret = process.env.PAYSTACK_SECRET_KEY;
+    const secret = await getPaystackSecret();
     if (!secret) return NextResponse.json({ error: "Paystack not configured" }, { status: 400 });
 
     const verifyRes = await fetch(`https://api.paystack.co/customer/${encodeURIComponent(parsed.data.email)}`, {
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, method: toSafeMethod(method) });
   }
 
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const stripeKey = await getStripeSecret();
   if (!stripeKey) return NextResponse.json({ error: "Stripe not configured" }, { status: 400 });
   const stripe = new Stripe(stripeKey);
 

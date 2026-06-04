@@ -18,9 +18,9 @@ interface CurrencyStore {
 }
 
 const DEFAULT_RATES: ExchangeRates = {
-  NGN: 1580,
-  USD: 1,
-  GBP: 0.79,
+  NGN: 1,
+  USD: 0.00065,
+  GBP: 0.00052,
   fetchedAt: 0,
 };
 

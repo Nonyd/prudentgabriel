@@ -1,13 +1,16 @@
 import crypto from "crypto";
-
-const apiKey = process.env.MONNIFY_API_KEY;
-const secretKey = process.env.MONNIFY_SECRET_KEY;
-const contractCode = process.env.MONNIFY_CONTRACT_CODE;
-const baseUrl = (process.env.MONNIFY_BASE_URL ?? "https://api.monnify.com").replace(/\/$/, "");
+import {
+  getMonnifyApiKey,
+  getMonnifyBaseUrl,
+  getMonnifyContractCode,
+  getMonnifySecret,
+} from "@/lib/payments/config";
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
 export async function getMonnifyToken(): Promise<string> {
+  const apiKey = await getMonnifyApiKey();
+  const secretKey = await getMonnifySecret();
   if (!apiKey || !secretKey) throw new Error("Monnify API credentials are not configured");
 
   const now = Date.now();
@@ -15,6 +18,7 @@ export async function getMonnifyToken(): Promise<string> {
     return cachedToken.token;
   }
 
+  const baseUrl = await getMonnifyBaseUrl();
   const basic = Buffer.from(`${apiKey}:${secretKey}`).toString("base64");
   const res = await fetch(`${baseUrl}/api/v1/auth/login`, {
     method: "POST",
@@ -47,8 +51,10 @@ export async function initializeTransaction(params: {
   description: string;
   redirectUrl: string;
 }): Promise<{ checkoutUrl: string; transactionReference: string }> {
-  if (!contractCode) throw new Error("MONNIFY_CONTRACT_CODE is not configured");
+  const contractCode = await getMonnifyContractCode();
+  if (!contractCode) throw new Error("Monnify contract code is not configured");
 
+  const baseUrl = await getMonnifyBaseUrl();
   const token = await getMonnifyToken();
   const res = await fetch(`${baseUrl}/api/v1/merchant/transactions/init-transaction`, {
     method: "POST",
@@ -90,6 +96,7 @@ export async function verifyTransaction(paymentReference: string): Promise<{
   amountPaid: number;
   paymentReference: string;
 }> {
+  const baseUrl = await getMonnifyBaseUrl();
   const token = await getMonnifyToken();
   const url = `${baseUrl}/api/v2/merchant/transactions/query?paymentReference=${encodeURIComponent(paymentReference)}`;
   const res = await fetch(url, {
@@ -114,7 +121,8 @@ export async function verifyTransaction(paymentReference: string): Promise<{
   };
 }
 
-export function verifyWebhookSignature(rawBody: string, signature: string | null): boolean {
+export async function verifyWebhookSignature(rawBody: string, signature: string | null): Promise<boolean> {
+  const secretKey = await getMonnifySecret();
   if (!secretKey || !signature) return false;
   const hash = crypto.createHmac("sha512", secretKey).update(rawBody).digest("hex");
   return hash === signature;

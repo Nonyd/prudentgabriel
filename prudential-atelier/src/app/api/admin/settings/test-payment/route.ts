@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAdminApi } from "@/lib/admin-auth";
-import { getSettings } from "@/lib/settings";
+import { requireSuperAdminApi } from "@/lib/admin-auth";
+import {
+  getFlutterwaveSecret,
+  getMonnifyApiKey,
+  getMonnifyBaseUrl,
+  getMonnifyContractCode,
+  getMonnifySecret,
+  getPaystackSecret,
+  getStripeSecret,
+} from "@/lib/payments/config";
 
 const bodySchema = z.object({
   gateway: z.enum(["paystack", "flutterwave", "stripe", "monnify"]),
 });
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireSuperAdminApi();
   if (!gate.ok) return gate.response;
 
   const json = await req.json().catch(() => null);
@@ -21,8 +29,8 @@ export async function POST(req: NextRequest) {
 
   try {
     if (gateway === "paystack") {
-      const { paystack_secret_key: secret } = await getSettings("PAYMENTS");
-      if (!secret?.trim()) {
+      const secret = await getPaystackSecret();
+      if (!secret) {
         return NextResponse.json({ ok: false, message: "Paystack secret key not configured" });
       }
       const res = await fetch("https://api.paystack.co/bank?country=nigeria&perPage=1", {
@@ -39,8 +47,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (gateway === "flutterwave") {
-      const { flutterwave_secret_key: secret } = await getSettings("PAYMENTS");
-      if (!secret?.trim()) {
+      const secret = await getFlutterwaveSecret();
+      if (!secret) {
         return NextResponse.json({ ok: false, message: "Flutterwave secret key not configured" });
       }
       const res = await fetch("https://api.flutterwave.com/v3/balances", {
@@ -57,8 +65,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (gateway === "stripe") {
-      const { stripe_secret_key: secret } = await getSettings("PAYMENTS");
-      if (!secret?.trim()) {
+      const secret = await getStripeSecret();
+      if (!secret) {
         return NextResponse.json({ ok: false, message: "Stripe secret key not configured" });
       }
       const res = await fetch("https://api.stripe.com/v1/balance", {
@@ -74,14 +82,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, message: "Stripe credentials accepted" });
     }
 
-    const { monnify_api_key: apiKey, monnify_secret_key: secret, monnify_contract_code: contract } =
-      await getSettings("PAYMENTS");
-    if (!apiKey?.trim() || !secret?.trim() || !contract?.trim()) {
+    const apiKey = await getMonnifyApiKey();
+    const secret = await getMonnifySecret();
+    const contract = await getMonnifyContractCode();
+    if (!apiKey || !secret || !contract) {
       return NextResponse.json({ ok: false, message: "Monnify API key, secret, and contract code are required" });
     }
+    const baseUrl = await getMonnifyBaseUrl();
     const auth = Buffer.from(`${apiKey}:${secret}`).toString("base64");
     const res = await fetch(
-      `${process.env.MONNIFY_BASE_URL ?? "https://api.monnify.com"}/api/v1/disbursements/wallet/balance?accountReference=${encodeURIComponent(contract)}`,
+      `${baseUrl}/api/v1/disbursements/wallet/balance?accountReference=${encodeURIComponent(contract)}`,
       { headers: { Authorization: `Basic ${auth}` } },
     );
     const data = (await res.json()) as { requestSuccessful?: boolean; responseMessage?: string };

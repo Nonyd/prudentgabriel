@@ -17,6 +17,7 @@ import {
   sendConsultationConfirmedEmail,
   sendConsultationPendingEmail,
 } from "@/lib/email";
+import { autoOnboardClient } from "@/lib/client-onboarding";
 
 const ATELIER_ADDRESS = "14 Prudential Atelier, Lagos, Nigeria";
 
@@ -79,6 +80,16 @@ export async function fulfillPaidConsultationBooking(params: {
       data: updateData,
     }),
   ]);
+
+  if (!booking.userId) {
+    void autoOnboardClient({
+      name: booking.clientName,
+      email: booking.clientEmail,
+      phone: booking.clientPhone,
+      source: "CONSULTATION",
+      sourceId: booking.id,
+    }).catch((e) => console.warn("[fulfillPaidConsultationBooking] onboard", e));
+  }
 
   const refreshed = await prisma.consultationBooking.findUnique({
     where: { id: booking.id },

@@ -15,8 +15,11 @@ import {
 import type { ConsultantOffering, Currency } from "@prisma/client";
 import { ConsultationDeliveryMode as DeliveryMode } from "@prisma/client";
 import { StripePayBlock } from "@/components/checkout/StripePayBlock";
+import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
+import type { PaymentGatewayType } from "@/lib/payments/index";
+import { formatPrice } from "@/lib/currency";
 
-type Gateway = "PAYSTACK" | "FLUTTERWAVE" | "STRIPE" | "MONNIFY";
+type Gateway = PaymentGatewayType;
 type ShopCur = "NGN" | "USD" | "GBP";
 type CardKey = "signature" | "design-team" | "virtual";
 
@@ -167,7 +170,8 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  const currency: ShopCur = "NGN";
+  const [currency, setCurrency] = useState<ShopCur>("NGN");
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [gateway, setGateway] = useState<Gateway | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [bookingNumber, setBookingNumber] = useState<string | null>(null);
@@ -361,6 +365,23 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
         window.location.href = (pj as { checkoutUrl: string }).checkoutUrl;
         return;
       }
+
+      if (gateway === "BANK_TRANSFER") {
+        if (!receiptUrl) throw new Error("Upload your payment receipt");
+        const bt = await fetch("/api/consultations/bank-transfer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            bookingId: bid,
+            receiptUrl,
+            guestEmail: session?.user ? undefined : clientEmail,
+          }),
+        });
+        const btj = await bt.json();
+        if (!bt.ok) throw new Error((btj as { error?: string }).error ?? "Could not submit receipt");
+        window.location.href = (btj as { redirectUrl: string }).redirectUrl;
+        return;
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Payment failed");
     }
@@ -380,7 +401,8 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
             clientPhone.length >= 7 &&
             occasion &&
             description.length >= 20 &&
-            Boolean(gateway)
+            Boolean(gateway) &&
+            (gateway !== "BANK_TRANSFER" || Boolean(receiptUrl))
           : false;
 
   const cardKeys: CardKey[] = ["signature", "design-team", "virtual"];
@@ -680,18 +702,53 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
             </div>
 
             <div className="rounded-lg border border-sand bg-white p-6">
-              <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Payment method</p>
-              <div className="mt-4 space-y-2">
-                <label className="flex cursor-pointer items-center gap-3 rounded-sm border border-sand p-4">
-                  <input type="radio" name="gw" checked={gateway === "PAYSTACK"} onChange={() => setGateway("PAYSTACK")} />
-                  <span className="font-body text-sm text-choc">Paystack</span>
-                </label>
-                <label className="flex cursor-pointer items-center gap-3 rounded-sm border border-sand p-4">
-                  <input type="radio" name="gw" checked={gateway === "MONNIFY"} onChange={() => setGateway("MONNIFY")} />
-                  <span className="font-body text-sm text-choc">Bank Transfer</span>
-                </label>
+              <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Currency</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {(["NGN", "USD", "GBP"] as ShopCur[]).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => {
+                      setCurrency(c);
+                      setGateway(null);
+                    }}
+                    className={clsx(
+                      "rounded-sm border px-4 py-2 font-sans text-xs uppercase",
+                      currency === c ? "border-choc bg-choc text-cream" : "border-sand bg-white text-text-mid",
+                    )}
+                  >
+                    {c}
+                  </button>
+                ))}
               </div>
+              <p className="mt-4 font-serif text-[28px] text-choc">
+                {currency === "NGN"
+                  ? formatPrice(offering.feeNGN, "NGN")
+                  : currency === "USD" && offering.feeUSD
+                    ? formatPrice(offering.feeUSD, "USD")
+                    : currency === "GBP" && offering.feeGBP
+                      ? formatPrice(offering.feeGBP, "GBP")
+                      : formatPrice(offering.feeNGN, "NGN")}
+              </p>
             </div>
+
+            <PaymentMethodSelector
+              currency={currency}
+              amount={
+                currency === "USD" && offering.feeUSD
+                  ? offering.feeUSD
+                  : currency === "GBP" && offering.feeGBP
+                    ? offering.feeGBP
+                    : offering.feeNGN
+              }
+              selected={gateway}
+              onSelect={(g) => {
+                setGateway(g);
+                if (g !== "BANK_TRANSFER") setReceiptUrl(null);
+              }}
+              receiptUrl={receiptUrl}
+              onReceiptUploaded={setReceiptUrl}
+            />
 
             {stripeClientSecret && stripePk ? (
               <StripePayBlock clientSecret={stripeClientSecret} publishableKey={stripePk} returnUrl={stripeReturnUrl} />

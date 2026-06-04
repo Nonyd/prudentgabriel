@@ -1,10 +1,9 @@
 import Stripe from "stripe";
+import { getStripeSecret, getStripeWebhookSecret } from "@/lib/payments/config";
 
-const key = process.env.STRIPE_SECRET_KEY;
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-function getStripe(): Stripe {
-  if (!key) throw new Error("STRIPE_SECRET_KEY is not configured");
+async function getStripe(): Promise<Stripe> {
+  const key = await getStripeSecret();
+  if (!key) throw new Error("Stripe secret key is not configured");
   return new Stripe(key);
 }
 
@@ -15,7 +14,7 @@ export async function createPaymentIntent(params: {
   orderNumber: string;
   customerEmail: string;
 }): Promise<{ clientSecret: string; paymentIntentId: string }> {
-  const stripe = getStripe();
+  const stripe = await getStripe();
   const intent = await stripe.paymentIntents.create({
     amount: params.amountCents,
     currency: params.currency,
@@ -37,7 +36,7 @@ export async function createConsultationPaymentIntent(params: {
   bookingNumber: string;
   customerEmail: string;
 }): Promise<{ clientSecret: string; paymentIntentId: string }> {
-  const stripe = getStripe();
+  const stripe = await getStripe();
   const intent = await stripe.paymentIntents.create({
     amount: params.amountCents,
     currency: params.currency,
@@ -56,9 +55,36 @@ export async function createConsultationPaymentIntent(params: {
   return { clientSecret, paymentIntentId: intent.id };
 }
 
-export function verifyWebhookEvent(rawBody: Buffer, signature: string | null): Stripe.Event {
-  if (!webhookSecret) throw new Error("STRIPE_WEBHOOK_SECRET is not configured");
+export async function createBespokePaymentIntent(params: {
+  amountCents: number;
+  currency: "usd" | "gbp";
+  bespokeOrderId: string;
+  orderRef: string;
+  customerEmail: string;
+}): Promise<{ clientSecret: string; paymentIntentId: string }> {
+  const stripe = await getStripe();
+  const intent = await stripe.paymentIntents.create({
+    amount: params.amountCents,
+    currency: params.currency,
+    automatic_payment_methods: { enabled: true },
+    metadata: {
+      bespokeOrderId: params.bespokeOrderId,
+      orderRef: params.orderRef,
+      type: "bespoke",
+    } as Record<string, string>,
+    receipt_email: params.customerEmail,
+  });
+
+  const clientSecret = intent.client_secret;
+  if (!clientSecret) throw new Error("Stripe did not return client_secret");
+
+  return { clientSecret, paymentIntentId: intent.id };
+}
+
+export async function verifyWebhookEvent(rawBody: Buffer, signature: string | null): Promise<Stripe.Event> {
+  const webhookSecret = await getStripeWebhookSecret();
+  if (!webhookSecret) throw new Error("Stripe webhook secret is not configured");
   if (!signature) throw new Error("Missing stripe-signature");
-  const stripe = getStripe();
+  const stripe = await getStripe();
   return stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
 }

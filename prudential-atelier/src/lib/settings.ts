@@ -1,44 +1,21 @@
-import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { decrypt, encrypt } from "@/lib/encryption";
 import type { SettingGroup, SettingType } from "@prisma/client";
 
 let contentSettingsCache: { data: Record<string, string>; expiresAt: number } | null = null;
 
-const ALGORITHM = "aes-256-cbc";
-const IV_LENGTH = 16;
-const PREFIX = "v1:";
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 type CacheEntry = { value: string; expiresAt: number };
 const settingCache = new Map<string, CacheEntry>();
 let publicSettingsCache: { data: Record<string, string>; expiresAt: number } | null = null;
 
-function deriveKey(): Buffer {
-  const raw = process.env.SETTINGS_ENCRYPTION_KEY ?? "prudent-gabriel-settings-key-2024";
-  return crypto.createHash("sha256").update(raw, "utf8").digest();
-}
-
 export function encryptSettingPlaintext(plain: string): string {
-  const key = deriveKey();
-  const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
-  const enc = Buffer.concat([cipher.update(plain, "utf8"), cipher.final()]);
-  return PREFIX + Buffer.concat([iv, enc]).toString("base64");
+  return encrypt(plain);
 }
 
 export function decryptSettingCiphertext(stored: string): string {
-  if (!stored.startsWith(PREFIX)) {
-    return stored;
-  }
-  const buf = Buffer.from(stored.slice(PREFIX.length), "base64");
-  if (buf.length <= IV_LENGTH) {
-    throw new Error("Invalid encrypted payload");
-  }
-  const iv = buf.subarray(0, IV_LENGTH);
-  const data = buf.subarray(IV_LENGTH);
-  const key = deriveKey();
-  const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
-  return Buffer.concat([decipher.update(data), decipher.final()]).toString("utf8");
+  return decrypt(stored);
 }
 
 function cacheGet(key: string): string | null {

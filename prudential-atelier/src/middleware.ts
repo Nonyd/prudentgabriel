@@ -127,10 +127,22 @@ export default auth((req) => {
   const isAdminRoute = pathname.startsWith("/admin");
   const isDeveloperSettings = pathname.startsWith("/admin/settings/developer");
 
-  if (isAccountRoute && !isLoggedIn) {
+  if ((isAccountRoute || pathname === "/reset-password") && !isLoggedIn) {
     const loginUrl = new URL("/login", nextUrl.origin);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (
+    isLoggedIn &&
+    session?.user?.mustResetPassword &&
+    pathname !== "/reset-password" &&
+    !pathname.startsWith("/api/auth") &&
+    !pathname.startsWith("/api/auth/reset-password")
+  ) {
+    const resetUrl = new URL("/reset-password", nextUrl.origin);
+    resetUrl.searchParams.set("required", "true");
+    return NextResponse.redirect(resetUrl);
   }
 
   if (isDeveloperSettings) {
@@ -158,5 +170,6 @@ export const config = {
     "/quote/:path*",
     "/journal",
     "/journal/:path*",
+    "/reset-password",
   ],
 };

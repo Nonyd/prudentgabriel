@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import type { CartItem } from "@/store/cartStore";
-import { formatPrice, getExchangeRates, convertFromNGN } from "@/lib/currency";
-import type { ShopCurrency } from "@/lib/currency";
+import { formatPrice, convertFromNGN, type ExchangeRatesNGN, type ShopCurrency } from "@/lib/currency";
 import { useEffect, useState } from "react";
 
 interface CouponResult {
@@ -27,10 +26,17 @@ export function OrderSummary({
   currency: ShopCurrency;
   step: number;
 }) {
-  const [rates, setRates] = useState({ NGN: 1580, USD: 1, GBP: 0.79 });
+  const [rates, setRates] = useState<ExchangeRatesNGN>({ NGN: 1, USD: 0.00065, GBP: 0.00052 });
 
   useEffect(() => {
-    void getExchangeRates().then(setRates);
+    void fetch("/api/currency/rates")
+      .then((r) => r.json())
+      .then((j: ExchangeRatesNGN) => {
+        if (typeof j.USD === "number" && j.USD > 0) {
+          setRates({ NGN: 1, USD: j.USD, GBP: j.GBP > 0 ? j.GBP : 0.00052 });
+        }
+      })
+      .catch(() => undefined);
   }, []);
 
   const subtotal = items.reduce((s, i) => s + i.priceNGN * i.quantity, 0);

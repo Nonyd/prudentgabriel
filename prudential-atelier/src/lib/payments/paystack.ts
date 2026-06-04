@@ -1,6 +1,5 @@
 import crypto from "crypto";
-
-const secret = process.env.PAYSTACK_SECRET_KEY;
+import { getPaystackSecret } from "@/lib/payments/config";
 
 export interface PaystackInitResult {
   authorizationUrl: string;
@@ -15,7 +14,8 @@ export async function initializeTransaction(params: {
   callbackUrl: string;
   metadata: Record<string, string>;
 }): Promise<PaystackInitResult> {
-  if (!secret) throw new Error("PAYSTACK_SECRET_KEY is not configured");
+  const secret = await getPaystackSecret();
+  if (!secret) throw new Error("Paystack secret key is not configured");
 
   const res = await fetch("https://api.paystack.co/transaction/initialize", {
     method: "POST",
@@ -55,7 +55,8 @@ export async function verifyTransaction(reference: string): Promise<{
   reference: string;
   metadata: Record<string, string | undefined>;
 }> {
-  if (!secret) throw new Error("PAYSTACK_SECRET_KEY is not configured");
+  const secret = await getPaystackSecret();
+  if (!secret) throw new Error("Paystack secret key is not configured");
 
   const res = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
     headers: { Authorization: `Bearer ${secret}` },
@@ -79,7 +80,8 @@ export async function verifyTransaction(reference: string): Promise<{
   };
 }
 
-export function verifyWebhookSignature(rawBody: string, signature: string | null): boolean {
+export async function verifyWebhookSignature(rawBody: string, signature: string | null): Promise<boolean> {
+  const secret = await getPaystackSecret();
   if (!secret || !signature) return false;
   const hash = crypto.createHmac("sha512", secret).update(rawBody).digest("hex");
   return hash === signature;

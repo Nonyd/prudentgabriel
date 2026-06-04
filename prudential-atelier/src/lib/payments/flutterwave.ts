@@ -1,6 +1,5 @@
 import crypto from "crypto";
-
-const secret = process.env.FLUTTERWAVE_SECRET_KEY;
+import { getFlutterwaveSecret } from "@/lib/payments/config";
 
 export interface FlutterwaveInitResult {
   paymentLink: string;
@@ -17,7 +16,8 @@ export async function initializeTransaction(params: {
   redirectUrl: string;
   meta: { orderId?: string; bookingId?: string };
 }): Promise<FlutterwaveInitResult> {
-  if (!secret) throw new Error("FLUTTERWAVE_SECRET_KEY is not configured");
+  const secret = await getFlutterwaveSecret();
+  if (!secret) throw new Error("Flutterwave secret key is not configured");
 
   const body = {
     tx_ref: params.txRef,
@@ -61,7 +61,8 @@ export async function verifyTransaction(transactionId: string): Promise<{
   currency: string;
   meta: { orderId?: string; bookingId?: string };
 }> {
-  if (!secret) throw new Error("FLUTTERWAVE_SECRET_KEY is not configured");
+  const secret = await getFlutterwaveSecret();
+  if (!secret) throw new Error("Flutterwave secret key is not configured");
 
   const res = await fetch(`https://api.flutterwave.com/v3/transactions/${encodeURIComponent(transactionId)}/verify`, {
     headers: { Authorization: `Bearer ${secret}` },
@@ -92,7 +93,8 @@ export async function verifyTransaction(transactionId: string): Promise<{
   };
 }
 
-export function verifyWebhookSignature(rawBody: string, signature: string | null): boolean {
+export async function verifyWebhookSignature(rawBody: string, signature: string | null): Promise<boolean> {
+  const secret = await getFlutterwaveSecret();
   if (!secret || !signature) return false;
   const hash = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
   return hash === signature;

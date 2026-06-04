@@ -12,11 +12,11 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       .then((r) => r.json())
       .then((j: { NGN?: number; USD?: number; GBP?: number }) => {
         if (cancelled) return;
-        if (typeof j.NGN === "number" && j.NGN > 0) {
+        if (typeof j.USD === "number" && j.USD > 0) {
           setRates({
-            NGN: j.NGN,
-            USD: typeof j.USD === "number" ? j.USD : 1,
-            GBP: typeof j.GBP === "number" ? j.GBP : 0.79,
+            NGN: 1,
+            USD: j.USD,
+            GBP: typeof j.GBP === "number" && j.GBP > 0 ? j.GBP : 0.00052,
             fetchedAt: Date.now(),
           });
         }

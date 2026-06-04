@@ -90,7 +90,7 @@ export function AccountOrdersClient({
                   </div>
                   {o.balance > 0 ? (
                     <Link
-                      href="/contact"
+                      href={`/account/orders/bespoke/${o.id}/pay`}
                       className="mt-3 inline-block font-sans text-xs text-nut underline"
                       onClick={(e) => e.stopPropagation()}
                     >

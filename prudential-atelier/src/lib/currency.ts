@@ -2,62 +2,77 @@ import { Currency } from "@prisma/client";
 
 export type ShopCurrency = "NGN" | "USD" | "GBP";
 
+/** Per-NGN rates: 1 NGN = rates.USD USD, 1 NGN = rates.GBP GBP (NGN is always 1). */
 export interface ExchangeRatesNGN {
   NGN: number;
   USD: number;
   GBP: number;
 }
 
-const FALLBACK: ExchangeRatesNGN = { NGN: 1580, USD: 1, GBP: 0.79 };
+const FALLBACK: ExchangeRatesNGN = { NGN: 1, USD: 0.00065, GBP: 0.00052 };
 const TTL_MS = 60 * 60 * 1000;
 
 let moduleCache: { rates: ExchangeRatesNGN; fetchedAt: number } | null = null;
 
-async function fetchOpenExchangeRates(): Promise<ExchangeRatesNGN> {
+async function getSiteSettingRates(): Promise<ExchangeRatesNGN | null> {
+  if (typeof window !== "undefined") return null;
+  const { getSetting } = await import("@/lib/settings");
+  const [usdRaw, gbpRaw] = await Promise.all([
+    getSetting("exchange_rate_usd"),
+    getSetting("exchange_rate_gbp"),
+  ]);
+  const usd = usdRaw ? Number.parseFloat(usdRaw) : NaN;
+  const gbp = gbpRaw ? Number.parseFloat(gbpRaw) : NaN;
+  if (!Number.isFinite(usd) || usd <= 0 || !Number.isFinite(gbp) || gbp <= 0) {
+    return null;
+  }
+  return { NGN: 1, USD: usd, GBP: gbp };
+}
+
+async function fetchOpenExchangeRates(): Promise<ExchangeRatesNGN | null> {
   const appId = process.env.OPEN_EXCHANGE_RATES_APP_ID;
-  if (!appId) return FALLBACK;
+  if (!appId) return null;
 
   try {
     const url = `https://openexchangerates.org/api/latest.json?app_id=${appId}&symbols=NGN,GBP`;
     const res = await fetch(url, { next: { revalidate: 3600 } });
-    if (!res.ok) return FALLBACK;
+    if (!res.ok) return null;
     const data = (await res.json()) as { rates?: { NGN?: number; GBP?: number } };
-    const ngn = data.rates?.NGN;
-    const gbp = data.rates?.GBP;
-    if (typeof ngn !== "number" || ngn <= 0) return FALLBACK;
-    return {
-      NGN: ngn,
-      USD: 1,
-      GBP: typeof gbp === "number" && gbp > 0 ? gbp : FALLBACK.GBP,
-    };
+    const ngnPerUsd = data.rates?.NGN;
+    const gbpPerUsd = data.rates?.GBP;
+    if (typeof ngnPerUsd !== "number" || ngnPerUsd <= 0) return null;
+    const usdPerNgn = 1 / ngnPerUsd;
+    const gbpPerNgn =
+      typeof gbpPerUsd === "number" && gbpPerUsd > 0 ? gbpPerUsd / ngnPerUsd : FALLBACK.GBP;
+    return { NGN: 1, USD: usdPerNgn, GBP: gbpPerNgn };
   } catch {
-    return FALLBACK;
+    return null;
   }
 }
 
-/** Shared module cache (1 hour). Safe for server + route handlers. */
+/** Shared module cache (1 hour). Reads SiteSetting first, then Open Exchange Rates, then fallback. */
 export async function getExchangeRates(): Promise<ExchangeRatesNGN> {
   const now = Date.now();
   if (moduleCache && now - moduleCache.fetchedAt < TTL_MS) {
     return moduleCache.rates;
   }
-  const rates = await fetchOpenExchangeRates();
+
+  const fromSettings = await getSiteSettingRates();
+  const rates = fromSettings ?? (await fetchOpenExchangeRates()) ?? FALLBACK;
   moduleCache = { rates, fetchedAt: now };
   return rates;
 }
 
 export function convertFromNGN(amountNGN: number, toCurrency: ShopCurrency, rates: ExchangeRatesNGN): number {
   if (toCurrency === "NGN") return amountNGN;
-  const usd = amountNGN / rates.NGN;
-  if (toCurrency === "USD") return usd;
-  return usd * rates.GBP;
+  if (toCurrency === "USD") return amountNGN * rates.USD;
+  return amountNGN * rates.GBP;
 }
 
 export function convertToNGN(amount: number, from: ShopCurrency, rates: ExchangeRatesNGN): number {
   if (from === "NGN") return amount;
-  if (from === "USD") return amount * rates.NGN;
-  const usd = amount / rates.GBP;
-  return usd * rates.NGN;
+  if (from === "USD") return amount / rates.USD;
+  return amount / rates.GBP;
 }
 
 /** @deprecated Use getExchangeRates + convertToNGN for new code — returns per-NGN rates (USD/GBP per ₦1). */
@@ -65,8 +80,8 @@ export async function fetchExchangeRates(): Promise<Partial<Record<Currency, num
   const r = await getExchangeRates();
   return {
     NGN: 1,
-    USD: 1 / r.NGN,
-    GBP: r.GBP / r.NGN,
+    USD: r.USD,
+    GBP: r.GBP,
   };
 }
 
@@ -78,13 +93,13 @@ export function convertPrice(amount: number, from: Currency, to: Currency, rates
   };
   const toNgn = (value: number, c: Currency) => {
     if (c === Currency.NGN) return value;
-    if (c === Currency.USD) return value / rateOr(Currency.USD, 1 / 1580);
-    return value / rateOr(Currency.GBP, 0.79 / 1580);
+    if (c === Currency.USD) return value / rateOr(Currency.USD, 0.00065);
+    return value / rateOr(Currency.GBP, 0.00052);
   };
   const fromNgn = (ngn: number, c: Currency) => {
     if (c === Currency.NGN) return ngn;
-    if (c === Currency.USD) return ngn * rateOr(Currency.USD, 1 / 1580);
-    return ngn * rateOr(Currency.GBP, 0.79 / 1580);
+    if (c === Currency.USD) return ngn * rateOr(Currency.USD, 0.00065);
+    return ngn * rateOr(Currency.GBP, 0.00052);
   };
   const ngn = toNgn(amount, from);
   const out = fromNgn(ngn, to);

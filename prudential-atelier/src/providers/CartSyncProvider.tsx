@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useCartStore, type CartItem } from "@/store/cartStore";
-import { getExchangeRates, convertFromNGN } from "@/lib/currency";
+import { convertFromNGN } from "@/lib/currency";
 
 type ServerCartRow = {
   id: string;
@@ -54,7 +54,13 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     (async () => {
-      const rates = await getExchangeRates();
+      const ratesRes = await fetch("/api/currency/rates");
+      const rates = (await ratesRes.json()) as { NGN: number; USD: number; GBP: number };
+      const normalized = {
+        NGN: 1 as const,
+        USD: rates.USD > 0 ? rates.USD : 0.00065,
+        GBP: rates.GBP > 0 ? rates.GBP : 0.00052,
+      };
       const local = useCartStore.getState().items;
       if (local.length) {
         for (const line of local) {
@@ -75,7 +81,7 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
       if (!res.ok || cancelled) return;
       const json = (await res.json()) as { items?: ServerCartRow[] };
       const serverItems = json.items ?? [];
-      const merged = serverItems.map((r) => serverRowToCartItem(r, rates));
+      const merged = serverItems.map((r) => serverRowToCartItem(r, normalized));
       const totalItems = merged.reduce((s, i) => s + i.quantity, 0);
       const totalNGN = merged.reduce((s, i) => s + i.priceNGN * i.quantity, 0);
       useCartStore.setState({ items: merged, totalItems, totalNGN });

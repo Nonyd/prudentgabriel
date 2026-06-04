@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   const rawBody = await req.text();
   const signature = req.headers.get("verif-hash") ?? req.headers.get("flutterwave-signature");
 
-  if (!verifyWebhookSignature(rawBody, signature)) {
+  if (!(await verifyWebhookSignature(rawBody, signature))) {
     return new Response(null, { status: 401 });
   }
 

@@ -1,7 +1,9 @@
 import { render } from "@react-email/render";
 import type { ReactElement } from "react";
 import { Resend } from "resend";
-import WelcomeEmail, { subject as welcomeSubject } from "@/emails/WelcomeEmail";
+import WelcomeCredentialsEmail, {
+  subjectWelcomeCredentials,
+} from "@/emails/WelcomeCredentialsEmail";
 import OrderConfirmationEmail from "@/emails/OrderConfirmationEmail";
 import type { OrderItemLine } from "@/emails/OrderConfirmationEmail";
 import OrderShippedEmail from "@/emails/OrderShippedEmail";
@@ -48,10 +50,117 @@ export async function sendWelcomeEmail(
   pointsBalance: number,
   referralCode: string,
 ): Promise<void> {
+  const WelcomeEmail = (await import("@/emails/WelcomeEmail")).default;
+  const { subject: welcomeSubject } = await import("@/emails/WelcomeEmail");
   const html = await renderBrandedEmail(
     <WelcomeEmail firstName={firstName} pointsBalance={pointsBalance} referralCode={referralCode} />,
   );
   await sendEmail({ to, subject: welcomeSubject(firstName), html });
+}
+
+export async function sendWelcomeCredentialsEmail(params: {
+  to: string;
+  firstName: string;
+  email: string;
+  tempPassword: string;
+  sourceLabel: string;
+  trackUrl: string;
+}): Promise<void> {
+  const loginUrl = `${getPublicAppUrl()}/login`;
+  const html = await renderBrandedEmail(
+    <WelcomeCredentialsEmail
+      firstName={params.firstName}
+      email={params.email}
+      tempPassword={params.tempPassword}
+      sourceLabel={params.sourceLabel}
+      trackUrl={params.trackUrl}
+      loginUrl={loginUrl}
+    />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: subjectWelcomeCredentials(params.firstName),
+    html,
+  });
+}
+
+export async function sendBankTransferReceiptReceivedEmail(params: {
+  to: string;
+  clientName: string;
+  ref: string;
+  amountNGN: number;
+}): Promise<void> {
+  await sendEmail({
+    to: params.to,
+    subject: `Payment receipt received — ${params.ref}`,
+    html: wrapHtml(
+      "Prudential Atelier",
+      `<p>Dear ${escapeHtml(params.clientName)},</p>
+       <p>We received your bank transfer receipt for <strong>₦${params.amountNGN.toLocaleString("en-NG")}</strong> (${escapeHtml(params.ref)}).</p>
+       <p>Our team will verify within 2–4 hours and confirm your order by email.</p>`,
+    ),
+  });
+}
+
+export async function sendBankTransferAdminNotification(params: {
+  ref: string;
+  clientName: string;
+  amountNGN: number;
+  receiptUrl: string;
+}): Promise<void> {
+  const adminEmail = process.env.ORDERS_ADMIN_EMAIL ?? "orders@prudentgabriel.com";
+  await sendEmail({
+    to: adminEmail,
+    subject: `[Bank transfer pending] ${params.ref}`,
+    html: wrapHtml(
+      "Prudential Atelier Admin",
+      `<p>New bank transfer receipt submitted.</p>
+       <p><strong>Ref:</strong> ${escapeHtml(params.ref)}<br/>
+       <strong>Client:</strong> ${escapeHtml(params.clientName)}<br/>
+       <strong>Amount:</strong> ₦${params.amountNGN.toLocaleString("en-NG")}</p>
+       <p><a href="${escapeHtml(params.receiptUrl)}">View receipt</a></p>`,
+    ),
+  });
+}
+
+export async function sendPaymentConfirmedEmail(params: {
+  to: string;
+  ref: string;
+  amountNGN: number;
+  kind: "order" | "consultation" | "bespoke";
+  trackUrl: string;
+}): Promise<void> {
+  const kindLabel =
+    params.kind === "consultation" ? "consultation" : params.kind === "bespoke" ? "bespoke order" : "order";
+  await sendEmail({
+    to: params.to,
+    subject: `Payment confirmed — ${params.ref}`,
+    html: wrapHtml(
+      "Prudential Atelier",
+      `<p>We&apos;ve confirmed your payment of <strong>₦${params.amountNGN.toLocaleString("en-NG")}</strong>.</p>
+       <p>Your ${kindLabel} is now active.</p>
+       <p><a href="${escapeHtml(params.trackUrl)}">Track your order</a></p>`,
+    ),
+  });
+}
+
+export async function sendPaymentRejectedEmail(params: {
+  to: string;
+  ref: string;
+  amountNGN: number;
+  reason: string;
+}): Promise<void> {
+  await sendEmail({
+    to: params.to,
+    subject: "Payment not confirmed — action needed",
+    html: wrapHtml(
+      "Prudential Atelier",
+      `<p>Unfortunately we couldn&apos;t confirm your payment of <strong>₦${params.amountNGN.toLocaleString("en-NG")}</strong>.</p>
+       <p><strong>Reason:</strong> ${escapeHtml(params.reason)}</p>
+       <p>Please contact us or try again.</p>
+       <p><a href="${getPublicAppUrl()}/contact">Contact us</a></p>`,
+    ),
+  });
 }
 
 export async function sendOrderConfirmationEmail(params: {

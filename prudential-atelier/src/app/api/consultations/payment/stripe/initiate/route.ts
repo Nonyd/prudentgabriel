@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getExchangeRates, convertFromNGN } from "@/lib/currency";
 import { createConsultationPaymentIntent } from "@/lib/payments/stripe";
+import { getStripePublicKey } from "@/lib/payments/config";
 
 const bodySchema = z.object({
   bookingId: z.string().min(1),
@@ -62,5 +63,6 @@ export async function POST(req: NextRequest) {
     data: { paymentRef: paymentIntentId },
   });
 
-  return NextResponse.json({ clientSecret, publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "" });
+  const publishableKey = (await getStripePublicKey()) ?? "";
+  return NextResponse.json({ clientSecret, publishableKey });
 }

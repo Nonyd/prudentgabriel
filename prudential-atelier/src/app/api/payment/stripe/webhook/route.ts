@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
   let event: Stripe.Event;
   try {
-    event = verifyWebhookEvent(buf, sig);
+    event = await verifyWebhookEvent(buf, sig);
   } catch {
     return new Response("Bad signature", { status: 400 });
   }

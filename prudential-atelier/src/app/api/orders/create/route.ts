@@ -6,8 +6,8 @@ import { validateCoupon } from "@/lib/coupon";
 import { calculateShippingOptions } from "@/lib/shipping";
 import { generateOrderNumber } from "@/lib/order-number";
 import { redeemPoints } from "@/lib/points";
-import { sendOrderConfirmationEmail } from "@/lib/email";
-import { notifyLowStock, notifyNewOrder } from "@/lib/notifications";
+import { generatePaymentReference } from "@/lib/payments/index";
+import { notifyNewOrder } from "@/lib/notifications";
 import { orderCreateBodySchema, type AddressInput } from "@/validations/order";
 
 function snapshotFromAddress(a: AddressInput) {
@@ -279,8 +279,11 @@ export async function POST(req: NextRequest) {
     FLUTTERWAVE: PaymentGateway.FLUTTERWAVE,
     STRIPE: PaymentGateway.STRIPE,
     MONNIFY: PaymentGateway.MONNIFY,
+    BANK_TRANSFER: PaymentGateway.BANK_TRANSFER,
   };
   const paymentGateway = gatewayMap[data.gateway];
+  const paymentRef =
+    data.gateway === "BANK_TRANSFER" ? generatePaymentReference("ORDER") : undefined;
 
   const orderNumber = generateOrderNumber();
 
@@ -305,6 +308,7 @@ export async function POST(req: NextRequest) {
           couponId,
           couponCode: couponCode ?? null,
           paymentGateway,
+          paymentRef: paymentRef ?? null,
           paymentStatus: PaymentStatus.PENDING,
           notes: data.notes ?? null,
           isGift: data.isGift ?? false,
@@ -326,11 +330,6 @@ export async function POST(req: NextRequest) {
             price: line.unitPrice,
             lineTotal,
           },
-        });
-
-        await tx.productVariant.update({
-          where: { id: line.variantId },
-          data: { stock: { decrement: line.quantity } },
         });
       }
 
@@ -378,36 +377,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    void sendOrderConfirmationEmail({
-      to: emailForCoupon,
-      firstName: resolvedAddress.firstName,
-      orderNumber: order.orderNumber,
-      items: lines.map((l) => ({
-        name: l.productName,
-        size: l.size,
-        color: l.color,
-        qty: l.quantity,
-        priceNGN: l.unitPrice,
-      })),
-      subtotalNGN,
-      totalNGN: order.total,
-      shippingNGN: order.shippingAmount,
-      discountNGN: order.discount,
-      pointsDiscNGN: order.pointsDiscountNGN,
-      addressSnapshot: addressSnapshot as Record<string, string>,
-    });
-
     void notifyNewOrder(order);
-
-    for (const line of lines) {
-      const v = await prisma.productVariant.findUnique({
-        where: { id: line.variantId },
-        include: { product: { select: { name: true } } },
-      });
-      if (v && v.stock <= v.lowStockAt) {
-        void notifyLowStock(v.product, v);
-      }
-    }
 
     return NextResponse.json({
       orderId: order.id,

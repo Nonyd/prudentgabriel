@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PaymentGateway, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { AdminPendingBankTransfers } from "@/components/admin/AdminPendingBankTransfers";
 
 const TAKE = 100;
 
@@ -29,6 +30,8 @@ function gatewayClass(g: PaymentGateway | null): string {
       return "bg-[#F0E8FF] text-[#6B3FAD]";
     case "MONNIFY":
       return "bg-[#FFF3E0] text-[#C45E0A]";
+    case "BANK_TRANSFER":
+      return "bg-[#F5F0E8] text-[#442913]";
     default:
       return "bg-[#FAFAFA] text-[#A8A8A4]";
   }
@@ -173,7 +176,7 @@ export default async function AdminPaymentsPage() {
   const monthRevenue = paidRows.filter((row) => row.createdAt >= monthStart).reduce((sum, row) => sum + row.amountNGN, 0);
   const avgOrderValue = paidRows.length ? totalRevenue / paidRows.length : 0;
   const refundsIssued = rows.filter((row) => row.statusLabel.toUpperCase().includes("REFUND")).reduce((sum, row) => sum + row.amountNGN, 0);
-  const gateways: PaymentGateway[] = ["PAYSTACK", "FLUTTERWAVE", "STRIPE", "MONNIFY"];
+  const gateways: PaymentGateway[] = ["PAYSTACK", "FLUTTERWAVE", "STRIPE", "MONNIFY", "BANK_TRANSFER"];
   const gatewaySummary = gateways.map((gateway) => {
     const matches = rows.filter((row) => row.gateway === gateway);
     return {
@@ -196,6 +199,8 @@ export default async function AdminPaymentsPage() {
         Recent checkout and fee activity: shop orders, consultation payments, and bespoke agreements (including
         online balance collection).
       </p>
+
+      <AdminPendingBankTransfers />
 
       <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-4">
         <div className="border border-[#EBEBEA] bg-white p-4">
