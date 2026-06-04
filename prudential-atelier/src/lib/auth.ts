@@ -39,7 +39,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = credentials?.password as string | undefined;
         if (!email || !password) return null;
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({
+          where: { email },
+          include: { jobRole: { select: { permissions: true } } },
+        });
         if (!user?.password) return null;
         if (user.isActive === false) return null;
 
@@ -60,18 +63,58 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = (user as { role: Role }).role;
+        token.isStaff = (user as { isStaff?: boolean }).isStaff ?? false;
+        token.jobTitle = (user as { jobTitle?: string | null }).jobTitle ?? undefined;
+        token.department = (user as { department?: string | null }).department ?? undefined;
         token.referralCode = (user as { referralCode: string }).referralCode;
         token.pointsBalance = (user as { pointsBalance: number }).pointsBalance;
         token.name = user.name;
         token.picture = user.image;
         token.mustResetPassword = (user as { mustResetPassword?: boolean }).mustResetPassword ?? false;
+
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: {
+            isStaff: true,
+            jobTitle: true,
+            department: true,
+            role: true,
+            mustResetPassword: true,
+            jobRole: { select: { permissions: true } },
+          },
+        });
+        if (dbUser) {
+          token.isStaff = dbUser.isStaff;
+          token.jobTitle = dbUser.jobTitle ?? undefined;
+          token.department = dbUser.department ?? undefined;
+          token.role = dbUser.role;
+          token.mustResetPassword = dbUser.mustResetPassword;
+          token.jobRolePermissions = dbUser.jobRole?.permissions ?? [];
+        } else {
+          token.jobRolePermissions =
+            (user as { jobRole?: { permissions: string[] } | null }).jobRole?.permissions ?? [];
+        }
       }
       if (token.id && trigger !== "signIn") {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { mustResetPassword: true },
+          select: {
+            mustResetPassword: true,
+            isStaff: true,
+            jobTitle: true,
+            department: true,
+            role: true,
+            jobRole: { select: { permissions: true } },
+          },
         });
-        if (dbUser) token.mustResetPassword = dbUser.mustResetPassword;
+        if (dbUser) {
+          token.mustResetPassword = dbUser.mustResetPassword;
+          token.isStaff = dbUser.isStaff;
+          token.jobTitle = dbUser.jobTitle ?? undefined;
+          token.department = dbUser.department ?? undefined;
+          token.role = dbUser.role;
+          token.jobRolePermissions = dbUser.jobRole?.permissions ?? [];
+        }
       }
       if (trigger === "update") {
         if (session) {
@@ -93,11 +136,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.isStaff = Boolean(token.isStaff);
+        session.user.jobTitle = token.jobTitle as string | undefined;
+        session.user.department = token.department as string | undefined;
         session.user.referralCode = token.referralCode as string;
         session.user.pointsBalance = token.pointsBalance as number;
         if (token.name) session.user.name = token.name as string;
         if (token.picture) session.user.image = token.picture as string;
         session.user.mustResetPassword = Boolean(token.mustResetPassword);
+        session.user.jobRolePermissions = (token.jobRolePermissions as string[] | undefined) ?? [];
       }
       return session;
     },

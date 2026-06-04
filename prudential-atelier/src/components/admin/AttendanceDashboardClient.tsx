@@ -50,12 +50,16 @@ export function AttendanceDashboardClient() {
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [resumptionTime, setResumptionTime] = useState("09:00");
+  const [savingTime, setSavingTime] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
 
   const refresh = useCallback(async () => {
-    const [todayRes, logsRes, qrRes] = await Promise.all([
+    const [todayRes, logsRes, qrRes, settingsRes] = await Promise.all([
       fetch("/api/attendance/today"),
       fetch("/api/attendance?limit=20"),
       fetch("/api/qr/current"),
+      fetch("/api/attendance/settings"),
     ]);
 
     if (todayRes.ok) {
@@ -71,14 +75,59 @@ export function AttendanceDashboardClient() {
 
     if (qrRes.ok) {
       const data = (await qrRes.json()) as { code: string };
-      const url = await QRCode.toDataURL(data.code, { width: 200, margin: 2 });
+      const payload = JSON.stringify({
+        code: data.code,
+        date: new Date().toISOString().slice(0, 10),
+        location: "Atelier Floor",
+      });
+      const url = await QRCode.toDataURL(payload, { width: 200, margin: 2 });
       setQrDataUrl(url);
     } else {
       setQrDataUrl(null);
     }
 
+    if (settingsRes.ok) {
+      const data = (await settingsRes.json()) as { resumptionTime: string };
+      setResumptionTime(data.resumptionTime);
+    }
+
     setLoading(false);
   }, []);
+
+  async function saveResumptionTime() {
+    setSavingTime(true);
+    try {
+      const res = await fetch("/api/attendance/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumptionTime }),
+      });
+      if (!res.ok) {
+        toast.error("Failed to save resumption time");
+        return;
+      }
+      toast.success("Resumption time saved");
+      await refresh();
+    } finally {
+      setSavingTime(false);
+    }
+  }
+
+  async function regenerateQr() {
+    setRegenerating(true);
+    try {
+      const res = await fetch("/api/qr/regenerate", { method: "POST" });
+      const data = (await res.json()) as { dataUrl?: string; error?: string };
+      if (!res.ok) {
+        toast.error(data.error ?? "Failed to regenerate QR");
+        return;
+      }
+      if (data.dataUrl) setQrDataUrl(data.dataUrl);
+      toast.success("QR code regenerated");
+    } finally {
+      setRegenerating(false);
+    }
+  }
 
   useEffect(() => {
     void refresh();
@@ -123,13 +172,27 @@ export function AttendanceDashboardClient() {
         <div className="card-surface p-6 lg:col-span-1">
           <h2 className="font-display text-lg text-ink">Office QR Code</h2>
           <p className="mt-1 font-sans text-xs text-text-mid">
-            Display for staff to scan at /clock-in
+            Display at <a href="/attendance/qr" className="text-nut underline" target="_blank" rel="noreferrer">/attendance/qr</a>
           </p>
           {qrDataUrl ? (
             <img src={qrDataUrl} alt="Attendance QR code" className="mx-auto mt-6 rounded border border-sand" />
           ) : (
             <p className="mt-6 font-sans text-sm text-text-mid">No active QR code</p>
           )}
+          <div className="mt-4 flex flex-col gap-2">
+            <Button variant="secondary" loading={regenerating} onClick={() => void regenerateQr()}>
+              Regenerate QR Now
+            </Button>
+            {qrDataUrl ? (
+              <a
+                href={qrDataUrl}
+                download="attendance-qr.png"
+                className="text-center font-sans text-xs text-nut underline"
+              >
+                Download PNG
+              </a>
+            ) : null}
+          </div>
         </div>
 
         <div className="card-surface overflow-hidden lg:col-span-2">
@@ -164,6 +227,27 @@ export function AttendanceDashboardClient() {
           </div>
         </div>
       </div>
+
+      <section className="card-surface p-6">
+        <h2 className="font-display text-lg text-ink">Late alert configuration</h2>
+        <p className="mt-1 font-sans text-xs text-text-mid">
+          Staff clocking in after this time are marked late. HR receives alerts via the daily cron.
+        </p>
+        <div className="mt-4 flex flex-wrap items-end gap-3">
+          <div>
+            <label className="font-sans text-[10px] uppercase text-text-light">Resumption time</label>
+            <input
+              type="time"
+              value={resumptionTime}
+              onChange={(e) => setResumptionTime(e.target.value)}
+              className="mt-1 block rounded border border-sand px-3 py-2 font-sans text-sm"
+            />
+          </div>
+          <Button loading={savingTime} onClick={() => void saveResumptionTime()}>
+            Save
+          </Button>
+        </div>
+      </section>
 
       <section className="card-surface overflow-hidden">
         <div className="border-b border-sand px-6 py-4">

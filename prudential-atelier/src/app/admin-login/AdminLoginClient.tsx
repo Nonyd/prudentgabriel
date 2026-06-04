@@ -101,6 +101,13 @@ export function AdminLoginClient() {
     }
     const session = await getSession();
     const role = session?.user?.role;
+    if (session?.user?.isStaff && role === "STAFF") {
+      await signOut({ redirect: false });
+      setError("root", {
+        message: "Staff accounts use the staff portal. Sign in at /staff-login.",
+      });
+      return;
+    }
     if (role && isAdminRole(role)) {
       router.push("/admin");
       router.refresh();

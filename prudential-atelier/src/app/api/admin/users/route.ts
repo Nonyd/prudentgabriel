@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { Role } from "@prisma/client";
+import { Role, StaffDepartment } from "@prisma/client";
 import { z } from "zod";
 import { requireSuperAdminApi } from "@/lib/admin-auth";
-import { INVITE_ROLES, MANAGED_STAFF_ROLES } from "@/lib/admin-users";
+import { MANAGED_STAFF_ROLES } from "@/lib/admin-users";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { sendEmail } from "@/lib/email";
 import { logActivity } from "@/lib/logger";
+import { mapDepartmentToEnum, resolveSystemRoleForAdmin } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { isProtectedAccount } from "@/lib/roles";
 import { generateTempPassword } from "@/lib/temp-password";
@@ -14,17 +15,10 @@ import { generateTempPassword } from "@/lib/temp-password";
 const createSchema = z.object({
   name: z.string().min(2, "Name is required"),
   email: z.string().email(),
-  role: z.enum([
-    "ADMIN",
-    "STAFF_ADMIN",
-    "BESPOKE_MANAGER",
-    "RTW_MANAGER",
-    "CONTENT_MANAGER",
-    "FINANCE_MANAGER",
-    "HR_MANAGER",
-    "CONSULTATION_MANAGER",
-    "STAFF",
-  ]),
+  userType: z.enum(["admin", "staff"]),
+  jobRoleId: z.string().min(1),
+  jobTitle: z.string().optional(),
+  department: z.string().optional(),
 });
 
 function serializeUser(user: {
@@ -117,8 +111,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  if (!INVITE_ROLES.includes(parsed.data.role as Role)) {
-    return NextResponse.json({ error: "Invalid role for invitation" }, { status: 400 });
+  const jobRole = await prisma.jobRole.findUnique({ where: { id: parsed.data.jobRoleId } });
+  if (!jobRole) {
+    return NextResponse.json({ error: "Invalid job role" }, { status: 400 });
   }
 
   const email = parsed.data.email.trim().toLowerCase();
@@ -127,32 +122,69 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "A user with this email already exists" }, { status: 409 });
   }
 
+  const isStaffMember = parsed.data.userType === "staff";
+  const systemRole: Role = isStaffMember
+    ? Role.STAFF
+    : (resolveSystemRoleForAdmin(jobRole.name) as Role);
+
   const tempPassword = generateTempPassword();
   const passwordHash = await bcrypt.hash(tempPassword, 12);
-  const loginUrl = `${getPublicAppUrl()}/admin-login`;
+  const loginUrl = isStaffMember
+    ? `${getPublicAppUrl()}/staff-login`
+    : `${getPublicAppUrl()}/admin-login`;
   const firstName = parsed.data.name.trim().split(/\s+/)[0] ?? parsed.data.name.trim();
 
-  const user = await prisma.user.create({
-    data: {
-      name: parsed.data.name.trim(),
-      email,
-      password: passwordHash,
-      role: parsed.data.role as Role,
-      mustResetPassword: true,
-      isActive: true,
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      isActive: true,
-      lastLogin: true,
-      createdAt: true,
-    },
+  const user = await prisma.$transaction(async (tx) => {
+    const created = await tx.user.create({
+      data: {
+        name: parsed.data.name.trim(),
+        email,
+        password: passwordHash,
+        role: systemRole,
+        jobRoleId: jobRole.id,
+        jobTitle: parsed.data.jobTitle?.trim() || jobRole.name,
+        department: parsed.data.department?.trim() || null,
+        isStaff: isStaffMember,
+        mustResetPassword: true,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        lastLogin: true,
+        createdAt: true,
+      },
+    });
+
+    if (isStaffMember) {
+      await tx.staffProfile.create({
+        data: {
+          userId: created.id,
+          department: mapDepartmentToEnum(parsed.data.department) as StaffDepartment,
+          employmentType: "EMPLOYEE",
+          skillTags: [],
+        },
+      });
+    }
+
+    return created;
   });
 
-  const html = `
+  const html = isStaffMember
+    ? `
+    <p>Hi ${firstName},</p>
+    <p>You've been set up on the Prudential Atelier staff system.</p>
+    <p><strong>Your login details:</strong><br/>
+    URL: <a href="${loginUrl}">prudentgabriel.com/staff-login</a><br/>
+    Email: ${email}<br/>
+    Temporary password: <strong>${tempPassword}</strong></p>
+    <p>You'll be asked to set a new password when you first log in.</p>
+    <p>— Prudential Atelier</p>
+  `
+    : `
     <p>Hi ${firstName},</p>
     <p>You've been given access to the Prudential Atelier operations system.</p>
     <p><strong>Your login details:</strong><br/>
@@ -165,7 +197,9 @@ export async function POST(req: NextRequest) {
 
   await sendEmail({
     to: email,
-    subject: "You've been added to Prudential Atelier — Operations Suite",
+    subject: isStaffMember
+      ? "You've been added to Prudential Atelier"
+      : "You've been added to Prudential Atelier — Operations Suite",
     html,
   });
 
@@ -175,7 +209,7 @@ export async function POST(req: NextRequest) {
     userRole: gate.session.user.role,
     action: "CREATE",
     module: "users",
-    description: `Invited ${email} as ${parsed.data.role}`,
+    description: `Invited ${email} as ${isStaffMember ? "staff" : systemRole} (${jobRole.name})`,
     recordId: user.id,
     recordType: "User",
   });

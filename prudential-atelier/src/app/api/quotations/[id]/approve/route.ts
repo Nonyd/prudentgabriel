@@ -3,6 +3,8 @@ import { QuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logError } from "@/lib/logger";
 import { sendSmtpMail, ORDERS_EMAIL } from "@/lib/email-transport";
+import { notifyQuoteApproved } from "@/lib/notifications";
+import { maybeAutoConvertApprovedQuote } from "@/lib/quotation-convert";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -51,6 +53,9 @@ export async function POST(req: NextRequest, { params }: Params) {
       subject: `Quote approved — ${quote.quoteRef}`,
       html: `<p>${quote.clientName} (${quote.clientEmail}) approved quotation ${quote.quoteRef}.</p>`,
     }).catch(() => undefined);
+
+    notifyQuoteApproved(quote);
+    void maybeAutoConvertApprovedQuote(quote.id);
 
     return NextResponse.json({ item, message: "Quotation approved" });
   } catch (e) {

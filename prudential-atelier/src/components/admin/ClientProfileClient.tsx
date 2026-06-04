@@ -60,22 +60,61 @@ export function ClientProfileClient({ clientId }: { clientId: string }) {
   const [noteOpen, setNoteOpen] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [communications, setCommunications] = useState<
+    { id: string; date: string; subject: string; type: string; status: string }[]
+  >([]);
 
   const refresh = useCallback(async () => {
-    const res = await fetch(`/api/clients/${clientId}`);
-    if (!res.ok) {
+    const [profileRes, commRes] = await Promise.all([
+      fetch(`/api/clients/${clientId}`),
+      fetch(`/api/clients/${clientId}/communications`),
+    ]);
+    if (!profileRes.ok) {
       toast.error("Failed to load client");
       setLoading(false);
       return;
     }
-    const data = (await res.json()) as { item: ClientDetail };
+    const data = (await profileRes.json()) as { item: ClientDetail };
     setItem(data.item);
+    if (commRes.ok) {
+      const comm = (await commRes.json()) as {
+        items: { id: string; date: string; subject: string; type: string; status: string }[];
+      };
+      setCommunications(comm.items);
+    }
     setLoading(false);
   }, [clientId]);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  async function sendCustomEmail() {
+    if (!emailSubject.trim() || !emailBody.trim()) return;
+    setSendingEmail(true);
+    try {
+      const res = await fetch(`/api/clients/${clientId}/communications`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subject: emailSubject, body: emailBody }),
+      });
+      if (!res.ok) {
+        toast.error("Failed to send email");
+        return;
+      }
+      toast.success("Email sent");
+      setEmailOpen(false);
+      setEmailSubject("");
+      setEmailBody("");
+      await refresh();
+    } finally {
+      setSendingEmail(false);
+    }
+  }
 
   async function addNote() {
     if (!noteText.trim()) return;
@@ -124,6 +163,28 @@ export function ClientProfileClient({ clientId }: { clientId: string }) {
 
   return (
     <div className="space-y-8">
+      <div className="sticky top-0 z-10 -mx-1 flex flex-wrap gap-2 border-b border-sand bg-bg/95 px-1 py-3 backdrop-blur">
+        <Link href="/admin/bespoke">
+          <Button size="sm">Create Bespoke Order</Button>
+        </Link>
+        <Link href="/admin/consultations">
+          <Button size="sm" variant="secondary">
+            Book Consultation
+          </Button>
+        </Link>
+        <Link href="/admin/invoices/new">
+          <Button size="sm" variant="secondary">
+            Send Invoice
+          </Button>
+        </Link>
+        <Button size="sm" variant="secondary" onClick={() => setEmailOpen(true)}>
+          Send Message
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setNoteOpen(true)}>
+          Add Note
+        </Button>
+      </div>
+
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-choc font-sans text-lg text-cream">
@@ -153,17 +214,23 @@ export function ClientProfileClient({ clientId }: { clientId: string }) {
             </div>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/admin/bespoke">
-            <Button size="sm" variant="secondary">
-              Create Bespoke Order
-            </Button>
-          </Link>
-          <Button size="sm" variant="secondary" onClick={() => setNoteOpen(true)}>
-            Add Note
-          </Button>
-        </div>
       </div>
+
+      <Section title="Communication Log" empty={communications.length === 0}>
+        <ul className="space-y-2">
+          {communications.map((c) => (
+            <li key={c.id} className="flex justify-between gap-4 font-sans text-sm">
+              <div>
+                <p className="font-medium text-ink">{c.subject}</p>
+                <p className="text-xs text-text-light">
+                  {c.type} · {c.status}
+                </p>
+              </div>
+              <span className="shrink-0 text-xs text-text-mid">{formatDate(c.date)}</span>
+            </li>
+          ))}
+        </ul>
+      </Section>
 
       {item.measurements ? (
         <section className="card-surface p-6">
@@ -272,6 +339,31 @@ export function ClientProfileClient({ clientId }: { clientId: string }) {
           ))}
         </ul>
       </Section>
+
+      <Modal open={emailOpen} onClose={() => setEmailOpen(false)} title="Send custom email">
+        <input
+          type="text"
+          placeholder="Subject"
+          value={emailSubject}
+          onChange={(e) => setEmailSubject(e.target.value)}
+          className="mt-4 w-full rounded border border-sand px-3 py-2 font-sans text-sm"
+        />
+        <textarea
+          rows={6}
+          placeholder="Message body (HTML supported)"
+          value={emailBody}
+          onChange={(e) => setEmailBody(e.target.value)}
+          className="mt-3 w-full rounded border border-sand px-3 py-2 font-sans text-sm"
+        />
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setEmailOpen(false)}>
+            Cancel
+          </Button>
+          <Button loading={sendingEmail} onClick={() => void sendCustomEmail()}>
+            Send
+          </Button>
+        </div>
+      </Modal>
 
       <Modal open={noteOpen} onClose={() => setNoteOpen(false)} title="Add admin note">
         <textarea

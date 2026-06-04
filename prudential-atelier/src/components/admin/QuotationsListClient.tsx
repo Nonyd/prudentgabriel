@@ -76,6 +76,23 @@ export function QuotationsListClient() {
     await refresh();
   }
 
+  async function convertQuote(id: string) {
+    const res = await fetch(`/api/quotations/${id}/convert`, { method: "POST" });
+    const data = (await res.json()) as {
+      error?: string;
+      order?: { id: string; orderRef: string };
+    };
+    if (!res.ok) {
+      toast.error(data.error ?? "Failed to convert quotation");
+      return;
+    }
+    toast.success(`Converted to order ${data.order?.orderRef ?? ""}`);
+    await refresh();
+    if (data.order?.id) {
+      window.location.href = `/admin/bespoke/${data.order.id}`;
+    }
+  }
+
   const columns: BulkColumn<QuoteRow>[] = useMemo(
     () => [
       {
@@ -117,14 +134,23 @@ export function QuotationsListClient() {
       {
         key: "actions",
         header: "Actions",
-        cell: (row) =>
-          row.status === "DRAFT" ? (
-            <Button size="sm" variant="secondary" onClick={() => void sendQuote(row.id)}>
-              Send
-            </Button>
-          ) : (
-            <span className="font-sans text-xs text-text-light">—</span>
-          ),
+        cell: (row) => {
+          if (row.status === "DRAFT") {
+            return (
+              <Button size="sm" variant="secondary" onClick={() => void sendQuote(row.id)}>
+                Send
+              </Button>
+            );
+          }
+          if (row.status === "APPROVED") {
+            return (
+              <Button size="sm" onClick={() => void convertQuote(row.id)}>
+                Convert to Order
+              </Button>
+            );
+          }
+          return <span className="font-sans text-xs text-text-light">—</span>;
+        },
       },
     ],
     [],

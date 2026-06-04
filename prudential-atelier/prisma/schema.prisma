@@ -45,6 +45,12 @@ model User {
   mustResetPassword Boolean @default(false)
   isActive          Boolean  @default(true)
   lastLogin         DateTime?
+
+  jobRoleId  String?
+  jobRole    JobRole? @relation("UserJobRole", fields: [jobRoleId], references: [id])
+  jobTitle   String?
+  department String?
+  isStaff    Boolean  @default(false)
 }
 
 model Consultant {
@@ -269,6 +275,8 @@ model Product {
   saleEndsAt     DateTime?
   isBespokeAvail Boolean         @default(false)
   tags           String[]        @default([])
+  orderCount     Int             @default(0)
+  isBestSeller   Boolean         @default(false)
   lowStockAt     Int             @default(3)
 
   images         ProductImage[]
@@ -1214,6 +1222,19 @@ model Material {
   createdAt DateTime @default(now())
 }
 
+model JobRole {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isPreset    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  permissions String[]
+  users       User[]   @relation("UserJobRole")
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model StaffProfile {
   id     String @id @default(cuid())
   userId String @unique
@@ -1228,11 +1249,41 @@ model StaffProfile {
   avgStageHours   Float?
   attendanceScore Float?
 
-  attendanceLogs AttendanceLog[]
-  assignments    OrderAssignment[]
+  attendanceLogs     AttendanceLog[]
+  assignments        OrderAssignment[]
+  tasks              StaffTask[]
+  performanceRecords PerformanceRecord[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model StaffTask {
+  id        String       @id @default(cuid())
+  staffId   String
+  staff     StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  orderId   String?
+  taskNote  String
+  date      DateTime     @default(now()) @db.Date
+  createdAt DateTime     @default(now())
+
+  @@index([staffId, date])
+}
+
+model PerformanceRecord {
+  id               String       @id @default(cuid())
+  staffId          String
+  staff            StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  month            Int
+  year             Int
+  ordersCompleted  Int          @default(0)
+  avgStageHours    Float?
+  clientRating     Float?
+  attendanceScore  Float?
+  punctualityScore Float?
+  createdAt        DateTime     @default(now())
+
+  @@unique([staffId, month, year])
 }
 
 model AttendanceLog {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PaymentGateway, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AdminPendingBankTransfers } from "@/components/admin/AdminPendingBankTransfers";
+import { AdminOutstandingBalances } from "@/components/admin/AdminOutstandingBalances";
 
 const TAKE = 100;
 
@@ -201,6 +202,8 @@ export default async function AdminPaymentsPage() {
       </p>
 
       <AdminPendingBankTransfers />
+
+      <AdminOutstandingBalances />
 
       <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-4">
         <div className="border border-[#EBEBEA] bg-white p-4">

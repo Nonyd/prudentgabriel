@@ -1,20 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { QuoteStatus } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
 import { FINANCE_ROLES, requireRoles } from "@/lib/api-auth";
-import { generateBespokeOrderRef } from "@/lib/bespoke-stages";
 import { logActivity, logError } from "@/lib/logger";
+import { prisma } from "@/lib/prisma";
+import { convertQuotationToOrder } from "@/lib/quotation-convert";
 
 type Params = { params: Promise<{ id: string }> };
-
-async function uniqueOrderRef(): Promise<string> {
-  for (let i = 0; i < 8; i++) {
-    const orderRef = generateBespokeOrderRef();
-    const exists = await prisma.bespokeOrder.findUnique({ where: { orderRef } });
-    if (!exists) return orderRef;
-  }
-  return generateBespokeOrderRef();
-}
 
 export async function POST(_req: NextRequest, { params }: Params) {
   const gate = await requireRoles(FINANCE_ROLES);
@@ -33,45 +24,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
       );
     }
 
-    const existingOrder = await prisma.bespokeOrder.findFirst({
-      where: { quotationId: quote.id },
-    });
-    if (existingOrder) {
-      return NextResponse.json(
-        { error: "Quotation already converted", order: existingOrder },
-        { status: 409 },
-      );
-    }
-
-    const clientProfile = await prisma.clientProfile.findFirst({
-      where: { user: { email: quote.clientEmail } },
-    });
-
-    const orderRef = await uniqueOrderRef();
-    const total = quote.total;
-
-    const order = await prisma.$transaction(async (tx) => {
-      const created = await tx.bespokeOrder.create({
-        data: {
-          orderRef,
-          quotationId: quote.id,
-          clientProfileId: clientProfile?.id ?? null,
-          clientName: quote.clientName,
-          clientEmail: quote.clientEmail,
-          clientPhone: quote.clientPhone,
-          totalAmount: total,
-          balance: total,
-          notes: quote.notes,
-        },
-      });
-
-      await tx.quotation.update({
-        where: { id: quote.id },
-        data: { status: QuoteStatus.CONVERTED },
-      });
-
-      return created;
-    });
+    const result = await convertQuotationToOrder(quote, gate.session.user.id);
 
     await logActivity({
       userId: gate.session.user.id,
@@ -79,13 +32,27 @@ export async function POST(_req: NextRequest, { params }: Params) {
       userRole: gate.session.user.role ?? undefined,
       action: "ORDER_CREATE",
       module: "quotations",
-      description: `Converted quotation ${quote.quoteRef} to bespoke order ${orderRef}`,
-      recordId: order.id,
+      description: `Converted quotation ${quote.quoteRef} to bespoke order ${result.orderRef}`,
+      recordId: result.orderId,
       recordType: "BespokeOrder",
     });
 
-    return NextResponse.json({ order, quotationId: quote.id }, { status: 201 });
+    return NextResponse.json(
+      {
+        order: { id: result.orderId, orderRef: result.orderRef },
+        invoice: { id: result.invoiceId, invoiceNumber: result.invoiceNumber },
+        quotationId: quote.id,
+      },
+      { status: 201 },
+    );
   } catch (e) {
+    if (e instanceof Error && e.message === "ALREADY_CONVERTED") {
+      const existing = await prisma.bespokeOrder.findFirst({ where: { quotationId: id } });
+      return NextResponse.json(
+        { error: "Quotation already converted", order: existing },
+        { status: 409 },
+      );
+    }
     await logError({
       severity: "WARNING",
       errorType: "QUOTATION_CONVERT",

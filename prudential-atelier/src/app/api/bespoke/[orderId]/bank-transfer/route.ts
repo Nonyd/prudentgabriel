@@ -7,6 +7,7 @@ import {
   sendBankTransferAdminNotification,
   sendBankTransferReceiptReceivedEmail,
 } from "@/lib/email";
+import { notifyBankTransferReceipt } from "@/lib/notifications";
 import { getPublicAppUrl } from "@/lib/app-url";
 import {
   encodeBespokePaymentRef,
@@ -68,6 +69,13 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ orderId: s
     clientName: order.clientName,
     amountNGN: payAmountNGN,
     receiptUrl: parsed.data.receiptUrl,
+  });
+  notifyBankTransferReceipt({
+    ref: order.orderRef,
+    clientName: order.clientName,
+    amountNGN: payAmountNGN,
+    link: `/admin/bespoke/${order.id}`,
+    entityId: order.id,
   });
 
   const appUrl = getPublicAppUrl();

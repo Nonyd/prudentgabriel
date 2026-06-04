@@ -14,10 +14,20 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.trim();
     const tier = searchParams.get("tier");
+    const filter = searchParams.get("filter");
 
     const where: Prisma.ClientProfileWhereInput = {};
     if (tier && tier !== "all" && TIERS.has(tier)) {
       where.loyaltyTier = tier as LoyaltyTier;
+    }
+    if (filter === "vip") {
+      where.loyaltyTier = { in: [LoyaltyTier.GOLD, LoyaltyTier.PLATINUM] };
+    } else if (filter === "active_orders") {
+      where.bespokeOrders = {
+        some: { status: { notIn: ["DELIVERED", "CANCELLED"] } },
+      };
+    } else if (filter === "no_orders") {
+      where.bespokeOrders = { none: {} };
     }
     if (search) {
       where.user = {

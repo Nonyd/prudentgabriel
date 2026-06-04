@@ -48,18 +48,38 @@ function InviteUserModal({
 }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<Role>("ADMIN");
+  const [userType, setUserType] = useState<"admin" | "staff">("admin");
+  const [jobRoleId, setJobRoleId] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [department, setDepartment] = useState("");
+  const [jobRoles, setJobRoles] = useState<{ id: string; name: string; permissionCount: number }[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    void fetch("/api/admin/job-roles")
+      .then((r) => r.json())
+      .then((d) => {
+        const items = (d as { items: { id: string; name: string; permissionCount: number }[] }).items ?? [];
+        setJobRoles(items);
+        if (items[0] && !jobRoleId) setJobRoleId(items[0].id);
+      });
+  }, [open, jobRoleId]);
+
+  const selectedRole = jobRoles.find((r) => r.id === jobRoleId);
 
   const reset = () => {
     setName("");
     setEmail("");
-    setRole("ADMIN");
+    setUserType("admin");
+    setJobRoleId("");
+    setJobTitle("");
+    setDepartment("");
   };
 
   const submit = async () => {
-    if (!name.trim() || !email.trim()) {
-      toast.error("Name and email are required");
+    if (!name.trim() || !email.trim() || !jobRoleId) {
+      toast.error("Name, email, and job role are required");
       return;
     }
     setSubmitting(true);
@@ -67,7 +87,14 @@ function InviteUserModal({
       const res = await fetch("/api/admin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), email: email.trim(), role }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          userType,
+          jobRoleId,
+          jobTitle: jobTitle.trim() || undefined,
+          department: department.trim() || undefined,
+        }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
@@ -86,6 +113,72 @@ function InviteUserModal({
   return (
     <Modal open={open} onClose={onClose} title="Invite User" className="max-w-lg">
       <div className="mt-6 space-y-4">
+        <div>
+          <p className="mb-2 font-sans text-xs font-semibold uppercase tracking-[0.12em] text-text-mid">
+            User type
+          </p>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 font-sans text-sm">
+              <input
+                type="radio"
+                checked={userType === "admin"}
+                onChange={() => setUserType("admin")}
+              />
+              Admin user
+            </label>
+            <label className="flex items-center gap-2 font-sans text-sm">
+              <input
+                type="radio"
+                checked={userType === "staff"}
+                onChange={() => setUserType("staff")}
+              />
+              Staff member
+            </label>
+          </div>
+        </div>
+        <div>
+          <label className="mb-1 block font-sans text-xs font-semibold uppercase tracking-[0.12em] text-text-mid">
+            Job role
+          </label>
+          <select
+            value={jobRoleId}
+            onChange={(e) => setJobRoleId(e.target.value)}
+            className="w-full rounded-[3px] border border-sand bg-white px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
+          >
+            {jobRoles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name} ({r.permissionCount} permissions)
+              </option>
+            ))}
+          </select>
+          {selectedRole ? (
+            <p className="mt-1 font-sans text-xs text-text-light">
+              {selectedRole.permissionCount} permissions
+            </p>
+          ) : null}
+        </div>
+        <div>
+          <label className="mb-1 block font-sans text-xs font-semibold uppercase tracking-[0.12em] text-text-mid">
+            Job title
+          </label>
+          <input
+            value={jobTitle}
+            onChange={(e) => setJobTitle(e.target.value)}
+            className="w-full rounded-[3px] border border-sand bg-white px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
+            placeholder="e.g. Head Beader"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block font-sans text-xs font-semibold uppercase tracking-[0.12em] text-text-mid">
+            Department
+          </label>
+          <input
+            value={department}
+            onChange={(e) => setDepartment(e.target.value)}
+            className="w-full rounded-[3px] border border-sand bg-white px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
+            placeholder="e.g. Production"
+          />
+        </div>
         <div>
           <label className="mb-1 block font-sans text-xs font-semibold uppercase tracking-[0.12em] text-text-mid">
             Full Name
@@ -108,22 +201,6 @@ function InviteUserModal({
             className="w-full rounded-[3px] border border-sand bg-white px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
             placeholder="email@example.com"
           />
-        </div>
-        <div>
-          <label className="mb-1 block font-sans text-xs font-semibold uppercase tracking-[0.12em] text-text-mid">
-            Role
-          </label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value as Role)}
-            className="w-full rounded-[3px] border border-sand bg-white px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
-          >
-            {INVITE_ROLES.map((r) => (
-              <option key={r} value={r}>
-                {INVITE_ROLE_LABELS[r] ?? r}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
       <div className="mt-8 flex justify-end gap-3">

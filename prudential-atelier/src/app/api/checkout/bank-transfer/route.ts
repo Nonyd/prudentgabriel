@@ -7,6 +7,7 @@ import {
   sendBankTransferAdminNotification,
   sendBankTransferReceiptReceivedEmail,
 } from "@/lib/email";
+import { notifyBankTransferReceipt } from "@/lib/notifications";
 import { getPublicAppUrl } from "@/lib/app-url";
 
 const bodySchema = z.object({
@@ -69,6 +70,13 @@ export async function POST(req: NextRequest) {
     clientName,
     amountNGN: order.total,
     receiptUrl,
+  });
+  notifyBankTransferReceipt({
+    ref: order.orderNumber,
+    clientName,
+    amountNGN: order.total,
+    link: `/admin/orders/${order.id}`,
+    entityId: order.id,
   });
 
   return NextResponse.json({

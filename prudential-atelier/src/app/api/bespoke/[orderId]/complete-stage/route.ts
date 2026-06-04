@@ -5,6 +5,7 @@ import { logActivity, logError } from "@/lib/logger";
 import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
 import { getNextStage, getPreviousStage } from "@/lib/bespoke-stages";
 import { buildStageEmailData, sendBespokeStageEmail } from "@/lib/bespoke-email";
+import { notifyStageAdvanced } from "@/lib/notifications";
 
 type Params = { params: Promise<{ orderId: string }> };
 
@@ -99,6 +100,12 @@ export async function POST(req: NextRequest, { params }: Params) {
       description: `Completed stage ${currentStage} for ${order.orderRef}`,
       recordId: order.id,
       recordType: "BespokeOrder",
+    });
+
+    notifyStageAdvanced({
+      orderId: order.id,
+      orderRef: order.orderRef,
+      stage: currentStage,
     });
 
     return NextResponse.json({ item: updated });

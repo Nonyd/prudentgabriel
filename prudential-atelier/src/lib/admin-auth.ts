@@ -25,6 +25,24 @@ export async function requireAdminApi(): Promise<
   return { ok: true, session };
 }
 
+export function isGeneralAdminRole(role: string | undefined): boolean {
+  return role === "ADMIN" || role === "SUPER_ADMIN";
+}
+
+/** SUPER_ADMIN and ADMIN (General Manager) only. */
+export async function requireGeneralAdminApi(): Promise<
+  { ok: true; session: Session } | { ok: false; response: NextResponse }
+> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { ok: false, response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  }
+  if (!isGeneralAdminRole(session.user.role)) {
+    return { ok: false, response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  }
+  return { ok: true, session };
+}
+
 export async function requireSuperAdminApi(): Promise<
   { ok: true; session: Session } | { ok: false; response: NextResponse }
 > {

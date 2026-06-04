@@ -46,8 +46,18 @@ export async function processQRScan(
   userId: string,
   taskNote: string,
 ): Promise<{ success: boolean; message: string; alreadyClockedIn: boolean }> {
+  let code = qrCode.trim();
+  if (code.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(code) as { code?: string };
+      if (parsed.code) code = parsed.code;
+    } catch {
+      /* use raw input */
+    }
+  }
+
   const record = await prisma.qRCode.findFirst({
-    where: { code: qrCode, isActive: true, expiresAt: { gt: new Date() } },
+    where: { code, isActive: true, expiresAt: { gt: new Date() } },
   });
 
   if (!record) {

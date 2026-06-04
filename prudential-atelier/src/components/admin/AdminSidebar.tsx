@@ -29,10 +29,16 @@ import { signOut, useSession } from "next-auth/react";
 import type { Session } from "next-auth";
 import { cn, getInitials } from "@/lib/utils";
 import {
+  ADMIN_NAV_JOB_PERMISSIONS,
+  hasAnyPermission,
+  shouldEnforceJobPermissions,
+  type PermissionSession,
+} from "@/lib/permissions";
+import {
   canAccessLogs,
   canAccessReports,
   canAccessSettings,
-  hasPermission,
+  hasPermission as hasRolePermission,
   isSuperAdmin,
   roleLabel,
   type AdminPermission,
@@ -46,6 +52,7 @@ type NavItem = {
   badgeKey?: string;
   permission?: AdminPermission;
   superAdminOnly?: boolean;
+  generalAdminOnly?: boolean;
   alsoActive?: string[];
 };
 
@@ -83,7 +90,7 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/admin/staff", label: "Staff Members", icon: Users, permission: "staff" },
       { href: "/admin/attendance", label: "Attendance", icon: ClipboardCheck, permission: "attendance" },
-      { href: "/admin/reports", label: "Performance", icon: TrendingUp, permission: "reports" },
+      { href: "/admin/staff/performance", label: "Performance", icon: TrendingUp, permission: "reports" },
     ],
   },
   {
@@ -101,7 +108,7 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Content",
     items: [
       { href: "/admin/content/blog", label: "Blog / Journal", icon: FileText, permission: "content" },
-      { href: "/admin/settings/content", label: "Pages", icon: FileText, permission: "settings" },
+      { href: "/admin/content/pages", label: "Pages", icon: FileText, permission: "content" },
     ],
   },
   {
@@ -128,21 +135,46 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
         icon: UserRoundCog,
         superAdminOnly: true,
       },
+      {
+        href: "/admin/settings/roles",
+        label: "Job Roles",
+        icon: UserRoundCog,
+        generalAdminOnly: true,
+      },
     ],
   },
 ];
 
 function canSeeNavItem(
   item: NavItem,
-  role: string,
-  email: string | null | undefined,
+  session: Session,
 ): boolean {
+  const role = session.user?.role ?? "ADMIN";
+  const email = session.user?.email;
+  const permissionSession: PermissionSession = {
+    user: {
+      role: session.user?.role,
+      jobRolePermissions: session.user?.jobRolePermissions,
+    },
+  };
+
   if (item.superAdminOnly) return isSuperAdmin(role, email);
-  if (item.permission === "logs") return canAccessLogs(role, email);
-  if (item.permission === "reports") return canAccessReports(role, email);
-  if (item.permission === "settings") return canAccessSettings(role, email);
-  if (item.permission) return hasPermission(role, item.permission);
-  return true;
+  if (item.generalAdminOnly) return role === "ADMIN" || isSuperAdmin(role, email);
+
+  let legacyAllowed = true;
+  if (item.permission === "logs") legacyAllowed = canAccessLogs(role, email);
+  else if (item.permission === "reports") legacyAllowed = canAccessReports(role, email);
+  else if (item.permission === "settings") legacyAllowed = canAccessSettings(role, email);
+  else if (item.permission) legacyAllowed = hasRolePermission(role, item.permission);
+
+  if (!legacyAllowed) return false;
+
+  if (!shouldEnforceJobPermissions(permissionSession) || !item.permission) return true;
+
+  const jobKeys = ADMIN_NAV_JOB_PERMISSIONS[item.permission];
+  if (!jobKeys?.length) return true;
+
+  return hasAnyPermission(permissionSession, jobKeys);
 }
 
 function isNavActive(pathname: string, item: NavItem): boolean {
@@ -168,7 +200,16 @@ export function AdminSidebar({
   const displayName = user?.name ?? user?.email ?? "Admin";
   const avatarUrl = user?.image;
   const role = user?.role ?? session.user?.role ?? "ADMIN";
-  const email = user?.email ?? session.user?.email;
+  const navSession: Session = {
+    ...session,
+    user: {
+      ...session.user,
+      ...user,
+      role,
+      jobRolePermissions:
+        user?.jobRolePermissions ?? session.user?.jobRolePermissions ?? [],
+    },
+  };
 
   return (
     <aside
@@ -185,7 +226,7 @@ export function AdminSidebar({
 
       <nav className="flex-1 px-3 py-4">
         {SECTIONS.map((section) => {
-          const visibleItems = section.items.filter((item) => canSeeNavItem(item, role, email));
+          const visibleItems = section.items.filter((item) => canSeeNavItem(item, navSession));
           if (visibleItems.length === 0) return null;
 
           return (

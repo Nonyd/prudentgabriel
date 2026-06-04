@@ -32,11 +32,13 @@ export function ClientsListClient() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [tier, setTier] = useState("all");
+  const [quickFilter, setQuickFilter] = useState("all");
 
   const refresh = useCallback(async () => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     if (tier !== "all") params.set("tier", tier);
+    if (quickFilter !== "all") params.set("filter", quickFilter);
     const res = await fetch(`/api/clients?${params}`);
     if (!res.ok) {
       toast.error("Failed to load clients");
@@ -45,7 +47,7 @@ export function ClientsListClient() {
     const data = (await res.json()) as { items: ClientRow[] };
     setItems(data.items);
     setLoading(false);
-  }, [search, tier]);
+  }, [search, tier, quickFilter]);
 
   useEffect(() => {
     const t = setTimeout(() => void refresh(), 300);
@@ -118,6 +120,28 @@ export function ClientsListClient() {
         <p className="mt-1 font-sans text-sm text-text-mid">
           Client profiles, measurements, and order history
         </p>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {[
+          { id: "all", label: "All clients" },
+          { id: "vip", label: "VIP (Gold+)" },
+          { id: "active_orders", label: "Active orders" },
+          { id: "no_orders", label: "No orders yet" },
+        ].map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => setQuickFilter(f.id)}
+            className={`rounded border px-3 py-1.5 font-sans text-xs transition-colors ${
+              quickFilter === f.id
+                ? "border-choc bg-choc text-cream"
+                : "border-sand bg-white text-text-mid hover:border-choc/40"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
 
       <div className="flex flex-wrap gap-3">

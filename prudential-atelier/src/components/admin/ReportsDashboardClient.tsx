@@ -24,6 +24,16 @@ type ReportData = {
     total: number;
     byStatus: { status: string; count: number; revenue: number }[];
   };
+  inventory?: { product: string; category: string | null; size: string; stock: number; status: string }[];
+  production?: {
+    orderRef: string;
+    clientName: string;
+    stage: string;
+    tailor: string;
+    deliveryDate: string | null;
+    overdue: boolean;
+  }[];
+  staffProductivity?: { name: string; completed: number }[];
 };
 
 const PRESETS = [
@@ -241,6 +251,102 @@ export function ReportsDashboardClient() {
               </tbody>
             </table>
           </div>
+
+          {data.inventory && data.inventory.length > 0 ? (
+            <div className="card-surface p-6">
+              <h2 className="font-display text-lg text-choc">RTW inventory</h2>
+              <table className="mt-4 w-full font-sans text-sm">
+                <thead>
+                  <tr className="border-b border-sand text-left text-xs text-text-light">
+                    <th className="py-2">Product</th>
+                    <th className="py-2">Size</th>
+                    <th className="py-2 text-right">Stock</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.inventory.map((row, i) => (
+                    <tr key={i} className="border-b border-sand/40">
+                      <td className="py-2">{row.product}</td>
+                      <td className="py-2">{row.size}</td>
+                      <td
+                        className={`py-2 text-right ${
+                          row.status === "out"
+                            ? "text-red-700"
+                            : row.status === "low"
+                              ? "text-amber-700"
+                              : ""
+                        }`}
+                      >
+                        {row.stock}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+
+          {data.production && data.production.length > 0 ? (
+            <div className="card-surface p-6">
+              <h2 className="font-display text-lg text-choc">Bespoke production</h2>
+              <table className="mt-4 w-full font-sans text-sm">
+                <thead>
+                  <tr className="border-b border-sand text-left text-xs text-text-light">
+                    <th className="py-2">Order</th>
+                    <th className="py-2">Stage</th>
+                    <th className="py-2">Assigned</th>
+                    <th className="py-2">Delivery</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.production.map((row) => (
+                    <tr
+                      key={row.orderRef}
+                      className={`border-b border-sand/40 ${row.overdue ? "bg-red-50/50" : ""}`}
+                    >
+                      <td className="py-2">{row.orderRef}</td>
+                      <td className="py-2">{row.stage}</td>
+                      <td className="py-2">{row.tailor}</td>
+                      <td className="py-2 text-xs">
+                        {row.deliveryDate
+                          ? new Date(row.deliveryDate).toLocaleDateString("en-GB")
+                          : "—"}
+                        {row.overdue ? " · Overdue" : ""}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+
+          {data.staffProductivity && data.staffProductivity.length > 0 ? (
+            <div className="card-surface p-6">
+              <h2 className="font-display text-lg text-choc">Staff productivity</h2>
+              <p className="mt-1 font-sans text-xs text-text-mid">Assignments completed in selected period</p>
+              <table className="mt-4 w-full font-sans text-sm">
+                <thead>
+                  <tr className="border-b border-sand text-left text-xs text-text-light">
+                    <th className="py-2">Staff</th>
+                    <th className="py-2 text-right">Completed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.staffProductivity.map((s, i) => (
+                    <tr key={i} className="border-b border-sand/40">
+                      <td className="py-2">
+                        {s.name}
+                        {i === 0 ? (
+                          <span className="ml-2 font-sans text-[10px] uppercase text-gold">Top</span>
+                        ) : null}
+                      </td>
+                      <td className="py-2 text-right">{s.completed}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
         </>
       )}
     </div>

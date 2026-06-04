@@ -5,9 +5,13 @@ declare module "next-auth" {
     user: {
       id?: string;
       role?: string;
+      isStaff?: boolean;
+      jobTitle?: string;
+      department?: string;
       referralCode?: string;
       pointsBalance?: number;
       mustResetPassword?: boolean;
+      jobRolePermissions?: string[];
     } & DefaultSession["user"];
   }
 
@@ -22,8 +26,12 @@ declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
     id?: string;
     role?: string;
+    isStaff?: boolean;
+    jobTitle?: string;
+    department?: string;
     referralCode?: string;
     pointsBalance?: number;
     mustResetPassword?: boolean;
+    jobRolePermissions?: string[];
   }
 }

@@ -177,6 +177,46 @@ export async function GET(req: NextRequest) {
       staffSummary.set(id, cur);
     });
 
+    const [inventory, activeProduction, productivity] = await Promise.all([
+      prisma.productVariant.findMany({
+        take: 50,
+        orderBy: { stock: "asc" },
+        include: { product: { select: { name: true, category: true } } },
+      }),
+      prisma.bespokeOrder.findMany({
+        where: { status: { notIn: ["DELIVERED", "CANCELLED"] } },
+        orderBy: { deliveryDate: "asc" },
+        take: 30,
+        include: {
+          assignments: {
+            take: 1,
+            include: {
+              staffProfile: { include: { user: { select: { name: true } } } },
+            },
+          },
+        },
+      }),
+      prisma.orderAssignment.findMany({
+        where: { completedAt: { gte: from, lte: to } },
+        include: {
+          staffProfile: { include: { user: { select: { name: true } } } },
+        },
+      }),
+    ]);
+
+    const productivityMap = new Map<string, { name: string; completed: number }>();
+    productivity.forEach((a) => {
+      const key = a.staffProfileId;
+      const cur = productivityMap.get(key) ?? {
+        name: a.staffProfile.user.name ?? "Staff",
+        completed: 0,
+      };
+      cur.completed += 1;
+      productivityMap.set(key, cur);
+    });
+
+    const now = new Date();
+
     return NextResponse.json({
       range: { from: from.toISOString(), to: to.toISOString() },
       kpis: {
@@ -206,6 +246,24 @@ export async function GET(req: NextRequest) {
           revenue: c._sum.feeNGN ?? 0,
         })),
       },
+      inventory: inventory.map((v) => ({
+        product: v.product.name,
+        category: v.product.category,
+        size: v.size,
+        stock: v.stock,
+        status: v.stock <= 0 ? "out" : v.stock <= 3 ? "low" : "ok",
+      })),
+      production: activeProduction.map((o) => ({
+        orderRef: o.orderRef,
+        clientName: o.clientName,
+        stage: STAGE_SHORT_LABELS[o.currentStage as BespokeStage],
+        tailor: o.assignments[0]?.staffProfile.user.name ?? "—",
+        deliveryDate: o.deliveryDate?.toISOString() ?? null,
+        overdue: o.deliveryDate != null && o.deliveryDate < now,
+      })),
+      staffProductivity: Array.from(productivityMap.values()).sort(
+        (a, b) => b.completed - a.completed,
+      ),
     });
   } catch (e) {
     await logError({

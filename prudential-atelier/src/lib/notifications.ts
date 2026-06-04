@@ -5,6 +5,7 @@ import type {
   Order,
   Product,
   ProductVariant,
+  Quotation,
   Review,
   User,
 } from "@prisma/client";
@@ -100,5 +101,45 @@ export function notifyNewCustomer(user: Pick<User, "id" | "name" | "email">): vo
     message: `${user.name ?? "—"} — ${user.email}`,
     link: `/admin/customers`,
     entityId: user.id,
+  }).catch(() => {});
+}
+
+export function notifyBankTransferReceipt(params: {
+  ref: string;
+  clientName: string;
+  amountNGN: number;
+  link: string;
+  entityId: string;
+}): void {
+  void createNotification({
+    type: "NEW_ORDER",
+    title: "Bank transfer receipt",
+    message: `${params.clientName} — ${params.ref} · ${formatNGN(params.amountNGN)}`,
+    link: params.link,
+    entityId: params.entityId,
+  }).catch(() => {});
+}
+
+export function notifyQuoteApproved(quote: Pick<Quotation, "id" | "quoteRef" | "clientName" | "total">): void {
+  void createNotification({
+    type: "NEW_BESPOKE",
+    title: "Quote approved",
+    message: `${quote.quoteRef} — ${quote.clientName} · ${formatNGN(quote.total)}`,
+    link: `/admin/quotations`,
+    entityId: quote.id,
+  }).catch(() => {});
+}
+
+export function notifyStageAdvanced(params: {
+  orderId: string;
+  orderRef: string;
+  stage: string;
+}): void {
+  void createNotification({
+    type: "NEW_BESPOKE",
+    title: "Production stage completed",
+    message: `${params.orderRef} — ${params.stage}`,
+    link: `/admin/bespoke/${params.orderId}`,
+    entityId: params.orderId,
   }).catch(() => {});
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 
@@ -18,6 +18,46 @@ const FIELDS = [
 
 export function GeneralSettingsClient() {
   const [saving, setSaving] = useState(false);
+  const [autoConvert, setAutoConvert] = useState(false);
+  const [autoConvertLoading, setAutoConvertLoading] = useState(true);
+  const [autoConvertSaving, setAutoConvertSaving] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/settings/general");
+        if (res.ok) {
+          const data = (await res.json()) as { autoConvertApprovedQuotes?: boolean };
+          setAutoConvert(Boolean(data.autoConvertApprovedQuotes));
+        }
+      } finally {
+        setAutoConvertLoading(false);
+      }
+    })();
+  }, []);
+
+  const onAutoConvertChange = async (enabled: boolean) => {
+    setAutoConvert(enabled);
+    setAutoConvertSaving(true);
+    try {
+      const res = await fetch("/api/admin/settings/general", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autoConvertApprovedQuotes: enabled }),
+      });
+      if (!res.ok) {
+        setAutoConvert(!enabled);
+        toast.error("Could not save setting");
+        return;
+      }
+      toast.success(enabled ? "Auto-convert enabled" : "Auto-convert disabled");
+    } catch {
+      setAutoConvert(!enabled);
+      toast.error("Could not save setting");
+    } finally {
+      setAutoConvertSaving(false);
+    }
+  };
 
   const onSave = async () => {
     setSaving(true);
@@ -34,6 +74,39 @@ export function GeneralSettingsClient() {
       <p className="mt-1 font-sans text-xs text-text-mid">
         Site identity, consultation pricing, and operational defaults.
       </p>
+
+      <div className="mt-6 rounded-lg border border-sand bg-bg/40 p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="font-sans text-sm font-medium text-ink">Auto-convert approved quotes to orders</p>
+            <p className="mt-1 font-sans text-xs leading-relaxed text-text-mid">
+              When a client approves a quotation, automatically create a bespoke order and invoice without
+              manual action.
+            </p>
+          </div>
+          <label className="relative inline-flex shrink-0 cursor-pointer items-center">
+            <input
+              type="checkbox"
+              className="peer sr-only"
+              checked={autoConvert}
+              disabled={autoConvertLoading || autoConvertSaving}
+              onChange={(e) => void onAutoConvertChange(e.target.checked)}
+            />
+            <span className="h-6 w-11 rounded-full bg-sand transition-colors peer-checked:bg-choc peer-disabled:opacity-50" />
+            <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
+          </label>
+        </div>
+        <p className="mt-2 font-sans text-[11px] text-text-light">
+          {autoConvertLoading
+            ? "Loading…"
+            : autoConvertSaving
+              ? "Saving…"
+              : autoConvert
+                ? "On"
+                : "Off"}
+        </p>
+      </div>
+
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         {FIELDS.map((field) => (
           <label key={field.key} className="block">
