@@ -110,9 +110,14 @@ export function getPointsValue(points: number): number {
 type Tx = Pick<PrismaClient, "user" | "pointsTransaction">;
 
 /** Call only inside `prisma.$transaction`. */
-export async function awardReferralPoints(referrerId: string, newUserId: string, tx: Tx): Promise<void> {
-  const REFERRER_PTS = 250;
-  const NEW_USER_PTS = 500;
+export async function awardReferralPoints(
+  referrerId: string,
+  newUserId: string,
+  tx: Tx,
+  points?: { referrer: number; newUser: number },
+): Promise<void> {
+  const REFERRER_PTS = points?.referrer ?? 250;
+  const NEW_USER_PTS = points?.newUser ?? 0;
 
   const referrerAfter = await tx.user.update({
     where: { id: referrerId },
@@ -130,19 +135,21 @@ export async function awardReferralPoints(referrerId: string, newUserId: string,
     },
   });
 
-  const newUserAfter = await tx.user.update({
-    where: { id: newUserId },
-    data: { pointsBalance: { increment: NEW_USER_PTS } },
-    select: { pointsBalance: true },
-  });
+  if (NEW_USER_PTS > 0) {
+    const newUserAfter = await tx.user.update({
+      where: { id: newUserId },
+      data: { pointsBalance: { increment: NEW_USER_PTS } },
+      select: { pointsBalance: true },
+    });
 
-  await tx.pointsTransaction.create({
-    data: {
-      userId: newUserId,
-      type: PointsType.EARNED_SIGNUP,
-      amount: NEW_USER_PTS,
-      balanceAfter: newUserAfter.pointsBalance,
-      description: "Welcome bonus — referred signup",
-    },
-  });
+    await tx.pointsTransaction.create({
+      data: {
+        userId: newUserId,
+        type: PointsType.EARNED_SIGNUP,
+        amount: NEW_USER_PTS,
+        balanceAfter: newUserAfter.pointsBalance,
+        description: "Welcome bonus — referred signup",
+      },
+    });
+  }
 }

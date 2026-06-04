@@ -9,9 +9,5 @@ export default async function AdminLoginPage() {
     redirect("/admin");
   }
 
-  return (
-    <div className="admin-area min-h-screen bg-canvas text-charcoal">
-      <AdminLoginClient />
-    </div>
-  );
+  return <AdminLoginClient />;
 }

@@ -1,39 +1,31 @@
 import { auth } from "@/auth";
-import { PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { AccountOrdersList } from "@/components/account/AccountOrdersList";
+import { getOrCreateClientProfile } from "@/lib/account-helpers";
+import { AccountOrdersClient } from "@/components/account/AccountOrdersClient";
 
-export default async function OrdersPage() {
+export default async function AccountOrdersPage() {
   const session = await auth();
-  const orders = await prisma.order.findMany({
-    where: { userId: session!.user!.id! },
-    orderBy: { createdAt: "desc" },
-    include: {
-      items: {
-        take: 3,
-        include: {
-          product: { select: { name: true, images: { where: { isPrimary: true }, take: 1 } } },
+  const userId = session!.user!.id!;
+  const profile = await getOrCreateClientProfile(userId);
+
+  const [bespokeOrders, rtwOrders] = await Promise.all([
+    prisma.bespokeOrder.findMany({
+      where: { clientProfileId: profile.id },
+      orderBy: { createdAt: "desc" },
+      include: { stageHistory: { orderBy: { completedAt: "asc" } } },
+    }),
+    prisma.order.findMany({
+      where: { userId, isBespoke: false },
+      orderBy: { createdAt: "desc" },
+      include: {
+        items: {
+          include: {
+            product: { include: { images: { take: 1 } } },
+          },
         },
       },
-    },
-  });
+    }),
+  ]);
 
-  const rows = orders.map((o) => ({
-    id: o.id,
-    orderNumber: o.orderNumber,
-    createdAt: o.createdAt.toISOString(),
-    total: o.total,
-    status: o.status,
-    paymentStatus: o.paymentStatus,
-    previewImages: o.items.map((it) => it.product.images[0]?.url).filter((u): u is string => Boolean(u)),
-    canDelete: o.paymentStatus === PaymentStatus.PENDING || o.paymentStatus === PaymentStatus.FAILED,
-  }));
-
-  return (
-    <div>
-      <h1 className="font-display text-3xl text-wine">My orders</h1>
-      <p className="mt-1 text-sm text-charcoal-mid">{orders.length} orders</p>
-      <AccountOrdersList orders={rows} />
-    </div>
-  );
+  return <AccountOrdersClient bespokeOrders={bespokeOrders} rtwOrders={rtwOrders} />;
 }

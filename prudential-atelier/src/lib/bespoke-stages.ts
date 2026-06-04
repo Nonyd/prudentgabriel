@@ -1,0 +1,105 @@
+import type { BespokeStage } from "@prisma/client";
+
+export const STAGE_ORDER: BespokeStage[] = [
+  "CONSULTATION_BOOKING",
+  "CONSULTATION_SESSION",
+  "INVOICE_ISSUANCE",
+  "PAYMENT_CONFIRMATION",
+  "SKETCHING_CONCEPT",
+  "FABRIC_SOURCING",
+  "DESIGN_APPROVAL",
+  "TAILORING",
+  "FIRST_FITTING",
+  "ALTERATIONS",
+  "BEADING_FINISHING",
+  "FINAL_FITTING",
+  "DELIVERY",
+];
+
+export const STAGE_LABELS: Record<BespokeStage, string> = {
+  CONSULTATION_BOOKING: "1. Consultation Booking",
+  CONSULTATION_SESSION: "2. Consultation Session",
+  INVOICE_ISSUANCE: "3. Invoice Issuance",
+  PAYMENT_CONFIRMATION: "4. Payment Confirmation",
+  SKETCHING_CONCEPT: "5. Sketching & Concept",
+  FABRIC_SOURCING: "6. Fabric Sourcing",
+  DESIGN_APPROVAL: "7. Design Approval",
+  TAILORING: "8. Tailoring / Construction",
+  FIRST_FITTING: "9. First Fitting",
+  ALTERATIONS: "10. Alterations",
+  BEADING_FINISHING: "11. Beading & Finishing",
+  FINAL_FITTING: "12. Final Fitting",
+  DELIVERY: "13. Delivery / Collection",
+};
+
+export const STAGE_SHORT_LABELS: Record<BespokeStage, string> = {
+  CONSULTATION_BOOKING: "Consultation Booking",
+  CONSULTATION_SESSION: "Consultation Session",
+  INVOICE_ISSUANCE: "Invoice Issuance",
+  PAYMENT_CONFIRMATION: "Payment Confirmation",
+  SKETCHING_CONCEPT: "Sketching & Concept",
+  FABRIC_SOURCING: "Fabric Sourcing",
+  DESIGN_APPROVAL: "Design Approval",
+  TAILORING: "Tailoring",
+  FIRST_FITTING: "First Fitting",
+  ALTERATIONS: "Alterations",
+  BEADING_FINISHING: "Beading & Finishing",
+  FINAL_FITTING: "Final Fitting",
+  DELIVERY: "Delivery",
+};
+
+export function getNextStage(current: BespokeStage): BespokeStage | null {
+  const idx = STAGE_ORDER.indexOf(current);
+  return idx < STAGE_ORDER.length - 1 ? STAGE_ORDER[idx + 1]! : null;
+}
+
+export function getStageProgress(current: BespokeStage): number {
+  return STAGE_ORDER.indexOf(current) + 1;
+}
+
+export function getPreviousStage(current: BespokeStage): BespokeStage | null {
+  const idx = STAGE_ORDER.indexOf(current);
+  return idx > 0 ? STAGE_ORDER[idx - 1]! : null;
+}
+
+export function isStageCompleted(
+  stage: BespokeStage,
+  currentStage: BespokeStage,
+  completedStages: BespokeStage[],
+): boolean {
+  if (completedStages.includes(stage)) return true;
+  return STAGE_ORDER.indexOf(stage) < STAGE_ORDER.indexOf(currentStage);
+}
+
+export function generateBespokeOrderRef(): string {
+  const n = Math.floor(Math.random() * 9000) + 1000;
+  return `ORD-${n}`;
+}
+
+export function generateQuoteRef(): string {
+  const y = String(new Date().getFullYear());
+  const n = Math.floor(Math.random() * 9999) + 1;
+  return `QT-${y}-${String(n).padStart(4, "0")}`;
+}
+
+export type DeliveryUrgency = "overdue" | "soon" | "ok" | "none";
+
+export function getDeliveryUrgency(deliveryDate: Date | null | undefined): DeliveryUrgency {
+  if (!deliveryDate) return "none";
+  const now = new Date();
+  const diff = deliveryDate.getTime() - now.getTime();
+  const days = diff / (1000 * 60 * 60 * 24);
+  if (days < 0) return "overdue";
+  if (days <= 7) return "soon";
+  return "ok";
+}
+
+export function getOrderTrackStatus(
+  deliveryDate: Date | null | undefined,
+  currentStage: BespokeStage,
+): "On Track" | "Watch" | "Urgent" {
+  const urgency = getDeliveryUrgency(deliveryDate);
+  if (urgency === "overdue") return "Urgent";
+  if (urgency === "soon" && currentStage !== "DELIVERY") return "Watch";
+  return "On Track";
+}

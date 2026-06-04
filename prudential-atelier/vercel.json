@@ -11,6 +11,30 @@
     {
       "path": "/api/cron/expired-coupons",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/rotate-qr",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/late-alert",
+      "schedule": "0 9 * * 1-6"
+    },
+    {
+      "path": "/api/cron/event-reminders",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/daily-report",
+      "schedule": "0 23 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-report",
+      "schedule": "0 7 * * 1"
+    },
+    {
+      "path": "/api/cron/update-bestsellers",
+      "schedule": "0 2 * * *"
     }
   ]
 }

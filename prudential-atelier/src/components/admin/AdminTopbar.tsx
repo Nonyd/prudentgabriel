@@ -1,132 +1,64 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { Bell, Mail, Menu, Search } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { ChevronDown, LogOut, Menu, RefreshCw } from "lucide-react";
-import { DarkModeToggle } from "@/components/common/DarkModeToggle";
-import { NotificationBell } from "@/components/admin/NotificationBell";
-import { AdminProfileDrawer } from "@/components/admin/AdminProfileDrawer";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { cn } from "@/lib/utils";
+import { getInitials } from "@/lib/utils";
 
 function pageTitleFromPath(pathname: string): string {
   if (pathname === "/admin") return "Dashboard";
   const seg = pathname.replace(/^\/admin\/?/, "").split("/").filter(Boolean);
   if (!seg.length) return "Dashboard";
-  const last = seg[seg.length - 1];
-  if (last === "new") return "New Product";
-  if (last === "edit" && seg.length >= 2) return "Edit Product";
-  return last
+  return seg[seg.length - 1]
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 }
 
-function initials(name: string | null | undefined, email: string | null | undefined): string {
-  const n = (name ?? "").trim();
-  if (n) {
-    const parts = n.split(/\s+/).filter(Boolean);
-    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    return n.slice(0, 2).toUpperCase();
-  }
-  const e = (email ?? "").split("@")[0] ?? "";
-  return e.slice(0, 2).toUpperCase() || "AD";
-}
-
 export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
   const pathname = usePathname();
   const { data } = useSession();
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [revalidating, setRevalidating] = useState(false);
   const title = pageTitleFromPath(pathname);
   const user = data?.user;
-  const displayName = user?.name ?? user?.email ?? "Admin";
 
   return (
-    <header className="flex h-[52px] shrink-0 items-center justify-between border-b border-[#EBEBEA] bg-canvas px-4 md:px-8">
+    <header className="flex h-14 shrink-0 items-center justify-between border-b border-sand bg-ivory px-4 md:px-8">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
-          className="p-2 text-[#6B6B68] transition-colors hover:bg-[#F5F5F3] hover:text-ink md:hidden"
+          className="p-2 text-text-mid md:hidden"
           onClick={() => onOpenNav?.()}
           aria-label="Toggle navigation"
         >
           <Menu size={20} strokeWidth={1.5} />
         </button>
-        <p className="flex min-w-0 items-center font-body">
-          <span className="text-[11px] text-[#A8A8A4]">Admin</span>
-          <span className="mx-2 text-[11px] text-[#EBEBEA]">/</span>
-          <span className="truncate text-xs font-medium text-ink">{title}</span>
-        </p>
+        <h1 className="truncate font-serif text-lg font-medium text-choc">{title}</h1>
       </div>
+
       <div className="flex items-center gap-3 md:gap-4">
-        <NotificationBell />
-        <button
-          type="button"
-          title="Refresh site cache"
-          disabled={revalidating}
-          onClick={() => {
-            void (async () => {
-              setRevalidating(true);
-              try {
-                const res = await fetch("/api/admin/revalidate-all", { method: "POST" });
-                const j = (await res.json().catch(() => ({}))) as { error?: string };
-                if (!res.ok) {
-                  toast.error(j.error ?? "Could not refresh cache");
-                  return;
-                }
-                toast.success("Site updated", { duration: 2000, icon: "✓" });
-              } catch {
-                toast.error("Could not refresh cache");
-              } finally {
-                setRevalidating(false);
-              }
-            })();
-          }}
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#6B6B68] transition-colors hover:bg-[#F5F5F3] hover:text-ink disabled:opacity-50"
-          aria-label="Refresh site cache"
-        >
-          <RefreshCw size={16} strokeWidth={1.75} className={cn(revalidating && "animate-spin")} />
+        <label className="relative hidden sm:block">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
+          <input
+            type="search"
+            placeholder="Search..."
+            className="input-field w-48 pl-9 md:w-56"
+            aria-label="Search admin"
+          />
+        </label>
+        <button type="button" className="relative text-text-mid" aria-label="Notifications">
+          <Bell className="h-[18px] w-[18px]" strokeWidth={1.5} />
+          <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-danger" />
+        </button>
+        <button type="button" className="hidden text-text-mid sm:inline-flex" aria-label="Mail">
+          <Mail className="h-[18px] w-[18px]" strokeWidth={1.5} />
         </button>
         <div
-          className="flex items-center justify-center p-1"
-          title="Toggle storefront dark mode (customer preview)"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-choc font-sans text-[10px] font-medium text-cream"
+          title={user?.email ?? ""}
         >
-          <DarkModeToggle />
+          {getInitials(user?.name ?? user?.email ?? "A")}
         </div>
-        <span className="hidden h-4 w-px bg-[#EBEBEA] sm:block" aria-hidden />
-        <button
-          type="button"
-          onClick={() => setProfileOpen(true)}
-          className="flex items-center gap-2.5 hover:opacity-90"
-          title="Open profile"
-        >
-          <div
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#37392d] font-body text-[11px] font-medium text-white"
-            title={user?.email ?? ""}
-          >
-            {initials(user?.name, user?.email)}
-          </div>
-          <span className="hidden max-w-[140px] truncate font-body text-xs text-ink md:inline">{displayName}</span>
-          <ChevronDown size={12} className="hidden text-[#6B6B68] md:block" />
-        </button>
-        <button
-          type="button"
-          onClick={() => void signOut({ callbackUrl: "/admin-login" })}
-          className="inline-flex items-center gap-1 font-body text-[11px] text-[#6B6B68] hover:text-red-500"
-        >
-          <LogOut size={14} />
-          Logout
-        </button>
       </div>
-      <AdminProfileDrawer
-        isOpen={profileOpen}
-        onClose={() => setProfileOpen(false)}
-        initialName={displayName}
-        initialEmail={user?.email ?? ""}
-      />
     </header>
   );
 }

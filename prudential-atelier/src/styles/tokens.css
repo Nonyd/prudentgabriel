@@ -1,99 +1,31 @@
-/* src/styles/tokens.css — Session 7 luxury editorial palette */
 :root {
-  /* Primary palette */
-  --white: #ffffff;
-  --off-white: #f8f8f6;
-  --light-grey: #f2f2f0;
-  --mid-grey: #e8e8e4;
-  --dark-grey: #8a8a85;
-  --charcoal: #2a2a28;
-  --black: #0a0a0a;
+  --choc: #442913;
+  --nut: #5c3422;
+  --lightbr: #98755b;
+  --cream: #e2d1c2;
+  --sand: #d4bbac;
+  --ivory: #f7f2ec;
+  --bg: #f0e8dd;
 
-  /* Accent — olive */
-  --olive: #37392d;
-  --olive-hover: #2c2e24;
-  --olive-light: #37392d18;
-  --olive-mid: #5a5d4a;
+  --text-dark: #2a1a0e;
+  --text-mid: #6b4c35;
+  --text-light: #a08060;
 
-  /* Prudential Bride */
-  --bride-bg: #faf7f4;
-  --bride-accent: #c8a97a;
-  --bride-dark: #2a1f1a;
+  --success: #2d7d4f;
+  --warning: #b87333;
+  --danger: #8b2020;
+  --info: #1a5c8b;
 
-  /* Functional */
-  --success: #2d5016;
-  --error: #8b1a1a;
-  --warning: #e76f51;
-  --info: #457b9d;
-  --border: #e8e8e4;
-  --border-dark: #c8c8c4;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
 
-  /* Typography (overridden by next/font variables on html) */
-  --font-display: "Bodoni Moda", "Didot", "Times New Roman", serif;
-  --font-body: "Jost", "Helvetica Neue", system-ui, sans-serif;
-  --font-label: "Jost", system-ui, sans-serif;
+  --border: 0.5px solid var(--sand);
+  --border-dark: 0.5px solid rgba(152, 117, 91, 0.3);
 
-  /* Legacy names → new system (keep components working) */
-  --wine: var(--olive);
-  --wine-hover: var(--olive-hover);
-  --wine-dark: var(--olive-hover);
-  --wine-muted: var(--olive-light);
-  --gold: var(--bride-accent);
-  --gold-hover: #d4b68a;
-  --gold-muted: rgba(200, 169, 122, 0.22);
-  --gold-dark: #a88b5c;
-  --ivory: var(--off-white);
-  --ivory-dark: var(--light-grey);
-  --ivory-deeper: var(--mid-grey);
-  --cream: var(--off-white);
-  --charcoal-mid: #5c5c58;
-  --charcoal-light: var(--dark-grey);
+  --font-display: var(--font-cormorant), "Cormorant", serif;
+  --font-body: var(--font-montserrat), "Montserrat", sans-serif;
 
-  /* Spacing scale */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 40px;
-  --space-2xl: 64px;
-  --space-3xl: 96px;
-  --space-4xl: 128px;
-
-  /* Radius — site is square-edged */
-  --radius-sm: 0;
-  --radius-md: 0;
-  --radius-lg: 0;
-  --radius-xl: 0;
-
-  /* Shadows — minimal */
-  --shadow-sm: 0 1px 2px rgba(10, 10, 10, 0.06);
-  --shadow-md: 0 4px 16px rgba(10, 10, 10, 0.08);
-  --shadow-lg: 0 8px 32px rgba(10, 10, 10, 0.1);
-  --shadow-gold: 0 4px 24px rgba(200, 169, 122, 0.15);
-
-  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
-  --ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --duration: 200ms;
-}
-
-/* ── DARK MODE ── */
-html.dark {
-  --white: #0a0a0a;
-  --off-white: #111110;
-  --light-grey: #1a1a18;
-  --mid-grey: #2a2a28;
-  --dark-grey: #6a6a65;
-  --charcoal: #e8e8e4;
-  --charcoal-mid: #a3a39c;
-  --charcoal-light: #8a8a84;
-  --black: #f8f8f6;
-  --border: #2a2a28;
-  --border-dark: #3a3a38;
-  --olive: #37392d;
-  --olive-hover: #4a4d3a;
-  --olive-light: #37392d30;
-  --olive-mid: #6b6e58;
-  --bride-bg: #1a1512;
-  --bride-accent: #c8a97a;
-  --bride-dark: #f5f0e8;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BrandLogo } from "@/components/common/BrandLogo";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,130 +40,141 @@ export function RegisterContent() {
       setError("root", { message });
       return;
     }
-    router.push("/auth/login?registered=1");
+    router.push("/login?registered=1");
     router.refresh();
   };
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[40%_60%]">
-      <div className="relative hidden flex-col justify-between bg-olive p-12 text-white lg:flex">
-        <Link href="/" className="inline-block">
-          <BrandLogo width={48} height={48} variant="multiply" />
-        </Link>
-        <div>
-          <p className="max-w-sm font-display text-[32px] font-normal italic leading-tight">
+    <div className="grid min-h-screen lg:grid-cols-2">
+      <div className="relative hidden lg:block">
+        <Image
+          src="https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=1200&q=80"
+          alt="Prudential Atelier"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-choc/50" />
+        <div className="absolute bottom-12 left-12 max-w-sm text-cream">
+          <p className="font-serif text-3xl font-medium leading-tight">
             Join the inner circle — orders, wishlists, and bespoke consultations.
           </p>
+          <p className="mt-4 font-sans text-xs font-light text-cream/80">
+            Prudential Atelier · Lagos, Nigeria
+          </p>
         </div>
-        <p className="font-body text-[11px] text-white/30">© {new Date().getFullYear()} Prudent Gabriel</p>
       </div>
 
-      <div className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-16">
+      <div className="flex flex-col justify-center bg-ivory px-6 py-12 sm:px-12 lg:px-16">
         <div className="mx-auto w-full max-w-sm">
-          <Link href="/" className="mb-8 inline-block lg:hidden">
-            <BrandLogo width={36} height={36} />
+          <Link href="/" className="font-serif text-xl tracking-[0.12em]">
+            <span className="text-choc">Prudent</span>{" "}
+            <span className="text-lightbr">Gabriel</span>
           </Link>
-          <h2 className="font-display text-[32px] text-charcoal">Create Account.</h2>
-          <p className="mt-2 font-body text-[14px] font-light text-dark-grey">
+          <h2 className="mt-10 font-serif text-3xl font-medium text-choc">Create account</h2>
+          <p className="mt-2 font-sans text-sm font-light text-text-mid">
             Already have an account?{" "}
-            <Link href="/auth/login" className="text-olive hover:underline">
+            <Link href="/login" className="text-nut hover:underline">
               Sign in
             </Link>
           </p>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-8 max-h-[70vh] space-y-4 overflow-y-auto pr-1">
-            {errors.root && (
-              <p className="font-body text-sm text-error" role="alert">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="mt-8 max-h-[70vh] space-y-4 overflow-y-auto pr-1"
+          >
+            {errors.root ? (
+              <p className="font-sans text-sm text-danger" role="alert">
                 {errors.root.message}
               </p>
-            )}
+            ) : null}
+
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="font-label text-[10px] uppercase tracking-[0.15em] text-charcoal-mid">
+              <label className="block">
+                <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
                   First name
-                </label>
-                <input
-                  className="mt-1 w-full border-0 border-b border-mid-grey bg-transparent py-2.5 font-body text-sm outline-none focus:border-olive"
-                  {...register("firstName")}
-                />
-                {errors.firstName && (
-                  <p className="mt-1 font-body text-xs text-error">{errors.firstName.message}</p>
-                )}
-              </div>
-              <div>
-                <label className="font-label text-[10px] uppercase tracking-[0.15em] text-charcoal-mid">
-                  Last name
-                </label>
-                <input
-                  className="mt-1 w-full border-0 border-b border-mid-grey bg-transparent py-2.5 font-body text-sm outline-none focus:border-olive"
-                  {...register("lastName")}
-                />
-                {errors.lastName && (
-                  <p className="mt-1 font-body text-xs text-error">{errors.lastName.message}</p>
-                )}
-              </div>
-            </div>
-            <div>
-              <label className="font-label text-[10px] uppercase tracking-[0.15em] text-charcoal-mid">Email</label>
-              <input
-                type="email"
-                autoComplete="email"
-                className="mt-1 w-full border-0 border-b border-mid-grey bg-transparent py-2.5 font-body text-sm outline-none focus:border-olive"
-                {...register("email")}
-              />
-              {errors.email && <p className="mt-1 font-body text-xs text-error">{errors.email.message}</p>}
-            </div>
-            <div>
-              <label className="font-label text-[10px] uppercase tracking-[0.15em] text-charcoal-mid">Phone</label>
-              <input
-                type="tel"
-                className="mt-1 w-full border-0 border-b border-mid-grey bg-transparent py-2.5 font-body text-sm outline-none focus:border-olive"
-                {...register("phone")}
-              />
-              {errors.phone && <p className="mt-1 font-body text-xs text-error">{errors.phone.message}</p>}
-            </div>
-            <div>
-              <label className="font-label text-[10px] uppercase tracking-[0.15em] text-charcoal-mid">
-                Referral code (optional)
+                </span>
+                <input className="input-field" {...register("firstName")} />
+                {errors.firstName ? (
+                  <p className="mt-1 font-sans text-xs text-danger">{errors.firstName.message}</p>
+                ) : null}
               </label>
-              <input
-                className="mt-1 w-full border-0 border-b border-mid-grey bg-transparent py-2.5 font-body text-sm outline-none focus:border-olive"
-                {...register("referralCode")}
-              />
+              <label className="block">
+                <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+                  Last name
+                </span>
+                <input className="input-field" {...register("lastName")} />
+                {errors.lastName ? (
+                  <p className="mt-1 font-sans text-xs text-danger">{errors.lastName.message}</p>
+                ) : null}
+              </label>
             </div>
-            <div>
-              <label className="font-label text-[10px] uppercase tracking-[0.15em] text-charcoal-mid">Password</label>
+
+            <label className="block">
+              <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+                Email
+              </span>
+              <input type="email" autoComplete="email" className="input-field" {...register("email")} />
+              {errors.email ? (
+                <p className="mt-1 font-sans text-xs text-danger">{errors.email.message}</p>
+              ) : null}
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+                Phone
+              </span>
+              <input type="tel" className="input-field" {...register("phone")} />
+              {errors.phone ? (
+                <p className="mt-1 font-sans text-xs text-danger">{errors.phone.message}</p>
+              ) : null}
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+                Referral code (optional)
+              </span>
+              <input className="input-field" {...register("referralCode")} />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+                Password
+              </span>
               <input
                 type="password"
                 autoComplete="new-password"
-                className="mt-1 w-full border-0 border-b border-mid-grey bg-transparent py-2.5 font-body text-sm outline-none focus:border-olive"
+                className="input-field"
                 {...register("password")}
               />
-              {errors.password && (
-                <p className="mt-1 font-body text-xs text-error">{errors.password.message}</p>
-              )}
-            </div>
-            <div>
-              <label className="font-label text-[10px] uppercase tracking-[0.15em] text-charcoal-mid">
+              {errors.password ? (
+                <p className="mt-1 font-sans text-xs text-danger">{errors.password.message}</p>
+              ) : null}
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
                 Confirm password
-              </label>
+              </span>
               <input
                 type="password"
                 autoComplete="new-password"
-                className="mt-1 w-full border-0 border-b border-mid-grey bg-transparent py-2.5 font-body text-sm outline-none focus:border-olive"
+                className="input-field"
                 {...register("confirmPassword")}
               />
-              {errors.confirmPassword && (
-                <p className="mt-1 font-body text-xs text-error">{errors.confirmPassword.message}</p>
-              )}
-            </div>
-            <label className="flex items-start gap-2 font-body text-xs text-charcoal-mid">
+              {errors.confirmPassword ? (
+                <p className="mt-1 font-sans text-xs text-danger">{errors.confirmPassword.message}</p>
+              ) : null}
+            </label>
+
+            <label className="flex items-start gap-2 font-sans text-xs text-text-mid">
               <input type="checkbox" className="mt-0.5" {...register("acceptTerms")} />
               <span>I accept the terms and conditions</span>
             </label>
-            {errors.acceptTerms && (
-              <p className="font-body text-xs text-error">{errors.acceptTerms.message}</p>
-            )}
+            {errors.acceptTerms ? (
+              <p className="font-sans text-xs text-danger">{errors.acceptTerms.message}</p>
+            ) : null}
+
             <Button type="submit" className="w-full" loading={isSubmitting}>
               Create account
             </Button>

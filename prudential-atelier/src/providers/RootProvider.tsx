@@ -39,23 +39,23 @@ export function RootProvider({ children, session }: RootProviderProps) {
             toastOptions={{
               duration: 4000,
               style: {
-                background: "var(--charcoal)",
-                color: "var(--ivory)",
+                background: "var(--choc)",
+                color: "var(--cream)",
                 fontFamily: "var(--font-body)",
-                fontSize: "14px",
+                fontSize: "13px",
                 borderRadius: "var(--radius-md)",
-                border: "1px solid var(--border)",
+                border: "var(--border)",
               },
               success: {
                 iconTheme: {
-                  primary: "var(--gold)",
-                  secondary: "var(--charcoal)",
+                  primary: "var(--lightbr)",
+                  secondary: "var(--cream)",
                 },
               },
               error: {
                 iconTheme: {
-                  primary: "var(--error)",
-                  secondary: "var(--ivory)",
+                  primary: "var(--danger)",
+                  secondary: "var(--cream)",
                 },
               },
             }}

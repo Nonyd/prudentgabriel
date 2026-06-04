@@ -5,6 +5,28 @@ import { prisma } from "@/lib/prisma";
 import { ConsultationStatus } from "@prisma/client";
 import { getDeliveryModeLabel, getSessionTypeLabel } from "@/lib/consultation";
 
+function statusLabel(status: ConsultationStatus) {
+  switch (status) {
+    case ConsultationStatus.CONFIRMED:
+      return "Confirmed";
+    case ConsultationStatus.PENDING_CONFIRMATION:
+      return "Pending";
+    case ConsultationStatus.COMPLETED:
+      return "Completed";
+    case ConsultationStatus.CANCELLED_BY_CLIENT:
+    case ConsultationStatus.CANCELLED_BY_ADMIN:
+      return "Cancelled";
+    case ConsultationStatus.NO_SHOW:
+      return "No show";
+    case ConsultationStatus.RESCHEDULED:
+      return "Rescheduled";
+    case ConsultationStatus.PENDING_PAYMENT:
+      return "Pending payment";
+    default:
+      return String(status);
+  }
+}
+
 export default async function AccountConsultationsPage() {
   const session = await auth();
   const email = session!.user!.email!.toLowerCase();
@@ -20,71 +42,86 @@ export default async function AccountConsultationsPage() {
   });
 
   return (
-    <div>
-      <h1 className="font-display text-3xl text-wine">My consultations</h1>
-      <p className="mt-1 text-sm text-charcoal-mid">{bookings.length} bookings</p>
-      <div className="mt-8 space-y-4">
+    <div className="mx-auto max-w-4xl">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-4xl text-choc">Consultations</h1>
+          <p className="mt-2 font-sans text-sm text-text-mid">{bookings.length} bookings</p>
+        </div>
+        <Link href="/consultation" className="btn-primary">
+          Book new consultation
+        </Link>
+      </div>
+
+      <div className="mt-10 space-y-4">
         {bookings.length === 0 ? (
-          <div className="rounded-sm border border-border bg-cream p-10 text-center">
-            <p className="text-charcoal-mid">No consultations booked yet.</p>
-            <Link href="/consultation" className="mt-4 inline-block rounded-sm bg-wine px-6 py-3 text-sm text-ivory">
+          <div className="card-surface p-12 text-center">
+            <p className="font-sans text-sm text-text-mid">No consultations booked yet.</p>
+            <Link href="/consultation" className="btn-primary mt-6 inline-flex">
               Book a consultation
             </Link>
           </div>
         ) : (
           bookings.map((b) => (
-            <div
+            <article
               key={b.id}
-              className="flex flex-col gap-4 rounded-sm border border-border bg-cream p-5 sm:flex-row sm:items-center sm:justify-between"
+              className="card-surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"
             >
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 {b.consultant.image ? (
                   <Image
                     src={b.consultant.image}
                     alt=""
-                    width={48}
-                    height={48}
-                    className="h-12 w-12 rounded-full object-cover"
+                    width={56}
+                    height={56}
+                    className="h-14 w-14 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="h-12 w-12 rounded-full bg-charcoal-mid/20" />
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-sand/40 font-serif text-lg text-choc">
+                    {b.consultant.name.charAt(0)}
+                  </div>
                 )}
                 <div>
-                  <p className="font-label text-[11px] text-gold">{b.bookingNumber}</p>
-                  <p className="font-medium text-charcoal">{b.consultant.name}</p>
-                  <p className="font-label text-[12px] text-gold">
-                    {getSessionTypeLabel(b.offering.sessionType)} · {getDeliveryModeLabel(b.offering.deliveryMode)}
+                  <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-lightbr">
+                    {b.bookingNumber}
                   </p>
-                  <p className="text-sm text-charcoal-mid">
+                  <p className="font-serif text-lg text-choc">{b.consultant.name}</p>
+                  <p className="font-sans text-xs text-text-mid">
+                    {getSessionTypeLabel(b.offering.sessionType)} ·{" "}
+                    {getDeliveryModeLabel(b.offering.deliveryMode)}
+                  </p>
+                  <p className="mt-1 font-sans text-sm text-text-mid">
                     {b.status === ConsultationStatus.CONFIRMED && b.confirmedDate
-                      ? `${b.confirmedDate.toLocaleDateString("en-GB", { timeZone: "Africa/Lagos" })} at ${b.confirmedTime ?? ""} WAT`
-                      : b.status === ConsultationStatus.PENDING_CONFIRMATION
-                        ? "Awaiting confirmation"
-                        : b.status === ConsultationStatus.COMPLETED
-                          ? "Completed"
-                          : String(b.status)}
+                      ? `${b.confirmedDate.toLocaleDateString("en-GB", { timeZone: "Africa/Lagos" })}${b.confirmedTime ? ` at ${b.confirmedTime} WAT` : ""}`
+                      : statusLabel(b.status)}
                   </p>
+                  {b.description ? (
+                    <p className="mt-2 line-clamp-2 font-sans text-xs text-text-light">{b.description}</p>
+                  ) : null}
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-sand px-3 py-1 font-sans text-[10px] uppercase tracking-wider text-text-mid">
+                  {statusLabel(b.status)}
+                </span>
                 <Link
                   href={`/consultation/${encodeURIComponent(b.bookingNumber)}`}
-                  className="rounded-sm border border-border px-4 py-2 text-sm text-charcoal hover:border-wine/40"
+                  className="btn-ghost-light text-[10px]"
                 >
                   View details
                 </Link>
-                {b.status === ConsultationStatus.CONFIRMED && b.meetingLink && (
+                {b.status === ConsultationStatus.CONFIRMED && b.meetingLink ? (
                   <a
                     href={b.meetingLink}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-sm bg-wine px-4 py-2 text-sm text-ivory"
+                    className="btn-primary text-[10px]"
                   >
                     Join meeting
                   </a>
-                )}
+                ) : null}
               </div>
-            </div>
+            </article>
           ))
         )}
       </div>

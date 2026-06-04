@@ -4,7 +4,7 @@ import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "gold" | "danger";
+type ButtonVariant = "primary" | "ghost-dark" | "ghost-light" | "danger" | "secondary" | "ghost" | "gold";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -15,19 +15,19 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary:
-    "border border-olive bg-olive text-white hover:border-olive-hover hover:bg-olive-hover",
-  secondary:
-    "border border-ink bg-transparent text-ink hover:bg-ink hover:text-[#ffffff]",
-  ghost: "border border-transparent bg-transparent text-ink hover:border-ink hover:text-olive",
-  gold: "border border-bride-accent bg-bride-accent text-bride-dark hover:opacity-90",
-  danger: "border border-error bg-error text-white hover:opacity-90",
+  primary: "bg-choc text-cream hover:bg-nut border border-transparent",
+  "ghost-dark": "border border-lightbr bg-transparent text-cream hover:bg-lightbr/10",
+  "ghost-light": "border border-nut bg-transparent text-nut hover:bg-nut/5",
+  danger: "border border-danger bg-danger text-cream hover:opacity-90",
+  secondary: "border border-nut bg-transparent text-nut hover:bg-nut/5",
+  ghost: "border border-transparent bg-transparent text-text-dark hover:text-nut",
+  gold: "border border-lightbr bg-lightbr text-cream hover:bg-nut",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: "px-4 py-2 text-[11px] tracking-[0.12em]",
-  md: "px-6 py-3 text-[12px] tracking-[0.12em]",
-  lg: "px-8 py-4 text-[13px] tracking-[0.14em]",
+  sm: "px-4 py-2 text-[9px] tracking-[0.14em]",
+  md: "px-7 py-[13px] text-[10px] tracking-[0.16em]",
+  lg: "px-8 py-4 text-[11px] tracking-[0.16em]",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -37,14 +37,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={cn(
-          "relative inline-flex items-center justify-center gap-2",
-          "font-body font-medium uppercase tracking-[0.12em] transition-all duration-200",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-olive focus-visible:ring-offset-2",
+          "inline-flex items-center justify-center gap-2 font-sans font-semibold uppercase transition-colors duration-200",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lightbr focus-visible:ring-offset-2",
           "disabled:cursor-not-allowed disabled:opacity-50",
-          "overflow-hidden",
-          "before:absolute before:inset-0 before:-translate-x-full",
-          "before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent",
-          "before:transition-transform before:duration-500 hover:before:translate-x-full",
+          "rounded-sm",
           variantClasses[variant],
           sizeClasses[size],
           className,

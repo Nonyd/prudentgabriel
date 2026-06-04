@@ -1,10 +1,5 @@
-import { Suspense } from "react";
-import { RegisterContent } from "./RegisterContent";
+import { redirect } from "next/navigation";
 
-export default function RegisterPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-ivory" />}>
-      <RegisterContent />
-    </Suspense>
-  );
+export default function LegacyRegisterRedirect() {
+  redirect("/register");
 }

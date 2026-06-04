@@ -1,10 +1,5 @@
-import { Suspense } from "react";
-import { LoginContent } from "./LoginContent";
+import { redirect } from "next/navigation";
 
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-ivory" />}>
-      <LoginContent />
-    </Suspense>
-  );
+export default function LegacyAuthLoginRedirect() {
+  redirect("/login");
 }

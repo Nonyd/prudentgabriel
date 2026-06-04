@@ -1,65 +1,42 @@
 import type { Metadata } from "next";
-import { Bodoni_Moda, Jost } from "next/font/google";
+import { Cormorant, Montserrat } from "next/font/google";
 import "@/styles/globals.css";
 import { auth } from "@/auth";
 import { getPublicAppUrl } from "@/lib/app-url";
-import { LenisProvider } from "@/providers/LenisProvider";
+import { SmoothScroll } from "@/components/public/SmoothScroll";
 import { RootProvider } from "@/providers/RootProvider";
 
-const bodoni = Bodoni_Moda({
+const cormorant = Cormorant({
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "600"],
   style: ["normal", "italic"],
-  variable: "--font-bodoni",
+  variable: "--font-cormorant",
   display: "swap",
 });
 
-const jost = Jost({
+const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
-  variable: "--font-jost",
+  variable: "--font-montserrat",
   display: "swap",
 });
 
 const siteUrl = getPublicAppUrl();
 
-const themeInitScript = `(function(){try{var r=localStorage.getItem("pg-theme");if(!r)return;var p=JSON.parse(r);if(p&&p.state&&p.state.isDark)document.documentElement.classList.add("dark");}catch(e){}})();`;
-
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  icons: {
-    icon: "/images/logo.png",
-    apple: "/images/logo.png",
-  },
   title: {
-    template: "%s | Prudent Gabriel",
-    default: "Prudent Gabriel — Luxury Nigerian Fashion & Bespoke Couture",
+    template: "%s | Prudential Atelier",
+    default: "Prudential Atelier — Luxury Fashion & Bespoke Couture",
   },
   description:
-    "Bespoke couture and ready-to-wear by Mrs. Prudent Gabriel-Okopi. Luxury Nigerian fashion for the modern woman — bridal, evening, formal, and casual wear. Ships worldwide.",
-  keywords: [
-    "Nigerian fashion",
-    "bespoke couture Nigeria",
-    "luxury bridal Lagos",
-    "Prudent Gabriel",
-    "Prudential Atelier",
-    "Nigerian designer",
-    "African fashion",
-  ],
+    "Bespoke couture and ready-to-wear by Mrs. Prudent Gabriel-Okopi. Luxury Nigerian fashion — bridal, evening, and everyday elegance.",
   openGraph: {
     type: "website",
     locale: "en_NG",
     url: siteUrl,
-    siteName: "Prudent Gabriel",
-    title: "Prudent Gabriel — Luxury Nigerian Fashion",
-    description:
-      "Bespoke couture and ready-to-wear for the woman who commands every room. Lagos, Nigeria.",
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@prudent_gabriel",
-    creator: "@prudent_gabriel",
-    title: "Prudent Gabriel",
+    siteName: "Prudential Atelier",
+    title: "Prudential Atelier",
     description: "Where culture meets couture. Every stitch is a story.",
   },
 };
@@ -72,13 +49,10 @@ export default async function RootLayout({
   const session = await auth();
 
   return (
-    <html lang="en" suppressHydrationWarning className={`${bodoni.variable} ${jost.variable}`}>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
-      <body className="min-h-screen">
+    <html lang="en" className={`${cormorant.variable} ${montserrat.variable}`}>
+      <body className="min-h-screen font-sans antialiased">
         <RootProvider session={session}>
-          <LenisProvider>{children}</LenisProvider>
+          <SmoothScroll>{children}</SmoothScroll>
         </RootProvider>
       </body>
     </html>

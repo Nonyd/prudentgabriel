@@ -6,8 +6,8 @@ import { registerSchema } from "@/validations/auth";
 import { awardReferralPoints } from "@/lib/points";
 import { sendWelcomeEmail } from "@/lib/email";
 import { notifyNewCustomer } from "@/lib/notifications";
-
-const SIGNUP_POINTS = 50;
+import { getLoyaltyRulePoints } from "@/lib/loyalty";
+import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -38,6 +38,9 @@ export async function POST(request: Request) {
 
   const hashedPassword = await bcrypt.hash(password, 12);
   const name = `${firstName} ${lastName}`.trim();
+  const signupPoints = await getLoyaltyRulePoints("SIGNUP");
+  const referralPoints = await getLoyaltyRulePoints("SIGNUP_REFERRAL");
+  const thresholds = await getTierThresholds();
 
   let pointsBalance = 0;
 
@@ -53,29 +56,42 @@ export async function POST(request: Request) {
     });
 
     if (referrerId) {
-      await awardReferralPoints(referrerId, user.id, tx);
+      await awardReferralPoints(referrerId, user.id, tx, {
+        referrer: referralPoints,
+        newUser: signupPoints,
+      });
       const u = await tx.user.findUnique({
         where: { id: user.id },
         select: { pointsBalance: true },
       });
       pointsBalance = u?.pointsBalance ?? 0;
-    } else {
+    } else if (signupPoints > 0) {
       const updated = await tx.user.update({
         where: { id: user.id },
-        data: { pointsBalance: { increment: SIGNUP_POINTS } },
+        data: { pointsBalance: { increment: signupPoints } },
         select: { pointsBalance: true },
       });
       await tx.pointsTransaction.create({
         data: {
           userId: user.id,
           type: PointsType.EARNED_SIGNUP,
-          amount: SIGNUP_POINTS,
+          amount: signupPoints,
           balanceAfter: updated.pointsBalance,
           description: "Welcome bonus",
         },
       });
       pointsBalance = updated.pointsBalance;
     }
+
+    const tier = tierFromPoints(pointsBalance, thresholds);
+    await tx.clientProfile.create({
+      data: {
+        userId: user.id,
+        loyaltyPoints: pointsBalance,
+        loyaltyTier: tier,
+        referredBy: referrerId,
+      },
+    });
   });
 
   const createdUser = await prisma.user.findUnique({

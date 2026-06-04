@@ -36,6 +36,8 @@ model User {
   cartItems           CartItem[]
   consultationBookings ConsultationBooking[]
   savedPaymentMethods SavedPaymentMethod[]
+  clientProfile       ClientProfile?
+  staffProfile        StaffProfile?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -834,6 +836,13 @@ enum Role {
   CUSTOMER
   ADMIN
   SUPER_ADMIN
+  BESPOKE_MANAGER
+  RTW_MANAGER
+  CONTENT_MANAGER
+  FINANCE_MANAGER
+  HR_MANAGER
+  CONSULTATION_MANAGER
+  STAFF
 }
 
 enum ProductCategory {
@@ -904,4 +913,412 @@ enum Currency {
   NGN
   USD
   GBP
+}
+
+enum ActivityAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  PAYMENT_CONFIRM
+  STAGE_COMPLETE
+  ORDER_CREATE
+  INVOICE_SEND
+  QUOTE_SEND
+  STAFF_CLOCK_IN
+  STAFF_CLOCK_OUT
+}
+
+enum ErrorSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model ActivityLog {
+  id          String         @id @default(cuid())
+  userId      String?
+  userEmail   String?
+  userRole    String?
+  action      ActivityAction
+  module      String
+  description String
+  recordId    String?
+  recordType  String?
+  ipAddress   String?
+  createdAt   DateTime       @default(now())
+
+  @@index([createdAt])
+  @@index([module])
+}
+
+model ErrorLog {
+  id          String        @id @default(cuid())
+  severity    ErrorSeverity @default(INFO)
+  errorType   String
+  message     String        @db.Text
+  stack       String?       @db.Text
+  userId      String?
+  orderId     String?
+  url         String?
+  resolved    Boolean       @default(false)
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  resolveNote String?
+  createdAt   DateTime      @default(now())
+
+  @@index([createdAt])
+  @@index([resolved])
+}
+
+enum BespokeStage {
+  CONSULTATION_BOOKING
+  CONSULTATION_SESSION
+  INVOICE_ISSUANCE
+  PAYMENT_CONFIRMATION
+  SKETCHING_CONCEPT
+  FABRIC_SOURCING
+  DESIGN_APPROVAL
+  TAILORING
+  FIRST_FITTING
+  ALTERATIONS
+  BEADING_FINISHING
+  FINAL_FITTING
+  DELIVERY
+}
+
+enum StaffDepartment {
+  TAILOR
+  BEADER
+  DESIGNER
+  PATTERN_CUTTER
+  GENERAL
+}
+
+enum EmploymentType {
+  EMPLOYEE
+  FREELANCER
+}
+
+enum LoyaltyTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum BlogStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  APPROVED
+  REJECTED
+  CONVERTED
+}
+
+model ClientProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  preferredSilhouettes String[]
+  preferredColors      String[]
+  occasions            String[]
+  budgetRange          String?
+
+  loyaltyPoints Int         @default(0)
+  loyaltyTier   LoyaltyTier @default(BRONZE)
+  totalSpend    Float       @default(0)
+
+  referredBy String?
+
+  measurements  Measurement?
+  bespokeOrders BespokeOrder[]
+  moodboards    Moodboard[]
+  eventDates    EventDate[]
+  adminNotes    ClientNote[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Measurement {
+  id       String        @id @default(cuid())
+  clientId String        @unique
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  bust          Float?
+  waist         Float?
+  hips          Float?
+  shoulderWidth Float?
+  sleeveLength  Float?
+  dressLength   Float?
+  thigh         Float?
+  inseam        Float?
+  neck          Float?
+  armhole       Float?
+  unit          String  @default("inches")
+  notes         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Moodboard {
+  id       String        @id @default(cuid())
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  title          String
+  images         String[]
+  notes          String?
+  bespokeOrderId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+}
+
+model EventDate {
+  id       String        @id @default(cuid())
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  label    String
+  date     DateTime
+  notified Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+model ClientNote {
+  id       String        @id @default(cuid())
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  note          String
+  addedBy       String
+  addedByName   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([clientId])
+}
+
+model BespokeOrder {
+  id       String @id @default(cuid())
+  orderRef String @unique
+
+  clientProfileId String?
+  clientProfile   ClientProfile? @relation(fields: [clientProfileId], references: [id])
+  clientName      String
+  clientEmail     String
+  clientPhone     String?
+
+  outfitDescription String?  @db.Text
+  occasionType      String?
+  eventLocation     String?
+  clientLocation    String?
+  deliveryDate      DateTime?
+  notes             String?  @db.Text
+
+  currentStage BespokeStage @default(CONSULTATION_BOOKING)
+  stageHistory StageUpdate[]
+  assignments  OrderAssignment[]
+  materials    Material[]
+
+  quotationId String?
+  quotation   Quotation? @relation(fields: [quotationId], references: [id])
+  amountPaid  Float      @default(0)
+  totalAmount Float      @default(0)
+  balance     Float      @default(0)
+
+  bespokeRequestId String?
+
+  trackingToken String @unique @default(cuid())
+
+  status OrderStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([trackingToken])
+  @@index([clientEmail])
+  @@index([status])
+}
+
+model StageUpdate {
+  id      String       @id @default(cuid())
+  orderId String
+  order   BespokeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  stage           BespokeStage
+  notes           String?  @db.Text
+  images          String[]
+  videos          String[]
+  completedBy     String
+  completedByName String?
+  emailSent       Boolean  @default(false)
+  emailSentAt     DateTime?
+
+  completedAt DateTime @default(now())
+
+  @@index([orderId])
+}
+
+model OrderAssignment {
+  id      String       @id @default(cuid())
+  orderId String
+  order   BespokeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  staffProfileId String
+  staffProfile   StaffProfile @relation(fields: [staffProfileId], references: [id])
+
+  role        String
+  assignedAt  DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([orderId])
+  @@index([staffProfileId])
+}
+
+model Material {
+  id      String       @id @default(cuid())
+  orderId String
+  order   BespokeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  name      String
+  quantity  String?
+  unitCost  Float?
+  totalCost Float?
+  supplier  String?
+  notes     String?
+
+  createdAt DateTime @default(now())
+}
+
+model StaffProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  department     StaffDepartment
+  employmentType EmploymentType  @default(EMPLOYEE)
+  skillTags      String[]
+  isActive       Boolean         @default(true)
+
+  ordersCompleted Int    @default(0)
+  avgStageHours   Float?
+  attendanceScore Float?
+
+  attendanceLogs AttendanceLog[]
+  assignments    OrderAssignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AttendanceLog {
+  id      String       @id @default(cuid())
+  staffId String
+  staff   StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  clockIn    DateTime?
+  clockOut   DateTime?
+  taskNote   String?
+  totalHours Float?
+  date       DateTime @default(now()) @db.Date
+
+  createdAt DateTime @default(now())
+
+  @@index([staffId])
+  @@index([date])
+}
+
+model QRCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  expiresAt DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([isActive])
+}
+
+model Quotation {
+  id       String @id @default(cuid())
+  quoteRef String @unique
+
+  clientName  String
+  clientEmail String
+  clientPhone String?
+
+  lineItems Json
+  subtotal  Float
+  tax       Float  @default(0)
+  discount  Float  @default(0)
+  total     Float
+
+  notes  String?     @db.Text
+  status QuoteStatus @default(DRAFT)
+
+  approvalToken String    @unique @default(cuid())
+  approvedAt    DateTime?
+  expiresAt     DateTime?
+  pdfUrl        String?
+  sentAt        DateTime?
+
+  bespokeOrders BespokeOrder[]
+
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([clientEmail])
+  @@index([approvalToken])
+}
+
+model BlogPost {
+  id    String @id @default(cuid())
+  title String
+  slug  String @unique
+
+  excerpt       String?
+  content       String    @db.Text
+  featuredImage String?
+  category      String?
+  tags          String[]
+
+  status      BlogStatus @default(DRAFT)
+  publishedAt DateTime?
+  scheduledAt DateTime?
+
+  metaTitle String?
+  metaDesc  String?
+  ogImage   String?
+
+  authorId   String
+  authorName String?
+  readTime   Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([status, publishedAt])
+}
+
+model LoyaltyRule {
+  id       String  @id @default(cuid())
+  action   String  @unique
+  points   Int
+  isActive Boolean @default(true)
 }

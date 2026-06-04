@@ -1,158 +1,161 @@
 "use client";
 
 import Link from "next/link";
-import { BrandLogo } from "@/components/common/BrandLogo";
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import type { Session } from "next-auth";
 import type { LucideIcon } from "lucide-react";
 import {
-  ArrowLeft,
+  Activity,
+  AlertTriangle,
   CalendarDays,
+  ClipboardCheck,
+  FileText,
   LayoutDashboard,
   LogOut,
   Package,
+  Receipt,
   Scissors,
   Settings,
-  ShoppingCart,
-  Star,
-  Tag,
-  Truck,
-  TrendingUp,
+  ShoppingBag,
   UserCircle,
   Users,
-  Images,
-  CreditCard,
-  Bell,
-  Upload,
-  FileText,
-  Layers,
+  Wallet,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
+import { isSuperAdmin } from "@/lib/roles";
 
-const SECTIONS: {
-  label: string;
-  items: { href: string; label: string; icon: LucideIcon }[];
-}[] = [
+type NavItem = { href: string; label: string; icon: LucideIcon; badgeKey?: string };
+
+const SECTIONS: { label: string; items: NavItem[] }[] = [
   {
     label: "Overview",
     items: [{ href: "/admin", label: "Dashboard", icon: LayoutDashboard }],
   },
   {
-    label: "Catalogue",
+    label: "Operations",
     items: [
-      { href: "/admin/products", label: "Products", icon: Package },
-      { href: "/admin/collections", label: "Collections", icon: Layers },
-      { href: "/admin/import", label: "Import Products", icon: Upload },
-      { href: "/admin/bespoke", label: "Bespoke Requests", icon: Scissors },
-      { href: "/admin/invoices", label: "Invoices", icon: FileText },
-      { href: "/admin/consultations", label: "Consultations", icon: CalendarDays },
-      { href: "/admin/consultants", label: "Consultants", icon: UserCircle },
-      { href: "/admin/reviews", label: "Reviews", icon: Star },
-      { href: "/admin/gallery", label: "Gallery", icon: Images },
+      { href: "/admin/bespoke", label: "Orders Pipeline", icon: Scissors, badgeKey: "bespoke" },
+      { href: "/admin/consultations", label: "Consultations", icon: CalendarDays, badgeKey: "consultations" },
+      { href: "/admin/invoices", label: "Invoices", icon: Receipt },
+      { href: "/admin/quotations", label: "Quotations", icon: FileText },
     ],
   },
   {
     label: "Commerce",
     items: [
-      { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
-      { href: "/admin/payments", label: "Payments", icon: CreditCard },
-      { href: "/admin/coupons", label: "Coupons", icon: Tag },
-      { href: "/admin/shipping", label: "Shipping Zones", icon: Truck },
+      { href: "/admin/products", label: "RTW Products", icon: Package },
+      { href: "/admin/orders", label: "RTW Orders", icon: ShoppingBag, badgeKey: "orders" },
+      { href: "/admin/payments", label: "Payments", icon: Wallet, badgeKey: "payments" },
     ],
   },
   {
-    label: "Customers",
+    label: "People",
     items: [
-      { href: "/admin/customers", label: "All Customers", icon: Users },
-      { href: "/admin/referrals", label: "Referral Analytics", icon: TrendingUp },
+      { href: "/admin/clients", label: "Clients", icon: UserCircle },
+      { href: "/admin/staff", label: "Staff", icon: Users },
+      { href: "/admin/attendance", label: "Attendance", icon: ClipboardCheck },
     ],
+  },
+  {
+    label: "Insights",
+    items: [
+      { href: "/admin/payments", label: "Finance", icon: Wallet },
+      { href: "/admin/reports", label: "Reports", icon: Activity },
+    ],
+  },
+  {
+    label: "Content",
+    items: [{ href: "/admin/content/blog", label: "Blog", icon: FileText }],
   },
   {
     label: "System",
     items: [
-      { href: "/admin/team", label: "Team", icon: Users },
-      { href: "/admin/notifications", label: "Notifications", icon: Bell },
+      { href: "/admin/logs/activity", label: "Activity Logs", icon: Activity },
+      { href: "/admin/logs/errors", label: "Error Logs", icon: AlertTriangle },
       { href: "/admin/settings", label: "Settings", icon: Settings },
     ],
   },
 ];
 
-function initials(name: string | null | undefined, email: string | null | undefined): string {
-  const n = (name ?? "").trim();
-  if (n) {
-    const parts = n.split(/\s+/).filter(Boolean);
-    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    return n.slice(0, 2).toUpperCase();
-  }
-  const e = (email ?? "").split("@")[0] ?? "";
-  return e.slice(0, 2).toUpperCase() || "AD";
-}
-
-export function AdminSidebar({ session, onNavigate }: { session: Session; onNavigate?: () => void }) {
+export function AdminSidebar({
+  session,
+  onNavigate,
+  badges = {},
+}: {
+  session: Session;
+  onNavigate?: () => void;
+  badges?: Record<string, number>;
+}) {
   const pathname = usePathname();
   const user = session.user;
   const displayName = user?.name ?? user?.email ?? "Admin";
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  useEffect(() => {
-    const run = async () => {
-      const res = await fetch("/api/admin/notifications/count");
-      if (!res.ok) return;
-      const data = (await res.json()) as { count: number };
-      setUnreadCount(data.count);
-    };
-    void run();
-    const intervalId = window.setInterval(() => void run(), 30_000);
-    return () => window.clearInterval(intervalId);
-  }, []);
+  const role = user?.role ?? "ADMIN";
+  const showDeveloper = isSuperAdmin(role, user?.email);
 
   return (
     <aside
-      className="flex h-screen w-[220px] shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-[#EBEBEA] bg-[#FAFAFA]"
+      className="flex h-screen w-[228px] shrink-0 flex-col overflow-y-auto bg-choc text-cream"
       style={{ overscrollBehavior: "contain" }}
       aria-label="Admin navigation"
     >
-      <div className="px-5 pb-0 pt-6">
-        <Link href="/admin" className="block" onClick={() => onNavigate?.()}>
-          <BrandLogo width={32} height={32} variant="admin" />
+      <div className="border-b border-lightbr/20 px-5 py-6">
+        <Link href="/admin" onClick={() => onNavigate?.()} className="block">
+          <p className="font-serif text-lg font-medium tracking-[0.12em]">
+            <span className="text-cream">Prudent</span>{" "}
+            <span className="text-lightbr">Gabriel</span>
+          </p>
+          <p className="mt-1 font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-lightbr/60">
+            Operations Suite
+          </p>
         </Link>
-        <p className="mt-3 font-body text-[9px] font-medium uppercase tracking-[0.2em] text-[#A8A8A4]">Prudent Gabriel</p>
       </div>
 
-      <nav className="mt-8 flex flex-1 flex-col overflow-y-auto px-3 pb-4" style={{ overscrollBehavior: "contain" }}>
-        {SECTIONS.map((section, si) => (
-          <div key={section.label} className={cn(si > 0 && "mt-6")}>
-            <p className="mb-1 px-2 font-body text-[9px] font-medium uppercase tracking-[0.15em] text-[#A8A8A4]">{section.label}</p>
+      <div className="flex items-center gap-3 border-b border-lightbr/20 px-5 py-4">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-lightbr/20 font-sans text-[11px] font-medium text-cream">
+          {getInitials(displayName)}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-sans text-[11px] text-cream">{displayName}</p>
+          <p className="mt-0.5 font-sans text-[9px] font-semibold uppercase tracking-[0.14em] text-lightbr/70">
+            {role.replace(/_/g, " ")}
+          </p>
+        </div>
+      </div>
+
+      <nav className="flex-1 px-3 py-4">
+        {SECTIONS.map((section) => (
+          <div key={section.label} className="mb-6">
+            <p className="mb-2 px-2 font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-lightbr/50">
+              {section.label}
+            </p>
             <ul className="space-y-0.5">
               {section.items.map((item) => {
                 const active =
                   item.href === "/admin"
                     ? pathname === "/admin"
                     : pathname === item.href || pathname.startsWith(`${item.href}/`);
-                const Icon = item.icon;
+                const badge = item.badgeKey ? badges[item.badgeKey] : 0;
+
                 return (
-                  <li key={item.href}>
+                  <li key={`${section.label}-${item.label}`}>
                     <Link
                       href={item.href}
                       onClick={() => onNavigate?.()}
                       className={cn(
-                        "flex items-center gap-2.5 px-2.5 py-2 font-body text-xs transition-colors duration-150 ease-out",
+                        "flex items-center gap-2.5 rounded-sm px-2 py-2 font-sans text-[11px] transition-colors",
                         active
-                          ? "bg-[#37392d] text-white"
-                          : "text-charcoal-mid hover:bg-light-grey hover:text-ink",
+                          ? "border-r-2 border-lightbr bg-lightbr/18 text-cream"
+                          : "text-cream/65 hover:bg-lightbr/10 hover:text-cream",
                       )}
                     >
-                      <Icon size={15} className={cn("shrink-0", active ? "text-white" : "text-[#A8A8A4]")} />
-                      <span className="inline-flex items-center gap-1.5">
-                        {item.label}
-                        {item.href === "/admin/notifications" && unreadCount > 0 ? (
-                          <span className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-semibold", active ? "bg-white text-[#37392d]" : "bg-[#37392d] text-white")}>
-                            {unreadCount > 99 ? "99+" : unreadCount}
-                          </span>
-                        ) : null}
-                      </span>
+                      <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                      <span className="flex-1 truncate">{item.label}</span>
+                      {badge ? (
+                        <span className="rounded-sm bg-nut px-1.5 py-0.5 font-sans text-[9px] font-semibold text-cream">
+                          {badge}
+                        </span>
+                      ) : null}
                     </Link>
                   </li>
                 );
@@ -160,34 +163,37 @@ export function AdminSidebar({ session, onNavigate }: { session: Session; onNavi
             </ul>
           </div>
         ))}
+
+        {showDeveloper ? (
+          <div className="mb-6">
+            <p className="mb-2 px-2 font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-lightbr/50">
+              Developer
+            </p>
+            <Link
+              href="/admin/settings/developer"
+              onClick={() => onNavigate?.()}
+              className={cn(
+                "flex items-center gap-2.5 rounded-sm px-2 py-2 font-sans text-[11px] transition-colors",
+                pathname.startsWith("/admin/settings/developer")
+                  ? "border-r-2 border-lightbr bg-lightbr/18 text-cream"
+                  : "text-cream/65 hover:bg-lightbr/10 hover:text-cream",
+              )}
+            >
+              <Settings className="h-4 w-4" strokeWidth={1.5} />
+              Developer
+            </Link>
+          </div>
+        ) : null}
       </nav>
 
-      <div className="mt-auto border-t border-[#EBEBEA] px-5 py-4">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center bg-mid-grey font-body text-[11px] text-ink">
-            {initials(user?.name, user?.email)}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-body text-xs text-ink">{displayName}</p>
-            <p className="font-body text-[10px] text-[#A8A8A4]">
-              {user?.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}
-            </p>
-          </div>
-        </div>
-        <Link
-          href="/"
-          className="mt-2 flex items-center gap-1.5 font-body text-[11px] text-[#A8A8A4] transition-colors hover:text-olive"
-        >
-          <ArrowLeft size={12} strokeWidth={1.5} aria-hidden />
-          Back to Store
-        </Link>
+      <div className="border-t border-lightbr/20 p-4">
         <button
           type="button"
-          onClick={() => void signOut({ callbackUrl: "/" })}
-          className="mt-2 flex w-full items-center gap-1.5 text-left font-body text-[11px] text-[#A8A8A4] transition-colors hover:text-red-500"
+          onClick={() => void signOut({ callbackUrl: "/admin-login" })}
+          className="flex w-full items-center gap-2 px-2 py-2 font-sans text-[11px] text-cream/65 transition-colors hover:text-cream"
         >
-          <LogOut size={12} strokeWidth={1.5} aria-hidden />
-          Sign Out
+          <LogOut className="h-4 w-4" strokeWidth={1.5} />
+          Sign out
         </button>
       </div>
     </aside>

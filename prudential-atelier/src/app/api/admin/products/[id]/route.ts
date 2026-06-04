@@ -4,6 +4,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { productAdminSchema, productToggleSchema } from "@/validations/product";
 import { buildDefaultProductSku } from "@/lib/product-sku";
 import { revalidateProduct } from "@/lib/revalidate";
+import { processRestockAlerts } from "@/lib/stock-alerts";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi();
@@ -121,6 +122,12 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const prices = data.variants.map((v) => v.salePriceNGN ?? v.priceNGN);
   const minPrice = Math.min(...prices);
+
+  const oldVariants = await prisma.productVariant.findMany({
+    where: { productId: id },
+    select: { id: true, stock: true },
+  });
+  const oldStockMap = new Map(oldVariants.map((v) => [v.id, v.stock]));
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -241,6 +248,13 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     });
 
     await revalidateProduct(data.slug);
+
+    const restockedIds = data.variants
+      .filter((v) => v.id && (oldStockMap.get(v.id) ?? 0) <= 0 && v.stock > 0)
+      .map((v) => v.id as string);
+    if (restockedIds.length) {
+      void processRestockAlerts(restockedIds);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (e) {

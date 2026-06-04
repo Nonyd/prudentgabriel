@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
 
 export function isAdminRole(role: string | undefined): boolean {
-  return role === "ADMIN" || role === "SUPER_ADMIN";
+  return (
+    role === "ADMIN" ||
+    role === "SUPER_ADMIN" ||
+    (typeof role === "string" && role.endsWith("_MANAGER"))
+  );
 }
 
 /** For API route handlers: returns session or a JSON NextResponse (401/403). */

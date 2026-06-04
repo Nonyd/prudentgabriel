@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { isAdminRole } from "@/lib/admin-auth";
+import { isAdminRole } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 

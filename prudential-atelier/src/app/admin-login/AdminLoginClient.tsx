@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { BrandLogo } from "@/components/common/BrandLogo";
 import { useRouter } from "next/navigation";
 import { signIn, signOut, getSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/validations/auth";
 import { Input } from "@/components/ui/Input";
-import { Spinner } from "@/components/ui/Spinner";
+import { Button } from "@/components/ui/Button";
 
 export function AdminLoginClient() {
   const router = useRouter();
@@ -45,35 +44,59 @@ export function AdminLoginClient() {
   };
 
   return (
-    <div className="mx-auto mt-[15vh] w-full max-w-sm px-6">
-      <div className="text-center">
-        <BrandLogo width={40} height={40} variant="admin" className="mx-auto" />
-        <p className="mt-3 font-body text-[11px] font-medium uppercase tracking-[0.2em] text-ink">Prudent Gabriel</p>
-        <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">Admin Portal</p>
-      </div>
-      <div className="my-8 h-px bg-[#E8E8E4]" />
-      <h1 className="mb-6 font-display text-[28px] text-ink">Sign In</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {errors.root ? (
-          <p className="text-center font-body text-[13px] text-[#8B1A1A]" role="alert">
-            {errors.root.message}
+    <div className="flex min-h-screen items-center justify-center bg-choc px-6 py-12">
+      <div className="w-full max-w-md rounded-lg border border-lightbr/30 bg-choc p-8 shadow-xl">
+        <div className="text-center">
+          <p className="font-serif text-2xl font-medium tracking-[0.12em]">
+            <span className="text-cream">Prudent</span>{" "}
+            <span className="text-lightbr">Gabriel</span>
           </p>
-        ) : null}
-        <Input label="Email Address" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
-        <Input label="Password" type="password" autoComplete="current-password" error={errors.password?.message} {...register("password")} />
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex h-12 w-full items-center justify-center bg-olive font-body text-xs font-medium uppercase tracking-[0.15em] text-white transition-opacity disabled:opacity-60"
-        >
-          {isSubmitting ? <Spinner size="sm" className="border-white border-t-transparent" /> : "Sign In"}
-        </button>
-      </form>
-      <p className="mt-8 text-center">
-        <Link href="/" className="font-body text-[11px] text-[#6B6B68] transition-colors hover:text-olive">
-          ← Back to Website
-        </Link>
-      </p>
+          <p className="mt-2 font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr/70">
+            Operations Suite
+          </p>
+        </div>
+
+        <h1 className="mt-8 font-serif text-2xl font-medium text-cream">Admin Sign In</h1>
+        <p className="mt-2 font-sans text-xs font-light text-cream/70">
+          Email and password only — staff accounts only.
+        </p>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
+          {errors.root ? (
+            <p className="font-sans text-[13px] text-danger" role="alert">
+              {errors.root.message}
+            </p>
+          ) : null}
+          <Input
+            label="Email"
+            type="email"
+            autoComplete="email"
+            error={errors.email?.message}
+            className="[&_input]:border-lightbr/30 [&_input]:bg-bg/10 [&_input]:text-text-dark [&_label]:text-cream/80"
+            {...register("email")}
+          />
+          <Input
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            error={errors.password?.message}
+            className="[&_input]:border-lightbr/30 [&_input]:bg-bg/10 [&_input]:text-text-dark [&_label]:text-cream/80"
+            {...register("password")}
+          />
+          <Button type="submit" loading={isSubmitting} className="w-full">
+            Sign In
+          </Button>
+        </form>
+
+        <p className="mt-8 text-center">
+          <Link
+            href="/"
+            className="font-sans text-[11px] text-lightbr transition-colors hover:text-cream"
+          >
+            ← Back to website
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

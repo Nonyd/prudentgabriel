@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-type BadgeVariant = "wine" | "gold" | "success" | "outline-gold" | "outline-wine" | "grey";
+type BadgeVariant = "wine" | "gold" | "success" | "outline-gold" | "outline-wine" | "grey" | "accent";
 type BadgeSize = "sm" | "md";
 
 interface BadgeProps {
@@ -17,6 +17,7 @@ const variantClasses: Record<BadgeVariant, string> = {
   "outline-gold": "border border-gold bg-transparent text-gold",
   "outline-wine": "border border-olive bg-transparent text-olive",
   grey: "bg-charcoal/10 text-charcoal-mid",
+  accent: "border border-lightbr/40 bg-choc/80 font-sans text-[9px] font-semibold uppercase tracking-[0.14em] text-cream",
 };
 
 const sizeClasses: Record<BadgeSize, string> = {
