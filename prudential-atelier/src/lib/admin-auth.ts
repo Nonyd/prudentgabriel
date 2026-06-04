@@ -6,6 +6,7 @@ export function isAdminRole(role: string | undefined): boolean {
   return (
     role === "ADMIN" ||
     role === "SUPER_ADMIN" ||
+    role === "STAFF_ADMIN" ||
     (typeof role === "string" && role.endsWith("_MANAGER"))
   );
 }

@@ -8,9 +8,10 @@ import { AdminTopbar } from "./AdminTopbar";
 type AdminShellProps = {
   session: Session;
   children: React.ReactNode;
+  badges?: Record<string, number>;
 };
 
-export function AdminShell({ session, children }: AdminShellProps) {
+export function AdminShell({ session, children, badges = {} }: AdminShellProps) {
   const [mobileNav, setMobileNav] = useState(false);
 
   return (
@@ -28,7 +29,7 @@ export function AdminShell({ session, children }: AdminShellProps) {
           mobileNav ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
-        <AdminSidebar session={session} onNavigate={() => setMobileNav(false)} />
+        <AdminSidebar session={session} badges={badges} onNavigate={() => setMobileNav(false)} />
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <AdminTopbar onOpenNav={() => setMobileNav(true)} />

@@ -21,14 +21,16 @@ export function formatDate(value: Date | string, pattern = "PPP"): string {
 // ── Price formatting ──
 type Currency = "NGN" | "USD" | "GBP";
 
+/** Naira formatter — sans-serif safe (avoids ₦+0 serif ligature rendering as "NO"). */
+export function formatNGN(amount: number): string {
+  return `\u20A6${Math.round(amount).toLocaleString("en-NG")}`;
+}
+
 export function formatPrice(amount: number, currency: Currency): string {
-  const formatters: Record<Currency, Intl.NumberFormat> = {
-    NGN: new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }),
+  if (currency === "NGN") {
+    return formatNGN(amount);
+  }
+  const formatters: Record<Exclude<Currency, "NGN">, Intl.NumberFormat> = {
     USD: new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",

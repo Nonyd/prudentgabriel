@@ -25,8 +25,10 @@ export type AdminPermission =
   | "settings"
   | "settings.developer";
 
+/** General Admin (Mrs. Prudent + deputies) — maps to ADMIN in the schema. */
 export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]> = {
   SUPER_ADMIN: ["*"],
+
   ADMIN: [
     "dashboard",
     "bespoke",
@@ -43,7 +45,8 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
     "logs",
     "settings",
   ],
-  GENERAL_ADMIN: [
+
+  STAFF_ADMIN: [
     "dashboard",
     "bespoke",
     "consultations",
@@ -54,16 +57,14 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
     "staff",
     "attendance",
     "finance",
-    "reports",
     "content",
-    "logs",
-    "settings",
   ],
-  BESPOKE_MANAGER: ["bespoke", "consultations", "clients.view", "staff.view"],
+
+  BESPOKE_MANAGER: ["bespoke", "consultations", "clients.view"],
   RTW_MANAGER: ["shop.products", "shop.orders"],
   CONTENT_MANAGER: ["content.blog", "content.pages"],
-  FINANCE_MANAGER: ["invoices", "quotations", "finance", "payments"],
-  HR_MANAGER: ["staff", "attendance", "reports.staff"],
+  FINANCE_MANAGER: ["invoices", "quotations", "finance"],
+  HR_MANAGER: ["staff", "attendance"],
   CONSULTATION_MANAGER: ["consultations", "clients.view"],
   STAFF: [],
 } as const;
@@ -75,15 +76,48 @@ export const PROTECTED_ACCOUNTS = [
 
 export function isAdminRole(role: string | undefined | null): boolean {
   if (!role) return false;
-  return role === "ADMIN" || role === "SUPER_ADMIN" || role.endsWith("_MANAGER");
+  return (
+    role === "ADMIN" ||
+    role === "SUPER_ADMIN" ||
+    role === "STAFF_ADMIN" ||
+    role.endsWith("_MANAGER")
+  );
+}
+
+export function isGeneralAdmin(role: string | undefined | null): boolean {
+  return role === "ADMIN" || role === "SUPER_ADMIN";
 }
 
 export function isSuperAdmin(role: string | undefined | null, email?: string | null): boolean {
   if (role === "SUPER_ADMIN") return true;
-  if (email && PROTECTED_ACCOUNTS.includes(email) && email === process.env.SUPER_ADMIN_EMAIL) {
-    return true;
-  }
+  if (email && email === process.env.SUPER_ADMIN_EMAIL) return true;
   return false;
+}
+
+export function isProtectedAccount(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return PROTECTED_ACCOUNTS.includes(email);
+}
+
+export function isSuperAdminAccount(email: string | null | undefined): boolean {
+  return !!email && email === process.env.SUPER_ADMIN_EMAIL;
+}
+
+export function isGeneralAdminAccount(email: string | null | undefined): boolean {
+  return !!email && email === process.env.GENERAL_ADMIN_EMAIL;
+}
+
+/** Only SUPER_ADMIN may modify Mrs. Prudent's account; super admin seat is immutable by others. */
+export function canModifyAdminUser(
+  actorRole: string | undefined | null,
+  actorEmail: string | null | undefined,
+  targetEmail: string | null | undefined,
+): boolean {
+  if (!isAdminRole(actorRole)) return false;
+  if (isSuperAdmin(actorRole, actorEmail)) return true;
+  if (isSuperAdminAccount(targetEmail)) return false;
+  if (isGeneralAdminAccount(targetEmail)) return false;
+  return actorRole === "ADMIN";
 }
 
 export function hasPermission(
@@ -92,11 +126,25 @@ export function hasPermission(
 ): boolean {
   if (!role) return false;
   const perms = ROLE_PERMISSIONS[role];
-  if (!perms) return role === "ADMIN" || role === "SUPER_ADMIN";
+  if (!perms) return false;
   if (perms[0] === "*") return true;
   return (perms as readonly AdminPermission[]).includes(permission);
 }
 
+export function canAccessLogs(role: string | undefined | null, email?: string | null): boolean {
+  return isSuperAdmin(role, email) || hasPermission(role, "logs");
+}
+
+export function canAccessReports(role: string | undefined | null, email?: string | null): boolean {
+  return isSuperAdmin(role, email) || hasPermission(role, "reports");
+}
+
+export function canAccessSettings(role: string | undefined | null, email?: string | null): boolean {
+  return isSuperAdmin(role, email) || hasPermission(role, "settings");
+}
+
 export function roleLabel(role: Role | string): string {
+  if (role === "ADMIN") return "General Admin";
+  if (role === "STAFF_ADMIN") return "Admin";
   return role.replace(/_/g, " ");
 }

@@ -1,6 +1,13 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-import { hasPermission, isAdminRole, isSuperAdmin } from "@/lib/roles";
+import {
+  canAccessLogs,
+  canAccessReports,
+  canAccessSettings,
+  hasPermission,
+  isAdminRole,
+  isSuperAdmin,
+} from "@/lib/roles";
 
 const PUBLIC_PREFIXES = ["/track/", "/quote/", "/journal"];
 
@@ -12,34 +19,75 @@ function isPublicPath(pathname: string): boolean {
 function canAccessAdminPath(role: string | undefined, pathname: string, email?: string | null): boolean {
   if (!role || !isAdminRole(role)) return false;
   if (isSuperAdmin(role, email)) return true;
-  if (role === "ADMIN" || role === "SUPER_ADMIN") return true;
 
-  if (pathname.startsWith("/admin/bespoke")) {
-    return hasPermission(role, "bespoke");
-  }
-  if (pathname.startsWith("/admin/staff")) {
-    return hasPermission(role, "staff") || hasPermission(role, "staff.view");
-  }
-  if (pathname.startsWith("/admin/attendance")) {
-    return hasPermission(role, "attendance");
-  }
-  if (pathname.startsWith("/admin/quotations")) {
-    return hasPermission(role, "quotations");
-  }
-  if (pathname.startsWith("/admin/clients")) {
-    return hasPermission(role, "clients") || hasPermission(role, "clients.view");
-  }
-  if (pathname.startsWith("/admin/content")) {
-    return hasPermission(role, "content") || hasPermission(role, "content.blog");
-  }
-  if (pathname.startsWith("/admin/logs")) {
-    return hasPermission(role, "logs");
-  }
   if (pathname.startsWith("/admin/settings/developer")) {
     return false;
   }
 
-  return isAdminRole(role);
+  if (pathname.startsWith("/admin/logs")) {
+    return canAccessLogs(role, email);
+  }
+
+  if (pathname.startsWith("/admin/reports")) {
+    return canAccessReports(role, email);
+  }
+
+  if (pathname.startsWith("/admin/settings")) {
+    return canAccessSettings(role, email);
+  }
+
+  if (pathname === "/admin") {
+    return hasPermission(role, "dashboard");
+  }
+
+  if (pathname.startsWith("/admin/bespoke")) {
+    return hasPermission(role, "bespoke");
+  }
+  if (pathname.startsWith("/admin/consultations")) {
+    return hasPermission(role, "consultations");
+  }
+  if (pathname.startsWith("/admin/invoices") || pathname.startsWith("/admin/quotations")) {
+    return hasPermission(role, "invoices") || hasPermission(role, "quotations");
+  }
+  if (
+    pathname.startsWith("/admin/products") ||
+    pathname.startsWith("/admin/collections") ||
+    pathname.startsWith("/admin/coupons")
+  ) {
+    return hasPermission(role, "shop") || hasPermission(role, "shop.products");
+  }
+  if (pathname.startsWith("/admin/orders")) {
+    return hasPermission(role, "shop") || hasPermission(role, "shop.orders");
+  }
+  if (pathname.startsWith("/admin/payments")) {
+    return hasPermission(role, "finance") || hasPermission(role, "payments");
+  }
+  if (pathname.startsWith("/admin/clients") || pathname.startsWith("/admin/customers")) {
+    return hasPermission(role, "clients") || hasPermission(role, "clients.view");
+  }
+  if (pathname.startsWith("/admin/staff") || pathname.startsWith("/admin/team")) {
+    return hasPermission(role, "staff") || hasPermission(role, "staff.view");
+  }
+  if (pathname.startsWith("/admin/attendance") || pathname.startsWith("/admin/clock-in")) {
+    return hasPermission(role, "attendance");
+  }
+  if (pathname.startsWith("/admin/content") || pathname.startsWith("/admin/gallery")) {
+    return (
+      hasPermission(role, "content") ||
+      hasPermission(role, "content.blog") ||
+      hasPermission(role, "content.pages")
+    );
+  }
+  if (pathname.startsWith("/admin/import") || pathname.startsWith("/admin/reviews")) {
+    return hasPermission(role, "shop") || hasPermission(role, "content");
+  }
+  if (pathname.startsWith("/admin/notifications") || pathname.startsWith("/admin/referrals")) {
+    return hasPermission(role, "clients") || hasPermission(role, "settings");
+  }
+
+  if (role === "ADMIN") return true;
+
+  return false;
 }
 
 export default auth((req) => {
@@ -59,7 +107,12 @@ export default auth((req) => {
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    const allowed = role === "STAFF" || role === "ADMIN" || role === "SUPER_ADMIN";
+    const allowed =
+      role === "STAFF" ||
+      role === "ADMIN" ||
+      role === "SUPER_ADMIN" ||
+      role === "STAFF_ADMIN" ||
+      (typeof role === "string" && role.endsWith("_MANAGER"));
     if (!allowed) {
       return NextResponse.redirect(new URL("/", nextUrl.origin));
     }

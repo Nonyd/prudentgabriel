@@ -4,7 +4,7 @@ import { CalendarDays, CreditCard, Scissors, TrendingUp } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { ExecutiveKPICard } from "@/components/admin/ExecutiveKPICard";
 import { ExecutiveRevenueChart, type RevenueChartPoint } from "@/components/admin/ExecutiveRevenueChart";
-import { formatPrice, getInitials } from "@/lib/utils";
+import { formatNGN, getInitials } from "@/lib/utils";
 
 function startOfDay(d: Date): Date {
   const x = new Date(d);
@@ -283,7 +283,7 @@ export default async function AdminDashboardPage() {
             </h2>
             <p className="mt-3 font-sans text-[13px] text-cream/80">
               {ordersAdvancedToday} orders advanced · {deliveriesToday} delivery scheduled today ·{" "}
-              {formatPrice(paymentsToday, "NGN")} received · {confirmationsPending} confirmations pending
+              {formatNGN(paymentsToday)} received · {confirmationsPending} confirmations pending
             </p>
           </div>
           <Link
@@ -298,7 +298,7 @@ export default async function AdminDashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <ExecutiveKPICard
           label="Revenue · This week"
-          value={formatPrice(revenueThisWeek, "NGN")}
+          value={formatNGN(revenueThisWeek)}
           trend={`${Math.abs(revenueTrendPct)}% vs last week`}
           trendUp={revenueTrendPct >= 0 ? true : revenueTrendPct < 0 ? false : null}
           icon={TrendingUp}
@@ -322,7 +322,7 @@ export default async function AdminDashboardPage() {
         />
         <ExecutiveKPICard
           label="Outstanding balance"
-          value={formatPrice(outstandingBalance, "NGN")}
+          value={formatNGN(outstandingBalance)}
           trend={`across ${outstandingOrders} orders`}
           trendUp={null}
           icon={CreditCard}

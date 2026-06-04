@@ -28,7 +28,7 @@ export function ExecutiveKPICard({
           <Icon className="h-4 w-4 text-choc/70" strokeWidth={1.5} />
         </div>
       </div>
-      <p className="mt-4 font-serif text-[36px] font-medium leading-none text-choc">{value}</p>
+      <p className="mt-4 font-sans text-[36px] font-medium leading-none tabular-nums text-choc">{value}</p>
       {trend ? (
         <p
           className={cn(

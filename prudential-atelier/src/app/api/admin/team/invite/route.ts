@@ -9,7 +9,7 @@ import { sendEmail } from "@/lib/email";
 
 const bodySchema = z.object({
   email: z.string().email(),
-  role: z.enum(["ADMIN", "SUPER_ADMIN"]).default("ADMIN"),
+  role: z.enum(["ADMIN", "SUPER_ADMIN", "STAFF_ADMIN"]).default("ADMIN"),
   message: z.string().max(300).optional(),
 });
 
