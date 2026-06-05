@@ -65,33 +65,39 @@ export function QuotationsListClient() {
     await refresh();
   };
 
-  async function sendQuote(id: string) {
-    const res = await fetch(`/api/quotations/${id}/send`, { method: "POST" });
-    const data = (await res.json()) as { error?: string };
-    if (!res.ok) {
-      toast.error(data.error ?? "Failed to send quotation");
-      return;
-    }
-    toast.success("Quotation sent to client");
-    await refresh();
-  }
+  const sendQuote = useCallback(
+    async (id: string) => {
+      const res = await fetch(`/api/quotations/${id}/send`, { method: "POST" });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        toast.error(data.error ?? "Failed to send quotation");
+        return;
+      }
+      toast.success("Quotation sent to client");
+      await refresh();
+    },
+    [refresh],
+  );
 
-  async function convertQuote(id: string) {
-    const res = await fetch(`/api/quotations/${id}/convert`, { method: "POST" });
-    const data = (await res.json()) as {
-      error?: string;
-      order?: { id: string; orderRef: string };
-    };
-    if (!res.ok) {
-      toast.error(data.error ?? "Failed to convert quotation");
-      return;
-    }
-    toast.success(`Converted to order ${data.order?.orderRef ?? ""}`);
-    await refresh();
-    if (data.order?.id) {
-      window.location.href = `/admin/bespoke/${data.order.id}`;
-    }
-  }
+  const convertQuote = useCallback(
+    async (id: string) => {
+      const res = await fetch(`/api/quotations/${id}/convert`, { method: "POST" });
+      const data = (await res.json()) as {
+        error?: string;
+        order?: { id: string; orderRef: string };
+      };
+      if (!res.ok) {
+        toast.error(data.error ?? "Failed to convert quotation");
+        return;
+      }
+      toast.success(`Converted to order ${data.order?.orderRef ?? ""}`);
+      await refresh();
+      if (data.order?.id) {
+        window.location.href = `/admin/bespoke/${data.order.id}`;
+      }
+    },
+    [refresh],
+  );
 
   const columns: BulkColumn<QuoteRow>[] = useMemo(
     () => [
@@ -153,7 +159,7 @@ export function QuotationsListClient() {
         },
       },
     ],
-    [],
+    [convertQuote, sendQuote],
   );
 
   return (

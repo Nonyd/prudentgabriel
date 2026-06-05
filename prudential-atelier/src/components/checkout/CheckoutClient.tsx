@@ -82,7 +82,6 @@ export function CheckoutClient() {
       .catch(() => {});
   }, [status, session?.user?.id]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- shipping quote; avoid loop on items reference
   useEffect(() => {
     if (step !== 2) return;
     if (!addr.city || !addr.state || !addr.country) return;
@@ -108,7 +107,7 @@ export function CheckoutClient() {
         });
       })
       .finally(() => setShipLoading(false));
-  }, [step, addr.city, addr.state, addr.country, subtotalNGN, items.length, couponResult?.valid, couponResult?.isFreeShipping]);
+  }, [step, addr.city, addr.state, addr.country, subtotalNGN, items, couponResult?.valid, couponResult?.isFreeShipping]);
 
   async function applyCoupon() {
     if (!couponCode.trim() || !emailForCoupon) {

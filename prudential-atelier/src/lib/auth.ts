@@ -54,7 +54,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           data: { lastLogin: new Date() },
         });
 
-        const { password: _password, jobRole, ...safeUser } = user;
+        const { jobRole, ...safeUser } = user;
+        delete (safeUser as { password?: string | null }).password;
         return {
           ...safeUser,
           jobRole,
