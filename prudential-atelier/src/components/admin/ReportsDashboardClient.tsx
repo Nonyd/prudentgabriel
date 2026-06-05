@@ -162,7 +162,7 @@ export function ReportsDashboardClient() {
 
           <div className="card-surface p-6">
             <h2 className="font-display text-lg text-choc">Revenue breakdown</h2>
-            <div className="mt-4 h-72">
+            <div className="mt-4 h-72 min-h-[300px] w-full" style={{ width: "100%", height: 300, minHeight: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data.revenueChart}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#D4BBAC" />
@@ -180,7 +180,7 @@ export function ReportsDashboardClient() {
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="card-surface p-6">
               <h2 className="font-display text-lg text-choc">Bespoke pipeline</h2>
-              <div className="mt-4 h-64">
+              <div className="mt-4 h-64 min-h-[300px] w-full" style={{ width: "100%", height: 300, minHeight: 300 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.pipeline} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" />

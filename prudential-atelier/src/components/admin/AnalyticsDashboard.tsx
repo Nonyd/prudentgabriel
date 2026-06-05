@@ -217,7 +217,7 @@ export function AnalyticsDashboard({
 
       <div className="border border-[#EBEBEA] bg-canvas p-6">
         <h2 className="mb-4 font-body text-xs font-medium uppercase tracking-wide text-ink">Revenue</h2>
-        <div className="h-[280px] w-full">
+        <div className="h-[280px] min-h-[300px] w-full" style={{ width: "100%", height: 300, minHeight: 300 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>

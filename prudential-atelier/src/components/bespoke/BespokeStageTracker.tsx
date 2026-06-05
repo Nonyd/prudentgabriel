@@ -9,8 +9,8 @@ type Props = {
   compact?: boolean;
 };
 
-function daysAgo(date: Date): number {
-  const diff = Date.now() - date.getTime();
+function daysAgo(date: Date | string): number {
+  const diff = Date.now() - new Date(date).getTime();
   return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
 }
 

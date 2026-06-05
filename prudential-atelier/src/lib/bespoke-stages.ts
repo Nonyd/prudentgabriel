@@ -100,10 +100,19 @@ export function generateQuoteRef(): string {
 
 export type DeliveryUrgency = "overdue" | "soon" | "ok" | "none";
 
-export function getDeliveryUrgency(deliveryDate: Date | null | undefined): DeliveryUrgency {
-  if (!deliveryDate) return "none";
+type DateLike = Date | string | null | undefined;
+
+function toDate(value: DateLike): Date | null {
+  if (value == null || value === "") return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export function getDeliveryUrgency(deliveryDate: DateLike): DeliveryUrgency {
+  const parsed = toDate(deliveryDate);
+  if (!parsed) return "none";
   const now = new Date();
-  const diff = deliveryDate.getTime() - now.getTime();
+  const diff = parsed.getTime() - now.getTime();
   const days = diff / (1000 * 60 * 60 * 24);
   if (days < 0) return "overdue";
   if (days <= 7) return "soon";
@@ -111,7 +120,7 @@ export function getDeliveryUrgency(deliveryDate: Date | null | undefined): Deliv
 }
 
 export function getOrderTrackStatus(
-  deliveryDate: Date | null | undefined,
+  deliveryDate: DateLike,
   currentStage: BespokeStage,
 ): "On Track" | "Watch" | "Urgent" {
   const urgency = getDeliveryUrgency(deliveryDate);

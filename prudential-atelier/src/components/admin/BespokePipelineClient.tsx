@@ -64,7 +64,8 @@ function DeliveryDate({ date }: { date: Date | string | null }) {
 }
 
 function TrackStatusPill({ order }: { order: OrderRow }) {
-  const status = getOrderTrackStatus(order.deliveryDate, order.currentStage);
+  const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
+  const status = getOrderTrackStatus(deliveryDate, order.currentStage);
   const variant =
     status === "Urgent" ? "wine" : status === "Watch" ? "gold" : "success";
   return <Badge variant={variant}>{status}</Badge>;

@@ -39,7 +39,7 @@ export function ExecutiveRevenueChart({
           {formatNGN(total)} total
         </span>
       </div>
-      <div className="mt-6 h-64">
+      <div className="mt-6 h-64 min-h-[300px] w-full" style={{ width: "100%", height: 300, minHeight: 300 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#98755B" }} axisLine={false} tickLine={false} />
