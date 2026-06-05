@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getActiveQRCode } from "@/lib/qr-attendance";
+import { generateDailyQR, getActiveQRCode } from "@/lib/qr-attendance";
 import { HR_ROLES, requireRoles } from "@/lib/api-auth";
 import { logError } from "@/lib/logger";
 
@@ -8,9 +8,13 @@ export async function GET() {
   if (!gate.ok) return gate.response;
 
   try {
-    const active = await getActiveQRCode();
+    let active = await getActiveQRCode();
     if (!active) {
-      return NextResponse.json({ error: "No active QR code" }, { status: 404 });
+      const code = await generateDailyQR();
+      active = await getActiveQRCode();
+      if (!active) {
+        return NextResponse.json({ code, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() });
+      }
     }
     return NextResponse.json({ code: active.code, expiresAt: active.expiresAt.toISOString() });
   } catch (e) {

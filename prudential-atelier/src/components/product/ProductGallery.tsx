@@ -53,42 +53,44 @@ export function ProductGallery({ images }: { images: GalleryImage[] }) {
         </div>
       </div>
 
-      <div className="mt-3 hidden md:block">
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {display.map((im, i) => (
-            <button
-              key={im.id}
-              type="button"
-              onClick={() => setIdx(i)}
-              className={cn(
-                "relative h-24 w-[72px] shrink-0 overflow-hidden rounded-sm ring-2 ring-offset-2 ring-offset-cream",
-                i === idx ? "ring-wine" : "ring-transparent hover:ring-border",
-              )}
-            >
-              <Image src={im.url} alt="" fill className="object-cover object-top" sizes="72px" />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-3 md:hidden">
-        <Swiper modules={[FreeMode]} spaceBetween={8} slidesPerView="auto" freeMode>
-          {display.map((im, i) => (
-            <SwiperSlide key={im.id} style={{ width: 72 }}>
+      {display.length > 1 ? (
+        <>
+          <div className="mt-1 hidden gap-px md:grid md:grid-cols-4">
+            {display.map((im, i) => (
               <button
+                key={im.id}
                 type="button"
                 onClick={() => setIdx(i)}
                 className={cn(
-                  "relative block h-24 w-[72px] overflow-hidden rounded-sm ring-2 ring-offset-2 ring-offset-cream",
-                  i === idx ? "ring-wine" : "ring-transparent",
+                  "relative aspect-square overflow-hidden bg-ivory-dark",
+                  i === idx ? "ring-1 ring-choc ring-offset-1 ring-offset-cream" : "opacity-80 hover:opacity-100",
                 )}
               >
-                <Image src={im.url} alt="" fill className="object-cover object-top" sizes="72px" />
+                <Image src={im.url} alt="" fill className="object-cover object-top" sizes="96px" />
               </button>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      </div>
+            ))}
+          </div>
+
+          <div className="mt-1 md:hidden">
+            <Swiper modules={[FreeMode]} spaceBetween={4} slidesPerView="auto" freeMode>
+              {display.map((im, i) => (
+                <SwiperSlide key={im.id} style={{ width: 72 }}>
+                  <button
+                    type="button"
+                    onClick={() => setIdx(i)}
+                    className={cn(
+                      "relative block h-[72px] w-[72px] overflow-hidden bg-ivory-dark",
+                      i === idx ? "ring-1 ring-choc ring-offset-1 ring-offset-cream" : "opacity-80",
+                    )}
+                  >
+                    <Image src={im.url} alt="" fill className="object-cover object-top" sizes="72px" />
+                  </button>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

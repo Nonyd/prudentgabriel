@@ -63,11 +63,11 @@ export default function EmailLayout({ children, previewText, logoUrl }: EmailLay
               <Link href={`${APP}/shop`} style={{ color: "rgba(250,246,239,0.6)", marginRight: 12 }}>
                 Shop
               </Link>
-              <Link href={`${APP}/bespoke`} style={{ color: "rgba(250,246,239,0.6)", marginRight: 12 }}>
-                Bespoke
+              <Link href={`${APP}/atelier`} style={{ color: "rgba(250,246,239,0.6)", marginRight: 12 }}>
+                Atelier
               </Link>
-              <Link href={`${APP}/our-story`} style={{ color: "rgba(250,246,239,0.6)", marginRight: 12 }}>
-                Our Story
+              <Link href={`${APP}/about`} style={{ color: "rgba(250,246,239,0.6)", marginRight: 12 }}>
+                About
               </Link>
               <Link href={`${APP}/contact`} style={{ color: "rgba(250,246,239,0.6)" }}>
                 Contact

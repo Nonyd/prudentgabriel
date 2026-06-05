@@ -17,13 +17,6 @@ export const authConfig = {
   providers: [],
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      console.log("JWT CALLBACK:", {
-        trigger,
-        hasUser: !!user,
-        role: (user as { role?: Role } | undefined)?.role ?? (token?.role as Role | undefined),
-        tokenRole: token?.role,
-      });
-
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -49,11 +42,6 @@ export const authConfig = {
       return token;
     },
     async session({ session, token }) {
-      console.log("SESSION CALLBACK:", {
-        role: token?.role,
-        email: token?.email,
-      });
-
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;

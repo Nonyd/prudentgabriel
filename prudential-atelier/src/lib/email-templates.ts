@@ -13,8 +13,8 @@ export const EMAIL_TEMPLATE_DEFAULTS: Record<string, { subject: string; body: st
     body: "Hi {{firstName}},\n\nGreat news — your order is on its way.\n\n— Prudent Gabriel",
   },
   email_tpl_bespoke_confirmation: {
-    subject: "We've received your bespoke request",
-    body: "Hi {{firstName}},\n\nOur team will review your bespoke enquiry and be in touch shortly.\n\n— Prudent Gabriel",
+    subject: "We've received your atelier request",
+    body: "Hi {{firstName}},\n\nOur team will review your atelier enquiry and be in touch shortly.\n\n— Prudent Gabriel",
   },
   email_tpl_password_reset: {
     subject: "Reset your password",
@@ -51,7 +51,7 @@ export const EMAIL_TEMPLATE_META: Record<
   email_tpl_welcome: { label: "Welcome Email", sortOrder: 100 },
   email_tpl_order_confirmation: { label: "Order Confirmation", sortOrder: 101 },
   email_tpl_order_shipped: { label: "Order Shipped", sortOrder: 102 },
-  email_tpl_bespoke_confirmation: { label: "Bespoke Confirmation", sortOrder: 103 },
+  email_tpl_bespoke_confirmation: { label: "Atelier Confirmation", sortOrder: 103 },
   email_tpl_password_reset: { label: "Password Reset", sortOrder: 104 },
   email_tpl_referral_success: { label: "Referral Success", sortOrder: 105 },
   email_tpl_back_in_stock: { label: "Back In Stock", sortOrder: 106 },

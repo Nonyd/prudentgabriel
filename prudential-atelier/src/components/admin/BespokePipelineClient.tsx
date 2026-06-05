@@ -201,12 +201,12 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl text-ink">Bespoke Orders Pipeline</h1>
+          <h1 className="font-display text-2xl text-ink">Atelier Orders Pipeline</h1>
           <p className="mt-1 font-sans text-sm text-text-mid">
             13-stage production tracking for couture orders
           </p>
         </div>
-        <Button onClick={() => setModalOpen(true)}>New Bespoke Order</Button>
+        <Button onClick={() => setModalOpen(true)}>New Atelier Order</Button>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -247,12 +247,12 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
 
       {items.length === 0 ? (
         <div className="card-surface flex flex-col items-center justify-center px-6 py-16 text-center">
-          <p className="font-display text-xl text-ink">No bespoke orders yet</p>
+          <p className="font-display text-xl text-ink">No atelier orders yet</p>
           <p className="mt-2 max-w-sm font-sans text-sm text-text-mid">
             Create your first production order to start the 13-stage pipeline.
           </p>
           <Button className="mt-6" onClick={() => setModalOpen(true)}>
-            New Bespoke Order
+            New Atelier Order
           </Button>
         </div>
       ) : (
@@ -264,7 +264,7 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
         />
       )}
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New Bespoke Order">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New Atelier Order">
         <div className="space-y-3">
           {(
             [

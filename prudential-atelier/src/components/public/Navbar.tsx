@@ -1,23 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Heart, Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, Heart, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/store/cartStore";
 import { useAuthModalStore } from "@/store/authModalStore";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
-const LEFT_LINKS = [
+type CollectionNav = { name: string; slug: string };
+
+const PRIMARY_LINKS = [
   { href: "/shop", label: "Shop" },
-  { href: "/bespoke", label: "Bespoke" },
   { href: "/bridal", label: "Bridal" },
+  { href: "/atelier", label: "Atelier" },
   { href: "/kids", label: "Kids" },
   { href: "/journal", label: "Journal" },
-  { href: "/our-story", label: "About" },
-];
+  { href: "/about", label: "About" },
+] as const;
 
 function NavLink({ href, label }: { href: string; label: string }) {
   return (
@@ -37,11 +40,186 @@ function NavLink({ href, label }: { href: string; label: string }) {
   );
 }
 
+function RtwDropdown({ collections }: { collections: CollectionNav[] }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <Link
+        href="/rtw"
+        className="inline-flex items-center gap-1 uppercase transition-colors hover:opacity-80"
+        style={{
+          fontFamily: "var(--font-ui)",
+          fontSize: "11px",
+          fontWeight: 500,
+          letterSpacing: "0.14em",
+          color: "var(--text-mid)",
+        }}
+      >
+        Ready to Wear
+        <ChevronDown
+          className={cn("h-3 w-3 transition-transform duration-150", open && "rotate-180")}
+          strokeWidth={2}
+        />
+      </Link>
+
+      <AnimatePresence>
+        {open ? (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-0 top-full z-50 min-w-[220px] pt-3"
+          >
+            <div
+              className="border-b py-3 shadow-sm"
+              style={{
+                backgroundColor: "var(--ivory)",
+                borderColor: "var(--sand)",
+              }}
+            >
+              <Link
+                href="/rtw"
+                className="block px-5 py-2 transition-colors hover:opacity-80"
+                style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "11px",
+                  color: "var(--text-mid)",
+                }}
+              >
+                All Ready-to-Wear
+              </Link>
+              <div className="my-2 border-t" style={{ borderColor: "var(--sand)" }} />
+              <p
+                className="px-5 py-1 uppercase"
+                style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "9px",
+                  letterSpacing: "0.18em",
+                  color: "var(--lightbr)",
+                }}
+              >
+                Collections
+              </p>
+              {collections.map((c) => (
+                <Link
+                  key={c.slug}
+                  href={`/rtw/collections/${c.slug}`}
+                  className="block px-5 py-2 transition-colors hover:text-choc"
+                  style={{
+                    fontFamily: "var(--font-ui)",
+                    fontSize: "11px",
+                    color: "var(--text-mid)",
+                  }}
+                >
+                  {c.name}
+                </Link>
+              ))}
+              <div className="my-2 border-t" style={{ borderColor: "var(--sand)" }} />
+              <Link
+                href="/rtw?sort=newest"
+                className="block px-5 py-2 transition-colors hover:opacity-80"
+                style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "11px",
+                  color: "var(--text-mid)",
+                }}
+              >
+                New Arrivals
+              </Link>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function MobileRtwSection({
+  collections,
+  onClose,
+}: {
+  collections: CollectionNav[];
+  onClose: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
+
+  const linkStyle = {
+    fontFamily: "var(--font-ui)",
+    fontSize: "11px",
+    fontWeight: 500,
+    letterSpacing: "0.14em",
+    color: "var(--text-mid)",
+  } as const;
+
+  return (
+    <div className="border-b border-sand/60">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center justify-between py-3 uppercase"
+        style={linkStyle}
+      >
+        Ready to Wear
+        <ChevronDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} />
+      </button>
+      {expanded ? (
+        <div className="pb-3 pl-4">
+          <Link href="/rtw" onClick={onClose} className="block py-2 text-[11px] text-text-mid">
+            All Ready-to-Wear
+          </Link>
+          <button
+            type="button"
+            onClick={() => setCollectionsOpen((v) => !v)}
+            className="flex w-full items-center justify-between py-2 text-left text-[10px] uppercase tracking-[0.16em] text-lightbr"
+          >
+            Collections
+            <ChevronDown className={cn("h-3 w-3 transition-transform", collectionsOpen && "rotate-180")} />
+          </button>
+          {collectionsOpen
+            ? collections.map((c) => (
+                <Link
+                  key={c.slug}
+                  href={`/rtw/collections/${c.slug}`}
+                  onClick={onClose}
+                  className="block py-2 pl-3 text-[11px] text-text-mid"
+                >
+                  {c.name}
+                </Link>
+              ))
+            : null}
+          <Link href="/rtw?sort=newest" onClick={onClose} className="block py-2 text-[11px] text-text-mid">
+            New Arrivals
+          </Link>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const [collections, setCollections] = useState<CollectionNav[]>([]);
   const { totalItems, openCart, openSearch } = useCartStore();
   const { status } = useSession();
   const openLogin = useAuthModalStore((s) => s.openLogin);
+
+  useEffect(() => {
+    fetch("/api/collections")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { collections?: CollectionNav[] } | null) => {
+        if (data?.collections) {
+          setCollections(data.collections.map((c) => ({ name: c.name, slug: c.slug })));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleAccountClick = () => {
     if (status === "authenticated") {
@@ -78,7 +256,9 @@ export function Navbar() {
               <Menu className="h-5 w-5" />
             </button>
             <nav className="hidden items-center gap-6 xl:gap-8 lg:flex" aria-label="Primary left">
-              {LEFT_LINKS.map((link) => (
+              <NavLink href="/shop" label="Shop" />
+              <RtwDropdown collections={collections} />
+              {PRIMARY_LINKS.filter((l) => l.href !== "/shop").map((link) => (
                 <NavLink key={link.href} href={link.href} label={link.label} />
               ))}
             </nav>
@@ -161,7 +341,22 @@ export function Navbar() {
           </button>
         </div>
         <nav className="flex flex-1 flex-col gap-1 border-t border-sand/60 p-6" aria-label="Mobile">
-          {LEFT_LINKS.map((link) => (
+          <Link
+            href="/shop"
+            onClick={() => setOpen(false)}
+            className="border-b border-sand/60 py-3 uppercase"
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: "11px",
+              fontWeight: 500,
+              letterSpacing: "0.14em",
+              color: "var(--text-mid)",
+            }}
+          >
+            Shop
+          </Link>
+          <MobileRtwSection collections={collections} onClose={() => setOpen(false)} />
+          {PRIMARY_LINKS.filter((l) => l.href !== "/shop").map((link) => (
             <Link
               key={link.href}
               href={link.href}

@@ -26,19 +26,21 @@ export async function BestSellers() {
     const featured = await prisma.product.findMany({
       where: { isPublished: true, isFeatured: true },
       take: 4,
-      orderBy: { createdAt: "desc" },
-      include: { images: { where: { isPrimary: true }, take: 1 } },
+      orderBy: { orderCount: "desc" },
+      include: { images: { where: { isPrimary: true }, take: 1 }, variants: true },
     });
 
-    const list =
-      featured.length >= 4
-        ? featured
-        : await prisma.product.findMany({
-            where: { isPublished: true },
-            take: 4,
-            orderBy: { createdAt: "desc" },
-            include: { images: { where: { isPrimary: true }, take: 1 } },
-          });
+    let list = [...featured];
+    if (list.length < 4) {
+      const existingIds = list.map((p) => p.id);
+      const filler = await prisma.product.findMany({
+        where: { isPublished: true, id: { notIn: existingIds } },
+        take: 4 - list.length,
+        orderBy: { orderCount: "desc" },
+        include: { images: { where: { isPrimary: true }, take: 1 }, variants: true },
+      });
+      list = [...list, ...filler];
+    }
 
     products = list.map((p) => ({
       id: p.id,

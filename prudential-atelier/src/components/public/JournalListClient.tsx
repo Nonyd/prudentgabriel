@@ -98,18 +98,18 @@ export function JournalListClient() {
           {featured ? (
             <Link
               href={`/journal/${featured.slug}`}
-              className="group mt-12 grid gap-6 overflow-hidden rounded-lg border border-sand bg-ivory/40 lg:grid-cols-2"
+              className="group mt-12 grid grid-cols-1 gap-0 overflow-hidden rounded-lg border border-sand bg-ivory/40 md:grid-cols-2"
             >
               {featured.featuredImage ? (
-                <div className="img-portrait relative overflow-hidden bg-sand/20">
+                <div className="relative min-h-[280px] overflow-hidden bg-sand/20 md:min-h-0 md:aspect-auto md:h-full">
                   <img
                     src={optimizeImageUrl(featured.featuredImage, 900)}
                     alt=""
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="h-full min-h-[280px] w-full object-cover object-center transition-transform duration-500 group-hover:scale-105 md:absolute md:inset-0 md:min-h-0"
                   />
                 </div>
               ) : null}
-              <div className="flex flex-col justify-center p-8 lg:p-12">
+              <div className="flex flex-col justify-center p-8 md:p-10 lg:p-12">
                 {featured.category ? (
                   <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-lightbr">
                     {featured.category}

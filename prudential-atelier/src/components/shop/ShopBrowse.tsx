@@ -21,14 +21,17 @@ interface ShopBrowseProps {
   totalPages: number;
   hasNext: boolean;
   hasPrev: boolean;
+  heroEyebrow?: string;
   heroHeadline?: string;
   heroSubtext?: string;
+  hideFilters?: boolean;
 }
 
 const FILTERS = [
   { id: "all", label: "ALL", params: {} },
   { id: "rtw", label: "READY-TO-WEAR", params: { type: "RTW" } },
   { id: "bridal", label: "BRIDAL", params: { category: "BRIDAL" } },
+  { id: "atelier", label: "ATELIER", params: { type: "BESPOKE" } },
   { id: "kids", label: "KIDS", params: { category: "KIDDIES" } },
 ] as const;
 
@@ -53,7 +56,7 @@ function ShopProductCard({ product, priority }: { product: ProductListItem; prio
 
   return (
     <Link href={`/shop/${product.slug}`} className="group block">
-      <div className="relative aspect-square overflow-hidden rounded-sm bg-sand/30">
+      <div className="product-image-wrapper relative aspect-[3/4] overflow-hidden rounded-sm bg-sand/30">
         <Image
           src={img}
           alt={product.images[0]?.alt || product.name}
@@ -92,6 +95,10 @@ export function ShopBrowse({
   total,
   page: initialPage,
   hasNext: initialHasNext,
+  heroEyebrow = "THE COLLECTION",
+  heroHeadline = "Prudent Gabriel",
+  heroSubtext = "Ready-to-wear, bridal, and atelier couture.",
+  hideFilters = false,
 }: ShopBrowseProps) {
   const sp = useSearchParams();
   const router = useRouter();
@@ -114,6 +121,7 @@ export function ShopBrowse({
     if (cat === "BRIDAL") return "bridal";
     if (cat === "KIDDIES") return "kids";
     if (type === "RTW") return "rtw";
+    if (type === "BESPOKE") return "atelier";
     return "all";
   }, [sp]);
 
@@ -156,10 +164,14 @@ export function ShopBrowse({
   return (
     <div className="bg-ivory">
       <header className="px-4 py-14 text-center md:py-16">
-        <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">THE SHOP</p>
-        <h1 className="mt-3 font-serif text-[40px] font-normal text-choc md:text-[56px]">Ready-to-Wear</h1>
+        <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">{heroEyebrow}</p>
+        <h1 className="mt-3 font-serif text-[40px] font-normal text-choc md:text-[64px]">{heroHeadline}</h1>
+        {heroSubtext ? (
+          <p className="mx-auto mt-4 max-w-lg font-serif text-sm font-light text-text-mid">{heroSubtext}</p>
+        ) : null}
       </header>
 
+      {!hideFilters ? (
       <div className="border-y border-[0.5px] border-sand bg-ivory px-4 py-4 md:px-8">
         <div className="mx-auto flex max-w-site flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap gap-2">
@@ -181,12 +193,21 @@ export function ShopBrowse({
           </div>
           <div className="flex items-center gap-4">
             <span className="font-sans text-[11px] uppercase tracking-[0.1em] text-text-light">
-              {total} {total === 1 ? "piece" : "pieces"}
+              {total} {total === 1 ? "PIECE" : "PIECES"}
             </span>
             <SortSelect />
           </div>
         </div>
       </div>
+      ) : (
+        <div className="border-y border-[0.5px] border-sand bg-ivory px-4 py-4 md:px-8">
+          <div className="mx-auto flex max-w-site justify-end">
+            <span className="font-sans text-[11px] uppercase tracking-[0.1em] text-text-light">
+              {total} {total === 1 ? "PIECE" : "PIECES"}
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="mx-auto max-w-site px-4 py-10 md:px-8">
         {items.length === 0 ? (

@@ -47,7 +47,7 @@ export default async function TrackOrderPage({ params }: Props) {
   }
 
   const firstName = order.clientName.split(" ")[0] ?? order.clientName;
-  const outfitName = order.outfitDescription?.split("\n")[0]?.slice(0, 80) || "Bespoke commission";
+  const outfitName = order.outfitDescription?.split("\n")[0]?.slice(0, 80) || "Atelier commission";
   const stagesComplete = getStageProgress(order.currentStage);
 
   return (
@@ -73,7 +73,7 @@ export default async function TrackOrderPage({ params }: Props) {
               <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-lightbr">Order {order.orderRef}</p>
               <h2 className="mt-2 font-serif text-[26px] leading-snug text-cream">{outfitName}</h2>
               <p className="mt-2 font-sans text-[12px] text-sand">
-                Bespoke commission for {firstName}
+                Atelier commission for {firstName}
                 {order.deliveryDate ? ` · Est. delivery ${formatDate(order.deliveryDate)}` : ""}
               </p>
             </div>
@@ -88,6 +88,10 @@ export default async function TrackOrderPage({ params }: Props) {
         </div>
 
         <BespokeStageTracker currentStage={order.currentStage} stageHistory={order.stageHistory} />
+
+        <p className="mt-8 text-center font-body text-[12px] text-text-light">
+          Crafted by our atelier team with care at every stage.
+        </p>
 
         <TrackOrderActions />
       </main>

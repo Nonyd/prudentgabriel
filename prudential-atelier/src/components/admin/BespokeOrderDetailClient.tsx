@@ -116,19 +116,43 @@ export function BespokeOrderDetailClient({
     }
   };
 
-  const assignStaff = async () => {
+  const stageAssignments = order.assignments.filter((a) => a.stage === order.currentStage);
+
+  const assignStaff = async (stage = order.currentStage) => {
     if (!assignStaffId) return;
     const res = await fetch(`/api/bespoke/${order.id}/assign-staff`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ staffProfileId: assignStaffId, role: assignRole }),
+      body: JSON.stringify({
+        staffProfileId: assignStaffId,
+        role: assignRole,
+        stage,
+      }),
     });
     if (!res.ok) {
       toast.error("Assignment failed");
       return;
     }
+    const data = (await res.json()) as {
+      item: OrderWithRelations["assignments"][number];
+    };
+    setOrder((o) => ({ ...o, assignments: [...o.assignments, data.item] }));
+    setAssignStaffId("");
     toast.success("Staff assigned");
-    router.refresh();
+  };
+
+  const removeAssignment = async (assignmentId: string) => {
+    const res = await fetch(`/api/bespoke/${order.id}/assign-staff?assignmentId=${assignmentId}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      toast.error("Could not remove assignment");
+      return;
+    }
+    setOrder((o) => ({
+      ...o,
+      assignments: o.assignments.filter((a) => a.id !== assignmentId),
+    }));
   };
 
   const recordPayment = async () => {
@@ -224,6 +248,14 @@ export function BespokeOrderDetailClient({
                       <p className={cn("font-sans text-sm", active && "font-semibold text-nut")}>
                         {STAGE_LABELS[stage]}
                       </p>
+                      {order.assignments
+                        .filter((a) => a.stage === stage)
+                        .map((a) => (
+                          <p key={a.id} className="mt-1 font-sans text-[11px] text-text-light">
+                            {a.staffProfile.user.name ?? a.staffProfile.user.email}
+                            {a.role ? ` · ${a.role}` : ""}
+                          </p>
+                        ))}
                     </div>
                   </li>
                 );
@@ -265,6 +297,64 @@ export function BespokeOrderDetailClient({
             <h2 className="font-sans text-xs font-semibold uppercase tracking-wider text-text-light">
               Complete current stage — {STAGE_LABELS[order.currentStage]}
             </h2>
+            <div className="mt-4">
+              <p className="font-sans text-[11px] font-semibold uppercase tracking-wider text-text-light">
+                Assign staff to this stage
+              </p>
+              {stageAssignments.length > 0 ? (
+                <ul className="mt-2 flex flex-wrap gap-2">
+                  {stageAssignments.map((a) => (
+                    <li
+                      key={a.id}
+                      className="inline-flex items-center gap-2 rounded-full border border-sand bg-ivory px-3 py-1 font-sans text-xs text-ink"
+                    >
+                      <span>
+                        {a.staffProfile.user.name ?? a.staffProfile.user.email}
+                        {a.role ? ` — ${a.role}` : ""}
+                      </span>
+                      <button
+                        type="button"
+                        className="text-text-light hover:text-nut"
+                        onClick={() => void removeAssignment(a.id)}
+                        aria-label="Remove assignment"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-2 font-sans text-xs text-text-light">No staff assigned yet.</p>
+              )}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <select
+                  value={assignStaffId}
+                  onChange={(e) => setAssignStaffId(e.target.value)}
+                  className="min-w-[12rem] flex-1 rounded border border-sand px-2 py-2 font-sans text-sm"
+                >
+                  <option value="">Select staff…</option>
+                  {staffList
+                    .sort((a, b) => a.activeOrders - b.activeOrders)
+                    .map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} — {s.activeOrders} active order(s)
+                      </option>
+                    ))}
+                </select>
+                <select
+                  value={assignRole}
+                  onChange={(e) => setAssignRole(e.target.value)}
+                  className="rounded border border-sand px-2 py-2 font-sans text-sm"
+                >
+                  <option value="TAILOR">Tailor</option>
+                  <option value="BEADER">Beader</option>
+                  <option value="DESIGNER">Designer</option>
+                </select>
+                <Button size="sm" variant="secondary" onClick={() => void assignStaff()}>
+                  Add staff
+                </Button>
+              </div>
+            </div>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -342,43 +432,20 @@ export function BespokeOrderDetailClient({
 
           <section className="card-surface p-6">
             <h2 className="font-sans text-xs font-semibold uppercase tracking-wider text-text-light">
-              Staff assignments
+              All stage assignments
             </h2>
             <ul className="mt-3 space-y-2">
-              {order.assignments.map((a) => (
-                <li key={a.id} className="font-sans text-sm">
-                  {a.role}: {a.staffProfile.user.name ?? a.staffProfile.user.email}
-                </li>
-              ))}
+              {order.assignments.length === 0 ? (
+                <li className="font-sans text-sm text-text-light">No assignments yet.</li>
+              ) : (
+                order.assignments.map((a) => (
+                  <li key={a.id} className="font-sans text-sm">
+                    {a.stage ? `${STAGE_LABELS[a.stage]} · ` : ""}
+                    {a.role}: {a.staffProfile.user.name ?? a.staffProfile.user.email}
+                  </li>
+                ))
+              )}
             </ul>
-            <div className="mt-4 space-y-2">
-              <select
-                value={assignStaffId}
-                onChange={(e) => setAssignStaffId(e.target.value)}
-                className="w-full rounded border border-sand px-2 py-2 font-sans text-sm"
-              >
-                <option value="">Select staff…</option>
-                {staffList
-                  .sort((a, b) => a.activeOrders - b.activeOrders)
-                  .map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} — {s.activeOrders} active order(s)
-                    </option>
-                  ))}
-              </select>
-              <select
-                value={assignRole}
-                onChange={(e) => setAssignRole(e.target.value)}
-                className="w-full rounded border border-sand px-2 py-2 font-sans text-sm"
-              >
-                <option value="TAILOR">Tailor</option>
-                <option value="BEADER">Beader</option>
-                <option value="DESIGNER">Designer</option>
-              </select>
-              <Button size="sm" variant="secondary" onClick={() => void assignStaff()}>
-                Assign
-              </Button>
-            </div>
           </section>
 
           <section className="card-surface p-6">

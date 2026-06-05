@@ -21,13 +21,22 @@ function asCurrency(c: string): InvoiceCurrency {
   return "NGN";
 }
 
-export function InvoiceFormPage({ mode, invoiceId }: { mode: Mode; invoiceId?: string }) {
+export function InvoiceFormPage({
+  mode,
+  invoiceId,
+  consultationId: initialConsultationId,
+}: {
+  mode: Mode;
+  invoiceId?: string;
+  consultationId?: string;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(mode === "edit");
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [publicToken, setPublicToken] = useState("");
   const [status, setStatus] = useState<string>("DRAFT");
   const [bespokeRequestId, setBespokeRequestId] = useState<string | null>(null);
+  const [consultationId, setConsultationId] = useState<string | null>(initialConsultationId ?? null);
   const [bespokeLabel, setBespokeLabel] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
@@ -68,6 +77,48 @@ export function InvoiceFormPage({ mode, invoiceId }: { mode: Mode; invoiceId?: s
       depositPaid: 0,
     });
   }, [lineItems, discountOn, discountType, discountValue, vatOn, vatPercent, depositPct]);
+
+  useEffect(() => {
+    if (!initialConsultationId || mode !== "create") return;
+    void (async () => {
+      const res = await fetch(`/api/admin/consultations/${initialConsultationId}`);
+      if (!res.ok) return;
+      const j = (await res.json()) as {
+        booking: {
+          id: string;
+          bookingNumber: string;
+          clientName: string;
+          clientEmail: string;
+          clientPhone: string;
+          clientCountry: string;
+          occasion: string;
+          feeNGN: number;
+        };
+      };
+      const b = j.booking;
+      setConsultationId(b.id);
+      setClientName(b.clientName);
+      setClientEmail(b.clientEmail);
+      setClientPhone(b.clientPhone);
+      setClientCountry(b.clientCountry);
+      setLineItems([
+        {
+          id: nanoid(),
+          description: `Consultation fee — ${b.occasion}`,
+          quantity: 1,
+          unitPrice: b.feeNGN,
+          amount: b.feeNGN,
+        },
+        {
+          id: nanoid(),
+          description: `Atelier commission — ${b.occasion}`,
+          quantity: 1,
+          unitPrice: 0,
+          amount: 0,
+        },
+      ]);
+    })();
+  }, [initialConsultationId, mode]);
 
   useEffect(() => {
     void (async () => {
@@ -154,7 +205,7 @@ export function InvoiceFormPage({ mode, invoiceId }: { mode: Mode; invoiceId?: s
   const selectBespoke = async (id: string) => {
     const res = await fetch(`/api/admin/bespoke/${id}`);
     if (!res.ok) {
-      toast.error("Could not load bespoke");
+      toast.error("Could not load atelier request");
       return;
     }
     const bespoke = (await res.json()) as {
@@ -187,6 +238,7 @@ export function InvoiceFormPage({ mode, invoiceId }: { mode: Mode; invoiceId?: s
     }
     const body = {
       bespokeRequestId,
+      consultationId,
       clientName: clientName.trim(),
       clientEmail: clientEmail.trim(),
       clientPhone: clientPhone || null,
@@ -303,7 +355,7 @@ export function InvoiceFormPage({ mode, invoiceId }: { mode: Mode; invoiceId?: s
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-8">
           <section className="border border-[#EBEBEA] bg-canvas p-5">
-            <h2 className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Link to bespoke (optional)</h2>
+            <h2 className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Link to atelier request (optional)</h2>
             <input
               className="mt-3 w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm"
               placeholder="Search #BQ-… or client name"
@@ -333,7 +385,7 @@ export function InvoiceFormPage({ mode, invoiceId }: { mode: Mode; invoiceId?: s
                 setBespokeLabel("");
               }}
             >
-              Clear bespoke link
+              Clear atelier link
             </button>
           </section>
 

@@ -1488,6 +1488,77 @@ async function seedQuotation() {
   console.log("  ✅ Quotation QUO-001");
 }
 
+async function seedCollections(productIds: Record<string, string>) {
+  console.log("\n📁 Seeding demo collections…");
+
+  const collections = [
+    {
+      name: "Rich & Regal",
+      slug: "rich-and-regal",
+      description:
+        "Commanding pieces for the woman who owns every room she enters. Structured silhouettes, premium fabrics, unapologetic presence.",
+      season: "Spring/Summer 2026",
+      displayOrder: 1,
+      productSlugs: ["the-adaeze-gown", "lumi-tailored-suit", "nneka-aso-ebi-set"],
+    },
+    {
+      name: "Church Girl",
+      slug: "church-girl",
+      description:
+        "Refined, modest, and effortlessly elegant. For the woman whose Sunday best is always extraordinary.",
+      season: "Spring/Summer 2026",
+      displayOrder: 2,
+      productSlugs: ["ember-silk-wrap", "ife-bias-slip-dress"],
+    },
+    {
+      name: "La Femme",
+      slug: "la-femme",
+      description:
+        "Soft, feminine, and deeply romantic. Pieces that move with you and speak for you.",
+      season: "Spring/Summer 2026",
+      displayOrder: 3,
+      productSlugs: ["zara-flower-girl-set", "kito-junior-tuxedo"],
+    },
+  ] as const;
+
+  for (const c of collections) {
+    const collection = await prisma.collection.upsert({
+      where: { slug: c.slug },
+      update: {
+        name: c.name,
+        description: c.description,
+        season: c.season,
+        isPublished: true,
+        displayOrder: c.displayOrder,
+      },
+      create: {
+        name: c.name,
+        slug: c.slug,
+        description: c.description,
+        season: c.season,
+        isPublished: true,
+        displayOrder: c.displayOrder,
+      },
+    });
+
+    await prisma.collectionProduct.deleteMany({ where: { collectionId: collection.id } });
+
+    for (let i = 0; i < c.productSlugs.length; i++) {
+      const productId = productIds[c.productSlugs[i]];
+      if (!productId) continue;
+      await prisma.collectionProduct.create({
+        data: {
+          collectionId: collection.id,
+          productId,
+          sortOrder: i,
+        },
+      });
+    }
+
+    console.log(`  ✅ Collection: ${c.name}`);
+  }
+}
+
 function printCredentials() {
   console.log("\n" + "=".repeat(60));
   console.log("DEMO CREDENTIALS — Prudential Atelier");
@@ -1525,6 +1596,7 @@ async function main() {
   await seedReviews(clientMap, productIds);
   await seedLoyaltyTransactions(clientMap);
   await seedQuotation();
+  await seedCollections(productIds);
 
   printCredentials();
   console.log("\n✅ Demo seed complete.\n");

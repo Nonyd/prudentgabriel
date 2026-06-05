@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { queryProductList } from "@/lib/products-list-query";
 import { getContent, getContentSettings } from "@/lib/settings";
 import { RTWPageClient } from "@/components/rtw/RTWPageClient";
@@ -46,6 +47,12 @@ export default async function RTWPage({
     /* defaults */
   }
 
+  const collections = await prisma.collection.findMany({
+    where: { isPublished: true },
+    orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
+    select: { name: true, slug: true, coverImage: true, coverImageAlt: true },
+  });
+
   return (
     <RTWPageClient
       initialProducts={products}
@@ -54,6 +61,7 @@ export default async function RTWPage({
       hasNext={hasNext}
       heroLabel={heroLabel}
       heroTitle={heroTitle}
+      collections={collections}
     />
   );
 }

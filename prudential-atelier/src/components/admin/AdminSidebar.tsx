@@ -61,7 +61,7 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Operations",
     items: [
       { href: "/admin", label: "Executive", icon: LayoutDashboard, permission: "dashboard" },
-      { href: "/admin/bespoke", label: "Bespoke Pipeline", icon: Scissors, badgeKey: "bespoke", permission: "bespoke" },
+      { href: "/admin/bespoke", label: "Atelier Pipeline", icon: Scissors, badgeKey: "bespoke", permission: "bespoke" },
       {
         href: "/admin/consultations",
         label: "Consultations",
@@ -82,6 +82,7 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Shop",
     items: [
       { href: "/admin/products", label: "Products", icon: Package, permission: "shop" },
+      { href: "/admin/collections", label: "Collections", icon: Package, permission: "shop" },
       { href: "/admin/orders", label: "Orders", icon: ShoppingBag, badgeKey: "orders", permission: "shop" },
     ],
   },

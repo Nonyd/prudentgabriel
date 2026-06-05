@@ -33,11 +33,11 @@ const STAGE_INTROS: Record<BespokeStage, string> = {
   CONSULTATION_BOOKING:
     "Your consultation has been confirmed. We look forward to understanding your vision and crafting something extraordinary for you.",
   CONSULTATION_SESSION:
-    "Thank you for your consultation session. Here is a summary of what we discussed and the direction for your bespoke piece.",
+    "Thank you for your consultation session. Here is a summary of what we discussed and the direction for your atelier commission.",
   INVOICE_ISSUANCE:
     "Your personalised quote is ready for review. Please take a moment to review the details and approve when you are ready to proceed.",
   PAYMENT_CONFIRMATION:
-    "We have received your payment. Your bespoke order is now officially in production — our atelier team has begun work on your piece.",
+    "We have received your payment. Your atelier order is now officially in production — our atelier team has begun work on your piece.",
   SKETCHING_CONCEPT:
     "Our design team has prepared initial concepts for your outfit. We hope these capture the vision we discussed together.",
   FABRIC_SOURCING:
@@ -55,7 +55,7 @@ const STAGE_INTROS: Record<BespokeStage, string> = {
   FINAL_FITTING:
     "Your final fitting has been approved. Your outfit meets our standards and yours — we are preparing it for delivery.",
   DELIVERY:
-    "Your bespoke outfit is ready! We cannot wait for you to experience the finished piece. Details for collection or delivery are below.",
+    "Your atelier outfit is ready! We cannot wait for you to experience the finished piece. Details for collection or delivery are below.",
 };
 
 function emailWrapper(content: string, logoUrl?: string): string {

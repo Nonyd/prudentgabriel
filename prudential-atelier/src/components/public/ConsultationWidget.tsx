@@ -21,7 +21,7 @@ export function ConsultationWidget() {
         >
           <p className="eyebrow">Consultations</p>
           <h2 className="mt-3 font-serif text-[clamp(2rem,3vw,2.625rem)] font-medium text-choc">
-            Begin Your Bespoke Journey
+            Begin a Commission
           </h2>
           <ul className="mt-10 space-y-6">
             {CONSULTATION_TYPES.map((type) => (

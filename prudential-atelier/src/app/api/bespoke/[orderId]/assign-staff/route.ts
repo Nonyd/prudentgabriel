@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { BespokeStage } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
 
@@ -9,7 +10,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!gate.ok) return gate.response;
 
   const { orderId } = await params;
-  let body: { staffProfileId?: string; role?: string };
+  let body: { staffProfileId?: string; role?: string; stage?: BespokeStage };
   try {
     body = await req.json();
   } catch {
@@ -28,6 +29,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       orderId,
       staffProfileId: body.staffProfileId,
       role: body.role,
+      stage: body.stage ?? null,
     },
     include: {
       staffProfile: { include: { user: { select: { name: true, email: true } } } },

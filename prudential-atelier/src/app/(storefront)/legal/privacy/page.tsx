@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         <h2 className="mt-8 font-display text-2xl text-wine">Data we collect</h2>
         <p>
           We collect information you provide (name, email, phone, shipping address, payment references), technical data
-          (cookies, device information), and imagery you upload for bespoke consultations via our approved partners
+          (cookies, device information), and imagery you upload for atelier consultations via our approved partners
           (including Cloudinary).
         </p>
         <h2 className="mt-8 font-display text-2xl text-wine">How we use data</h2>

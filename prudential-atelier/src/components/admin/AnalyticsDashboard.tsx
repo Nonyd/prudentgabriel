@@ -210,7 +210,7 @@ export function AnalyticsDashboard({
             {pendingActions}
           </p>
           <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">
-            {pendingBespoke} bespoke · {pendingReviews} reviews · {pendingOrdersFulfilment} orders
+            {pendingBespoke} atelier · {pendingReviews} reviews · {pendingOrdersFulfilment} orders
           </p>
         </Link>
       </div>
@@ -364,7 +364,7 @@ export function AnalyticsDashboard({
         </div>
         <div className="border border-[#EBEBEA] bg-canvas p-5">
           <div className="flex items-center justify-between">
-            <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-ink">Bespoke requests</h3>
+            <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-ink">Atelier requests</h3>
             {bespokePendingList.length > 0 ? (
               <span className="bg-[#FFF8E7] px-2 py-0.5 font-body text-[9px] text-[#92660A]">{bespokePendingList.length}</span>
             ) : null}

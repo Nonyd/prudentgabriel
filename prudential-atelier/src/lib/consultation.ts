@@ -242,7 +242,7 @@ export function getDeliveryModeLabel(mode: ConsultationDeliveryMode): string {
 
 export function getSessionTypeLabel(type: ConsultationSessionType): string {
   const labels: Record<ConsultationSessionType, string> = {
-    [ConsultationSessionType.BESPOKE_DESIGN]: "Bespoke Design Session",
+    [ConsultationSessionType.BESPOKE_DESIGN]: "Atelier Commission",
     [ConsultationSessionType.BRIDAL_CONSULTATION]: "Bridal Consultation",
     [ConsultationSessionType.STYLING_SESSION]: "Styling & Fabric Session",
     [ConsultationSessionType.WARDROBE_CONSULTATION]: "Wardrobe Consultation",

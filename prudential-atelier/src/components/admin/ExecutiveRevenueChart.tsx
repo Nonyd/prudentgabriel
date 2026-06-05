@@ -39,7 +39,7 @@ export function ExecutiveRevenueChart({
           {formatNGN(total)} total
         </span>
       </div>
-      <div className="mt-6 h-64 min-h-[300px] w-full" style={{ width: "100%", height: 300, minHeight: 300 }}>
+      <div className="mt-6 w-full" style={{ width: "100%", height: 280, minHeight: 280 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#98755B" }} axisLine={false} tickLine={false} />
@@ -48,7 +48,7 @@ export function ExecutiveRevenueChart({
               formatter={(v) => formatNGN(Number(v ?? 0))}
               contentStyle={{ border: "1px solid #D4BBAC", borderRadius: 4, fontSize: 12 }}
             />
-            <Line type="monotone" dataKey="bespoke" stroke="#442913" strokeWidth={2} dot={false} name="Bespoke" />
+            <Line type="monotone" dataKey="bespoke" stroke="#442913" strokeWidth={2} dot={false} name="Atelier" />
             <Line type="monotone" dataKey="rtw" stroke="#98755B" strokeWidth={2} dot={false} name="Ready to Wear" />
             <Line type="monotone" dataKey="consultations" stroke="#D4BBAC" strokeWidth={2} dot={false} name="Consultations" />
           </LineChart>
@@ -56,7 +56,7 @@ export function ExecutiveRevenueChart({
       </div>
       <div className="mt-4 flex flex-wrap gap-6">
         {[
-          { color: "#442913", label: "Bespoke", key: "bespoke" as const },
+          { color: "#442913", label: "Atelier", key: "bespoke" as const },
           { color: "#98755B", label: "Ready to Wear", key: "rtw" as const },
           { color: "#D4BBAC", label: "Consultations", key: "consultations" as const },
         ].map((item) => {

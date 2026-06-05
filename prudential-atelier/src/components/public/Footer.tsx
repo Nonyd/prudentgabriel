@@ -4,7 +4,6 @@ import { Logo } from "@/components/ui/Logo";
 
 const HOUSE_LINKS = [
   { href: "/atelier", label: "The Atelier" },
-  { href: "/bespoke", label: "Bespoke Process" },
   { href: "/bridal", label: "Bridal" },
   { href: "https://pfacademy.ng", label: "Fashion Academy", external: true },
   { href: "/journal", label: "Journal" },
@@ -19,7 +18,7 @@ const CLIENT_LINKS = [
 ];
 
 function BrandWordmark() {
-  return <Logo variant="white" size="lg" themeAdaptive={false} />;
+  return <Logo variant="white" size="lg" themeAdaptive={false} showSubline />;
 }
 
 function FooterColumn({

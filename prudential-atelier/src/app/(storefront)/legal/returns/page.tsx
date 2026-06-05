@@ -10,8 +10,8 @@ export default function ReturnsPage() {
           We want you to love your piece. Ready-to-wear items may be returned within 14 days of delivery in original
           condition with tags and packaging intact.
         </p>
-        <h2 className="mt-8 font-display text-2xl text-wine">Bespoke & altered items</h2>
-        <p>Bespoke, made-to-measure, and altered garments are not eligible for return except where required by law.</p>
+        <h2 className="mt-8 font-display text-2xl text-wine">Atelier & altered items</h2>
+        <p>Atelier commissions, made-to-measure, and altered garments are not eligible for return except where required by law.</p>
         <h2 className="mt-8 font-display text-2xl text-wine">How to start a return</h2>
         <p>Email hello@prudentgabriel.com with your order number and reason; our team will guide you through the process.</p>
       </div>

@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Order Tracking — Prudential Atelier",
-  description: "Track your bespoke commission with your order reference.",
+  description: "Track your atelier commission with your order reference.",
 };
 
 type Props = {

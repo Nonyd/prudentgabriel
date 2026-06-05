@@ -20,7 +20,7 @@ export function ReferralsClient({
 }) {
   function shareWhatsApp() {
     const text = encodeURIComponent(
-      `Join me at Prudential Atelier — bespoke fashion worth celebrating. ${link}`,
+      `Join me at Prudential Atelier — atelier fashion worth celebrating. ${link}`,
     );
     window.open(`https://wa.me/?text=${text}`, "_blank");
   }

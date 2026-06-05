@@ -157,6 +157,8 @@ model ConsultationBooking {
   completedAt   DateTime?
   adminFeedback String?   @db.Text
 
+  invoices Invoice[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -516,6 +518,8 @@ model Invoice {
   invoiceNumber    String          @unique
   bespokeRequestId String?
   bespokeRequest   BespokeRequest? @relation(fields: [bespokeRequestId], references: [id], onDelete: SetNull)
+  consultationId   String?
+  consultation     ConsultationBooking? @relation(fields: [consultationId], references: [id], onDelete: SetNull)
 
   clientName      String
   clientEmail     String
@@ -1200,11 +1204,13 @@ model OrderAssignment {
   staffProfile   StaffProfile @relation(fields: [staffProfileId], references: [id])
 
   role        String
+  stage       BespokeStage?
   assignedAt  DateTime  @default(now())
   completedAt DateTime?
 
   @@index([orderId])
   @@index([staffProfileId])
+  @@index([stage])
 }
 
 model Material {

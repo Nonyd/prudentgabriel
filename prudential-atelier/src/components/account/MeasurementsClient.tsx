@@ -106,7 +106,7 @@ export function MeasurementsClient({ initial }: { initial: Measurement | null })
       {!data ? (
         <div className="mt-16 text-center">
           <p className="font-sans text-sm text-text-mid">
-            Save your measurements securely for faster bespoke orders.
+            Save your measurements securely for faster atelier commissions.
           </p>
           <button type="button" onClick={openModal} className="btn-primary mt-6">
             Add Your Measurements

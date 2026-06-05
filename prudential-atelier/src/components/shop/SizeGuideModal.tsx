@@ -98,9 +98,9 @@ export function SizeGuideModal({ children }: { children: React.ReactNode }) {
             </Tabs.Content>
           </Tabs.Root>
           <div className="mt-4 space-y-2 border-t border-border pt-4 text-xs text-charcoal-light">
-            <p>For bespoke pieces, we take exact measurements. All sizes in centimetres.</p>
-            <Link href="/bespoke" className="font-label text-wine underline">
-              Book Bespoke
+            <p>For atelier commissions, we take exact measurements. All sizes in centimetres.</p>
+            <Link href="/atelier" className="font-label text-wine underline">
+              Begin a Commission
             </Link>
           </div>
         </Dialog.Content>

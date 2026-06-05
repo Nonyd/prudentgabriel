@@ -18,9 +18,9 @@ export default function BespokeConfirmationEmail({
   timeline,
 }: BespokeConfirmationEmailProps) {
   return (
-    <EmailLayout previewText={`Bespoke request ${requestNumber}`}>
+    <EmailLayout previewText={`Atelier request ${requestNumber}`}>
       <Heading as="h1" style={{ fontSize: 28, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
-        Your bespoke request
+        Your atelier request
       </Heading>
       <Text style={{ fontSize: 16, color: "#2d2d2d" }}>Thank you, {name}. We&apos;ve received your request.</Text>
       <Section

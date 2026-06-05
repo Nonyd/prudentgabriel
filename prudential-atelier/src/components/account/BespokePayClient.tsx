@@ -106,7 +106,7 @@ export function BespokePayClient({ order }: { order: BespokeOrder }) {
       <div className="mt-8 border border-[var(--border)] bg-white p-6">
         <p className="font-body text-[11px] uppercase tracking-wide text-[var(--text-light)]">Order summary</p>
         <p className="mt-2 font-display text-lg text-[var(--chocolate)]">
-          {order.outfitDescription?.slice(0, 120) ?? "Bespoke commission"}
+          {order.outfitDescription?.slice(0, 120) ?? "Atelier commission"}
         </p>
         <dl className="mt-4 grid grid-cols-3 gap-3 font-body text-sm">
           <div>

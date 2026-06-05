@@ -57,7 +57,7 @@ export function RegisterContent() {
         <div className="absolute inset-0 bg-choc/50" />
         <div className="absolute bottom-12 left-12 max-w-sm text-cream">
           <p className="font-serif text-3xl font-medium leading-tight">
-            Join the inner circle — orders, wishlists, and bespoke consultations.
+            Join the inner circle — orders, wishlists, and atelier consultations.
           </p>
           <p className="mt-4 font-sans text-xs font-light text-cream/80">
             Prudential Atelier · Lagos, Nigeria

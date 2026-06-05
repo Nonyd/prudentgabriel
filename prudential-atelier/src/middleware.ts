@@ -17,8 +17,6 @@ export default auth(function middleware(request) {
   const session = request.auth;
   const pathname = request.nextUrl.pathname;
 
-  console.log("MIDDLEWARE HIT:", pathname, "token:", !!session);
-
   if (
     pathname === "/" ||
     pathname === "/admin-login" ||
@@ -34,6 +32,9 @@ export default auth(function middleware(request) {
     pathname.startsWith("/consultation") ||
     pathname.startsWith("/journal") ||
     pathname.startsWith("/bespoke") ||
+    pathname.startsWith("/atelier") ||
+    pathname.startsWith("/rtw") ||
+    pathname.startsWith("/about") ||
     pathname.startsWith("/bridal") ||
     pathname.startsWith("/kids") ||
     pathname.startsWith("/cart") ||
@@ -95,7 +96,6 @@ export default auth(function middleware(request) {
     }
 
     const role = (session.user?.role as string | undefined) ?? "";
-    console.log("ADMIN GATE role:", role);
 
     if (!ADMIN_ROLES.includes(role)) {
       return NextResponse.redirect(new URL("/admin-login", request.url));

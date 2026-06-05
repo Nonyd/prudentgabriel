@@ -22,7 +22,7 @@ export function HeroSectionClient({ heroImage = DEFAULT_HERO }: { heroImage?: st
             Crafted for the Woman Who Commands the Room
           </h1>
           <p className="mt-6 max-w-md copy-body text-sm font-light leading-[1.8] text-cream/85">
-            Bespoke couture and ready-to-wear — each piece conceived in our Lagos atelier and
+            Atelier couture and ready-to-wear — each piece conceived in our Lagos atelier and
             finished by hand for weddings, galas, and everyday elegance.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">

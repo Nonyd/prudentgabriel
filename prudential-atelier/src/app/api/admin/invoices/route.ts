@@ -23,6 +23,7 @@ const lineItemInput = z.object({
 
 const postSchema = z.object({
   bespokeRequestId: z.string().optional().nullable(),
+  consultationId: z.string().optional().nullable(),
   clientName: z.string().optional().nullable(),
   clientEmail: z.string().email().optional().nullable(),
   clientPhone: z.string().optional().nullable(),
@@ -166,6 +167,33 @@ export async function POST(req: NextRequest) {
     estimatedPrice: number | null;
   } | null = null;
 
+  let consultation: {
+    id: string;
+    clientName: string;
+    clientEmail: string;
+    clientPhone: string;
+    clientCountry: string;
+    occasion: string;
+    feeNGN: number;
+  } | null = null;
+
+  if (d.consultationId) {
+    const c = await prisma.consultationBooking.findUnique({
+      where: { id: d.consultationId },
+      select: {
+        id: true,
+        clientName: true,
+        clientEmail: true,
+        clientPhone: true,
+        clientCountry: true,
+        occasion: true,
+        feeNGN: true,
+      },
+    });
+    if (!c) return NextResponse.json({ error: "Consultation not found" }, { status: 404 });
+    consultation = c;
+  }
+
   if (d.bespokeRequestId) {
     const b = await prisma.bespokeRequest.findUnique({
       where: { id: d.bespokeRequestId },
@@ -190,16 +218,32 @@ export async function POST(req: NextRequest) {
     d.currency ??
     (defaultCurrency === "USD" || defaultCurrency === "GBP" ? defaultCurrency : "NGN");
 
-  const clientName = d.clientName ?? bespoke?.name;
-  const clientEmail = d.clientEmail ?? bespoke?.email;
+  const clientName = d.clientName ?? bespoke?.name ?? consultation?.clientName;
+  const clientEmail = d.clientEmail ?? bespoke?.email ?? consultation?.clientEmail;
   if (!clientName || !clientEmail) {
     return NextResponse.json({ error: "clientName and clientEmail are required" }, { status: 400 });
   }
 
   let lineItemsIn = d.lineItems ?? [];
+  if (lineItemsIn.length === 0 && consultation) {
+    lineItemsIn = [
+      {
+        description: `Consultation fee — ${consultation.occasion}`,
+        details: "Atelier consultation session",
+        quantity: 1,
+        unitPrice: consultation.feeNGN,
+      },
+      {
+        description: `Atelier commission — ${consultation.occasion}`,
+        details: "Made-to-measure couture commission",
+        quantity: 1,
+        unitPrice: 0,
+      },
+    ];
+  }
   if (lineItemsIn.length === 0 && bespoke) {
     const unit = bespoke.agreedPrice ?? bespoke.estimatedPrice ?? 0;
-    const desc = `${bespoke.occasion} — Bespoke piece`;
+    const desc = `${bespoke.occasion} — Atelier commission`;
     const det = bespoke.description.slice(0, 100);
     lineItemsIn = [{ description: desc, details: det, quantity: 1, unitPrice: unit }];
   }
@@ -248,12 +292,13 @@ export async function POST(req: NextRequest) {
     data: {
       invoiceNumber,
       bespokeRequestId: bespoke?.id ?? d.bespokeRequestId ?? null,
+      consultationId: consultation?.id ?? d.consultationId ?? null,
       clientName,
       clientEmail,
-      clientPhone: d.clientPhone ?? bespoke?.phone ?? null,
+      clientPhone: d.clientPhone ?? bespoke?.phone ?? consultation?.clientPhone ?? null,
       clientAddress: d.clientAddress ?? null,
       clientCity: d.clientCity ?? null,
-      clientCountry: d.clientCountry ?? bespoke?.country ?? "Nigeria",
+      clientCountry: d.clientCountry ?? bespoke?.country ?? consultation?.clientCountry ?? "Nigeria",
       clientInstagram: d.clientInstagram ?? null,
       currency: cur,
       exchangeRate: d.exchangeRate ?? 1,

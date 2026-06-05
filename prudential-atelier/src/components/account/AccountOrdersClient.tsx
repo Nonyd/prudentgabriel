@@ -41,7 +41,7 @@ export function AccountOrdersClient({
               tab === t ? "border-b-2 border-nut text-nut" : "text-text-mid"
             }`}
           >
-            {t === "bespoke" ? "Bespoke Orders" : "Ready-to-Wear"}
+            {t === "bespoke" ? "Atelier Orders" : "Ready-to-Wear"}
           </button>
         ))}
       </div>
@@ -50,7 +50,7 @@ export function AccountOrdersClient({
         bespokeOrders.length === 0 ? (
           <div className="mt-12 text-center">
             <p className="font-sans text-sm text-text-mid">
-              No bespoke orders yet — book a consultation to get started
+              No atelier orders yet — book a consultation to get started
             </p>
             <Link href="/consultation" className="btn-primary mt-4 inline-flex">
               Book consultation
@@ -69,7 +69,7 @@ export function AccountOrdersClient({
                     <div>
                       <p className="font-sans text-[10px] uppercase tracking-wider text-lightbr">{o.orderRef}</p>
                       <p className="mt-1 font-display text-lg text-choc">
-                        {o.outfitDescription?.slice(0, 80) ?? "Bespoke order"}
+                        {o.outfitDescription?.slice(0, 80) ?? "Atelier order"}
                       </p>
                       {o.deliveryDate ? (
                         <p className="mt-1 font-sans text-xs text-text-mid">

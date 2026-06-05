@@ -106,7 +106,15 @@ export function AdminConsultationDetail({ booking }: { booking: Booking }) {
       </div>
 
       <div className="space-y-4 rounded-sm border border-[#EBEBEA] bg-[#1e1e1e] p-4">
-        <p className="font-display text-lg text-gold">Status: {booking.status}</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="font-display text-lg text-gold">Status: {booking.status}</p>
+          <Link
+            href={`/admin/invoices/new?consultationId=${booking.id}`}
+            className="rounded-sm border border-gold px-3 py-1.5 text-xs uppercase tracking-wider text-gold hover:bg-gold/10"
+          >
+            Create Invoice
+          </Link>
+        </div>
 
         {booking.status === ConsultationStatus.PENDING_CONFIRMATION && (
           <div className="space-y-3">

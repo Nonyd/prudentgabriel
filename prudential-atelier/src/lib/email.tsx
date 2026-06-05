@@ -131,7 +131,7 @@ export async function sendPaymentConfirmedEmail(params: {
   trackUrl: string;
 }): Promise<void> {
   const kindLabel =
-    params.kind === "consultation" ? "consultation" : params.kind === "bespoke" ? "bespoke order" : "order";
+    params.kind === "consultation" ? "consultation" : params.kind === "bespoke" ? "atelier order" : "order";
   await sendEmail({
     to: params.to,
     subject: `Payment confirmed — ${params.ref}`,
@@ -221,7 +221,7 @@ export async function sendBespokeConfirmationEmail(
   );
   await sendEmail({
     to,
-    subject: `Bespoke Request Received — ${requestNumber}`,
+    subject: `Atelier Request Received — ${requestNumber}`,
     html,
   });
 }
@@ -247,7 +247,7 @@ export async function sendBespokeBalancePaymentLinkEmail(params: {
   const inner = `
     <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Dear ${escapeHtml(params.clientName)},</p>
     <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">
-      Your bespoke order <strong>${escapeHtml(params.requestNumber)}</strong> is ready for payment.
+      Your atelier order <strong>${escapeHtml(params.requestNumber)}</strong> is ready for payment.
       Please complete the secure checkout for the outstanding balance of
       <strong>₦${params.amountNGN.toLocaleString("en-NG")}</strong>.
     </p>

@@ -41,7 +41,7 @@ export function eventReminderEmailHtml(params: {
   const body = `
     <p style="font-size:14px;line-height:1.6;color:#5C3422;">
       Hi ${params.firstName}, your <strong>${params.eventLabel}</strong> is about ${params.weeksAway} week${params.weeksAway !== 1 ? "s" : ""} away.
-      Whether you need a bespoke piece or something from our collection, we'd love to dress you for the occasion.
+      Whether you need an atelier commission or something from our collection, we'd love to dress you for the occasion.
     </p>`;
   return WRAPPER(`${params.eventLabel} is coming up`, body, `${params.appUrl}/consultation`, "Book a Consultation");
 }

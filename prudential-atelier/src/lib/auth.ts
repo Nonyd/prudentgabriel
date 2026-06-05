@@ -28,13 +28,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        console.log("AUTH ATTEMPT:", credentials?.email);
-
         try {
           const email = (credentials?.email as string | undefined)?.trim().toLowerCase();
           const password = credentials?.password as string | undefined;
           if (!email || !password) {
-            console.log("NO EMAIL OR PASSWORD");
             return null;
           }
 
@@ -42,19 +39,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             where: { email },
             include: { jobRole: { select: { permissions: true } } },
           });
-          console.log("USER FOUND:", !!user, user?.role, "isStaff:", user?.isStaff);
 
           if (!user || !user.password) {
-            console.log("NO USER OR PASSWORD");
             return null;
           }
           if (user.isActive === false) {
-            console.log("USER INACTIVE");
             return null;
           }
 
           const valid = await bcrypt.compare(password, user.password);
-          console.log("PASSWORD VALID:", valid);
           if (!valid) return null;
 
           await prisma.user.update({
@@ -62,21 +55,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             data: { lastLogin: new Date() },
           });
 
-          if (user.role === "STAFF" || user.isStaff) {
-            console.log("STAFF AUTH OK:", user.email, {
-              role: user.role,
-              isStaff: user.isStaff,
-            });
-          }
-
           const { jobRole, ...safeUser } = user;
           delete (safeUser as { password?: string | null }).password;
           return {
             ...safeUser,
             jobRole,
           };
-        } catch (error) {
-          console.log("AUTH ERROR:", error);
+        } catch {
           return null;
         }
       },

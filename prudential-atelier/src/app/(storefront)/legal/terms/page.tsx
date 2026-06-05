@@ -12,7 +12,7 @@ export default function TermsPage() {
         </p>
         <h2 className="mt-8 font-display text-2xl text-wine">Orders & acceptance</h2>
         <p>
-          An order confirmation email acknowledges receipt; bespoke and made-to-order timelines are estimates. We may
+          An order confirmation email acknowledges receipt; atelier and made-to-order timelines are estimates. We may
           refuse orders where fraud is suspected.
         </p>
         <h2 className="mt-8 font-display text-2xl text-wine">Intellectual property</h2>

@@ -132,14 +132,19 @@ export function ProductDetailClient({
         <span className="text-charcoal">{product.name}</span>
       </nav>
 
-      <div className="grid gap-10 lg:grid-cols-[55%_45%] lg:gap-12">
+      <div className="grid gap-10 lg:grid-cols-[60%_40%] lg:gap-12">
         <ProductGallery images={product.images} />
 
         <div className="lg:sticky lg:top-32 lg:self-start">
-          <p className="mb-2 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-olive">
+          <p className="mb-1 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">
+            Prudent Gabriel
+          </p>
+          <p className="mb-4 font-body text-[10px] font-medium uppercase tracking-[0.14em] text-text-light">
             {String(product.category).replace(/_/g, " ")}
           </p>
-          <h1 className="font-display text-4xl font-normal text-charcoal md:text-[40px]">{product.name}</h1>
+          <h1 className="font-display text-[36px] font-normal leading-[1.1] text-choc md:text-[42px]">
+            {product.name}
+          </h1>
 
           <button
             type="button"
@@ -185,37 +190,44 @@ export function ProductDetailClient({
             </div>
           )}
 
-          <div className="mb-2 flex items-center justify-between">
-            <p className="font-label text-xs uppercase text-charcoal-mid">Size</p>
-            <SizeGuideModal>
-              <button type="button" className="font-body text-[10px] font-medium uppercase tracking-wide text-olive underline">
-                Size Guide
-              </button>
-            </SizeGuideModal>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {product.variants.map((v) => (
-              <button
-                key={v.id}
-                type="button"
-                disabled={v.stock === 0}
-                onClick={() => {
-                  setVariantId(v.id);
-                  setQty(1);
-                }}
-                className={`border px-3 py-2 font-body text-[11px] font-medium uppercase tracking-wide ${
-                  variantId === v.id
-                    ? "border-olive bg-olive text-white"
-                    : v.stock === 0
-                      ? "cursor-not-allowed border-mid-grey text-dark-grey/50 line-through"
-                      : "border-mid-grey text-charcoal hover:border-olive"
-                }`}
-                title={v.stock === 0 ? "Sold Out" : undefined}
-              >
-                {v.size}
-              </button>
-            ))}
-          </div>
+          {product.variants.length > 1 ? (
+            <>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="font-body text-[10px] font-medium uppercase tracking-[0.14em] text-text-light">Size</p>
+                <SizeGuideModal>
+                  <button
+                    type="button"
+                    className="font-body text-[10px] font-medium uppercase tracking-wide text-olive underline"
+                  >
+                    Size Guide
+                  </button>
+                </SizeGuideModal>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {product.variants.map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    disabled={v.stock === 0}
+                    onClick={() => {
+                      setVariantId(v.id);
+                      setQty(1);
+                    }}
+                    className={`flex h-9 w-12 items-center justify-center border font-body text-[11px] font-medium uppercase tracking-wide ${
+                      variantId === v.id
+                        ? "border-choc bg-choc text-cream"
+                        : v.stock === 0
+                          ? "cursor-not-allowed border-sand text-text-light/40 line-through"
+                          : "border-sand text-text-mid hover:border-choc"
+                    }`}
+                    title={v.stock === 0 ? "Sold Out" : undefined}
+                  >
+                    {v.size}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
           {lowStock > 0 && (
             <p className="mt-2 font-body text-[10px] font-medium uppercase tracking-wide text-olive">Only {lowStock} left!</p>
           )}
@@ -223,8 +235,9 @@ export function ProductDetailClient({
             <StockAlertForm productId={product.id} variantId={variant.id} />
           )}
 
+          {variant && variant.stock > 1 ? (
           <div className="mt-6">
-            <p className="font-label text-xs uppercase text-charcoal-mid">Qty</p>
+            <p className="font-body text-[10px] font-medium uppercase tracking-[0.14em] text-text-light">Quantity</p>
             <div className="mt-2 flex items-center gap-3">
               <button
                 type="button"
@@ -245,8 +258,14 @@ export function ProductDetailClient({
               </button>
             </div>
           </div>
+          ) : null}
 
-          <Button type="button" className="mt-8 w-full" size="lg" onClick={addToBag}>
+          <Button
+            type="button"
+            className="mt-8 h-[52px] w-full bg-choc font-body text-[11px] font-semibold uppercase tracking-[0.18em] text-cream hover:bg-nut"
+            size="lg"
+            onClick={addToBag}
+          >
             Add to Bag
           </Button>
 
@@ -307,14 +326,14 @@ export function ProductDetailClient({
               <Accordion.Item value="b" className="border-b border-border">
                 <Accordion.Header>
                   <Accordion.Trigger className="flex w-full py-3 font-label text-xs uppercase tracking-wider">
-                    Bespoke Version
+                    Atelier Version
                   </Accordion.Trigger>
                 </Accordion.Header>
                 <Accordion.Content className="space-y-3 pb-4 text-sm text-charcoal-mid">
                   <p>Have this piece made to your exact measurements.</p>
                   <p>Lead time: 3–6 weeks. Starts from ₦{Math.round(product.basePriceNGN * 1.3).toLocaleString()}</p>
-                  <Link href="/bespoke" className="font-body text-[11px] font-medium uppercase tracking-wide text-olive underline">
-                    Book Bespoke Consultation
+                  <Link href="/atelier" className="font-body text-[11px] font-medium uppercase tracking-wide text-olive underline">
+                    Book Atelier Consultation
                   </Link>
                 </Accordion.Content>
               </Accordion.Item>

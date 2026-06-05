@@ -24,7 +24,7 @@ export function BespokeJourneySection() {
             color: "var(--lightbr)",
           }}
         >
-          The Bespoke Journey
+          The Atelier Journey
         </p>
         <h2
           className="mt-4 leading-[1.1]"
@@ -48,7 +48,7 @@ export function BespokeJourneySection() {
           From the first consultation to the final fitting, every commission is documented and
           shared with you at each step.
         </p>
-        <Link href="/bespoke" className="btn-ghost-dark mt-10 inline-flex w-fit">
+        <Link href="/atelier" className="btn-ghost-dark mt-10 inline-flex w-fit">
           Begin Your Commission →
         </Link>
       </motion.div>

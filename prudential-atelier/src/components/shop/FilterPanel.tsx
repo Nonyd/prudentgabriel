@@ -127,7 +127,7 @@ export function FilterPanel({ className }: { className?: string }) {
             {[
               { v: "", l: "All" },
               { v: "RTW", l: "Ready-to-Wear" },
-              { v: "BESPOKE", l: "Bespoke" },
+              { v: "BESPOKE", l: "Atelier" },
             ].map((o) => (
               <label key={o.l} className="flex cursor-pointer items-center gap-2 text-sm">
                 <input

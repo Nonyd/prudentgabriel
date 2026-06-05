@@ -5,8 +5,8 @@ import Link from "next/link";
 
 const COLLECTIONS = [
   {
-    href: "/bespoke",
-    title: "The Bespoke Atelier",
+    href: "/atelier",
+    title: "The Atelier",
     subtitle: "Commissions designed entirely around you.",
     bg: "#442913",
   },

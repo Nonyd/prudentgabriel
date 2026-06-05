@@ -58,7 +58,7 @@ export default function StaffOrderDetailPage({ params }: { params: { orderId: st
       <div>
         <p className="font-sans text-xs uppercase tracking-wide text-lightbr">{order.orderRef}</p>
         <h1 className="font-display text-2xl text-ink">
-          {order.outfitDescription ?? "Bespoke order"}
+          {order.outfitDescription ?? "Atelier order"}
         </h1>
         <p className="mt-1 font-sans text-sm text-text-mid">Client: {order.clientFirstName}</p>
         <p className="font-sans text-sm text-text-mid">
