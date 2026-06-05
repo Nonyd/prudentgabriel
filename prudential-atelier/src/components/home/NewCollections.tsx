@@ -108,7 +108,7 @@ export function NewCollections({
         </div>
         <span className="hidden w-8 md:block" />
         <Link
-          href="/shop"
+          href="/collections"
           className="font-body text-[11px] font-medium uppercase tracking-[0.12em] text-charcoal underline decoration-charcoal underline-offset-4 transition-colors hover:text-olive hover:decoration-olive"
         >
           View all collections →

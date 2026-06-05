@@ -97,6 +97,18 @@ function RtwDropdown({ collections }: { collections: CollectionNav[] }) {
                 All Ready-to-Wear
               </Link>
               <div className="my-2 border-t" style={{ borderColor: "var(--sand)" }} />
+              <Link
+                href="/collections"
+                className="block px-5 py-2 transition-colors hover:text-choc"
+                style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "11px",
+                  color: "var(--text-mid)",
+                }}
+              >
+                All Collections
+              </Link>
+              <div className="my-2 border-t" style={{ borderColor: "var(--sand)" }} />
               <p
                 className="px-5 py-1 uppercase"
                 style={{
@@ -106,12 +118,12 @@ function RtwDropdown({ collections }: { collections: CollectionNav[] }) {
                   color: "var(--lightbr)",
                 }}
               >
-                Collections
+                By edit
               </p>
               {collections.map((c) => (
                 <Link
                   key={c.slug}
-                  href={`/rtw/collections/${c.slug}`}
+                  href={`/collections/${c.slug}`}
                   className="block px-5 py-2 transition-colors hover:text-choc"
                   style={{
                     fontFamily: "var(--font-ui)",
@@ -184,11 +196,14 @@ function MobileRtwSection({
             Collections
             <ChevronDown className={cn("h-3 w-3 transition-transform", collectionsOpen && "rotate-180")} />
           </button>
+          <Link href="/collections" onClick={onClose} className="block py-2 pl-3 text-[11px] text-text-mid">
+            All Collections
+          </Link>
           {collectionsOpen
             ? collections.map((c) => (
                 <Link
                   key={c.slug}
-                  href={`/rtw/collections/${c.slug}`}
+                  href={`/collections/${c.slug}`}
                   onClick={onClose}
                   className="block py-2 pl-3 text-[11px] text-text-mid"
                 >

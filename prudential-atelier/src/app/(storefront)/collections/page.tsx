@@ -6,8 +6,9 @@ import { CollectionsPage } from "@/components/collections/CollectionsPage";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Collections | Prudent Gabriel",
-  description: "Curated fashion collections from Prudent Gabriel — discover the edit.",
+  title: "Ready-to-Wear Collections | Prudent Gabriel",
+  description:
+    "Explore curated ready-to-wear collections from Prudent Gabriel — Rich & Regal, Church Girl, La Femme, and more.",
 };
 
 export default async function CollectionsListingPage() {

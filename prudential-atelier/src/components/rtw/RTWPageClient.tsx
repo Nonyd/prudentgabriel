@@ -1,22 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as Select from "@radix-ui/react-select";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/product-image-url";
 import { RTWProductCard } from "@/components/rtw/RTWProductCard";
 import type { ProductListItem } from "@/types/product";
-
-export type RTWCollectionStripItem = {
-  name: string;
-  slug: string;
-  coverImage: string | null;
-  coverImageAlt: string | null;
-};
 
 type ChipId = "ALL" | "DRESSES" | "JUMPSUITS" | "SETS" | "SUITS" | "KIDDIES" | "ACCESSORIES";
 
@@ -103,7 +94,6 @@ export interface RTWPageClientProps {
   heroLabel: string;
   heroTitle: string;
   heroSubtitle?: string;
-  collections?: RTWCollectionStripItem[];
 }
 
 export function RTWPageClient({
@@ -114,7 +104,6 @@ export function RTWPageClient({
   heroLabel,
   heroTitle,
   heroSubtitle,
-  collections = [],
 }: RTWPageClientProps) {
   const sp = useSearchParams();
   const router = useRouter();
@@ -260,31 +249,6 @@ export function RTWPageClient({
       </div>
 
       <div className="mx-auto max-w-[1600px] px-4 pt-8">
-        {collections.length > 0 ? (
-          <section className="mb-10 border-b border-mid-grey pb-10">
-            <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:gap-8">
-              {collections.map((c) => (
-                <Link
-                  key={c.slug}
-                  href={`/rtw/collections/${c.slug}`}
-                  className="group block text-center"
-                >
-                  <div className="relative mx-auto aspect-[3/4] max-w-[220px] overflow-hidden bg-[#F8F8F6]">
-                    <Image
-                      src={c.coverImage || PRODUCT_IMAGE_PLACEHOLDER}
-                      alt={c.coverImageAlt || c.name}
-                      fill
-                      sizes="(max-width: 768px) 50vw, 220px"
-                      className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
-                    />
-                  </div>
-                  <p className="mt-3 font-display text-lg text-black group-hover:text-olive">{c.name}</p>
-                </Link>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
         {isPending ? (
           <RTWGridSkeleton />
         ) : items.length === 0 ? (

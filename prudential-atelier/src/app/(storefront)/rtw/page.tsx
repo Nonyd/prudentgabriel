@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
 import { queryProductList } from "@/lib/products-list-query";
 import { RTWPageClient } from "@/components/rtw/RTWPageClient";
 import { cmsGet, getCMSContent } from "@/lib/cms";
@@ -39,12 +38,6 @@ export default async function RTWPage({
   const { products, total, page, hasNext } = await queryProductList(u, { isAdmin });
   const cms = await getCMSContent(["rtw_page_eyebrow", "rtw_page_title", "rtw_page_subtitle"]);
 
-  const collections = await prisma.collection.findMany({
-    where: { isPublished: true },
-    orderBy: { displayOrder: "asc" },
-    select: { name: true, slug: true, coverImage: true, coverImageAlt: true },
-  });
-
   return (
     <RTWPageClient
       initialProducts={products}
@@ -54,7 +47,6 @@ export default async function RTWPage({
       heroLabel={cmsGet(cms, "rtw_page_eyebrow", "THE COLLECTION")}
       heroTitle={cmsGet(cms, "rtw_page_title", "Ready-to-Wear")}
       heroSubtitle={cmsGet(cms, "rtw_page_subtitle", "")}
-      collections={collections}
     />
   );
 }
