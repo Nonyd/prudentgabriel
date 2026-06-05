@@ -1,7 +1,7 @@
 import { GalleryCategory } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AtelierLandingPage } from "@/components/atelier/AtelierLandingPage";
-import { cmsGet, getCMSContent } from "@/lib/cms";
+import { getCMSContent } from "@/lib/cms";
 
 export const revalidate = 300;
 
