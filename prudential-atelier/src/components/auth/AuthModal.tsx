@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
-import { signIn } from "next-auth/react";
-import { useSession } from "next-auth/react";
-import { hardNavigate, isSignInFailure, waitForClientSession } from "@/lib/client-auth";
+import { useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
@@ -137,7 +135,7 @@ const inputStyle: React.CSSProperties = {
   fontSize: "13px",
 };
 
-function LoginForm({ onSuccess }: { onSuccess: () => void }) {
+function LoginForm() {
   const callbackUrl = useAuthModalStore((s) => s.callbackUrl);
   const setView = useAuthModalStore((s) => s.setView);
 
@@ -149,21 +147,20 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = async (data: LoginInput) => {
-    const res = await signIn("credentials", {
+    const result = await signIn("credentials", {
       email: data.email,
       password: data.password,
       redirect: false,
     });
-    if (isSignInFailure(res)) {
+
+    if (!result?.ok) {
       setError("root", { message: "Invalid email or password" });
       return;
     }
-    const session = await waitForClientSession();
-    if (!session?.user?.id) {
-      setError("root", { message: "Signed in, but the session did not load. Please try again." });
-      return;
-    }
-    onSuccess();
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    const target = callbackUrl?.startsWith("/") ? callbackUrl : "/account";
+    window.location.replace(target);
   };
 
   return (
@@ -291,7 +288,8 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
+function RegisterForm() {
+  const callbackUrl = useAuthModalStore((s) => s.callbackUrl);
   const setView = useAuthModalStore((s) => s.setView);
 
   const {
@@ -333,22 +331,19 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
       return;
     }
 
-    const signInRes = await signIn("credentials", {
+    const result = await signIn("credentials", {
       email: data.email,
       password: data.password,
       redirect: false,
     });
-    if (isSignInFailure(signInRes)) {
+    if (!result?.ok) {
       setView("login");
       return;
     }
-    const session = await waitForClientSession();
-    if (!session?.user?.id) {
-      setError("root", { message: "Account created. Please sign in from the login tab." });
-      setView("login");
-      return;
-    }
-    onSuccess();
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    const target = callbackUrl?.startsWith("/") ? callbackUrl : "/account";
+    window.location.replace(target);
   };
 
   return (
@@ -510,14 +505,8 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export function AuthModal() {
-  const { isOpen, view, close, callbackUrl } = useAuthModalStore();
+  const { isOpen, view, close } = useAuthModalStore();
   const { status } = useSession();
-
-  const handleSuccess = useCallback(() => {
-    close();
-    const target = callbackUrl?.startsWith("/") ? callbackUrl : "/account";
-    hardNavigate(target);
-  }, [close, callbackUrl]);
 
   useEffect(() => {
     if (status === "authenticated" && isOpen) {
@@ -543,11 +532,7 @@ export function AuthModal() {
   return (
     <ModalShell onClose={close}>
       <BrandHeader />
-      {view === "login" ? (
-        <LoginForm onSuccess={handleSuccess} />
-      ) : (
-        <RegisterForm onSuccess={handleSuccess} />
-      )}
+      {view === "login" ? <LoginForm /> : <RegisterForm />}
     </ModalShell>
   );
 }

@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { signIn, signOut } from "next-auth/react";
-import { hardNavigate, isSignInFailure, waitForClientSession } from "@/lib/client-auth";
+import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -10,8 +9,6 @@ import { useId, useState } from "react";
 import { loginSchema, type LoginInput } from "@/validations/auth";
 import { Logo } from "@/components/ui/Logo";
 import { cn } from "@/lib/utils";
-import { isAdminRole } from "@/lib/roles";
-
 function AdminField({
   id,
   label,
@@ -89,42 +86,19 @@ export function AdminLoginClient() {
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = async (data: LoginInput) => {
-    const res = await signIn("credentials", {
+    const result = await signIn("credentials", {
       email: data.email,
       password: data.password,
       redirect: false,
     });
-    if (isSignInFailure(res)) {
+
+    if (!result?.ok) {
       setError("root", { message: "Invalid credentials. Please try again." });
       return;
     }
-    const session = await waitForClientSession({
-      until: (s) => Boolean(s?.user?.id && s?.user?.role),
-    });
-    if (!session?.user?.id) {
-      setError("root", {
-        message: "Signed in, but the session did not load. Please try again.",
-      });
-      return;
-    }
-    const role = session.user.role;
-    if (session?.user?.isStaff && role === "STAFF") {
-      await signOut({ redirect: false });
-      setError("root", {
-        message: "Staff accounts use the staff portal. Sign in at /staff-login.",
-      });
-      return;
-    }
-    if (role && isAdminRole(role)) {
-      hardNavigate("/admin");
-      return;
-    }
-    if (role === "CUSTOMER") {
-      await signOut({ redirect: false });
-      setError("root", { message: "You do not have admin access." });
-      return;
-    }
-    setError("root", { message: "Invalid credentials. Please try again." });
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    window.location.replace("/admin");
   };
 
   return (
