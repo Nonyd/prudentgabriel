@@ -6,6 +6,7 @@ import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
 import { getNextStage, getPreviousStage } from "@/lib/bespoke-stages";
 import { buildStageEmailData, sendBespokeStageEmail } from "@/lib/bespoke-email";
 import { notifyStageAdvanced } from "@/lib/notifications";
+import { notifyClientBespokeStageComplete } from "@/lib/customer-notifications";
 
 type Params = { params: Promise<{ orderId: string }> };
 
@@ -106,6 +107,15 @@ export async function POST(req: NextRequest, { params }: Params) {
       orderId: order.id,
       orderRef: order.orderRef,
       stage: currentStage,
+    });
+
+    notifyClientBespokeStageComplete({
+      orderId: order.id,
+      orderRef: order.orderRef,
+      stage: currentStage,
+      trackingToken: order.trackingToken,
+      clientProfileId: order.clientProfileId,
+      clientEmail: order.clientEmail,
     });
 
     return NextResponse.json({ item: updated });

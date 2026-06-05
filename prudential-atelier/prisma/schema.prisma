@@ -38,6 +38,7 @@ model User {
   savedPaymentMethods SavedPaymentMethod[]
   clientProfile       ClientProfile?
   staffProfile        StaffProfile?
+  customerNotifications CustomerNotification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -789,6 +790,21 @@ model AdminNotification {
   @@index([isRead, createdAt])
 }
 
+model CustomerNotification {
+  id        String                     @id @default(cuid())
+  userId    String
+  user      User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      CustomerNotificationType
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean                    @default(false)
+  entityId  String?
+  createdAt DateTime                   @default(now())
+
+  @@index([userId, isRead, createdAt])
+}
+
 model TeamInvitation {
   id         String   @id @default(cuid())
   email      String   @unique
@@ -835,6 +851,15 @@ enum AdminNotificationType {
   PAYMENT_FAILED
   NEW_CUSTOMER
   COUPON_EXPIRING
+}
+
+enum CustomerNotificationType {
+  BESPOKE_STAGE
+  ORDER_UPDATE
+  CONSULTATION
+  PAYMENT
+  LOYALTY
+  GENERAL
 }
 
 enum SettingType {
