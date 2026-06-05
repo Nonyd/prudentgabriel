@@ -867,6 +867,25 @@ async function upsertBespokeOrder(params: {
   return order;
 }
 
+async function migrateLegacyOrderRefs() {
+  const legacy = await prisma.bespokeOrder.findMany({
+    where: { orderRef: { startsWith: "ORD-" } },
+    select: { id: true, orderRef: true },
+  });
+  for (const row of legacy) {
+    const updatedRef = row.orderRef.replace(/^ORD-/, "INV-");
+    const conflict = await prisma.bespokeOrder.findFirst({
+      where: { orderRef: updatedRef, NOT: { id: row.id } },
+    });
+    if (!conflict) {
+      await prisma.bespokeOrder.update({ where: { id: row.id }, data: { orderRef: updatedRef } });
+    }
+  }
+  if (legacy.length) {
+    console.log(`  ↪ Migrated ${legacy.length} legacy ORD-* order ref(s) to INV-*`);
+  }
+}
+
 async function seedBespokeOrders(
   clientMap: Record<string, { userId: string; profileId: string }>,
   staffMap: Record<string, { userId: string; profileId: string }>,
@@ -875,7 +894,7 @@ async function seedBespokeOrders(
   const now = new Date();
 
   await upsertBespokeOrder({
-    orderRef: "ORD-2847",
+    orderRef: "INV-2847",
     clientEmail: "amaka.nwosu@gmail.com",
     clientMap,
     staffMap,
@@ -892,7 +911,7 @@ async function seedBespokeOrders(
   });
 
   await upsertBespokeOrder({
-    orderRef: "ORD-2848",
+    orderRef: "INV-2848",
     clientEmail: "chisom.eze@yahoo.com",
     clientMap,
     staffMap,
@@ -909,7 +928,7 @@ async function seedBespokeOrders(
   });
 
   await upsertBespokeOrder({
-    orderRef: "ORD-2849",
+    orderRef: "INV-2849",
     clientEmail: "fatima.aliyu@gmail.com",
     clientMap,
     staffMap,
@@ -924,7 +943,7 @@ async function seedBespokeOrders(
   });
 
   await upsertBespokeOrder({
-    orderRef: "ORD-2850",
+    orderRef: "INV-2850",
     clientEmail: "blessing.obi@hotmail.com",
     clientMap,
     staffMap,
@@ -939,7 +958,7 @@ async function seedBespokeOrders(
   });
 
   await upsertBespokeOrder({
-    orderRef: "ORD-2851",
+    orderRef: "INV-2851",
     clientEmail: "sandra.dike@gmail.com",
     clientMap,
     staffMap,
@@ -1202,7 +1221,7 @@ async function seedInvoices() {
       depositRequired: 325_000,
       depositPaid: 325_000,
       balanceDue: 325_000,
-      notes: "Linked to bespoke order ORD-2847",
+      notes: "Linked to bespoke order INV-2847",
     },
     create: {
       invoiceNumber: "INV-2847",
@@ -1225,7 +1244,7 @@ async function seedInvoices() {
           reference: "DEMO-PAY-2847",
         },
       ],
-      notes: "Linked to bespoke order ORD-2847",
+      notes: "Linked to bespoke order INV-2847",
     },
   });
 
@@ -1239,7 +1258,7 @@ async function seedInvoices() {
       depositPaid: 1_850_000,
       balanceDue: 0,
       paidAt: addDays(new Date(), -5),
-      notes: "Linked to bespoke order ORD-2848 — fully paid",
+      notes: "Linked to bespoke order INV-2848 — fully paid",
     },
     create: {
       invoiceNumber: "INV-2848",
@@ -1271,7 +1290,7 @@ async function seedInvoices() {
           method: "Bank Transfer",
         },
       ],
-      notes: "Linked to bespoke order ORD-2848",
+      notes: "Linked to bespoke order INV-2848",
     },
   });
 
@@ -1604,6 +1623,7 @@ async function main() {
   const productIds = await seedProducts();
   const clientMap = await seedClients(clientHash);
   const staffMap = await seedStaff(staffHash);
+  await migrateLegacyOrderRefs();
   await seedBespokeOrders(clientMap, staffMap);
   await seedConsultations(clientMap);
   await seedBlogPosts();

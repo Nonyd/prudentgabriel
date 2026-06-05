@@ -113,7 +113,7 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
     () => [
       {
         key: "ref",
-        header: "Order Ref",
+        header: "Invoice #",
         cell: (row) => (
           <Link
             href={`/admin/bespoke/${row.id}`}

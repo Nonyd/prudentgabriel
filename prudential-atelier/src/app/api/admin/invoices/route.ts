@@ -11,7 +11,7 @@ import {
   syncLineItemAmounts,
 } from "@/lib/invoice";
 import { getSetting } from "@/lib/settings";
-import { mapBespokeOrdersByRequestId } from "@/lib/invoice-bespoke-order";
+import { mapBespokeOrdersByRequestId, mapBespokeOrdersByClientEmail, syncBespokeOrderRefFromInvoice } from "@/lib/invoice-bespoke-order";
 import type { InvoiceLineItem } from "@/types/invoice";
 
 const lineItemInput = z.object({
@@ -103,11 +103,13 @@ export async function GET(req: NextRequest) {
   const orderByRequestId = await mapBespokeOrdersByRequestId(
     invoices.map((invoice) => invoice.bespokeRequestId).filter((id): id is string => Boolean(id)),
   );
+  const orderByEmail = await mapBespokeOrdersByClientEmail(invoices.map((invoice) => invoice.clientEmail));
   const invoicesWithOrders = invoices.map((invoice) => ({
     ...invoice,
-    bespokeOrder: invoice.bespokeRequestId
-      ? (orderByRequestId.get(invoice.bespokeRequestId) ?? null)
-      : null,
+    bespokeOrder:
+      (invoice.bespokeRequestId ? orderByRequestId.get(invoice.bespokeRequestId) : null) ??
+      orderByEmail.get(invoice.clientEmail.trim().toLowerCase()) ??
+      null,
   }));
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -338,6 +340,12 @@ export async function POST(req: NextRequest) {
     include: {
       bespokeRequest: { select: { id: true, requestNumber: true, occasion: true } },
     },
+  });
+
+  await syncBespokeOrderRefFromInvoice({
+    invoiceNumber: created.invoiceNumber,
+    clientEmail: created.clientEmail,
+    bespokeRequestId: created.bespokeRequestId,
   });
 
   return NextResponse.json(created);

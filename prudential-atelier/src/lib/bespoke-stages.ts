@@ -87,9 +87,10 @@ export function isStageCompleted(
   return STAGE_ORDER.indexOf(stage) < STAGE_ORDER.indexOf(currentStage);
 }
 
+/** @deprecated Use allocateAtelierReference() — order refs must match invoice numbers. */
 export function generateBespokeOrderRef(): string {
   const n = Math.floor(Math.random() * 9000) + 1000;
-  return `ORD-${n}`;
+  return `INV-${n}`;
 }
 
 export function generateQuoteRef(): string {

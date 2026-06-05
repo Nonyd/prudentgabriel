@@ -23,6 +23,30 @@ export async function mapBespokeOrdersByRequestId(
   return map;
 }
 
+export async function mapBespokeOrdersByClientEmail(
+  emails: string[],
+): Promise<Map<string, BespokeOrderLink>> {
+  const normalized = Array.from(
+    new Set(emails.map((email) => email.trim().toLowerCase()).filter(Boolean)),
+  );
+  if (normalized.length === 0) return new Map();
+
+  const orders = await prisma.bespokeOrder.findMany({
+    where: { clientEmail: { in: normalized } },
+    select: { id: true, orderRef: true, clientEmail: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const map = new Map<string, BespokeOrderLink>();
+  for (const order of orders) {
+    const key = order.clientEmail.trim().toLowerCase();
+    if (!map.has(key)) {
+      map.set(key, { id: order.id, orderRef: order.orderRef });
+    }
+  }
+  return map;
+}
+
 export async function getBespokeOrderForRequest(
   bespokeRequestId: string | null | undefined,
 ): Promise<BespokeOrderLink | null> {
@@ -31,5 +55,35 @@ export async function getBespokeOrderForRequest(
     where: { bespokeRequestId },
     select: { id: true, orderRef: true },
     orderBy: { createdAt: "desc" },
+  });
+}
+
+/** Keep pipeline order ref aligned with the invoice number clients see. */
+export async function syncBespokeOrderRefFromInvoice(params: {
+  invoiceNumber: string;
+  clientEmail: string;
+  bespokeRequestId?: string | null;
+}): Promise<void> {
+  const email = params.clientEmail.trim().toLowerCase();
+  let order =
+    params.bespokeRequestId != null
+      ? await prisma.bespokeOrder.findFirst({
+          where: { bespokeRequestId: params.bespokeRequestId },
+          orderBy: { createdAt: "desc" },
+        })
+      : null;
+
+  if (!order) {
+    order = await prisma.bespokeOrder.findFirst({
+      where: { clientEmail: email },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  if (!order || order.orderRef === params.invoiceNumber) return;
+
+  await prisma.bespokeOrder.update({
+    where: { id: order.id },
+    data: { orderRef: params.invoiceNumber },
   });
 }

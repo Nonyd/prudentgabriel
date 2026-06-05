@@ -1,8 +1,7 @@
 import { InvoiceStatus, Prisma, QuoteStatus } from "@prisma/client";
 import { nanoid } from "nanoid";
 import { prisma } from "@/lib/prisma";
-import { generateBespokeOrderRef } from "@/lib/bespoke-stages";
-import { generateInvoiceNumber, calculateInvoiceTotals, syncLineItemAmounts } from "@/lib/invoice";
+import { allocateAtelierReference, calculateInvoiceTotals, syncLineItemAmounts } from "@/lib/invoice";
 import type { InvoiceLineItem } from "@/types/invoice";
 
 type QuotationRecord = {
@@ -20,13 +19,13 @@ type QuotationRecord = {
   status: QuoteStatus;
 };
 
-async function uniqueOrderRef(): Promise<string> {
+async function allocateSharedAtelierReference(): Promise<string> {
   for (let i = 0; i < 8; i++) {
-    const orderRef = generateBespokeOrderRef();
+    const orderRef = await allocateAtelierReference();
     const exists = await prisma.bespokeOrder.findUnique({ where: { orderRef } });
     if (!exists) return orderRef;
   }
-  return generateBespokeOrderRef();
+  return allocateAtelierReference();
 }
 
 function mapLineItems(raw: unknown): InvoiceLineItem[] {
@@ -80,8 +79,8 @@ export async function convertQuotationToOrder(
     depositPaid: 0,
   });
 
-  const invoiceNumber = await generateInvoiceNumber();
-  const orderRef = await uniqueOrderRef();
+  const invoiceNumber = await allocateSharedAtelierReference();
+  const orderRef = invoiceNumber;
 
   const result = await prisma.$transaction(async (tx) => {
     const invoice = await tx.invoice.create({

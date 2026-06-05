@@ -44,10 +44,16 @@ export async function generateInvoiceNumber(): Promise<string> {
   const prefix = (await getSetting("invoice_prefix"))?.trim() || "PA-INV";
   const year = new Date().getFullYear();
   const stem = `${prefix}-${year}-`;
-  const count = await prisma.invoice.count({
-    where: { invoiceNumber: { startsWith: stem } },
-  });
-  return `${stem}${String(count + 1).padStart(4, "0")}`;
+  const [invoiceCount, orderCount] = await Promise.all([
+    prisma.invoice.count({ where: { invoiceNumber: { startsWith: stem } } }),
+    prisma.bespokeOrder.count({ where: { orderRef: { startsWith: stem } } }),
+  ]);
+  return `${stem}${String(Math.max(invoiceCount, orderCount) + 1).padStart(4, "0")}`;
+}
+
+/** Shared atelier reference — same value on invoices and bespoke pipeline orders. */
+export async function allocateAtelierReference(): Promise<string> {
+  return generateInvoiceNumber();
 }
 
 export async function getInvoiceSettings(): Promise<InvoiceBusinessDetails> {
