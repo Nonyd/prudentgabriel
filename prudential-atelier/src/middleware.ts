@@ -1,7 +1,18 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
-import { isAdminRole } from '@/lib/roles'
+
+const ADMIN_ROLES = [
+  'SUPER_ADMIN',
+  'ADMIN',
+  'STAFF_ADMIN',
+  'BESPOKE_MANAGER',
+  'RTW_MANAGER',
+  'CONTENT_MANAGER',
+  'FINANCE_MANAGER',
+  'HR_MANAGER',
+  'CONSULTATION_MANAGER',
+]
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
@@ -94,17 +105,12 @@ export async function middleware(request: NextRequest) {
       )
     }
 
-    const role = token.role as string | undefined
-    const isStaff = Boolean(token.isStaff)
+    console.log('ADMIN GATE - token role:', token?.role,
+      'isStaff:', token?.isStaff)
 
-    // Non-admin staff only — do not block STAFF_ADMIN / managers
-    if (isStaff && !isAdminRole(role)) {
-      return NextResponse.redirect(
-        new URL('/staff', request.url)
-      )
-    }
+    const role = token?.role as string ?? ''
 
-    if (!isAdminRole(role)) {
+    if (!ADMIN_ROLES.includes(role)) {
       return NextResponse.redirect(
         new URL('/admin-login', request.url)
       )
