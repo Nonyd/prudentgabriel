@@ -16,6 +16,7 @@ function asCurrency(c: string): InvoiceCurrency {
 
 export type InvoiceDetailInitial = Invoice & {
   bespokeRequest: { id: string; requestNumber: string; occasion: string; status: string } | null;
+  bespokeOrder: { id: string; orderRef: string } | null;
 };
 
 export function InvoiceDetailAdmin({ initial }: { initial: InvoiceDetailInitial }) {
@@ -44,7 +45,8 @@ export function InvoiceDetailAdmin({ initial }: { initial: InvoiceDetailInitial 
       body: JSON.stringify({ amount, method, reference, fullPayment: full }),
     });
     if (!res.ok) return toast.error("Update failed");
-    setInv((await res.json()) as InvoiceDetailInitial);
+    const updated = (await res.json()) as InvoiceDetailInitial;
+    setInv((prev) => ({ ...updated, bespokeOrder: updated.bespokeOrder ?? prev.bespokeOrder }));
     toast.success("Payment recorded");
   };
 
@@ -56,7 +58,8 @@ export function InvoiceDetailAdmin({ initial }: { initial: InvoiceDetailInitial 
       body: JSON.stringify({ status: "CANCELLED" }),
     });
     if (!res.ok) return toast.error("Could not cancel");
-    setInv((await res.json()) as InvoiceDetailInitial);
+    const updated = (await res.json()) as InvoiceDetailInitial;
+    setInv((prev) => ({ ...updated, bespokeOrder: updated.bespokeOrder ?? prev.bespokeOrder }));
   };
 
   return (
@@ -135,9 +138,18 @@ export function InvoiceDetailAdmin({ initial }: { initial: InvoiceDetailInitial 
       {inv.bespokeRequest ? (
         <div className="mt-6 border border-[#EBEBEA] bg-[#FAFAF8] p-6">
           <p className="font-body text-[11px] uppercase text-[#6B6B68]">Order</p>
-          <Link className="mt-2 inline-block text-olive underline" href={`/admin/bespoke/${inv.bespokeRequest.id}`}>
-            {inv.bespokeRequest.requestNumber} — {inv.bespokeRequest.occasion}
-          </Link>
+          {inv.bespokeOrder ? (
+            <Link className="mt-2 inline-block text-olive underline" href={`/admin/bespoke/${inv.bespokeOrder.id}`}>
+              {inv.bespokeOrder.orderRef} — {inv.bespokeRequest.occasion}
+            </Link>
+          ) : (
+            <Link
+              className="mt-2 inline-block text-olive underline"
+              href={`/admin/bespoke/intake/${inv.bespokeRequest.id}`}
+            >
+              {inv.bespokeRequest.requestNumber} — {inv.bespokeRequest.occasion}
+            </Link>
+          )}
         </div>
       ) : null}
     </div>

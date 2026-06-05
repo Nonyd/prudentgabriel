@@ -11,6 +11,7 @@ import {
   syncLineItemAmounts,
 } from "@/lib/invoice";
 import { getSetting } from "@/lib/settings";
+import { mapBespokeOrdersByRequestId } from "@/lib/invoice-bespoke-order";
 import type { InvoiceLineItem } from "@/types/invoice";
 
 const lineItemInput = z.object({
@@ -99,6 +100,16 @@ export async function GET(req: NextRequest) {
     }),
   ]);
 
+  const orderByRequestId = await mapBespokeOrdersByRequestId(
+    invoices.map((invoice) => invoice.bespokeRequestId).filter((id): id is string => Boolean(id)),
+  );
+  const invoicesWithOrders = invoices.map((invoice) => ({
+    ...invoice,
+    bespokeOrder: invoice.bespokeRequestId
+      ? (orderByRequestId.get(invoice.bespokeRequestId) ?? null)
+      : null,
+  }));
+
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const statsParam = searchParams.get("stats");
@@ -122,7 +133,7 @@ export async function GET(req: NextRequest) {
       }),
     ]);
     return NextResponse.json({
-      invoices,
+      invoices: invoicesWithOrders,
       total,
       page,
       totalPages,
@@ -135,7 +146,7 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({ invoices, total, page, totalPages });
+  return NextResponse.json({ invoices: invoicesWithOrders, total, page, totalPages });
 }
 
 export async function POST(req: NextRequest) {

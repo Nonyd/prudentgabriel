@@ -9,6 +9,7 @@ import type { InvoiceCurrency } from "@/types/invoice";
 
 type Row = Invoice & {
   bespokeRequest: { id: string; requestNumber: string; occasion: string } | null;
+  bespokeOrder: { id: string; orderRef: string } | null;
 };
 
 function asCurrency(c: string): InvoiceCurrency {
@@ -226,8 +227,15 @@ export function InvoicesClient() {
                       <div className="text-[#6B6B68]">{r.clientEmail}</div>
                     </td>
                     <td className="px-3 py-2">
-                      {r.bespokeRequest ? (
-                        <Link className="text-olive underline" href={`/admin/bespoke/${r.bespokeRequest.id}`}>
+                      {r.bespokeOrder ? (
+                        <Link className="text-olive underline" href={`/admin/bespoke/${r.bespokeOrder.id}`}>
+                          {r.bespokeOrder.orderRef}
+                        </Link>
+                      ) : r.bespokeRequest ? (
+                        <Link
+                          className="text-olive underline"
+                          href={`/admin/bespoke/intake/${r.bespokeRequest.id}`}
+                        >
                           {r.bespokeRequest.requestNumber}
                         </Link>
                       ) : (
@@ -237,7 +245,7 @@ export function InvoicesClient() {
                     <td className="px-3 py-2">
                       {r.currency} {formatInvoiceCurrency(r.total, cur)}
                     </td>
-                    <td className={`px-3 py-2 ${r.balanceDue > 0 ? "text-red-800" : ""}`}>
+                    <td className={`px-3 py-2 ${r.balanceDue > 0 ? "text-red-800" : "text-ink"}`}>
                       {formatInvoiceCurrency(r.balanceDue, cur)}
                     </td>
                     <td className="px-3 py-2">{r.status.replace(/_/g, " ")}</td>
