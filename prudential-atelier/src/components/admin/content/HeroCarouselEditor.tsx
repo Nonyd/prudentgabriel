@@ -1,13 +1,9 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import { ChevronDown, ChevronUp, Film, ImageIcon, Plus, Trash2 } from "lucide-react";
 import { AdminImageUrlField } from "@/components/admin/AdminImageUrlField";
-import { parseHeroCarouselItems, type HeroCarouselItem } from "@/lib/hero-carousel";
-
-function parseItems(raw: string): HeroCarouselItem[] {
-  const items = parseHeroCarouselItems(raw);
-  return items;
-}
+import { parseHeroCarouselEditorItems, type HeroCarouselItem } from "@/lib/hero-carousel";
 
 export function HeroCarouselEditor({
   value,
@@ -16,14 +12,44 @@ export function HeroCarouselEditor({
   value: string;
   onChange: (next: string) => void;
 }) {
-  const items = parseItems(value);
+  const [items, setItems] = useState<HeroCarouselItem[]>(() => parseHeroCarouselEditorItems(value));
 
-  const updateItems = (next: HeroCarouselItem[]) => {
-    onChange(JSON.stringify(next));
+  useEffect(() => {
+    setItems(parseHeroCarouselEditorItems(value));
+  }, [value]);
+
+  useEffect(() => {
+    console.log("[HeroCarouselEditor] items:", items);
+  }, [items]);
+
+  const commitItems = useCallback(
+    (next: HeroCarouselItem[]) => {
+      setItems(next);
+      onChange(JSON.stringify(next));
+    },
+    [onChange],
+  );
+
+  const handleAddImage = () => {
+    commitItems([
+      ...items,
+      {
+        type: "image" as const,
+        url: "",
+        alt: "",
+      },
+    ]);
   };
 
-  const addItem = (type: "image" | "video") => {
-    updateItems([...items, { type, url: "", alt: "" }]);
+  const handleAddVideo = () => {
+    commitItems([
+      ...items,
+      {
+        type: "video" as const,
+        url: "",
+        alt: "",
+      },
+    ]);
   };
 
   return (
@@ -35,14 +61,14 @@ export function HeroCarouselEditor({
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => addItem("image")}
+            onClick={handleAddImage}
             className="inline-flex items-center gap-1 rounded-[3px] border border-sand bg-white px-3 py-1.5 font-sans text-xs text-choc hover:bg-sand/20"
           >
             <Plus className="h-3.5 w-3.5" /> Add image
           </button>
           <button
             type="button"
-            onClick={() => addItem("video")}
+            onClick={handleAddVideo}
             className="inline-flex items-center gap-1 rounded-[3px] border border-sand bg-white px-3 py-1.5 font-sans text-xs text-choc hover:bg-sand/20"
           >
             <Plus className="h-3.5 w-3.5" /> Add video
@@ -58,7 +84,7 @@ export function HeroCarouselEditor({
 
       <div className="space-y-3">
         {items.map((item, index) => (
-          <div key={index} className="rounded-md border border-sand bg-white p-4">
+          <div key={`${item.type}-${index}`} className="rounded-md border border-sand bg-white p-4">
             <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-14 w-10 shrink-0 items-center justify-center overflow-hidden rounded border border-sand bg-sand/20">
@@ -88,7 +114,7 @@ export function HeroCarouselEditor({
                   onClick={() => {
                     const next = [...items];
                     [next[index - 1], next[index]] = [next[index], next[index - 1]];
-                    updateItems(next);
+                    commitItems(next);
                   }}
                   className="rounded p-1 text-text-light hover:text-choc disabled:opacity-30"
                   aria-label="Move up"
@@ -101,7 +127,7 @@ export function HeroCarouselEditor({
                   onClick={() => {
                     const next = [...items];
                     [next[index], next[index + 1]] = [next[index + 1], next[index]];
-                    updateItems(next);
+                    commitItems(next);
                   }}
                   className="rounded p-1 text-text-light hover:text-choc disabled:opacity-30"
                   aria-label="Move down"
@@ -110,7 +136,7 @@ export function HeroCarouselEditor({
                 </button>
                 <button
                   type="button"
-                  onClick={() => updateItems(items.filter((_, i) => i !== index))}
+                  onClick={() => commitItems(items.filter((_, i) => i !== index))}
                   className="rounded p-1 text-text-light hover:text-danger"
                   aria-label="Remove item"
                 >
@@ -127,7 +153,7 @@ export function HeroCarouselEditor({
                   onChange={(url) => {
                     const next = [...items];
                     next[index] = { ...next[index], url };
-                    updateItems(next);
+                    commitItems(next);
                   }}
                   folder="prudent-gabriel/hero"
                 />
@@ -142,7 +168,7 @@ export function HeroCarouselEditor({
                     onChange={(e) => {
                       const next = [...items];
                       next[index] = { ...next[index], url: e.target.value };
-                      updateItems(next);
+                      commitItems(next);
                     }}
                     placeholder="https://..."
                     className="w-full rounded-[3px] border border-sand px-3 py-2 font-sans text-sm text-ink focus:border-choc focus:outline-none"
@@ -160,7 +186,7 @@ export function HeroCarouselEditor({
                   onChange={(e) => {
                     const next = [...items];
                     next[index] = { ...next[index], alt: e.target.value };
-                    updateItems(next);
+                    commitItems(next);
                   }}
                   className="w-full rounded-[3px] border border-sand px-3 py-2 font-sans text-sm text-ink focus:border-choc focus:outline-none"
                 />

@@ -32,6 +32,20 @@ export const FALLBACK_CAROUSEL_ITEMS: HeroCarouselItem[] = [
   },
 ];
 
+function mapCarouselEntry(
+  entry: unknown,
+  { requireUrl }: { requireUrl: boolean },
+): HeroCarouselItem | null {
+  if (!entry || typeof entry !== "object") return null;
+  const item = entry as Record<string, unknown>;
+  const type = item.type === "video" ? "video" : item.type === "image" ? "image" : null;
+  const url = typeof item.url === "string" ? item.url.trim() : "";
+  if (!type || (requireUrl && !url)) return null;
+  const alt = typeof item.alt === "string" ? item.alt : undefined;
+  return { type, url, ...(alt !== undefined ? { alt } : {}) };
+}
+
+/** Public/runtime parse — drops items without a URL. */
 export function parseHeroCarouselItems(raw: string | null | undefined): HeroCarouselItem[] {
   if (!raw?.trim()) return [];
 
@@ -40,15 +54,23 @@ export function parseHeroCarouselItems(raw: string | null | undefined): HeroCaro
     if (!Array.isArray(parsed)) return [];
 
     return parsed
-      .map((entry): HeroCarouselItem | null => {
-        if (!entry || typeof entry !== "object") return null;
-        const item = entry as Record<string, unknown>;
-        const type = item.type === "video" ? "video" : item.type === "image" ? "image" : null;
-        const url = typeof item.url === "string" ? item.url.trim() : "";
-        if (!type || !url) return null;
-        const alt = typeof item.alt === "string" ? item.alt : undefined;
-        return { type, url, ...(alt ? { alt } : {}) };
-      })
+      .map((entry) => mapCarouselEntry(entry, { requireUrl: true }))
+      .filter((item): item is HeroCarouselItem => item !== null);
+  } catch {
+    return [];
+  }
+}
+
+/** Admin editor parse — keeps draft rows with empty URLs so Add Image/Video works. */
+export function parseHeroCarouselEditorItems(raw: string | null | undefined): HeroCarouselItem[] {
+  if (!raw?.trim()) return [];
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .map((entry) => mapCarouselEntry(entry, { requireUrl: false }))
       .filter((item): item is HeroCarouselItem => item !== null);
   } catch {
     return [];

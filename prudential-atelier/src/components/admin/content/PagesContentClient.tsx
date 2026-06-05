@@ -302,7 +302,9 @@ function PageEditor({ page }: { page: CmsPageDef }) {
           <div className="space-y-4">
             {section.fields.map((field) => (
               <div key={field.key}>
-                <label className="mb-1.5 block font-sans text-xs font-medium text-text-mid">{field.label}</label>
+                {field.type !== "carousel" ? (
+                  <label className="mb-1.5 block font-sans text-xs font-medium text-text-mid">{field.label}</label>
+                ) : null}
                 <FieldInput
                   field={field}
                   value={values[field.key] ?? field.default}
