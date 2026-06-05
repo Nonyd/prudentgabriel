@@ -164,7 +164,7 @@ export function AdminProfileDrawer({
               <Link href="/" className="font-body text-xs text-[#6B6B68] hover:text-ink">
                 ← Back to Store
               </Link>
-              <button type="button" onClick={() => void signOut({ callbackUrl: "/admin-login" })} className="font-body text-xs text-red-500 hover:text-red-600">
+              <button type="button" onClick={() => void signOut({ callbackUrl: "/login?tab=admin" })} className="font-body text-xs text-red-500 hover:text-red-600">
                 Logout
               </button>
             </div>

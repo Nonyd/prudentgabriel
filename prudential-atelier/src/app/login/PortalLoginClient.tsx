@@ -2,22 +2,25 @@
 
 import Link from "next/link";
 import { signIn, signOut } from "next-auth/react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useEffect, useId, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { loginSchema, type LoginInput } from "@/validations/auth";
+import { Logo } from "@/components/ui/Logo";
+import { cn } from "@/lib/utils";
 import {
   hardNavigate,
   isSignInFailure,
   resolveStaffPortalRedirect,
   waitForClientSession,
 } from "@/lib/client-auth";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { useEffect, useId, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { loginSchema, type LoginInput } from "@/validations/auth";
-import { Logo } from "@/components/ui/Logo";
-import { cn } from "@/lib/utils";
+import { isAdminRole } from "@/lib/roles";
 
-function StaffField({
+type PortalTab = "admin" | "staff";
+
+function LoginField({
   id,
   label,
   type = "text",
@@ -51,8 +54,10 @@ function StaffField({
           id={id}
           type={inputType}
           autoComplete={autoComplete}
+          aria-invalid={error ? true : undefined}
           className={cn(
-            "w-full rounded-[3px] border-[0.5px] border-[var(--sand)] bg-white px-4 py-3 font-sans text-[13px] text-[#2A1A0E] outline-none transition-colors focus:border-[#442913]",
+            "w-full rounded-[3px] border-[0.5px] border-[var(--sand)] bg-white px-4 py-3 font-sans text-[13px] text-[#2A1A0E] outline-none transition-colors",
+            "focus:border-[#442913]",
             error && "border-[#8B2020]",
             isPassword && "pr-11",
           )}
@@ -66,11 +71,11 @@ function StaffField({
           <button
             type="button"
             tabIndex={-1}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-light)]"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-light)] hover:text-[var(--text-mid)]"
             onClick={() => setShowPassword((s) => !s)}
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
-            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {showPassword ? <EyeOff className="h-4 w-4" strokeWidth={1.5} /> : <Eye className="h-4 w-4" strokeWidth={1.5} />}
           </button>
         ) : null}
       </div>
@@ -83,26 +88,63 @@ function StaffField({
   );
 }
 
-export function StaffLoginClient() {
+const TAB_COPY: Record<
+  PortalTab,
+  { badge: string; title: string; subtitle: string }
+> = {
+  admin: {
+    badge: "OPERATIONS SUITE",
+    title: "Admin Sign In",
+    subtitle: "For management and operations staff",
+  },
+  staff: {
+    badge: "STAFF PORTAL",
+    title: "Staff Sign In",
+    subtitle: "For production staff only",
+  },
+};
+
+export function PortalLoginClient() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const emailId = useId();
   const passwordId = useId();
+  const tab: PortalTab = searchParams.get("tab") === "staff" ? "staff" : "admin";
+  const copy = TAB_COPY[tab];
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
     setError,
     clearErrors,
+    reset,
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
 
   useEffect(() => {
     if (searchParams.get("error") === "no_staff_access") {
+      if (tab !== "staff") {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("tab", "staff");
+        router.replace(`/login?${params.toString()}`, { scroll: false });
+        return;
+      }
       setError("root", {
         message:
-          "This account does not have staff portal access. Use the client login or contact your manager.",
+          "This account does not have staff portal access. Use the Admin tab or contact your manager.",
       });
     }
-  }, [searchParams, setError]);
+  }, [router, searchParams, setError, tab]);
+
+  const setTab = (next: PortalTab) => {
+    if (next === tab) return;
+    reset();
+    clearErrors();
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", next);
+    params.delete("error");
+    router.replace(`/login?${params.toString()}`, { scroll: false });
+  };
 
   const onSubmit = async (data: LoginInput) => {
     try {
@@ -123,12 +165,34 @@ export function StaffLoginClient() {
         until: (current) => Boolean(current?.user?.id && current?.user?.role),
       });
 
+      if (!session?.user?.id) {
+        setError("root", { message: "Something went wrong. Please try again." });
+        return;
+      }
+
+      if (session.user.mustResetPassword) {
+        hardNavigate("/reset-password?required=true");
+        return;
+      }
+
+      if (tab === "admin") {
+        if (!isAdminRole(session.user.role)) {
+          await signOut({ redirect: false });
+          setError("root", {
+            message: "This account does not have admin access. Try the Staff tab or contact your manager.",
+          });
+          return;
+        }
+        hardNavigate("/admin");
+        return;
+      }
+
       const destination = resolveStaffPortalRedirect(session);
       if (!destination) {
         await signOut({ redirect: false });
         setError("root", {
           message:
-            "This account does not have staff portal access. Use the client login or contact your manager.",
+            "This account does not have staff portal access. Try the Admin tab or contact your manager.",
         });
         return;
       }
@@ -141,19 +205,55 @@ export function StaffLoginClient() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6 py-12">
-      <div className="w-[420px] max-w-full rounded-xl border-[0.5px] border-[var(--sand)] bg-[#F7F2EC] px-10 py-12">
+      <div className="w-[420px] max-w-full rounded-xl border-[0.5px] border-[var(--sand)] bg-[#F7F2EC] px-10 py-12 shadow-none">
         <div className="flex flex-col items-center text-center">
-          <Logo variant="dark" size="md" themeAdaptive={false} showSubline={false} href={undefined} />
+          <Logo
+            variant="dark"
+            size="md"
+            themeAdaptive={false}
+            showSubline={false}
+            href={undefined}
+            wordmarkTitleClassName="font-serif text-[20px] font-medium tracking-[0.2em] text-[#442913]"
+          />
           <p className="mt-1 font-sans text-[9px] uppercase tracking-[0.3em] text-[var(--lightbr)]">/ ATELIER</p>
           <div className="mx-auto my-4 h-px w-10 bg-[#C9A84C]" aria-hidden />
           <p className="mb-6 font-sans text-[9px] font-semibold uppercase tracking-[0.24em] text-[var(--lightbr)]">
-            STAFF PORTAL
+            {copy.badge}
           </p>
         </div>
 
-        <h1 className="mb-1 text-center font-serif text-[32px] font-normal text-[#442913]">Staff Sign In</h1>
+        <div
+          className="mb-8 flex rounded-[3px] border-[0.5px] border-[var(--sand)] bg-white p-1"
+          role="tablist"
+          aria-label="Sign in as"
+        >
+          {(["admin", "staff"] as const).map((value) => {
+            const active = tab === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setTab(value)}
+                className={cn(
+                  "flex-1 rounded-[2px] py-2.5 font-sans text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors",
+                  active
+                    ? "bg-[#442913] text-[#E2D1C2]"
+                    : "text-[var(--text-mid)] hover:text-[#442913]",
+                )}
+              >
+                {value === "admin" ? "Admin" : "Staff"}
+              </button>
+            );
+          })}
+        </div>
+
+        <h1 className="mb-1 text-center font-serif text-[32px] font-normal leading-tight text-[#442913]">
+          {copy.title}
+        </h1>
         <p className="mb-8 text-center font-sans text-xs font-light text-[var(--text-light)]">
-          For production staff only
+          {copy.subtitle}
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
@@ -167,7 +267,7 @@ export function StaffLoginClient() {
             </p>
           ) : null}
 
-          <StaffField
+          <LoginField
             id={emailId}
             label="EMAIL"
             type="email"
@@ -180,7 +280,7 @@ export function StaffLoginClient() {
             }}
           />
 
-          <StaffField
+          <LoginField
             id={passwordId}
             label="PASSWORD"
             type="password"
@@ -196,11 +296,11 @@ export function StaffLoginClient() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-[3px] bg-[#442913] px-4 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-[#E2D1C2] disabled:opacity-70"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-[3px] bg-[#442913] px-4 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-[#E2D1C2] transition-colors hover:bg-[#5C3422] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
                 SIGNING IN...
               </>
             ) : (
@@ -210,7 +310,10 @@ export function StaffLoginClient() {
         </form>
 
         <p className="mt-8 text-center">
-          <Link href="/" className="font-sans text-[11px] text-[var(--text-light)] hover:text-[var(--text-mid)]">
+          <Link
+            href="/"
+            className="font-sans text-[11px] font-light text-[var(--text-light)] transition-colors hover:text-[var(--text-mid)]"
+          >
             ← Back to website
           </Link>
         </p>

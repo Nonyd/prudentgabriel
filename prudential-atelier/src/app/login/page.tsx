@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { LoginModalRedirect } from "./LoginModalRedirect";
+import { LoginPageRouter } from "./LoginPageRouter";
 
 export default function LoginPage() {
   return (
     <Suspense fallback={null}>
-      <LoginModalRedirect />
+      <LoginPageRouter />
     </Suspense>
   );
 }

@@ -302,7 +302,7 @@ export function AdminSidebar({
         </Link>
         <button
           type="button"
-          onClick={() => void signOut({ callbackUrl: "/admin-login" })}
+          onClick={() => void signOut({ callbackUrl: "/login?tab=admin" })}
           className="mt-2 flex w-full items-center gap-2 px-2 py-2 font-sans text-[11px] text-[rgba(226,209,194,0.65)] transition-colors hover:text-cream"
         >
           <LogOut className="h-4 w-4" strokeWidth={1.5} />

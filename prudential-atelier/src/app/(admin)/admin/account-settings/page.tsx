@@ -9,14 +9,14 @@ export const dynamic = "force-dynamic";
 export default async function AdminAccountSettingsPage() {
   const session = await auth();
   if (!session?.user?.id || !isAdminRole(session.user.role)) {
-    redirect("/admin-login");
+    redirect("/login?tab=admin");
   }
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { name: true, email: true, image: true },
   });
-  if (!user) redirect("/admin-login");
+  if (!user) redirect("/login?tab=admin");
 
   return (
     <AdminAccountSettingsClient

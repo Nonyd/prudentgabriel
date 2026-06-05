@@ -22,11 +22,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = await auth();
 
   if (!session?.user) {
-    redirect("/admin-login");
+    redirect("/login?tab=admin");
   }
 
   if (!adminRoles.includes(session.user.role)) {
-    redirect("/admin-login");
+    redirect("/login?tab=admin");
   }
 
   let badges: Record<string, number> = {};

@@ -9,6 +9,8 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
   const skipLenis =
     pathname?.startsWith("/admin") ||
     pathname?.startsWith("/admin-login") ||
+    pathname?.startsWith("/login") ||
+    pathname?.startsWith("/staff-login") ||
     pathname?.startsWith("/account");
 
   useEffect(() => {

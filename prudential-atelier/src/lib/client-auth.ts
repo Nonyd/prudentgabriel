@@ -1,9 +1,36 @@
 import { getSession } from "next-auth/react";
 import type { Session } from "next-auth";
 import type { SignInResponse } from "next-auth/react";
+import { isAdminRole } from "@/lib/roles";
 
 export function isSignInFailure(res: SignInResponse | undefined): boolean {
   return !res?.ok || Boolean(res?.error);
+}
+
+export function canAccessStaffPortal(session: Session | null | undefined): boolean {
+  if (!session?.user?.id) return false;
+  const { role, isStaff } = session.user;
+  return isStaff === true || role === "STAFF";
+}
+
+/** Where to send the user after a successful staff-portal sign-in, or null if not allowed. */
+export function resolveStaffPortalRedirect(session: Session | null | undefined): string | null {
+  if (!session?.user?.id) return null;
+
+  if (session.user.mustResetPassword) {
+    return "/reset-password?required=true";
+  }
+
+  const role = session.user.role ?? "";
+  if (isAdminRole(role)) {
+    return "/admin";
+  }
+
+  if (canAccessStaffPortal(session)) {
+    return "/staff";
+  }
+
+  return null;
 }
 
 type WaitOptions = {

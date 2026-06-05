@@ -5,12 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { Logo } from "@/components/ui/Logo";
+import { isAdminRole } from "@/lib/roles";
 
 export function ResetPasswordClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const required = searchParams.get("required") === "true";
-  const { update } = useSession();
+  const { data: session, update } = useSession();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -43,7 +44,10 @@ export function ResetPasswordClient() {
       }
       await update();
       toast.success("Password updated");
-      router.push("/account");
+      const role = session?.user?.role ?? "";
+      const isStaffUser = session?.user?.isStaff === true || role === "STAFF";
+      const destination = isStaffUser ? "/staff" : isAdminRole(role) ? "/admin" : "/account";
+      router.push(destination);
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not update password");

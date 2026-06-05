@@ -88,7 +88,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
         if (dbUser) {
           token.role = dbUser.role;
-          token.isStaff = dbUser.isStaff ?? false;
+          token.isStaff = dbUser.isStaff === true || dbUser.role === "STAFF";
           token.mustResetPassword = dbUser.mustResetPassword;
           token.jobTitle = dbUser.jobTitle ?? undefined;
           token.department = dbUser.department ?? undefined;
@@ -103,7 +103,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
         if (dbUser) {
           token.role = dbUser.role;
-          token.isStaff = dbUser.isStaff ?? false;
+          token.isStaff = dbUser.isStaff === true || dbUser.role === "STAFF";
         }
       }
 
@@ -121,7 +121,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
         if (dbUser) {
           token.mustResetPassword = dbUser.mustResetPassword;
-          token.isStaff = dbUser.isStaff ?? false;
+          token.isStaff = dbUser.isStaff === true || dbUser.role === "STAFF";
           token.jobTitle = dbUser.jobTitle ?? undefined;
           token.department = dbUser.department ?? undefined;
           token.role = dbUser.role;

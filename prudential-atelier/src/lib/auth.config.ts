@@ -21,7 +21,8 @@ export const authConfig = {
         token.id = user.id;
         token.email = user.email;
         token.role = (user as { role: Role }).role;
-        token.isStaff = (user as { isStaff?: boolean }).isStaff ?? false;
+        const role = (user as { role: Role }).role;
+        token.isStaff = (user as { isStaff?: boolean }).isStaff === true || role === "STAFF";
         token.mustResetPassword = (user as { mustResetPassword?: boolean }).mustResetPassword ?? false;
         token.referralCode = (user as { referralCode?: string }).referralCode ?? "";
         token.pointsBalance = (user as { pointsBalance?: number }).pointsBalance ?? 0;

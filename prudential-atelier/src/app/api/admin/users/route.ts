@@ -130,8 +130,8 @@ export async function POST(req: NextRequest) {
   const tempPassword = generateTempPassword();
   const passwordHash = await bcrypt.hash(tempPassword, 12);
   const loginUrl = isStaffMember
-    ? `${getPublicAppUrl()}/staff-login`
-    : `${getPublicAppUrl()}/admin-login`;
+    ? `${getPublicAppUrl()}/login?tab=staff`
+    : `${getPublicAppUrl()}/login?tab=admin`;
   const firstName = parsed.data.name.trim().split(/\s+/)[0] ?? parsed.data.name.trim();
 
   const user = await prisma.$transaction(async (tx) => {
@@ -178,7 +178,7 @@ export async function POST(req: NextRequest) {
     <p>Hi ${firstName},</p>
     <p>You've been set up on the Prudential Atelier staff system.</p>
     <p><strong>Your login details:</strong><br/>
-    URL: <a href="${loginUrl}">prudentgabriel.com/staff-login</a><br/>
+    URL: <a href="${loginUrl}">prudentgabriel.com/login</a> (Staff tab)<br/>
     Email: ${email}<br/>
     Temporary password: <strong>${tempPassword}</strong></p>
     <p>You'll be asked to set a new password when you first log in.</p>
@@ -188,7 +188,7 @@ export async function POST(req: NextRequest) {
     <p>Hi ${firstName},</p>
     <p>You've been given access to the Prudential Atelier operations system.</p>
     <p><strong>Your login details:</strong><br/>
-    URL: <a href="${loginUrl}">prudentgabriel.com/admin-login</a><br/>
+    URL: <a href="${loginUrl}">prudentgabriel.com/login</a> (Admin tab)<br/>
     Email: ${email}<br/>
     Temporary password: <strong>${tempPassword}</strong></p>
     <p>You'll be asked to set a new password on first login.</p>

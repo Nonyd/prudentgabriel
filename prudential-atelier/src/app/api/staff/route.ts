@@ -112,6 +112,8 @@ export async function POST(req: NextRequest) {
           phone: body.phone?.trim() || null,
           password: hashedPassword,
           role: Role.STAFF,
+          isStaff: true,
+          isActive: true,
         },
       });
 

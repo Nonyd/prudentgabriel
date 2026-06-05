@@ -77,7 +77,7 @@ export function StaffShell({
 
       <button
         type="button"
-        onClick={() => void signOut({ callbackUrl: "/staff-login" })}
+        onClick={() => void signOut({ callbackUrl: "/login?tab=staff" })}
         className="sr-only"
         aria-hidden
       >

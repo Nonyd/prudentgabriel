@@ -70,7 +70,7 @@ export default auth(function middleware(request) {
 
   if (pathname.startsWith("/staff")) {
     if (!session) {
-      return NextResponse.redirect(new URL("/staff-login", request.url));
+      return NextResponse.redirect(new URL("/login?tab=staff", request.url));
     }
     if (session.user?.mustResetPassword) {
       return NextResponse.redirect(new URL("/reset-password?required=true", request.url));
@@ -84,7 +84,10 @@ export default auth(function middleware(request) {
     }
 
     if (!isStaff && role !== "STAFF") {
-      return NextResponse.redirect(new URL("/staff-login", request.url));
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("tab", "staff");
+      loginUrl.searchParams.set("error", "no_staff_access");
+      return NextResponse.redirect(loginUrl);
     }
 
     return NextResponse.next();
@@ -92,13 +95,13 @@ export default auth(function middleware(request) {
 
   if (pathname.startsWith("/admin")) {
     if (!session) {
-      return NextResponse.redirect(new URL("/admin-login", request.url));
+      return NextResponse.redirect(new URL("/login?tab=admin", request.url));
     }
 
     const role = (session.user?.role as string | undefined) ?? "";
 
     if (!ADMIN_ROLES.includes(role)) {
-      return NextResponse.redirect(new URL("/admin-login", request.url));
+      return NextResponse.redirect(new URL("/login?tab=admin", request.url));
     }
 
     if (pathname.startsWith("/admin/settings/developer") && role !== "SUPER_ADMIN") {

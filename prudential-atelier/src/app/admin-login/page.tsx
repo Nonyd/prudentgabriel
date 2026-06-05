@@ -1,5 +1,5 @@
-import { AdminLoginClient } from "./AdminLoginClient";
+import { redirect } from "next/navigation";
 
 export default function AdminLoginPage() {
-  return <AdminLoginClient />;
+  redirect("/login?tab=admin");
 }

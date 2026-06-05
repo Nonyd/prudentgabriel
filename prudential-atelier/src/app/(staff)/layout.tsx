@@ -6,14 +6,14 @@ export const dynamic = "force-dynamic";
 export default async function StaffLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user) {
-    redirect("/staff-login");
+    redirect("/login?tab=staff");
   }
 
   const { role, isStaff } = session.user;
   const canAccess = isStaff === true || role === "STAFF";
 
   if (!canAccess) {
-    redirect("/staff-login");
+    redirect("/login?tab=staff");
   }
 
   return <StaffShell session={session}>{children}</StaffShell>;
