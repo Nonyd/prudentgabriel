@@ -17,7 +17,7 @@ export default async function AccountGroupLayout({ children }: { children: React
   }
   const profile = await getOrCreateClientProfile(userId);
 
-  const [rtwActive, bespokeActive, wishlistCount] = await Promise.all([
+  const [rtwActive, bespokeActive, wishlistCount, userPoints] = await Promise.all([
     prisma.order.count({
       where: { userId, status: { not: "DELIVERED" }, isBespoke: false },
     }),
@@ -28,12 +28,17 @@ export default async function AccountGroupLayout({ children }: { children: React
       },
     }),
     prisma.wishlistItem.count({ where: { userId } }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { pointsBalance: true },
+    }),
   ]);
 
   return (
     <AccountShell
       session={session}
       tier={profile.loyaltyTier}
+      points={userPoints?.pointsBalance ?? 0}
       activeOrders={rtwActive + bespokeActive}
       wishlistCount={wishlistCount}
     >
