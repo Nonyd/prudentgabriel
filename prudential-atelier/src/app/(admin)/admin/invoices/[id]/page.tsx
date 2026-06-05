@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { InvoiceDetailAdmin } from "@/components/admin/InvoiceDetailAdmin";
-import { getBespokeOrderForRequest, mapBespokeOrdersByClientEmail } from "@/lib/invoice-bespoke-order";
+import { getBespokeOrderForInvoice } from "@/lib/invoice-bespoke-order";
 
 export default async function AdminInvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,10 +13,10 @@ export default async function AdminInvoiceDetailPage({ params }: { params: Promi
   });
   if (!inv) notFound();
 
-  const bespokeOrder =
-    (await getBespokeOrderForRequest(inv.bespokeRequestId)) ??
-    (await mapBespokeOrdersByClientEmail([inv.clientEmail])).get(inv.clientEmail.trim().toLowerCase()) ??
-    null;
+  const bespokeOrder = await getBespokeOrderForInvoice({
+    bespokeRequestId: inv.bespokeRequestId,
+    clientEmail: inv.clientEmail,
+  });
 
   return (
     <InvoiceDetailAdmin

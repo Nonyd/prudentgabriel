@@ -58,32 +58,16 @@ export async function getBespokeOrderForRequest(
   });
 }
 
-/** Keep pipeline order ref aligned with the invoice number clients see. */
-export async function syncBespokeOrderRefFromInvoice(params: {
-  invoiceNumber: string;
-  clientEmail: string;
+export async function getBespokeOrderForInvoice(params: {
   bespokeRequestId?: string | null;
-}): Promise<void> {
-  const email = params.clientEmail.trim().toLowerCase();
-  let order =
-    params.bespokeRequestId != null
-      ? await prisma.bespokeOrder.findFirst({
-          where: { bespokeRequestId: params.bespokeRequestId },
-          orderBy: { createdAt: "desc" },
-        })
-      : null;
+  clientEmail: string;
+}): Promise<BespokeOrderLink | null> {
+  const byRequest = await getBespokeOrderForRequest(params.bespokeRequestId);
+  if (byRequest) return byRequest;
 
-  if (!order) {
-    order = await prisma.bespokeOrder.findFirst({
-      where: { clientEmail: email },
-      orderBy: { createdAt: "desc" },
-    });
-  }
-
-  if (!order || order.orderRef === params.invoiceNumber) return;
-
-  await prisma.bespokeOrder.update({
-    where: { id: order.id },
-    data: { orderRef: params.invoiceNumber },
+  return prisma.bespokeOrder.findFirst({
+    where: { clientEmail: params.clientEmail.trim().toLowerCase() },
+    select: { id: true, orderRef: true },
+    orderBy: { createdAt: "desc" },
   });
 }

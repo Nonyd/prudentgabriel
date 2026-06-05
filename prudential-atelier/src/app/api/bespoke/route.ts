@@ -3,7 +3,7 @@ import { BespokeStage, OrderStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/logger";
 import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
-import { allocateAtelierReference } from "@/lib/invoice";
+import { generateBespokeOrderRef } from "@/lib/bespoke-stages";
 import { bespokeRequestSchema } from "@/validations/bespoke";
 import { auth } from "@/auth";
 import { generateBespokeNumber } from "@/lib/order-number";
@@ -85,10 +85,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Client name and email are required" }, { status: 400 });
     }
 
-    const orderRef = await allocateAtelierReference();
-    const refTaken = await prisma.bespokeOrder.findUnique({ where: { orderRef } });
-    if (refTaken) {
-      return NextResponse.json({ error: "Could not allocate order reference" }, { status: 409 });
+    let orderRef = generateBespokeOrderRef();
+    for (let i = 0; i < 5; i++) {
+      const exists = await prisma.bespokeOrder.findUnique({ where: { orderRef } });
+      if (!exists) break;
+      orderRef = generateBespokeOrderRef();
     }
 
     const total = d.totalAmount ?? 0;

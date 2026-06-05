@@ -11,7 +11,7 @@ import {
   syncLineItemAmounts,
 } from "@/lib/invoice";
 import { getSetting } from "@/lib/settings";
-import { mapBespokeOrdersByRequestId, mapBespokeOrdersByClientEmail, syncBespokeOrderRefFromInvoice } from "@/lib/invoice-bespoke-order";
+import { mapBespokeOrdersByRequestId, mapBespokeOrdersByClientEmail } from "@/lib/invoice-bespoke-order";
 import type { InvoiceLineItem } from "@/types/invoice";
 
 const lineItemInput = z.object({
@@ -340,12 +340,6 @@ export async function POST(req: NextRequest) {
     include: {
       bespokeRequest: { select: { id: true, requestNumber: true, occasion: true } },
     },
-  });
-
-  await syncBespokeOrderRefFromInvoice({
-    invoiceNumber: created.invoiceNumber,
-    clientEmail: created.clientEmail,
-    bespokeRequestId: created.bespokeRequestId,
   });
 
   return NextResponse.json(created);
