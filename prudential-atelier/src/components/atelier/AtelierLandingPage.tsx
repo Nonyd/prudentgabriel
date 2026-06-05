@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { GalleryCategory } from "@prisma/client";
 import { STAGE_LABELS, STAGE_ORDER } from "@/lib/bespoke-stages";
 import { optimizeImageUrl } from "@/lib/utils";
 
