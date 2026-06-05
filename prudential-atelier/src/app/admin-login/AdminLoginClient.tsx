@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { signIn, signOut, getSession } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
+import { hardNavigate, isSignInFailure, waitForClientSession } from "@/lib/client-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -78,7 +78,6 @@ function AdminField({
 }
 
 export function AdminLoginClient() {
-  const router = useRouter();
   const emailId = useId();
   const passwordId = useId();
   const {
@@ -95,12 +94,20 @@ export function AdminLoginClient() {
       password: data.password,
       redirect: false,
     });
-    if (res?.error) {
+    if (isSignInFailure(res)) {
       setError("root", { message: "Invalid credentials. Please try again." });
       return;
     }
-    const session = await getSession();
-    const role = session?.user?.role;
+    const session = await waitForClientSession({
+      until: (s) => Boolean(s?.user?.id && s?.user?.role),
+    });
+    if (!session?.user?.id) {
+      setError("root", {
+        message: "Signed in, but the session did not load. Please try again.",
+      });
+      return;
+    }
+    const role = session.user.role;
     if (session?.user?.isStaff && role === "STAFF") {
       await signOut({ redirect: false });
       setError("root", {
@@ -109,8 +116,7 @@ export function AdminLoginClient() {
       return;
     }
     if (role && isAdminRole(role)) {
-      router.push("/admin");
-      router.refresh();
+      hardNavigate("/admin");
       return;
     }
     if (role === "CUSTOMER") {

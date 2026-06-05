@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { hardNavigate, isSignInFailure, waitForClientSession } from "@/lib/client-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/validations/auth";
 import { Button } from "@/components/ui/Button";
 
 export function LoginContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/account";
 
@@ -27,12 +27,16 @@ export function LoginContent() {
       password: data.password,
       redirect: false,
     });
-    if (res?.error) {
+    if (isSignInFailure(res)) {
       setError("root", { message: "Invalid email or password" });
       return;
     }
-    router.push(callbackUrl);
-    router.refresh();
+    const session = await waitForClientSession();
+    if (!session?.user?.id) {
+      setError("root", { message: "Signed in, but the session did not load. Please try again." });
+      return;
+    }
+    hardNavigate(callbackUrl);
   };
 
   return (

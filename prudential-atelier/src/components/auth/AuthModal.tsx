@@ -3,6 +3,7 @@
 import { useEffect, useCallback } from "react";
 import { signIn } from "next-auth/react";
 import { useSession } from "next-auth/react";
+import { hardNavigate, isSignInFailure, waitForClientSession } from "@/lib/client-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
@@ -153,8 +154,13 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
       password: data.password,
       redirect: false,
     });
-    if (res?.error) {
+    if (isSignInFailure(res)) {
       setError("root", { message: "Invalid email or password" });
+      return;
+    }
+    const session = await waitForClientSession();
+    if (!session?.user?.id) {
+      setError("root", { message: "Signed in, but the session did not load. Please try again." });
       return;
     }
     onSuccess();
@@ -332,7 +338,13 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
       password: data.password,
       redirect: false,
     });
-    if (signInRes?.error) {
+    if (isSignInFailure(signInRes)) {
+      setView("login");
+      return;
+    }
+    const session = await waitForClientSession();
+    if (!session?.user?.id) {
+      setError("root", { message: "Account created. Please sign in from the login tab." });
       setView("login");
       return;
     }
@@ -498,13 +510,14 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export function AuthModal() {
-  const { isOpen, view, close } = useAuthModalStore();
-  const { status, update } = useSession();
+  const { isOpen, view, close, callbackUrl } = useAuthModalStore();
+  const { status } = useSession();
 
   const handleSuccess = useCallback(() => {
     close();
-    void update();
-  }, [close, update]);
+    const target = callbackUrl?.startsWith("/") ? callbackUrl : "/account";
+    hardNavigate(target);
+  }, [close, callbackUrl]);
 
   useEffect(() => {
     if (status === "authenticated" && isOpen) {
