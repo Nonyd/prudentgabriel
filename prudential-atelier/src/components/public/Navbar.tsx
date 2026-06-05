@@ -9,6 +9,7 @@ import { ChevronDown, Heart, Menu, Search, ShoppingBag, User, X } from "lucide-r
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/store/cartStore";
 import { useAuthModalStore } from "@/store/authModalStore";
+import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { getSubBrand } from "@/lib/sub-brand";
@@ -220,7 +221,15 @@ function MobileRtwSection({
   );
 }
 
-export function Navbar() {
+export function Navbar({
+  showAnnouncement = true,
+  announcementMessages = ["WORLDWIDE SHIPPING · ₦ · $ · £"],
+  announcementIntervalMs = 3000,
+}: {
+  showAnnouncement?: boolean;
+  announcementMessages?: string[];
+  announcementIntervalMs?: number;
+}) {
   const pathname = usePathname();
   const subBrand = getSubBrand(pathname);
   const [open, setOpen] = useState(false);
@@ -250,18 +259,9 @@ export function Navbar() {
 
   return (
     <>
-      <div className="bg-hero-bg py-2.5 text-center">
-        <p
-          className="uppercase"
-          style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: "10px",
-            color: "var(--cream)",
-          }}
-        >
-          Worldwide Shipping · ₦ · $ · £
-        </p>
-      </div>
+      {showAnnouncement ? (
+        <AnnouncementBar messages={announcementMessages} intervalMs={announcementIntervalMs} />
+      ) : null}
 
       <header className="sticky top-0 z-50 border-b border-sand/40 bg-ivory">
         <div className="relative mx-auto flex h-[72px] max-w-site items-center justify-between px-6 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:px-10">
