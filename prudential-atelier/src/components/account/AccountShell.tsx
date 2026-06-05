@@ -35,7 +35,7 @@ export function AccountShell({
           wishlistCount={wishlistCount}
         />
         <div className="flex min-w-0 flex-1 flex-col pb-16 lg:pb-0">
-          <div className="hidden items-center justify-end gap-3 border-b border-sand bg-ivory px-6 py-2 lg:flex">
+          <div className="hidden items-center justify-end gap-4 border-b border-sand/70 bg-white px-6 py-3 lg:flex">
             <ThemeToggle />
             <Link
               href="/shop"
@@ -53,7 +53,7 @@ export function AccountShell({
               Logout
             </button>
           </div>
-          <main className="flex-1 px-5 py-8 lg:px-10 lg:py-10">{children}</main>
+          <main className="flex-1 bg-bg-page px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
         </div>
       </div>
     </div>

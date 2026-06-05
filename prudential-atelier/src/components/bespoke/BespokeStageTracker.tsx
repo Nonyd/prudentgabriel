@@ -19,7 +19,12 @@ export function BespokeStageTracker({ currentStage, stageHistory, compact }: Pro
   const currentIdx = STAGE_ORDER.indexOf(currentStage);
 
   return (
-    <ol className={cn("card-surface space-y-0 p-6 md:p-8", compact ? "mt-4" : "mt-0")}>
+    <ol
+      className={cn(
+        "space-y-0",
+        compact ? "mt-2 rounded-sm border border-sand/60 bg-ivory p-4 md:p-5" : "card-surface p-6 md:p-8",
+      )}
+    >
         {STAGE_ORDER.map((stage, idx) => {
           const history = completedMap.get(stage);
           const isDone = Boolean(history) || idx < currentIdx;
