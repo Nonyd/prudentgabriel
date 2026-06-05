@@ -35,31 +35,50 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const email = credentials?.email as string | undefined;
-        const password = credentials?.password as string | undefined;
-        if (!email || !password) return null;
+        console.log("AUTH ATTEMPT:", credentials?.email);
 
-        const user = await prisma.user.findUnique({
-          where: { email },
-          include: { jobRole: { select: { permissions: true } } },
-        });
-        if (!user?.password) return null;
-        if (user.isActive === false) return null;
+        try {
+          const email = credentials?.email as string | undefined;
+          const password = credentials?.password as string | undefined;
+          if (!email || !password) {
+            console.log("NO EMAIL OR PASSWORD");
+            return null;
+          }
 
-        const valid = await bcrypt.compare(password, user.password);
-        if (!valid) return null;
+          const user = await prisma.user.findUnique({
+            where: { email },
+            include: { jobRole: { select: { permissions: true } } },
+          });
+          console.log("USER FOUND:", !!user, user?.role);
 
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lastLogin: new Date() },
-        });
+          if (!user || !user.password) {
+            console.log("NO USER OR PASSWORD");
+            return null;
+          }
+          if (user.isActive === false) {
+            console.log("USER INACTIVE");
+            return null;
+          }
 
-        const { jobRole, ...safeUser } = user;
-        delete (safeUser as { password?: string | null }).password;
-        return {
-          ...safeUser,
-          jobRole,
-        };
+          const valid = await bcrypt.compare(password, user.password);
+          console.log("PASSWORD VALID:", valid);
+          if (!valid) return null;
+
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLogin: new Date() },
+          });
+
+          const { jobRole, ...safeUser } = user;
+          delete (safeUser as { password?: string | null }).password;
+          return {
+            ...safeUser,
+            jobRole,
+          };
+        } catch (error) {
+          console.log("AUTH ERROR:", error);
+          return null;
+        }
       },
     }),
   ],
