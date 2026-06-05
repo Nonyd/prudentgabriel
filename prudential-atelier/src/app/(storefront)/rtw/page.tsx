@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { queryProductList } from "@/lib/products-list-query";
-import { getContent, getContentSettings } from "@/lib/settings";
 import { RTWPageClient } from "@/components/rtw/RTWPageClient";
 
 export const revalidate = 300;
@@ -33,23 +32,17 @@ export default async function RTWPage({
   u.set("type", "RTW");
   u.set("excludeCategory", "BRIDAL");
   if (!u.get("limit")) u.set("limit", "40");
+  if (!u.get("sort")) u.set("sort", "featured");
   if (u.get("category") === "BRIDAL") u.delete("category");
 
   const { products, total, page, hasNext } = await queryProductList(u, { isAdmin });
 
-  let heroLabel = "PRUDENT GABRIEL";
-  let heroTitle = "Ready to Wear.";
-  try {
-    const c = await getContentSettings();
-    heroLabel = getContent(c, "content_rtw_label", heroLabel);
-    heroTitle = getContent(c, "content_rtw_headline", heroTitle);
-  } catch {
-    /* defaults */
-  }
+  const heroLabel = "THE COLLECTION";
+  const heroTitle = "Ready-to-Wear";
 
   const collections = await prisma.collection.findMany({
     where: { isPublished: true },
-    orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
+    orderBy: { displayOrder: "asc" },
     select: { name: true, slug: true, coverImage: true, coverImageAlt: true },
   });
 

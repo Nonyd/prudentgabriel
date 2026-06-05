@@ -45,9 +45,9 @@ function activeChipFromSearchParams(sp: URLSearchParams): ChipId {
 }
 
 function chipHref(sp: URLSearchParams, chip: ChipId): string {
-  const sort = sp.get("sort") ?? "newest";
+  const sort = sp.get("sort") ?? "featured";
   const n = new URLSearchParams();
-  if (sort && sort !== "newest") n.set("sort", sort);
+  if (sort && sort !== "featured") n.set("sort", sort);
   switch (chip) {
     case "ALL":
       break;
@@ -80,6 +80,7 @@ function augmentProductQuery(sp: URLSearchParams): URLSearchParams {
   const u = new URLSearchParams(sp.toString());
   u.set("type", "RTW");
   u.set("excludeCategory", "BRIDAL");
+  if (!u.get("sort")) u.set("sort", "featured");
   if (!u.get("limit")) u.set("limit", "40");
   return u;
 }
@@ -155,13 +156,15 @@ export function RTWPageClient({
     }
   }, [hasMore, loadingMore, isPending, page, sp]);
 
-  const sortValue = sp.get("sort") ?? "newest";
+  const sortValue = sp.get("sort") ?? "featured";
   const sortTriggerLabel =
     sortValue === "price-asc"
       ? "PRICE: LOW–HIGH"
       : sortValue === "price-desc"
         ? "PRICE: HIGH–LOW"
-        : "NEWEST";
+        : sortValue === "newest"
+          ? "NEWEST"
+          : "FEATURED";
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -229,6 +232,7 @@ export function RTWPageClient({
                   <Select.Viewport className="p-0">
                     {(
                       [
+                        ["featured", "Featured"],
                         ["newest", "Newest"],
                         ["price-asc", "Price: Low–High"],
                         ["price-desc", "Price: High–Low"],

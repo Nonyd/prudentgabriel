@@ -1494,11 +1494,13 @@ async function seedCollections(productIds: Record<string, string>) {
   const collections = [
     {
       name: "Rich & Regal",
-      slug: "rich-and-regal",
+      slug: "rich-regal",
       description:
         "Commanding pieces for the woman who owns every room she enters. Structured silhouettes, premium fabrics, unapologetic presence.",
       season: "Spring/Summer 2026",
-      displayOrder: 1,
+      displayOrder: 0,
+      coverImage: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800",
+      coverImageAlt: "Rich & Regal collection",
       productSlugs: ["the-adaeze-gown", "lumi-tailored-suit", "nneka-aso-ebi-set"],
     },
     {
@@ -1507,7 +1509,9 @@ async function seedCollections(productIds: Record<string, string>) {
       description:
         "Refined, modest, and effortlessly elegant. For the woman whose Sunday best is always extraordinary.",
       season: "Spring/Summer 2026",
-      displayOrder: 2,
+      displayOrder: 1,
+      coverImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800",
+      coverImageAlt: "Church Girl collection",
       productSlugs: ["ember-silk-wrap", "ife-bias-slip-dress"],
     },
     {
@@ -1516,7 +1520,9 @@ async function seedCollections(productIds: Record<string, string>) {
       description:
         "Soft, feminine, and deeply romantic. Pieces that move with you and speak for you.",
       season: "Spring/Summer 2026",
-      displayOrder: 3,
+      displayOrder: 2,
+      coverImage: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=800",
+      coverImageAlt: "La Femme collection",
       productSlugs: ["zara-flower-girl-set", "kito-junior-tuxedo"],
     },
   ] as const;
@@ -1528,6 +1534,8 @@ async function seedCollections(productIds: Record<string, string>) {
         name: c.name,
         description: c.description,
         season: c.season,
+        coverImage: c.coverImage,
+        coverImageAlt: c.coverImageAlt,
         isPublished: true,
         displayOrder: c.displayOrder,
       },
@@ -1536,9 +1544,16 @@ async function seedCollections(productIds: Record<string, string>) {
         slug: c.slug,
         description: c.description,
         season: c.season,
+        coverImage: c.coverImage,
+        coverImageAlt: c.coverImageAlt,
         isPublished: true,
         displayOrder: c.displayOrder,
       },
+    });
+
+    await prisma.collection.updateMany({
+      where: { slug: "rich-and-regal" },
+      data: { isPublished: false },
     });
 
     await prisma.collectionProduct.deleteMany({ where: { collectionId: collection.id } });

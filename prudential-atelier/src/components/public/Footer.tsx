@@ -4,8 +4,10 @@ import { Logo } from "@/components/ui/Logo";
 
 const HOUSE_LINKS = [
   { href: "/atelier", label: "The Atelier" },
+  { href: "/rtw", label: "Ready-to-Wear" },
   { href: "/bridal", label: "Bridal" },
-  { href: "https://pfacademy.ng", label: "Fashion Academy", external: true },
+  { href: "/kids", label: "Kids" },
+  { href: "/about#academy", label: "Fashion Academy" },
   { href: "/journal", label: "Journal" },
 ];
 

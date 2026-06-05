@@ -117,10 +117,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const relatedRaw = await prisma.product.findMany({
     where: {
       category: product.category,
+      id: { not: product.id },
       isPublished: true,
-      NOT: { id: product.id },
     },
     take: 4,
+    orderBy: { orderCount: "desc" },
     include: {
       images: { orderBy: { sortOrder: "asc" }, take: 2 },
       variants: { orderBy: { priceNGN: "asc" } },
