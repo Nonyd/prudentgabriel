@@ -64,6 +64,9 @@ function DeliveryDate({ date }: { date: Date | string | null }) {
 }
 
 function TrackStatusPill({ order }: { order: OrderRow }) {
+  if (order.currentStage === "DELIVERY") {
+    return <Badge variant="success">DELIVERED</Badge>;
+  }
   const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
   const status = getOrderTrackStatus(deliveryDate, order.currentStage);
   const variant =

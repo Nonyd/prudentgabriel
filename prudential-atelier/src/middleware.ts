@@ -74,6 +74,18 @@ export default auth(function middleware(request) {
     if (session.user?.mustResetPassword) {
       return NextResponse.redirect(new URL("/reset-password?required=true", request.url));
     }
+
+    const role = (session.user?.role as string | undefined) ?? "";
+    const isStaff = session.user?.isStaff === true;
+
+    if (ADMIN_ROLES.includes(role)) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+
+    if (!isStaff && role !== "STAFF") {
+      return NextResponse.redirect(new URL("/staff-login", request.url));
+    }
+
     return NextResponse.next();
   }
 

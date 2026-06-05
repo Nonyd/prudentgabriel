@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { LoyaltyTier, Prisma } from "@prisma/client";
+import { LoyaltyTier, Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
 import { logError } from "@/lib/logger";
+import { PROTECTED_ACCOUNTS } from "@/lib/roles";
 
 const TIERS = new Set<string>(Object.values(LoyaltyTier));
 
@@ -29,15 +30,22 @@ export async function GET(req: NextRequest) {
     } else if (filter === "no_orders") {
       where.bespokeOrders = { none: {} };
     }
-    if (search) {
-      where.user = {
-        OR: [
-          { name: { contains: search, mode: "insensitive" } },
-          { email: { contains: search, mode: "insensitive" } },
-          { phone: { contains: search, mode: "insensitive" } },
-        ],
-      };
-    }
+    const userWhere: Prisma.UserWhereInput = {
+      role: Role.CUSTOMER,
+      ...(PROTECTED_ACCOUNTS.length
+        ? { email: { notIn: PROTECTED_ACCOUNTS } }
+        : {}),
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search, mode: "insensitive" } },
+              { email: { contains: search, mode: "insensitive" } },
+              { phone: { contains: search, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    };
+    where.user = userWhere;
 
     const items = await prisma.clientProfile.findMany({
       where,

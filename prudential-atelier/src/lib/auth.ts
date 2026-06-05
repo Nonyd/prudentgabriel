@@ -31,7 +31,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         console.log("AUTH ATTEMPT:", credentials?.email);
 
         try {
-          const email = credentials?.email as string | undefined;
+          const email = (credentials?.email as string | undefined)?.trim().toLowerCase();
           const password = credentials?.password as string | undefined;
           if (!email || !password) {
             console.log("NO EMAIL OR PASSWORD");
@@ -42,7 +42,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             where: { email },
             include: { jobRole: { select: { permissions: true } } },
           });
-          console.log("USER FOUND:", !!user, user?.role);
+          console.log("USER FOUND:", !!user, user?.role, "isStaff:", user?.isStaff);
 
           if (!user || !user.password) {
             console.log("NO USER OR PASSWORD");
@@ -61,6 +61,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             where: { id: user.id },
             data: { lastLogin: new Date() },
           });
+
+          if (user.role === "STAFF" || user.isStaff) {
+            console.log("STAFF AUTH OK:", user.email, {
+              role: user.role,
+              isStaff: user.isStaff,
+            });
+          }
 
           const { jobRole, ...safeUser } = user;
           delete (safeUser as { password?: string | null }).password;
