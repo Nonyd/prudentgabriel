@@ -273,6 +273,12 @@ export function ProductsTable({
         </select>
       </div>
 
+      {published === "false" ? (
+        <div className="rounded-sm border border-amber-300 bg-amber-50 px-4 py-3 font-body text-[13px] text-amber-900">
+          These products were imported and are awaiting review. Set images, check prices, then publish.
+        </div>
+      ) : null}
+
       {selected.size > 0 ? (
         <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border border-olive bg-olive p-3 text-sm text-white shadow-md">
           <span className="font-medium">{selected.size} selected</span>

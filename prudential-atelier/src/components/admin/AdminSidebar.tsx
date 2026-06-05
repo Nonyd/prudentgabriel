@@ -82,6 +82,7 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Shop",
     items: [
       { href: "/admin/products", label: "Products", icon: Package, permission: "shop" },
+      { href: "/admin/shop/import", label: "Import Products", icon: Package, permission: "shop" },
       { href: "/admin/collections", label: "Collections", icon: Package, permission: "shop" },
       { href: "/admin/orders", label: "Orders", icon: ShoppingBag, badgeKey: "orders", permission: "shop" },
     ],

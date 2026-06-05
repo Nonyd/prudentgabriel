@@ -36,40 +36,79 @@ export function KidsGalleryPage({
   }, [page]);
 
   return (
-    <div className="bg-white">
-      <section className="px-6 pb-16 pt-20 text-center">
-        <p className="font-body text-[9px] uppercase tracking-[0.3em] text-olive">PRUDENTIAL KIDS</p>
-        <h1 className="mt-3 font-display text-[44px] italic leading-[0.9] text-black md:text-[80px]">Little Ones.</h1>
-        <p className="mx-auto mt-4 max-w-sm text-center font-body text-[14px] font-light text-dark-grey">
-          Dressed for their greatest moments.
+    <div className="bg-[var(--accent-soft)]">
+      <section
+        className="px-6 pb-20 pt-24 text-center"
+        style={{ backgroundColor: "var(--hero-bg)" }}
+      >
+        <p
+          className="uppercase"
+          style={{
+            fontFamily: "var(--font-ui)",
+            fontSize: "10px",
+            letterSpacing: "0.2em",
+            color: "var(--lightbr)",
+          }}
+        >
+          PRUDENTIAL KIDS
         </p>
-        <div className="mx-auto mt-8 flex w-fit gap-2">
-          <span className="h-3 w-3 bg-olive" />
-          <span className="h-3 w-3 bg-[#F9E8E8]" />
-          <span className="h-3 w-3 bg-black" />
-        </div>
+        <h1
+          className="mt-4 font-display leading-[1.05] text-cream"
+          style={{ fontSize: "clamp(40px, 6vw, 52px)" }}
+        >
+          Dressed for little royals
+        </h1>
+        <p
+          className="mx-auto mt-4 max-w-md font-body leading-[1.8]"
+          style={{ fontSize: "15px", color: "rgba(226, 209, 194, 0.85)" }}
+        >
+          Beautifully crafted pieces for the children who deserve the best.
+        </p>
+        <Link
+          href="/shop?category=KIDDIES"
+          className="mt-8 inline-block px-8 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-[#2a1a0e] transition-opacity hover:opacity-90"
+          style={{ backgroundColor: "var(--cta-bg)", borderRadius: "2px" }}
+        >
+          Shop Kids Collection
+        </Link>
       </section>
 
-      <section className="mx-auto flex max-w-[1400px] items-center justify-between px-6 pb-4">
-        <p className="font-body text-[10px] uppercase tracking-[0.15em] text-dark-grey/50">{initialTotal} works</p>
+      <section className="mx-auto flex max-w-[1400px] items-center justify-between px-6 pb-4 pt-10">
+        <p
+          className="uppercase"
+          style={{
+            fontFamily: "var(--font-ui)",
+            fontSize: "10px",
+            letterSpacing: "0.15em",
+            color: "var(--text-mid)",
+          }}
+        >
+          {initialTotal} works
+        </p>
         <a
           href="https://instagram.com/prudential_kids"
           target="_blank"
           rel="noopener noreferrer"
-          className="font-body text-[10px] uppercase tracking-[0.15em] text-olive"
+          className="uppercase transition-opacity hover:opacity-80"
+          style={{
+            fontFamily: "var(--font-ui)",
+            fontSize: "10px",
+            letterSpacing: "0.15em",
+            color: "var(--accent)",
+          }}
         >
           @prudential_kids ↗
         </a>
       </section>
 
       <section className="mx-auto max-w-[1400px] px-6 pb-16">
-        <div className="columns-2 md:columns-3 lg:columns-4" style={{ columnGap: "8px" }}>
+        <div className="columns-2 md:columns-3 lg:columns-4" style={{ columnGap: "16px" }}>
           {images.map((img, index) => (
             <button
               key={img.id}
               type="button"
               onClick={() => setLightboxIndex(index)}
-              className="group relative mb-2 block w-full overflow-hidden text-left"
+              className="group relative mb-4 block w-full overflow-hidden text-left"
               style={{ breakInside: "avoid" }}
             >
               <img
@@ -79,8 +118,13 @@ export function KidsGalleryPage({
                 loading="lazy"
               />
               {img.caption ? (
-                <div className="absolute inset-x-0 bottom-0 translate-y-full bg-white px-2.5 py-2 transition-transform duration-300 group-hover:translate-y-0">
-                  <p className="font-body text-[11px] text-black">{img.caption}</p>
+                <div
+                  className="absolute inset-x-0 bottom-0 translate-y-full px-3 py-2 transition-transform duration-300 group-hover:translate-y-0"
+                  style={{ backgroundColor: "var(--accent-soft)" }}
+                >
+                  <p className="font-body text-[13px]" style={{ color: "var(--text-primary)" }}>
+                    {img.caption}
+                  </p>
                 </div>
               ) : null}
             </button>
@@ -93,42 +137,55 @@ export function KidsGalleryPage({
               type="button"
               disabled={loading}
               onClick={() => void loadMore()}
-              className="border border-black/20 px-12 py-3 font-body text-[11px] uppercase tracking-[0.14em] text-black transition-colors hover:border-black hover:bg-black hover:text-white disabled:opacity-50"
+              className="border px-12 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors disabled:opacity-50"
+              style={{
+                borderColor: "var(--accent)",
+                color: "var(--text-primary)",
+                backgroundColor: "transparent",
+              }}
             >
-              {loading ? "LOADING..." : "LOAD MORE"}
+              {loading ? "Loading…" : "Load more"}
             </button>
           ) : (
-            <p className="font-body text-[10px] text-dark-grey/40">— {images.length} works —</p>
+            <p className="font-body text-[10px]" style={{ color: "var(--text-light)" }}>
+              — {images.length} works —
+            </p>
           )}
         </div>
       </section>
 
-      <section className="bg-[#F9F9F7] px-6 py-20">
+      <section className="px-6 py-20" style={{ backgroundColor: "var(--accent-soft)" }}>
         <div className="mx-auto grid max-w-4xl gap-4 md:grid-cols-2">
-          <div className="border border-[#EBEBEA] bg-white p-8 text-center">
-            <div className="mx-auto mb-4 flex h-8 w-8 items-center justify-center text-olive">✂</div>
+          <div className="border border-[var(--border-color)] bg-[var(--bg-card)] p-8 text-center">
+            <div className="mx-auto mb-4 flex h-8 w-8 items-center justify-center" style={{ color: "var(--accent)" }}>
+              ✂
+            </div>
             <h3 className="font-display text-[24px]">Bespoke for Little Ones</h3>
-            <p className="mt-2 font-body text-[13px] font-light text-dark-grey">
+            <p className="mt-2 font-body text-[13px] leading-[1.8]" style={{ color: "var(--text-mid)" }}>
               Custom-made pieces for birthdays, dedications, flower girls, and traditional ceremonies.
             </p>
             <Link
               href="/bespoke"
-              className="mt-4 inline-block border border-olive px-6 py-2.5 font-body text-[11px] uppercase tracking-[0.12em] text-olive"
+              className="mt-4 inline-block border px-6 py-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.12em]"
+              style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
             >
-              BOOK BESPOKE
+              Book bespoke
             </Link>
           </div>
-          <div className="border border-[#EBEBEA] bg-white p-8 text-center">
-            <div className="mx-auto mb-4 flex h-8 w-8 items-center justify-center text-olive">⌁</div>
+          <div className="border border-[var(--border-color)] bg-[var(--bg-card)] p-8 text-center">
+            <div className="mx-auto mb-4 flex h-8 w-8 items-center justify-center" style={{ color: "var(--accent)" }}>
+              ⌁
+            </div>
             <h3 className="font-display text-[24px]">Ready to Wear</h3>
-            <p className="mt-2 font-body text-[13px] font-light text-dark-grey">
+            <p className="mt-2 font-body text-[13px] leading-[1.8]" style={{ color: "var(--text-mid)" }}>
               Browse our ready-made children&apos;s collection for immediate purchase and delivery.
             </p>
             <Link
               href="/shop?category=KIDDIES"
-              className="mt-4 inline-block bg-olive px-6 py-2.5 font-body text-[11px] uppercase tracking-[0.12em] text-white"
+              className="mt-4 inline-block px-6 py-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] text-[#2a1a0e]"
+              style={{ backgroundColor: "var(--cta-bg)" }}
             >
-              SHOP KIDDIES
+              Shop kiddies
             </Link>
           </div>
         </div>

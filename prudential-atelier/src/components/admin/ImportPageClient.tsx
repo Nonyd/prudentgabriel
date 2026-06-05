@@ -3,31 +3,34 @@
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Upload } from "lucide-react";
+import type { ProductCategory } from "@prisma/client";
 import { cn } from "@/lib/utils";
+import type { ParsedProduct } from "@/lib/woocommerce-parser";
 
-type PreviewProduct = {
-  rowIndex: number;
-  name: string;
-  slug: string;
-  imageUrls: string[];
-  firstImageUrl: string;
-  description: string;
-  shortDesc: string;
-  sku: string;
-  stock: number;
-  isDuplicate: boolean;
-};
+type EnrichedProduct = ParsedProduct & { isDuplicate?: boolean };
 
-type PreviewResponse = {
+type ParseResponse = {
   total: number;
-  skippedNoImage?: number;
-  warning?: string;
-  products: PreviewProduct[];
+  importable: number;
+  skipped: number;
+  products: EnrichedProduct[];
+  error?: string;
 };
 
-type LogLine = {
-  tone: "ok" | "error" | "progress";
-  text: string;
+type ExecuteResponse = {
+  imported: number;
+  failed: number;
+  errors: string[];
+  productIds: string[];
+};
+
+const CATEGORY_LABELS: Record<ProductCategory, string> = {
+  BRIDAL: "Bridal",
+  EVENING_WEAR: "Evening",
+  CASUAL: "Casual",
+  FORMAL: "Formal",
+  KIDDIES: "Kiddies",
+  ACCESSORIES: "Accessories",
 };
 
 export function ImportPageClient() {
@@ -37,25 +40,15 @@ export function ImportPageClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState("");
-  const [warning, setWarning] = useState("");
-  const [previewData, setPreviewData] = useState<PreviewResponse | null>(null);
-  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
-  const [currentName, setCurrentName] = useState("");
-  const [progressCurrent, setProgressCurrent] = useState(0);
-  const [progressTotal, setProgressTotal] = useState(0);
-  const [logLines, setLogLines] = useState<LogLine[]>([]);
-  const [done, setDone] = useState(false);
-  const [stats, setStats] = useState({ ok: 0, failed: 0, imageIssues: 0 });
+  const [previewData, setPreviewData] = useState<ParseResponse | null>(null);
+  const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set());
+  const [importing, setImporting] = useState(false);
+  const [result, setResult] = useState<ExecuteResponse | null>(null);
 
-  const duplicatesCount = useMemo(
-    () => (previewData ? previewData.products.filter((p) => p.isDuplicate).length : 0),
+  const importableProducts = useMemo(
+    () => previewData?.products.filter((p) => p.isImportable && !p.isDuplicate) ?? [],
     [previewData],
   );
-
-  const selectedCount = selectedRows.size;
-  const progressPct = progressTotal > 0 ? Math.round((progressCurrent / progressTotal) * 100) : 0;
-
-  const pushLog = (line: LogLine) => setLogLines((prev) => [...prev, line]);
 
   const onPickFile = (file: File | null) => {
     setError("");
@@ -72,23 +65,17 @@ export function ImportPageClient() {
     if (!selectedFile) return;
     setIsLoading(true);
     setError("");
-    setWarning("");
     try {
       const formData = new FormData();
       formData.set("file", selectedFile);
-      const res = await fetch("/api/admin/import/preview", {
-        method: "POST",
-        body: formData,
-      });
-      const data = (await res.json()) as PreviewResponse & { error?: string };
+      const res = await fetch("/api/admin/import/parse", { method: "POST", body: formData });
+      const data = (await res.json()) as ParseResponse;
       if (!res.ok) {
         setError(data.error ?? "Failed to parse CSV");
         return;
       }
       setPreviewData(data);
-      setWarning(data.warning ?? "");
-      const defaultSelected = data.products.filter((p) => !p.isDuplicate).map((p) => p.rowIndex);
-      setSelectedRows(new Set(defaultSelected));
+      setSelectedSlugs(new Set(data.products.filter((p) => p.isImportable && !p.isDuplicate).map((p) => p.slug)));
       setStep(2);
     } catch {
       setError("Failed to parse CSV");
@@ -97,91 +84,44 @@ export function ImportPageClient() {
     }
   };
 
-  const toggleRow = (rowIndex: number) => {
-    setSelectedRows((prev) => {
+  const toggleSlug = (slug: string, enabled: boolean) => {
+    if (!enabled) return;
+    setSelectedSlugs((prev) => {
       const next = new Set(prev);
-      if (next.has(rowIndex)) next.delete(rowIndex);
-      else next.add(rowIndex);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
       return next;
     });
   };
 
+  const selectAllImportable = () => {
+    setSelectedSlugs(new Set(importableProducts.map((p) => p.slug)));
+  };
+
   const startImport = async () => {
-    if (!previewData || selectedRows.size === 0) return;
+    if (!previewData || selectedSlugs.size === 0) return;
+    setImporting(true);
+    setError("");
     setStep(3);
-    setDone(false);
-    setLogLines([]);
-    setStats({ ok: 0, failed: 0, imageIssues: 0 });
-    setCurrentName("");
-    setProgressCurrent(0);
-    setProgressTotal(selectedRows.size);
-
-    const response = await fetch("/api/admin/import/execute", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        selectedIndices: Array.from(selectedRows),
-        products: previewData.products,
-      }),
-    });
-
-    if (!response.body) {
-      setError("Import stream failed");
-      return;
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let pendingText = "";
-
-    while (true) {
-      const { done: streamDone, value } = await reader.read();
-      if (streamDone) break;
-      pendingText += decoder.decode(value, { stream: true });
-      const chunks = pendingText.split("\n\n");
-      pendingText = chunks.pop() ?? "";
-
-      for (const chunk of chunks) {
-        const line = chunk.split("\n").find((part) => part.startsWith("data: "));
-        if (!line) continue;
-        const raw = line.replace("data: ", "");
-        const event = JSON.parse(raw) as
-          | { type: "start"; total: number }
-          | { type: "progress"; current: number; total: number; name: string }
-          | { type: "product_done"; name: string; imageCount: number; imageIssue?: boolean }
-          | { type: "product_error"; name: string; error: string }
-          | { type: "complete"; imported: number };
-
-        if (event.type === "start") {
-          setProgressTotal(event.total);
-        }
-        if (event.type === "progress") {
-          setProgressCurrent(event.current);
-          setProgressTotal(event.total);
-          setCurrentName(event.name);
-          pushLog({ tone: "progress", text: `⟳ ${event.name} — Importing...` });
-        }
-        if (event.type === "product_done") {
-          setStats((prev) => ({
-            ok: prev.ok + 1,
-            failed: prev.failed,
-            imageIssues: prev.imageIssues + (event.imageIssue ? 1 : 0),
-          }));
-          pushLog({ tone: "ok", text: `✓ ${event.name} — ${event.imageCount} images uploaded` });
-        }
-        if (event.type === "product_error") {
-          setStats((prev) => ({
-            ok: prev.ok,
-            failed: prev.failed + 1,
-            imageIssues: prev.imageIssues,
-          }));
-          pushLog({ tone: "error", text: `✗ ${event.name} — Failed: ${event.error}` });
-        }
-        if (event.type === "complete") {
-          setDone(true);
-          setCurrentName("");
-        }
+    try {
+      const products = previewData.products.filter((p) => selectedSlugs.has(p.slug));
+      const res = await fetch("/api/admin/import/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ products }),
+      });
+      const data = (await res.json()) as ExecuteResponse & { error?: string };
+      if (!res.ok) {
+        setError(data.error ?? "Import failed");
+        setStep(2);
+        return;
       }
+      setResult(data);
+    } catch {
+      setError("Import failed");
+      setStep(2);
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -189,46 +129,20 @@ export function ImportPageClient() {
     setStep(1);
     setSelectedFile(null);
     setPreviewData(null);
-    setSelectedRows(new Set());
-    setDone(false);
-    setWarning("");
+    setSelectedSlugs(new Set());
+    setResult(null);
     setError("");
-    setLogLines([]);
-    setStats({ ok: 0, failed: 0, imageIssues: 0 });
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl text-ink">Import Products</h1>
-        <p className="mt-1 font-body text-[13px] text-[#6B6B68]">Import products from a WooCommerce CSV export</p>
-      </div>
-
-      <div className="flex items-center gap-3 text-xs text-charcoal-mid">
-        <span className={cn("rounded-sm border px-2 py-1", step === 1 && "border-olive text-olive")}>1 Upload CSV</span>
-        <span>→</span>
-        <span className={cn("rounded-sm border px-2 py-1", step === 2 && "border-olive text-olive")}>2 Preview & Select</span>
-        <span>→</span>
-        <span className={cn("rounded-sm border px-2 py-1", step === 3 && "border-olive text-olive")}>3 Importing</span>
+        <h1 className="font-display text-2xl text-ink">Import Products from WooCommerce</h1>
+        <p className="mt-1 font-body text-[13px] text-[#6B6B68]">Upload your WooCommerce CSV export</p>
       </div>
 
       {step === 1 ? (
         <section>
-          <div className="mb-6 rounded-sm border border-[#EBEBEA] bg-[#FAFAF8] p-6">
-            <h2 className="font-body text-sm font-medium text-charcoal">How to export from WooCommerce:</h2>
-            <ol className="mt-3 list-decimal space-y-1 pl-4 text-[13px] text-charcoal-mid">
-              <li>Log into your WordPress admin</li>
-              <li>Go to WooCommerce → Products → All Products</li>
-              <li>Click Export at the top of the page</li>
-              <li>Select All columns or ensure Name and Images are included</li>
-              <li>Click Generate CSV and download the file</li>
-              <li>Upload the downloaded CSV file below</li>
-            </ol>
-            <Link href="/admin/import/help" className="mt-3 inline-block text-xs text-olive hover:underline">
-              Need detailed guide?
-            </Link>
-          </div>
-
           <button
             type="button"
             className={cn(
@@ -248,8 +162,7 @@ export function ImportPageClient() {
             }}
           >
             <Upload size={32} className="mx-auto text-[#A8A8A4]" />
-            <p className="mt-2 font-body text-sm text-charcoal">Drop your WooCommerce CSV here</p>
-            <p className="text-xs text-charcoal-mid">or click to browse</p>
+            <p className="mt-2 font-body text-sm text-charcoal">Drop CSV file here or click to upload</p>
             <p className="mt-1 text-[11px] text-charcoal-light">.csv files only</p>
           </button>
 
@@ -273,167 +186,164 @@ export function ImportPageClient() {
             type="button"
             onClick={() => void parseCsv()}
             disabled={!selectedFile || isLoading}
-            className="mt-4 w-full rounded-sm bg-olive px-4 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-4 w-full rounded-sm bg-olive px-4 py-3 font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-white disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {isLoading ? "Parsing..." : "PARSE CSV & PREVIEW PRODUCTS"}
+            {isLoading ? "Parsing…" : "Parse & Preview"}
           </button>
         </section>
       ) : null}
 
       {step === 2 && previewData ? (
         <section>
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-[#EBEBEA] bg-[#FAFAF8] p-4 text-sm">
-            <span>{previewData.total} products found in CSV</span>
-            <span className={cn(duplicatesCount > 0 && "rounded-sm bg-amber-100 px-2 py-1 text-amber-900")}>
-              {duplicatesCount} duplicates
-            </span>
-            <span className="text-olive">{selectedCount} selected</span>
-          </div>
-
-          {warning ? <p className="mb-3 text-sm text-amber-700">{warning}</p> : null}
-
-          {duplicatesCount > 0 ? (
-            <div className="mb-4 rounded-sm border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
-              {duplicatesCount} products appear to already exist. Duplicates are unchecked by default.
-            </div>
-          ) : null}
-
-          {(previewData.skippedNoImage ?? 0) > 0 ? (
-            <div className="mb-4 rounded-sm border border-amber-400 bg-amber-50 p-3 text-xs text-amber-900">
-              ℹ️ {previewData.skippedNoImage} products were skipped because they have no images in the CSV. Products
-              without images are not imported.
-            </div>
-          ) : null}
-
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedRows(new Set(previewData.products.map((p) => p.rowIndex)))}
-              className="border border-border px-2 py-1 text-xs"
-            >
-              Select All
+            <button type="button" onClick={selectAllImportable} className="border border-border px-3 py-1.5 font-body text-xs">
+              Select all importable
             </button>
-            <button type="button" onClick={() => setSelectedRows(new Set())} className="border border-border px-2 py-1 text-xs">
-              Deselect All
+            <button type="button" onClick={() => setSelectedSlugs(new Set())} className="border border-border px-3 py-1.5 font-body text-xs">
+              Deselect all
             </button>
-            <button
-              type="button"
-              onClick={() => setSelectedRows(new Set(previewData.products.filter((p) => !p.isDuplicate).map((p) => p.rowIndex)))}
-              className="border border-border px-2 py-1 text-xs"
-            >
-              Select Non-Duplicates
-            </button>
-            <div className="ml-auto flex items-center gap-2">
-              <button type="button" onClick={() => setStep(1)} className="px-3 py-1 text-xs text-charcoal-mid">
-                ← Back
-              </button>
-              <button
-                type="button"
-                disabled={selectedCount === 0}
-                onClick={() => void startImport()}
-                className="rounded-sm bg-olive px-4 py-2 text-xs text-white disabled:opacity-40"
-              >
-                IMPORT SELECTED →
-              </button>
-            </div>
+            <span className="ml-auto font-body text-sm text-charcoal">
+              {previewData.importable} of {previewData.total} products ready to import
+            </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-            {previewData.products.map((product) => {
-              const selected = selectedRows.has(product.rowIndex);
-              return (
-                <article
-                  key={product.rowIndex}
-                  className={cn(
-                    "relative rounded-sm border border-[#EBEBEA] bg-canvas",
-                    product.isDuplicate && "border-amber-300",
-                    selected && "ring-2 ring-olive bg-olive/5",
-                    selected && product.isDuplicate && "ring-amber-400",
-                  )}
-                >
-                  <label className="absolute left-2 top-2 z-10">
-                    <input type="checkbox" checked={selected} onChange={() => toggleRow(product.rowIndex)} />
-                  </label>
-                  <div className="aspect-[3/4] bg-[#F2F2F0]">
-                    {product.firstImageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={product.firstImageUrl} alt={product.name} className="h-full w-full object-cover" loading="lazy" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-3xl text-charcoal-light">
-                        {product.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-1 p-3">
-                    <h3 className="line-clamp-2 text-[13px] font-medium text-charcoal">{product.name}</h3>
-                    {product.description ? (
-                      <p className="mt-1 line-clamp-2 text-[11px] text-[#6B6B68]">{product.description}</p>
-                    ) : null}
-                    {product.sku ? <p className="text-[10px] text-charcoal-mid">SKU: {product.sku}</p> : null}
-                    <p className="text-[10px] text-charcoal-mid">{product.imageUrls.length} images</p>
-                    {product.isDuplicate ? (
-                      <span className="inline-block bg-[#FFF8E7] px-2 py-0.5 text-[9px] uppercase text-[#92660A]">Duplicate</span>
-                    ) : null}
-                    <p className="text-[10px] text-charcoal-light">Category: Unassigned</p>
-                  </div>
-                </article>
-              );
-            })}
+          <div className="overflow-x-auto border border-[#EBEBEA]">
+            <table className="w-full min-w-[800px] border-collapse font-body text-xs">
+              <thead>
+                <tr className="bg-[#37392d] text-left text-[10px] font-medium uppercase tracking-[0.1em] text-white">
+                  <th className="px-3 py-2 w-10" />
+                  <th className="px-3 py-2 w-14">Image</th>
+                  <th className="px-3 py-2">Product</th>
+                  <th className="px-3 py-2">Category</th>
+                  <th className="px-3 py-2">Price</th>
+                  <th className="px-3 py-2">Sizes</th>
+                  <th className="px-3 py-2">Colours</th>
+                  <th className="px-3 py-2">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {previewData.products.map((product) => {
+                  const canSelect = product.isImportable && !product.isDuplicate;
+                  const selected = selectedSlugs.has(product.slug);
+                  return (
+                    <tr key={product.slug} className="border-t border-[#EBEBEA]">
+                      <td className="px-3 py-2">
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          disabled={!canSelect}
+                          onChange={() => toggleSlug(product.slug, canSelect)}
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        {product.images[0] ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={product.images[0]}
+                            alt=""
+                            className="h-12 w-12 object-cover"
+                            width={48}
+                            height={48}
+                          />
+                        ) : (
+                          <div className="flex h-12 w-12 items-center justify-center bg-[#F2F2F0] text-[10px] text-[#A8A8A4]">
+                            —
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 font-medium text-charcoal">{product.name}</td>
+                      <td className="px-3 py-2">
+                        <span className="rounded-sm bg-[#F2F2F0] px-2 py-0.5 text-[10px] uppercase">
+                          {CATEGORY_LABELS[product.category]}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        {product.minPrice > 0 ? `₦${product.minPrice.toLocaleString("en-NG")}` : "—"}
+                      </td>
+                      <td className="max-w-[120px] truncate px-3 py-2 text-[#6B6B68]">
+                        {product.sizes.join(", ") || "—"}
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="flex gap-1">
+                          {product.colors.slice(0, 4).map((c) => (
+                            <span
+                              key={c}
+                              title={c}
+                              className="inline-block h-3 w-3 rounded-full border border-[#EBEBEA]"
+                              style={{ backgroundColor: c.toLowerCase() }}
+                            />
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2">
+                        {product.isDuplicate ? (
+                          <span className="text-amber-700">⚠ Skip — Already exists</span>
+                        ) : product.isImportable ? (
+                          <span className="text-emerald-700">✓ Ready</span>
+                        ) : (
+                          <span className="text-amber-700">⚠ Skip — {product.skipReason}</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <button type="button" onClick={() => setStep(1)} className="font-body text-xs text-charcoal-mid">
+              ← Back
+            </button>
+            <button
+              type="button"
+              disabled={selectedSlugs.size === 0 || importing}
+              onClick={() => void startImport()}
+              className="rounded-sm bg-olive px-6 py-2.5 font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-white disabled:opacity-40"
+            >
+              Import selected products
+            </button>
           </div>
         </section>
       ) : null}
 
       {step === 3 ? (
         <section className="space-y-4">
-          <div>
-            <div className="h-1.5 w-full bg-border">
-              <div className="h-full bg-olive transition-all" style={{ width: `${progressPct}%` }} />
-            </div>
-            <p className="mt-2 text-sm text-charcoal">
-              {progressCurrent} of {progressTotal} products imported
-            </p>
-            <p className="text-xs text-charcoal-mid">{progressPct}%</p>
-          </div>
+          {importing ? (
+            <p className="font-body text-sm text-charcoal">Importing products…</p>
+          ) : null}
 
-          {currentName ? <p className="text-sm text-charcoal">Importing: {currentName}...</p> : null}
-
-          <div className="max-h-64 overflow-y-auto rounded-sm border border-[#EBEBEA] bg-[#FAFAF8] p-4">
-            {logLines.map((line, index) => (
-              <p
-                key={`${line.text}-${index}`}
-                className={cn(
-                  "text-xs",
-                  line.tone === "ok" && "text-emerald-700",
-                  line.tone === "error" && "text-red-600",
-                  line.tone === "progress" && "text-charcoal-mid",
-                )}
-              >
-                {line.text}
+          {result ? (
+            <div className="space-y-4 rounded-sm border border-border bg-canvas p-6">
+              <p className="font-body text-sm text-emerald-700">✓ {result.imported} products imported successfully</p>
+              {result.failed > 0 ? (
+                <div className="text-sm text-amber-800">
+                  <p>⚠ {result.failed} products failed</p>
+                  <ul className="mt-2 list-disc pl-4 text-xs">
+                    {result.errors.map((e) => (
+                      <li key={e}>{e}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              <p className="font-body text-[13px] text-[#6B6B68]">
+                All products are in DRAFT status. Review and publish them from the Products page.
               </p>
-            ))}
-          </div>
-
-          {done ? (
-            <div className="space-y-4 rounded-sm border border-border bg-canvas p-4">
-              <h2 className="font-display text-3xl text-ink">Import Complete!</h2>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="border border-emerald-300 bg-emerald-50 p-3 text-sm">✓ {stats.ok} imported successfully</div>
-                <div className="border border-amber-300 bg-amber-50 p-3 text-sm">⚠ {stats.imageIssues} had image issues</div>
-                <div className="border border-red-300 bg-red-50 p-3 text-sm">✗ {stats.failed} failed</div>
-              </div>
-              <div className="rounded-sm border border-olive/30 bg-olive/10 p-3 text-sm text-charcoal">
-                All imported products are saved as drafts. Set prices, category, sizes, then publish.
-              </div>
-              <div className="space-y-2">
-                <Link href="/admin/products?status=draft&sort=newest" className="block rounded-sm bg-olive px-4 py-2 text-center text-sm text-white">
-                  VIEW IMPORTED PRODUCTS
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/admin/products?published=false"
+                  className="rounded-sm bg-olive px-4 py-2 font-body text-[11px] font-semibold uppercase tracking-[0.12em] text-white"
+                >
+                  View imported products →
                 </Link>
-                <button type="button" onClick={reset} className="w-full rounded-sm border border-border px-4 py-2 text-sm">
-                  IMPORT MORE
+                <button type="button" onClick={reset} className="rounded-sm border border-border px-4 py-2 font-body text-sm">
+                  Import again
                 </button>
               </div>
             </div>
           ) : null}
+
+          {error ? <p className="text-sm text-red-500">{error}</p> : null}
         </section>
       ) : null}
     </div>

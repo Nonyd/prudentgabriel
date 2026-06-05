@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Heart, Menu, Search, ShoppingBag, User, X } from "lucide-react";
@@ -10,6 +11,7 @@ import { useCartStore } from "@/store/cartStore";
 import { useAuthModalStore } from "@/store/authModalStore";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { getSubBrand } from "@/lib/sub-brand";
 
 type CollectionNav = { name: string; slug: string };
 
@@ -204,6 +206,8 @@ function MobileRtwSection({
 }
 
 export function Navbar() {
+  const pathname = usePathname();
+  const subBrand = getSubBrand(pathname);
   const [open, setOpen] = useState(false);
   const [collections, setCollections] = useState<CollectionNav[]>([]);
   const { totalItems, openCart, openSearch } = useCartStore();
@@ -265,7 +269,7 @@ export function Navbar() {
           </div>
 
           <div className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0">
-            <Logo variant="dark" size="md" />
+            <Logo variant="dark" size="md" subBrand={subBrand} />
           </div>
 
           <div className="relative ml-auto flex items-center justify-end gap-5 lg:ml-0">
@@ -335,7 +339,7 @@ export function Navbar() {
         aria-hidden={!open}
       >
         <div className="flex items-center justify-between px-6 py-4">
-          <Logo variant="dark" size="sm" />
+          <Logo variant="dark" size="sm" subBrand={subBrand} />
           <button type="button" onClick={() => setOpen(false)} aria-label="Close menu">
             <X className="h-5 w-5 text-choc" />
           </button>

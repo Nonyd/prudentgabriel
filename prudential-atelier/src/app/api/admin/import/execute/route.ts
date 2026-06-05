@@ -1,28 +1,105 @@
-import { Buffer } from "node:buffer";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { cloudinary } from "@/lib/cloudinary";
-import { slugifyText } from "@/lib/utils";
+import { logActivity } from "@/lib/logger";
 import { revalidateAfterBulkImport } from "@/lib/revalidate";
-
-type PreviewProduct = {
-  rowIndex: number;
-  name: string;
-  slug: string;
-  imageUrls: string[];
-  firstImageUrl: string;
-  description: string;
-  shortDesc: string;
-  sku: string;
-  stock: number;
-  isDuplicate: boolean;
-};
+import { slugifyText } from "@/lib/utils";
+import type { ParsedProduct } from "@/lib/woocommerce-parser";
 
 type ImportBody = {
-  selectedIndices: number[];
-  products: PreviewProduct[];
+  products: ParsedProduct[];
 };
+
+function colorToHex(name: string): string {
+  const map: Record<string, string> = {
+    black: "#000000",
+    white: "#FFFFFF",
+    red: "#C41E3A",
+    blue: "#1E3A8A",
+    green: "#166534",
+    pink: "#F9A8D4",
+    gold: "#D4AF37",
+    silver: "#C0C0C0",
+    beige: "#F5F5DC",
+    cream: "#FFFDD0",
+    brown: "#5C3422",
+    navy: "#1B2A4A",
+    purple: "#6B21A8",
+  };
+  const key = name.toLowerCase().trim();
+  return map[key] ?? "#888888";
+}
+
+async function importParsedProduct(product: ParsedProduct): Promise<{ id: string } | { error: string }> {
+  const baseSlug = slugifyText(product.slug || product.name);
+  let suffix = 0;
+  let finalSlug = baseSlug;
+
+  while (true) {
+    const candidate = suffix === 0 ? baseSlug : `${baseSlug}-${suffix}`;
+    const existing = await prisma.product.findUnique({
+      where: { slug: candidate },
+      select: { id: true },
+    });
+    if (!existing) {
+      finalSlug = candidate;
+      break;
+    }
+    suffix += 1;
+  }
+
+  const colorNames = Array.from(
+    new Set(product.variants.map((v) => v.color).filter(Boolean) as string[]),
+  );
+
+  const created = await prisma.product.create({
+    data: {
+      name: product.name,
+      slug: finalSlug,
+      description: product.description || product.shortDescription || "",
+      details: product.shortDescription || "",
+      category: product.category,
+      type: "RTW",
+      tags: product.tags,
+      basePriceNGN: product.minPrice,
+      priceNGN: product.minPrice,
+      isPublished: false,
+      isFeatured: false,
+      isNewArrival: false,
+      isBespokeAvail: false,
+      inStock: true,
+      images: {
+        create: product.images.map((url, idx) => ({
+          url,
+          alt: product.name,
+          isPrimary: idx === 0,
+          sortOrder: idx,
+        })),
+      },
+      variants: {
+        create: product.variants.map((v, idx) => ({
+          size: v.size,
+          sku: v.sku || `PG-${finalSlug.toUpperCase().slice(0, 6)}-${idx + 1}`,
+          priceNGN: v.price,
+          stock: 0,
+          lowStockAt: 3,
+          sortOrder: idx,
+        })),
+      },
+      colors:
+        colorNames.length > 0
+          ? {
+              create: colorNames.map((name) => ({
+                name,
+                hex: colorToHex(name),
+              })),
+            }
+          : undefined,
+    },
+  });
+
+  return { id: created.id };
+}
 
 export async function POST(req: NextRequest) {
   const gate = await requireAdminApi();
@@ -32,147 +109,43 @@ export async function POST(req: NextRequest) {
   try {
     body = (await req.json()) as ImportBody;
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const selectedSet = new Set(body.selectedIndices ?? []);
-  const selectedProducts = (body.products ?? []).filter((p) => selectedSet.has(p.rowIndex));
+  const toImport = (body.products ?? []).filter((p) => p.isImportable);
 
-  const stream = new ReadableStream({
-    async start(controller) {
-      const encoder = new TextEncoder();
-      const send = (data: object) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-      };
+  let imported = 0;
+  let failed = 0;
+  const errors: string[] = [];
+  const productIds: string[] = [];
 
-      send({ type: "start", total: selectedProducts.length });
-
-      for (let i = 0; i < selectedProducts.length; i += 1) {
-        const product = selectedProducts[i];
-        send({
-          type: "progress",
-          current: i + 1,
-          total: selectedProducts.length,
-          name: product.name,
-        });
-
-        try {
-          const cloudinaryUrls: string[] = [];
-          for (const imageUrl of product.imageUrls.slice(0, 5)) {
-            try {
-              const imageResponse = await fetch(imageUrl, {
-                signal: AbortSignal.timeout(10_000),
-                headers: {
-                  Accept: "image/*,*/*;q=0.8",
-                  "User-Agent":
-                    "Mozilla/5.0 (compatible; PrudentGabrielProductImport/1.0; +https://prudentgabriel.com)",
-                },
-              });
-              if (!imageResponse.ok) continue;
-              const mimeType = imageResponse.headers.get("content-type") || "image/jpeg";
-              const buffer = await imageResponse.arrayBuffer();
-              const dataUri = `data:${mimeType};base64,${Buffer.from(buffer).toString("base64")}`;
-              const uploadResult = await cloudinary.uploader.upload(dataUri, {
-                folder: "prudent-gabriel/products",
-                transformation: [
-                  { width: 1200, crop: "limit" },
-                  { quality: "auto" },
-                  { fetch_format: "auto" },
-                ],
-              });
-              cloudinaryUrls.push(uploadResult.secure_url);
-            } catch (imageError) {
-              console.error(`[import] image failed for ${product.name}`, imageError);
-            }
-          }
-
-          const baseSlug = slugifyText(product.name);
-          let suffix = 0;
-          let finalSlug = baseSlug;
-          while (true) {
-            const candidate = suffix === 0 ? baseSlug : `${baseSlug}-${suffix}`;
-            const existing = await prisma.product.findUnique({
-              where: { slug: candidate },
-              select: { id: true },
-            });
-            if (!existing) {
-              finalSlug = candidate;
-              break;
-            }
-            suffix += 1;
-          }
-
-          const created = await prisma.product.create({
-            data: {
-              name: product.name,
-              slug: finalSlug,
-              description: product.description || product.shortDesc || "",
-              details: product.shortDesc || "",
-              category: "CASUAL",
-              type: "RTW",
-              tags: [],
-              basePriceNGN: 0,
-              priceNGN: 0,
-              isPublished: false,
-              isFeatured: false,
-              isNewArrival: false,
-              isBespokeAvail: false,
-              inStock: product.stock > 0,
-              images: {
-                create: cloudinaryUrls.map((url, idx) => ({
-                  url,
-                  alt: product.name,
-                  isPrimary: idx === 0,
-                  sortOrder: idx,
-                })),
-              },
-              variants: {
-                create: [
-                  {
-                    size: "One Size",
-                    sku: product.sku || `PG-${finalSlug.toUpperCase().slice(0, 8)}`,
-                    priceNGN: 0,
-                    stock: Math.max(product.stock, 1),
-                    lowStockAt: 3,
-                    sortOrder: 0,
-                  },
-                ],
-              },
-            },
-          });
-
-          send({
-            type: "product_done",
-            current: i + 1,
-            total: selectedProducts.length,
-            name: product.name,
-            productId: created.id,
-            imageCount: cloudinaryUrls.length,
-            imageIssue: cloudinaryUrls.length < product.imageUrls.length,
-          });
-        } catch (productError) {
-          send({
-            type: "product_error",
-            current: i + 1,
-            total: selectedProducts.length,
-            name: product.name,
-            error: productError instanceof Error ? productError.message : "Unknown error",
-          });
-        }
+  for (const product of toImport) {
+    try {
+      const result = await importParsedProduct(product);
+      if ("error" in result) {
+        failed += 1;
+        errors.push(`${product.name}: ${result.error}`);
+      } else {
+        imported += 1;
+        productIds.push(result.id);
       }
+    } catch (e) {
+      failed += 1;
+      errors.push(`${product.name}: ${e instanceof Error ? e.message : "Unknown error"}`);
+    }
+  }
 
-      await revalidateAfterBulkImport();
+  if (imported > 0) {
+    await logActivity({
+      userId: gate.session.user.id,
+      userEmail: gate.session.user.email ?? undefined,
+      userRole: gate.session.user.role,
+      action: "CREATE",
+      module: "import",
+      description: `Imported ${imported} products from WooCommerce CSV`,
+    });
+    await revalidateAfterBulkImport();
+  }
 
-      send({ type: "complete", imported: selectedProducts.length });
-      controller.close();
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    },
-  });
+  return NextResponse.json({ imported, failed, errors, productIds });
 }

@@ -112,7 +112,7 @@ export function InvoicesClient() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl text-ink">Invoices</h1>
-          <p className="mt-1 font-body text-[13px] text-[#6B6B68]">Prudential Atelier Bespoke</p>
+          <p className="mt-1 font-body text-[13px] text-[#6B6B68]">Prudential Atelier</p>
         </div>
         <Link
           href="/admin/invoices/new"
@@ -192,7 +192,7 @@ export function InvoicesClient() {
             <tr className="bg-[#37392d] text-left text-[10px] font-medium uppercase tracking-[0.1em] text-white">
               <th className="px-3 py-2">Invoice #</th>
               <th className="px-3 py-2">Client</th>
-              <th className="px-3 py-2">Bespoke</th>
+              <th className="px-3 py-2">Order</th>
               <th className="px-3 py-2">Total</th>
               <th className="px-3 py-2">Balance</th>
               <th className="px-3 py-2">Status</th>

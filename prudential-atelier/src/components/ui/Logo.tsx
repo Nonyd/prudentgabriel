@@ -5,15 +5,25 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useLogoSettings } from "@/components/ui/LogoProvider";
 import { useTheme } from "@/components/ui/ThemeProvider";
+import { resolveSubBrandLogo } from "@/lib/logos";
+import type { SubBrand } from "@/lib/sub-brand";
 
 const WIDTHS = { sm: 120, md: 160, lg: 200 } as const;
+
+const SUBLINE: Record<SubBrand, string> = {
+  main: "/ ATELIER",
+  atelier: "/ ATELIER",
+  bridal: "/ BRIDAL",
+  kids: "/ KIDS",
+};
 
 export type LogoProps = {
   variant?: "dark" | "white";
   size?: keyof typeof WIDTHS;
+  subBrand?: SubBrand;
   /** When false, always use `variant`. When true (default), logo swaps with theme. */
   themeAdaptive?: boolean;
-  /** When false, wordmark omits the "/ ATELIER" subline (render separately if needed). */
+  /** When false, wordmark omits the subline (render separately if needed). */
   showSubline?: boolean;
   wordmarkTitleClassName?: string;
   className?: string;
@@ -23,12 +33,14 @@ export type LogoProps = {
 function WordmarkFallback({
   size,
   tone,
+  subBrand,
   showSubline,
   wordmarkTitleClassName,
   className,
 }: {
   size: keyof typeof WIDTHS;
   tone: "dark" | "white";
+  subBrand: SubBrand;
   showSubline?: boolean;
   wordmarkTitleClassName?: string;
   className?: string;
@@ -49,7 +61,7 @@ function WordmarkFallback({
           className="mt-0.5 block font-sans tracking-[0.28em]"
           style={{ fontSize: "9px", color: "var(--lightbr)" }}
         >
-          / ATELIER
+          {SUBLINE[subBrand]}
         </span>
       ) : null}
     </span>
@@ -59,13 +71,14 @@ function WordmarkFallback({
 export function Logo({
   variant = "dark",
   size = "md",
+  subBrand = "main",
   themeAdaptive = true,
   showSubline = true,
   wordmarkTitleClassName,
   className,
   href = "/",
 }: LogoProps) {
-  const { logoDark, logoWhite } = useLogoSettings();
+  const logoSettings = useLogoSettings();
   const { theme, mounted } = useTheme();
 
   const effectiveVariant: "dark" | "white" = themeAdaptive
@@ -76,7 +89,7 @@ export function Logo({
       : variant
     : variant;
 
-  const url = effectiveVariant === "dark" ? logoDark : logoWhite;
+  const url = resolveSubBrandLogo(logoSettings, subBrand, effectiveVariant);
   const width = WIDTHS[size];
   const height = Math.round(width * 0.35);
 
@@ -94,6 +107,7 @@ export function Logo({
     <WordmarkFallback
       size={size}
       tone={effectiveVariant}
+      subBrand={subBrand}
       showSubline={showSubline}
       wordmarkTitleClassName={wordmarkTitleClassName}
     />

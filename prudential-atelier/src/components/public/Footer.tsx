@@ -1,6 +1,16 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { FooterNewsletter } from "./FooterNewsletter";
 import { Logo } from "@/components/ui/Logo";
+import { usePublicSettings, getSettingFromPublic } from "@/hooks/usePublicSettings";
+import {
+  getInstagramFallback,
+  getInstagramSettingKey,
+  getSubBrand,
+  instagramHandleToUrl,
+} from "@/lib/sub-brand";
 
 const HOUSE_LINKS = [
   { href: "/atelier", label: "The Atelier" },
@@ -18,10 +28,6 @@ const CLIENT_LINKS = [
   { href: "/consultation", label: "Book Consultation" },
   { href: "/contact", label: "Contact" },
 ];
-
-function BrandWordmark() {
-  return <Logo variant="white" size="lg" themeAdaptive={false} showSubline />;
-}
 
 function FooterColumn({
   title,
@@ -82,13 +88,19 @@ function FooterColumn({
 }
 
 export function Footer() {
+  const pathname = usePathname();
+  const subBrand = getSubBrand(pathname);
+  const settings = usePublicSettings();
+  const instagramKey = getInstagramSettingKey(subBrand);
+  const instagramHandle = getSettingFromPublic(settings, instagramKey, getInstagramFallback(subBrand));
+  const instagramUrl = instagramHandleToUrl(instagramHandle);
   const year = new Date().getFullYear();
 
   return (
     <footer className="bg-footer-bg">
       <div className="mx-auto max-w-site px-6 py-16 lg:px-10 lg:py-20">
         <div className="flex justify-center pb-12">
-          <BrandWordmark />
+          <Logo variant="white" size="lg" themeAdaptive={false} showSubline subBrand={subBrand} />
         </div>
 
         <div className="grid gap-10 md:grid-cols-3 lg:gap-12">
@@ -110,6 +122,19 @@ export function Footer() {
             >
               © {year} Prudential Atelier. All rights reserved.
             </p>
+            <a
+              href={instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors hover:text-cream/80"
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: "11px",
+                color: "rgba(226, 209, 194, 0.55)",
+              }}
+            >
+              {instagramHandle} ↗
+            </a>
             <p
               style={{
                 fontFamily: "var(--font-body)",

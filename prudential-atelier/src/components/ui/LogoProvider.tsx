@@ -3,7 +3,15 @@
 import { createContext, useContext } from "react";
 import type { LogoSettings } from "@/lib/logos";
 
-const LogoContext = createContext<LogoSettings>({ logoDark: "", logoWhite: "" });
+const EMPTY_LOGOS: LogoSettings = {
+  logoDark: "",
+  logoWhite: "",
+  atelier: { dark: "", white: "" },
+  bridal: { dark: "", white: "" },
+  kids: { dark: "", white: "" },
+};
+
+const LogoContext = createContext<LogoSettings>(EMPTY_LOGOS);
 
 export function LogoProvider({
   logos,

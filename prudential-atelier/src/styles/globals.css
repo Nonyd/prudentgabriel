@@ -64,6 +64,14 @@ body {
   height: 100%;
 }
 
+/* Kids sub-brand theme — applied on /kids routes only */
+.kids-theme {
+  --accent: #e8a838;
+  --accent-soft: #fff3dc;
+  --hero-bg: #2d1b69;
+  --cta-bg: #e8a838;
+}
+
 @layer base {
   body {
     @apply min-h-screen;

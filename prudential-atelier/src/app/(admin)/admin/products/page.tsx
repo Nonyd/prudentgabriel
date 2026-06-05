@@ -13,7 +13,13 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   const search = (Array.isArray(sp.search) ? sp.search[0] : sp.search)?.trim() ?? "";
   const category = (Array.isArray(sp.category) ? sp.category[0] : sp.category) as ProductCategory | undefined;
   const type = (Array.isArray(sp.type) ? sp.type[0] : sp.type) as ProductType | undefined;
-  const published = Array.isArray(sp.published) ? sp.published[0] : sp.published;
+  const statusParam = Array.isArray(sp.status) ? sp.status[0] : sp.status;
+  const published =
+    statusParam === "draft"
+      ? "false"
+      : Array.isArray(sp.published)
+        ? sp.published[0]
+        : sp.published;
   const needsPrice = Array.isArray(sp.needsPrice) ? sp.needsPrice[0] : sp.needsPrice;
   const stock = Array.isArray(sp.stock) ? sp.stock[0] : sp.stock;
 

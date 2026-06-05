@@ -10,7 +10,8 @@ import { QuickViewModal } from "@/components/common/QuickViewModal";
 import { convertFromNGN, formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import { useCartStore } from "@/store/cartStore";
-import { optimizeProductCardImageUrl, PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/product-image-url";
+import { optimizeProductCardImageUrl } from "@/lib/product-image-url";
+import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import type { ProductListItem } from "@/types/product";
 
 export interface ProductCardProps {
@@ -31,6 +32,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
   const [qv, setQv] = useState<string | null>(null);
   const [colorId, setColorId] = useState<string | null>(product.colors[0]?.id ?? null);
   const [sizeId, setSizeId] = useState<string | null>(null);
+  const [imgError, setImgError] = useState(false);
 
   const selectedColor = useMemo(
     () => product.colors.find((c) => c.id === colorId) ?? product.colors[0] ?? null,
@@ -63,7 +65,8 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
   const showSaleBadge = product.isOnSale;
   const showNewBadge = product.isNewArrival && !showSaleBadge;
 
-  const imgPrimary = optimizeProductCardImageUrl(primary?.url || PRODUCT_IMAGE_PLACEHOLDER);
+  const hasImage = Boolean(primary?.url?.trim()) && !imgError;
+  const imgPrimary = primary?.url?.trim() ? optimizeProductCardImageUrl(primary.url) : "";
   const imgSecondary = secondary ? optimizeProductCardImageUrl(secondary.url) : null;
 
   const addToBag = (variant: ProductListItem["variants"][0]) => {
@@ -73,8 +76,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
     }
     const unit = variant.salePriceNGN ?? variant.priceNGN;
     const id = `${variant.id}-${selectedColor?.id ?? "none"}`;
-    const imageUrl =
-      (selectedColor?.imageUrl?.trim() || primary?.url || PRODUCT_IMAGE_PLACEHOLDER) as string;
+    const imageUrl = (selectedColor?.imageUrl?.trim() || primary?.url || "") as string;
     addItem({
       id,
       productId: product.id,
@@ -110,19 +112,24 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
           className="relative aspect-[3/4] overflow-hidden bg-[var(--light-grey)]"
           onClick={() => router.push(`/shop/${product.slug}`)}
         >
-          <Image
-            src={imgPrimary}
-            alt={primary?.alt || product.name}
-            fill
-            sizes="(max-width: 768px) 50vw, 33vw"
-            className={cn(
-              "object-cover object-top",
-              secondary
-                ? "transition-opacity duration-500 ease-out group-hover:opacity-0"
-                : "transition-transform duration-700 ease-out group-hover:scale-[1.04]",
-            )}
-            priority={priority}
-          />
+          {hasImage ? (
+            <Image
+              src={imgPrimary}
+              alt={primary?.alt || product.name}
+              fill
+              sizes="(max-width: 768px) 50vw, 33vw"
+              className={cn(
+                "object-cover object-top",
+                secondary
+                  ? "transition-opacity duration-500 ease-out group-hover:opacity-0"
+                  : "transition-transform duration-700 ease-out group-hover:scale-[1.04]",
+              )}
+              priority={priority}
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <ImagePlaceholder className="absolute inset-0 h-full w-full" />
+          )}
           {secondary && (
             <Image
               src={imgSecondary!}

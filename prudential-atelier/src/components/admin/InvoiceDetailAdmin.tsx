@@ -134,7 +134,7 @@ export function InvoiceDetailAdmin({ initial }: { initial: InvoiceDetailInitial 
 
       {inv.bespokeRequest ? (
         <div className="mt-6 border border-[#EBEBEA] bg-[#FAFAF8] p-6">
-          <p className="font-body text-[11px] uppercase text-[#6B6B68]">Bespoke</p>
+          <p className="font-body text-[11px] uppercase text-[#6B6B68]">Order</p>
           <Link className="mt-2 inline-block text-olive underline" href={`/admin/bespoke/${inv.bespokeRequest.id}`}>
             {inv.bespokeRequest.requestNumber} — {inv.bespokeRequest.occasion}
           </Link>

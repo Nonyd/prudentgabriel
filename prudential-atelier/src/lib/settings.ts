@@ -134,6 +134,12 @@ export async function getImageSetting(key: string, fallback: string): Promise<st
 const APPEARANCE_IMAGE_KEYS = [
   "logo_dark",
   "logo_white",
+  "logo_atelier_dark",
+  "logo_atelier_white",
+  "logo_bridal_dark",
+  "logo_bridal_white",
+  "logo_kids_dark",
+  "logo_kids_white",
   "img_hero",
   "img_bride_hero",
   "img_bride_portrait",

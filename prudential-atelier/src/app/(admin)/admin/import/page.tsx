@@ -1,10 +1,5 @@
-import type { Metadata } from "next";
-import { ImportPageClient } from "@/components/admin/ImportPageClient";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Import Products | Admin",
-};
-
-export default function AdminImportPage() {
-  return <ImportPageClient />;
+export default function AdminImportRedirectPage() {
+  redirect("/admin/shop/import");
 }
