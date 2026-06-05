@@ -5,7 +5,7 @@ export type BespokeOrderLink = { id: string; orderRef: string };
 export async function mapBespokeOrdersByRequestId(
   requestIds: string[],
 ): Promise<Map<string, BespokeOrderLink>> {
-  const ids = [...new Set(requestIds.filter(Boolean))];
+  const ids = Array.from(new Set(requestIds.filter(Boolean)));
   if (ids.length === 0) return new Map();
 
   const orders = await prisma.bespokeOrder.findMany({
