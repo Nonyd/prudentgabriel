@@ -58,6 +58,25 @@ export async function uploadAdminAsset(
   return url;
 }
 
+/** Cloudinary-backed admin video upload (MP4, WebM, MOV). */
+export async function uploadAdminVideo(
+  file: File,
+  folder: string,
+  onProgress?: UploadProgressHandler,
+): Promise<string> {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("folder", folder);
+  fd.append("allowVideo", "true");
+  const body = await xhrPostFormData("/api/admin/upload", fd, { onProgress, credentials: true });
+  const url = body.url;
+  if (typeof url !== "string" || !url.length) {
+    const err = typeof body.error === "string" ? body.error : "Upload failed";
+    throw new Error(err);
+  }
+  return url;
+}
+
 /** Account area avatar upload (session cookie, fixed server folder). */
 export async function uploadAccountImage(file: File, onProgress?: UploadProgressHandler): Promise<string> {
   const fd = new FormData();

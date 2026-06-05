@@ -47,3 +47,30 @@ export function resolveImageMimeType(
 
   return (allowed as readonly string[]).includes(t) ? t : null;
 }
+
+function videoExtToMime(ext: string): string | null {
+  switch (ext.toLowerCase()) {
+    case "mp4":
+      return "video/mp4";
+    case "webm":
+      return "video/webm";
+    case "mov":
+      return "video/quicktime";
+    default:
+      return null;
+  }
+}
+
+export function resolveVideoMimeType(reportedType: string, fileName: string | undefined): string | null {
+  const allowed = ["video/mp4", "video/webm", "video/quicktime"] as const;
+  let t = (reportedType || "").trim().toLowerCase();
+
+  if (!t && fileName) {
+    const parts = fileName.split(".");
+    const ext = parts.length > 1 ? parts.pop() ?? "" : "";
+    const inferred = videoExtToMime(ext);
+    if (inferred) return inferred;
+  }
+
+  return (allowed as readonly string[]).includes(t) ? t : null;
+}

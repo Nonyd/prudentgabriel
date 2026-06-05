@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ChevronDown, ChevronUp, Film, ImageIcon, Plus, Trash2 } from "lucide-react";
 import { AdminImageUrlField } from "@/components/admin/AdminImageUrlField";
+import { AdminVideoUrlField } from "@/components/admin/AdminVideoUrlField";
 import { parseHeroCarouselEditorItems, type HeroCarouselItem } from "@/lib/hero-carousel";
 
 export function HeroCarouselEditor({
@@ -91,6 +92,8 @@ export function HeroCarouselEditor({
                   {item.url && item.type === "image" ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={item.url} alt="" className="h-full w-full object-cover" />
+                  ) : item.url && item.type === "video" ? (
+                    <video src={item.url} muted playsInline className="h-full w-full object-cover" />
                   ) : item.type === "video" ? (
                     <Film className="h-4 w-4 text-text-light" />
                   ) : (
@@ -158,22 +161,16 @@ export function HeroCarouselEditor({
                   folder="prudent-gabriel/hero"
                 />
               ) : (
-                <div>
-                  <label className="mb-1.5 block font-sans text-xs font-medium text-text-mid">
-                    Video URL
-                  </label>
-                  <input
-                    type="url"
-                    value={item.url}
-                    onChange={(e) => {
-                      const next = [...items];
-                      next[index] = { ...next[index], url: e.target.value };
-                      commitItems(next);
-                    }}
-                    placeholder="https://..."
-                    className="w-full rounded-[3px] border border-sand px-3 py-2 font-sans text-sm text-ink focus:border-choc focus:outline-none"
-                  />
-                </div>
+                <AdminVideoUrlField
+                  label="Video"
+                  value={item.url}
+                  onChange={(url) => {
+                    const next = [...items];
+                    next[index] = { ...next[index], url };
+                    commitItems(next);
+                  }}
+                  folder="prudent-gabriel/hero-videos"
+                />
               )}
 
               <div>

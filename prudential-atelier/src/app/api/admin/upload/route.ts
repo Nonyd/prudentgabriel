@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { cloudinary } from "@/lib/cloudinary";
-import { resolveImageMimeType } from "@/lib/image-upload-mime";
+import { resolveImageMimeType, resolveVideoMimeType } from "@/lib/image-upload-mime";
 
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 
 const PLACEHOLDER =
   "https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80&auto=format";
@@ -35,10 +36,17 @@ export async function POST(req: NextRequest) {
 
   const fileName = "name" in raw && typeof raw.name === "string" ? raw.name : undefined;
   const allowPdf = form.get("allowPdf") === "true";
+  const allowVideo = form.get("allowVideo") === "true";
   const isPdf = raw.type === "application/pdf";
+  const videoMime = allowVideo ? resolveVideoMimeType(raw.type ?? "", fileName) : null;
+  const isVideo = Boolean(videoMime);
 
-  if (allowPdf && isPdf) {
-    if (raw.size > MAX_BYTES) {
+  if (isVideo) {
+    if (raw.size > MAX_VIDEO_BYTES) {
+      return NextResponse.json({ error: "Video must be 50MB or smaller" }, { status: 400 });
+    }
+  } else if (allowPdf && isPdf) {
+    if (raw.size > MAX_IMAGE_BYTES) {
       return NextResponse.json({ error: "PDF must be 5MB or smaller" }, { status: 400 });
     }
   } else {
@@ -46,15 +54,18 @@ export async function POST(req: NextRequest) {
     if (!mime) {
       return NextResponse.json({ error: "Only JPEG, PNG, or WebP images are allowed" }, { status: 400 });
     }
-  }
-
-  if (raw.size > MAX_BYTES) {
-    return NextResponse.json({ error: "Image must be 5MB or smaller" }, { status: 400 });
+    if (raw.size > MAX_IMAGE_BYTES) {
+      return NextResponse.json({ error: "Image must be 5MB or smaller" }, { status: 400 });
+    }
   }
 
   if (!configured) {
     return NextResponse.json({
-      url: isPdf ? "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" : PLACEHOLDER,
+      url: isPdf
+        ? "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+        : isVideo
+          ? "https://res.cloudinary.com/demo/video/upload/sample.mp4"
+          : PLACEHOLDER,
       publicId: `dev-${Date.now()}`,
     });
   }
@@ -66,14 +77,18 @@ export async function POST(req: NextRequest) {
       : "prudential-atelier/products";
 
   const buffer = Buffer.from(await raw.arrayBuffer());
-  const dataMime = isPdf ? "application/pdf" : resolveImageMimeType(raw.type ?? "", fileName, { allowGif: false })!;
+  const dataMime = isVideo
+    ? videoMime!
+    : isPdf
+      ? "application/pdf"
+      : resolveImageMimeType(raw.type ?? "", fileName, { allowGif: false })!;
   const base64 = `data:${dataMime};base64,${buffer.toString("base64")}`;
 
   try {
     const uploaded = await cloudinary.uploader.upload(base64, {
       folder,
-      resource_type: isPdf ? "raw" : "image",
-      ...(isPdf ? {} : { transformation: [{ width: 1200, crop: "limit" }, { quality: "auto" }] }),
+      resource_type: isVideo ? "video" : isPdf ? "raw" : "image",
+      ...(isPdf || isVideo ? {} : { transformation: [{ width: 1200, crop: "limit" }, { quality: "auto" }] }),
     });
     return NextResponse.json({
       url: uploaded.secure_url,
