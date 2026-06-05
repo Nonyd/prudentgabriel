@@ -3,22 +3,15 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { authConfig } from "@/lib/auth.config";
 
 const googleEnabled =
   Boolean(process.env.GOOGLE_CLIENT_ID?.length) && Boolean(process.env.GOOGLE_CLIENT_SECRET?.length);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  // Auth.js v5 reads AUTH_SECRET; many deployments still set NEXTAUTH_SECRET only.
-  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  ...authConfig,
   adapter: PrismaAdapter(prisma),
-  trustHost: true,
-  session: { strategy: "jwt" },
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
   providers: [
     ...(googleEnabled
       ? [
@@ -83,29 +76,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    ...authConfig.callbacks,
     async jwt({ token, user, trigger, session }) {
-      console.log("JWT CALLBACK:", {
-        trigger,
-        hasUser: !!user,
-        role: (user as { role?: Role } | undefined)?.role ?? (token?.role as Role | undefined),
-        tokenRole: token?.role,
-      });
+      if (authConfig.callbacks?.jwt) {
+        token = await authConfig.callbacks.jwt({ token, user, trigger, session });
+      }
 
       if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.role = (user as { role: Role }).role;
-        token.isStaff = (user as { isStaff?: boolean }).isStaff ?? false;
-        token.mustResetPassword = (user as { mustResetPassword?: boolean }).mustResetPassword ?? false;
-        token.referralCode = (user as { referralCode?: string }).referralCode ?? "";
-        token.pointsBalance = (user as { pointsBalance?: number }).pointsBalance ?? 0;
-        token.jobRolePermissions =
-          (user as { jobRole?: { permissions: string[] } | null }).jobRole?.permissions ?? [];
-        token.name = user.name;
-        token.picture = user.image;
-        token.jobTitle = (user as { jobTitle?: string | null }).jobTitle ?? undefined;
-        token.department = (user as { department?: string | null }).department ?? undefined;
-
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
           select: {
@@ -160,43 +137,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       }
 
-      if (trigger === "update") {
-        if (session) {
-          const patch = session as { name?: string; image?: string };
-          if (patch.name !== undefined) token.name = patch.name;
-          if (patch.image !== undefined) token.picture = patch.image;
-        }
-        if (token.id) {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: token.id as string },
-            select: { mustResetPassword: true },
-          });
-          if (dbUser) token.mustResetPassword = dbUser.mustResetPassword;
-        }
+      if (trigger === "update" && token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { mustResetPassword: true },
+        });
+        if (dbUser) token.mustResetPassword = dbUser.mustResetPassword;
       }
 
       return token;
-    },
-    async session({ session, token }) {
-      console.log("SESSION CALLBACK:", {
-        role: token?.role,
-        email: token?.email,
-      });
-
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
-        session.user.isStaff = Boolean(token.isStaff);
-        session.user.jobTitle = token.jobTitle as string | undefined;
-        session.user.department = token.department as string | undefined;
-        session.user.referralCode = token.referralCode as string;
-        session.user.pointsBalance = token.pointsBalance as number;
-        if (token.name) session.user.name = token.name as string;
-        if (token.picture) session.user.image = token.picture as string;
-        session.user.mustResetPassword = Boolean(token.mustResetPassword);
-        session.user.jobRolePermissions = (token.jobRolePermissions as string[] | undefined) ?? [];
-      }
-      return session;
     },
   },
 });
