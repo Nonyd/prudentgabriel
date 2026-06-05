@@ -16,7 +16,15 @@ type BlogPost = {
   readTime: number | null;
 };
 
-export function JournalListClient() {
+export function JournalListClient({
+  eyebrow = "The Journal",
+  title = "Style & Stories",
+  subtitle = "Stories from the atelier, styling notes, and behind-the-scenes craft.",
+}: {
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+}) {
   const [items, setItems] = useState<BlogPost[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -49,13 +57,9 @@ export function JournalListClient() {
 
   return (
     <div className="mx-auto max-w-site px-6 py-20 lg:px-10">
-      <p className="eyebrow">The Journal</p>
-      <h1 className="mt-3 font-serif text-[clamp(2rem,4vw,3rem)] font-medium text-choc">
-        Style &amp; Stories
-      </h1>
-      <p className="mt-4 max-w-xl copy-body text-sm font-light leading-relaxed text-text-mid">
-        Stories from the atelier, styling notes, and behind-the-scenes craft.
-      </p>
+      <p className="eyebrow">{eyebrow}</p>
+      <h1 className="mt-3 font-serif text-[clamp(2rem,4vw,3rem)] font-medium text-choc">{title}</h1>
+      <p className="mt-4 max-w-xl copy-body text-sm font-light leading-relaxed text-text-mid">{subtitle}</p>
 
       {categories.length > 0 ? (
         <div className="mt-8 flex flex-wrap gap-2">

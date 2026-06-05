@@ -3,7 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function TrackSearchForm({ notFound }: { notFound?: boolean }) {
+export function TrackSearchForm({
+  notFound,
+  eyebrow = "ORDER TRACKING",
+  title = "Follow your commission",
+  subtitle = "No login required — just your order reference.",
+}: {
+  notFound?: boolean;
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+}) {
   const router = useRouter();
   const [ref, setRef] = useState("");
 
@@ -17,11 +27,9 @@ export function TrackSearchForm({ notFound }: { notFound?: boolean }) {
   return (
     <div className="bg-ivory px-4 py-16 md:py-20">
       <div className="mx-auto max-w-lg text-center">
-        <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">ORDER TRACKING</p>
-        <h1 className="mt-3 font-serif text-[40px] font-normal leading-tight text-choc md:text-[52px]">
-          Follow your commission
-        </h1>
-        <p className="mt-3 font-body text-[14px] text-text-light">No login required — just your order reference.</p>
+        <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">{eyebrow}</p>
+        <h1 className="mt-3 font-serif text-[40px] font-normal leading-tight text-choc md:text-[52px]">{title}</h1>
+        <p className="mt-3 font-body text-[14px] text-text-light">{subtitle}</p>
 
         <form onSubmit={handleSubmit} className="mx-auto mt-10 flex max-w-[480px] overflow-hidden rounded border border-[0.5px] border-sand">
           <input

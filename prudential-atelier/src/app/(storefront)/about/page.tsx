@@ -1,24 +1,55 @@
 import Image from "next/image";
 import Link from "next/link";
 import { PFABanner } from "@/components/common/PFABanner";
-import { getContent, getContentSettings, getImageSettings } from "@/lib/settings";
+import { cmsBool, cmsGet, getCMSContent } from "@/lib/cms";
+import { getImageSettings } from "@/lib/settings";
 
 export const revalidate = 300;
 
-const DEFAULT_STORY =
-  "Founded in Lagos, Prudential Atelier crafts ready-to-wear, bridal, and made-to-measure commissions for women who expect more from what they wear. Every piece is designed and constructed in our atelier with the same precision whether it ships worldwide or is tailored to your measurements.";
+const ABOUT_KEYS = [
+  "about_hero_headline",
+  "about_hero_subtext",
+  "about_story_body",
+  "about_founder_quote",
+  "about_founder_name",
+  "about_founder_title",
+  "about_academy_enabled",
+  "about_academy_headline",
+  "about_academy_body",
+  "about_academy_cta_label",
+  "about_academy_cta_link",
+  "about_team_enabled",
+  "about_team_headline",
+] as const;
 
 export default async function AboutPage() {
-  let storyBody = DEFAULT_STORY;
   let storyHero = "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1400";
+  let cms: Record<string, string> = {};
 
   try {
-    const [content, images] = await Promise.all([getContentSettings(), getImageSettings()]);
-    storyBody = getContent(content, "page_about", storyBody);
+    const [content, images] = await Promise.all([getCMSContent([...ABOUT_KEYS]), getImageSettings()]);
+    cms = content;
     if (images.img_our_story_hero?.trim()) storyHero = images.img_our_story_hero;
   } catch {
     /* defaults */
   }
+
+  const heroHeadline = cmsGet(cms, "about_hero_headline", "The House of Prudent Gabriel");
+  const heroSubtext = cmsGet(cms, "about_hero_subtext", "Founded in Lagos. Worn around the world.");
+  const storyHtml = cmsGet(
+    cms,
+    "about_story_body",
+    "<p>Founded in Lagos, Prudential Atelier crafts ready-to-wear, bridal, and made-to-measure commissions for women who expect more from what they wear.</p>",
+  );
+  const founderQuote = cmsGet(
+    cms,
+    "about_founder_quote",
+    "I didn't plan to be a fashion designer. I just couldn't let a spoiled dress defeat me.",
+  );
+  const founderName = cmsGet(cms, "about_founder_name", "Mrs. Prudent Gabriel");
+  const founderTitle = cmsGet(cms, "about_founder_title", "Founder");
+  const showTeam = cmsBool(cms, "about_team_enabled", false);
+  const teamHeadline = cmsGet(cms, "about_team_headline", "Our team");
 
   return (
     <div>
@@ -31,7 +62,7 @@ export default async function AboutPage() {
             fontWeight: 400,
           }}
         >
-          The House of Prudent Gabriel
+          {heroHeadline}
         </h1>
         <p
           className="mx-auto mt-4 max-w-lg"
@@ -41,22 +72,21 @@ export default async function AboutPage() {
             color: "var(--sand)",
           }}
         >
-          Founded in Lagos. Worn around the world.
+          {heroSubtext}
         </p>
       </section>
 
       <section className="mx-auto grid max-w-site items-center gap-12 bg-ivory px-6 py-20 lg:grid-cols-2 lg:px-10">
         <div
-          className="whitespace-pre-line font-light leading-relaxed"
+          className="legal-content font-light leading-relaxed"
           style={{
             fontFamily: "var(--font-body)",
             fontSize: "15px",
             color: "var(--text-mid)",
             lineHeight: 1.85,
           }}
-        >
-          {storyBody}
-        </div>
+          dangerouslySetInnerHTML={{ __html: storyHtml }}
+        />
         <div className="relative aspect-[3/4] overflow-hidden bg-sand/20">
           <Image src={storyHero} alt="Prudent Gabriel atelier" fill className="object-cover object-top" priority />
         </div>
@@ -71,7 +101,7 @@ export default async function AboutPage() {
             color: "var(--choc)",
           }}
         >
-          &ldquo;I didn&apos;t plan to be a fashion designer. I just couldn&apos;t let a spoiled dress defeat me.&rdquo;
+          &ldquo;{founderQuote}&rdquo;
         </blockquote>
         <p
           className="mt-4 uppercase"
@@ -82,37 +112,39 @@ export default async function AboutPage() {
             color: "var(--lightbr)",
           }}
         >
-          — Mrs. Prudent Gabriel, Founder
+          — {founderName}, {founderTitle}
         </p>
       </section>
 
-      <section className="bg-ivory px-6 py-20 lg:px-10">
-        <div className="mx-auto max-w-site text-center">
-          <h2
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "32px",
-              color: "var(--choc)",
-            }}
-          >
-            Our team
-          </h2>
-          <p
-            className="mx-auto mt-4 max-w-md"
-            style={{
-              fontFamily: "var(--font-body)",
-              fontSize: "14px",
-              color: "var(--text-mid)",
-            }}
-          >
-            Team portraits coming soon. In the meantime,{" "}
-            <Link href="/consultation" className="underline hover:text-choc">
-              book a consultation
-            </Link>{" "}
-            to meet our atelier team.
-          </p>
-        </div>
-      </section>
+      {showTeam ? (
+        <section className="bg-ivory px-6 py-20 lg:px-10">
+          <div className="mx-auto max-w-site text-center">
+            <h2
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "32px",
+                color: "var(--choc)",
+              }}
+            >
+              {teamHeadline}
+            </h2>
+            <p
+              className="mx-auto mt-4 max-w-md"
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: "14px",
+                color: "var(--text-mid)",
+              }}
+            >
+              Team portraits coming soon. In the meantime,{" "}
+              <Link href="/consultation" className="underline hover:text-choc">
+                book a consultation
+              </Link>{" "}
+              to meet our atelier team.
+            </p>
+          </div>
+        </section>
+      ) : null}
 
       <PFABanner />
     </div>

@@ -5,29 +5,41 @@ import { usePathname } from "next/navigation";
 import { FooterNewsletter } from "./FooterNewsletter";
 import { Logo } from "@/components/ui/Logo";
 import { usePublicSettings, getSettingFromPublic } from "@/hooks/usePublicSettings";
+import { cmsGet, cmsJson } from "@/lib/cms-helpers";
 import {
   getInstagramFallback,
   getInstagramSettingKey,
   getSubBrand,
   instagramHandleToUrl,
 } from "@/lib/sub-brand";
+import { useCookieConsentStore } from "@/store/cookieConsentStore";
 
-const HOUSE_LINKS = [
-  { href: "/atelier", label: "The Atelier" },
-  { href: "/rtw", label: "Ready-to-Wear" },
-  { href: "/bridal", label: "Bridal" },
-  { href: "/kids", label: "Kids" },
-  { href: "/about#academy", label: "Fashion Academy" },
-  { href: "/journal", label: "Journal" },
+type LinkItem = { label: string; url: string };
+
+const DEFAULT_HOUSE_LINKS: LinkItem[] = [
+  { label: "The Atelier", url: "/atelier" },
+  { label: "Ready-to-Wear", url: "/rtw" },
+  { label: "Bridal", url: "/bridal" },
+  { label: "Kids", url: "/kids" },
+  { label: "Fashion Academy", url: "/about#academy" },
+  { label: "Journal", url: "/journal" },
 ];
 
-const CLIENT_LINKS = [
-  { href: "/account/orders", label: "Track Your Order" },
-  { href: "/rtw", label: "Size Guide" },
-  { href: "/legal/returns", label: "Shipping & Returns" },
-  { href: "/consultation", label: "Book Consultation" },
-  { href: "/contact", label: "Contact" },
+const DEFAULT_CLIENT_LINKS: LinkItem[] = [
+  { label: "Track Your Order", url: "/track" },
+  { label: "Size Guide", url: "/rtw" },
+  { label: "Shipping & Returns", url: "/returns-policy" },
+  { label: "Book Consultation", url: "/consultation" },
+  { label: "Contact", url: "/contact" },
 ];
+
+const LEGAL_LINKS = [
+  { href: "/privacy-policy", label: "Privacy Policy" },
+  { href: "/terms-and-conditions", label: "Terms & Conditions" },
+  { href: "/cookie-policy", label: "Cookie Policy" },
+  { href: "/returns-policy", label: "Returns Policy" },
+  { href: "/shipping-policy", label: "Shipping Policy" },
+] as const;
 
 function FooterColumn({
   title,
@@ -87,14 +99,35 @@ function FooterColumn({
   );
 }
 
-export function Footer() {
+export function Footer({ cms = {} }: { cms?: Record<string, string> }) {
   const pathname = usePathname();
   const subBrand = getSubBrand(pathname);
   const settings = usePublicSettings();
+  const openCookieModal = useCookieConsentStore((s) => s.openModal);
   const instagramKey = getInstagramSettingKey(subBrand);
   const instagramHandle = getSettingFromPublic(settings, instagramKey, getInstagramFallback(subBrand));
   const instagramUrl = instagramHandleToUrl(instagramHandle);
-  const year = new Date().getFullYear();
+
+  const houseLinks = cmsJson<LinkItem[]>(cms, "footer_house_links", DEFAULT_HOUSE_LINKS).map((l) => ({
+    href: l.url,
+    label: l.label,
+    external: l.url.startsWith("http"),
+  }));
+
+  const clientLinks = cmsJson<LinkItem[]>(cms, "footer_client_links", DEFAULT_CLIENT_LINKS).map((l) => ({
+    href: l.url,
+    label: l.label,
+    external: l.url.startsWith("http"),
+  }));
+
+  const copyright = cmsGet(cms, "footer_copyright", `© ${new Date().getFullYear()} Prudential Atelier. All rights reserved.`);
+
+  const newsletterHeadline = cmsGet(
+    cms,
+    "footer_newsletter_headline",
+    "Collections, ateliers and invitations — first.",
+  );
+  const newsletterPlaceholder = cmsGet(cms, "footer_newsletter_placeholder", "Your email");
 
   return (
     <footer className="bg-footer-bg">
@@ -104,9 +137,9 @@ export function Footer() {
         </div>
 
         <div className="grid gap-10 md:grid-cols-3 lg:gap-12">
-          <FooterColumn title="The House" links={HOUSE_LINKS} />
-          <FooterColumn title="Client Care" links={CLIENT_LINKS} />
-          <FooterNewsletter />
+          <FooterColumn title="The House" links={houseLinks} />
+          <FooterColumn title="Client Care" links={clientLinks} />
+          <FooterNewsletter headline={newsletterHeadline} placeholder={newsletterPlaceholder} />
         </div>
       </div>
 
@@ -120,7 +153,7 @@ export function Footer() {
                 color: "rgba(226, 209, 194, 0.4)",
               }}
             >
-              © {year} Prudential Atelier. All rights reserved.
+              {copyright}
             </p>
             <a
               href={instagramUrl}
@@ -135,23 +168,34 @@ export function Footer() {
             >
               {instagramHandle} ↗
             </a>
-            <p
-              style={{
-                fontFamily: "var(--font-body)",
-                fontSize: "11px",
-                color: "rgba(226, 209, 194, 0.4)",
-              }}
-            >
-              <Link href="/legal/privacy" className="transition-colors hover:text-cream/60">
-                Privacy
-              </Link>
-              {" · "}
-              <Link href="/legal/terms" className="transition-colors hover:text-cream/60">
-                Terms
-              </Link>
-              {" · ₦ NGN"}
-            </p>
           </div>
+
+          <p
+            className="text-center"
+            style={{
+              fontFamily: "var(--font-jost)",
+              fontSize: "10px",
+              color: "var(--text-light)",
+            }}
+          >
+            {LEGAL_LINKS.map((link, i) => (
+              <span key={link.href}>
+                {i > 0 ? " · " : null}
+                <Link href={link.href} className="transition-colors hover:text-cream">
+                  {link.label}
+                </Link>
+              </span>
+            ))}
+            {" · "}
+            <button
+              type="button"
+              onClick={openCookieModal}
+              className="transition-colors hover:text-cream"
+            >
+              Cookie Settings
+            </button>
+          </p>
+
           <p
             className="text-center italic"
             style={{

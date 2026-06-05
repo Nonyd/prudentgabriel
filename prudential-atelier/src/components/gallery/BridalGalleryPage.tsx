@@ -10,10 +10,18 @@ export function BridalGalleryPage({
   initialImages,
   initialTotal,
   initialHasMore,
+  heroHeadline = "Bridal.",
+  heroSubtext = "Every bride is a masterpiece. Every gown, a legacy.",
+  pageDescription,
+  galleryLabel = "PRUDENTIAL BRIDE",
 }: {
   initialImages: GalleryImage[];
   initialTotal: number;
   initialHasMore: boolean;
+  heroHeadline?: string;
+  heroSubtext?: string;
+  pageDescription?: string;
+  galleryLabel?: string;
 }) {
   const [images, setImages] = useState(initialImages);
   const [page, setPage] = useState(1);
@@ -38,10 +46,10 @@ export function BridalGalleryPage({
   return (
     <div className="bg-[#FAF7F4]">
       <section className="px-6 pb-16 pt-20 text-center">
-        <p className="font-body text-[9px] uppercase tracking-[0.3em] text-[#C8A97A]">PRUDENTIAL BRIDE</p>
-        <h1 className="mt-3 font-display text-[44px] italic leading-[0.9] text-[#2A1F1A] md:text-[80px]">Bridal.</h1>
+        <p className="font-body text-[9px] uppercase tracking-[0.3em] text-[#C8A97A]">{galleryLabel}</p>
+        <h1 className="mt-3 font-display text-[44px] italic leading-[0.9] text-[#2A1F1A] md:text-[80px]">{heroHeadline}</h1>
         <p className="mx-auto mt-4 max-w-sm font-body text-[14px] font-light text-charcoal/60">
-          Every bride is a masterpiece. Every gown, a legacy.
+          {pageDescription ?? heroSubtext}
         </p>
         <div className="mx-auto mt-8 flex w-[120px] items-center justify-center gap-2 text-[#C8A97A]/40">
           <span className="h-px flex-1 bg-current" />

@@ -102,6 +102,7 @@ export interface RTWPageClientProps {
   hasNext: boolean;
   heroLabel: string;
   heroTitle: string;
+  heroSubtitle?: string;
   collections?: RTWCollectionStripItem[];
 }
 
@@ -112,6 +113,7 @@ export function RTWPageClient({
   hasNext: initialHasNext,
   heroLabel,
   heroTitle,
+  heroSubtitle,
   collections = [],
 }: RTWPageClientProps) {
   const sp = useSearchParams();
@@ -173,6 +175,9 @@ export function RTWPageClient({
         <h1 className="mt-2 text-center font-display text-[32px] font-normal italic leading-[0.95] text-black md:text-[56px]">
           {heroTitle}
         </h1>
+        {heroSubtitle ? (
+          <p className="mx-auto mt-3 max-w-lg text-center font-body text-sm font-light text-dark-grey">{heroSubtitle}</p>
+        ) : null}
       </header>
 
       <div className="sticky top-0 z-30 border-b border-mid-grey bg-white">

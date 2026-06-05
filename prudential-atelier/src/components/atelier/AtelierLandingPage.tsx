@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { STAGE_LABELS, STAGE_ORDER } from "@/lib/bespoke-stages";
 import { optimizeImageUrl } from "@/lib/utils";
+import { cmsGet } from "@/lib/cms-helpers";
 
 type GalleryImage = {
   id: string;
@@ -21,11 +22,30 @@ type ReviewItem = {
 export function AtelierLandingPage({
   galleryImages,
   reviews,
+  cms = {},
 }: {
   galleryImages: GalleryImage[];
   reviews: ReviewItem[];
+  cms?: Record<string, string>;
 }) {
   const stages = STAGE_ORDER.map((s) => STAGE_LABELS[s]);
+  const heroHeadline = cmsGet(cms, "atelier_hero_headline", "The Atelier");
+  const heroSubtext = cmsGet(
+    cms,
+    "atelier_hero_subtext",
+    "Every commission begins with a conversation. We design entirely around you.",
+  );
+  const heroCta = cmsGet(cms, "atelier_hero_cta_label", "Begin a Commission");
+  const processHeadline = cmsGet(cms, "atelier_process_headline", "Thirteen stages of craft");
+  const processSubtext = cmsGet(
+    cms,
+    "atelier_process_subtext",
+    "From consultation to delivery — every step documented and shared with you.",
+  );
+  const galleryLabel = cmsGet(cms, "atelier_gallery_label", "Past Work");
+  const galleryHeadline = cmsGet(cms, "atelier_gallery_headline", "From our atelier");
+  const ctaHeadline = cmsGet(cms, "atelier_cta_headline", "Ready to begin?");
+  const ctaButton = cmsGet(cms, "atelier_cta_button_label", "Book your consultation");
 
   return (
     <div>
@@ -39,7 +59,7 @@ export function AtelierLandingPage({
             fontWeight: 400,
           }}
         >
-          The Atelier
+          {heroHeadline}
         </h1>
         <p
           className="mx-auto mt-6 max-w-xl"
@@ -50,7 +70,7 @@ export function AtelierLandingPage({
             lineHeight: 1.7,
           }}
         >
-          Every commission begins with a conversation. We design entirely around you.
+          {heroSubtext}
         </p>
         <Link
           href="/consultation"
@@ -64,7 +84,7 @@ export function AtelierLandingPage({
             color: "var(--choc)",
           }}
         >
-          Begin a Commission
+          {heroCta}
         </Link>
       </section>
 
@@ -89,8 +109,16 @@ export function AtelierLandingPage({
               color: "var(--choc)",
             }}
           >
-            Thirteen stages of craft
+            {processHeadline}
           </h2>
+          {processSubtext ? (
+            <p
+              className="mx-auto mt-4 max-w-xl text-center"
+              style={{ fontFamily: "var(--font-body)", fontSize: "14px", color: "var(--text-mid)" }}
+            >
+              {processSubtext}
+            </p>
+          ) : null}
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {stages.map((label) => (
               <div
@@ -117,7 +145,7 @@ export function AtelierLandingPage({
                 color: "var(--lightbr)",
               }}
             >
-              Past Work
+              {galleryLabel}
             </p>
             <h2
               className="mt-3"
@@ -127,7 +155,7 @@ export function AtelierLandingPage({
                 color: "var(--choc)",
               }}
             >
-              From our atelier
+              {galleryHeadline}
             </h2>
             <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {galleryImages.slice(0, 8).map((img) => (
@@ -186,7 +214,7 @@ export function AtelierLandingPage({
             color: "var(--cream)",
           }}
         >
-          Ready to begin?
+          {ctaHeadline}
         </p>
         <Link
           href="/consultation"
@@ -199,7 +227,7 @@ export function AtelierLandingPage({
             color: "var(--cream)",
           }}
         >
-          Book your consultation
+          {ctaButton}
         </Link>
       </section>
     </div>

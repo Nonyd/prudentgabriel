@@ -18,6 +18,7 @@ import { StripePayBlock } from "@/components/checkout/StripePayBlock";
 import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
 import type { PaymentGatewayType } from "@/lib/payments/index";
 import { formatPrice } from "@/lib/currency";
+import { cmsGet } from "@/lib/cms-helpers";
 
 type Gateway = PaymentGatewayType;
 type ShopCur = "NGN" | "USD" | "GBP";
@@ -84,6 +85,32 @@ const CARD_UI: Record<
   },
 };
 
+const CARD_CMS_PREFIX: Record<CardKey, string> = {
+  signature: "consultation_type1",
+  "design-team": "consultation_type2",
+  virtual: "consultation_type3",
+};
+
+function getCardConfig(key: CardKey, cms: Record<string, string>) {
+  const base = CARD_UI[key];
+  const prefix = CARD_CMS_PREFIX[key];
+  const badge = cmsGet(cms, `${prefix}_badge`, base.badge ?? "");
+  const features = [
+    cmsGet(cms, `${prefix}_feature_1`, base.features[0] ?? ""),
+    cmsGet(cms, `${prefix}_feature_2`, base.features[1] ?? ""),
+    cmsGet(cms, `${prefix}_feature_3`, base.features[2] ?? ""),
+  ].filter(Boolean);
+
+  return {
+    ...base,
+    typeLabel: badge || base.typeLabel,
+    title: cmsGet(cms, `${prefix}_title`, base.title),
+    description: cmsGet(cms, `${prefix}_description`, base.description),
+    features: features.length ? features : base.features,
+    badge: badge || base.badge,
+  };
+}
+
 function resolveCard(
   consultants: ConsultantWithOfferings[],
   key: CardKey,
@@ -142,7 +169,13 @@ function StepIndicator({ step }: { step: number }) {
   );
 }
 
-export function ConsultationBookingFlow({ consultants }: { consultants: ConsultantWithOfferings[] }) {
+export function ConsultationBookingFlow({
+  consultants,
+  cms = {},
+}: {
+  consultants: ConsultantWithOfferings[];
+  cms?: Record<string, string>;
+}) {
   const { data: session } = useSession();
   const [step, setStep] = useState(1);
   const [selectedCard, setSelectedCard] = useState<CardKey | null>(null);
@@ -413,14 +446,17 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
       <div className="mx-auto max-w-5xl">
         <header className="mb-10 text-center">
           <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">
-            BOOK A CONSULTATION
+            {cmsGet(cms, "consultation_page_eyebrow", "BOOK A CONSULTATION")}
           </p>
           <h1 className="mt-3 font-serif text-[40px] font-normal leading-tight text-choc md:text-[56px]">
-            Sit with us
+            {cmsGet(cms, "consultation_page_title", "Sit with us")}
           </h1>
           <p className="mx-auto mt-4 max-w-[480px] font-body text-[15px] leading-relaxed text-text-mid">
-            Tell us the occasion, and we&apos;ll design around your story. Payment is taken at booking to reserve your
-            time.
+            {cmsGet(
+              cms,
+              "consultation_page_subtitle",
+              "Tell us the occasion, and we'll design around your story. Payment is taken at booking to reserve your time.",
+            )}
           </p>
         </header>
 
@@ -430,7 +466,7 @@ export function ConsultationBookingFlow({ consultants }: { consultants: Consulta
           <div>
             <div className="grid gap-5 md:grid-cols-3">
               {cardKeys.map((key) => {
-                const cfg = CARD_UI[key];
+                const cfg = getCardConfig(key, cms);
                 const resolved = resolveCard(consultants, key);
                 const price = resolved?.offering.feeNGN ?? 0;
                 const selected = selectedCard === key;

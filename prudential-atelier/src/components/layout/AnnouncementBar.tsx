@@ -5,7 +5,13 @@ import { X } from "lucide-react";
 
 const DISMISSED_KEY = "pa_announcement_dismissed";
 
-export function AnnouncementBar({ messages }: { messages: string[] }) {
+export function AnnouncementBar({
+  messages,
+  intervalMs = 3000,
+}: {
+  messages: string[];
+  intervalMs?: number;
+}) {
   const [visible, setVisible] = useState(false);
   const [index, setIndex] = useState(0);
 
@@ -15,21 +21,21 @@ export function AnnouncementBar({ messages }: { messages: string[] }) {
 
     const interval = setInterval(() => {
       setIndex((i) => (i + 1) % Math.max(1, messages.length));
-    }, 3000);
+    }, intervalMs);
 
     return () => clearInterval(interval);
-  }, [messages]);
+  }, [messages, intervalMs]);
 
   if (!visible) return null;
 
   const list = messages.filter((m) => m.trim().length > 0);
+  if (list.length === 0) return null;
+
   const line = list[index % list.length] ?? "";
 
   return (
     <div className="relative flex h-9 shrink-0 items-center justify-center bg-olive px-10 text-center">
-      <p className="pr-8 font-body text-[11px] font-normal uppercase tracking-[0.1em] text-white">
-        {line}
-      </p>
+      <p className="pr-8 font-body text-[11px] font-normal uppercase tracking-[0.1em] text-white">{line}</p>
       <button
         type="button"
         onClick={() => {

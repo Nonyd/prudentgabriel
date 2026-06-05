@@ -6,6 +6,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { getLogoSettings } from "@/lib/logos";
 import { SmoothScroll } from "@/components/public/SmoothScroll";
 import { RootProvider } from "@/providers/RootProvider";
+import { CookieConsent } from "@/components/gdpr/CookieConsent";
 
 const themeInitScript = `(function(){try{var t=localStorage.getItem("pg-theme");var theme="light";if(t==="dark"||t==="light")theme=t;else if(t){try{var p=JSON.parse(t);if(p&&p.state&&p.state.isDark)theme="dark";}catch(e){}}document.documentElement.setAttribute("data-theme",theme);}catch(e){}})();`;
 
@@ -72,6 +73,7 @@ export default async function RootLayout({
       <body className="min-h-screen font-sans antialiased">
         <RootProvider session={session} logos={logos}>
           <SmoothScroll>{children}</SmoothScroll>
+          <CookieConsent />
         </RootProvider>
       </body>
     </html>

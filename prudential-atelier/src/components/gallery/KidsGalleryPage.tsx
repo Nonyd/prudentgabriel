@@ -10,10 +10,18 @@ export function KidsGalleryPage({
   initialImages,
   initialTotal,
   initialHasMore,
+  heroHeadline = "Dressed for little royals",
+  heroSubtext = "Occasion wear and everyday elegance for the smallest members of the house.",
+  heroCtaLabel = "Shop Kids",
+  pageDescription,
 }: {
   initialImages: GalleryImage[];
   initialTotal: number;
   initialHasMore: boolean;
+  heroHeadline?: string;
+  heroSubtext?: string;
+  heroCtaLabel?: string;
+  pageDescription?: string;
 }) {
   const [images, setImages] = useState(initialImages);
   const [page, setPage] = useState(1);
@@ -56,20 +64,20 @@ export function KidsGalleryPage({
           className="mt-4 font-display leading-[1.05] text-cream"
           style={{ fontSize: "clamp(40px, 6vw, 52px)" }}
         >
-          Dressed for little royals
+          {heroHeadline}
         </h1>
         <p
           className="mx-auto mt-4 max-w-md font-body leading-[1.8]"
           style={{ fontSize: "15px", color: "rgba(226, 209, 194, 0.85)" }}
         >
-          Beautifully crafted pieces for the children who deserve the best.
+          {pageDescription ?? heroSubtext}
         </p>
         <Link
           href="/shop?category=KIDDIES"
           className="mt-8 inline-block px-8 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-[#2a1a0e] transition-opacity hover:opacity-90"
           style={{ backgroundColor: "var(--cta-bg)", borderRadius: "2px" }}
         >
-          Shop Kids Collection
+          {heroCtaLabel}
         </Link>
       </section>
 

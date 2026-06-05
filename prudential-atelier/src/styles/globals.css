@@ -116,4 +116,57 @@ body {
   .eyebrow {
     @apply font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr;
   }
+
+  .legal-content {
+    font-family: var(--font-lora);
+    font-size: 15px;
+    line-height: 1.9;
+    color: var(--text-mid);
+  }
+
+  .legal-content h2 {
+    font-family: var(--font-cormorant);
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--choc);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .legal-content h3 {
+    font-family: var(--font-jost);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--choc);
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .legal-content p {
+    margin-bottom: 1rem;
+  }
+
+  .legal-content ul,
+  .legal-content ol {
+    margin: 0.75rem 0 1rem 1.25rem;
+    padding-left: 0.5rem;
+  }
+
+  .legal-content li {
+    margin-bottom: 0.35rem;
+  }
+
+  .legal-content a {
+    color: var(--nut);
+    text-decoration: none;
+  }
+
+  .legal-content a:hover {
+    text-decoration: underline;
+  }
+
+  .legal-content strong {
+    color: var(--choc);
+    font-weight: 600;
+  }
 }

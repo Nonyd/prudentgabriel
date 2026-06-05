@@ -9,7 +9,13 @@ import { ArrowRight } from "lucide-react";
 const schema = z.object({ email: z.string().email() });
 type Form = z.infer<typeof schema>;
 
-export function FooterNewsletter() {
+export function FooterNewsletter({
+  headline = "Collections, ateliers and invitations — first.",
+  placeholder = "Your email",
+}: {
+  headline?: string;
+  placeholder?: string;
+}) {
   const [done, setDone] = useState(false);
   const { register, handleSubmit, formState } = useForm<Form>({
     resolver: zodResolver(schema),
@@ -40,7 +46,7 @@ export function FooterNewsletter() {
         The Newsletter
       </p>
       <p className="mb-5 max-w-xs font-sans text-[13px] font-light leading-relaxed text-cream/75">
-        Collections, ateliers and invitations — first.
+        {headline}
       </p>
       {done ? (
         <p className="font-sans text-sm text-cream/90">You&apos;re on the list. Thank you.</p>
@@ -48,7 +54,7 @@ export function FooterNewsletter() {
         <form onSubmit={handleSubmit(onSubmit)} className="flex max-w-sm border-b border-cream/25">
           <input
             type="email"
-            placeholder="Your email"
+            placeholder={placeholder}
             className="h-11 min-w-0 flex-1 border-0 bg-transparent font-sans text-[13px] font-light text-cream placeholder:text-cream/40 focus:outline-none"
             {...register("email")}
           />

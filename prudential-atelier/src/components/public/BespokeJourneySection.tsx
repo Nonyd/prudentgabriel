@@ -2,8 +2,19 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { cmsGet } from "@/lib/cms-helpers";
 
-export function BespokeJourneySection() {
+export function BespokeJourneySection({ cms = {} }: { cms?: Record<string, string> }) {
+  const eyebrow = cmsGet(cms, "home_journey_eyebrow", "The Atelier Journey");
+  const headline = cmsGet(cms, "home_journey_headline", "Thirteen stages, one unforgettable piece.");
+  const body = cmsGet(
+    cms,
+    "home_journey_body",
+    "From the first consultation to the final fitting, every commission is documented and shared with you at each step.",
+  );
+  const btnLabel = cmsGet(cms, "home_journey_button_label", "Begin Your Commission →");
+  const btnLink = cmsGet(cms, "home_journey_button_link", "/atelier");
+
   return (
     <section className="grid min-h-[380px] lg:grid-cols-2">
       <motion.div
@@ -24,7 +35,7 @@ export function BespokeJourneySection() {
             color: "var(--lightbr)",
           }}
         >
-          The Atelier Journey
+          {eyebrow}
         </p>
         <h2
           className="mt-4 leading-[1.1]"
@@ -34,7 +45,14 @@ export function BespokeJourneySection() {
             color: "var(--cream)",
           }}
         >
-          Thirteen stages, <span className="italic">one unforgettable piece.</span>
+          {headline.includes(",") ? (
+            <>
+              {headline.split(",")[0]},
+              <span className="italic"> {headline.split(",").slice(1).join(",").trim()}</span>
+            </>
+          ) : (
+            headline
+          )}
         </h2>
         <p
           className="mt-6 max-w-md leading-[1.85]"
@@ -45,11 +63,10 @@ export function BespokeJourneySection() {
             color: "var(--sand)",
           }}
         >
-          From the first consultation to the final fitting, every commission is documented and
-          shared with you at each step.
+          {body}
         </p>
-        <Link href="/atelier" className="btn-ghost-dark mt-10 inline-flex w-fit">
-          Begin Your Commission →
+        <Link href={btnLink} className="btn-ghost-dark mt-10 inline-flex w-fit">
+          {btnLabel}
         </Link>
       </motion.div>
 
@@ -58,9 +75,8 @@ export function BespokeJourneySection() {
         style={{ backgroundColor: "var(--nut)" }}
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
         viewport={{ once: true, margin: "-80px" }}
-        aria-hidden
       />
     </section>
   );

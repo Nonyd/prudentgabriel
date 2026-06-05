@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { queryProductList } from "@/lib/products-list-query";
 import { ShopBrowse } from "@/components/shop/ShopBrowse";
+import { cmsGet, getCMSContent } from "@/lib/cms";
 
 export const revalidate = 300;
 
@@ -24,6 +25,7 @@ export default async function ShopPage({
   if (!u.get("limit")) u.set("limit", "20");
 
   const { products, total, page, totalPages, hasNext, hasPrev } = await queryProductList(u, { isAdmin });
+  const cms = await getCMSContent(["shop_page_eyebrow", "shop_page_title", "shop_page_subtitle"]);
 
   return (
     <ShopBrowse
@@ -33,6 +35,9 @@ export default async function ShopPage({
       totalPages={totalPages}
       hasNext={hasNext}
       hasPrev={hasPrev}
+      heroEyebrow={cmsGet(cms, "shop_page_eyebrow", "THE COLLECTION")}
+      heroHeadline={cmsGet(cms, "shop_page_title", "Prudent Gabriel")}
+      heroSubtext={cmsGet(cms, "shop_page_subtitle", "Ready-to-wear, bridal, and atelier couture.")}
     />
   );
 }
