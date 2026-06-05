@@ -556,6 +556,36 @@ export const CMS_PAGES: CmsPageDef[] = [
   },
 ];
 
+export type CmsPageGroup = {
+  id: string;
+  label: string;
+  pageIds: string[];
+};
+
+/** Sidebar grouping for the Pages CMS — keeps related pages together. */
+export const CMS_PAGE_GROUPS: CmsPageGroup[] = [
+  {
+    id: "main",
+    label: "Main site",
+    pageIds: ["homepage", "about", "footer"],
+  },
+  {
+    id: "brands",
+    label: "Brands & services",
+    pageIds: ["atelier", "bridal", "kids", "consultation", "shop", "rtw", "track"],
+  },
+  {
+    id: "journal",
+    label: "Journal",
+    pageIds: ["journal"],
+  },
+  {
+    id: "legal",
+    label: "Legal & policies",
+    pageIds: ["legal"],
+  },
+];
+
 export const LEGAL_PAGE_META: Record<
   string,
   { title: string; route: string; contentKey: string; lastUpdated: string }

@@ -9,6 +9,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { AdminImageUrlField } from "@/components/admin/AdminImageUrlField";
 import { CmsRichTextEditor } from "@/components/admin/content/CmsRichTextEditor";
 import {
+  CMS_PAGE_GROUPS,
   CMS_PAGES,
   getFieldDefault,
   getPageById,
@@ -318,30 +319,69 @@ export function PagesContentClient() {
   const [selectedId, setSelectedId] = useState(CMS_PAGES[0].id);
   const page = getPageById(selectedId) ?? CMS_PAGES[0];
 
+  const pageById = useMemo(() => Object.fromEntries(CMS_PAGES.map((p) => [p.id, p])), []);
+
   return (
     <div className="space-y-6">
       <div>
+        <Link
+          href="/admin/content"
+          className="mb-4 inline-block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-light hover:text-choc"
+        >
+          ← Content
+        </Link>
         <p className="eyebrow">Content</p>
-        <h1 className="font-display text-2xl text-ink">Pages</h1>
-        <p className="mt-1 font-sans text-sm text-text-mid">Manage copy for every public page</p>
+        <h1 className="font-display text-2xl text-ink">Page content</h1>
+        <p className="mt-1 font-sans text-sm text-text-mid">
+          Edit live copy and images section by section. Changes save per section.
+        </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
-        <ul className="space-y-0.5">
-          {CMS_PAGES.map((p) => (
-            <li key={p.id}>
-              <button
-                type="button"
-                onClick={() => setSelectedId(p.id)}
-                className={`w-full rounded-sm px-3 py-2 text-left font-sans text-sm transition-colors ${
-                  selectedId === p.id ? "bg-choc/10 font-medium text-choc" : "text-text-mid hover:bg-sand/30"
-                }`}
-              >
-                {p.label}
-              </button>
-            </li>
+      <div className="rounded-lg border border-sand/80 bg-white px-4 py-3">
+        <p className="font-sans text-[13px] leading-relaxed text-text-mid">
+          Page-specific images are edited here. Global logos and fallback hero images are in{" "}
+          <Link href="/admin/settings/appearance" className="text-choc hover:underline">
+            Appearance settings
+          </Link>
+          . Portfolio grids are managed in the{" "}
+          <Link href="/admin/gallery" className="text-choc hover:underline">
+            gallery
+          </Link>
+          .
+        </p>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+        <nav className="space-y-5" aria-label="Pages">
+          {CMS_PAGE_GROUPS.map((group) => (
+            <div key={group.id}>
+              <p className="mb-1.5 px-3 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
+                {group.label}
+              </p>
+              <ul className="space-y-0.5">
+                {group.pageIds.map((pageId) => {
+                  const p = pageById[pageId];
+                  if (!p) return null;
+                  return (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedId(p.id)}
+                        className={`w-full rounded-sm px-3 py-2 text-left font-sans text-sm transition-colors ${
+                          selectedId === p.id
+                            ? "bg-choc/10 font-medium text-choc"
+                            : "text-text-mid hover:bg-sand/30"
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </nav>
 
         <div>
           <PageEditor key={page.id} page={page} />

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AppearanceSettingsCard } from "@/components/admin/settings/AppearanceSettingsCard";
 import { SubBrandLogosSettingsCard } from "@/components/admin/settings/SubBrandLogosSettingsCard";
 import type { SettingType } from "@prisma/client";
@@ -39,6 +40,21 @@ export function AppearanceSettingsForm({
 
   return (
     <div className="space-y-10">
+      <div className="rounded-lg border border-sand/80 bg-white px-4 py-3">
+        <p className="font-body text-[13px] leading-relaxed text-[#6B6B68]">
+          Global brand assets and fallback images used when a page has no specific image set.
+          Page-specific copy and hero images are edited in{" "}
+          <Link href="/admin/content/pages" className="text-choc hover:underline">
+            Page content
+          </Link>
+          . Curated portfolio grids are in the{" "}
+          <Link href="/admin/gallery" className="text-choc hover:underline">
+            gallery
+          </Link>
+          .
+        </p>
+      </div>
+
       <div>
         <h2 className="font-body text-xs font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
           Brand logos

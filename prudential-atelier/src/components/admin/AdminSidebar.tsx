@@ -8,7 +8,11 @@ import {
   CalendarDays,
   ClipboardCheck,
   FileText,
+  Images,
+  Image as ImageIcon,
+  Layout,
   LayoutDashboard,
+  Newspaper,
   Lock,
   LogOut,
   Package,
@@ -109,8 +113,11 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
   {
     label: "Content",
     items: [
-      { href: "/admin/content/blog", label: "Blog / Journal", icon: FileText, permission: "content" },
-      { href: "/admin/content/pages", label: "Pages", icon: FileText, permission: "content" },
+      { href: "/admin/content", label: "Overview", icon: Layout, permission: "content", alsoActive: ["/admin/content/pages", "/admin/content/media"] },
+      { href: "/admin/content/pages", label: "Page content", icon: FileText, permission: "content" },
+      { href: "/admin/content/blog", label: "Blog / Journal", icon: Newspaper, permission: "content" },
+      { href: "/admin/gallery", label: "Portfolio gallery", icon: Images, permission: "content" },
+      { href: "/admin/content/media", label: "Media library", icon: ImageIcon, permission: "content" },
     ],
   },
   {
@@ -124,7 +131,7 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Settings",
     items: [
       { href: "/admin/settings", label: "General Settings", icon: Settings, permission: "settings" },
-      { href: "/admin/settings/appearance", label: "Appearance", icon: Palette, permission: "settings" },
+      { href: "/admin/settings/appearance", label: "Brand & appearance", icon: Palette, permission: "settings" },
       {
         href: "/admin/settings/developer",
         label: "Developer",

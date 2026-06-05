@@ -22,7 +22,7 @@ const TITLES: Record<AdminSettingsGroupSlug, string> = {
   store: "Store",
   payments: "Payments",
   email: "Email & SMS",
-  appearance: "Appearance",
+  appearance: "Appearance & brand",
   content: "Content",
   social: "Social media",
   loyalty: "Loyalty",
@@ -30,12 +30,20 @@ const TITLES: Record<AdminSettingsGroupSlug, string> = {
   seo: "SEO",
 };
 
+const DESCRIPTIONS: Partial<Record<AdminSettingsGroupSlug, string>> = {
+  appearance: "Global logos, favicon, and fallback images. Page-specific copy lives in Page content.",
+  seo: "Default meta tags and Open Graph image for search and social sharing.",
+};
+
 export default async function AdminSettingsGroupPage({ params }: { params: Promise<{ group: string }> }) {
   const { group } = await params;
   const g = group.toLowerCase();
   if (!VALID.has(g)) notFound();
+  if (g === "content") {
+    redirect("/admin/content/pages");
+  }
   if (g === "media") {
-    redirect("/admin/gallery");
+    redirect("/admin/content/media");
   }
 
   const slug = g as AdminSettingsGroupSlug;
@@ -50,6 +58,9 @@ export default async function AdminSettingsGroupPage({ params }: { params: Promi
         ← Settings
       </Link>
       <h1 className="font-display text-2xl text-ink">{title}</h1>
+      {DESCRIPTIONS[slug] ? (
+        <p className="mt-1 font-sans text-sm text-text-mid">{DESCRIPTIONS[slug]}</p>
+      ) : null}
       <div className="mt-8">
         <AdminSettingsGroupClient groupSlug={slug} />
       </div>
