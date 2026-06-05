@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
+import { isAdminRole } from '@/lib/roles'
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
@@ -93,32 +94,17 @@ export async function middleware(request: NextRequest) {
       )
     }
 
-    const role = token.role as string
-    const isStaff = token.isStaff as boolean
+    const role = token.role as string | undefined
+    const isStaff = Boolean(token.isStaff)
 
-    // Staff users cannot access admin
-    if (isStaff && 
-        role !== 'ADMIN' && 
-        role !== 'SUPER_ADMIN') {
+    // Non-admin staff only — do not block STAFF_ADMIN / managers
+    if (isStaff && !isAdminRole(role)) {
       return NextResponse.redirect(
         new URL('/staff', request.url)
       )
     }
 
-    // Must be a recognised admin role
-    const adminRoles = [
-      'SUPER_ADMIN', 
-      'ADMIN', 
-      'STAFF_ADMIN',
-      'BESPOKE_MANAGER',
-      'RTW_MANAGER', 
-      'CONTENT_MANAGER',
-      'FINANCE_MANAGER',
-      'HR_MANAGER',
-      'CONSULTATION_MANAGER',
-    ]
-
-    if (!adminRoles.includes(role)) {
+    if (!isAdminRole(role)) {
       return NextResponse.redirect(
         new URL('/admin-login', request.url)
       )

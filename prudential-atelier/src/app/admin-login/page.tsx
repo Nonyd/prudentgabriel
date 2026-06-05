@@ -1,13 +1,5 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/auth";
-import { isAdminRole } from "@/lib/admin-auth";
 import { AdminLoginClient } from "./AdminLoginClient";
 
-export default async function AdminLoginPage() {
-  const session = await auth();
-  if (session?.user && isAdminRole(session.user.role)) {
-    redirect("/admin");
-  }
-
+export default function AdminLoginPage() {
   return <AdminLoginClient />;
 }
