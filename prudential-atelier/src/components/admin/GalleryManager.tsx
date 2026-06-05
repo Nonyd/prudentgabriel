@@ -349,9 +349,9 @@ export function GalleryManager() {
         </div>
       </div>
 
-      <div className="masonry-grid-admin">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {images.map((img, idx) => (
-          <div key={img.id} className="group masonry-item relative border border-[#EBEBEA] bg-[#fafafa]">
+          <div key={img.id} className="group relative border border-[#EBEBEA] bg-[#fafafa]">
             <div className="relative aspect-[3/4] w-full overflow-hidden">
               <Image
                 src={img.url}
