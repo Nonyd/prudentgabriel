@@ -1,15 +1,31 @@
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { BespokeStage, ConsultationStatus, OrderStatus, PaymentStatus } from "@prisma/client";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { isAdminRole } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+const adminRoles = [
+  "SUPER_ADMIN",
+  "ADMIN",
+  "STAFF_ADMIN",
+  "BESPOKE_MANAGER",
+  "RTW_MANAGER",
+  "CONTENT_MANAGER",
+  "FINANCE_MANAGER",
+  "HR_MANAGER",
+  "CONSULTATION_MANAGER",
+];
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  if (!session?.user || !isAdminRole(session.user.role)) {
+
+  if (!session?.user) {
+    redirect("/admin-login");
+  }
+
+  if (!adminRoles.includes(session.user.role)) {
     redirect("/admin-login");
   }
 

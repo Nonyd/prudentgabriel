@@ -17,6 +17,13 @@ const ADMIN_ROLES = [
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
+  const token = await getToken({
+    req: request,
+    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  })
+
+  console.log('MIDDLEWARE HIT:', pathname, 'token:', !!token)
+
   // ─── STEP 1: PUBLIC PATHS — return immediately, no checks ───
   // Use exact match for login pages to avoid 
   // /admin-login matching /admin guard
@@ -57,13 +64,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ─── STEP 2: GET JWT TOKEN ───────────────────────────────────
-  const token = await getToken({
-    req: request,
-    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
-  })
-
-  // ─── STEP 3: PROTECTED ACCOUNT ROUTES (/account/*) ──────────
+  // ─── STEP 2: PROTECTED ACCOUNT ROUTES (/account/*) ──────────
   if (pathname.startsWith('/account')) {
     if (!token) {
       return NextResponse.redirect(
@@ -81,7 +82,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ─── STEP 4: STAFF PORTAL ROUTES (/staff/*) ─────────────────
+  // ─── STEP 3: STAFF PORTAL ROUTES (/staff/*) ─────────────────
   if (pathname.startsWith('/staff')) {
     if (!token) {
       return NextResponse.redirect(
@@ -97,7 +98,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ─── STEP 5: ADMIN ROUTES (/admin/*) ────────────────────────
+  // ─── STEP 4: ADMIN ROUTES (/admin/*) ────────────────────────
   if (pathname.startsWith('/admin')) {
     if (!token) {
       return NextResponse.redirect(
@@ -151,7 +152,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ─── STEP 6: ALL OTHER ROUTES — allow through ────────────────
+  // ─── STEP 5: ALL OTHER ROUTES — allow through ────────────────
   return NextResponse.next()
 }
 

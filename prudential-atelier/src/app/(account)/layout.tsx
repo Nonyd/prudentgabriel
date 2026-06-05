@@ -1,16 +1,20 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateClientProfile } from "@/lib/account-helpers";
 import { AccountShell } from "@/components/account/AccountShell";
 
 export default async function AccountGroupLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  if (!session?.user?.id) {
+
+  if (!session?.user) {
     redirect("/login?callbackUrl=/account");
   }
 
   const userId = session.user.id;
+  if (!userId) {
+    redirect("/login?callbackUrl=/account");
+  }
   const profile = await getOrCreateClientProfile(userId);
 
   const [rtwActive, bespokeActive, wishlistCount] = await Promise.all([
