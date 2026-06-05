@@ -1,20 +1,14 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-import type { Session } from "next-auth";
-import {
-  getJobPermissionsForAdminPath,
-  hasAnyPermission,
-  shouldEnforceJobPermissions,
-  type PermissionSession,
-} from "@/lib/permissions";
-import {
-  canAccessLogs,
-  canAccessReports,
-  canAccessSettings,
-  hasPermission as hasRolePermission,
-  isAdminRole,
-  isSuperAdmin,
-} from "@/lib/roles";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
+
+/** JWT session fields set in src/lib/auth.ts — no database access on Edge. */
+type EdgeAuthToken = {
+  role?: string;
+  isStaff?: boolean;
+  mustResetPassword?: boolean;
+  email?: string | null;
+};
 
 const publicPaths = [
   "/admin-login",
@@ -40,126 +34,35 @@ function isPublicPath(pathname: string): boolean {
   return publicPaths.some((path) => pathname.startsWith(path));
 }
 
-function toPermissionSession(session: Session | null | undefined): PermissionSession {
-  if (!session?.user) return null;
-  return {
-    user: {
-      role: session.user.role,
-      jobRolePermissions: session.user.jobRolePermissions,
-    },
-  };
+function isAdminRole(role: string | undefined): boolean {
+  if (!role) return false;
+  return (
+    role === "ADMIN" ||
+    role === "SUPER_ADMIN" ||
+    role === "STAFF_ADMIN" ||
+    role.endsWith("_MANAGER")
+  );
 }
 
-function canAccessAdminPathLegacy(role: string | undefined, pathname: string, email?: string | null): boolean {
-  if (!role || !isAdminRole(role)) return false;
-  if (isSuperAdmin(role, email)) return true;
-
-  if (pathname.startsWith("/admin/account-settings")) {
-    return isAdminRole(role);
-  }
-
-  if (pathname.startsWith("/admin/settings/developer")) {
-    return false;
-  }
-
-  if (pathname.startsWith("/admin/settings/users")) {
-    return false;
-  }
-
-  if (pathname.startsWith("/admin/settings/roles")) {
-    return role === "ADMIN" || isSuperAdmin(role, email);
-  }
-
-  if (pathname.startsWith("/admin/logs")) {
-    return canAccessLogs(role, email);
-  }
-
-  if (pathname.startsWith("/admin/reports")) {
-    return canAccessReports(role, email);
-  }
-
-  if (pathname.startsWith("/admin/settings")) {
-    return canAccessSettings(role, email);
-  }
-
-  if (pathname === "/admin") {
-    return hasRolePermission(role, "dashboard");
-  }
-
-  if (pathname.startsWith("/admin/bespoke")) {
-    return hasRolePermission(role, "bespoke");
-  }
-  if (pathname.startsWith("/admin/consultations")) {
-    return hasRolePermission(role, "consultations");
-  }
-  if (pathname.startsWith("/admin/invoices") || pathname.startsWith("/admin/quotations")) {
-    return hasRolePermission(role, "invoices") || hasRolePermission(role, "quotations");
-  }
-  if (
-    pathname.startsWith("/admin/products") ||
-    pathname.startsWith("/admin/collections") ||
-    pathname.startsWith("/admin/coupons")
-  ) {
-    return hasRolePermission(role, "shop") || hasRolePermission(role, "shop.products");
-  }
-  if (pathname.startsWith("/admin/orders")) {
-    return hasRolePermission(role, "shop") || hasRolePermission(role, "shop.orders");
-  }
-  if (pathname.startsWith("/admin/payments")) {
-    return hasRolePermission(role, "finance") || hasRolePermission(role, "payments");
-  }
-  if (pathname.startsWith("/admin/clients") || pathname.startsWith("/admin/customers")) {
-    return hasRolePermission(role, "clients") || hasRolePermission(role, "clients.view");
-  }
-  if (pathname.startsWith("/admin/staff") || pathname.startsWith("/admin/team")) {
-    return hasRolePermission(role, "staff") || hasRolePermission(role, "staff.view");
-  }
-  if (pathname.startsWith("/admin/attendance") || pathname.startsWith("/admin/clock-in")) {
-    return hasRolePermission(role, "attendance");
-  }
-  if (pathname.startsWith("/admin/content") || pathname.startsWith("/admin/gallery")) {
-    return (
-      hasRolePermission(role, "content") ||
-      hasRolePermission(role, "content.blog") ||
-      hasRolePermission(role, "content.pages")
-    );
-  }
-  if (pathname.startsWith("/admin/import") || pathname.startsWith("/admin/reviews")) {
-    return hasRolePermission(role, "shop") || hasRolePermission(role, "content");
-  }
-  if (pathname.startsWith("/admin/notifications") || pathname.startsWith("/admin/referrals")) {
-    return hasRolePermission(role, "clients") || hasRolePermission(role, "settings");
-  }
-
-  if (role === "ADMIN") return true;
-
-  return false;
+function isSuperAdmin(role: string | undefined, email?: string | null): boolean {
+  if (role === "SUPER_ADMIN") return true;
+  const superEmail = process.env.SUPER_ADMIN_EMAIL;
+  return Boolean(email && superEmail && email === superEmail);
 }
 
-function canAccessAdminPath(
-  session: Session | null | undefined,
-  pathname: string,
-  email?: string | null,
-): boolean {
-  const role = session?.user?.role;
-  if (!canAccessAdminPathLegacy(role, pathname, email)) return false;
-
-  const permissionSession = toPermissionSession(session);
-  if (!shouldEnforceJobPermissions(permissionSession)) return true;
-
-  const jobKeys = getJobPermissionsForAdminPath(pathname);
-  if (!jobKeys || jobKeys.length === 0) return true;
-
-  return hasAnyPermission(permissionSession, jobKeys);
-}
-
-export default auth((req) => {
-  const { nextUrl, auth: session } = req;
+export async function middleware(request: NextRequest) {
+  const { nextUrl } = request;
   const pathname = nextUrl.pathname;
-  const isLoggedIn = !!session;
-  const role = session?.user?.role;
-  const email = session?.user?.email;
-  const isStaff = Boolean(session?.user?.isStaff);
+
+  const token = (await getToken({
+    req: request,
+    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  })) as EdgeAuthToken | null;
+
+  const isLoggedIn = Boolean(token);
+  const role = token?.role;
+  const email = token?.email ?? null;
+  const isStaff = Boolean(token?.isStaff);
 
   if (isPublicPath(pathname)) {
     return NextResponse.next();
@@ -185,8 +88,9 @@ export default auth((req) => {
   }
 
   const isAccountRoute = pathname.startsWith("/account");
-  const isAdminRoute = pathname.startsWith("/admin");
-  const isStaffRoute = pathname.startsWith("/staff");
+  const isAdminRoute =
+    pathname.startsWith("/admin") && !pathname.startsWith("/admin-login");
+  const isStaffRoute = pathname.startsWith("/staff") && !pathname.startsWith("/staff-login");
   const isDeveloperSettings = pathname.startsWith("/admin/settings/developer");
   const isUsersSettings = pathname.startsWith("/admin/settings/users");
   const isRolesSettings = pathname.startsWith("/admin/settings/roles");
@@ -208,7 +112,7 @@ export default auth((req) => {
 
   if (
     isLoggedIn &&
-    session?.user?.mustResetPassword &&
+    token?.mustResetPassword &&
     pathname !== "/reset-password" &&
     !pathname.startsWith("/api/auth") &&
     !pathname.startsWith("/api/auth/reset-password")
@@ -241,16 +145,16 @@ export default auth((req) => {
   }
 
   if (isAdminRoute) {
-    if (isLoggedIn && isStaff) {
+    if (isLoggedIn && isStaff && role !== "SUPER_ADMIN" && role !== "ADMIN") {
       return NextResponse.redirect(new URL("/staff", nextUrl.origin));
     }
-    if (!isLoggedIn || !canAccessAdminPath(session, pathname, email)) {
+    if (!isLoggedIn || !isAdminRole(role)) {
       return NextResponse.redirect(new URL("/admin-login", nextUrl.origin));
     }
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
@@ -270,4 +174,3 @@ export const config = {
     "/reset-password",
   ],
 };
-
