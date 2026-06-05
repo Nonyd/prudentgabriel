@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
 import { AdminImageUrlField } from "@/components/admin/AdminImageUrlField";
 import { CmsRichTextEditor } from "@/components/admin/content/CmsRichTextEditor";
+import { HeroCarouselEditor } from "@/components/admin/content/HeroCarouselEditor";
 import {
   CMS_PAGE_GROUPS,
   CMS_PAGES,
@@ -90,6 +91,10 @@ function FieldInput({
 
   if (field.type === "richtext") {
     return <CmsRichTextEditor value={value} onChange={onChange} placeholder={field.placeholder} />;
+  }
+
+  if (field.type === "carousel") {
+    return <HeroCarouselEditor value={value} onChange={onChange} />;
   }
 
   if (field.type === "messages") {

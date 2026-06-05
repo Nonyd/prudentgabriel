@@ -1,19 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 import Link from "next/link";
+import { HeroCarousel } from "@/components/sections/HeroCarousel";
 import { cmsGet } from "@/lib/cms-helpers";
-
-const DEFAULT_HERO =
-  "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=1200&q=85";
+import type { HeroCarouselItem } from "@/lib/hero-carousel";
 
 export function HeroSectionClient({
-  heroImage = DEFAULT_HERO,
   cms = {},
+  carouselItems,
 }: {
-  heroImage?: string;
   cms?: Record<string, string>;
+  carouselItems: HeroCarouselItem[];
 }) {
   const eyebrow = cmsGet(cms, "home_hero_eyebrow", "PRUDENTIAL ATELIER · LAGOS");
   const line1 = cmsGet(cms, "home_hero_headline_1", "Crafted for the");
@@ -56,21 +54,14 @@ export function HeroSectionClient({
         </motion.div>
 
         <motion.div
-          className="img-portrait relative overflow-hidden rounded-lg border border-lightbr/30"
+          className="relative min-h-[420px] w-full md:min-h-[600px]"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
           viewport={{ once: true, margin: "-80px" }}
         >
-          <Image
-            src={heroImage || DEFAULT_HERO}
-            alt="Luxury couture gown"
-            fill
-            className="object-cover object-top"
-            sizes="(max-width: 1024px) 100vw, 50vw"
-            priority
-          />
-          <div className="absolute bottom-6 left-6 border border-lightbr/40 bg-choc/90 px-5 py-4 backdrop-blur-sm">
+          <HeroCarousel items={carouselItems} />
+          <div className="pointer-events-none absolute bottom-6 left-1/2 z-30 -translate-x-1/2 border border-lightbr/40 bg-choc/90 px-5 py-4 backdrop-blur-sm md:left-6 md:translate-x-0">
             <p className="font-serif text-2xl font-medium text-cream">{statNum}</p>
             <p className="mt-1 font-sans text-[9px] font-semibold uppercase tracking-[0.14em] text-lightbr">
               {statLabel}

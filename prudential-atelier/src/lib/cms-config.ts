@@ -1,3 +1,5 @@
+import { FALLBACK_CAROUSEL_ITEMS } from "@/lib/hero-carousel";
+
 export type CmsFieldType =
   | "text"
   | "textarea"
@@ -7,7 +9,8 @@ export type CmsFieldType =
   | "image"
   | "richtext"
   | "messages"
-  | "links";
+  | "links"
+  | "carousel";
 
 export type CmsField = {
   key: string;
@@ -97,7 +100,13 @@ export const CMS_PAGES: CmsPageDef[] = [
           { key: "home_hero_button_1_link", label: "Button 1 link", type: "text", default: "/shop" },
           { key: "home_hero_button_2_label", label: "Button 2 label", type: "text", default: "BOOK CONSULTATION" },
           { key: "home_hero_button_2_link", label: "Button 2 link", type: "text", default: "/consultation" },
-          { key: "home_hero_image", label: "Hero image", type: "image", default: "", uploadFolder: "prudent-gabriel/hero" },
+          { key: "home_hero_image", label: "Hero image (legacy fallback)", type: "image", default: "", uploadFolder: "prudent-gabriel/hero" },
+          {
+            key: "home_hero_carousel",
+            label: "Hero media carousel",
+            type: "carousel",
+            default: JSON.stringify(FALLBACK_CAROUSEL_ITEMS),
+          },
           { key: "home_hero_stat_number", label: "Hero stat number", type: "text", default: "15+" },
           { key: "home_hero_stat_label", label: "Hero stat label", type: "text", default: "YEARS OF COUTURE" },
         ],
