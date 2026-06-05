@@ -34,8 +34,8 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 const prisma = new PrismaClient();
 
-const DEMO_CLIENT_PASSWORD = "Demo@2024!";
-const DEMO_STAFF_PASSWORD = "Staff@2024!";
+const DEMO_CLIENT_PASSWORD = process.env.DEMO_CLIENT_PASSWORD || "Demo@2024!";
+const DEMO_STAFF_PASSWORD = process.env.DEMO_STAFF_PASSWORD || "Staff@2024!";
 const SUPER_ADMIN_EMAIL =
   process.env.SUPER_ADMIN_EMAIL?.trim() || "nony@sonshubmedia.com";
 

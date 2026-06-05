@@ -5,6 +5,7 @@ prudential-atelier/out/
 prudential-atelier/.vercel/
 prudential-atelier/.env
 prudential-atelier/.env.local
+prudential-atelier/.env.production
 prudential-atelier/*.tsbuildinfo
 prudential-atelier/next-env.d.ts
 
