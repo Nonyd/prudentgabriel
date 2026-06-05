@@ -285,15 +285,23 @@ export default async function AdminDashboardPage() {
       <section className="overflow-hidden rounded-lg bg-wine px-8 py-8 md:px-10">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="font-sans text-[11px] uppercase tracking-[0.2em] text-cream/70">
+            <p
+              className="font-sans text-[11px] uppercase tracking-[0.2em]"
+              style={{ color: "rgba(226, 209, 194, 0.7)" }}
+            >
               Daily report · {dateLabel}
             </p>
-            <h2 className="mt-2 font-serif text-[40px] font-normal leading-tight text-cream">
+            <h2
+              className="mt-2 font-serif text-[40px] font-normal leading-tight"
+              style={{ color: "#F7F2EC" }}
+            >
               {greeting}, {displayName}.
             </h2>
-            <p className="mt-3 font-sans text-[14px] text-cream/80">
+            <p className="mt-3 font-sans" style={{ color: "rgba(226, 209, 194, 0.8)", fontSize: 14 }}>
               {ordersAdvancedToday} orders advanced · {deliveriesToday} delivery scheduled today ·{" "}
-              {formatNGN(paymentsToday)} received · {confirmationsPending} confirmations pending
+              <span style={{ color: "rgba(226, 209, 194, 0.8)" }}>{"\u20A6"}</span>
+              {Math.round(paymentsToday).toLocaleString("en-NG")} received · {confirmationsPending}{" "}
+              confirmations pending
             </p>
           </div>
           <Link

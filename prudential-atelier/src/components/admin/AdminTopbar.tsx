@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Download, ExternalLink, Menu, Search } from "lucide-react";
 import Link from "next/link";
 import { NotificationBell } from "@/components/admin/NotificationBell";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 function formatExecutiveDate(d: Date): string {
   return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
@@ -49,6 +50,7 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
             aria-label="Search admin"
           />
         </label>
+        <ThemeToggle className="p-2 transition-colors hover:text-choc" />
         <NotificationBell />
         <a
           href="/"
@@ -58,7 +60,7 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
           className="inline-flex items-center gap-1.5 font-sans text-[11px] font-medium text-text-mid transition-colors hover:text-choc"
         >
           <ExternalLink className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-          <span className="hidden sm:inline">View Site</span>
+          <span className="hidden sm:inline">Homepage</span>
         </a>
         {isExecutive ? (
           <Link
