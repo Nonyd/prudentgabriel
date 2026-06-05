@@ -1,49 +1,41 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AdminNotification, AdminNotificationType } from "@prisma/client";
 import {
-  BellOff,
   Bell,
-  ShoppingCart,
-  Scissors,
   Calendar,
-  Star,
-  AlertTriangle,
+  Check,
   CreditCard,
-  User,
-  Tag,
-  X,
+  FileText,
+  AlertTriangle,
+  Scissors,
 } from "lucide-react";
 import Link from "next/link";
 
 function iconFor(type: AdminNotificationType) {
   const wrap = (node: ReactNode, bg: string) => (
-    <span className={`flex h-8 w-8 items-center justify-center rounded-full ${bg}`}>{node}</span>
+    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${bg}`}>{node}</span>
   );
   switch (type) {
-    case "NEW_ORDER":
-      return wrap(<ShoppingCart className="h-4 w-4 text-green-800" strokeWidth={1.5} />, "bg-[#E8F5E9]");
-    case "NEW_BESPOKE":
-      return wrap(<Scissors className="h-4 w-4 text-purple-900" strokeWidth={1.5} />, "bg-[#F0E8FF]");
     case "NEW_CONSULTATION":
-      return wrap(<Calendar className="h-4 w-4 text-blue-900" strokeWidth={1.5} />, "bg-[#E8F4FF]");
-    case "REVIEW_PENDING":
-      return wrap(<Star className="h-4 w-4 text-amber-800" strokeWidth={1.5} />, "bg-[#FFF8E7]");
-    case "LOW_STOCK":
-      return wrap(<AlertTriangle className="h-4 w-4 text-red-800" strokeWidth={1.5} />, "bg-[#FDECEA]");
+      return wrap(<Calendar className="h-4 w-4 text-lightbr" strokeWidth={1.5} />, "bg-lightbr/20");
     case "PAYMENT_FAILED":
-      return wrap(<CreditCard className="h-4 w-4 text-red-800" strokeWidth={1.5} />, "bg-[#FDECEA]");
-    case "NEW_CUSTOMER":
-      return wrap(<User className="h-4 w-4 text-green-800" strokeWidth={1.5} />, "bg-[#E8F5E9]");
+    case "NEW_ORDER":
+      return wrap(<CreditCard className="h-4 w-4 text-success" strokeWidth={1.5} />, "bg-success/15");
+    case "NEW_BESPOKE":
+      return wrap(<Scissors className="h-4 w-4 text-choc" strokeWidth={1.5} />, "bg-nut/15");
+    case "REVIEW_PENDING":
+      return wrap(<FileText className="h-4 w-4 text-warning" strokeWidth={1.5} />, "bg-warning/15");
+    case "LOW_STOCK":
     case "COUPON_EXPIRING":
-      return wrap(<Tag className="h-4 w-4 text-amber-800" strokeWidth={1.5} />, "bg-[#FFF8E7]");
+      return wrap(<AlertTriangle className="h-4 w-4 text-danger" strokeWidth={1.5} />, "bg-danger/10");
     default:
-      return wrap(<Bell className="h-4 w-4 text-charcoal" strokeWidth={1.5} />, "bg-[#F5F5F3]");
+      return wrap(<Bell className="h-4 w-4 text-nut" strokeWidth={1.5} />, "bg-sand/50");
   }
 }
 
@@ -55,26 +47,14 @@ function timeLabel(createdAt: string) {
   }
 }
 
-type DrawerFilter = "ALL" | "ORDERS" | "BESPOKE" | "CONSULTATIONS" | "REVIEWS" | "STOCK";
-
-function filterMatches(notification: AdminNotification, filter: DrawerFilter): boolean {
-  if (filter === "ALL") return true;
-  if (filter === "ORDERS") return notification.type === "NEW_ORDER" || notification.type === "PAYMENT_FAILED";
-  if (filter === "BESPOKE") return notification.type === "NEW_BESPOKE";
-  if (filter === "CONSULTATIONS") return notification.type === "NEW_CONSULTATION";
-  if (filter === "REVIEWS") return notification.type === "REVIEW_PENDING";
-  return notification.type === "LOW_STOCK" || notification.type === "COUPON_EXPIRING";
-}
-
 export function NotificationBell() {
   const router = useRouter();
+  const panelRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<DrawerFilter>("ALL");
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [loading, setLoading] = useState(false);
   const [pulse, setPulse] = useState(false);
-  const panelUnread = notifications.filter((n) => !n.isRead).length;
 
   const pollCount = useCallback(async () => {
     const res = await fetch("/api/admin/notifications/count");
@@ -86,9 +66,22 @@ export function NotificationBell() {
     });
   }, []);
 
+  const loadNotifications = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/notifications");
+      if (!res.ok) return;
+      const j = (await res.json()) as { notifications: AdminNotification[]; unreadCount?: number };
+      setNotifications(j.notifications.slice(0, 10));
+      if (typeof j.unreadCount === "number") setUnreadCount(j.unreadCount);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     void pollCount();
-    const id = window.setInterval(() => void pollCount(), 30_000);
+    const id = window.setInterval(() => void pollCount(), 60_000);
     return () => window.clearInterval(id);
   }, [pollCount]);
 
@@ -98,29 +91,25 @@ export function NotificationBell() {
     return () => window.clearTimeout(t);
   }, [pulse]);
 
-  const loadNotifications = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/notifications");
-      if (!res.ok) return;
-      const j = (await res.json()) as { notifications: AdminNotification[] };
-      setNotifications(j.notifications);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (!isOpen) return;
+    function onDocClick(e: MouseEvent) {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
     }
-  }, []);
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [isOpen]);
 
-  const openDrawer = useCallback(async () => {
-    setIsOpen(true);
-    await loadNotifications();
-    await fetch("/api/admin/notifications/read", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ markAllRead: true }),
-    });
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    setUnreadCount(0);
-  }, [loadNotifications]);
+  const toggleOpen = useCallback(async () => {
+    if (!isOpen) {
+      setIsOpen(true);
+      await loadNotifications();
+    } else {
+      setIsOpen(false);
+    }
+  }, [isOpen, loadNotifications]);
 
   async function markAllRead() {
     await fetch("/api/admin/notifications/read", {
@@ -130,28 +119,34 @@ export function NotificationBell() {
     });
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setUnreadCount(0);
-  };
+  }
+
+  async function openNotification(n: AdminNotification) {
+    if (!n.isRead) {
+      await fetch("/api/admin/notifications/read", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: n.id }),
+      });
+      setNotifications((prev) => prev.map((item) => (item.id === n.id ? { ...item, isRead: true } : item)));
+      setUnreadCount((c) => Math.max(0, c - 1));
+    }
+    router.push(n.link || "/admin/notifications");
+    setIsOpen(false);
+  }
 
   const badge = unreadCount > 9 ? "9+" : String(Math.max(0, unreadCount));
-  const filtered = notifications.filter((notification) => filterMatches(notification, selectedFilter));
-  const tabs: { id: DrawerFilter; label: string }[] = [
-    { id: "ALL", label: "All" },
-    { id: "ORDERS", label: "Orders" },
-    { id: "BESPOKE", label: "Bespoke" },
-    { id: "CONSULTATIONS", label: "Consultations" },
-    { id: "REVIEWS", label: "Reviews" },
-    { id: "STOCK", label: "Stock" },
-  ];
 
   return (
-    <>
+    <div className="relative" ref={panelRef}>
       <button
         type="button"
-        className="relative p-1.5 text-[#6B6B68] transition-colors hover:text-olive"
+        className="relative p-1.5 text-text-mid transition-colors hover:text-choc"
         aria-label="Notifications"
-        onClick={() => void openDrawer()}
+        aria-expanded={isOpen}
+        onClick={() => void toggleOpen()}
       >
-        <Bell size={16} strokeWidth={1.5} />
+        <Bell size={18} strokeWidth={1.5} />
         <AnimatePresence>
           {unreadCount > 0 ? (
             <motion.span
@@ -160,7 +155,7 @@ export function NotificationBell() {
               animate={{ scale: pulse ? [1, 1.15, 1] : 1 }}
               exit={{ scale: 0.6 }}
               transition={{ duration: 0.35 }}
-              className="absolute right-0 top-0 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#37392d] px-0.5 font-body text-[9px] font-semibold text-white"
+              className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-danger px-0.5 font-sans text-[9px] font-semibold text-white"
             >
               {badge}
             </motion.span>
@@ -170,116 +165,70 @@ export function NotificationBell() {
 
       <AnimatePresence>
         {isOpen ? (
-          <>
-            <motion.button
-              type="button"
-              className="fixed inset-0 z-40 bg-black/20"
-              onClick={() => setIsOpen(false)}
-              aria-label="Close notifications drawer"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            />
-            <motion.aside
-              className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[400px] flex-col border-l border-[#EBEBEA] bg-white"
-              initial={{ x: 400 }}
-              animate={{ x: 0 }}
-              exit={{ x: 400 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-            >
-              <div className="border-b border-[#EBEBEA] px-6 py-5">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-display text-[22px] text-[#111]">Notifications</h3>
-                  <button type="button" onClick={() => setIsOpen(false)} className="text-[#5E5E5B] hover:text-[#111]">
-                    <X size={18} />
-                  </button>
-                </div>
-                {panelUnread > 0 ? (
-                  <p className="mt-1 font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">{panelUnread} unread</p>
-                ) : null}
-              </div>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-full z-50 mt-2 flex w-[380px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-lg border border-sand bg-ivory shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+          >
+            <div className="flex items-center justify-between border-b border-sand px-4 py-3">
+              <h3 className="font-sans text-sm font-semibold text-choc">Notifications</h3>
+              <button
+                type="button"
+                onClick={() => void markAllRead()}
+                className="font-sans text-[11px] text-nut hover:underline"
+              >
+                Mark all ✓
+              </button>
+            </div>
 
-              <div className="scrollbar-none flex gap-2 overflow-x-auto border-b border-[#EBEBEA] px-4 py-2">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setSelectedFilter(tab.id)}
-                    className={`whitespace-nowrap border-b-2 px-2 py-2 font-body text-[11px] uppercase tracking-[0.08em] ${
-                      selectedFilter === tab.id
-                        ? "border-[#37392d] text-[#37392d]"
-                        : "border-transparent text-[#6B6B68] hover:text-[#111]"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+            <ul className="max-h-[480px] overflow-y-auto" data-lenis-prevent>
+              {loading ? (
+                <li className="p-4 font-sans text-sm text-text-mid">Loading…</li>
+              ) : notifications.length === 0 ? (
+                <li className="p-8 text-center font-sans text-sm text-text-mid">No notifications yet.</li>
+              ) : (
+                notifications.map((n) => (
+                  <li key={n.id}>
+                    <button
+                      type="button"
+                      className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[rgba(152,117,91,0.06)] ${
+                        !n.isRead ? "border-l-[3px] border-l-nut bg-[rgba(92,52,34,0.04)]" : ""
+                      }`}
+                      onClick={() => void openNotification(n)}
+                    >
+                      {iconFor(n.type)}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-sans text-[13px] font-medium text-choc">{n.title}</p>
+                        <p className="mt-0.5 line-clamp-2 font-sans text-[11px] font-light text-text-light">
+                          {n.message}
+                        </p>
+                        <p className="mt-1 font-sans text-[11px] text-text-light">{timeLabel(n.createdAt.toString())}</p>
+                      </div>
+                      {n.isRead ? (
+                        <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-text-light" strokeWidth={1.5} />
+                      ) : (
+                        <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-nut" />
+                      )}
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
 
-              <div className="flex-1 overflow-y-auto" data-lenis-prevent>
-                {loading ? (
-                  <div className="p-4">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <div key={index} className="mb-3 h-16 animate-pulse bg-[#F5F5F3]" />
-                    ))}
-                  </div>
-                ) : filtered.length === 0 ? (
-                  <div className="flex flex-col items-center py-16 text-center">
-                    <BellOff className="h-8 w-8 text-[#EBEBEA]" strokeWidth={1.5} />
-                    <p className="mt-3 font-body text-sm text-[#6B6B68]">No notifications</p>
-                    <p className="font-body text-xs text-[#6B6B68]/70">You&apos;re all caught up!</p>
-                  </div>
-                ) : (
-                  <ul>
-                    {filtered.map((n) => (
-                      <li key={n.id} className="border-b border-[#F5F5F3]">
-                        <button
-                          type="button"
-                          className={`flex w-full items-start gap-3 px-6 py-4 text-left ${
-                            !n.isRead ? "border-l-[3px] border-l-[#37392d] bg-[#FAFAF8]" : "bg-white"
-                          }`}
-                          onClick={async () => {
-                            if (!n.isRead) {
-                              await fetch("/api/admin/notifications/read", {
-                                method: "PATCH",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ id: n.id }),
-                              });
-                              setNotifications((prev) => prev.map((item) => (item.id === n.id ? { ...item, isRead: true } : item)));
-                            }
-                            router.push(n.link || "/admin");
-                            setIsOpen(false);
-                          }}
-                        >
-                          {iconFor(n.type)}
-                          <div className="min-w-0 flex-1">
-                            <p className="font-body text-[13px] font-medium text-[#111]">{n.title}</p>
-                            <p className="mt-0.5 line-clamp-2 font-body text-[12px] font-light text-[#4A4A47]">{n.message}</p>
-                            <p className="mt-1 font-body text-[10px] text-[#6B6B68]/80">{timeLabel(n.createdAt.toString())}</p>
-                          </div>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between border-t border-[#EBEBEA] px-6 py-4">
-                <button type="button" onClick={() => void markAllRead()} className="font-body text-[11px] text-[#6B6B68] hover:text-[#111]">
-                  Mark All Read
-                </button>
-                <Link
-                  href="/admin/notifications"
-                  onClick={() => setIsOpen(false)}
-                  className="font-body text-[11px] text-[#37392d] hover:underline"
-                >
-                  View All Notifications →
-                </Link>
-              </div>
-            </motion.aside>
-          </>
+            <div className="border-t border-sand px-4 py-3 text-center">
+              <Link
+                href="/admin/notifications"
+                onClick={() => setIsOpen(false)}
+                className="font-sans text-[11px] text-nut hover:underline"
+              >
+                View all notifications →
+              </Link>
+            </div>
+          </motion.div>
         ) : null}
       </AnimatePresence>
-    </>
+    </div>
   );
 }

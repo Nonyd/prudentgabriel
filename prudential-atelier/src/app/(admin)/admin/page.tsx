@@ -282,23 +282,24 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <section className="overflow-hidden rounded-lg bg-wine px-7 py-7 md:px-8">
+      <section className="overflow-hidden rounded-lg bg-wine px-8 py-8 md:px-10">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-cream/70">
+            <p className="font-sans text-[11px] uppercase tracking-[0.2em] text-cream/70">
               Daily report · {dateLabel}
             </p>
-            <h2 className="mt-2 font-serif text-[28px] font-normal text-cream md:text-[32px]">
+            <h2 className="mt-2 font-serif text-[40px] font-normal leading-tight text-cream">
               {greeting}, {displayName}.
             </h2>
-            <p className="mt-3 font-sans text-[13px] text-cream/80">
+            <p className="mt-3 font-sans text-[14px] text-cream/80">
               {ordersAdvancedToday} orders advanced · {deliveriesToday} delivery scheduled today ·{" "}
               {formatNGN(paymentsToday)} received · {confirmationsPending} confirmations pending
             </p>
           </div>
           <Link
             href="/admin/reports"
-            className="inline-flex shrink-0 items-center justify-center rounded-sm border border-gold px-5 py-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] text-gold transition-colors hover:bg-gold/10"
+            className="inline-flex shrink-0 items-center justify-center rounded-sm border px-6 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors hover:bg-gold/10"
+            style={{ borderColor: "rgba(201,168,76,0.6)", color: "rgba(201,168,76,0.9)" }}
           >
             ↓ Download report
           </Link>
@@ -346,7 +347,7 @@ export default async function AdminDashboardPage() {
         </div>
 
         <div className="card-surface p-6">
-          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-light">
+          <p className="panel-title font-sans font-semibold uppercase text-text-light">
             Attendance · Today
           </p>
           <div className="mt-4 grid grid-cols-2 gap-3">
@@ -369,9 +370,9 @@ export default async function AdminDashboardPage() {
                     {row.initials}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-sans text-[12px] text-choc">{row.name}</p>
+                    <p className="truncate font-sans text-[14px] text-choc">{row.name}</p>
                     <p
-                      className={`font-sans text-[10px] ${row.status === "in" ? "text-success" : "text-danger"}`}
+                      className={`font-sans text-[11px] ${row.status === "in" ? "text-success" : "text-danger"}`}
                     >
                       {row.badge}
                     </p>

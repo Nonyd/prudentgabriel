@@ -13,17 +13,32 @@ import { formatPrice as formatPriceUtil } from "@/lib/utils";
 
 const MIN_PARTIAL = 10_000;
 
+type PayOption = "deposit" | "full" | "custom";
+
 export function BespokePayClient({ order }: { order: BespokeOrder }) {
   const rates = useCurrencyStore((s) => s.rates);
   const setCurrency = useCurrencyStore((s) => s.setCurrency);
   const currency = useCurrencyStore((s) => s.currency) as PaymentCurrency;
 
-  const [amountNGN, setAmountNGN] = useState(Math.round(order.balance));
+  const depositAmount = Math.round(order.balance * 0.7);
+  const fullAmount = Math.round(order.balance);
+  const remainderAmount = fullAmount - depositAmount;
+
+  const [payOption, setPayOption] = useState<PayOption>("deposit");
+  const [customAmountNGN, setCustomAmountNGN] = useState(
+    Math.min(fullAmount, Math.max(MIN_PARTIAL, depositAmount)),
+  );
   const [gateway, setGateway] = useState<PaymentGatewayType | null>(null);
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
   const [stripePk, setStripePk] = useState("");
+
+  const amountNGN = useMemo(() => {
+    if (payOption === "deposit") return depositAmount;
+    if (payOption === "full") return fullAmount;
+    return customAmountNGN;
+  }, [customAmountNGN, depositAmount, fullAmount, payOption]);
 
   const displayAmount = useMemo(() => {
     if (currency === "NGN") return amountNGN;
@@ -42,6 +57,10 @@ export function BespokePayClient({ order }: { order: BespokeOrder }) {
     }
     if (amountNGN < MIN_PARTIAL && amountNGN < order.balance) {
       toast.error(`Minimum partial payment is ₦${MIN_PARTIAL.toLocaleString("en-NG")}`);
+      return;
+    }
+    if (amountNGN > order.balance) {
+      toast.error("Amount cannot exceed your balance");
       return;
     }
 
@@ -95,6 +114,32 @@ export function BespokePayClient({ order }: { order: BespokeOrder }) {
     }
   }
 
+  const options: {
+    id: PayOption;
+    title: string;
+    amount: number;
+    description: string;
+  }[] = [
+    {
+      id: "deposit",
+      title: "Pay deposit (70%)",
+      amount: depositAmount,
+      description: `Begin your commission with a 70% deposit. The remaining 30% (${formatPriceUtil(remainderAmount, "NGN")}) is due before delivery.`,
+    },
+    {
+      id: "full",
+      title: "Pay in full (100%)",
+      amount: fullAmount,
+      description: "Pay the full amount now.",
+    },
+    {
+      id: "custom",
+      title: "Custom amount",
+      amount: customAmountNGN,
+      description: `Minimum partial payment ₦${MIN_PARTIAL.toLocaleString("en-NG")}.`,
+    },
+  ];
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <Link href="/account/orders" className="font-body text-xs uppercase text-[var(--text-mid)] hover:underline">
@@ -125,20 +170,51 @@ export function BespokePayClient({ order }: { order: BespokeOrder }) {
       </div>
 
       <div className="mt-6 border border-[var(--border)] bg-white p-6">
-        <label className="font-body text-[11px] uppercase tracking-wide text-[var(--text-light)]">
-          Amount to pay (NGN)
-        </label>
-        <input
-          type="number"
-          min={order.balance <= MIN_PARTIAL ? order.balance : MIN_PARTIAL}
-          max={Math.round(order.balance)}
-          value={amountNGN}
-          onChange={(e) => setAmountNGN(Number(e.target.value))}
-          className="mt-2 w-full border border-[var(--border)] px-3 py-2 font-body text-sm"
-        />
-        <p className="mt-2 font-body text-xs text-[var(--text-mid)]">
-          Minimum partial payment ₦{MIN_PARTIAL.toLocaleString("en-NG")}. You may pay the full balance.
+        <p className="font-body text-[11px] uppercase tracking-wide text-[var(--text-light)]">
+          How would you like to pay?
         </p>
+        <div className="mt-4 space-y-3">
+          {options.map((option) => {
+            const selected = payOption === option.id;
+            return (
+              <label
+                key={option.id}
+                className={`block cursor-pointer rounded-sm border p-4 transition-colors ${
+                  selected
+                    ? "border-[1.5px] border-[var(--chocolate)] bg-[rgba(68,41,19,0.04)]"
+                    : "border border-[var(--border)] bg-white"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <input
+                    type="radio"
+                    name="pay-option"
+                    checked={selected}
+                    onChange={() => setPayOption(option.id)}
+                    className="mt-1"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-body text-sm font-medium text-[var(--chocolate)]">{option.title}</p>
+                    <p className="mt-1 font-display text-[28px] leading-none text-[var(--chocolate)]">
+                      {formatPriceUtil(option.id === "custom" ? customAmountNGN : option.amount, "NGN")}
+                    </p>
+                    <p className="mt-2 font-body text-[13px] text-[var(--text-mid)]">{option.description}</p>
+                    {option.id === "custom" && selected ? (
+                      <input
+                        type="number"
+                        min={order.balance <= MIN_PARTIAL ? order.balance : MIN_PARTIAL}
+                        max={Math.round(order.balance)}
+                        value={customAmountNGN}
+                        onChange={(e) => setCustomAmountNGN(Number(e.target.value))}
+                        className="mt-3 w-full border border-[var(--border)] px-3 py-2 font-body text-sm"
+                      />
+                    ) : null}
+                  </div>
+                </div>
+              </label>
+            );
+          })}
+        </div>
 
         <div className="mt-4 flex gap-2">
           {(["NGN", "USD", "GBP"] as PaymentCurrency[]).map((c) => (

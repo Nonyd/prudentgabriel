@@ -10,6 +10,10 @@ import {
 } from "@prisma/client";
 import toast from "react-hot-toast";
 import { getDeliveryModeLabel, getSessionTypeLabel } from "@/lib/consultation";
+import {
+  ClientMeasurementsPanel,
+  type MeasurementData,
+} from "@/components/admin/ClientMeasurementsPanel";
 
 type Booking = {
   id: string;
@@ -42,7 +46,15 @@ type Booking = {
   };
 };
 
-export function AdminConsultationDetail({ booking }: { booking: Booking }) {
+export function AdminConsultationDetail({
+  booking,
+  clientId,
+  measurements,
+}: {
+  booking: Booking;
+  clientId: string | null;
+  measurements?: MeasurementData | null;
+}) {
   const router = useRouter();
   const [confirmDate, setConfirmDate] = useState(
     booking.confirmedDate ? booking.confirmedDate.slice(0, 10) : "",
@@ -71,7 +83,8 @@ export function AdminConsultationDetail({ booking }: { booking: Booking }) {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-2">
+    <div className="space-y-8">
+      <div className="grid gap-8 lg:grid-cols-2">
       <div className="space-y-4 text-sm text-[#eaeaea]">
         <div className="rounded-sm border border-[#EBEBEA] bg-[#FAFAFA] p-4">
           <h2 className="font-label text-gold">Client</h2>
@@ -259,6 +272,13 @@ export function AdminConsultationDetail({ booking }: { booking: Booking }) {
           </Link>
         )}
       </div>
+      </div>
+
+      <ClientMeasurementsPanel
+        clientId={clientId}
+        clientName={booking.clientName}
+        initial={measurements}
+      />
     </div>
   );
 }

@@ -5,10 +5,18 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import {
+  ClientMeasurementsPanel,
+  measurementFromRecord,
+  patchClientMeasurements,
+  type MeasurementData,
+} from "@/components/admin/ClientMeasurementsPanel";
 import type {
   BespokeOrder,
   BespokeStage,
+  ClientProfile,
   Material,
+  Measurement,
   OrderAssignment,
   Quotation,
   StageUpdate,
@@ -27,6 +35,7 @@ type OrderWithRelations = BespokeOrder & {
   })[];
   materials: Material[];
   quotation: Quotation | null;
+  clientProfile: (ClientProfile & { measurements: Measurement | null }) | null;
 };
 
 type StaffOption = { id: string; name: string; department: string; activeOrders: number };
@@ -52,6 +61,7 @@ export function BespokeOrderDetailClient({
   const [assignStaffId, setAssignStaffId] = useState("");
   const [materialForm, setMaterialForm] = useState({ name: "", quantity: "", unitCost: "" });
   const [paymentAmount, setPaymentAmount] = useState("");
+  const [measurementsDraft, setMeasurementsDraft] = useState<MeasurementData | null>(null);
 
   const completedStages = new Set(order.stageHistory.map((s) => s.stage));
 
@@ -92,6 +102,9 @@ export function BespokeOrderDetailClient({
   const completeStage = async () => {
     setCompleting(true);
     try {
+      if (order.currentStage === "CONSULTATION_SESSION" && order.clientProfileId && measurementsDraft) {
+        await patchClientMeasurements(order.clientProfileId, measurementsDraft);
+      }
       const res = await fetch(`/api/bespoke/${order.id}/complete-stage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -362,6 +375,20 @@ export function BespokeOrderDetailClient({
               rows={4}
               className="mt-4 w-full rounded border border-sand px-3 py-2 font-sans text-sm"
             />
+            {order.currentStage === "CONSULTATION_SESSION" ? (
+              <div className="mt-4">
+                <p className="font-sans text-[11px] text-text-mid">
+                  Capture measurements now to save a trip later (optional)
+                </p>
+                <ClientMeasurementsPanel
+                  compact
+                  clientId={order.clientProfileId}
+                  clientName={order.clientName}
+                  initial={measurementFromRecord(order.clientProfile?.measurements ?? null)}
+                  onDraftChange={setMeasurementsDraft}
+                />
+              </div>
+            ) : null}
             <div className="mt-4 flex flex-wrap gap-3">
               <label className="cursor-pointer">
                 <span className="inline-flex rounded border border-sand px-3 py-2 font-sans text-xs">

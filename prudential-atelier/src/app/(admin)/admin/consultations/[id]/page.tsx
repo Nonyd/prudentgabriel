@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { AdminConsultationDetail } from "@/components/admin/AdminConsultationDetail";
+import { measurementFromRecord } from "@/components/admin/ClientMeasurementsPanel";
 
 export default async function AdminConsultationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,6 +14,13 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
     },
   });
   if (!booking) notFound();
+
+  const clientProfile = booking.userId
+    ? await prisma.clientProfile.findUnique({
+        where: { userId: booking.userId },
+        include: { measurements: true },
+      })
+    : null;
 
   const payload = {
     ...booking,
@@ -28,7 +36,12 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
         ← Consultations
       </Link>
       <h1 className="mt-4 font-display text-2xl text-gold">{booking.bookingNumber}</h1>
-      <AdminConsultationDetail key={booking.updatedAt.toISOString()} booking={payload} />
+      <AdminConsultationDetail
+        key={booking.updatedAt.toISOString()}
+        booking={payload}
+        clientId={clientProfile?.id ?? null}
+        measurements={measurementFromRecord(clientProfile?.measurements ?? null)}
+      />
     </div>
   );
 }

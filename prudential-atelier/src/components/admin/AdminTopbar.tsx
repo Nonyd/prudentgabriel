@@ -1,8 +1,9 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Bell, Download, Menu, Search } from "lucide-react";
+import { Download, ExternalLink, Menu, Search } from "lucide-react";
 import Link from "next/link";
+import { NotificationBell } from "@/components/admin/NotificationBell";
 
 function formatExecutiveDate(d: Date): string {
   return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
@@ -26,11 +27,13 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
         </button>
         {isExecutive ? (
           <div>
-            <h1 className="font-serif text-2xl font-medium text-choc">Executive Dashboard</h1>
-            <p className="font-sans text-[12px] text-text-light">Your private overview · {formatExecutiveDate(now)}</p>
+            <h1 className="admin-topbar-title font-serif font-medium text-choc">Executive Dashboard</h1>
+            <p className="admin-topbar-subtitle font-sans text-text-light">
+              Your private overview · {formatExecutiveDate(now)}
+            </p>
           </div>
         ) : (
-          <h1 className="truncate font-serif text-lg font-medium text-choc">
+          <h1 className="admin-topbar-title truncate font-serif font-medium capitalize text-choc">
             {pathname.replace(/^\/admin\/?/, "").split("/")[0]?.replace(/-/g, " ") || "Admin"}
           </h1>
         )}
@@ -46,9 +49,17 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
             aria-label="Search admin"
           />
         </label>
-        <button type="button" className="relative text-text-mid" aria-label="Notifications">
-          <Bell className="h-[18px] w-[18px]" strokeWidth={1.5} />
-        </button>
+        <NotificationBell />
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="View live site"
+          className="inline-flex items-center gap-1.5 font-sans text-[11px] font-medium text-text-mid transition-colors hover:text-choc"
+        >
+          <ExternalLink className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+          <span className="hidden sm:inline">View Site</span>
+        </a>
         {isExecutive ? (
           <Link
             href="/admin/reports"

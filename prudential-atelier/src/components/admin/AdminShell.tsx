@@ -33,7 +33,7 @@ export function AdminShell({ session, children, badges = {} }: AdminShellProps) 
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <AdminTopbar onOpenNav={() => setMobileNav(true)} />
-        <main className="min-h-0 flex-1 overflow-y-auto bg-bg-page p-4 md:p-8">{children}</main>
+        <main className="admin-shell min-h-0 flex-1 overflow-y-auto bg-bg-page p-4 md:p-8">{children}</main>
       </div>
     </div>
   );

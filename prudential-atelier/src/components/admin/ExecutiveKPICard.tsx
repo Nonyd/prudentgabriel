@@ -21,18 +21,18 @@ export function ExecutiveKPICard({
   className,
 }: ExecutiveKPICardProps) {
   return (
-    <div className={cn("card-surface p-5", className)}>
+    <div className={cn("card-surface min-h-[120px] p-6", className)}>
       <div className="flex items-start justify-between gap-3">
-        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-light">{label}</p>
+        <p className="kpi-label font-sans font-semibold uppercase text-text-light">{label}</p>
         <div className={cn("flex h-8 w-8 items-center justify-center rounded-sm", iconBg)}>
           <Icon className="h-4 w-4 text-choc/70" strokeWidth={1.5} />
         </div>
       </div>
-      <p className="mt-4 font-sans text-[36px] font-medium leading-none tabular-nums text-choc">{value}</p>
+      <p className="kpi-value mt-3 leading-none tabular-nums text-choc">{value}</p>
       {trend ? (
         <p
           className={cn(
-            "mt-3 font-sans text-[11px]",
+            "kpi-trend mt-1.5 font-sans",
             trendUp === true && "text-success",
             trendUp === false && "text-danger",
             trendUp == null && "text-text-mid",

@@ -1,13 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { NotificationsPageClient } from "@/components/admin/NotificationsPageClient";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 20;
 
 export default async function AdminNotificationsPage() {
   const [notifications, unreadCount] = await Promise.all([
     prisma.adminNotification.findMany({
       orderBy: { createdAt: "desc" },
-      take: PAGE_SIZE,
+      take: 500,
     }),
     prisma.adminNotification.count({ where: { isRead: false } }),
   ]);

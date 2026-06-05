@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { AdminNotification, AdminNotificationType } from "@prisma/client";
 import {
   AlertTriangle,
@@ -21,23 +22,23 @@ type FilterType = "ALL" | "UNREAD" | "ORDERS" | "BESPOKE" | "CONSULTATIONS" | "R
 function iconFor(type: AdminNotificationType) {
   switch (type) {
     case "NEW_ORDER":
-      return <ShoppingCart size={16} className="text-green-800" />;
+      return <ShoppingCart size={16} className="text-success" />;
     case "NEW_BESPOKE":
-      return <Scissors size={16} className="text-purple-900" />;
+      return <Scissors size={16} className="text-choc" />;
     case "NEW_CONSULTATION":
-      return <Calendar size={16} className="text-blue-900" />;
+      return <Calendar size={16} className="text-lightbr" />;
     case "REVIEW_PENDING":
-      return <Star size={16} className="text-amber-800" />;
+      return <Star size={16} className="text-warning" />;
     case "LOW_STOCK":
-      return <AlertTriangle size={16} className="text-red-800" />;
+      return <AlertTriangle size={16} className="text-danger" />;
     case "PAYMENT_FAILED":
-      return <CreditCard size={16} className="text-red-800" />;
+      return <CreditCard size={16} className="text-danger" />;
     case "NEW_CUSTOMER":
-      return <User size={16} className="text-green-800" />;
+      return <User size={16} className="text-success" />;
     case "COUPON_EXPIRING":
-      return <Tag size={16} className="text-amber-800" />;
+      return <Tag size={16} className="text-warning" />;
     default:
-      return <Bell size={16} className="text-[#6B6B68]" />;
+      return <Bell size={16} className="text-text-light" />;
   }
 }
 
@@ -61,13 +62,15 @@ export function NotificationsPageClient({
   initialUnreadCount: number;
   pageSize: number;
 }) {
+  const router = useRouter();
   const [rows, setRows] = useState(initialNotifications);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("ALL");
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
 
   const unreadCount = rows.filter((n) => !n.isRead).length;
-  const data = useMemo(() => rows.filter((row) => matchesFilter(row, selectedFilter)), [rows, selectedFilter]);
-  const pageRows = data.slice(0, pageSize);
+  const filtered = useMemo(() => rows.filter((row) => matchesFilter(row, selectedFilter)), [rows, selectedFilter]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const pageRows = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   async function markOneRead(id: string) {
     await fetch("/api/admin/notifications/read", {
@@ -87,6 +90,11 @@ export function NotificationsPageClient({
     setRows((prev) => prev.map((row) => ({ ...row, isRead: true })));
   }
 
+  async function openRow(row: AdminNotification) {
+    if (!row.isRead) await markOneRead(row.id);
+    router.push(row.link || "/admin/notifications");
+  }
+
   const tabs: { id: FilterType; label: string }[] = [
     { id: "ALL", label: "All" },
     { id: "UNREAD", label: "Unread" },
@@ -101,11 +109,17 @@ export function NotificationsPageClient({
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-[28px] text-ink">Notifications</h1>
+        <h1 className="admin-topbar-title font-serif font-medium text-choc">Notifications</h1>
         <div className="flex items-center gap-2">
-          <span className="bg-[#37392d] px-2 py-1 font-body text-[10px] uppercase tracking-[0.08em] text-white">{unreadCount || initialUnreadCount} unread</span>
-          <button type="button" onClick={() => void markAllRead()} className="border border-[#EBEBEA] px-3 py-1.5 font-body text-xs hover:bg-[#F5F5F3]">
-            Mark All Read
+          <span className="rounded-sm bg-nut/10 px-2 py-1 font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-nut">
+            {unreadCount || initialUnreadCount} unread
+          </span>
+          <button
+            type="button"
+            onClick={() => void markAllRead()}
+            className="rounded-sm border border-sand px-3 py-1.5 font-sans text-[11px] text-nut hover:bg-sand/30"
+          >
+            Mark all read
           </button>
         </div>
       </div>
@@ -115,9 +129,12 @@ export function NotificationsPageClient({
           <button
             key={tab.id}
             type="button"
-            onClick={() => setSelectedFilter(tab.id)}
-            className={`border-b-2 px-2 py-1.5 font-body text-[11px] uppercase tracking-[0.08em] ${
-              selectedFilter === tab.id ? "border-[#37392d] text-[#37392d]" : "border-transparent text-[#6B6B68]"
+            onClick={() => {
+              setSelectedFilter(tab.id);
+              setPage(1);
+            }}
+            className={`border-b-2 px-2 py-1.5 font-sans text-[11px] uppercase tracking-[0.08em] ${
+              selectedFilter === tab.id ? "border-nut text-choc" : "border-transparent text-text-light"
             }`}
           >
             {tab.label}
@@ -125,85 +142,63 @@ export function NotificationsPageClient({
         ))}
       </div>
 
-      {selectedIds.length > 0 ? (
-        <div className="mb-3 flex items-center gap-3 border border-[#EBEBEA] bg-white px-3 py-2 font-body text-xs">
-          <button
-            type="button"
-            onClick={async () => {
-              await Promise.all(selectedIds.map(async (id) => markOneRead(id)));
-              setSelectedIds([]);
-            }}
-            className="text-[#37392d] hover:underline"
-          >
-            Mark Selected Read
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setRows((prev) => prev.filter((row) => !selectedIds.includes(row.id)));
-              setSelectedIds([]);
-            }}
-            className="text-red-600 hover:underline"
-          >
-            Delete Selected
-          </button>
+      <ul className="overflow-hidden rounded-lg border border-sand bg-ivory">
+        {pageRows.length === 0 ? (
+          <li className="p-8 text-center font-sans text-sm text-text-mid">No notifications match this filter.</li>
+        ) : (
+          pageRows.map((row) => (
+            <li key={row.id}>
+              <button
+                type="button"
+                onClick={() => void openRow(row)}
+                className={`flex w-full items-start gap-3 border-b border-sand px-4 py-4 text-left transition-colors last:border-b-0 hover:bg-[rgba(152,117,91,0.06)] ${
+                  !row.isRead ? "border-l-[3px] border-l-nut bg-[rgba(92,52,34,0.04)]" : ""
+                }`}
+              >
+                <span className="mt-0.5">{iconFor(row.type)}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-sans text-[13px] font-medium text-choc">{row.title}</p>
+                  <p className="mt-0.5 font-sans text-[12px] text-text-mid">{row.message}</p>
+                  <p className="mt-1 font-sans text-[11px] text-text-light">
+                    {formatDistanceToNow(new Date(row.createdAt), { addSuffix: true })}
+                  </p>
+                </div>
+                {!row.isRead ? <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-nut" /> : null}
+              </button>
+            </li>
+          ))
+        )}
+      </ul>
+
+      {totalPages > 1 ? (
+        <div className="mt-4 flex items-center justify-between font-sans text-[11px] text-text-mid">
+          <span>
+            Page {page} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="rounded-sm border border-sand px-3 py-1 disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="rounded-sm border border-sand px-3 py-1 disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
         </div>
       ) : null}
 
-      <div className="overflow-x-auto border border-[#EBEBEA] bg-white">
-        <table className="w-full min-w-[900px]">
-          <thead className="border-b border-[#EBEBEA] bg-[#FAFAFA]">
-            <tr className="font-body text-[10px] uppercase tracking-[0.08em] text-[#6B6B68]">
-              <th className="px-3 py-2 text-left" />
-              <th className="px-3 py-2 text-left">Type</th>
-              <th className="px-3 py-2 text-left">Title</th>
-              <th className="px-3 py-2 text-left">Message</th>
-              <th className="px-3 py-2 text-left">Time</th>
-              <th className="px-3 py-2 text-left">Status</th>
-              <th className="px-3 py-2 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pageRows.map((row) => (
-              <tr key={row.id} className={`border-b border-[#F5F5F3] ${!row.isRead ? "border-l-[3px] border-l-[#37392d] bg-[#FAFAF8]" : "bg-white"}`}>
-                <td className="px-3 py-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.includes(row.id)}
-                    onChange={(event) => {
-                      if (event.target.checked) setSelectedIds((prev) => [...prev, row.id]);
-                      else setSelectedIds((prev) => prev.filter((id) => id !== row.id));
-                    }}
-                  />
-                </td>
-                <td className="px-3 py-3">{iconFor(row.type)}</td>
-                <td className="px-3 py-3 font-body text-[13px] font-medium text-ink">{row.title}</td>
-                <td className="px-3 py-3 font-body text-[12px] text-[#4A4A47]">{row.message}</td>
-                <td className="px-3 py-3 font-body text-[11px] text-[#6B6B68]">
-                  {formatDistanceToNow(new Date(row.createdAt), { addSuffix: true })}
-                </td>
-                <td className="px-3 py-3">
-                  {row.isRead ? (
-                    <span className="font-body text-[10px] uppercase text-[#6B6B68]">Read</span>
-                  ) : (
-                    <span className="font-body text-[10px] uppercase text-[#37392d]">Unread</span>
-                  )}
-                </td>
-                <td className="px-3 py-3 text-right">
-                  {!row.isRead ? (
-                    <button type="button" onClick={() => void markOneRead(row.id)} className="mr-3 font-body text-[11px] text-[#37392d] hover:underline">
-                      Mark Read
-                    </button>
-                  ) : null}
-                  <Link href={row.link || "/admin"} className="font-body text-[11px] text-[#37392d] hover:underline">
-                    Go to →
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Link href="/admin" className="mt-6 inline-block font-sans text-[11px] text-nut hover:underline">
+        ← Back to dashboard
+      </Link>
     </div>
   );
 }

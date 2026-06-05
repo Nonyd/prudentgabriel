@@ -215,7 +215,7 @@ export function AdminSidebar({
 
   return (
     <aside
-      className="flex h-screen w-[228px] shrink-0 flex-col overflow-y-auto bg-sidebar-bg text-cream"
+      className="flex h-screen w-[228px] shrink-0 flex-col overflow-hidden bg-sidebar-bg text-cream"
       style={{ overscrollBehavior: "contain" }}
       aria-label="Admin navigation"
     >
@@ -226,14 +226,14 @@ export function AdminSidebar({
         </p>
       </div>
 
-      <nav className="flex-1 px-3 py-4">
+      <nav className="admin-sidebar-nav min-h-0 flex-1 px-3 py-4">
         {SECTIONS.map((section) => {
           const visibleItems = section.items.filter((item) => canSeeNavItem(item, navSession));
           if (visibleItems.length === 0) return null;
 
           return (
             <div key={section.label} className="mb-6">
-              <p className="mb-2 px-2 font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-[rgba(152,117,91,0.5)]">
+              <p className="admin-nav-section-label mb-2 px-2 font-sans font-semibold uppercase text-[rgba(152,117,91,0.5)]">
                 {section.label}
               </p>
               <ul className="space-y-0.5">
@@ -247,7 +247,7 @@ export function AdminSidebar({
                         href={item.href}
                         onClick={() => onNavigate?.()}
                         className={cn(
-                          "flex items-center gap-2.5 rounded-sm px-2 py-2 font-sans text-[11px] transition-colors",
+                          "admin-nav-item flex items-center gap-2.5 rounded-sm px-2 py-2 font-sans text-[13px] transition-colors",
                           active
                             ? "border-r-2 border-lightbr bg-[rgba(152,117,91,0.18)] text-cream"
                             : "text-[rgba(226,209,194,0.65)] hover:bg-lightbr/10 hover:text-cream",
@@ -281,8 +281,8 @@ export function AdminSidebar({
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-sans text-[11px] text-cream">{displayName}</p>
-            <p className="mt-0.5 font-sans text-[9px] font-semibold uppercase tracking-[0.14em] text-lightbr/70">
+            <p className="truncate font-sans text-[13px] text-cream">{displayName}</p>
+            <p className="mt-0.5 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-lightbr/70">
               {roleLabel(role)}
             </p>
           </div>
@@ -291,7 +291,7 @@ export function AdminSidebar({
           href="/admin/account-settings"
           onClick={() => onNavigate?.()}
           className={cn(
-            "mt-1 flex items-center gap-2 rounded-sm px-2 py-2 font-sans text-[11px] transition-colors",
+            "admin-nav-item mt-1 flex items-center gap-2 rounded-sm px-2 py-2 font-sans text-[13px] transition-colors",
             pathname.startsWith("/admin/account-settings")
               ? "border-r-2 border-lightbr bg-[rgba(152,117,91,0.18)] text-cream"
               : "text-[rgba(226,209,194,0.65)] hover:bg-lightbr/10 hover:text-cream",
@@ -303,7 +303,7 @@ export function AdminSidebar({
         <button
           type="button"
           onClick={() => void signOut({ callbackUrl: "/login?tab=admin" })}
-          className="mt-2 flex w-full items-center gap-2 px-2 py-2 font-sans text-[11px] text-[rgba(226,209,194,0.65)] transition-colors hover:text-cream"
+          className="admin-nav-item mt-2 flex w-full items-center gap-2 px-2 py-2 font-sans text-[13px] text-[rgba(226,209,194,0.65)] transition-colors hover:text-cream"
         >
           <LogOut className="h-4 w-4" strokeWidth={1.5} />
           Sign out

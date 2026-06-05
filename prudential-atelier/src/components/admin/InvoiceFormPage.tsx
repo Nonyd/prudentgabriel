@@ -15,6 +15,16 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import type { InvoiceCurrency, InvoiceLineItem } from "@/types/invoice";
 
 type Mode = "create" | "edit";
+type TermsPreset = "70_30" | "full" | "custom";
+
+function buildPaymentTermsText(preset: Exclude<TermsPreset, "custom">, total: number, cur: InvoiceCurrency): string {
+  if (preset === "full") {
+    return `PAYMENT TERMS\n\nOption B: Full Payment\nPay ${formatInvoiceCurrency(total, cur)} in full.`;
+  }
+  const deposit = Math.round(total * 0.7);
+  const balance = total - deposit;
+  return `PAYMENT TERMS\n\nOption A: 70% Deposit\nPay ${formatInvoiceCurrency(deposit, cur)} now to begin production.\nRemaining ${formatInvoiceCurrency(balance, cur)} due before delivery.\n\nOption B: Full Payment\nPay ${formatInvoiceCurrency(total, cur)} in full.`;
+}
 
 function asCurrency(c: string): InvoiceCurrency {
   if (c === "USD" || c === "GBP") return c;
@@ -48,6 +58,7 @@ export function InvoiceFormPage({
   const [currency, setCurrency] = useState<InvoiceCurrency>("NGN");
   const [dueDate, setDueDate] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("");
+  const [termsPreset, setTermsPreset] = useState<TermsPreset>("70_30");
   const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([
     { id: nanoid(), description: "", quantity: 1, unitPrice: 0, amount: 0 },
   ]);
@@ -77,6 +88,11 @@ export function InvoiceFormPage({
       depositPaid: 0,
     });
   }, [lineItems, discountOn, discountType, discountValue, vatOn, vatPercent, depositPct]);
+
+  useEffect(() => {
+    if (termsPreset === "custom") return;
+    setPaymentTerms(buildPaymentTermsText(termsPreset, totals.total, cur));
+  }, [termsPreset, totals.total, cur]);
 
   useEffect(() => {
     if (!initialConsultationId || mode !== "create") return;
@@ -164,6 +180,7 @@ export function InvoiceFormPage({
           : "",
       );
       setPaymentTerms(inv.paymentTerms ?? "");
+      setTermsPreset("custom");
       const items = Array.isArray(inv.lineItems)
         ? (inv.lineItems as unknown as InvoiceLineItem[])
         : [{ id: nanoid(), description: "", quantity: 1, unitPrice: 0, amount: 0 }];
@@ -441,10 +458,40 @@ export function InvoiceFormPage({
               Due date
               <input type="date" className="mt-1 border border-[#EBEBEA] px-3 py-2 text-sm" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </label>
-            <label className="mt-4 block font-body text-xs">
-              Payment terms
-              <textarea className="mt-1 min-h-[80px] w-full border border-[#EBEBEA] px-3 py-2 text-sm" value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} />
-            </label>
+            <div className="mt-4 space-y-2">
+              <p className="font-body text-xs font-medium text-[#6B6B68]">Payment terms</p>
+              {(
+                [
+                  { id: "70_30" as const, label: "70/30 Split (70% deposit, 30% on delivery)" },
+                  { id: "full" as const, label: "Full payment required" },
+                  { id: "custom" as const, label: "Custom (free text)" },
+                ] as const
+              ).map((option) => (
+                <label key={option.id} className="flex cursor-pointer items-center gap-2 font-body text-sm text-ink">
+                  <input
+                    type="radio"
+                    name="terms-preset"
+                    checked={termsPreset === option.id}
+                    onChange={() => setTermsPreset(option.id)}
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+            {termsPreset === "custom" ? (
+              <label className="mt-4 block font-body text-xs">
+                Custom payment terms
+                <textarea
+                  className="mt-1 min-h-[80px] w-full border border-[#EBEBEA] px-3 py-2 text-sm"
+                  value={paymentTerms}
+                  onChange={(e) => setPaymentTerms(e.target.value)}
+                />
+              </label>
+            ) : (
+              <pre className="mt-4 whitespace-pre-wrap rounded border border-[#EBEBEA] bg-white p-3 font-body text-xs text-[#4A4A47]">
+                {paymentTerms}
+              </pre>
+            )}
           </section>
 
           <section className="border border-[#EBEBEA] bg-canvas p-5">

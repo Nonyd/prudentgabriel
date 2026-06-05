@@ -32,21 +32,21 @@ export function ExecutiveRevenueChart({
   return (
     <div className="card-surface p-6">
       <div className="flex items-start justify-between gap-4">
-        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-light">
+        <p className="panel-title font-sans font-semibold uppercase text-text-light">
           Revenue · Last 7 days
         </p>
         <span className="rounded-full bg-sand/50 px-3 py-1 font-sans text-[11px] text-choc">
           {formatNGN(total)} total
         </span>
       </div>
-      <div className="mt-6 w-full" style={{ width: "100%", height: 280, minHeight: 280 }}>
+      <div className="mt-6 w-full" style={{ width: "100%", height: 320, minHeight: 320 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#98755B" }} axisLine={false} tickLine={false} />
-            <YAxis tickFormatter={formatNGN} tick={{ fontSize: 10, fill: "#98755B" }} axisLine={false} tickLine={false} width={48} />
+            <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#98755B" }} axisLine={false} tickLine={false} />
+            <YAxis tickFormatter={formatNGN} tick={{ fontSize: 12, fill: "#98755B" }} axisLine={false} tickLine={false} width={48} />
             <Tooltip
               formatter={(v) => formatNGN(Number(v ?? 0))}
-              contentStyle={{ border: "1px solid #D4BBAC", borderRadius: 4, fontSize: 12 }}
+              contentStyle={{ border: "1px solid #D4BBAC", borderRadius: 4, fontSize: 12, padding: "8px 12px" }}
             />
             <Line type="monotone" dataKey="bespoke" stroke="#442913" strokeWidth={2} dot={false} name="Atelier" />
             <Line type="monotone" dataKey="rtw" stroke="#98755B" strokeWidth={2} dot={false} name="Ready to Wear" />
@@ -63,8 +63,8 @@ export function ExecutiveRevenueChart({
           const sum = data.reduce((acc, d) => acc + d[item.key], 0);
           return (
             <div key={item.key} className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: item.color }} />
-              <span className="font-sans text-[11px] text-text-mid">
+              <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: item.color }} />
+              <span className="font-sans text-[12px] text-text-mid">
                 {item.label} · {formatNGN(sum)}
               </span>
             </div>
