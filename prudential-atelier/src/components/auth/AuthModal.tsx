@@ -153,14 +153,16 @@ function LoginForm() {
       redirect: false,
     });
 
-    if (!result?.ok) {
-      setError("root", { message: "Invalid email or password" });
+    console.log("CLIENT LOGIN RESULT:", result);
+
+    if (result?.ok) {
+      setTimeout(() => {
+        window.location.href = callbackUrl?.startsWith("/") ? callbackUrl : "/account";
+      }, 1000);
       return;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const target = callbackUrl?.startsWith("/") ? callbackUrl : "/account";
-    window.location.replace(target);
+    setError("root", { message: "Invalid credentials. Please try again." });
   };
 
   return (

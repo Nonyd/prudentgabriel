@@ -17,7 +17,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
-    error: "/auth/error",
+    error: "/login",
   },
   providers: [
     ...(googleEnabled
@@ -84,6 +84,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user, trigger, session }) {
+      console.log("JWT CALLBACK:", {
+        trigger,
+        hasUser: !!user,
+        role: (user as { role?: Role } | undefined)?.role ?? (token?.role as Role | undefined),
+        tokenRole: token?.role,
+      });
+
       if (user) {
         token.id = user.id;
         token.role = (user as { role: Role }).role;
@@ -157,6 +164,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async session({ session, token }) {
+      console.log("SESSION CALLBACK:", {
+        role: token?.role,
+        email: token?.email,
+      });
+
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;

@@ -86,19 +86,39 @@ export function AdminLoginClient() {
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = async (data: LoginInput) => {
-    const result = await signIn("credentials", {
-      email: data.email,
-      password: data.password,
-      redirect: false,
-    });
+    try {
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
 
-    if (!result?.ok) {
-      setError("root", { message: "Invalid credentials. Please try again." });
-      return;
+      console.log("SIGN IN RESULT:", result);
+
+      if (!result) {
+        setError("root", { message: "No response from server. Please try again." });
+        return;
+      }
+
+      if (result.error) {
+        console.log("SIGN IN ERROR:", result.error);
+        setError("root", { message: "Invalid credentials. Please try again." });
+        return;
+      }
+
+      if (result.ok) {
+        console.log("LOGIN OK - redirecting...");
+        setTimeout(() => {
+          window.location.href = "/admin";
+        }, 1000);
+        return;
+      }
+
+      setError("root", { message: "Something went wrong. Please try again." });
+    } catch (err) {
+      console.log("LOGIN EXCEPTION:", err);
+      setError("root", { message: "An error occurred. Please try again." });
     }
-
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    window.location.replace("/admin");
   };
 
   return (
