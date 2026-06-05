@@ -12,32 +12,8 @@ import {
   saveCookieConsent,
   type CookieConsent,
 } from "@/lib/cookie-consent";
+import { Toggle } from "@/components/ui/Toggle";
 import { useCookieConsentStore } from "@/store/cookieConsentStore";
-
-function Toggle({
-  checked,
-  onChange,
-  disabled,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={() => !disabled && onChange(!checked)}
-      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? "bg-lightbr" : "bg-cream/30"} ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
-    >
-      <span
-        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${checked ? "translate-x-5" : "translate-x-0.5"}`}
-      />
-    </button>
-  );
-}
 
 export function CookieConsent() {
   const isModalOpen = useCookieConsentStore((s) => s.isModalOpen);
@@ -215,6 +191,9 @@ export function CookieConsent() {
                   <Toggle
                     checked={prefs[key]}
                     onChange={(v) => setPrefs((p) => ({ ...p, [key]: v }))}
+                    srLabel={title}
+                    checkedClassName="bg-lightbr"
+                    uncheckedClassName="bg-cream/30"
                   />
                 </div>
               ))}

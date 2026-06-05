@@ -9,6 +9,14 @@ import { ArrowRight } from "lucide-react";
 const schema = z.object({ email: z.string().email() });
 type Form = z.infer<typeof schema>;
 
+const labelStyle = {
+  fontFamily: "var(--font-ui)",
+  fontSize: "10px",
+  fontWeight: 500,
+  letterSpacing: "0.18em",
+  color: "var(--lightbr)",
+} as const;
+
 export function FooterNewsletter({
   headline = "Collections, ateliers and invitations — first.",
   placeholder = "Your email",
@@ -33,35 +41,49 @@ export function FooterNewsletter({
 
   return (
     <div>
-      <p
-        className="mb-4 uppercase"
-        style={{
-          fontFamily: "var(--font-body)",
-          fontSize: "10px",
-          fontWeight: 600,
-          letterSpacing: "0.2em",
-          color: "var(--lightbr)",
-        }}
-      >
+      <p className="mb-4 uppercase" style={labelStyle}>
         The Newsletter
       </p>
-      <p className="mb-5 max-w-xs font-sans text-[13px] font-light leading-relaxed text-cream/75">
+      <p
+        className="mb-5 max-w-xs whitespace-pre-line"
+        style={{
+          fontFamily: "var(--font-body)",
+          fontSize: "14px",
+          fontWeight: 400,
+          color: "var(--sand)",
+        }}
+      >
         {headline}
       </p>
       {done ? (
-        <p className="font-sans text-sm text-cream/90">You&apos;re on the list. Thank you.</p>
+        <p
+          style={{
+            fontFamily: "var(--font-ui)",
+            fontSize: "13px",
+            color: "var(--cream)",
+          }}
+        >
+          You&apos;re on the list. Thank you.
+        </p>
       ) : (
-        <form onSubmit={handleSubmit(onSubmit)} className="flex max-w-sm border-b border-cream/25">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex max-w-sm items-center gap-2">
           <input
             type="email"
             placeholder={placeholder}
-            className="h-11 min-w-0 flex-1 border-0 bg-transparent font-sans text-[13px] font-light text-cream placeholder:text-cream/40 focus:outline-none"
+            className="min-w-0 flex-1 border-0 border-b bg-transparent py-2.5 placeholder:text-text-light focus:outline-none"
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: "12px",
+              color: "var(--sand)",
+              borderBottom: "0.5px solid rgba(226, 209, 194, 0.3)",
+            }}
             {...register("email")}
           />
           <button
             type="submit"
             disabled={formState.isSubmitting}
-            className="flex h-11 w-11 shrink-0 items-center justify-center text-cream transition-colors hover:text-sand disabled:opacity-60"
+            className="flex shrink-0 items-center justify-center transition-opacity hover:opacity-80 disabled:opacity-60"
+            style={{ color: "var(--lightbr)" }}
             aria-label="Subscribe"
           >
             <ArrowRight className="h-4 w-4" strokeWidth={1.5} />

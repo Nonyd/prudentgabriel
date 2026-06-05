@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export interface ToggleProps {
@@ -10,36 +9,70 @@ export interface ToggleProps {
   size?: "sm" | "md";
   label?: string;
   srLabel: string;
+  className?: string;
+  checkedClassName?: string;
+  uncheckedClassName?: string;
+  labelClassName?: string;
 }
 
-const track = { sm: { w: 36, h: 20, thumb: 14, travel: 18 }, md: { w: 44, h: 24, thumb: 18, travel: 22 } };
+const sizeStyles = {
+  sm: {
+    track: "h-5 w-9",
+    thumb: "h-3.5 w-3.5",
+    checked: "translate-x-[18px]",
+  },
+  md: {
+    track: "h-6 w-11",
+    thumb: "h-5 w-5",
+    checked: "translate-x-5",
+  },
+} as const;
 
-export function Toggle({ checked, onChange, disabled, size = "md", label, srLabel }: ToggleProps) {
-  const t = track[size];
+export function Toggle({
+  checked,
+  onChange,
+  disabled,
+  size = "md",
+  label,
+  srLabel,
+  className,
+  checkedClassName = "bg-choc",
+  uncheckedClassName = "bg-sand",
+  labelClassName,
+}: ToggleProps) {
+  const s = sizeStyles[size];
+
   return (
     <div className={cn("inline-flex items-center gap-3", label ? "" : "")}>
       <button
         type="button"
         role="switch"
         aria-checked={checked}
+        aria-label={srLabel}
         disabled={disabled}
         onClick={() => !disabled && onChange(!checked)}
         className={cn(
-          "relative shrink-0 rounded-full transition-colors duration-200",
-          size === "sm" ? "h-5 w-9" : "h-6 w-11",
-          checked ? "bg-[var(--wine)]" : "bg-[var(--border)]",
-          disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer",
+          "relative inline-flex shrink-0 cursor-pointer overflow-hidden rounded-full transition-colors duration-200",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-choc/40 focus-visible:ring-offset-2",
+          s.track,
+          checked ? checkedClassName : uncheckedClassName,
+          disabled && "cursor-not-allowed opacity-40",
+          className,
         )}
       >
-        <span className="sr-only">{srLabel}</span>
-        <motion.span
-          className={cn("absolute top-[2px] block rounded-full bg-white shadow-sm", size === "sm" ? "h-3.5 w-3.5" : "h-[18px] w-[18px]")}
-          initial={false}
-          animate={{ x: checked ? t.travel : 2 }}
-          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        <span
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute left-0.5 top-0.5 block rounded-full bg-white shadow-sm",
+            "transition-transform duration-200 ease-out",
+            s.thumb,
+            checked ? s.checked : "translate-x-0",
+          )}
         />
       </button>
-      {label ? <span className="font-body text-sm text-ivory/90">{label}</span> : null}
+      {label ? (
+        <span className={cn("font-body text-sm text-text-mid", labelClassName)}>{label}</span>
+      ) : null}
     </div>
   );
 }

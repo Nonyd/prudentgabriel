@@ -5,6 +5,7 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { ExternalLink, GripVertical, Loader2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Toggle } from "@/components/ui/Toggle";
 import { AdminImageUrlField } from "@/components/admin/AdminImageUrlField";
 import { CmsRichTextEditor } from "@/components/admin/content/CmsRichTextEditor";
 import {
@@ -42,20 +43,14 @@ function FieldInput({
   if (field.type === "toggle") {
     const on = value === "true" || value === "1";
     return (
-      <label className="flex cursor-pointer items-center gap-3">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={on}
-          onClick={() => onChange(on ? "false" : "true")}
-          className={`relative h-6 w-11 rounded-full transition-colors ${on ? "bg-choc" : "bg-sand"}`}
-        >
-          <span
-            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${on ? "translate-x-5" : "translate-x-0.5"}`}
-          />
-        </button>
+      <div className="flex items-center gap-3">
+        <Toggle
+          checked={on}
+          onChange={(v) => onChange(v ? "true" : "false")}
+          srLabel={field.label}
+        />
         <span className="font-sans text-sm text-text-mid">{on ? "On" : "Off"}</span>
-      </label>
+      </div>
     );
   }
 

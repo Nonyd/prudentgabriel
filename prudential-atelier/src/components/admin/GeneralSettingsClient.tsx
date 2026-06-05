@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
+import { Toggle } from "@/components/ui/Toggle";
 
 const FIELDS = [
   { key: "site_name", label: "Site name", defaultValue: "Prudential Atelier" },
@@ -84,17 +85,12 @@ export function GeneralSettingsClient() {
               manual action.
             </p>
           </div>
-          <label className="relative inline-flex shrink-0 cursor-pointer items-center">
-            <input
-              type="checkbox"
-              className="peer sr-only"
-              checked={autoConvert}
-              disabled={autoConvertLoading || autoConvertSaving}
-              onChange={(e) => void onAutoConvertChange(e.target.checked)}
-            />
-            <span className="h-6 w-11 rounded-full bg-sand transition-colors peer-checked:bg-choc peer-disabled:opacity-50" />
-            <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
-          </label>
+          <Toggle
+            checked={autoConvert}
+            onChange={(v) => void onAutoConvertChange(v)}
+            disabled={autoConvertLoading || autoConvertSaving}
+            srLabel="Auto-convert approved quotes to orders"
+          />
         </div>
         <p className="mt-2 font-sans text-[11px] text-text-light">
           {autoConvertLoading
