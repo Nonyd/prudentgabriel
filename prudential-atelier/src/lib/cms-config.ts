@@ -1,4 +1,13 @@
 import { FALLBACK_CAROUSEL_ITEMS } from "@/lib/hero-carousel";
+import {
+  DEFAULT_ABOUT_VALUES,
+  DEFAULT_BRIDAL_INTRO,
+  DEFAULT_BRIDAL_NOTES,
+  DEFAULT_KIDS_SIZE_CHART,
+  DEFAULT_MEASURE_STEPS,
+  DEFAULT_SIZE_TIP,
+  DEFAULT_WOMEN_SIZE_CHART,
+} from "@/lib/page-content-defaults";
 
 export type CmsFieldType =
   | "text"
@@ -348,6 +357,99 @@ export const CMS_PAGES: CmsPageDef[] = [
     ],
   },
   {
+    id: "contact",
+    label: "Contact",
+    previewPath: "/contact",
+    sections: [
+      {
+        id: "details",
+        label: "Contact Details",
+        fields: [
+          { key: "contact_lagos_address_1", label: "Lagos address (line 1)", type: "text", default: "14 Bode Thomas Street" },
+          { key: "contact_lagos_address_2", label: "Lagos address (line 2)", type: "text", default: "Surulere, Lagos, Nigeria" },
+          { key: "contact_abuja_address_1", label: "Abuja address (line 1)", type: "text", default: "Plot 1234, Wuse Zone 5" },
+          { key: "contact_abuja_address_2", label: "Abuja address (line 2)", type: "text", default: "Abuja, FCT, Nigeria" },
+          { key: "contact_whatsapp", label: "WhatsApp number", type: "text", default: "+2348012345678" },
+          { key: "contact_phone", label: "Phone number", type: "text", default: "+2348012345678" },
+          { key: "contact_email", label: "Email", type: "text", default: "hello@prudentgabriel.com" },
+          { key: "contact_hours_weekday", label: "Hours (Mon–Fri)", type: "text", default: "Monday – Friday: 9:00 AM – 6:00 PM" },
+          { key: "contact_hours_saturday", label: "Hours (Saturday)", type: "text", default: "Saturday: 10:00 AM – 4:00 PM" },
+          { key: "contact_instagram", label: "Instagram handle", type: "text", default: "@prudentgabriel" },
+          { key: "contact_tiktok", label: "TikTok handle", type: "text", default: "@prudentgabriel" },
+          { key: "contact_facebook", label: "Facebook page name", type: "text", default: "Prudential Atelier" },
+        ],
+      },
+      {
+        id: "form",
+        label: "Contact Form",
+        fields: [
+          {
+            key: "contact_auto_reply_message",
+            label: "Auto-reply message",
+            type: "textarea",
+            default: "Thank you for reaching out. We'll be in touch within 24 hours.",
+          },
+          {
+            key: "contact_notification_email",
+            label: "Notification email (form submissions)",
+            type: "text",
+            default: "hello@prudentgabriel.com",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "size-guide",
+    label: "Size Guide",
+    previewPath: "/size-guide",
+    sections: [
+      {
+        id: "charts",
+        label: "Size Charts",
+        fields: [
+          {
+            key: "size_guide_women",
+            label: "Women's size chart (JSON)",
+            type: "textarea",
+            default: JSON.stringify(DEFAULT_WOMEN_SIZE_CHART),
+          },
+          {
+            key: "size_guide_kids",
+            label: "Kids size chart (JSON)",
+            type: "textarea",
+            default: JSON.stringify(DEFAULT_KIDS_SIZE_CHART),
+          },
+          {
+            key: "size_guide_bridal_intro",
+            label: "Bridal intro",
+            type: "textarea",
+            default: DEFAULT_BRIDAL_INTRO,
+          },
+          {
+            key: "size_guide_bridal_notes",
+            label: "Bridal sizing notes",
+            type: "textarea",
+            default: DEFAULT_BRIDAL_NOTES,
+          },
+          { key: "size_guide_size_tip", label: "Between sizes tip", type: "textarea", default: DEFAULT_SIZE_TIP },
+        ],
+      },
+      {
+        id: "measure",
+        label: "How to Measure",
+        fields: [
+          {
+            key: "size_guide_measure_steps",
+            label: "Measurement steps (JSON: title, description)",
+            type: "textarea",
+            default: JSON.stringify(DEFAULT_MEASURE_STEPS),
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: "about",
     label: "About",
     previewPath: "/about",
@@ -356,35 +458,156 @@ export const CMS_PAGES: CmsPageDef[] = [
         id: "hero",
         label: "Hero",
         fields: [
-          { key: "about_hero_headline", label: "Hero headline", type: "text", default: "The House of Prudent Gabriel" },
-          { key: "about_hero_subtext", label: "Hero subtext", type: "text", default: "Founded in Lagos. Worn around the world." },
+          { key: "about_hero_headline", label: "Headline", type: "text", default: "The House of Prudent Gabriel" },
+          {
+            key: "about_hero_subtext",
+            label: "Subheadline",
+            type: "text",
+            default: "Founded in Lagos. Worn around the world.",
+          },
         ],
       },
       {
         id: "story",
         label: "Brand Story",
         fields: [
+          { key: "about_story_eyebrow", label: "Eyebrow", type: "text", default: "OUR STORY" },
+          { key: "about_story_headline", label: "Headline", type: "text", default: "From a dream to a dynasty." },
+          {
+            key: "about_story_paragraph_1",
+            label: "Paragraph 1",
+            type: "textarea",
+            default:
+              "Prudential Atelier was born from a single, unwavering belief — that every woman deserves to be dressed with intention. Founded in Lagos by Mrs. Prudent Gabriel-Okopi, the house began as a quiet vision in a small studio and grew, through dedication and extraordinary craft, into one of Nigeria's most celebrated luxury fashion houses.",
+          },
+          {
+            key: "about_story_paragraph_2",
+            label: "Paragraph 2",
+            type: "textarea",
+            default:
+              "Today, Prudential Atelier serves clients across Nigeria, the United Kingdom, the United States, and beyond — crafting bespoke commissions, ready-to-wear collections, and bridal wear that speak to the modern African woman in all her power and grace.",
+          },
+          {
+            key: "about_story_paragraph_3",
+            label: "Paragraph 3",
+            type: "textarea",
+            default:
+              "Each piece is conceived in our Lagos atelier, hand-finished by our team of master tailors and beaders, and delivered to clients who understand that true luxury is not purchased — it is commissioned.",
+          },
           {
             key: "about_story_body",
-            label: "Brand story",
+            label: "Brand story (legacy rich text)",
             type: "richtext",
             default:
-              "<p>Founded in Lagos, Prudential Atelier crafts ready-to-wear, bridal, and made-to-measure commissions for women who expect more from what they wear. Every piece is designed and constructed in our atelier with the same precision whether it ships worldwide or is tailored to your measurements.</p>",
+              "<p>Founded in Lagos, Prudential Atelier crafts ready-to-wear, bridal, and made-to-measure commissions for women who expect more from what they wear.</p>",
+          },
+          {
+            key: "about_story_image",
+            label: "Story image",
+            type: "image",
+            default: "",
+            uploadFolder: "prudent-gabriel/about",
           },
         ],
       },
       {
         id: "founder",
-        label: "Founder Quote",
+        label: "Founder",
         fields: [
+          { key: "about_founder_name", label: "Name", type: "text", default: "Mrs. Prudent Gabriel-Okopi" },
+          { key: "about_founder_title", label: "Title", type: "text", default: "Founder & Creative Director" },
+          { key: "about_founder_photo", label: "Photo", type: "image", default: "", uploadFolder: "prudent-gabriel/about" },
+          {
+            key: "about_founder_bio_1",
+            label: "Bio paragraph 1",
+            type: "textarea",
+            default:
+              "Mrs. Prudent Gabriel-Okopi is the founder and creative director of Prudential Atelier, Nigeria's premier luxury fashion house. With over 15 years of experience in fashion design and garment construction, she has built a house synonymous with exceptional craftsmanship, cultural pride, and international elegance.",
+          },
+          {
+            key: "about_founder_bio_2",
+            label: "Bio paragraph 2",
+            type: "textarea",
+            default:
+              "A visionary who trained under some of Nigeria's finest designers, Mrs. Prudent founded the atelier with a clear mandate: to create pieces that celebrate the African woman in all her dimensions — her power, her femininity, her ambition, and her grace.",
+          },
+          {
+            key: "about_founder_bio_3",
+            label: "Bio paragraph 3",
+            type: "textarea",
+            default:
+              "Under her creative direction, Prudential Atelier has dressed women for state dinners, royal ceremonies, international galas, and intimate celebrations — each commission a reflection of her unwavering commitment to excellence.",
+          },
           {
             key: "about_founder_quote",
             label: "Founder quote",
             type: "textarea",
-            default: "I didn't plan to be a fashion designer. I just couldn't let a spoiled dress defeat me.",
+            default: "We don't make clothes. We make the way you'll be remembered.",
           },
-          { key: "about_founder_name", label: "Founder name", type: "text", default: "Mrs. Prudent Gabriel" },
-          { key: "about_founder_title", label: "Founder title", type: "text", default: "Founder" },
+        ],
+      },
+      {
+        id: "stats",
+        label: "By the Numbers",
+        fields: [
+          { key: "about_stat_1_number", label: "Stat 1 number", type: "text", default: "15+" },
+          { key: "about_stat_1_label", label: "Stat 1 label", type: "text", default: "Years of Couture" },
+          { key: "about_stat_2_number", label: "Stat 2 number", type: "text", default: "500+" },
+          { key: "about_stat_2_label", label: "Stat 2 label", type: "text", default: "Commissions Delivered" },
+          { key: "about_stat_3_number", label: "Stat 3 number", type: "text", default: "10,000+" },
+          { key: "about_stat_3_label", label: "Stat 3 label", type: "text", default: "Happy Clients" },
+          { key: "about_stat_4_number", label: "Stat 4 number", type: "text", default: "4" },
+          { key: "about_stat_4_label", label: "Stat 4 label", type: "text", default: "Atelier Locations" },
+        ],
+      },
+      {
+        id: "values",
+        label: "Our Values",
+        fields: [
+          { key: "about_values_eyebrow", label: "Eyebrow", type: "text", default: "WHAT WE STAND FOR" },
+          { key: "about_values_headline", label: "Headline", type: "text", default: "The principles behind every piece" },
+          {
+            key: "about_values",
+            label: "Values (JSON: name, description)",
+            type: "textarea",
+            default: JSON.stringify(DEFAULT_ABOUT_VALUES),
+          },
+        ],
+      },
+      {
+        id: "locations",
+        label: "Locations",
+        fields: [
+          { key: "about_locations_eyebrow", label: "Eyebrow", type: "text", default: "OUR ATELIERS" },
+          { key: "about_locations_headline", label: "Headline", type: "text", default: "Where to find us" },
+          { key: "about_lagos_name", label: "Lagos name", type: "text", default: "LAGOS" },
+          {
+            key: "about_lagos_address",
+            label: "Lagos address",
+            type: "textarea",
+            default: "14 Bode Thomas Street\nSurulere, Lagos",
+          },
+          { key: "about_lagos_hours", label: "Lagos hours", type: "text", default: "Mon–Fri: 9am–6pm · Sat: 10am–4pm" },
+          {
+            key: "about_lagos_maps_link",
+            label: "Lagos maps link",
+            type: "text",
+            default: "https://maps.google.com/?q=Surulere,Lagos,Nigeria",
+          },
+          { key: "about_abuja_name", label: "Abuja name", type: "text", default: "ABUJA" },
+          {
+            key: "about_abuja_address",
+            label: "Abuja address",
+            type: "textarea",
+            default: "Plot 1234, Wuse Zone 5\nAbuja, FCT",
+          },
+          { key: "about_abuja_hours", label: "Abuja hours", type: "text", default: "Mon–Fri: 9am–6pm · Sat: 10am–4pm" },
+          {
+            key: "about_abuja_maps_link",
+            label: "Abuja maps link",
+            type: "text",
+            default: "https://maps.google.com/?q=Wuse+Zone+5,Abuja,Nigeria",
+          },
         ],
       },
       {
@@ -400,16 +623,24 @@ export const CMS_PAGES: CmsPageDef[] = [
             default: "Over 5,000 designers trained. The school behind the brand.",
           },
           { key: "about_academy_cta_label", label: "CTA label", type: "text", default: "Explore PFA →" },
-          { key: "about_academy_cta_link", label: "CTA link", type: "text", default: "https://pfacademy.ng" },
+          { key: "about_academy_cta_link", label: "CTA link", type: "text", default: "/about#academy" },
         ],
       },
       {
-        id: "team",
-        label: "Team Section",
+        id: "cta",
+        label: "Final CTA",
         fields: [
-          { key: "about_team_enabled", label: "Enabled", type: "toggle", default: "false" },
-          { key: "about_team_headline", label: "Section headline", type: "text", default: "Our team" },
-          { key: "about_team_members", label: "Team members", type: "messages", default: "[]" },
+          { key: "about_cta_headline", label: "Headline", type: "text", default: "Ready to begin your commission?" },
+          {
+            key: "about_cta_quote",
+            label: "Quote",
+            type: "textarea",
+            default: "Every great piece begins with a conversation.",
+          },
+          { key: "about_cta_button_1_label", label: "Button 1 label", type: "text", default: "BOOK A CONSULTATION →" },
+          { key: "about_cta_button_1_link", label: "Button 1 link", type: "text", default: "/consultation" },
+          { key: "about_cta_button_2_label", label: "Button 2 label", type: "text", default: "BROWSE THE COLLECTION →" },
+          { key: "about_cta_button_2_link", label: "Button 2 link", type: "text", default: "/shop" },
         ],
       },
     ],
@@ -595,7 +826,7 @@ export const CMS_PAGE_GROUPS: CmsPageGroup[] = [
   {
     id: "main",
     label: "Main site",
-    pageIds: ["homepage", "about", "footer"],
+    pageIds: ["homepage", "about", "contact", "size-guide", "footer"],
   },
   {
     id: "brands",

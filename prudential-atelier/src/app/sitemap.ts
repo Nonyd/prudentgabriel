@@ -17,6 +17,8 @@ const STATIC_PATHS: {
   { path: "/bespoke", changeFrequency: "monthly", priority: 0.8 },
   { path: "/consultation", changeFrequency: "weekly", priority: 0.85 },
   { path: "/contact", changeFrequency: "monthly", priority: 0.7 },
+  { path: "/about", changeFrequency: "monthly", priority: 0.75 },
+  { path: "/size-guide", changeFrequency: "monthly", priority: 0.65 },
   { path: "/our-story", changeFrequency: "monthly", priority: 0.7 },
   { path: "/press", changeFrequency: "monthly", priority: 0.6 },
   { path: "/legal/privacy", changeFrequency: "yearly", priority: 0.4 },

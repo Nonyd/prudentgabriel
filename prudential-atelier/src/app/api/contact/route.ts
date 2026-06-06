@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email";
+import { cmsGet, getCMSContent } from "@/lib/cms";
+import { createNotification } from "@/lib/notifications";
 import { contactSchema } from "@/validations/contact";
 
 export async function POST(req: NextRequest) {
@@ -15,14 +17,57 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { name, email, subject, message } = parsed.data;
-  const admin = process.env.ADMIN_EMAIL ?? "hello@prudentgabriel.com";
+  const { name, email, phone, subject, message } = parsed.data;
+
+  let cms: Record<string, string> = {};
+  try {
+    cms = await getCMSContent(["contact_notification_email", "contact_auto_reply_message"]);
+  } catch {
+    /* fall back to env */
+  }
+
+  const contactEmail =
+    cmsGet(cms, "contact_notification_email", "") ||
+    process.env.ADMIN_EMAIL ||
+    "hello@prudentgabriel.com";
+  const autoReplyMessage = cmsGet(
+    cms,
+    "contact_auto_reply_message",
+    "Thank you for reaching out. We'll be in touch within 24 hours.",
+  );
+
+  const safeMessage = message.replace(/</g, "&lt;");
 
   await sendEmail({
-    to: admin,
-    subject: `[Contact] ${subject} — ${name}`,
-    html: `<p>From: ${name} &lt;${email}&gt;</p><p>${message.replace(/</g, "&lt;")}</p>`,
+    to: contactEmail,
+    subject: `New contact: ${subject} — ${name}`,
+    html: `
+      <h2>New Contact Form Submission</h2>
+      <p><strong>Name:</strong> ${name}</p>
+      <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
+      <p><strong>Subject:</strong> ${subject}</p>
+      <p><strong>Message:</strong></p>
+      <p>${safeMessage}</p>
+    `,
   });
+
+  await sendEmail({
+    to: email,
+    subject: "We received your message — Prudential Atelier",
+    html: `
+      <p>Thank you for reaching out, ${name}.</p>
+      <p>${autoReplyMessage.replace(/</g, "&lt;")}</p>
+      <p>— Prudential Atelier</p>
+    `,
+  });
+
+  await createNotification({
+    type: "CONTACT_FORM",
+    title: "New contact message",
+    message: `${name} — ${subject}`,
+    link: "/admin/clients",
+  }).catch(() => {});
 
   return NextResponse.json({ success: true });
 }

@@ -29,6 +29,8 @@ function iconFor(type: AdminNotificationType) {
       return wrap(<CreditCard className="h-4 w-4 text-success" strokeWidth={1.5} />, "bg-success/15");
     case "NEW_BESPOKE":
       return wrap(<Scissors className="h-4 w-4 text-choc" strokeWidth={1.5} />, "bg-nut/15");
+    case "CONTACT_FORM":
+      return wrap(<FileText className="h-4 w-4 text-nut" strokeWidth={1.5} />, "bg-nut/15");
     case "REVIEW_PENDING":
       return wrap(<FileText className="h-4 w-4 text-warning" strokeWidth={1.5} />, "bg-warning/15");
     case "LOW_STOCK":

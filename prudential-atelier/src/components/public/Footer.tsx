@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { FacebookIcon, InstagramIcon } from "@/components/icons/SocialIcons";
 import { FooterNewsletter } from "./FooterNewsletter";
+import { Logo } from "@/components/ui/Logo";
 import { usePublicSettings, getSettingFromPublic } from "@/hooks/usePublicSettings";
 import { cmsGet, cmsJson } from "@/lib/cms-helpers";
 import { instagramHandleToUrl } from "@/lib/sub-brand";
@@ -23,7 +24,7 @@ const DEFAULT_HOUSE_LINKS: LinkItem[] = [
 
 const DEFAULT_CLIENT_LINKS: LinkItem[] = [
   { label: "Track Your Order", url: "/track" },
-  { label: "Size Guide", url: "/rtw" },
+  { label: "Size Guide", url: "/size-guide" },
   { label: "Shipping & Returns", url: "/returns-policy" },
   { label: "Book Consultation", url: "/consultation" },
   { label: "Contact", url: "/contact" },
@@ -164,30 +165,7 @@ export function Footer({ cms = {} }: { cms?: Record<string, string> }) {
   return (
     <footer style={{ backgroundColor: "#1A0F08" }}>
       <div className="mx-auto max-w-site px-6 pt-14 pb-12 text-center lg:px-10">
-        <Link href="/" className="inline-block">
-          <span
-            className="block uppercase"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "28px",
-              letterSpacing: "0.16em",
-              color: "var(--cream)",
-            }}
-          >
-            PRUDENTIAL
-          </span>
-          <span
-            className="mt-1 block uppercase"
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "10px",
-              letterSpacing: "0.3em",
-              color: "var(--lightbr)",
-            }}
-          >
-            / ATELIER
-          </span>
-        </Link>
+        <Logo variant="white" size="lg" themeAdaptive={false} className="mx-auto inline-block" />
       </div>
 
       <div className="mx-auto grid max-w-site gap-12 px-6 pb-16 md:grid-cols-3 lg:px-10 lg:gap-16">
