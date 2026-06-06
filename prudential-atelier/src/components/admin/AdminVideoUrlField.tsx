@@ -92,7 +92,9 @@ export function AdminVideoUrlField({ label, value, onChange, folder }: AdminVide
             </button>
           </div>
           <UploadProgressBar value={progress} />
-          <p className="font-body text-[10px] text-[#A8A8A4]">MP4, WebM, or MOV · max 50MB</p>
+          <p className="font-body text-[10px] text-[#A8A8A4]">
+            MP4, WebM, or MOV · max 100MB · uploads directly to Cloudinary
+          </p>
         </div>
       </div>
     </div>
