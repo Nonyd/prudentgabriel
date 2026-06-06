@@ -4,6 +4,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { clearPublicSettingsCache, clearSettingCacheKey, setSetting } from "@/lib/settings";
 import { ensurePaymentSettingKeys } from "@/lib/payment-settings-bootstrap";
+import { ensureAppearanceLogoSettingKeys } from "@/lib/appearance-settings-bootstrap";
 import { revalidateSettings } from "@/lib/revalidate";
 import { EMAIL_TEMPLATE_META } from "@/lib/email-templates";
 import { SettingType, type SettingGroup } from "@prisma/client";
@@ -45,6 +46,10 @@ export async function GET(
     await ensurePaymentSettingKeys();
   }
 
+  if (group === "APPEARANCE") {
+    await ensureAppearanceLogoSettingKeys();
+  }
+
   const rows = await prisma.siteSetting.findMany({
     where: { group: group as SettingGroup },
     orderBy: { sortOrder: "asc" },
@@ -83,6 +88,10 @@ export async function PATCH(
 
   if (group === "PAYMENTS") {
     await ensurePaymentSettingKeys();
+  }
+
+  if (group === "APPEARANCE") {
+    await ensureAppearanceLogoSettingKeys();
   }
 
   const json = await req.json().catch(() => null);
