@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
       rating: parsed.data.rating,
       body: parsed.data.body.trim(),
       clientImage: parsed.data.clientImage ?? null,
+      source: "CLIENT",
     },
   });
 

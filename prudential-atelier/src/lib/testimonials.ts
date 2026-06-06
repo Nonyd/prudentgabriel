@@ -8,6 +8,7 @@ export type HomepageTestimonial = {
   userName: string;
   subtitle: string | null;
   imageUrl: string | null;
+  isAnonymous: boolean;
 };
 
 const testimonialInclude = {
@@ -35,18 +36,46 @@ function resolveImageUrl(
   return null;
 }
 
-function mapTestimonial(t: TestimonialRow): HomepageTestimonial {
-  const tier = formatLoyaltyTier(t.user.clientProfile?.loyaltyTier ?? null);
-  const context = [t.productContext, t.orderContext].filter(Boolean).join(" · ");
-  const subtitle = [tier, context].filter(Boolean).join(" · ") || null;
+export function getDisplayName(testimonial: {
+  user?: { name: string | null } | null;
+  displayName?: string | null;
+}): string {
+  if (testimonial.user?.name) {
+    const parts = testimonial.user.name.trim().split(/\s+/);
+    return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1]![0]}.` : parts[0]!;
+  }
+  return testimonial.displayName?.trim() || "Valued Client";
+}
 
+export function getSubLabel(testimonial: {
+  user?: { clientProfile?: { loyaltyTier: LoyaltyTier | null } | null } | null;
+  location?: string | null;
+  productContext?: string | null;
+  orderContext?: string | null;
+}): string | null {
+  const context = [testimonial.productContext, testimonial.orderContext].filter(Boolean).join(" · ");
+  const tier = formatLoyaltyTier(testimonial.user?.clientProfile?.loyaltyTier ?? null);
+
+  if (tier) {
+    return [tier, context].filter(Boolean).join(" · ") || null;
+  }
+
+  if (testimonial.location?.trim()) {
+    return [testimonial.location.trim(), context].filter(Boolean).join(" · ") || null;
+  }
+
+  return context || null;
+}
+
+function mapTestimonial(t: TestimonialRow): HomepageTestimonial {
   return {
     id: t.id,
     rating: t.rating,
     body: t.body,
-    userName: t.user.name ?? "Client",
-    subtitle,
-    imageUrl: resolveImageUrl(t.adminImage, t.clientImage, t.user.image),
+    userName: getDisplayName(t),
+    subtitle: getSubLabel(t),
+    imageUrl: resolveImageUrl(t.adminImage, t.clientImage, t.user?.image),
+    isAnonymous: !t.userId,
   };
 }
 
@@ -59,6 +88,7 @@ export const FALLBACK_TESTIMONIALS: HomepageTestimonial[] = [
     userName: "Chisom Eze",
     subtitle: "Platinum member · Chieftaincy Ceremony Wrapper Set · Atelier Commission",
     imageUrl: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400",
+    isAnonymous: false,
   },
   {
     id: "fallback-2",
@@ -67,6 +97,7 @@ export const FALLBACK_TESTIMONIALS: HomepageTestimonial[] = [
     userName: "Sandra Dike",
     subtitle: "Gold member · Custom Evening Gown · Atelier Commission",
     imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
+    isAnonymous: false,
   },
   {
     id: "fallback-3",
@@ -75,6 +106,7 @@ export const FALLBACK_TESTIMONIALS: HomepageTestimonial[] = [
     userName: "Amaka Nwosu",
     subtitle: "Gold member · Custom Asoebi Gown · In-Person Consultation",
     imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
+    isAnonymous: false,
   },
 ];
 

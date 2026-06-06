@@ -1,16 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Prisma } from "@prisma/client";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { Toggle } from "@/components/ui/Toggle";
 import { StarRating } from "@/components/ui/StarRating";
+import { TestimonialFormModal, clientLabel } from "@/components/admin/TestimonialFormModal";
 
 export type TestimonialAdminRow = Prisma.TestimonialGetPayload<{
-  include: { user: { select: { name: true; image: true } } };
+  include: { user: { select: { name: true; image: true; email: true } } };
 }>;
 
 function excerpt(text: string | null | undefined, max = 80): string {
@@ -19,35 +20,40 @@ function excerpt(text: string | null | undefined, max = 80): string {
   return t.length <= max ? t : `${t.slice(0, max)}…`;
 }
 
+function SourcePill({ source }: { source: string }) {
+  const isClient = source === "CLIENT";
+  return (
+    <span
+      className="inline-block rounded-sm px-2 py-0.5 font-label text-[9px] uppercase tracking-wide"
+      style={
+        isClient
+          ? { background: "rgba(34,197,94,0.1)", color: "#166534" }
+          : { background: "rgba(245,158,11,0.1)", color: "#92400e" }
+      }
+    >
+      {isClient ? "CLIENT" : "MANUAL"}
+    </span>
+  );
+}
+
 export function TestimonialsAdminClient({ testimonials }: { testimonials: TestimonialAdminRow[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [productContext, setProductContext] = useState("");
-  const [orderContext, setOrderContext] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [uploadTargetId, setUploadTargetId] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<TestimonialAdminRow | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return testimonials;
     return testimonials.filter((t) => {
-      const hay = `${t.user.name ?? ""} ${t.body} ${t.productContext ?? ""} ${t.orderContext ?? ""}`.toLowerCase();
+      const clientName = t.user?.name ?? t.displayName ?? "";
+      const hay = `${clientName} ${t.body} ${t.productContext ?? ""} ${t.orderContext ?? ""}`.toLowerCase();
       return hay.includes(q);
     });
   }, [testimonials, search]);
 
-  async function patchTestimonial(
-    id: string,
-    data: {
-      isApproved?: boolean;
-      showOnHomepage?: boolean;
-      productContext?: string | null;
-      orderContext?: string | null;
-      adminImage?: string | null;
-    },
-  ) {
+  async function patchTestimonial(id: string, data: { isApproved?: boolean; showOnHomepage?: boolean }) {
     setBusyId(id);
     try {
       const res = await fetch(`/api/admin/testimonials/${id}`, {
@@ -81,59 +87,42 @@ export function TestimonialsAdminClient({ testimonials }: { testimonials: Testim
     }
   }
 
-  async function handleImageUpload(id: string, file: File) {
-    setBusyId(id);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("folder", "prudential-atelier/testimonials");
-      const uploadRes = await fetch("/api/admin/upload", { method: "POST", body: form, credentials: "include" });
-      const uploadData = (await uploadRes.json()) as { url?: string };
-      if (!uploadRes.ok || !uploadData.url) {
-        toast.error("Upload failed");
-        return;
-      }
-      await patchTestimonial(id, { adminImage: uploadData.url });
-    } finally {
-      setBusyId(null);
-      setUploadTargetId(null);
-    }
+  function openCreate() {
+    setEditing(null);
+    setModalOpen(true);
   }
 
-  function startEdit(t: TestimonialAdminRow) {
-    setEditingId(t.id);
-    setProductContext(t.productContext ?? "");
-    setOrderContext(t.orderContext ?? "");
-  }
-
-  function saveContext(id: string) {
-    void patchTestimonial(id, {
-      productContext: productContext.trim() || null,
-      orderContext: orderContext.trim() || null,
-    });
-    setEditingId(null);
+  function openEdit(t: TestimonialAdminRow) {
+    setEditing(t);
+    setModalOpen(true);
   }
 
   return (
     <div className="mt-6 space-y-4">
-      <input
-        type="search"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search client or excerpt…"
-        className="w-full max-w-md rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 font-body text-sm text-charcoal outline-none focus:border-olive"
-      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search client or excerpt…"
+          className="w-full max-w-md rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 font-body text-sm text-charcoal outline-none focus:border-olive"
+        />
+        <button
+          type="button"
+          onClick={openCreate}
+          className="rounded-[3px] bg-choc px-5 py-2.5 font-label text-[11px] font-semibold uppercase tracking-wide text-cream"
+        >
+          + Add Testimonial
+        </button>
+      </div>
 
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f && uploadTargetId) void handleImageUpload(uploadTargetId, f);
-          e.target.value = "";
+      <TestimonialFormModal
+        open={modalOpen}
+        onOpenChange={(next) => {
+          setModalOpen(next);
+          if (!next) setEditing(null);
         }}
+        testimonial={editing}
       />
 
       <div className="-mx-4 overflow-x-auto rounded-sm border border-[#EBEBEA] bg-canvas px-4 md:mx-0 md:px-0">
@@ -141,6 +130,7 @@ export function TestimonialsAdminClient({ testimonials }: { testimonials: Testim
           <thead className="border-b border-[#EBEBEA] font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">
             <tr>
               <th className="p-3">Client</th>
+              <th className="p-3">Source</th>
               <th className="p-3">Rating</th>
               <th className="p-3">Excerpt</th>
               <th className="p-3">Client photo</th>
@@ -155,13 +145,14 @@ export function TestimonialsAdminClient({ testimonials }: { testimonials: Testim
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={10} className="p-8 text-center font-body text-sm text-charcoal-mid">
+                <td colSpan={11} className="p-8 text-center font-body text-sm text-charcoal-mid">
                   No testimonials found.
                 </td>
               </tr>
             ) : (
               filtered.map((t) => {
                 const disabled = busyId === t.id;
+                const label = clientLabel(t);
                 const thumb = (url: string | null) =>
                   url ? (
                     <div className="relative h-10 w-10 overflow-hidden rounded-sm">
@@ -173,7 +164,10 @@ export function TestimonialsAdminClient({ testimonials }: { testimonials: Testim
 
                 return (
                   <tr key={t.id} className="border-b border-[#F5F5F3] hover:bg-[#FAFAFA]">
-                    <td className="p-3 font-body text-sm">{t.user.name ?? "—"}</td>
+                    <td className="p-3 font-body text-sm">{t.user?.name ?? t.displayName ?? "—"}</td>
+                    <td className="p-3">
+                      <SourcePill source={t.source} />
+                    </td>
                     <td className="p-3">
                       <StarRating rating={t.rating} size="sm" variant="gold" />
                     </td>
@@ -184,7 +178,7 @@ export function TestimonialsAdminClient({ testimonials }: { testimonials: Testim
                       <Toggle
                         checked={t.isApproved}
                         disabled={disabled}
-                        srLabel={`Approved — ${t.user.name}`}
+                        srLabel={`Approved — ${label}`}
                         onChange={(v) => void patchTestimonial(t.id, { isApproved: v })}
                       />
                     </td>
@@ -192,38 +186,14 @@ export function TestimonialsAdminClient({ testimonials }: { testimonials: Testim
                       <Toggle
                         checked={t.showOnHomepage}
                         disabled={disabled || !t.isApproved}
-                        srLabel={`Show on homepage — ${t.user.name}`}
+                        srLabel={`Show on homepage — ${label}`}
                         onChange={(v) => void patchTestimonial(t.id, { showOnHomepage: v })}
                       />
                     </td>
                     <td className="min-w-[180px] p-3">
-                      {editingId === t.id ? (
-                        <div className="space-y-2">
-                          <input
-                            value={productContext}
-                            onChange={(e) => setProductContext(e.target.value)}
-                            placeholder="Product context"
-                            className="w-full rounded-sm border border-[#EBEBEA] px-2 py-1 text-xs"
-                          />
-                          <input
-                            value={orderContext}
-                            onChange={(e) => setOrderContext(e.target.value)}
-                            placeholder="Order context"
-                            className="w-full rounded-sm border border-[#EBEBEA] px-2 py-1 text-xs"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => saveContext(t.id)}
-                            className="font-body text-xs text-olive hover:underline"
-                          >
-                            Save
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="font-body text-xs text-charcoal-mid">
-                          {[t.productContext, t.orderContext].filter(Boolean).join(" · ") || "—"}
-                        </div>
-                      )}
+                      <div className="font-body text-xs text-charcoal-mid">
+                        {[t.productContext, t.orderContext].filter(Boolean).join(" · ") || "—"}
+                      </div>
                     </td>
                     <td className="whitespace-nowrap p-3 font-body text-xs text-charcoal-mid">
                       {format(new Date(t.createdAt), "MMM d, yyyy")}
@@ -232,21 +202,10 @@ export function TestimonialsAdminClient({ testimonials }: { testimonials: Testim
                       <button
                         type="button"
                         disabled={disabled}
-                        onClick={() => {
-                          setUploadTargetId(t.id);
-                          fileRef.current?.click();
-                        }}
+                        onClick={() => openEdit(t)}
                         className="block font-body text-xs text-olive hover:underline disabled:opacity-50"
                       >
-                        Replace image
-                      </button>
-                      <button
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => startEdit(t)}
-                        className="block font-body text-xs text-olive hover:underline disabled:opacity-50"
-                      >
-                        Edit context
+                        Edit
                       </button>
                       <button
                         type="button"

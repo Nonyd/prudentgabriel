@@ -38,6 +38,10 @@
       "schedule": "0 2 * * *"
     },
     {
+      "path": "/api/cron/review-requests",
+      "schedule": "0 9 * * *"
+    },
+    {
       "path": "/api/cron/update-bestsellers",
       "schedule": "0 2 * * *"
     }

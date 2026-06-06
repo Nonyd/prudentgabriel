@@ -106,7 +106,7 @@ function ClientPhoto({ item, mobile }: { item: HomepageTestimonial; mobile?: boo
       }
     >
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-lightbr font-display text-2xl text-choc">
-        {getInitials(item.userName)}
+        {item.isAnonymous ? "P" : getInitials(item.userName)}
       </span>
     </div>
   );

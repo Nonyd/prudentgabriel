@@ -1,25 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi, requireGeneralAdminApi } from "@/lib/admin-auth";
+import { adminTestimonialBodySchema, toTestimonialWriteData } from "@/lib/admin-testimonial-schema";
 
-const patchSchema = z
+const quickPatchSchema = z
   .object({
     isApproved: z.boolean().optional(),
     showOnHomepage: z.boolean().optional(),
-    productContext: z.string().max(200).optional().nullable(),
-    orderContext: z.string().max(200).optional().nullable(),
-    adminImage: z.string().url().optional().nullable(),
   })
-  .refine(
-    (d) =>
-      d.isApproved !== undefined ||
-      d.showOnHomepage !== undefined ||
-      d.productContext !== undefined ||
-      d.orderContext !== undefined ||
-      d.adminImage !== undefined,
-    { message: "At least one field required" },
-  );
+  .refine((d) => d.isApproved !== undefined || d.showOnHomepage !== undefined, {
+    message: "At least one field required",
+  });
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi();
@@ -32,25 +24,46 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
-  const parsed = patchSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const existing = await prisma.testimonial.findUnique({ where: { id } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const data: {
-    isApproved?: boolean;
-    showOnHomepage?: boolean;
-    productContext?: string | null;
-    orderContext?: string | null;
-    adminImage?: string | null;
-  } = {};
+  const isFullUpdate =
+    typeof body === "object" &&
+    body !== null &&
+    ("body" in body || "rating" in body || "userId" in body || "displayName" in body);
 
+  if (isFullUpdate) {
+    const generalGate = await requireGeneralAdminApi();
+    if (!generalGate.ok) return generalGate.response;
+
+    const parsed = adminTestimonialBodySchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    }
+
+    if (parsed.data.userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: parsed.data.userId },
+        select: { id: true },
+      });
+      if (!user) {
+        return NextResponse.json({ error: "Client not found" }, { status: 404 });
+      }
+    }
+
+    const updated = await prisma.testimonial.update({
+      where: { id },
+      data: toTestimonialWriteData(parsed.data),
+    });
+    return NextResponse.json(updated);
+  }
+
+  const parsed = quickPatchSchema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+
+  const data: { isApproved?: boolean; showOnHomepage?: boolean } = {};
   if (parsed.data.isApproved !== undefined) data.isApproved = parsed.data.isApproved;
-  if (parsed.data.productContext !== undefined) data.productContext = parsed.data.productContext;
-  if (parsed.data.orderContext !== undefined) data.orderContext = parsed.data.orderContext;
-  if (parsed.data.adminImage !== undefined) data.adminImage = parsed.data.adminImage;
-
   if (parsed.data.showOnHomepage !== undefined) {
     const approved = parsed.data.isApproved ?? existing.isApproved;
     if (parsed.data.showOnHomepage && !approved) {

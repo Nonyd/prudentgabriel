@@ -707,8 +707,11 @@ model Review {
 
 model Testimonial {
   id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+
+  displayName String?
+  location    String?
 
   body        String
   rating      Int
@@ -720,6 +723,8 @@ model Testimonial {
 
   productContext String?
   orderContext   String?
+
+  source String @default("CLIENT")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

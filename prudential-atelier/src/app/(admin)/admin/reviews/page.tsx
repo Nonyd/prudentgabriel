@@ -20,7 +20,7 @@ export default async function AdminReviewsPage() {
     }),
     prisma.testimonial.findMany({
       orderBy: { createdAt: "desc" },
-      include: { user: { select: { name: true, image: true } } },
+      include: { user: { select: { name: true, image: true, email: true } } },
     }),
   ]);
 
