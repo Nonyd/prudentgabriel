@@ -1,28 +1,68 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
-import type { Swiper as SwiperType } from "swiper";
-import "swiper/css";
-import "swiper/css/pagination";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { formatLoyaltyTier, type HomepageTestimonial } from "@/lib/testimonials";
 import { getInitials } from "@/lib/utils";
-import { cn } from "@/lib/utils";
 
-function chunkPairs(items: HomepageTestimonial[]): HomepageTestimonial[][] {
-  const pairs: HomepageTestimonial[][] = [];
-  for (let i = 0; i < items.length; i += 2) {
-    pairs.push(items.slice(i, i + 2));
-  }
-  return pairs;
+const CARD_WIDTH = 580;
+const CARD_HEIGHT = 320;
+const CARD_GAP = 20;
+const SWIPE_THRESHOLD = 50;
+
+function CarouselArrowLeft() {
+  return (
+    <svg width="24" height="48" viewBox="0 0 24 48" fill="none" aria-hidden>
+      <line
+        x1="20"
+        y1="4"
+        x2="4"
+        y2="24"
+        stroke="rgba(68,41,19,0.4)"
+        strokeWidth="1.5"
+        className="transition-all duration-200 group-hover:stroke-[rgba(68,41,19,0.9)]"
+      />
+      <line
+        x1="4"
+        y1="24"
+        x2="20"
+        y2="44"
+        stroke="rgba(68,41,19,0.4)"
+        strokeWidth="1.5"
+        className="transition-all duration-200 group-hover:stroke-[rgba(68,41,19,0.9)]"
+      />
+    </svg>
+  );
+}
+
+function CarouselArrowRight() {
+  return (
+    <svg width="24" height="48" viewBox="0 0 24 48" fill="none" aria-hidden>
+      <line
+        x1="4"
+        y1="4"
+        x2="20"
+        y2="24"
+        stroke="rgba(68,41,19,0.4)"
+        strokeWidth="1.5"
+        className="transition-all duration-200 group-hover:stroke-[rgba(68,41,19,0.9)]"
+      />
+      <line
+        x1="20"
+        y1="24"
+        x2="4"
+        y2="44"
+        stroke="rgba(68,41,19,0.4)"
+        strokeWidth="1.5"
+        className="transition-all duration-200 group-hover:stroke-[rgba(68,41,19,0.9)]"
+      />
+    </svg>
+  );
 }
 
 function GoldStars({ rating }: { rating: number }) {
   return (
-    <div className="flex gap-0.5 text-[13px]" aria-label={`${rating} out of 5 stars`}>
+    <div className="text-[14px] leading-none tracking-[0.08em] text-[#C9A84C]" aria-label={`${rating} out of 5 stars`}>
       {[1, 2, 3, 4, 5].map((i) => (
         <span key={i} className={i <= rating ? "text-[#C9A84C]" : "text-sand"}>
           ★
@@ -32,19 +72,25 @@ function GoldStars({ rating }: { rating: number }) {
   );
 }
 
-function ClientPhoto({ item }: { item: HomepageTestimonial }) {
+function ClientPhoto({ item, mobile }: { item: HomepageTestimonial; mobile?: boolean }) {
   const [failed, setFailed] = useState(false);
   const showImage = Boolean(item.imageUrl?.trim()) && !failed;
 
   if (showImage && item.imageUrl) {
     return (
-      <div className="relative h-full min-h-[200px] w-[108px] shrink-0 overflow-hidden bg-sand sm:w-[128px] md:w-[148px]">
+      <div
+        className={
+          mobile
+            ? "relative h-[200px] w-full shrink-0 overflow-hidden bg-sand"
+            : "relative h-full w-[40%] shrink-0 overflow-hidden bg-sand"
+        }
+      >
         <Image
           src={item.imageUrl}
           alt={item.userName}
           fill
           className="object-cover object-top"
-          sizes="148px"
+          sizes={mobile ? "100vw" : "232px"}
           onError={() => setFailed(true)}
         />
       </div>
@@ -52,29 +98,54 @@ function ClientPhoto({ item }: { item: HomepageTestimonial }) {
   }
 
   return (
-    <div className="flex h-full min-h-[200px] w-[108px] shrink-0 items-center justify-center bg-gradient-to-br from-lightbr to-choc sm:w-[128px] md:w-[148px]">
-      <span className="font-display text-3xl text-white/90 md:text-4xl">{getInitials(item.userName)}</span>
+    <div
+      className={
+        mobile
+          ? "flex h-[200px] w-full shrink-0 items-center justify-center bg-lightbr"
+          : "flex h-full w-[40%] shrink-0 items-center justify-center bg-lightbr"
+      }
+    >
+      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-lightbr font-display text-2xl text-choc">
+        {getInitials(item.userName)}
+      </span>
     </div>
   );
 }
 
-function TestimonialCard({ item }: { item: HomepageTestimonial }) {
+function TestimonialCard({ item, mobile }: { item: HomepageTestimonial; mobile?: boolean }) {
   const tier = formatLoyaltyTier(item.loyaltyTier);
   const subtitle = [tier, item.productName].filter(Boolean).join(" · ");
 
   return (
-    <article className="flex h-full min-h-[200px] overflow-hidden rounded-md border border-sand bg-white shadow-sm">
-      <ClientPhoto item={item} />
-      <div className="flex min-w-0 flex-1 flex-col justify-center px-4 py-5 sm:px-5 md:py-6">
-        <GoldStars rating={item.rating} />
-        <blockquote className="mt-3">
-          <p className="line-clamp-5 font-display text-[15px] italic leading-[1.65] text-choc md:text-base md:leading-[1.7]">
-            &ldquo;{item.body ?? ""}&rdquo;
-          </p>
-        </blockquote>
-        <footer className="mt-4 border-t border-sand/70 pt-3">
-          <p className="font-label text-sm font-medium text-choc">{item.userName}</p>
-          {subtitle ? <p className="mt-0.5 line-clamp-1 font-body text-xs italic text-text-light">{subtitle}</p> : null}
+    <article
+      className={
+        mobile
+          ? "flex w-full min-w-full shrink-0 flex-col overflow-hidden rounded-lg border-[0.5px] border-sand bg-white"
+          : "flex shrink-0 flex-row overflow-hidden rounded-lg border-[0.5px] border-sand bg-white"
+      }
+      style={mobile ? undefined : { width: CARD_WIDTH, height: CARD_HEIGHT }}
+    >
+      <ClientPhoto item={item} mobile={mobile} />
+      <div className="flex min-w-0 flex-1 flex-col justify-between px-7 py-8 md:w-[60%]">
+        <div>
+          <GoldStars rating={item.rating} />
+          <blockquote className="relative mt-3">
+            <span
+              className="pointer-events-none absolute -left-1 -top-1 font-display text-[36px] leading-none text-sand"
+              aria-hidden
+            >
+              &ldquo;
+            </span>
+            <p className="line-clamp-3 pl-4 font-display text-[19px] italic leading-[1.75] text-choc">
+              {item.body ?? ""}
+            </p>
+          </blockquote>
+        </div>
+        <footer className="mt-4 border-t border-sand pt-3">
+          <p className="font-label text-[13px] font-semibold text-choc">{item.userName}</p>
+          {subtitle ? (
+            <p className="mt-0.5 font-body text-[12px] italic text-text-light">{subtitle}</p>
+          ) : null}
         </footer>
       </div>
     </article>
@@ -88,71 +159,144 @@ type HomeTestimonialsCarouselProps = {
 };
 
 export function HomeTestimonialsCarousel({ items, heading, subtitle }: HomeTestimonialsCarouselProps) {
-  const swiperRef = useRef<SwiperType | null>(null);
-  const slides = chunkPairs(items);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const total = items.length;
+  const cardsPerView = isMobile ? 1 : 2;
+  const maxIndex = Math.max(0, total - cardsPerView);
+  const viewportWidth = cardsPerView * CARD_WIDTH + (cardsPerView - 1) * CARD_GAP;
+  const stepWidth = CARD_WIDTH + CARD_GAP;
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    setCurrentIndex((prev) => Math.min(prev, maxIndex));
+  }, [maxIndex]);
+
+  const goTo = useCallback(
+    (index: number) => {
+      if (total === 0) return;
+      setCurrentIndex(Math.min(Math.max(index, 0), maxIndex));
+    },
+    [maxIndex, total],
+  );
+
+  const goPrev = useCallback(() => goTo(currentIndex - 1), [currentIndex, goTo]);
+  const goNext = useCallback(() => goTo(currentIndex + 1), [currentIndex, goTo]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    touchEndX.current = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX.current;
+    if (Math.abs(diff) > SWIPE_THRESHOLD) {
+      if (diff > 0) goNext();
+      else goPrev();
+    }
+  };
 
   if (items.length === 0) return null;
 
-  const singleSlide = slides.length <= 1;
+  const showArrows = total > cardsPerView;
 
   return (
-    <section className="bg-ivory py-16 md:py-20">
+    <section className="bg-ivory py-20">
       <div className="mx-auto max-w-site px-4 lg:px-6">
-        <p className="text-center font-label text-[10px] uppercase tracking-[0.2em] text-lightbr">Client Words</p>
-        <h2 className="mt-3 text-center font-display text-3xl leading-tight text-choc md:text-[42px]">{heading}</h2>
-        {subtitle ? (
-          <p className="mx-auto mt-3 max-w-xl text-center font-body text-sm text-text-light">{subtitle}</p>
-        ) : null}
+        <div className="mb-12">
+          <p className="text-center font-label text-[10px] uppercase tracking-[0.2em] text-lightbr">Client Words</p>
+          <h2 className="mt-3 text-center font-display text-[42px] leading-tight text-choc">{heading}</h2>
+          {subtitle ? (
+            <p className="mx-auto mt-3 max-w-xl text-center font-body text-sm text-text-light">{subtitle}</p>
+          ) : null}
+        </div>
 
-        <div className="relative mx-auto mt-10 md:mt-12">
-          {!singleSlide ? (
+        <div className="relative">
+          {showArrows ? (
             <>
               <button
                 type="button"
-                className="absolute -left-1 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-sand bg-white/95 p-2.5 text-choc shadow-sm transition hover:border-olive hover:text-olive md:-left-4 lg:flex"
-                aria-label="Previous testimonials"
-                onClick={() => swiperRef.current?.slidePrev()}
+                onClick={goPrev}
+                disabled={currentIndex === 0}
+                aria-label="Previous testimonial"
+                className="group absolute left-0 top-1/2 z-20 flex h-14 w-8 -translate-y-1/2 items-center justify-center transition-all duration-200 hover:scale-110 disabled:pointer-events-none disabled:opacity-30 md:-left-2 lg:-left-6"
+                style={{ background: "transparent", border: "none" }}
               >
-                <ChevronLeft className="h-4 w-4" />
+                <CarouselArrowLeft />
               </button>
               <button
                 type="button"
-                className="absolute -right-1 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-sand bg-white/95 p-2.5 text-choc shadow-sm transition hover:border-olive hover:text-olive md:-right-4 lg:flex"
-                aria-label="Next testimonials"
-                onClick={() => swiperRef.current?.slideNext()}
+                onClick={goNext}
+                disabled={currentIndex >= maxIndex}
+                aria-label="Next testimonial"
+                className="group absolute right-0 top-1/2 z-20 flex h-14 w-8 -translate-y-1/2 items-center justify-center transition-all duration-200 hover:scale-110 disabled:pointer-events-none disabled:opacity-30 md:-right-2 lg:-right-6"
+                style={{ background: "transparent", border: "none" }}
               >
-                <ChevronRight className="h-4 w-4" />
+                <CarouselArrowRight />
               </button>
             </>
           ) : null}
 
-          <Swiper
-            modules={[Autoplay, Pagination, Navigation]}
-            loop={slides.length > 1}
-            autoplay={
-              slides.length > 1 ? { delay: 7000, disableOnInteraction: false, pauseOnMouseEnter: true } : false
-            }
-            pagination={{ clickable: true, dynamicBullets: slides.length > 3 }}
-            onSwiper={(s) => {
-              swiperRef.current = s;
-            }}
-            className={cn("home-testimonials-swiper pb-12", singleSlide && "pb-0")}
+          <div
+            className="mx-auto overflow-hidden"
+            style={{ maxWidth: isMobile ? "100%" : viewportWidth }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
           >
-            {slides.map((pair, slideIndex) => (
-              <SwiperSlide key={`slide-${slideIndex}`}>
-                <div
-                  className={cn(
-                    "grid gap-5 md:gap-6",
-                    pair.length === 2 ? "md:grid-cols-2" : "md:grid-cols-1 md:max-w-[calc(50%-12px)] md:mx-auto",
-                  )}
-                >
-                  {pair.map((item) => (
-                    <TestimonialCard key={item.id} item={item} />
-                  ))}
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+            <div
+              className="flex transition-transform duration-[400ms] ease-out"
+              style={{
+                gap: isMobile ? 0 : CARD_GAP,
+                transform: isMobile
+                  ? `translateX(-${currentIndex * 100}%)`
+                  : `translateX(-${currentIndex * stepWidth}px)`,
+              }}
+            >
+              {items.map((item) =>
+                isMobile ? (
+                  <div key={item.id} className="min-w-full shrink-0">
+                    <TestimonialCard item={item} mobile />
+                  </div>
+                ) : (
+                  <TestimonialCard key={item.id} item={item} />
+                ),
+              )}
+            </div>
+          </div>
+
+          {total > 1 ? (
+            <div className="mt-8 flex items-center justify-center gap-1.5">
+              {items.map((_, index) => {
+                const active = index === currentIndex;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    aria-label={`Go to testimonial ${index + 1}`}
+                    onClick={() => goTo(index)}
+                    className="cursor-pointer border-0 bg-transparent p-0"
+                    style={{
+                      width: active ? "20px" : "6px",
+                      height: "4px",
+                      borderRadius: "2px",
+                      background: active ? "var(--lightbr)" : "var(--sand)",
+                      transition: "width 0.3s ease, background 0.3s ease",
+                    }}
+                  />
+                );
+              })}
+            </div>
+          ) : null}
         </div>
       </div>
     </section>

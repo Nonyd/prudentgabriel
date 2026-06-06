@@ -29,9 +29,14 @@ const reviewInclude = {
 
 type ReviewRow = Awaited<ReturnType<typeof prisma.review.findMany<{ include: typeof reviewInclude }>>>[number];
 
-function resolveImageUrl(userImage: string | null | undefined, productImage: string | null | undefined): string | null {
+function resolveImageUrl(
+  userImage: string | null | undefined,
+  productImage: string | null | undefined,
+  testimonialImage: string | null | undefined,
+): string | null {
   if (userImage?.trim()) return userImage;
   if (productImage?.trim()) return productImage;
+  if (testimonialImage?.trim()) return testimonialImage;
   return null;
 }
 
@@ -44,7 +49,7 @@ function mapReview(r: ReviewRow): HomepageTestimonial {
     userName: r.user.name ?? "Client",
     loyaltyTier: r.user.clientProfile?.loyaltyTier ?? null,
     productName: r.product.name,
-    imageUrl: resolveImageUrl(r.user.image, productImage),
+    imageUrl: resolveImageUrl(r.user.image, productImage, r.testimonialImage),
   };
 }
 
@@ -57,7 +62,7 @@ export const FALLBACK_TESTIMONIALS: HomepageTestimonial[] = [
     userName: "Sandra Dike",
     loyaltyTier: "GOLD",
     productName: "Nneka Aso-Ebi Set",
-    imageUrl: "https://images.unsplash.com/photo-1589156191108-cdcff793e2f2?w=800&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400",
   },
   {
     id: "fallback-2",
@@ -66,7 +71,7 @@ export const FALLBACK_TESTIMONIALS: HomepageTestimonial[] = [
     userName: "Chisom Eze",
     loyaltyTier: "PLATINUM",
     productName: "The Zahra Bridal Gown",
-    imageUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400",
   },
   {
     id: "fallback-3",

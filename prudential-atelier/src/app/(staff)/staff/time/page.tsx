@@ -296,7 +296,7 @@ export default function StaffTimePage() {
 
       {status?.employmentType === "FREELANCER" ? (
 
-        <p className="rounded-lg border border-sand bg-white p-4 font-sans text-sm text-text-mid">
+        <p className="rounded-lg border border-sand bg-bg-card p-4 font-sans text-sm text-text-mid">
 
           Freelancers are not required to clock in.
 
@@ -304,7 +304,7 @@ export default function StaffTimePage() {
 
       ) : status?.isClockedIn ? (
 
-        <div className="rounded-lg border border-sand bg-white p-4">
+        <div className="rounded-lg border border-sand bg-bg-card p-4">
 
           <div className="flex items-start gap-3">
 
@@ -342,7 +342,7 @@ export default function StaffTimePage() {
 
       ) : (
 
-        <div className="space-y-4 rounded-lg border border-sand bg-white p-4">
+        <div className="space-y-4 rounded-lg border border-sand bg-bg-card p-4">
 
           {clockInSuccessAt ? (
 
@@ -424,7 +424,7 @@ export default function StaffTimePage() {
 
         </h2>
 
-        <div className="overflow-x-auto rounded-lg border border-sand bg-white">
+        <div className="overflow-x-auto rounded-lg border border-sand bg-bg-card">
 
           <table className="w-full min-w-[320px] text-left font-sans text-xs">
 

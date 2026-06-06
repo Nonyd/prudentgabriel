@@ -126,7 +126,7 @@ export function StaffAccountSettingsClient({ initial }: Props) {
         ) : null}
       </div>
 
-      <section className="rounded-lg border border-sand bg-white p-6">
+      <section className="staff-card p-6">
         <h2 className="font-serif text-lg font-medium text-choc">Profile photo</h2>
         <p className="mt-1 font-sans text-xs text-text-mid">Shown in the staff sidebar and header.</p>
         <div className="mt-5 flex items-center gap-5">
@@ -161,7 +161,7 @@ export function StaffAccountSettingsClient({ initial }: Props) {
         </div>
       </section>
 
-      <form onSubmit={saveProfile} className="space-y-5 rounded-lg border border-sand bg-white p-6">
+      <form onSubmit={saveProfile} className="staff-card space-y-5 p-6">
         <div>
           <h2 className="font-serif text-lg font-medium text-choc">Personal information</h2>
           <p className="mt-1 font-sans text-xs text-text-mid">Your display name appears across the staff portal.</p>
@@ -188,7 +188,7 @@ export function StaffAccountSettingsClient({ initial }: Props) {
         </Button>
       </form>
 
-      <form onSubmit={savePassword} className="space-y-5 rounded-lg border border-sand bg-white p-6">
+      <form onSubmit={savePassword} className="staff-card space-y-5 p-6">
         <div>
           <h2 className="font-serif text-lg font-medium text-choc">Password</h2>
           <p className="mt-1 font-sans text-xs text-text-mid">Minimum 8 characters. Use a unique password for this account.</p>

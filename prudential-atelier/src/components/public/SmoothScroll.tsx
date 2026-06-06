@@ -11,6 +11,7 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     pathname?.startsWith("/admin-login") ||
     pathname?.startsWith("/login") ||
     pathname?.startsWith("/staff-login") ||
+    pathname?.startsWith("/staff") ||
     pathname?.startsWith("/account");
 
   useEffect(() => {

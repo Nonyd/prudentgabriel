@@ -72,7 +72,7 @@ export default function StaffOrderDetailPage({ params }: { params: { orderId: st
       </div>
 
       {order.measurements ? (
-        <section className="rounded-lg border border-sand bg-white p-4">
+        <section className="rounded-lg border border-sand bg-bg-card p-4">
           <h2 className="mb-3 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
             Measurements
           </h2>
@@ -90,7 +90,7 @@ export default function StaffOrderDetailPage({ params }: { params: { orderId: st
       ) : null}
 
       {order.materials.length > 0 ? (
-        <section className="rounded-lg border border-sand bg-white p-4">
+        <section className="rounded-lg border border-sand bg-bg-card p-4">
           <h2 className="mb-3 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
             Materials
           </h2>
@@ -107,7 +107,7 @@ export default function StaffOrderDetailPage({ params }: { params: { orderId: st
       ) : null}
 
       {order.stageNotes.length > 0 ? (
-        <section className="rounded-lg border border-sand bg-white p-4">
+        <section className="rounded-lg border border-sand bg-bg-card p-4">
           <h2 className="mb-3 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
             Instructions from manager
           </h2>

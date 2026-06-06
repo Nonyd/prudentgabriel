@@ -74,11 +74,11 @@ export default function StaffNotificationsPage() {
       </div>
 
       {items.length === 0 ? (
-        <p className="rounded-lg border border-sand bg-white p-6 font-sans text-sm text-text-mid">
+        <p className="rounded-lg border border-sand bg-bg-card p-6 font-sans text-sm text-text-mid">
           No notifications yet.
         </p>
       ) : (
-        <ul className="divide-y divide-sand overflow-hidden rounded-lg border border-sand bg-white">
+        <ul className="staff-card divide-y divide-sand overflow-hidden">
           {items.map((n) => (
             <li key={n.id}>
               <button

@@ -6,11 +6,12 @@ import Lenis from "@studio-freight/lenis";
 
 export function LenisProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAdmin = pathname?.startsWith("/admin") ?? false;
+  const isPortalShell =
+    pathname?.startsWith("/admin") || pathname?.startsWith("/staff") || false;
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (isPortalShell) {
       document.documentElement.classList.remove("lenis", "lenis-smooth");
       return;
     }
@@ -40,7 +41,7 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
       lenis.destroy();
       lenisRef.current = null;
     };
-  }, [isAdmin]);
+  }, [isPortalShell]);
 
   return <>{children}</>;
 }

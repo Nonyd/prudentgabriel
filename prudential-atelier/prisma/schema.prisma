@@ -686,6 +686,7 @@ model Review {
   isVerified     Boolean  @default(false)
   isApproved     Boolean  @default(false)
   showOnHomepage Boolean  @default(false)
+  testimonialImage String?
   helpfulCount   Int      @default(0)
   orderId      String?
   createdAt    DateTime @default(now())

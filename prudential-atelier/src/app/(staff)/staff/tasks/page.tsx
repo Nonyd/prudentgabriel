@@ -42,7 +42,7 @@ export default function StaffTasksPage() {
             type="button"
             onClick={() => setFilter(f)}
             className={`rounded-full px-3 py-1 font-sans text-xs capitalize ${
-              filter === f ? "bg-choc text-cream" : "bg-white text-text-mid border border-sand"
+              filter === f ? "bg-choc text-cream" : "bg-bg-card text-text-mid border border-sand"
             }`}
           >
             {f}
@@ -60,7 +60,7 @@ export default function StaffTasksPage() {
             <li key={item.id}>
               <Link
                 href={`/staff/orders/${item.orderId}`}
-                className="flex items-center justify-between rounded-lg border border-sand bg-white px-4 py-3"
+                className="flex items-center justify-between staff-card px-4 py-3"
               >
                 <div>
                   <p className="font-sans text-xs text-lightbr">{item.orderRef}</p>

@@ -126,11 +126,14 @@ export function StaffShell({
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <StaffTopbar onOpenNav={() => setMobileNav(true)} />
 
-        <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8">
+        <main
+          className="staff-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-6 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:px-8 md:py-8 md:pb-8"
+          data-lenis-prevent
+        >
           <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
 
-        <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-sand bg-ivory px-2 py-2 md:hidden">
+        <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-sand bg-ivory px-2 pb-[env(safe-area-inset-bottom,0px)] pt-2 md:hidden">
           <ul className="flex items-center justify-around">
             {NAV.map((item) => {
               const active = isNavActive(pathname, item.href);

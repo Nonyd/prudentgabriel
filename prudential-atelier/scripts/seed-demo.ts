@@ -1322,6 +1322,9 @@ async function seedReviews(
   const formalProductId = productIds["nneka-aso-ebi-set"];
   const bridalProductId = productIds["the-zahra-bridal-gown"];
 
+  const sandraImage = "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400";
+  const chisomImage = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400";
+
   if (sandra && formalProductId) {
     const existing = await prisma.review.findFirst({
       where: { userId: sandra.userId, productId: formalProductId },
@@ -1337,6 +1340,7 @@ async function seedReviews(
           isApproved: true,
           isVerified: true,
           showOnHomepage: true,
+          testimonialImage: sandraImage,
         },
       });
     } else {
@@ -1349,6 +1353,7 @@ async function seedReviews(
           isApproved: true,
           isVerified: true,
           showOnHomepage: true,
+          testimonialImage: sandraImage,
         },
       });
     }
@@ -1369,6 +1374,7 @@ async function seedReviews(
           isApproved: true,
           isVerified: true,
           showOnHomepage: true,
+          testimonialImage: chisomImage,
         },
       });
     } else {
@@ -1381,6 +1387,7 @@ async function seedReviews(
           isApproved: true,
           isVerified: true,
           showOnHomepage: true,
+          testimonialImage: chisomImage,
         },
       });
     }
@@ -1389,13 +1396,13 @@ async function seedReviews(
   if (sandra) {
     await prisma.user.update({
       where: { id: sandra.userId },
-      data: { image: "https://images.unsplash.com/photo-1589156191108-cdcff793e2f2?w=800&q=80" },
+      data: { image: sandraImage },
     });
   }
   if (chisom) {
     await prisma.user.update({
       where: { id: chisom.userId },
-      data: { image: "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80" },
+      data: { image: chisomImage },
     });
   }
 
