@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { BespokeStage } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
+import { notifyStaffJobAssigned } from "@/lib/staff-notifications";
 
 type Params = { params: Promise<{ orderId: string }> };
 
@@ -24,6 +25,12 @@ export async function POST(req: NextRequest, { params }: Params) {
   const staff = await prisma.staffProfile.findUnique({ where: { id: body.staffProfileId } });
   if (!staff) return NextResponse.json({ error: "Staff not found" }, { status: 404 });
 
+  const order = await prisma.bespokeOrder.findUnique({
+    where: { id: orderId },
+    select: { orderRef: true, outfitDescription: true },
+  });
+  if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
+
   const assignment = await prisma.orderAssignment.create({
     data: {
       orderId,
@@ -34,6 +41,15 @@ export async function POST(req: NextRequest, { params }: Params) {
     include: {
       staffProfile: { include: { user: { select: { name: true, email: true } } } },
     },
+  });
+
+  notifyStaffJobAssigned({
+    userId: staff.userId,
+    orderId,
+    orderRef: order.orderRef,
+    role: body.role,
+    outfitDescription: order.outfitDescription,
+    assignmentId: assignment.id,
   });
 
   return NextResponse.json({ item: assignment }, { status: 201 });

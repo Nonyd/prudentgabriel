@@ -39,6 +39,7 @@ model User {
   clientProfile       ClientProfile?
   staffProfile        StaffProfile?
   customerNotifications CustomerNotification[]
+  staffNotifications    StaffNotification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -806,6 +807,21 @@ model CustomerNotification {
   @@index([userId, isRead, createdAt])
 }
 
+model StaffNotification {
+  id        String                  @id @default(cuid())
+  userId    String
+  user      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      StaffNotificationType
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean                 @default(false)
+  entityId  String?
+  createdAt DateTime                @default(now())
+
+  @@index([userId, isRead, createdAt])
+}
+
 model TeamInvitation {
   id         String   @id @default(cuid())
   email      String   @unique
@@ -861,6 +877,14 @@ enum CustomerNotificationType {
   CONSULTATION
   PAYMENT
   LOYALTY
+  GENERAL
+}
+
+enum StaffNotificationType {
+  JOB_ASSIGNED
+  TASK_ASSIGNED
+  ORDER_UPDATE
+  SCHEDULE
   GENERAL
 }
 

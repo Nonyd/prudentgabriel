@@ -1,0 +1,243 @@
+"use client";
+
+import { useRef, useState } from "react";
+import Image from "next/image";
+import { useSession } from "next-auth/react";
+import toast from "react-hot-toast";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { uploadAccountImage } from "@/lib/admin-upload-xhr";
+import { getInitials } from "@/lib/utils";
+
+type Props = {
+  initial: { name: string; email: string; image: string; jobTitle?: string; department?: string };
+};
+
+export function StaffAccountSettingsClient({ initial }: Props) {
+  const { update } = useSession();
+  const [name, setName] = useState(initial.name);
+  const [email] = useState(initial.email);
+  const [image, setImage] = useState(initial.image);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
+
+  async function saveProfile(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    setSavingProfile(true);
+    try {
+      const parts = name.trim().split(/\s+/);
+      const body: { firstName: string; lastName?: string } = { firstName: parts[0] ?? name.trim() };
+      if (parts.length > 1) body.lastName = parts.slice(1).join(" ");
+
+      const res = await fetch("/api/account/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error("Save failed");
+
+      const trimmed = name.trim();
+      setName(trimmed);
+      await update({ name: trimmed, image });
+      toast.success("Profile updated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save profile");
+    } finally {
+      setSavingProfile(false);
+    }
+  }
+
+  async function onAvatarPick(file: File) {
+    setUploading(true);
+    try {
+      const url = await uploadAccountImage(file);
+      const res = await fetch("/api/account/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: url }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      setImage(url);
+      await update({ name, image: url });
+      toast.success("Profile photo updated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function savePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      toast.error("New password must be at least 8 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords must match");
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      const res = await fetch("/api/account/password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+      });
+      const data = (await res.json()) as { error?: unknown };
+      if (!res.ok) {
+        const msg = typeof data.error === "string" ? data.error : "Could not update password";
+        throw new Error(msg);
+      }
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      toast.success("Password updated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not update password");
+    } finally {
+      setSavingPassword(false);
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div>
+        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr">Account</p>
+        <h1 className="mt-2 font-serif text-3xl font-normal text-choc">Account Settings</h1>
+        <p className="mt-2 font-sans text-sm text-text-mid">Manage your profile photo, personal details, and password.</p>
+        {initial.jobTitle || initial.department ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {initial.jobTitle ? (
+              <span className="font-sans text-sm text-choc">{initial.jobTitle}</span>
+            ) : null}
+            {initial.department ? <Badge variant="outline-gold">{initial.department}</Badge> : null}
+          </div>
+        ) : null}
+      </div>
+
+      <section className="rounded-lg border border-sand bg-white p-6">
+        <h2 className="font-serif text-lg font-medium text-choc">Profile photo</h2>
+        <p className="mt-1 font-sans text-xs text-text-mid">Shown in the staff sidebar and header.</p>
+        <div className="mt-5 flex items-center gap-5">
+          <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sand/50 font-sans text-lg font-medium text-choc">
+            {image ? (
+              <Image src={image} alt="" fill className="object-cover" sizes="80px" unoptimized />
+            ) : (
+              getInitials(name || email)
+            )}
+          </div>
+          <div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void onAvatarPick(file);
+                e.target.value = "";
+              }}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              loading={uploading}
+              onClick={() => fileRef.current?.click()}
+            >
+              {uploading ? "Uploading…" : "Upload photo"}
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <form onSubmit={saveProfile} className="space-y-5 rounded-lg border border-sand bg-white p-6">
+        <div>
+          <h2 className="font-serif text-lg font-medium text-choc">Personal information</h2>
+          <p className="mt-1 font-sans text-xs text-text-mid">Your display name appears across the staff portal.</p>
+        </div>
+        <label className="block">
+          <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+            Full name
+          </span>
+          <input
+            className="input-field w-full"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </label>
+        <label className="block">
+          <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+            Email
+          </span>
+          <input className="input-field w-full cursor-not-allowed opacity-60" value={email} readOnly disabled />
+        </label>
+        <Button type="submit" loading={savingProfile}>
+          Save changes
+        </Button>
+      </form>
+
+      <form onSubmit={savePassword} className="space-y-5 rounded-lg border border-sand bg-white p-6">
+        <div>
+          <h2 className="font-serif text-lg font-medium text-choc">Password</h2>
+          <p className="mt-1 font-sans text-xs text-text-mid">Minimum 8 characters. Use a unique password for this account.</p>
+        </div>
+        <label className="block">
+          <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+            Current password
+          </span>
+          <input
+            type="password"
+            autoComplete="current-password"
+            className="input-field w-full"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            required
+          />
+        </label>
+        <label className="block">
+          <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+            New password
+          </span>
+          <input
+            type="password"
+            autoComplete="new-password"
+            className="input-field w-full"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            minLength={8}
+            required
+          />
+        </label>
+        <label className="block">
+          <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+            Confirm new password
+          </span>
+          <input
+            type="password"
+            autoComplete="new-password"
+            className="input-field w-full"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            minLength={8}
+            required
+          />
+        </label>
+        <Button type="submit" loading={savingPassword}>
+          Update password
+        </Button>
+      </form>
+    </div>
+  );
+}

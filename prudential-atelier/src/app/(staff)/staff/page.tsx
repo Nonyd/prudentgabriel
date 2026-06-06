@@ -91,17 +91,17 @@ export default function StaffDashboardPage() {
     <>
       <div className="rounded-lg border border-sand bg-white p-4 text-center md:p-5">
         <p className="font-display text-2xl text-ink md:text-3xl">{summary.hoursToday.toFixed(1)}h</p>
-        <p className="mt-1 font-sans text-[10px] uppercase tracking-wide text-text-light">Today</p>
+        <p className="mt-1 font-sans text-[10px] uppercase tracking-wide text-text-mid">Today</p>
       </div>
       <div className="rounded-lg border border-sand bg-white p-4 text-center md:p-5">
         <p className="font-display text-2xl text-ink md:text-3xl">{summary.tasksCompletedWeek}</p>
-        <p className="mt-1 font-sans text-[10px] uppercase tracking-wide text-text-light">This week</p>
+        <p className="mt-1 font-sans text-[10px] uppercase tracking-wide text-text-mid">This week</p>
       </div>
       <div className="rounded-lg border border-sand bg-white p-4 text-center md:p-5">
         <p className="font-display text-2xl text-ink md:text-3xl">
           {summary.attendanceScore != null ? `${Math.round(summary.attendanceScore)}%` : "—"}
         </p>
-        <p className="mt-1 font-sans text-[10px] uppercase tracking-wide text-text-light">Attendance</p>
+        <p className="mt-1 font-sans text-[10px] uppercase tracking-wide text-text-mid">Attendance</p>
       </div>
     </>
   );
@@ -109,7 +109,7 @@ export default function StaffDashboardPage() {
   return (
     <div className="space-y-6 md:space-y-8">
       <div>
-        <h1 className="font-display text-2xl text-ink md:text-3xl">Today</h1>
+        <h1 className="font-display text-2xl text-choc md:text-3xl">Today</h1>
         <p className="font-sans text-sm text-text-mid">{format(new Date(), "EEEE, d MMMM")}</p>
       </div>
 

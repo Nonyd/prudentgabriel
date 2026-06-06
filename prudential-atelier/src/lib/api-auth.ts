@@ -39,6 +39,14 @@ export async function requireStaff(): Promise<AuthResult> {
   return requireRoles(["STAFF", "ADMIN", "SUPER_ADMIN"]);
 }
 
+export async function requireStaffPortal(): Promise<AuthResult> {
+  const gate = await requireSession();
+  if (!gate.ok) return gate;
+  const { role, isStaff } = gate.session.user;
+  if (isStaff === true || role === "STAFF" || isAdminRole(role)) return gate;
+  return { ok: false, response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+}
+
 export function validateCronSecret(req: Request): boolean {
   const authHeader = req.headers.get("authorization");
   const secret = process.env.CRON_SECRET;
