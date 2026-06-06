@@ -18,7 +18,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { cn } from "@/lib/utils";
 import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
 import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
-import { isLegacyWordPressImageUrl } from "@/lib/product-image-migrate";
+import { isLegacyWordPressImageUrl } from "@/lib/product-image-url";
 
 type FullProduct = Product & {
   images: ProductImage[];

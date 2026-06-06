@@ -2,10 +2,6 @@ import { cloudinary } from "@/lib/cloudinary";
 
 export const PRODUCT_CLOUDINARY_FOLDER = "prudential-atelier/products";
 
-export function isLegacyWordPressImageUrl(url: string): boolean {
-  return url.includes("wp-content/uploads");
-}
-
 export async function uploadProductImageFromUrl(sourceUrl: string): Promise<string> {
   const configured =
     Boolean(process.env.CLOUDINARY_API_KEY?.length) &&

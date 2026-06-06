@@ -9,3 +9,7 @@ export const PRODUCT_IMAGE_PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http:
 
 /** Static fallback when remote product images fail to load. */
 export const PG_PLACEHOLDER_PATH = "/images/pg-placeholder.svg";
+
+export function isLegacyWordPressImageUrl(url: string): boolean {
+  return url.includes("wp-content/uploads");
+}

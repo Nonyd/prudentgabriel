@@ -3,7 +3,8 @@ import { z } from "zod";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { revalidateProduct } from "@/lib/revalidate";
-import { isLegacyWordPressImageUrl, uploadProductImageFromUrl } from "@/lib/product-image-migrate";
+import { isLegacyWordPressImageUrl } from "@/lib/product-image-url";
+import { uploadProductImageFromUrl } from "@/lib/product-image-migrate";
 
 const bodySchema = z.object({
   sourceUrl: z.string().url(),
