@@ -196,10 +196,10 @@ export function ImportPageClient() {
       {step === 2 && previewData ? (
         <section>
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <button type="button" onClick={selectAllImportable} className="border border-border px-3 py-1.5 font-body text-xs">
+            <button type="button" onClick={selectAllImportable} className="rounded-sm border border-border px-3 py-1.5 font-body text-xs text-charcoal hover:bg-light-grey">
               Select all importable
             </button>
-            <button type="button" onClick={() => setSelectedSlugs(new Set())} className="border border-border px-3 py-1.5 font-body text-xs">
+            <button type="button" onClick={() => setSelectedSlugs(new Set())} className="rounded-sm border border-border px-3 py-1.5 font-body text-xs text-charcoal hover:bg-light-grey">
               Deselect all
             </button>
             <span className="ml-auto font-body text-sm text-charcoal">
@@ -336,7 +336,7 @@ export function ImportPageClient() {
                 >
                   View imported products →
                 </Link>
-                <button type="button" onClick={reset} className="rounded-sm border border-border px-4 py-2 font-body text-sm">
+                <button type="button" onClick={reset} className="rounded-sm border border-border px-4 py-2 font-body text-sm text-charcoal hover:bg-light-grey">
                   Import again
                 </button>
               </div>

@@ -289,32 +289,32 @@ export function ProductsTable({
       ) : null}
 
       {selected.size > 0 ? (
-        <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border border-olive bg-olive p-3 text-sm text-white shadow-md">
-          <span className="font-medium">{selected.size} selected</span>
+        <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-sm border border-olive bg-olive p-3 text-sm text-white shadow-md">
+          <span className="font-medium text-white">{selected.size} selected</span>
           <button
             type="button"
-            className="border border-white/40 px-3 py-1 text-xs text-white hover:bg-canvas/10"
+            className="rounded-sm border border-white/50 bg-white/10 px-3 py-1 text-xs font-medium text-white hover:bg-white/20"
             onClick={() => void bulkPatch({ isPublished: true })}
           >
             Publish
           </button>
           <button
             type="button"
-            className="border border-white/40 px-3 py-1 text-xs text-white hover:bg-canvas/10"
+            className="rounded-sm border border-white/50 bg-white/10 px-3 py-1 text-xs font-medium text-white hover:bg-white/20"
             onClick={() => void bulkPatch({ isPublished: false })}
           >
             Unpublish
           </button>
           <button
             type="button"
-            className="border border-white/40 px-3 py-1 text-xs text-white hover:bg-canvas/10"
+            className="rounded-sm border border-white/50 bg-white/10 px-3 py-1 text-xs font-medium text-white hover:bg-white/20"
             onClick={() => void bulkPatch({ isNewArrival: true })}
           >
             Mark as New Arrival
           </button>
           <button
             type="button"
-            className="border border-white/40 px-3 py-1 text-xs text-white hover:bg-red-600/30"
+            className="rounded-sm border border-red-300/60 bg-red-900/30 px-3 py-1 text-xs font-medium text-white hover:bg-red-900/50"
             onClick={() => setDeleteState({ mode: "bulk", ids: Array.from(selected) })}
           >
             Delete selected

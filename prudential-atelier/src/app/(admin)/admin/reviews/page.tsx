@@ -9,7 +9,7 @@ export default async function AdminReviewsPage() {
   });
   return (
     <div>
-      <h1 className="font-display text-2xl text-ivory">Reviews</h1>
+      <h1 className="font-display text-2xl text-ink">Reviews</h1>
       <ReviewsAdminClient pending={pending} />
     </div>
   );

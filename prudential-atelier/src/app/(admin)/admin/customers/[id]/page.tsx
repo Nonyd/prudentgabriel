@@ -28,7 +28,7 @@ export default async function AdminCustomerDetailPage({ params }: { params: Prom
       <div>
         <h1 className="font-display text-2xl text-charcoal">{user.name}</h1>
         <p className="text-sm text-[#A8A8A4]">{user.email}</p>
-        <p className="mt-2 text-sm text-ivory/80">
+        <p className="mt-2 text-sm text-charcoal-mid">
           Points: {user.pointsBalance} · Orders: {user.orders.length} · Spent: ₦
           {Math.round(spent._sum.total ?? 0).toLocaleString("en-NG")}
         </p>
@@ -48,7 +48,7 @@ export default async function AdminCustomerDetailPage({ params }: { params: Prom
       </div>
       <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
         <h2 className="font-display text-lg text-gold">Points history</h2>
-        <ul className="mt-3 space-y-2 text-xs text-ivory/80">
+        <ul className="mt-3 space-y-2 text-xs text-charcoal-mid">
           {user.pointsHistory.map((p) => (
             <li key={p.id}>
               {p.type}: {p.amount} — {p.description}
