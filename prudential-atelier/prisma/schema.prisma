@@ -682,9 +682,10 @@ model Review {
   rating       Int
   title        String?
   body         String?
-  isVerified   Boolean  @default(false)
-  isApproved   Boolean  @default(false)
-  helpfulCount Int      @default(0)
+  isVerified     Boolean  @default(false)
+  isApproved     Boolean  @default(false)
+  showOnHomepage Boolean  @default(false)
+  helpfulCount   Int      @default(0)
   orderId      String?
   createdAt    DateTime @default(now())
 

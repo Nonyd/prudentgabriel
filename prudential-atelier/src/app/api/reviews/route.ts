@@ -11,7 +11,7 @@ const bodySchema = z.object({
   productId: z.string().min(1),
   rating: z.number().int().min(1).max(5),
   title: z.string().max(80).optional(),
-  body: z.string().min(10).max(1000),
+  body: z.string().min(20).max(500),
 });
 
 export async function POST(req: NextRequest) {

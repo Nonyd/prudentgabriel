@@ -1336,6 +1336,7 @@ async function seedReviews(
           body: "Mrs. Prudent and her team created exactly what I envisioned for my husband's chieftaincy ceremony. The fabric quality, the beading, the fit — everything was perfect. I received so many compliments. I will never go anywhere else.",
           isApproved: true,
           isVerified: true,
+          showOnHomepage: true,
         },
       });
     } else {
@@ -1347,6 +1348,7 @@ async function seedReviews(
           body: "Mrs. Prudent and her team created exactly what I envisioned for my husband's chieftaincy ceremony. The fabric quality, the beading, the fit — everything was perfect. I received so many compliments. I will never go anywhere else.",
           isApproved: true,
           isVerified: true,
+          showOnHomepage: true,
         },
       });
     }
@@ -1366,6 +1368,7 @@ async function seedReviews(
           body: "The attention to detail is unmatched. From the consultation to the final delivery, the entire experience felt truly luxurious. My bridal gown was a masterpiece.",
           isApproved: true,
           isVerified: true,
+          showOnHomepage: true,
         },
       });
     } else {
@@ -1377,6 +1380,7 @@ async function seedReviews(
           body: "The attention to detail is unmatched. From the consultation to the final delivery, the entire experience felt truly luxurious. My bridal gown was a masterpiece.",
           isApproved: true,
           isVerified: true,
+          showOnHomepage: true,
         },
       });
     }

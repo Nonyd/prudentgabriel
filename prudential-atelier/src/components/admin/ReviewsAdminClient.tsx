@@ -3,184 +3,161 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Prisma } from "@prisma/client";
+import { format } from "date-fns";
 import toast from "react-hot-toast";
-import { AlertDialog } from "@/components/ui/AlertDialog";
+import { Toggle } from "@/components/ui/Toggle";
+import { StarRating } from "@/components/ui/StarRating";
 
-type Row = Prisma.ReviewGetPayload<{
+export type ReviewAdminRow = Prisma.ReviewGetPayload<{
   include: { user: { select: { name: true } }; product: { select: { name: true; slug: true } } };
 }>;
 
-export function ReviewsAdminClient({ pending }: { pending: Row[] }) {
+type FilterTab = "all" | "approved" | "pending" | "homepage";
+
+function excerpt(text: string | null | undefined, max = 80): string {
+  const t = (text ?? "").trim();
+  if (!t) return "—";
+  return t.length <= max ? t : `${t.slice(0, max)}…`;
+}
+
+export function ReviewsAdminClient({ reviews }: { reviews: ReviewAdminRow[] }) {
   const router = useRouter();
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [rejectOpen, setRejectOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState<FilterTab>("all");
+  const [search, setSearch] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
 
-  const allSelected = pending.length > 0 && pending.every((r) => selected.has(r.id));
-
-  const toggle = (id: string) => {
-    setSelected((prev) => {
-      const n = new Set(prev);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return reviews.filter((r) => {
+      if (filter === "approved" && !r.isApproved) return false;
+      if (filter === "pending" && r.isApproved) return false;
+      if (filter === "homepage" && !r.showOnHomepage) return false;
+      if (!q) return true;
+      const hay = `${r.user.name ?? ""} ${r.product.name} ${r.title ?? ""} ${r.body ?? ""}`.toLowerCase();
+      return hay.includes(q);
     });
-  };
+  }, [reviews, filter, search]);
 
-  const toggleAll = () => {
-    if (allSelected) setSelected(new Set());
-    else setSelected(new Set(pending.map((r) => r.id)));
-  };
-
-  async function approve(id: string) {
-    const res = await fetch(`/api/admin/reviews/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isApproved: true }),
-    });
-    if (!res.ok) toast.error("Failed");
-    else {
-      toast.success("Approved");
-      router.refresh();
-    }
-  }
-
-  async function rejectOne(id: string) {
-    const res = await fetch(`/api/admin/reviews/${id}`, { method: "DELETE" });
-    if (!res.ok) toast.error("Failed");
-    else {
-      toast.success("Removed");
-      router.refresh();
-    }
-  }
-
-  async function bulkApprove() {
-    if (selected.size === 0) return;
-    setBusy(true);
+  async function patchReview(id: string, data: { isApproved?: boolean; showOnHomepage?: boolean }) {
+    setBusyId(id);
     try {
-      const ids = Array.from(selected);
-      const results = await Promise.all(
-        ids.map((id) =>
-          fetch(`/api/admin/reviews/${id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ isApproved: true }),
-          }),
-        ),
-      );
-      if (results.some((r) => !r.ok)) toast.error("Some reviews failed to approve");
-      else {
-        toast.success(`${ids.length} review(s) approved`);
-        setSelected(new Set());
-        router.refresh();
+      const res = await fetch(`/api/admin/reviews/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        toast.error("Could not save review");
+        return;
       }
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function bulkReject() {
-    if (selected.size === 0) return;
-    setBusy(true);
-    try {
-      const ids = Array.from(selected);
-      for (const id of ids) {
-        const res = await fetch(`/api/admin/reviews/${id}`, { method: "DELETE" });
-        if (!res.ok) {
-          toast.error("Some reviews could not be removed");
-          return;
-        }
-      }
-      toast.success(`${ids.length} review(s) removed`);
-      setSelected(new Set());
-      setRejectOpen(false);
       router.refresh();
     } finally {
-      setBusy(false);
+      setBusyId(null);
     }
   }
 
-  const rejectDescription = useMemo(() => {
-    return `Permanently delete ${selected.size} review(s)? This cannot be undone.`;
-  }, [selected.size]);
-
-  if (!pending.length) {
-    return <p className="mt-8 font-body text-sm text-[#1B5E20]">No reviews awaiting moderation ✓</p>;
-  }
+  const tabs: { id: FilterTab; label: string }[] = [
+    { id: "all", label: "All" },
+    { id: "approved", label: "Approved" },
+    { id: "pending", label: "Pending" },
+    { id: "homepage", label: "Homepage" },
+  ];
 
   return (
-    <div className="mt-8 space-y-4">
-      <AlertDialog
-        open={rejectOpen}
-        onOpenChange={setRejectOpen}
-        title="Remove selected reviews?"
-        description={rejectDescription}
-        variant="danger"
-        confirmLabel="Remove"
-        onConfirm={bulkReject}
-        loading={busy}
-      />
-
-      {selected.size > 0 ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-sm border border-olive bg-olive p-3 text-sm text-white">
-          <span className="font-medium">{selected.size} selected</span>
-          <button
-            type="button"
-            disabled={busy}
-            className="border border-white/40 px-3 py-1 text-xs hover:bg-white/10 disabled:opacity-50"
-            onClick={() => void bulkApprove()}
-          >
-            Approve selected
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            className="border border-white/40 bg-red-900/40 px-3 py-1 text-xs hover:bg-red-900/60 disabled:opacity-50"
-            onClick={() => setRejectOpen(true)}
-          >
-            Remove selected
-          </button>
+    <div className="mt-6 space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap gap-1 rounded-sm border border-[#EBEBEA] bg-canvas p-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setFilter(tab.id)}
+              className={`rounded-sm px-3 py-1.5 font-body text-xs transition-colors ${
+                filter === tab.id ? "bg-olive text-white" : "text-charcoal hover:bg-light-grey"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
-      ) : null}
-
-      <div className="flex items-center gap-2 border-b border-[#EBEBEA] pb-2 font-body text-xs text-[#6B6B68]">
-        <input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="Select all pending reviews" />
-        <span>Select all</span>
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search client or product…"
+          className="min-w-[200px] flex-1 rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 font-body text-sm text-charcoal outline-none focus:border-olive"
+        />
       </div>
 
-      {pending.map((r) => (
-        <div
-          key={r.id}
-          className="border border-[#EBEBEA] border-l-[3px] border-l-[#F59E0B] bg-canvas p-4 text-sm text-charcoal"
-        >
-          <div className="flex gap-3">
-            <input type="checkbox" className="mt-1" checked={selected.has(r.id)} onChange={() => toggle(r.id)} aria-label={`Select review ${r.id}`} />
-            <div className="min-w-0 flex-1">
-              <p className="font-medium text-olive">{r.product.name}</p>
-              <p className="text-xs text-[#A8A8A4]">
-                {r.user.name} · {r.rating}★
-              </p>
-              <p className="mt-2">{r.body ?? r.title}</p>
-              <div className="mt-3 flex gap-2">
-                <button
-                  type="button"
-                  className="bg-[#E8F5E9] px-3 py-1.5 font-body text-[11px] text-[#1B5E20] transition-colors hover:bg-[#22C55E] hover:text-white"
-                  onClick={() => void approve(r.id)}
-                >
-                  Approve
-                </button>
-                <button
-                  type="button"
-                  className="bg-[#FDECEA] px-3 py-1.5 font-body text-[11px] text-[#8B1A1A] transition-colors hover:bg-[#8B1A1A] hover:text-white"
-                  onClick={() => void rejectOne(r.id)}
-                >
-                  Reject
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
+      <div className="-mx-4 overflow-x-auto rounded-sm border border-[#EBEBEA] bg-canvas px-4 md:mx-0 md:px-0">
+        <table className="w-full min-w-[960px] text-left text-sm text-charcoal">
+          <thead className="border-b border-[#EBEBEA] font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">
+            <tr>
+              <th className="p-3">Client</th>
+              <th className="p-3">Product</th>
+              <th className="p-3">Rating</th>
+              <th className="p-3">Excerpt</th>
+              <th className="p-3">Approved</th>
+              <th className="p-3">Homepage</th>
+              <th className="p-3">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="p-8 text-center font-body text-sm text-charcoal-mid">
+                  No reviews match this filter.
+                </td>
+              </tr>
+            ) : (
+              filtered.map((r) => {
+                const disabled = busyId === r.id;
+                return (
+                  <tr key={r.id} className="border-b border-[#F5F5F3] hover:bg-[#FAFAFA]">
+                    <td className="p-3 font-body text-sm">{r.user.name ?? "—"}</td>
+                    <td className="p-3">
+                      <a href={`/shop/${r.product.slug}`} className="font-body text-sm text-olive hover:underline">
+                        {r.product.name}
+                      </a>
+                    </td>
+                    <td className="p-3">
+                      <StarRating rating={r.rating} size="sm" variant="gold" />
+                    </td>
+                    <td className="max-w-[240px] p-3 font-body text-xs text-charcoal-mid">
+                      {excerpt(r.body ?? r.title)}
+                    </td>
+                    <td className="p-3">
+                      <Toggle
+                        checked={r.isApproved}
+                        disabled={disabled}
+                        srLabel={`Approved — ${r.user.name}`}
+                        onChange={(v) => void patchReview(r.id, { isApproved: v })}
+                      />
+                    </td>
+                    <td className="p-3">
+                      <Toggle
+                        checked={r.showOnHomepage}
+                        disabled={disabled || !r.isApproved}
+                        srLabel={`Show on homepage — ${r.user.name}`}
+                        onChange={(v) => void patchReview(r.id, { showOnHomepage: v })}
+                      />
+                    </td>
+                    <td className="whitespace-nowrap p-3 font-body text-xs text-charcoal-mid">
+                      {format(new Date(r.createdAt), "MMM d, yyyy")}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="font-body text-xs text-charcoal-mid">
+        {filtered.length} of {reviews.length} review{reviews.length === 1 ? "" : "s"}
+        {filter === "homepage" ? " flagged for homepage" : ""}
+      </p>
     </div>
   );
 }

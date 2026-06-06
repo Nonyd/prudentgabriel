@@ -74,6 +74,21 @@ export function notifyReviewPending(review: Pick<Review, "id" | "productId">, pr
   }).catch(() => {});
 }
 
+export function notifyReviewSubmitted(params: {
+  reviewId: string;
+  productName: string;
+  userName: string;
+  rating: number;
+}): void {
+  void createNotification({
+    type: "REVIEW_PENDING",
+    title: "New review submitted",
+    message: `${params.userName} left a ${params.rating}-star review on ${params.productName}`,
+    link: "/admin/reviews",
+    entityId: params.reviewId,
+  }).catch(() => {});
+}
+
 export function notifyLowStock(product: Pick<Product, "name">, variant: Pick<ProductVariant, "id" | "size" | "stock">): void {
   void createNotification({
     type: "LOW_STOCK",

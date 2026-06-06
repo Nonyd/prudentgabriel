@@ -303,10 +303,10 @@ export function getJobPermissionsForAdminPath(pathname: string): Permission[] | 
   if (pathname.startsWith("/admin/attendance") || pathname.startsWith("/admin/clock-in")) {
     return [PERMISSIONS.VIEW_ATTENDANCE];
   }
-  if (pathname.startsWith("/admin/content") || pathname.startsWith("/admin/gallery")) {
+  if (pathname.startsWith("/admin/content") || pathname.startsWith("/admin/gallery") || pathname.startsWith("/admin/reviews")) {
     return [PERMISSIONS.MANAGE_BLOG, PERMISSIONS.MANAGE_PAGES];
   }
-  if (pathname.startsWith("/admin/import") || pathname.startsWith("/admin/reviews")) {
+  if (pathname.startsWith("/admin/import")) {
     return [PERMISSIONS.MANAGE_PRODUCTS, PERMISSIONS.MANAGE_BLOG];
   }
   if (pathname.startsWith("/admin/notifications") || pathname.startsWith("/admin/referrals")) {

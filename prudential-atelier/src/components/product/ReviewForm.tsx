@@ -12,7 +12,7 @@ import { StarRating } from "@/components/ui/StarRating";
 const schema = z.object({
   rating: z.number().int().min(1).max(5),
   title: z.string().max(80).optional(),
-  body: z.string().min(10, "Please write at least 10 characters").max(1000),
+  body: z.string().min(20, "Please write at least 20 characters").max(500),
 });
 
 type Form = z.infer<typeof schema>;
@@ -80,11 +80,10 @@ export function ReviewForm({
   }, [productId]);
 
   const onSubmit = async (data: Form) => {
-    const res = await fetch("/api/reviews", {
+    const res = await fetch(`/api/products/${encodeURIComponent(productSlug)}/reviews`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        productId,
         rating: data.rating,
         title: data.title || undefined,
         body: data.body,
@@ -103,7 +102,11 @@ export function ReviewForm({
       toast.error((j as { error?: string }).error ?? "Could not submit review.");
       return;
     }
-    const points = typeof (j as { pointsAwarded?: number }).pointsAwarded === "number" ? (j as { pointsAwarded: number }).pointsAwarded : 0;
+    toast.success("Thank you! Your review will appear after approval.");
+    const points =
+      typeof (j as { pointsAwarded?: number }).pointsAwarded === "number"
+        ? (j as { pointsAwarded: number }).pointsAwarded
+        : 0;
     setDone({ points });
   };
 
@@ -139,25 +142,18 @@ export function ReviewForm({
     return (
       <p className="font-body text-sm text-charcoal">
         <Link href="/auth/login" className="text-olive underline">
-          Sign in
+          Log in
         </Link>{" "}
-        to leave a review.
+        to write a review.
       </p>
     );
   }
 
   if (!eligibility.isVerifiedBuyer) {
     return (
-      <div className="space-y-4">
-        <p className="font-body text-sm leading-relaxed text-charcoal">
-          Only verified buyers can review this product.{" "}
-          <Link href={`/shop/${productSlug}`} className="text-olive underline">
-            Purchase this item
-          </Link>{" "}
-          to leave a review.
-        </p>
-        <p className="font-body text-xs text-dark-grey">You need a completed paid order containing this product.</p>
-      </div>
+      <p className="font-body text-sm text-charcoal">
+        Purchase this piece to leave a review.
+      </p>
     );
   }
 
@@ -176,8 +172,8 @@ export function ReviewForm({
         <StarRating
           rating={rating}
           interactive
-          size="md"
-          className="scale-110"
+          variant="gold"
+          size="lg"
           onChange={(r) => setValue("rating", r)}
         />
       </div>
@@ -197,12 +193,12 @@ export function ReviewForm({
         <textarea
           className="mt-1 min-h-[120px] w-full border border-mid-grey bg-canvas px-3 py-2 font-body text-sm text-charcoal outline-none focus:border-olive"
           placeholder="Tell others about the fit, quality, and delivery..."
-          maxLength={1000}
+          maxLength={500}
           {...register("body")}
         />
         <div className="mt-1 flex justify-between font-body text-xs text-dark-grey">
           <span>{errors.body?.message}</span>
-          <span>{bodyLen}/1000</span>
+          <span>{bodyLen}/500</span>
         </div>
       </div>
       <Button type="submit" loading={isSubmitting} className="h-11 w-full bg-olive text-white hover:opacity-90">

@@ -171,6 +171,25 @@ export const CMS_PAGES: CmsPageDef[] = [
           { key: "home_journey_button_link", label: "Button link", type: "text", default: "/atelier" },
         ],
       },
+      {
+        id: "testimonials",
+        label: "Testimonials Section",
+        fields: [
+          { key: "home_testimonials_enabled", label: "Enabled", type: "toggle", default: "true" },
+          {
+            key: "home_testimonials_heading",
+            label: "Section heading",
+            type: "text",
+            default: "What our clients say",
+          },
+          {
+            key: "home_testimonials_subtitle",
+            label: "Section subtitle (optional)",
+            type: "textarea",
+            default: "",
+          },
+        ],
+      },
     ],
   },
   {

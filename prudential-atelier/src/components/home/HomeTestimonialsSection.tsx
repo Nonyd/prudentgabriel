@@ -1,0 +1,21 @@
+import { cmsBool, cmsGet, getCMSContent } from "@/lib/cms";
+import { getHomepageTestimonials } from "@/lib/testimonials";
+import { HomeTestimonialsGrid } from "@/components/home/HomeTestimonialsGrid";
+
+const CMS_KEYS = [
+  "home_testimonials_enabled",
+  "home_testimonials_heading",
+  "home_testimonials_subtitle",
+] as const;
+
+export async function HomeTestimonialsSection() {
+  const [cms, items] = await Promise.all([getCMSContent([...CMS_KEYS]), getHomepageTestimonials(3)]);
+
+  const enabled = cmsBool(cms, "home_testimonials_enabled", true);
+  if (!enabled || items.length === 0) return null;
+
+  const heading = cmsGet(cms, "home_testimonials_heading", "What our clients say");
+  const subtitle = cmsGet(cms, "home_testimonials_subtitle", "").trim();
+
+  return <HomeTestimonialsGrid items={items} heading={heading} subtitle={subtitle || undefined} />;
+}
