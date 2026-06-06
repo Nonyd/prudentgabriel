@@ -8,7 +8,11 @@ import { useTheme } from "@/components/ui/ThemeProvider";
 import { resolveSubBrandLogo } from "@/lib/logos";
 import type { SubBrand } from "@/lib/sub-brand";
 
-const WIDTHS = { sm: 120, md: 160, lg: 200 } as const;
+const SIZES = {
+  sm: { width: 120, height: 32 },
+  md: { width: 160, height: 44 },
+  lg: { width: 200, height: 52 },
+} as const;
 
 const SUBLINE: Record<SubBrand, string> = {
   main: "/ ATELIER",
@@ -19,7 +23,7 @@ const SUBLINE: Record<SubBrand, string> = {
 
 export type LogoProps = {
   variant?: "dark" | "white";
-  size?: keyof typeof WIDTHS;
+  size?: keyof typeof SIZES;
   subBrand?: SubBrand;
   /** When false, always use `variant`. When true (default), logo swaps with theme. */
   themeAdaptive?: boolean;
@@ -38,7 +42,7 @@ function WordmarkFallback({
   wordmarkTitleClassName,
   className,
 }: {
-  size: keyof typeof WIDTHS;
+  size: keyof typeof SIZES;
   tone: "dark" | "white";
   subBrand: SubBrand;
   showSubline?: boolean;
@@ -90,17 +94,16 @@ export function Logo({
     : variant;
 
   const url = resolveSubBrandLogo(logoSettings, subBrand, effectiveVariant);
-  const width = WIDTHS[size];
-  const height = Math.round(width * 0.35);
+  const dims = SIZES[size];
 
   const inner = url ? (
     <Image
       src={url}
       alt="Prudential Atelier"
-      width={width}
-      height={height}
-      className="h-auto w-auto object-contain"
-      style={{ maxWidth: width, height: "auto" }}
+      width={dims.width}
+      height={dims.height}
+      className="object-contain"
+      style={{ width: "auto", height: dims.height, maxWidth: dims.width }}
       priority
     />
   ) : (
