@@ -222,7 +222,7 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
     >
       <div className="relative flex flex-1 items-center justify-center overflow-visible px-4 md:overflow-hidden md:px-0">
         <div className="relative h-full w-full" style={{ perspective: "1200px" }}>
-          <div className="relative mx-auto flex h-[420px] w-full items-center justify-center md:h-full md:min-h-[600px]">
+          <div className="relative mx-auto flex min-h-[520px] w-full items-center justify-center md:min-h-[600px]">
             {visibleItems.map(({ item, index }) => {
               let pos = index - currentIndex;
               if (!isMobile) {
@@ -238,13 +238,11 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
               return (
                 <div
                   key={`${item.url}-${index}`}
-                  className={`absolute overflow-hidden ${
-                    isMobile ? "h-[420px] w-[85vw] max-w-[85vw]" : "h-full max-h-[520px] w-[340px] md:max-h-none"
-                  }`}
+                  className="absolute max-h-[520px] w-[min(340px,85vw)] overflow-hidden sm:w-[340px]"
                   style={{
                     left: "50%",
                     top: "50%",
-                    aspectRatio: isMobile ? undefined : "3 / 4",
+                    aspectRatio: "3 / 4",
                     transform: `translate(-50%, -50%) translateX(${pos * 42}%) scale(${isCenter ? 1 : isAdjacent ? 0.82 : 0.65}) rotateY(${pos * -8}deg)`,
                     zIndex: isCenter ? 10 : isAdjacent ? 5 : 1,
                     opacity: isCenter ? 1 : isAdjacent ? 0.45 : 0,

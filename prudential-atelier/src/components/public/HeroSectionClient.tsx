@@ -60,7 +60,7 @@ export function HeroSectionClient({
         </motion.div>
 
         <motion.div
-          className="relative w-full md:min-h-[600px]"
+          className="relative w-full min-h-[520px] md:min-h-[600px]"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
