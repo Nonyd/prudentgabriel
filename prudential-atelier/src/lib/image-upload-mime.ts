@@ -63,7 +63,7 @@ function videoExtToMime(ext: string): string | null {
 
 export function resolveVideoMimeType(reportedType: string, fileName: string | undefined): string | null {
   const allowed = ["video/mp4", "video/webm", "video/quicktime"] as const;
-  let t = (reportedType || "").trim().toLowerCase();
+  const t = (reportedType || "").trim().toLowerCase();
 
   if (!t && fileName) {
     const parts = fileName.split(".");
