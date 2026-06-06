@@ -18,6 +18,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { cn } from "@/lib/utils";
 import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
 import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
+import { isLegacyWordPressImageUrl } from "@/lib/product-image-migrate";
 
 type FullProduct = Product & {
   images: ProductImage[];
@@ -75,6 +76,7 @@ function mapProductToForm(p: FullProduct): ProductAdminInput {
       imageUrl: c.imageUrl,
     })),
     images: p.images.map((im, i) => ({
+      id: im.id,
       url: im.url,
       alt: im.alt ?? "",
       isPrimary: im.isPrimary,
@@ -135,6 +137,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
 
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [reuploadingId, setReuploadingId] = useState<string | null>(null);
   const [bundleSearch, setBundleSearch] = useState("");
   const [bundleResults, setBundleResults] = useState<ProductListItem[]>([]);
   const [bundleSearching, setBundleSearching] = useState(false);
@@ -197,6 +200,29 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
     }
   };
 
+  const persistImage = async (url: string, isPrimary: boolean, sortOrder: number) => {
+    if (mode !== "edit" || !product?.id) {
+      return { url, alt: "", isPrimary, sortOrder };
+    }
+    const res = await fetch(`/api/admin/products/${product.id}/images`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, alt: "", isPrimary, sortOrder }),
+    });
+    const data = (await res.json()) as ProductImage & { error?: string };
+    if (!res.ok) {
+      throw new Error(typeof data.error === "string" ? data.error : "Could not save image");
+    }
+    return {
+      id: data.id,
+      url: data.url,
+      alt: data.alt ?? "",
+      isPrimary: data.isPrimary,
+      sortOrder: data.sortOrder,
+    };
+  };
+
   const uploadFiles = async (files: FileList | null) => {
     if (!files?.length) return;
     setUploading(true);
@@ -211,7 +237,8 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
         });
         const imgs = form.getValues("images");
         const isFirst = imgs.length === 0;
-        form.setValue("images", [...imgs, { url, alt: "", isPrimary: isFirst, sortOrder: imgs.length }]);
+        const saved = await persistImage(url, isFirst, imgs.length);
+        form.setValue("images", [...imgs, saved]);
         done += 1;
         setUploadProgress(Math.round((100 * done) / list.length));
       }
@@ -229,10 +256,62 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
     form.setValue("images", imgs);
   };
 
-  const removeImage = (index: number) => {
-    const imgs = form.getValues("images").filter((_, i) => i !== index);
-    if (imgs.length && !imgs.some((i) => i.isPrimary)) imgs[0] = { ...imgs[0], isPrimary: true };
-    form.setValue("images", imgs);
+  const removeImage = async (index: number) => {
+    const imgs = form.getValues("images");
+    const target = imgs[index];
+    if (!target) return;
+
+    const next = imgs.filter((_, i) => i !== index);
+    if (next.length && !next.some((i) => i.isPrimary)) {
+      next[0] = { ...next[0], isPrimary: true };
+    }
+    form.setValue("images", next);
+
+    if (mode === "edit" && product?.id && target.id) {
+      try {
+        const res = await fetch(`/api/admin/products/${product.id}/images/${target.id}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        const data = (await res.json()) as { error?: string };
+        if (!res.ok) {
+          throw new Error(typeof data.error === "string" ? data.error : "Could not delete image");
+        }
+        toast.success("Image removed");
+        router.refresh();
+      } catch (e) {
+        form.setValue("images", imgs);
+        toast.error(e instanceof Error ? e.message : "Delete failed");
+      }
+    }
+  };
+
+  const reuploadLegacyImage = async (index: number) => {
+    const imgs = form.getValues("images");
+    const target = imgs[index];
+    if (!target?.id || mode !== "edit" || !product?.id) return;
+
+    setReuploadingId(target.id);
+    try {
+      const res = await fetch(`/api/admin/products/${product.id}/images/reupload`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourceUrl: target.url, imageId: target.id }),
+      });
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !data.url) {
+        throw new Error(typeof data.error === "string" ? data.error : "Re-upload failed");
+      }
+      const updated = imgs.map((im, i) => (i === index ? { ...im, url: data.url! } : im));
+      form.setValue("images", updated);
+      toast.success("Image migrated to Cloudinary");
+      router.refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Re-upload failed");
+    } finally {
+      setReuploadingId(null);
+    }
   };
 
   const onSubmit: SubmitHandler<ProductAdminInput> = async (values) => {
@@ -376,9 +455,24 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
             </div>
             <div className="mt-4 grid grid-cols-3 gap-3">
               {images.map((im, idx) => (
-                <div key={`${im.url}-${idx}`} className="relative rounded-sm border border-[#EBEBEA] p-1">
+                <div key={im.id ?? `${im.url}-${idx}`} className="relative rounded-sm border border-[#EBEBEA] p-1">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={im.url} alt="" className="h-28 w-full rounded-sm object-cover" />
+                  {isLegacyWordPressImageUrl(im.url) && (
+                    <div className="mt-1 space-y-1">
+                      <p className="text-[10px] text-amber-600">⚠ Hosted on old server</p>
+                      {mode === "edit" && im.id && (
+                        <button
+                          type="button"
+                          disabled={reuploadingId === im.id}
+                          onClick={() => void reuploadLegacyImage(idx)}
+                          className="text-[10px] text-gold hover:underline disabled:opacity-50"
+                        >
+                          {reuploadingId === im.id ? "Migrating…" : "Re-upload to Cloudinary →"}
+                        </button>
+                      )}
+                    </div>
+                  )}
                   <div className="mt-1 flex justify-between gap-1">
                     <button
                       type="button"
@@ -390,7 +484,11 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                     >
                       {im.isPrimary ? "★ Primary" : "☆ Set primary"}
                     </button>
-                    <button type="button" className="text-xs text-red-400" onClick={() => removeImage(idx)}>
+                    <button
+                      type="button"
+                      className="text-xs text-red-400"
+                      onClick={() => void removeImage(idx)}
+                    >
                       Remove
                     </button>
                   </div>

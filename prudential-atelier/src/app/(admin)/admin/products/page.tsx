@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Prisma, ProductCategory, ProductType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ProductsTable, type ProductRow } from "@/components/admin/ProductsTable";
+import { MigrateImagesBanner } from "@/components/admin/MigrateImagesBanner";
 
 const PAGE_SIZE = 20;
 
@@ -41,7 +42,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   if (stock === "out") where.variants = { some: { stock: 0 } };
   if (stock === "in") where.NOT = { variants: { some: { stock: 0 } } };
 
-  const [total, rows] = await Promise.all([
+  const [total, rows, legacyImageCount] = await Promise.all([
     prisma.product.count({ where }),
     prisma.product.findMany({
       where,
@@ -53,6 +54,9 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
         variants: { select: { id: true, priceNGN: true, salePriceNGN: true, stock: true }, orderBy: { sortOrder: "asc" } },
         _count: { select: { orderItems: true } },
       },
+    }),
+    prisma.productImage.count({
+      where: { url: { contains: "wp-content/uploads" } },
     }),
   ]);
 
@@ -90,6 +94,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
           + Add product
         </Link>
       </div>
+      <MigrateImagesBanner initialCount={legacyImageCount} />
       <ProductsTable
         items={items}
         page={page}

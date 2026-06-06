@@ -36,6 +36,7 @@ const colorSchema = z.object({
 });
 
 const imageSchema = z.object({
+  id: z.string().optional(),
   url: z.string().url(),
   alt: z.string().optional(),
   isPrimary: z.boolean().default(false),

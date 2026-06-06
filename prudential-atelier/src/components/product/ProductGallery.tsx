@@ -9,11 +9,44 @@ import "swiper/css";
 import "swiper/css/free-mode";
 import { cn } from "@/lib/utils";
 import { PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/product-image-url";
+import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 
 export interface GalleryImage {
   id: string;
   url: string;
   alt: string | null;
+}
+
+function GalleryImageTile({
+  src,
+  alt,
+  className,
+  sizes,
+  priority,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  sizes: string;
+  priority?: boolean;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed || !src.trim()) {
+    return <ImagePlaceholder className={cn("absolute inset-0 h-full w-full", className)} />;
+  }
+
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      className={className}
+      sizes={sizes}
+      priority={priority}
+      onError={() => setFailed(true)}
+    />
+  );
 }
 
 export function ProductGallery({ images }: { images: GalleryImage[] }) {
@@ -37,10 +70,9 @@ export function ProductGallery({ images }: { images: GalleryImage[] }) {
             className="absolute inset-0 group"
           >
             {main && (
-              <Image
+              <GalleryImageTile
                 src={main.url}
                 alt={main.alt ?? ""}
-                fill
                 className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.08]"
                 sizes="(max-width: 1024px) 100vw, 55vw"
                 priority={idx === 0}
@@ -66,7 +98,7 @@ export function ProductGallery({ images }: { images: GalleryImage[] }) {
                   i === idx ? "ring-1 ring-choc ring-offset-1 ring-offset-cream" : "opacity-80 hover:opacity-100",
                 )}
               >
-                <Image src={im.url} alt="" fill className="object-cover object-top" sizes="96px" />
+                <GalleryImageTile src={im.url} alt="" className="object-cover object-top" sizes="96px" />
               </button>
             ))}
           </div>
@@ -83,7 +115,7 @@ export function ProductGallery({ images }: { images: GalleryImage[] }) {
                       i === idx ? "ring-1 ring-choc ring-offset-1 ring-offset-cream" : "opacity-80",
                     )}
                   >
-                    <Image src={im.url} alt="" fill className="object-cover object-top" sizes="72px" />
+                    <GalleryImageTile src={im.url} alt="" className="object-cover object-top" sizes="72px" />
                   </button>
                 </SwiperSlide>
               ))}

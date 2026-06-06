@@ -33,6 +33,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
   const [colorId, setColorId] = useState<string | null>(product.colors[0]?.id ?? null);
   const [sizeId, setSizeId] = useState<string | null>(null);
   const [imgError, setImgError] = useState(false);
+  const [secondaryError, setSecondaryError] = useState(false);
 
   const selectedColor = useMemo(
     () => product.colors.find((c) => c.id === colorId) ?? product.colors[0] ?? null,
@@ -130,13 +131,14 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
           ) : (
             <ImagePlaceholder className="absolute inset-0 h-full w-full" />
           )}
-          {secondary && (
+          {secondary && !secondaryError && (
             <Image
               src={imgSecondary!}
               alt={secondary.alt || product.name}
               fill
               sizes="(max-width: 768px) 50vw, 33vw"
               className="absolute inset-0 object-cover object-top opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100"
+              onError={() => setSecondaryError(true)}
             />
           )}
 
