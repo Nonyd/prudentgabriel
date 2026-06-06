@@ -229,3 +229,13 @@ body {
     display: none;
   }
 }
+
+/* Homepage testimonials carousel */
+.home-testimonials-swiper .swiper-pagination-bullet {
+  background: var(--sand, #d4cfc4);
+  opacity: 1;
+}
+
+.home-testimonials-swiper .swiper-pagination-bullet-active {
+  background: var(--choc, #3d2b1f);
+}

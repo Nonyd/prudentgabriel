@@ -221,6 +221,80 @@ function MobileRtwSection({
   );
 }
 
+function HeaderUtilityIcons({
+  className,
+  iconColor,
+  cartBadgeBg,
+  cartBadgeFg,
+  iconClassName = "h-[18px] w-[18px]",
+  gapClassName = "gap-4",
+  onAccountClick,
+}: {
+  className?: string;
+  iconColor: string;
+  cartBadgeBg: string;
+  cartBadgeFg: string;
+  iconClassName?: string;
+  gapClassName?: string;
+  onAccountClick: () => void;
+}) {
+  const { totalItems, openCart, openSearch } = useCartStore();
+
+  const iconBtn = "transition-colors hover:opacity-80";
+
+  return (
+    <div className={cn("flex shrink-0 items-center", gapClassName, className)}>
+      <button
+        type="button"
+        onClick={openSearch}
+        className={iconBtn}
+        style={{ color: iconColor }}
+        aria-label="Search"
+      >
+        <Search className={iconClassName} strokeWidth={1.5} />
+      </button>
+      <Link
+        href="/account/wishlist"
+        className={iconBtn}
+        style={{ color: iconColor }}
+        aria-label="Wishlist"
+      >
+        <Heart className={iconClassName} strokeWidth={1.5} />
+      </Link>
+      <button
+        type="button"
+        onClick={onAccountClick}
+        className={iconBtn}
+        style={{ color: iconColor }}
+        aria-label="Account"
+      >
+        <User className={iconClassName} strokeWidth={1.5} />
+      </button>
+      <ThemeToggle
+        color={iconColor}
+        className="relative flex h-8 w-8 items-center justify-center transition-colors duration-200 hover:opacity-80"
+      />
+      <button
+        type="button"
+        onClick={openCart}
+        className={cn("relative", iconBtn)}
+        style={{ color: iconColor }}
+        aria-label="Cart"
+      >
+        <ShoppingBag className={iconClassName} strokeWidth={1.5} />
+        {totalItems > 0 ? (
+          <span
+            className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center px-1 font-sans text-[9px] font-semibold"
+            style={{ backgroundColor: cartBadgeBg, color: cartBadgeFg }}
+          >
+            {totalItems > 9 ? "9+" : totalItems}
+          </span>
+        ) : null}
+      </button>
+    </div>
+  );
+}
+
 export function Navbar({
   showAnnouncement = true,
   announcementMessages = ["WORLDWIDE SHIPPING · ₦ · $ · £"],
@@ -234,7 +308,6 @@ export function Navbar({
   const subBrand = getSubBrand(pathname);
   const [open, setOpen] = useState(false);
   const [collections, setCollections] = useState<CollectionNav[]>([]);
-  const { totalItems, openCart, openSearch } = useCartStore();
   const { status } = useSession();
   const openLogin = useAuthModalStore((s) => s.openLogin);
 
@@ -265,36 +338,32 @@ export function Navbar({
 
       <header className="sticky top-0 z-50">
         <div className="overflow-hidden border-b border-sand/40 bg-ivory">
-          <div className="mx-auto flex h-14 max-w-site items-center justify-between px-4 lg:h-[72px] lg:justify-center lg:px-10">
-            <button
-              type="button"
-              className="text-choc lg:hidden"
-              onClick={() => setOpen(true)}
-              aria-label="Open menu"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
+          <div className="mx-auto flex h-14 max-w-site items-center justify-between gap-2 px-3 sm:px-4 lg:h-[72px] lg:justify-center lg:px-10">
+            <div className="flex min-w-0 items-center gap-2 lg:hidden">
+              <button
+                type="button"
+                className="shrink-0 text-choc"
+                onClick={() => setOpen(true)}
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <Logo variant="dark" size="sm" subBrand={subBrand} className="min-w-0 max-w-[120px] shrink sm:max-w-[140px]" />
+            </div>
 
-            <div className="flex min-w-0 flex-1 items-center justify-center lg:flex-none">
+            <div className="hidden min-w-0 lg:flex lg:flex-none">
               <Logo variant="dark" size="md" subBrand={subBrand} className="shrink-0" />
             </div>
 
-            <button
-              type="button"
-              onClick={openCart}
-              className="relative text-choc lg:hidden"
-              aria-label="Cart"
-            >
-              <ShoppingBag className="h-[18px] w-[18px]" strokeWidth={1.5} />
-              {totalItems > 0 ? (
-                <span
-                  className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center px-1 font-sans text-[9px] font-semibold"
-                  style={{ backgroundColor: "var(--choc)", color: "var(--cream)" }}
-                >
-                  {totalItems > 9 ? "9+" : totalItems}
-                </span>
-              ) : null}
-            </button>
+            <HeaderUtilityIcons
+              className="lg:hidden"
+              iconColor="var(--choc)"
+              cartBadgeBg="var(--choc)"
+              cartBadgeFg="var(--cream)"
+              iconClassName="h-[16px] w-[16px] sm:h-[17px] sm:w-[17px]"
+              gapClassName="gap-2 sm:gap-2.5"
+              onAccountClick={handleAccountClick}
+            />
           </div>
         </div>
 
@@ -308,52 +377,12 @@ export function Navbar({
               ))}
             </nav>
 
-            <div className="flex items-center justify-end gap-5">
-              <button
-                type="button"
-                onClick={openSearch}
-                className="transition-colors hover:opacity-80"
-                style={{ color: "var(--cream)" }}
-                aria-label="Search"
-              >
-                <Search className="h-[18px] w-[18px]" strokeWidth={1.5} />
-              </button>
-              <Link
-                href="/account/wishlist"
-                className="transition-colors hover:opacity-80"
-                style={{ color: "var(--cream)" }}
-                aria-label="Wishlist"
-              >
-                <Heart className="h-[18px] w-[18px]" strokeWidth={1.5} />
-              </Link>
-              <button
-                type="button"
-                onClick={handleAccountClick}
-                className="transition-colors hover:opacity-80"
-                style={{ color: "var(--cream)" }}
-                aria-label="Account"
-              >
-                <User className="h-[18px] w-[18px]" strokeWidth={1.5} />
-              </button>
-              <ThemeToggle color="var(--cream)" />
-              <button
-                type="button"
-                onClick={openCart}
-                className="relative transition-colors hover:opacity-80"
-                style={{ color: "var(--cream)" }}
-                aria-label="Cart"
-              >
-                <ShoppingBag className="h-[18px] w-[18px]" strokeWidth={1.5} />
-                {totalItems > 0 ? (
-                  <span
-                    className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center px-1 font-sans text-[9px] font-semibold"
-                    style={{ backgroundColor: "var(--cream)", color: "var(--sidebar-bg)" }}
-                  >
-                    {totalItems > 9 ? "9+" : totalItems}
-                  </span>
-                ) : null}
-              </button>
-            </div>
+            <HeaderUtilityIcons
+              iconColor="var(--cream)"
+              cartBadgeBg="var(--cream)"
+              cartBadgeFg="var(--sidebar-bg)"
+              onAccountClick={handleAccountClick}
+            />
           </div>
         </div>
       </header>

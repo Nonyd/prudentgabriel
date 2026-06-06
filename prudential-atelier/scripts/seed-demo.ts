@@ -1386,6 +1386,19 @@ async function seedReviews(
     }
   }
 
+  if (sandra) {
+    await prisma.user.update({
+      where: { id: sandra.userId },
+      data: { image: "https://images.unsplash.com/photo-1589156191108-cdcff793e2f2?w=800&q=80" },
+    });
+  }
+  if (chisom) {
+    await prisma.user.update({
+      where: { id: chisom.userId },
+      data: { image: "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80" },
+    });
+  }
+
   console.log("  ✅ 2 reviews");
 }
 
