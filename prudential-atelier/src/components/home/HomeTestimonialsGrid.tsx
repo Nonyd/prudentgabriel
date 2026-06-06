@@ -1,4 +1,4 @@
-import { formatLoyaltyTier, getHomepageTestimonials, type HomepageTestimonial } from "@/lib/testimonials";
+import { formatLoyaltyTier, type HomepageTestimonial } from "@/lib/testimonials";
 import { getInitials } from "@/lib/utils";
 
 function GoldStars({ rating }: { rating: number }) {
