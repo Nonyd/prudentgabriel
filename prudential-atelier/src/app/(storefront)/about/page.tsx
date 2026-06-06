@@ -84,7 +84,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 export default async function AboutPage() {
   let cms: Record<string, string> = {};
   let storyHero = "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1400&q=80";
-  let founderPhoto = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80";
+  const founderPhoto = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80";
 
   try {
     const [content, images] = await Promise.all([getCMSContent([...ABOUT_KEYS]), getImageSettings()]);
