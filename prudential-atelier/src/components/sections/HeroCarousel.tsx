@@ -1,5 +1,6 @@
 "use client";
 
+import { Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { HeroCarouselItem } from "@/lib/hero-carousel";
 
@@ -63,21 +64,25 @@ function CarouselArrowRight() {
 function CarouselMedia({
   item,
   isCenter,
+  isMuted,
+  videoRef,
   onVideoEnded,
 }: {
   item: HeroCarouselItem;
   isCenter: boolean;
+  isMuted: boolean;
+  videoRef?: React.RefObject<HTMLVideoElement>;
   onVideoEnded: () => void;
 }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const fallbackRef = useRef<HTMLVideoElement>(null);
+  const activeRef = videoRef ?? fallbackRef;
 
   useEffect(() => {
-    const video = videoRef.current;
+    const video = activeRef.current;
     if (item.type !== "video" || !video) return;
 
     if (isCenter) {
-      video.muted = false;
-      video.volume = 0.7;
+      video.muted = isMuted;
       void video.play().catch(() => {});
 
       const handleEnded = () => onVideoEnded();
@@ -97,12 +102,12 @@ function CarouselMedia({
     video.pause();
     video.currentTime = 0;
     return undefined;
-  }, [isCenter, item.type, onVideoEnded]);
+  }, [activeRef, isCenter, isMuted, item.type, onVideoEnded]);
 
   if (item.type === "video") {
     return (
       <video
-        ref={videoRef}
+        ref={activeRef}
         src={item.url}
         muted
         playsInline
@@ -124,7 +129,9 @@ function CarouselMedia({
 
 export function HeroCarousel({ items }: HeroCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isMuted, setIsMuted] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const centerVideoRef = useRef<HTMLVideoElement>(null);
   const isPaused = useRef(false);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
@@ -156,6 +163,16 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
   const handleVideoEnded = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % total);
   }, [total]);
+
+  const toggleMute = useCallback(() => {
+    setIsMuted((prev) => {
+      const next = !prev;
+      if (centerVideoRef.current) {
+        centerVideoRef.current.muted = next;
+      }
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (total <= 1) return;
@@ -242,8 +259,43 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
                   <CarouselMedia
                     item={item}
                     isCenter={isCenter}
+                    isMuted={isMuted}
+                    videoRef={isCenter ? centerVideoRef : undefined}
                     onVideoEnded={handleVideoEnded}
                   />
+                  {item.type === "video" ? (
+                    <button
+                      type="button"
+                      onClick={toggleMute}
+                      aria-label={isMuted ? "Unmute video" : "Mute video"}
+                      className="absolute flex items-center justify-center"
+                      style={{
+                        bottom: "12px",
+                        right: "12px",
+                        width: "36px",
+                        height: "36px",
+                        borderRadius: "50%",
+                        background: "rgba(0,0,0,0.5)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        border: "0.5px solid rgba(226,209,194,0.2)",
+                        color: "#E2D1C2",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease, opacity 0.3s ease",
+                        zIndex: 20,
+                        opacity: isCenter ? 1 : 0,
+                        pointerEvents: isCenter ? "auto" : "none",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(0,0,0,0.75)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(0,0,0,0.5)";
+                      }}
+                    >
+                      {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                    </button>
+                  ) : null}
                 </div>
               );
             })}
