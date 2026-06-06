@@ -1409,6 +1409,62 @@ async function seedReviews(
   console.log("  ✅ 2 reviews");
 }
 
+async function seedTestimonials(clientMap: Record<string, { userId: string; profileId: string }>) {
+  console.log("\n✨ Seeding demo testimonials…");
+
+  const chisom = clientMap["chisom.eze@yahoo.com"];
+  const sandra = clientMap["sandra.dike@gmail.com"];
+  const amaka = clientMap["amaka.nwosu@gmail.com"];
+
+  const entries = [
+    {
+      user: chisom,
+      body: "Prudential Atelier didn't just make me a dress — they made me feel like the woman I always knew I was. From the first consultation to the final fitting, every detail was handled with such grace and precision. I wore my piece to my husband's chieftaincy ceremony and I have never felt more powerful.",
+      rating: 5,
+      clientImage: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400",
+      productContext: "Chieftaincy Ceremony Wrapper Set",
+      orderContext: "Atelier Commission",
+    },
+    {
+      user: sandra,
+      body: "I have bought luxury fashion from London, Paris, and Dubai. Nothing compares to the experience of walking into the Prudential atelier and having something made entirely for you. The quality, the attention to detail, the relationship — this is what luxury truly means.",
+      rating: 5,
+      clientImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
+      productContext: "Custom Evening Gown",
+      orderContext: "Atelier Commission",
+    },
+    {
+      user: amaka,
+      body: "My consultation with Mrs. Prudent was unlike anything I expected. She listened to everything — not just what I said, but what I meant. My Asoebi gown is being made right now and I cannot wait to see the final piece.",
+      rating: 5,
+      clientImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
+      productContext: "Custom Asoebi Gown",
+      orderContext: "In-Person Consultation",
+    },
+  ];
+
+  for (const entry of entries) {
+    if (!entry.user) continue;
+    const existing = await prisma.testimonial.findFirst({ where: { userId: entry.user.userId } });
+    const data = {
+      body: entry.body,
+      rating: entry.rating,
+      clientImage: entry.clientImage,
+      isApproved: true,
+      showOnHomepage: true,
+      productContext: entry.productContext,
+      orderContext: entry.orderContext,
+    };
+    if (existing) {
+      await prisma.testimonial.update({ where: { id: existing.id }, data });
+    } else {
+      await prisma.testimonial.create({ data: { userId: entry.user.userId, ...data } });
+    }
+  }
+
+  console.log("  ✅ 3 testimonials");
+}
+
 async function seedLoyaltyTransactions(clientMap: Record<string, { userId: string; profileId: string }>) {
   console.log("\n🎁 Seeding loyalty transactions…");
 
@@ -1633,6 +1689,7 @@ async function main() {
   await seedBlogPosts();
   await seedInvoices();
   await seedReviews(clientMap, productIds);
+  await seedTestimonials(clientMap);
   await seedLoyaltyTransactions(clientMap);
   await seedQuotation();
   await seedCollections(productIds);

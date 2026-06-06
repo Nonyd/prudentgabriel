@@ -12,6 +12,7 @@ import {
   sendConsultationCancelledEmail,
   sendConsultationConfirmedEmail,
   sendConsultationRescheduleEmail,
+  sendConsultationReviewRequestEmail,
 } from "@/lib/email";
 
 const patchSchema = z.object({
@@ -171,6 +172,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       bookingNumber: refreshed.bookingNumber,
       consultantName: refreshed.consultant.name,
       reason: d.cancellationReason ?? undefined,
+    });
+  }
+
+  if (
+    nextStatus === ConsultationStatus.COMPLETED &&
+    !booking.reviewRequestSent
+  ) {
+    const firstName = refreshed.clientName.split(/\s+/)[0] ?? refreshed.clientName;
+    await sendConsultationReviewRequestEmail({
+      to: refreshed.clientEmail,
+      firstName,
+      consultationId: refreshed.id,
+    });
+    await prisma.consultationBooking.update({
+      where: { id: refreshed.id },
+      data: { reviewRequestSent: true },
     });
   }
 

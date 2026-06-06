@@ -89,6 +89,34 @@ export function notifyReviewSubmitted(params: {
   }).catch(() => {});
 }
 
+export function notifyConsultationReviewSubmitted(params: {
+  reviewId: string;
+  userName: string;
+  rating: number;
+}): void {
+  void createNotification({
+    type: "REVIEW_PENDING",
+    title: "New consultation review",
+    message: `${params.userName} left a ${params.rating}-star consultation review`,
+    link: "/admin/reviews?tab=consultation",
+    entityId: params.reviewId,
+  }).catch(() => {});
+}
+
+export function notifyTestimonialSubmitted(params: {
+  testimonialId: string;
+  userName: string;
+  rating: number;
+}): void {
+  void createNotification({
+    type: "TESTIMONIAL_SUBMITTED",
+    title: "New testimonial submitted",
+    message: `${params.userName} submitted a ${params.rating}-star testimonial`,
+    link: "/admin/reviews?tab=testimonials",
+    entityId: params.testimonialId,
+  }).catch(() => {});
+}
+
 export function notifyLowStock(product: Pick<Product, "name">, variant: Pick<ProductVariant, "id" | "size" | "stock">): void {
   void createNotification({
     type: "LOW_STOCK",

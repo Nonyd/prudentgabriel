@@ -1,19 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
-import { z } from "zod";
 
 const patchSchema = z
   .object({
     isApproved: z.boolean().optional(),
     showOnHomepage: z.boolean().optional(),
-    showOnConsultationPage: z.boolean().optional(),
+    productContext: z.string().max(200).optional().nullable(),
+    orderContext: z.string().max(200).optional().nullable(),
+    adminImage: z.string().url().optional().nullable(),
   })
   .refine(
     (d) =>
       d.isApproved !== undefined ||
       d.showOnHomepage !== undefined ||
-      d.showOnConsultationPage !== undefined,
+      d.productContext !== undefined ||
+      d.orderContext !== undefined ||
+      d.adminImage !== undefined,
     { message: "At least one field required" },
   );
 
@@ -31,52 +35,41 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
+  const existing = await prisma.testimonial.findUnique({ where: { id } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const data: {
     isApproved?: boolean;
     showOnHomepage?: boolean;
-    showOnConsultationPage?: boolean;
+    productContext?: string | null;
+    orderContext?: string | null;
+    adminImage?: string | null;
   } = {};
+
   if (parsed.data.isApproved !== undefined) data.isApproved = parsed.data.isApproved;
+  if (parsed.data.productContext !== undefined) data.productContext = parsed.data.productContext;
+  if (parsed.data.orderContext !== undefined) data.orderContext = parsed.data.orderContext;
+  if (parsed.data.adminImage !== undefined) data.adminImage = parsed.data.adminImage;
+
   if (parsed.data.showOnHomepage !== undefined) {
-    if (parsed.data.showOnHomepage) {
-      const existing = await prisma.review.findUnique({ where: { id }, select: { isApproved: true } });
-      if (!existing?.isApproved) {
-        return NextResponse.json({ error: "Only approved reviews can appear on the homepage" }, { status: 400 });
-      }
+    const approved = parsed.data.isApproved ?? existing.isApproved;
+    if (parsed.data.showOnHomepage && !approved) {
+      return NextResponse.json({ error: "Only approved testimonials can appear on the homepage" }, { status: 400 });
     }
     data.showOnHomepage = parsed.data.showOnHomepage;
   }
-  if (parsed.data.showOnConsultationPage !== undefined) {
-    if (parsed.data.showOnConsultationPage) {
-      const existing = await prisma.review.findUnique({
-        where: { id },
-        select: { isApproved: true, consultationId: true },
-      });
-      if (!existing?.isApproved) {
-        return NextResponse.json(
-          { error: "Only approved reviews can appear on the consultation page" },
-          { status: 400 },
-        );
-      }
-      if (!existing.consultationId) {
-        return NextResponse.json({ error: "Not a consultation review" }, { status: 400 });
-      }
-    }
-    data.showOnConsultationPage = parsed.data.showOnConsultationPage;
-  }
   if (parsed.data.isApproved === false) {
     data.showOnHomepage = false;
-    data.showOnConsultationPage = false;
   }
 
-  const r = await prisma.review.update({ where: { id }, data });
-  return NextResponse.json(r);
+  const updated = await prisma.testimonial.update({ where: { id }, data });
+  return NextResponse.json(updated);
 }
 
 export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi();
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
-  await prisma.review.delete({ where: { id } });
+  await prisma.testimonial.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }

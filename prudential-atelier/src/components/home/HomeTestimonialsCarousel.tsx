@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { formatLoyaltyTier, type HomepageTestimonial } from "@/lib/testimonials";
+import { type HomepageTestimonial } from "@/lib/testimonials";
 import { getInitials } from "@/lib/utils";
 
 const CARD_WIDTH = 580;
@@ -113,8 +113,7 @@ function ClientPhoto({ item, mobile }: { item: HomepageTestimonial; mobile?: boo
 }
 
 function TestimonialCard({ item, mobile }: { item: HomepageTestimonial; mobile?: boolean }) {
-  const tier = formatLoyaltyTier(item.loyaltyTier);
-  const subtitle = [tier, item.productName].filter(Boolean).join(" · ");
+  const subtitle = item.subtitle;
 
   return (
     <article

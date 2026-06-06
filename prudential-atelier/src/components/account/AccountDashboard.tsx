@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { BespokeStageTracker } from "@/components/bespoke/BespokeStageTracker";
 import { ProductCard } from "@/components/common/ProductCard";
+import { ShareYourStoryCard } from "@/components/account/ShareYourStoryCard";
 import { TIER_BENEFITS, TIER_LABELS } from "@/lib/loyalty";
 import { formatDate, formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -98,6 +99,7 @@ export type AccountDashboardProps = {
   measurements: Measurements;
   eventDates: EventDate[];
   personalizedPicks: ProductListItem[];
+  testimonialCard?: "write" | "pending" | null;
 };
 
 function getGreeting(): string {
@@ -475,6 +477,7 @@ export function AccountDashboard({
   measurements,
   eventDates,
   personalizedPicks,
+  testimonialCard = null,
 }: AccountDashboardProps) {
   const greeting = getGreeting();
   const member = formatMemberSince(memberSince);
@@ -539,6 +542,8 @@ export function AccountDashboard({
           sub={member.isNew ? "Welcome to the atelier ✦" : member.dateLabel}
         />
       </div>
+
+      {testimonialCard ? <ShareYourStoryCard status={testimonialCard} /> : null}
 
       {dashboardState === "new_client" ? (
         <section className="mt-8 rounded-md bg-[#442913] px-6 py-10 text-cream md:px-10 md:py-12">

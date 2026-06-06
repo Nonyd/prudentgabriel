@@ -6,12 +6,11 @@ export type HomepageTestimonial = {
   rating: number;
   body: string | null;
   userName: string;
-  loyaltyTier: LoyaltyTier | null;
-  productName: string;
+  subtitle: string | null;
   imageUrl: string | null;
 };
 
-const reviewInclude = {
+const testimonialInclude = {
   user: {
     select: {
       name: true,
@@ -19,85 +18,71 @@ const reviewInclude = {
       clientProfile: { select: { loyaltyTier: true } },
     },
   },
-  product: {
-    select: {
-      name: true,
-      images: { orderBy: { sortOrder: "asc" as const }, take: 1, select: { url: true } },
-    },
-  },
 } as const;
 
-type ReviewRow = Awaited<ReturnType<typeof prisma.review.findMany<{ include: typeof reviewInclude }>>>[number];
+type TestimonialRow = Awaited<
+  ReturnType<typeof prisma.testimonial.findMany<{ include: typeof testimonialInclude }>>
+>[number];
 
 function resolveImageUrl(
+  adminImage: string | null | undefined,
+  clientImage: string | null | undefined,
   userImage: string | null | undefined,
-  productImage: string | null | undefined,
-  testimonialImage: string | null | undefined,
 ): string | null {
+  if (adminImage?.trim()) return adminImage;
+  if (clientImage?.trim()) return clientImage;
   if (userImage?.trim()) return userImage;
-  if (productImage?.trim()) return productImage;
-  if (testimonialImage?.trim()) return testimonialImage;
   return null;
 }
 
-function mapReview(r: ReviewRow): HomepageTestimonial {
-  const productImage = r.product.images[0]?.url ?? null;
+function mapTestimonial(t: TestimonialRow): HomepageTestimonial {
+  const tier = formatLoyaltyTier(t.user.clientProfile?.loyaltyTier ?? null);
+  const context = [t.productContext, t.orderContext].filter(Boolean).join(" · ");
+  const subtitle = [tier, context].filter(Boolean).join(" · ") || null;
+
   return {
-    id: r.id,
-    rating: r.rating,
-    body: r.body,
-    userName: r.user.name ?? "Client",
-    loyaltyTier: r.user.clientProfile?.loyaltyTier ?? null,
-    productName: r.product.name,
-    imageUrl: resolveImageUrl(r.user.image, productImage, r.testimonialImage),
+    id: t.id,
+    rating: t.rating,
+    body: t.body,
+    userName: t.user.name ?? "Client",
+    subtitle,
+    imageUrl: resolveImageUrl(t.adminImage, t.clientImage, t.user.image),
   };
 }
 
-/** Curated fallbacks when no approved reviews exist yet (e.g. before demo seed). */
+/** Curated fallbacks when no approved testimonials exist yet (e.g. before demo seed). */
 export const FALLBACK_TESTIMONIALS: HomepageTestimonial[] = [
   {
     id: "fallback-1",
     rating: 5,
-    body: "Mrs. Gabriel-Okopi understood my vision completely. The fabric quality, the beading, the fit — everything was perfect. I received so many compliments. I will never go anywhere else.",
-    userName: "Sandra Dike",
-    loyaltyTier: "GOLD",
-    productName: "Nneka Aso-Ebi Set",
-    imageUrl: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400",
+    body: "Prudential Atelier didn't just make me a dress — they made me feel like the woman I always knew I was. From the first consultation to the final fitting, every detail was handled with such grace and precision.",
+    userName: "Chisom Eze",
+    subtitle: "Platinum member · Chieftaincy Ceremony Wrapper Set · Atelier Commission",
+    imageUrl: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400",
   },
   {
     id: "fallback-2",
     rating: 5,
-    body: "The attention to detail is unmatched. From the consultation to the final delivery, the entire experience felt truly luxurious. My bridal gown was a masterpiece.",
-    userName: "Chisom Eze",
-    loyaltyTier: "PLATINUM",
-    productName: "The Zahra Bridal Gown",
-    imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400",
+    body: "I have bought luxury fashion from London, Paris, and Dubai. Nothing compares to the experience of walking into the Prudential atelier and having something made entirely for you.",
+    userName: "Sandra Dike",
+    subtitle: "Gold member · Custom Evening Gown · Atelier Commission",
+    imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
   },
   {
     id: "fallback-3",
     rating: 5,
-    body: "The Lagos Power Suit made me walk into that boardroom and own every second. The tailoring is sharper than anything I have bought abroad. Nigerian excellence at its finest.",
-    userName: "Chidinma E.",
-    loyaltyTier: "SILVER",
-    productName: "Executive Power Suit",
-    imageUrl: "https://images.unsplash.com/photo-1566174053879-435285eff2e8?w=800&q=80",
-  },
-  {
-    id: "fallback-4",
-    rating: 5,
-    body: "From my first consultation to the delivery of my bespoke piece, everything was handled with such professionalism and heart. This brand is the future of Nigerian fashion.",
-    userName: "Temi A.",
-    loyaltyTier: "GOLD",
-    productName: "Bespoke Commission",
-    imageUrl: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=800&q=80",
+    body: "My consultation with Mrs. Prudent was unlike anything I expected. She listened to everything — not just what I said, but what I meant.",
+    userName: "Amaka Nwosu",
+    subtitle: "Gold member · Custom Asoebi Gown · In-Person Consultation",
+    imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
   },
 ];
 
-/** Approved reviews for the homepage — homepage-flagged first, then recent approved. */
+/** Approved testimonials for the homepage — homepage-flagged first, then recent approved. */
 export async function getHomepageTestimonials(limit = 6): Promise<HomepageTestimonial[]> {
-  const flagged = await prisma.review.findMany({
+  const flagged = await prisma.testimonial.findMany({
     where: { isApproved: true, showOnHomepage: true },
-    include: reviewInclude,
+    include: testimonialInclude,
     orderBy: { createdAt: "desc" },
     take: limit,
   });
@@ -106,19 +91,19 @@ export async function getHomepageTestimonials(limit = 6): Promise<HomepageTestim
 
   if (rows.length < limit) {
     const excludeIds = rows.map((r) => r.id);
-    const filler = await prisma.review.findMany({
+    const filler = await prisma.testimonial.findMany({
       where: {
         isApproved: true,
         id: excludeIds.length ? { notIn: excludeIds } : undefined,
       },
-      include: reviewInclude,
+      include: testimonialInclude,
       orderBy: { createdAt: "desc" },
       take: limit - rows.length,
     });
     rows = [...rows, ...filler];
   }
 
-  const mapped = rows.map(mapReview);
+  const mapped = rows.map(mapTestimonial);
   if (mapped.length > 0) return mapped;
 
   return FALLBACK_TESTIMONIALS.slice(0, limit);

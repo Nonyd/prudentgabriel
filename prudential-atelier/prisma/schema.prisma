@@ -28,6 +28,7 @@ model User {
   addresses           Address[]
   wishlist            WishlistItem[]
   reviews             Review[]
+  testimonials        Testimonial[]
   reviewHelpfulVotes  ReviewHelpfulVote[]
   pointsHistory       PointsTransaction[]
   sessions            Session[]
@@ -160,6 +161,9 @@ model ConsultationBooking {
   adminFeedback String?   @db.Text
 
   invoices Invoice[]
+  reviews  Review[]
+
+  reviewRequestSent Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -459,6 +463,8 @@ model Order {
   trackingNumber   String?
   carrier            String?
 
+  reviewRequestSent Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -678,20 +684,48 @@ model Review {
   id           String   @id @default(cuid())
   userId       String
   user         User     @relation(fields: [userId], references: [id])
-  productId    String
-  product      Product  @relation(fields: [productId], references: [id])
+  productId    String?
+  product      Product? @relation(fields: [productId], references: [id])
+  consultationId String?
+  consultation   ConsultationBooking? @relation(fields: [consultationId], references: [id], onDelete: SetNull)
   rating       Int
   title        String?
   body         String?
   isVerified     Boolean  @default(false)
   isApproved     Boolean  @default(false)
   showOnHomepage Boolean  @default(false)
+  showOnConsultationPage Boolean @default(false)
   testimonialImage String?
   helpfulCount   Int      @default(0)
   orderId      String?
   createdAt    DateTime @default(now())
 
   helpfulVotes ReviewHelpfulVote[]
+
+  @@index([consultationId])
+}
+
+model Testimonial {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  body        String
+  rating      Int
+  clientImage String?
+  adminImage  String?
+
+  isApproved     Boolean @default(false)
+  showOnHomepage Boolean @default(false)
+
+  productContext String?
+  orderContext   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isApproved, showOnHomepage])
+  @@index([userId])
 }
 
 model ReviewHelpfulVote {
@@ -865,6 +899,7 @@ enum AdminNotificationType {
   NEW_BESPOKE
   NEW_CONSULTATION
   REVIEW_PENDING
+  TESTIMONIAL_SUBMITTED
   LOW_STOCK
   PAYMENT_FAILED
   NEW_CUSTOMER

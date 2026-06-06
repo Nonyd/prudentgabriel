@@ -16,6 +16,7 @@ import ConsultationConfirmedEmail from "@/emails/ConsultationConfirmedEmail";
 import ConsultationCancelledEmail from "@/emails/ConsultationCancelledEmail";
 import ConsultationRescheduleEmail from "@/emails/ConsultationRescheduleEmail";
 import InvoiceEmail, { subjectInvoiceEmail } from "@/emails/InvoiceEmail";
+import ReviewRequestEmail from "@/emails/ReviewRequestEmail";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { primeEmailBranding, emailLogoWhiteUrl } from "@/lib/email-branding";
 const FROM = "Prudential Atelier <hello@prudentgabriel.com>";
@@ -539,4 +540,52 @@ export async function sendAdminConsultationNotification(params: {
     <p><a href="${getPublicAppUrl()}/admin/consultations">Open admin</a></p>
   `;
   await sendAdminNotificationEmail(`New Consultation Booking — #${params.bookingNumber}${tag}`, inner);
+}
+
+export async function sendProductReviewRequestEmail(params: {
+  to: string;
+  firstName: string;
+  productName: string;
+  productId: string;
+  orderId: string;
+}): Promise<void> {
+  const appUrl = getPublicAppUrl();
+  const reviewUrl = `${appUrl}/account/reviews/new?product=${params.productId}&order=${params.orderId}`;
+  const html = await renderBrandedEmail(
+    <ReviewRequestEmail
+      firstName={params.firstName}
+      headline={`How was your ${params.productName}?`}
+      bodyParagraph={`Your ${params.productName} has been delivered — we hope you love it as much as we loved creating it. We'd be honoured to hear about your experience.`}
+      ctaLabel="Share your review"
+      ctaUrl={reviewUrl}
+    />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: `How was your ${params.productName}? — Prudential Atelier`,
+    html,
+  });
+}
+
+export async function sendConsultationReviewRequestEmail(params: {
+  to: string;
+  firstName: string;
+  consultationId: string;
+}): Promise<void> {
+  const appUrl = getPublicAppUrl();
+  const reviewUrl = `${appUrl}/account/reviews/new?consultation=${params.consultationId}`;
+  const html = await renderBrandedEmail(
+    <ReviewRequestEmail
+      firstName={params.firstName}
+      headline="How was your consultation?"
+      bodyParagraph="Thank you for sitting with us. It was a pleasure getting to know your vision. We'd love to hear how your experience was — it helps us serve you and every client better."
+      ctaLabel="Share your experience"
+      ctaUrl={reviewUrl}
+    />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: "How was your consultation? — Prudential Atelier",
+    html,
+  });
 }

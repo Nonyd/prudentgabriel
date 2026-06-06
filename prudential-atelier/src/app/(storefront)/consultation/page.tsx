@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import type { ConsultantWithOfferings } from "@/lib/consultation";
 import { ConsultationBookingFlow } from "@/components/consultation/ConsultationBookingFlow";
+import { getConsultationPageReviews } from "@/lib/consultation-reviews";
 import { getPageFieldKeys } from "@/lib/cms-config";
 import { getCMSContent } from "@/lib/cms";
 
@@ -21,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ConsultationPage() {
-  const [rows, cms] = await Promise.all([
+  const [rows, cms, consultationReviews] = await Promise.all([
     prisma.consultant.findMany({
       where: { isActive: true },
       orderBy: { displayOrder: "asc" },
@@ -31,8 +32,9 @@ export default async function ConsultationPage() {
       },
     }),
     getCMSContent(getPageFieldKeys("consultation")),
+    getConsultationPageReviews(),
   ]);
   const consultants = rows as ConsultantWithOfferings[];
 
-  return <ConsultationBookingFlow consultants={consultants} cms={cms} />;
+  return <ConsultationBookingFlow consultants={consultants} cms={cms} consultationReviews={consultationReviews} />;
 }

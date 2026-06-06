@@ -19,6 +19,8 @@ import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelect
 import type { PaymentGatewayType } from "@/lib/payments/index";
 import { formatPrice } from "@/lib/currency";
 import { cmsGet } from "@/lib/cms-helpers";
+import { ConsultationReviewsSlider } from "@/components/consultation/ConsultationReviewsSlider";
+import type { ConsultationReviewSlide } from "@/lib/consultation-reviews";
 
 type Gateway = PaymentGatewayType;
 type ShopCur = "NGN" | "USD" | "GBP";
@@ -172,9 +174,11 @@ function StepIndicator({ step }: { step: number }) {
 export function ConsultationBookingFlow({
   consultants,
   cms = {},
+  consultationReviews = [],
 }: {
   consultants: ConsultantWithOfferings[];
   cms?: Record<string, string>;
+  consultationReviews?: ConsultationReviewSlide[];
 }) {
   const { data: session } = useSession();
   const [step, setStep] = useState(1);
@@ -512,6 +516,8 @@ export function ConsultationBookingFlow({
                 );
               })}
             </div>
+
+            <ConsultationReviewsSlider items={consultationReviews} />
 
             <div className="mt-10 flex justify-center">
               <button

@@ -11,6 +11,7 @@ import {
 import { mapProductToListItem } from "@/lib/map-product-list-item";
 import { AccountDashboard } from "@/components/account/AccountDashboard";
 import type { DashboardState } from "@/components/account/AccountDashboard";
+import { canSubmitTestimonial } from "@/lib/testimonial-eligibility";
 
 const BUDGET_RANGES: Record<string, [number, number]> = {
   "₦50k–₦150k": [50000, 150000],
@@ -187,6 +188,16 @@ export default async function AccountDashboardPage() {
     year: "numeric",
   });
 
+  const testimonialEligibility = await canSubmitTestimonial(userId);
+  let testimonialCard: "write" | "pending" | null = null;
+  if (testimonialEligibility.eligible) {
+    if (testimonialEligibility.hasExistingTestimonial) {
+      if (testimonialEligibility.pendingTestimonial) testimonialCard = "pending";
+    } else {
+      testimonialCard = "write";
+    }
+  }
+
   return (
     <AccountDashboard
       firstName={firstName}
@@ -214,6 +225,7 @@ export default async function AccountDashboardPage() {
       measurements={measurements}
       eventDates={eventDates}
       personalizedPicks={personalizedPicks.map(mapProductToListItem)}
+      testimonialCard={testimonialCard}
     />
   );
 }
