@@ -142,11 +142,18 @@ export function ProductsTable({
     try {
       const ids = deleteState.mode === "single" ? [deleteState.id] : deleteState.ids;
       for (const id of Array.from(ids)) {
-        const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
-        const data = (await res.json()) as { error?: string };
+        const res = await fetch(`/api/admin/products/${id}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        let data: { error?: string } = {};
+        try {
+          data = (await res.json()) as { error?: string };
+        } catch {
+          data = {};
+        }
         if (!res.ok) {
           toast.error(data.error ?? "Delete failed");
-          setIsDeleting(false);
           return;
         }
       }
@@ -154,6 +161,8 @@ export function ProductsTable({
       setSelected(new Set());
       setDeleteState(null);
       router.refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Delete failed");
     } finally {
       setIsDeleting(false);
     }

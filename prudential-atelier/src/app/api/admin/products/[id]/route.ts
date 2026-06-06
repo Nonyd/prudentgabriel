@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { productAdminSchema, productToggleSchema } from "@/validations/product";
 import { buildDefaultProductSku } from "@/lib/product-sku";
 import { revalidateProduct } from "@/lib/revalidate";
 import { processRestockAlerts } from "@/lib/stock-alerts";
+import { destroyCloudinaryAsset } from "@/lib/cloudinary-public-id";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi();
@@ -274,21 +276,64 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
 
-  const blocking = await prisma.orderItem.count({
+  const product = await prisma.product.findUnique({
+    where: { id },
+    select: {
+      slug: true,
+      images: { select: { url: true } },
+      _count: { select: { orderItems: true } },
+    },
+  });
+  if (!product) {
+    return NextResponse.json({ error: "Product not found" }, { status: 404 });
+  }
+
+  const activeOrders = await prisma.orderItem.count({
     where: {
       productId: id,
       order: { status: { in: ["PENDING", "CONFIRMED", "PROCESSING"] } },
     },
   });
-  if (blocking > 0) {
+  if (activeOrders > 0) {
     return NextResponse.json(
       { error: "Cannot delete — active orders contain this product" },
       { status: 409 },
     );
   }
 
-  const slugRow = await prisma.product.findUnique({ where: { id }, select: { slug: true } });
-  await prisma.product.delete({ where: { id } });
-  if (slugRow) await revalidateProduct(slugRow.slug);
-  return NextResponse.json({ ok: true });
+  if (product._count.orderItems > 0) {
+    return NextResponse.json(
+      {
+        error: `Cannot delete — this product appears in ${product._count.orderItems} past order(s). Unpublish it instead.`,
+      },
+      { status: 409 },
+    );
+  }
+
+  try {
+    await prisma.$transaction([
+      prisma.cartItem.deleteMany({ where: { productId: id } }),
+      prisma.wishlistItem.deleteMany({ where: { productId: id } }),
+      prisma.review.deleteMany({ where: { productId: id } }),
+      prisma.product.delete({ where: { id } }),
+    ]);
+
+    await Promise.all(product.images.map((im) => destroyCloudinaryAsset(im.url)));
+    await revalidateProduct(product.slug);
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2003") {
+        return NextResponse.json(
+          { error: "Cannot delete — this product is still linked to other records (orders, carts, or reviews)." },
+          { status: 409 },
+        );
+      }
+      if (e.code === "P2025") {
+        return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      }
+    }
+    console.error("[admin/products DELETE]", e);
+    return NextResponse.json({ error: "Could not delete product" }, { status: 500 });
+  }
 }
