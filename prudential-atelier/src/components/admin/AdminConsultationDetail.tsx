@@ -57,7 +57,7 @@ export function AdminConsultationDetail({
 }) {
   const router = useRouter();
   const [confirmDate, setConfirmDate] = useState(
-    booking.confirmedDate ? booking.confirmedDate.slice(0, 10) : "",
+    booking.confirmedDate ? new Date(booking.confirmedDate).toISOString().slice(0, 10) : "",
   );
   const [confirmTime, setConfirmTime] = useState(booking.confirmedTime ?? "10:00");
   const [meetingLink, setMeetingLink] = useState(booking.meetingLink ?? "");
@@ -106,12 +106,13 @@ export function AdminConsultationDetail({
           <h2 className="font-label text-gold">Scheduling</h2>
           {booking.preferredDate1 && (
             <p className="mt-2 text-xs">
-              Prefs: {booking.preferredDate1?.slice(0, 10)} {booking.preferredDate2 ? `, ${booking.preferredDate2.slice(0, 10)}` : ""}
+              Prefs: {new Date(booking.preferredDate1).toISOString().slice(0, 10)}{" "}
+              {booking.preferredDate2 ? `, ${new Date(booking.preferredDate2).toISOString().slice(0, 10)}` : ""}
             </p>
           )}
           {booking.confirmedDate && (
             <p className="mt-2 text-xs">
-              Confirmed: {booking.confirmedDate.slice(0, 10)} {booking.confirmedTime} WAT
+              Confirmed: {new Date(booking.confirmedDate).toISOString().slice(0, 10)} {booking.confirmedTime} WAT
             </p>
           )}
         </div>

@@ -14,8 +14,7 @@ export function slugifyText(text: string): string {
 
 /** date-fns formatted date (existing helper) */
 export function formatDate(value: Date | string, pattern = "PPP"): string {
-  const d = typeof value === "string" ? new Date(value) : value;
-  return formatDateFns(d, pattern);
+  return formatDateFns(new Date(value), pattern);
 }
 
 // ── Price formatting ──

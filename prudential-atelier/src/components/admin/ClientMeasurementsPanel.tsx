@@ -94,7 +94,11 @@ export function measurementFromRecord(
     armhole: record.armhole,
     unit: record.unit ?? "inches",
     notes: record.notes,
-    updatedAt: record.updatedAt,
+    updatedAt: record.updatedAt
+      ? typeof record.updatedAt === "string"
+        ? record.updatedAt
+        : record.updatedAt.toISOString()
+      : null,
   };
 }
 
