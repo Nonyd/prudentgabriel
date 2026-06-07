@@ -589,3 +589,71 @@ export async function sendConsultationReviewRequestEmail(params: {
     html,
   });
 }
+
+export async function sendJobApplicationConfirmationEmail(params: {
+  to: string;
+  name: string;
+  jobTitle: string;
+  applicationId: string;
+}): Promise<void> {
+  const JobApplicationConfirmationEmail = (await import("@/emails/JobApplicationConfirmationEmail"))
+    .JobApplicationConfirmationEmail;
+  const html = await renderBrandedEmail(
+    <JobApplicationConfirmationEmail
+      name={params.name}
+      jobTitle={params.jobTitle}
+      applicationId={params.applicationId}
+    />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: `Application received — ${params.jobTitle} at Prudential Atelier`,
+    html,
+  });
+}
+
+export async function sendJobApplicationAdminEmail(params: {
+  jobTitle: string;
+  name: string;
+  email: string;
+  phone: string;
+  yearsOfExp: number | null;
+  applicationId: string;
+}): Promise<void> {
+  const appUrl = getPublicAppUrl();
+  const reviewUrl = `${appUrl}/admin/careers/applications/${params.applicationId}`;
+  const exp = params.yearsOfExp != null ? `${params.yearsOfExp} years` : "Not specified";
+  await sendAdminNotificationEmail(
+    `New application: ${params.jobTitle} — ${params.name}`,
+    `
+      <p><strong>New job application received.</strong></p>
+      <p><strong>Position:</strong> ${params.jobTitle}</p>
+      <p><strong>Applicant:</strong> ${params.name}</p>
+      <p><strong>Email:</strong> ${params.email}</p>
+      <p><strong>Phone:</strong> ${params.phone}</p>
+      <p><strong>Experience:</strong> ${exp}</p>
+      <p><a href="${reviewUrl}">Review application</a></p>
+    `,
+  );
+}
+
+export async function sendJobApplicationStatusEmail(params: {
+  to: string;
+  name: string;
+  jobTitle: string;
+  status: import("@prisma/client").ApplicationStatus;
+}): Promise<void> {
+  const { JobApplicationStatusEmail, jobStatusEmailCopy } = await import(
+    "@/emails/JobApplicationStatusEmail"
+  );
+  const copy = jobStatusEmailCopy(params.status);
+  if (!copy) return;
+  const html = await renderBrandedEmail(
+    <JobApplicationStatusEmail name={params.name} jobTitle={params.jobTitle} status={params.status} />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: `${copy.subject} — ${params.jobTitle}`,
+    html,
+  });
+}

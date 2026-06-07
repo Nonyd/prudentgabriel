@@ -733,6 +733,93 @@ model Testimonial {
   @@index([userId])
 }
 
+model JobPosting {
+  id            String   @id @default(cuid())
+  title         String
+  department    String
+  type          JobType
+  location      String
+  description   String   @db.Text
+  requirements  String   @db.Text
+  benefits      String?  @db.Text
+  salaryRange   String?
+  deadline      DateTime?
+  isPublished   Boolean  @default(false)
+  isPFAPosition Boolean  @default(false)
+  slug          String   @unique
+  customFields  Json?
+  applications  JobApplication[]
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isPublished, type])
+}
+
+model JobApplication {
+  id               String            @id @default(cuid())
+  jobId            String
+  job              JobPosting        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  fullName         String
+  email            String
+  phone            String
+  yearsOfExp       Int?
+  coverLetter      String?           @db.Text
+  cvUrl            String?
+  portfolioUrl     String?
+  heardFrom        String?
+  isPFAApplication Boolean           @default(false)
+  pfaRegNumber     String?
+  pfaVerified      Boolean           @default(false)
+  pfaStudentName   String?
+  pfaCourse        String?
+  pfaYear          Int?
+  universityName   String?
+  supervisorName   String?
+  supervisorEmail  String?
+  supervisorPhone  String?
+  itDuration       String?
+  itStartDate      DateTime?
+  schoolItLetter   String?
+  schoolIdCard     String?
+  customResponses  Json?
+  status           ApplicationStatus @default(NEW)
+  adminNotes       String?           @db.Text
+  emailsSent       ApplicationEmail[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([jobId, status])
+  @@index([email])
+}
+
+model ApplicationEmail {
+  id            String         @id @default(cuid())
+  applicationId String
+  application   JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  subject       String
+  body          String         @db.Text
+  sentAt        DateTime       @default(now())
+  sentBy        String
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  FREELANCE
+  INTERNSHIP
+  IT_PLACEMENT
+}
+
+enum ApplicationStatus {
+  NEW
+  REVIEWED
+  SHORTLISTED
+  INTERVIEWED
+  REJECTED
+  HIRED
+}
+
 model ReviewHelpfulVote {
   id        String   @id @default(cuid())
   userId    String
@@ -910,6 +997,7 @@ enum AdminNotificationType {
   NEW_CUSTOMER
   COUPON_EXPIRING
   CONTACT_FORM
+  JOB_APPLICATION
 }
 
 enum CustomerNotificationType {

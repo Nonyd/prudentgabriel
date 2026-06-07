@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { AdminNotification, AdminNotificationType } from "@prisma/client";
 import {
   Bell,
+  Briefcase,
   Calendar,
   Check,
   CreditCard,
@@ -33,6 +34,8 @@ function iconFor(type: AdminNotificationType) {
       return wrap(<FileText className="h-4 w-4 text-nut" strokeWidth={1.5} />, "bg-nut/15");
     case "REVIEW_PENDING":
       return wrap(<FileText className="h-4 w-4 text-warning" strokeWidth={1.5} />, "bg-warning/15");
+    case "JOB_APPLICATION":
+      return wrap(<Briefcase className="h-4 w-4 text-olive" strokeWidth={1.5} />, "bg-olive/15");
     case "LOW_STOCK":
     case "COUPON_EXPIRING":
       return wrap(<AlertTriangle className="h-4 w-4 text-danger" strokeWidth={1.5} />, "bg-danger/10");

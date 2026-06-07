@@ -124,6 +124,14 @@ export default auth(function middleware(request) {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
 
+    if (
+      pathname.startsWith("/admin/careers") &&
+      role !== "SUPER_ADMIN" &&
+      role !== "ADMIN"
+    ) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+
     if (session.user?.mustResetPassword) {
       return NextResponse.redirect(new URL("/reset-password?required=true", request.url));
     }

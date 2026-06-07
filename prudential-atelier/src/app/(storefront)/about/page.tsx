@@ -493,6 +493,12 @@ export default async function AboutPage() {
             {cmsGet(cms, "about_cta_button_2_label", "BROWSE THE COLLECTION →")}
           </Link>
         </div>
+        <p className="mt-6 font-body text-sm" style={{ color: "var(--sand)" }}>
+          Interested in joining our team?{" "}
+          <Link href="/careers" className="underline underline-offset-2 hover:text-cream">
+            View open positions
+          </Link>
+        </p>
       </section>
     </div>
   );

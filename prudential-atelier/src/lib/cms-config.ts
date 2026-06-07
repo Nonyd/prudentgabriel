@@ -749,6 +749,7 @@ export const CMS_PAGES: CmsPageDef[] = [
               { label: "Ready-to-Wear", url: "/rtw" },
               { label: "Bridal", url: "/bridal" },
               { label: "Kids", url: "/kids" },
+              { label: "Careers", url: "/careers" },
               { label: "Fashion Academy", url: "/about#academy" },
               { label: "Journal", url: "/journal" },
             ]),

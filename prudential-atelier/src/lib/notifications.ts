@@ -186,3 +186,17 @@ export function notifyStageAdvanced(params: {
     entityId: params.orderId,
   }).catch(() => {});
 }
+
+export function notifyJobApplication(params: {
+  applicationId: string;
+  name: string;
+  jobTitle: string;
+}): void {
+  void createNotification({
+    type: "JOB_APPLICATION",
+    title: "New job application",
+    message: `${params.name} applied for ${params.jobTitle}`,
+    link: `/admin/careers/applications/${params.applicationId}`,
+    entityId: params.applicationId,
+  }).catch(() => {});
+}

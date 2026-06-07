@@ -5,6 +5,7 @@ import {
   Activity,
   AlertTriangle,
   BarChart3,
+  Briefcase,
   CalendarDays,
   ClipboardCheck,
   FileText,
@@ -98,6 +99,24 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
       { href: "/admin/staff", label: "Staff Members", icon: Users, permission: "staff" },
       { href: "/admin/attendance", label: "Attendance", icon: ClipboardCheck, permission: "attendance" },
       { href: "/admin/staff/performance", label: "Performance", icon: TrendingUp, permission: "reports" },
+    ],
+  },
+  {
+    label: "Careers",
+    items: [
+      {
+        href: "/admin/careers",
+        label: "Job Postings",
+        icon: Briefcase,
+        generalAdminOnly: true,
+        alsoActive: ["/admin/careers/new"],
+      },
+      {
+        href: "/admin/careers/applications",
+        label: "Applications",
+        icon: FileText,
+        generalAdminOnly: true,
+      },
     ],
   },
   {
