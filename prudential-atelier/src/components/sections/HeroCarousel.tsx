@@ -204,9 +204,9 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
 
   if (total === 0) return null;
 
-  const visibleItems = isMobile
-    ? [{ item: items[currentIndex], index: currentIndex }]
-    : items.map((item, index) => ({ item, index }));
+  const visibleItems = items.map((item, index) => ({ item, index }));
+  const slideOffset = isMobile ? 52 : 42;
+  const adjacentScale = isMobile ? 0.78 : 0.82;
 
   return (
     <div
@@ -220,17 +220,13 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="relative flex flex-1 items-center justify-center overflow-visible px-4 md:overflow-hidden md:px-0">
+      <div className="relative flex flex-1 items-center justify-center overflow-visible px-0 md:overflow-hidden">
         <div className="relative h-full w-full" style={{ perspective: "1200px" }}>
           <div className="relative mx-auto flex min-h-[520px] w-full items-center justify-center md:min-h-[600px]">
             {visibleItems.map(({ item, index }) => {
               let pos = index - currentIndex;
-              if (!isMobile) {
-                pos = (pos + total) % total;
-                if (pos > Math.floor(total / 2)) pos -= total;
-              } else {
-                pos = 0;
-              }
+              pos = (pos + total) % total;
+              if (pos > Math.floor(total / 2)) pos -= total;
 
               const isCenter = pos === 0;
               const isAdjacent = Math.abs(pos) === 1;
@@ -238,15 +234,15 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
               return (
                 <div
                   key={`${item.url}-${index}`}
-                  className="absolute max-h-[520px] w-[min(340px,85vw)] overflow-hidden sm:w-[340px]"
+                  className="absolute max-h-[520px] w-[min(300px,72vw)] overflow-hidden md:w-[340px]"
                   style={{
                     left: "50%",
                     top: "50%",
                     aspectRatio: "3 / 4",
-                    transform: `translate(-50%, -50%) translateX(${pos * 42}%) scale(${isCenter ? 1 : isAdjacent ? 0.82 : 0.65}) rotateY(${pos * -8}deg)`,
+                    transform: `translate(-50%, -50%) translateX(${pos * slideOffset}%) scale(${isCenter ? 1 : isAdjacent ? adjacentScale : 0.65}) rotateY(${isMobile ? 0 : pos * -8}deg)`,
                     zIndex: isCenter ? 10 : isAdjacent ? 5 : 1,
-                    opacity: isCenter ? 1 : isAdjacent ? 0.45 : 0,
-                    filter: isCenter ? "blur(0px)" : "blur(3px)",
+                    opacity: isCenter ? 1 : isAdjacent ? (isMobile ? 0.55 : 0.45) : 0,
+                    filter: isCenter ? "blur(0px)" : isMobile ? "blur(4px) brightness(0.7)" : "blur(3px)",
                     visibility: Math.abs(pos) > 1 ? "hidden" : "visible",
                     transition: "all 0.5s ease-in-out",
                     borderRadius: isMobile ? "12px" : "8px",
@@ -306,9 +302,7 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
               type="button"
               onClick={goPrev}
               aria-label="Previous slide"
-              className={`group absolute top-1/2 z-20 flex h-14 w-8 -translate-y-1/2 items-center justify-center transition-all duration-200 hover:scale-110 ${
-                isMobile ? "-left-4" : "left-3"
-              }`}
+              className="group absolute left-1 top-1/2 z-20 flex h-14 w-8 -translate-y-1/2 items-center justify-center transition-all duration-200 hover:scale-110 md:left-3"
               style={{ background: "transparent", border: "none" }}
             >
               <CarouselArrowLeft />
@@ -317,9 +311,7 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
               type="button"
               onClick={goNext}
               aria-label="Next slide"
-              className={`group absolute top-1/2 z-20 flex h-14 w-8 -translate-y-1/2 items-center justify-center transition-all duration-200 hover:scale-110 ${
-                isMobile ? "-right-4" : "right-3"
-              }`}
+              className="group absolute right-1 top-1/2 z-20 flex h-14 w-8 -translate-y-1/2 items-center justify-center transition-all duration-200 hover:scale-110 md:right-3"
               style={{ background: "transparent", border: "none" }}
             >
               <CarouselArrowRight />
