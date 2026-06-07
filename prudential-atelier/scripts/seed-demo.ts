@@ -1680,63 +1680,20 @@ async function seedCareerJobs() {
   });
   const createdBy = admin?.id ?? "demo-seed";
 
-  const jobs = [
-    {
-      title: "Senior Tailor",
-      department: "Production",
-      type: "FULL_TIME" as const,
-      location: "Lagos, Nigeria",
-      description:
-        "We are looking for an experienced senior tailor to join our production team at Victoria Island. You will lead garment construction for bespoke and ready-to-wear commissions.",
-      requirements:
-        "5+ years experience in luxury garment construction. Proficiency in hand finishing, pattern adjustment, and fitting. Strong attention to detail.",
-      benefits: "Competitive salary, staff accommodation available, training opportunities.",
-      salaryRange: "₦150,000 – ₦250,000/month",
-      isPublished: true,
-      isPFAPosition: false,
-      slug: "senior-tailor",
-      deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    },
-    {
-      title: "Head Beader",
-      department: "Production",
-      type: "FULL_TIME" as const,
-      location: "Lagos, Nigeria",
-      description:
-        "Lead our beading and embellishment team. You will oversee hand-beaded bridal and occasion wear from concept through final quality check.",
-      requirements:
-        "7+ years experience in hand beading, crystal work, and embellishment. Ability to mentor junior artisans.",
-      benefits: "Competitive salary, creative autonomy, premium materials.",
-      isPublished: true,
-      isPFAPosition: false,
-      slug: "head-beader",
-      deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    },
-    {
-      title: "Industrial Training Placement — Fashion Production",
-      department: "Production",
-      type: "IT_PLACEMENT" as const,
-      location: "Lagos, Nigeria",
-      description:
-        "Prudential Atelier welcomes PFA students for Industrial Training. Gain hands-on experience in luxury fashion production, from cutting to finishing.",
-      requirements:
-        "Must be a registered PFA student eligible for IT placement. Valid school IT letter required.",
-      isPublished: true,
-      isPFAPosition: true,
-      slug: "it-placement-fashion-production",
-      deadline: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-    },
-  ];
+  const { DEMO_CAREER_JOBS } = await import("./careers-demo-data");
 
-  for (const job of jobs) {
+  for (const job of DEMO_CAREER_JOBS) {
+    const deadline = new Date(Date.now() + job.deadlineDays * 24 * 60 * 60 * 1000);
+    const { deadlineDays: _days, ...rest } = job;
+
     await prisma.jobPosting.upsert({
       where: { slug: job.slug },
-      create: { ...job, createdBy },
-      update: { ...job, createdBy },
+      create: { ...rest, deadline, createdBy },
+      update: { ...rest, deadline, createdBy },
     });
   }
 
-  console.log(`  ✅ ${jobs.length} job postings`);
+  console.log(`  ✅ ${DEMO_CAREER_JOBS.length} job postings`);
 }
 
 async function main() {
