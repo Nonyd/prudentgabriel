@@ -55,14 +55,17 @@ function ShopProductCard({ product, priority }: { product: ProductListItem; prio
   const showNew = product.isNewArrival && !showBestSeller;
 
   return (
-    <Link href={`/shop/${product.slug}`} className="group block">
-      <div className="product-image-wrapper relative aspect-[3/4] overflow-hidden rounded-sm bg-sand/30">
+    <Link
+      href={`/shop/${product.slug}`}
+      className="group flex h-full flex-col overflow-hidden border border-sand/70 bg-bg-card transition-shadow duration-300 hover:shadow-[0_10px_32px_rgba(42,36,31,0.08)]"
+    >
+      <div className="product-image-wrapper relative aspect-[3/4] shrink-0 overflow-hidden bg-ivory-dark">
         <Image
           src={img}
           alt={product.images[0]?.alt || product.name}
           fill
           sizes="(max-width: 768px) 50vw, 25vw"
-          className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
+          className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
           priority={priority}
         />
         {showBestSeller ? (
@@ -71,19 +74,23 @@ function ShopProductCard({ product, priority }: { product: ProductListItem; prio
           </span>
         ) : null}
         {showNew ? (
-          <span className="absolute left-3 top-3 rounded-sm border border-[0.5px] border-sand bg-cream px-2 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-choc">
+          <span className="absolute left-3 top-3 rounded-sm border border-sand bg-cream px-2 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-choc">
             New in
           </span>
         ) : null}
       </div>
-      <div className="pt-4">
-        <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">
+      <div className="flex flex-1 flex-col px-4 py-4 md:px-5 md:py-5">
+        <p className="font-sans text-[10px] font-medium uppercase tracking-[0.14em] text-lightbr">
           {product.type === "RTW" ? "READY-TO-WEAR" : CATEGORY_LABELS[product.category]}
         </p>
-        <h3 className="mt-1.5 font-serif text-[20px] text-choc transition-colors group-hover:text-nut">{product.name}</h3>
-        <p className="mt-1 font-sans text-[14px] text-text-mid">
-          {multi ? "From " : ""}
-          {formatPrice(convertFromNGN(lowest, currency, rates), currency)}
+        <h3 className="mt-2 line-clamp-2 font-serif text-[15px] leading-snug text-choc transition-colors group-hover:text-nut md:text-base">
+          {product.name}
+        </h3>
+        <p className="mt-2.5 font-body text-[13px] text-text-mid">
+          {multi ? <span className="text-text-light">From </span> : null}
+          <span className="font-medium text-choc">
+            {formatPrice(convertFromNGN(lowest, currency, rates), currency)}
+          </span>
         </p>
       </div>
     </Link>
@@ -222,7 +229,7 @@ export function ShopBrowse({
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4 lg:gap-6">
             {items.map((p, i) => (
               <ShopProductCard key={`${p.id}-${i}`} product={p} priority={i < 4} />
             ))}

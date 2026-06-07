@@ -77,9 +77,20 @@ function augmentProductQuery(sp: URLSearchParams): URLSearchParams {
 
 function RTWGridSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-px bg-mid-grey md:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 xl:grid-cols-4 xl:gap-6">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="aspect-[3/4] animate-pulse bg-[#F8F8F6]" />
+        <div key={i} className="overflow-hidden border border-sand/70 bg-bg-card">
+          <div className="aspect-[3/4] animate-pulse bg-ivory-dark" />
+          <div className="space-y-2 px-4 py-4 md:px-5 md:py-5">
+            <div className="h-4 w-4/5 animate-pulse rounded-sm bg-sand/60" />
+            <div className="h-3.5 w-1/3 animate-pulse rounded-sm bg-sand/40" />
+            <div className="flex gap-2 pt-2">
+              {[0, 1, 2].map((j) => (
+                <div key={j} className="h-3.5 w-3.5 animate-pulse rounded-full bg-sand/50" />
+              ))}
+            </div>
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -253,11 +264,9 @@ export function RTWPageClient({
         ) : items.length === 0 ? (
           <p className="py-20 text-center font-body text-sm text-dark-grey">No pieces in this view yet.</p>
         ) : (
-          <div className="grid grid-cols-2 gap-px bg-mid-grey md:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 xl:grid-cols-4 xl:gap-6">
             {items.map((p, index) => (
-              <div key={p.id} className="bg-bg-card">
-                <RTWProductCard product={p} priority={index < 8} />
-              </div>
+              <RTWProductCard key={p.id} product={p} priority={index < 8} />
             ))}
           </div>
         )}

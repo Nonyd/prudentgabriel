@@ -97,16 +97,16 @@ export function RTWProductCard({ product, priority }: RTWProductCardProps) {
   };
 
   return (
-    <div
+    <article
       role="link"
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === "Enter") goToProduct();
       }}
-      className="group relative cursor-pointer bg-bg-card"
+      className="group relative flex h-full cursor-pointer flex-col overflow-hidden border border-sand/70 bg-bg-card transition-shadow duration-300 hover:shadow-[0_10px_32px_rgba(42,36,31,0.08)]"
     >
       <div
-        className="relative aspect-[3/4] overflow-hidden bg-[#F8F8F6]"
+        className="relative aspect-[3/4] shrink-0 overflow-hidden bg-ivory-dark"
         onClick={goToProduct}
       >
         <Image
@@ -141,14 +141,14 @@ export function RTWProductCard({ product, priority }: RTWProductCardProps) {
             </span>
           )}
           {showNewBadge && (
-            <span className="bg-black px-2 py-0.5 font-body text-[9px] font-medium uppercase tracking-wide text-white">
+            <span className="bg-choc px-2 py-0.5 font-body text-[9px] font-medium uppercase tracking-wide text-cream">
               New
             </span>
           )}
         </div>
 
         <div
-          className="absolute bottom-0 left-0 right-0 translate-y-full bg-bg-card px-3.5 py-3 transition-transform duration-[400ms] ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:translate-y-0"
+          className="absolute bottom-0 left-0 right-0 translate-y-full border-t border-sand/60 bg-bg-card px-4 py-3.5 transition-transform duration-[400ms] ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:translate-y-0"
           onClick={(e) => e.stopPropagation()}
         >
           {oneSizeOnly ? (
@@ -158,13 +158,13 @@ export function RTWProductCard({ product, priority }: RTWProductCardProps) {
                 e.stopPropagation();
                 addToBag(product.variants[0]);
               }}
-              className="h-[38px] w-full bg-black font-body text-[10px] font-medium uppercase tracking-wide text-white transition-opacity hover:opacity-90"
+              className="h-10 w-full bg-choc font-body text-[10px] font-medium uppercase tracking-[0.12em] text-cream transition-opacity hover:opacity-90"
             >
               Add to bag
             </button>
           ) : (
             <>
-              <div className="mb-2 flex flex-wrap gap-1">
+              <div className="mb-2.5 flex flex-wrap gap-1.5">
                 {product.variants.map((v) => {
                   const active = sizeId === v.id;
                   const oos = v.stock < 1;
@@ -178,10 +178,10 @@ export function RTWProductCard({ product, priority }: RTWProductCardProps) {
                         setSizeId(v.id);
                       }}
                       className={cn(
-                        "border px-2 py-0.5 font-body text-[10px] transition-colors",
-                        active ? "border-black bg-black text-white" : "border-[#E8E8E4] text-charcoal",
+                        "min-w-[2rem] border px-2.5 py-1 font-body text-[10px] uppercase tracking-wide transition-colors",
+                        active ? "border-choc bg-choc text-cream" : "border-mid-grey text-charcoal",
                         oos && "cursor-not-allowed opacity-30 line-through",
-                        !oos && !active && "hover:border-black",
+                        !oos && !active && "hover:border-choc",
                       )}
                     >
                       {v.size}
@@ -190,8 +190,8 @@ export function RTWProductCard({ product, priority }: RTWProductCardProps) {
                 })}
               </div>
               {!sizeId ? (
-                <p className="text-center font-body text-[10px] font-medium uppercase tracking-wide text-dark-grey">
-                  Select options
+                <p className="text-center font-body text-[10px] font-medium uppercase tracking-[0.12em] text-text-light">
+                  Select a size
                 </p>
               ) : (
                 <button
@@ -202,7 +202,7 @@ export function RTWProductCard({ product, priority }: RTWProductCardProps) {
                     const v = product.variants.find((x) => x.id === sizeId);
                     if (v) addToBag(v);
                   }}
-                  className="h-[38px] w-full bg-black font-body text-[10px] font-medium uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="h-10 w-full bg-choc font-body text-[10px] font-medium uppercase tracking-[0.12em] text-cream transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Add to bag
                 </button>
@@ -212,49 +212,54 @@ export function RTWProductCard({ product, priority }: RTWProductCardProps) {
         </div>
       </div>
 
-      <div className="px-0.5 pb-4 pt-2.5" onClick={goToProduct}>
-        <h3 className="line-clamp-1 font-body text-[13px] font-normal text-black transition-opacity duration-200 group-hover:opacity-70">
+      <div className="flex flex-1 flex-col px-4 pb-5 pt-4 md:px-5 md:pb-6" onClick={goToProduct}>
+        <h3 className="line-clamp-2 font-serif text-[15px] leading-snug text-choc transition-colors duration-200 group-hover:text-nut md:text-base">
           {product.name}
         </h3>
-        <div className="mt-1.5">
+
+        <div className="mt-2.5">
           {product.isOnSale && lowestSale != null ? (
-            <p>
-              <del className="mr-2 font-body text-[12px] font-light text-dark-grey">{formatN(lowestOrig)}</del>
+            <p className="flex flex-wrap items-baseline gap-2">
+              <del className="font-body text-[12px] font-light text-text-light">{formatN(lowestOrig)}</del>
               <span className="font-body text-[13px] font-medium text-olive">{formatN(lowestSale)}</span>
             </p>
           ) : (
-            <span className="font-body text-[13px] font-light text-dark-grey">
-              {multi ? "From " : ""}
-              {formatN(lowestEff)}
-            </span>
+            <p className="font-body text-[13px] text-text-mid">
+              {multi ? <span className="text-text-light">From </span> : null}
+              <span className="font-medium text-choc">{formatN(lowestEff)}</span>
+            </p>
           )}
         </div>
 
         {product.colors.length > 0 && (
-          <div className="mt-2 flex flex-wrap items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="mt-auto flex flex-wrap items-center gap-2 pt-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             {product.colors.slice(0, 5).map((c) => (
               <button
                 key={c.id}
                 type="button"
                 aria-label={c.name}
+                title={c.name}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   setColorId(c.id);
                 }}
                 className={cn(
-                  "h-2.5 w-2.5 rounded-full ring-1 ring-[#E8E8E4] transition-[box-shadow] duration-150 hover:ring-black",
-                  colorId === c.id && "ring-2 ring-black",
+                  "h-3.5 w-3.5 rounded-full ring-1 ring-mid-grey transition-[box-shadow,transform] duration-150 hover:scale-110 hover:ring-charcoal md:h-4 md:w-4",
+                  colorId === c.id && "ring-2 ring-choc ring-offset-2 ring-offset-bg-card",
                 )}
                 style={{ backgroundColor: c.hex }}
               />
             ))}
             {product.colors.length > 5 && (
-              <span className="font-body text-[11px] text-dark-grey/60">+{product.colors.length - 5}</span>
+              <span className="font-body text-[11px] text-text-light">+{product.colors.length - 5}</span>
             )}
           </div>
         )}
       </div>
-    </div>
+    </article>
   );
 }

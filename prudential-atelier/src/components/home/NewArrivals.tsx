@@ -22,7 +22,7 @@ export function NewArrivals({ products }: { products: ProductListItem[] }) {
             View All →
           </Link>
         </div>
-        <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5 lg:gap-6">
           {products.map((p, i) => (
             <motion.div
               key={p.id}

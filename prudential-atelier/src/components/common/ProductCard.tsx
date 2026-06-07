@@ -101,16 +101,19 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
 
   return (
     <>
-      <div
+      <article
         role="link"
         tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === "Enter") router.push(`/shop/${product.slug}`);
         }}
-        className={cn("group relative cursor-pointer bg-canvas", compact && "text-left")}
+        className={cn(
+          "group relative flex h-full cursor-pointer flex-col overflow-hidden border border-sand/70 bg-bg-card transition-shadow duration-300 hover:shadow-[0_10px_32px_rgba(42,36,31,0.08)]",
+          compact && "border-0 bg-transparent shadow-none hover:shadow-none",
+        )}
       >
         <div
-          className="relative aspect-[3/4] overflow-hidden bg-[var(--light-grey)]"
+          className="relative aspect-[3/4] shrink-0 overflow-hidden bg-ivory-dark"
           onClick={() => router.push(`/shop/${product.slug}`)}
         >
           {hasImage ? (
@@ -224,56 +227,65 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
 
         <div
           onClick={() => router.push(`/shop/${product.slug}`)}
-          className={cn("pb-5 pt-3.5", compact && "py-2")}
+          className={cn(
+            "flex flex-1 flex-col px-4 pb-5 pt-4 md:px-5 md:pb-6",
+            compact && "px-0 py-2",
+          )}
         >
           <h3
             className={cn(
-              "font-body text-[14px] font-normal text-charcoal line-clamp-1 transition-colors duration-200 group-hover:text-olive",
-              compact && "text-sm text-white",
+              "line-clamp-2 font-serif text-[15px] leading-snug text-choc transition-colors duration-200 group-hover:text-nut md:text-base",
+              compact && "line-clamp-1 font-body text-sm text-white group-hover:text-white",
             )}
           >
             {product.name}
           </h3>
-          <div className={cn("mt-1 flex flex-wrap items-center gap-2", compact && "text-ivory")}>
+          <div className={cn("mt-2.5", compact && "text-ivory")}>
             {product.isOnSale && lowestSale != null ? (
-              <>
-                <del className="font-body text-[13px] font-light text-dark-grey">{formatN(lowestOrig)}</del>
+              <p className="flex flex-wrap items-baseline gap-2">
+                <del className="font-body text-[12px] font-light text-text-light">{formatN(lowestOrig)}</del>
                 <span className="font-body text-[13px] font-medium text-olive">{formatN(lowestSale)}</span>
-              </>
+              </p>
             ) : (
-              <span className="font-body text-[13px] font-light text-charcoal">
-                {multi ? "From " : ""}
-                <span className="font-light">{formatN(lowestEff)}</span>
-              </span>
+              <p className="font-body text-[13px] text-text-mid">
+                {multi ? <span className="text-text-light">From </span> : null}
+                <span className={cn("font-medium", compact ? "text-ivory" : "text-choc")}>
+                  {formatN(lowestEff)}
+                </span>
+              </p>
             )}
           </div>
 
           {!compact && product.colors.length > 0 && (
-            <div className="mt-2 flex flex-wrap items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="mt-auto flex flex-wrap items-center gap-2 pt-4"
+              onClick={(e) => e.stopPropagation()}
+            >
               {product.colors.slice(0, 4).map((c) => (
                 <button
                   key={c.id}
                   type="button"
                   aria-label={c.name}
+                  title={c.name}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     setColorId(c.id);
                   }}
                   className={cn(
-                    "h-2.5 w-2.5 rounded-full ring-1 ring-mid-grey transition-[box-shadow] hover:ring-charcoal",
-                    colorId === c.id && "ring-2 ring-charcoal",
+                    "h-3.5 w-3.5 rounded-full ring-1 ring-mid-grey transition-[box-shadow,transform] duration-150 hover:scale-110 hover:ring-charcoal md:h-4 md:w-4",
+                    colorId === c.id && "ring-2 ring-choc ring-offset-2 ring-offset-bg-card",
                   )}
                   style={{ backgroundColor: c.hex }}
                 />
               ))}
               {product.colors.length > 4 && (
-                <span className="font-body text-xs text-dark-grey">+{product.colors.length - 4}</span>
+                <span className="font-body text-[11px] text-text-light">+{product.colors.length - 4}</span>
               )}
             </div>
           )}
         </div>
-      </div>
+      </article>
 
       <QuickViewModal productSlug={qv} onClose={() => setQv(null)} />
     </>

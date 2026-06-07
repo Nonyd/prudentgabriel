@@ -271,15 +271,17 @@ export function CollectionDetailPage({
         </div>
 
         {sortBusy ? (
-          <div className="mx-auto grid max-w-[1400px] grid-cols-2 gap-px bg-mid-grey px-6 md:grid-cols-3 xl:grid-cols-4">
+          <div className="mx-auto grid max-w-[1400px] grid-cols-2 gap-4 px-6 md:grid-cols-3 md:gap-5 xl:grid-cols-4 xl:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="aspect-[3/4] animate-pulse bg-[#F2F2F0]" />
+              <div key={i} className="overflow-hidden border border-sand/70 bg-bg-card">
+                <div className="aspect-[3/4] animate-pulse bg-ivory-dark" />
+              </div>
             ))}
           </div>
         ) : items.length === 0 ? (
           <p className="py-16 text-center font-body text-[14px] text-dark-grey">No products in this collection yet.</p>
         ) : (
-          <div className="mx-auto grid max-w-[1400px] grid-cols-2 gap-px bg-mid-grey px-6 md:grid-cols-3 xl:grid-cols-4">
+          <div className="mx-auto grid max-w-[1400px] grid-cols-2 gap-4 px-6 md:grid-cols-3 md:gap-5 xl:grid-cols-4 xl:gap-6">
             {items.map((p, index) => {
               const cardProduct: ProductListItem = {
                 id: p.id,
@@ -299,11 +301,7 @@ export function CollectionDetailPage({
                 colors: p.colors,
                 _count: p._count,
               };
-              return (
-                <div key={p.id} className="bg-bg-card">
-                  <RTWProductCard product={cardProduct} priority={index < 8} />
-                </div>
-              );
+              return <RTWProductCard key={p.id} product={cardProduct} priority={index < 8} />;
             })}
           </div>
         )}
