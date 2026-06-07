@@ -42,7 +42,7 @@ export async function BestSellers() {
       list = [...list, ...filler];
     }
 
-    products = list.map((p) => ({
+    products = list.slice(0, 4).map((p) => ({
       id: p.id,
       name: p.name,
       slug: p.slug,
@@ -55,7 +55,7 @@ export async function BestSellers() {
   }
 
   return (
-    <section className="px-6 py-20 lg:px-10" style={{ backgroundColor: "var(--ivory)" }}>
+    <section className="bg-bg-page px-6 py-20 lg:px-10">
       <div className="mx-auto max-w-site">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>

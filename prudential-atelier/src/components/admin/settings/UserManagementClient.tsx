@@ -143,7 +143,7 @@ function InviteUserModal({
           <select
             value={jobRoleId}
             onChange={(e) => setJobRoleId(e.target.value)}
-            className="w-full rounded-[3px] border border-sand bg-white px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
+            className="w-full rounded-[3px] border border-sand bg-bg-card px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
           >
             {jobRoles.map((r) => (
               <option key={r.id} value={r.id}>
@@ -164,7 +164,7 @@ function InviteUserModal({
           <input
             value={jobTitle}
             onChange={(e) => setJobTitle(e.target.value)}
-            className="w-full rounded-[3px] border border-sand bg-white px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
+            className="w-full rounded-[3px] border border-sand bg-bg-card px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
             placeholder="e.g. Head Beader"
           />
         </div>
@@ -175,7 +175,7 @@ function InviteUserModal({
           <input
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
-            className="w-full rounded-[3px] border border-sand bg-white px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
+            className="w-full rounded-[3px] border border-sand bg-bg-card px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
             placeholder="e.g. Production"
           />
         </div>
@@ -186,7 +186,7 @@ function InviteUserModal({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-[3px] border border-sand bg-white px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
+            className="w-full rounded-[3px] border border-sand bg-bg-card px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
             placeholder="Full name"
           />
         </div>
@@ -198,7 +198,7 @@ function InviteUserModal({
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-[3px] border border-sand bg-white px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
+            className="w-full rounded-[3px] border border-sand bg-bg-card px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
             placeholder="email@example.com"
           />
         </div>
@@ -287,7 +287,7 @@ function EditUserModal({
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-[3px] border border-sand bg-white px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
+              className="w-full rounded-[3px] border border-sand bg-bg-card px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
             />
           </div>
           <div>
@@ -308,7 +308,7 @@ function EditUserModal({
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as Role)}
-                className="w-full rounded-[3px] border border-sand bg-white px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
+                className="w-full rounded-[3px] border border-sand bg-bg-card px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
               >
                 {INVITE_ROLES.map((r) => (
                   <option key={r} value={r}>
@@ -564,12 +564,12 @@ export function UserManagementClient() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search name or email…"
-          className="min-w-[220px] flex-1 rounded-[3px] border border-sand bg-white px-4 py-2.5 font-sans text-sm text-text-dark outline-none focus:border-nut"
+          className="min-w-[220px] flex-1 rounded-[3px] border border-sand bg-bg-card px-4 py-2.5 font-sans text-sm text-text-dark outline-none focus:border-nut"
         />
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="rounded-[3px] border border-sand bg-white px-4 py-2.5 font-sans text-sm text-text-dark outline-none focus:border-nut"
+          className="rounded-[3px] border border-sand bg-bg-card px-4 py-2.5 font-sans text-sm text-text-dark outline-none focus:border-nut"
         >
           <option value="all">All roles</option>
           {MANAGED_STAFF_ROLES.map((r) => (
@@ -581,7 +581,7 @@ export function UserManagementClient() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-[3px] border border-sand bg-white px-4 py-2.5 font-sans text-sm text-text-dark outline-none focus:border-nut"
+          className="rounded-[3px] border border-sand bg-bg-card px-4 py-2.5 font-sans text-sm text-text-dark outline-none focus:border-nut"
         >
           <option value="all">All statuses</option>
           <option value="active">Active</option>

@@ -47,7 +47,7 @@ export function AdminVideoUrlField({ label, value, onChange, folder }: AdminVide
     <div>
       <label className="font-body text-xs text-charcoal">{label}</label>
       <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start">
-        <div className="relative flex h-28 w-full max-w-[220px] shrink-0 items-center justify-center overflow-hidden rounded-sm border border-[#EBEBEA] bg-[#F5F5F3]">
+        <div className="relative flex h-28 w-full max-w-[220px] shrink-0 items-center justify-center overflow-hidden rounded-sm border border-sand bg-[#F5F5F3]">
           {canPreview && !broken ? (
             <video
               src={url}
@@ -67,7 +67,7 @@ export function AdminVideoUrlField({ label, value, onChange, folder }: AdminVide
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <input
               type="text"
-              className="min-w-0 flex-1 border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+              className="min-w-0 flex-1 border border-sand px-3 py-2 font-body text-sm"
               value={value}
               placeholder="Video URL (optional if uploading)"
               onChange={(e) => {

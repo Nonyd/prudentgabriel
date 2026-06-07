@@ -5,7 +5,7 @@ import Link from "next/link";
 export function ShareYourStoryCard({ status }: { status: "write" | "pending" }) {
   if (status === "pending") {
     return (
-      <section className="mt-8 rounded-md border border-sand bg-white px-6 py-8 dark:border-sand/40 dark:bg-bg-card md:px-10">
+      <section className="mt-8 rounded-md border border-sand bg-bg-card px-6 py-8 md:px-10">
         <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr">✓ Testimonial submitted</p>
         <p className="mt-3 font-body text-sm text-text-mid">Your testimonial is awaiting approval.</p>
       </section>

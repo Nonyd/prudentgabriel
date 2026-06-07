@@ -131,7 +131,7 @@ export function InvoicesClient() {
             { label: "Overdue", value: String(stats.overdue) },
             { label: "Paid this month", value: String(stats.paidThisMonth) },
           ].map((c) => (
-            <div key={c.label} className="border border-[#EBEBEA] bg-canvas p-4">
+            <div key={c.label} className="border border-sand bg-canvas p-4">
               <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-[#A8A8A4]">{c.label}</p>
               <p className="mt-2 font-body text-lg text-ink">{c.value}</p>
             </div>
@@ -139,7 +139,7 @@ export function InvoicesClient() {
         </div>
       ) : null}
 
-      <div className="mt-8 flex flex-wrap gap-2 border-b border-[#EBEBEA] pb-2">
+      <div className="mt-8 flex flex-wrap gap-2 border-b border-sand pb-2">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -159,14 +159,14 @@ export function InvoicesClient() {
 
       <div className="mt-4 flex flex-wrap gap-3">
         <input
-          className="min-w-[200px] flex-1 border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+          className="min-w-[200px] flex-1 border border-sand px-3 py-2 font-body text-sm"
           placeholder="Search name, email, invoice #"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && void load()}
         />
         <select
-          className="border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+          className="border border-sand px-3 py-2 font-body text-sm"
           value={currency}
           onChange={(e) => {
             setCurrency(e.target.value);
@@ -180,14 +180,14 @@ export function InvoicesClient() {
         </select>
         <button
           type="button"
-          className="border border-[#EBEBEA] px-4 py-2 font-body text-xs uppercase text-olive"
+          className="border border-sand px-4 py-2 font-body text-xs uppercase text-olive"
           onClick={() => void load()}
         >
           Search
         </button>
       </div>
 
-      <div className="mt-6 overflow-x-auto border border-[#EBEBEA]">
+      <div className="mt-6 overflow-x-auto border border-sand">
         <table className="w-full min-w-[900px] border-collapse font-body text-xs">
           <thead>
             <tr className="bg-[#37392d] text-left text-[10px] font-medium uppercase tracking-[0.1em] text-white">
@@ -220,7 +220,7 @@ export function InvoicesClient() {
                 const cur = asCurrency(r.currency);
                 const overdue = r.dueDate && new Date(r.dueDate) < new Date() && r.balanceDue > 0;
                 return (
-                  <tr key={r.id} className="border-t border-[#EBEBEA]">
+                  <tr key={r.id} className="border-t border-sand">
                     <td className="px-3 py-2 font-mono text-[11px] text-olive">{r.invoiceNumber}</td>
                     <td className="px-3 py-2">
                       <div className="font-medium">{r.clientName}</div>
@@ -288,7 +288,7 @@ export function InvoicesClient() {
             <button
               type="button"
               disabled={page <= 1}
-              className="border border-[#EBEBEA] px-3 py-1 disabled:opacity-40"
+              className="border border-sand px-3 py-1 disabled:opacity-40"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
               Prev
@@ -296,7 +296,7 @@ export function InvoicesClient() {
             <button
               type="button"
               disabled={page >= totalPages}
-              className="border border-[#EBEBEA] px-3 py-1 disabled:opacity-40"
+              className="border border-sand px-3 py-1 disabled:opacity-40"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >
               Next

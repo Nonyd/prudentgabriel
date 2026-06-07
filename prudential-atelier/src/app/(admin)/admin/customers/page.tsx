@@ -15,7 +15,7 @@ export default async function AdminCustomersPage() {
   return (
     <div>
       <h1 className="font-display text-2xl text-charcoal">Customers</h1>
-      <div className="-mx-4 mt-8 overflow-x-auto rounded-sm border border-[#EBEBEA] bg-canvas px-4 md:mx-0 md:px-0">
+      <div className="-mx-4 mt-8 overflow-x-auto rounded-sm border border-sand bg-canvas px-4 md:mx-0 md:px-0">
         <table className="w-full min-w-[700px] text-left text-sm text-charcoal">
           <thead className="text-[#A8A8A4]">
             <tr>
@@ -29,7 +29,7 @@ export default async function AdminCustomersPage() {
           </thead>
           <tbody>
             {users.map((u) => (
-              <tr key={u.id} className="border-t border-[#EBEBEA]">
+              <tr key={u.id} className="border-t border-sand">
                 <td className="p-3">
                   <div>{u.name}</div>
                   <div className="text-xs text-[#A8A8A4] sm:hidden">{u.email}</div>

@@ -206,25 +206,25 @@ export default async function AdminPaymentsPage() {
       <AdminOutstandingBalances />
 
       <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-4">
-        <div className="border border-[#EBEBEA] bg-white p-4">
+        <div className="border border-sand bg-bg-card p-4">
           <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Total Revenue</p>
           <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(totalRevenue).toLocaleString("en-NG")}</p>
         </div>
-        <div className="border border-[#EBEBEA] bg-white p-4">
+        <div className="border border-sand bg-bg-card p-4">
           <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Revenue This Month</p>
           <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(monthRevenue).toLocaleString("en-NG")}</p>
         </div>
-        <div className="border border-[#EBEBEA] bg-white p-4">
+        <div className="border border-sand bg-bg-card p-4">
           <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Avg Order Value</p>
           <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(avgOrderValue).toLocaleString("en-NG")}</p>
         </div>
-        <div className="border border-[#EBEBEA] bg-white p-4">
+        <div className="border border-sand bg-bg-card p-4">
           <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Refunds Issued</p>
           <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(refundsIssued).toLocaleString("en-NG")}</p>
         </div>
       </div>
 
-      <div className="mt-5 border border-[#EBEBEA] bg-white p-4">
+      <div className="mt-5 border border-sand bg-bg-card p-4">
         <p className="mb-3 font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Gateway Breakdown</p>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
           {gatewaySummary.map((item) => (
@@ -237,10 +237,10 @@ export default async function AdminPaymentsPage() {
         </div>
       </div>
 
-      <div className="mt-8 overflow-x-auto border border-[#EBEBEA]">
+      <div className="mt-8 overflow-x-auto border border-sand">
         <table className="w-full min-w-[720px] border-collapse font-body text-sm">
           <thead>
-            <tr className="border-b border-[#EBEBEA] bg-[#FAFAFA] text-left text-[10px] font-medium uppercase tracking-wide text-[#6B6B68]">
+            <tr className="border-b border-sand bg-[#FAFAFA] text-left text-[10px] font-medium uppercase tracking-wide text-[#6B6B68]">
               <th className="px-4 py-3">Type</th>
               <th className="px-4 py-3">Reference</th>
               <th className="px-4 py-3">Customer</th>
@@ -253,7 +253,7 @@ export default async function AdminPaymentsPage() {
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={`${r.kind}-${r.id}`} className="border-b border-[#EBEBEA] last:border-0 hover:bg-[#FAFAFA]">
+              <tr key={`${r.kind}-${r.id}`} className="border-b border-sand last:border-0 hover:bg-[#FAFAFA]">
                 <td className="px-4 py-3 text-xs">{kindLabel(r.kind)}</td>
                 <td className="px-4 py-3 font-medium text-ink">{r.ref}</td>
                 <td className="max-w-[240px] truncate px-4 py-3 text-xs text-[#6B6B68]">{r.customer}</td>

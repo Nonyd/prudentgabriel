@@ -65,7 +65,7 @@ export function TestimonialSubmitClient({ firstName }: { firstName: string }) {
 
   if (done) {
     return (
-      <div className="mx-auto max-w-xl rounded-md border border-sand bg-white px-8 py-12 text-center">
+      <div className="mx-auto max-w-xl rounded-md border border-sand bg-bg-card px-8 py-12 text-center">
         <p className="font-display text-2xl text-choc">✓ Thank you, {firstName}!</p>
         <p className="mt-4 font-body text-sm text-text-mid">
           Your testimonial has been submitted and will appear after approval.
@@ -98,7 +98,7 @@ export function TestimonialSubmitClient({ firstName }: { firstName: string }) {
           value={body}
           onChange={(e) => setBody(e.target.value.slice(0, 600))}
           rows={5}
-          className="mt-2 w-full rounded-sm border border-sand bg-white px-4 py-3 font-body text-sm text-choc outline-none focus:border-nut"
+          className="mt-2 w-full rounded-sm border border-sand bg-input-bg px-4 py-3 font-body text-sm text-choc outline-none focus:border-nut"
           placeholder="Tell us about your Prudential experience…"
         />
         <p className="mt-1 font-body text-xs text-text-light">{body.length} / 600</p>

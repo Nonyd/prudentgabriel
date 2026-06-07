@@ -149,7 +149,7 @@ export function CollectionDetailAdmin({
 
       <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
         <div>
-          <div className="flex gap-4 border-b border-[#EBEBEA] font-body text-[12px]">
+          <div className="flex gap-4 border-b border-sand font-body text-[12px]">
             {(
               [
                 ["manual", `Manual (${manualOrder.length})`],
@@ -176,7 +176,7 @@ export function CollectionDetailAdmin({
             </p>
           ) : null}
 
-          <ul className="mt-6 divide-y divide-[#EBEBEA] border border-[#EBEBEA] bg-white">
+          <ul className="mt-6 divide-y divide-[#EBEBEA] border border-sand bg-bg-card">
             {listForTab.map((p) => (
               <li key={p.id} className="flex items-center gap-3 px-3 py-3">
                 {tab === "manual" ? (
@@ -212,7 +212,7 @@ export function CollectionDetailAdmin({
           </ul>
         </div>
 
-        <aside className="space-y-4 border border-[#EBEBEA] bg-[#FAFAFA] p-4">
+        <aside className="space-y-4 border border-sand bg-[#FAFAFA] p-4">
           <div>
             <p className="font-body text-[11px] uppercase text-[#6B6B68]">Total products</p>
             <p className="font-display text-2xl text-ink">{totalUnique}</p>

@@ -103,7 +103,7 @@ export function RTWProductCard({ product, priority }: RTWProductCardProps) {
       onKeyDown={(e) => {
         if (e.key === "Enter") goToProduct();
       }}
-      className="group relative cursor-pointer bg-white"
+      className="group relative cursor-pointer bg-bg-card"
     >
       <div
         className="relative aspect-[3/4] overflow-hidden bg-[#F8F8F6]"
@@ -148,7 +148,7 @@ export function RTWProductCard({ product, priority }: RTWProductCardProps) {
         </div>
 
         <div
-          className="absolute bottom-0 left-0 right-0 translate-y-full bg-white px-3.5 py-3 transition-transform duration-[400ms] ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:translate-y-0"
+          className="absolute bottom-0 left-0 right-0 translate-y-full bg-bg-card px-3.5 py-3 transition-transform duration-[400ms] ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:translate-y-0"
           onClick={(e) => e.stopPropagation()}
         >
           {oneSizeOnly ? (

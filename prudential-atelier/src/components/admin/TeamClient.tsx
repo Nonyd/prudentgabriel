@@ -87,12 +87,12 @@ export function TeamClient({
         </button>
       </div>
 
-      <div className="mb-6 border border-[#EBEBEA] bg-white">
-        <div className="border-b border-[#EBEBEA] px-4 py-3">
+      <div className="mb-6 border border-sand bg-bg-card">
+        <div className="border-b border-sand px-4 py-3">
           <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Active Members</p>
         </div>
         <table className="w-full min-w-[840px]">
-          <thead className="border-b border-[#EBEBEA] bg-[#FAFAFA]">
+          <thead className="border-b border-sand bg-[#FAFAFA]">
             <tr className="font-body text-[10px] uppercase tracking-[0.08em] text-[#6B6B68]">
               <th className="px-3 py-2 text-left">Avatar</th>
               <th className="px-3 py-2 text-left">Name + Email</th>
@@ -124,7 +124,7 @@ export function TeamClient({
                 </td>
                 <td className="px-3 py-3 font-body text-xs text-[#6B6B68]">{new Date(member.createdAt).toLocaleDateString("en-GB")}</td>
                 <td className="px-3 py-3 text-right">
-                  <select value={member.role} onChange={(e) => void changeRole(member, e.target.value as Role)} className="mr-3 border border-[#EBEBEA] px-2 py-1 font-body text-xs">
+                  <select value={member.role} onChange={(e) => void changeRole(member, e.target.value as Role)} className="mr-3 border border-sand px-2 py-1 font-body text-xs">
                     <option value="ADMIN">ADMIN</option>
                     <option value="SUPER_ADMIN">SUPER_ADMIN</option>
                   </select>
@@ -144,12 +144,12 @@ export function TeamClient({
       </div>
 
       {invitations.length > 0 ? (
-        <div className="border border-[#EBEBEA] bg-white">
-          <div className="border-b border-[#EBEBEA] px-4 py-3">
+        <div className="border border-sand bg-bg-card">
+          <div className="border-b border-sand px-4 py-3">
             <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Pending Invitations</p>
           </div>
           <table className="w-full min-w-[840px]">
-            <thead className="border-b border-[#EBEBEA] bg-[#FAFAFA]">
+            <thead className="border-b border-sand bg-[#FAFAFA]">
               <tr className="font-body text-[10px] uppercase tracking-[0.08em] text-[#6B6B68]">
                 <th className="px-3 py-2 text-left">Email</th>
                 <th className="px-3 py-2 text-left">Role</th>

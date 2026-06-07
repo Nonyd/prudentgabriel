@@ -18,18 +18,20 @@ function CarouselArrowLeft() {
         y1="4"
         x2="4"
         y2="24"
-        stroke="rgba(68,41,19,0.4)"
+        stroke="var(--lightbr)"
+        strokeOpacity="0.4"
         strokeWidth="1.5"
-        className="transition-all duration-200 group-hover:stroke-[rgba(68,41,19,0.9)]"
+        className="transition-all duration-200 group-hover:[stroke-opacity:0.9]"
       />
       <line
         x1="4"
         y1="24"
         x2="20"
         y2="44"
-        stroke="rgba(68,41,19,0.4)"
+        stroke="var(--lightbr)"
+        strokeOpacity="0.4"
         strokeWidth="1.5"
-        className="transition-all duration-200 group-hover:stroke-[rgba(68,41,19,0.9)]"
+        className="transition-all duration-200 group-hover:[stroke-opacity:0.9]"
       />
     </svg>
   );
@@ -43,18 +45,20 @@ function CarouselArrowRight() {
         y1="4"
         x2="20"
         y2="24"
-        stroke="rgba(68,41,19,0.4)"
+        stroke="var(--lightbr)"
+        strokeOpacity="0.4"
         strokeWidth="1.5"
-        className="transition-all duration-200 group-hover:stroke-[rgba(68,41,19,0.9)]"
+        className="transition-all duration-200 group-hover:[stroke-opacity:0.9]"
       />
       <line
         x1="20"
         y1="24"
         x2="4"
         y2="44"
-        stroke="rgba(68,41,19,0.4)"
+        stroke="var(--lightbr)"
+        strokeOpacity="0.4"
         strokeWidth="1.5"
-        className="transition-all duration-200 group-hover:stroke-[rgba(68,41,19,0.9)]"
+        className="transition-all duration-200 group-hover:[stroke-opacity:0.9]"
       />
     </svg>
   );
@@ -119,8 +123,8 @@ function TestimonialCard({ item, mobile }: { item: HomepageTestimonial; mobile?:
     <article
       className={
         mobile
-          ? "flex w-full min-w-full shrink-0 flex-col overflow-hidden rounded-lg border-[0.5px] border-sand bg-white"
-          : "flex shrink-0 flex-row overflow-hidden rounded-lg border-[0.5px] border-sand bg-white"
+          ? "flex w-full min-w-full shrink-0 flex-col overflow-hidden rounded-lg border-[0.5px] border-sand bg-bg-card"
+          : "flex shrink-0 flex-row overflow-hidden rounded-lg border-[0.5px] border-sand bg-bg-card"
       }
       style={mobile ? undefined : { width: CARD_WIDTH, height: CARD_HEIGHT }}
     >

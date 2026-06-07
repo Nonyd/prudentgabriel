@@ -89,9 +89,9 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
           name="search"
           defaultValue={search}
           placeholder="Order # or email"
-          className="min-w-[200px] flex-1 rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 text-charcoal"
+          className="min-w-[200px] flex-1 rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
         />
-        <select name="status" defaultValue={status} className="rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-2 text-charcoal">
+        <select name="status" defaultValue={status} className="rounded-sm border border-sand bg-canvas px-2 py-2 text-charcoal">
           <option value="">All statuses</option>
           {Object.values(OrderStatus).map((s) => (
             <option key={s} value={s}>
@@ -102,7 +102,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
         <select
           name="paymentStatus"
           defaultValue={paymentStatus}
-          className="rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-2 text-charcoal"
+          className="rounded-sm border border-sand bg-canvas px-2 py-2 text-charcoal"
         >
           <option value="">All payments</option>
           {Object.values(PaymentStatus).map((s) => (

@@ -55,7 +55,7 @@ export function AdminReviewsHub({
         )}
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-1 rounded-sm border border-[#EBEBEA] bg-canvas p-1">
+      <div className="mt-6 flex flex-wrap gap-1 rounded-sm border border-sand bg-canvas p-1">
         {tabs.map((t) => (
           <button
             key={t.id}

@@ -82,7 +82,7 @@ export function ApplicationDetailClient({ application }: { application: Applicat
   return (
     <div className="mt-6 space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-5">
+        <div className="rounded-sm border border-sand bg-canvas p-5">
           <p className="font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">Applicant</p>
           <p className="mt-2 font-display text-xl text-ink">{application.fullName}</p>
           <p className="font-body text-sm text-charcoal-mid">{application.email}</p>
@@ -103,13 +103,13 @@ export function ApplicationDetailClient({ application }: { application: Applicat
           ) : null}
         </div>
 
-        <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-5 space-y-4">
+        <div className="rounded-sm border border-sand bg-canvas p-5 space-y-4">
           <div>
             <label className="font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">Status</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as ApplicationStatus)}
-              className="mt-2 w-full rounded-sm border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+              className="mt-2 w-full rounded-sm border border-sand px-3 py-2 font-body text-sm"
             >
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
@@ -128,7 +128,7 @@ export function ApplicationDetailClient({ application }: { application: Applicat
               value={adminNotes}
               onChange={(e) => setAdminNotes(e.target.value)}
               rows={4}
-              className="mt-2 w-full rounded-sm border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+              className="mt-2 w-full rounded-sm border border-sand px-3 py-2 font-body text-sm"
             />
             <button
               type="button"
@@ -145,14 +145,14 @@ export function ApplicationDetailClient({ application }: { application: Applicat
               value={emailSubject}
               onChange={(e) => setEmailSubject(e.target.value)}
               placeholder="Subject"
-              className="mt-2 w-full rounded-sm border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+              className="mt-2 w-full rounded-sm border border-sand px-3 py-2 font-body text-sm"
             />
             <textarea
               value={emailBody}
               onChange={(e) => setEmailBody(e.target.value)}
               rows={4}
               placeholder="Message"
-              className="mt-2 w-full rounded-sm border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+              className="mt-2 w-full rounded-sm border border-sand px-3 py-2 font-body text-sm"
             />
             <button
               type="button"
@@ -167,13 +167,13 @@ export function ApplicationDetailClient({ application }: { application: Applicat
       </div>
 
       {application.coverLetter ? (
-        <section className="rounded-sm border border-[#EBEBEA] bg-canvas p-5">
+        <section className="rounded-sm border border-sand bg-canvas p-5">
           <p className="font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">Cover letter</p>
           <p className="mt-2 whitespace-pre-wrap font-body text-sm text-charcoal">{application.coverLetter}</p>
         </section>
       ) : null}
 
-      <section className="rounded-sm border border-[#EBEBEA] bg-canvas p-5">
+      <section className="rounded-sm border border-sand bg-canvas p-5">
         <p className="font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">Documents</p>
         <div className="mt-3 flex flex-wrap gap-4">
           {application.cvUrl ? (
@@ -200,7 +200,7 @@ export function ApplicationDetailClient({ application }: { application: Applicat
       </section>
 
       {customFields.length > 0 ? (
-        <section className="rounded-sm border border-[#EBEBEA] bg-canvas p-5">
+        <section className="rounded-sm border border-sand bg-canvas p-5">
           <p className="font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">Custom field responses</p>
           <dl className="mt-3 space-y-2">
             {customFields
@@ -220,7 +220,7 @@ export function ApplicationDetailClient({ application }: { application: Applicat
       ) : null}
 
       {application.emailsSent.length > 0 ? (
-        <section className="rounded-sm border border-[#EBEBEA] bg-canvas p-5">
+        <section className="rounded-sm border border-sand bg-canvas p-5">
           <p className="font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">Email log</p>
           <ul className="mt-3 space-y-2">
             {application.emailsSent.map((e) => (

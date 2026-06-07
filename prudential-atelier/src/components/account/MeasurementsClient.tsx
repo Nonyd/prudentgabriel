@@ -166,7 +166,7 @@ export function MeasurementsClient({ initial }: { initial: Measurement | null })
                     min="0"
                     value={form[key] ?? ""}
                     onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                    className="mt-1 w-full border border-sand bg-white px-3 py-2 font-sans text-sm"
+                    className="mt-1 w-full border border-sand bg-input-bg px-3 py-2 font-sans text-sm"
                   />
                 </label>
               ))}

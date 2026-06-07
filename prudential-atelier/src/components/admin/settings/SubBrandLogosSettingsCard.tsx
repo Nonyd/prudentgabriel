@@ -40,7 +40,7 @@ function BrandLogoPair({
   onWhiteChange: (v: string) => void;
 }) {
   return (
-    <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
+    <div className="rounded-sm border border-sand bg-canvas p-6">
       <h3 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
         {brand.title}
       </h3>
@@ -61,13 +61,13 @@ function BrandLogoPair({
       {(darkUrl || whiteUrl) && (
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           {darkUrl ? (
-            <div className="flex items-center justify-center rounded-sm border border-[#EBEBEA] bg-[var(--ivory)] p-4">
+            <div className="flex items-center justify-center rounded-sm border border-sand bg-[var(--ivory)] p-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={darkUrl} alt={`${brand.title} light preview`} className="max-h-12 w-auto object-contain" />
             </div>
           ) : null}
           {whiteUrl ? (
-            <div className="flex items-center justify-center rounded-sm border border-[#EBEBEA] bg-[var(--sidebar-bg)] p-4">
+            <div className="flex items-center justify-center rounded-sm border border-sand bg-[var(--sidebar-bg)] p-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={whiteUrl} alt={`${brand.title} dark preview`} className="max-h-12 w-auto object-contain" />
             </div>

@@ -230,7 +230,7 @@ export function PublicInvoiceView({ token }: { token: string }) {
         ) : null}
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 flex flex-wrap items-center justify-between gap-3 border-t border-[#EBEBEA] bg-white px-6 py-4">
+      <div className="fixed bottom-0 left-0 right-0 flex flex-wrap items-center justify-between gap-3 border-t border-[#EBEBEA] bg-bg-card px-6 py-4">
         <a
           href={`/api/invoice/${token}/pdf`}
           className="inline-flex items-center bg-[#37392d] px-4 py-2 font-body text-[11px] font-medium uppercase tracking-[0.1em] text-white"

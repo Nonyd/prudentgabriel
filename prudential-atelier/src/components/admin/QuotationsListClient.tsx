@@ -183,12 +183,12 @@ export function QuotationsListClient() {
           placeholder="Search ref or client…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="min-w-[200px] flex-1 rounded border border-sand bg-white px-3 py-2 font-sans text-sm"
+          className="min-w-[200px] flex-1 rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded border border-sand bg-white px-3 py-2 font-sans text-sm"
+          className="rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         >
           <option value="all">All statuses</option>
           {(["DRAFT", "SENT", "APPROVED", "REJECTED", "CONVERTED"] as QuoteStatus[]).map((s) => (

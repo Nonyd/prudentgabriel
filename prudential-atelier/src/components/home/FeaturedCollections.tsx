@@ -83,7 +83,7 @@ export function FeaturedCollections({
   const [a, b, c] = [collections[0], collections[1], collections[2]];
 
   return (
-    <section className="bg-white py-20 md:py-[100px]">
+    <section className="bg-bg-page py-20 md:py-[100px]">
       <div className="mx-auto max-w-[1400px] px-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>

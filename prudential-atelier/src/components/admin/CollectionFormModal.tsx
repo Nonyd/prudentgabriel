@@ -298,8 +298,8 @@ export function CollectionFormModal({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/50" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] flex max-h-[92vh] w-[700px] max-w-[96vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden border border-[#EBEBEA] bg-white shadow-xl">
-          <div className="flex shrink-0 items-center justify-between border-b border-[#EBEBEA] px-6 py-4">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] flex max-h-[92vh] w-[700px] max-w-[96vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden border border-sand bg-bg-card shadow-xl">
+          <div className="flex shrink-0 items-center justify-between border-b border-sand px-6 py-4">
             <Dialog.Title className="font-display text-xl text-ink">
               {isEdit ? `Edit: ${editing?.name ?? ""}` : "Create collection"}
             </Dialog.Title>
@@ -311,7 +311,7 @@ export function CollectionFormModal({
           <form onSubmit={onSubmit} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
               <div className="grid gap-0 pb-4 md:grid-cols-[3fr_2fr]">
-            <div className="space-y-6 border-b border-[#EBEBEA] p-6 md:border-b-0 md:border-r">
+            <div className="space-y-6 border-b border-sand p-6 md:border-b-0 md:border-r">
               <div>
                 <label className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">
                   Collection name *
@@ -319,7 +319,7 @@ export function CollectionFormModal({
                 <input
                   {...form.register("name")}
                   onBlur={onNameBlur}
-                  className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 text-[13px]"
+                  className="mt-1 w-full border border-sand px-3 py-2 text-[13px]"
                 />
                 {form.formState.errors.name ? (
                   <p className="mt-1 text-[11px] text-red-700">{form.formState.errors.name.message}</p>
@@ -330,7 +330,7 @@ export function CollectionFormModal({
                 <label className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">
                   Slug
                 </label>
-                <input {...form.register("slug")} className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 font-mono text-[12px]" />
+                <input {...form.register("slug")} className="mt-1 w-full border border-sand px-3 py-2 font-mono text-[12px]" />
                 <p className="mt-1 text-[11px] text-[#8A8A86]">prudentgabriel.com/collections/{slugPreview}</p>
                 {form.formState.errors.slug ? (
                   <p className="mt-1 text-[11px] text-red-700">{form.formState.errors.slug.message}</p>
@@ -341,20 +341,20 @@ export function CollectionFormModal({
                 <label className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">
                   Tagline / excerpt
                 </label>
-                <input {...form.register("excerpt")} maxLength={200} className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 text-[13px]" />
+                <input {...form.register("excerpt")} maxLength={200} className="mt-1 w-full border border-sand px-3 py-2 text-[13px]" />
               </div>
 
               <div>
                 <label className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">
                   Description
                 </label>
-                <textarea {...form.register("description")} rows={4} maxLength={2000} className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 text-[13px]" />
+                <textarea {...form.register("description")} rows={4} maxLength={2000} className="mt-1 w-full border border-sand px-3 py-2 text-[13px]" />
               </div>
 
               <div className="flex flex-wrap gap-4">
                 <div className="min-w-[100px] flex-1">
                   <label className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">Season</label>
-                  <input {...form.register("season")} maxLength={10} className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 text-[13px]" />
+                  <input {...form.register("season")} maxLength={10} className="mt-1 w-full border border-sand px-3 py-2 text-[13px]" />
                 </div>
                 <div className="w-28">
                   <label className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">Year</label>
@@ -367,14 +367,14 @@ export function CollectionFormModal({
                         return Number.isFinite(n) ? n : null;
                       },
                     })}
-                    className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 text-[13px]"
+                    className="mt-1 w-full border border-sand px-3 py-2 text-[13px]"
                   />
                 </div>
               </div>
 
               <div>
                 <p className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">Auto-tag</p>
-                <input {...form.register("autoTag")} className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 text-[13px]" placeholder="e.g. rich-regal" />
+                <input {...form.register("autoTag")} className="mt-1 w-full border border-sand px-3 py-2 text-[13px]" placeholder="e.g. rich-regal" />
                 <p className="mt-1 text-[11px] text-[#8A8A86]">All products with this tag are automatically included.</p>
                 {tagMatchCount !== null ? (
                   <p className="mt-1 font-body text-[12px] text-olive">Currently matches {tagMatchCount} published products</p>
@@ -386,17 +386,17 @@ export function CollectionFormModal({
                 <input
                   value={searchQ}
                   onChange={(e) => setSearchQ(e.target.value)}
-                  className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 text-[13px]"
+                  className="mt-1 w-full border border-sand px-3 py-2 text-[13px]"
                   placeholder="Search products…"
                 />
                 {searchHits.length > 0 ? (
-                  <ul className="mt-2 max-h-48 overflow-auto border border-[#EBEBEA] bg-[#FAFAFA]">
+                  <ul className="mt-2 max-h-48 overflow-auto border border-sand bg-[#FAFAFA]">
                     {searchHits.map((p) => (
                       <li key={p.id}>
                         <button
                           type="button"
                           onClick={() => addManual(p)}
-                          className="flex w-full items-center gap-2 px-2 py-2 text-left text-[12px] hover:bg-white"
+                          className="flex w-full items-center gap-2 px-2 py-2 text-left text-[12px] hover:bg-bg-card"
                         >
                           {p.images[0]?.url ? (
                             <span className="relative h-10 w-8 shrink-0 overflow-hidden bg-[#EEE]">
@@ -415,7 +415,7 @@ export function CollectionFormModal({
                     return (
                       <span
                         key={id}
-                        className="inline-flex items-center gap-1 border border-[#EBEBEA] bg-[#FAFAFA] px-2 py-1 text-[11px]"
+                        className="inline-flex items-center gap-1 border border-sand bg-[#FAFAFA] px-2 py-1 text-[11px]"
                       >
                         {pr?.name ?? id}
                         <button type="button" className="text-red-700" onClick={() => removeManual(id)} aria-label="Remove">
@@ -443,17 +443,17 @@ export function CollectionFormModal({
                 </label>
                 <input
                   {...form.register("coverImage")}
-                  className="mt-2 w-full border border-[#EBEBEA] px-2 py-1 font-mono text-[11px]"
+                  className="mt-2 w-full border border-sand px-2 py-1 font-mono text-[11px]"
                   placeholder="Or paste image URL"
                 />
-                <input {...form.register("coverImageAlt")} className="mt-2 w-full border border-[#EBEBEA] px-2 py-1 text-[12px]" placeholder="Alt text" />
+                <input {...form.register("coverImageAlt")} className="mt-2 w-full border border-sand px-2 py-1 text-[12px]" placeholder="Alt text" />
                 <p className="mt-1 text-[10px] text-[#8A8A86]">Portrait editorial (3:4) works best.</p>
                 <div className="mt-2 max-w-[220px]">
                   <UploadProgressBar value={uploadProgress} />
                 </div>
               </div>
 
-              <div className="space-y-3 border-t border-[#EBEBEA] pt-4">
+              <div className="space-y-3 border-t border-sand pt-4">
                 <label className="flex items-center gap-2 font-body text-[13px]">
                   <input type="checkbox" {...form.register("isPublished")} className="accent-olive" />
                   Published
@@ -473,12 +473,12 @@ export function CollectionFormModal({
                         return Number.isFinite(n) ? n : 0;
                       },
                     })}
-                    className="mt-1 w-full border border-[#EBEBEA] px-2 py-1"
+                    className="mt-1 w-full border border-sand px-2 py-1"
                   />
                 </div>
               </div>
 
-              <div className="border-t border-[#EBEBEA] pt-4">
+              <div className="border-t border-sand pt-4">
                 <button
                   type="button"
                   onClick={() => setSeoOpen((v) => !v)}
@@ -488,12 +488,12 @@ export function CollectionFormModal({
                 </button>
                 {seoOpen ? (
                   <div className="mt-3 space-y-2">
-                    <input {...form.register("metaTitle")} maxLength={60} className="w-full border border-[#EBEBEA] px-2 py-1 text-[12px]" placeholder="Meta title" />
+                    <input {...form.register("metaTitle")} maxLength={60} className="w-full border border-sand px-2 py-1 text-[12px]" placeholder="Meta title" />
                     <textarea
                       {...form.register("metaDescription")}
                       maxLength={160}
                       rows={3}
-                      className="max-h-40 min-h-[4.5rem] w-full resize-y border border-[#EBEBEA] px-2 py-1 text-[12px]"
+                      className="max-h-40 min-h-[4.5rem] w-full resize-y border border-sand px-2 py-1 text-[12px]"
                       placeholder="Meta description"
                     />
                   </div>
@@ -503,9 +503,9 @@ export function CollectionFormModal({
               </div>
             </div>
 
-            <div className="relative z-20 flex shrink-0 justify-end gap-3 border-t border-[#EBEBEA] bg-white px-6 py-4">
+            <div className="relative z-20 flex shrink-0 justify-end gap-3 border-t border-sand bg-bg-card px-6 py-4">
               <Dialog.Close asChild>
-                <button type="button" className="border border-[#EBEBEA] px-4 py-2 font-body text-[12px]">
+                <button type="button" className="border border-sand px-4 py-2 font-body text-[12px]">
                   Cancel
                 </button>
               </Dialog.Close>

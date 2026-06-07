@@ -97,14 +97,14 @@ export function EmailTemplatesEditor({
   };
 
   return (
-    <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
+    <div className="rounded-sm border border-sand bg-canvas p-6">
       <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">Email templates</h2>
       <p className="mt-2 font-body text-xs text-[#6B6B68]">
         Customise transactional emails. If not customised here, the app uses its built-in defaults. Variables such as{" "}
         <code className="text-[11px]">{"{{firstName}}"}</code>, <code className="text-[11px]">{"{{orderNumber}}"}</code> may be
         used where supported.
       </p>
-      <ul className="mt-4 divide-y divide-[#EBEBEA] border border-[#EBEBEA]">
+      <ul className="mt-4 divide-y divide-[#EBEBEA] border border-sand">
         {TEMPLATE_KEY_LIST.map((key) => {
           const meta = EMAIL_TEMPLATE_META[key];
           if (!meta) return null;
@@ -126,7 +126,7 @@ export function EmailTemplatesEditor({
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[90] bg-black/50" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-[91] max-h-[90vh] w-[min(96vw,480px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-[#EBEBEA] bg-canvas p-6 shadow-lg">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-[91] max-h-[90vh] w-[min(96vw,480px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-sand bg-canvas p-6 shadow-lg">
             <Dialog.Title className="font-display text-lg text-charcoal">
               {editingKey && EMAIL_TEMPLATE_META[editingKey]?.label}
             </Dialog.Title>
@@ -134,7 +134,7 @@ export function EmailTemplatesEditor({
               <div>
                 <label className="font-body text-xs text-charcoal">Subject</label>
                 <input
-                  className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+                  className="mt-1 w-full border border-sand px-3 py-2 font-body text-sm"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                 />
@@ -142,7 +142,7 @@ export function EmailTemplatesEditor({
               <div>
                 <label className="font-body text-xs text-charcoal">Body</label>
                 <textarea
-                  className="mt-1 min-h-[200px] w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+                  className="mt-1 min-h-[200px] w-full border border-sand px-3 py-2 font-body text-sm"
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                 />
@@ -159,7 +159,7 @@ export function EmailTemplatesEditor({
               </button>
               <div className="flex gap-2">
                 <Dialog.Close asChild>
-                  <button type="button" className="border border-[#EBEBEA] px-4 py-2 font-body text-xs uppercase text-charcoal">
+                  <button type="button" className="border border-sand px-4 py-2 font-body text-xs uppercase text-charcoal">
                     Cancel
                   </button>
                 </Dialog.Close>

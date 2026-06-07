@@ -135,12 +135,12 @@ export function StaffListClient() {
           placeholder="Search name or email…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="min-w-[200px] flex-1 rounded border border-sand bg-white px-3 py-2 font-sans text-sm"
+          className="min-w-[200px] flex-1 rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         />
         <select
           value={department}
           onChange={(e) => setDepartment(e.target.value)}
-          className="rounded border border-sand bg-white px-3 py-2 font-sans text-sm"
+          className="rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         >
           <option value="all">All departments</option>
           {["TAILOR", "BEADER", "DESIGNER", "PATTERN_CUTTER", "GENERAL"].map((d) => (
@@ -152,7 +152,7 @@ export function StaffListClient() {
         <select
           value={active}
           onChange={(e) => setActive(e.target.value)}
-          className="rounded border border-sand bg-white px-3 py-2 font-sans text-sm"
+          className="rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         >
           <option value="all">All statuses</option>
           <option value="true">Active</option>

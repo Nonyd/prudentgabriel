@@ -157,7 +157,7 @@ export function CustomerProfileDrawer({
             exit={{ opacity: 0 }}
           />
           <motion.aside
-            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[360px] flex-col border-l border-[#EBEBEA] bg-white"
+            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[360px] flex-col border-l border-sand bg-bg-card"
             initial={{ x: 360 }}
             animate={{ x: 0 }}
             exit={{ x: 360 }}

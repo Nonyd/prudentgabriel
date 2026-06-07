@@ -1121,6 +1121,7 @@ async function seedBlogPosts() {
       title: "Inside the beading room: 400 hours by hand",
       category: "Behind the Scenes",
       readTime: 6,
+      featuredImage: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
       publishedAt: addDays(new Date(), -10),
       content: `<p>Step inside our beading atelier on Victoria Island and you will hear only the soft click of needle on silk. Each Prudential commission that carries hand embellishment passes through this room — a quiet studio where patience is as essential as skill.</p>
 <p>Our head beaders, many of whom have worked with Mrs. Prudent Gabriel-Okopi for over a decade, apply crystals and pearls one at a time. There are no shortcuts: a single bridal bodice can require four hundred hours of labour, spread across weeks of meticulous work.</p>
@@ -1131,6 +1132,7 @@ async function seedBlogPosts() {
       title: "Choosing silk for a Lagos ceremony: a complete guide",
       category: "Style Guides",
       readTime: 4,
+      featuredImage: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800",
       publishedAt: addDays(new Date(), -18),
       content: `<p>Lagos ceremonies demand fabrics that breathe in humidity yet photograph beautifully under ballroom lighting. Silk remains our first recommendation for evening galas and white weddings — but not all silks behave the same.</p>
 <p>For traditional ceremonies and chieftaincy celebrations, we often pair silk bases with Aso-Oke or George wrappers for structure and cultural resonance. Corporate events favour matte silk crepes and wool-silk blends that hold a sharp line through long receptions.</p>
@@ -1141,6 +1143,7 @@ async function seedBlogPosts() {
       title: "The art of the second fitting",
       category: "Bridal",
       readTime: 5,
+      featuredImage: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=800",
       publishedAt: addDays(new Date(), -25),
       content: `<p>The second fitting is where bespoke fashion becomes personal. The first fitting confirms structure; the second refines the silhouette to your body and your movement.</p>
 <p>Clients should expect honest feedback from our tailors, pin markings for final adjustments, and time to walk, sit, and dance in the toile or nearly-finished garment. Bring the undergarments and shoes you plan to wear.</p>
@@ -1155,6 +1158,7 @@ async function seedBlogPosts() {
         title: p.title,
         content: p.content,
         category: p.category,
+        featuredImage: p.featuredImage,
         status: BlogStatus.PUBLISHED,
         publishedAt: p.publishedAt,
         readTime: p.readTime,
@@ -1167,6 +1171,7 @@ async function seedBlogPosts() {
         excerpt: p.content.replace(/<[^>]+>/g, "").slice(0, 160),
         content: p.content,
         category: p.category,
+        featuredImage: p.featuredImage,
         tags: ["demo", p.category.toLowerCase()],
         status: BlogStatus.PUBLISHED,
         publishedAt: p.publishedAt,

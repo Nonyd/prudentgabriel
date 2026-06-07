@@ -98,7 +98,7 @@ export function ReviewsAdminClient({ reviews, variant }: ReviewsAdminClientProps
   return (
     <div className="mt-6 space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex flex-wrap gap-1 rounded-sm border border-[#EBEBEA] bg-canvas p-1">
+        <div className="flex flex-wrap gap-1 rounded-sm border border-sand bg-canvas p-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -117,13 +117,13 @@ export function ReviewsAdminClient({ reviews, variant }: ReviewsAdminClientProps
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={variant === "product" ? "Search client or product…" : "Search client…"}
-          className="min-w-[200px] flex-1 rounded-sm border border-[#EBEBEA] bg-canvas px-3 py-2 font-body text-sm text-charcoal outline-none focus:border-olive"
+          className="min-w-[200px] flex-1 rounded-sm border border-sand bg-canvas px-3 py-2 font-body text-sm text-charcoal outline-none focus:border-olive"
         />
       </div>
 
-      <div className="-mx-4 overflow-x-auto rounded-sm border border-[#EBEBEA] bg-canvas px-4 md:mx-0 md:px-0">
+      <div className="-mx-4 overflow-x-auto rounded-sm border border-sand bg-canvas px-4 md:mx-0 md:px-0">
         <table className="w-full min-w-[960px] text-left text-sm text-charcoal">
-          <thead className="border-b border-[#EBEBEA] font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">
+          <thead className="border-b border-sand font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">
             <tr>
               <th className="p-3">Client</th>
               {variant === "product" ? <th className="p-3">Product</th> : <th className="p-3">Consultation type</th>}

@@ -297,7 +297,7 @@ function PageEditor({ page }: { page: CmsPageDef }) {
       </div>
 
       {page.sections.map((section) => (
-        <div key={section.id} className="rounded-lg border border-sand bg-white p-5">
+        <div key={section.id} className="rounded-lg border border-sand bg-bg-card p-5">
           <h3 className="mb-4 font-sans text-sm font-semibold text-ink">{section.label}</h3>
           <div className="space-y-4">
             {section.fields.map((field) => (
@@ -344,7 +344,7 @@ export function PagesContentClient() {
         </p>
       </div>
 
-      <div className="rounded-lg border border-sand/80 bg-white px-4 py-3">
+      <div className="rounded-lg border border-sand/80 bg-bg-card px-4 py-3">
         <p className="font-sans text-[13px] leading-relaxed text-text-mid">
           Page-specific images are edited here. Global logos and fallback hero images are in{" "}
           <Link href="/admin/settings/appearance" className="text-choc hover:underline">

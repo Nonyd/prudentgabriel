@@ -135,7 +135,7 @@ export function CollectionDetailPage({
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-bg-card">
       <section className="relative h-[100svh] min-h-[480px] w-full overflow-hidden bg-charcoal">
         {heroImg ? (
           <Image
@@ -161,7 +161,7 @@ export function CollectionDetailPage({
           <span className="font-body text-[9px] font-medium uppercase tracking-[0.2em] [writing-mode:vertical-rl]">
             Scroll
           </span>
-          <span className="h-12 w-px bg-white/30" />
+          <span className="h-12 w-px bg-bg-card/30" />
         </div>
 
         <div className="absolute bottom-8 left-6 right-6 md:bottom-16 md:left-16 md:right-auto">
@@ -205,7 +205,7 @@ export function CollectionDetailPage({
               <button
                 type="button"
                 onClick={scrollToGrid}
-                className="border border-white px-10 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white transition-colors hover:bg-white hover:text-black"
+                className="border border-white px-10 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white transition-colors hover:bg-bg-card hover:text-black"
               >
                 Shop the collection
               </button>
@@ -215,7 +215,7 @@ export function CollectionDetailPage({
       </section>
 
       {collection.description ? (
-        <section className="bg-white py-16 md:py-20">
+        <section className="bg-bg-card py-16 md:py-20">
           <div className="mx-auto max-w-2xl px-6 text-center">
             <p className="font-body text-[12px] tracking-[0.3em] text-gold/40">—— ◆ ——</p>
             <p className="mt-6 font-display text-[20px] font-normal italic leading-[1.7] text-charcoal md:text-[22px]">
@@ -227,7 +227,7 @@ export function CollectionDetailPage({
 
       <section
         id="collection-products"
-        className={cn("py-12 md:py-16", collection.description ? "bg-[#FAFAF8]" : "bg-white")}
+        className={cn("py-12 md:py-16", collection.description ? "bg-bg-page" : "bg-bg-card")}
       >
         <div className="mx-auto mb-8 flex max-w-[1400px] flex-col gap-4 px-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-body text-[11px] font-medium uppercase tracking-[0.12em] text-dark-grey/50">
@@ -245,7 +245,7 @@ export function CollectionDetailPage({
             <Select.Portal>
               <Select.Content
                 position="popper"
-                className="z-50 min-w-[11rem] border-x border-b border-mid-grey bg-white shadow-md"
+                className="z-50 min-w-[11rem] border-x border-b border-mid-grey bg-bg-card shadow-md"
               >
                 <Select.Viewport className="p-0">
                   {(
@@ -300,7 +300,7 @@ export function CollectionDetailPage({
                 _count: p._count,
               };
               return (
-                <div key={p.id} className="bg-white">
+                <div key={p.id} className="bg-bg-card">
                   <RTWProductCard product={cardProduct} priority={index < 8} />
                 </div>
               );

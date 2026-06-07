@@ -85,7 +85,7 @@ export function ContentSettingsForm() {
       const list = rowsForSection(rows, sec.match);
       if (!list.length) return null;
       return (
-        <Accordion.Item key={sec.id} value={sec.id} className="border border-[#EBEBEA] bg-canvas px-4">
+        <Accordion.Item key={sec.id} value={sec.id} className="border border-sand bg-canvas px-4">
           <Accordion.Header>
             <Accordion.Trigger className="flex w-full items-center justify-between py-4 font-body text-xs font-medium uppercase tracking-[0.12em] text-ink">
               {sec.title}
@@ -94,7 +94,7 @@ export function ContentSettingsForm() {
               </span>
             </Accordion.Trigger>
           </Accordion.Header>
-          <Accordion.Content className="border-t border-[#EBEBEA] pb-6 pt-4">
+          <Accordion.Content className="border-t border-sand pb-6 pt-4">
             <div className="space-y-5">
               {list.map((row) => (
                 <div key={row.key}>

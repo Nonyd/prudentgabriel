@@ -55,7 +55,7 @@ export function CustomFieldBuilder({
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         <select
-          className="rounded-sm border border-[#EBEBEA] px-3 py-2 font-body text-xs"
+          className="rounded-sm border border-sand px-3 py-2 font-body text-xs"
           defaultValue=""
           onChange={(e) => {
             const v = e.target.value as FieldType;
@@ -73,7 +73,7 @@ export function CustomFieldBuilder({
       </div>
 
       {fields.map((field, index) => (
-        <div key={field.id} className="rounded-sm border border-[#EBEBEA] bg-[#FAFAFA] p-4">
+        <div key={field.id} className="rounded-sm border border-sand bg-[#FAFAFA] p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2">
               <button type="button" className="font-body text-xs text-charcoal-mid" onClick={() => moveField(field.id, -1)}>
@@ -96,7 +96,7 @@ export function CustomFieldBuilder({
               value={field.label}
               onChange={(e) => updateField(field.id, { label: e.target.value })}
               placeholder="Label"
-              className="w-full rounded-sm border border-[#EBEBEA] px-2 py-1.5 font-body text-sm"
+              className="w-full rounded-sm border border-sand px-2 py-1.5 font-body text-sm"
             />
             {field.type !== "section_heading" ? (
               <>
@@ -104,13 +104,13 @@ export function CustomFieldBuilder({
                   value={field.placeholder ?? ""}
                   onChange={(e) => updateField(field.id, { placeholder: e.target.value })}
                   placeholder="Placeholder"
-                  className="w-full rounded-sm border border-[#EBEBEA] px-2 py-1.5 font-body text-sm"
+                  className="w-full rounded-sm border border-sand px-2 py-1.5 font-body text-sm"
                 />
                 <input
                   value={field.helpText ?? ""}
                   onChange={(e) => updateField(field.id, { helpText: e.target.value })}
                   placeholder="Help text"
-                  className="w-full rounded-sm border border-[#EBEBEA] px-2 py-1.5 font-body text-sm"
+                  className="w-full rounded-sm border border-sand px-2 py-1.5 font-body text-sm"
                 />
                 <div className="flex items-center justify-between">
                   <span className="font-body text-xs text-charcoal">Required</span>
@@ -134,7 +134,7 @@ export function CustomFieldBuilder({
                         options[i] = e.target.value;
                         updateField(field.id, { options });
                       }}
-                      className="flex-1 rounded-sm border border-[#EBEBEA] px-2 py-1 font-body text-xs"
+                      className="flex-1 rounded-sm border border-sand px-2 py-1 font-body text-xs"
                     />
                     <button
                       type="button"
@@ -164,14 +164,14 @@ export function CustomFieldBuilder({
                   type="number"
                   value={field.minValue ?? 1}
                   onChange={(e) => updateField(field.id, { minValue: Number(e.target.value) })}
-                  className="rounded-sm border border-[#EBEBEA] px-2 py-1 font-body text-xs"
+                  className="rounded-sm border border-sand px-2 py-1 font-body text-xs"
                   placeholder="Min"
                 />
                 <input
                   type="number"
                   value={field.maxValue ?? 5}
                   onChange={(e) => updateField(field.id, { maxValue: Number(e.target.value) })}
-                  className="rounded-sm border border-[#EBEBEA] px-2 py-1 font-body text-xs"
+                  className="rounded-sm border border-sand px-2 py-1 font-body text-xs"
                   placeholder="Max"
                 />
               </div>

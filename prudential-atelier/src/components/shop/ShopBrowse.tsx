@@ -270,7 +270,7 @@ function SortSelect() {
         <ChevronDown className="h-3.5 w-3.5" />
       </Select.Trigger>
       <Select.Portal>
-        <Select.Content className="z-50 min-w-[10rem] rounded-sm border border-sand bg-white shadow-md">
+        <Select.Content className="z-50 min-w-[10rem] rounded-sm border border-sand bg-bg-card shadow-md">
           <Select.Viewport className="p-1">
             {[
               ["featured", "Featured"],

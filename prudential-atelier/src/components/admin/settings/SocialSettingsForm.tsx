@@ -79,7 +79,7 @@ export function SocialSettingsForm({ rows, onSaved }: { rows: Row[]; onSaved: ()
   };
 
   return (
-    <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
+    <div className="rounded-sm border border-sand bg-canvas p-6">
       <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">Instagram Handles</h2>
       <div className="mt-6 space-y-5">
         {FIELDS.map((field) => (
@@ -87,7 +87,7 @@ export function SocialSettingsForm({ rows, onSaved }: { rows: Row[]; onSaved: ()
             <label className="font-body text-xs text-charcoal">{field.label}</label>
             <input
               type="text"
-              className="mt-1.5 w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+              className="mt-1.5 w-full border border-sand px-3 py-2 font-body text-sm"
               value={values[field.key] ?? field.fallback}
               onChange={(event) => setValues((prev) => ({ ...prev, [field.key]: event.target.value }))}
             />

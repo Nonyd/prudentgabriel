@@ -56,7 +56,7 @@ export function AdminImageUrlField({
     <div>
       <label className="font-body text-xs text-charcoal">{label}</label>
       <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start">
-        <div className="relative h-28 w-full max-w-[220px] shrink-0 overflow-hidden rounded-sm border border-[#EBEBEA] bg-[#F5F5F3]">
+        <div className="relative h-28 w-full max-w-[220px] shrink-0 overflow-hidden rounded-sm border border-sand bg-[#F5F5F3]">
           {canPreview && !broken ? (
             // eslint-disable-next-line @next/next/no-img-element -- arbitrary CDN / user URLs
             <img src={url} alt="" className="h-full w-full object-contain" onError={() => setBroken(true)} />
@@ -70,7 +70,7 @@ export function AdminImageUrlField({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <input
               type="text"
-              className="min-w-0 flex-1 border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+              className="min-w-0 flex-1 border border-sand px-3 py-2 font-body text-sm"
               value={value}
               placeholder="Image URL"
               onChange={(e) => {
@@ -93,14 +93,14 @@ export function AdminImageUrlField({
                   <button
                     type="button"
                     disabled={!canPreview}
-                    className="border border-[#EBEBEA] px-3 py-2 font-body text-[11px] font-medium uppercase tracking-wide text-charcoal disabled:cursor-not-allowed disabled:opacity-40"
+                    className="border border-sand px-3 py-2 font-body text-[11px] font-medium uppercase tracking-wide text-charcoal disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Enlarge
                   </button>
                 </Dialog.Trigger>
                 <Dialog.Portal>
                   <Dialog.Overlay className="fixed inset-0 z-[90] bg-black/50" />
-                  <Dialog.Content className="fixed left-1/2 top-1/2 z-[91] max-h-[90vh] w-[min(92vw,720px)] -translate-x-1/2 -translate-y-1/2 overflow-auto border border-[#EBEBEA] bg-canvas p-5 shadow-lg">
+                  <Dialog.Content className="fixed left-1/2 top-1/2 z-[91] max-h-[90vh] w-[min(92vw,720px)] -translate-x-1/2 -translate-y-1/2 overflow-auto border border-sand bg-canvas p-5 shadow-lg">
                     <Dialog.Title className="font-body text-sm font-medium text-charcoal">Preview</Dialog.Title>
                     <div className="relative mx-auto mt-4 flex min-h-[200px] max-h-[70vh] w-full items-center justify-center bg-[#F5F5F3] p-2">
                       {canPreview && !broken ? (
@@ -109,7 +109,7 @@ export function AdminImageUrlField({
                       ) : null}
                     </div>
                     <Dialog.Close asChild>
-                      <button type="button" className="mt-4 w-full border border-[#EBEBEA] py-2 font-body text-xs uppercase text-charcoal">
+                      <button type="button" className="mt-4 w-full border border-sand py-2 font-body text-xs uppercase text-charcoal">
                         Close
                       </button>
                     </Dialog.Close>

@@ -40,7 +40,7 @@ export function BespokeAdminTable({ initial }: { initial: BespokeRequest[] }) {
 
   return (
     <div className="mt-8">
-      <div className="flex flex-wrap gap-2 border-b border-[#EBEBEA] pb-3">
+      <div className="flex flex-wrap gap-2 border-b border-sand pb-3">
         {tabs.map((t) => (
           <button
             key={t}
@@ -54,7 +54,7 @@ export function BespokeAdminTable({ initial }: { initial: BespokeRequest[] }) {
           </button>
         ))}
       </div>
-      <div className="-mx-4 overflow-x-auto rounded-sm border border-[#EBEBEA] bg-canvas px-4 md:mx-0 md:px-0">
+      <div className="-mx-4 overflow-x-auto rounded-sm border border-sand bg-canvas px-4 md:mx-0 md:px-0">
         <table className="w-full min-w-[700px] text-left text-sm text-charcoal">
           <thead className="text-[11px] uppercase text-[#A8A8A4]">
             <tr>
@@ -70,7 +70,7 @@ export function BespokeAdminTable({ initial }: { initial: BespokeRequest[] }) {
           </thead>
           <tbody>
             {filtered.map((r) => (
-              <tr key={r.id} className="border-t border-[#EBEBEA]">
+              <tr key={r.id} className="border-t border-sand">
                 <td className="p-3 font-label text-gold">
                   <Link href={`/admin/bespoke/${r.id}`} className="underline hover:text-charcoal">
                     {r.requestNumber}
@@ -87,7 +87,7 @@ export function BespokeAdminTable({ initial }: { initial: BespokeRequest[] }) {
                 <td className="p-3 text-xs text-[#A8A8A4]">{r.createdAt.toLocaleDateString("en-NG")}</td>
                 <td className="p-3">
                   <select
-                    className="rounded-sm border border-[#EBEBEA] bg-canvas px-2 py-1 text-xs text-charcoal"
+                    className="rounded-sm border border-sand bg-canvas px-2 py-1 text-xs text-charcoal"
                     value={r.status}
                     onChange={(e) => void updateStatus(r.id, e.target.value as BespokeStatus)}
                   >

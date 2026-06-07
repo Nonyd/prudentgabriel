@@ -60,7 +60,7 @@ function ModalShell({
       <div
         className="relative max-h-[90vh] w-full max-w-[420px] overflow-y-auto"
         style={{
-          background: "var(--ivory)",
+          background: "var(--bg-card)",
           borderRadius: "12px",
           padding: "48px 40px",
         }}
@@ -126,7 +126,7 @@ const labelStyle: React.CSSProperties = {
 };
 
 const inputClass =
-  "w-full border bg-white text-choc outline-none focus:border-lightbr";
+  "w-full border bg-input-bg text-choc outline-none focus:border-lightbr";
 const inputStyle: React.CSSProperties = {
   border: "0.5px solid var(--sand)",
   borderRadius: "4px",

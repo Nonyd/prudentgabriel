@@ -209,7 +209,7 @@ export function ContactForm({ autoReplyHint }: { autoReplyHint?: string }) {
             minLength={20}
             rows={5}
             placeholder="Tell us how we can help (min. 20 characters)"
-            className="mt-2 w-full resize-y rounded-[3px] border border-sand bg-ivory/50 p-3 outline-none focus:border-choc"
+            className="mt-2 w-full resize-y rounded-[3px] border border-sand bg-input-bg p-3 outline-none focus:border-choc"
             style={{
               fontFamily: "var(--font-body)",
               fontSize: "14px",

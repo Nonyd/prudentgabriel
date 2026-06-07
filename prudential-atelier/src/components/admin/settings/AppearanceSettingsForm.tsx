@@ -40,7 +40,7 @@ export function AppearanceSettingsForm({
 
   return (
     <div className="space-y-10">
-      <div className="rounded-lg border border-sand/80 bg-white px-4 py-3">
+      <div className="rounded-lg border border-sand/80 bg-bg-card px-4 py-3">
         <p className="font-body text-[13px] leading-relaxed text-[#6B6B68]">
           Global brand assets and fallback images used when a page has no specific image set.
           Page-specific copy and hero images are edited in{" "}

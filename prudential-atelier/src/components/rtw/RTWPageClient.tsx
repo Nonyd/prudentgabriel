@@ -157,8 +157,8 @@ export function RTWPageClient({
           : "FEATURED";
 
   return (
-    <div className="min-h-screen bg-white pb-20">
-      <header className="flex h-[140px] flex-col items-center justify-center border-b border-mid-grey bg-white md:h-[200px]">
+    <div className="min-h-screen bg-bg-card pb-20">
+      <header className="flex h-[140px] flex-col items-center justify-center border-b border-mid-grey bg-bg-card md:h-[200px]">
         <p className="font-body text-[9px] font-medium uppercase tracking-[0.25em] text-dark-grey">{heroLabel}</p>
         <h1 className="mt-2 text-center font-display text-[32px] font-normal italic leading-[0.95] text-black md:text-[56px]">
           {heroTitle}
@@ -168,7 +168,7 @@ export function RTWPageClient({
         ) : null}
       </header>
 
-      <div className="sticky top-0 z-30 border-b border-mid-grey bg-white">
+      <div className="sticky top-0 z-30 border-b border-mid-grey bg-bg-card">
         <div className="mx-auto flex h-12 max-w-[1600px] items-center gap-4 px-6">
           <div className="scrollbar-hide flex min-w-0 flex-1 items-center gap-0 overflow-x-auto">
             {CHIPS.map((chip) => {
@@ -220,7 +220,7 @@ export function RTWPageClient({
               <Select.Portal>
                 <Select.Content
                   position="popper"
-                  className="z-50 min-w-[10rem] border-x border-b border-mid-grey bg-white shadow-md"
+                  className="z-50 min-w-[10rem] border-x border-b border-mid-grey bg-bg-card shadow-md"
                 >
                   <Select.Viewport className="p-0">
                     {(
@@ -255,7 +255,7 @@ export function RTWPageClient({
         ) : (
           <div className="grid grid-cols-2 gap-px bg-mid-grey md:grid-cols-3 xl:grid-cols-4">
             {items.map((p, index) => (
-              <div key={p.id} className="bg-white">
+              <div key={p.id} className="bg-bg-card">
                 <RTWProductCard product={p} priority={index < 8} />
               </div>
             ))}

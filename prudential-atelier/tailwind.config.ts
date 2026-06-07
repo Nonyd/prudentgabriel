@@ -41,6 +41,8 @@ const config: Config = {
         bg: "var(--bg-surface)",
         "bg-page": "var(--bg-page)",
         "bg-card": "var(--bg-card)",
+        "input-bg": "var(--input-bg)",
+        "input-border": "var(--input-border)",
         "hero-bg": "var(--hero-bg)",
         "sidebar-bg": "var(--sidebar-bg)",
         "footer-bg": "var(--footer-bg)",

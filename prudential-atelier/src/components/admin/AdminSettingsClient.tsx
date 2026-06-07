@@ -78,7 +78,7 @@ export function FieldInput({
       <div className="flex gap-2">
         <input
           type={show ? "text" : "password"}
-          className="min-w-0 flex-1 border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+          className="min-w-0 flex-1 border border-sand px-3 py-2 font-body text-sm"
           value={row.value === PASSWORD_MASK ? "" : row.value}
           placeholder={row.value === PASSWORD_MASK ? "•••••••• (unchanged)" : ""}
           onChange={(e) => onChange(e.target.value)}
@@ -93,7 +93,7 @@ export function FieldInput({
   if (isArea) {
     return (
       <textarea
-        className="min-h-[88px] w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+        className="min-h-[88px] w-full border border-sand px-3 py-2 font-body text-sm"
         value={row.value}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -111,7 +111,7 @@ export function FieldInput({
             : ["termii", "twilio", "africastalking"];
     return (
       <select
-        className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+        className="w-full border border-sand px-3 py-2 font-body text-sm"
         value={row.value}
         onChange={(e) => onChange(e.target.value)}
       >
@@ -128,7 +128,7 @@ export function FieldInput({
     return (
       <input
         type="number"
-        className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+        className="w-full border border-sand px-3 py-2 font-body text-sm"
         value={row.value}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -138,7 +138,7 @@ export function FieldInput({
   return (
     <input
       type="text"
-      className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+      className="w-full border border-sand px-3 py-2 font-body text-sm"
       value={row.value}
       placeholder={isImage ? "Image URL (Cloudinary or CDN)" : undefined}
       onChange={(e) => onChange(e.target.value)}
@@ -184,7 +184,7 @@ export function SettingsGroupCard({
   };
 
   return (
-    <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
+    <div className="rounded-sm border border-sand bg-canvas p-6">
       <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">{title}</h2>
       <div className="mt-6 space-y-5">
         {local.map((row) => (
@@ -255,7 +255,7 @@ export function AdminSettingsClient() {
           <SettingsGroupCard title="Email" group="EMAIL" rows={emailConfig} onSaved={load} />
           <SettingsGroupCard title="SMS" group="SMS" rows={rowsFor("SMS")} onSaved={load} />
           <EmailTemplatesEditor emailRows={rowsFor("EMAIL")} onSaved={load} />
-          <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
+          <div className="rounded-sm border border-sand bg-canvas p-6">
             <button
               type="button"
               className="text-sm text-olive underline"
@@ -282,13 +282,13 @@ export function AdminSettingsClient() {
           </div>
           <Accordion.Root type="multiple" className="space-y-2">
             {(["paystack", "flutterwave", "stripe", "monnify"] as const).map((gw) => (
-              <Accordion.Item key={gw} value={gw} className="rounded-sm border border-[#EBEBEA] bg-canvas">
+              <Accordion.Item key={gw} value={gw} className="rounded-sm border border-sand bg-canvas">
                 <Accordion.Header>
                   <Accordion.Trigger className="flex w-full items-center justify-between px-4 py-3 font-body text-sm font-medium capitalize">
                     {gw}
                   </Accordion.Trigger>
                 </Accordion.Header>
-                <Accordion.Content className="border-t border-[#EBEBEA] px-4 pb-4 pt-2">
+                <Accordion.Content className="border-t border-sand px-4 pb-4 pt-2">
                   <button
                     type="button"
                     className="mb-3 text-xs text-olive underline"
@@ -320,7 +320,7 @@ export function AdminSettingsClient() {
   return (
     <div className="flex flex-col gap-6 lg:flex-row">
       <Tabs.Root value={tab} onValueChange={setTab} className="flex w-full flex-col gap-6 lg:flex-row">
-        <Tabs.List className="flex shrink-0 flex-row flex-wrap gap-1 border-b border-[#EBEBEA] pb-2 lg:w-48 lg:flex-col lg:border-b-0 lg:border-r lg:pr-4 lg:pb-0">
+        <Tabs.List className="flex shrink-0 flex-row flex-wrap gap-1 border-b border-sand pb-2 lg:w-48 lg:flex-col lg:border-b-0 lg:border-r lg:pr-4 lg:pb-0">
           {TABS.map((t) => (
             <Tabs.Trigger
               key={t.id}

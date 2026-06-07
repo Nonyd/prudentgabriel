@@ -82,8 +82,8 @@ export function CollectionsPage({ collections }: { collections: CollectionListIt
   const totalPieces = collections.reduce((sum, c) => sum + c.productCount, 0);
 
   return (
-    <div className="min-h-screen bg-white pb-20">
-      <header className="flex h-[140px] flex-col items-center justify-center border-b border-mid-grey bg-white md:h-[200px]">
+    <div className="min-h-screen bg-bg-card pb-20">
+      <header className="flex h-[140px] flex-col items-center justify-center border-b border-mid-grey bg-bg-card md:h-[200px]">
         <p className="font-body text-[9px] font-medium uppercase tracking-[0.25em] text-dark-grey">
           Ready to Wear
         </p>
@@ -127,7 +127,7 @@ export function CollectionsPage({ collections }: { collections: CollectionListIt
             )}
           >
             {collections.map((c, i) => (
-              <div key={c.id} className="bg-white">
+              <div key={c.id} className="bg-bg-card">
                 <CollectionCard item={c} index={i} />
               </div>
             ))}
@@ -139,7 +139,7 @@ export function CollectionsPage({ collections }: { collections: CollectionListIt
         <section className="mx-auto mt-16 max-w-[1400px] px-4 md:px-6">
           <div
             className={cn(
-              "flex flex-col items-center justify-between gap-6 border border-mid-grey bg-[#FAFAF8] px-6 py-10 text-center md:flex-row md:px-10 md:text-left",
+              "flex flex-col items-center justify-between gap-6 border border-mid-grey bg-bg-page px-6 py-10 text-center md:flex-row md:px-10 md:text-left",
               !reduceMotion && "transition-colors duration-200 hover:border-olive/30",
             )}
           >

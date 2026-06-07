@@ -117,7 +117,7 @@ export function PaymentMethodSelector({
                     "flex w-full items-start gap-3 rounded-sm border p-4 text-left transition-colors",
                     isSelected
                       ? "border-[1.5px] border-choc bg-[rgba(68,41,19,0.04)]"
-                      : "border-[0.5px] border-sand bg-white",
+                      : "border-[0.5px] border-sand bg-bg-card",
                   )}
                 >
                   <span
@@ -164,7 +164,7 @@ export function PaymentMethodSelector({
                       type="button"
                       disabled={uploading}
                       onClick={() => fileRef.current?.click()}
-                      className="mt-4 inline-flex items-center gap-2 rounded-sm border border-choc bg-white px-4 py-2 font-sans text-[10px] uppercase tracking-wider text-choc"
+                      className="mt-4 inline-flex items-center gap-2 rounded-sm border border-choc bg-bg-card px-4 py-2 font-sans text-[10px] uppercase tracking-wider text-choc"
                     >
                       <Upload className="h-3.5 w-3.5" />
                       {uploading ? "Uploading…" : receiptUrl ? "Replace receipt" : "Upload payment receipt"}
@@ -197,7 +197,7 @@ export function PaymentMethodSelector({
                 "flex w-full items-start gap-3 rounded-sm border p-4 text-left transition-colors",
                 isSelected
                   ? "border-[1.5px] border-choc bg-[rgba(68,41,19,0.04)]"
-                  : "border-[0.5px] border-sand bg-white",
+                  : "border-[0.5px] border-sand bg-bg-card",
               )}
             >
               <span

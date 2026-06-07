@@ -37,7 +37,7 @@ export function TrackSearchForm({
             value={ref}
             onChange={(e) => setRef(e.target.value)}
             placeholder="ORD-7421"
-            className="min-w-0 flex-1 border-0 bg-white px-5 py-3.5 font-body text-sm text-choc outline-none placeholder:text-text-light"
+            className="min-w-0 flex-1 border-0 bg-input-bg px-5 py-3.5 font-body text-sm text-choc outline-none placeholder:text-text-light"
             aria-label="Order reference"
           />
           <button

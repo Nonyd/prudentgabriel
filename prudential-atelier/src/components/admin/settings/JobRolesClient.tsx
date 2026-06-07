@@ -110,7 +110,7 @@ function RoleFormModal({
             <select
               value={presetKey}
               onChange={(e) => applyPreset(e.target.value)}
-              className="w-full rounded-[3px] border border-sand bg-white px-3 py-2.5 font-sans text-sm"
+              className="w-full rounded-[3px] border border-sand bg-bg-card px-3 py-2.5 font-sans text-sm"
             >
               <option value="">— Custom role —</option>
               {Object.entries(ROLE_PRESETS).map(([key, preset]) => (
@@ -129,7 +129,7 @@ function RoleFormModal({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-[3px] border border-sand bg-white px-3 py-2.5 font-sans text-sm"
+            className="w-full rounded-[3px] border border-sand bg-bg-card px-3 py-2.5 font-sans text-sm"
             placeholder="e.g. Head Beader"
           />
         </div>
@@ -142,7 +142,7 @@ function RoleFormModal({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            className="w-full rounded-[3px] border border-sand bg-white px-3 py-2.5 font-sans text-sm"
+            className="w-full rounded-[3px] border border-sand bg-bg-card px-3 py-2.5 font-sans text-sm"
           />
         </div>
 
@@ -263,7 +263,7 @@ export function JobRolesClient() {
           {sorted.map((role) => (
             <div
               key={role.id}
-              className="rounded-lg border border-sand bg-white p-5 shadow-sm"
+              className="rounded-lg border border-sand bg-bg-card p-5 shadow-sm"
             >
               <div className="flex items-start justify-between gap-2">
                 <h2 className="font-display text-xl text-ink">{role.name}</h2>

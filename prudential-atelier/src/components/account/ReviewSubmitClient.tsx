@@ -84,7 +84,7 @@ export function ReviewSubmitClient({ context }: { context: ProductContext | Cons
 
   if (done) {
     return (
-      <div className="mx-auto max-w-xl rounded-md border border-sand bg-white px-8 py-12 text-center">
+      <div className="mx-auto max-w-xl rounded-md border border-sand bg-bg-card px-8 py-12 text-center">
         <p className="font-display text-2xl text-choc">✓ Thank you!</p>
         <p className="mt-4 font-body text-sm text-text-mid">
           Your review has been submitted and will appear after approval.
@@ -126,7 +126,7 @@ export function ReviewSubmitClient({ context }: { context: ProductContext | Cons
             value={body}
             onChange={(e) => setBody(e.target.value.slice(0, maxBody))}
             rows={4}
-            className="mt-2 w-full rounded-sm border border-sand bg-white px-4 py-3 font-body text-sm text-choc outline-none focus:border-nut"
+            className="mt-2 w-full rounded-sm border border-sand bg-input-bg px-4 py-3 font-body text-sm text-choc outline-none focus:border-nut"
           />
           <p className="mt-1 font-body text-xs text-text-light">{body.length} / {maxBody}</p>
         </div>
@@ -170,7 +170,7 @@ export function ReviewSubmitClient({ context }: { context: ProductContext | Cons
               id="review-title"
               value={title}
               onChange={(e) => setTitle(e.target.value.slice(0, 80))}
-              className="mt-2 w-full rounded-sm border border-sand bg-white px-4 py-2 font-body text-sm text-choc outline-none focus:border-nut"
+              className="mt-2 w-full rounded-sm border border-sand bg-input-bg px-4 py-2 font-body text-sm text-choc outline-none focus:border-nut"
             />
           </div>
 
@@ -183,7 +183,7 @@ export function ReviewSubmitClient({ context }: { context: ProductContext | Cons
               value={body}
               onChange={(e) => setBody(e.target.value.slice(0, maxBody))}
               rows={5}
-              className="mt-2 w-full rounded-sm border border-sand bg-white px-4 py-3 font-body text-sm text-choc outline-none focus:border-nut"
+              className="mt-2 w-full rounded-sm border border-sand bg-input-bg px-4 py-3 font-body text-sm text-choc outline-none focus:border-nut"
             />
             <p className="mt-1 font-body text-xs text-text-light">{body.length} / {maxBody}</p>
           </div>

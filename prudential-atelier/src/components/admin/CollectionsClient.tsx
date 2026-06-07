@@ -173,10 +173,10 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
         </div>
       ) : null}
 
-      <div className="overflow-x-auto border border-[#EBEBEA] bg-white">
+      <div className="overflow-x-auto border border-sand bg-bg-card">
         <table className="w-full min-w-[900px] border-collapse text-left font-body text-[13px]">
           <thead>
-            <tr className="border-b border-[#EBEBEA] bg-[#FAFAFA] text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">
+            <tr className="border-b border-sand bg-[#FAFAFA] text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">
               <th className="w-10 px-3 py-3">
                 <input type="checkbox" checked={allSortedSelected} onChange={toggleSelectAllSorted} aria-label="Select all" />
               </th>
@@ -196,7 +196,7 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
             {sorted.map((row, idx) => (
               <tr
                 key={row.id}
-                className="cursor-pointer border-b border-[#EBEBEA] last:border-0 hover:bg-[#FAFAFA]"
+                className="cursor-pointer border-b border-sand last:border-0 hover:bg-[#FAFAFA]"
                 onClick={() => {
                   setEditing(row);
                   setModalOpen(true);
@@ -286,7 +286,7 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
                   <input
                     type="number"
                     defaultValue={row.displayOrder}
-                    className="w-14 border border-[#EBEBEA] bg-white px-2 py-1 text-[12px]"
+                    className="w-14 border border-sand bg-bg-card px-2 py-1 text-[12px]"
                     onBlur={(e) => {
                       const v = Number(e.target.value);
                       if (!Number.isFinite(v) || v < 0) return;

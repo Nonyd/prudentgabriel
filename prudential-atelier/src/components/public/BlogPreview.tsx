@@ -1,7 +1,7 @@
 import Link from "next/link";
-import Image from "next/image";
 import { BlogStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { BlogPreviewImage } from "./BlogPreviewImage";
 
 export async function BlogPreview() {
   let posts: {
@@ -37,7 +37,7 @@ export async function BlogPreview() {
   if (posts.length === 0) return null;
 
   return (
-    <section className="px-6 py-20 lg:px-10" style={{ backgroundColor: "var(--ivory)" }}>
+    <section className="bg-bg-page px-6 py-20 lg:px-10">
       <div className="mx-auto max-w-site">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -64,19 +64,11 @@ export async function BlogPreview() {
               className="group block"
             >
               <div className="img-portrait relative overflow-hidden bg-bg">
-                {post.featuredImage ? (
-                  <Image
-                    src={post.featuredImage}
-                    alt=""
-                    fill
-                    className="object-cover transition duration-500 group-hover:scale-[1.02]"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center font-serif text-lg text-lightbr">
-                    Journal
-                  </div>
-                )}
+                <BlogPreviewImage
+                  src={post.featuredImage}
+                  alt={post.title}
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                />
               </div>
               <div className="mt-4">
                 {post.category ? (

@@ -60,7 +60,7 @@ export function MediaLibraryTab() {
   const n = selected.size;
 
   return (
-    <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
+    <div className="rounded-sm border border-sand bg-canvas p-6">
       <p className="font-body text-sm text-charcoal">Media library</p>
       <p className="mt-1 font-body text-xs text-[#6B6B68]">
         {data?.total ?? 0} files stored. Select items to delete in bulk.
@@ -71,7 +71,7 @@ export function MediaLibraryTab() {
           return (
             <label
               key={m.id}
-              className={`relative cursor-pointer border p-2 ${on ? "border-olive ring-1 ring-olive" : "border-[#EBEBEA]"}`}
+              className={`relative cursor-pointer border p-2 ${on ? "border-olive ring-1 ring-olive" : "border-sand"}`}
             >
               <input
                 type="checkbox"
@@ -107,7 +107,7 @@ export function MediaLibraryTab() {
       )}
 
       {n > 0 && (
-        <div className="fixed bottom-6 left-1/2 z-[85] flex -translate-x-1/2 items-center gap-4 rounded-sm border border-[#EBEBEA] bg-canvas px-5 py-3 shadow-lg">
+        <div className="fixed bottom-6 left-1/2 z-[85] flex -translate-x-1/2 items-center gap-4 rounded-sm border border-sand bg-canvas px-5 py-3 shadow-lg">
           <span className="font-body text-sm text-charcoal">
             {n} selected —{" "}
             <button

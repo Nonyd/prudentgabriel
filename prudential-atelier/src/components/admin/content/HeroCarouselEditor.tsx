@@ -63,14 +63,14 @@ export function HeroCarouselEditor({
           <button
             type="button"
             onClick={handleAddImage}
-            className="inline-flex items-center gap-1 rounded-[3px] border border-sand bg-white px-3 py-1.5 font-sans text-xs text-choc hover:bg-sand/20"
+            className="inline-flex items-center gap-1 rounded-[3px] border border-sand bg-bg-card px-3 py-1.5 font-sans text-xs text-choc hover:bg-sand/20"
           >
             <Plus className="h-3.5 w-3.5" /> Add image
           </button>
           <button
             type="button"
             onClick={handleAddVideo}
-            className="inline-flex items-center gap-1 rounded-[3px] border border-sand bg-white px-3 py-1.5 font-sans text-xs text-choc hover:bg-sand/20"
+            className="inline-flex items-center gap-1 rounded-[3px] border border-sand bg-bg-card px-3 py-1.5 font-sans text-xs text-choc hover:bg-sand/20"
           >
             <Plus className="h-3.5 w-3.5" /> Add video
           </button>
@@ -85,7 +85,7 @@ export function HeroCarouselEditor({
 
       <div className="space-y-3">
         {items.map((item, index) => (
-          <div key={`${item.type}-${index}`} className="rounded-md border border-sand bg-white p-4">
+          <div key={`${item.type}-${index}`} className="rounded-md border border-sand bg-bg-card p-4">
             <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-14 w-10 shrink-0 items-center justify-center overflow-hidden rounded border border-sand bg-sand/20">

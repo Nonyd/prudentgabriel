@@ -48,7 +48,7 @@ export function CareersApplicationsAdminClient({
   return (
     <div className="mt-6 space-y-4">
       <div className="flex flex-wrap gap-3">
-        <select value={jobId} onChange={(e) => setJobId(e.target.value)} className="rounded-sm border border-[#EBEBEA] px-3 py-2 font-body text-sm">
+        <select value={jobId} onChange={(e) => setJobId(e.target.value)} className="rounded-sm border border-sand px-3 py-2 font-body text-sm">
           <option value="">All jobs</option>
           {jobs.map((j) => (
             <option key={j.id} value={j.id}>
@@ -56,7 +56,7 @@ export function CareersApplicationsAdminClient({
             </option>
           ))}
         </select>
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-sm border border-[#EBEBEA] px-3 py-2 font-body text-sm">
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-sm border border-sand px-3 py-2 font-body text-sm">
           <option value="">All statuses</option>
           {STATUSES.map((s) => (
             <option key={s} value={s}>
@@ -70,9 +70,9 @@ export function CareersApplicationsAdminClient({
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-[#EBEBEA] bg-canvas">
+      <div className="overflow-x-auto rounded-sm border border-sand bg-canvas">
         <table className="w-full min-w-[900px] text-left text-sm">
-          <thead className="border-b border-[#EBEBEA] font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">
+          <thead className="border-b border-sand font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">
             <tr>
               <th className="p-3">Applicant</th>
               <th className="p-3">Position</th>

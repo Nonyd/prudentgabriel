@@ -167,7 +167,7 @@ export function ManualBespokeForm() {
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[120] bg-black/40" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-[121] max-h-[92vh] w-[min(96vw,640px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-[#EBEBEA] bg-canvas p-6 shadow-lg">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-[121] max-h-[92vh] w-[min(96vw,640px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-sand bg-canvas p-6 shadow-lg">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <Dialog.Title className="font-display text-[22px] text-ink">Add manual bespoke request</Dialog.Title>
@@ -180,43 +180,43 @@ export function ManualBespokeForm() {
 
             <div className="mt-6 space-y-4 font-body text-sm">
               <p className="text-[11px] font-medium uppercase text-[#6B6B68]">Client</p>
-              <input className="w-full border border-[#EBEBEA] px-3 py-2" placeholder="Full name *" value={name} onChange={(e) => setName(e.target.value)} />
-              <input className="w-full border border-[#EBEBEA] px-3 py-2" placeholder="Phone *" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <input className="w-full border border-sand px-3 py-2" placeholder="Full name *" value={name} onChange={(e) => setName(e.target.value)} />
+              <input className="w-full border border-sand px-3 py-2" placeholder="Phone *" value={phone} onChange={(e) => setPhone(e.target.value)} />
               <input
-                className="w-full border border-[#EBEBEA] px-3 py-2"
+                className="w-full border border-sand px-3 py-2"
                 placeholder={isOnlinePayment ? "Client email (required for payment link) *" : "Email (optional)"}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <select className="w-full border border-[#EBEBEA] px-3 py-2" value={country} onChange={(e) => setCountry(e.target.value)}>
+              <select className="w-full border border-sand px-3 py-2" value={country} onChange={(e) => setCountry(e.target.value)}>
                 <option>Nigeria</option>
                 <option>Other</option>
               </select>
-              <select className="w-full border border-[#EBEBEA] px-3 py-2" value={heardFrom} onChange={(e) => setHeardFrom(e.target.value)}>
+              <select className="w-full border border-sand px-3 py-2" value={heardFrom} onChange={(e) => setHeardFrom(e.target.value)}>
                 {["Walk-in", "Phone call", "WhatsApp", "Referral", "Other"].map((o) => (
                   <option key={o}>{o}</option>
                 ))}
               </select>
 
               <p className="pt-2 text-[11px] font-medium uppercase text-[#6B6B68]">Order</p>
-              <select className="w-full border border-[#EBEBEA] px-3 py-2" value={occasion} onChange={(e) => setOccasion(e.target.value)}>
+              <select className="w-full border border-sand px-3 py-2" value={occasion} onChange={(e) => setOccasion(e.target.value)}>
                 {["White Wedding", "Traditional Wedding", "Corporate Event", "Birthday", "Other"].map((o) => (
                   <option key={o}>{o}</option>
                 ))}
               </select>
               <textarea
-                className="min-h-[100px] w-full resize-y border border-[#EBEBEA] px-3 py-2"
+                className="min-h-[100px] w-full resize-y border border-sand px-3 py-2"
                 placeholder="Description (min 10 chars) *"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
-              <select className="w-full border border-[#EBEBEA] px-3 py-2" value={budgetRange} onChange={(e) => setBudgetRange(e.target.value)}>
+              <select className="w-full border border-sand px-3 py-2" value={budgetRange} onChange={(e) => setBudgetRange(e.target.value)}>
                 <option>Under ₦200k</option>
                 <option>₦200k–₦500k</option>
                 <option>₦500k–₦1M</option>
                 <option>Above ₦1M</option>
               </select>
-              <select className="w-full border border-[#EBEBEA] px-3 py-2" value={timeline} onChange={(e) => setTimeline(e.target.value)}>
+              <select className="w-full border border-sand px-3 py-2" value={timeline} onChange={(e) => setTimeline(e.target.value)}>
                 <option>Under 2 weeks</option>
                 <option>2–4 weeks</option>
                 <option>1–2 months</option>
@@ -224,8 +224,8 @@ export function ManualBespokeForm() {
               </select>
 
               <p className="pt-2 text-[11px] font-medium uppercase text-[#6B6B68]">Pricing</p>
-              <input className="w-full border border-[#EBEBEA] px-3 py-2" placeholder="Agreed price (₦) *" value={agreedPrice} onChange={(e) => setAgreedPrice(e.target.value)} />
-              <select className="w-full border border-[#EBEBEA] px-3 py-2" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+              <input className="w-full border border-sand px-3 py-2" placeholder="Agreed price (₦) *" value={agreedPrice} onChange={(e) => setAgreedPrice(e.target.value)} />
+              <select className="w-full border border-sand px-3 py-2" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                 {["Cash", "Bank Transfer", "POS", "Online Payment", "Paid Online", "Pending"].map((o) => (
                   <option key={o}>{o}</option>
                 ))}
@@ -236,7 +236,7 @@ export function ManualBespokeForm() {
                   deposit). Paystack must be configured on the server.
                 </p>
               ) : null}
-              <input className="w-full border border-[#EBEBEA] px-3 py-2" placeholder="Deposit paid (₦)" value={depositPaid} onChange={(e) => setDepositPaid(e.target.value)} />
+              <input className="w-full border border-sand px-3 py-2" placeholder="Deposit paid (₦)" value={depositPaid} onChange={(e) => setDepositPaid(e.target.value)} />
               <p className="text-xs text-[#37392d]">
                 Balance: ₦
                 {Math.max(0, (parseFloat(agreedPrice) || 0) - (parseFloat(depositPaid) || 0)).toLocaleString("en-NG")}
@@ -252,7 +252,7 @@ export function ManualBespokeForm() {
                   {sketches.map((s) => (
                     <div
                       key={`sk-${s.url}`}
-                      className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-sm border border-[#EBEBEA] bg-[#FAFAFA] text-[9px] text-[#6B6B68]"
+                      className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-sm border border-sand bg-[#FAFAFA] text-[9px] text-[#6B6B68]"
                       title={s.name}
                     >
                       {s.isPdf ? (
@@ -264,7 +264,7 @@ export function ManualBespokeForm() {
                     </div>
                   ))}
                   {refs.map((r) => (
-                    <div key={`rf-${r.url}`} className="h-14 w-14 overflow-hidden rounded-sm border border-[#EBEBEA]" title={r.name}>
+                    <div key={`rf-${r.url}`} className="h-14 w-14 overflow-hidden rounded-sm border border-sand" title={r.name}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={r.url} alt="" className="h-full w-full object-cover" />
                     </div>
@@ -272,9 +272,9 @@ export function ManualBespokeForm() {
                 </div>
               )}
 
-              <textarea className="min-h-[72px] w-full border border-[#EBEBEA] px-3 py-2" placeholder="Internal admin notes" value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} />
+              <textarea className="min-h-[72px] w-full border border-sand px-3 py-2" placeholder="Internal admin notes" value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} />
 
-              <select className="w-full border border-[#EBEBEA] px-3 py-2" value={status} onChange={(e) => setStatus(e.target.value as BespokeStatus)}>
+              <select className="w-full border border-sand px-3 py-2" value={status} onChange={(e) => setStatus(e.target.value as BespokeStatus)}>
                 <option value="PENDING">Pending</option>
                 <option value="CONFIRMED">Confirmed</option>
                 <option value="IN_PROGRESS">In progress</option>
@@ -283,7 +283,7 @@ export function ManualBespokeForm() {
 
             <div className="mt-8 flex justify-end gap-2">
               <Dialog.Close asChild>
-                <button type="button" className="border border-[#EBEBEA] px-6 py-2 text-xs uppercase">
+                <button type="button" className="border border-sand px-6 py-2 text-xs uppercase">
                   Cancel
                 </button>
               </Dialog.Close>

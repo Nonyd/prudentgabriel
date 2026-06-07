@@ -92,7 +92,7 @@ export function ActivityLogClient() {
             setPage(1);
             setSearch(e.target.value);
           }}
-          className="min-w-[200px] flex-1 rounded border border-sand bg-white px-3 py-2 font-sans text-sm"
+          className="min-w-[200px] flex-1 rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         />
         <input
           placeholder="Module"
@@ -101,7 +101,7 @@ export function ActivityLogClient() {
             setPage(1);
             setModule(e.target.value || "all");
           }}
-          className="w-32 rounded border border-sand bg-white px-3 py-2 font-sans text-sm"
+          className="w-32 rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         />
         <select
           value={action}
@@ -109,7 +109,7 @@ export function ActivityLogClient() {
             setPage(1);
             setAction(e.target.value);
           }}
-          className="rounded border border-sand bg-white px-3 py-2 font-sans text-sm"
+          className="rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         >
           <option value="all">All actions</option>
           {["CREATE", "UPDATE", "DELETE", "STAFF_CLOCK_IN", "STAFF_CLOCK_OUT"].map((a) => (

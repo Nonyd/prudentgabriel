@@ -239,7 +239,7 @@ export function GalleryManager() {
   return (
     <div className="mt-8 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex gap-1 border-b border-[#EBEBEA]">
+        <div className="flex gap-1 border-b border-sand">
           {(["ATELIER", "BRIDAL", "KIDS"] as const).map((c) => (
             <button
               key={c}
@@ -268,7 +268,7 @@ export function GalleryManager() {
               });
             }}
             className={`border px-3 py-2 font-body text-[11px] uppercase tracking-wide ${
-              reorder ? "border-[#37392d] bg-[#37392d] text-white" : "border-[#EBEBEA] text-charcoal"
+              reorder ? "border-[#37392d] bg-[#37392d] text-white" : "border-sand text-charcoal"
             }`}
           >
             Reorder
@@ -284,7 +284,7 @@ export function GalleryManager() {
               });
             }}
             className={`border px-3 py-2 font-body text-[11px] uppercase tracking-wide ${
-              selectMode ? "border-[#37392d] bg-[#37392d] text-white" : "border-[#EBEBEA] text-charcoal"
+              selectMode ? "border-[#37392d] bg-[#37392d] text-white" : "border-sand text-charcoal"
             }`}
           >
             Select
@@ -296,7 +296,7 @@ export function GalleryManager() {
                 if (allOnPageSelected) setSelectedIds([]);
                 else setSelectedIds([...pageIds]);
               }}
-              className="border border-[#EBEBEA] px-3 py-2 font-body text-[11px] uppercase tracking-wide text-charcoal"
+              className="border border-sand px-3 py-2 font-body text-[11px] uppercase tracking-wide text-charcoal"
             >
               {allOnPageSelected ? "Deselect all" : "Select all"}
             </button>
@@ -314,14 +314,14 @@ export function GalleryManager() {
               </AlertDialog.Trigger>
               <AlertDialog.Portal>
                 <AlertDialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
-                <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 border border-[#EBEBEA] bg-canvas p-6 shadow-lg">
+                <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 border border-sand bg-canvas p-6 shadow-lg">
                   <AlertDialog.Title className="font-body text-sm font-medium">
                     Delete {selectedIds.length} image{selectedIds.length === 1 ? "" : "s"}?
                   </AlertDialog.Title>
                   <p className="mt-2 font-body text-xs text-[#6B6B68]">This cannot be undone.</p>
                   <div className="mt-6 flex justify-end gap-2">
                     <AlertDialog.Cancel asChild>
-                      <button type="button" className="border border-[#EBEBEA] px-4 py-2 text-xs uppercase">
+                      <button type="button" className="border border-sand px-4 py-2 text-xs uppercase">
                         Cancel
                       </button>
                     </AlertDialog.Cancel>
@@ -351,7 +351,7 @@ export function GalleryManager() {
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {images.map((img, idx) => (
-          <div key={img.id} className="group relative border border-[#EBEBEA] bg-[#fafafa]">
+          <div key={img.id} className="group relative border border-sand bg-[#fafafa]">
             <div className="relative aspect-[3/4] w-full overflow-hidden">
               <Image
                 src={img.url}
@@ -377,7 +377,7 @@ export function GalleryManager() {
                       type="checkbox"
                       checked={selectedIds.includes(img.id)}
                       onChange={() => toggleImageSelected(img.id)}
-                      className="h-4 w-4 border-[#EBEBEA] accent-[#37392d]"
+                      className="h-4 w-4 border-sand accent-[#37392d]"
                       aria-label={selectedIds.includes(img.id) ? "Deselect image" : "Select image"}
                     />
                   </label>
@@ -442,11 +442,11 @@ export function GalleryManager() {
                     </AlertDialog.Trigger>
                     <AlertDialog.Portal>
                       <AlertDialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
-                      <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 border border-[#EBEBEA] bg-canvas p-6 shadow-lg">
+                      <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 border border-sand bg-canvas p-6 shadow-lg">
                         <AlertDialog.Title className="font-body text-sm font-medium">Delete image?</AlertDialog.Title>
                         <div className="mt-6 flex justify-end gap-2">
                           <AlertDialog.Cancel asChild>
-                            <button type="button" className="border border-[#EBEBEA] px-4 py-2 text-xs uppercase">
+                            <button type="button" className="border border-sand px-4 py-2 text-xs uppercase">
                               Cancel
                             </button>
                           </AlertDialog.Cancel>
@@ -478,7 +478,7 @@ export function GalleryManager() {
               type="button"
               onClick={() => setPage(p)}
               className={`min-w-[2rem] border px-2 py-1 font-body text-xs ${
-                page === p ? "border-[#37392d] bg-[#37392d] text-white" : "border-[#EBEBEA] text-charcoal"
+                page === p ? "border-[#37392d] bg-[#37392d] text-white" : "border-sand text-charcoal"
               }`}
             >
               {p}
@@ -499,13 +499,13 @@ export function GalleryManager() {
       >
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] max-h-[min(90vh,640px)] w-[min(90vw,520px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-[#EBEBEA] bg-canvas p-6 shadow-lg">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] max-h-[min(90vh,640px)] w-[min(90vw,520px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-sand bg-canvas p-6 shadow-lg">
             <Dialog.Title className="font-display text-xl text-ink">Upload images</Dialog.Title>
             <p className="mt-2 font-body text-xs text-[#6B6B68]">
               Uploading to: {tab === "ATELIER" ? "Atelier" : tab === "BRIDAL" ? "Bridal" : "Kids"}
             </p>
             <label
-              className="mt-6 flex cursor-pointer flex-col items-center justify-center border border-dashed border-[#EBEBEA] bg-[#fafafa] px-6 py-12 transition-colors hover:border-[#37392d]/40"
+              className="mt-6 flex cursor-pointer flex-col items-center justify-center border border-dashed border-sand bg-[#fafafa] px-6 py-12 transition-colors hover:border-[#37392d]/40"
               onDragOver={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -533,7 +533,7 @@ export function GalleryManager() {
             </label>
 
             {uploadJobs.length > 0 ? (
-              <ul className="mt-6 space-y-3 border-t border-[#EBEBEA] pt-4">
+              <ul className="mt-6 space-y-3 border-t border-sand pt-4">
                 {uploadJobs.map((job) => (
                   <li key={job.id} className="font-body text-xs">
                     <div className="flex items-center justify-between gap-2">
@@ -570,7 +570,7 @@ export function GalleryManager() {
               <button
                 type="button"
                 disabled={uploadInFlight}
-                className="mt-6 w-full border border-[#EBEBEA] py-2 text-xs uppercase disabled:opacity-50"
+                className="mt-6 w-full border border-sand py-2 text-xs uppercase disabled:opacity-50"
               >
                 {uploadInFlight ? "Uploading…" : "Close"}
               </button>
@@ -582,17 +582,17 @@ export function GalleryManager() {
       <Dialog.Root open={Boolean(editing)} onOpenChange={(o) => !o && setEditing(null)}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
-          <Dialog.Content className="fixed right-0 top-0 z-[101] flex h-full w-[min(100vw,380px)] flex-col border-l border-[#EBEBEA] bg-canvas p-6 shadow-lg">
+          <Dialog.Content className="fixed right-0 top-0 z-[101] flex h-full w-[min(100vw,380px)] flex-col border-l border-sand bg-canvas p-6 shadow-lg">
             <Dialog.Title className="font-display text-lg">Edit image</Dialog.Title>
             <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Alt</label>
             <input
-              className="mt-1 border border-[#EBEBEA] px-3 py-2 text-sm"
+              className="mt-1 border border-sand px-3 py-2 text-sm"
               value={editAlt}
               onChange={(e) => setEditAlt(e.target.value)}
             />
             <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Caption</label>
             <textarea
-              className="mt-1 min-h-[80px] resize-y border border-[#EBEBEA] px-3 py-2 text-sm"
+              className="mt-1 min-h-[80px] resize-y border border-sand px-3 py-2 text-sm"
               value={editCaption}
               onChange={(e) => setEditCaption(e.target.value)}
             />
@@ -603,13 +603,13 @@ export function GalleryManager() {
             <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Sort order</label>
             <input
               type="number"
-              className="mt-1 border border-[#EBEBEA] px-3 py-2 text-sm"
+              className="mt-1 border border-sand px-3 py-2 text-sm"
               value={editSort}
               onChange={(e) => setEditSort(parseInt(e.target.value, 10) || 0)}
             />
             <div className="mt-auto flex gap-2 pt-8">
               <Dialog.Close asChild>
-                <button type="button" className="flex-1 border border-[#EBEBEA] py-2 text-xs uppercase">
+                <button type="button" className="flex-1 border border-sand py-2 text-xs uppercase">
                   Cancel
                 </button>
               </Dialog.Close>

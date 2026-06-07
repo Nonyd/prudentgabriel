@@ -80,7 +80,7 @@ function FieldInput({
   onUpload: (file: File) => Promise<string>;
 }) {
   const inputClass =
-    "mt-2 w-full rounded-[3px] border border-sand bg-white px-3 py-2 font-body text-sm text-choc outline-none focus:border-lightbr";
+    "mt-2 w-full rounded-[3px] border border-sand bg-input-bg px-3 py-2 font-body text-sm text-choc outline-none focus:border-lightbr";
 
   const type = field.type as FieldType;
 

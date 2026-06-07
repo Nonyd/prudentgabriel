@@ -32,7 +32,7 @@ export function CmsRichTextEditor({ value, onChange, placeholder = "Write conten
   }, [editor, value]);
 
   return (
-    <div className="rounded-[3px] border border-sand bg-white">
+    <div className="rounded-[3px] border border-sand bg-bg-card">
       <EditorContent editor={editor} />
     </div>
   );

@@ -108,7 +108,7 @@ export function JobApplicationForm({ job }: { job: JobPosting }) {
   }
 
   const inputClass =
-    "mt-2 w-full rounded-[3px] border border-sand bg-white px-3 py-2 font-body text-sm text-choc outline-none focus:border-lightbr";
+    "mt-2 w-full rounded-[3px] border border-sand bg-input-bg px-3 py-2 font-body text-sm text-choc outline-none focus:border-lightbr";
 
   return (
     <form onSubmit={(e) => void submit(e)} className="space-y-5">

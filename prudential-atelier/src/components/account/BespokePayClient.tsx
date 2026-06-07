@@ -148,7 +148,7 @@ export function BespokePayClient({ order }: { order: BespokeOrder }) {
       <h1 className="mt-4 font-display text-3xl text-[var(--chocolate)]">Pay balance</h1>
       <p className="mt-1 font-body text-sm text-[var(--text-mid)]">{order.orderRef}</p>
 
-      <div className="mt-8 border border-[var(--border)] bg-white p-6">
+      <div className="mt-8 border border-[var(--border)] bg-bg-card p-6">
         <p className="font-body text-[11px] uppercase tracking-wide text-[var(--text-light)]">Order summary</p>
         <p className="mt-2 font-display text-lg text-[var(--chocolate)]">
           {order.outfitDescription?.slice(0, 120) ?? "Atelier commission"}
@@ -169,7 +169,7 @@ export function BespokePayClient({ order }: { order: BespokeOrder }) {
         </dl>
       </div>
 
-      <div className="mt-6 border border-[var(--border)] bg-white p-6">
+      <div className="mt-6 border border-[var(--border)] bg-bg-card p-6">
         <p className="font-body text-[11px] uppercase tracking-wide text-[var(--text-light)]">
           How would you like to pay?
         </p>
@@ -182,7 +182,7 @@ export function BespokePayClient({ order }: { order: BespokeOrder }) {
                 className={`block cursor-pointer rounded-sm border p-4 transition-colors ${
                   selected
                     ? "border-[1.5px] border-[var(--chocolate)] bg-[rgba(68,41,19,0.04)]"
-                    : "border border-[var(--border)] bg-white"
+                    : "border border-[var(--border)] bg-bg-card"
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -235,7 +235,7 @@ export function BespokePayClient({ order }: { order: BespokeOrder }) {
         </p>
       </div>
 
-      <div className="mt-6 border border-[var(--border)] bg-white p-6">
+      <div className="mt-6 border border-[var(--border)] bg-bg-card p-6">
         <PaymentMethodSelector
           currency={currency}
           amount={displayAmount}

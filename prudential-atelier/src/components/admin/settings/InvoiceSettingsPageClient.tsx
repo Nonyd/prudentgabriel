@@ -80,7 +80,7 @@ export function InvoiceSettingsPageClient() {
         <SettingsGroupCard title="Bank details" group="INVOICE" rows={filterKeys(rows, BANK_KEYS)} onSaved={load} />
         <SettingsGroupCard title="Invoice defaults" group="INVOICE" rows={filterKeys(rows, DEFAULT_KEYS)} onSaved={load} />
       </div>
-      <aside className="h-fit border border-[#EBEBEA] bg-[#FAFAF8] p-5 font-body text-xs text-[#6B6B68]">
+      <aside className="h-fit border border-sand bg-[#FAFAF8] p-5 font-body text-xs text-[#6B6B68]">
         <p className="font-medium uppercase tracking-[0.1em] text-[#37392d]">Preview</p>
         <p className="mt-3">
           Header preview uses <span className="text-ink">{rows.find((r) => r.key === "invoice_business_name")?.value}</span>

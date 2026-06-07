@@ -86,7 +86,7 @@ export default async function CareerJobPage({
         </div>
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-[3px] border border-sand bg-white p-6 shadow-sm">
+          <div className="rounded-[3px] border border-sand bg-bg-card p-6 shadow-sm">
             <h2 className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">Apply for this role</h2>
             {applied === "1" ? (
               <p className="mt-4 rounded-sm bg-green-50 p-4 font-body text-sm text-green-800">

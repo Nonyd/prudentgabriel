@@ -146,19 +146,19 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="border border-[#EBEBEA] bg-canvas p-4">
+        <div className="border border-sand bg-canvas p-4">
           <p className="font-body text-[11px] uppercase text-[#6B6B68]">Active</p>
           <p className="mt-1 font-display text-2xl">{coupons.filter((c) => c.isActive).length}</p>
         </div>
-        <div className="border border-[#EBEBEA] bg-canvas p-4">
+        <div className="border border-sand bg-canvas p-4">
           <p className="font-body text-[11px] uppercase text-[#6B6B68]">Total uses</p>
           <p className="mt-1 font-display text-2xl">{totalUses}</p>
         </div>
-        <div className="border border-[#EBEBEA] bg-canvas p-4">
+        <div className="border border-sand bg-canvas p-4">
           <p className="font-body text-[11px] uppercase text-[#6B6B68]">Revenue saved</p>
           <p className="mt-1 font-display text-2xl">—</p>
         </div>
-        <div className="border border-[#EBEBEA] bg-canvas p-4">
+        <div className="border border-sand bg-canvas p-4">
           <p className="font-body text-[11px] uppercase text-[#6B6B68]">Expiring soon</p>
           <p className="mt-1 font-display text-2xl">
             {
@@ -177,7 +177,7 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
             type="button"
             onClick={() => setFilter(f)}
             className={`border px-3 py-1.5 font-body text-[11px] uppercase ${
-              filter === f ? "border-[#37392d] bg-[#37392d] text-white" : "border-[#EBEBEA] text-charcoal"
+              filter === f ? "border-[#37392d] bg-[#37392d] text-white" : "border-sand text-charcoal"
             }`}
           >
             {f}
@@ -218,7 +218,7 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
         </div>
       ) : null}
 
-      <div className="overflow-x-auto border border-[#EBEBEA] bg-canvas">
+      <div className="overflow-x-auto border border-sand bg-canvas">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="font-body text-[11px] uppercase text-[#A8A8A4]">
             <tr>
@@ -242,7 +242,7 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
           </thead>
           <tbody>
             {filtered.map((c) => (
-              <tr key={c.id} className="border-t border-[#EBEBEA]">
+              <tr key={c.id} className="border-t border-sand">
                 <td className="p-3">
                   <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleRowSelect(c.id)} aria-label={`Select ${c.code}`} />
                 </td>
@@ -278,11 +278,11 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
                       </AlertDialog.Trigger>
                       <AlertDialog.Portal>
                         <AlertDialog.Overlay className="fixed inset-0 z-[130] bg-black/40" />
-                        <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[131] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 border border-[#EBEBEA] bg-canvas p-6 shadow-lg">
+                        <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[131] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 border border-sand bg-canvas p-6 shadow-lg">
                           <AlertDialog.Title className="font-body text-sm">Delete coupon?</AlertDialog.Title>
                           <div className="mt-6 flex justify-end gap-2">
                             <AlertDialog.Cancel asChild>
-                              <button type="button" className="border border-[#EBEBEA] px-4 py-2 text-xs uppercase">
+                              <button type="button" className="border border-sand px-4 py-2 text-xs uppercase">
                                 Cancel
                               </button>
                             </AlertDialog.Cancel>

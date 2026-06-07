@@ -89,19 +89,19 @@ export function ShippingZoneModal({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/20" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[560px] max-w-[95vw] -translate-x-1/2 -translate-y-1/2 border border-[#EBEBEA] bg-white p-0">
-          <div className="border-b border-[#EBEBEA] px-5 py-4">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[560px] max-w-[95vw] -translate-x-1/2 -translate-y-1/2 border border-sand bg-bg-card p-0">
+          <div className="border-b border-sand px-5 py-4">
             <Dialog.Title className="font-display text-xl text-ink">{zone ? "Edit Shipping Zone" : "Add Shipping Zone"}</Dialog.Title>
           </div>
 
           <div className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-4">
-            <input value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="Zone Name" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
+            <input value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="Zone Name" className="w-full border border-sand px-3 py-2 font-body text-sm" />
 
             <div>
               <p className="mb-2 font-body text-xs text-[#6B6B68]">Countries</p>
               <div className="grid grid-cols-2 gap-2">
                 {COUNTRY_OPTIONS.map((country) => (
-                  <label key={country.code} className="flex items-center gap-2 border border-[#EBEBEA] px-2 py-1.5 font-body text-xs">
+                  <label key={country.code} className="flex items-center gap-2 border border-sand px-2 py-1.5 font-body text-xs">
                     <input
                       type="checkbox"
                       checked={form.countries.includes(country.code)}
@@ -127,7 +127,7 @@ export function ShippingZoneModal({
                   All Nigerian States
                 </label>
                 {!form.allStatesInNigeria ? (
-                  <div className="grid grid-cols-3 gap-1 border border-[#EBEBEA] p-2">
+                  <div className="grid grid-cols-3 gap-1 border border-sand p-2">
                     {NIGERIAN_STATES.map((state) => (
                       <label key={state} className="flex items-center gap-1 font-body text-[11px]">
                         <input
@@ -149,10 +149,10 @@ export function ShippingZoneModal({
             ) : null}
 
             <div className="grid grid-cols-2 gap-2">
-              <input type="number" value={form.flatRateNGN} onChange={(e) => setForm((prev) => ({ ...prev, flatRateNGN: Number(e.target.value) }))} placeholder="Flat Rate (NGN)" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
-              <input type="number" value={form.perKgNGN} onChange={(e) => setForm((prev) => ({ ...prev, perKgNGN: Number(e.target.value) }))} placeholder="Per KG (NGN)" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
-              <input type="number" value={form.freeAboveNGN} onChange={(e) => setForm((prev) => ({ ...prev, freeAboveNGN: e.target.value }))} placeholder="Free Above (NGN)" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
-              <input value={form.estimatedDays} onChange={(e) => setForm((prev) => ({ ...prev, estimatedDays: e.target.value }))} placeholder="Estimated Days (e.g. 1–2 business days)" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
+              <input type="number" value={form.flatRateNGN} onChange={(e) => setForm((prev) => ({ ...prev, flatRateNGN: Number(e.target.value) }))} placeholder="Flat Rate (NGN)" className="w-full border border-sand px-3 py-2 font-body text-sm" />
+              <input type="number" value={form.perKgNGN} onChange={(e) => setForm((prev) => ({ ...prev, perKgNGN: Number(e.target.value) }))} placeholder="Per KG (NGN)" className="w-full border border-sand px-3 py-2 font-body text-sm" />
+              <input type="number" value={form.freeAboveNGN} onChange={(e) => setForm((prev) => ({ ...prev, freeAboveNGN: e.target.value }))} placeholder="Free Above (NGN)" className="w-full border border-sand px-3 py-2 font-body text-sm" />
+              <input value={form.estimatedDays} onChange={(e) => setForm((prev) => ({ ...prev, estimatedDays: e.target.value }))} placeholder="Estimated Days (e.g. 1–2 business days)" className="w-full border border-sand px-3 py-2 font-body text-sm" />
             </div>
 
             <label className="flex items-center gap-2 font-body text-sm">
@@ -161,8 +161,8 @@ export function ShippingZoneModal({
             </label>
           </div>
 
-          <div className="flex items-center justify-end gap-2 border-t border-[#EBEBEA] px-5 py-3">
-            <button type="button" onClick={() => onOpenChange(false)} className="border border-[#EBEBEA] px-4 py-2 font-body text-xs">
+          <div className="flex items-center justify-end gap-2 border-t border-sand px-5 py-3">
+            <button type="button" onClick={() => onOpenChange(false)} className="border border-sand px-4 py-2 font-body text-xs">
               Cancel
             </button>
             <button type="button" onClick={() => void submit()} className="bg-[#37392d] px-4 py-2 font-body text-xs text-white">

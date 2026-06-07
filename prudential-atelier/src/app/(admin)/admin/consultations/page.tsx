@@ -30,7 +30,7 @@ export default async function AdminConsultationsPage() {
           {pendingConfirm} booking(s) awaiting manual confirmation
         </p>
       ) : null}
-      <div className="mt-8 overflow-x-auto border border-[#EBEBEA]">
+      <div className="mt-8 overflow-x-auto border border-sand">
         <table className="w-full min-w-[720px] border-collapse font-body text-xs">
           <thead>
             <tr className="bg-[#37392d] text-left text-[10px] font-medium uppercase tracking-[0.1em] text-white">
@@ -44,7 +44,7 @@ export default async function AdminConsultationsPage() {
           </thead>
           <tbody>
             {bookings.map((b) => (
-              <tr key={b.id} className="border-t border-[#EBEBEA]">
+              <tr key={b.id} className="border-t border-sand">
                 <td className="px-3 py-2 font-mono text-[11px] text-olive">{b.bookingNumber}</td>
                 <td className="px-3 py-2">
                   <div className="font-medium text-ink">{b.clientName}</div>

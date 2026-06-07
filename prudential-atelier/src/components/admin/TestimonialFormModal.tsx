@@ -203,7 +203,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[120] bg-black/40" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[121] max-h-[90vh] w-[min(96vw,560px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[3px] border border-[#EBEBEA] bg-canvas p-6 shadow-lg">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-[121] max-h-[90vh] w-[min(96vw,560px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[3px] border border-sand bg-canvas p-6 shadow-lg">
           <div className="flex items-start justify-between gap-4">
             <Dialog.Title className="font-display text-[22px] text-ink">
               {isEdit ? "Update Testimonial" : "Add Testimonial"}
@@ -255,13 +255,13 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
                       setClientQuery(e.target.value);
                     }}
                     placeholder="Search by name or email…"
-                    className="w-full rounded-sm border border-[#EBEBEA] bg-white px-3 py-2 font-body text-sm outline-none focus:border-olive"
+                    className="w-full rounded-sm border border-sand bg-bg-card px-3 py-2 font-body text-sm outline-none focus:border-olive"
                   />
                   {searching ? (
                     <p className="mt-1 font-body text-xs text-charcoal-mid">Searching…</p>
                   ) : null}
                   {!selectedClient && clientResults.length > 0 ? (
-                    <ul className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-sm border border-[#EBEBEA] bg-white shadow-md">
+                    <ul className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-sm border border-sand bg-bg-card shadow-md">
                       {clientResults.map((c) => (
                         <li key={c.id}>
                           <button
@@ -299,7 +299,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
                       placeholder='e.g. "Chidinma E."'
-                      className="mt-1 w-full rounded-sm border border-[#EBEBEA] px-3 py-2 font-body text-sm outline-none focus:border-olive"
+                      className="mt-1 w-full rounded-sm border border-sand px-3 py-2 font-body text-sm outline-none focus:border-olive"
                     />
                   </div>
                   <div>
@@ -308,7 +308,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       placeholder='e.g. "Lagos, Nigeria"'
-                      className="mt-1 w-full rounded-sm border border-[#EBEBEA] px-3 py-2 font-body text-sm outline-none focus:border-olive"
+                      className="mt-1 w-full rounded-sm border border-sand px-3 py-2 font-body text-sm outline-none focus:border-olive"
                     />
                   </div>
                 </div>
@@ -334,7 +334,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
                 onChange={(e) => setBody(e.target.value)}
                 rows={5}
                 maxLength={600}
-                className="mt-2 w-full resize-y rounded-sm border border-[#EBEBEA] px-3 py-2 font-body text-sm outline-none focus:border-olive"
+                className="mt-2 w-full resize-y rounded-sm border border-sand px-3 py-2 font-body text-sm outline-none focus:border-olive"
               />
               <p className="mt-1 text-right font-body text-xs text-charcoal-mid">
                 {body.length}/600 · min 30
@@ -348,7 +348,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
                   value={productContext}
                   onChange={(e) => setProductContext(e.target.value)}
                   placeholder='e.g. "Custom Asoebi Gown"'
-                  className="mt-1 w-full rounded-sm border border-[#EBEBEA] px-3 py-2 font-body text-sm outline-none focus:border-olive"
+                  className="mt-1 w-full rounded-sm border border-sand px-3 py-2 font-body text-sm outline-none focus:border-olive"
                 />
               </div>
               <div>
@@ -357,7 +357,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
                   value={orderContext}
                   onChange={(e) => setOrderContext(e.target.value)}
                   placeholder='e.g. "Atelier Commission"'
-                  className="mt-1 w-full rounded-sm border border-[#EBEBEA] px-3 py-2 font-body text-sm outline-none focus:border-olive"
+                  className="mt-1 w-full rounded-sm border border-sand px-3 py-2 font-body text-sm outline-none focus:border-olive"
                 />
               </div>
             </div>
@@ -365,7 +365,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
             <div>
               <p className="font-label text-[10px] uppercase tracking-wide text-[#A8A8A4]">Photo (optional)</p>
               <div className="mt-2 flex flex-wrap items-center gap-3">
-                <label className="cursor-pointer border border-[#EBEBEA] px-3 py-2 font-body text-xs text-charcoal hover:bg-[#FAFAFA]">
+                <label className="cursor-pointer border border-sand px-3 py-2 font-body text-xs text-charcoal hover:bg-[#FAFAFA]">
                   {uploading ? "Uploading…" : "Upload photo"}
                   <input
                     type="file"
@@ -388,7 +388,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
               ) : null}
             </div>
 
-            <div className="space-y-3 border-t border-[#EBEBEA] pt-4">
+            <div className="space-y-3 border-t border-sand pt-4">
               <p className="font-label text-[10px] uppercase tracking-wide text-[#A8A8A4]">Status</p>
               <div className="flex items-center justify-between gap-4">
                 <span className="font-body text-sm text-charcoal">Approved</span>
@@ -406,7 +406,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
             </div>
           </div>
 
-          <div className="mt-8 flex flex-wrap items-center justify-end gap-3 border-t border-[#EBEBEA] pt-4">
+          <div className="mt-8 flex flex-wrap items-center justify-end gap-3 border-t border-sand pt-4">
             <Dialog.Close className="px-4 py-2 font-body text-sm text-charcoal-mid hover:text-charcoal">
               Cancel
             </Dialog.Close>

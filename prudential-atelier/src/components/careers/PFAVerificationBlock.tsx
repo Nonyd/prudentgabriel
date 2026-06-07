@@ -62,7 +62,7 @@ export function PFAVerificationBlock({
           }}
           placeholder="PFA/2024/0142"
           disabled={disabled || checking}
-          className="flex-1 rounded-[3px] border border-sand bg-white px-3 py-2 font-body text-sm uppercase outline-none focus:border-lightbr"
+          className="flex-1 rounded-[3px] border border-sand bg-input-bg px-3 py-2 font-body text-sm uppercase outline-none focus:border-lightbr"
         />
         <button
           type="button"

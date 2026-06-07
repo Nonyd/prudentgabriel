@@ -26,7 +26,7 @@ const COLLECTIONS = [
 
 export function CategoryGrid() {
   return (
-    <section className="px-6 py-20 lg:px-10" style={{ backgroundColor: "var(--ivory)" }}>
+    <section className="bg-bg-page px-6 py-20 lg:px-10">
       <div className="mx-auto max-w-site">
         <div className="text-center">
           <p

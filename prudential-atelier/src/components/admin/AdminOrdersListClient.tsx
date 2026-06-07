@@ -184,9 +184,9 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
         </div>
       ) : null}
 
-      <div className="-mx-4 overflow-x-auto rounded-sm border border-[#EBEBEA] bg-canvas px-4 md:mx-0 md:px-0">
+      <div className="-mx-4 overflow-x-auto rounded-sm border border-sand bg-canvas px-4 md:mx-0 md:px-0">
         <table className="w-full min-w-[700px] text-left text-sm text-charcoal">
-          <thead className="border-b border-[#EBEBEA] text-[11px] uppercase text-[#A8A8A4]">
+          <thead className="border-b border-sand text-[11px] uppercase text-[#A8A8A4]">
             <tr>
               <th className="w-10 p-3">
                 <input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="Select all on page" />

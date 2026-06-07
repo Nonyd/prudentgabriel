@@ -82,7 +82,7 @@ function RtwDropdown({ collections }: { collections: CollectionNav[] }) {
             <div
               className="border-b py-3 shadow-sm"
               style={{
-                backgroundColor: "var(--ivory)",
+                backgroundColor: "var(--bg-card)",
                 borderColor: "var(--sand)",
               }}
             >

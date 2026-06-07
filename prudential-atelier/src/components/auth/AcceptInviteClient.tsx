@@ -53,7 +53,7 @@ export function AcceptInviteClient({
           <h1 className="mt-3 font-display text-4xl text-white">Join the Team</h1>
         </div>
       </div>
-      <div className="flex items-center justify-center bg-white p-8">
+      <div className="flex items-center justify-center bg-input-bg p-8">
         <div className="w-full max-w-md">
           <h2 className="font-display text-[30px] text-ink">Create Your Admin Account</h2>
           <div className="mt-5 space-y-3">

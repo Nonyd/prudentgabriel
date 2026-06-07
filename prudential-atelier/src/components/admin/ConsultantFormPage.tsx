@@ -125,7 +125,7 @@ export function ConsultantFormPage({ consultantId }: { consultantId: string }) {
       <Link href="/admin/consultants" className="text-sm text-gold underline">
         ← Consultants
       </Link>
-      <div className="space-y-3 rounded-sm border border-[#EBEBEA] bg-[#FAFAFA] p-4">
+      <div className="space-y-3 rounded-sm border border-sand bg-[#FAFAFA] p-4">
         <label className="block text-xs text-[#aaa]">
           Name
           <input
@@ -185,7 +185,7 @@ export function ConsultantFormPage({ consultantId }: { consultantId: string }) {
         </label>
       </div>
 
-      <div className="rounded-sm border border-[#EBEBEA] bg-[#FAFAFA] p-4">
+      <div className="rounded-sm border border-sand bg-[#FAFAFA] p-4">
         <h2 className="font-label text-gold">Offerings</h2>
         <div className="mt-3 space-y-3">
           {form.offerings.map((o, idx) => (
@@ -247,7 +247,7 @@ export function ConsultantFormPage({ consultantId }: { consultantId: string }) {
         </div>
       </div>
 
-      <div className="rounded-sm border border-[#EBEBEA] bg-[#FAFAFA] p-4">
+      <div className="rounded-sm border border-sand bg-[#FAFAFA] p-4">
         <h2 className="font-label text-gold">Weekly availability</h2>
         <div className="mt-3 space-y-2">
           {form.availability.map((a, idx) => (

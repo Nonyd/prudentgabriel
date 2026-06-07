@@ -248,7 +248,7 @@ export function BespokeOrderDetailClient({
                           "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-[11px] font-semibold",
                           done && "border-lightbr bg-lightbr text-cream",
                           active && !done && "border-nut bg-nut text-cream animate-pulse",
-                          !done && !active && "border-sand bg-white text-text-light",
+                          !done && !active && "border-sand bg-bg-card text-text-light",
                         )}
                       >
                         {idx + 1}

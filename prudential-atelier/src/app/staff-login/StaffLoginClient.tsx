@@ -52,7 +52,7 @@ function StaffField({
           type={inputType}
           autoComplete={autoComplete}
           className={cn(
-            "w-full rounded-[3px] border-[0.5px] border-[var(--sand)] bg-white px-4 py-3 font-sans text-[13px] text-[#2A1A0E] outline-none transition-colors focus:border-[#442913]",
+            "w-full rounded-[3px] border-[0.5px] border-[var(--sand)] bg-input-bg px-4 py-3 font-sans text-[13px] text-text-dark outline-none transition-colors focus:border-[#442913]",
             error && "border-[#8B2020]",
             isPassword && "pr-11",
           )}

@@ -56,7 +56,7 @@ function LoginField({
           autoComplete={autoComplete}
           aria-invalid={error ? true : undefined}
           className={cn(
-            "w-full rounded-[3px] border-[0.5px] border-[var(--sand)] bg-white px-4 py-3 font-sans text-[13px] text-[#2A1A0E] outline-none transition-colors",
+            "w-full rounded-[3px] border-[0.5px] border-[var(--sand)] bg-input-bg px-4 py-3 font-sans text-[13px] text-text-dark outline-none transition-colors",
             "focus:border-[#442913]",
             error && "border-[#8B2020]",
             isPassword && "pr-11",
@@ -223,7 +223,7 @@ export function PortalLoginClient() {
         </div>
 
         <div
-          className="mb-8 flex rounded-[3px] border-[0.5px] border-[var(--sand)] bg-white p-1"
+          className="mb-8 flex rounded-[3px] border-[0.5px] border-[var(--sand)] bg-bg-card p-1"
           role="tablist"
           aria-label="Sign in as"
         >

@@ -53,7 +53,7 @@ export function ShippingZonesClient({ initialZones }: { initialZones: ShippingZo
         </button>
       </div>
 
-      <div className="border border-[#EBEBEA] bg-white">
+      <div className="border border-sand bg-bg-card">
         {zones.length === 0 ? (
           <div className="py-12 text-center">
             <p className="font-body text-sm text-[#6B6B68]">No shipping zones configured yet. Add your first zone.</p>

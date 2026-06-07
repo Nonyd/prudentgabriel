@@ -146,7 +146,7 @@ export function ImportPageClient() {
           <button
             type="button"
             className={cn(
-              "w-full rounded-sm border-2 border-dashed border-[#EBEBEA] p-12 text-center transition-colors",
+              "w-full rounded-sm border-2 border-dashed border-sand p-12 text-center transition-colors",
               dragging && "border-olive bg-olive/5",
             )}
             onClick={() => fileInputRef.current?.click()}
@@ -207,7 +207,7 @@ export function ImportPageClient() {
             </span>
           </div>
 
-          <div className="overflow-x-auto border border-[#EBEBEA]">
+          <div className="overflow-x-auto border border-sand">
             <table className="w-full min-w-[800px] border-collapse font-body text-xs">
               <thead>
                 <tr className="bg-[#37392d] text-left text-[10px] font-medium uppercase tracking-[0.1em] text-white">
@@ -226,7 +226,7 @@ export function ImportPageClient() {
                   const canSelect = product.isImportable && !product.isDuplicate;
                   const selected = selectedSlugs.has(product.slug);
                   return (
-                    <tr key={product.slug} className="border-t border-[#EBEBEA]">
+                    <tr key={product.slug} className="border-t border-sand">
                       <td className="px-3 py-2">
                         <input
                           type="checkbox"
@@ -269,7 +269,7 @@ export function ImportPageClient() {
                             <span
                               key={c}
                               title={c}
-                              className="inline-block h-3 w-3 rounded-full border border-[#EBEBEA]"
+                              className="inline-block h-3 w-3 rounded-full border border-sand"
                               style={{ backgroundColor: c.toLowerCase() }}
                             />
                           ))}

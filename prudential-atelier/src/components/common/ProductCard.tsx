@@ -164,7 +164,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
 
           {!compact && (
             <div
-              className="absolute bottom-0 left-0 right-0 translate-y-full bg-white px-4 pb-4 pt-4 transition-transform duration-[400ms] ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:translate-y-0"
+              className="absolute bottom-0 left-0 right-0 translate-y-full bg-bg-card px-4 pb-4 pt-4 transition-transform duration-[400ms] ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:translate-y-0"
               onClick={(e) => e.stopPropagation()}
             >
               {oneSizeOnly ? (

@@ -150,7 +150,7 @@ function StepIndicator({ step }: { step: number }) {
             <div
               className={clsx(
                 "flex h-3 w-3 items-center justify-center rounded-full border",
-                step >= s.n ? "border-choc bg-choc" : "border-sand bg-white",
+                step >= s.n ? "border-choc bg-choc" : "border-sand bg-bg-card",
               )}
             />
             <span
@@ -480,7 +480,7 @@ export function ConsultationBookingFlow({
                     type="button"
                     onClick={() => selectCard(key)}
                     className={clsx(
-                      "relative rounded-lg border bg-white p-8 text-left transition-shadow",
+                      "relative rounded-lg border bg-bg-card p-8 text-left transition-shadow",
                       selected
                         ? "border-[1.5px] border-choc shadow-[0_4px_24px_rgba(68,41,19,0.08)]"
                         : "border-[0.5px] border-sand hover:border-nut/40",
@@ -544,7 +544,7 @@ export function ConsultationBookingFlow({
 
             {manualFlow ? (
               <div className="mt-8 space-y-4">
-                <div className="rounded-lg border border-sand bg-white p-4 font-body text-sm text-text-mid">
+                <div className="rounded-lg border border-sand bg-bg-card p-4 font-body text-sm text-text-mid">
                   As Mrs. Prudent personally conducts these sessions, scheduling is coordinated with her team. Submit
                   up to three preferred dates; we will confirm within 24–48 hours.
                 </div>
@@ -596,7 +596,7 @@ export function ConsultationBookingFlow({
                         }}
                         className={clsx(
                           "rounded-sm border px-3 py-2 font-sans text-xs transition-colors",
-                          selectedYmd === d ? "border-choc bg-choc text-cream" : "border-sand bg-white text-text-mid",
+                          selectedYmd === d ? "border-choc bg-choc text-cream" : "border-sand bg-bg-card text-text-mid",
                         )}
                       >
                         {d}
@@ -616,7 +616,7 @@ export function ConsultationBookingFlow({
                           onClick={() => setSelectedTime(t)}
                           className={clsx(
                             "rounded-sm border px-3 py-2 font-sans text-xs transition-colors",
-                            selectedTime === t ? "border-choc bg-choc text-cream" : "border-sand bg-white text-text-mid",
+                            selectedTime === t ? "border-choc bg-choc text-cream" : "border-sand bg-bg-card text-text-mid",
                           )}
                         >
                           {t} WAT
@@ -642,7 +642,7 @@ export function ConsultationBookingFlow({
                       onClick={() => setVirtualPlatform(p)}
                       className={clsx(
                         "rounded-sm border px-4 py-2 font-sans text-xs transition-colors",
-                        virtualPlatform === p ? "border-choc bg-choc text-cream" : "border-sand bg-white text-text-mid",
+                        virtualPlatform === p ? "border-choc bg-choc text-cream" : "border-sand bg-bg-card text-text-mid",
                       )}
                     >
                       {p}
@@ -670,7 +670,7 @@ export function ConsultationBookingFlow({
 
         {step === 3 && consultant && offering && selectedCard && (
           <div className="mx-auto max-w-2xl space-y-8">
-            <div className="rounded-lg border border-sand bg-white p-6">
+            <div className="rounded-lg border border-sand bg-bg-card p-6">
               <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Booking summary</p>
               <h3 className="mt-2 font-serif text-xl text-choc">{CARD_UI[selectedCard].title}</h3>
               <p className="mt-2 font-body text-sm text-text-mid">
@@ -686,7 +686,7 @@ export function ConsultationBookingFlow({
               <p className="mt-4 font-serif text-[28px] text-choc">₦{offering.feeNGN.toLocaleString("en-NG")}</p>
             </div>
 
-            <div className="space-y-4 rounded-lg border border-sand bg-white p-6">
+            <div className="space-y-4 rounded-lg border border-sand bg-bg-card p-6">
               <h3 className="font-serif text-xl text-choc">Your details</h3>
               <input
                 placeholder="Full name"
@@ -743,7 +743,7 @@ export function ConsultationBookingFlow({
               </div>
             </div>
 
-            <div className="rounded-lg border border-sand bg-white p-6">
+            <div className="rounded-lg border border-sand bg-bg-card p-6">
               <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Currency</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {(["NGN", "USD", "GBP"] as ShopCur[]).map((c) => (
@@ -756,7 +756,7 @@ export function ConsultationBookingFlow({
                     }}
                     className={clsx(
                       "rounded-sm border px-4 py-2 font-sans text-xs uppercase",
-                      currency === c ? "border-choc bg-choc text-cream" : "border-sand bg-white text-text-mid",
+                      currency === c ? "border-choc bg-choc text-cream" : "border-sand bg-bg-card text-text-mid",
                     )}
                   >
                     {c}

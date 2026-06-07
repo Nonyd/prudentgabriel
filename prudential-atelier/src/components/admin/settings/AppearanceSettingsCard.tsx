@@ -60,7 +60,7 @@ export function AppearanceSettingsCard({
   };
 
   return (
-    <div className="rounded-sm border border-[#EBEBEA] bg-canvas p-6">
+    <div className="rounded-sm border border-sand bg-canvas p-6">
       <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">Site images</h2>
       <p className="mt-2 font-body text-xs text-[#6B6B68]">
         Replace static images across the site. Upload fills the URL automatically; you can still paste a CDN URL manually.
@@ -80,7 +80,7 @@ export function AppearanceSettingsCard({
               <label className="font-body text-xs text-charcoal">{row.label}</label>
               <input
                 type="text"
-                className="mt-1.5 w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+                className="mt-1.5 w-full border border-sand px-3 py-2 font-body text-sm"
                 value={row.value}
                 onChange={(e) => updateVal(row.key, e.target.value)}
               />

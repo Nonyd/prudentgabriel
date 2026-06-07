@@ -86,7 +86,7 @@ export function AdminConsultationDetail({
     <div className="space-y-8">
       <div className="grid gap-8 lg:grid-cols-2">
       <div className="space-y-4 text-sm text-[#eaeaea]">
-        <div className="rounded-sm border border-[#EBEBEA] bg-[#FAFAFA] p-4">
+        <div className="rounded-sm border border-sand bg-[#FAFAFA] p-4">
           <h2 className="font-label text-gold">Client</h2>
           <p className="mt-2">{booking.clientName}</p>
           <a href={`mailto:${booking.clientEmail}`} className="text-gold underline">
@@ -95,14 +95,14 @@ export function AdminConsultationDetail({
           <p className="mt-1">{booking.clientPhone}</p>
           <p className="text-[#aaa]">{booking.clientCountry}</p>
         </div>
-        <div className="rounded-sm border border-[#EBEBEA] bg-[#FAFAFA] p-4">
+        <div className="rounded-sm border border-sand bg-[#FAFAFA] p-4">
           <h2 className="font-label text-gold">Session</h2>
           <p className="mt-2">{booking.consultant.name}</p>
           <p className="text-xs text-[#aaa]">{getSessionTypeLabel(booking.offering.sessionType)}</p>
           <p className="text-xs text-[#aaa]">{getDeliveryModeLabel(booking.offering.deliveryMode)}</p>
           <p className="mt-2 text-xs">Fee ₦{booking.feeNGN.toLocaleString("en-NG")}</p>
         </div>
-        <div className="rounded-sm border border-[#EBEBEA] bg-[#FAFAFA] p-4">
+        <div className="rounded-sm border border-sand bg-[#FAFAFA] p-4">
           <h2 className="font-label text-gold">Scheduling</h2>
           {booking.preferredDate1 && (
             <p className="mt-2 text-xs">
@@ -118,7 +118,7 @@ export function AdminConsultationDetail({
         <p className="text-xs text-[#888]">{booking.description}</p>
       </div>
 
-      <div className="space-y-4 rounded-sm border border-[#EBEBEA] bg-[#1e1e1e] p-4">
+      <div className="space-y-4 rounded-sm border border-sand bg-[#1e1e1e] p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="font-display text-lg text-gold">Status: {booking.status}</p>
           <Link

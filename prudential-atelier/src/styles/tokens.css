@@ -13,6 +13,8 @@
   --text-mid: #6b4c35;
   --text-light: #a08060;
   --border-color: rgba(212, 187, 172, 0.6);
+  --input-bg: #ffffff;
+  --input-border: var(--sand);
   --hero-bg: #442913;
   --sidebar-bg: #442913;
   --footer-bg: #1a0f08;
@@ -77,6 +79,8 @@
   --text-mid: #d4bbac;
   --text-light: #98755b;
   --border-color: rgba(107, 76, 53, 0.4);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-border: rgba(226, 209, 194, 0.15);
   --hero-bg: #0f0804;
   --sidebar-bg: #0f0804;
   --footer-bg: #0f0804;

@@ -16,7 +16,7 @@ export default async function AdminConsultantsPage() {
       <p className="mt-2 text-sm text-[#aaa]">Manage profiles, offerings, and weekly availability.</p>
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         {consultants.map((c) => (
-          <div key={c.id} className="rounded-sm border border-[#EBEBEA] bg-[#FAFAFA] p-4">
+          <div key={c.id} className="rounded-sm border border-sand bg-[#FAFAFA] p-4">
             <div className="flex gap-3">
               {c.image ? (
                 <Image src={c.image} alt="" width={64} height={64} className="h-16 w-16 rounded-full object-cover" />

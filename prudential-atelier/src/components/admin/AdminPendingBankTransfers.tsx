@@ -86,7 +86,7 @@ export function AdminPendingBankTransfers() {
 
   if (loading) {
     return (
-      <div className="mt-8 border border-[#EBEBEA] bg-white p-6">
+      <div className="mt-8 border border-sand bg-bg-card p-6">
         <p className="font-body text-sm text-[#6B6B68]">Loading pending bank transfers…</p>
       </div>
     );
@@ -103,7 +103,7 @@ export function AdminPendingBankTransfers() {
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[720px] border-collapse font-body text-sm">
             <thead>
-              <tr className="border-b border-[#EBEBEA] text-left text-[10px] uppercase tracking-wide text-[#6B6B68]">
+              <tr className="border-b border-sand text-left text-[10px] uppercase tracking-wide text-[#6B6B68]">
                 <th className="px-2 py-2">Type</th>
                 <th className="px-2 py-2">Reference</th>
                 <th className="px-2 py-2">Client</th>
@@ -114,7 +114,7 @@ export function AdminPendingBankTransfers() {
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="border-b border-[#EBEBEA] last:border-0">
+                <tr key={item.id} className="border-b border-sand last:border-0">
                   <td className="px-2 py-3 text-xs">{item.kind}</td>
                   <td className="px-2 py-3 font-medium">{item.ref}</td>
                   <td className="px-2 py-3 text-xs text-[#6B6B68]">
@@ -186,7 +186,7 @@ export function AdminPendingBankTransfers() {
             />
             <button
               type="button"
-              className="absolute right-2 top-2 bg-white px-3 py-1 text-xs uppercase"
+              className="absolute right-2 top-2 bg-bg-card px-3 py-1 text-xs uppercase"
               onClick={() => setLightbox(null)}
             >
               Close
@@ -197,14 +197,14 @@ export function AdminPendingBankTransfers() {
 
       {rejectId ? (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md bg-white p-6">
+          <div className="w-full max-w-md bg-bg-card p-6">
             <p className="font-display text-lg text-ink">Reject payment</p>
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               rows={4}
               placeholder="Reason for rejection…"
-              className="mt-4 w-full border border-[#EBEBEA] p-3 font-body text-sm"
+              className="mt-4 w-full border border-sand p-3 font-body text-sm"
             />
             <div className="mt-4 flex justify-end gap-2">
               <button type="button" className="px-4 py-2 text-xs uppercase" onClick={() => setRejectId(null)}>

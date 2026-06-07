@@ -165,13 +165,13 @@ export function AnalyticsDashboard({
           <h1 className="font-display text-[28px] text-ink">Dashboard</h1>
           <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">{todayLabel}</p>
         </div>
-        <span className="inline-flex w-fit border border-[#EBEBEA] px-3 py-1 font-body text-[11px] text-[#6B6B68]">
+        <span className="inline-flex w-fit border border-sand px-3 py-1 font-body text-[11px] text-[#6B6B68]">
           Last 30 days
         </span>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="relative border border-[#EBEBEA] bg-canvas p-6">
+        <div className="relative border border-sand bg-canvas p-6">
           <div className="flex items-start justify-between">
             <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">Revenue (30 days)</p>
             <TrendingUp className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
@@ -182,7 +182,7 @@ export function AnalyticsDashboard({
             {growth.toFixed(1)}% vs prev 30 days
           </p>
         </div>
-        <div className="border border-[#EBEBEA] bg-canvas p-6">
+        <div className="border border-sand bg-canvas p-6">
           <div className="flex items-start justify-between">
             <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">Total orders (30 days)</p>
             <ShoppingBag className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
@@ -190,7 +190,7 @@ export function AnalyticsDashboard({
           <p className="mt-2 font-display text-[32px] text-ink">{orders30Count}</p>
           <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">{ordersPendingPayment} pending payment</p>
         </div>
-        <div className="border border-[#EBEBEA] bg-canvas p-6">
+        <div className="border border-sand bg-canvas p-6">
           <div className="flex items-start justify-between">
             <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">New customers (30 days)</p>
             <Users className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
@@ -200,7 +200,7 @@ export function AnalyticsDashboard({
         </div>
         <Link
           href={urgentHref}
-          className="block border border-[#EBEBEA] bg-canvas p-6 transition-colors hover:bg-[#FAFAFA]"
+          className="block border border-sand bg-canvas p-6 transition-colors hover:bg-[#FAFAFA]"
         >
           <div className="flex items-start justify-between">
             <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">Pending actions</p>
@@ -215,7 +215,7 @@ export function AnalyticsDashboard({
         </Link>
       </div>
 
-      <div className="border border-[#EBEBEA] bg-canvas p-6">
+      <div className="border border-sand bg-canvas p-6">
         <h2 className="mb-4 font-body text-xs font-medium uppercase tracking-wide text-ink">Revenue</h2>
         <div className="h-[280px] min-h-[300px] w-full" style={{ width: "100%", height: 300, minHeight: 300 }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -246,7 +246,7 @@ export function AnalyticsDashboard({
                   return [`₦${n.toLocaleString("en-NG")}`, "Revenue"];
                 }}
                 contentStyle={{
-                  background: "white",
+                  background: "var(--bg-card)",
                   border: "1px solid #EBEBEA",
                   borderRadius: 0,
                   fontFamily: "var(--font-jost)",
@@ -268,8 +268,8 @@ export function AnalyticsDashboard({
         </div>
       </div>
 
-      <div className="overflow-hidden border border-[#EBEBEA] bg-canvas">
-        <div className="flex items-center justify-between border-b border-[#EBEBEA] px-6 py-4">
+      <div className="overflow-hidden border border-sand bg-canvas">
+        <div className="flex items-center justify-between border-b border-sand px-6 py-4">
           <h2 className="font-body text-xs font-medium uppercase tracking-wide text-ink">Recent Orders</h2>
           <Link href="/admin/orders" className="font-body text-[11px] text-olive hover:underline">
             View All →
@@ -278,7 +278,7 @@ export function AnalyticsDashboard({
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead>
-              <tr className="border-b border-[#EBEBEA] bg-[#FAFAFA] font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">
+              <tr className="border-b border-sand bg-[#FAFAFA] font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">
                 <th className="px-6 py-2.5">Order #</th>
                 <th className="px-6 py-2.5">Customer</th>
                 <th className="px-6 py-2.5">Items</th>
@@ -338,7 +338,7 @@ export function AnalyticsDashboard({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="border border-[#EBEBEA] bg-canvas p-5">
+        <div className="border border-sand bg-canvas p-5">
           <div className="flex items-center justify-between">
             <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-ink">Out of stock</h3>
             {oosVariants.length > 0 ? (
@@ -362,7 +362,7 @@ export function AnalyticsDashboard({
             )}
           </ul>
         </div>
-        <div className="border border-[#EBEBEA] bg-canvas p-5">
+        <div className="border border-sand bg-canvas p-5">
           <div className="flex items-center justify-between">
             <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-ink">Atelier requests</h3>
             {bespokePendingList.length > 0 ? (
@@ -383,7 +383,7 @@ export function AnalyticsDashboard({
             Review all
           </Link>
         </div>
-        <div className="border border-[#EBEBEA] bg-canvas p-5">
+        <div className="border border-sand bg-canvas p-5">
           <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-ink">Coupons expiring soon</h3>
           <p className="mt-1 font-body text-[11px] text-[#6B6B68]">Within 7 days</p>
           <ul className="mt-4 divide-y divide-[#F5F5F3]">

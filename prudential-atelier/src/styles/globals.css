@@ -104,12 +104,14 @@ body {
   }
 
   .card-surface {
-    @apply border border-sand bg-ivory;
+    @apply border border-sand bg-bg-card;
     border-radius: var(--radius-lg);
   }
 
   .input-field {
-    @apply w-full border border-sand bg-bg px-3 py-2.5 font-sans text-xs text-text-dark placeholder:text-text-light;
+    @apply w-full border px-3 py-2.5 font-sans text-xs text-text-dark placeholder:text-text-light;
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
     border-radius: 3px;
   }
 

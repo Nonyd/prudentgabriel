@@ -341,13 +341,13 @@ export function InvoiceFormPage({
               href={`${base}/invoice/${publicToken}`}
               target="_blank"
               rel="noreferrer"
-              className="border border-[#EBEBEA] px-4 py-2 font-body text-[11px] uppercase"
+              className="border border-sand px-4 py-2 font-body text-[11px] uppercase"
             >
               Preview
             </a>
             <button
               type="button"
-              className="border border-[#EBEBEA] px-4 py-2 font-body text-[11px] uppercase"
+              className="border border-sand px-4 py-2 font-body text-[11px] uppercase"
               onClick={() => window.open(`/api/admin/invoices/${invoiceId}/pdf`, "_blank")}
             >
               Download PDF
@@ -371,15 +371,15 @@ export function InvoiceFormPage({
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-8">
-          <section className="border border-[#EBEBEA] bg-canvas p-5">
+          <section className="border border-sand bg-canvas p-5">
             <h2 className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Link to atelier request (optional)</h2>
             <input
-              className="mt-3 w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm"
+              className="mt-3 w-full border border-sand px-3 py-2 font-body text-sm"
               placeholder="Search #BQ-… or client name"
               onChange={(e) => void searchBespoke(e.target.value)}
             />
             {bespokeHits.length > 0 ? (
-              <ul className="mt-2 border border-[#EBEBEA] bg-white">
+              <ul className="mt-2 border border-sand bg-bg-card">
                 {bespokeHits.map((h) => (
                   <li key={h.id}>
                     <button
@@ -406,41 +406,41 @@ export function InvoiceFormPage({
             </button>
           </section>
 
-          <section className="border border-[#EBEBEA] bg-canvas p-5">
+          <section className="border border-sand bg-canvas p-5">
             <h2 className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Client</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <label className="block font-body text-xs">
                 Full name
-                <input className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 text-sm" value={clientName} onChange={(e) => setClientName(e.target.value)} />
+                <input className="mt-1 w-full border border-sand px-3 py-2 text-sm" value={clientName} onChange={(e) => setClientName(e.target.value)} />
               </label>
               <label className="block font-body text-xs">
                 Email
-                <input className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 text-sm" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} />
+                <input className="mt-1 w-full border border-sand px-3 py-2 text-sm" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} />
               </label>
               <label className="block font-body text-xs">
                 Phone
-                <input className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 text-sm" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} />
+                <input className="mt-1 w-full border border-sand px-3 py-2 text-sm" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} />
               </label>
               <label className="block font-body text-xs">
                 City
-                <input className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 text-sm" value={clientCity} onChange={(e) => setClientCity(e.target.value)} />
+                <input className="mt-1 w-full border border-sand px-3 py-2 text-sm" value={clientCity} onChange={(e) => setClientCity(e.target.value)} />
               </label>
               <label className="block font-body text-xs sm:col-span-2">
                 Address
-                <input className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 text-sm" value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} />
+                <input className="mt-1 w-full border border-sand px-3 py-2 text-sm" value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} />
               </label>
               <label className="block font-body text-xs">
                 Country
-                <input className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 text-sm" value={clientCountry} onChange={(e) => setClientCountry(e.target.value)} />
+                <input className="mt-1 w-full border border-sand px-3 py-2 text-sm" value={clientCountry} onChange={(e) => setClientCountry(e.target.value)} />
               </label>
               <label className="block font-body text-xs">
                 Instagram
-                <input className="mt-1 w-full border border-[#EBEBEA] px-3 py-2 text-sm" value={clientInstagram} onChange={(e) => setClientInstagram(e.target.value)} />
+                <input className="mt-1 w-full border border-sand px-3 py-2 text-sm" value={clientInstagram} onChange={(e) => setClientInstagram(e.target.value)} />
               </label>
             </div>
           </section>
 
-          <section className="border border-[#EBEBEA] bg-canvas p-5">
+          <section className="border border-sand bg-canvas p-5">
             <h2 className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Invoice details</h2>
             <div className="mt-4 flex flex-wrap gap-3">
               {(["NGN", "USD", "GBP"] as const).map((c) => (
@@ -448,7 +448,7 @@ export function InvoiceFormPage({
                   key={c}
                   type="button"
                   onClick={() => setCurrency(c)}
-                  className={`border px-4 py-2 font-body text-xs ${currency === c ? "border-[#37392d] ring-1 ring-[#37392d]" : "border-[#EBEBEA]"}`}
+                  className={`border px-4 py-2 font-body text-xs ${currency === c ? "border-[#37392d] ring-1 ring-[#37392d]" : "border-sand"}`}
                 >
                   {c}
                 </button>
@@ -456,7 +456,7 @@ export function InvoiceFormPage({
             </div>
             <label className="mt-4 block font-body text-xs">
               Due date
-              <input type="date" className="mt-1 border border-[#EBEBEA] px-3 py-2 text-sm" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              <input type="date" className="mt-1 border border-sand px-3 py-2 text-sm" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </label>
             <div className="mt-4 space-y-2">
               <p className="font-body text-xs font-medium text-[#6B6B68]">Payment terms</p>
@@ -482,25 +482,25 @@ export function InvoiceFormPage({
               <label className="mt-4 block font-body text-xs">
                 Custom payment terms
                 <textarea
-                  className="mt-1 min-h-[80px] w-full border border-[#EBEBEA] px-3 py-2 text-sm"
+                  className="mt-1 min-h-[80px] w-full border border-sand px-3 py-2 text-sm"
                   value={paymentTerms}
                   onChange={(e) => setPaymentTerms(e.target.value)}
                 />
               </label>
             ) : (
-              <pre className="mt-4 whitespace-pre-wrap rounded border border-[#EBEBEA] bg-white p-3 font-body text-xs text-[#4A4A47]">
+              <pre className="mt-4 whitespace-pre-wrap rounded border border-sand bg-bg-card p-3 font-body text-xs text-[#4A4A47]">
                 {paymentTerms}
               </pre>
             )}
           </section>
 
-          <section className="border border-[#EBEBEA] bg-canvas p-5">
+          <section className="border border-sand bg-canvas p-5">
             <h2 className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Line items</h2>
             <div className="mt-4 space-y-3">
               {lineItems.map((li) => (
-                <div key={li.id} className="grid gap-2 border border-[#EBEBEA] bg-white p-3 sm:grid-cols-12">
+                <div key={li.id} className="grid gap-2 border border-sand bg-bg-card p-3 sm:grid-cols-12">
                   <input
-                    className="sm:col-span-4 border border-[#EBEBEA] px-2 py-1 text-sm"
+                    className="sm:col-span-4 border border-sand px-2 py-1 text-sm"
                     placeholder="Description"
                     value={li.description}
                     onChange={(e) => {
@@ -509,7 +509,7 @@ export function InvoiceFormPage({
                     }}
                   />
                   <input
-                    className="sm:col-span-3 border border-[#EBEBEA] px-2 py-1 text-sm"
+                    className="sm:col-span-3 border border-sand px-2 py-1 text-sm"
                     placeholder="Details"
                     value={li.details ?? ""}
                     onChange={(e) => {
@@ -519,7 +519,7 @@ export function InvoiceFormPage({
                   />
                   <input
                     type="number"
-                    className="sm:col-span-1 border border-[#EBEBEA] px-2 py-1 text-sm"
+                    className="sm:col-span-1 border border-sand px-2 py-1 text-sm"
                     min={1}
                     value={li.quantity}
                     onChange={(e) => {
@@ -531,7 +531,7 @@ export function InvoiceFormPage({
                   />
                   <input
                     type="number"
-                    className="sm:col-span-2 border border-[#EBEBEA] px-2 py-1 text-sm"
+                    className="sm:col-span-2 border border-sand px-2 py-1 text-sm"
                     min={0}
                     step="0.01"
                     value={li.unitPrice}
@@ -568,7 +568,7 @@ export function InvoiceFormPage({
                 <button
                   key={chip}
                   type="button"
-                  className="border border-[#EBEBEA] px-2 py-1 font-body text-[10px] uppercase"
+                  className="border border-sand px-2 py-1 font-body text-[10px] uppercase"
                   onClick={() =>
                     setLineItems((prev) => [...prev, { id: nanoid(), description: chip, quantity: 1, unitPrice: 0, amount: 0 }])
                   }
@@ -579,7 +579,7 @@ export function InvoiceFormPage({
             </div>
           </section>
 
-          <section className="border border-[#EBEBEA] bg-canvas p-5 space-y-4">
+          <section className="border border-sand bg-canvas p-5 space-y-4">
             <label className="flex items-center gap-2 font-body text-sm">
               <input type="checkbox" checked={discountOn} onChange={(e) => setDiscountOn(e.target.checked)} className="accent-olive" />
               Apply discount
@@ -596,7 +596,7 @@ export function InvoiceFormPage({
                 </label>
                 <input
                   type="number"
-                  className="border border-[#EBEBEA] px-2 py-1 text-sm"
+                  className="border border-sand px-2 py-1 text-sm"
                   value={discountValue}
                   onChange={(e) => setDiscountValue(Number(e.target.value) || 0)}
                 />
@@ -609,7 +609,7 @@ export function InvoiceFormPage({
             {vatOn ? (
               <input
                 type="number"
-                className="border border-[#EBEBEA] px-2 py-1 text-sm"
+                className="border border-sand px-2 py-1 text-sm"
                 value={vatPercent}
                 onChange={(e) => setVatPercent(Number(e.target.value) || 0)}
               />
@@ -618,7 +618,7 @@ export function InvoiceFormPage({
               <p className="font-body text-[11px] uppercase text-[#6B6B68]">Deposit %</p>
               <input
                 type="number"
-                className="mt-1 border border-[#EBEBEA] px-2 py-1 text-sm"
+                className="mt-1 border border-sand px-2 py-1 text-sm"
                 min={0}
                 max={100}
                 value={depositPct}
@@ -635,20 +635,20 @@ export function InvoiceFormPage({
             </label>
           </section>
 
-          <section className="border border-[#EBEBEA] bg-canvas p-5">
+          <section className="border border-sand bg-canvas p-5">
             <h2 className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Notes</h2>
             <label className="mt-3 block font-body text-xs">
               Client note
-              <textarea className="mt-1 min-h-[72px] w-full border border-[#EBEBEA] px-3 py-2 text-sm" value={clientNote} onChange={(e) => setClientNote(e.target.value)} />
+              <textarea className="mt-1 min-h-[72px] w-full border border-sand px-3 py-2 text-sm" value={clientNote} onChange={(e) => setClientNote(e.target.value)} />
             </label>
             <label className="mt-3 block font-body text-xs">
               Internal notes
-              <textarea className="mt-1 min-h-[72px] w-full border border-[#EBEBEA] px-3 py-2 text-sm" value={notes} onChange={(e) => setNotes(e.target.value)} />
+              <textarea className="mt-1 min-h-[72px] w-full border border-sand px-3 py-2 text-sm" value={notes} onChange={(e) => setNotes(e.target.value)} />
             </label>
           </section>
 
           <div className="flex flex-wrap gap-3">
-            <button type="button" className="border border-[#EBEBEA] px-6 py-3 font-body text-xs uppercase" onClick={() => void save(false)}>
+            <button type="button" className="border border-sand px-6 py-3 font-body text-xs uppercase" onClick={() => void save(false)}>
               Save draft
             </button>
             <button type="button" className="bg-[#37392d] px-6 py-3 font-body text-xs uppercase text-white" onClick={() => void save(true)}>
@@ -658,7 +658,7 @@ export function InvoiceFormPage({
         </div>
 
         <aside className="lg:sticky lg:top-6 h-fit space-y-4">
-          <div className="border border-[#EBEBEA] bg-[#FAFAF8] p-5">
+          <div className="border border-sand bg-[#FAFAF8] p-5">
             <div className="bg-[#37392d] px-3 py-2 font-body text-[10px] font-medium uppercase tracking-[0.15em] text-white">
               <div className="flex justify-between">
                 <span>Prudential Atelier</span>
@@ -668,7 +668,7 @@ export function InvoiceFormPage({
             <p className="mt-3 font-body text-sm">{clientName}</p>
             <p className="text-xs text-[#6B6B68]">{clientEmail}</p>
             <p className="mt-2 font-body text-xs">Currency: {currency}</p>
-            <div className="mt-4 space-y-1 border-t border-[#EBEBEA] pt-3 font-body text-xs">
+            <div className="mt-4 space-y-1 border-t border-sand pt-3 font-body text-xs">
               <div className="flex justify-between">
                 <span>Subtotal</span>
                 <span>{formatInvoiceCurrency(totals.subtotal, cur)}</span>

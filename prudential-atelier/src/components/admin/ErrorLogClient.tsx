@@ -125,7 +125,7 @@ export function ErrorLogClient() {
             setPage(1);
             setSearch(e.target.value);
           }}
-          className="min-w-[200px] flex-1 rounded border border-sand bg-white px-3 py-2 font-sans text-sm"
+          className="min-w-[200px] flex-1 rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         />
         <select
           value={severity}
@@ -133,7 +133,7 @@ export function ErrorLogClient() {
             setPage(1);
             setSeverity(e.target.value);
           }}
-          className="rounded border border-sand bg-white px-3 py-2 font-sans text-sm"
+          className="rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         >
           <option value="all">All severities</option>
           {(["INFO", "WARNING", "CRITICAL"] as ErrorSeverity[]).map((s) => (
@@ -148,7 +148,7 @@ export function ErrorLogClient() {
             setPage(1);
             setResolved(e.target.value);
           }}
-          className="rounded border border-sand bg-white px-3 py-2 font-sans text-sm"
+          className="rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         >
           <option value="all">All</option>
           <option value="false">Unresolved</option>

@@ -73,7 +73,7 @@ export function JobEditorClient({ job }: { job?: JobPosting }) {
   }
 
   const inputClass =
-    "mt-1 w-full rounded-sm border border-[#EBEBEA] px-3 py-2 font-body text-sm outline-none focus:border-olive";
+    "mt-1 w-full rounded-sm border border-sand px-3 py-2 font-body text-sm outline-none focus:border-olive";
 
   return (
     <div className="mt-6 max-w-3xl space-y-6">
@@ -121,7 +121,7 @@ export function JobEditorClient({ job }: { job?: JobPosting }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-sm border border-[#EBEBEA] p-4">
+      <div className="flex items-center justify-between rounded-sm border border-sand p-4">
         <div>
           <p className="font-body text-sm text-charcoal">PFA Position</p>
           <p className="font-body text-xs text-charcoal-mid">Enable for IT/internship roles open to PFA students</p>
@@ -155,7 +155,7 @@ export function JobEditorClient({ job }: { job?: JobPosting }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-sm border border-[#EBEBEA] p-4">
+      <div className="flex items-center justify-between rounded-sm border border-sand p-4">
         <span className="font-body text-sm text-charcoal">Published</span>
         <Toggle checked={isPublished} srLabel="Published" onChange={setIsPublished} />
       </div>
@@ -165,7 +165,7 @@ export function JobEditorClient({ job }: { job?: JobPosting }) {
           type="button"
           disabled={saving}
           onClick={() => void save(false)}
-          className="rounded-sm border border-[#EBEBEA] px-4 py-2 font-body text-sm"
+          className="rounded-sm border border-sand px-4 py-2 font-body text-sm"
         >
           Save as draft
         </button>

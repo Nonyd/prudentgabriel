@@ -200,7 +200,7 @@ export function Navbar() {
                   <ChevronDown className="h-3 w-3 shrink-0 opacity-60" strokeWidth={1.75} aria-hidden />
                 </Link>
                 <div
-                  className="invisible absolute left-0 top-full z-50 w-[220px] border-x border-b border-mid-grey bg-white opacity-0 shadow-sm transition-[opacity,visibility] duration-150 group-hover:visible group-hover:opacity-100"
+                  className="invisible absolute left-0 top-full z-50 w-[220px] border-x border-b border-mid-grey bg-bg-card opacity-0 shadow-sm transition-[opacity,visibility] duration-150 group-hover:visible group-hover:opacity-100"
                   role="menu"
                 >
                   {COLLECTIONS_SUBLINKS.map((s) => (
@@ -229,7 +229,7 @@ export function Navbar() {
                   <ChevronDown className="h-3 w-3 shrink-0 opacity-60" strokeWidth={1.75} aria-hidden />
                 </Link>
                 <div
-                  className="invisible absolute left-0 top-full z-50 w-[200px] border-x border-b border-mid-grey bg-white opacity-0 shadow-sm transition-[opacity,visibility] duration-150 group-hover:visible group-hover:opacity-100"
+                  className="invisible absolute left-0 top-full z-50 w-[200px] border-x border-b border-mid-grey bg-bg-card opacity-0 shadow-sm transition-[opacity,visibility] duration-150 group-hover:visible group-hover:opacity-100"
                   role="menu"
                 >
                   {RTW_SUBLINKS.map((s) => (

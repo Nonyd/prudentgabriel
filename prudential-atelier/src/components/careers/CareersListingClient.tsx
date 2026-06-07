@@ -37,7 +37,7 @@ export function CareersListingClient({ jobs }: { jobs: JobPosting[] }) {
             return (
               <article
                 key={job.id}
-                className="flex flex-col gap-4 rounded-[3px] border border-sand bg-white p-6 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-4 rounded-[3px] border border-sand bg-bg-card p-6 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <div className="flex flex-wrap items-center gap-2">

@@ -83,13 +83,13 @@ export function AdminProfileDrawer({
             exit={{ opacity: 0 }}
           />
           <motion.aside
-            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[360px] flex-col border-l border-[#EBEBEA] bg-white"
+            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[360px] flex-col border-l border-sand bg-bg-card"
             initial={{ x: 360 }}
             animate={{ x: 0 }}
             exit={{ x: 360 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
           >
-            <div className="flex items-center justify-between border-b border-[#EBEBEA] px-6 py-4">
+            <div className="flex items-center justify-between border-b border-sand px-6 py-4">
               <h3 className="font-display text-[20px] text-ink">My Profile</h3>
               <button type="button" onClick={onClose} className="text-[#6B6B68] hover:text-ink">
                 <X size={18} />
@@ -126,31 +126,31 @@ export function AdminProfileDrawer({
               </div>
 
               <div className="space-y-3">
-                <input value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="First Name" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
-                <input value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Last Name" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
+                <input value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="First Name" className="w-full border border-sand px-3 py-2 font-body text-sm" />
+                <input value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Last Name" className="w-full border border-sand px-3 py-2 font-body text-sm" />
                 <div className="relative">
-                  <input value={initialEmail} disabled className="w-full border border-[#EBEBEA] bg-[#FAFAFA] px-3 py-2 pr-8 font-body text-sm text-[#6B6B68]" />
+                  <input value={initialEmail} disabled className="w-full border border-sand bg-[#FAFAFA] px-3 py-2 pr-8 font-body text-sm text-[#6B6B68]" />
                   <Lock size={14} className="absolute right-3 top-3 text-[#A8A8A4]" />
                 </div>
-                <input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Phone" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
+                <input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Phone" className="w-full border border-sand px-3 py-2 font-body text-sm" />
                 <button type="button" onClick={() => void saveProfile()} className="w-full bg-[#37392d] px-3 py-2 font-body text-[12px] uppercase tracking-[0.08em] text-white">
                   Save Profile
                 </button>
               </div>
 
-              <div className="my-6 border-t border-[#EBEBEA]" />
+              <div className="my-6 border-t border-sand" />
 
               <p className="mb-3 font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Change Password</p>
               <div className="space-y-3">
-                <input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} placeholder="Current Password" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
-                <input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="New Password" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
-                <input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Confirm Password" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
+                <input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} placeholder="Current Password" className="w-full border border-sand px-3 py-2 font-body text-sm" />
+                <input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="New Password" className="w-full border border-sand px-3 py-2 font-body text-sm" />
+                <input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Confirm Password" className="w-full border border-sand px-3 py-2 font-body text-sm" />
                 <button type="button" onClick={() => void updatePassword()} className="w-full border border-[#37392d] px-3 py-2 font-body text-[12px] uppercase tracking-[0.08em] text-[#37392d]">
                   Update Password
                 </button>
               </div>
 
-              <div className="my-6 border-t border-[#EBEBEA]" />
+              <div className="my-6 border-t border-sand" />
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Display</p>
@@ -160,7 +160,7 @@ export function AdminProfileDrawer({
               </div>
             </div>
 
-            <div className="flex items-center justify-between border-t border-[#EBEBEA] px-6 py-4">
+            <div className="flex items-center justify-between border-t border-sand px-6 py-4">
               <Link href="/" className="font-body text-xs text-[#6B6B68] hover:text-ink">
                 ← Back to Store
               </Link>

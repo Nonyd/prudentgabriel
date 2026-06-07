@@ -136,7 +136,7 @@ export function ClientsListClient() {
             className={`rounded border px-3 py-1.5 font-sans text-xs transition-colors ${
               quickFilter === f.id
                 ? "border-choc bg-choc text-cream"
-                : "border-sand bg-white text-text-mid hover:border-choc/40"
+                : "border-sand bg-bg-card text-text-mid hover:border-choc/40"
             }`}
           >
             {f.label}
@@ -150,12 +150,12 @@ export function ClientsListClient() {
           placeholder="Search name, email, phone…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="min-w-[200px] flex-1 rounded border border-sand bg-white px-3 py-2 font-sans text-sm"
+          className="min-w-[200px] flex-1 rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         />
         <select
           value={tier}
           onChange={(e) => setTier(e.target.value)}
-          className="rounded border border-sand bg-white px-3 py-2 font-sans text-sm"
+          className="rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         >
           <option value="all">All tiers</option>
           {(["BRONZE", "SILVER", "GOLD", "PLATINUM"] as LoyaltyTier[]).map((t) => (
