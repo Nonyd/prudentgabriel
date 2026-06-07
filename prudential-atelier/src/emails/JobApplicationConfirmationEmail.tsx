@@ -1,4 +1,4 @@
-import { Body, Container, Heading, Html, Preview, Section, Text } from "@react-email/components";
+import { Body, Container, Heading, Html, Preview, Text } from "@react-email/components";
 import EmailLayout from "./components/EmailLayout";
 
 export function JobApplicationConfirmationEmail({
