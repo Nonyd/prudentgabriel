@@ -12,10 +12,16 @@ interface StarRatingProps {
   className?: string;
 }
 
-const sizeMap = {
-  sm: "h-3.5 w-3.5 gap-0.5 text-[14px]",
-  md: "h-8 w-8 gap-1 text-[32px]",
-  lg: "h-8 w-8 gap-1 text-[32px]",
+const containerSizeMap = {
+  sm: "gap-0.5",
+  md: "gap-1",
+  lg: "gap-1.5",
+};
+
+const starSizeMap = {
+  sm: "h-3.5 w-3.5 text-[14px]",
+  md: "h-8 w-8 text-[32px]",
+  lg: "h-9 w-9 text-[36px]",
 };
 
 export function StarRating({
@@ -33,7 +39,7 @@ export function StarRating({
 
   return (
     <div
-      className={cn("inline-flex items-center", sizeMap[size], className)}
+      className={cn("inline-flex shrink-0 items-center", containerSizeMap[size], className)}
       role={interactive ? "radiogroup" : undefined}
       onMouseLeave={interactive ? () => setHover(0) : undefined}
     >
@@ -48,7 +54,8 @@ export function StarRating({
             onClick={interactive ? () => onChange?.(i) : undefined}
             onMouseEnter={interactive ? () => setHover(i) : undefined}
             className={cn(
-              "relative leading-none",
+              "relative inline-flex shrink-0 items-center justify-center leading-none",
+              starSizeMap[size],
               emptyClass,
               interactive &&
                 "cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-olive",
