@@ -81,69 +81,54 @@ export function ReviewsSection({
     }
   }
 
+  const writeReviewButtonClass =
+    "border border-olive px-5 py-2.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-olive transition-colors hover:bg-olive hover:text-white";
+
   return (
-    <section id="reviews" className="scroll-mt-28 border-t border-mid-grey py-16">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="font-display text-3xl text-charcoal">Client Reviews</h2>
-        <span className="border border-mid-grey px-3 py-1 font-body text-[10px] font-medium uppercase tracking-[0.12em] text-dark-grey">
-          {reviewCount} reviews
-        </span>
-      </div>
-
-      {reviews.length > 0 && (
-        <div className="mb-10 grid gap-8 md:grid-cols-2">
-          <div>
-            <p className="font-display text-[48px] font-normal italic leading-none text-olive md:text-[52px]">
-              {averageRating.toFixed(1)}
-            </p>
-            <StarRating rating={averageRating} size="sm" variant="gold" className="mt-2" />
-            <p className="mt-2 font-body text-[11px] text-text-light">Based on {reviewCount} reviews</p>
-          </div>
-          <div className="space-y-2">
-            {dist.map(({ star, n }) => (
-              <div key={star} className="flex items-center gap-2 font-body text-sm">
-                <span className="w-8 text-charcoal">{star}★</span>
-                <div className="h-1 flex-1 bg-mid-grey">
-                  <div className="h-full bg-olive" style={{ width: `${reviewCount ? (n / reviewCount) * 100 : 0}%` }} />
-                </div>
-                <span className="w-6 text-right text-dark-grey">{n}</span>
-              </div>
-            ))}
-          </div>
+    <Dialog.Root open={openForm} onOpenChange={setOpenForm}>
+      <section id="reviews" className="scroll-mt-28 border-t border-mid-grey py-16">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <h2 className="font-display text-3xl text-charcoal">Client Reviews</h2>
+          <span className="border border-mid-grey px-3 py-1 font-body text-[10px] font-medium uppercase tracking-[0.12em] text-dark-grey">
+            {reviewCount} reviews
+          </span>
         </div>
-      )}
 
-      <Dialog.Root open={openForm} onOpenChange={setOpenForm}>
-        {isLoggedIn ? (
-          <Dialog.Trigger asChild>
-            <button
-              type="button"
-              className="mb-8 border border-olive px-5 py-2.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-olive transition-colors hover:bg-olive hover:text-white"
-            >
-              Write a review
-            </button>
-          </Dialog.Trigger>
-        ) : (
-          <Link
-            href="/auth/login"
-            className="mb-8 inline-block border border-olive px-5 py-2.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-olive transition-colors hover:bg-olive hover:text-white"
-          >
-            Log in to write a review
-          </Link>
-        )}
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-[80] bg-charcoal/50" />
-          <Dialog.Content
-            data-lenis-prevent
-            className="fixed left-1/2 top-1/2 z-[81] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain border border-mid-grey bg-canvas p-6 shadow-xl"
-          >
-            <Dialog.Title className="font-display text-xl text-charcoal">Write your review</Dialog.Title>
-            <div className="mt-4">
-              <ReviewForm productId={productId} productSlug={productSlug} onDone={() => setOpenForm(false)} />
+        {reviews.length > 0 && (
+          <div className="mb-10 grid gap-8 md:grid-cols-2">
+            <div>
+              <p className="font-display text-[48px] font-normal italic leading-none text-olive md:text-[52px]">
+                {averageRating.toFixed(1)}
+              </p>
+              <StarRating rating={averageRating} size="sm" variant="gold" className="mt-2" />
+              <p className="mt-2 font-body text-[11px] text-text-light">Based on {reviewCount} reviews</p>
             </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+            <div className="space-y-2">
+              {dist.map(({ star, n }) => (
+                <div key={star} className="flex items-center gap-2 font-body text-sm">
+                  <span className="w-8 text-charcoal">{star}★</span>
+                  <div className="h-1 flex-1 bg-mid-grey">
+                    <div className="h-full bg-olive" style={{ width: `${reviewCount ? (n / reviewCount) * 100 : 0}%` }} />
+                  </div>
+                  <span className="w-6 text-right text-dark-grey">{n}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {reviews.length > 0 &&
+          (isLoggedIn ? (
+            <Dialog.Trigger asChild>
+              <button type="button" className={`mb-8 ${writeReviewButtonClass}`}>
+                Write a review
+              </button>
+            </Dialog.Trigger>
+          ) : (
+            <Link href="/auth/login" className={`mb-8 inline-block ${writeReviewButtonClass}`}>
+              Log in to write a review
+            </Link>
+          ))}
 
       {reviews.length > 0 ? (
         <>
@@ -215,23 +200,31 @@ export function ReviewsSection({
           <p className="font-body text-sm italic text-text-light">Be the first to review this piece</p>
           {isLoggedIn ? (
             <Dialog.Trigger asChild>
-              <button
-                type="button"
-                className="mt-4 border border-olive px-5 py-2.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-olive transition-colors hover:bg-olive hover:text-white"
-              >
+              <button type="button" className={`mt-4 ${writeReviewButtonClass}`}>
                 Write a Review
               </button>
             </Dialog.Trigger>
           ) : (
-            <Link
-              href="/auth/login"
-              className="mt-4 inline-block border border-olive px-5 py-2.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-olive transition-colors hover:bg-olive hover:text-white"
-            >
+            <Link href="/auth/login" className={`mt-4 inline-block ${writeReviewButtonClass}`}>
               Log in to write a review
             </Link>
           )}
         </div>
       )}
-    </section>
+      </section>
+
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-[80] bg-charcoal/50" />
+        <Dialog.Content
+          data-lenis-prevent
+          className="fixed left-1/2 top-1/2 z-[81] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain border border-mid-grey bg-canvas p-6 shadow-xl"
+        >
+          <Dialog.Title className="font-display text-xl text-charcoal">Write your review</Dialog.Title>
+          <div className="mt-4">
+            <ReviewForm productId={productId} productSlug={productSlug} onDone={() => setOpenForm(false)} />
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
