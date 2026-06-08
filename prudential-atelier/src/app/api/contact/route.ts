@@ -3,6 +3,8 @@ import { sendEmail } from "@/lib/email";
 import { cmsGet, getCMSContent } from "@/lib/cms";
 import { createNotification } from "@/lib/notifications";
 import { contactSchema } from "@/validations/contact";
+import { prisma } from "@/lib/prisma";
+import { getPublicAppUrl } from "@/lib/app-url";
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -37,6 +39,30 @@ export async function POST(req: NextRequest) {
   );
 
   const safeMessage = message.replace(/</g, "&lt;");
+  const appUrl = getPublicAppUrl();
+
+  const ipAddress =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    req.headers.get("x-real-ip") ??
+    null;
+
+  const saved = await prisma.contactMessage.create({
+    data: {
+      name,
+      email,
+      phone: phone ?? null,
+      subject,
+      message,
+      ipAddress,
+    },
+  });
+
+  await createNotification({
+    type: "CONTACT_FORM",
+    title: "New contact message",
+    message: `${name} — ${subject}`,
+    link: `/admin/content/messages`,
+  }).catch(() => {});
 
   await sendEmail({
     to: contactEmail,
@@ -49,8 +75,9 @@ export async function POST(req: NextRequest) {
       <p><strong>Subject:</strong> ${subject}</p>
       <p><strong>Message:</strong></p>
       <p>${safeMessage}</p>
+      <p><a href="${appUrl}/admin/content/messages">View in admin messages →</a></p>
     `,
-  });
+  }).catch(() => {});
 
   await sendEmail({
     to: email,
@@ -60,14 +87,7 @@ export async function POST(req: NextRequest) {
       <p>${autoReplyMessage.replace(/</g, "&lt;")}</p>
       <p>— Prudential Atelier</p>
     `,
-  });
-
-  await createNotification({
-    type: "CONTACT_FORM",
-    title: "New contact message",
-    message: `${name} — ${subject}`,
-    link: "/admin/clients",
   }).catch(() => {});
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, id: saved.id });
 }

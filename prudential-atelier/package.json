@@ -17,6 +17,7 @@
     "seed:careers": "tsx scripts/seed-careers.ts",
     "seed:legal": "tsx scripts/seed-legal.ts",
     "seed:pages": "tsx scripts/seed-pages.ts",
+    "seed:email-templates": "tsx scripts/seed-email-templates.ts",
     "email:dev": "email dev src/emails --port 3001"
   },
   "dependencies": {

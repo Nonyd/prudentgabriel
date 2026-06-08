@@ -14,6 +14,8 @@ import {
   Layout,
   LayoutDashboard,
   MessageSquare,
+  Mail,
+  Send,
   Newspaper,
   Lock,
   LogOut,
@@ -134,6 +136,9 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Content",
     items: [
       { href: "/admin/content", label: "Overview", icon: Layout, permission: "content", alsoActive: ["/admin/content/pages", "/admin/content/media"] },
+      { href: "/admin/content/messages", label: "Messages", icon: MessageSquare, generalAdminOnly: true, badgeKey: "messages" },
+      { href: "/admin/content/email-templates", label: "Email Templates", icon: Mail, generalAdminOnly: true },
+      { href: "/admin/content/send-email", label: "Send Email", icon: Send, generalAdminOnly: true },
       { href: "/admin/content/pages", label: "Page content", icon: FileText, permission: "content" },
       { href: "/admin/content/blog", label: "Blog / Journal", icon: Newspaper, permission: "content" },
       { href: "/admin/reviews", label: "Reviews", icon: MessageSquare, permission: "content" },

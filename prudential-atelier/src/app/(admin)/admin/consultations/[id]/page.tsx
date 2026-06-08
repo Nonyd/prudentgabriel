@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { ConsultationStatus, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AdminConsultationDetail } from "@/components/admin/AdminConsultationDetail";
-import { measurementFromRecord } from "@/components/admin/ClientMeasurementsPanel";
+import { measurementFromRecord } from "@/lib/measurements";
 
 function toIso(value: Date | string | null | undefined): string | null {
   if (value == null) return null;
@@ -41,7 +42,7 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
     id: booking.id,
     userId: booking.userId,
     bookingNumber: booking.bookingNumber,
-    status: booking.status,
+    status: booking.status as ConsultationStatus,
     clientName: booking.clientName ?? "Unknown",
     clientEmail: booking.clientEmail ?? "",
     clientPhone: booking.clientPhone ?? "",
@@ -63,8 +64,8 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
     sessionNotes: booking.sessionNotes,
     moodboardImages: booking.moodboardImages ?? [],
     moodboardNotes: booking.moodboardNotes,
-    feeNGN: booking.feeNGN,
-    paymentStatus: booking.paymentStatus,
+    feeNGN: Number(booking.feeNGN) || 0,
+    paymentStatus: booking.paymentStatus as PaymentStatus,
     paymentGateway: booking.paymentGateway,
     paymentRef: booking.paymentRef,
     paidAt: toIso(booking.paidAt),

@@ -14,10 +14,8 @@ import {
   type OfferingTypeKey,
 } from "@/lib/consultation-types";
 import { isVirtualDelivery } from "@/lib/consultation";
-import {
-  ClientMeasurementsPanel,
-  type MeasurementData,
-} from "@/components/admin/ClientMeasurementsPanel";
+import { ClientMeasurementsPanel } from "@/components/admin/ClientMeasurementsPanel";
+import type { MeasurementData } from "@/lib/measurements";
 
 type Booking = {
   id: string;
@@ -55,6 +53,8 @@ type Booking = {
 };
 
 const STATUS_OPTIONS: ConsultationStatus[] = [
+  ConsultationStatus.PENDING_PAYMENT,
+  ConsultationStatus.PENDING_CONFIRMATION,
   ConsultationStatus.CONFIRMED,
   ConsultationStatus.SCHEDULED,
   ConsultationStatus.IN_SESSION,
@@ -64,17 +64,21 @@ const STATUS_OPTIONS: ConsultationStatus[] = [
 
 function formatWatDate(iso: string | null): string {
   if (!iso) return "—";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
   return new Intl.DateTimeFormat("en-GB", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
     timeZone: "Africa/Lagos",
-  }).format(new Date(iso));
+  }).format(date);
 }
 
 function formatWatDateTime(iso: string | null): string {
   if (!iso) return "—";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
   return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
     month: "long",
@@ -82,7 +86,7 @@ function formatWatDateTime(iso: string | null): string {
     hour: "numeric",
     minute: "2-digit",
     timeZone: "Africa/Lagos",
-  }).format(new Date(iso));
+  }).format(date);
 }
 
 export function AdminConsultationDetail({
@@ -95,7 +99,7 @@ export function AdminConsultationDetail({
   measurements?: MeasurementData | null;
 }) {
   const router = useRouter();
-  const [status, setStatus] = useState(booking.status);
+  const [status, setStatus] = useState(booking.status as ConsultationStatus);
   const [linkInput, setLinkInput] = useState(booking.meetingLink ?? "");
   const [sessionNotes, setSessionNotes] = useState(booking.sessionNotes ?? "");
   const [moodboardNotes, setMoodboardNotes] = useState(booking.moodboardNotes ?? "");
@@ -272,7 +276,9 @@ export function AdminConsultationDetail({
           </p>
           <div className="border-t border-sand pt-4">
             <p className="font-label text-xs text-gold">Payment</p>
-            <p className="mt-1 text-sm text-ink">₦{booking.feeNGN.toLocaleString("en-NG")}</p>
+            <p className="mt-1 text-sm text-ink">
+              ₦{(Number(booking.feeNGN) || 0).toLocaleString("en-NG")}
+            </p>
             <p className="text-sm text-[#6B6B68]">
               {booking.paymentStatus}
               {booking.paymentGateway ? ` · ${booking.paymentGateway}` : ""}

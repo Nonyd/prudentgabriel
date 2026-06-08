@@ -1,35 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Role } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
 import { requireGeneralAdminApi } from "@/lib/admin-auth";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   const gate = await requireGeneralAdminApi();
   if (!gate.ok) return gate.response;
 
-  const q = new URL(req.url).searchParams.get("q")?.trim() ?? "";
+  const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";
   if (q.length < 2) {
-    return NextResponse.json([]);
+    return NextResponse.json({ items: [] });
   }
 
-  const users = await prisma.user.findMany({
+  const items = await prisma.user.findMany({
     where: {
       role: Role.CUSTOMER,
       OR: [
-        { name: { contains: q, mode: "insensitive" } },
         { email: { contains: q, mode: "insensitive" } },
+        { name: { contains: q, mode: "insensitive" } },
       ],
     },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      image: true,
-      clientProfile: { select: { loyaltyTier: true } },
-    },
-    orderBy: { name: "asc" },
+    select: { id: true, email: true, name: true },
     take: 12,
+    orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json(users);
+  return NextResponse.json({
+    items: items.map((u) => ({
+      id: u.id,
+      email: u.email,
+      name: u.name?.trim() || u.email,
+    })),
+  });
 }

@@ -31,7 +31,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   let badges: Record<string, number> = {};
   try {
-    const [bespoke, consultations, orders] = await Promise.all([
+    const [bespoke, consultations, orders, messages] = await Promise.all([
       prisma.bespokeOrder.count({
         where: { currentStage: { not: BespokeStage.DELIVERY } },
       }),
@@ -47,8 +47,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           ],
         },
       }),
+      prisma.contactMessage.count({ where: { isRead: false } }),
     ]);
-    badges = { bespoke, consultations, orders };
+    badges = { bespoke, consultations, orders, messages };
   } catch {
     /* DB unavailable */
   }

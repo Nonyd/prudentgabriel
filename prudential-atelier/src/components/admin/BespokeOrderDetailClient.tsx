@@ -7,10 +7,10 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import {
   ClientMeasurementsPanel,
-  measurementFromRecord,
   patchClientMeasurements,
   type MeasurementData,
 } from "@/components/admin/ClientMeasurementsPanel";
+import { measurementFromRecord } from "@/lib/measurements";
 import type {
   BespokeOrder,
   BespokeStage,
