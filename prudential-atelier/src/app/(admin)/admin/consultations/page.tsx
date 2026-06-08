@@ -9,6 +9,7 @@ import {
   type OfferingTypeKey,
 } from "@/lib/consultation-types";
 import { isVirtualDelivery } from "@/lib/consultation";
+import { formatConsultationQuotationStatus } from "@/lib/consultation-quotation-status";
 
 function formatStatus(status: ConsultationStatus) {
   return status.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
@@ -31,6 +32,13 @@ export default async function AdminConsultationsPage() {
     include: {
       consultant: { select: { name: true } },
       offering: { select: { deliveryMode: true } },
+      quotations: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        include: {
+          bespokeOrders: { select: { orderRef: true }, take: 1 },
+        },
+      },
     },
   });
 
@@ -85,6 +93,7 @@ export default async function AdminConsultationsPage() {
               <th className="px-3 py-2">Type</th>
               <th className="px-3 py-2">Platform</th>
               <th className="px-3 py-2">Status</th>
+              <th className="px-3 py-2">Quotation</th>
               <th className="px-3 py-2">Actions</th>
             </tr>
           </thead>
@@ -107,6 +116,12 @@ export default async function AdminConsultationsPage() {
                     {isVirtual ? getVirtualPlatformLabel(b.virtualPlatform) || "—" : "—"}
                   </td>
                   <td className="px-3 py-2 text-ink">{formatStatus(b.status)}</td>
+                  <td className="px-3 py-2">
+                    {(() => {
+                      const q = formatConsultationQuotationStatus(b.quotations[0]);
+                      return <span className={q.className}>{q.label}</span>;
+                    })()}
+                  </td>
                   <td className="px-3 py-2">
                     <Link href={`/admin/consultations/${b.id}`} className="text-olive underline">
                       View

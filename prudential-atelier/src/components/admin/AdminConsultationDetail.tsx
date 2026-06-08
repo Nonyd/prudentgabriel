@@ -17,6 +17,12 @@ import { isVirtualDelivery } from "@/lib/consultation";
 import { ClientMeasurementsPanel } from "@/components/admin/ClientMeasurementsPanel";
 import type { MeasurementData } from "@/lib/measurements";
 
+type LinkedQuotation = {
+  id: string;
+  quoteRef: string;
+  status: string;
+};
+
 type Booking = {
   id: string;
   userId: string | null;
@@ -109,10 +115,12 @@ export function AdminConsultationDetail({
   booking,
   clientId,
   measurements,
+  quotation,
 }: {
   booking: Booking;
   clientId: string | null;
   measurements?: MeasurementData | null;
+  quotation?: LinkedQuotation | null;
 }) {
   const router = useRouter();
   const [status, setStatus] = useState(booking.status as ConsultationStatus);
@@ -497,6 +505,35 @@ export function AdminConsultationDetail({
       </div>
 
       <ClientMeasurementsPanel clientId={clientId} clientName={booking.clientName} initial={measurements} />
+
+      <div className="rounded-sm border border-sand bg-[#FAFAFA] p-5">
+        <h3 className="font-label text-gold">Actions</h3>
+        <div className="mt-4">
+          {status === ConsultationStatus.COMPLETED && !quotation ? (
+            <Link
+              href={`/admin/invoices/quotations/new?consultationId=${booking.id}`}
+              className="inline-flex items-center rounded-sm bg-choc px-4 py-2 font-sans text-[11px] font-semibold uppercase tracking-wide text-cream"
+            >
+              + Create Quotation
+            </Link>
+          ) : quotation ? (
+            <p className="font-sans text-sm text-ink">
+              Quotation{" "}
+              <Link href="/admin/quotations" className="font-medium text-olive underline">
+                {quotation.quoteRef}
+              </Link>{" "}
+              created ({quotation.status.replace(/_/g, " ").toLowerCase()}) →{" "}
+              <Link href="/admin/quotations" className="text-olive underline">
+                View quotation
+              </Link>
+            </p>
+          ) : (
+            <p className="font-sans text-sm text-[#6B6B68]">
+              Mark the consultation as completed to create a quotation.
+            </p>
+          )}
+        </div>
+      </div>
 
       {confirmOpen ? (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 p-4">

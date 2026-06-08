@@ -31,6 +31,7 @@ function buildQuoteEmailHtml(params: {
   approvalUrl: string;
   lineItems: QuoteLineItem[];
   notes: string | null;
+  consultationSection?: string;
 }): string {
   const rows = params.lineItems
     .map(
@@ -48,6 +49,7 @@ function buildQuoteEmailHtml(params: {
       <hr style="border:none;border-top:2px solid #98755B;margin:16px 0" />
       <p>Dear ${params.clientName},</p>
       <p>Your quotation <strong>${params.quoteRef}</strong> is ready for review.</p>
+      ${params.consultationSection ?? ""}
       <table style="width:100%;border-collapse:collapse;margin:16px 0">
         <thead>
           <tr style="background:#E2D1C2">
@@ -74,12 +76,45 @@ export async function POST(_req: NextRequest, { params }: Params) {
   const { id } = await params;
 
   try {
-    const quote = await prisma.quotation.findUnique({ where: { id } });
+    const quote = await prisma.quotation.findUnique({
+      where: { id },
+      include: {
+        consultation: {
+          select: {
+            sessionNotes: true,
+            confirmedDate: true,
+            completedAt: true,
+            offeringType: true,
+            offering: { select: { sessionType: true } },
+          },
+        },
+      },
+    });
     if (!quote) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const base = getPublicAppUrl().replace(/\/+$/, "");
     const approvalUrl = `${base}/quote/${quote.approvalToken}`;
     const lineItems = quote.lineItems as QuoteLineItem[];
+
+    let consultationSection = "";
+    if (quote.consultation) {
+      const c = quote.consultation;
+      const sessionDate = c.completedAt ?? c.confirmedDate;
+      const dateLabel = sessionDate
+        ? sessionDate.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+        : "your recent session";
+      const sessionType =
+        c.offeringType?.replace(/_/g, " ") ??
+        c.offering.sessionType.replace(/_/g, " ").toLowerCase();
+      const excerpt = (c.sessionNotes ?? "").slice(0, 200);
+      consultationSection = `
+        <div style="margin:20px 0;padding:16px;background:rgba(152,117,91,0.08);border:1px solid #D4BBAC;border-radius:6px">
+          <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#98755B">Based on your consultation</p>
+          <p style="margin:0 0 12px">We've prepared this quotation based on your ${sessionType} on ${dateLabel}.</p>
+          ${excerpt ? `<p style="margin:0"><strong>Your outfit brief:</strong><br/>&ldquo;${excerpt}${(c.sessionNotes?.length ?? 0) > 200 ? "…" : ""}&rdquo;</p>` : ""}
+        </div>
+      `;
+    }
 
     await sendSmtpMail({
       to: quote.clientEmail,
@@ -91,6 +126,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
         approvalUrl,
         lineItems: Array.isArray(lineItems) ? lineItems : [],
         notes: quote.notes,
+        consultationSection,
       }),
     });
 

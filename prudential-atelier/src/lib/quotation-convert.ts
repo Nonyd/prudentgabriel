@@ -18,6 +18,7 @@ type QuotationRecord = {
   total: number;
   notes: string | null;
   status: QuoteStatus;
+  consultationId?: string | null;
 };
 
 async function uniqueOrderRef(): Promise<string> {
@@ -83,6 +84,12 @@ export async function convertQuotationToOrder(
   const invoiceNumber = await generateInvoiceNumber();
   const orderRef = await uniqueOrderRef();
 
+  const consultation = quote.consultationId
+    ? await prisma.consultationBooking.findUnique({
+        where: { id: quote.consultationId },
+      })
+    : null;
+
   const result = await prisma.$transaction(async (tx) => {
     const invoice = await tx.invoice.create({
       data: {
@@ -115,10 +122,17 @@ export async function convertQuotationToOrder(
       data: {
         orderRef,
         quotationId: quote.id,
+        consultationId: quote.consultationId ?? null,
         clientProfileId: clientProfile?.id ?? null,
-        clientName: quote.clientName,
-        clientEmail: quote.clientEmail,
-        clientPhone: quote.clientPhone,
+        clientName: consultation?.clientName ?? quote.clientName,
+        clientEmail: consultation?.clientEmail ?? quote.clientEmail,
+        clientPhone: consultation?.clientPhone ?? quote.clientPhone,
+        outfitDescription: consultation?.sessionNotes ?? quote.notes,
+        occasionType: consultation?.occasion ?? null,
+        sessionNotes: consultation?.sessionNotes ?? null,
+        moodboardImages: consultation?.moodboardImages ?? [],
+        occasionDetails: consultation?.occasion ?? null,
+        outfitBrief: consultation?.sessionNotes ?? null,
         totalAmount: quote.total,
         balance: quote.total,
         notes: quote.notes,

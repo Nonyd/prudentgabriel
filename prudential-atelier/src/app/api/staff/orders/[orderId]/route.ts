@@ -61,6 +61,9 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: s
     orderRef: order.orderRef,
     outfitDescription: order.outfitDescription,
     occasionType: order.occasionType,
+    occasionDetails: order.occasionDetails,
+    outfitBrief: order.outfitBrief ?? order.sessionNotes,
+    moodboardImages: order.moodboardImages ?? [],
     deliveryDate: order.deliveryDate?.toISOString() ?? null,
     currentStage: order.currentStage,
     assignment: {

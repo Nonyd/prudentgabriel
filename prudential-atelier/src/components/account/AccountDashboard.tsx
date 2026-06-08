@@ -10,6 +10,7 @@ import {
   Ruler,
 } from "lucide-react";
 import { BespokeStageTracker } from "@/components/bespoke/BespokeStageTracker";
+import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPanel";
 import { ProductCard } from "@/components/common/ProductCard";
 import { ShareYourStoryCard } from "@/components/account/ShareYourStoryCard";
 import { TIER_BENEFITS, TIER_LABELS } from "@/lib/loyalty";
@@ -46,6 +47,13 @@ type BespokeOrder = {
   trackingToken: string;
   balance: number;
   stageHistory: StageUpdate[];
+  consultationId?: string | null;
+  occasionDetails?: string | null;
+  occasionType?: string | null;
+  outfitBrief?: string | null;
+  sessionNotes?: string | null;
+  moodboardImages?: string[];
+  consultation?: { bookingNumber: string } | null;
 };
 
 type Consultation = {
@@ -742,6 +750,21 @@ export function AccountDashboard({
                       </p>
                     ) : null}
                   </div>
+                  {activeBespoke.consultationId ? (
+                    <ConsultationBriefPanel
+                      variant="client"
+                      brief={{
+                        bookingNumber: activeBespoke.consultation?.bookingNumber ?? "",
+                        occasion: activeBespoke.occasionDetails ?? activeBespoke.occasionType ?? null,
+                        outfitBrief:
+                          activeBespoke.outfitBrief ??
+                          activeBespoke.sessionNotes ??
+                          activeBespoke.outfitDescription,
+                        moodboardImages: activeBespoke.moodboardImages ?? [],
+                        adminHref: "/account/moodboards",
+                      }}
+                    />
+                  ) : null}
                   {lastStage?.notes ? (
                     <p className="rounded-sm border border-sand/60 bg-bg px-4 py-3 font-sans text-sm text-text-mid dark:bg-bg-page">
                       Last update: &ldquo;{lastStage.notes}&rdquo;

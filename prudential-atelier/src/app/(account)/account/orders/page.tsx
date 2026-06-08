@@ -12,7 +12,10 @@ export default async function AccountOrdersPage() {
     prisma.bespokeOrder.findMany({
       where: { clientProfileId: profile.id },
       orderBy: { createdAt: "desc" },
-      include: { stageHistory: { orderBy: { completedAt: "asc" } } },
+      include: {
+        stageHistory: { orderBy: { completedAt: "asc" } },
+        consultation: { select: { bookingNumber: true } },
+      },
     }),
     prisma.order.findMany({
       where: { userId, isBespoke: false },

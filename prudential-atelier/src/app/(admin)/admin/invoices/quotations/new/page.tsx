@@ -1,6 +1,6 @@
 import { QuotationFormClient } from "@/components/admin/QuotationFormClient";
 
-export default async function AdminQuotationNewPage({
+export default async function AdminInvoiceQuotationNewPage({
   searchParams,
 }: {
   searchParams: Promise<{ consultationId?: string }>;

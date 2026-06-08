@@ -99,6 +99,7 @@ export default async function AccountDashboardPage() {
         take: 3,
         include: {
           stageHistory: { orderBy: { completedAt: "desc" }, take: 1 },
+          consultation: { select: { bookingNumber: true } },
         },
       }),
       prisma.measurement.findUnique({ where: { clientId: profile.id } }),

@@ -111,6 +111,27 @@ export async function POST(req: NextRequest) {
   const discount = typeof body.discount === "number" ? body.discount : Number(body.discount) || 0;
   const { subtotal, total } = calcTotals(lineItems, tax, discount);
 
+  const consultationId =
+    typeof body.consultationId === "string" && body.consultationId.trim()
+      ? body.consultationId.trim()
+      : null;
+
+  if (consultationId) {
+    const consultation = await prisma.consultationBooking.findUnique({
+      where: { id: consultationId },
+      select: { id: true },
+    });
+    if (!consultation) {
+      return NextResponse.json({ error: "Consultation not found" }, { status: 400 });
+    }
+    const existing = await prisma.quotation.findFirst({
+      where: { consultationId },
+    });
+    if (existing) {
+      return NextResponse.json({ error: "A quotation is already linked to this consultation" }, { status: 409 });
+    }
+  }
+
   try {
     const quoteRef = await uniqueQuoteRef();
     const item = await prisma.quotation.create({
@@ -126,6 +147,7 @@ export async function POST(req: NextRequest) {
         total,
         notes: typeof body.notes === "string" ? body.notes : null,
         expiresAt: body.expiresAt ? new Date(String(body.expiresAt)) : null,
+        consultationId,
         createdBy: gate.session.user.id,
       },
     });

@@ -19,6 +19,7 @@ export default async function AdminBespokeOrderPage({
       materials: { orderBy: { createdAt: "asc" } },
       clientProfile: { include: { measurements: true } },
       quotation: true,
+      consultation: { select: { id: true, bookingNumber: true, occasion: true } },
     },
   });
 

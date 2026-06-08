@@ -173,6 +173,8 @@ model ConsultationBooking {
 
   invoices Invoice[]
   reviews  Review[]
+  quotations  Quotation[]
+  bespokeOrders BespokeOrder[]
 
   reviewRequestSent Boolean @default(false)
 
@@ -1372,6 +1374,13 @@ model BespokeOrder {
 
   bespokeRequestId String?
 
+  consultationId  String?
+  consultation    ConsultationBooking? @relation(fields: [consultationId], references: [id], onDelete: SetNull)
+  sessionNotes    String?  @db.Text
+  moodboardImages String[] @default([])
+  occasionDetails String?
+  outfitBrief     String?  @db.Text
+
   trackingToken String @unique @default(cuid())
 
   status OrderStatus @default(PENDING)
@@ -1382,6 +1391,7 @@ model BespokeOrder {
   @@index([trackingToken])
   @@index([clientEmail])
   @@index([status])
+  @@index([consultationId])
 }
 
 model StageUpdate {
@@ -1550,6 +1560,9 @@ model Quotation {
   pdfUrl        String?
   sentAt        DateTime?
 
+  consultationId String?
+  consultation   ConsultationBooking? @relation(fields: [consultationId], references: [id], onDelete: SetNull)
+
   bespokeOrders BespokeOrder[]
 
   createdBy String?
@@ -1559,6 +1572,7 @@ model Quotation {
   @@index([status])
   @@index([clientEmail])
   @@index([approvalToken])
+  @@index([consultationId])
 }
 
 model BlogPost {

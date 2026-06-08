@@ -25,6 +25,7 @@ import type {
 } from "@prisma/client";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPanel";
 import { STAGE_LABELS, STAGE_ORDER, getStageProgress } from "@/lib/bespoke-stages";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -36,6 +37,11 @@ type OrderWithRelations = BespokeOrder & {
   materials: Material[];
   quotation: Quotation | null;
   clientProfile: (ClientProfile & { measurements: Measurement | null }) | null;
+  consultation?: {
+    id: string;
+    bookingNumber: string;
+    occasion: string;
+  } | null;
 };
 
 type StaffOption = { id: string; name: string; department: string; activeOrders: number };
@@ -229,6 +235,19 @@ export function BespokeOrderDetailClient({
         </div>
         <BadgeStage stage={order.currentStage} />
       </div>
+
+      {order.consultationId ? (
+        <ConsultationBriefPanel
+          variant="admin"
+          brief={{
+            consultationId: order.consultationId,
+            bookingNumber: order.consultation?.bookingNumber ?? "—",
+            occasion: order.occasionDetails ?? order.occasionType,
+            outfitBrief: order.outfitBrief ?? order.sessionNotes ?? order.outfitDescription,
+            moodboardImages: order.moodboardImages ?? [],
+          }}
+        />
+      ) : null}
 
       <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
         <div className="space-y-8">

@@ -22,6 +22,11 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
       include: {
         consultant: true,
         offering: true,
+        quotations: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { id: true, quoteRef: true, status: true },
+        },
       },
     });
   } catch (error) {
@@ -109,6 +114,7 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
         booking={payload}
         clientId={clientProfile?.id ?? null}
         measurements={measurementFromRecord(clientProfile?.measurements ?? null)}
+        quotation={booking.quotations[0] ?? null}
       />
     </div>
   );

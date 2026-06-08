@@ -4,11 +4,15 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPanel";
 
 type OrderDetail = {
   orderRef: string;
   outfitDescription: string | null;
   occasionType: string | null;
+  occasionDetails: string | null;
+  outfitBrief: string | null;
+  moodboardImages: string[];
   deliveryDate: string | null;
   currentStage: string;
   assignment: { role: string; assignedAt: string };
@@ -70,6 +74,18 @@ export default function StaffOrderDetailPage({ params }: { params: { orderId: st
           </p>
         ) : null}
       </div>
+
+      {order.outfitBrief || order.occasionDetails || order.moodboardImages.length > 0 ? (
+        <ConsultationBriefPanel
+          variant="staff"
+          brief={{
+            bookingNumber: order.orderRef,
+            occasion: order.occasionDetails ?? order.occasionType,
+            outfitBrief: order.outfitBrief ?? order.outfitDescription,
+            moodboardImages: order.moodboardImages,
+          }}
+        />
+      ) : null}
 
       {order.measurements ? (
         <section className="rounded-lg border border-sand bg-bg-card p-4">

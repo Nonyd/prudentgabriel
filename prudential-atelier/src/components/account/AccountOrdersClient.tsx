@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { BespokeOrder, BespokeStage, Order, OrderItem, Product, ProductImage, StageUpdate } from "@prisma/client";
 import { BespokeStageTracker } from "@/components/bespoke/BespokeStageTracker";
+import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPanel";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { formatDate, formatPrice } from "@/lib/utils";
 import { Modal } from "@/components/ui/Modal";
@@ -15,7 +16,10 @@ type RtwOrder = Order & {
   })[];
 };
 
-type Bespoke = BespokeOrder & { stageHistory: StageUpdate[] };
+type Bespoke = BespokeOrder & {
+  stageHistory: StageUpdate[];
+  consultation?: { bookingNumber: string } | null;
+};
 
 export function AccountOrdersClient({
   bespokeOrders,
@@ -99,7 +103,19 @@ export function AccountOrdersClient({
                   ) : null}
                 </button>
                 {expanded === o.id ? (
-                  <div className="border-t border-sand px-5 pb-5">
+                  <div className="space-y-5 border-t border-sand px-5 pb-5 pt-5">
+                    {o.consultationId ? (
+                      <ConsultationBriefPanel
+                        variant="client"
+                        brief={{
+                          bookingNumber: o.consultation?.bookingNumber ?? "",
+                          occasion: o.occasionDetails ?? o.occasionType,
+                          outfitBrief: o.outfitBrief ?? o.sessionNotes ?? o.outfitDescription,
+                          moodboardImages: o.moodboardImages ?? [],
+                          adminHref: "/account/moodboards",
+                        }}
+                      />
+                    ) : null}
                     <BespokeStageTracker
                       currentStage={o.currentStage}
                       stageHistory={o.stageHistory}
