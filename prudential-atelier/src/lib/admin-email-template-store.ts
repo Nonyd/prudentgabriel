@@ -6,7 +6,6 @@ import {
   EMAIL_TEMPLATE_CATALOG,
   EMAIL_TEMPLATE_FIELD_SUFFIXES,
   emailSettingKey,
-  type EmailTemplateFieldSuffix,
   type EmailTemplateFields,
   type EmailTemplateKey,
 } from "@/lib/admin-email-catalog";
