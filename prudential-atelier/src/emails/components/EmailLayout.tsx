@@ -10,10 +10,7 @@ import {
   Text,
 } from "@react-email/components";
 import type { ReactNode } from "react";
-import { getPublicAppUrl } from "@/lib/app-url";
 import { emailLogoWhiteUrl } from "@/lib/email-branding";
-
-const APP = getPublicAppUrl();
 
 type EmailLayoutProps = {
   children: ReactNode;
