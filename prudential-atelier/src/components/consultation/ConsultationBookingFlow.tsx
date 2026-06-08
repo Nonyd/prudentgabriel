@@ -6,14 +6,19 @@ import clsx from "clsx";
 import { Check } from "lucide-react";
 import toast from "react-hot-toast";
 import type { ConsultantWithOfferings } from "@/lib/consultation";
-import {
-  addDaysToWatYmd,
-  getWatYmd,
-  isManualFlow,
-  isVirtualDelivery,
-} from "@/lib/consultation";
+import { addDaysToWatYmd, getWatYmd } from "@/lib/consultation";
 import type { ConsultantOffering, Currency } from "@prisma/client";
-import { ConsultationDeliveryMode as DeliveryMode } from "@prisma/client";
+import {
+  getOfferingTypeConfig,
+  getVirtualPlatformLabel,
+  isOfferingTypeManual,
+  isOfferingTypeVirtual,
+  OFFERING_TYPES,
+  resolveOfferingType,
+  VIRTUAL_PLATFORMS,
+  type OfferingTypeKey,
+  type VirtualPlatformId,
+} from "@/lib/consultation-types";
 import { StripePayBlock } from "@/components/checkout/StripePayBlock";
 import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
 import type { PaymentGatewayType } from "@/lib/payments/index";
@@ -24,7 +29,6 @@ import type { ConsultationReviewSlide } from "@/lib/consultation-reviews";
 
 type Gateway = PaymentGatewayType;
 type ShopCur = "NGN" | "USD" | "GBP";
-type CardKey = "signature" | "design-team" | "virtual";
 
 const OCCASIONS = [
   "White Wedding",
@@ -39,102 +43,6 @@ const OCCASIONS = [
   "Wardrobe Refresh",
   "Other",
 ];
-
-const VIRTUAL_PLATFORMS = ["Zoom", "Google Meet", "WhatsApp Call", "WhatsApp Video"] as const;
-
-const CARD_UI: Record<
-  CardKey,
-  {
-    typeLabel: string;
-    title: string;
-    description: string;
-    features: string[];
-    badge?: string;
-    match: (c: ConsultantWithOfferings, o: ConsultantOffering) => boolean;
-  }
-> = {
-  signature: {
-    typeLabel: "SIGNATURE",
-    title: "In-Person with Mrs. Prudent",
-    description: "A private session with the Creative Director herself. The full atelier experience.",
-    features: ["Direct with the Creative Director", "Premium fabric library access", "Up to 90 minutes"],
-    badge: "SIGNATURE",
-    match: (c, o) =>
-      c.isFlagship &&
-      (o.deliveryMode === DeliveryMode.INPERSON_ATELIER_PRUDENT ||
-        o.deliveryMode === DeliveryMode.INPERSON_HOME_PRUDENT),
-  },
-  "design-team": {
-    typeLabel: "IN-PERSON",
-    title: "With the Design Team",
-    description: "Sit with our senior designers in the Lagos atelier to shape your commission.",
-    features: ["Senior design team", "In-atelier fabric viewing", "Up to 60 minutes"],
-    match: (c, o) =>
-      !c.isFlagship &&
-      (o.deliveryMode === DeliveryMode.INPERSON_ATELIER ||
-        o.deliveryMode === DeliveryMode.INPERSON_HOME_TEAM),
-  },
-  virtual: {
-    typeLabel: "VIRTUAL",
-    title: "Virtual Consultation",
-    description: "Meet us from anywhere — Zoom, Google Meet or WhatsApp. Link sent an hour before.",
-    features: ["Zoom · Meet · WhatsApp", "Screen-shared lookbook", "Up to 45 minutes"],
-    match: (c, o) =>
-      !c.isFlagship &&
-      (o.deliveryMode === DeliveryMode.VIRTUAL_STANDARD ||
-        o.deliveryMode === DeliveryMode.VIRTUAL_WITH_TEAM ||
-        o.deliveryMode === DeliveryMode.PHONE_CALL),
-  },
-};
-
-const CARD_CMS_PREFIX: Record<CardKey, string> = {
-  signature: "consultation_type1",
-  "design-team": "consultation_type2",
-  virtual: "consultation_type3",
-};
-
-function getCardConfig(key: CardKey, cms: Record<string, string>) {
-  const base = CARD_UI[key];
-  const prefix = CARD_CMS_PREFIX[key];
-  const badge = cmsGet(cms, `${prefix}_badge`, base.badge ?? "");
-  const features = [
-    cmsGet(cms, `${prefix}_feature_1`, base.features[0] ?? ""),
-    cmsGet(cms, `${prefix}_feature_2`, base.features[1] ?? ""),
-    cmsGet(cms, `${prefix}_feature_3`, base.features[2] ?? ""),
-  ].filter(Boolean);
-
-  return {
-    ...base,
-    typeLabel: badge || base.typeLabel,
-    title: cmsGet(cms, `${prefix}_title`, base.title),
-    description: cmsGet(cms, `${prefix}_description`, base.description),
-    features: features.length ? features : base.features,
-    badge: badge || base.badge,
-  };
-}
-
-function resolveCard(
-  consultants: ConsultantWithOfferings[],
-  key: CardKey,
-): { consultant: ConsultantWithOfferings; offering: ConsultantOffering } | null {
-  const cfg = CARD_UI[key];
-  for (const c of consultants) {
-    const offering = c.offerings.find((o) => o.isActive && cfg.match(c, o));
-    if (offering) return { consultant: c, offering };
-  }
-  for (const c of consultants) {
-    if (key === "signature" && c.isFlagship && c.offerings[0]) {
-      return { consultant: c, offering: c.offerings[0] };
-    }
-    if (key === "design-team" && !c.isFlagship && c.offerings[0]) {
-      return { consultant: c, offering: c.offerings[0] };
-    }
-    if (key === "virtual" && !c.isFlagship && c.offerings[0]) {
-      return { consultant: c, offering: c.offerings[0] };
-    }
-  }
-  return null;
-}
 
 function StepIndicator({ step }: { step: number }) {
   const steps = [
@@ -182,7 +90,7 @@ export function ConsultationBookingFlow({
 }) {
   const { data: session } = useSession();
   const [step, setStep] = useState(1);
-  const [selectedCard, setSelectedCard] = useState<CardKey | null>(null);
+  const [selectedType, setSelectedType] = useState<OfferingTypeKey | null>(null);
   const [consultant, setConsultant] = useState<ConsultantWithOfferings | null>(null);
   const [offering, setOffering] = useState<ConsultantOffering | null>(null);
   const [manualFlow, setManualFlow] = useState(false);
@@ -195,7 +103,7 @@ export function ConsultationBookingFlow({
   const [pref1, setPref1] = useState("");
   const [pref2, setPref2] = useState("");
   const [pref3, setPref3] = useState("");
-  const [virtualPlatform, setVirtualPlatform] = useState<string>(VIRTUAL_PLATFORMS[0]);
+  const [virtualPlatform, setVirtualPlatform] = useState<VirtualPlatformId>("zoom");
 
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
@@ -221,17 +129,24 @@ export function ConsultationBookingFlow({
     if (session?.user?.email) setClientEmail(session.user.email);
   }, [session]);
 
-  function selectCard(key: CardKey) {
-    const resolved = resolveCard(consultants, key);
+  function selectType(key: OfferingTypeKey) {
+    const cfg = getOfferingTypeConfig(key, cms);
+    if (!cfg.enabled) {
+      toast.error("This consultation type is not available right now.");
+      return;
+    }
+    const resolved = resolveOfferingType(consultants, key);
     if (!resolved) {
       toast.error("This consultation type is not available right now.");
       return;
     }
-    setSelectedCard(key);
+    setSelectedType(key);
     setConsultant(resolved.consultant);
     setOffering(resolved.offering);
-    setManualFlow(isManualFlow(resolved.offering.deliveryMode, resolved.consultant.isFlagship));
+    setManualFlow(isOfferingTypeManual(key));
   }
+
+  const typeConfig = selectedType ? getOfferingTypeConfig(selectedType, cms) : null;
 
   const loadAvailableDates = useCallback(async () => {
     if (!consultant || !offering || manualFlow) return;
@@ -314,6 +229,8 @@ export function ConsultationBookingFlow({
       const body = {
         offeringId: offering.id,
         consultantId: consultant.id,
+        offeringType: selectedType,
+        virtualPlatform: selectedType && isOfferingTypeVirtual(selectedType) ? virtualPlatform : undefined,
         currency: currency as Currency,
         gateway,
         clientName,
@@ -322,10 +239,7 @@ export function ConsultationBookingFlow({
         clientCountry,
         clientInstagram: clientInstagram || undefined,
         occasion,
-        description:
-          offering && isVirtualDelivery(offering.deliveryMode) && virtualPlatform
-            ? `${description}\n\nPreferred platform: ${virtualPlatform}`
-            : description,
+        description,
         referenceImages,
         confirmedDate,
         confirmedTime: !manualFlow ? selectedTime ?? undefined : undefined,
@@ -427,7 +341,7 @@ export function ConsultationBookingFlow({
 
   const stepValid =
     step === 1
-      ? Boolean(selectedCard && consultant && offering)
+      ? Boolean(selectedType && consultant && offering)
       : step === 2
         ? manualFlow
           ? Boolean(pref1)
@@ -442,8 +356,21 @@ export function ConsultationBookingFlow({
             (gateway !== "BANK_TRANSFER" || Boolean(receiptUrl))
           : false;
 
-  const cardKeys: CardKey[] = ["signature", "design-team", "virtual"];
-  const showVirtualPlatform = offering && isVirtualDelivery(offering.deliveryMode);
+  const showVirtualPlatform = selectedType && isOfferingTypeVirtual(selectedType);
+
+  function displayPrice(cur: ShopCur): string {
+    if (!typeConfig) return "";
+    if (cur === "NGN") return formatPrice(typeConfig.priceNgn, "NGN");
+    if (cur === "USD") return formatPrice(typeConfig.priceUsd, "USD");
+    return formatPrice(typeConfig.priceGbp, "GBP");
+  }
+
+  function paymentAmount(cur: ShopCur): number {
+    if (!typeConfig) return 0;
+    if (cur === "USD") return typeConfig.priceUsd;
+    if (cur === "GBP") return typeConfig.priceGbp;
+    return typeConfig.priceNgn;
+  }
 
   return (
     <div className="bg-ivory px-4 py-12 md:py-16">
@@ -468,17 +395,18 @@ export function ConsultationBookingFlow({
 
         {step === 1 && (
           <div>
-            <div className="grid gap-5 md:grid-cols-3">
-              {cardKeys.map((key) => {
-                const cfg = getCardConfig(key, cms);
-                const resolved = resolveCard(consultants, key);
-                const price = resolved?.offering.feeNGN ?? 0;
-                const selected = selectedCard === key;
+            <div className="grid gap-5 md:grid-cols-2">
+              {OFFERING_TYPES.map((key) => {
+                const cfg = getOfferingTypeConfig(key, cms);
+                if (!cfg.enabled) return null;
+                const resolved = resolveOfferingType(consultants, key);
+                if (!resolved) return null;
+                const selected = selectedType === key;
                 return (
                   <button
                     key={key}
                     type="button"
-                    onClick={() => selectCard(key)}
+                    onClick={() => selectType(key)}
                     className={clsx(
                       "relative rounded-lg border bg-bg-card p-8 text-left transition-shadow",
                       selected
@@ -486,15 +414,14 @@ export function ConsultationBookingFlow({
                         : "border-[0.5px] border-sand hover:border-nut/40",
                     )}
                   >
-                    {cfg.badge ? (
-                      <span className="absolute left-4 top-4 rounded-full bg-gold px-2.5 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-white">
-                        {cfg.badge}
-                      </span>
-                    ) : null}
-                    <p className={clsx("font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr", cfg.badge && "mt-6")}>
-                      {cfg.typeLabel}
+                    <span className="absolute left-4 top-4 rounded-full bg-gold px-2.5 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-white">
+                      {cfg.formatLabel}
+                    </span>
+                    <p className="mt-6 font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">
+                      {cfg.isVirtual ? "Virtual" : "In-person"}
+                      {cfg.location ? ` · ${cfg.location}` : ""}
                     </p>
-                    <h3 className="mt-2 font-serif text-[24px] leading-snug text-choc md:text-[28px]">{cfg.title}</h3>
+                    <h3 className="mt-2 font-serif text-[22px] leading-snug text-choc md:text-[26px]">{cfg.title}</h3>
                     <p className="mt-3 font-body text-[13px] leading-relaxed text-text-mid">{cfg.description}</p>
                     <ul className="mt-5 space-y-2">
                       {cfg.features.map((f) => (
@@ -506,7 +433,7 @@ export function ConsultationBookingFlow({
                     </ul>
                     <div className="mt-6 flex items-end justify-between">
                       <p className="font-serif text-[28px] text-choc">
-                        ₦{price.toLocaleString("en-NG")}
+                        {formatPrice(cfg.priceNgn, "NGN")}
                       </p>
                       <span className="font-sans text-[10px] uppercase tracking-[0.14em] text-text-light">
                         {selected ? "SELECTED" : "SELECT"}
@@ -516,6 +443,35 @@ export function ConsultationBookingFlow({
                 );
               })}
             </div>
+
+            {showVirtualPlatform ? (
+              <div className="mx-auto mt-8 max-w-xl rounded-lg border border-sand bg-bg-card p-6">
+                <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Choose your platform</p>
+                <div className="mt-4 space-y-3">
+                  {VIRTUAL_PLATFORMS.map((p) => (
+                    <label
+                      key={p.id}
+                      className={clsx(
+                        "flex cursor-pointer items-center gap-3 rounded-sm border px-4 py-3 transition-colors",
+                        virtualPlatform === p.id ? "border-choc bg-choc/5" : "border-sand",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="virtualPlatform"
+                        checked={virtualPlatform === p.id}
+                        onChange={() => setVirtualPlatform(p.id)}
+                        className="accent-choc"
+                      />
+                      <span className="font-body text-sm text-text-mid">{p.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="mt-4 font-body text-xs text-text-light">
+                  A link will be sent to you 1 hour before your session.
+                </p>
+              </div>
+            ) : null}
 
             <ConsultationReviewsSlider items={consultationReviews} />
 
@@ -631,27 +587,6 @@ export function ConsultationBookingFlow({
               </div>
             )}
 
-            {showVirtualPlatform ? (
-              <div className="mt-8">
-                <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Meeting platform</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {VIRTUAL_PLATFORMS.map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setVirtualPlatform(p)}
-                      className={clsx(
-                        "rounded-sm border px-4 py-2 font-sans text-xs transition-colors",
-                        virtualPlatform === p ? "border-choc bg-choc text-cream" : "border-sand bg-bg-card text-text-mid",
-                      )}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
             <div className="mt-10 flex gap-3">
               <button type="button" onClick={() => setStep(1)} className="btn-ghost-light px-6 py-3 text-[10px]">
                 Back
@@ -668,11 +603,13 @@ export function ConsultationBookingFlow({
           </div>
         )}
 
-        {step === 3 && consultant && offering && selectedCard && (
+        {step === 3 && consultant && offering && selectedType && typeConfig && (
           <div className="mx-auto max-w-2xl space-y-8">
             <div className="rounded-lg border border-sand bg-bg-card p-6">
               <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Booking summary</p>
-              <h3 className="mt-2 font-serif text-xl text-choc">{CARD_UI[selectedCard].title}</h3>
+              <h3 className="mt-2 font-serif text-xl text-choc">
+                {typeConfig.isVirtual ? "💻" : "🏛"} {typeConfig.title}
+              </h3>
               <p className="mt-2 font-body text-sm text-text-mid">
                 {!manualFlow && selectedYmd
                   ? `${selectedYmd} at ${selectedTime ?? "—"} WAT`
@@ -681,9 +618,11 @@ export function ConsultationBookingFlow({
                     : "—"}
               </p>
               {showVirtualPlatform ? (
-                <p className="mt-1 font-body text-sm text-text-mid">Platform: {virtualPlatform}</p>
+                <p className="mt-1 font-body text-sm text-text-mid">
+                  Via {getVirtualPlatformLabel(virtualPlatform)}
+                </p>
               ) : null}
-              <p className="mt-4 font-serif text-[28px] text-choc">₦{offering.feeNGN.toLocaleString("en-NG")}</p>
+              <p className="mt-4 font-serif text-[28px] text-choc">{displayPrice(currency)}</p>
             </div>
 
             <div className="space-y-4 rounded-lg border border-sand bg-bg-card p-6">
@@ -763,26 +702,12 @@ export function ConsultationBookingFlow({
                   </button>
                 ))}
               </div>
-              <p className="mt-4 font-serif text-[28px] text-choc">
-                {currency === "NGN"
-                  ? formatPrice(offering.feeNGN, "NGN")
-                  : currency === "USD" && offering.feeUSD
-                    ? formatPrice(offering.feeUSD, "USD")
-                    : currency === "GBP" && offering.feeGBP
-                      ? formatPrice(offering.feeGBP, "GBP")
-                      : formatPrice(offering.feeNGN, "NGN")}
-              </p>
+              <p className="mt-4 font-serif text-[28px] text-choc">{displayPrice(currency)}</p>
             </div>
 
             <PaymentMethodSelector
               currency={currency}
-              amount={
-                currency === "USD" && offering.feeUSD
-                  ? offering.feeUSD
-                  : currency === "GBP" && offering.feeGBP
-                    ? offering.feeGBP
-                    : offering.feeNGN
-              }
+              amount={paymentAmount(currency)}
               selected={gateway}
               onSelect={(g) => {
                 setGateway(g);

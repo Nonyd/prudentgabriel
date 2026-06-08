@@ -843,6 +843,7 @@ async function main() {
       update: {},
       create: {
         bookingNumber: "CB-26-SEED01",
+        offeringType: "PHYSICAL_TEAM_ONLY",
         offeringId: seniorOffering.id,
         consultantId: "consultant-senior",
         userId: amaraUser.id,
@@ -876,6 +877,7 @@ async function main() {
       update: {},
       create: {
         bookingNumber: "CB-26-SEED02",
+        offeringType: "PHYSICAL_PRUDENT_TEAM",
         offeringId: prudentOffering.id,
         consultantId: "consultant-prudent",
         userId: chidinmaUser.id,
@@ -908,6 +910,8 @@ async function main() {
       update: {},
       create: {
         bookingNumber: "CB-26-SEED03",
+        offeringType: "VIRTUAL_TEAM_ONLY",
+        virtualPlatform: "zoom",
         offeringId: styleOffering.id,
         consultantId: "consultant-style",
         userId: amaraUser.id,

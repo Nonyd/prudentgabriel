@@ -92,9 +92,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (cur === ConsultationStatus.PENDING_CONFIRMATION && nextStatus === ConsultationStatus.RESCHEDULED) allowed = true;
   if (cur === ConsultationStatus.PENDING_CONFIRMATION && nextStatus === ConsultationStatus.CANCELLED_BY_ADMIN)
     allowed = true;
+  if (cur === ConsultationStatus.CONFIRMED && nextStatus === ConsultationStatus.SCHEDULED) allowed = true;
+  if (cur === ConsultationStatus.CONFIRMED && nextStatus === ConsultationStatus.IN_SESSION) allowed = true;
   if (cur === ConsultationStatus.CONFIRMED && nextStatus === ConsultationStatus.COMPLETED) allowed = true;
   if (cur === ConsultationStatus.CONFIRMED && nextStatus === ConsultationStatus.CANCELLED_BY_ADMIN) allowed = true;
   if (cur === ConsultationStatus.CONFIRMED && nextStatus === ConsultationStatus.NO_SHOW) allowed = true;
+  if (cur === ConsultationStatus.SCHEDULED && nextStatus === ConsultationStatus.IN_SESSION) allowed = true;
+  if (cur === ConsultationStatus.SCHEDULED && nextStatus === ConsultationStatus.COMPLETED) allowed = true;
+  if (cur === ConsultationStatus.SCHEDULED && nextStatus === ConsultationStatus.CANCELLED_BY_ADMIN) allowed = true;
+  if (cur === ConsultationStatus.IN_SESSION && nextStatus === ConsultationStatus.COMPLETED) allowed = true;
+  if (cur === ConsultationStatus.IN_SESSION && nextStatus === ConsultationStatus.CANCELLED_BY_ADMIN) allowed = true;
 
   if (!allowed) {
     return NextResponse.json({ error: "Invalid status transition" }, { status: 400 });

@@ -54,14 +54,29 @@ export function notifyNewBespoke(request: Pick<BespokeRequest, "id" | "requestNu
   }).catch(() => {});
 }
 
-export function notifyNewConsultation(booking: Pick<ConsultationBooking, "id" | "bookingNumber" | "clientName">): void {
+export function notifyNewConsultation(
+  booking: Pick<ConsultationBooking, "id" | "bookingNumber" | "clientName" | "offeringType">,
+): void {
   void createNotification({
     type: "NEW_CONSULTATION",
     title: "New consultation",
     message: `${booking.bookingNumber} — ${booking.clientName}`,
-    link: `/admin/consultations`,
+    link: `/admin/consultations/${booking.id}`,
     entityId: booking.id,
   }).catch(() => {});
+
+  if (
+    booking.offeringType === "PHYSICAL_PRUDENT_TEAM" ||
+    booking.offeringType === "VIRTUAL_PRUDENT_TEAM"
+  ) {
+    void createNotification({
+      type: "CONSULTATION_BOOKED_PRUDENT",
+      title: "New consultation — Mrs. Prudent requested",
+      message: `${booking.clientName} booked a ${booking.offeringType?.replace(/_/g, " ").toLowerCase()} consultation`,
+      link: `/admin/consultations/${booking.id}`,
+      entityId: booking.id,
+    }).catch(() => {});
+  }
 }
 
 export function notifyReviewPending(review: Pick<Review, "id" | "productId">, productName: string): void {

@@ -2,14 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import {
-  ConsultationDeliveryMode,
-  ConsultationSessionType,
-  ConsultationStatus,
-} from "@prisma/client";
+import { ConsultationStatus } from "@prisma/client";
 import toast from "react-hot-toast";
-import { getDeliveryModeLabel, getSessionTypeLabel } from "@/lib/consultation";
+import {
+  getOfferingTypeIcon,
+  getOfferingTypeLabel,
+  getVirtualPlatformLabel,
+  isOfferingTypeVirtual,
+  type OfferingTypeKey,
+} from "@/lib/consultation-types";
+import { isVirtualDelivery } from "@/lib/consultation";
 import {
   ClientMeasurementsPanel,
   type MeasurementData,
@@ -20,6 +24,8 @@ type Booking = {
   userId: string | null;
   bookingNumber: string;
   status: ConsultationStatus;
+  offeringType: string | null;
+  virtualPlatform: string | null;
   clientName: string;
   clientEmail: string;
   clientPhone: string;
@@ -34,17 +40,50 @@ type Booking = {
   confirmedTime: string | null;
   meetingLink: string | null;
   meetingPlatform: string | null;
+  meetingLinkSentAt: string | null;
   feeNGN: number;
   paymentStatus: string;
   paymentGateway: string | null;
   paymentRef: string | null;
+  paidAt: string | null;
+  adminNotes: string | null;
+  sessionNotes: string | null;
+  moodboardImages: string[];
+  moodboardNotes: string | null;
   consultant: { id: string; name: string; title: string; image: string | null };
-  offering: {
-    sessionType: ConsultationSessionType;
-    deliveryMode: ConsultationDeliveryMode;
-    durationMinutes: number;
-  };
+  offering: { durationMinutes: number; deliveryMode: string };
 };
+
+const STATUS_OPTIONS: ConsultationStatus[] = [
+  ConsultationStatus.CONFIRMED,
+  ConsultationStatus.SCHEDULED,
+  ConsultationStatus.IN_SESSION,
+  ConsultationStatus.COMPLETED,
+  ConsultationStatus.CANCELLED_BY_ADMIN,
+];
+
+function formatWatDate(iso: string | null): string {
+  if (!iso) return "—";
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Africa/Lagos",
+  }).format(new Date(iso));
+}
+
+function formatWatDateTime(iso: string | null): string {
+  if (!iso) return "—";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "Africa/Lagos",
+  }).format(new Date(iso));
+}
 
 export function AdminConsultationDetail({
   booking,
@@ -56,230 +95,320 @@ export function AdminConsultationDetail({
   measurements?: MeasurementData | null;
 }) {
   const router = useRouter();
-  const [confirmDate, setConfirmDate] = useState(
-    booking.confirmedDate ? new Date(booking.confirmedDate).toISOString().slice(0, 10) : "",
-  );
-  const [confirmTime, setConfirmTime] = useState(booking.confirmedTime ?? "10:00");
-  const [meetingLink, setMeetingLink] = useState(booking.meetingLink ?? "");
-  const [meetingPlatform, setMeetingPlatform] = useState(booking.meetingPlatform ?? "Google Meet");
-  const [proposalMsg, setProposalMsg] = useState("");
-  const [alt1, setAlt1] = useState("");
-  const [alt2, setAlt2] = useState("");
-  const [cancelReason, setCancelReason] = useState("");
+  const [status, setStatus] = useState(booking.status);
+  const [linkInput, setLinkInput] = useState(booking.meetingLink ?? "");
+  const [sessionNotes, setSessionNotes] = useState(booking.sessionNotes ?? "");
+  const [moodboardNotes, setMoodboardNotes] = useState(booking.moodboardNotes ?? "");
+  const [moodboardImages, setMoodboardImages] = useState<string[]>(booking.moodboardImages ?? []);
+  const [adminNotes, setAdminNotes] = useState(booking.adminNotes ?? "");
+  const [uploading, setUploading] = useState(false);
+  const [sendingLink, setSendingLink] = useState(false);
+  const [savingSession, setSavingSession] = useState(false);
 
-  async function patch(body: Record<string, unknown>) {
+  const isVirtual =
+    (booking.offeringType && isOfferingTypeVirtual(booking.offeringType as OfferingTypeKey)) ||
+    isVirtualDelivery(booking.offering.deliveryMode as never);
+
+  const typeLabel = getOfferingTypeLabel(booking.offeringType);
+  const typeIcon = getOfferingTypeIcon(booking.offeringType);
+  const platformLabel = getVirtualPlatformLabel(booking.virtualPlatform) || booking.meetingPlatform;
+
+  async function sendLink() {
+    if (!linkInput.trim()) {
+      toast.error("Enter a meeting link");
+      return;
+    }
+    setSendingLink(true);
+    try {
+      const res = await fetch(`/api/admin/consultations/${booking.id}/send-link`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ meetingLink: linkInput.trim() }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error((j as { error?: string }).error ?? "Failed to send link");
+      toast.success("Meeting link sent to client");
+      router.refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to send link");
+    } finally {
+      setSendingLink(false);
+    }
+  }
+
+  async function saveSession(markComplete = false) {
+    setSavingSession(true);
+    try {
+      const res = await fetch(`/api/admin/consultations/${booking.id}/session`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionNotes,
+          moodboardImages,
+          moodboardNotes,
+          ...(markComplete ? { status: ConsultationStatus.COMPLETED } : {}),
+        }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error((j as { error?: string }).error ?? "Save failed");
+      toast.success(markComplete ? "Marked as completed" : "Session notes saved");
+      if (markComplete) setStatus(ConsultationStatus.COMPLETED);
+      router.refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSavingSession(false);
+    }
+  }
+
+  async function uploadMoodboard(file: File) {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      const res = await fetch("/api/consultations/upload", { method: "POST", body: fd });
+      const j = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok) throw new Error(j.error ?? "Upload failed");
+      if (j.url) setMoodboardImages((prev) => [...prev, j.url!]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function patchStatus(next: ConsultationStatus) {
     const res = await fetch(`/api/admin/consultations/${booking.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ status: next }),
     });
     const j = await res.json();
     if (!res.ok) {
       toast.error((j as { error?: string }).error ?? "Update failed");
       return;
     }
-    toast.success("Updated");
+    setStatus(next);
+    toast.success("Status updated");
     router.refresh();
   }
 
+  async function saveAdminNotes() {
+    const res = await fetch(`/api/admin/consultations/${booking.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminNotes }),
+    });
+    if (!res.ok) {
+      toast.error("Could not save notes");
+      return;
+    }
+    toast.success("Internal notes saved");
+  }
+
+  const canEditSession =
+    status === ConsultationStatus.IN_SESSION ||
+    status === ConsultationStatus.COMPLETED ||
+    status === ConsultationStatus.SCHEDULED ||
+    status === ConsultationStatus.CONFIRMED;
+
   return (
-    <div className="space-y-8">
-      <div className="grid gap-8 lg:grid-cols-2">
-      <div className="space-y-4 text-sm text-[#eaeaea]">
-        <div className="rounded-sm border border-sand bg-[#FAFAFA] p-4">
-          <h2 className="font-label text-gold">Client</h2>
-          <p className="mt-2">{booking.clientName}</p>
-          <a href={`mailto:${booking.clientEmail}`} className="text-gold underline">
+    <div className="mt-8 space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="font-label text-xs uppercase tracking-widest text-gold">Consultation</p>
+          <h2 className="font-display text-xl text-ink">{booking.bookingNumber}</h2>
+        </div>
+        <select
+          value={status}
+          onChange={(e) => void patchStatus(e.target.value as ConsultationStatus)}
+          className="rounded-sm border border-sand bg-white px-3 py-2 text-sm text-ink"
+        >
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s}>
+              {s.replace(/_/g, " ")}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-4 rounded-sm border border-sand bg-[#FAFAFA] p-5">
+          <h3 className="font-label text-gold">Client</h3>
+          <p className="font-medium text-ink">{booking.clientName}</p>
+          <a href={`mailto:${booking.clientEmail}`} className="text-sm text-olive underline">
             {booking.clientEmail}
           </a>
-          <p className="mt-1">{booking.clientPhone}</p>
-          <p className="text-[#aaa]">{booking.clientCountry}</p>
+          <p className="text-sm text-[#6B6B68]">{booking.clientPhone}</p>
+          {clientId ? (
+            <Link href={`/admin/customers/${booking.userId}`} className="text-xs text-olive underline">
+              View client profile →
+            </Link>
+          ) : null}
+          <div className="border-t border-sand pt-4">
+            <p className="font-label text-xs text-gold">Occasion</p>
+            <p className="mt-1 text-sm text-ink">{booking.occasion}</p>
+            <p className="mt-2 text-sm text-[#6B6B68]">{booking.description}</p>
+          </div>
         </div>
-        <div className="rounded-sm border border-sand bg-[#FAFAFA] p-4">
-          <h2 className="font-label text-gold">Session</h2>
-          <p className="mt-2">{booking.consultant.name}</p>
-          <p className="text-xs text-[#aaa]">{getSessionTypeLabel(booking.offering.sessionType)}</p>
-          <p className="text-xs text-[#aaa]">{getDeliveryModeLabel(booking.offering.deliveryMode)}</p>
-          <p className="mt-2 text-xs">Fee ₦{booking.feeNGN.toLocaleString("en-NG")}</p>
-        </div>
-        <div className="rounded-sm border border-sand bg-[#FAFAFA] p-4">
-          <h2 className="font-label text-gold">Scheduling</h2>
-          {booking.preferredDate1 && (
-            <p className="mt-2 text-xs">
-              Prefs: {new Date(booking.preferredDate1).toISOString().slice(0, 10)}{" "}
-              {booking.preferredDate2 ? `, ${new Date(booking.preferredDate2).toISOString().slice(0, 10)}` : ""}
+
+        <div className="space-y-4 rounded-sm border border-sand bg-[#FAFAFA] p-5">
+          <h3 className="font-label text-gold">Session details</h3>
+          <p className="text-sm text-ink">
+            {typeIcon} {typeLabel}
+          </p>
+          {isVirtual && platformLabel ? (
+            <p className="text-sm text-[#6B6B68]">Platform: {platformLabel}</p>
+          ) : null}
+          <p className="text-sm text-ink">
+            Date: {formatWatDate(booking.confirmedDate ?? booking.preferredDate1)}
+          </p>
+          {booking.confirmedTime ? (
+            <p className="text-sm text-ink">Time: {booking.confirmedTime} WAT</p>
+          ) : null}
+          <p className="text-sm text-[#6B6B68]">Duration: up to {booking.offering.durationMinutes} minutes</p>
+          <div className="border-t border-sand pt-4">
+            <p className="font-label text-xs text-gold">Payment</p>
+            <p className="mt-1 text-sm text-ink">₦{booking.feeNGN.toLocaleString("en-NG")}</p>
+            <p className="text-sm text-[#6B6B68]">
+              {booking.paymentStatus}
+              {booking.paymentGateway ? ` · ${booking.paymentGateway}` : ""}
             </p>
-          )}
-          {booking.confirmedDate && (
-            <p className="mt-2 text-xs">
-              Confirmed: {new Date(booking.confirmedDate).toISOString().slice(0, 10)} {booking.confirmedTime} WAT
-            </p>
-          )}
+            {booking.paidAt ? (
+              <p className="text-xs text-[#6B6B68]">Paid {formatWatDate(booking.paidAt)}</p>
+            ) : null}
+          </div>
         </div>
-        <p className="text-xs text-[#888]">{booking.description}</p>
       </div>
 
-      <div className="space-y-4 rounded-sm border border-sand bg-[#1e1e1e] p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="font-display text-lg text-gold">Status: {booking.status}</p>
-          <Link
-            href={`/admin/invoices/new?consultationId=${booking.id}`}
-            className="rounded-sm border border-gold px-3 py-1.5 text-xs uppercase tracking-wider text-gold hover:bg-gold/10"
+      {isVirtual ? (
+        <div className="rounded-sm border border-sand bg-[#FAFAFA] p-5">
+          <h3 className="font-label text-gold">Virtual meeting link</h3>
+          {booking.meetingLinkSentAt ? (
+            <div className="mt-3 space-y-2">
+              <p className="text-sm text-emerald-800">
+                ✓ Link sent on {formatWatDateTime(booking.meetingLinkSentAt)}
+              </p>
+              <a href={booking.meetingLink ?? "#"} className="break-all text-sm text-olive underline">
+                {booking.meetingLink}
+              </a>
+            </div>
+          ) : null}
+          <label className="mt-4 block text-xs text-[#6B6B68]">
+            Paste meeting link
+            <input
+              value={linkInput}
+              onChange={(e) => setLinkInput(e.target.value)}
+              placeholder="https://zoom.us/j/..."
+              className="mt-1 w-full rounded-sm border border-sand px-3 py-2 text-sm text-ink"
+            />
+          </label>
+          <button
+            type="button"
+            disabled={sendingLink}
+            onClick={() => void sendLink()}
+            className="mt-3 rounded-sm bg-wine px-4 py-2 text-sm text-white disabled:opacity-50"
           >
-            Create Invoice
-          </Link>
+            {sendingLink ? "Sending…" : "Send link to client →"}
+          </button>
+          <p className="mt-2 text-xs text-[#6B6B68]">This will email the link to {booking.clientEmail}</p>
         </div>
+      ) : null}
 
-        {booking.status === ConsultationStatus.PENDING_CONFIRMATION && (
-          <div className="space-y-3">
-            <label className="block text-xs text-[#aaa]">
-              Confirmed date
-              <input
-                type="date"
-                value={confirmDate}
-                onChange={(e) => setConfirmDate(e.target.value)}
-                className="mt-1 w-full rounded-sm border border-[#444] bg-[#2a2a2a] px-2 py-2 text-[#eaeaea]"
+      <div className="rounded-sm border border-sand bg-[#FAFAFA] p-5">
+        <h3 className="font-label text-gold">Session notes & moodboard</h3>
+        {!canEditSession ? (
+          <p className="mt-3 text-sm text-[#6B6B68]">Complete after the consultation session.</p>
+        ) : (
+          <div className="mt-4 space-y-4">
+            <label className="block text-xs text-[#6B6B68]">
+              Session notes
+              <textarea
+                value={sessionNotes}
+                onChange={(e) => setSessionNotes(e.target.value)}
+                rows={4}
+                className="mt-1 w-full rounded-sm border border-sand px-3 py-2 text-sm text-ink"
               />
             </label>
-            <label className="block text-xs text-[#aaa]">
-              Time (WAT)
+            <div>
+              <p className="text-xs text-[#6B6B68]">Moodboard / reference images</p>
               <input
-                value={confirmTime}
-                onChange={(e) => setConfirmTime(e.target.value)}
-                className="mt-1 w-full rounded-sm border border-[#444] bg-[#2a2a2a] px-2 py-2 text-[#eaeaea]"
+                type="file"
+                accept="image/*"
+                disabled={uploading}
+                className="mt-2 text-sm"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void uploadMoodboard(f);
+                  e.target.value = "";
+                }}
+              />
+              {moodboardImages.length > 0 ? (
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {moodboardImages.map((url) => (
+                    <div key={url} className="relative aspect-square overflow-hidden rounded-sm border border-sand">
+                      <Image src={url} alt="" fill className="object-cover" sizes="120px" />
+                      <button
+                        type="button"
+                        onClick={() => setMoodboardImages((prev) => prev.filter((u) => u !== url))}
+                        className="absolute right-1 top-1 rounded bg-black/60 px-1.5 text-xs text-white"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <label className="block text-xs text-[#6B6B68]">
+              Moodboard notes
+              <textarea
+                value={moodboardNotes}
+                onChange={(e) => setMoodboardNotes(e.target.value)}
+                rows={3}
+                className="mt-1 w-full rounded-sm border border-sand px-3 py-2 text-sm text-ink"
               />
             </label>
-            <label className="block text-xs text-[#aaa]">
-              Meeting link (virtual)
-              <input
-                value={meetingLink}
-                onChange={(e) => setMeetingLink(e.target.value)}
-                className="mt-1 w-full rounded-sm border border-[#444] bg-[#2a2a2a] px-2 py-2 text-[#eaeaea]"
-              />
-            </label>
-            <label className="block text-xs text-[#aaa]">
-              Platform
-              <input
-                value={meetingPlatform}
-                onChange={(e) => setMeetingPlatform(e.target.value)}
-                className="mt-1 w-full rounded-sm border border-[#444] bg-[#2a2a2a] px-2 py-2 text-[#eaeaea]"
-              />
-            </label>
-            <button
-              type="button"
-              onClick={() =>
-                void patch({
-                  status: ConsultationStatus.CONFIRMED,
-                  confirmedDate: confirmDate ? new Date(confirmDate).toISOString() : undefined,
-                  confirmedTime: confirmTime,
-                  meetingLink: meetingLink || undefined,
-                  meetingPlatform: meetingPlatform || undefined,
-                })
-              }
-              className="w-full rounded-sm bg-wine py-2 text-sm text-charcoal"
-            >
-              Confirm & send email
-            </button>
-
-            <textarea
-              value={proposalMsg}
-              onChange={(e) => setProposalMsg(e.target.value)}
-              placeholder="Message for reschedule proposal"
-              className="mt-4 w-full rounded-sm border border-[#444] bg-[#2a2a2a] p-2 text-sm text-[#eaeaea]"
-              rows={3}
-            />
-            <input
-              placeholder="Alt date 1 (YYYY-MM-DD)"
-              value={alt1}
-              onChange={(e) => setAlt1(e.target.value)}
-              className="w-full rounded-sm border border-[#444] bg-[#2a2a2a] px-2 py-2 text-sm"
-            />
-            <input
-              placeholder="Alt date 2"
-              value={alt2}
-              onChange={(e) => setAlt2(e.target.value)}
-              className="w-full rounded-sm border border-[#444] bg-[#2a2a2a] px-2 py-2 text-sm"
-            />
-            <button
-              type="button"
-              onClick={() =>
-                void patch({
-                  status: ConsultationStatus.RESCHEDULED,
-                  proposedDates: [alt1, alt2].filter(Boolean),
-                  adminMessage: proposalMsg || undefined,
-                })
-              }
-              className="w-full rounded-sm border border-gold py-2 text-sm text-gold"
-            >
-              Send reschedule proposal
-            </button>
-
-            <textarea
-              value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
-              placeholder="Cancellation reason"
-              className="w-full rounded-sm border border-[#444] bg-[#2a2a2a] p-2 text-sm"
-              rows={2}
-            />
-            <button
-              type="button"
-              onClick={() =>
-                void patch({
-                  status: ConsultationStatus.CANCELLED_BY_ADMIN,
-                  cancellationReason: cancelReason || undefined,
-                })
-              }
-              className="w-full rounded-sm border border-red-700 py-2 text-sm text-red-300"
-            >
-              Cancel & notify client
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={savingSession}
+                onClick={() => void saveSession(false)}
+                className="rounded-sm border border-olive px-4 py-2 text-sm text-olive"
+              >
+                Save session notes
+              </button>
+              <button
+                type="button"
+                disabled={savingSession}
+                onClick={() => void saveSession(true)}
+                className="rounded-sm bg-emerald-800 px-4 py-2 text-sm text-white"
+              >
+                Mark as completed
+              </button>
+            </div>
           </div>
         )}
-
-        {booking.status === ConsultationStatus.CONFIRMED && (
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => void patch({ status: ConsultationStatus.COMPLETED })}
-              className="w-full rounded-sm bg-emerald-900 py-2 text-sm text-charcoal"
-            >
-              Mark completed
-            </button>
-            <button
-              type="button"
-              onClick={() => void patch({ status: ConsultationStatus.NO_SHOW })}
-              className="w-full rounded-sm border border-amber-700 py-2 text-sm text-amber-200"
-            >
-              Mark no-show
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                void patch({
-                  status: ConsultationStatus.CANCELLED_BY_ADMIN,
-                  cancellationReason: cancelReason || "Cancelled by admin",
-                })
-              }
-              className="w-full rounded-sm border border-red-700 py-2 text-sm text-red-300"
-            >
-              Cancel booking
-            </button>
-          </div>
-        )}
-
-        {booking.userId && (
-          <Link href={`/admin/customers/${booking.userId}`} className="mt-4 inline-block text-xs text-gold underline">
-            Open customer wallet
-          </Link>
-        )}
-      </div>
       </div>
 
-      <ClientMeasurementsPanel
-        clientId={clientId}
-        clientName={booking.clientName}
-        initial={measurements}
-      />
+      <div className="rounded-sm border border-sand bg-[#FAFAFA] p-5">
+        <h3 className="font-label text-gold">Internal notes (admin only)</h3>
+        <textarea
+          value={adminNotes}
+          onChange={(e) => setAdminNotes(e.target.value)}
+          rows={3}
+          className="mt-3 w-full rounded-sm border border-sand px-3 py-2 text-sm text-ink"
+        />
+        <button
+          type="button"
+          onClick={() => void saveAdminNotes()}
+          className="mt-3 rounded-sm border border-sand px-4 py-2 text-sm text-ink"
+        >
+          Save notes
+        </button>
+      </div>
+
+      <ClientMeasurementsPanel clientId={clientId} clientName={booking.clientName} initial={measurements} />
     </div>
   );
 }

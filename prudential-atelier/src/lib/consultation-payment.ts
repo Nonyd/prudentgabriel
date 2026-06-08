@@ -13,17 +13,19 @@ import {
   isVirtualDelivery,
 } from "@/lib/consultation";
 import {
+  getOfferingTypeLabel,
+  isOfferingTypeManual,
+  isOfferingTypeVirtual,
+  type OfferingTypeKey,
+} from "@/lib/consultation-types";
+import {
   sendAdminConsultationNotification,
   sendConsultationConfirmedEmail,
   sendConsultationPendingEmail,
 } from "@/lib/email";
 import { autoOnboardClient } from "@/lib/client-onboarding";
 
-const ATELIER_ADDRESS = "14 Prudential Atelier, Lagos, Nigeria";
-
-function defaultMeetingLink(): string {
-  return "https://meet.google.com";
-}
+const ATELIER_ADDRESS = "14 Bode Thomas Street, Surulere, Lagos";
 
 export async function fulfillPaidConsultationBooking(params: {
   bookingId: string;
@@ -47,18 +49,22 @@ export async function fulfillPaidConsultationBooking(params: {
   });
   if (!booking) return false;
 
+  const typeKey = booking.offeringType as OfferingTypeKey | null;
+  const isVirtual =
+    (typeKey && isOfferingTypeVirtual(typeKey)) || isVirtualDelivery(booking.offering.deliveryMode);
+
   const manual =
+    (typeKey && isOfferingTypeManual(typeKey)) ||
     isManualFlow(booking.offering.deliveryMode, booking.consultant.isFlagship) ||
     !booking.confirmedDate ||
     !booking.confirmedTime;
 
   const nextStatus = manual ? ConsultationStatus.PENDING_CONFIRMATION : ConsultationStatus.CONFIRMED;
 
-  const meetingLink = isVirtualDelivery(booking.offering.deliveryMode) ? defaultMeetingLink() : null;
-  const meetingPlatform = isVirtualDelivery(booking.offering.deliveryMode) ? "Google Meet" : null;
   const atelierAddress =
-    booking.offering.deliveryMode === ConsultationDeliveryMode.INPERSON_ATELIER ||
-    booking.offering.deliveryMode === ConsultationDeliveryMode.INPERSON_ATELIER_PRUDENT
+    !isVirtual &&
+    (booking.offering.deliveryMode === ConsultationDeliveryMode.INPERSON_ATELIER ||
+      booking.offering.deliveryMode === ConsultationDeliveryMode.INPERSON_ATELIER_PRUDENT)
       ? ATELIER_ADDRESS
       : null;
 
@@ -68,9 +74,7 @@ export async function fulfillPaidConsultationBooking(params: {
     paymentRef: params.paymentRef,
     paymentGateway: params.gateway,
     status: nextStatus,
-    ...(nextStatus === ConsultationStatus.CONFIRMED && meetingLink && !booking.meetingLink
-      ? { meetingLink, meetingPlatform }
-      : {}),
+    confirmedAt: nextStatus === ConsultationStatus.CONFIRMED ? new Date() : undefined,
     ...(atelierAddress && !booking.atelierAddress ? { atelierAddress } : {}),
   };
 
@@ -98,7 +102,9 @@ export async function fulfillPaidConsultationBooking(params: {
   if (!refreshed) return true;
 
   const sessionTypeLabel = getSessionTypeLabel(refreshed.offering.sessionType);
-  const deliveryModeLabel = getDeliveryModeLabel(refreshed.offering.deliveryMode);
+  const deliveryModeLabel = refreshed.offeringType
+    ? getOfferingTypeLabel(refreshed.offeringType)
+    : getDeliveryModeLabel(refreshed.offering.deliveryMode);
   const preferredDates: string[] = [];
   if (refreshed.preferredDate1) preferredDates.push(refreshed.preferredDate1.toISOString());
   if (refreshed.preferredDate2) preferredDates.push(refreshed.preferredDate2.toISOString());
@@ -118,7 +124,7 @@ export async function fulfillPaidConsultationBooking(params: {
       meetingLink: refreshed.meetingLink ?? undefined,
       meetingPlatform: refreshed.meetingPlatform ?? undefined,
       atelierAddress: refreshed.atelierAddress ?? undefined,
-      isVirtual: isVirtualDelivery(refreshed.offering.deliveryMode),
+      isVirtual,
     });
   } else if (refreshed.status === ConsultationStatus.PENDING_CONFIRMATION) {
     await sendConsultationPendingEmail({

@@ -15,6 +15,7 @@ import ConsultationPendingEmail from "@/emails/ConsultationPendingEmail";
 import ConsultationConfirmedEmail from "@/emails/ConsultationConfirmedEmail";
 import ConsultationCancelledEmail from "@/emails/ConsultationCancelledEmail";
 import ConsultationRescheduleEmail from "@/emails/ConsultationRescheduleEmail";
+import ConsultationMeetingLinkEmail from "@/emails/ConsultationMeetingLinkEmail";
 import InvoiceEmail, { subjectInvoiceEmail } from "@/emails/InvoiceEmail";
 import ReviewRequestEmail from "@/emails/ReviewRequestEmail";
 import { getPublicAppUrl } from "@/lib/app-url";
@@ -454,6 +455,32 @@ export async function sendConsultationCancelledEmail(params: {
   await sendEmail({
     to: params.to,
     subject: `Consultation Cancelled — #${params.bookingNumber}`,
+    html,
+  });
+}
+
+export async function sendConsultationMeetingLinkEmail(params: {
+  to: string;
+  clientName: string;
+  platformLabel: string;
+  confirmedDate: string;
+  confirmedTime: string;
+  meetingLink: string;
+  isWhatsApp: boolean;
+}): Promise<void> {
+  const html = await renderBrandedEmail(
+    <ConsultationMeetingLinkEmail
+      clientName={params.clientName}
+      platformLabel={params.platformLabel}
+      confirmedDate={params.confirmedDate}
+      confirmedTime={params.confirmedTime}
+      meetingLink={params.meetingLink}
+      isWhatsApp={params.isWhatsApp}
+    />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: "Your consultation link — Prudential Atelier",
     html,
   });
 }

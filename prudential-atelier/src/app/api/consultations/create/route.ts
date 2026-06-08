@@ -15,6 +15,14 @@ import {
 } from "@/lib/consultation";
 import { consultationBookingSchema } from "@/validations/consultation";
 import { notifyNewConsultation } from "@/lib/notifications";
+import { getCMSContent } from "@/lib/cms";
+import { getPageFieldKeys } from "@/lib/cms-config";
+import {
+  getOfferingTypeConfig,
+  isOfferingTypeManual,
+  isOfferingTypeVirtual,
+  type OfferingTypeKey,
+} from "@/lib/consultation-types";
 
 function parseDateParamToUtcDay(ymd: string): Date {
   const [y, mo, d] = ymd.split("-").map(Number);
@@ -50,7 +58,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid offering" }, { status: 400 });
   }
 
-  const manual = isManualFlow(offering.deliveryMode, offering.consultant.isFlagship);
+  const typeKey = data.offeringType as OfferingTypeKey;
+  const cms = await getCMSContent(getPageFieldKeys("consultation"));
+  const typeConfig = getOfferingTypeConfig(typeKey, cms);
+  if (!typeConfig.enabled) {
+    return NextResponse.json({ error: "This consultation type is not available" }, { status: 400 });
+  }
+
+  if (isOfferingTypeVirtual(typeKey) && !data.virtualPlatform) {
+    return NextResponse.json({ error: "Virtual platform required" }, { status: 400 });
+  }
+
+  const manual =
+    isOfferingTypeManual(typeKey) ||
+    isManualFlow(offering.deliveryMode, offering.consultant.isFlagship);
 
   if (manual) {
     if (!data.preferredDate1) {
@@ -124,7 +145,12 @@ export async function POST(req: NextRequest) {
         preferredDate3: manual ? data.preferredDate3 ?? null : null,
         confirmedDate,
         confirmedTime,
-        feeNGN: offering.feeNGN,
+        offeringType: data.offeringType,
+        virtualPlatform: data.virtualPlatform ?? null,
+        meetingPlatform: data.virtualPlatform
+          ? data.virtualPlatform.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+          : null,
+        feeNGN: typeConfig.priceNgn,
         currency: data.currency,
         paymentGateway,
         paymentRef: paymentRef ?? null,

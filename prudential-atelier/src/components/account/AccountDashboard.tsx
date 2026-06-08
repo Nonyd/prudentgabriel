@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { getOfferingTypeLabel } from "@/lib/consultation-types";
 import type { BespokeStage, LoyaltyTier, StageUpdate } from "@prisma/client";
 import {
   Calendar,
@@ -59,6 +60,14 @@ type Consultation = {
   offering: { sessionType: string | null; deliveryMode: string | null } | null;
 };
 
+type ConsultationMoodboard = {
+  id: string;
+  confirmedDate: Date | null;
+  offeringType: string | null;
+  moodboardImages: string[];
+  moodboardNotes: string | null;
+};
+
 type Measurements = {
   bust: number | null;
   waist: number | null;
@@ -96,6 +105,7 @@ export type AccountDashboardProps = {
   activeBespoke: BespokeOrder | undefined;
   upcomingConsultation: Consultation | null;
   consultations: Consultation[];
+  consultationMoodboards: ConsultationMoodboard[];
   measurements: Measurements;
   eventDates: EventDate[];
   personalizedPicks: ProductListItem[];
@@ -474,6 +484,7 @@ export function AccountDashboard({
   rtwOrders,
   activeBespoke,
   upcomingConsultation,
+  consultationMoodboards = [],
   measurements,
   eventDates,
   personalizedPicks,
@@ -590,6 +601,42 @@ export function AccountDashboard({
               View details
             </Link>
           </div>
+        </section>
+      ) : null}
+
+      {consultationMoodboards.length > 0 ? (
+        <section className="mt-8 rounded-md border border-sand bg-ivory px-6 py-8 dark:border-sand/40 dark:bg-bg-card md:px-10">
+          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
+            Your moodboard
+          </p>
+          {consultationMoodboards.map((board) => (
+            <div key={board.id} className="mt-6 border-t border-sand/50 pt-6 first:mt-4 first:border-t-0 first:pt-0">
+              <p className="font-sans text-sm text-text-mid">
+                Consultation: {board.confirmedDate ? formatDate(board.confirmedDate) : "Recent"}
+              </p>
+              <p className="mt-1 font-sans text-sm font-medium text-choc dark:text-cream">
+                With: {getOfferingTypeLabel(board.offeringType)}
+              </p>
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {board.moodboardImages.map((url) => (
+                  <a
+                    key={url}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative aspect-[4/5] overflow-hidden rounded-sm border border-sand"
+                  >
+                    <Image src={url} alt="" fill className="object-cover" sizes="(max-width:640px) 50vw, 200px" />
+                  </a>
+                ))}
+              </div>
+              {board.moodboardNotes ? (
+                <p className="mt-4 font-body text-sm italic text-text-mid">
+                  &ldquo;{board.moodboardNotes}&rdquo;
+                </p>
+              ) : null}
+            </div>
+          ))}
         </section>
       ) : null}
 

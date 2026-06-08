@@ -143,7 +143,18 @@ model ConsultationBooking {
 
   meetingLink      String?
   meetingPlatform  String?
+  meetingLinkSentAt DateTime?
   atelierAddress     String?
+
+  offeringType     String?
+  virtualPlatform  String?
+
+  sessionNotes     String?   @db.Text
+  moodboardImages  String[]  @default([])
+  moodboardNotes   String?   @db.Text
+
+  confirmedAt      DateTime?
+  confirmedBy      String?
 
   feeNGN           Float
   currency         Currency                  @default(NGN)
@@ -198,6 +209,8 @@ enum ConsultationStatus {
   PENDING_PAYMENT
   PENDING_CONFIRMATION
   CONFIRMED
+  SCHEDULED
+  IN_SESSION
   RESCHEDULED
   COMPLETED
   CANCELLED_BY_CLIENT
@@ -990,6 +1003,7 @@ enum AdminNotificationType {
   NEW_ORDER
   NEW_BESPOKE
   NEW_CONSULTATION
+  CONSULTATION_BOOKED_PRUDENT
   REVIEW_PENDING
   TESTIMONIAL_SUBMITTED
   LOW_STOCK

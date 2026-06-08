@@ -5,9 +5,18 @@ import {
   Currency,
 } from "@prisma/client";
 
+export const OFFERING_TYPE_VALUES = [
+  "PHYSICAL_PRUDENT_TEAM",
+  "PHYSICAL_TEAM_ONLY",
+  "VIRTUAL_PRUDENT_TEAM",
+  "VIRTUAL_TEAM_ONLY",
+] as const;
+
 export const consultationBookingSchema = z.object({
   offeringId: z.string().min(1),
   consultantId: z.string().min(1),
+  offeringType: z.enum(OFFERING_TYPE_VALUES),
+  virtualPlatform: z.enum(["zoom", "google_meet", "whatsapp_video"]).optional(),
   currency: z.nativeEnum(Currency).default(Currency.NGN),
   gateway: z.enum(["PAYSTACK", "FLUTTERWAVE", "STRIPE", "MONNIFY", "BANK_TRANSFER"]),
 

@@ -45,7 +45,7 @@ export default async function AccountDashboardPage() {
 
   const profile = await getOrCreateClientProfile(userId);
 
-  const [user, rtwOrders, consultations, bespokeOrders, measurements, eventDates, orderHistory] =
+  const [user, rtwOrders, consultations, consultationMoodboards, bespokeOrders, measurements, eventDates, orderHistory] =
     await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
@@ -76,6 +76,21 @@ export default async function AccountDashboardPage() {
         include: {
           consultant: { select: { name: true } },
           offering: { select: { sessionType: true, deliveryMode: true } },
+        },
+      }),
+      prisma.consultationBooking.findMany({
+        where: {
+          userId,
+          moodboardImages: { isEmpty: false },
+        },
+        orderBy: { completedAt: "desc" },
+        take: 3,
+        select: {
+          id: true,
+          confirmedDate: true,
+          offeringType: true,
+          moodboardImages: true,
+          moodboardNotes: true,
         },
       }),
       prisma.bespokeOrder.findMany({
@@ -222,6 +237,7 @@ export default async function AccountDashboardPage() {
       activeBespoke={activeBespoke}
       upcomingConsultation={upcomingConsultation ?? null}
       consultations={consultations}
+      consultationMoodboards={consultationMoodboards}
       measurements={measurements}
       eventDates={eventDates}
       personalizedPicks={personalizedPicks.map(mapProductToListItem)}
