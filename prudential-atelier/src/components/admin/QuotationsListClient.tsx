@@ -8,6 +8,7 @@ import { BulkSelectTable, type BulkColumn } from "@/components/ui/BulkSelectTabl
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { formatDate, formatPrice } from "@/lib/utils";
+import { InvoicesQuotationsNav } from "@/components/admin/InvoicesQuotationsNav";
 
 type QuoteRow = {
   id: string;
@@ -167,12 +168,13 @@ export function QuotationsListClient() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="eyebrow">Finance</p>
-          <h1 className="font-display text-2xl text-ink">Quotations</h1>
+          <h1 className="font-display text-2xl text-ink">Quotations &amp; Invoices</h1>
           <p className="mt-1 font-sans text-sm text-text-mid">
             Create and send client quotations for bespoke work
           </p>
+          <InvoicesQuotationsNav />
         </div>
-        <Link href="/admin/quotations/new">
+        <Link href="/admin/invoices/quotations/new">
           <Button>New Quotation</Button>
         </Link>
       </div>

@@ -6,6 +6,7 @@ import type { Invoice, InvoiceStatus } from "@prisma/client";
 import toast from "react-hot-toast";
 import { formatInvoiceCurrency } from "@/lib/invoice";
 import type { InvoiceCurrency } from "@/types/invoice";
+import { InvoicesQuotationsNav } from "@/components/admin/InvoicesQuotationsNav";
 
 type Row = Invoice & {
   bespokeRequest: { id: string; requestNumber: string; occasion: string } | null;
@@ -112,8 +113,9 @@ export function InvoicesClient() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl text-ink">Invoices</h1>
+          <h1 className="font-display text-2xl text-ink">Quotations &amp; Invoices</h1>
           <p className="mt-1 font-body text-[13px] text-[#6B6B68]">Prudential Atelier</p>
+          <InvoicesQuotationsNav />
         </div>
         <Link
           href="/admin/invoices/new"

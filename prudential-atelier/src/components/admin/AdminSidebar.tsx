@@ -82,7 +82,7 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
         label: "Quotations & Invoices",
         icon: Receipt,
         permission: "invoices",
-        alsoActive: ["/admin/quotations"],
+        alsoActive: ["/admin/quotations", "/admin/invoices/quotations"],
       },
     ],
   },

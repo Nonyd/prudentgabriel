@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
+import { InvoicesQuotationsNav } from "@/components/admin/InvoicesQuotationsNav";
 import { formatPrice } from "@/lib/utils";
 
 type LineItem = {
@@ -259,8 +260,9 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
           href="/admin/quotations"
           className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light hover:text-nut"
         >
-          ← Quotations
+          ← Back to quotations
         </Link>
+        <InvoicesQuotationsNav />
         <h1 className="mt-2 font-display text-2xl text-ink">New Quotation</h1>
         {quoteTitle ? (
           <p className="mt-1 font-sans text-sm text-text-mid">{quoteTitle}</p>
