@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import type { CustomerNotification, CustomerNotificationType } from "@prisma/client";
-import { Bell, Calendar, Check, CreditCard, Package, Scissors } from "lucide-react";
+import { Bell, Calendar, Check, CreditCard, Gift, Package, Scissors, Star, Truck } from "lucide-react";
 import Link from "next/link";
 
 function iconFor(type: CustomerNotificationType) {
@@ -14,16 +14,30 @@ function iconFor(type: CustomerNotificationType) {
     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${bg}`}>{node}</span>
   );
   switch (type) {
-    case "BESPOKE_STAGE":
+    case "ATELIER_STAGE_ADVANCED":
+    case "MOODBOARD_READY":
       return wrap(<Scissors className="h-4 w-4 text-choc" strokeWidth={1.5} />, "bg-nut/15");
-    case "CONSULTATION":
+    case "CONSULTATION_CONFIRMED":
+    case "MEETING_LINK_SENT":
+    case "EVENT_REMINDER":
       return wrap(<Calendar className="h-4 w-4 text-lightbr" strokeWidth={1.5} />, "bg-lightbr/20");
-    case "ORDER_UPDATE":
+    case "ORDER_SHIPPED":
+      return wrap(<Truck className="h-4 w-4 text-nut" strokeWidth={1.5} />, "bg-sand/50");
+    case "ORDER_DELIVERED":
+    case "ORDER_CONFIRMED":
+    case "INVOICE_ISSUED":
+    case "QUOTE_READY":
+    case "REVIEW_REQUEST":
       return wrap(<Package className="h-4 w-4 text-nut" strokeWidth={1.5} />, "bg-sand/50");
-    case "PAYMENT":
+    case "PAYMENT_CONFIRMED":
+    case "BALANCE_REMINDER":
+    case "BANK_TRANSFER_CONFIRMED":
       return wrap(<CreditCard className="h-4 w-4 text-success" strokeWidth={1.5} />, "bg-success/15");
+    case "LOYALTY_TIER_UPGRADE":
+    case "REFERRAL_REWARD":
+      return wrap(<Star className="h-4 w-4 text-nut" strokeWidth={1.5} />, "bg-nut/15");
     default:
-      return wrap(<Bell className="h-4 w-4 text-nut" strokeWidth={1.5} />, "bg-sand/50");
+      return wrap(<Gift className="h-4 w-4 text-nut" strokeWidth={1.5} />, "bg-sand/50");
   }
 }
 

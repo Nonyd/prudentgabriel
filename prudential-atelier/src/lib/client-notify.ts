@@ -2,5 +2,6 @@
 export {
   createClientNotification,
   createCustomerNotification,
-  type ClientNotificationType,
 } from "@/lib/customer-notifications";
+
+export type { CustomerNotificationType } from "@prisma/client";

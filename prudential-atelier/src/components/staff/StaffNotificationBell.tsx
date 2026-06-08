@@ -14,6 +14,8 @@ function iconFor(type: StaffNotificationType) {
     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${bg}`}>{node}</span>
   );
   switch (type) {
+    case "STAGE_ASSIGNED":
+    case "STAGE_REASSIGNED":
     case "JOB_ASSIGNED":
     case "TASK_ASSIGNED":
       return wrap(<ClipboardList className="h-4 w-4 text-choc" strokeWidth={1.5} />, "bg-nut/15");

@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { canTransitionOrder } from "@/lib/order-status";
 import { awardPurchasePoints } from "@/lib/points";
-import { sendOrderShippedEmail } from "@/lib/email";
+import { sendOrderShippedEmail, sendRtwOrderDeliveredEmail } from "@/lib/email";
+import { notifyOrderDelivered, notifyOrderShipped } from "@/lib/customer-notifications";
 import { deleteOrdersByIds } from "@/lib/order-delete";
 import { z } from "zod";
 
@@ -139,6 +140,28 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       carrier: parsed.data.carrier ?? updated.carrier ?? undefined,
       estimatedDays: undefined,
     });
+    if (order.userId) {
+      notifyOrderShipped({
+        userId: order.userId,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+      });
+    }
+  }
+
+  if (parsed.data.status === "DELIVERED" && email) {
+    void sendRtwOrderDeliveredEmail({
+      to: email,
+      firstName,
+      orderNumber: order.orderNumber,
+    });
+    if (order.userId) {
+      notifyOrderDelivered({
+        userId: order.userId,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+      });
+    }
   }
 
   return NextResponse.json(updated);

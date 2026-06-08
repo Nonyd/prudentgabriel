@@ -105,6 +105,10 @@ export const TIER_BENEFITS = [
   { label: "Complimentary alterations", tiers: ["PLATINUM"] as LoyaltyTier[] },
 ];
 
+export function getTierPerks(tier: LoyaltyTier): string[] {
+  return TIER_BENEFITS.filter((b) => b.tiers.includes(tier)).map((b) => b.label);
+}
+
 export async function getLoyaltyRulePoints(action: string): Promise<number> {
   const rule = await prisma.loyaltyRule.findUnique({ where: { action } });
   if (!rule?.isActive) return 0;

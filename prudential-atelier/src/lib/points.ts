@@ -1,8 +1,125 @@
 import type { PrismaClient } from "@prisma/client";
 import { PointsType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { createClientNotification } from "@/lib/customer-notifications";
+import { sendLoyaltyTierUpgradeEmail, sendReferralRewardEmail } from "@/lib/email";
+import { getTierPerks, getTierThresholds, tierFromPoints, TIER_LABELS } from "@/lib/loyalty";
 
-type PointsDb = Pick<PrismaClient, "user" | "pointsTransaction">;
+const REFERRAL_FIRST_PURCHASE_CREDIT = 5000;
+
+type PointsDb = Pick<PrismaClient, "user" | "pointsTransaction" | "clientProfile" | "order">;
+
+async function maybeUpgradeLoyaltyTier(userId: string, newPointsBalance: number, db: PointsDb): Promise<void> {
+  const profile = await db.clientProfile.findUnique({
+    where: { userId },
+    select: { loyaltyTier: true },
+  });
+  if (!profile) return;
+
+  const thresholds = await getTierThresholds();
+  const oldTier = profile.loyaltyTier;
+  const newTier = tierFromPoints(newPointsBalance, thresholds);
+  if (newTier === oldTier) return;
+
+  await db.clientProfile.update({
+    where: { userId },
+    data: { loyaltyTier: newTier },
+  });
+
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { email: true, name: true },
+  });
+  if (!user?.email) return;
+
+  const firstName = user.name?.split(" ")[0] ?? "there";
+  const perks = getTierPerks(newTier);
+
+  void sendLoyaltyTierUpgradeEmail({
+    to: user.email,
+    firstName,
+    newTier,
+    perks,
+  }).catch(() => {});
+
+  void createClientNotification({
+    userId,
+    type: "LOYALTY_TIER_UPGRADE",
+    title: `You've reached ${TIER_LABELS[newTier]} status!`,
+    message: `Congratulations — you are now a ${TIER_LABELS[newTier]} member.`,
+    link: "/account/loyalty",
+  }).catch(() => {});
+}
+
+export async function awardReferralFirstPurchaseReward(
+  buyerUserId: string,
+  orderId: string,
+  db: PointsDb = prisma,
+): Promise<void> {
+  const buyer = await db.user.findUnique({
+    where: { id: buyerUserId },
+    select: { referredById: true },
+  });
+  if (!buyer?.referredById) return;
+
+  const referrerId = buyer.referredById;
+
+  const priorPaidCount = await db.order.count({
+    where: {
+      userId: buyerUserId,
+      paymentStatus: "PAID",
+      id: { not: orderId },
+    },
+  });
+  if (priorPaidCount > 0) return;
+
+  const rewardKey = `first purchase (${buyerUserId})`;
+  const existing = await db.pointsTransaction.findFirst({
+    where: {
+      userId: referrerId,
+      type: PointsType.EARNED_REFERRAL,
+      description: { contains: rewardKey },
+    },
+  });
+  if (existing) return;
+
+  const referrerAfter = await db.user.update({
+    where: { id: referrerId },
+    data: { pointsBalance: { increment: REFERRAL_FIRST_PURCHASE_CREDIT } },
+    select: { pointsBalance: true, email: true, name: true },
+  });
+
+  await db.pointsTransaction.create({
+    data: {
+      userId: referrerId,
+      type: PointsType.EARNED_REFERRAL,
+      amount: REFERRAL_FIRST_PURCHASE_CREDIT,
+      balanceAfter: referrerAfter.pointsBalance,
+      description: `Referral reward — friend's first purchase (${buyerUserId})`,
+      orderId,
+    },
+  });
+
+  await maybeUpgradeLoyaltyTier(referrerId, referrerAfter.pointsBalance, db);
+
+  if (referrerAfter.email) {
+    const firstName = referrerAfter.name?.split(" ")[0] ?? "there";
+    void sendReferralRewardEmail({
+      to: referrerAfter.email,
+      firstName,
+      creditNGN: REFERRAL_FIRST_PURCHASE_CREDIT,
+    }).catch(() => {});
+  }
+
+  void createClientNotification({
+    userId: referrerId,
+    type: "REFERRAL_REWARD",
+    title: "Referral reward earned!",
+    message: "Your friend made their first purchase. ₦5,000 added to your account.",
+    link: "/account/loyalty",
+    entityId: orderId,
+  }).catch(() => {});
+}
 
 async function runAwardPurchase(client: PointsDb, userId: string, points: number, orderId: string) {
   const updated = await client.user.update({
@@ -21,6 +138,9 @@ async function runAwardPurchase(client: PointsDb, userId: string, points: number
       orderId,
     },
   });
+
+  await maybeUpgradeLoyaltyTier(userId, updated.pointsBalance, client);
+  await awardReferralFirstPurchaseReward(userId, orderId, client);
 }
 
 export async function awardPurchasePoints(
@@ -30,7 +150,10 @@ export async function awardPurchasePoints(
   db?: PointsDb,
 ): Promise<number> {
   const points = Math.floor(orderTotalNGN / 100);
-  if (points <= 0) return 0;
+  if (points <= 0) {
+    await awardReferralFirstPurchaseReward(userId, orderId, db ?? prisma);
+    return 0;
+  }
 
   if (db) {
     await runAwardPurchase(db, userId, points, orderId);
@@ -65,6 +188,8 @@ export async function awardReviewPoints(
       description: `Points for verified product review (${productId})`,
     },
   });
+
+  await maybeUpgradeLoyaltyTier(userId, updated.pointsBalance, db);
 
   return points;
 }

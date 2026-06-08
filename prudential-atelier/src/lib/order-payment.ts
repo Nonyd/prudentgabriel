@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { awardPurchasePoints } from "@/lib/points";
 import { autoOnboardClient } from "@/lib/client-onboarding";
 import { sendOrderConfirmationEmail } from "@/lib/email";
-import { notifyPaymentConfirmed } from "@/lib/customer-notifications";
+import { notifyOrderConfirmed, notifyPaymentConfirmed } from "@/lib/customer-notifications";
 import { getPublicAppUrl } from "@/lib/app-url";
 
 export async function fulfillPaidOrder(params: {
@@ -97,6 +97,11 @@ export async function fulfillPaidOrder(params: {
       ref: order.orderNumber,
       link: `${appUrl}/account/orders`,
       entityId: order.id,
+    });
+    notifyOrderConfirmed({
+      userId,
+      orderId: order.id,
+      orderNumber: order.orderNumber,
     });
   }
 

@@ -6,7 +6,7 @@ import { fulfillPaidOrder } from "@/lib/order-payment";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
 import { fulfillBespokeOrderBalance } from "@/lib/bespoke-order-payment";
 import { sendPaymentConfirmedEmail } from "@/lib/email";
-import { notifyPaymentConfirmed } from "@/lib/customer-notifications";
+import { notifyBankTransferConfirmed, notifyPaymentConfirmed } from "@/lib/customer-notifications";
 import { logActivity } from "@/lib/logger";
 import { getPublicAppUrl } from "@/lib/app-url";
 
@@ -58,6 +58,13 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
         link: `${appUrl}/account/orders`,
         entityId: order.id,
       });
+      notifyBankTransferConfirmed({
+        userId: order.userId,
+        clientEmail: email,
+        ref: order.orderNumber,
+        link: `${appUrl}/account/orders`,
+        entityId: order.id,
+      });
     }
     void logActivity({
       userId: adminId,
@@ -91,6 +98,13 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
       trackUrl: `${appUrl}/consultation/${encodeURIComponent(booking.bookingNumber)}`,
     });
     notifyPaymentConfirmed({
+      userId: booking.userId,
+      clientEmail: booking.clientEmail,
+      ref: booking.bookingNumber,
+      link: `${appUrl}/account/consultations`,
+      entityId: booking.id,
+    });
+    notifyBankTransferConfirmed({
       userId: booking.userId,
       clientEmail: booking.clientEmail,
       ref: booking.bookingNumber,
@@ -137,6 +151,13 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
     trackUrl: `${appUrl}/track/${encodeURIComponent(bespoke.trackingToken)}`,
   });
   notifyPaymentConfirmed({
+    userId: null,
+    clientEmail: bespoke.clientEmail,
+    ref: bespoke.orderRef,
+    link: `${appUrl}/track/${encodeURIComponent(bespoke.trackingToken)}`,
+    entityId: bespoke.id,
+  });
+  notifyBankTransferConfirmed({
     userId: null,
     clientEmail: bespoke.clientEmail,
     ref: bespoke.orderRef,

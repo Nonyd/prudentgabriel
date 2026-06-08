@@ -3,6 +3,7 @@ import { validateCronSecret } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import { logError } from "@/lib/logger";
 import { sendConsultationReviewRequestEmail, sendProductReviewRequestEmail } from "@/lib/email";
+import { notifyReviewRequest } from "@/lib/customer-notifications";
 
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -52,6 +53,14 @@ export async function POST(req: NextRequest) {
         where: { id: order.id },
         data: { reviewRequestSent: true },
       });
+
+      if (order.userId) {
+        notifyReviewRequest({
+          userId: order.userId,
+          orderId: order.id,
+          productName: item.product.name,
+        });
+      }
 
       sent += 1;
     }

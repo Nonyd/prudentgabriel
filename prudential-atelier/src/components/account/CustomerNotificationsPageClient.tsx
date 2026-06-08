@@ -3,21 +3,50 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CustomerNotification, CustomerNotificationType } from "@prisma/client";
-import { Bell, Calendar, CreditCard, Package, Scissors } from "lucide-react";
+import { Bell, Calendar, CreditCard, Package, Scissors, Star, Truck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 type FilterType = "ALL" | "UNREAD" | "ATELIER" | "ORDERS" | "CONSULTATIONS";
 
+const ATELIER_TYPES: CustomerNotificationType[] = ["ATELIER_STAGE_ADVANCED", "MOODBOARD_READY"];
+const ORDER_TYPES: CustomerNotificationType[] = [
+  "ORDER_SHIPPED",
+  "ORDER_DELIVERED",
+  "ORDER_CONFIRMED",
+  "INVOICE_ISSUED",
+  "QUOTE_READY",
+  "REVIEW_REQUEST",
+];
+const CONSULTATION_TYPES: CustomerNotificationType[] = [
+  "CONSULTATION_CONFIRMED",
+  "MEETING_LINK_SENT",
+  "EVENT_REMINDER",
+];
+
 function iconFor(type: CustomerNotificationType) {
   switch (type) {
-    case "BESPOKE_STAGE":
+    case "ATELIER_STAGE_ADVANCED":
+    case "MOODBOARD_READY":
       return <Scissors size={16} className="text-choc" />;
-    case "CONSULTATION":
+    case "CONSULTATION_CONFIRMED":
+    case "MEETING_LINK_SENT":
+    case "EVENT_REMINDER":
       return <Calendar size={16} className="text-lightbr" />;
-    case "ORDER_UPDATE":
+    case "ORDER_SHIPPED":
+      return <Truck size={16} className="text-nut" />;
+    case "ORDER_DELIVERED":
+    case "ORDER_CONFIRMED":
+    case "INVOICE_ISSUED":
+    case "QUOTE_READY":
+    case "REVIEW_REQUEST":
       return <Package size={16} className="text-nut" />;
-    case "PAYMENT":
+    case "PAYMENT_CONFIRMED":
+    case "BALANCE_REMINDER":
+    case "BANK_TRANSFER_CONFIRMED":
       return <CreditCard size={16} className="text-success" />;
+    case "LOYALTY_TIER_UPGRADE":
+    case "REFERRAL_REWARD":
+      return <Star size={16} className="text-nut" />;
     default:
       return <Bell size={16} className="text-text-light" />;
   }
@@ -26,9 +55,9 @@ function iconFor(type: CustomerNotificationType) {
 function matchesFilter(row: CustomerNotification, filter: FilterType): boolean {
   if (filter === "ALL") return true;
   if (filter === "UNREAD") return !row.isRead;
-  if (filter === "ATELIER") return row.type === "BESPOKE_STAGE";
-  if (filter === "ORDERS") return row.type === "ORDER_UPDATE";
-  if (filter === "CONSULTATIONS") return row.type === "CONSULTATION";
+  if (filter === "ATELIER") return ATELIER_TYPES.includes(row.type);
+  if (filter === "ORDERS") return ORDER_TYPES.includes(row.type);
+  if (filter === "CONSULTATIONS") return CONSULTATION_TYPES.includes(row.type);
   return true;
 }
 

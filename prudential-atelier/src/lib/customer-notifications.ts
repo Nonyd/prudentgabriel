@@ -2,49 +2,6 @@ import type { BespokeStage, CustomerNotificationType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 
-export type ClientNotificationType =
-  | "CONSULTATION_CONFIRMED"
-  | "MEETING_LINK_SENT"
-  | "ATELIER_STAGE_ADVANCED"
-  | "MOODBOARD_READY"
-  | "INVOICE_ISSUED"
-  | "QUOTE_READY"
-  | "PAYMENT_CONFIRMED"
-  | "BALANCE_REMINDER"
-  | "ORDER_SHIPPED"
-  | "ORDER_DELIVERED"
-  | "REVIEW_REQUEST"
-  | "LOYALTY_TIER_UPGRADE"
-  | "EVENT_REMINDER"
-  | "REFERRAL_REWARD";
-
-function mapClientType(type: ClientNotificationType): CustomerNotificationType {
-  switch (type) {
-    case "CONSULTATION_CONFIRMED":
-    case "MEETING_LINK_SENT":
-    case "MOODBOARD_READY":
-      return "CONSULTATION";
-    case "ATELIER_STAGE_ADVANCED":
-      return "BESPOKE_STAGE";
-    case "INVOICE_ISSUED":
-    case "QUOTE_READY":
-    case "ORDER_SHIPPED":
-    case "ORDER_DELIVERED":
-    case "REVIEW_REQUEST":
-      return "ORDER_UPDATE";
-    case "PAYMENT_CONFIRMED":
-    case "BALANCE_REMINDER":
-      return "PAYMENT";
-    case "LOYALTY_TIER_UPGRADE":
-    case "REFERRAL_REWARD":
-      return "LOYALTY";
-    case "EVENT_REMINDER":
-      return "GENERAL";
-    default:
-      return "GENERAL";
-  }
-}
-
 async function resolveUserIdForBespoke(
   clientProfileId: string | null,
   clientEmail: string,
@@ -92,23 +49,16 @@ export async function createCustomerNotification(params: {
   });
 }
 
-/** Spec alias — maps granular client types to stored CustomerNotificationType. */
+/** Spec alias — stores granular CustomerNotificationType directly. */
 export async function createClientNotification(params: {
   userId: string;
-  type: ClientNotificationType;
+  type: CustomerNotificationType;
   title: string;
   message: string;
   link?: string;
   entityId?: string;
 }): Promise<void> {
-  await createCustomerNotification({
-    userId: params.userId,
-    type: mapClientType(params.type),
-    title: params.title,
-    message: params.message,
-    link: params.link,
-    entityId: params.entityId,
-  });
+  await createCustomerNotification(params);
 }
 
 export function notifyClientBespokeStageComplete(params: {
@@ -256,6 +206,87 @@ export function notifyPaymentConfirmed(params: {
   })().catch(() => {});
 }
 
+export function notifyBankTransferConfirmed(params: {
+  userId: string | null;
+  clientEmail: string;
+  ref: string;
+  link: string;
+  entityId: string;
+}): void {
+  void (async () => {
+    const userId = params.userId ?? (await resolveUserIdByEmail(params.clientEmail));
+    if (!userId) return;
+    await createClientNotification({
+      userId,
+      type: "BANK_TRANSFER_CONFIRMED",
+      title: "Bank transfer confirmed",
+      message: `Your bank transfer for ${params.ref} has been confirmed.`,
+      link: params.link,
+      entityId: params.entityId,
+    });
+  })().catch(() => {});
+}
+
+export function notifyOrderConfirmed(params: {
+  userId: string;
+  orderId: string;
+  orderNumber: string;
+}): void {
+  void createClientNotification({
+    userId: params.userId,
+    type: "ORDER_CONFIRMED",
+    title: "Order confirmed",
+    message: `Your order #${params.orderNumber} is confirmed.`,
+    link: "/account/orders",
+    entityId: params.orderId,
+  }).catch(() => {});
+}
+
+export function notifyOrderShipped(params: {
+  userId: string;
+  orderId: string;
+  orderNumber: string;
+}): void {
+  void createClientNotification({
+    userId: params.userId,
+    type: "ORDER_SHIPPED",
+    title: "Your order has shipped",
+    message: `Order #${params.orderNumber} is on its way.`,
+    link: "/account/orders",
+    entityId: params.orderId,
+  }).catch(() => {});
+}
+
+export function notifyOrderDelivered(params: {
+  userId: string;
+  orderId: string;
+  orderNumber: string;
+}): void {
+  void createClientNotification({
+    userId: params.userId,
+    type: "ORDER_DELIVERED",
+    title: "Order delivered",
+    message: `Order #${params.orderNumber} has been delivered.`,
+    link: "/account/orders",
+    entityId: params.orderId,
+  }).catch(() => {});
+}
+
+export function notifyReviewRequest(params: {
+  userId: string;
+  orderId: string;
+  productName: string;
+}): void {
+  void createClientNotification({
+    userId: params.userId,
+    type: "REVIEW_REQUEST",
+    title: "Share your thoughts",
+    message: `How was your ${params.productName}? Leave a quick review.`,
+    link: "/account/orders",
+    entityId: params.orderId,
+  }).catch(() => {});
+}
+
 export function notifyBalanceReminder(params: {
   clientProfileId: string | null;
   clientEmail: string;
@@ -298,8 +329,7 @@ export async function hasRecentBalanceReminder(orderId: string, withinDays = 7):
   const existing = await prisma.customerNotification.findFirst({
     where: {
       entityId: orderId,
-      type: "PAYMENT",
-      title: "Outstanding balance reminder",
+      type: "BALANCE_REMINDER",
       createdAt: { gte: since },
     },
     select: { id: true },

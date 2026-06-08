@@ -19,6 +19,11 @@ import ConsultationMeetingLinkEmail from "@/emails/ConsultationMeetingLinkEmail"
 import ConsultationSessionSummaryEmail from "@/emails/ConsultationSessionSummaryEmail";
 import InvoiceEmail, { subjectInvoiceEmail } from "@/emails/InvoiceEmail";
 import ReviewRequestEmail from "@/emails/ReviewRequestEmail";
+import LoyaltyTierUpgradeEmail from "@/emails/LoyaltyTierUpgradeEmail";
+import ReferralRewardEmail from "@/emails/ReferralRewardEmail";
+import StageAssignmentEmail from "@/emails/StageAssignmentEmail";
+import RtwOrderDeliveredEmail from "@/emails/RtwOrderDeliveredEmail";
+import type { LoyaltyTier } from "@prisma/client";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { primeEmailBranding, emailLogoWhiteUrl } from "@/lib/email-branding";
 import { sendSmtpMail, EMAIL_FROM } from "@/lib/email-transport";
@@ -329,6 +334,76 @@ export async function sendOrderShippedEmail(params: {
   await sendEmail({
     to: params.to,
     subject: `Your order has shipped — #${params.orderNumber}`,
+    html,
+  });
+}
+
+export async function sendRtwOrderDeliveredEmail(params: {
+  to: string;
+  firstName: string;
+  orderNumber: string;
+}): Promise<void> {
+  const html = await renderBrandedEmail(
+    <RtwOrderDeliveredEmail firstName={params.firstName} orderNumber={params.orderNumber} />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: `Your order has been delivered — #${params.orderNumber}`,
+    html,
+  });
+}
+
+export async function sendLoyaltyTierUpgradeEmail(params: {
+  to: string;
+  firstName: string;
+  newTier: LoyaltyTier;
+  perks: string[];
+}): Promise<void> {
+  const html = await renderBrandedEmail(
+    <LoyaltyTierUpgradeEmail firstName={params.firstName} newTier={params.newTier} perks={params.perks} />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: `You've reached a new loyalty tier — Prudential Atelier`,
+    html,
+  });
+}
+
+export async function sendReferralRewardEmail(params: {
+  to: string;
+  firstName: string;
+  creditNGN: number;
+}): Promise<void> {
+  const html = await renderBrandedEmail(
+    <ReferralRewardEmail firstName={params.firstName} creditNGN={params.creditNGN} />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: "You've earned a referral reward — Prudential Atelier",
+    html,
+  });
+}
+
+export async function sendStageAssignmentEmail(params: {
+  to: string;
+  firstName: string;
+  stageName: string;
+  orderRef: string;
+  outfitName: string;
+  deliveryDate?: string;
+}): Promise<void> {
+  const html = await renderBrandedEmail(
+    <StageAssignmentEmail
+      firstName={params.firstName}
+      stageName={params.stageName}
+      orderRef={params.orderRef}
+      outfitName={params.outfitName}
+      deliveryDate={params.deliveryDate}
+    />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: `New assignment — ${params.orderRef}`,
     html,
   });
 }
