@@ -30,6 +30,20 @@ import type { ConsultationReviewSlide } from "@/lib/consultation-reviews";
 type Gateway = PaymentGatewayType;
 type ShopCur = "NGN" | "USD" | "GBP";
 
+function prefYmdToDate(ymd: string): Date {
+  return new Date(`${ymd}T12:00:00+01:00`);
+}
+
+function formatPrefYmd(ymd: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Africa/Lagos",
+  }).format(prefYmdToDate(ymd));
+}
+
 const OCCASIONS = [
   "White Wedding",
   "Traditional Wedding",
@@ -243,9 +257,9 @@ export function ConsultationBookingFlow({
         referenceImages,
         confirmedDate,
         confirmedTime: !manualFlow ? selectedTime ?? undefined : undefined,
-        preferredDate1: manualFlow && pref1 ? new Date(pref1) : undefined,
-        preferredDate2: manualFlow && pref2 ? new Date(pref2) : undefined,
-        preferredDate3: manualFlow && pref3 ? new Date(pref3) : undefined,
+        preferredDate1: manualFlow && pref1 ? prefYmdToDate(pref1) : undefined,
+        preferredDate2: manualFlow && pref2 ? prefYmdToDate(pref2) : undefined,
+        preferredDate3: manualFlow && pref3 ? prefYmdToDate(pref3) : undefined,
       };
 
       const cr = await fetch("/api/consultations/create", {
@@ -613,9 +627,14 @@ export function ConsultationBookingFlow({
               <p className="mt-2 font-body text-sm text-text-mid">
                 {!manualFlow && selectedYmd
                   ? `${selectedYmd} at ${selectedTime ?? "—"} WAT`
-                  : manualFlow
-                    ? "Preferred dates pending confirmation"
-                    : "—"}
+                  : manualFlow && pref1
+                    ? [pref1, pref2, pref3]
+                        .filter(Boolean)
+                        .map((d) => formatPrefYmd(d))
+                        .join(" · ")
+                    : manualFlow
+                      ? "Preferred dates pending confirmation"
+                      : "—"}
               </p>
               {showVirtualPlatform ? (
                 <p className="mt-1 font-body text-sm text-text-mid">

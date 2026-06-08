@@ -51,9 +51,15 @@ export function PaymentPendingClient() {
       ) : null}
 
       <div className="mt-8 text-center">
-        <Link href="/account/orders" className="font-body text-sm text-[var(--wine)] underline">
-          View my orders
-        </Link>
+        {type === "consultation" ? (
+          <Link href="/account/consultations" className="font-body text-sm text-[var(--wine)] underline">
+            View my consultations
+          </Link>
+        ) : (
+          <Link href="/account/orders" className="font-body text-sm text-[var(--wine)] underline">
+            View my orders
+          </Link>
+        )}
       </div>
     </div>
   );

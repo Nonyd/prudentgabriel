@@ -51,12 +51,15 @@ export async function fulfillPaidConsultationBooking(params: {
   if (!booking) return false;
 
   const typeKey = booking.offeringType as OfferingTypeKey | null;
+  const deliveryMode = booking.offering?.deliveryMode;
   const isVirtual =
-    (typeKey && isOfferingTypeVirtual(typeKey)) || isVirtualDelivery(booking.offering.deliveryMode);
+    (typeKey && isOfferingTypeVirtual(typeKey)) || (deliveryMode ? isVirtualDelivery(deliveryMode) : false);
 
   const manual =
     (typeKey && isOfferingTypeManual(typeKey)) ||
-    isManualFlow(booking.offering.deliveryMode, booking.consultant.isFlagship) ||
+    (deliveryMode && booking.consultant
+      ? isManualFlow(deliveryMode, booking.consultant.isFlagship)
+      : false) ||
     !booking.confirmedDate ||
     !booking.confirmedTime;
 
@@ -64,8 +67,9 @@ export async function fulfillPaidConsultationBooking(params: {
 
   const atelierAddress =
     !isVirtual &&
-    (booking.offering.deliveryMode === ConsultationDeliveryMode.INPERSON_ATELIER ||
-      booking.offering.deliveryMode === ConsultationDeliveryMode.INPERSON_ATELIER_PRUDENT)
+    deliveryMode &&
+    (deliveryMode === ConsultationDeliveryMode.INPERSON_ATELIER ||
+      deliveryMode === ConsultationDeliveryMode.INPERSON_ATELIER_PRUDENT)
       ? ATELIER_ADDRESS
       : null;
 
@@ -102,10 +106,14 @@ export async function fulfillPaidConsultationBooking(params: {
   });
   if (!refreshed) return true;
 
-  const sessionTypeLabel = getSessionTypeLabel(refreshed.offering.sessionType);
+  const sessionTypeLabel = refreshed.offering
+    ? getSessionTypeLabel(refreshed.offering.sessionType)
+    : "Consultation";
   const deliveryModeLabel = refreshed.offeringType
     ? getOfferingTypeLabel(refreshed.offeringType)
-    : getDeliveryModeLabel(refreshed.offering.deliveryMode);
+    : refreshed.offering
+      ? getDeliveryModeLabel(refreshed.offering.deliveryMode)
+      : "Consultation";
   const preferredDates: string[] = [];
   if (refreshed.preferredDate1) preferredDates.push(refreshed.preferredDate1.toISOString());
   if (refreshed.preferredDate2) preferredDates.push(refreshed.preferredDate2.toISOString());
@@ -116,12 +124,12 @@ export async function fulfillPaidConsultationBooking(params: {
       to: refreshed.clientEmail,
       clientName: refreshed.clientName,
       bookingNumber: refreshed.bookingNumber,
-      consultantName: refreshed.consultant.name,
+      consultantName: refreshed.consultant?.name ?? "Our team",
       sessionTypeLabel,
       deliveryModeLabel,
       confirmedDate: refreshed.confirmedDate,
       confirmedTime: refreshed.confirmedTime,
-      durationMinutes: refreshed.offering.durationMinutes,
+      durationMinutes: refreshed.offering?.durationMinutes ?? 60,
       meetingLink: refreshed.meetingLink ?? undefined,
       meetingPlatform: refreshed.meetingPlatform ?? undefined,
       atelierAddress: refreshed.atelierAddress ?? undefined,
@@ -132,7 +140,7 @@ export async function fulfillPaidConsultationBooking(params: {
       to: refreshed.clientEmail,
       clientName: refreshed.clientName,
       bookingNumber: refreshed.bookingNumber,
-      consultantName: refreshed.consultant.name,
+      consultantName: refreshed.consultant?.name ?? "Our team",
       sessionTypeLabel,
       deliveryModeLabel,
       feeNGN: refreshed.feeNGN,
@@ -146,7 +154,7 @@ export async function fulfillPaidConsultationBooking(params: {
     bookingNumber: refreshed.bookingNumber,
     clientName: refreshed.clientName,
     clientEmail: refreshed.clientEmail,
-    consultantName: refreshed.consultant.name,
+    consultantName: refreshed.consultant?.name ?? "Our team",
     sessionTypeLabel,
     deliveryModeLabel,
     preferredDates,
