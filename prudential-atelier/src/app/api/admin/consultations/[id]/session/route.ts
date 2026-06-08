@@ -4,7 +4,9 @@ import { z } from "zod";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { createNotification } from "@/lib/notifications";
-import { sendConsultationReviewRequestEmail } from "@/lib/email";
+import { sendConsultationSessionSummaryEmail } from "@/lib/email";
+import { notifyMoodboardReady } from "@/lib/customer-notifications";
+import { getPublicAppUrl } from "@/lib/app-url";
 
 const bodySchema = z.object({
   sessionNotes: z.string().max(20000).optional(),
@@ -47,17 +49,29 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     },
   });
 
-  if (completing && !booking.reviewRequestSent) {
+  if (completing) {
     const firstName = updated.clientName.split(/\s+/)[0] ?? updated.clientName;
-    await sendConsultationReviewRequestEmail({
+    const moodboardImages = updated.moodboardImages ?? [];
+    const appUrl = getPublicAppUrl();
+
+    await sendConsultationSessionSummaryEmail({
       to: updated.clientEmail,
       firstName,
-      consultationId: updated.id,
+      sessionNotes: updated.sessionNotes ?? undefined,
+      moodboardImages: moodboardImages.length > 0 ? moodboardImages : undefined,
+      moodboardUrl: `${appUrl}/account/consultations`,
+      commissionUrl: `${appUrl}/atelier`,
     });
-    await prisma.consultationBooking.update({
-      where: { id },
-      data: { reviewRequestSent: true },
-    });
+
+    if (moodboardImages.length > 0) {
+      notifyMoodboardReady({
+        userId: updated.userId,
+        clientEmail: updated.clientEmail,
+        bookingId: updated.id,
+        bookingNumber: updated.bookingNumber,
+      });
+    }
+
     await createNotification({
       type: "NEW_CONSULTATION",
       title: "Consultation completed",

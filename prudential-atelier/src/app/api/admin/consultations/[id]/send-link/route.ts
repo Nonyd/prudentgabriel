@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getVirtualPlatformLabel, isOfferingTypeVirtual } from "@/lib/consultation-types";
 import { isVirtualDelivery } from "@/lib/consultation";
 import { sendConsultationMeetingLinkEmail } from "@/lib/email";
+import { notifyMeetingLinkSent } from "@/lib/customer-notifications";
 
 const bodySchema = z.object({
   meetingLink: z.string().url(),
@@ -66,6 +67,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     confirmedTime: booking.confirmedTime,
     meetingLink: parsed.data.meetingLink,
     isWhatsApp: booking.virtualPlatform === "whatsapp_video",
+  });
+
+  notifyMeetingLinkSent({
+    userId: booking.userId,
+    clientEmail: booking.clientEmail,
+    bookingId: booking.id,
+    bookingNumber: booking.bookingNumber,
   });
 
   return NextResponse.json({ ok: true });

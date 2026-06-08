@@ -5,6 +5,7 @@ import { logActivity, logError } from "@/lib/logger";
 import { sendSmtpMail } from "@/lib/email-transport";
 import { eventReminderEmailHtml } from "@/lib/email-templates/reports";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { notifyEventReminder } from "@/lib/customer-notifications";
 
 const REMINDER_DAYS = [60, 30, 14];
 
@@ -55,6 +56,12 @@ export async function POST(req: NextRequest) {
       await prisma.eventDate.update({
         where: { id: ev.id },
         data: { notified: true },
+      });
+
+      notifyEventReminder({
+        userId: ev.client.userId,
+        eventId: ev.id,
+        eventLabel: ev.label,
       });
 
       await logActivity({

@@ -12,8 +12,8 @@ import {
   sendConsultationCancelledEmail,
   sendConsultationConfirmedEmail,
   sendConsultationRescheduleEmail,
-  sendConsultationReviewRequestEmail,
 } from "@/lib/email";
+import { notifyConsultationConfirmed } from "@/lib/customer-notifications";
 
 const patchSchema = z.object({
   status: z.nativeEnum(ConsultationStatus).optional(),
@@ -159,6 +159,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       atelierAddress: refreshed.atelierAddress ?? undefined,
       isVirtual: isVirtualDelivery(refreshed.offering.deliveryMode),
     });
+    notifyConsultationConfirmed({
+      userId: refreshed.userId,
+      clientEmail: refreshed.clientEmail,
+      bookingId: refreshed.id,
+      bookingNumber: refreshed.bookingNumber,
+    });
   }
 
   if (nextStatus === ConsultationStatus.RESCHEDULED) {
@@ -179,22 +185,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       bookingNumber: refreshed.bookingNumber,
       consultantName: refreshed.consultant.name,
       reason: d.cancellationReason ?? undefined,
-    });
-  }
-
-  if (
-    nextStatus === ConsultationStatus.COMPLETED &&
-    !booking.reviewRequestSent
-  ) {
-    const firstName = refreshed.clientName.split(/\s+/)[0] ?? refreshed.clientName;
-    await sendConsultationReviewRequestEmail({
-      to: refreshed.clientEmail,
-      firstName,
-      consultationId: refreshed.id,
-    });
-    await prisma.consultationBooking.update({
-      where: { id: refreshed.id },
-      data: { reviewRequestSent: true },
     });
   }
 

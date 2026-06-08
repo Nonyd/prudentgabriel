@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateCronSecret } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import { logError } from "@/lib/logger";
-import { sendProductReviewRequestEmail } from "@/lib/email";
+import { sendConsultationReviewRequestEmail, sendProductReviewRequestEmail } from "@/lib/email";
 
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+const ONE_HOUR_MS = 60 * 60 * 1000;
 
 export async function POST(req: NextRequest) {
   if (!validateCronSecret(req)) {
@@ -55,7 +56,36 @@ export async function POST(req: NextRequest) {
       sent += 1;
     }
 
-    return NextResponse.json({ ok: true, sent });
+    const consultationCutoff = new Date(Date.now() - ONE_HOUR_MS);
+    const eligibleConsultations = await prisma.consultationBooking.findMany({
+      where: {
+        status: "COMPLETED",
+        reviewRequestSent: false,
+        completedAt: { lte: consultationCutoff },
+      },
+      select: {
+        id: true,
+        clientEmail: true,
+        clientName: true,
+      },
+    });
+
+    let consultationSent = 0;
+    for (const booking of eligibleConsultations) {
+      const firstName = (booking.clientName ?? "there").split(/\s+/)[0] ?? "there";
+      await sendConsultationReviewRequestEmail({
+        to: booking.clientEmail,
+        firstName,
+        consultationId: booking.id,
+      });
+      await prisma.consultationBooking.update({
+        where: { id: booking.id },
+        data: { reviewRequestSent: true },
+      });
+      consultationSent += 1;
+    }
+
+    return NextResponse.json({ ok: true, sent, consultationSent });
   } catch (e) {
     await logError({
       severity: "CRITICAL",

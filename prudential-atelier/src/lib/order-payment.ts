@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { awardPurchasePoints } from "@/lib/points";
 import { autoOnboardClient } from "@/lib/client-onboarding";
 import { sendOrderConfirmationEmail } from "@/lib/email";
+import { notifyPaymentConfirmed } from "@/lib/customer-notifications";
+import { getPublicAppUrl } from "@/lib/app-url";
 
 export async function fulfillPaidOrder(params: {
   orderId: string;
@@ -85,6 +87,17 @@ export async function fulfillPaidOrder(params: {
       pointsDiscNGN: order.pointsDiscountNGN,
       addressSnapshot: snap ?? undefined,
     }).catch((e) => console.warn("[fulfillPaidOrder] email", e));
+  }
+
+  if (userId && clientEmail) {
+    const appUrl = getPublicAppUrl();
+    notifyPaymentConfirmed({
+      userId,
+      clientEmail,
+      ref: order.orderNumber,
+      link: `${appUrl}/account/orders`,
+      entityId: order.id,
+    });
   }
 
   return true;

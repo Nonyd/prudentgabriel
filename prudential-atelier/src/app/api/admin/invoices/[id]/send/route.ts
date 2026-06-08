@@ -3,6 +3,7 @@ import { InvoiceStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { sendInvoiceEmail } from "@/lib/email";
+import { notifyInvoiceIssued } from "@/lib/customer-notifications";
 import { formatInvoiceCurrency, getInvoiceSettings } from "@/lib/invoice";
 import { getPublicAppUrl } from "@/lib/app-url";
 import type { InvoiceCurrency } from "@/types/invoice";
@@ -46,6 +47,13 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
       sentAt: inv.sentAt ?? new Date(),
       status: inv.status === InvoiceStatus.DRAFT ? InvoiceStatus.SENT : inv.status,
     },
+  });
+
+  notifyInvoiceIssued({
+    clientEmail: inv.clientEmail,
+    invoiceId: inv.id,
+    invoiceNumber: inv.invoiceNumber,
+    publicToken: inv.publicToken,
   });
 
   return NextResponse.json({ success: true });

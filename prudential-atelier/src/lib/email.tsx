@@ -16,11 +16,14 @@ import ConsultationConfirmedEmail from "@/emails/ConsultationConfirmedEmail";
 import ConsultationCancelledEmail from "@/emails/ConsultationCancelledEmail";
 import ConsultationRescheduleEmail from "@/emails/ConsultationRescheduleEmail";
 import ConsultationMeetingLinkEmail from "@/emails/ConsultationMeetingLinkEmail";
+import ConsultationSessionSummaryEmail from "@/emails/ConsultationSessionSummaryEmail";
 import InvoiceEmail, { subjectInvoiceEmail } from "@/emails/InvoiceEmail";
 import ReviewRequestEmail from "@/emails/ReviewRequestEmail";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { primeEmailBranding, emailLogoWhiteUrl } from "@/lib/email-branding";
-const FROM = "Prudential Atelier <hello@prudentgabriel.com>";
+import { sendSmtpMail, EMAIL_FROM } from "@/lib/email-transport";
+import { prisma } from "@/lib/prisma";
+const FROM = EMAIL_FROM;
 
 async function renderBrandedEmail(element: ReactElement) {
   await primeEmailBranding();
@@ -33,7 +36,21 @@ function getResend(): Resend | null {
   return new Resend(key);
 }
 
+export async function getEmailLogo(): Promise<string | null> {
+  const setting = await prisma.siteSetting.findUnique({ where: { key: "logo_dark" } });
+  return setting?.value?.trim() || null;
+}
+
 export async function sendEmail(params: { to: string; subject: string; html: string }): Promise<void> {
+  if (process.env.SMTP_PASSWORD) {
+    try {
+      await sendSmtpMail({ to: params.to, subject: params.subject, html: params.html, from: FROM });
+      return;
+    } catch (e) {
+      console.warn("[EMAIL] SMTP send failed, trying Resend", e);
+    }
+  }
+
   const resend = getResend();
   if (!resend) {
     console.log("[EMAIL]", params.to, params.subject);
@@ -455,6 +472,32 @@ export async function sendConsultationCancelledEmail(params: {
   await sendEmail({
     to: params.to,
     subject: `Consultation Cancelled — #${params.bookingNumber}`,
+    html,
+  });
+}
+
+export async function sendConsultationSessionSummaryEmail(params: {
+  to: string;
+  firstName: string;
+  sessionNotes?: string;
+  moodboardImages?: string[];
+  moodboardUrl?: string;
+  commissionUrl?: string;
+  showCommissionCta?: boolean;
+}): Promise<void> {
+  const html = await renderBrandedEmail(
+    <ConsultationSessionSummaryEmail
+      firstName={params.firstName}
+      sessionNotes={params.sessionNotes}
+      moodboardImages={params.moodboardImages}
+      moodboardUrl={params.moodboardUrl}
+      commissionUrl={params.commissionUrl}
+      showCommissionCta={params.showCommissionCta}
+    />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: "Thank you for your consultation — Prudential Atelier",
     html,
   });
 }

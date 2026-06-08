@@ -24,6 +24,7 @@ import {
   sendConsultationPendingEmail,
 } from "@/lib/email";
 import { autoOnboardClient } from "@/lib/client-onboarding";
+import { notifyConsultationConfirmed } from "@/lib/customer-notifications";
 
 const ATELIER_ADDRESS = "14 Bode Thomas Street, Surulere, Lagos";
 
@@ -151,6 +152,15 @@ export async function fulfillPaidConsultationBooking(params: {
     preferredDates,
     isManual: refreshed.status === ConsultationStatus.PENDING_CONFIRMATION,
   });
+
+  if (refreshed.status === ConsultationStatus.CONFIRMED) {
+    notifyConsultationConfirmed({
+      userId: refreshed.userId,
+      clientEmail: refreshed.clientEmail,
+      bookingId: refreshed.id,
+      bookingNumber: refreshed.bookingNumber,
+    });
+  }
 
   return true;
 }

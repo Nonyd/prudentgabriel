@@ -5,6 +5,7 @@ import { FINANCE_ROLES, requireRoles } from "@/lib/api-auth";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { logActivity, logError } from "@/lib/logger";
 import { sendSmtpMail } from "@/lib/email-transport";
+import { notifyQuoteReady } from "@/lib/customer-notifications";
 type Params = { params: Promise<{ id: string }> };
 
 type QuoteLineItem = {
@@ -111,6 +112,13 @@ export async function POST(_req: NextRequest, { params }: Params) {
       description: `Sent quotation ${quote.quoteRef} to ${quote.clientEmail}`,
       recordId: quote.id,
       recordType: "Quotation",
+    });
+
+    notifyQuoteReady({
+      clientEmail: quote.clientEmail,
+      quoteId: quote.id,
+      quoteRef: quote.quoteRef,
+      approvalToken: quote.approvalToken,
     });
 
     return NextResponse.json({ item, approvalUrl });

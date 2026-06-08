@@ -6,6 +6,7 @@ import { fulfillPaidOrder } from "@/lib/order-payment";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
 import { fulfillBespokeOrderBalance } from "@/lib/bespoke-order-payment";
 import { sendPaymentConfirmedEmail } from "@/lib/email";
+import { notifyPaymentConfirmed } from "@/lib/customer-notifications";
 import { logActivity } from "@/lib/logger";
 import { getPublicAppUrl } from "@/lib/app-url";
 
@@ -50,6 +51,13 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
         kind: "order",
         trackUrl: `${appUrl}/track/${encodeURIComponent(order.orderNumber)}`,
       });
+      notifyPaymentConfirmed({
+        userId: order.userId,
+        clientEmail: email,
+        ref: order.orderNumber,
+        link: `${appUrl}/account/orders`,
+        entityId: order.id,
+      });
     }
     void logActivity({
       userId: adminId,
@@ -81,6 +89,13 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
       amountNGN: booking.feeNGN,
       kind: "consultation",
       trackUrl: `${appUrl}/consultation/${encodeURIComponent(booking.bookingNumber)}`,
+    });
+    notifyPaymentConfirmed({
+      userId: booking.userId,
+      clientEmail: booking.clientEmail,
+      ref: booking.bookingNumber,
+      link: `${appUrl}/account/consultations`,
+      entityId: booking.id,
     });
     void logActivity({
       userId: adminId,
@@ -120,6 +135,13 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
     amountNGN: payAmount,
     kind: "bespoke",
     trackUrl: `${appUrl}/track/${encodeURIComponent(bespoke.trackingToken)}`,
+  });
+  notifyPaymentConfirmed({
+    userId: null,
+    clientEmail: bespoke.clientEmail,
+    ref: bespoke.orderRef,
+    link: `${appUrl}/track/${encodeURIComponent(bespoke.trackingToken)}`,
+    entityId: bespoke.id,
   });
   void logActivity({
     userId: adminId,
