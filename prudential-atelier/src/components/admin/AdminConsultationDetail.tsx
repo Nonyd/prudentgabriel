@@ -89,6 +89,22 @@ function formatWatDateTime(iso: string | null): string {
   }).format(date);
 }
 
+function isoToDateInput(iso: string | null): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Lagos",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+function dateInputToWatIso(ymd: string): string {
+  return `${ymd}T12:00:00+01:00`;
+}
+
 export function AdminConsultationDetail({
   booking,
   clientId,
@@ -108,6 +124,10 @@ export function AdminConsultationDetail({
   const [uploading, setUploading] = useState(false);
   const [sendingLink, setSendingLink] = useState(false);
   const [savingSession, setSavingSession] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmDate, setConfirmDate] = useState("");
+  const [confirmTime, setConfirmTime] = useState("10:00");
+  const [confirming, setConfirming] = useState(false);
 
   const deliveryMode = booking.offering?.deliveryMode as ConsultationDeliveryMode | undefined;
   const isVirtual =
@@ -182,20 +202,67 @@ export function AdminConsultationDetail({
     }
   }
 
-  async function patchStatus(next: ConsultationStatus) {
+  async function patchStatus(
+    next: ConsultationStatus,
+    extra?: { confirmedDate?: string; confirmedTime?: string },
+  ) {
     const res = await fetch(`/api/admin/consultations/${booking.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: next }),
+      body: JSON.stringify({ status: next, ...extra }),
     });
     const j = await res.json();
     if (!res.ok) {
-      toast.error((j as { error?: string }).error ?? "Update failed");
-      return;
+      const err = j as { error?: string | { formErrors?: string[] } };
+      const msg =
+        typeof err.error === "string"
+          ? err.error
+          : Array.isArray(err.error?.formErrors)
+            ? err.error.formErrors.join(", ")
+            : "Update failed";
+      toast.error(msg);
+      return false;
     }
     setStatus(next);
     toast.success("Status updated");
     router.refresh();
+    return true;
+  }
+
+  function openConfirmDialog() {
+    setConfirmDate(
+      isoToDateInput(booking.confirmedDate) || isoToDateInput(booking.preferredDate1),
+    );
+    setConfirmTime(booking.confirmedTime ?? "10:00");
+    setConfirmOpen(true);
+  }
+
+  async function submitConfirmation() {
+    if (!confirmDate || !confirmTime) {
+      toast.error("Select a date and time");
+      return;
+    }
+    setConfirming(true);
+    try {
+      const ok = await patchStatus(ConsultationStatus.CONFIRMED, {
+        confirmedDate: dateInputToWatIso(confirmDate),
+        confirmedTime: confirmTime,
+      });
+      if (ok) setConfirmOpen(false);
+    } finally {
+      setConfirming(false);
+    }
+  }
+
+  function handleStatusChange(next: ConsultationStatus) {
+    if (
+      next === ConsultationStatus.CONFIRMED &&
+      status === ConsultationStatus.PENDING_CONFIRMATION
+    ) {
+      openConfirmDialog();
+      return;
+    }
+    void patchStatus(next);
   }
 
   async function saveAdminNotes() {
@@ -226,7 +293,7 @@ export function AdminConsultationDetail({
         </div>
         <select
           value={status}
-          onChange={(e) => void patchStatus(e.target.value as ConsultationStatus)}
+          onChange={(e) => handleStatusChange(e.target.value as ConsultationStatus)}
           className="rounded-sm border border-sand bg-white px-3 py-2 text-sm text-ink"
         >
           {STATUS_OPTIONS.map((s) => (
@@ -266,10 +333,22 @@ export function AdminConsultationDetail({
             <p className="text-sm text-[#6B6B68]">Platform: {platformLabel}</p>
           ) : null}
           <p className="text-sm text-ink">
-            Date: {formatWatDate(booking.confirmedDate ?? booking.preferredDate1)}
+            {booking.confirmedDate ? "Confirmed date" : "Preferred date"}:{" "}
+            {formatWatDate(booking.confirmedDate ?? booking.preferredDate1)}
           </p>
           {booking.confirmedTime ? (
             <p className="text-sm text-ink">Time: {booking.confirmedTime} WAT</p>
+          ) : (
+            <p className="text-sm text-[#6B6B68]">Time: pending confirmation</p>
+          )}
+          {status === ConsultationStatus.PENDING_CONFIRMATION ? (
+            <button
+              type="button"
+              onClick={openConfirmDialog}
+              className="mt-2 rounded-sm bg-wine px-3 py-1.5 text-xs text-white"
+            >
+              Confirm date & time →
+            </button>
           ) : null}
           <p className="text-sm text-[#6B6B68]">
             Duration: up to {booking.offering?.durationMinutes ?? 45} minutes
@@ -418,6 +497,68 @@ export function AdminConsultationDetail({
       </div>
 
       <ClientMeasurementsPanel clientId={clientId} clientName={booking.clientName} initial={measurements} />
+
+      {confirmOpen ? (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 p-4">
+          <div
+            className="w-full max-w-md rounded-sm border border-sand bg-white p-6 shadow-xl"
+            role="dialog"
+            aria-labelledby="confirm-consultation-title"
+          >
+            <h3 id="confirm-consultation-title" className="font-display text-lg text-ink">
+              Confirm consultation
+            </h3>
+            <p className="mt-2 text-sm text-[#6B6B68]">
+              Set the final date and time for {booking.clientName}. A confirmation email will be sent.
+            </p>
+            {booking.preferredDate1 ? (
+              <p className="mt-3 text-xs text-[#6B6B68]">
+                Client preferred: {formatWatDate(booking.preferredDate1)}
+                {booking.preferredDate2 ? ` · alt ${formatWatDate(booking.preferredDate2)}` : ""}
+                {booking.preferredDate3 ? ` · alt ${formatWatDate(booking.preferredDate3)}` : ""}
+              </p>
+            ) : null}
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <label className="block text-xs text-[#6B6B68]">
+                Date (WAT)
+                <input
+                  type="date"
+                  value={confirmDate}
+                  onChange={(e) => setConfirmDate(e.target.value)}
+                  className="mt-1 w-full rounded-sm border border-sand px-3 py-2 text-sm text-ink"
+                />
+              </label>
+              <label className="block text-xs text-[#6B6B68]">
+                Time (WAT)
+                <input
+                  type="time"
+                  value={confirmTime}
+                  onChange={(e) => setConfirmTime(e.target.value)}
+                  className="mt-1 w-full rounded-sm border border-sand px-3 py-2 text-sm text-ink"
+                />
+              </label>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                disabled={confirming}
+                onClick={() => setConfirmOpen(false)}
+                className="rounded-sm border border-sand px-4 py-2 text-sm text-ink"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={confirming}
+                onClick={() => void submitConfirmation()}
+                className="rounded-sm bg-wine px-4 py-2 text-sm text-white disabled:opacity-50"
+              >
+                {confirming ? "Confirming…" : "Confirm & notify client"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

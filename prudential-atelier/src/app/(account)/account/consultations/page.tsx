@@ -105,7 +105,7 @@ export default async function AccountConsultationsPage() {
                   {statusLabel(b.status)}
                 </span>
                 <Link
-                  href={`/consultation/${encodeURIComponent(b.bookingNumber)}`}
+                  href={`/account/consultations/${b.id}`}
                   className="btn-ghost-light text-[10px]"
                 >
                   View details

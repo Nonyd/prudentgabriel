@@ -19,6 +19,7 @@ import {
   ImageIcon,
   Users,
   ShoppingBag,
+  Receipt,
 } from "lucide-react";
 import { TIER_LABELS } from "@/lib/loyalty";
 import { Logo } from "@/components/ui/Logo";
@@ -41,6 +42,7 @@ const MY_ATELIER: NavItem[] = [
 
 const MY_PERKS: NavItem[] = [
   { href: "/account/loyalty", label: "Loyalty & Rewards", icon: Crown },
+  { href: "/account/transactions", label: "Transactions", icon: Receipt },
   { href: "/account/wishlist", label: "Wishlist", icon: Heart },
   { href: "/account/referrals", label: "Refer a Friend", icon: Users },
 ];

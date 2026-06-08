@@ -595,7 +595,7 @@ export function AccountDashboard({
           ) : null}
           <div className="mt-6 flex flex-wrap gap-4">
             <Link
-              href="/account/consultations"
+              href={`/account/consultations/${upcomingConsultation.id}`}
               className="font-sans text-[11px] font-medium uppercase tracking-[0.1em] text-cream underline-offset-2 hover:underline"
             >
               View details
