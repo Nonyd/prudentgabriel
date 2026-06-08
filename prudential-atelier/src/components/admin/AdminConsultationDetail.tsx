@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ConsultationStatus } from "@prisma/client";
+import { ConsultationDeliveryMode, ConsultationStatus } from "@prisma/client";
 import toast from "react-hot-toast";
 import {
   getOfferingTypeIcon,
@@ -51,7 +51,7 @@ type Booking = {
   moodboardImages: string[];
   moodboardNotes: string | null;
   consultant: { id: string; name: string; title: string; image: string | null };
-  offering: { durationMinutes: number; deliveryMode: string };
+  offering: { durationMinutes: number; deliveryMode: string; sessionType?: string };
 };
 
 const STATUS_OPTIONS: ConsultationStatus[] = [
@@ -105,9 +105,10 @@ export function AdminConsultationDetail({
   const [sendingLink, setSendingLink] = useState(false);
   const [savingSession, setSavingSession] = useState(false);
 
+  const deliveryMode = booking.offering?.deliveryMode as ConsultationDeliveryMode | undefined;
   const isVirtual =
     (booking.offeringType && isOfferingTypeVirtual(booking.offeringType as OfferingTypeKey)) ||
-    isVirtualDelivery(booking.offering.deliveryMode as never);
+    (deliveryMode ? isVirtualDelivery(deliveryMode) : false);
 
   const typeLabel = getOfferingTypeLabel(booking.offeringType);
   const typeIcon = getOfferingTypeIcon(booking.offeringType);
@@ -266,7 +267,9 @@ export function AdminConsultationDetail({
           {booking.confirmedTime ? (
             <p className="text-sm text-ink">Time: {booking.confirmedTime} WAT</p>
           ) : null}
-          <p className="text-sm text-[#6B6B68]">Duration: up to {booking.offering.durationMinutes} minutes</p>
+          <p className="text-sm text-[#6B6B68]">
+            Duration: up to {booking.offering?.durationMinutes ?? 45} minutes
+          </p>
           <div className="border-t border-sand pt-4">
             <p className="font-label text-xs text-gold">Payment</p>
             <p className="mt-1 text-sm text-ink">₦{booking.feeNGN.toLocaleString("en-NG")}</p>

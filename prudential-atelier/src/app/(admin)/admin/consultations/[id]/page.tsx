@@ -6,18 +6,28 @@ import { measurementFromRecord } from "@/components/admin/ClientMeasurementsPane
 
 function toIso(value: Date | string | null | undefined): string | null {
   if (value == null) return null;
-  return typeof value === "string" ? value : value.toISOString();
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
 }
 
 export default async function AdminConsultationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const booking = await prisma.consultationBooking.findUnique({
-    where: { id },
-    include: {
-      consultant: true,
-      offering: true,
-    },
-  });
+
+  let booking;
+  try {
+    booking = await prisma.consultationBooking.findUnique({
+      where: { id },
+      include: {
+        consultant: true,
+        offering: true,
+      },
+    });
+  } catch (error) {
+    console.error("CONSULTATION DETAIL ERROR:", error);
+    throw error;
+  }
+
   if (!booking) notFound();
 
   const clientProfile = booking.userId
@@ -32,10 +42,10 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
     userId: booking.userId,
     bookingNumber: booking.bookingNumber,
     status: booking.status,
-    clientName: booking.clientName,
-    clientEmail: booking.clientEmail,
-    clientPhone: booking.clientPhone,
-    clientCountry: booking.clientCountry,
+    clientName: booking.clientName ?? "Unknown",
+    clientEmail: booking.clientEmail ?? "",
+    clientPhone: booking.clientPhone ?? "",
+    clientCountry: booking.clientCountry ?? "",
     clientInstagram: booking.clientInstagram,
     occasion: booking.occasion,
     description: booking.description,
@@ -51,27 +61,40 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
     meetingLinkSentAt: toIso(booking.meetingLinkSentAt),
     adminNotes: booking.adminNotes,
     sessionNotes: booking.sessionNotes,
-    moodboardImages: booking.moodboardImages,
+    moodboardImages: booking.moodboardImages ?? [],
     moodboardNotes: booking.moodboardNotes,
     feeNGN: booking.feeNGN,
     paymentStatus: booking.paymentStatus,
     paymentGateway: booking.paymentGateway,
     paymentRef: booking.paymentRef,
     paidAt: toIso(booking.paidAt),
-    createdAt: booking.createdAt.toISOString(),
-    updatedAt: booking.updatedAt.toISOString(),
+    createdAt: toIso(booking.createdAt) ?? new Date().toISOString(),
+    updatedAt: toIso(booking.updatedAt) ?? new Date().toISOString(),
     completedAt: toIso(booking.completedAt),
-    consultant: {
-      id: booking.consultant.id,
-      name: booking.consultant.name,
-      title: booking.consultant.title,
-      image: booking.consultant.image,
-    },
-    offering: {
-      sessionType: booking.offering.sessionType,
-      deliveryMode: booking.offering.deliveryMode,
-      durationMinutes: booking.offering.durationMinutes,
-    },
+    consultant: booking.consultant
+      ? {
+          id: booking.consultant.id,
+          name: booking.consultant.name,
+          title: booking.consultant.title,
+          image: booking.consultant.image,
+        }
+      : {
+          id: booking.consultantId,
+          name: "Unknown consultant",
+          title: "",
+          image: null,
+        },
+    offering: booking.offering
+      ? {
+          sessionType: booking.offering.sessionType,
+          deliveryMode: booking.offering.deliveryMode,
+          durationMinutes: booking.offering.durationMinutes,
+        }
+      : {
+          sessionType: "DISCOVERY_CALL" as const,
+          deliveryMode: "VIRTUAL_STANDARD" as const,
+          durationMinutes: 45,
+        },
   };
 
   return (
