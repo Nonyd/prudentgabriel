@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth.config";
+import { getPublicAppUrl } from "@/lib/app-url";
 
 const ADMIN_ROLES = [
   "SUPER_ADMIN",
@@ -13,9 +14,56 @@ const ADMIN_ROLES = [
   "CONSULTATION_MANAGER",
 ];
 
-export default auth(function middleware(request) {
+export default auth(async function middleware(request) {
   const session = request.auth;
   const pathname = request.nextUrl.pathname;
+
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/images") ||
+    pathname.startsWith("/icons") ||
+    pathname.includes("favicon") ||
+    pathname.includes(".") ||
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/webhooks") ||
+    pathname === "/api/maintenance-status" ||
+    pathname === "/maintenance"
+  ) {
+    return NextResponse.next();
+  }
+
+  const skipMaintenance =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/maintenance-status") ||
+    pathname === "/admin-login" ||
+    pathname === "/staff-login" ||
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/maintenance";
+
+  if (!skipMaintenance) {
+    try {
+      const maintenanceRes = await fetch(`${getPublicAppUrl()}/api/maintenance-status`, {
+        cache: "no-store",
+      });
+
+      if (maintenanceRes.ok) {
+        const { enabled } = (await maintenanceRes.json()) as { enabled?: boolean };
+
+        if (enabled) {
+          const role = session?.user?.role as string | undefined;
+          const isAdmin = role && ADMIN_ROLES.includes(role);
+
+          if (!isAdmin) {
+            return NextResponse.rewrite(new URL("/maintenance", request.url));
+          }
+        }
+      }
+    } catch {
+      // Fail open — never block on error
+    }
+  }
 
   if (
     pathname === "/" ||
@@ -41,17 +89,12 @@ export default auth(function middleware(request) {
     pathname.startsWith("/checkout") ||
     pathname.startsWith("/payment") ||
     pathname.startsWith("/attendance/qr") ||
-    pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/api/webhooks") ||
     pathname.startsWith("/api/payments") ||
     pathname.startsWith("/api/products") ||
     pathname.startsWith("/api/blog") ||
     pathname.startsWith("/api/consultations") ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/images") ||
-    pathname.startsWith("/icons") ||
-    pathname.includes("favicon") ||
-    pathname.includes(".")
+    pathname.startsWith("/careers") ||
+    pathname.startsWith("/size-guide")
   ) {
     return NextResponse.next();
   }

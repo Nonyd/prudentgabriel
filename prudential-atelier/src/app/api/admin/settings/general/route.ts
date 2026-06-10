@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { SettingType } from "@prisma/client";
 import { requireAdminApi } from "@/lib/admin-auth";
@@ -7,19 +8,33 @@ import { clearSettingCacheKey } from "@/lib/settings";
 
 const patchSchema = z.object({
   autoConvertApprovedQuotes: z.boolean().optional(),
+  maintenanceModeEnabled: z.boolean().optional(),
+  maintenanceModeMessage: z.string().max(500).optional(),
 });
 
 export async function GET() {
   const gate = await requireAdminApi();
   if (!gate.ok) return gate.response;
 
-  const row = await prisma.siteSetting.findUnique({
-    where: { key: "auto_convert_approved_quotes" },
-    select: { value: true },
-  });
+  const [autoConvertRow, maintenanceEnabledRow, maintenanceMessageRow] = await Promise.all([
+    prisma.siteSetting.findUnique({
+      where: { key: "auto_convert_approved_quotes" },
+      select: { value: true },
+    }),
+    prisma.siteSetting.findUnique({
+      where: { key: "maintenance_mode_enabled" },
+      select: { value: true },
+    }),
+    prisma.siteSetting.findUnique({
+      where: { key: "maintenance_mode_message" },
+      select: { value: true },
+    }),
+  ]);
 
   return NextResponse.json({
-    autoConvertApprovedQuotes: row?.value === "true",
+    autoConvertApprovedQuotes: autoConvertRow?.value === "true",
+    maintenanceModeEnabled: maintenanceEnabledRow?.value === "true",
+    maintenanceModeMessage: maintenanceMessageRow?.value ?? "",
   });
 }
 
@@ -33,29 +48,86 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  if (parsed.data.autoConvertApprovedQuotes === undefined) {
+  const { autoConvertApprovedQuotes, maintenanceModeEnabled, maintenanceModeMessage } =
+    parsed.data;
+
+  if (
+    autoConvertApprovedQuotes === undefined &&
+    maintenanceModeEnabled === undefined &&
+    maintenanceModeMessage === undefined
+  ) {
     return NextResponse.json({ error: "No updates provided" }, { status: 400 });
   }
 
   const userId = gate.session.user!.id!;
-  const value = parsed.data.autoConvertApprovedQuotes ? "true" : "false";
 
-  await prisma.siteSetting.upsert({
-    where: { key: "auto_convert_approved_quotes" },
-    create: {
-      key: "auto_convert_approved_quotes",
-      value,
-      group: "STORE",
-      label: "Auto-convert approved quotes to orders",
-      type: SettingType.BOOLEAN,
-      isPublic: false,
-      sortOrder: 100,
-      updatedBy: userId,
-    },
-    update: { value, updatedBy: userId },
+  if (autoConvertApprovedQuotes !== undefined) {
+    const value = autoConvertApprovedQuotes ? "true" : "false";
+
+    await prisma.siteSetting.upsert({
+      where: { key: "auto_convert_approved_quotes" },
+      create: {
+        key: "auto_convert_approved_quotes",
+        value,
+        group: "STORE",
+        label: "Auto-convert approved quotes to orders",
+        type: SettingType.BOOLEAN,
+        isPublic: false,
+        sortOrder: 100,
+        updatedBy: userId,
+      },
+      update: { value, updatedBy: userId },
+    });
+
+    clearSettingCacheKey("auto_convert_approved_quotes");
+  }
+
+  if (maintenanceModeEnabled !== undefined) {
+    const value = maintenanceModeEnabled ? "true" : "false";
+
+    await prisma.siteSetting.upsert({
+      where: { key: "maintenance_mode_enabled" },
+      create: {
+        key: "maintenance_mode_enabled",
+        value,
+        group: "STORE",
+        label: "Maintenance mode enabled",
+        type: SettingType.BOOLEAN,
+        isPublic: false,
+        sortOrder: 0,
+        updatedBy: userId,
+      },
+      update: { value, updatedBy: userId },
+    });
+
+    clearSettingCacheKey("maintenance_mode_enabled");
+    revalidatePath("/api/maintenance-status");
+  }
+
+  if (maintenanceModeMessage !== undefined) {
+    await prisma.siteSetting.upsert({
+      where: { key: "maintenance_mode_message" },
+      create: {
+        key: "maintenance_mode_message",
+        value: maintenanceModeMessage,
+        group: "STORE",
+        label: "Maintenance mode message",
+        type: SettingType.TEXT,
+        isPublic: false,
+        sortOrder: 1,
+        updatedBy: userId,
+      },
+      update: { value: maintenanceModeMessage, updatedBy: userId },
+    });
+
+    clearSettingCacheKey("maintenance_mode_message");
+    revalidatePath("/api/maintenance-status");
+  }
+
+  return NextResponse.json({
+    success: true,
+    autoConvertApprovedQuotes,
+    maintenanceModeEnabled,
+    maintenanceModeMessage,
   });
-
-  clearSettingCacheKey("auto_convert_approved_quotes");
-
-  return NextResponse.json({ success: true, autoConvertApprovedQuotes: parsed.data.autoConvertApprovedQuotes });
 }

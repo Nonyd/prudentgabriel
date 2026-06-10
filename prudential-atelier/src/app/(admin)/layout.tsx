@@ -30,6 +30,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   let badges: Record<string, number> = {};
+  let isMaintenanceOn = false;
+  try {
+    const maintenanceEnabled = await prisma.siteSetting.findUnique({
+      where: { key: "maintenance_mode_enabled" },
+      select: { value: true },
+    });
+    isMaintenanceOn = maintenanceEnabled?.value === "true";
+  } catch {
+    /* DB unavailable */
+  }
+
   try {
     const [bespoke, consultations, orders, messages] = await Promise.all([
       prisma.bespokeOrder.count({
@@ -55,7 +66,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <AdminShell session={session} badges={badges}>
+    <AdminShell session={session} badges={badges} isMaintenanceOn={isMaintenanceOn}>
       {children}
     </AdminShell>
   );
