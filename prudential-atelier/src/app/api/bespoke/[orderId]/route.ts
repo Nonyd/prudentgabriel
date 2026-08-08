@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PaymentMethod, PaymentPurpose, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logError } from "@/lib/logger";
-import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
+import { BESPOKE_ADMIN_ROLES, BESPOKE_MANAGER_ROLES, BESPOKE_STAFF_ROLES, requireRoles } from "@/lib/api-auth";
 import {
   appendPayment,
   getOrderPaymentSummary,
@@ -12,6 +12,7 @@ import {
   recomputeOrderTotals,
 } from "@/lib/payments/ledger";
 import { generatePaymentReference } from "@/lib/payments/index";
+import { stageGateInclude } from "@/lib/atelier/can-complete-stage";
 
 type Params = { params: Promise<{ orderId: string }> };
 
@@ -23,7 +24,7 @@ const paymentInclude = {
 };
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_ROLES);
+  const gate = await requireRoles(BESPOKE_STAFF_ROLES);
   if (!gate.ok) return gate.response;
 
   const { orderId } = await params;
@@ -39,6 +40,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
         clientProfile: { include: { measurements: true, moodboards: true } },
         quotation: true,
         ...paymentInclude,
+        ...stageGateInclude(),
       },
     });
     if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -54,7 +56,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_ROLES);
+  const gate = await requireRoles(BESPOKE_MANAGER_ROLES);
   if (!gate.ok) return gate.response;
 
   const { orderId } = await params;
@@ -63,6 +65,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  if ("currentStage" in body) {
+    return NextResponse.json(
+      { error: "Stage changes must go through complete-stage or revert-stage." },
+      { status: 422 },
+    );
   }
 
   try {
@@ -136,7 +145,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         deliveryDate: body.deliveryDate ? new Date(String(body.deliveryDate)) : undefined,
         notes: typeof body.notes === "string" ? body.notes : undefined,
         totalAmount,
-        // amountPaid / balance are ledger-owned — do not write here
+        // amountPaid / balance / currentStage are not writable here.
+        // Stage changes go through canCompleteStage / revertOrderStage.
       },
     });
 
@@ -161,7 +171,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_ROLES);
+  const gate = await requireRoles(BESPOKE_ADMIN_ROLES);
   if (!gate.ok) return gate.response;
 
   const { orderId } = await params;

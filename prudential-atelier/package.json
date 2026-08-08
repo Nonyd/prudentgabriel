@@ -21,6 +21,8 @@
     "seed:email-templates": "tsx scripts/seed-email-templates.ts",
     "backfill:payments": "tsx scripts/backfill-payments.ts",
     "purge:demo": "tsx scripts/purge-demo-data.ts",
+    "test:stage-gate": "tsx scripts/test-stage-gate.ts",
+    "test:stage-walk": "tsx scripts/test-stage-walk.ts",
     "email:dev": "email dev src/emails --port 3001"
   },
   "dependencies": {

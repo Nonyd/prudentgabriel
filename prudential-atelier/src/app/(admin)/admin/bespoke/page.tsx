@@ -5,6 +5,12 @@ export default async function AdminBespokePipelinePage() {
   const rows = await prisma.bespokeOrder.findMany({
     orderBy: { createdAt: "desc" },
     take: 100,
+    include: {
+      stageApprovals: {
+        where: { status: "PENDING" },
+        select: { id: true, stage: true, status: true },
+      },
+    },
   });
 
   return <BespokePipelineClient initial={rows} />;

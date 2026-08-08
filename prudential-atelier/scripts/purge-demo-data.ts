@@ -111,7 +111,7 @@ async function main() {
       "3. ReviewHelpfulVote, Review, Testimonial, PointsTransaction",
       "4. AdminNotification / CustomerNotification / StaffNotification (entity-linked)",
       "5. ActivityLog rows whose recordId is a deleted entity",
-      "6. StageUpdate, OrderAssignment, Material (bespoke children; also CASCADE)",
+      "6. StageUpdate, OrderStageCompletion/Media/Draft, StageApproval, OrderAssignment, Material (bespoke children; also CASCADE)",
       "7. Invoice, Quotation, BespokeOrder",
       "8. ConsultationBooking",
       "9. BespokeRequest",

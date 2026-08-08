@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { BespokeOrderDetailClient } from "@/components/admin/BespokeOrderDetailClient";
+import { stageGateInclude } from "@/lib/atelier/can-complete-stage";
 
 export default async function AdminBespokeOrderPage({
   params,
@@ -24,6 +26,7 @@ export default async function AdminBespokeOrderPage({
         orderBy: { createdAt: "desc" },
         include: { confirmedBy: { select: { id: true, name: true, email: true } } },
       },
+      ...stageGateInclude(),
     },
   });
 
@@ -37,11 +40,13 @@ export default async function AdminBespokeOrderPage({
     },
   });
 
+  const session = await auth();
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://prudentgabriel.com";
 
   return (
     <BespokeOrderDetailClient
       order={order}
+      actorRole={session?.user?.role ?? null}
       staffList={staffList.map((s) => ({
         id: s.id,
         name: s.user.name ?? s.user.email ?? "Staff",

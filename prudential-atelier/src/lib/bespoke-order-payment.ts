@@ -1,4 +1,4 @@
-import { BespokeStage, PaymentGateway, PaymentPurpose, PaymentStatus } from "@prisma/client";
+import { PaymentGateway, PaymentPurpose, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { autoOnboardClient } from "@/lib/client-onboarding";
 import {
@@ -13,8 +13,8 @@ import {
 
 /**
  * Record a confirmed bespoke payment on the ledger and refresh denormalised totals.
- * productionUnlockedAt is set by the ledger when deposit is satisfied.
- * Existing full-payment stage advance (PAYMENT_CONFIRMATION → SKETCHING) is preserved.
+ * productionUnlockedAt is set/cleared by the ledger when depositSatisfied changes.
+ * Stage advancement is owned by the stage-gate evaluator — this path does not mutate currentStage.
  */
 export async function fulfillBespokeOrderBalance(params: {
   orderId: string;
@@ -91,11 +91,7 @@ export async function fulfillBespokeOrderBalance(params: {
     });
   }
 
-  const summaryAfter = await getOrderPaymentSummary(order.id);
-  const advanceStage =
-    summaryAfter.isFullyPaid && order.currentStage === BespokeStage.PAYMENT_CONFIRMATION
-      ? BespokeStage.SKETCHING_CONCEPT
-      : undefined;
+  await getOrderPaymentSummary(order.id);
 
   await prisma.bespokeOrder.update({
     where: { id: order.id },
@@ -103,7 +99,6 @@ export async function fulfillBespokeOrderBalance(params: {
       paymentRef: params.paymentRef,
       paymentGateway: params.gateway,
       paymentReceiptUrl: null,
-      ...(advanceStage ? { currentStage: advanceStage } : {}),
     },
   });
 

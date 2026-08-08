@@ -814,6 +814,10 @@ async function upsertBespokeOrder(params: {
   });
 
   await prisma.stageUpdate.deleteMany({ where: { orderId: order.id } });
+  await prisma.orderStageCompletion.deleteMany({ where: { orderId: order.id } });
+  await prisma.orderStageMedia.deleteMany({ where: { orderId: order.id } });
+  await prisma.orderStageDraft.deleteMany({ where: { orderId: order.id } });
+  await prisma.stageApproval.deleteMany({ where: { orderId: order.id } });
   await prisma.orderAssignment.deleteMany({ where: { orderId: order.id } });
 
   const currentIdx = STAGE_ORDER.indexOf(params.currentStage);
@@ -855,6 +859,28 @@ async function upsertBespokeOrder(params: {
 
   if (stageRows.length) {
     await prisma.stageUpdate.createMany({ data: stageRows });
+    const completedBy =
+      (params.tailorEmail && params.staffMap[params.tailorEmail]?.userId) ||
+      (await prisma.user.findUnique({ where: { email: SUPER_ADMIN_EMAIL }, select: { id: true } }))
+        ?.id;
+    if (completedBy) {
+      await prisma.orderStageCompletion.createMany({
+        data: stageRows.map((row) => ({
+          orderId: row.orderId,
+          stage: row.stage,
+          completedAt: row.completedAt,
+          completedById: completedBy,
+          notes: row.notes,
+        })),
+      });
+    }
+  }
+
+  if (params.amountPaid > 0) {
+    await prisma.bespokeOrder.update({
+      where: { id: order.id },
+      data: { productionUnlockedAt: addDays(new Date(), -14) },
+    });
   }
 
   if (params.tailorEmail && params.staffMap[params.tailorEmail]) {

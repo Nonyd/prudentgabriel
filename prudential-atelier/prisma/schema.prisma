@@ -56,6 +56,9 @@ model User {
   isStaff    Boolean  @default(false)
 
   paymentsConfirmed Payment[] @relation("PaymentConfirmedBy")
+  stageCompletions  OrderStageCompletion[] @relation("StageCompletions")
+  stageReverts      OrderStageCompletion[] @relation("StageReverts")
+  stageMediaUploads OrderStageMedia[] @relation("StageMediaUploads")
 }
 
 model Consultant {
@@ -1026,6 +1029,8 @@ enum AdminNotificationType {
   COUPON_EXPIRING
   CONTACT_FORM
   JOB_APPLICATION
+  STAGE_APPROVAL_RESPONSE
+  PRODUCTION_RELOCKED
 }
 
 enum CustomerNotificationType {
@@ -1045,6 +1050,8 @@ enum CustomerNotificationType {
   REFERRAL_REWARD
   ORDER_CONFIRMED
   BANK_TRANSFER_CONFIRMED
+  STAGE_APPROVAL_REQUESTED
+  STAGE_CHANGES_REQUESTED
 }
 
 enum StaffNotificationType {
@@ -1185,6 +1192,9 @@ enum ActivityAction {
   LOGOUT
   PAYMENT_CONFIRM
   STAGE_COMPLETE
+  STAGE_REVERT
+  STAGE_APPROVAL_REQUEST
+  PRODUCTION_RELOCK
   ORDER_CREATE
   INVOICE_SEND
   QUOTE_SEND
@@ -1393,7 +1403,11 @@ model BespokeOrder {
   notes             String?  @db.Text
 
   currentStage BespokeStage @default(CONSULTATION_BOOKING)
-  stageHistory StageUpdate[]
+  stageHistory     StageUpdate[]
+  stageCompletions OrderStageCompletion[]
+  stageMedia       OrderStageMedia[]
+  stageDrafts      OrderStageDraft[]
+  stageApprovals   StageApproval[]
   assignments  OrderAssignment[]
   materials    Material[]
 
@@ -1452,6 +1466,82 @@ model StageUpdate {
   completedAt DateTime @default(now())
 
   @@index([orderId])
+}
+
+enum StageApprovalStatus {
+  PENDING
+  APPROVED
+  CHANGES_REQUESTED
+  SUPERSEDED
+}
+
+enum StageMediaKind {
+  IMAGE
+  VIDEO
+}
+
+/// Persisted per-stage completion. Sequential integrity counts rows with revertedAt null.
+/// Reverts preserve the row (revertedAt / revertedById / revertReason) — do not delete.
+model OrderStageCompletion {
+  id            String       @id @default(cuid())
+  orderId       String
+  order         BespokeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  stage         BespokeStage
+  completedAt   DateTime     @default(now())
+  completedById String
+  completedBy   User         @relation("StageCompletions", fields: [completedById], references: [id])
+  notes         String?      @db.Text
+  revertedAt    DateTime?
+  revertedById  String?
+  revertedBy    User?        @relation("StageReverts", fields: [revertedById], references: [id])
+  revertReason  String?      @db.Text
+
+  @@index([orderId, stage])
+  @@index([orderId, revertedAt])
+}
+
+/// Stage-scoped media. Null stage is not allowed — unscoped uploads cannot satisfy any gate.
+model OrderStageMedia {
+  id           String         @id @default(cuid())
+  orderId      String
+  order        BespokeOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  stage        BespokeStage
+  url          String
+  kind         StageMediaKind @default(IMAGE)
+  uploadedById String?
+  uploadedBy   User?          @relation("StageMediaUploads", fields: [uploadedById], references: [id])
+  createdAt    DateTime       @default(now())
+
+  @@index([orderId, stage])
+}
+
+/// In-progress notes for the current stage (before completion / approval request).
+model OrderStageDraft {
+  id          String       @id @default(cuid())
+  orderId     String
+  order       BespokeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  stage       BespokeStage
+  notes       String       @db.Text
+  updatedById String?
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([orderId, stage])
+}
+
+model StageApproval {
+  id            String              @id @default(cuid())
+  orderId       String
+  order         BespokeOrder        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  stage         BespokeStage
+  status        StageApprovalStatus @default(PENDING)
+  requestedAt   DateTime            @default(now())
+  requestedById String?
+  respondedAt   DateTime?
+  clientComment String?             @db.Text
+  reminderSentAt DateTime?
+
+  @@index([orderId, stage])
+  @@index([status, requestedAt])
 }
 
 model OrderAssignment {

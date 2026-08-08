@@ -110,6 +110,24 @@ ledger does not silently miss consultation income. `getOrderPaymentSummary` /
 `getInvoicePaymentSummary` never read them — they are scoped by
 `bespokeOrderId` / `invoiceId`.
 
+## `productionUnlockedAt`
+
+Set by `recomputeOrderTotals` → `syncProductionUnlock` when confirmed receipts
+first cover the deposit (`depositSatisfied` and confirmed > 0).
+
+**Relock:** if a later `CONFIRMED → REJECTED` transition or a negative correction
+row drops confirmed below the deposit, `productionUnlockedAt` is cleared. That
+write is accompanied by an `ActivityLog` (`PRODUCTION_RELOCK`) and an admin
+notification (`PRODUCTION_RELOCKED`). Do not silently unset a flag staff were
+told about.
+
+The 13-stage evaluator reads **`productionUnlockedAt`**, not a freshly derived
+`depositSatisfied`. One source of truth; the same flag that is cleared.
+
+Completed stages stay completed. Relock only blocks *further* production stages
+(5+) until the deposit is restored. No auto-revert — a payment-processing hiccup
+must not rewrite atelier history.
+
 ### RTW orders
 
 Not backfilled in this sprint. Ready-to-wear already has a native `Order`

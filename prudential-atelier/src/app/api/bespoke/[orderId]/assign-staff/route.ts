@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { BespokeStage } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
+import { BESPOKE_MANAGER_ROLES, requireRoles } from "@/lib/api-auth";
 import { notifyStaffStageAssigned } from "@/lib/staff-notifications";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 
 type Params = { params: Promise<{ orderId: string }> };
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_ROLES);
+  const gate = await requireRoles(BESPOKE_MANAGER_ROLES);
   if (!gate.ok) return gate.response;
 
   const { orderId } = await params;
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_ROLES);
+  const gate = await requireRoles(BESPOKE_MANAGER_ROLES);
   if (!gate.ok) return gate.response;
 
   const { orderId } = await params;

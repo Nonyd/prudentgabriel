@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import type { BespokeOrder, BespokeStage, OrderStatus } from "@prisma/client";
+import type { BespokeOrder, BespokeStage, OrderStatus, StageApproval } from "@prisma/client";
 import { BulkSelectTable, type BulkColumn } from "@/components/ui/BulkSelectTable";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -15,9 +15,12 @@ import {
   getOrderTrackStatus,
   getStageProgress,
 } from "@/lib/bespoke-stages";
+import { pipelineBlockFor } from "@/lib/atelier/stage-requirements";
 import { cn, formatDate } from "@/lib/utils";
 
-type OrderRow = BespokeOrder;
+type OrderRow = BespokeOrder & {
+  stageApprovals?: Pick<StageApproval, "id" | "stage" | "status">[];
+};
 
 function StageBadge({ stage }: { stage: BespokeStage }) {
   return (
@@ -66,6 +69,20 @@ function DeliveryDate({ date }: { date: Date | string | null }) {
 function TrackStatusPill({ order }: { order: OrderRow }) {
   if (order.currentStage === "DELIVERY") {
     return <Badge variant="success">DELIVERED</Badge>;
+  }
+  const pendingApproval = (order.stageApprovals ?? []).some(
+    (a) => a.stage === order.currentStage && a.status === "PENDING",
+  );
+  const block = pipelineBlockFor({
+    currentStage: order.currentStage,
+    pendingApproval,
+    balance: order.balance,
+  });
+  if (block === "CLIENT_APPROVAL") {
+    return <Badge variant="gold">Awaiting client approval</Badge>;
+  }
+  if (block === "OUTSTANDING_BALANCE") {
+    return <Badge variant="wine">Awaiting balance</Badge>;
   }
   const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
   const status = getOrderTrackStatus(deliveryDate, order.currentStage);

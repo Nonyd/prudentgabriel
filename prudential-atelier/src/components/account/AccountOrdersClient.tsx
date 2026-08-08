@@ -92,15 +92,24 @@ export function AccountOrdersClient({
                       <span className="text-nut">Balance: {formatPrice(o.balance, "NGN")}</span>
                     ) : null}
                   </div>
-                  {o.balance > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-3">
                     <Link
-                      href={`/account/orders/bespoke/${o.id}/pay`}
-                      className="mt-3 inline-block font-sans text-xs text-nut underline"
+                      href={`/account/orders/bespoke/${o.id}`}
+                      className="font-sans text-xs text-nut underline"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      Pay Balance
+                      View commission
                     </Link>
-                  ) : null}
+                    {o.balance > 0 ? (
+                      <Link
+                        href={`/account/orders/bespoke/${o.id}/pay`}
+                        className="font-sans text-xs text-nut underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Pay Balance
+                      </Link>
+                    ) : null}
+                  </div>
                 </button>
                 {expanded === o.id ? (
                   <div className="space-y-5 border-t border-sand px-5 pb-5 pt-5">

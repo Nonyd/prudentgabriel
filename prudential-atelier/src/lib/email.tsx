@@ -443,6 +443,107 @@ function wrapHtml(title: string, inner: string): string {
 </body></html>`;
 }
 
+export async function sendStageApprovalRequestEmail(params: {
+  to: string;
+  clientName: string;
+  orderRef: string;
+  stageLabel: string;
+  notes: string | null;
+  imageUrls: string[];
+  approveUrl: string;
+}): Promise<void> {
+  await primeEmailBranding();
+  const href = params.approveUrl.replace(/"/g, "%22");
+  const first = params.clientName.split(/\s+/)[0] ?? params.clientName;
+  const notes = params.notes?.trim()
+    ? `<p style="margin:16px 0;font-size:15px;line-height:1.5;white-space:pre-wrap;">${escapeHtml(params.notes.trim())}</p>`
+    : "";
+  const images = params.imageUrls
+    .slice(0, 6)
+    .map(
+      (url) =>
+        `<img src="${escapeHtml(url)}" alt="" width="160" style="max-width:160px;height:auto;margin:4px;border:1px solid #E2D1C2;" />`,
+    )
+    .join("");
+  const inner = `
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Dear ${escapeHtml(first)},</p>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">
+      ${escapeHtml(params.stageLabel)} on order <strong>${escapeHtml(params.orderRef)}</strong> is ready for your review.
+    </p>
+    ${notes}
+    ${images ? `<div style="margin:16px 0;">${images}</div>` : ""}
+    <p style="margin:24px 0;">
+      <a href="${href}" style="display:inline-block;background:#37392d;color:#fff;padding:14px 28px;text-decoration:none;font-size:14px;">
+        Review &amp; approve
+      </a>
+    </p>
+  `;
+  await sendEmail({
+    to: params.to,
+    subject: `Please review ${params.stageLabel} — ${params.orderRef} | Prudential Atelier`,
+    html: wrapHtml("Prudential Atelier", inner),
+  });
+}
+
+export async function sendStageApprovalReminderEmail(params: {
+  to: string;
+  clientName: string;
+  orderRef: string;
+  stageLabel: string;
+  approveUrl: string;
+}): Promise<void> {
+  await primeEmailBranding();
+  const href = params.approveUrl.replace(/"/g, "%22");
+  const first = params.clientName.split(/\s+/)[0] ?? params.clientName;
+  const inner = `
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Dear ${escapeHtml(first)},</p>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">
+      A reminder: ${escapeHtml(params.stageLabel)} on order <strong>${escapeHtml(params.orderRef)}</strong>
+      is still waiting for your approval.
+    </p>
+    <p style="margin:24px 0;">
+      <a href="${href}" style="display:inline-block;background:#37392d;color:#fff;padding:14px 28px;text-decoration:none;font-size:14px;">
+        Review now
+      </a>
+    </p>
+  `;
+  await sendEmail({
+    to: params.to,
+    subject: `Reminder: review ${params.stageLabel} — ${params.orderRef}`,
+    html: wrapHtml("Prudential Atelier", inner),
+  });
+}
+
+export async function sendStageChangesRequestedEmail(params: {
+  to: string;
+  staffName: string;
+  orderRef: string;
+  stageLabel: string;
+  comment: string;
+  orderUrl: string;
+}): Promise<void> {
+  await primeEmailBranding();
+  const href = params.orderUrl.replace(/"/g, "%22");
+  const inner = `
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Hi ${escapeHtml(params.staffName)},</p>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">
+      The client requested changes on <strong>${escapeHtml(params.orderRef)}</strong>
+      (${escapeHtml(params.stageLabel)}).
+    </p>
+    <p style="margin:16px 0;font-size:15px;line-height:1.5;white-space:pre-wrap;">${escapeHtml(params.comment)}</p>
+    <p style="margin:24px 0;">
+      <a href="${href}" style="display:inline-block;background:#37392d;color:#fff;padding:14px 28px;text-decoration:none;font-size:14px;">
+        Open order
+      </a>
+    </p>
+  `;
+  await sendEmail({
+    to: params.to,
+    subject: `Changes requested — ${params.orderRef} / ${params.stageLabel}`,
+    html: wrapHtml("Prudential Atelier", inner),
+  });
+}
+
 export async function sendAdminNotificationEmail(subject: string, htmlInner: string): Promise<void> {
   const admin = process.env.ADMIN_EMAIL;
   if (!admin) {

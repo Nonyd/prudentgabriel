@@ -18,8 +18,12 @@ import type {
   Material,
   Measurement,
   OrderAssignment,
+  OrderStageCompletion,
+  OrderStageDraft,
+  OrderStageMedia,
   Payment,
   Quotation,
+  StageApproval,
   StageUpdate,
   StaffProfile,
   User,
@@ -27,8 +31,9 @@ import type {
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPanel";
-import { STAGE_LABELS, STAGE_ORDER, getStageProgress } from "@/lib/bespoke-stages";
-import { cn, formatDate } from "@/lib/utils";
+import { STAGE_LABELS, STAGE_ORDER, STAGE_SHORT_LABELS, getPreviousStage, getStageProgress } from "@/lib/bespoke-stages";
+import { getStageRequirement } from "@/lib/atelier/stage-requirements";
+import { cn, formatDate, formatNGN } from "@/lib/utils";
 
 type LedgerPayment = Payment & {
   confirmedBy?: Pick<User, "id" | "name" | "email"> | null;
@@ -37,6 +42,10 @@ type LedgerPayment = Payment & {
 
 type OrderWithRelations = BespokeOrder & {
   stageHistory: StageUpdate[];
+  stageCompletions?: OrderStageCompletion[];
+  stageMedia?: OrderStageMedia[];
+  stageDrafts?: OrderStageDraft[];
+  stageApprovals?: StageApproval[];
   assignments: (OrderAssignment & {
     staffProfile: StaffProfile & { user: Pick<User, "name" | "email"> };
   })[];
@@ -61,10 +70,12 @@ export function BespokeOrderDetailClient({
   order: initial,
   staffList,
   trackingUrl,
+  actorRole,
 }: {
   order: OrderWithRelations;
   staffList: StaffOption[];
   trackingUrl: string;
+  actorRole?: string | null;
 }) {
   const router = useRouter();
   const [order, setOrder] = useState(initial);
@@ -79,8 +90,82 @@ export function BespokeOrderDetailClient({
   const [materialForm, setMaterialForm] = useState({ name: "", quantity: "", unitCost: "" });
   const [paymentAmount, setPaymentAmount] = useState("");
   const [measurementsDraft, setMeasurementsDraft] = useState<MeasurementData | null>(null);
+  const [requestingApproval, setRequestingApproval] = useState(false);
+  const [revertOpen, setRevertOpen] = useState(false);
+  const [revertTarget, setRevertTarget] = useState<BespokeStage | "">("");
+  const [revertReason, setRevertReason] = useState("");
+  const [reverting, setReverting] = useState(false);
 
-  const completedStages = new Set(order.stageHistory.map((s) => s.stage));
+  const completedStages = new Set(
+    (order.stageCompletions ?? []).filter((s) => !s.revertedAt).map((s) => s.stage),
+  );
+  const req = getStageRequirement(order.currentStage);
+  const stageMedia = (order.stageMedia ?? []).filter((m) => m.stage === order.currentStage);
+  const draftNotes =
+    notes.trim() ||
+    (order.stageDrafts ?? []).find((d) => d.stage === order.currentStage)?.notes?.trim() ||
+    "";
+  const latestApproval = (order.stageApprovals ?? [])
+    .filter((a) => a.stage === order.currentStage && a.status !== "SUPERSEDED")
+    .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime())[0];
+  const prevStage = getPreviousStage(order.currentStage);
+  const checklist = [
+    {
+      key: "prev",
+      label: prevStage
+        ? `${STAGE_SHORT_LABELS[prevStage]} complete`
+        : "First stage — no predecessor",
+      required: Boolean(prevStage),
+      met: !prevStage || completedStages.has(prevStage),
+    },
+    { key: "notes", label: "Notes added", required: req.requiresNotes, met: Boolean(draftNotes) },
+    {
+      key: "media",
+      label:
+        order.currentStage === "DELIVERY"
+          ? `${stageMedia.length}/${req.minMediaCount || 1} delivery photo(s) uploaded`
+          : `${stageMedia.length}/${Math.max(req.minMediaCount, 1)} photo(s) uploaded`,
+      required: req.requiresMedia,
+      met: !req.requiresMedia || stageMedia.length >= req.minMediaCount,
+    },
+    {
+      key: "approval",
+      label:
+        latestApproval?.status === "APPROVED"
+          ? "Client approval received"
+          : latestApproval?.status === "PENDING"
+            ? "Waiting for client approval"
+            : latestApproval?.status === "CHANGES_REQUESTED"
+              ? "Client requested changes"
+              : "Client approval received",
+      required: req.requiresClientApproval,
+      met: !req.requiresClientApproval || latestApproval?.status === "APPROVED",
+    },
+    {
+      key: "deposit",
+      label: "Deposit satisfied",
+      required: req.requiresDepositSatisfied,
+      met: !req.requiresDepositSatisfied || Boolean(order.productionUnlockedAt),
+    },
+    {
+      key: "balance",
+      label:
+        order.balance > 0.01
+          ? `Balance cleared (${formatNGN(order.balance)} outstanding)`
+          : "Balance cleared",
+      required: req.requiresZeroBalance,
+      met: !req.requiresZeroBalance || order.balance <= 0.01,
+    },
+  ];
+  const unmet = checklist.filter((c) => c.required && !c.met);
+  const canComplete = unmet.length === 0;
+  const canRequestApproval =
+    req.requiresClientApproval &&
+    latestApproval?.status !== "PENDING" &&
+    latestApproval?.status !== "APPROVED" &&
+    Boolean(draftNotes) &&
+    (!req.requiresMedia || stageMedia.length >= req.minMediaCount);
+  const isAdminActor = actorRole === "SUPER_ADMIN" || actorRole === "ADMIN";
 
   const uploadFile = async (file: File, folder: string) => {
     const reader = new FileReader();
@@ -107,8 +192,14 @@ export function BespokeOrderDetailClient({
       for (const file of Array.from(files)) {
         urls.push(await uploadFile(file, type === "videos" ? "bespoke-videos" : "bespoke-stages"));
       }
+      await fetch(`/api/bespoke/${order.id}/stage-media`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ urls, kind: type === "videos" ? "VIDEO" : "IMAGE" }),
+      });
       if (type === "images") setImages((prev) => [...prev, ...urls]);
       else setVideos((prev) => [...prev, ...urls]);
+      router.refresh();
     } catch {
       toast.error("Upload failed");
     } finally {
@@ -128,8 +219,8 @@ export function BespokeOrderDetailClient({
         body: JSON.stringify({ notes, images, videos }),
       });
       if (!res.ok) {
-        const err = (await res.json()) as { error?: string };
-        throw new Error(err.error ?? "Failed");
+        const err = (await res.json()) as { error?: string; failures?: { message: string }[] };
+        throw new Error(err.failures?.map((f) => f.message).join(" · ") || err.error || "Failed");
       }
       const data = (await res.json()) as { item: OrderWithRelations };
       setOrder((o) => ({ ...o, ...data.item }));
@@ -143,6 +234,52 @@ export function BespokeOrderDetailClient({
       toast.error(e instanceof Error ? e.message : "Could not complete stage");
     } finally {
       setCompleting(false);
+    }
+  };
+
+  const requestApproval = async () => {
+    setRequestingApproval(true);
+    try {
+      const res = await fetch(`/api/bespoke/${order.id}/request-approval`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes, images, videos }),
+      });
+      if (!res.ok) {
+        const err = (await res.json()) as { error?: string; failures?: { message: string }[] };
+        throw new Error(err.failures?.map((f) => f.message).join(" · ") || err.error || "Failed");
+      }
+      toast.success("Client approval requested");
+      router.refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not request approval");
+    } finally {
+      setRequestingApproval(false);
+    }
+  };
+
+  const revertStage = async () => {
+    if (!revertTarget || !revertReason.trim()) return;
+    setReverting(true);
+    try {
+      const res = await fetch(`/api/bespoke/${order.id}/revert-stage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetStage: revertTarget, reason: revertReason }),
+      });
+      if (!res.ok) {
+        const err = (await res.json()) as { error?: string; failures?: { message: string }[] };
+        throw new Error(err.failures?.map((f) => f.message).join(" · ") || err.error || "Failed");
+      }
+      toast.success("Stage reverted");
+      setRevertOpen(false);
+      setRevertReason("");
+      setRevertTarget("");
+      router.refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not revert");
+    } finally {
+      setReverting(false);
     }
   };
 
@@ -398,6 +535,23 @@ export function BespokeOrderDetailClient({
                 </Button>
               </div>
             </div>
+            <ul className="mt-4 space-y-1.5">
+              {checklist.map((item) => (
+                <li
+                  key={item.key}
+                  className={cn(
+                    "flex items-start gap-2 font-sans text-xs",
+                    !item.required ? "text-text-light" : item.met ? "text-ink" : "text-[#C45E0A]",
+                  )}
+                >
+                  <span aria-hidden>{item.met ? "✓" : item.required ? "○" : "–"}</span>
+                  <span>
+                    {item.label}
+                    {!item.required ? " (optional)" : null}
+                  </span>
+                </li>
+              ))}
+            </ul>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -450,13 +604,34 @@ export function BespokeOrderDetailClient({
                 {images.length} image(s), {videos.length} video(s) attached
               </p>
             )}
-            <Button
-              className="mt-4"
-              disabled={!notes.trim()}
-              onClick={() => setConfirmOpen(true)}
-            >
-              Mark Stage Complete
-            </Button>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {req.requiresClientApproval ? (
+                <Button
+                  variant="secondary"
+                  loading={requestingApproval}
+                  disabled={!canRequestApproval}
+                  onClick={() => void requestApproval()}
+                >
+                  Request client approval
+                </Button>
+              ) : null}
+              <Button
+                disabled={!canComplete}
+                onClick={() => setConfirmOpen(true)}
+              >
+                Mark Stage Complete
+              </Button>
+              {isAdminActor ? (
+                <Button variant="ghost" onClick={() => setRevertOpen(true)}>
+                  Revert stage
+                </Button>
+              ) : null}
+            </div>
+            {!canComplete ? (
+              <p className="mt-2 font-sans text-[11px] text-text-light">
+                Complete the checklist above. The server will still refuse if anything is missing.
+              </p>
+            ) : null}
           </section>
         </div>
 
@@ -607,6 +782,45 @@ export function BespokeOrderDetailClient({
           </section>
         </div>
       </div>
+
+      <Modal open={revertOpen} onClose={() => setRevertOpen(false)} title="Revert to an earlier stage">
+        <p className="font-sans text-sm text-text-mid">
+          Staff cannot reverse a stage. This is logged with your reason.
+        </p>
+        <select
+          value={revertTarget}
+          onChange={(e) => setRevertTarget(e.target.value as BespokeStage | "")}
+          className="mt-4 w-full rounded border border-sand px-3 py-2 font-sans text-sm"
+        >
+          <option value="">Select earlier stage…</option>
+          {STAGE_ORDER.filter((s) => STAGE_ORDER.indexOf(s) < STAGE_ORDER.indexOf(order.currentStage)).map(
+            (s) => (
+              <option key={s} value={s}>
+                {STAGE_LABELS[s]}
+              </option>
+            ),
+          )}
+        </select>
+        <textarea
+          value={revertReason}
+          onChange={(e) => setRevertReason(e.target.value)}
+          placeholder="Reason (required)"
+          rows={3}
+          className="mt-3 w-full rounded border border-sand px-3 py-2 font-sans text-sm"
+        />
+        <div className="mt-6 flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setRevertOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            loading={reverting}
+            disabled={!revertTarget || !revertReason.trim()}
+            onClick={() => void revertStage()}
+          >
+            Revert
+          </Button>
+        </div>
+      </Modal>
 
       <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} title="Confirm stage completion">
         <p className="font-sans text-sm text-text-mid">

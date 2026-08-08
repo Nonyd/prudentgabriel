@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { BespokeStage, OrderStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/logger";
-import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
+import { BESPOKE_MANAGER_ROLES, BESPOKE_STAFF_ROLES, requireRoles } from "@/lib/api-auth";
 import { generateBespokeOrderRef } from "@/lib/bespoke-stages";
 import { bespokeRequestSchema } from "@/validations/bespoke";
 import { auth } from "@/auth";
@@ -11,7 +11,7 @@ import { sendBespokeConfirmationEmail, sendAdminNotificationEmail } from "@/lib/
 import { notifyNewBespoke } from "@/lib/notifications";
 
 export async function GET(req: NextRequest) {
-  const gate = await requireRoles(BESPOKE_ROLES);
+  const gate = await requireRoles(BESPOKE_STAFF_ROLES);
   if (!gate.ok) return gate.response;
 
   const { searchParams } = new URL(req.url);
@@ -44,6 +44,10 @@ export async function GET(req: NextRequest) {
     include: {
       stageHistory: { orderBy: { completedAt: "desc" }, take: 1 },
       assignments: { include: { staffProfile: { include: { user: { select: { name: true } } } } } },
+      stageApprovals: {
+        where: { status: "PENDING" },
+        select: { id: true, stage: true, status: true },
+      },
     },
   });
 
@@ -54,7 +58,7 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   const isAdmin =
     session?.user?.role &&
-    (BESPOKE_ROLES.includes(session.user.role) || session.user.role === "SUPER_ADMIN");
+    (BESPOKE_MANAGER_ROLES.includes(session.user.role) || session.user.role === "SUPER_ADMIN");
 
   let body: unknown;
   try {
@@ -64,7 +68,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (isAdmin && body && typeof body === "object" && "clientName" in body) {
-    const gate = await requireRoles(BESPOKE_ROLES);
+    const gate = await requireRoles(BESPOKE_MANAGER_ROLES);
     if (!gate.ok) return gate.response;
 
     const d = body as {

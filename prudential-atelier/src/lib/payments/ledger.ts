@@ -9,6 +9,7 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createNotification } from "@/lib/notifications";
+import { logActivity } from "@/lib/logger";
 import { getSetting } from "@/lib/settings";
 
 export type PaymentSummary = {
@@ -194,7 +195,20 @@ export async function getInvoicePaymentSummary(invoiceId: string): Promise<Payme
   });
 }
 
-async function maybeUnlockProduction(bespokeOrderId: string): Promise<void> {
+/**
+ * Keep productionUnlockedAt in sync with the ledger-derived deposit.
+ * Unlock when depositSatisfied first becomes true (and confirmed > 0).
+ * Relock when depositSatisfied becomes false — do not silently unset:
+ * write PRODUCTION_RELOCK activity + PRODUCTION_RELOCKED admin notice.
+ *
+ * Already-completed stages stay completed. The stage gate reads
+ * productionUnlockedAt, so further production stages block until relocked
+ * money is restored. No auto-revert.
+ */
+async function syncProductionUnlock(
+  bespokeOrderId: string,
+  summary: PaymentSummary,
+): Promise<void> {
   const order = await prisma.bespokeOrder.findUnique({
     where: { id: bespokeOrderId },
     select: {
@@ -204,39 +218,57 @@ async function maybeUnlockProduction(bespokeOrderId: string): Promise<void> {
       productionUnlockedAt: true,
     },
   });
-  if (!order || order.productionUnlockedAt) return;
+  if (!order) return;
 
-  const summary = await getOrderPaymentSummary(bespokeOrderId);
-  // Never unlock without confirmed money (even if deposit % is 0).
-  if (!summary.depositSatisfied || summary.confirmed.lte(ZERO)) {
+  const depositOk = summary.depositSatisfied && summary.confirmed.gt(ZERO);
+
+  if (depositOk && !order.productionUnlockedAt) {
+    const earliest = await prisma.payment.findFirst({
+      where: { bespokeOrderId, status: PaymentStatus.CONFIRMED },
+      orderBy: { confirmedAt: "asc" },
+      select: { confirmedAt: true, createdAt: true },
+    });
+    if (!earliest) return;
+    const unlockedAt = earliest.confirmedAt ?? earliest.createdAt;
+    await prisma.bespokeOrder.update({
+      where: { id: bespokeOrderId },
+      data: { productionUnlockedAt: unlockedAt },
+    });
+    void createNotification({
+      type: "NEW_BESPOKE",
+      title: "Production unlocked",
+      message: `${order.orderRef} — deposit satisfied for ${order.clientName}. Production may begin.`,
+      link: `/admin/bespoke/${order.id}`,
+      entityId: order.id,
+    }).catch(() => {});
     return;
   }
 
-  const earliest = await prisma.payment.findFirst({
-    where: { bespokeOrderId, status: PaymentStatus.CONFIRMED },
-    orderBy: { confirmedAt: "asc" },
-    select: { confirmedAt: true, createdAt: true },
-  });
-  if (!earliest) return;
-  const unlockedAt = earliest.confirmedAt ?? earliest.createdAt;
-
-  await prisma.bespokeOrder.update({
-    where: { id: bespokeOrderId },
-    data: { productionUnlockedAt: unlockedAt },
-  });
-
-  void createNotification({
-    type: "NEW_BESPOKE",
-    title: "Production unlocked",
-    message: `${order.orderRef} — deposit satisfied for ${order.clientName}. Production may begin.`,
-    link: `/admin/bespoke/${order.id}`,
-    entityId: order.id,
-  }).catch(() => {});
+  if (!depositOk && order.productionUnlockedAt) {
+    await prisma.bespokeOrder.update({
+      where: { id: bespokeOrderId },
+      data: { productionUnlockedAt: null },
+    });
+    await logActivity({
+      action: "PRODUCTION_RELOCK",
+      module: "payments",
+      description: `${order.orderRef} — production relocked; confirmed receipts no longer cover the deposit.`,
+      recordId: order.id,
+      recordType: "BespokeOrder",
+    });
+    void createNotification({
+      type: "PRODUCTION_RELOCKED",
+      title: "Production relocked",
+      message: `${order.orderRef} — deposit is no longer satisfied. Further production stages are blocked until the deposit is restored. Completed stages were not reverted.`,
+      link: `/admin/bespoke/${order.id}`,
+      entityId: order.id,
+    }).catch(() => {});
+  }
 }
 
 /**
  * Only writer allowed to set BespokeOrder.amountPaid / balance (denormalised cache).
- * Also sets productionUnlockedAt when deposit becomes satisfied.
+ * Also sets / clears productionUnlockedAt when depositSatisfied changes.
  */
 export async function recomputeOrderTotals(bespokeOrderId: string): Promise<PaymentSummary> {
   const summary = await getOrderPaymentSummary(bespokeOrderId);
@@ -247,7 +279,7 @@ export async function recomputeOrderTotals(bespokeOrderId: string): Promise<Paym
       balance: toNumber(summary.balance),
     },
   });
-  await maybeUnlockProduction(bespokeOrderId);
+  await syncProductionUnlock(bespokeOrderId, summary);
   return summary;
 }
 
@@ -373,7 +405,11 @@ export async function confirmPayment(params: {
   return payment;
 }
 
-/** Reject a PENDING Payment (status-only — amount unchanged). */
+/**
+ * Reject a PENDING or CONFIRMED Payment (status-only — amount unchanged).
+ * CONFIRMED → REJECTED is permitted by the append-only trigger and relocks
+ * production via recomputeOrderTotals when the deposit is no longer covered.
+ */
 export async function rejectPayment(params: {
   paymentId: string;
   reason: string;
@@ -382,7 +418,7 @@ export async function rejectPayment(params: {
   const existing = await prisma.payment.findUnique({ where: { id: params.paymentId } });
   if (!existing) throw new Error("Payment not found");
   if (existing.status === PaymentStatus.REJECTED) return existing;
-  if (existing.status !== PaymentStatus.PENDING) {
+  if (existing.status !== PaymentStatus.PENDING && existing.status !== PaymentStatus.CONFIRMED) {
     throw new Error(`Cannot reject payment in status ${existing.status}`);
   }
 
