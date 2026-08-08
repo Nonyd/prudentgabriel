@@ -301,47 +301,48 @@ export async function POST(req: NextRequest) {
     if (!Number.isNaN(dt.getTime())) dueDate = dt;
   }
 
-  const invoiceNumber = await generateInvoiceNumber();
-
-  const created = await prisma.invoice.create({
-    data: {
-      invoiceNumber,
-      bespokeRequestId: bespoke?.id ?? d.bespokeRequestId ?? null,
-      consultationId: consultation?.id ?? d.consultationId ?? null,
-      clientName,
-      clientEmail,
-      clientPhone: d.clientPhone ?? bespoke?.phone ?? consultation?.clientPhone ?? null,
-      clientAddress: d.clientAddress ?? null,
-      clientCity: d.clientCity ?? null,
-      clientCountry: d.clientCountry ?? bespoke?.country ?? consultation?.clientCountry ?? "Nigeria",
-      clientInstagram: d.clientInstagram ?? null,
-      currency: cur,
-      exchangeRate: d.exchangeRate ?? 1,
-      status: InvoiceStatus.DRAFT,
-      lineItems: items as unknown as Prisma.InputJsonValue,
-      subtotal: totals.subtotal,
-      discountType,
-      discountValue,
-      discountAmount: totals.discountAmount,
-      vatEnabled,
-      vatPercent,
-      vatAmount: totals.vatAmount,
-      total: totals.total,
-      depositRequired: totals.depositRequired,
-      depositPaid: 0,
-      balanceDue: totals.balanceDue,
-      paymentTerms,
-      dueDate,
-      clientNote: d.clientNote ?? null,
-      notes: d.notes ?? null,
-      showVat: d.showVat ?? false,
-      showRcNumber: d.showRcNumber ?? false,
-      paymentHistory: [],
-      createdBy: gate.session.user?.id ?? null,
-    },
-    include: {
-      bespokeRequest: { select: { id: true, requestNumber: true, occasion: true } },
-    },
+  const created = await prisma.$transaction(async (tx) => {
+    const number = await generateInvoiceNumber(tx);
+    return tx.invoice.create({
+      data: {
+        invoiceNumber: number,
+        bespokeRequestId: bespoke?.id ?? d.bespokeRequestId ?? null,
+        consultationId: consultation?.id ?? d.consultationId ?? null,
+        clientName,
+        clientEmail,
+        clientPhone: d.clientPhone ?? bespoke?.phone ?? consultation?.clientPhone ?? null,
+        clientAddress: d.clientAddress ?? null,
+        clientCity: d.clientCity ?? null,
+        clientCountry: d.clientCountry ?? bespoke?.country ?? consultation?.clientCountry ?? "Nigeria",
+        clientInstagram: d.clientInstagram ?? null,
+        currency: cur,
+        exchangeRate: d.exchangeRate ?? 1,
+        status: InvoiceStatus.DRAFT,
+        lineItems: items as unknown as Prisma.InputJsonValue,
+        subtotal: totals.subtotal,
+        discountType,
+        discountValue,
+        discountAmount: totals.discountAmount,
+        vatEnabled,
+        vatPercent,
+        vatAmount: totals.vatAmount,
+        total: totals.total,
+        depositRequired: totals.depositRequired,
+        depositPaid: 0,
+        balanceDue: totals.balanceDue,
+        paymentTerms,
+        dueDate,
+        clientNote: d.clientNote ?? null,
+        notes: d.notes ?? null,
+        showVat: d.showVat ?? false,
+        showRcNumber: d.showRcNumber ?? false,
+        paymentHistory: [],
+        createdBy: gate.session.user?.id ?? null,
+      },
+      include: {
+        bespokeRequest: { select: { id: true, requestNumber: true, occasion: true } },
+      },
+    });
   });
 
   return NextResponse.json(created);

@@ -17,6 +17,16 @@ export async function POST(_req: NextRequest, { params }: Params) {
     const quote = await prisma.quotation.findUnique({ where: { id } });
     if (!quote) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+    if (quote.status === QuoteStatus.SUPERSEDED) {
+      return NextResponse.json(
+        {
+          error:
+            "This quotation was superseded by a newer version and cannot be converted. Open the latest version instead.",
+        },
+        { status: 400 },
+      );
+    }
+
     if (quote.status !== QuoteStatus.APPROVED && quote.status !== QuoteStatus.SENT) {
       return NextResponse.json(
         { error: "Only sent or approved quotations can be converted" },
@@ -51,6 +61,12 @@ export async function POST(_req: NextRequest, { params }: Params) {
       return NextResponse.json(
         { error: "Quotation already converted", order: existing },
         { status: 409 },
+      );
+    }
+    if (e instanceof Error && e.message === "SUPERSEDED") {
+      return NextResponse.json(
+        { error: "Superseded quotations cannot be converted" },
+        { status: 400 },
       );
     }
     await logError({

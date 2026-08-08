@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma, QuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { FINANCE_ROLES, requireRoles } from "@/lib/api-auth";
-import { generateQuoteRef } from "@/lib/bespoke-stages";
+import { allocateQuotationBaseRef, formatQuotationRef } from "@/lib/document-numbers";
 import { logActivity, logError } from "@/lib/logger";
 
 export type QuoteLineItem = {
@@ -38,15 +38,6 @@ function calcTotals(items: QuoteLineItem[], tax = 0, discount = 0) {
   return { subtotal, total };
 }
 
-async function uniqueQuoteRef(): Promise<string> {
-  for (let i = 0; i < 8; i++) {
-    const quoteRef = generateQuoteRef();
-    const exists = await prisma.quotation.findUnique({ where: { quoteRef } });
-    if (!exists) return quoteRef;
-  }
-  return generateQuoteRef();
-}
-
 export async function GET(req: NextRequest) {
   const gate = await requireRoles(FINANCE_ROLES);
   if (!gate.ok) return gate.response;
@@ -63,6 +54,7 @@ export async function GET(req: NextRequest) {
     if (search) {
       where.OR = [
         { quoteRef: { contains: search, mode: "insensitive" } },
+        { baseQuoteRef: { contains: search, mode: "insensitive" } },
         { clientName: { contains: search, mode: "insensitive" } },
         { clientEmail: { contains: search, mode: "insensitive" } },
       ];
@@ -125,31 +117,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Consultation not found" }, { status: 400 });
     }
     const existing = await prisma.quotation.findFirst({
-      where: { consultationId },
+      where: {
+        consultationId,
+        status: { not: QuoteStatus.SUPERSEDED },
+      },
     });
     if (existing) {
-      return NextResponse.json({ error: "A quotation is already linked to this consultation" }, { status: 409 });
+      return NextResponse.json(
+        { error: "A quotation is already linked to this consultation — revise that quote instead." },
+        { status: 409 },
+      );
     }
   }
 
   try {
-    const quoteRef = await uniqueQuoteRef();
-    const item = await prisma.quotation.create({
-      data: {
-        quoteRef,
-        clientName,
-        clientEmail,
-        clientPhone: typeof body.clientPhone === "string" ? body.clientPhone.trim() || null : null,
-        lineItems: lineItems as unknown as Prisma.InputJsonValue,
-        subtotal,
-        tax,
-        discount,
-        total,
-        notes: typeof body.notes === "string" ? body.notes : null,
-        expiresAt: body.expiresAt ? new Date(String(body.expiresAt)) : null,
-        consultationId,
-        createdBy: gate.session.user.id,
-      },
+    const item = await prisma.$transaction(async (tx) => {
+      const baseQuoteRef = await allocateQuotationBaseRef(tx);
+      const quoteRef = formatQuotationRef(baseQuoteRef, 1);
+      return tx.quotation.create({
+        data: {
+          quoteRef,
+          baseQuoteRef,
+          version: 1,
+          clientName,
+          clientEmail,
+          clientPhone: typeof body.clientPhone === "string" ? body.clientPhone.trim() || null : null,
+          lineItems: lineItems as unknown as Prisma.InputJsonValue,
+          subtotal,
+          tax,
+          discount,
+          total,
+          notes: typeof body.notes === "string" ? body.notes : null,
+          expiresAt: body.expiresAt ? new Date(String(body.expiresAt)) : null,
+          consultationId,
+          createdBy: gate.session.user.id,
+        },
+      });
     });
 
     await logActivity({
@@ -158,7 +161,7 @@ export async function POST(req: NextRequest) {
       userRole: gate.session.user.role ?? undefined,
       action: "CREATE",
       module: "quotations",
-      description: `Created quotation ${quoteRef}`,
+      description: `Created quotation ${item.quoteRef}`,
       recordId: item.id,
       recordType: "Quotation",
     });

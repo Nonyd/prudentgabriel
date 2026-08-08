@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ConsultationDeliveryMode, ConsultationStatus } from "@prisma/client";
+import { ConsultationDeliveryMode, ConsultationStatus, QuoteStatus } from "@prisma/client";
 import { z } from "zod";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
       ? {
           status: ConsultationStatus.COMPLETED,
           completedAt: { lte: quoteCutoff, not: null },
-          quotations: { none: {} },
+          quotations: { none: { status: { not: QuoteStatus.SUPERSEDED } } },
         }
       : {
           ...(q.status ? { status: q.status } : {}),

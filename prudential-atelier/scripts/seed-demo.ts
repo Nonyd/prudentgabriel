@@ -1585,6 +1585,8 @@ async function seedQuotation() {
     },
     create: {
       quoteRef: "QUO-001",
+      baseQuoteRef: "QUO-001",
+      version: 1,
       clientName: "Ngozi Peters",
       clientEmail: "ngozi.peters@gmail.com",
       clientPhone: "+234 704 678 9012",

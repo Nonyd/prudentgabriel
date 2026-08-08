@@ -119,6 +119,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
   }
 
+  if (nextStatus === ConsultationStatus.COMPLETED) {
+    const notes = (booking.sessionNotes ?? "").trim();
+    if (!notes) {
+      return NextResponse.json(
+        { error: "Session notes are required before marking a consultation completed." },
+        { status: 400 },
+      );
+    }
+  }
+
   await prisma.consultationBooking.update({
     where: { id },
     data: {

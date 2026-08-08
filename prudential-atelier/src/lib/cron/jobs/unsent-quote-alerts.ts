@@ -1,4 +1,4 @@
-import { ConsultationStatus, Role } from "@prisma/client";
+import { ConsultationStatus, QuoteStatus, Role } from "@prisma/client";
 import type { CronJobContext, JobResult } from "@/lib/cron/types";
 import { prisma } from "@/lib/prisma";
 import { createAdminNotification } from "@/lib/notify";
@@ -47,7 +47,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
       status: ConsultationStatus.COMPLETED,
       quoteAlertSentAt: null,
       completedAt: { lte: cutoff, not: null },
-      quotations: { none: {} },
+      quotations: { none: { status: { not: QuoteStatus.SUPERSEDED } } },
     },
     orderBy: { completedAt: "asc" },
     take: ctx.batchLimit,

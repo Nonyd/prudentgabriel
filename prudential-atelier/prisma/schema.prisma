@@ -1298,6 +1298,7 @@ enum QuoteStatus {
   APPROVED
   REJECTED
   CONVERTED
+  SUPERSEDED
 }
 
 model ClientProfile {
@@ -1681,7 +1682,11 @@ model QRCode {
 
 model Quotation {
   id       String @id @default(cuid())
+  /// Display reference: `QT-2026-0001` (v1) or `QT-2026-0001-v2` (revisions).
   quoteRef String @unique
+  /// Stable stem shared across versions (`QT-2026-0001`).
+  baseQuoteRef String
+  version      Int    @default(1)
 
   clientName  String
   clientEmail String
@@ -1699,8 +1704,15 @@ model Quotation {
   approvalToken String    @unique @default(cuid())
   approvedAt    DateTime?
   expiresAt     DateTime?
+  /// Public client approval page URL (never a PDF).
+  approvalUrl   String?
+  /// URL of the generated quotation PDF (admin/public PDF route), set on send.
   pdfUrl        String?
   sentAt        DateTime?
+
+  parentQuotationId String?
+  parentQuotation   Quotation?  @relation("QuotationVersions", fields: [parentQuotationId], references: [id], onDelete: SetNull)
+  childQuotations   Quotation[] @relation("QuotationVersions")
 
   consultationId String?
   consultation   ConsultationBooking? @relation(fields: [consultationId], references: [id], onDelete: SetNull)
@@ -1709,6 +1721,8 @@ model Quotation {
   invoices      Invoice[]
 
   createdBy String?
+  /// User id who created this revision (null for original v1).
+  revisedBy String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1716,6 +1730,18 @@ model Quotation {
   @@index([clientEmail])
   @@index([approvalToken])
   @@index([consultationId])
+  @@index([baseQuoteRef, version])
+  @@index([parentQuotationId])
+}
+
+/// Monotonic per-year counters for financial document numbers (never reuse after delete).
+model DocumentNumberSequence {
+  id        String @id @default(cuid())
+  kind      String
+  year      Int
+  lastValue Int    @default(0)
+
+  @@unique([kind, year])
 }
 
 model BlogPost {

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { QuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { logError } from "@/lib/logger";
+import { logActivity, logError } from "@/lib/logger";
 import { sendSmtpMail, ORDERS_EMAIL } from "@/lib/email-transport";
 import { notifyQuoteApproved } from "@/lib/notifications";
 import { maybeAutoConvertApprovedQuote } from "@/lib/quotation-convert";
+import { findLatestQuotationVersion } from "@/lib/quotation-versioning";
+import { getPublicAppUrl } from "@/lib/app-url";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -32,6 +34,20 @@ export async function POST(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Quotation not found" }, { status: 404 });
     }
 
+    if (quote.status === QuoteStatus.SUPERSEDED) {
+      const latest = await findLatestQuotationVersion(quote.baseQuoteRef);
+      const base = getPublicAppUrl().replace(/\/+$/, "");
+      return NextResponse.json(
+        {
+          error: "This quotation has been superseded by a newer version.",
+          superseded: true,
+          latestQuoteRef: latest?.quoteRef ?? null,
+          latestApprovalUrl: latest ? `${base}/quote/${latest.approvalToken}` : null,
+        },
+        { status: 409 },
+      );
+    }
+
     if (quote.status === QuoteStatus.APPROVED || quote.status === QuoteStatus.CONVERTED) {
       return NextResponse.json({ error: "Quotation already approved" }, { status: 400 });
     }
@@ -46,6 +62,15 @@ export async function POST(req: NextRequest, { params }: Params) {
         status: QuoteStatus.APPROVED,
         approvedAt: new Date(),
       },
+    });
+
+    await logActivity({
+      action: "UPDATE",
+      module: "quotations",
+      description: `Client approved quotation ${quote.quoteRef}`,
+      recordId: quote.id,
+      recordType: "Quotation",
+      userEmail: quote.clientEmail,
     });
 
     void sendSmtpMail({

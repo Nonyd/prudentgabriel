@@ -6,6 +6,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { logActivity, logError } from "@/lib/logger";
 import { sendSmtpMail } from "@/lib/email-transport";
 import { notifyQuoteReady } from "@/lib/customer-notifications";
+
 type Params = { params: Promise<{ id: string }> };
 
 type QuoteLineItem = {
@@ -29,6 +30,7 @@ function buildQuoteEmailHtml(params: {
   quoteRef: string;
   total: number;
   approvalUrl: string;
+  pdfUrl?: string;
   lineItems: QuoteLineItem[];
   notes: string | null;
   consultationSection?: string;
@@ -64,6 +66,11 @@ function buildQuoteEmailHtml(params: {
       <p style="font-size:18px"><strong>Total: ${formatCurrency(params.total)}</strong></p>
       ${params.notes ? `<p>${params.notes}</p>` : ""}
       <p><a href="${params.approvalUrl}" style="display:inline-block;background:#5C3422;color:#F7F2EC;padding:12px 24px;text-decoration:none;border-radius:4px">Review &amp; Approve Quote</a></p>
+      ${
+        params.pdfUrl
+          ? `<p style="margin-top:16px;font-size:13px"><a href="${params.pdfUrl}" style="color:#5C3422">Download PDF quotation</a> (for your records)</p>`
+          : ""
+      }
       <p style="margin-top:32px;font-size:12px;color:#98755B">Prudential Atelier · prudentgabriel.com</p>
     </div>
   `;
@@ -91,9 +98,16 @@ export async function POST(_req: NextRequest, { params }: Params) {
       },
     });
     if (!quote) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (quote.status === QuoteStatus.SUPERSEDED) {
+      return NextResponse.json({ error: "Cannot send a superseded quotation" }, { status: 400 });
+    }
+    if (quote.status === QuoteStatus.CONVERTED) {
+      return NextResponse.json({ error: "Converted quotations cannot be sent" }, { status: 400 });
+    }
 
     const base = getPublicAppUrl().replace(/\/+$/, "");
     const approvalUrl = `${base}/quote/${quote.approvalToken}`;
+    const pdfPublicUrl = `${base}/api/quote/${quote.approvalToken}/pdf`;
     const lineItems = quote.lineItems as QuoteLineItem[];
 
     let consultationSection = "";
@@ -116,26 +130,46 @@ export async function POST(_req: NextRequest, { params }: Params) {
       `;
     }
 
-    await sendSmtpMail({
-      to: quote.clientEmail,
-      subject: `Your quote is ready — ${quote.quoteRef}`,
-      html: buildQuoteEmailHtml({
-        clientName: quote.clientName,
-        quoteRef: quote.quoteRef,
-        total: quote.total,
-        approvalUrl,
-        lineItems: Array.isArray(lineItems) ? lineItems : [],
-        notes: quote.notes,
-        consultationSection,
-      }),
-    });
+    // PDF is generated on demand at pdfPublicUrl — do not render+attach here.
+    // Hobby's ~10s ceiling makes react-pdf + SMTP attachment a timeout risk;
+    // status must only flip to SENT after the mail is accepted (below).
+    try {
+      await sendSmtpMail({
+        to: quote.clientEmail,
+        subject: `Your quote is ready — ${quote.quoteRef}`,
+        html: buildQuoteEmailHtml({
+          clientName: quote.clientName,
+          quoteRef: quote.quoteRef,
+          total: quote.total,
+          approvalUrl,
+          pdfUrl: pdfPublicUrl,
+          lineItems: Array.isArray(lineItems) ? lineItems : [],
+          notes: quote.notes,
+          consultationSection,
+        }),
+      });
+    } catch (mailErr) {
+      await logError({
+        severity: "WARNING",
+        errorType: "QUOTATION_SEND_MAIL",
+        message: mailErr instanceof Error ? mailErr.message : "SMTP failed",
+      });
+      return NextResponse.json(
+        {
+          error:
+            "Could not send the quotation email. The quote was not marked as sent — try again.",
+        },
+        { status: 502 },
+      );
+    }
 
     const item = await prisma.quotation.update({
       where: { id },
       data: {
         status: QuoteStatus.SENT,
         sentAt: new Date(),
-        pdfUrl: approvalUrl,
+        approvalUrl,
+        pdfUrl: pdfPublicUrl,
       },
     });
 
@@ -157,7 +191,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
       approvalToken: quote.approvalToken,
     });
 
-    return NextResponse.json({ item, approvalUrl });
+    return NextResponse.json({ item, approvalUrl, pdfUrl: pdfPublicUrl });
   } catch (e) {
     await logError({
       severity: "WARNING",

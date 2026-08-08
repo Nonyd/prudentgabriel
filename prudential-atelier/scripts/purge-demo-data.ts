@@ -200,7 +200,7 @@ async function main() {
         clientNote: true,
       },
     }),
-    prisma.quotation.findMany({ select: { id: true, quoteRef: true, pdfUrl: true } }),
+    prisma.quotation.findMany({ select: { id: true, quoteRef: true, approvalUrl: true, pdfUrl: true } }),
     prisma.bespokeOrder.findMany({
       select: {
         id: true,
@@ -642,6 +642,7 @@ async function main() {
     stageUpdates.map((s) => s.images),
     stageUpdates.map((s) => s.videos),
     rtwOrders.map((o) => o.paymentReceiptUrl),
+    quotations.map((q) => q.approvalUrl),
     quotations.map((q) => q.pdfUrl),
     bespokeRequests.map((r) => r.referenceImages),
     bespokeRequests.map((r) => r.sketchUrls),

@@ -1,7 +1,10 @@
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSetting, getSettings } from "@/lib/settings";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { allocateInvoiceNumber } from "@/lib/document-numbers";
+import { getLogoSettings } from "@/lib/logos";
 import type {
   InvoiceBankDetails,
   InvoiceBusinessDetails,
@@ -40,18 +43,20 @@ function boolFromSetting(v: string | undefined): boolean {
   return v === "true" || v === "1";
 }
 
-export async function generateInvoiceNumber(): Promise<string> {
-  const prefix = (await getSetting("invoice_prefix"))?.trim() || "PA-INV";
-  const year = new Date().getFullYear();
-  const stem = `${prefix}-${year}-`;
-  const count = await prisma.invoice.count({
-    where: { invoiceNumber: { startsWith: stem } },
-  });
-  return `${stem}${String(count + 1).padStart(4, "0")}`;
+export async function generateInvoiceNumber(
+  client?: Prisma.TransactionClient | typeof prisma,
+): Promise<string> {
+  return allocateInvoiceNumber(client);
 }
 
 export async function getInvoiceSettings(): Promise<InvoiceBusinessDetails> {
-  const s = await getSettings("INVOICE");
+  const [s, logos] = await Promise.all([getSettings("INVOICE"), getLogoSettings()]);
+  // Transparent/dark-on-light logo for branded PDFs (standing rule).
+  const pdfLogo =
+    logos.atelier.dark ||
+    logos.logoDark ||
+    s.invoice_logo_url ||
+    "";
   return {
     businessName: s.invoice_business_name ?? "Prudential Atelier",
     tagline: s.invoice_tagline ?? "",
@@ -63,7 +68,7 @@ export async function getInvoiceSettings(): Promise<InvoiceBusinessDetails> {
     website: s.invoice_website ?? "",
     rcNumber: s.invoice_rc_number ?? "",
     showRc: boolFromSetting(s.invoice_show_rc),
-    logoUrl: resolveAssetUrl(s.invoice_logo_url ?? ""),
+    logoUrl: resolveAssetUrl(pdfLogo),
     footerNote: s.invoice_footer_note ?? "",
   };
 }

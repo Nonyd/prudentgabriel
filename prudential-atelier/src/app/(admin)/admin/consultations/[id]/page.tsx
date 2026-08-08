@@ -23,7 +23,8 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
         consultant: true,
         offering: true,
         quotations: {
-          orderBy: { createdAt: "desc" },
+          where: { status: { not: "SUPERSEDED" } },
+          orderBy: { version: "desc" },
           take: 1,
           select: { id: true, quoteRef: true, status: true },
         },

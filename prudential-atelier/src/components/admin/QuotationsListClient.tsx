@@ -17,6 +17,7 @@ type QuoteRow = {
   clientEmail: string;
   total: number;
   status: QuoteStatus;
+  version?: number;
   createdAt: string;
 };
 
@@ -27,8 +28,9 @@ function quoteBadge(status: QuoteStatus) {
     APPROVED: { variant: "success", label: "Approved" },
     REJECTED: { variant: "wine", label: "Rejected" },
     CONVERTED: { variant: "outline-gold", label: "Converted" },
+    SUPERSEDED: { variant: "grey", label: "Superseded" },
   };
-  const cfg = map[status];
+  const cfg = map[status] ?? { variant: "grey" as const, label: status };
   return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
 }
 
@@ -106,7 +108,9 @@ export function QuotationsListClient() {
         key: "ref",
         header: "Quote Ref",
         cell: (row) => (
-          <span className="font-sans text-sm font-medium text-nut">{row.quoteRef}</span>
+          <Link href={`/admin/quotations/${row.id}`} className="font-sans text-sm font-medium text-nut underline">
+            {row.quoteRef}
+          </Link>
         ),
       },
       {
@@ -149,14 +153,27 @@ export function QuotationsListClient() {
               </Button>
             );
           }
-          if (row.status === "APPROVED") {
+          if (row.status === "SENT" || row.status === "APPROVED") {
             return (
-              <Button size="sm" onClick={() => void convertQuote(row.id)}>
-                Convert to Order
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Link href={`/admin/quotations/${row.id}`}>
+                  <Button size="sm" variant="secondary">
+                    Open
+                  </Button>
+                </Link>
+                {row.status === "APPROVED" ? (
+                  <Button size="sm" onClick={() => void convertQuote(row.id)}>
+                    Convert to Order
+                  </Button>
+                ) : null}
+              </div>
             );
           }
-          return <span className="font-sans text-xs text-text-light">—</span>;
+          return (
+            <Link href={`/admin/quotations/${row.id}`} className="font-sans text-xs text-olive underline">
+              View
+            </Link>
+          );
         },
       },
     ],
@@ -193,7 +210,7 @@ export function QuotationsListClient() {
           className="rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         >
           <option value="all">All statuses</option>
-          {(["DRAFT", "SENT", "APPROVED", "REJECTED", "CONVERTED"] as QuoteStatus[]).map((s) => (
+          {(["DRAFT", "SENT", "APPROVED", "REJECTED", "CONVERTED", "SUPERSEDED"] as QuoteStatus[]).map((s) => (
             <option key={s} value={s}>
               {s}
             </option>

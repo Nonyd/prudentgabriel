@@ -63,6 +63,10 @@ export async function convertQuotationToOrder(
   quote: QuotationRecord,
   createdBy?: string | null,
 ): Promise<{ orderId: string; orderRef: string; invoiceId: string; invoiceNumber: string }> {
+  if (quote.status === QuoteStatus.SUPERSEDED) {
+    throw new Error("SUPERSEDED");
+  }
+
   const existingOrder = await prisma.bespokeOrder.findFirst({
     where: { quotationId: quote.id },
   });
@@ -104,7 +108,6 @@ export async function convertQuotationToOrder(
     currency: "NGN",
   });
 
-  const invoiceNumber = await generateInvoiceNumber();
   const orderRef = await uniqueOrderRef();
 
   const consultation = quote.consultationId
@@ -114,6 +117,7 @@ export async function convertQuotationToOrder(
     : null;
 
   const result = await prisma.$transaction(async (tx) => {
+    const invoiceNumber = await generateInvoiceNumber(tx);
     const invoice = await tx.invoice.create({
       data: {
         invoiceNumber,

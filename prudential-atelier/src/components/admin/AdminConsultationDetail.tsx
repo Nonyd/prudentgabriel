@@ -65,6 +65,7 @@ const STATUS_OPTIONS: ConsultationStatus[] = [
   ConsultationStatus.SCHEDULED,
   ConsultationStatus.IN_SESSION,
   ConsultationStatus.COMPLETED,
+  ConsultationStatus.NO_SHOW,
   ConsultationStatus.CANCELLED_BY_ADMIN,
 ];
 

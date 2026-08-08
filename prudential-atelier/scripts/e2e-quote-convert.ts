@@ -20,7 +20,7 @@ import {
 import { looksLikeProductionDatabase } from "./fixture-guard";
 import { prisma } from "../src/lib/prisma";
 import { generateBookingNumber } from "../src/lib/consultation";
-import { generateQuoteRef } from "../src/lib/bespoke-stages";
+import { allocateQuotationBaseRef, formatQuotationRef } from "../src/lib/document-numbers";
 import { fulfillPaidConsultationBooking } from "../src/lib/consultation-payment";
 import { convertQuotationToOrder } from "../src/lib/quotation-convert";
 import {
@@ -107,15 +107,6 @@ async function cleanupE2eRows(): Promise<void> {
       await tx.user.delete({ where: { id: user.id } }).catch(() => undefined);
     }
   });
-}
-
-async function uniqueQuoteRef(): Promise<string> {
-  for (let i = 0; i < 8; i++) {
-    const quoteRef = generateQuoteRef();
-    const exists = await prisma.quotation.findUnique({ where: { quoteRef } });
-    if (!exists) return quoteRef;
-  }
-  return generateQuoteRef();
 }
 
 async function main() {
@@ -236,7 +227,8 @@ async function main() {
   assert(completed.completedAt, "completedAt not set");
   console.log(`3. Completed consultation at ${completed.completedAt.toISOString()}`);
 
-  const quoteRef = await uniqueQuoteRef();
+  const baseQuoteRef = await allocateQuotationBaseRef();
+  const quoteRef = formatQuotationRef(baseQuoteRef, 1);
   const lineItems = [
     {
       description: "Bespoke evening gown — emerald silk",
@@ -248,6 +240,8 @@ async function main() {
   const quote = await prisma.quotation.create({
     data: {
       quoteRef,
+      baseQuoteRef,
+      version: 1,
       clientName: CLIENT.name,
       clientEmail: CLIENT.email,
       clientPhone: CLIENT.phone,

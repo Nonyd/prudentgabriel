@@ -92,6 +92,7 @@ export function generateBespokeOrderRef(): string {
   return `ORD-${n}`;
 }
 
+/** @deprecated Use allocateQuotationBaseRef from @/lib/document-numbers */
 export function generateQuoteRef(): string {
   const y = String(new Date().getFullYear());
   const n = Math.floor(Math.random() * 9999) + 1;

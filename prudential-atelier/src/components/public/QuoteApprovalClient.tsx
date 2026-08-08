@@ -49,8 +49,19 @@ export function QuoteApprovalClient({ quote }: { quote: QuoteApprovalData }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ approvalToken: quote.approvalToken }),
       });
-      const data = (await res.json()) as { error?: string; message?: string };
+      const data = (await res.json()) as {
+        error?: string;
+        message?: string;
+        superseded?: boolean;
+        latestApprovalUrl?: string | null;
+        latestQuoteRef?: string | null;
+      };
       if (!res.ok) {
+        if (data.superseded && data.latestApprovalUrl) {
+          toast.error(`Superseded — open ${data.latestQuoteRef ?? "the latest quote"}`);
+          window.location.href = data.latestApprovalUrl;
+          return;
+        }
         toast.error(data.error ?? "Approval failed");
         return;
       }

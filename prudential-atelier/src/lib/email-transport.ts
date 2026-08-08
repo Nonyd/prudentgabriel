@@ -22,9 +22,14 @@ export async function sendSmtpMail(params: {
   subject: string;
   html: string;
   from?: string;
+  attachments?: Array<{
+    filename: string;
+    content: Buffer | string;
+    contentType?: string;
+  }>;
 }): Promise<void> {
   if (!process.env.SMTP_PASSWORD) {
-    console.log("[SMTP]", params.to, params.subject);
+    console.log("[SMTP]", params.to, params.subject, params.attachments?.length ? `(${params.attachments.length} attachment(s))` : "");
     return;
   }
 
@@ -33,5 +38,6 @@ export async function sendSmtpMail(params: {
     to: params.to,
     subject: params.subject,
     html: params.html,
+    attachments: params.attachments,
   });
 }

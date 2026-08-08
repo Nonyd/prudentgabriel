@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { ConsultationStatus } from "@prisma/client";
+import { ConsultationStatus, QuoteStatus } from "@prisma/client";
 import {
   getOfferingTypeIcon,
   getOfferingTypeLabel,
@@ -41,7 +41,7 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
       ? {
           status: ConsultationStatus.COMPLETED,
           completedAt: { lte: quoteCutoff, not: null },
-          quotations: { none: {} },
+          quotations: { none: { status: { not: QuoteStatus.SUPERSEDED } } },
         }
       : undefined,
     orderBy: awaitingQuote ? { completedAt: "asc" } : { createdAt: "desc" },
@@ -50,7 +50,8 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
       consultant: { select: { name: true } },
       offering: { select: { deliveryMode: true } },
       quotations: {
-        orderBy: { createdAt: "desc" },
+        where: { status: { not: QuoteStatus.SUPERSEDED } },
+        orderBy: { version: "desc" },
         take: 1,
         include: {
           bespokeOrders: { select: { orderRef: true }, take: 1 },
@@ -67,7 +68,7 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
     where: {
       status: ConsultationStatus.COMPLETED,
       completedAt: { lte: quoteCutoff, not: null },
-      quotations: { none: {} },
+      quotations: { none: { status: { not: QuoteStatus.SUPERSEDED } } },
     },
   });
 
