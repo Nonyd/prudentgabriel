@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { PaymentGateway } from "@prisma/client";
+import { PaymentGateway, PaymentStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import {
@@ -15,6 +15,14 @@ import {
   parseBespokePaymentRef,
 } from "@/lib/bespoke-order-access";
 import { generatePaymentReference } from "@/lib/payments/index";
+import {
+  appendPayment,
+  getOrderPaymentSummary,
+  inferBespokePurpose,
+  resolveClientId,
+  toNumber,
+} from "@/lib/payments/ledger";
+import { PaymentMethod, PaymentPurpose } from "@prisma/client";
 
 const bodySchema = z.object({
   amount: z.number().positive(),
@@ -45,9 +53,47 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ orderId: s
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
-  const payAmountNGN = Math.min(Math.round(parsed.data.amount), Math.round(order.balance));
+  const summary = await getOrderPaymentSummary(order.id);
+  const payAmountNGN = Math.min(Math.round(parsed.data.amount), Math.round(toNumber(summary.balance)));
+  if (payAmountNGN <= 0) {
+    return NextResponse.json({ error: "Nothing to pay" }, { status: 400 });
+  }
+
   const { reference: existingRef } = parseBespokePaymentRef(order.paymentRef);
   const reference = existingRef || generatePaymentReference("BESPOKE");
+
+  // Cancel any prior pending ledger row for this order (receipt resubmit).
+  await prisma.payment.updateMany({
+    where: { bespokeOrderId: order.id, status: PaymentStatus.PENDING },
+    data: { status: PaymentStatus.REJECTED, rejectedReason: "Superseded by new transfer receipt" },
+  });
+
+  const purpose =
+    inferBespokePurpose({
+      amount: payAmountNGN,
+      balanceBefore: toNumber(summary.balance),
+      depositRequired: toNumber(summary.depositRequired),
+      confirmedBefore: toNumber(summary.confirmed),
+    }) ?? PaymentPurpose.DEPOSIT;
+
+  const clientId = await resolveClientId({
+    userId: session.user.id,
+    email: order.clientEmail,
+  });
+
+  // Unique reference per pending attempt
+  const ledgerRef = `${reference}-${Date.now()}`;
+
+  await appendPayment({
+    reference: ledgerRef,
+    amount: payAmountNGN,
+    method: PaymentMethod.BANK_TRANSFER,
+    status: PaymentStatus.PENDING,
+    purpose,
+    receiptUrl: parsed.data.receiptUrl,
+    bespokeOrderId: order.id,
+    clientId,
+  });
 
   await prisma.bespokeOrder.update({
     where: { id: order.id },

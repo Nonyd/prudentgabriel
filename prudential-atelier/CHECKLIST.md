@@ -12,7 +12,7 @@
 - [ ] DATABASE_URL (pooled) set in Vercel
 - [ ] DIRECT_URL (unpooled) set in Vercel
 - [ ] After deploy: npx prisma migrate deploy OR npx prisma db push
-- [ ] After deploy: npx prisma db seed
+- [ ] After deploy: `pnpm db:seed` (bootstrap only — never `seed:demo` / `seed:fixtures` on production)
 
 ## Auth
 

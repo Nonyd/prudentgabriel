@@ -1,11 +1,12 @@
 /**
  * Demo seed — luxury Nigerian atelier data for client presentations.
- * Safe to re-run: upserts + createMany(skipDuplicates) + targeted deletes for child records.
+ * NEVER run against production. Requires ALLOW_FIXTURES=true.
  */
 import dotenv from "dotenv";
 import path from "path";
 import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
+import { assertFixturesAllowed } from "./fixture-guard";
 import {
   PrismaClient,
   Role,
@@ -31,6 +32,8 @@ import { STAGE_ORDER } from "../src/lib/bespoke-stages";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+
+assertFixturesAllowed("scripts/seed-demo.ts");
 
 const prisma = new PrismaClient();
 

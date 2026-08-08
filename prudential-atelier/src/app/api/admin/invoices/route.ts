@@ -275,7 +275,9 @@ export async function POST(req: NextRequest) {
     })),
   );
 
-  const depositPct = d.depositPercent ?? (bespoke ? 50 : 0);
+  const { getBespokeDepositPercent } = await import("@/lib/payments/ledger");
+  const defaultBespokeDeposit = bespoke ? await getBespokeDepositPercent() : 0;
+  const depositPct = d.depositPercent ?? defaultBespokeDeposit;
   const discountType = d.discountType ?? null;
   const discountValue = d.discountValue ?? 0;
   const vatEnabled = d.vatEnabled ?? false;

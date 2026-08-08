@@ -66,6 +66,10 @@ export async function DELETE(_req: NextRequest, context: { params: Promise<{ id:
     }
     return NextResponse.json({ ok: true });
   } catch (e) {
+    const msg = e instanceof Error ? e.message : "Delete failed";
+    if (msg.includes("payment records")) {
+      return NextResponse.json({ error: msg }, { status: 409 });
+    }
     console.error("[account/orders DELETE]", e);
     return NextResponse.json({ error: "Delete failed" }, { status: 500 });
   }

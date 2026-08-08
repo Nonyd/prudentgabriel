@@ -179,7 +179,11 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
     }
     return NextResponse.json({ ok: true, deleted });
   } catch (e) {
+    const msg = e instanceof Error ? e.message : "Delete failed";
+    if (msg.includes("payment records")) {
+      return NextResponse.json({ error: msg }, { status: 409 });
+    }
     console.error("[admin/orders DELETE]", e);
-    return NextResponse.json({ error: e instanceof Error ? e.message : "Delete failed" }, { status: 500 });
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

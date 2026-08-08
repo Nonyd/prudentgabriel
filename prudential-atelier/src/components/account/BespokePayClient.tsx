@@ -15,12 +15,19 @@ const MIN_PARTIAL = 10_000;
 
 type PayOption = "deposit" | "full" | "custom";
 
-export function BespokePayClient({ order }: { order: BespokeOrder }) {
+export function BespokePayClient({
+  order,
+  depositPercent = 70,
+}: {
+  order: BespokeOrder;
+  depositPercent?: number;
+}) {
   const rates = useCurrencyStore((s) => s.rates);
   const setCurrency = useCurrencyStore((s) => s.setCurrency);
   const currency = useCurrencyStore((s) => s.currency) as PaymentCurrency;
 
-  const depositAmount = Math.round(order.balance * 0.7);
+  const pct = Math.min(100, Math.max(0, depositPercent));
+  const depositAmount = Math.round(order.balance * (pct / 100));
   const fullAmount = Math.round(order.balance);
   const remainderAmount = fullAmount - depositAmount;
 
@@ -122,9 +129,9 @@ export function BespokePayClient({ order }: { order: BespokeOrder }) {
   }[] = [
     {
       id: "deposit",
-      title: "Pay deposit (70%)",
+      title: `Pay deposit (${pct}%)`,
       amount: depositAmount,
-      description: `Begin your commission with a 70% deposit. The remaining 30% (${formatPriceUtil(remainderAmount, "NGN")}) is due before delivery.`,
+      description: `Begin your commission with a ${pct}% deposit. The remaining ${100 - pct}% (${formatPriceUtil(remainderAmount, "NGN")}) is due before delivery.`,
     },
     {
       id: "full",

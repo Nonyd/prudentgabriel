@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PaymentMethod, PaymentPurpose, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logError } from "@/lib/logger";
 import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
+import {
+  appendPayment,
+  getOrderPaymentSummary,
+  inferBespokePurpose,
+  resolveClientId,
+  toNumber,
+  recomputeOrderTotals,
+} from "@/lib/payments/ledger";
+import { generatePaymentReference } from "@/lib/payments/index";
 
 type Params = { params: Promise<{ orderId: string }> };
+
+const paymentInclude = {
+  payments: {
+    orderBy: { createdAt: "desc" as const },
+    include: { confirmedBy: { select: { id: true, name: true, email: true } } },
+  },
+};
 
 export async function GET(_req: NextRequest, { params }: Params) {
   const gate = await requireRoles(BESPOKE_ROLES);
@@ -21,6 +38,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
         materials: { orderBy: { createdAt: "asc" } },
         clientProfile: { include: { measurements: true, moodboards: true } },
         quotation: true,
+        ...paymentInclude,
       },
     });
     if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -53,7 +71,32 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     const totalAmount =
       typeof body.totalAmount === "number" ? body.totalAmount : existing.totalAmount;
-    const amountPaid = typeof body.amountPaid === "number" ? body.amountPaid : existing.amountPaid;
+
+    // Legacy clients may send amountPaid as a running total — convert delta into a ledger row.
+    if (typeof body.amountPaid === "number" && body.amountPaid !== existing.amountPaid) {
+      const delta = Math.round((body.amountPaid - existing.amountPaid) * 100) / 100;
+      if (delta > 0) {
+        const summary = await getOrderPaymentSummary(orderId);
+        const purpose = inferBespokePurpose({
+          amount: delta,
+          balanceBefore: toNumber(summary.balance),
+          depositRequired: toNumber(summary.depositRequired),
+          confirmedBefore: toNumber(summary.confirmed),
+        });
+        const clientId = await resolveClientId({ email: existing.clientEmail });
+        await appendPayment({
+          reference: generatePaymentReference("MANUAL"),
+          amount: delta,
+          method: PaymentMethod.MANUAL,
+          status: PaymentStatus.CONFIRMED,
+          purpose: purpose as PaymentPurpose,
+          bespokeOrderId: orderId,
+          clientId,
+          confirmedById: gate.session.user?.id ?? null,
+          confirmedAt: new Date(),
+        });
+      }
+    }
 
     if (body.material && typeof body.material === "object") {
       const m = body.material as {
@@ -79,7 +122,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       }
     }
 
-    const updated = await prisma.bespokeOrder.update({
+    await prisma.bespokeOrder.update({
       where: { id: orderId },
       data: {
         clientName: typeof body.clientName === "string" ? body.clientName : undefined,
@@ -93,12 +136,20 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         deliveryDate: body.deliveryDate ? new Date(String(body.deliveryDate)) : undefined,
         notes: typeof body.notes === "string" ? body.notes : undefined,
         totalAmount,
-        amountPaid,
-        balance: totalAmount - amountPaid,
+        // amountPaid / balance are ledger-owned — do not write here
       },
     });
 
-    return NextResponse.json({ item: updated });
+    if (totalAmount !== existing.totalAmount) {
+      await recomputeOrderTotals(orderId);
+    }
+
+    const refreshed = await prisma.bespokeOrder.findUnique({
+      where: { id: orderId },
+      include: paymentInclude,
+    });
+
+    return NextResponse.json({ item: refreshed });
   } catch (e) {
     await logError({
       severity: "WARNING",
@@ -117,7 +168,10 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
     await prisma.bespokeOrder.delete({ where: { id: orderId } });
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (e) {
+    const { mapLedgerDeleteError } = await import("@/lib/payments/ledger-delete-guard");
+    const blocked = mapLedgerDeleteError(e, "order");
+    if (blocked) return NextResponse.json(blocked.body, { status: blocked.status });
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 }

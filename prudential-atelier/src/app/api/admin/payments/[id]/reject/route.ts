@@ -5,15 +5,19 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { sendPaymentRejectedEmail } from "@/lib/email";
 import { logActivity } from "@/lib/logger";
+import { rejectPayment, toNumber } from "@/lib/payments/ledger";
 
 const bodySchema = z.object({
   reason: z.string().min(1).max(500),
 });
 
-function parsePaymentId(id: string): { kind: "ORDER" | "CONSULTATION" | "BESPOKE"; recordId: string } | null {
+function parsePaymentId(
+  id: string,
+): { kind: "ORDER" | "CONSULTATION" | "BESPOKE" | "PAYMENT"; recordId: string } | null {
   if (id.startsWith("order-")) return { kind: "ORDER", recordId: id.slice(6) };
   if (id.startsWith("booking-")) return { kind: "CONSULTATION", recordId: id.slice(8) };
   if (id.startsWith("bespoke-")) return { kind: "BESPOKE", recordId: id.slice(8) };
+  if (id.startsWith("payment-")) return { kind: "PAYMENT", recordId: id.slice(8) };
   return null;
 }
 
@@ -41,6 +45,25 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   const { reason } = parsedBody.data;
   const adminEmail = gate.session.user?.email ?? undefined;
   const adminId = gate.session.user?.id;
+
+  if (parsed.kind === "PAYMENT") {
+    const payment = await rejectPayment({
+      paymentId: parsed.recordId,
+      reason,
+      confirmedById: adminId,
+    });
+    void logActivity({
+      userId: adminId,
+      userEmail: adminEmail,
+      userRole: gate.session.user?.role,
+      action: "PAYMENT_CONFIRM",
+      module: "payments",
+      description: `Rejected ledger payment ${payment.reference}: ${reason}`,
+      recordId: payment.id,
+      recordType: "Payment",
+    });
+    return NextResponse.json({ success: true });
+  }
 
   if (parsed.kind === "ORDER") {
     const order = await prisma.order.findUnique({ where: { id: parsed.recordId } });
@@ -100,6 +123,21 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   if (!bespoke || bespoke.paymentGateway !== PaymentGateway.BANK_TRANSFER) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+
+  const pending = await prisma.payment.findFirst({
+    where: { bespokeOrderId: bespoke.id, status: PaymentStatus.PENDING },
+    orderBy: { createdAt: "desc" },
+  });
+  if (pending) {
+    await rejectPayment({
+      paymentId: pending.id,
+      reason,
+      confirmedById: adminId,
+    });
+  }
+
+  const rejectAmount = pending ? toNumber(pending.amount) : bespoke.balance;
+
   await prisma.bespokeOrder.update({
     where: { id: bespoke.id },
     data: { paymentReceiptUrl: null, paymentGateway: null, paymentRef: null },
@@ -107,7 +145,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   void sendPaymentRejectedEmail({
     to: bespoke.clientEmail,
     ref: bespoke.orderRef,
-    amountNGN: bespoke.balance,
+    amountNGN: rejectAmount,
     reason,
   });
   void logActivity({

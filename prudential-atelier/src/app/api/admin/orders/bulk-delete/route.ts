@@ -27,10 +27,14 @@ export async function POST(req: NextRequest) {
     const deleted = await deleteOrdersByIds(parsed.data.ids);
     return NextResponse.json({ ok: true, deleted });
   } catch (e) {
+    const msg = e instanceof Error ? e.message : "Delete failed";
+    if (msg.includes("payment records")) {
+      return NextResponse.json({ error: msg }, { status: 409 });
+    }
     console.error("[admin/orders/bulk-delete]", e);
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Delete failed" },
-      { status: e instanceof Error && e.message.includes("Maximum") ? 400 : 500 },
+      { error: msg },
+      { status: msg.includes("Maximum") ? 400 : 500 },
     );
   }
 }

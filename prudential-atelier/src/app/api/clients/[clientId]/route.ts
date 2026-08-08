@@ -3,6 +3,7 @@ import { LoyaltyTier } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
 import { logActivity, logError } from "@/lib/logger";
+import { getClientPayments } from "@/lib/payments/ledger";
 
 type Params = { params: Promise<{ clientId: string }> };
 
@@ -59,7 +60,27 @@ export async function GET(_req: NextRequest, { params }: Params) {
     });
 
     if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json({ item });
+
+    const payments = await getClientPayments({
+      userId: item.userId,
+      email: item.user.email,
+    });
+
+    return NextResponse.json({
+      item: {
+        ...item,
+        payments: payments.map((p) => ({
+          id: p.id,
+          reference: p.reference,
+          amount: Number(p.amount),
+          currency: p.currency,
+          purpose: p.purpose,
+          status: p.status,
+          createdAt: p.createdAt,
+          confirmedAt: p.confirmedAt,
+        })),
+      },
+    });
   } catch (e) {
     await logError({
       severity: "WARNING",

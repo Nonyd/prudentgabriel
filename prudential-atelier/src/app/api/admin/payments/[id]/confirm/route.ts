@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PaymentGateway } from "@prisma/client";
+import { PaymentGateway, PaymentStatus } from "@prisma/client";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { fulfillPaidOrder } from "@/lib/order-payment";
@@ -9,11 +9,22 @@ import { sendPaymentConfirmedEmail } from "@/lib/email";
 import { notifyBankTransferConfirmed, notifyPaymentConfirmed } from "@/lib/customer-notifications";
 import { logActivity } from "@/lib/logger";
 import { getPublicAppUrl } from "@/lib/app-url";
+import {
+  appendPayment,
+  confirmPayment,
+  gatewayToPaymentMethod,
+  resolveClientId,
+  toNumber,
+} from "@/lib/payments/ledger";
+import { PaymentPurpose } from "@prisma/client";
 
-function parsePaymentId(id: string): { kind: "ORDER" | "CONSULTATION" | "BESPOKE"; recordId: string } | null {
+function parsePaymentId(
+  id: string,
+): { kind: "ORDER" | "CONSULTATION" | "BESPOKE" | "PAYMENT"; recordId: string } | null {
   if (id.startsWith("order-")) return { kind: "ORDER", recordId: id.slice(6) };
   if (id.startsWith("booking-")) return { kind: "CONSULTATION", recordId: id.slice(8) };
   if (id.startsWith("bespoke-")) return { kind: "BESPOKE", recordId: id.slice(8) };
+  if (id.startsWith("payment-")) return { kind: "PAYMENT", recordId: id.slice(8) };
   return null;
 }
 
@@ -31,6 +42,24 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
   const adminEmail = gate.session.user?.email ?? undefined;
   const adminId = gate.session.user?.id;
 
+  if (parsed.kind === "PAYMENT") {
+    const payment = await confirmPayment({
+      paymentId: parsed.recordId,
+      confirmedById: adminId,
+    });
+    void logActivity({
+      userId: adminId,
+      userEmail: adminEmail,
+      userRole: gate.session.user?.role,
+      action: "PAYMENT_CONFIRM",
+      module: "payments",
+      description: `Confirmed ledger payment ${payment.reference}`,
+      recordId: payment.id,
+      recordType: "Payment",
+    });
+    return NextResponse.json({ success: true, paymentId: payment.id });
+  }
+
   if (parsed.kind === "ORDER") {
     const order = await prisma.order.findUnique({ where: { id: parsed.recordId } });
     if (!order || order.paymentGateway !== PaymentGateway.BANK_TRANSFER) {
@@ -42,6 +71,27 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
       paymentRef: ref,
       gateway: PaymentGateway.BANK_TRANSFER,
     });
+
+    const clientId = await resolveClientId({
+      userId: order.userId,
+      email: order.guestEmail,
+    });
+    const existingLedger = await prisma.payment.findUnique({ where: { reference: ref } });
+    if (!existingLedger) {
+      await appendPayment({
+        reference: ref,
+        amount: order.total,
+        method: gatewayToPaymentMethod(PaymentGateway.BANK_TRANSFER),
+        status: PaymentStatus.CONFIRMED,
+        purpose: PaymentPurpose.RTW_ORDER,
+        receiptUrl: order.paymentReceiptUrl,
+        orderId: order.id,
+        clientId,
+        confirmedById: adminId,
+        confirmedAt: new Date(),
+      });
+    }
+
     const email = order.guestEmail ?? (await prisma.user.findUnique({ where: { id: order.userId ?? "" }, select: { email: true } }))?.email;
     if (email) {
       void sendPaymentConfirmedEmail({
@@ -90,6 +140,27 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
       paymentRef: ref,
       gateway: PaymentGateway.BANK_TRANSFER,
     });
+
+    const clientId = await resolveClientId({
+      userId: booking.userId,
+      email: booking.clientEmail,
+    });
+    const existingLedger = await prisma.payment.findUnique({ where: { reference: ref } });
+    if (!existingLedger) {
+      await appendPayment({
+        reference: ref,
+        amount: booking.feeNGN,
+        method: gatewayToPaymentMethod(PaymentGateway.BANK_TRANSFER),
+        status: PaymentStatus.CONFIRMED,
+        purpose: PaymentPurpose.CONSULTATION,
+        receiptUrl: booking.paymentReceiptUrl,
+        consultationId: booking.id,
+        clientId,
+        confirmedById: adminId,
+        confirmedAt: new Date(),
+      });
+    }
+
     void sendPaymentConfirmedEmail({
       to: booking.clientEmail,
       ref: booking.bookingNumber,
@@ -129,18 +200,27 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  const pending = await prisma.payment.findFirst({
+    where: { bespokeOrderId: bespoke.id, status: PaymentStatus.PENDING },
+    orderBy: { createdAt: "desc" },
+  });
+
   const refParts = (bespoke.paymentRef ?? "").split("|");
   const parsedAmount = refParts.length > 1 ? Number(refParts[1]) : NaN;
-  const payAmount =
-    Number.isFinite(parsedAmount) && parsedAmount > 0
+  const payAmount = pending
+    ? toNumber(pending.amount)
+    : Number.isFinite(parsedAmount) && parsedAmount > 0
       ? Math.min(parsedAmount, bespoke.balance)
       : bespoke.balance;
-  const paymentRef = refParts[0] || bespoke.orderRef;
+  const paymentRef = pending?.reference ?? (refParts[0] || bespoke.orderRef);
+
   await fulfillBespokeOrderBalance({
     orderId: bespoke.id,
     amount: payAmount,
     paymentRef,
     gateway: PaymentGateway.BANK_TRANSFER,
+    confirmedById: adminId,
+    receiptUrl: bespoke.paymentReceiptUrl,
   });
 
   void sendPaymentConfirmedEmail({

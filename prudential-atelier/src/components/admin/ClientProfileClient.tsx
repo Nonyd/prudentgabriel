@@ -52,6 +52,16 @@ type ClientDetail = {
   moodboards: { id: string; title: string; images: string[]; createdAt: string }[];
   adminNotes: { id: string; note: string; addedByName: string | null; createdAt: string }[];
   eventDates: { id: string; label: string; date: string }[];
+  payments?: {
+    id: string;
+    reference: string;
+    amount: number;
+    currency: string;
+    purpose: string;
+    status: string;
+    createdAt: string;
+    confirmedAt: string | null;
+  }[];
 };
 
 export function ClientProfileClient({ clientId }: { clientId: string }) {
@@ -293,6 +303,33 @@ export function ClientProfileClient({ clientId }: { clientId: string }) {
                 <td className="py-2 text-xs">{o.status}</td>
                 <td className="py-2 text-xs">{formatPrice(o.total, "NGN")}</td>
                 <td className="py-2 text-xs">{formatDate(o.createdAt)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Section>
+
+      <Section title="Payments" empty={(item.payments ?? []).length === 0}>
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-sand font-sans text-[10px] uppercase text-text-light">
+              <th className="py-2">Date</th>
+              <th className="py-2">Purpose</th>
+              <th className="py-2">Reference</th>
+              <th className="py-2">Status</th>
+              <th className="py-2 text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(item.payments ?? []).map((p) => (
+              <tr key={p.id} className="border-b border-sand/60">
+                <td className="py-2 text-xs">{formatDate(p.confirmedAt ?? p.createdAt)}</td>
+                <td className="py-2 text-xs">{p.purpose.replace(/_/g, " ")}</td>
+                <td className="py-2 font-sans text-xs text-text-mid">{p.reference}</td>
+                <td className="py-2 text-xs">{p.status}</td>
+                <td className="py-2 text-right text-xs">
+                  {formatPrice(p.amount, (p.currency as "NGN") || "NGN")}
+                </td>
               </tr>
             ))}
           </tbody>

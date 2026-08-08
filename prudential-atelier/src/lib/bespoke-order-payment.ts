@@ -1,12 +1,29 @@
-import { BespokeStage, PaymentGateway } from "@prisma/client";
+import { BespokeStage, PaymentGateway, PaymentPurpose, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { autoOnboardClient } from "@/lib/client-onboarding";
+import {
+  appendPayment,
+  confirmPayment,
+  gatewayToPaymentMethod,
+  getOrderPaymentSummary,
+  inferBespokePurpose,
+  resolveClientId,
+  toNumber,
+} from "@/lib/payments/ledger";
 
+/**
+ * Record a confirmed bespoke payment on the ledger and refresh denormalised totals.
+ * productionUnlockedAt is set by the ledger when deposit is satisfied.
+ * Existing full-payment stage advance (PAYMENT_CONFIRMATION → SKETCHING) is preserved.
+ */
 export async function fulfillBespokeOrderBalance(params: {
   orderId: string;
   amount: number;
   paymentRef: string;
   gateway: PaymentGateway;
+  confirmedById?: string | null;
+  receiptUrl?: string | null;
+  purpose?: PaymentPurpose;
 }): Promise<boolean> {
   const order = await prisma.bespokeOrder.findUnique({
     where: { id: params.orderId },
@@ -20,27 +37,72 @@ export async function fulfillBespokeOrderBalance(params: {
       clientName: true,
       clientPhone: true,
       clientProfileId: true,
+      paymentReceiptUrl: true,
     },
   });
 
-  if (!order || params.amount <= 0 || params.amount > order.balance + 0.01) {
+  if (!order || params.amount <= 0) {
     return false;
   }
 
-  const newPaid = order.amountPaid + params.amount;
-  const newBalance = Math.max(0, order.totalAmount - newPaid);
+  const summaryBefore = await getOrderPaymentSummary(order.id);
+  if (params.amount > toNumber(summaryBefore.balance) + 0.01) {
+    return false;
+  }
+
+  const existing = await prisma.payment.findUnique({
+    where: { reference: params.paymentRef },
+  });
+  if (existing) {
+    if (existing.status === PaymentStatus.CONFIRMED && existing.bespokeOrderId === order.id) {
+      return true;
+    }
+    if (existing.status === PaymentStatus.PENDING && existing.bespokeOrderId === order.id) {
+      await confirmPayment({
+        paymentId: existing.id,
+        confirmedById: params.confirmedById,
+      });
+    } else {
+      return false;
+    }
+  } else {
+    const purpose =
+      params.purpose ??
+      inferBespokePurpose({
+        amount: params.amount,
+        balanceBefore: toNumber(summaryBefore.balance),
+        depositRequired: toNumber(summaryBefore.depositRequired),
+        confirmedBefore: toNumber(summaryBefore.confirmed),
+      });
+
+    const clientId = await resolveClientId({ email: order.clientEmail });
+
+    await appendPayment({
+      reference: params.paymentRef,
+      amount: params.amount,
+      method: gatewayToPaymentMethod(params.gateway),
+      status: PaymentStatus.CONFIRMED,
+      purpose,
+      receiptUrl: params.receiptUrl ?? order.paymentReceiptUrl,
+      bespokeOrderId: order.id,
+      clientId,
+      confirmedById: params.confirmedById ?? null,
+      confirmedAt: new Date(),
+    });
+  }
+
+  const summaryAfter = await getOrderPaymentSummary(order.id);
   const advanceStage =
-    newBalance <= 0 && order.currentStage === BespokeStage.PAYMENT_CONFIRMATION
+    summaryAfter.isFullyPaid && order.currentStage === BespokeStage.PAYMENT_CONFIRMATION
       ? BespokeStage.SKETCHING_CONCEPT
       : undefined;
 
   await prisma.bespokeOrder.update({
     where: { id: order.id },
     data: {
-      amountPaid: newPaid,
-      balance: newBalance,
       paymentRef: params.paymentRef,
       paymentGateway: params.gateway,
+      paymentReceiptUrl: null,
       ...(advanceStage ? { currentStage: advanceStage } : {}),
     },
   });

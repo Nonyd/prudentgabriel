@@ -54,6 +54,8 @@ model User {
   jobTitle   String?
   department String?
   isStaff    Boolean  @default(false)
+
+  paymentsConfirmed Payment[] @relation("PaymentConfirmedBy")
 }
 
 model Consultant {
@@ -175,6 +177,7 @@ model ConsultationBooking {
   reviews  Review[]
   quotations  Quotation[]
   bespokeOrders BespokeOrder[]
+  payments Payment[]
 
   reviewRequestSent Boolean @default(false)
 
@@ -480,6 +483,8 @@ model Order {
 
   reviewRequestSent Boolean @default(false)
 
+  payments Payment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -591,7 +596,13 @@ model Invoice {
   publicToken String @unique @default(cuid())
 
   /// Append-only log for admin payment history UI: [{ recordedAt, amount, method, reference? }]
+  /// Prefer Payment ledger rows; kept for back-compat until fully migrated.
   paymentHistory Json @default("[]")
+
+  quotationId String?
+  quotation   Quotation? @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+
+  payments Payment[]
 
   createdBy String?
   createdAt DateTime @default(now())
@@ -601,6 +612,7 @@ model Invoice {
   @@index([clientEmail])
   @@index([bespokeRequestId])
   @@index([publicToken])
+  @@index([quotationId])
 }
 
 enum InvoiceStatus {
@@ -1101,6 +1113,10 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+  /// Ledger Payment model — confirmed money received
+  CONFIRMED
+  /// Ledger Payment model — rejected (e.g. invalid transfer receipt)
+  REJECTED
 }
 
 enum PaymentGateway {
@@ -1109,6 +1125,24 @@ enum PaymentGateway {
   STRIPE
   MONNIFY
   BANK_TRANSFER
+}
+
+/// Channel used on Payment ledger rows. Mirrors PaymentGateway plus MANUAL for staff-recorded entries.
+enum PaymentMethod {
+  PAYSTACK
+  FLUTTERWAVE
+  STRIPE
+  MONNIFY
+  BANK_TRANSFER
+  MANUAL
+}
+
+enum PaymentPurpose {
+  DEPOSIT
+  BALANCE
+  FULL
+  CONSULTATION
+  RTW_ORDER
 }
 
 enum BespokeStatus {
@@ -1365,8 +1399,10 @@ model BespokeOrder {
 
   quotationId String?
   quotation   Quotation? @relation(fields: [quotationId], references: [id])
+  /// Cached denormalised total of CONFIRMED Payment rows — only write via recomputeOrderTotals().
   amountPaid  Float      @default(0)
   totalAmount Float      @default(0)
+  /// Cached denormalised (totalAmount - amountPaid) — only write via recomputeOrderTotals().
   balance     Float      @default(0)
   paymentGateway PaymentGateway?
   paymentRef     String?
@@ -1383,7 +1419,12 @@ model BespokeOrder {
 
   trackingToken String @unique @default(cuid())
 
+  /// Set when depositSatisfied first becomes true (confirmed payments ≥ deposit). Sprint B gates stage advancement on this.
+  productionUnlockedAt DateTime?
+
   status OrderStatus @default(PENDING)
+
+  payments Payment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1564,6 +1605,7 @@ model Quotation {
   consultation   ConsultationBooking? @relation(fields: [consultationId], references: [id], onDelete: SetNull)
 
   bespokeOrders BespokeOrder[]
+  invoices      Invoice[]
 
   createdBy String?
   createdAt DateTime @default(now())
@@ -1603,6 +1645,62 @@ model BlogPost {
 
   @@index([slug])
   @@index([status, publishedAt])
+}
+
+/// Append-only money ledger. Never update `amount` on an existing row —
+/// corrections are new rows (negative amount with the same purpose, or status REFUNDED).
+/// BespokeOrder.amountPaid / balance and Invoice.depositPaid / balanceDue are
+/// denormalised caches maintained only by recomputeOrderTotals / recomputeInvoiceTotals.
+model Payment {
+  id             String         @id @default(cuid())
+  reference      String         @unique
+  amount         Decimal        @db.Decimal(12, 2)
+  currency       String         @default("NGN")
+  method         PaymentMethod
+  status         PaymentStatus
+  purpose        PaymentPurpose
+  receiptUrl     String?
+  gatewayPayload Json?
+
+  invoiceId       String?
+  invoice         Invoice?             @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  bespokeOrderId  String?
+  bespokeOrder    BespokeOrder?        @relation(fields: [bespokeOrderId], references: [id], onDelete: Restrict)
+  consultationId  String?
+  consultation    ConsultationBooking? @relation(fields: [consultationId], references: [id], onDelete: Restrict)
+  orderId         String?
+  order           Order?               @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  /// Paying party identifier — NOT a FK.
+  /// Prefer User.id when a User row exists; otherwise the stable placeholder
+  /// `email:<lowercase>` for guests without accounts (see resolveClientId).
+  /// Cannot FK to User: guest placeholders are not User rows, and orphaning a
+  /// ledger row on user-delete would erase money history (RESTRICT would also
+  /// block deleting customers who have paid).
+  ///
+  /// IMMUTABLE — the append-only trigger rejects any UPDATE of this column, so a
+  /// guest who later registers keeps `email:<lowercase>` on their older rows
+  /// while newer rows carry User.id. Never rewrite it to reconcile the two.
+  /// READ RULE: client-scoped queries MUST match BOTH identifiers via
+  /// `clientId: { in: await resolveClientIdentifiers({ userId, email }) }`
+  /// (see getClientPayments in src/lib/payments/ledger.ts), otherwise a client's
+  /// guest-era payments disappear from their own history.
+  clientId String
+
+  confirmedById  String?
+  confirmedBy    User?     @relation("PaymentConfirmedBy", fields: [confirmedById], references: [id], onDelete: SetNull)
+  confirmedAt    DateTime?
+  rejectedReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([bespokeOrderId])
+  @@index([invoiceId])
+  @@index([clientId])
+  @@index([status])
+  @@index([orderId])
+  @@index([consultationId])
 }
 
 model LoyaltyRule {

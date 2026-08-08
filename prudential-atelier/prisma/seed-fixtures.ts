@@ -1,85 +1,657 @@
 /**
- * Production-safe bootstrap seed.
+ * Demo / fixture seed — NEVER run against production.
+ * Requires ALLOW_FIXTURES=true. Refuses the production Neon host.
  *
- * Upserts operational config only: SiteSettings, invoice/payment defaults,
- * email template keys, consultants, shipping zones, default collections,
- * Unsplash gallery placeholders, and the admin account.
- *
- * Never creates clients, orders, invoices, consultations, reviews, or
- * testimonials. Never deletes catalogue rows.
- *
- * Demo / fixture data lives in prisma/seed-fixtures.ts and scripts/seed-demo.ts
- * (both require ALLOW_FIXTURES=true and refuse the production Neon host).
+ * Prefer scripts/seed-demo.ts for the richer presentation dataset.
+ * Production bootstrap is prisma/seed.ts (`pnpm db:seed`).
  */
 import bcrypt from "bcryptjs";
 import {
   PrismaClient,
+  CouponType,
+  ProductCategory,
+  ProductType,
   Role,
+  BespokeStatus,
+  OrderStatus,
+  PaymentStatus,
+  PaymentGateway,
+  Currency,
   ConsultationSessionType,
   ConsultationDeliveryMode,
+  ConsultationStatus,
   SettingGroup,
   SettingType,
   GalleryCategory,
+  InvoiceStatus,
 } from "@prisma/client";
+import { assertFixturesAllowed } from "../scripts/fixture-guard";
+
+assertFixturesAllowed("prisma/seed-fixtures.ts");
 
 const prisma = new PrismaClient();
 
-async function upsertShippingZones() {
-  const zones = [
+const IMG = {
+  bridal: "https://images.unsplash.com/photo-1519741497674-611481863552?w=800",
+  evening: "https://images.unsplash.com/photo-1566174053879-435285eff2e8?w=800",
+  formal: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=800",
+  casual: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=800",
+  kiddies: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800",
+  accessories: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800",
+  bridal2: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?w=800",
+};
+
+type VariantSeed = { size: string; priceNGN: number; salePriceNGN?: number | null; stock: number };
+
+type ProductSeed = {
+  name: string;
+  slug: string;
+  description: string;
+  details?: string;
+  category: ProductCategory;
+  type: ProductType;
+  basePriceNGN: number;
+  isFeatured?: boolean;
+  isNewArrival?: boolean;
+  isOnSale?: boolean;
+  saleEndsAt?: Date;
+  isBespokeAvail?: boolean;
+  tags: string[];
+  images: { url: string; alt: string; isPrimary: boolean; sortOrder: number }[];
+  variants: VariantSeed[];
+  colors?: { name: string; hex: string }[];
+};
+
+const saleEnd = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+
+const PRODUCTS: ProductSeed[] = [
+  {
+    name: "Amore Bridal Gown",
+    slug: "amore-bridal-gown",
+    description: "Hand-beaded couture bridal gown with cathedral train.",
+    details: "<p>Silk organza base with hand-applied pearl and crystal embroidery.</p>",
+    category: ProductCategory.BRIDAL,
+    type: ProductType.BESPOKE,
+    basePriceNGN: 1_850_000,
+    isFeatured: true,
+    isNewArrival: true,
+    isBespokeAvail: true,
+    tags: ["Bridal", "Evening", "dress"],
+    images: [
+      { url: IMG.bridal, alt: "Amore Bridal Gown", isPrimary: true, sortOrder: 0 },
+      { url: IMG.bridal2, alt: "Amore detail", isPrimary: false, sortOrder: 1 },
+    ],
+    variants: [
+      { size: "UK8", priceNGN: 1_850_000, stock: 2 },
+      { size: "UK10", priceNGN: 1_900_000, stock: 3 },
+      { size: "UK12", priceNGN: 1_950_000, stock: 1 },
+    ],
+    colors: [
+      { name: "Ivory", hex: "#FFFFF0" },
+      { name: "Champagne", hex: "#F7E7CE" },
+    ],
+  },
+  {
+    name: "Ebony Evening Dress",
+    slug: "ebony-evening-dress",
+    description: "Floor-length sequin evening gown with sculptural neckline.",
+    details: "<p>Stretch sequin mesh. Fully lined.</p>",
+    category: ProductCategory.EVENING_WEAR,
+    type: ProductType.RTW,
+    basePriceNGN: 420_000,
+    isFeatured: true,
+    isOnSale: true,
+    saleEndsAt: saleEnd,
+    tags: ["Evening", "Bridal", "dress", "rich-regal"],
+    images: [
+      { url: IMG.evening, alt: "Ebony Evening Dress", isPrimary: true, sortOrder: 0 },
+      { url: IMG.formal, alt: "Ebony alternate", isPrimary: false, sortOrder: 1 },
+    ],
+    variants: [
+      { size: "XS", priceNGN: 450_000, salePriceNGN: 360_000, stock: 4 },
+      { size: "S", priceNGN: 450_000, salePriceNGN: 360_000, stock: 5 },
+      { size: "M", priceNGN: 450_000, salePriceNGN: 360_000, stock: 2 },
+      { size: "L", priceNGN: 450_000, salePriceNGN: 360_000, stock: 0 },
+    ],
+    colors: [{ name: "Black", hex: "#1a1a1a" }],
+  },
+  {
+    name: "Lagos Power Suit",
+    slug: "lagos-power-suit",
+    description: "Tailored double-breasted suit in Italian wool blend.",
+    category: ProductCategory.FORMAL,
+    type: ProductType.RTW,
+    basePriceNGN: 285_000,
+    isNewArrival: true,
+    tags: ["Corporate", "Evening", "suit"],
+    images: [{ url: IMG.formal, alt: "Lagos Power Suit", isPrimary: true, sortOrder: 0 }],
+    variants: [
+      { size: "UK8", priceNGN: 285_000, stock: 6 },
+      { size: "UK10", priceNGN: 295_000, stock: 4 },
+      { size: "UK12", priceNGN: 305_000, stock: 3 },
+    ],
+    colors: [
+      { name: "Navy", hex: "#1B2838" },
+      { name: "Charcoal", hex: "#36454F" },
+    ],
+  },
+  {
+    name: "Celestial Sequin Gown",
+    slug: "celestial-sequin-gown",
+    description: "Ombré sequin column gown for gala nights.",
+    category: ProductCategory.EVENING_WEAR,
+    type: ProductType.RTW,
+    basePriceNGN: 520_000,
+    tags: ["Evening", "dress", "la-femme"],
+    images: [{ url: IMG.evening, alt: "Celestial Sequin Gown", isPrimary: true, sortOrder: 0 }],
+    variants: [
+      { size: "S", priceNGN: 520_000, stock: 2 },
+      { size: "M", priceNGN: 540_000, stock: 2 },
+      { size: "L", priceNGN: 560_000, stock: 1 },
+    ],
+  },
+  {
+    name: "Ivy Casual Set",
+    slug: "ivy-casual-set",
+    description: "Linen co-ord with wide-leg trousers and cropped shirt.",
+    category: ProductCategory.CASUAL,
+    type: ProductType.RTW,
+    basePriceNGN: 125_000,
+    tags: ["Casual", "set"],
+    images: [{ url: IMG.casual, alt: "Ivy Casual Set", isPrimary: true, sortOrder: 0 }],
+    variants: [
+      { size: "XS", priceNGN: 125_000, stock: 8 },
+      { size: "S", priceNGN: 125_000, stock: 10 },
+      { size: "M", priceNGN: 130_000, stock: 7 },
+    ],
+  },
+  {
+    name: "Kiddies Party Dress",
+    slug: "kiddies-party-dress",
+    description: "Tulle party dress with satin sash.",
+    category: ProductCategory.KIDDIES,
+    type: ProductType.RTW,
+    basePriceNGN: 68_000,
+    tags: ["Kiddies", "dress"],
+    images: [{ url: IMG.kiddies, alt: "Kiddies Party Dress", isPrimary: true, sortOrder: 0 }],
+    variants: [
+      { size: "Age 4-5", priceNGN: 68_000, stock: 5 },
+      { size: "Age 6-7", priceNGN: 72_000, stock: 4 },
+      { size: "Age 8-10", priceNGN: 76_000, stock: 3 },
+    ],
+  },
+  {
+    name: "Silk Scarf — Niger",
+    slug: "silk-scarf-niger",
+    description: "Hand-rolled silk twill scarf with custom print.",
+    category: ProductCategory.ACCESSORIES,
+    type: ProductType.RTW,
+    basePriceNGN: 45_000,
+    tags: ["Traditional", "accessories"],
+    images: [{ url: IMG.accessories, alt: "Silk Scarf", isPrimary: true, sortOrder: 0 }],
+    variants: [
+      { size: "One Size", priceNGN: 45_000, stock: 20 },
+    ],
+  },
+  {
+    name: "Aso-Ebi Formal Gown",
+    slug: "aso-ebi-formal-gown",
+    description: "Structured mermaid gown for group orders.",
+    category: ProductCategory.FORMAL,
+    type: ProductType.BESPOKE,
+    basePriceNGN: 380_000,
+    isBespokeAvail: true,
+    tags: ["Traditional", "Corporate", "dress"],
+    images: [{ url: IMG.formal, alt: "Aso-Ebi Formal Gown", isPrimary: true, sortOrder: 0 }],
+    variants: [
+      { size: "UK8", priceNGN: 380_000, stock: 3 },
+      { size: "UK10", priceNGN: 400_000, stock: 3 },
+      { size: "UK12", priceNGN: 420_000, stock: 2 },
+    ],
+  },
+  {
+    name: "Cocktail Midi Dress",
+    slug: "cocktail-midi-dress",
+    description: "Midi cocktail dress with feather hem.",
+    category: ProductCategory.EVENING_WEAR,
+    type: ProductType.RTW,
+    basePriceNGN: 195_000,
+    tags: ["Evening", "dress"],
+    images: [{ url: IMG.evening, alt: "Cocktail Midi", isPrimary: true, sortOrder: 0 }],
+    variants: [
+      { size: "S", priceNGN: 195_000, stock: 4 },
+      { size: "M", priceNGN: 195_000, stock: 4 },
+      { size: "L", priceNGN: 210_000, stock: 2 },
+    ],
+  },
+  {
+    name: "Linen Shirt Dress",
+    slug: "linen-shirt-dress",
+    description: "Relaxed shirt dress with belt.",
+    category: ProductCategory.CASUAL,
+    type: ProductType.RTW,
+    basePriceNGN: 98_000,
+    tags: ["Casual", "Modest", "dress"],
+    images: [{ url: IMG.casual, alt: "Linen Shirt Dress", isPrimary: true, sortOrder: 0 }],
+    variants: [
+      { size: "XS", priceNGN: 98_000, stock: 5 },
+      { size: "S", priceNGN: 98_000, stock: 6 },
+      { size: "M", priceNGN: 102_000, stock: 4 },
+    ],
+  },
+  {
+    name: "Pearl Clutch",
+    slug: "pearl-clutch",
+    description: "Structured clutch with pearl frame.",
+    category: ProductCategory.ACCESSORIES,
+    type: ProductType.RTW,
+    basePriceNGN: 85_000,
+    tags: ["Evening", "Bridal", "accessories"],
+    images: [{ url: IMG.accessories, alt: "Pearl Clutch", isPrimary: true, sortOrder: 0 }],
+    variants: [{ size: "One Size", priceNGN: 85_000, stock: 12 }],
+  },
+  {
+    name: "Traditional Buba Set",
+    slug: "traditional-buba-set",
+    description: "Embroidered buba and iro in aso-oke.",
+    category: ProductCategory.CASUAL,
+    type: ProductType.BESPOKE,
+    basePriceNGN: 220_000,
+    isBespokeAvail: true,
+    tags: ["Traditional", "set"],
+    images: [{ url: IMG.casual, alt: "Buba Set", isPrimary: true, sortOrder: 0 }],
+    variants: [
+      { size: "S", priceNGN: 220_000, stock: 2 },
+      { size: "M", priceNGN: 240_000, stock: 2 },
+      { size: "L", priceNGN: 260_000, stock: 1 },
+    ],
+  },
+  {
+    name: "Modest Wrap Dress",
+    slug: "modest-wrap-dress",
+    description: "Long-sleeve wrap dress with modest coverage.",
+    category: ProductCategory.CASUAL,
+    type: ProductType.RTW,
+    basePriceNGN: 112_000,
+    tags: ["Modest", "Corporate", "dress", "church-girl"],
+    images: [{ url: IMG.casual, alt: "Modest Wrap Dress", isPrimary: true, sortOrder: 0 }],
+    variants: [
+      { size: "XS", priceNGN: 112_000, stock: 3 },
+      { size: "S", priceNGN: 112_000, stock: 4 },
+      { size: "M", priceNGN: 118_000, stock: 3 },
+    ],
+  },
+  {
+    name: "Mini-Me Mom Dress",
+    slug: "mini-me-mom-dress",
+    description: "Coordinating mother-daughter occasion set.",
+    category: ProductCategory.KIDDIES,
+    type: ProductType.BESPOKE,
+    basePriceNGN: 155_000,
+    isBespokeAvail: true,
+    tags: ["Kiddies", "Bridal", "dress"],
+    images: [{ url: IMG.kiddies, alt: "Mini-Me", isPrimary: true, sortOrder: 0 }],
+    variants: [
+      { size: "Age 4-5", priceNGN: 155_000, stock: 2 },
+      { size: "Age 6-7", priceNGN: 165_000, stock: 2 },
+    ],
+  },
+];
+
+async function main() {
+  console.log("Fixture seed — transactional demo data only (catalogue is not wiped).");
+
+  const created: { slug: string; id: string }[] = [];
+
+  for (const p of PRODUCTS) {
+    const row = await prisma.product.upsert({
+      where: { slug: p.slug },
+      update: {},
+      create: {
+        name: p.name,
+        slug: p.slug,
+        description: p.description,
+        details: p.details ?? `<p>${p.description}</p>`,
+        category: p.category,
+        type: p.type,
+        priceNGN: p.basePriceNGN,
+        basePriceNGN: p.basePriceNGN,
+        isPublished: true,
+        isFeatured: p.isFeatured ?? false,
+        isNewArrival: p.isNewArrival ?? false,
+        isOnSale: p.isOnSale ?? false,
+        saleEndsAt: p.saleEndsAt ?? null,
+        isBespokeAvail: p.isBespokeAvail ?? false,
+        tags: p.tags,
+        inStock: true,
+        images: {
+          create: p.images.map((im) => ({
+            url: im.url,
+            alt: im.alt,
+            isPrimary: im.isPrimary,
+            sortOrder: im.sortOrder,
+          })),
+        },
+        variants: {
+          create: p.variants.map((v, i) => ({
+            size: v.size,
+            priceNGN: v.priceNGN,
+            salePriceNGN: v.salePriceNGN ?? null,
+            stock: v.stock,
+            sortOrder: i,
+          })),
+        },
+        colors: p.colors?.length
+          ? {
+              create: p.colors.map((c) => ({ name: c.name, hex: c.hex })),
+            }
+          : undefined,
+      },
+    });
+    created.push({ slug: row.slug, id: row.id });
+  }
+
+  const ebony = created.find((c) => c.slug === "ebony-evening-dress");
+  const pearl = created.find((c) => c.slug === "pearl-clutch");
+  const scarf = created.find((c) => c.slug === "silk-scarf-niger");
+
+  if (ebony && pearl) {
+    await prisma.bundleItem.createMany({
+      data: [{ sourceProductId: ebony.id, targetProductId: pearl.id, sortOrder: 0 }],
+      skipDuplicates: true,
+    });
+  }
+  if (ebony && scarf) {
+    await prisma.bundleItem.createMany({
+      data: [{ sourceProductId: ebony.id, targetProductId: scarf.id, sortOrder: 1 }],
+      skipDuplicates: true,
+    });
+  }
+
+  console.log(`Ensured ${created.length} fixture products (catalogue not wiped).`);
+
+  await prisma.shippingZone.createMany({
+    skipDuplicates: true,
+    data: [
+      {
+        name: "Lagos — Express",
+        countries: ["NG"],
+        states: ["Lagos"],
+        flatRateNGN: 3500,
+        perKgNGN: 400,
+        freeAboveNGN: 250_000,
+        estimatedDays: "2–4 business days",
+        sortOrder: 0,
+      },
+      {
+        name: "Nigeria — Standard",
+        countries: ["NG"],
+        states: [],
+        flatRateNGN: 5500,
+        perKgNGN: 600,
+        freeAboveNGN: 400_000,
+        estimatedDays: "4–7 business days",
+        sortOrder: 1,
+      },
+      {
+        name: "International",
+        countries: ["*"],
+        states: [],
+        flatRateNGN: 45_000,
+        perKgNGN: 2500,
+        freeAboveNGN: null,
+        estimatedDays: "10–14 business days",
+        sortOrder: 2,
+      },
+    ],
+  });
+
+  const couponSeeds = [
     {
-      name: "Lagos — Express",
-      countries: ["NG"],
-      states: ["Lagos"],
-      flatRateNGN: 3500,
-      perKgNGN: 400,
-      freeAboveNGN: 250_000,
-      estimatedDays: "2–4 business days",
-      sortOrder: 0,
+      code: "WELCOME10",
+      description: "Welcome — 10% off your first order",
+      type: CouponType.PERCENTAGE,
+      value: 10,
+      appliesToAll: true,
+      isActive: true,
+      maxUsesPerUser: 1,
+      minOrderNGN: null as number | null,
+      maxUsesTotal: null as number | null,
+      categoryScope: [] as ProductCategory[],
+      expiresAt: null as Date | null,
     },
     {
-      name: "Nigeria — Standard",
-      countries: ["NG"],
-      states: [] as string[],
-      flatRateNGN: 5500,
-      perKgNGN: 600,
-      freeAboveNGN: 400_000,
-      estimatedDays: "4–7 business days",
-      sortOrder: 1,
+      code: "FREESHIP",
+      description: "Free shipping from ₦50,000",
+      type: CouponType.FREE_SHIPPING,
+      value: 0,
+      appliesToAll: true,
+      isActive: true,
+      maxUsesPerUser: 2,
+      minOrderNGN: 50_000,
+      maxUsesTotal: null,
+      categoryScope: [],
+      expiresAt: null,
     },
     {
-      name: "International",
-      countries: ["*"],
-      states: [] as string[],
-      flatRateNGN: 45_000,
-      perKgNGN: 2500,
-      freeAboveNGN: null as number | null,
-      estimatedDays: "10–14 business days",
-      sortOrder: 2,
+      code: "BRIDAL20",
+      description: "20% off bridal",
+      type: CouponType.PERCENTAGE,
+      value: 20,
+      appliesToAll: false,
+      isActive: true,
+      maxUsesPerUser: 1,
+      minOrderNGN: 150_000,
+      maxUsesTotal: 50,
+      categoryScope: [ProductCategory.BRIDAL],
+      expiresAt: null,
+    },
+    {
+      code: "FLASH5000",
+      description: "₦5,000 off",
+      type: CouponType.FIXED_AMOUNT,
+      value: 5000,
+      appliesToAll: true,
+      isActive: true,
+      maxUsesPerUser: 1,
+      minOrderNGN: 80_000,
+      maxUsesTotal: 200,
+      categoryScope: [],
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    },
+    {
+      code: "VIP15",
+      description: "15% VIP",
+      type: CouponType.PERCENTAGE,
+      value: 15,
+      appliesToAll: true,
+      isActive: true,
+      maxUsesPerUser: 5,
+      minOrderNGN: null,
+      maxUsesTotal: null,
+      categoryScope: [],
+      expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    },
+    {
+      code: "EXPIRED10",
+      description: "Expired sample",
+      type: CouponType.PERCENTAGE,
+      value: 10,
+      appliesToAll: true,
+      isActive: false,
+      maxUsesPerUser: 1,
+      minOrderNGN: null,
+      maxUsesTotal: null,
+      categoryScope: [],
+      expiresAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
     },
   ];
 
-  for (const z of zones) {
-    const existing = await prisma.shippingZone.findFirst({ where: { name: z.name } });
-    if (existing) {
-      await prisma.shippingZone.update({
-        where: { id: existing.id },
-        data: {
-          countries: z.countries,
-          states: z.states,
-          flatRateNGN: z.flatRateNGN,
-          perKgNGN: z.perKgNGN,
-          freeAboveNGN: z.freeAboveNGN,
-          estimatedDays: z.estimatedDays,
-          sortOrder: z.sortOrder,
-        },
-      });
-    } else {
-      await prisma.shippingZone.create({ data: z });
-    }
+  for (const c of couponSeeds) {
+    await prisma.coupon.upsert({
+      where: { code: c.code },
+      update: {
+        description: c.description,
+        type: c.type,
+        value: c.value,
+        appliesToAll: c.appliesToAll,
+        isActive: c.isActive,
+        maxUsesPerUser: c.maxUsesPerUser,
+        minOrderNGN: c.minOrderNGN,
+        maxUsesTotal: c.maxUsesTotal,
+        categoryScope: c.categoryScope,
+        expiresAt: c.expiresAt,
+      },
+      create: {
+        code: c.code,
+        description: c.description,
+        type: c.type,
+        value: c.value,
+        appliesToAll: c.appliesToAll,
+        isActive: c.isActive,
+        maxUsesPerUser: c.maxUsesPerUser,
+        minOrderNGN: c.minOrderNGN,
+        maxUsesTotal: c.maxUsesTotal,
+        categoryScope: c.categoryScope,
+        expiresAt: c.expiresAt,
+      },
+    });
   }
-}
 
-async function upsertConsultants() {
+  const adminHash = await bcrypt.hash("Admin@PA2024!", 12);
+  await prisma.user.upsert({
+    where: { email: "admin@prudentgabriel.com" },
+    update: { password: adminHash, role: Role.SUPER_ADMIN, name: "PA Admin" },
+    create: {
+      email: "admin@prudentgabriel.com",
+      name: "PA Admin",
+      password: adminHash,
+      role: Role.SUPER_ADMIN,
+    },
+  });
+
+  const custHash = await bcrypt.hash("Customer@2024", 12);
+  const customers = ["amara@example.com", "chidinma@example.com", "folake@example.com"];
+  for (const em of customers) {
+    await prisma.user.upsert({
+      where: { email: em },
+      update: {},
+      create: {
+        email: em,
+        name: em.split("@")[0].replace(/^\w/, (c) => c.toUpperCase()),
+        password: custHash,
+        role: Role.CUSTOMER,
+      },
+    });
+  }
+
+  const amaraUser = await prisma.user.findUnique({ where: { email: "amara@example.com" }, select: { id: true } });
+  const chidinmaUser = await prisma.user.findUnique({ where: { email: "chidinma@example.com" }, select: { id: true } });
+  if (chidinmaUser && amaraUser) {
+    await prisma.user.update({
+      where: { id: chidinmaUser.id },
+      data: { referredById: amaraUser.id },
+    });
+  }
+  if (amaraUser) {
+    await prisma.user.update({
+      where: { id: amaraUser.id },
+      data: { pointsBalance: 2350 },
+    });
+  }
+
+  const bespokeStatuses: BespokeStatus[] = [
+    BespokeStatus.PENDING,
+    BespokeStatus.REVIEWED,
+    BespokeStatus.CONFIRMED,
+    BespokeStatus.IN_PROGRESS,
+    BespokeStatus.READY,
+    BespokeStatus.DELIVERED,
+    BespokeStatus.REVIEWED,
+    BespokeStatus.CANCELLED,
+  ];
+  for (let i = 0; i < 8; i++) {
+    const n = String(i + 1).padStart(5, "0");
+    await prisma.bespokeRequest.upsert({
+      where: { requestNumber: `BQ-2024-${n}` },
+      update: {},
+      create: {
+        requestNumber: `BQ-2024-${n}`,
+        name: `Client ${i + 1}`,
+        email: `bespoke${i}@example.com`,
+        phone: "+2348000000000",
+        country: "NG",
+        occasion: i % 2 === 0 ? "Wedding" : "Gala",
+        description: "Looking for a statement piece with modest tailoring.",
+        budgetRange: "₦500k – ₦1m",
+        timeline: "3 months",
+        status: bespokeStatuses[i] ?? BespokeStatus.REVIEWED,
+        referenceImages: [],
+      },
+    });
+  }
+
+  const productsForOrders = await prisma.product.findMany({
+    take: 4,
+    include: { variants: { take: 1, orderBy: { sortOrder: "asc" } } },
+  });
+  const orderVariants: {
+    status: OrderStatus;
+    payment: PaymentStatus;
+    gateway: PaymentGateway | null;
+  }[] = [
+    { status: OrderStatus.PENDING, payment: PaymentStatus.PENDING, gateway: null },
+    { status: OrderStatus.CONFIRMED, payment: PaymentStatus.PAID, gateway: PaymentGateway.PAYSTACK },
+    { status: OrderStatus.PROCESSING, payment: PaymentStatus.PAID, gateway: PaymentGateway.FLUTTERWAVE },
+    { status: OrderStatus.SHIPPED, payment: PaymentStatus.PAID, gateway: PaymentGateway.PAYSTACK },
+    { status: OrderStatus.DELIVERED, payment: PaymentStatus.PAID, gateway: PaymentGateway.STRIPE },
+    { status: OrderStatus.PENDING, payment: PaymentStatus.PAID, gateway: PaymentGateway.MONNIFY },
+    { status: OrderStatus.PROCESSING, payment: PaymentStatus.FAILED, gateway: PaymentGateway.PAYSTACK },
+    { status: OrderStatus.CANCELLED, payment: PaymentStatus.PENDING, gateway: null },
+  ];
+
+  for (let i = 0; i < 8; i++) {
+    const p = productsForOrders[i % Math.max(1, productsForOrders.length)];
+    const v = p?.variants[0];
+    if (!p || !v) break;
+    const orderNumber = `PA-SEED-${2024000 + i}`;
+    const line = v.priceNGN;
+    const subtotal = line;
+    const ship = 3500;
+    const ov = orderVariants[i] ?? orderVariants[0];
+    await prisma.order.upsert({
+      where: { orderNumber },
+      update: {},
+      create: {
+        orderNumber,
+        userId: amaraUser?.id ?? null,
+        guestEmail: amaraUser ? null : "guest@example.com",
+        guestName: amaraUser ? null : "Guest Buyer",
+        subtotal,
+        shippingAmount: ship,
+        discount: 0,
+        total: subtotal + ship,
+        currency: Currency.NGN,
+        paymentStatus: ov.payment,
+        status: ov.status,
+        paymentGateway: ov.gateway,
+        items: {
+          create: [
+            {
+              productId: p.id,
+              variantId: v.id,
+              quantity: 1,
+              price: line,
+              lineTotal: line,
+              size: v.size,
+            },
+          ],
+        },
+      },
+    });
+  }
+
+  console.log("\n👤 Creating consultants...");
   await prisma.consultant.upsert({
     where: { id: "consultant-prudent" },
     update: {},
@@ -242,9 +814,144 @@ async function upsertConsultants() {
       },
     },
   });
-}
 
-async function upsertSiteSettings() {
+  const seniorOffering = await prisma.consultantOffering.findFirst({
+    where: { consultantId: "consultant-senior", sessionType: ConsultationSessionType.BESPOKE_DESIGN },
+  });
+  const prudentOffering = await prisma.consultantOffering.findFirst({
+    where: { consultantId: "consultant-prudent" },
+  });
+  const styleOffering = await prisma.consultantOffering.findFirst({
+    where: { consultantId: "consultant-style" },
+  });
+
+  if (amaraUser && seniorOffering) {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() + 10);
+    await prisma.consultationBooking.upsert({
+      where: { bookingNumber: "CB-26-SEED01" },
+      update: {},
+      create: {
+        bookingNumber: "CB-26-SEED01",
+        offeringType: "PHYSICAL_TEAM_ONLY",
+        offeringId: seniorOffering.id,
+        consultantId: "consultant-senior",
+        userId: amaraUser.id,
+        clientName: "Amara",
+        clientEmail: "amara@example.com",
+        clientPhone: "+2348000000001",
+        clientCountry: "NG",
+        occasion: "White Wedding",
+        description: "Planning a bespoke reception gown with modern lines and traditional accents.",
+        referenceImages: [],
+        confirmedDate: d,
+        confirmedTime: "11:00",
+        meetingLink: "https://meet.google.com",
+        meetingPlatform: "Google Meet",
+        feeNGN: seniorOffering.feeNGN,
+        currency: Currency.NGN,
+        paymentStatus: PaymentStatus.PAID,
+        paymentGateway: PaymentGateway.PAYSTACK,
+        paymentRef: "seed-pay-1",
+        paidAt: new Date(),
+        status: ConsultationStatus.CONFIRMED,
+      },
+    });
+  }
+
+  if (chidinmaUser && prudentOffering) {
+    const p1 = new Date();
+    p1.setUTCDate(p1.getUTCDate() + 14);
+    await prisma.consultationBooking.upsert({
+      where: { bookingNumber: "CB-26-SEED02" },
+      update: {},
+      create: {
+        bookingNumber: "CB-26-SEED02",
+        offeringType: "PHYSICAL_PRUDENT_TEAM",
+        offeringId: prudentOffering.id,
+        consultantId: "consultant-prudent",
+        userId: chidinmaUser.id,
+        clientName: "Chidinma",
+        clientEmail: "chidinma@example.com",
+        clientPhone: "+2348000000002",
+        clientCountry: "NG",
+        occasion: "Bridal",
+        description: "Bridal consultation for traditional and white wedding looks across two days of celebration.",
+        referenceImages: [],
+        preferredDate1: p1,
+        preferredDate2: null,
+        preferredDate3: null,
+        feeNGN: prudentOffering.feeNGN,
+        currency: Currency.NGN,
+        paymentStatus: PaymentStatus.PAID,
+        paymentGateway: PaymentGateway.PAYSTACK,
+        paymentRef: "seed-pay-2",
+        paidAt: new Date(),
+        status: ConsultationStatus.PENDING_CONFIRMATION,
+      },
+    });
+  }
+
+  if (amaraUser && styleOffering) {
+    const d2 = new Date();
+    d2.setUTCMonth(d2.getUTCMonth() - 1);
+    await prisma.consultationBooking.upsert({
+      where: { bookingNumber: "CB-26-SEED03" },
+      update: {},
+      create: {
+        bookingNumber: "CB-26-SEED03",
+        offeringType: "VIRTUAL_TEAM_ONLY",
+        virtualPlatform: "zoom",
+        offeringId: styleOffering.id,
+        consultantId: "consultant-style",
+        userId: amaraUser.id,
+        clientName: "Amara",
+        clientEmail: "amara@example.com",
+        clientPhone: "+2348000000001",
+        clientCountry: "NG",
+        occasion: "Wardrobe Refresh",
+        description: "Completed styling session for office and weekend wardrobe refresh.",
+        referenceImages: [],
+        confirmedDate: d2,
+        confirmedTime: "14:00",
+        feeNGN: styleOffering.feeNGN,
+        currency: Currency.NGN,
+        paymentStatus: PaymentStatus.PAID,
+        paymentGateway: PaymentGateway.FLUTTERWAVE,
+        paymentRef: "seed-pay-3",
+        paidAt: d2,
+        status: ConsultationStatus.COMPLETED,
+        completedAt: d2,
+      },
+    });
+  }
+
+  console.log("  ✅ Consultants and demo consultation bookings ensured.");
+
+  const firstProduct = await prisma.product.findFirst({ select: { id: true } });
+  const firstUser = await prisma.user.findFirst({
+    where: { email: "folake@example.com" },
+    select: { id: true },
+  });
+  if (firstProduct && firstUser) {
+    const existing = await prisma.review.findFirst({
+      where: { userId: firstUser.id, productId: firstProduct.id },
+    });
+    if (!existing) {
+      await prisma.review.create({
+        data: {
+          userId: firstUser.id,
+          productId: firstProduct.id,
+          rating: 5,
+          title: "Stunning",
+          body: "Absolutely beautiful craftsmanship — awaiting moderation.",
+          isVerified: true,
+          isApproved: false,
+        },
+      });
+    }
+  }
+
   const defaultSettings: {
     key: string;
     value: string;
@@ -280,7 +987,6 @@ async function upsertSiteSettings() {
     { key: "bank_name", value: "", group: SettingGroup.PAYMENTS, label: "Bank Transfer — Bank Name", type: SettingType.TEXT, isPublic: true, sortOrder: 20 },
     { key: "bank_account_number", value: "", group: SettingGroup.PAYMENTS, label: "Bank Transfer — Account Number", type: SettingType.TEXT, isPublic: true, sortOrder: 21 },
     { key: "bank_account_name", value: "", group: SettingGroup.PAYMENTS, label: "Bank Transfer — Account Name", type: SettingType.TEXT, isPublic: true, sortOrder: 22 },
-    { key: "bespoke_deposit_percent", value: "70", group: SettingGroup.PAYMENTS, label: "Bespoke Deposit %", type: SettingType.NUMBER, isPublic: false, sortOrder: 25 },
     { key: "exchange_rate_usd", value: "0.00065", group: SettingGroup.PAYMENTS, label: "USD Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 30 },
     { key: "exchange_rate_gbp", value: "0.00052", group: SettingGroup.PAYMENTS, label: "GBP Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 31 },
     { key: "email_from_name", value: "Prudent Gabriel", group: SettingGroup.EMAIL, label: "From Name", type: SettingType.TEXT, isPublic: false, sortOrder: 1 },
@@ -352,22 +1058,35 @@ async function upsertSiteSettings() {
     });
   }
 
-  const invoiceSettings = [
-    { key: "invoice_company_name", value: "Prudential Atelier", group: SettingGroup.INVOICE, label: "Company Name", type: SettingType.TEXT, isPublic: false, sortOrder: 1 },
-    { key: "invoice_address", value: "Lagos, Nigeria", group: SettingGroup.INVOICE, label: "Studio Address", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 2 },
-    { key: "invoice_phone", value: "", group: SettingGroup.INVOICE, label: "Invoice Phone", type: SettingType.TEXT, isPublic: false, sortOrder: 3 },
-    { key: "invoice_email", value: "hello@prudentgabriel.com", group: SettingGroup.INVOICE, label: "Invoice Email", type: SettingType.TEXT, isPublic: false, sortOrder: 4 },
-    { key: "invoice_website", value: "https://prudentgabriel.com", group: SettingGroup.INVOICE, label: "Website", type: SettingType.TEXT, isPublic: false, sortOrder: 5 },
-    { key: "invoice_bank_name_ngn", value: "", group: SettingGroup.INVOICE, label: "Bank Name (NGN)", type: SettingType.TEXT, isPublic: false, sortOrder: 10 },
-    { key: "invoice_account_name_ngn", value: "", group: SettingGroup.INVOICE, label: "Account Name (NGN)", type: SettingType.TEXT, isPublic: false, sortOrder: 11 },
-    { key: "invoice_account_number_ngn", value: "", group: SettingGroup.INVOICE, label: "Account Number (NGN)", type: SettingType.TEXT, isPublic: false, sortOrder: 12 },
-    { key: "invoice_bank_name_usd", value: "", group: SettingGroup.INVOICE, label: "Bank Name (USD)", type: SettingType.TEXT, isPublic: false, sortOrder: 20 },
-    { key: "invoice_account_name_usd", value: "", group: SettingGroup.INVOICE, label: "Account Name (USD)", type: SettingType.TEXT, isPublic: false, sortOrder: 21 },
-    { key: "invoice_account_number_usd", value: "", group: SettingGroup.INVOICE, label: "Account Number (USD)", type: SettingType.TEXT, isPublic: false, sortOrder: 22 },
-    { key: "invoice_swift_usd", value: "", group: SettingGroup.INVOICE, label: "SWIFT (USD)", type: SettingType.TEXT, isPublic: false, sortOrder: 23 },
-    { key: "invoice_bank_name_gbp", value: "", group: SettingGroup.INVOICE, label: "Bank Name (GBP)", type: SettingType.TEXT, isPublic: false, sortOrder: 28 },
-    { key: "invoice_account_name_gbp", value: "", group: SettingGroup.INVOICE, label: "Account Name (GBP)", type: SettingType.TEXT, isPublic: false, sortOrder: 29 },
-    { key: "invoice_account_number_gbp", value: "", group: SettingGroup.INVOICE, label: "Account Number (GBP)", type: SettingType.TEXT, isPublic: false, sortOrder: 30 },
+  const invoiceSettings: {
+    key: string;
+    value: string;
+    group: SettingGroup;
+    label: string;
+    type: SettingType;
+    isPublic: boolean;
+    sortOrder: number;
+  }[] = [
+    { key: "invoice_business_name", value: "Prudential Atelier", group: SettingGroup.INVOICE, label: "Business Name on Invoice", type: SettingType.TEXT, isPublic: false, sortOrder: 1 },
+    { key: "invoice_tagline", value: "A Division of Prudent Gabriel", group: SettingGroup.INVOICE, label: "Tagline (below business name)", type: SettingType.TEXT, isPublic: false, sortOrder: 2 },
+    { key: "invoice_address_line1", value: "14 Atelier Close", group: SettingGroup.INVOICE, label: "Address Line 1", type: SettingType.TEXT, isPublic: false, sortOrder: 3 },
+    { key: "invoice_address_line2", value: "Victoria Island", group: SettingGroup.INVOICE, label: "Address Line 2", type: SettingType.TEXT, isPublic: false, sortOrder: 4 },
+    { key: "invoice_city", value: "Lagos, Nigeria", group: SettingGroup.INVOICE, label: "City / State / Country", type: SettingType.TEXT, isPublic: false, sortOrder: 5 },
+    { key: "invoice_phone", value: "+234 000 000 0000", group: SettingGroup.INVOICE, label: "Phone Number", type: SettingType.TEXT, isPublic: false, sortOrder: 6 },
+    { key: "invoice_email", value: "hello@prudentgabriel.com", group: SettingGroup.INVOICE, label: "Invoice Email", type: SettingType.TEXT, isPublic: false, sortOrder: 7 },
+    { key: "invoice_website", value: "www.prudentgabriel.com", group: SettingGroup.INVOICE, label: "Website", type: SettingType.TEXT, isPublic: false, sortOrder: 8 },
+    { key: "invoice_rc_number", value: "RC 0000000", group: SettingGroup.INVOICE, label: "CAC/RC Number", type: SettingType.TEXT, isPublic: false, sortOrder: 9 },
+    { key: "invoice_show_rc", value: "false", group: SettingGroup.INVOICE, label: "Show RC Number on Invoice", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 10 },
+    { key: "invoice_bank_name_ngn", value: "First Bank of Nigeria", group: SettingGroup.INVOICE, label: "Bank Name (NGN)", type: SettingType.TEXT, isPublic: false, sortOrder: 20 },
+    { key: "invoice_account_name_ngn", value: "Prudential Atelier Ltd", group: SettingGroup.INVOICE, label: "Account Name (NGN)", type: SettingType.TEXT, isPublic: false, sortOrder: 21 },
+    { key: "invoice_account_number_ngn", value: "0000000000", group: SettingGroup.INVOICE, label: "Account Number (NGN)", type: SettingType.TEXT, isPublic: false, sortOrder: 22 },
+    { key: "invoice_bank_name_usd", value: "Wise (TransferWise)", group: SettingGroup.INVOICE, label: "Bank Name (USD)", type: SettingType.TEXT, isPublic: false, sortOrder: 23 },
+    { key: "invoice_account_name_usd", value: "Prudential Atelier Ltd", group: SettingGroup.INVOICE, label: "Account Name (USD)", type: SettingType.TEXT, isPublic: false, sortOrder: 24 },
+    { key: "invoice_account_number_usd", value: "0000000000", group: SettingGroup.INVOICE, label: "Account Number / IBAN (USD)", type: SettingType.TEXT, isPublic: false, sortOrder: 25 },
+    { key: "invoice_sort_code_usd", value: "", group: SettingGroup.INVOICE, label: "Sort Code / Routing Number (USD)", type: SettingType.TEXT, isPublic: false, sortOrder: 26 },
+    { key: "invoice_bank_name_gbp", value: "Wise (TransferWise)", group: SettingGroup.INVOICE, label: "Bank Name (GBP)", type: SettingType.TEXT, isPublic: false, sortOrder: 27 },
+    { key: "invoice_account_name_gbp", value: "Prudential Atelier Ltd", group: SettingGroup.INVOICE, label: "Account Name (GBP)", type: SettingType.TEXT, isPublic: false, sortOrder: 28 },
+    { key: "invoice_account_number_gbp", value: "0000000000", group: SettingGroup.INVOICE, label: "Account Number / IBAN (GBP)", type: SettingType.TEXT, isPublic: false, sortOrder: 29 },
     { key: "invoice_sort_code_gbp", value: "", group: SettingGroup.INVOICE, label: "Sort Code (GBP)", type: SettingType.TEXT, isPublic: false, sortOrder: 30 },
     { key: "invoice_default_vat", value: "0", group: SettingGroup.INVOICE, label: "Default VAT % (0 = no VAT)", type: SettingType.NUMBER, isPublic: false, sortOrder: 40 },
     { key: "invoice_default_due_days", value: "7", group: SettingGroup.INVOICE, label: "Default Payment Due (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 41 },
@@ -387,9 +1106,33 @@ async function upsertSiteSettings() {
   }
 
   const extraSocial = [
-    { key: "social_instagram_atelier", value: "@prudential_atelier", group: SettingGroup.SOCIAL, label: "Instagram — Atelier", type: SettingType.TEXT, isPublic: true, sortOrder: 6 },
-    { key: "social_instagram_bridal", value: "@prudential_bridal", group: SettingGroup.SOCIAL, label: "Instagram — Bridal", type: SettingType.TEXT, isPublic: true, sortOrder: 7 },
-    { key: "social_instagram_kids", value: "@prudential_kids", group: SettingGroup.SOCIAL, label: "Instagram — Kids", type: SettingType.TEXT, isPublic: true, sortOrder: 8 },
+    {
+      key: "social_instagram_atelier",
+      value: "@prudential_atelier",
+      group: SettingGroup.SOCIAL,
+      label: "Instagram — Atelier",
+      type: SettingType.TEXT,
+      isPublic: true,
+      sortOrder: 6,
+    },
+    {
+      key: "social_instagram_bridal",
+      value: "@prudential_bridal",
+      group: SettingGroup.SOCIAL,
+      label: "Instagram — Bridal",
+      type: SettingType.TEXT,
+      isPublic: true,
+      sortOrder: 7,
+    },
+    {
+      key: "social_instagram_kids",
+      value: "@prudential_kids",
+      group: SettingGroup.SOCIAL,
+      label: "Instagram — Kids",
+      type: SettingType.TEXT,
+      isPublic: true,
+      sortOrder: 8,
+    },
   ];
   for (const setting of extraSocial) {
     await prisma.siteSetting.upsert({
@@ -451,9 +1194,36 @@ async function upsertSiteSettings() {
       create: s,
     });
   }
-}
 
-async function upsertGalleryPlaceholders() {
+  const emailTemplates: { key: string; label: string; sortOrder: number }[] = [
+    { key: "email_tpl_welcome", label: "Welcome Email", sortOrder: 100 },
+    { key: "email_tpl_order_confirmation", label: "Order Confirmation", sortOrder: 101 },
+    { key: "email_tpl_order_shipped", label: "Order Shipped", sortOrder: 102 },
+    { key: "email_tpl_bespoke_confirmation", label: "Bespoke Confirmation", sortOrder: 103 },
+    { key: "email_tpl_password_reset", label: "Password Reset", sortOrder: 104 },
+    { key: "email_tpl_referral_success", label: "Referral Success", sortOrder: 105 },
+    { key: "email_tpl_back_in_stock", label: "Back In Stock", sortOrder: 106 },
+    { key: "email_tpl_consultation_pending", label: "Consultation Pending", sortOrder: 107 },
+    { key: "email_tpl_consultation_confirmed", label: "Consultation Confirmed", sortOrder: 108 },
+    { key: "email_tpl_consultation_cancelled", label: "Consultation Cancelled", sortOrder: 109 },
+  ];
+  const tplDefault = JSON.stringify({ subject: "", body: "" });
+  for (const t of emailTemplates) {
+    await prisma.siteSetting.upsert({
+      where: { key: t.key },
+      update: {},
+      create: {
+        key: t.key,
+        value: tplDefault,
+        group: SettingGroup.EMAIL,
+        label: t.label,
+        type: SettingType.JSON,
+        isPublic: false,
+        sortOrder: t.sortOrder,
+      },
+    });
+  }
+
   const atelierGallerySeed: { url: string; alt: string; caption?: string }[] = [
     { url: "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800", alt: "Atelier workspace", caption: "The workshop where every piece begins" },
     { url: "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=600", alt: "Design team at work", caption: "Our team in Lagos" },
@@ -492,7 +1262,7 @@ async function upsertGalleryPlaceholders() {
   ];
 
   for (let i = 0; i < atelierGallerySeed.length; i++) {
-    const img = atelierGallerySeed[i]!;
+    const img = atelierGallerySeed[i];
     await prisma.galleryImage.upsert({
       where: { publicId: `seed-atelier-${i}` },
       update: {},
@@ -507,8 +1277,9 @@ async function upsertGalleryPlaceholders() {
       },
     });
   }
+
   for (let i = 0; i < bridalGallerySeed.length; i++) {
-    const img = bridalGallerySeed[i]!;
+    const img = bridalGallerySeed[i];
     await prisma.galleryImage.upsert({
       where: { publicId: `seed-bridal-${i}` },
       update: {},
@@ -523,8 +1294,9 @@ async function upsertGalleryPlaceholders() {
       },
     });
   }
+
   for (let i = 0; i < kidsGallerySeed.length; i++) {
-    const img = kidsGallerySeed[i]!;
+    const img = kidsGallerySeed[i];
     await prisma.galleryImage.upsert({
       where: { publicId: `seed-kids-${i}` },
       update: {},
@@ -539,9 +1311,73 @@ async function upsertGalleryPlaceholders() {
       },
     });
   }
-}
 
-async function upsertCollections() {
+  const seedYear = new Date().getFullYear();
+  const demoInvoiceNumber = `PA-INV-${seedYear}-0001`;
+  const demoBespokeForInvoice = await prisma.bespokeRequest.findFirst({ orderBy: { createdAt: "asc" } });
+  if (demoBespokeForInvoice) {
+    const payEntry = { recordedAt: new Date().toISOString(), amount: 637500, method: "Bank Transfer", reference: "SEED-DEP-001" };
+    await prisma.invoice.upsert({
+      where: { invoiceNumber: demoInvoiceNumber },
+      update: {},
+      create: {
+        invoiceNumber: demoInvoiceNumber,
+        bespokeRequestId: demoBespokeForInvoice.id,
+        clientName: "Mrs. Amara Okafor",
+        clientEmail: "amara@example.com",
+        clientPhone: "+234 801 234 5678",
+        clientCity: "Lagos, Nigeria",
+        clientCountry: "Nigeria",
+        currency: "NGN",
+        status: InvoiceStatus.PARTIALLY_PAID,
+        lineItems: [
+          {
+            id: "item-001",
+            description: "Custom White Wedding Gown",
+            details: "Cathedral train, hand-beaded bodice, French lace overlay, removable sleeves",
+            quantity: 1,
+            unitPrice: 850000,
+            amount: 850000,
+          },
+          {
+            id: "item-002",
+            description: "Traditional Attire — Iro & Buba",
+            details: "Embroidered gold aso-oke with matching gele and ipele",
+            quantity: 1,
+            unitPrice: 350000,
+            amount: 350000,
+          },
+          {
+            id: "item-003",
+            description: "Fitting Sessions (3)",
+            details: "Three in-atelier fitting sessions included",
+            quantity: 3,
+            unitPrice: 25000,
+            amount: 75000,
+          },
+        ],
+        subtotal: 1275000,
+        discountType: null,
+        discountValue: 0,
+        discountAmount: 0,
+        vatEnabled: false,
+        vatPercent: 0,
+        vatAmount: 0,
+        total: 1275000,
+        depositRequired: 637500,
+        depositPaid: 637500,
+        balanceDue: 637500,
+        paymentTerms: "50% deposit required to commence. Balance due 3 days before delivery.",
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        clientNote: "Thank you for choosing Prudential Atelier for your special day. We are honoured to dress you.",
+        sentAt: new Date(),
+        paymentHistory: [payEntry],
+      },
+    });
+  }
+
+  console.log("  ✅ Site settings seeded (upsert, existing values preserved).");
+
   const defaultCollections = [
     {
       name: "Rich & Regal",
@@ -588,70 +1424,15 @@ async function upsertCollections() {
       create: col,
     });
   }
-}
 
-async function main() {
-  console.log("Bootstrap seed (production-safe) — settings, consultants, shipping, collections, gallery, admin.");
-
-  const adminHash = await bcrypt.hash("Admin@PA2024!", 12);
-  await prisma.user.upsert({
-    where: { email: "admin@prudentgabriel.com" },
-    update: { role: Role.SUPER_ADMIN },
-    create: {
-      email: "admin@prudentgabriel.com",
-      name: "PA Admin",
-      password: adminHash,
-      role: Role.SUPER_ADMIN,
-    },
-  });
-
-  await upsertShippingZones();
-  await upsertConsultants();
-  await upsertSiteSettings();
-
-  const emailTemplates: { key: string; label: string; sortOrder: number }[] = [
-    { key: "email_tpl_welcome", label: "Welcome Email", sortOrder: 100 },
-    { key: "email_tpl_order_confirmation", label: "Order Confirmation", sortOrder: 101 },
-    { key: "email_tpl_order_shipped", label: "Order Shipped", sortOrder: 102 },
-    { key: "email_tpl_bespoke_confirmation", label: "Bespoke Confirmation", sortOrder: 103 },
-    { key: "email_tpl_password_reset", label: "Password Reset", sortOrder: 104 },
-    { key: "email_tpl_referral_success", label: "Referral Success", sortOrder: 105 },
-    { key: "email_tpl_back_in_stock", label: "Back In Stock", sortOrder: 106 },
-    { key: "email_tpl_consultation_pending", label: "Consultation Pending", sortOrder: 107 },
-    { key: "email_tpl_consultation_confirmed", label: "Consultation Confirmed", sortOrder: 108 },
-    { key: "email_tpl_consultation_cancelled", label: "Consultation Cancelled", sortOrder: 109 },
-  ];
-  const tplDefault = JSON.stringify({ subject: "", body: "" });
-  for (const t of emailTemplates) {
-    await prisma.siteSetting.upsert({
-      where: { key: t.key },
-      update: {},
-      create: {
-        key: t.key,
-        value: tplDefault,
-        group: SettingGroup.EMAIL,
-        label: t.label,
-        type: SettingType.JSON,
-        isPublic: false,
-        sortOrder: t.sortOrder,
-      },
-    });
-  }
-  console.log("  email template keys upserted (full bodies: pnpm seed:email-templates)");
-
-  await upsertGalleryPlaceholders();
-  await upsertCollections();
-
-  const [settings, consultants, products, orders, invoices, bookings] = await Promise.all([
-    prisma.siteSetting.count(),
-    prisma.consultant.count(),
+  const [productCount, orderCount, bespokeCount, couponCount] = await Promise.all([
     prisma.product.count(),
     prisma.order.count(),
-    prisma.invoice.count(),
-    prisma.consultationBooking.count(),
+    prisma.bespokeRequest.count(),
+    prisma.coupon.count(),
   ]);
   console.log(
-    `Bootstrap complete. settings=${settings} consultants=${consultants} products=${products} (untouched) orders=${orders} invoices=${invoices} consultations=${bookings}`,
+    `Seed complete: ${productCount} products, ${orderCount} orders, ${bespokeCount} bespoke requests, ${couponCount} coupons.`,
   );
 }
 

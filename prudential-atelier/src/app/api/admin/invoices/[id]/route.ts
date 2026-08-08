@@ -202,6 +202,13 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
     return NextResponse.json({ error: "Only draft invoices can be deleted" }, { status: 400 });
   }
 
-  await prisma.invoice.delete({ where: { id } });
-  return NextResponse.json({ success: true });
+  try {
+    await prisma.invoice.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    const { mapLedgerDeleteError } = await import("@/lib/payments/ledger-delete-guard");
+    const blocked = mapLedgerDeleteError(e, "invoice");
+    if (blocked) return NextResponse.json(blocked.body, { status: blocked.status });
+    throw e;
+  }
 }

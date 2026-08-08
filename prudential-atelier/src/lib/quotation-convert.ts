@@ -3,6 +3,10 @@ import { nanoid } from "nanoid";
 import { prisma } from "@/lib/prisma";
 import { generateBespokeOrderRef } from "@/lib/bespoke-stages";
 import { generateInvoiceNumber, calculateInvoiceTotals, syncLineItemAmounts } from "@/lib/invoice";
+import {
+  buildDepositPaymentTerms,
+  getBespokeDepositPercent,
+} from "@/lib/payments/ledger";
 import type { InvoiceLineItem } from "@/types/invoice";
 
 type QuotationRecord = {
@@ -70,15 +74,34 @@ export async function convertQuotationToOrder(
     where: { user: { email: quote.clientEmail } },
   });
 
+  const depositPercent = await getBespokeDepositPercent();
+
   const items = mapLineItems(quote.lineItems);
+  const lineItemsPayload = items.length
+    ? items
+    : [
+        {
+          id: nanoid(),
+          description: quote.quoteRef,
+          quantity: 1,
+          unitPrice: quote.total,
+          amount: quote.total,
+        },
+      ];
   const totals = calculateInvoiceTotals({
-    lineItems: items.length ? items : [{ id: nanoid(), description: quote.quoteRef, quantity: 1, unitPrice: quote.total, amount: quote.total }],
+    lineItems: lineItemsPayload,
     discountType: quote.discount > 0 ? "FIXED" : null,
     discountValue: quote.discount,
     vatEnabled: quote.tax > 0,
     vatPercent: quote.subtotal > 0 ? Math.round((quote.tax / quote.subtotal) * 10000) / 100 : 0,
-    depositPercent: 50,
+    depositPercent,
     depositPaid: 0,
+  });
+
+  const paymentTerms = buildDepositPaymentTerms({
+    total: totals.total || quote.total,
+    depositPercent,
+    currency: "NGN",
   });
 
   const invoiceNumber = await generateInvoiceNumber();
@@ -94,13 +117,15 @@ export async function convertQuotationToOrder(
     const invoice = await tx.invoice.create({
       data: {
         invoiceNumber,
+        quotationId: quote.id,
+        consultationId: quote.consultationId ?? null,
         clientName: quote.clientName,
         clientEmail: quote.clientEmail,
         clientPhone: quote.clientPhone,
         currency: "NGN",
         exchangeRate: 1,
         status: InvoiceStatus.DRAFT,
-        lineItems: (items.length ? items : [{ id: nanoid(), description: quote.quoteRef, quantity: 1, unitPrice: quote.total, amount: quote.total }]) as unknown as Prisma.InputJsonValue,
+        lineItems: lineItemsPayload as unknown as Prisma.InputJsonValue,
         subtotal: totals.subtotal || quote.subtotal,
         discountType: quote.discount > 0 ? "FIXED" : null,
         discountValue: quote.discount,
@@ -112,6 +137,7 @@ export async function convertQuotationToOrder(
         depositRequired: totals.depositRequired,
         depositPaid: 0,
         balanceDue: totals.balanceDue,
+        paymentTerms,
         notes: quote.notes,
         paymentHistory: [],
         createdBy: createdBy ?? null,

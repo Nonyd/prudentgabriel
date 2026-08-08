@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getBespokeOrderForUser } from "@/lib/bespoke-order-access";
 import { BespokePayClient } from "@/components/account/BespokePayClient";
+import { getBespokeDepositPercent } from "@/lib/payments/ledger";
 
 export default async function BespokePayPage({ params }: { params: Promise<{ orderId: string }> }) {
   const session = await auth();
@@ -12,9 +13,11 @@ export default async function BespokePayPage({ params }: { params: Promise<{ ord
   if (!order) notFound();
   if (order.balance <= 0) redirect("/account/orders");
 
+  const depositPercent = await getBespokeDepositPercent();
+
   return (
     <div className="min-h-screen bg-ivory">
-      <BespokePayClient order={order} />
+      <BespokePayClient order={order} depositPercent={depositPercent} />
     </div>
   );
 }

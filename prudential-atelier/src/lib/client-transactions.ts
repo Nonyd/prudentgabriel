@@ -2,8 +2,14 @@ import type { Currency, PaymentGateway, PaymentStatus } from "@prisma/client";
 import { PaymentStatus as PaymentStatusEnum } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateClientProfile } from "@/lib/account-helpers";
+import { getClientPayments } from "@/lib/payments/ledger";
 
-export type ClientTransactionKind = "rtw_order" | "consultation" | "bespoke" | "bespoke_request";
+export type ClientTransactionKind =
+  | "rtw_order"
+  | "consultation"
+  | "bespoke"
+  | "bespoke_request"
+  | "ledger";
 
 export type ClientTransaction = {
   id: string;
@@ -31,7 +37,7 @@ export async function getClientTransactions(
   const profile = await getOrCreateClientProfile(userId);
   const emailLower = email.toLowerCase();
 
-  const [rtwOrders, consultations, bespokeOrders, bespokeRequests] = await Promise.all([
+  const [rtwOrders, consultations, bespokeOrders, bespokeRequests, ledgerPayments] = await Promise.all([
     prisma.order.findMany({
       where: {
         userId,
@@ -111,11 +117,54 @@ export async function getClientTransactions(
         occasion: true,
       },
     }),
+    getClientPayments({ userId, email }),
   ]);
+
+  const ledgerConsultationIds = new Set(
+    ledgerPayments.filter((p) => p.consultationId).map((p) => p.consultationId!),
+  );
+  const ledgerBespokeIds = new Set(
+    ledgerPayments.filter((p) => p.bespokeOrderId).map((p) => p.bespokeOrderId!),
+  );
+  const ledgerRtwIds = new Set(ledgerPayments.filter((p) => p.orderId).map((p) => p.orderId!));
 
   const rows: ClientTransaction[] = [];
 
+  for (const p of ledgerPayments) {
+    rows.push({
+      id: `ledger-${p.id}`,
+      kind: "ledger",
+      date: p.confirmedAt ?? p.createdAt,
+      label:
+        p.purpose === "CONSULTATION"
+          ? "Consultation"
+          : p.purpose === "RTW_ORDER"
+            ? "Ready-to-wear order"
+            : p.purpose === "DEPOSIT"
+              ? "Commission deposit"
+              : p.purpose === "BALANCE"
+                ? "Commission balance"
+                : p.purpose === "FULL"
+                  ? "Commission payment"
+                  : "Payment",
+      detail: p.reference,
+      amount: Number(p.amount),
+      currency: (p.currency as Currency) || "NGN",
+      status: p.status,
+      gateway: null,
+      reference: p.reference,
+      href: p.bespokeOrderId
+        ? "/account/orders"
+        : p.consultationId
+          ? `/account/consultations/${p.consultationId}`
+          : p.orderId
+            ? `/account/orders/${p.orderId}`
+            : null,
+    });
+  }
+
   for (const o of rtwOrders) {
+    if (ledgerRtwIds.has(o.id)) continue;
     rows.push({
       id: `order-${o.id}`,
       kind: "rtw_order",
@@ -132,6 +181,7 @@ export async function getClientTransactions(
   }
 
   for (const b of consultations) {
+    if (ledgerConsultationIds.has(b.id)) continue;
     rows.push({
       id: `consultation-${b.id}`,
       kind: "consultation",
@@ -148,6 +198,7 @@ export async function getClientTransactions(
   }
 
   for (const o of bespokeOrders) {
+    if (ledgerBespokeIds.has(o.id)) continue;
     rows.push({
       id: `bespoke-${o.id}`,
       kind: "bespoke",
@@ -205,6 +256,10 @@ export function formatTransactionStatus(status: PaymentStatus): string {
       return "Pending";
     case PaymentStatusEnum.FAILED:
       return "Failed";
+    case PaymentStatusEnum.CONFIRMED:
+      return "Confirmed";
+    case PaymentStatusEnum.REJECTED:
+      return "Rejected";
     default:
       return status;
   }

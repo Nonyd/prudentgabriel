@@ -54,8 +54,11 @@ Add the following in the Vercel project settings:
 
 ```bash
 npx prisma migrate deploy
-npx prisma db seed
+pnpm db:seed   # bootstrap only (settings, consultants, email templates)
 ```
+
+Do **not** run `pnpm seed:demo` or `pnpm seed:fixtures` against production.
+Those scripts require `ALLOW_FIXTURES=true` and refuse the production Neon host.
 
 (Or `npx prisma db push` for an initial schema push where migrations are not used.)
 

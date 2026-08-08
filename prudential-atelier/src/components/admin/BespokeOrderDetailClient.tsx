@@ -18,6 +18,7 @@ import type {
   Material,
   Measurement,
   OrderAssignment,
+  Payment,
   Quotation,
   StageUpdate,
   StaffProfile,
@@ -28,6 +29,11 @@ import { Modal } from "@/components/ui/Modal";
 import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPanel";
 import { STAGE_LABELS, STAGE_ORDER, getStageProgress } from "@/lib/bespoke-stages";
 import { cn, formatDate } from "@/lib/utils";
+
+type LedgerPayment = Payment & {
+  confirmedBy?: Pick<User, "id" | "name" | "email"> | null;
+  amount: number | { toString(): string };
+};
 
 type OrderWithRelations = BespokeOrder & {
   stageHistory: StageUpdate[];
@@ -42,7 +48,12 @@ type OrderWithRelations = BespokeOrder & {
     bookingNumber: string;
     occasion: string;
   } | null;
+  payments?: LedgerPayment[];
 };
+
+function ledgerAmount(p: LedgerPayment): number {
+  return typeof p.amount === "number" ? p.amount : Number(p.amount.toString());
+}
 
 type StaffOption = { id: string; name: string; department: string; activeOrders: number };
 
@@ -509,7 +520,55 @@ export function BespokeOrderDetailClient({
                 <dt>Balance</dt>
                 <dd>₦{order.balance.toLocaleString("en-NG")}</dd>
               </div>
+              {order.productionUnlockedAt ? (
+                <div className="flex justify-between text-xs text-text-light">
+                  <dt>Production unlocked</dt>
+                  <dd>{formatDate(order.productionUnlockedAt)}</dd>
+                </div>
+              ) : (
+                <div className="pt-1 text-xs text-[#C45E0A]">Deposit not yet satisfied — production locked</div>
+              )}
             </dl>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[520px] border-collapse font-sans text-xs">
+                <thead>
+                  <tr className="border-b border-sand text-left text-[10px] font-medium uppercase tracking-wide text-text-light">
+                    <th className="py-2 pr-2">Date</th>
+                    <th className="py-2 pr-2 text-right">Amount</th>
+                    <th className="py-2 pr-2">Method</th>
+                    <th className="py-2 pr-2">Purpose</th>
+                    <th className="py-2 pr-2">Status</th>
+                    <th className="py-2">Confirmed by</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(order.payments ?? []).length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-3 text-text-light">
+                        No ledger payments yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    (order.payments ?? []).map((p) => (
+                      <tr key={p.id} className="border-b border-sand last:border-0">
+                        <td className="py-2 pr-2 whitespace-nowrap">
+                          {formatDate(p.confirmedAt ?? p.createdAt)}
+                        </td>
+                        <td className="py-2 pr-2 text-right tabular-nums">
+                          ₦{ledgerAmount(p).toLocaleString("en-NG")}
+                        </td>
+                        <td className="py-2 pr-2">{p.method.replace(/_/g, " ")}</td>
+                        <td className="py-2 pr-2">{p.purpose.replace(/_/g, " ")}</td>
+                        <td className="py-2 pr-2">{p.status}</td>
+                        <td className="py-2 text-text-light">
+                          {p.confirmedBy?.name ?? p.confirmedBy?.email ?? "—"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
             <div className="mt-4 flex gap-2">
               <input
                 type="number"

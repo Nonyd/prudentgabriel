@@ -17,13 +17,18 @@ import type { InvoiceCurrency, InvoiceLineItem } from "@/types/invoice";
 type Mode = "create" | "edit";
 type TermsPreset = "70_30" | "full" | "custom";
 
-function buildPaymentTermsText(preset: Exclude<TermsPreset, "custom">, total: number, cur: InvoiceCurrency): string {
+function buildPaymentTermsText(
+  preset: Exclude<TermsPreset, "custom">,
+  total: number,
+  cur: InvoiceCurrency,
+  depositPercent = 70,
+): string {
   if (preset === "full") {
     return `PAYMENT TERMS\n\nOption B: Full Payment\nPay ${formatInvoiceCurrency(total, cur)} in full.`;
   }
-  const deposit = Math.round(total * 0.7);
+  const deposit = Math.round(total * (depositPercent / 100));
   const balance = total - deposit;
-  return `PAYMENT TERMS\n\nOption A: 70% Deposit\nPay ${formatInvoiceCurrency(deposit, cur)} now to begin production.\nRemaining ${formatInvoiceCurrency(balance, cur)} due before delivery.\n\nOption B: Full Payment\nPay ${formatInvoiceCurrency(total, cur)} in full.`;
+  return `PAYMENT TERMS\n\nOption A: ${depositPercent}% Deposit\nPay ${formatInvoiceCurrency(deposit, cur)} now to begin production.\nRemaining ${formatInvoiceCurrency(balance, cur)} due before delivery.\n\nOption B: Full Payment\nPay ${formatInvoiceCurrency(total, cur)} in full.`;
 }
 
 function asCurrency(c: string): InvoiceCurrency {
@@ -67,7 +72,8 @@ export function InvoiceFormPage({
   const [discountValue, setDiscountValue] = useState(0);
   const [vatOn, setVatOn] = useState(false);
   const [vatPercent, setVatPercent] = useState(0);
-  const [depositPct, setDepositPct] = useState(0);
+  const [depositPct, setDepositPct] = useState(70);
+  const [cmsDepositPct, setCmsDepositPct] = useState(70);
   const [clientNote, setClientNote] = useState("");
   const [notes, setNotes] = useState("");
   const [showVat, setShowVat] = useState(false);
@@ -91,8 +97,10 @@ export function InvoiceFormPage({
 
   useEffect(() => {
     if (termsPreset === "custom") return;
-    setPaymentTerms(buildPaymentTermsText(termsPreset, totals.total, cur));
-  }, [termsPreset, totals.total, cur]);
+    setPaymentTerms(buildPaymentTermsText(termsPreset, totals.total, cur, cmsDepositPct));
+    if (termsPreset === "70_30") setDepositPct(cmsDepositPct);
+    if (termsPreset === "full") setDepositPct(100);
+  }, [termsPreset, totals.total, cur, cmsDepositPct]);
 
   useEffect(() => {
     if (!initialConsultationId || mode !== "create") return;
@@ -142,15 +150,21 @@ export function InvoiceFormPage({
       if (!res.ok) return;
       const j = (await res.json()) as { settings: Record<string, { key: string; value: string }[]> };
       const inv = j.settings.INVOICE ?? [];
-      const pick = (k: string) => inv.find((r) => r.key === k)?.value ?? "";
-      setPaymentTerms(pick("invoice_deposit_terms"));
-      setVatPercent(Number(pick("invoice_default_vat")) || 0);
-      const days = Number(pick("invoice_default_due_days")) || 7;
+      const payments = j.settings.PAYMENTS ?? [];
+      const pick = (rows: { key: string; value: string }[], k: string) =>
+        rows.find((r) => r.key === k)?.value ?? "";
+      setPaymentTerms(pick(inv, "invoice_deposit_terms"));
+      setVatPercent(Number(pick(inv, "invoice_default_vat")) || 0);
+      const cmsPct = Number(pick(payments, "bespoke_deposit_percent"));
+      const pct = Number.isFinite(cmsPct) && cmsPct > 0 && cmsPct <= 100 ? cmsPct : 70;
+      setCmsDepositPct(pct);
+      if (mode === "create") setDepositPct(pct);
+      const days = Number(pick(inv, "invoice_default_due_days")) || 7;
       const d = new Date();
       d.setDate(d.getDate() + days);
       setDueDate(d.toISOString().slice(0, 10));
     })();
-  }, []);
+  }, [mode]);
 
   const loadInvoice = useCallback(async () => {
     if (!invoiceId) return;
@@ -462,7 +476,7 @@ export function InvoiceFormPage({
               <p className="font-body text-xs font-medium text-[#6B6B68]">Payment terms</p>
               {(
                 [
-                  { id: "70_30" as const, label: "70/30 Split (70% deposit, 30% on delivery)" },
+                  { id: "70_30" as const, label: `${cmsDepositPct}/${100 - cmsDepositPct} Split (${cmsDepositPct}% deposit, ${100 - cmsDepositPct}% on delivery)` },
                   { id: "full" as const, label: "Full payment required" },
                   { id: "custom" as const, label: "Custom (free text)" },
                 ] as const

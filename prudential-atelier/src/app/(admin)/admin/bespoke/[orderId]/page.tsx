@@ -20,6 +20,10 @@ export default async function AdminBespokeOrderPage({
       clientProfile: { include: { measurements: true } },
       quotation: true,
       consultation: { select: { id: true, bookingNumber: true, occasion: true } },
+      payments: {
+        orderBy: { createdAt: "desc" },
+        include: { confirmedBy: { select: { id: true, name: true, email: true } } },
+      },
     },
   });
 

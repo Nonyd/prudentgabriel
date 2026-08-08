@@ -1,0 +1,29 @@
+{
+  "$comment": [
+    "Human-confirmed order<->invoice pairs for the one-time payment ledger backfill.",
+    "Legacy rows carry NO structural link: Invoice.quotationId, .consultationId and",
+    ".bespokeRequestId are all NULL for these entities, so the automatic structural",
+    "tiers in backfill-payments.ts cannot match them.",
+    "",
+    "Each pair below is justified by the invoice's own `notes` column, which names the",
+    "bespoke order explicitly. That is documentary evidence of one payment recorded in",
+    "two places, NOT reference-string similarity.",
+    "",
+    "A paired entry emits ONE Payment row carrying both invoiceId and bespokeOrderId.",
+    "Do not add a pair here without evidence from a data field. ORD-2849/INV-2849 look",
+    "like a pair by name only and are deliberately absent: they belong to two different",
+    "clients (fatima.aliyu@gmail.com vs yetunde.adeyemi@gmail.com)."
+  ],
+  "pairs": [
+    {
+      "orderRef": "ORD-2847",
+      "invoiceNumber": "INV-2847",
+      "evidence": "Invoice.notes = 'Linked to bespoke order ORD-2847'; same client amaka.nwosu@gmail.com; both total 650000 and paid 325000"
+    },
+    {
+      "orderRef": "ORD-2848",
+      "invoiceNumber": "INV-2848",
+      "evidence": "Invoice.notes = 'Linked to bespoke order ORD-2848 - fully paid'; same client chisom.eze@yahoo.com; both total 1850000 and paid 1850000"
+    }
+  ]
+}

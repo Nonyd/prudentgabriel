@@ -1,0 +1,13 @@
+{
+  "generatedAt": "2026-08-08T01:15:59.003Z",
+  "note": "Do not delete from Cloudinary in this pass. Cleanup is a separate reversible step.",
+  "count": 2,
+  "publicIds": [
+    "prudential-atelier/receipts/fmyo4qjbcb7ircn2rk3o",
+    "prudential-atelier/receipts/m4idom8qsqatolak4lhh"
+  ],
+  "urls": [
+    "https://res.cloudinary.com/dwgbr0oyn/image/upload/v1780920574/prudential-atelier/receipts/fmyo4qjbcb7ircn2rk3o.png",
+    "https://res.cloudinary.com/dwgbr0oyn/image/upload/v1786125651/prudential-atelier/receipts/m4idom8qsqatolak4lhh.png"
+  ]
+}
