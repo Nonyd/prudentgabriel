@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { LoyaltyTier } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
+import { BESPOKE_MANAGER_ROLES, BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
 import { logActivity, logError } from "@/lib/logger";
 import { getClientPayments } from "@/lib/payments/ledger";
 
@@ -92,7 +92,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_ROLES);
+  // Loyalty points convert to money — manager tier, not floor STAFF.
+  const gate = await requireRoles(BESPOKE_MANAGER_ROLES);
   if (!gate.ok) return gate.response;
 
   const { clientId } = await params;

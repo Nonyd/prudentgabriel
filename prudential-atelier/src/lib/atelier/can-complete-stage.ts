@@ -309,7 +309,11 @@ export { pipelineBlockFor, type PipelineBlock } from "@/lib/atelier/stage-requir
 
 export function stageGateInclude() {
   return {
-    stageCompletions: { orderBy: { completedAt: "asc" as const } },
+    // Live completions only — reverted rows must not satisfy PREVIOUS_STAGE_INCOMPLETE.
+    stageCompletions: {
+      where: { revertedAt: null },
+      orderBy: { completedAt: "asc" as const },
+    },
     stageMedia: { orderBy: { createdAt: "asc" as const } },
     stageDrafts: true,
     stageApprovals: { orderBy: { requestedAt: "desc" as const } },

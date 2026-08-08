@@ -119,8 +119,17 @@ async function uniqueQuoteRef(): Promise<string> {
 }
 
 async function main() {
-  if (looksLikeProductionDatabase()) {
-    throw new Error("e2e-quote-convert: refused — DATABASE_URL points at production.");
+  const onProd = looksLikeProductionDatabase();
+  if (onProd && process.env.ALLOW_PROD_E2E !== "true") {
+    throw new Error(
+      "e2e-quote-convert: refused — DATABASE_URL points at production.\n" +
+        "While maintenance is on, set ALLOW_PROD_E2E=true to run a smoke E2E that always cleans up via app.ledger_bypass.",
+    );
+  }
+  if (onProd) {
+    console.warn(
+      "⚠ Production E2E: will create then delete consultation/quote/order/invoice/payments via ledger_bypass. Keep maintenance ON until cleanup finishes.",
+    );
   }
 
   const host = (() => {
@@ -361,5 +370,14 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
+    try {
+      // Always wipe E2E rows — especially on production (ALLOW_PROD_E2E) so
+      // confirmed payments never linger on the finance dashboard.
+      await cleanupE2eRows();
+      console.log("E2E cleanup: done (ledger_bypass)");
+    } catch (e) {
+      console.error("E2E cleanup FAILED — purge manually while maintenance is on:", e);
+      process.exitCode = 1;
+    }
     await prisma.$disconnect();
   });

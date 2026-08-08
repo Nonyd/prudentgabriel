@@ -128,6 +128,32 @@ Completed stages stay completed. Relock only blocks *further* production stages
 (5+) until the deposit is restored. No auto-revert — a payment-processing hiccup
 must not rewrite atelier history.
 
+## Production smoke E2E (maintenance window)
+
+After Sprint B deploys, prove the ledger + unlock path on production **while
+maintenance is still on**, then leave zero fixture money behind:
+
+```bash
+# Point DATABASE_URL / DIRECT_URL at production (direct host preferred).
+ALLOW_PROD_E2E=true pnpm exec tsx scripts/e2e-quote-convert.ts
+```
+
+That script always runs `cleanupE2eRows()` (which sets `app.ledger_bypass`)
+before creating rows and again in `finally`. Confirm afterward:
+
+```sql
+SELECT COUNT(*) FROM "Payment";
+SELECT COUNT(*) FROM "BespokeOrder";
+SELECT COUNT(*) FROM "Invoice" WHERE "clientEmail" = 'e2e.quote.convert@example.com';
+```
+
+All must be zero (or free of the E2E email). Do **not** flip maintenance off
+until this cleanup is verified. Prefer this controlled bypass use over discovering
+an `ORD-*` with ₦350,000 on the finance dashboard at handover.
+
+Scope is the existing quote-convert chain (consultation → deposit unlock), not a
+full 13-stage walk on production.
+
 ### RTW orders
 
 Not backfilled in this sprint. Ready-to-wear already has a native `Order`
