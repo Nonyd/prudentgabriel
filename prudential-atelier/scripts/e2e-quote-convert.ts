@@ -27,7 +27,6 @@ import {
   appendPayment,
   getBespokeDepositPercent,
   getInvoicePaymentSummary,
-  getLegacyFallbackHitCount,
   getOrderPaymentSummary,
   resolveClientId,
 } from "../src/lib/payments/ledger";
@@ -332,9 +331,6 @@ async function main() {
   assert(nearly(invoicePaid.depositPaid, expectedDeposit), `depositPaid=${invoicePaid.depositPaid}`);
   assert(invoicePaid.status === "PARTIALLY_PAID", `invoice.status=${invoicePaid.status}`);
   assert(orderSummary.depositSatisfied, "order summary depositSatisfied=false");
-  assert(!orderSummary.usedLegacyFallback, "order hit LEGACY_NO_LEDGER_ROWS");
-  assert(!invoiceSummary.usedLegacyFallback, "invoice hit LEGACY_NO_LEDGER_ROWS");
-  assert(getLegacyFallbackHitCount() === 0, `legacy hits=${getLegacyFallbackHitCount()}`);
 
   console.log("\n=== E2E PASS ===");
   console.log(
@@ -352,7 +348,6 @@ async function main() {
         depositPaid: invoicePaid.depositPaid,
         depositRequired: invoicePaid.depositRequired,
         paymentReference: payment.reference,
-        legacyHits: getLegacyFallbackHitCount(),
       },
       null,
       2,

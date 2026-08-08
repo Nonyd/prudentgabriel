@@ -65,19 +65,6 @@ Hard-delete routes return HTTP 409 with:
 
 > This \<entity\> has payment records and cannot be deleted. Cancel it instead.
 
-## Deploy bridge
-
-`LEGACY_NO_LEDGER_ROWS` in `ledger.ts` treats cached `amountPaid` / `depositPaid`
-as confirmed when an entity has **zero** Payment rows. Removable after
-`pnpm backfill:payments` reconciles clean (watch hit count → zero).
-
-**Production note (Sprint A):** all transactional rows were demo/fixture. Purge
-them with `pnpm purge:demo --apply` **before** the ledger migration lands, then
-**do not run the backfill** — the ledger starts empty. Keep the script; it is
-still needed after a future real import. Keep `LEGACY_NO_LEDGER_ROWS` for that
-one deploy as insurance, then remove it as the first commit of Sprint B once
-the hit count is zero.
-
 ## Backfill
 
 Default is **plan only** — nothing is written. Review the pairing table, then
@@ -121,9 +108,7 @@ before production.
 backfilled with `purpose: CONSULTATION` so a revenue report that `SUM`s the
 ledger does not silently miss consultation income. `getOrderPaymentSummary` /
 `getInvoicePaymentSummary` never read them — they are scoped by
-`bespokeOrderId` / `invoiceId`. `LEGACY_NO_LEDGER_ROWS` still covers only
-orders and invoices; consultations have no denormalised paid-cache that would
-mislead a client during the deploy window.
+`bespokeOrderId` / `invoiceId`.
 
 ### RTW orders
 

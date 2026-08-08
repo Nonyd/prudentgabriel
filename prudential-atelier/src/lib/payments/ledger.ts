@@ -20,26 +20,7 @@ export type PaymentSummary = {
   depositRequired: Prisma.Decimal;
   depositSatisfied: boolean;
   isFullyPaid: boolean;
-  /**
-   * True when summary used cached amountPaid/depositPaid because the entity
-   * has zero Payment rows. Removable once backfill:payments reconciles clean.
-   */
-  usedLegacyFallback: boolean;
 };
-
-/**
- * Temporary deploy-window bridge: when an entity has zero Payment rows of any
- * status but cached amountPaid/depositPaid > 0, treat the cache as confirmed.
- * Removable once `backfill:payments` reconciles clean — do not blend sources.
- */
-export const LEGACY_NO_LEDGER_ROWS = "LEGACY_NO_LEDGER_ROWS" as const;
-
-let legacyFallbackHitCount = 0;
-
-/** Test/ops helper — count of entities that hit LEGACY_NO_LEDGER_ROWS this process. */
-export function getLegacyFallbackHitCount(): number {
-  return legacyFallbackHitCount;
-}
 
 const D = Prisma.Decimal;
 const ZERO = new D(0);
@@ -105,7 +86,6 @@ function buildSummary(params: {
   confirmed: Prisma.Decimal;
   pending: Prisma.Decimal;
   depositRequired: Prisma.Decimal;
-  usedLegacyFallback?: boolean;
 }): PaymentSummary {
   const balance = Prisma.Decimal.max(ZERO, params.total.minus(params.confirmed));
   const depositSatisfied =
@@ -119,7 +99,6 @@ function buildSummary(params: {
     depositRequired: params.depositRequired,
     depositSatisfied,
     isFullyPaid,
-    usedLegacyFallback: params.usedLegacyFallback ?? false,
   };
 }
 
@@ -147,37 +126,19 @@ async function resolveOrderDepositRequired(
 
 /**
  * Authoritative payment summary for a bespoke order.
- * Balance is derived from Payment rows — never from BespokeOrder.amountPaid,
- * except the LEGACY_NO_LEDGER_ROWS bridge when zero Payment rows exist.
+ * Balance is derived from Payment rows — never from BespokeOrder.amountPaid.
  */
 export async function getOrderPaymentSummary(bespokeOrderId: string): Promise<PaymentSummary> {
   const order = await prisma.bespokeOrder.findUnique({
     where: { id: bespokeOrderId },
-    select: { id: true, totalAmount: true, amountPaid: true },
+    select: { id: true, totalAmount: true },
   });
   if (!order) {
     throw new Error(`BespokeOrder not found: ${bespokeOrderId}`);
   }
 
-  const rowCount = await prisma.payment.count({ where: { bespokeOrderId } });
   const total = dec(order.totalAmount);
   const depositRequired = await resolveOrderDepositRequired(bespokeOrderId, total);
-
-  // LEGACY_NO_LEDGER_ROWS — removable after backfill:payments reconciles clean.
-  // Strictly zero rows only; never blend with ledger sums.
-  if (rowCount === 0 && order.amountPaid > 0) {
-    legacyFallbackHitCount += 1;
-    console.warn(
-      `[${LEGACY_NO_LEDGER_ROWS}] bespokeOrder=${bespokeOrderId} using cached amountPaid=${order.amountPaid} (hits=${legacyFallbackHitCount})`,
-    );
-    return buildSummary({
-      total,
-      confirmed: dec(order.amountPaid),
-      pending: ZERO,
-      depositRequired,
-      usedLegacyFallback: true,
-    });
-  }
 
   const [confirmedRows, pendingRows] = await Promise.all([
     prisma.payment.findMany({
@@ -200,36 +161,19 @@ export async function getOrderPaymentSummary(bespokeOrderId: string): Promise<Pa
 
 /**
  * Authoritative payment summary for an invoice.
- * Confirmed total comes from Payment rows, not Invoice.depositPaid,
- * except the LEGACY_NO_LEDGER_ROWS bridge when zero Payment rows exist.
+ * Confirmed total comes from Payment rows, not Invoice.depositPaid.
  */
 export async function getInvoicePaymentSummary(invoiceId: string): Promise<PaymentSummary> {
   const invoice = await prisma.invoice.findUnique({
     where: { id: invoiceId },
-    select: { id: true, total: true, depositRequired: true, depositPaid: true },
+    select: { id: true, total: true, depositRequired: true },
   });
   if (!invoice) {
     throw new Error(`Invoice not found: ${invoiceId}`);
   }
 
-  const rowCount = await prisma.payment.count({ where: { invoiceId } });
   const total = dec(invoice.total);
   const depositRequired = dec(invoice.depositRequired);
-
-  // LEGACY_NO_LEDGER_ROWS — removable after backfill:payments reconciles clean.
-  if (rowCount === 0 && invoice.depositPaid > 0) {
-    legacyFallbackHitCount += 1;
-    console.warn(
-      `[${LEGACY_NO_LEDGER_ROWS}] invoice=${invoiceId} using cached depositPaid=${invoice.depositPaid} (hits=${legacyFallbackHitCount})`,
-    );
-    return buildSummary({
-      total,
-      confirmed: dec(invoice.depositPaid),
-      pending: ZERO,
-      depositRequired,
-      usedLegacyFallback: true,
-    });
-  }
 
   const [confirmedRows, pendingRows] = await Promise.all([
     prisma.payment.findMany({
@@ -264,12 +208,7 @@ async function maybeUnlockProduction(bespokeOrderId: string): Promise<void> {
 
   const summary = await getOrderPaymentSummary(bespokeOrderId);
   // Never unlock without confirmed money (even if deposit % is 0).
-  // Skip while on LEGACY_NO_LEDGER_ROWS — unlock after real Payment rows exist.
-  if (
-    !summary.depositSatisfied ||
-    summary.confirmed.lte(ZERO) ||
-    summary.usedLegacyFallback
-  ) {
+  if (!summary.depositSatisfied || summary.confirmed.lte(ZERO)) {
     return;
   }
 
