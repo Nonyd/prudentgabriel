@@ -1,6 +1,7 @@
 import { InvoiceStatus, Prisma, QuoteStatus } from "@prisma/client";
 import { nanoid } from "nanoid";
 import { prisma } from "@/lib/prisma";
+import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { generateBespokeOrderRef } from "@/lib/bespoke-stages";
 import { generateInvoiceNumber, calculateInvoiceTotals, syncLineItemAmounts } from "@/lib/invoice";
 import {
@@ -175,7 +176,7 @@ export async function convertQuotationToOrder(
     });
 
     return { order, invoice };
-  });
+  }, INTERACTIVE_TX);
 
   return {
     orderId: result.order.id,

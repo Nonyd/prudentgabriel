@@ -28,6 +28,7 @@ const PAYMENT_SETTING_DEFS: {
   { key: "bank_account_number", value: "", label: "Bank Transfer — Account Number", type: SettingType.TEXT, isPublic: true, sortOrder: 21 },
   { key: "bank_account_name", value: "", label: "Bank Transfer — Account Name", type: SettingType.TEXT, isPublic: true, sortOrder: 22 },
   { key: "bespoke_deposit_percent", value: "70", label: "Bespoke Deposit %", type: SettingType.NUMBER, isPublic: false, sortOrder: 25 },
+  { key: "alteration_warranty_days", value: "30", label: "Alteration warranty (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 26 },
   { key: "exchange_rate_usd", value: "0.00065", label: "USD Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 30 },
   { key: "exchange_rate_gbp", value: "0.00052", label: "GBP Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 31 },
 ];

@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { PointsType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { getLoyaltyRulePoints } from "@/lib/loyalty";
 import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
 import { sendWelcomeCredentialsEmail } from "@/lib/email";
@@ -120,7 +121,7 @@ export async function autoOnboardClient(params: {
     }
 
     return created;
-  });
+  }, INTERACTIVE_TX);
 
   const sourceLabel =
     params.source === "CONSULTATION"

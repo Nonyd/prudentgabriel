@@ -19,6 +19,7 @@ import {
 } from "@prisma/client";
 import { looksLikeProductionDatabase } from "./fixture-guard";
 import { prisma } from "../src/lib/prisma";
+import { clearCapturedEmails, getCapturedEmails } from "../src/lib/email-capture";
 import { generateBookingNumber } from "../src/lib/consultation";
 import { allocateQuotationBaseRef, formatQuotationRef } from "../src/lib/document-numbers";
 import { fulfillPaidConsultationBooking } from "../src/lib/consultation-payment";
@@ -31,6 +32,8 @@ import {
   resolveClientId,
 } from "../src/lib/payments/ledger";
 import { generatePaymentReference } from "../src/lib/payments/index";
+
+process.env.E2E_CAPTURE_EMAIL = process.env.E2E_CAPTURE_EMAIL ?? "1";
 
 const CLIENT = {
   name: "E2E Quote Convert Client",
@@ -176,21 +179,25 @@ async function main() {
   });
   console.log(`1. Booked ${booking.bookingNumber} (${booking.id}) status=${booking.status}`);
 
-  try {
-    const paid = await fulfillPaidConsultationBooking({
-      bookingId: booking.id,
-      paymentRef: booking.paymentRef ?? generatePaymentReference("CONSULT"),
-      gateway: PaymentGateway.BANK_TRANSFER,
-    });
-    assert(paid, "fulfillPaidConsultationBooking returned false");
-  } catch (e) {
-    // tsx does not inject React for email JSX; production Next compile does.
-    // The booking row is updated before emails fire — assert on DB state below.
-    console.warn(
-      "fulfillPaidConsultationBooking side-effect error (email/onboard):",
-      e instanceof Error ? e.message : e,
-    );
-  }
+  clearCapturedEmails();
+
+  const paid = await fulfillPaidConsultationBooking({
+    bookingId: booking.id,
+    paymentRef: booking.paymentRef ?? generatePaymentReference("CONSULT"),
+    gateway: PaymentGateway.BANK_TRANSFER,
+  });
+  assert(paid, "fulfillPaidConsultationBooking returned false");
+
+  // Wait briefly for fire-and-forget onboard email
+  await new Promise((r) => setTimeout(r, 2500));
+  const captured = getCapturedEmails();
+  assert(captured.length >= 1, `expected ≥1 captured email after pay, got ${captured.length}`);
+  const subjects = captured.map((e) => e.subject).join(" | ");
+  assert(
+    captured.some((e) => /welcome|credential|consultation|confirm/i.test(e.subject)),
+    `unexpected email subjects: ${subjects}`,
+  );
+  console.log(`   Emails rendered: ${captured.length} (${subjects})`);
 
   const afterPay = await prisma.consultationBooking.findUnique({ where: { id: booking.id } });
   assert(afterPay, "booking vanished after pay");

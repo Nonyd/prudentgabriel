@@ -2,6 +2,8 @@ import type { CronJobDefinition } from "@/lib/cron/types";
 import { run as runBalanceReminders } from "@/lib/cron/jobs/balance-reminders";
 import { run as runStageApprovalReminders } from "@/lib/cron/jobs/stage-approval-reminders";
 import { run as runUnsentQuoteAlerts } from "@/lib/cron/jobs/unsent-quote-alerts";
+import { run as runReviewRequests } from "@/lib/cron/jobs/review-requests";
+import { run as runReceiptReminders } from "@/lib/cron/jobs/receipt-reminders";
 
 /**
  * Single source of truth for scheduled jobs.
@@ -68,9 +70,9 @@ export const CRON_JOBS: CronJobDefinition[] = [
   {
     name: "review-requests",
     schedule: "0 9 * * *",
-    description: "Product + consultation review request emails",
-    handler: null,
-    migrated: false,
+    description: "Product + consultation + bespoke review request emails",
+    handler: runReviewRequests,
+    migrated: true,
   },
   {
     name: "balance-reminders",
@@ -98,6 +100,13 @@ export const CRON_JOBS: CronJobDefinition[] = [
     schedule: "0 11 * * *",
     description: "Alert when COMPLETED consultations have no quotation after 48h",
     handler: runUnsentQuoteAlerts,
+    migrated: true,
+  },
+  {
+    name: "receipt-reminders",
+    schedule: "0 10 * * *",
+    description: "Remind clients to confirm bespoke garment receipt after 7 days",
+    handler: runReceiptReminders,
     migrated: true,
   },
 ];

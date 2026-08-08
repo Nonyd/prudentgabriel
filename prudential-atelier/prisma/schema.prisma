@@ -59,6 +59,7 @@ model User {
   stageCompletions  OrderStageCompletion[] @relation("StageCompletions")
   stageReverts      OrderStageCompletion[] @relation("StageReverts")
   stageMediaUploads OrderStageMedia[] @relation("StageMediaUploads")
+  receiptsConfirmed BespokeOrder[] @relation("ReceiptConfirmedBy")
 }
 
 model Consultant {
@@ -1056,6 +1057,9 @@ enum CustomerNotificationType {
   BANK_TRANSFER_CONFIRMED
   STAGE_APPROVAL_REQUESTED
   STAGE_CHANGES_REQUESTED
+  RECEIPT_CONFIRMATION_REQUESTED
+  RECEIPT_CONFIRMED
+  ALTERATION_UPDATE
 }
 
 enum StaffNotificationType {
@@ -1118,6 +1122,8 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
   REFUNDED
+  /// Terminal: delivered, receipt confirmed, balance zero, no open alterations.
+  ARCHIVED
 }
 
 enum PaymentStatus {
@@ -1322,6 +1328,7 @@ model ClientProfile {
   moodboards    Moodboard[]
   eventDates    EventDate[]
   adminNotes    ClientNote[]
+  alterationRequests AlterationRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1445,9 +1452,22 @@ model BespokeOrder {
   /// Last time a balance-reminder email/notification was sent for this order.
   balanceReminderSentAt DateTime?
 
+  /// When the DELIVERY stage completed (status → DELIVERED). Used for warranty + reminders.
+  deliveredAt DateTime?
+
+  receiptConfirmToken   String    @unique @default(cuid())
+  receiptConfirmedAt    DateTime?
+  receiptConfirmedById  String?
+  receiptConfirmedBy    User?     @relation("ReceiptConfirmedBy", fields: [receiptConfirmedById], references: [id], onDelete: SetNull)
+  receiptReminderSentAt DateTime?
+
+  /// Bespoke review-request email sent once (mirrors RTW Order.reviewRequestSent).
+  reviewRequestSent Boolean @default(false)
+
   status OrderStatus @default(PENDING)
 
   payments Payment[]
+  alterationRequests AlterationRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1457,6 +1477,66 @@ model BespokeOrder {
   @@index([status])
   @@index([consultationId])
   @@index([balance, balanceReminderSentAt, deliveryDate])
+  @@index([deliveredAt, receiptConfirmedAt])
+}
+
+enum AlterationReason {
+  FIT
+  WORKMANSHIP
+  DAMAGE
+  CHANGE_REQUESTED
+  OTHER
+}
+
+enum AlterationStatus {
+  REQUESTED
+  ACCEPTED
+  DECLINED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum AlterationPricing {
+  FREE
+  CHARGEABLE
+}
+
+/// Post-delivery alteration — separate from pipeline stage ALTERATIONS.
+/// Chargeable path links a Quotation; free accepts require complimentaryEstimatedValue.
+model AlterationRequest {
+  id      String       @id @default(cuid())
+  orderId String
+  order   BespokeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  description String           @db.Text
+  media       Json             @default("[]")
+  reason      AlterationReason
+  status      AlterationStatus @default(REQUESTED)
+
+  /// Policy suggestion at triage time (warranty + reason).
+  pricingDefault  AlterationPricing?
+  /// Final decision (admin may override).
+  pricingDecision AlterationPricing?
+  pricingOverrideReason String? @db.Text
+
+  /// Required when accepting FREE — estimated NGN cost of complimentary work.
+  complimentaryEstimatedValue Float?
+
+  declineReason String? @db.Text
+
+  quotationId String?
+  quotation   Quotation? @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([orderId, status])
+  @@index([clientId])
+  @@index([status])
 }
 
 model StageUpdate {
@@ -1719,6 +1799,7 @@ model Quotation {
 
   bespokeOrders BespokeOrder[]
   invoices      Invoice[]
+  alterationRequests AlterationRequest[]
 
   createdBy String?
   /// User id who created this revision (null for original v1).

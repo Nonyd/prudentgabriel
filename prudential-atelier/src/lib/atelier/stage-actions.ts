@@ -6,6 +6,7 @@ import {
   StageMediaKind,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { logActivity } from "@/lib/logger";
 import { getNextStage, STAGE_ORDER, STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { buildStageEmailData, sendBespokeStageEmail } from "@/lib/bespoke-email";
@@ -16,7 +17,7 @@ import {
   resolveUserIdByEmail,
 } from "@/lib/customer-notifications";
 import { notifyStaffOrderUpdate } from "@/lib/staff-notifications";
-import { sendStageApprovalRequestEmail, sendStageChangesRequestedEmail } from "@/lib/email";
+import { sendStageApprovalRequestEmail, sendStageChangesRequestedEmail, sendBespokeDeliveredEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import {
   canCompleteStage,
@@ -109,6 +110,13 @@ export async function completeOrderStage(params: {
       failures: [{ code: "WRONG_STAGE", message: "Order not found." }],
     };
   }
+  if (order.status === OrderStatus.ARCHIVED) {
+    return {
+      ok: false,
+      status: 400,
+      failures: [{ code: "WRONG_STAGE", message: "Archived orders are read-only." }],
+    };
+  }
 
   const stage = order.currentStage;
   if (params.notes?.trim()) {
@@ -195,35 +203,66 @@ export async function completeOrderStage(params: {
       });
     }
     await tx.orderStageDraft.deleteMany({ where: { orderId: order.id, stage } });
+    const isFinalDelivery = !nextStage;
     await tx.bespokeOrder.update({
       where: { id: order.id },
       data: {
         currentStage: nextStage ?? stage,
-        status: !nextStage ? OrderStatus.DELIVERED : order.status,
+        status: isFinalDelivery ? OrderStatus.DELIVERED : order.status,
+        ...(isFinalDelivery ? { deliveredAt: new Date() } : {}),
       },
     });
     return update;
-  });
+  }, INTERACTIVE_TX);
 
-  const emailData = buildStageEmailData({
-    clientName: order.clientName.split(" ")[0] ?? order.clientName,
-    orderRef: order.orderRef,
-    stage,
-    notes,
-    images,
-    videos,
-    trackingToken: order.trackingToken,
-    deliveryDate: order.deliveryDate,
-  });
+  const isDeliveryComplete = !nextStage;
+  const refreshed = isDeliveryComplete
+    ? await prisma.bespokeOrder.findUnique({
+        where: { id: order.id },
+        select: { receiptConfirmToken: true },
+      })
+    : null;
 
-  try {
-    await sendBespokeStageEmail(stage, emailData, order.clientEmail);
-    await prisma.stageUpdate.update({
-      where: { id: stageUpdate.id },
-      data: { emailSent: true, emailSentAt: new Date() },
+  if (isDeliveryComplete && refreshed?.receiptConfirmToken) {
+    const base = getPublicAppUrl().replace(/\/+$/, "");
+    const confirmUrl = `${base}/receipt/${refreshed.receiptConfirmToken}`;
+    const accountUrl = `${base}/account/orders/bespoke/${order.id}`;
+    try {
+      await sendBespokeDeliveredEmail({
+        to: order.clientEmail,
+        firstName: order.clientName.split(" ")[0] ?? order.clientName,
+        orderRef: order.orderRef,
+        confirmUrl,
+        accountUrl,
+      });
+      await prisma.stageUpdate.update({
+        where: { id: stageUpdate.id },
+        data: { emailSent: true, emailSentAt: new Date() },
+      });
+    } catch (emailErr) {
+      console.error("[bespoke-delivery-email]", emailErr);
+    }
+  } else {
+    const emailData = buildStageEmailData({
+      clientName: order.clientName.split(" ")[0] ?? order.clientName,
+      orderRef: order.orderRef,
+      stage,
+      notes,
+      images,
+      videos,
+      trackingToken: order.trackingToken,
+      deliveryDate: order.deliveryDate,
     });
-  } catch (emailErr) {
-    console.error("[bespoke-stage-email]", emailErr);
+
+    try {
+      await sendBespokeStageEmail(stage, emailData, order.clientEmail);
+      await prisma.stageUpdate.update({
+        where: { id: stageUpdate.id },
+        data: { emailSent: true, emailSentAt: new Date() },
+      });
+    } catch (emailErr) {
+      console.error("[bespoke-stage-email]", emailErr);
+    }
   }
 
   await logActivity({
@@ -263,13 +302,20 @@ export async function revertOrderStage(params: {
 }): Promise<{ ok: true } | { ok: false; status: number; failures: StageGateResult["failures"] }> {
   const order = await prisma.bespokeOrder.findUnique({
     where: { id: params.orderId },
-    select: { id: true, orderRef: true, currentStage: true },
+    select: { id: true, orderRef: true, currentStage: true, status: true },
   });
   if (!order) {
     return {
       ok: false,
       status: 404,
       failures: [{ code: "WRONG_STAGE", message: "Order not found." }],
+    };
+  }
+  if (order.status === OrderStatus.ARCHIVED) {
+    return {
+      ok: false,
+      status: 400,
+      failures: [{ code: "WRONG_STAGE", message: "Archived orders are read-only." }],
     };
   }
 
@@ -316,7 +362,7 @@ export async function revertOrderStage(params: {
         status: OrderStatus.PROCESSING,
       },
     });
-  });
+  }, INTERACTIVE_TX);
 
   await logActivity({
     userId: params.actor.id,

@@ -281,6 +281,7 @@ async function upsertSiteSettings() {
     { key: "bank_account_number", value: "", group: SettingGroup.PAYMENTS, label: "Bank Transfer — Account Number", type: SettingType.TEXT, isPublic: true, sortOrder: 21 },
     { key: "bank_account_name", value: "", group: SettingGroup.PAYMENTS, label: "Bank Transfer — Account Name", type: SettingType.TEXT, isPublic: true, sortOrder: 22 },
     { key: "bespoke_deposit_percent", value: "70", group: SettingGroup.PAYMENTS, label: "Bespoke Deposit %", type: SettingType.NUMBER, isPublic: false, sortOrder: 25 },
+    { key: "alteration_warranty_days", value: "30", group: SettingGroup.PAYMENTS, label: "Alteration warranty (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 26 },
     { key: "exchange_rate_usd", value: "0.00065", group: SettingGroup.PAYMENTS, label: "USD Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 30 },
     { key: "exchange_rate_gbp", value: "0.00052", group: SettingGroup.PAYMENTS, label: "GBP Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 31 },
     { key: "email_from_name", value: "Prudent Gabriel", group: SettingGroup.EMAIL, label: "From Name", type: SettingType.TEXT, isPublic: false, sortOrder: 1 },
@@ -375,6 +376,7 @@ async function upsertSiteSettings() {
     { key: "invoice_footer_note", value: "Thank you for choosing Prudential Atelier. We look forward to creating something extraordinary for you.", group: SettingGroup.INVOICE, label: "Invoice Footer Note", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 43 },
     { key: "invoice_deposit_terms", value: "70% deposit required to commence. Balance due before delivery.", group: SettingGroup.INVOICE, label: "Default Payment Terms", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 44 },
     { key: "bespoke_deposit_percent", value: "70", group: SettingGroup.PAYMENTS, label: "Bespoke Deposit %", type: SettingType.NUMBER, isPublic: false, sortOrder: 25 },
+    { key: "alteration_warranty_days", value: "30", group: SettingGroup.PAYMENTS, label: "Alteration warranty (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 26 },
     { key: "invoice_logo_url", value: "/images/atelier-logo.png", group: SettingGroup.INVOICE, label: "Invoice Logo URL", type: SettingType.IMAGE, isPublic: false, sortOrder: 45 },
     { key: "invoice_prefix", value: "PA-INV", group: SettingGroup.INVOICE, label: "Invoice Number Prefix", type: SettingType.TEXT, isPublic: false, sortOrder: 46 },
   ];

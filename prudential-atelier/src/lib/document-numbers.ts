@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { SHORT_INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { getSetting } from "@/lib/settings";
 
 export type DocumentNumberKind = "invoice" | "quotation";
@@ -41,7 +42,7 @@ export async function allocateDocumentSequence(
   if (client && client !== prisma) {
     return run(client as Prisma.TransactionClient);
   }
-  return prisma.$transaction((tx) => run(tx));
+  return prisma.$transaction((tx) => run(tx), SHORT_INTERACTIVE_TX);
 }
 
 export async function formatInvoiceNumber(

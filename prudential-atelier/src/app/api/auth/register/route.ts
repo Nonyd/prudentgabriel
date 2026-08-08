@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { PointsType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { registerSchema } from "@/validations/auth";
 import { awardReferralPoints } from "@/lib/points";
 import { sendWelcomeEmail } from "@/lib/email";
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
         referredBy: referrerId,
       },
     });
-  });
+  }, INTERACTIVE_TX);
 
   const createdUser = await prisma.user.findUnique({
     where: { email: email.toLowerCase() },

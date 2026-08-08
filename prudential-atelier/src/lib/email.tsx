@@ -1,6 +1,7 @@
 import { render } from "@react-email/render";
-import type { ReactElement } from "react";
+import React, { type ReactElement } from "react";
 import { Resend } from "resend";
+import { isEmailCaptureEnabled, recordCapturedEmail } from "@/lib/email-capture";
 import WelcomeCredentialsEmail, {
   subjectWelcomeCredentials,
 } from "@/emails/WelcomeCredentialsEmail";
@@ -23,6 +24,8 @@ import LoyaltyTierUpgradeEmail from "@/emails/LoyaltyTierUpgradeEmail";
 import ReferralRewardEmail from "@/emails/ReferralRewardEmail";
 import StageAssignmentEmail from "@/emails/StageAssignmentEmail";
 import RtwOrderDeliveredEmail from "@/emails/RtwOrderDeliveredEmail";
+import BespokeDeliveredEmail, { subjectBespokeDelivered } from "@/emails/BespokeDeliveredEmail";
+import ReceiptReminderEmail, { subjectReceiptReminder } from "@/emails/ReceiptReminderEmail";
 import type { LoyaltyTier } from "@prisma/client";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { primeEmailBranding, emailLogoWhiteUrl } from "@/lib/email-branding";
@@ -47,6 +50,12 @@ export async function getEmailLogo(): Promise<string | null> {
 }
 
 export async function sendEmail(params: { to: string; subject: string; html: string }): Promise<void> {
+  if (isEmailCaptureEnabled()) {
+    recordCapturedEmail(params);
+    console.log("[EMAIL:capture]", params.to, params.subject);
+    return;
+  }
+
   if (process.env.SMTP_PASSWORD) {
     try {
       await sendSmtpMail({ to: params.to, subject: params.subject, html: params.html, from: FROM });
@@ -349,6 +358,70 @@ export async function sendRtwOrderDeliveredEmail(params: {
   await sendEmail({
     to: params.to,
     subject: `Your order has been delivered — #${params.orderNumber}`,
+    html,
+  });
+}
+
+export async function sendBespokeDeliveredEmail(params: {
+  to: string;
+  firstName: string;
+  orderRef: string;
+  confirmUrl: string;
+  accountUrl: string;
+}): Promise<void> {
+  const html = await renderBrandedEmail(
+    <BespokeDeliveredEmail
+      firstName={params.firstName}
+      orderRef={params.orderRef}
+      confirmUrl={params.confirmUrl}
+      accountUrl={params.accountUrl}
+    />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: subjectBespokeDelivered(params.orderRef),
+    html,
+  });
+}
+
+export async function sendReceiptReminderEmail(params: {
+  to: string;
+  firstName: string;
+  orderRef: string;
+  confirmUrl: string;
+}): Promise<void> {
+  const html = await renderBrandedEmail(
+    <ReceiptReminderEmail
+      firstName={params.firstName}
+      orderRef={params.orderRef}
+      confirmUrl={params.confirmUrl}
+    />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: subjectReceiptReminder(params.orderRef),
+    html,
+  });
+}
+
+export async function sendBespokeReviewRequestEmail(params: {
+  to: string;
+  firstName: string;
+  orderRef: string;
+  reviewUrl: string;
+}): Promise<void> {
+  const html = await renderBrandedEmail(
+    <ReviewRequestEmail
+      firstName={params.firstName}
+      headline={`How was your commission ${params.orderRef}?`}
+      bodyParagraph={`Your bespoke piece ${params.orderRef} is with you — we hope you love every detail. We'd be honoured to hear about your experience.`}
+      ctaLabel="Share your thoughts"
+      ctaUrl={params.reviewUrl}
+    />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: `How was your commission ${params.orderRef}? — Prudential Atelier`,
     html,
   });
 }

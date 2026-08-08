@@ -97,6 +97,8 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [showArchived, setShowArchived] = useState(false);
+  const [awaitingReceipt, setAwaitingReceipt] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({
@@ -114,12 +116,14 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
     if (search) params.set("search", search);
     if (stageFilter !== "all") params.set("stage", stageFilter);
     if (statusFilter !== "all") params.set("status", statusFilter);
+    if (showArchived) params.set("showArchived", "1");
+    if (awaitingReceipt) params.set("awaitingReceipt", "1");
     const res = await fetch(`/api/bespoke?${params}`);
     if (res.ok) {
       const data = (await res.json()) as { items: OrderRow[] };
       setItems(data.items);
     }
-  }, [search, stageFilter, statusFilter]);
+  }, [search, stageFilter, statusFilter, showArchived, awaitingReceipt]);
 
   useEffect(() => {
     const t = setTimeout(refresh, 300);
@@ -252,7 +256,7 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
           className="rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         >
           <option value="all">All statuses</option>
-          {(["PENDING", "CONFIRMED", "PROCESSING", "DELIVERED", "CANCELLED"] as OrderStatus[]).map(
+          {(["PENDING", "CONFIRMED", "PROCESSING", "DELIVERED", "ARCHIVED", "CANCELLED"] as OrderStatus[]).map(
             (s) => (
               <option key={s} value={s}>
                 {s}
@@ -260,6 +264,22 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
             ),
           )}
         </select>
+        <label className="flex items-center gap-2 font-sans text-xs text-text-mid">
+          <input
+            type="checkbox"
+            checked={showArchived}
+            onChange={(e) => setShowArchived(e.target.checked)}
+          />
+          Show archived
+        </label>
+        <label className="flex items-center gap-2 font-sans text-xs text-text-mid">
+          <input
+            type="checkbox"
+            checked={awaitingReceipt}
+            onChange={(e) => setAwaitingReceipt(e.target.checked)}
+          />
+          Awaiting receipt confirm
+        </label>
       </div>
 
       {items.length === 0 ? (

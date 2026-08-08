@@ -55,10 +55,23 @@ async function fetchLogoSettings(): Promise<LogoSettings> {
   };
 }
 
+export async function fetchLogoSettingsUncached(): Promise<LogoSettings> {
+  return fetchLogoSettings();
+}
+
 export const getLogoSettings = unstable_cache(fetchLogoSettings, ["logo-settings"], {
   revalidate: 3600,
   tags: ["logo-settings"],
 });
+
+/** Prefer cached Next.js path; fall back for tsx/script runtimes without incrementalCache. */
+export async function getLogoSettingsSafe(): Promise<LogoSettings> {
+  try {
+    return await getLogoSettings();
+  } catch {
+    return fetchLogoSettings();
+  }
+}
 
 export const LOGO_SETTING_KEYS = [
   "logo_dark",

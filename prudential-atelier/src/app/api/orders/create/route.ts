@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PaymentGateway, PaymentStatus, Prisma, ProductCategory } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { validateCoupon } from "@/lib/coupon";
 import { calculateShippingOptions } from "@/lib/shipping";
 import { generateOrderNumber } from "@/lib/order-number";
@@ -357,7 +358,7 @@ export async function POST(req: NextRequest) {
       }
 
       return orderRow;
-    });
+    }, INTERACTIVE_TX);
 
     if (userId && data.address?.saveAddress && data.address) {
       await prisma.address.create({

@@ -1,5 +1,6 @@
 import { OrderStatus, PaymentGateway, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { awardPurchasePoints } from "@/lib/points";
 import { autoOnboardClient } from "@/lib/client-onboarding";
 import { sendOrderConfirmationEmail } from "@/lib/email";
@@ -43,7 +44,7 @@ export async function fulfillPaidOrder(params: {
         });
       }
     }
-  });
+  }, INTERACTIVE_TX);
 
   let userId = order.userId;
   const clientEmail = order.guestEmail ?? order.user?.email;

@@ -20,10 +20,21 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get("search")?.trim();
   const from = searchParams.get("from");
   const to = searchParams.get("to");
+  const showArchived = searchParams.get("showArchived") === "1";
+  const awaitingReceipt = searchParams.get("awaitingReceipt") === "1";
 
   const where: Prisma.BespokeOrderWhereInput = {};
   if (stage && stage !== "all") where.currentStage = stage as BespokeStage;
-  if (status && status !== "all") where.status = status as OrderStatus;
+  if (status && status !== "all") {
+    where.status = status as OrderStatus;
+  } else if (!showArchived) {
+    where.status = { not: OrderStatus.ARCHIVED };
+  }
+  if (awaitingReceipt) {
+    where.deliveredAt = { not: null };
+    where.receiptConfirmedAt = null;
+    where.status = { in: [OrderStatus.DELIVERED] };
+  }
   if (from || to) {
     where.createdAt = {};
     if (from) where.createdAt.gte = new Date(from);

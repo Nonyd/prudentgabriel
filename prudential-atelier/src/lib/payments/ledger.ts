@@ -280,6 +280,10 @@ export async function recomputeOrderTotals(bespokeOrderId: string): Promise<Paym
     },
   });
   await syncProductionUnlock(bespokeOrderId, summary);
+  if (summary.isFullyPaid || toNumber(summary.balance) <= 0.01) {
+    const { maybeArchiveBespokeOrder } = await import("@/lib/bespoke-archive");
+    await maybeArchiveBespokeOrder(bespokeOrderId).catch(() => undefined);
+  }
   return summary;
 }
 
