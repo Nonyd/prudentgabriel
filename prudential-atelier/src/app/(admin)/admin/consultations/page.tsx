@@ -25,9 +25,26 @@ function isWithinTwoHours(confirmedDate: Date | null, confirmedTime: string | nu
   return diff > 0 && diff <= 2 * 60 * 60 * 1000;
 }
 
-export default async function AdminConsultationsPage() {
+const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
+
+type PageProps = {
+  searchParams?: Promise<{ awaitingQuote?: string }>;
+};
+
+export default async function AdminConsultationsPage({ searchParams }: PageProps) {
+  const sp = (await searchParams) ?? {};
+  const awaitingQuote = sp.awaitingQuote === "1" || sp.awaitingQuote === "true";
+  const quoteCutoff = new Date(Date.now() - FORTY_EIGHT_HOURS_MS);
+
   const bookings = await prisma.consultationBooking.findMany({
-    orderBy: { createdAt: "desc" },
+    where: awaitingQuote
+      ? {
+          status: ConsultationStatus.COMPLETED,
+          completedAt: { lte: quoteCutoff, not: null },
+          quotations: { none: {} },
+        }
+      : undefined,
+    orderBy: awaitingQuote ? { completedAt: "asc" } : { createdAt: "desc" },
     take: 100,
     include: {
       consultant: { select: { name: true } },
@@ -44,6 +61,14 @@ export default async function AdminConsultationsPage() {
 
   const pendingConfirm = await prisma.consultationBooking.count({
     where: { status: ConsultationStatus.PENDING_CONFIRMATION },
+  });
+
+  const awaitingQuoteCount = await prisma.consultationBooking.count({
+    where: {
+      status: ConsultationStatus.COMPLETED,
+      completedAt: { lte: quoteCutoff, not: null },
+      quotations: { none: {} },
+    },
   });
 
   const unsentVirtual = bookings.filter((b) => {
@@ -66,7 +91,30 @@ export default async function AdminConsultationsPage() {
       <h1 className="font-display text-2xl text-ink">Consultations</h1>
       <p className="mt-1 font-body text-[13px] text-[#6B6B68]">Prudential Atelier</p>
 
-      {unsentVirtual.length > 0 && alertBooking ? (
+      <div className="mt-4 flex flex-wrap gap-2 font-body text-[11px]">
+        <Link
+          href="/admin/consultations"
+          className={`rounded-sm border px-3 py-1.5 uppercase tracking-[0.08em] ${
+            !awaitingQuote
+              ? "border-olive bg-olive text-white"
+              : "border-sand text-ink hover:border-olive"
+          }`}
+        >
+          All
+        </Link>
+        <Link
+          href="/admin/consultations?awaitingQuote=1"
+          className={`rounded-sm border px-3 py-1.5 uppercase tracking-[0.08em] ${
+            awaitingQuote
+              ? "border-olive bg-olive text-white"
+              : "border-sand text-ink hover:border-olive"
+          }`}
+        >
+          Awaiting quote{awaitingQuoteCount > 0 ? ` (${awaitingQuoteCount})` : ""}
+        </Link>
+      </div>
+
+      {unsentVirtual.length > 0 && alertBooking && !awaitingQuote ? (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <span>
             ⚠ {unsentVirtual.length} virtual consultation{unsentVirtual.length > 1 ? "s" : ""} within 2 hours —
@@ -78,7 +126,16 @@ export default async function AdminConsultationsPage() {
         </div>
       ) : null}
 
-      {pendingConfirm > 0 ? (
+      {awaitingQuoteCount > 0 && !awaitingQuote ? (
+        <p className="mt-4 font-body text-sm text-amber-800">
+          {awaitingQuoteCount} completed consultation(s) awaiting a quotation (48h+) —{" "}
+          <Link href="/admin/consultations?awaitingQuote=1" className="underline">
+            view filter
+          </Link>
+        </p>
+      ) : null}
+
+      {pendingConfirm > 0 && !awaitingQuote ? (
         <p className="mt-4 font-body text-sm text-amber-800">
           {pendingConfirm} booking(s) awaiting manual confirmation
         </p>

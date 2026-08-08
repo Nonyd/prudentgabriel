@@ -47,7 +47,8 @@ function matchesFilter(row: AdminNotification, filter: FilterType): boolean {
   if (filter === "UNREAD") return !row.isRead;
   if (filter === "ORDERS") return row.type === "NEW_ORDER" || row.type === "PAYMENT_FAILED";
   if (filter === "BESPOKE") return row.type === "NEW_BESPOKE";
-  if (filter === "CONSULTATIONS") return row.type === "NEW_CONSULTATION";
+  if (filter === "CONSULTATIONS")
+    return row.type === "NEW_CONSULTATION" || row.type === "QUOTE_AWAITING";
   if (filter === "REVIEWS") return row.type === "REVIEW_PENDING";
   if (filter === "STOCK") return row.type === "LOW_STOCK" || row.type === "COUPON_EXPIRING";
   return row.type === "NEW_CUSTOMER";

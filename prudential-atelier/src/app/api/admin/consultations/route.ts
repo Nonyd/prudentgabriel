@@ -13,6 +13,9 @@ const querySchema = z.object({
   dateFrom: z.coerce.date().optional(),
   dateTo: z.coerce.date().optional(),
   search: z.string().optional(),
+  awaitingQuote: z
+    .union([z.literal("1"), z.literal("true"), z.literal("0"), z.literal("false")])
+    .optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -26,9 +29,19 @@ export async function GET(req: NextRequest) {
   }
   const q = parsed.data;
   const skip = (q.page - 1) * q.pageSize;
+  const awaitingQuote = q.awaitingQuote === "1" || q.awaitingQuote === "true";
+  const quoteCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
 
   const where = {
-    ...(q.status ? { status: q.status } : {}),
+    ...(awaitingQuote
+      ? {
+          status: ConsultationStatus.COMPLETED,
+          completedAt: { lte: quoteCutoff, not: null },
+          quotations: { none: {} },
+        }
+      : {
+          ...(q.status ? { status: q.status } : {}),
+        }),
     ...(q.consultantId ? { consultantId: q.consultantId } : {}),
     ...(q.deliveryMode ? { offering: { deliveryMode: q.deliveryMode } } : {}),
     ...(q.dateFrom || q.dateTo

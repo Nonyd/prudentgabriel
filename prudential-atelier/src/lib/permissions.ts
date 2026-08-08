@@ -264,6 +264,7 @@ export function getJobPermissionsForAdminPath(pathname: string): Permission[] | 
   if (pathname.startsWith("/admin/settings/developer")) return [PERMISSIONS.ACCESS_DEVELOPER];
   if (pathname.startsWith("/admin/settings/users")) return [PERMISSIONS.MANAGE_USERS];
   if (pathname.startsWith("/admin/settings/roles")) return [PERMISSIONS.MANAGE_ROLES];
+  if (pathname.startsWith("/admin/system")) return null;
   if (pathname.startsWith("/admin/logs")) return [PERMISSIONS.VIEW_LOGS];
   if (pathname.startsWith("/admin/reports")) {
     return [

@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { result, runId, status } = await executeCronJob("stage-approval-reminders");
+    const { result, runId, status } = await executeCronJob("unsent-quote-alerts");
     return NextResponse.json({
       ok: true,
       runId,

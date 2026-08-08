@@ -152,6 +152,14 @@ export default auth(async function middleware(request) {
     }
 
     if (
+      pathname.startsWith("/admin/system") &&
+      role !== "SUPER_ADMIN" &&
+      role !== "ADMIN"
+    ) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+
+    if (
       pathname.startsWith("/admin/settings/users") &&
       role !== "SUPER_ADMIN" &&
       role !== "ADMIN"

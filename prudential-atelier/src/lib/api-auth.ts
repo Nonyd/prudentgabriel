@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
 import { isAdminRole } from "@/lib/roles";
 import { sessionHasRole } from "@/lib/bespoke-roles";
+import { verifyCronRequest } from "@/lib/cron/verify";
 
 export {
   BESPOKE_STAFF_ROLES,
@@ -54,11 +55,9 @@ export async function requireStaffPortal(): Promise<AuthResult> {
   return { ok: false, response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
 }
 
+/** @deprecated Prefer verifyCronRequest from @/lib/cron/verify — kept for legacy routes. */
 export function validateCronSecret(req: Request): boolean {
-  const authHeader = req.headers.get("authorization");
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  return authHeader === `Bearer ${secret}`;
+  return verifyCronRequest(req);
 }
 
 export const HR_ROLES = ["HR_MANAGER", "ADMIN", "SUPER_ADMIN"];
