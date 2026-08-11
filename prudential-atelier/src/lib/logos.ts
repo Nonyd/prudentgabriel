@@ -15,7 +15,17 @@ export type LogoSettings = {
   kids: SubBrandLogos;
 };
 
+const EMPTY_LOGOS: LogoSettings = {
+  logoDark: "",
+  logoWhite: "",
+  atelier: { dark: "", white: "" },
+  bridal: { dark: "", white: "" },
+  kids: { dark: "", white: "" },
+};
+
 async function fetchLogoSettings(): Promise<LogoSettings> {
+  if (process.env.SKIP_DB_BUILD === "1") return EMPTY_LOGOS;
+
   const keys = [
     "logo_dark",
     "logo_white",

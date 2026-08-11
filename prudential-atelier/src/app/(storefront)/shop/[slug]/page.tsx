@@ -32,7 +32,7 @@ const RelatedProducts = nextDynamic(() => import("@/components/product/RelatedPr
 export const revalidate = 300;
 
 export async function generateStaticParams() {
-  if (!process.env.DATABASE_URL?.trim()) return [];
+  if (process.env.SKIP_DB_BUILD === "1" || !process.env.DATABASE_URL?.trim()) return [];
   try {
     const rows = await prisma.product.findMany({
       where: { isPublished: true },

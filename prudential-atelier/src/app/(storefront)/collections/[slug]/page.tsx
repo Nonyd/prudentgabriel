@@ -14,13 +14,18 @@ export const revalidate = 300;
 const PAGE_LIMIT = 24;
 
 export async function generateStaticParams() {
-  const rows = await prisma.collection.findMany({
-    where: { isPublished: true },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-    select: { slug: true },
-  });
-  return rows.map((r) => ({ slug: r.slug }));
+  if (process.env.SKIP_DB_BUILD === "1" || !process.env.DATABASE_URL?.trim()) return [];
+  try {
+    const rows = await prisma.collection.findMany({
+      where: { isPublished: true },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      select: { slug: true },
+    });
+    return rows.map((r) => ({ slug: r.slug }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({
