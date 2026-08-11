@@ -1,0 +1,119 @@
+# Build app image on push to main → GHCR tag `production` (+ commit SHA), then SSH redeploy.
+
+name: docker-publish-ghcr-production
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "prudential-atelier/**"
+      - "deploy/**"
+      - ".github/workflows/docker-publish-ghcr-production.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: docker-publish-ghcr-production
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: prudentgabriel
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      DOCKER_CLIENT_TIMEOUT: "300"
+      COMPOSE_HTTP_TIMEOUT: "300"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lowercase GHCR owner
+        run: echo "IMAGE_OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
+      - name: Add swap for Docker Next.js build
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 8
+
+      - name: Set build-args for Next.js (production URLs)
+        run: |
+          set_build_arg() {
+            local name="$1"
+            local secret_val="$2"
+            local default_val="$3"
+            if [ -n "$secret_val" ]; then
+              echo "${name}=${secret_val}" >> "$GITHUB_ENV"
+            else
+              echo "${name}=${default_val}" >> "$GITHUB_ENV"
+            fi
+          }
+          set_build_arg BUILD_NEXT_PUBLIC_APP_URL "${{ secrets.PA_BUILD_NEXT_PUBLIC_APP_URL }}" "https://prudentgabriel.com"
+          set_build_arg BUILD_NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME "${{ secrets.PA_BUILD_NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}" ""
+          set_build_arg BUILD_NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY "${{ secrets.PA_BUILD_NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY }}" ""
+          set_build_arg BUILD_NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY "${{ secrets.PA_BUILD_NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY }}" ""
+          set_build_arg BUILD_NEXT_PUBLIC_STRIPE_PUBLIC_KEY "${{ secrets.PA_BUILD_NEXT_PUBLIC_STRIPE_PUBLIC_KEY }}" ""
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR (retry on timeout)
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 5
+          retry_wait_seconds: 30
+          command: |
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login "${{ env.REGISTRY }}" -u "${{ github.actor }}" --password-stdin
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: prudential-atelier
+          file: prudential-atelier/Dockerfile
+          push: true
+          build-args: |
+            NODE_MEMORY_MB=4096
+            NEXT_PUBLIC_APP_URL=${{ env.BUILD_NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${{ env.BUILD_NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
+            NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=${{ env.BUILD_NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY }}
+            NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY=${{ env.BUILD_NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY }}
+            NEXT_PUBLIC_STRIPE_PUBLIC_KEY=${{ env.BUILD_NEXT_PUBLIC_STRIPE_PUBLIC_KEY }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:production
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha,scope=production-v1
+          cache-to: type=gha,mode=max,scope=production-v1
+
+      - name: Deploy production via SSH
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_OWNER: ${{ env.IMAGE_OWNER }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: GHCR_PAT,GITHUB_TOKEN,IMAGE_OWNER
+          script: |
+            set -euo pipefail
+            TOKEN="${GHCR_PAT:-$GITHUB_TOKEN}"
+            export DOCKER_CLIENT_TIMEOUT=300
+            for attempt in 1 2 3 4 5; do
+              if echo "$TOKEN" | docker login ghcr.io -u "${IMAGE_OWNER}" --password-stdin; then
+                break
+              fi
+              if [ "$attempt" -eq 5 ]; then
+                echo "GHCR login failed after 5 attempts" >&2
+                exit 1
+              fi
+              echo "GHCR login attempt $attempt failed; retrying in 30s..." >&2
+              sleep 30
+            done
+            cd /opt/prudentgabriel/deploy
+            docker compose --env-file .env.production -f compose.production.yaml pull
+            docker compose --env-file .env.production -f compose.production.yaml up -d --force-recreate app

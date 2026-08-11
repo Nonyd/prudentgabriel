@@ -1,0 +1,47 @@
+# Staging stack: Postgres + app (self-contained, separate from PFA and production).
+#
+#   docker compose --env-file .env.staging -f compose.staging.yaml up -d
+
+name: prudentgabriel-staging
+
+networks:
+  coolify:
+    external: true
+    name: coolify
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: prudentgabriel-staging-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+    volumes:
+      - pa_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  app:
+    image: ${PA_MAIN_IMAGE:?Set PA_MAIN_IMAGE}:${PA_IMAGE_TAG:-staging}
+    container_name: prudentgabriel-staging
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.staging
+    ports:
+      - "${PA_MAIN_BIND:-127.0.0.1:3011}:3000"
+    networks:
+      - default
+      - coolify
+
+volumes:
+  pa_postgres_data:
+    name: prudentgabriel-staging-postgres-data

@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+.vercel
+.git
+.env
+.env.*
+!.env.example
+*.md
+doc
+coverage
+tsconfig.tsbuildinfo
+*.pem
+.DS_Store

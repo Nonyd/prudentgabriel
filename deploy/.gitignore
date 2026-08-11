@@ -1,0 +1,6 @@
+.env.production
+.env.staging
+.env.*
+!.env.production.example
+!.env.staging.example
+!.gitignore

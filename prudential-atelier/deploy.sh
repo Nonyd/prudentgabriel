@@ -1,4 +1,5 @@
 #!/bin/bash
+# Local/PM2 helper only. Production uses Compose + GHCR — see ../deploy/DEPLOY.md
 set -euo pipefail
 
 ROOT="${PRUDENTIAL_ATELIER_ROOT:-$(cd "$(dirname "$0")" && pwd)}"

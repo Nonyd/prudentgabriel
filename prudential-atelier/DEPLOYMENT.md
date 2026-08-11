@@ -1,6 +1,13 @@
 # Prudential Atelier — Deployment Guide
 
-## Vercel deployment
+**Primary (this VPS, same host as Fashion Academy):** see **[../deploy/DEPLOY.md](../deploy/DEPLOY.md)** — Docker Compose + Coolify Traefik + GHCR.
+
+- Production: https://prudentgabriel.com
+- Staging: https://staging.prudentgabriel.com
+
+The Vercel steps below are kept as a fallback only.
+
+## Vercel deployment (fallback)
 
 ### Step 1 — Database (Neon.tech)
 

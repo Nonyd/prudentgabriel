@@ -9,4 +9,11 @@ prudential-atelier/.env.production
 prudential-atelier/*.tsbuildinfo
 prudential-atelier/next-env.d.ts
 
+# Deploy secrets (never commit)
+deploy/.env.production
+deploy/.env.staging
+deploy/.env.*
+!deploy/.env.production.example
+!deploy/.env.staging.example
+
 .DS_Store

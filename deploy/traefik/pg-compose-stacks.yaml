@@ -1,0 +1,85 @@
+# Traefik file provider (Coolify coolify-proxy).
+# Install on server: /data/coolify/proxy/dynamic/pg-compose-stacks.yaml
+# Apps must join the `coolify` network (see compose.production.yaml / compose.staging.yaml).
+# Traefik reaches them by container name on port 3000.
+#
+# Does not replace pfa-compose-stacks.yaml — both files can live side by side.
+
+http:
+  middlewares:
+    pg-redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+    pg-gzip:
+      compress: {}
+    pg-www-to-apex:
+      redirectRegex:
+        regex: "^https://www\\.prudentgabriel\\.com(.*)"
+        replacement: "https://prudentgabriel.com${1}"
+        permanent: true
+
+  routers:
+    pg-production-http:
+      entryPoints:
+        - http
+      rule: Host(`prudentgabriel.com`) || Host(`www.prudentgabriel.com`)
+      middlewares:
+        - pg-redirect-to-https
+      service: pg-noop
+      priority: 2000
+
+    pg-production-https:
+      entryPoints:
+        - https
+      rule: Host(`prudentgabriel.com`)
+      middlewares:
+        - pg-gzip
+      service: pg-production-svc
+      tls:
+        certResolver: letsencrypt
+      priority: 2000
+
+    pg-production-www-https:
+      entryPoints:
+        - https
+      rule: Host(`www.prudentgabriel.com`)
+      middlewares:
+        - pg-www-to-apex
+      service: pg-production-svc
+      tls:
+        certResolver: letsencrypt
+      priority: 2000
+
+    pg-staging-http:
+      entryPoints:
+        - http
+      rule: Host(`staging.prudentgabriel.com`)
+      middlewares:
+        - pg-redirect-to-https
+      service: pg-noop
+      priority: 2000
+
+    pg-staging-https:
+      entryPoints:
+        - https
+      rule: Host(`staging.prudentgabriel.com`)
+      middlewares:
+        - pg-gzip
+      service: pg-staging-svc
+      tls:
+        certResolver: letsencrypt
+      priority: 2000
+
+  services:
+    pg-noop:
+      loadBalancer:
+        servers: []
+    pg-production-svc:
+      loadBalancer:
+        servers:
+          - url: http://prudentgabriel-main:3000
+    pg-staging-svc:
+      loadBalancer:
+        servers:
+          - url: http://prudentgabriel-staging:3000

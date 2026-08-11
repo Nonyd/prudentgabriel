@@ -1,0 +1,18 @@
+# Optional override: build the app image on the host instead of pulling from GHCR.
+# Requires repo checkout with prudential-atelier/ next to deploy/.
+#
+#   docker compose --env-file .env.production \
+#     -f compose.production.yaml -f compose.production.build.yaml up -d --build
+
+services:
+  app:
+    build:
+      context: ../prudential-atelier
+      dockerfile: Dockerfile
+      args:
+        NODE_MEMORY_MB: ${NODE_MEMORY_MB:-4096}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://prudentgabriel.com}
+        NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME:-}
+        NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY: ${NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY:-}
+        NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY: ${NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY:-}
+        NEXT_PUBLIC_STRIPE_PUBLIC_KEY: ${NEXT_PUBLIC_STRIPE_PUBLIC_KEY:-}

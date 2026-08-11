@@ -1,0 +1,48 @@
+# Production stack: Postgres + app (self-contained, separate from PFA).
+#
+#   docker compose --env-file .env.production -f compose.production.yaml up -d
+
+name: prudentgabriel-main
+
+networks:
+  coolify:
+    external: true
+    name: coolify
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: prudentgabriel-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+    volumes:
+      # postgres:18+ expects mount at /var/lib/postgresql (not .../data)
+      - pa_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  app:
+    image: ${PA_MAIN_IMAGE:?Set PA_MAIN_IMAGE}:${PA_IMAGE_TAG:-production}
+    container_name: prudentgabriel-main
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.production
+    ports:
+      - "${PA_MAIN_BIND:-127.0.0.1:3010}:3000"
+    networks:
+      - default
+      - coolify
+
+volumes:
+  pa_postgres_data:
+    name: prudentgabriel-postgres-data

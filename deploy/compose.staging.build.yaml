@@ -1,0 +1,17 @@
+# Optional override: build the staging image on the host instead of pulling from GHCR.
+#
+#   docker compose --env-file .env.staging \
+#     -f compose.staging.yaml -f compose.staging.build.yaml up -d --build
+
+services:
+  app:
+    build:
+      context: ../prudential-atelier
+      dockerfile: Dockerfile
+      args:
+        NODE_MEMORY_MB: ${NODE_MEMORY_MB:-4096}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://staging.prudentgabriel.com}
+        NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME:-}
+        NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY: ${NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY:-}
+        NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY: ${NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY:-}
+        NEXT_PUBLIC_STRIPE_PUBLIC_KEY: ${NEXT_PUBLIC_STRIPE_PUBLIC_KEY:-}
