@@ -119,7 +119,7 @@ nano .env.staging
 Minimum checks (both files):
 
 - `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` — **different** from PFA
-- `DATABASE_URL` and `DIRECT_URL` — host **`postgres`**, same credentials as above
+- `DATABASE_URL` and `DIRECT_URL` — host **`prudentgabriel-postgres`** (prod) or **`prudentgabriel-staging-postgres`** (staging), **not** `postgres`. The Coolify network also resolves `postgres` to Coolify’s own database (Prisma P1000).
 - `AUTH_SECRET` / `NEXTAUTH_SECRET` — long random (`openssl rand -base64 32`)
 - `NEXTAUTH_URL` + `NEXT_PUBLIC_APP_URL` — match the public HTTPS origin
 - `CRON_SECRET` — used by host crontab

@@ -1573,7 +1573,7 @@ enum StageMediaKind {
 /// Persisted per-stage completion. Sequential integrity counts rows with revertedAt null.
 /// Reverts preserve the row (revertedAt / revertedById / revertReason) — do not delete.
 /// DB enforces at most one live row per (orderId, stage) via partial unique index
-/// OrderStageCompletion_orderId_stage_live_key (see migration 20260808_stage_completion_live_unique).
+/// OrderStageCompletion_orderId_stage_live_key (see migration 20260809_stage_completion_live_unique).
 model OrderStageCompletion {
   id            String       @id @default(cuid())
   orderId       String
