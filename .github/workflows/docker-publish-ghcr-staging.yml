@@ -124,5 +124,17 @@ jobs:
               sleep 30
             done
             cd /opt/prudentgabriel/deploy
-            docker compose --env-file .env.staging -f compose.staging.yaml pull
+            # Pull only the app image from GHCR. A full `compose pull` also hits Docker Hub
+            # for postgres:18-alpine and fails when Hub resets IPv6 connections.
+            for attempt in 1 2 3 4 5; do
+              if docker compose --env-file .env.staging -f compose.staging.yaml pull app; then
+                break
+              fi
+              if [ "$attempt" -eq 5 ]; then
+                echo "App image pull failed after 5 attempts" >&2
+                exit 1
+              fi
+              echo "App image pull attempt $attempt failed; retrying in 30s..." >&2
+              sleep 30
+            done
             docker compose --env-file .env.staging -f compose.staging.yaml up -d --force-recreate app

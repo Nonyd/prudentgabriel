@@ -12,6 +12,7 @@ networks:
 services:
   postgres:
     image: postgres:18-alpine
+    pull_policy: missing
     container_name: prudentgabriel-postgres
     restart: unless-stopped
     environment:
