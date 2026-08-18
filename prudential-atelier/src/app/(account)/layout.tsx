@@ -3,9 +3,11 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateClientProfile } from "@/lib/account-helpers";
 import { AccountShell } from "@/components/account/AccountShell";
+import { enforcePublicMaintenance } from "@/lib/maintenance";
 
 export default async function AccountGroupLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+  await enforcePublicMaintenance(session?.user?.role);
 
   if (!session?.user) {
     redirect("/login?callbackUrl=/account");

@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { InstagramIcon } from "@/components/icons/SocialIcons";
-import { getPublicAppUrl } from "@/lib/app-url";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 
 async function getMaintenanceMessage(): Promise<string> {
   try {
-    const res = await fetch(`${getPublicAppUrl()}/api/maintenance-status`, {
-      cache: "no-store",
+    const row = await prisma.siteSetting.findUnique({
+      where: { key: "maintenance_mode_message" },
+      select: { value: true },
     });
-    const data = (await res.json()) as { message?: string };
-    return data.message || "We're making some improvements. Check back soon.";
+    return row?.value || "We're making some improvements. Check back soon.";
   } catch {
     return "We're making some improvements. Check back soon.";
   }

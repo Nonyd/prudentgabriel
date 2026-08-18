@@ -1,10 +1,12 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { StaffShell } from "@/components/staff/StaffShell";
+import { enforcePublicMaintenance } from "@/lib/maintenance";
 export const dynamic = "force-dynamic";
 
 export default async function StaffLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+  await enforcePublicMaintenance(session?.user?.role);
   if (!session?.user) {
     redirect("/login?tab=staff");
   }

@@ -29,39 +29,6 @@ export default auth(async function middleware(request) {
     return NextResponse.next();
   }
 
-  const skipMaintenance =
-    pathname.startsWith("/admin") ||
-    pathname === "/admin-login" ||
-    pathname === "/staff-login" ||
-    pathname === "/login" ||
-    pathname === "/register" ||
-    pathname === "/maintenance";
-
-  if (!skipMaintenance) {
-    try {
-      const statusUrl = new URL("/api/maintenance-status", request.nextUrl.origin);
-      const maintenanceRes = await fetch(statusUrl, {
-        cache: "no-store",
-        signal: AbortSignal.timeout(2000),
-      });
-
-      if (maintenanceRes.ok) {
-        const { enabled } = (await maintenanceRes.json()) as { enabled?: boolean };
-
-        if (enabled) {
-          const role = session?.user?.role as string | undefined;
-          const isAdmin = role && ADMIN_ROLES.includes(role);
-
-          if (!isAdmin) {
-            return NextResponse.rewrite(new URL("/maintenance", request.url));
-          }
-        }
-      }
-    } catch {
-      // Fail open — never block on error
-    }
-  }
-
   if (
     pathname === "/" ||
     pathname === "/admin-login" ||

@@ -2,7 +2,9 @@ import { Navbar } from "@/components/public/Navbar";
 import { Footer } from "@/components/public/Footer";
 import { CartDrawer } from "@/components/layout/CartDrawer";
 import { SearchModal } from "@/components/layout/SearchModal";
+import { auth } from "@/lib/auth";
 import { ANNOUNCEMENT_SPEED_MS, cmsBool, cmsGet, cmsJson, getCMSContent } from "@/lib/cms";
+import { enforcePublicMaintenance } from "@/lib/maintenance";
 
 const ANNOUNCEMENT_KEYS = ["announcement_bar_enabled", "announcement_bar_messages", "announcement_bar_speed"] as const;
 
@@ -15,7 +17,12 @@ const FOOTER_KEYS = [
   "footer_copyright",
 ] as const;
 
+export const dynamic = "force-dynamic";
+
 export default async function StorefrontLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth();
+  await enforcePublicMaintenance(session?.user?.role);
+
   const [announcementCms, footerCms] = await Promise.all([
     getCMSContent([...ANNOUNCEMENT_KEYS]),
     getCMSContent([...FOOTER_KEYS]),
