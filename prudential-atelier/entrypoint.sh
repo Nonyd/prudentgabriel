@@ -7,8 +7,8 @@ if [ ! -f "${STANDALONE_APP_DIR}/server.js" ]; then
   exit 1
 fi
 
-PRISMA_CLI="node /app/node_modules/prisma/build/index.js"
-TSX_CLI="node /app/node_modules/tsx/dist/cli.mjs"
+PRISMA_CLI="prisma"
+TSX_CLI="tsx"
 
 # Same-host Postgres: Prisma migrate prefers DIRECT_URL when set.
 if [ -z "${DIRECT_URL:-}" ] && [ -n "${DATABASE_URL:-}" ]; then
@@ -31,11 +31,7 @@ fi
 # unset / false              → skip.
 if [ "${RUN_DB_SEED_ON_START}" = "safe" ] || [ "${RUN_DB_SEED_ON_START}" = "true" ]; then
   echo "[entrypoint] RUN_DB_SEED_ON_START=${RUN_DB_SEED_ON_START} — running bootstrap seed..."
-  if [ -f /app/node_modules/tsx/dist/cli.mjs ]; then
-    $TSX_CLI prisma/seed.ts || echo "[entrypoint] WARNING: bootstrap seed failed (non-fatal)."
-  else
-    echo "[entrypoint] WARNING: tsx not in image — skip seed. Run seed from a one-off container."
-  fi
+  $TSX_CLI prisma/seed.ts || echo "[entrypoint] WARNING: bootstrap seed failed (non-fatal)."
 else
   echo "[entrypoint] Skipping seed. Set RUN_DB_SEED_ON_START=safe for bootstrap seed."
 fi

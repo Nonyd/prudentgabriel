@@ -48,23 +48,18 @@ ENV SKIP_DB_BUILD=1
 
 RUN pnpm prisma generate && pnpm build:next
 
-# Prisma CLI + tsx for migrate/seed at container start (not in standalone trace).
-FROM deps AS prisma-cli-deps
-RUN mkdir -p /prisma-node_modules && cd /app/node_modules && \
-    for pkg in prisma @prisma tsx esbuild get-tsconfig resolve-pkg-maps bcryptjs; do \
-      if [ -e "$pkg" ]; then cp -a "$pkg" /prisma-node_modules/; fi; \
-    done
-
 FROM base AS runner
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+# pnpm nests prisma/tsx; Next standalone does not trace the CLI. Install globally for migrate/seed.
+RUN npm install -g prisma@5.22.0 tsx@4.21.0 bcryptjs@3.0.3
+ENV NODE_PATH=/usr/local/lib/node_modules
 RUN groupadd --gid 1001 nodejs && useradd --uid 1001 --gid nodejs --shell /bin/false nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
-COPY --from=prisma-cli-deps --chown=nextjs:nodejs /prisma-node_modules/ ./node_modules/
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --chown=root:root entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
