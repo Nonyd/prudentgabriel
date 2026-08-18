@@ -1,0 +1,17 @@
+---
+description: Build and verify on staging, not production
+alwaysApply: true
+---
+
+# Staging first
+
+This project is built on **staging**. Do not treat production as the working environment.
+
+- Git branch: `staging` (not `main`). Create feature work from `staging`. Merge to `main` only when the user explicitly asks to ship production.
+- Public URL: https://staging.prudentgabriel.com
+- Deploy: push to `staging` runs `.github/workflows/docker-publish-ghcr-staging.yml` → GHCR tag `staging` → VPS compose `deploy/compose.staging.yaml`
+- Verify in the browser against staging, not `prudentgabriel.com`
+- Do not change production compose, `.env.production`, Traefik production routers, or the `main` deploy workflow unless the user asks
+- Local `prudential-atelier/.env` / `.env.local` stay on localhost. Staging runtime lives on the VPS in `/opt/prudentgabriel/deploy/.env.staging`
+
+If staging does not resolve on this PC, the VPS IP is `5.189.168.55` (hosts file: `5.189.168.55 staging.prudentgabriel.com`).
