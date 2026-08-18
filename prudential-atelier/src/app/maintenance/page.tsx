@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { InstagramIcon } from "@/components/icons/SocialIcons";
 import { prisma } from "@/lib/prisma";
@@ -24,6 +25,20 @@ export default async function MaintenancePage() {
       className="flex min-h-screen flex-col items-center justify-center px-6 py-10 text-center"
       style={{ background: "#442913" }}
     >
+      <div
+        className="mb-8 flex h-[108px] w-[108px] items-center justify-center rounded-full"
+        style={{ border: "1.5px solid #f4ece4" }}
+      >
+        <Image
+          src="/images/pg-mark.png"
+          alt="Prudential Atelier"
+          width={88}
+          height={88}
+          priority
+          className="h-[88px] w-[88px] rounded-full object-cover"
+        />
+      </div>
+
       <div>
         <p
           className="font-serif text-2xl font-normal tracking-wide"
