@@ -34,7 +34,10 @@ export function GeneralSettingsClient() {
   useEffect(() => {
     void (async () => {
       try {
-        const res = await fetch("/api/admin/settings/general");
+        const res = await fetch("/api/admin/settings/general", {
+          cache: "no-store",
+          signal: AbortSignal.timeout(8000),
+        });
         if (res.ok) {
           const data = (await res.json()) as {
             autoConvertApprovedQuotes?: boolean;

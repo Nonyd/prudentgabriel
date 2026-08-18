@@ -12,7 +12,12 @@ http:
         scheme: https
         permanent: true
     pg-gzip:
-      compress: {}
+      compress:
+        # Next.js App Router RSC payloads break if Traefik gzipes them.
+        # Sidebar Link clicks then do nothing (open-in-new-tab still works).
+        excludedContentTypes:
+          - text/event-stream
+          - text/x-component
     pg-www-to-apex:
       redirectRegex:
         regex: "^https://www\\.prudentgabriel\\.com(.*)"

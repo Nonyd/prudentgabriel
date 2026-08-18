@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth.config";
-import { getPublicAppUrl } from "@/lib/app-url";
 
 const ADMIN_ROLES = [
   "SUPER_ADMIN",
@@ -24,9 +23,7 @@ export default auth(async function middleware(request) {
     pathname.startsWith("/icons") ||
     pathname.includes("favicon") ||
     pathname.includes(".") ||
-    pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/api/webhooks") ||
-    pathname === "/api/maintenance-status" ||
+    pathname.startsWith("/api/") ||
     pathname === "/maintenance"
   ) {
     return NextResponse.next();
@@ -34,8 +31,6 @@ export default auth(async function middleware(request) {
 
   const skipMaintenance =
     pathname.startsWith("/admin") ||
-    pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/api/maintenance-status") ||
     pathname === "/admin-login" ||
     pathname === "/staff-login" ||
     pathname === "/login" ||
@@ -44,8 +39,10 @@ export default auth(async function middleware(request) {
 
   if (!skipMaintenance) {
     try {
-      const maintenanceRes = await fetch(`${getPublicAppUrl()}/api/maintenance-status`, {
+      const statusUrl = new URL("/api/maintenance-status", request.nextUrl.origin);
+      const maintenanceRes = await fetch(statusUrl, {
         cache: "no-store",
+        signal: AbortSignal.timeout(2000),
       });
 
       if (maintenanceRes.ok) {
