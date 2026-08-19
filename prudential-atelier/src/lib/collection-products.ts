@@ -50,31 +50,53 @@ export function mapProductToListItemWithMeta(p: CollectionListProduct): Collecti
   };
 }
 
+export async function uniqueProductCountsForCollections(
+  rows: { id: string; autoTag: string | null }[],
+): Promise<number[]> {
+  if (rows.length === 0) return [];
+
+  const collectionIds = rows.map((r) => r.id);
+  const manuals = await prisma.collectionProduct.findMany({
+    where: { collectionId: { in: collectionIds } },
+    select: { collectionId: true, productId: true },
+  });
+
+  const byCollection = new Map<string, Set<string>>();
+  for (const id of collectionIds) byCollection.set(id, new Set());
+  for (const row of manuals) {
+    byCollection.get(row.collectionId)?.add(row.productId);
+  }
+
+  const tags = Array.from(
+    new Set(rows.map((r) => r.autoTag?.trim()).filter((t): t is string => Boolean(t))),
+  );
+  if (tags.length > 0) {
+    const autoRows = await prisma.product.findMany({
+      where: { isPublished: true, tags: { hasSome: tags } },
+      select: { id: true, tags: true },
+    });
+    for (const row of rows) {
+      const tag = row.autoTag?.trim();
+      if (!tag) continue;
+      const set = byCollection.get(row.id);
+      if (!set) continue;
+      for (const product of autoRows) {
+        if (product.tags.includes(tag)) set.add(product.id);
+      }
+    }
+  }
+
+  return rows.map((r) => byCollection.get(r.id)?.size ?? 0);
+}
+
 export async function uniqueProductCountForCollection(
   collectionId: string,
   autoTag: string | null | undefined,
 ): Promise<number> {
-  const manual = await prisma.collectionProduct.findMany({
-    where: { collectionId },
-    select: { productId: true },
-  });
-  const ids = new Set(manual.map((m) => m.productId));
-  const tag = autoTag?.trim();
-  if (tag) {
-    const extraWhere: Prisma.ProductWhereInput = {
-      isPublished: true,
-      tags: { has: tag },
-    };
-    if (ids.size > 0) {
-      extraWhere.id = { notIn: Array.from(ids) };
-    }
-    const autoRows = await prisma.product.findMany({
-      where: extraWhere,
-      select: { id: true },
-    });
-    for (const r of autoRows) ids.add(r.id);
-  }
-  return ids.size;
+  const [count] = await uniqueProductCountsForCollections([
+    { id: collectionId, autoTag: autoTag ?? null },
+  ]);
+  return count ?? 0;
 }
 
 export async function mergePublishedCollectionProducts(

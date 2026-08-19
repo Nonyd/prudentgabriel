@@ -22,7 +22,7 @@ export async function GET() {
       },
       {
         headers: {
-          "Cache-Control": "no-store",
+          "Cache-Control": "public, s-maxage=15, stale-while-revalidate=30",
         },
       },
     );

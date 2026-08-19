@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { auth } from "@/auth";
 import { queryProductList } from "@/lib/products-list-query";
 import { RTWPageClient } from "@/components/rtw/RTWPageClient";
 import { cmsGet, getCMSContent } from "@/lib/cms";
@@ -26,8 +25,6 @@ export default async function RTWPage({
 }: {
   searchParams: Record<string, string | string[] | undefined>;
 }) {
-  const session = await auth();
-  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN";
   const u = flattenSearchParams(searchParams);
   u.set("type", "RTW");
   u.set("excludeCategory", "BRIDAL");
@@ -35,7 +32,7 @@ export default async function RTWPage({
   if (!u.get("sort")) u.set("sort", "featured");
   if (u.get("category") === "BRIDAL") u.delete("category");
 
-  const { products, total, page, hasNext } = await queryProductList(u, { isAdmin });
+  const { products, total, page, hasNext } = await queryProductList(u, { isAdmin: false });
   const cms = await getCMSContent(["rtw_page_eyebrow", "rtw_page_title", "rtw_page_subtitle"]);
 
   return (

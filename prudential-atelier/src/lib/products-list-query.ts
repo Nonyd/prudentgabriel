@@ -145,10 +145,22 @@ export async function queryProductList(
       orderBy,
       skip,
       take: limit,
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        category: true,
+        type: true,
+        basePriceNGN: true,
+        isOnSale: true,
+        isNewArrival: true,
+        isBespokeAvail: true,
+        isFeatured: true,
+        tags: true,
         images: {
           orderBy: { sortOrder: "asc" },
           take: 2,
+          select: { url: true, alt: true, isPrimary: true },
         },
         variants: {
           orderBy: { priceNGN: "asc" },
@@ -165,7 +177,7 @@ export async function queryProductList(
     id: p.id,
     name: p.name,
     slug: p.slug,
-    description: p.description,
+    description: "",
     category: p.category,
     type: p.type,
     basePriceNGN: p.basePriceNGN,

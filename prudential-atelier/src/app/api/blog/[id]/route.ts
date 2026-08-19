@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { CONTENT_ROLES, requireRoles } from "@/lib/api-auth";
 import { slugifyText } from "@/lib/utils";
 import { logActivity, logError } from "@/lib/logger";
+import { revalidateJournal } from "@/lib/revalidate";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -112,6 +113,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       recordType: "BlogPost",
     });
 
+    await revalidateJournal(item.slug);
+
     return NextResponse.json({ item });
   } catch (e) {
     await logError({
@@ -134,6 +137,8 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     await prisma.blogPost.delete({ where: { id } });
+
+    await revalidateJournal(existing.slug);
 
     await logActivity({
       userId: gate.session.user.id,

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { uniqueProductCountForCollection } from "@/lib/collection-products";
+import { uniqueProductCountsForCollections } from "@/lib/collection-products";
 
 const CACHE = "public, s-maxage=300, stale-while-revalidate=600";
 
@@ -11,8 +11,8 @@ export async function GET() {
       orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
     });
 
-    const counts = await Promise.all(
-      rows.map((c) => uniqueProductCountForCollection(c.id, c.autoTag)),
+    const counts = await uniqueProductCountsForCollections(
+      rows.map((c) => ({ id: c.id, autoTag: c.autoTag })),
     );
 
     const collections = rows.map((c, i) => ({

@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
+import nextDynamic from "next/dynamic";
 import { Cormorant_Garamond, Jost, Lora } from "next/font/google";
 import "@/styles/globals.css";
-import { auth } from "@/auth";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { getLogoSettings } from "@/lib/logos";
-import { SmoothScroll } from "@/components/public/SmoothScroll";
 import { RootProvider } from "@/providers/RootProvider";
 import { CookieConsent } from "@/components/gdpr/CookieConsent";
+
+const SmoothScroll = nextDynamic(
+  () => import("@/components/public/SmoothScroll").then((m) => ({ default: m.SmoothScroll })),
+  { ssr: true },
+);
 
 const themeInitScript = `(function(){try{var t=localStorage.getItem("pg-theme");var theme="light";if(t==="dark"||t==="light")theme=t;else if(t){try{var p=JSON.parse(t);if(p&&p.state&&p.state.isDark)theme="dark";}catch(e){}}document.documentElement.setAttribute("data-theme",theme);}catch(e){}})();`;
 
@@ -58,7 +62,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
   const logos = await getLogoSettings();
 
   return (
@@ -71,7 +74,7 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-screen font-sans antialiased">
-        <RootProvider session={session} logos={logos}>
+        <RootProvider logos={logos}>
           <SmoothScroll>{children}</SmoothScroll>
           <CookieConsent />
         </RootProvider>

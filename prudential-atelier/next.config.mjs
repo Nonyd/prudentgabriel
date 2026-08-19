@@ -10,7 +10,7 @@ const nextConfig = {
     minimumCacheTTL: 31536000,
   },
   compress: true,
-  output: "standalone",
+  output: process.env.SKIP_STANDALONE === "1" ? undefined : "standalone",
 };
 
 export default nextConfig;

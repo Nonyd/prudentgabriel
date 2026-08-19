@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -296,10 +296,12 @@ function HeaderUtilityIcons({
 }
 
 export function Navbar({
+  collections: collectionsProp = [],
   showAnnouncement = true,
   announcementMessages = ["WORLDWIDE SHIPPING · ₦ · $ · £"],
   announcementIntervalMs = 3000,
 }: {
+  collections?: CollectionNav[];
   showAnnouncement?: boolean;
   announcementMessages?: string[];
   announcementIntervalMs?: number;
@@ -307,20 +309,9 @@ export function Navbar({
   const pathname = usePathname();
   const subBrand = getSubBrand(pathname);
   const [open, setOpen] = useState(false);
-  const [collections, setCollections] = useState<CollectionNav[]>([]);
+  const collections = collectionsProp;
   const { status } = useSession();
   const openLogin = useAuthModalStore((s) => s.openLogin);
-
-  useEffect(() => {
-    fetch("/api/collections")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: { collections?: CollectionNav[] } | null) => {
-        if (data?.collections) {
-          setCollections(data.collections.map((c) => ({ name: c.name, slug: c.slug })));
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   const handleAccountClick = () => {
     if (status === "authenticated") {

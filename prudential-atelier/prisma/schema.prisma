@@ -327,6 +327,9 @@ model Product {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([isPublished, createdAt])
+  @@index([isPublished, category])
 }
 
 model Collection {
@@ -374,6 +377,8 @@ model ProductImage {
   sortOrder Int     @default(0)
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
 }
 
 model ProductVariant {
@@ -404,6 +409,8 @@ model ProductColor {
   productId String
   product   Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
   cartItems CartItem[]
+
+  @@index([productId])
 }
 
 model BundleItem {
@@ -496,6 +503,9 @@ model Order {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model OrderItem {
@@ -512,6 +522,8 @@ model OrderItem {
   colorHex   String?
   price      Float
   lineTotal  Float
+
+  @@index([orderId])
 }
 
 model BespokeRequest {

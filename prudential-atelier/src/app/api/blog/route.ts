@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { CONTENT_ROLES, requireRoles } from "@/lib/api-auth";
 import { slugifyText } from "@/lib/utils";
 import { logActivity, logError } from "@/lib/logger";
+import { revalidateJournal } from "@/lib/revalidate";
 
 const STATUSES = new Set<string>(Object.values(BlogStatus));
 
@@ -134,6 +135,8 @@ export async function POST(req: NextRequest) {
       recordId: item.id,
       recordType: "BlogPost",
     });
+
+    await revalidateJournal(item.slug);
 
     return NextResponse.json({ item }, { status: 201 });
   } catch (e) {

@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { HeroCarouselItem } from "@/lib/hero-carousel";
+import { optimizeImageUrl } from "@/lib/utils";
 
 interface HeroCarouselProps {
   items: HeroCarouselItem[];
@@ -111,6 +113,7 @@ function CarouselMedia({
         src={item.url}
         muted
         playsInline
+        preload={isCenter ? "metadata" : "none"}
         className="h-full w-full object-cover"
         style={{ objectFit: "cover", width: "100%", height: "100%" }}
       />
@@ -118,11 +121,13 @@ function CarouselMedia({
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={item.url}
+    <Image
+      src={optimizeImageUrl(item.url, 900)}
       alt={item.alt ?? "Hero carousel"}
-      className="h-full w-full object-cover"
+      fill
+      sizes="(max-width: 767px) 72vw, 340px"
+      priority={isCenter}
+      className="object-cover"
     />
   );
 }

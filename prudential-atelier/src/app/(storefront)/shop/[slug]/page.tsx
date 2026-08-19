@@ -1,7 +1,7 @@
 import nextDynamic from "next/dynamic";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ProductDetailClient } from "@/components/product/ProductDetailClient";
 import { CompleteTheLook } from "@/components/product/CompleteTheLook";
@@ -13,7 +13,6 @@ import type { ProductListItem } from "@/types/product";
 import type { ReviewItem } from "@/components/product/ReviewsSection";
 import { mapProductToListItem } from "@/lib/map-product-list-item";
 
-export const dynamic = "force-dynamic";
 
 const ReviewsSection = nextDynamic(() => import("@/components/product/ReviewsSection").then((m) => ({ default: m.ReviewsSection })), {
   loading: () => <Skeleton className="h-64 w-full rounded-sm" />,
@@ -46,31 +45,9 @@ export async function generateStaticParams() {
   }
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const product = await prisma.product.findUnique({
-    where: { slug: params.slug },
-    select: {
-      name: true,
-      description: true,
-      images: { where: { isPrimary: true }, take: 1 },
-    },
-  });
-  if (!product) return { title: "Product" };
-  return {
-    title: product.name,
-    description: product.description.slice(0, 160),
-    openGraph: product.images[0]?.url
-      ? { images: [{ url: product.images[0].url, alt: product.name }] }
-      : undefined,
-  };
-}
-
-export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const session = await auth();
-  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN";
-
-  const product = await prisma.product.findUnique({
-    where: { slug: params.slug },
+const getPublishedProduct = cache(async (slug: string) =>
+  prisma.product.findUnique({
+    where: { slug },
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       variants: { orderBy: { priceNGN: "asc" } },
@@ -94,9 +71,24 @@ export default async function ProductPage({ params }: { params: { slug: string }
         },
       },
     },
-  });
+  }),
+);
 
-  if (!product || (!product.isPublished && !isAdmin)) notFound();
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const product = await getPublishedProduct(params.slug);
+  if (!product?.isPublished) return { title: "Product" };
+  const primary = product.images.find((im) => im.isPrimary) ?? product.images[0];
+  return {
+    title: product.name,
+    description: product.description.slice(0, 160),
+    openGraph: primary?.url ? { images: [{ url: primary.url, alt: product.name }] } : undefined,
+  };
+}
+
+export default async function ProductPage({ params }: { params: { slug: string } }) {
+  const product = await getPublishedProduct(params.slug);
+
+  if (!product || !product.isPublished) notFound();
 
   const approved = product.reviews;
   const averageRating =
@@ -183,7 +175,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
           reviewCount={reviewCount}
           productId={product.id}
           productSlug={product.slug}
-          isLoggedIn={Boolean(session?.user?.id)}
         />
         <CompleteTheLook products={bundleProducts} />
         <RelatedProducts products={relatedProducts} />

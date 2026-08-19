@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { uniqueProductCountForCollection } from "@/lib/collection-products";
+import { uniqueProductCountsForCollections } from "@/lib/collection-products";
 import { CollectionsPage } from "@/components/collections/CollectionsPage";
 
 export const revalidate = 300;
@@ -17,7 +17,9 @@ export default async function CollectionsListingPage() {
     orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
   });
 
-  const counts = await Promise.all(rows.map((c) => uniqueProductCountForCollection(c.id, c.autoTag)));
+  const counts = await uniqueProductCountsForCollections(
+    rows.map((c) => ({ id: c.id, autoTag: c.autoTag })),
+  );
 
   const collections = rows.map((c, i) => ({
     id: c.id,

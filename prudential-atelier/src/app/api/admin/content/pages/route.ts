@@ -4,6 +4,7 @@ import { requireAdminApi, CMS_ADMIN_PERMISSIONS } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { clearContentSettingsCache, clearPublicSettingsCache, clearSettingCacheKey } from "@/lib/settings";
 import { getPageById, getPageFieldKeys } from "@/lib/cms-config";
+import { revalidateStorefront } from "@/lib/revalidate";
 
 export async function GET(req: NextRequest) {
   const gate = await requireAdminApi(CMS_ADMIN_PERMISSIONS);
@@ -77,6 +78,7 @@ export async function PUT(req: NextRequest) {
     for (const [key] of entries) clearSettingCacheKey(key);
     clearPublicSettingsCache();
     clearContentSettingsCache();
+    await revalidateStorefront();
 
     return NextResponse.json({ ok: true, saved: entries.length });
   }
@@ -99,6 +101,7 @@ export async function PUT(req: NextRequest) {
   clearSettingCacheKey(body.key);
   clearPublicSettingsCache();
   clearContentSettingsCache();
+  await revalidateStorefront();
 
   return NextResponse.json({ ok: true });
 }

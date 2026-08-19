@@ -13,12 +13,15 @@ export async function revalidateStorefront(paths: string[] = []) {
     "/consultation",
     "/bespoke",
     "/our-story",
+    "/journal",
   ];
 
   const allPaths = Array.from(new Set([...corePaths, ...paths]));
   for (const path of allPaths) {
     revalidatePath(path);
   }
+  revalidateTag("cms-chrome");
+  revalidateTag("nav-collections");
 }
 
 export async function revalidateProduct(slug: string) {
@@ -33,11 +36,20 @@ export async function revalidateCollection(slug: string) {
   revalidatePath(`/collections/${slug}`);
   revalidatePath("/collections");
   revalidatePath("/");
+  revalidateTag("nav-collections");
+}
+
+export async function revalidateJournal(slug?: string) {
+  revalidatePath("/journal");
+  revalidatePath("/");
+  if (slug) revalidatePath(`/journal/${slug}`);
 }
 
 export async function revalidateSettings() {
   revalidatePath("/", "layout");
   revalidateTag("logo-settings");
+  revalidateTag("cms-chrome");
+  revalidateTag("maintenance");
 }
 
 export async function revalidateGallery(category: "ATELIER" | "BRIDAL" | "KIDS") {

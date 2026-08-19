@@ -1,4 +1,3 @@
-import { auth } from "@/auth";
 import { queryProductList } from "@/lib/products-list-query";
 import { ShopBrowse } from "@/components/shop/ShopBrowse";
 import { cmsGet, getCMSContent } from "@/lib/cms";
@@ -19,12 +18,12 @@ export default async function ShopPage({
 }: {
   searchParams: Record<string, string | string[] | undefined>;
 }) {
-  const session = await auth();
-  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN";
   const u = flattenSearchParams(searchParams);
   if (!u.get("limit")) u.set("limit", "20");
 
-  const { products, total, page, totalPages, hasNext, hasPrev } = await queryProductList(u, { isAdmin });
+  const { products, total, page, totalPages, hasNext, hasPrev } = await queryProductList(u, {
+    isAdmin: false,
+  });
   const cms = await getCMSContent(["shop_page_eyebrow", "shop_page_title", "shop_page_subtitle"]);
 
   return (

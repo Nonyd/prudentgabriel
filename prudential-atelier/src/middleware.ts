@@ -29,6 +29,37 @@ export default auth(async function middleware(request) {
     return NextResponse.next();
   }
 
+  const role = (session?.user?.role as string | undefined) ?? "";
+  const isAdminUser = ADMIN_ROLES.includes(role);
+  const skipMaintenanceGate =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/staff") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/admin-login") ||
+    pathname.startsWith("/staff-login") ||
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/accept-invite");
+
+  if (!isAdminUser && !skipMaintenanceGate) {
+    try {
+      const statusUrl = new URL("/api/maintenance-status", request.url);
+      const statusRes = await fetch(statusUrl, {
+        headers: { Accept: "application/json" },
+        next: { revalidate: 15 },
+      });
+      if (statusRes.ok) {
+        const body = (await statusRes.json()) as { enabled?: boolean };
+        if (body.enabled === true) {
+          return NextResponse.redirect(new URL("/maintenance", request.url));
+        }
+      }
+    } catch {
+      /* fail open so a status blip does not take the storefront down */
+    }
+  }
+
   if (
     pathname === "/" ||
     pathname === "/admin-login" ||

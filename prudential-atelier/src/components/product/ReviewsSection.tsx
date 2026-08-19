@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import { format } from "date-fns";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -34,7 +35,6 @@ interface ReviewsSectionProps {
   reviewCount: number;
   productId: string;
   productSlug: string;
-  isLoggedIn: boolean;
 }
 
 export function ReviewsSection({
@@ -43,8 +43,9 @@ export function ReviewsSection({
   reviewCount,
   productId,
   productSlug,
-  isLoggedIn,
 }: ReviewsSectionProps) {
+  const { status } = useSession();
+  const isLoggedIn = status === "authenticated";
   const [expanded, setExpanded] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [sort, setSort] = useState<"newest" | "helpful">("newest");
