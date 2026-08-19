@@ -2,6 +2,7 @@ import { GalleryCategory } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AtelierLandingPage } from "@/components/atelier/AtelierLandingPage";
 import { getCMSContent } from "@/lib/cms";
+import { isSkipDbBuild } from "@/lib/skip-db-build";
 
 export const revalidate = 300;
 
@@ -24,7 +25,9 @@ const ATELIER_KEYS = [
 ] as const;
 
 export default async function AtelierPage() {
-  const [galleryImages, reviews, cms] = await Promise.all([
+  const [galleryImages, reviews, cms] = isSkipDbBuild()
+    ? [[], [], {} as Record<string, string>]
+    : await Promise.all([
     prisma.galleryImage.findMany({
       where: { isPublished: true, category: GalleryCategory.ATELIER },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],

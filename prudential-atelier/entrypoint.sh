@@ -37,6 +37,11 @@ else
 fi
 
 echo "[entrypoint] Starting Next.js (cwd ${STANDALONE_APP_DIR})..."
+if echo "${NEXT_PUBLIC_APP_URL:-} ${APP_URL:-}" | grep -q "staging.prudentgabriel.com"; then
+  export CRON_SCHEDULER="${CRON_SCHEDULER:-1}"
+  export CRON_HOST="${CRON_HOST:-vps-staging}"
+  echo "[entrypoint] Staging host detected — CRON_SCHEDULER=${CRON_SCHEDULER}."
+fi
 if [ "$(id -u)" = "0" ]; then
   cd "${STANDALONE_APP_DIR}"
   exec gosu nextjs node server.js

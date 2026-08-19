@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BlogStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { BlogPreviewImage } from "./BlogPreviewImage";
+import { isSkipDbBuild } from "@/lib/skip-db-build";
 
 export async function BlogPreview() {
   let posts: {
@@ -14,6 +15,7 @@ export async function BlogPreview() {
   }[] = [];
 
   try {
+    if (!isSkipDbBuild()) {
     posts = await prisma.blogPost.findMany({
       where: {
         status: BlogStatus.PUBLISHED,
@@ -30,6 +32,7 @@ export async function BlogPreview() {
         readTime: true,
       },
     });
+    }
   } catch {
     return null;
   }

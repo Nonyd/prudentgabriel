@@ -2,14 +2,25 @@
 
 Scheduled work is defined in `src/lib/cron/jobs.ts` (registry). Each entry has
 `name`, `schedule` (5-field cron, UTC), `description`, and optionally a
-`handler`. Vercel currently triggers jobs via `vercel.json` → `/api/cron/<name>`.
+`handler`.
+
+**Vercel `vercel.json` crons do not fire on the Coolify VPS** and are no longer
+listed there. Scheduling:
+
+- **Staging:** the app process with `CRON_SCHEDULER=1` (set in
+  `deploy/compose.staging.yaml`) reads `CRON_JOBS` and POSTs
+  `/api/cron/:name` on localhost with `CRON_SECRET`.
+- **Production:** `/etc/cron.d/prudentgabriel` curls
+  `https://prudentgabriel.com/api/cron/...`. That file does not yet include
+  `email-outbox`. Do not also set `CRON_SCHEDULER=1` on production or jobs
+  will double-fire.
 
 ## Design goals
 
 - **Resumable, not fast.** Process oldest unprocessed items first, mark each
   item immediately after its side effect, stop when the **time budget** is
-  spent (`RUN_BUDGET_MS`), catch per item. Finish with `status: OK` and
-  `hasMore: true` when work remains — that is expected on Hobby, not a failure.
+  spent, catch per item. Finish with `status: OK` and `hasMore: true` when
+  work remains — that is expected, not a failure.
 - **Handlers decoupled from HTTP.** Migrated jobs live in
   `src/lib/cron/jobs/<name>.ts` as `export async function run(ctx)`. Routes are
   thin auth wrappers. **Run now** also goes through `executeCronJob` (same
@@ -21,24 +32,24 @@ Scheduled work is defined in `src/lib/cron/jobs.ts` (registry). Each entry has
 - **Retention.** The runner deletes `CronRun` rows older than 90 days on each
   migrated job start.
 - **Auth.** `verifyCronRequest(req)` in `src/lib/cron/verify.ts` (Bearer
-  `CRON_SECRET`). Swap this file for the VPS variant later.
+  `CRON_SECRET`).
 - **Admin.** `/admin/system/jobs` (ADMIN / SUPER_ADMIN) lists registry jobs,
-  last run, stale flag (no OK within 2× interval), backlog hint, and **Run now**.
+  last run, stale flag (no OK within 2× max(schedule interval, job budget)),
+  backlog hint, and **Run now**.
 
-## Time budget & Hobby throughput
+## Time budget
 
 | Constant | Value | Role |
 |----------|-------|------|
-| `RUN_BUDGET_MS` | `8_000` on Vercel; `5 * 60_000` otherwise | Primary stop |
+| `RUN_BUDGET_MS` | `8_000` on Vercel; `5 * 60_000` otherwise | Default stop |
+| `email-outbox.budgetMs` | `50_000` | Drain on a minutely schedule without overlapping runs |
 | `CRON_BATCH_LIMIT` | `200` | Secondary fetch bound |
 
-Hobby allows **one run per day** per cron expression and kills functions at
-~10 seconds. At ~300ms per SMTP email, an 8-second budget clears roughly
-**~25 items per day** per job. That is ample while production volume is low;
-it is a known ceiling before Phase 5. When backlog grows past ~25/day, either
-raise the schedule frequency (requires Pro) or move to the VPS.
+Stale detection uses `2 × max(cronIntervalMs(schedule), budgetMs)` so a job
+cannot look healthy on a 1-minute cadence while its budget is longer than that
+window, or look stale while still inside a legitimate budget.
 
-## Migrated in Sprint C0
+## Migrated
 
 | Job | Marker | Notes |
 |-----|--------|-------|
@@ -46,10 +57,11 @@ raise the schedule frequency (requires Pro) or move to the VPS.
 | `stage-approval-reminders` | `StageApproval.reminderSentAt` | Once per pending approval |
 | `unsent-quote-alerts` | `ConsultationBooking.quoteAlertSentAt` | Once; COMPLETED + no quotation + 48h |
 | `update-performance` | `PerformanceRecord` upsert | Staff scores; fail-closed cron auth |
+| `review-requests` | review request emails | Product + consultation + bespoke |
+| `receipt-reminders` | receipt confirmation | 7 days after delivery |
+| `email-outbox` | `EmailMessage` | Drain queue; 50s budget |
 
 ## Pending migration (legacy route handlers)
-
-Leave these on their current structure until a later sprint / Phase 5:
 
 - `abandoned-cart`
 - `expired-coupons`
@@ -58,26 +70,12 @@ Leave these on their current structure until a later sprint / Phase 5:
 - `event-reminders`
 - `daily-report`
 - `weekly-report`
-- `review-requests`
 - `update-bestsellers`
 
-They appear in the registry (`migrated: false`) so the drift test still covers
-them. **Run now** for legacy jobs POSTs their existing HTTP route with
-`CRON_SECRET`.
+They appear in the registry (`migrated: false`). **Run now** and the in-process
+scheduler POST their existing HTTP routes with `CRON_SECRET`.
 
 ## Drift test
 
-`pnpm test:cron` asserts every registry entry has a matching `vercel.json`
-cron (path + schedule), and vice versa. At Phase 5, point this test at the VPS
-scheduler config instead of `vercel.json`.
-
-## Phase 5 (VPS) checklist
-
-1. Run a node process (or system crontab) that reads `CRON_JOBS` and calls
-   `executeCronJob` / the HTTP routes on schedule.
-2. Delete the `crons` block from `vercel.json`.
-3. Repoint `scripts/test-cron-registry.ts`.
-4. Raise `RUN_BUDGET_MS` (single edit in `src/lib/cron/types.ts`) — e.g. collapse
-   both branches to `5 * 60_000`. Optionally raise or remove `CRON_BATCH_LIMIT`.
-
-No handler changes required. Throughput then stops being a daily ~25-item ceiling.
+`pnpm test:cron` asserts every registry entry has `src/app/api/cron/<name>/route.ts`
+and a 5-field schedule, plus matcher / stale-window checks.

@@ -12,6 +12,9 @@ const nextConfig = {
   compress: true,
   // SKIP_STANDALONE is local Windows only. CI/Docker must always emit standalone.
   output: process.env.SKIP_STANDALONE === "1" && !process.env.CI ? undefined : "standalone",
+  experimental: {
+    instrumentationHook: true,
+  },
 };
 
 export default nextConfig;

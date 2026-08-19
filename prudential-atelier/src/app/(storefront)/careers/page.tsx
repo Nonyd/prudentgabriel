@@ -1,10 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { CareersListingClient } from "@/components/careers/CareersListingClient";
+import { isSkipDbBuild } from "@/lib/skip-db-build";
 
 export const revalidate = 60;
 
 export default async function CareersPage() {
-  const jobs = await prisma.jobPosting.findMany({
+  const jobs = isSkipDbBuild()
+    ? []
+    : await prisma.jobPosting.findMany({
     where: { isPublished: true },
     orderBy: { createdAt: "desc" },
   });

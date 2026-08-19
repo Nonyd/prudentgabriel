@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { uniqueProductCountsForCollections } from "@/lib/collection-products";
 import { CollectionsPage } from "@/components/collections/CollectionsPage";
+import { isSkipDbBuild } from "@/lib/skip-db-build";
 
 export const revalidate = 300;
 
@@ -12,6 +13,9 @@ export const metadata: Metadata = {
 };
 
 export default async function CollectionsListingPage() {
+  if (isSkipDbBuild()) {
+    return <CollectionsPage collections={[]} />;
+  }
   const rows = await prisma.collection.findMany({
     where: { isPublished: true },
     orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],

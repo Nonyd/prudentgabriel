@@ -2,6 +2,7 @@ import { getCMSContent } from "@/lib/cms";
 import { resolveHeroCarouselItems, type HeroCarouselItem } from "@/lib/hero-carousel";
 import { prisma } from "@/lib/prisma";
 import { HeroSectionClient } from "./HeroSectionClient";
+import { isSkipDbBuild } from "@/lib/skip-db-build";
 
 const HERO_KEYS = [
   "home_hero_eyebrow",
@@ -22,12 +23,14 @@ export async function HeroSection() {
   let carouselItems: HeroCarouselItem[] = resolveHeroCarouselItems(undefined);
 
   try {
-    const [content, carouselSetting] = await Promise.all([
-      getCMSContent([...HERO_KEYS, "home_hero_carousel"]),
-      prisma.siteSetting.findUnique({ where: { key: "home_hero_carousel" } }),
-    ]);
-    cms = content;
-    carouselItems = resolveHeroCarouselItems(carouselSetting?.value ?? cms.home_hero_carousel);
+    if (!isSkipDbBuild()) {
+      const [content, carouselSetting] = await Promise.all([
+        getCMSContent([...HERO_KEYS, "home_hero_carousel"]),
+        prisma.siteSetting.findUnique({ where: { key: "home_hero_carousel" } }),
+      ]);
+      cms = content;
+      carouselItems = resolveHeroCarouselItems(carouselSetting?.value ?? cms.home_hero_carousel);
+    }
   } catch {
     /* defaults */
   }

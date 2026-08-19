@@ -40,6 +40,7 @@ export async function GET() {
       schedule: def.schedule,
       lastOkAt: lastOk?.finishedAt ?? lastOk?.startedAt ?? null,
       now,
+      budgetMs: def.budgetMs,
     });
     return {
       name: def.name,

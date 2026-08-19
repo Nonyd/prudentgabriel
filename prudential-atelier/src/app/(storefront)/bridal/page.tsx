@@ -3,6 +3,7 @@ import { GalleryCategory } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { BridalGalleryPage } from "@/components/gallery/BridalGalleryPage";
 import { cmsGet, getCMSContent } from "@/lib/cms";
+import { isSkipDbBuild } from "@/lib/skip-db-build";
 
 export const revalidate = 300;
 
@@ -15,7 +16,9 @@ const LIMIT = 24;
 
 export default async function BridalPage() {
   const where = { isPublished: true, category: GalleryCategory.BRIDAL };
-  const [images, total, cms] = await Promise.all([
+  const [images, total, cms] = isSkipDbBuild()
+    ? [[], 0, {} as Record<string, string>]
+    : await Promise.all([
     prisma.galleryImage.findMany({
       where,
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ProductCategory } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { BestSellersGrid } from "./BestSellersGrid";
+import { isSkipDbBuild } from "@/lib/skip-db-build";
 
 const CATEGORY_LABELS: Record<ProductCategory, string> = {
   BRIDAL: "Bridal",
@@ -23,6 +24,9 @@ export async function BestSellers() {
   }[] = [];
 
   try {
+    if (isSkipDbBuild()) {
+      /* empty products at image-build time */
+    } else {
     const featured = await prisma.product.findMany({
       where: { isPublished: true, isFeatured: true },
       take: 4,
@@ -50,6 +54,7 @@ export async function BestSellers() {
       category: CATEGORY_LABELS[p.category] ?? "Ready-to-Wear",
       images: p.images[0]?.url ? [p.images[0].url] : [],
     }));
+    }
   } catch {
     products = [];
   }

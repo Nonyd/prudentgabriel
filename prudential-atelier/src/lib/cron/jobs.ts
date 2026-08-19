@@ -9,8 +9,8 @@ import { run as runEmailOutbox } from "@/lib/cron/jobs/email-outbox";
 
 /**
  * Single source of truth for scheduled jobs.
- * Path in vercel.json must be `/api/cron/${name}` with matching `schedule`.
- * Phase 5: point the VPS scheduler at this registry; delete vercel.json crons.
+ * The VPS process with CRON_SCHEDULER=1 reads this registry and POSTs each
+ * `/api/cron/${name}` on `schedule` (UTC). vercel.json no longer lists crons.
  */
 export const CRON_JOBS: CronJobDefinition[] = [
   {
@@ -117,7 +117,7 @@ export const CRON_JOBS: CronJobDefinition[] = [
     description: "Drain queued and failed outbound emails",
     handler: runEmailOutbox,
     migrated: true,
-    budgetMs: 4 * 60_000,
+    budgetMs: 50_000,
   },
 ];
 

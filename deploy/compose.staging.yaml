@@ -37,6 +37,9 @@ services:
         condition: service_healthy
     env_file:
       - .env.staging
+    environment:
+      CRON_SCHEDULER: "1"
+      CRON_HOST: "vps-staging"
     ports:
       - "${PA_MAIN_BIND:-127.0.0.1:3011}:3000"
     networks:
