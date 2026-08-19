@@ -3,7 +3,7 @@ import { PaymentStatus } from "@prisma/client";
 import { validateCronSecret } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import { logError } from "@/lib/logger";
-import { sendSmtpMail } from "@/lib/email-transport";
+import { sendEmail } from "@/lib/email";
 import { reportEmailHtml } from "@/lib/email-templates/reports";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
@@ -117,10 +117,12 @@ export async function POST(req: NextRequest) {
     ].filter(Boolean) as string[];
 
     for (const email of recipients) {
-      await sendSmtpMail({
+      await sendEmail({
         to: email,
         subject: `Weekly Report — Week of ${weekLabel} | Prudential Atelier`,
         html,
+        template: "weekly-report",
+        idempotencyKey: `weekly-report:${weekLabel}:${email}`,
       });
     }
 

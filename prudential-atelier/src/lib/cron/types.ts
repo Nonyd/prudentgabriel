@@ -32,6 +32,8 @@ export type CronJobDefinition = {
    */
   handler: CronJobHandler | null;
   migrated: boolean;
+  /** Override RUN_BUDGET_MS for this job (email drain is not Hobby-bound). */
+  budgetMs?: number;
 };
 
 /**

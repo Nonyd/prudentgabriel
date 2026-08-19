@@ -56,7 +56,15 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           ? `Your bespoke piece is ready — ${prev.requestNumber}`
           : `Bespoke request update — ${prev.requestNumber}`;
       const html = `<p>Dear ${prev.name},</p><p>Your bespoke request <strong>${prev.requestNumber}</strong> is now <strong>${parsed.data.status}</strong>.</p>`;
-      void sendEmail({ to: prev.email, subject, html });
+      void sendEmail({
+        to: prev.email,
+        subject,
+        html,
+        template: "bespoke-request-status",
+        idempotencyKey: `bespoke-request:${prev.id}:${parsed.data.status}`,
+        relatedType: "BespokeRequest",
+        relatedId: prev.id,
+      });
     }
   }
 

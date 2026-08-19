@@ -3,7 +3,7 @@ import { z } from "zod";
 import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import { logActivity, logError } from "@/lib/logger";
-import { sendSmtpMail } from "@/lib/email-transport";
+import { sendEmail } from "@/lib/email";
 
 type Params = { params: Promise<{ clientId: string }> };
 
@@ -72,10 +72,14 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!profile) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   try {
-    await sendSmtpMail({
+    await sendEmail({
       to: profile.user.email,
       subject: parsed.data.subject,
       html: parsed.data.body,
+      template: "client-communication",
+      idempotencyKey: `client-comm:${clientId}:${Date.now()}`,
+      relatedType: "ClientProfile",
+      relatedId: clientId,
     });
 
     await logActivity({

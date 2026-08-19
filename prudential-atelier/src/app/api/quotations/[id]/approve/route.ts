@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { QuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logActivity, logError } from "@/lib/logger";
-import { sendSmtpMail, ORDERS_EMAIL } from "@/lib/email-transport";
+import { sendEmail } from "@/lib/email";
+import { ORDERS_EMAIL } from "@/lib/email-transport";
 import { notifyQuoteApproved } from "@/lib/notifications";
 import { maybeAutoConvertApprovedQuote } from "@/lib/quotation-convert";
 import { findLatestQuotationVersion } from "@/lib/quotation-versioning";
@@ -73,10 +74,14 @@ export async function POST(req: NextRequest, { params }: Params) {
       userEmail: quote.clientEmail,
     });
 
-    void sendSmtpMail({
+    void sendEmail({
       to: ORDERS_EMAIL,
       subject: `Quote approved — ${quote.quoteRef}`,
       html: `<p>${quote.clientName} (${quote.clientEmail}) approved quotation ${quote.quoteRef}.</p>`,
+      template: "quote-approved-admin",
+      idempotencyKey: `quote-approved:${quote.id}`,
+      relatedType: "Quotation",
+      relatedId: quote.id,
     }).catch(() => undefined);
 
     notifyQuoteApproved(quote);

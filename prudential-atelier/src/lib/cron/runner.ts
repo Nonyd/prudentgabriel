@@ -74,11 +74,12 @@ export async function executeCronJob(jobName: string): Promise<{
   });
 
   const started = Date.now();
+  const budgetMs = def.budgetMs ?? RUN_BUDGET_MS;
   try {
     const result = await def.handler({
       now: new Date(),
       batchLimit: CRON_BATCH_LIMIT,
-      isBudgetExhausted: () => Date.now() - started >= RUN_BUDGET_MS,
+      isBudgetExhausted: () => Date.now() - started >= budgetMs,
     });
 
     const hasMore = Boolean(result.hasMore);
@@ -102,7 +103,7 @@ export async function executeCronJob(jobName: string): Promise<{
         processed: result.processed,
         failed: result.failed,
         hasMore,
-        budgetMs: RUN_BUDGET_MS,
+        budgetMs,
         durationMs: Date.now() - started,
         detail: result.detail ?? null,
       }),

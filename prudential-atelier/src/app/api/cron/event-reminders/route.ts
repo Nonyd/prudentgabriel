@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateCronSecret } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import { logActivity, logError } from "@/lib/logger";
-import { sendSmtpMail } from "@/lib/email-transport";
+import { sendEmail } from "@/lib/email";
 import { eventReminderEmailHtml } from "@/lib/email-templates/reports";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { notifyEventReminder } from "@/lib/customer-notifications";
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       const firstName = (ev.client.user.name ?? "there").split(/\s+/)[0] ?? "there";
       const weeksAway = Math.round(days / 7);
 
-      await sendSmtpMail({
+      await sendEmail({
         to: email,
         subject: `${ev.label} is coming up — time to get dressed?`,
         html: eventReminderEmailHtml({
@@ -51,6 +51,10 @@ export async function POST(req: NextRequest) {
           weeksAway: weeksAway || 1,
           appUrl,
         }),
+        template: "event-reminder",
+        idempotencyKey: `event-reminder:${ev.id}:${days}`,
+        relatedType: "EventDate",
+        relatedId: ev.id,
       });
 
       await prisma.eventDate.update({

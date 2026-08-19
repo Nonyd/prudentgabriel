@@ -31,7 +31,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ key
   }
 
   const { subject, html } = await renderTemplateEmailHtml(template);
-  await sendEmail({ to: parsed.data.to, subject: `[TEST] ${subject}`, html });
+  await sendEmail({
+    to: parsed.data.to,
+    subject: `[TEST] ${subject}`,
+    html,
+    template: `template-test:${key}`,
+    idempotencyKey: `template-test:${key}:${parsed.data.to}:${Date.now()}`,
+  });
 
   return NextResponse.json({ success: true });
 }

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { FINANCE_ROLES, requireRoles } from "@/lib/api-auth";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { logActivity, logError } from "@/lib/logger";
-import { sendSmtpMail } from "@/lib/email-transport";
+import { sendEmail } from "@/lib/email";
 import { notifyQuoteReady } from "@/lib/customer-notifications";
 
 type Params = { params: Promise<{ id: string }> };
@@ -130,38 +130,27 @@ export async function POST(_req: NextRequest, { params }: Params) {
       `;
     }
 
-    // PDF is generated on demand at pdfPublicUrl — do not render+attach here.
-    // Hobby's ~10s ceiling makes react-pdf + SMTP attachment a timeout risk;
-    // status must only flip to SENT after the mail is accepted (below).
-    try {
-      await sendSmtpMail({
-        to: quote.clientEmail,
-        subject: `Your quote is ready — ${quote.quoteRef}`,
-        html: buildQuoteEmailHtml({
-          clientName: quote.clientName,
-          quoteRef: quote.quoteRef,
-          total: quote.total,
-          approvalUrl,
-          pdfUrl: pdfPublicUrl,
-          lineItems: Array.isArray(lineItems) ? lineItems : [],
-          notes: quote.notes,
-          consultationSection,
-        }),
-      });
-    } catch (mailErr) {
-      await logError({
-        severity: "WARNING",
-        errorType: "QUOTATION_SEND_MAIL",
-        message: mailErr instanceof Error ? mailErr.message : "SMTP failed",
-      });
-      return NextResponse.json(
-        {
-          error:
-            "Could not send the quotation email. The quote was not marked as sent — try again.",
-        },
-        { status: 502 },
-      );
-    }
+    // Queue the rendered HTML; transport is out of band. Quote is marked SENT
+    // once the outbox row exists so a failed SMTP attempt is still visible.
+    const html = buildQuoteEmailHtml({
+      clientName: quote.clientName,
+      quoteRef: quote.quoteRef,
+      total: quote.total,
+      approvalUrl,
+      pdfUrl: pdfPublicUrl,
+      lineItems: Array.isArray(lineItems) ? lineItems : [],
+      notes: quote.notes,
+      consultationSection,
+    });
+    await sendEmail({
+      to: quote.clientEmail,
+      subject: `Your quote is ready — ${quote.quoteRef}`,
+      html,
+      template: "quote-sent",
+      idempotencyKey: `quote-sent:${quote.id}:v${quote.version}`,
+      relatedType: "Quotation",
+      relatedId: quote.id,
+    });
 
     const item = await prisma.quotation.update({
       where: { id },

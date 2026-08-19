@@ -78,7 +78,15 @@ export async function processEmailSendJobBatch(jobId: string): Promise<void> {
   for (let i = nextIndex; i < end; i += 1) {
     const to = recipients[i];
     try {
-      await sendEmail({ to, subject: job.subject, html });
+      await sendEmail({
+        to,
+        subject: job.subject,
+        html,
+        template: "admin-broadcast",
+        idempotencyKey: `admin-broadcast:${jobId}:${to}`,
+        relatedType: "EmailSendJob",
+        relatedId: jobId,
+      });
       sent += 1;
     } catch {
       failed += 1;
@@ -100,5 +108,11 @@ export async function processEmailSendJobBatch(jobId: string): Promise<void> {
 
 export async function sendSingleEmail(subject: string, bodyHtml: string, to: string) {
   const html = await renderCustomEmailHtml(subject, bodyHtml);
-  await sendEmail({ to, subject, html });
+  await sendEmail({
+    to,
+    subject,
+    html,
+    template: "admin-single",
+    idempotencyKey: `admin-single:${to}:${subject}:${Date.now()}`,
+  });
 }

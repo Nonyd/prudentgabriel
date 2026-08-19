@@ -5,6 +5,7 @@ import { run as runUnsentQuoteAlerts } from "@/lib/cron/jobs/unsent-quote-alerts
 import { run as runReviewRequests } from "@/lib/cron/jobs/review-requests";
 import { run as runReceiptReminders } from "@/lib/cron/jobs/receipt-reminders";
 import { run as runUpdatePerformance } from "@/lib/cron/jobs/update-performance";
+import { run as runEmailOutbox } from "@/lib/cron/jobs/email-outbox";
 
 /**
  * Single source of truth for scheduled jobs.
@@ -109,6 +110,14 @@ export const CRON_JOBS: CronJobDefinition[] = [
     description: "Remind clients to confirm bespoke garment receipt after 7 days",
     handler: runReceiptReminders,
     migrated: true,
+  },
+  {
+    name: "email-outbox",
+    schedule: "* * * * *",
+    description: "Drain queued and failed outbound emails",
+    handler: runEmailOutbox,
+    migrated: true,
+    budgetMs: 4 * 60_000,
   },
 ];
 

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { sendSmtpMail } from "@/lib/email-transport";
+import { sendEmail } from "@/lib/email";
 import { restockEmailHtml } from "@/lib/email-templates/reports";
 import { getPublicAppUrl } from "@/lib/app-url";
 
@@ -23,10 +23,14 @@ export async function processRestockAlerts(variantIds: string[]): Promise<number
     if (alert.variant.stock <= 0) continue;
 
     const shopUrl = `${appUrl}/shop/${alert.variant.product.slug}`;
-    await sendSmtpMail({
+    await sendEmail({
       to: alert.email,
       subject: `Back in stock — ${alert.variant.product.name} | Prudential Atelier`,
       html: restockEmailHtml(alert.variant.product.name, alert.variant.size, shopUrl),
+      template: "stock-alert",
+      idempotencyKey: `stock-alert:${alert.id}`,
+      relatedType: "StockAlert",
+      relatedId: alert.id,
     });
 
     await prisma.stockAlert.delete({ where: { id: alert.id } });

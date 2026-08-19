@@ -201,6 +201,10 @@ export async function POST(req: NextRequest) {
       ? "You've been added to Prudential Atelier"
       : "You've been added to Prudential Atelier — Operations Suite",
     html,
+    template: "user-invite",
+    idempotencyKey: `user-invite:${user.id}`,
+    relatedType: "User",
+    relatedId: user.id,
   });
 
   await logActivity({

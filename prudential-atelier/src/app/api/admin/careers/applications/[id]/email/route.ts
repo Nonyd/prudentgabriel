@@ -35,6 +35,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     to: application.email,
     subject: parsed.data.subject,
     html: `<div style="font-family: Georgia, serif; line-height: 1.7; color: #442913;">${safeBody}</div>`,
+    template: "career-application-email",
+    idempotencyKey: `career-email:${id}:${Date.now()}`,
+    relatedType: "JobApplication",
+    relatedId: id,
   });
 
   await prisma.applicationEmail.create({

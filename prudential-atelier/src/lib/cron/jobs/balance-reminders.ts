@@ -1,6 +1,6 @@
 import type { CronJobContext, JobResult } from "@/lib/cron/types";
 import { prisma } from "@/lib/prisma";
-import { sendSmtpMail } from "@/lib/email-transport";
+import { sendEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { notifyBalanceReminder } from "@/lib/customer-notifications";
 
@@ -67,7 +67,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
       const payUrl = `${appUrl}/track/${encodeURIComponent(order.trackingToken)}`;
       const outfitName = order.outfitDescription?.slice(0, 80) ?? "Your commission";
 
-      await sendSmtpMail({
+      await sendEmail({
         to: order.clientEmail,
         subject: `Outstanding balance reminder — ${order.orderRef}`,
         html: balanceReminderHtml({
@@ -78,6 +78,10 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
           deliveryDate,
           payUrl,
         }),
+        template: "balance-reminder",
+        idempotencyKey: `balance-reminder:${order.id}:${ctx.now.toISOString().slice(0, 10)}`,
+        relatedType: "BespokeOrder",
+        relatedId: order.id,
       });
 
       notifyBalanceReminder({

@@ -56,6 +56,10 @@ export async function POST(req: NextRequest) {
     to: invitation.email,
     subject: "You've been invited to join Prudent Gabriel Admin",
     html,
+    template: "team-invite",
+    idempotencyKey: `team-invite:${invitation.id}`,
+    relatedType: "TeamInvitation",
+    relatedId: invitation.id,
   });
 
   return NextResponse.json({ success: true });

@@ -150,6 +150,7 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "System",
     items: [
       { href: "/admin/system/jobs", label: "Scheduled jobs", icon: Activity, generalAdminOnly: true },
+      { href: "/admin/system/emails", label: "Emails", icon: Mail, generalAdminOnly: true },
       { href: "/admin/logs/activity", label: "Activity Log", icon: Activity, permission: "logs" },
       { href: "/admin/logs/errors", label: "Error Log", icon: AlertTriangle, permission: "logs" },
     ],

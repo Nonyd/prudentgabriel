@@ -1,6 +1,6 @@
 import { ActivityAction, ErrorSeverity } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { sendSmtpMail } from "@/lib/email-transport";
+import { queueEmail } from "@/lib/email-outbox";
 
 export async function logActivity(params: {
   userId?: string;
@@ -33,10 +33,12 @@ export async function logError(params: {
     await prisma.errorLog.create({ data: params });
 
     if (params.severity === "CRITICAL" && process.env.SUPER_ADMIN_EMAIL) {
-      await sendSmtpMail({
+      await queueEmail({
         to: process.env.SUPER_ADMIN_EMAIL,
         subject: `[Prudential Atelier] Critical error: ${params.errorType}`,
         html: `<p>${params.message}</p><pre>${params.stack ?? ""}</pre>`,
+        template: "critical-error",
+        idempotencyKey: `critical-error:${params.errorType}:${Date.now()}`,
       }).catch(() => undefined);
     }
   } catch (error) {

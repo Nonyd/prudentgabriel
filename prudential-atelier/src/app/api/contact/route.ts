@@ -77,6 +77,10 @@ export async function POST(req: NextRequest) {
       <p>${safeMessage}</p>
       <p><a href="${appUrl}/admin/content/messages">View in admin messages →</a></p>
     `,
+    template: "contact-admin",
+    idempotencyKey: `contact-admin:${saved.id}`,
+    relatedType: "ContactMessage",
+    relatedId: saved.id,
   }).catch(() => {});
 
   await sendEmail({
@@ -87,6 +91,10 @@ export async function POST(req: NextRequest) {
       <p>${autoReplyMessage.replace(/</g, "&lt;")}</p>
       <p>— Prudential Atelier</p>
     `,
+    template: "contact-receipt",
+    idempotencyKey: `contact-receipt:${saved.id}`,
+    relatedType: "ContactMessage",
+    relatedId: saved.id,
   }).catch(() => {});
 
   return NextResponse.json({ success: true, id: saved.id });

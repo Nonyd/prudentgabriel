@@ -30,7 +30,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     `<p>Dear ${message.name.replace(/</g, "&lt;")},</p>${parsed.data.replyBody}`,
   );
 
-  await sendEmail({ to: message.email, subject, html });
+  await sendEmail({ to: message.email, subject, html, template: "contact-reply", idempotencyKey: `contact-reply:${id}`, relatedType: "ContactMessage", relatedId: id });
 
   const updated = await prisma.contactMessage.update({
     where: { id },

@@ -5,7 +5,7 @@ import {
   getBespokeStageEmailSubject,
   type StageEmailData,
 } from "@/lib/email-templates/bespoke-stages";
-import { sendSmtpMail } from "@/lib/email-transport";
+import { sendEmail } from "@/lib/email";
 import { getLogoSettings } from "@/lib/logos";
 
 export async function sendBespokeStageEmail(
@@ -16,7 +16,15 @@ export async function sendBespokeStageEmail(
   const { logoWhite } = await getLogoSettings();
   const html = getBespokeStageEmail(stage, data, logoWhite || undefined);
   const subject = getBespokeStageEmailSubject(stage, data.orderRef);
-  await sendSmtpMail({ to: toEmail, subject, html });
+  await sendEmail({
+    to: toEmail,
+    subject,
+    html,
+    template: "stage-complete",
+    idempotencyKey: `stage-complete:${data.orderRef}:${stage}`,
+    relatedType: "BespokeOrder",
+    relatedId: data.orderRef,
+  });
 }
 
 export { buildStageEmailData };

@@ -1,7 +1,5 @@
 import { render } from "@react-email/render";
 import React, { type ReactElement } from "react";
-import { Resend } from "resend";
-import { isEmailCaptureEnabled, recordCapturedEmail } from "@/lib/email-capture";
 import WelcomeCredentialsEmail, {
   subjectWelcomeCredentials,
 } from "@/emails/WelcomeCredentialsEmail";
@@ -30,19 +28,12 @@ import ReceiptReminderEmail, { subjectReceiptReminder } from "@/emails/ReceiptRe
 import type { LoyaltyTier } from "@prisma/client";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { primeEmailBranding, emailLogoWhiteUrl } from "@/lib/email-branding";
-import { sendSmtpMail, EMAIL_FROM } from "@/lib/email-transport";
 import { prisma } from "@/lib/prisma";
-const FROM = EMAIL_FROM;
+import { queueEmail } from "@/lib/email-outbox";
 
 async function renderBrandedEmail(element: ReactElement) {
   await primeEmailBranding();
   return render(element);
-}
-
-function getResend(): Resend | null {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return null;
-  return new Resend(key);
 }
 
 export async function getEmailLogo(): Promise<string | null> {
@@ -50,32 +41,19 @@ export async function getEmailLogo(): Promise<string | null> {
   return setting?.value?.trim() || null;
 }
 
-export async function sendEmail(params: { to: string; subject: string; html: string }): Promise<void> {
-  if (isEmailCaptureEnabled()) {
-    recordCapturedEmail(params);
-    console.log("[EMAIL:capture]", params.to, params.subject);
-    return;
-  }
-
-  if (process.env.SMTP_PASSWORD) {
-    try {
-      await sendSmtpMail({ to: params.to, subject: params.subject, html: params.html, from: FROM });
-      return;
-    } catch (e) {
-      console.warn("[EMAIL] SMTP send failed, trying Resend", e);
-    }
-  }
-
-  const resend = getResend();
-  if (!resend) {
-    console.log("[EMAIL]", params.to, params.subject);
-    return;
-  }
-  try {
-    await resend.emails.send({ from: FROM, to: params.to, subject: params.subject, html: params.html });
-  } catch (e) {
-    console.warn("[EMAIL] send failed", e);
-  }
+export async function sendEmail(params: {
+  to: string;
+  subject: string;
+  html: string;
+  template: string;
+  idempotencyKey: string;
+  relatedType?: string;
+  relatedId?: string;
+  cc?: string;
+  bcc?: string;
+  fromAddress?: string;
+}): Promise<void> {
+  await queueEmail(params);
 }
 
 export async function sendWelcomeEmail(
@@ -89,7 +67,7 @@ export async function sendWelcomeEmail(
   const html = await renderBrandedEmail(
     <WelcomeEmail firstName={firstName} pointsBalance={pointsBalance} referralCode={referralCode} />,
   );
-  await sendEmail({ to, subject: welcomeSubject(firstName), html });
+  await sendEmail({ to, subject: welcomeSubject(firstName), html, template: "welcome", idempotencyKey: `welcome:${to}` });
 }
 
 export async function sendWelcomeCredentialsEmail(params: {
@@ -115,6 +93,10 @@ export async function sendWelcomeCredentialsEmail(params: {
     to: params.to,
     subject: subjectWelcomeCredentials(params.firstName),
     html,
+    template: "welcome-credentials",
+    idempotencyKey: `welcome-credentials:${params.email}:${params.sourceLabel}`,
+    relatedType: "User",
+    relatedId: params.email,
   });
 }
 
@@ -133,6 +115,10 @@ export async function sendBankTransferReceiptReceivedEmail(params: {
        <p>We received your bank transfer receipt for <strong>₦${params.amountNGN.toLocaleString("en-NG")}</strong> (${escapeHtml(params.ref)}).</p>
        <p>Our team will verify within 2–4 hours and confirm your order by email.</p>`,
     ),
+    template: "bank-transfer-receipt",
+    idempotencyKey: `bank-receipt:${params.ref}`,
+    relatedType: "Payment",
+    relatedId: params.ref,
   });
 }
 
@@ -154,6 +140,10 @@ export async function sendBankTransferAdminNotification(params: {
        <strong>Amount:</strong> ₦${params.amountNGN.toLocaleString("en-NG")}</p>
        <p><a href="${escapeHtml(params.receiptUrl)}">View receipt</a></p>`,
     ),
+    template: "bank-transfer-admin",
+    idempotencyKey: `bank-receipt-admin:${params.ref}`,
+    relatedType: "Payment",
+    relatedId: params.ref,
   });
 }
 
@@ -175,6 +165,10 @@ export async function sendPaymentConfirmedEmail(params: {
        <p>Your ${kindLabel} is now active.</p>
        <p><a href="${escapeHtml(params.trackUrl)}">Track your order</a></p>`,
     ),
+    template: "payment-confirmed",
+    idempotencyKey: `payment-confirmed:${params.kind}:${params.ref}`,
+    relatedType: "Payment",
+    relatedId: params.ref,
   });
 }
 
@@ -194,6 +188,10 @@ export async function sendPaymentRejectedEmail(params: {
        <p>Please contact us or try again.</p>
        <p><a href="${getPublicAppUrl()}/contact">Contact us</a></p>`,
     ),
+    template: "payment-rejected",
+    idempotencyKey: `payment-rejected:${params.ref}`,
+    relatedType: "Payment",
+    relatedId: params.ref,
   });
 }
 
@@ -231,15 +229,23 @@ export async function sendOrderConfirmationEmail(params: {
     to: params.to,
     subject: `Order Confirmed — #${params.orderNumber} | Prudential Atelier`,
     html,
+    template: "order-confirmation",
+    idempotencyKey: `order-confirmed:${params.orderNumber}`,
+    relatedType: "Order",
+    relatedId: params.orderNumber,
   });
 }
 
-export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
+export async function sendPasswordResetEmail(to: string, resetUrl: string, tokenHash: string): Promise<void> {
   const html = await renderBrandedEmail(<PasswordResetEmail resetUrl={resetUrl} />);
   await sendEmail({
     to,
     subject: "Reset your Prudential Atelier password",
     html,
+    template: "password-reset",
+    idempotencyKey: `password-reset:${tokenHash}`,
+    relatedType: "User",
+    relatedId: to,
   });
 }
 
@@ -249,6 +255,8 @@ export async function sendAccountExistsEmail(to: string, loginUrl: string): Prom
     to,
     subject: "You already have a Prudential Atelier account",
     html,
+    template: "account-exists",
+    idempotencyKey: `account-exists:${to}`,
   });
 }
 
@@ -266,6 +274,10 @@ export async function sendBespokeConfirmationEmail(
     to,
     subject: `Atelier Request Received — ${requestNumber}`,
     html,
+    template: "bespoke-confirmation",
+    idempotencyKey: `bespoke-confirmation:${requestNumber}`,
+    relatedType: "BespokeRequest",
+    relatedId: requestNumber,
   });
 }
 
@@ -308,6 +320,10 @@ export async function sendBespokeBalancePaymentLinkEmail(params: {
     to: params.to,
     subject: `Complete payment — ${params.requestNumber} | Prudential Atelier`,
     html: wrapHtml("Prudential Atelier", inner),
+    template: "bespoke-balance-link",
+    idempotencyKey: `bespoke-balance-link:${params.requestNumber}`,
+    relatedType: "BespokeOrder",
+    relatedId: params.requestNumber,
   });
 }
 
@@ -330,6 +346,8 @@ export async function sendReferralSuccessEmail(
     to,
     subject: `You just earned ${pointsEarned} points!`,
     html,
+    template: "referral-success",
+    idempotencyKey: `referral-success:${to}:${friendFirstName}:${pointsEarned}`,
   });
 }
 
@@ -354,6 +372,10 @@ export async function sendOrderShippedEmail(params: {
     to: params.to,
     subject: `Your order has shipped — #${params.orderNumber}`,
     html,
+    template: "order-shipped",
+    idempotencyKey: `order-shipped:${params.orderNumber}`,
+    relatedType: "Order",
+    relatedId: params.orderNumber,
   });
 }
 
@@ -369,6 +391,10 @@ export async function sendRtwOrderDeliveredEmail(params: {
     to: params.to,
     subject: `Your order has been delivered — #${params.orderNumber}`,
     html,
+    template: "rtw-delivered",
+    idempotencyKey: `rtw-delivered:${params.orderNumber}`,
+    relatedType: "Order",
+    relatedId: params.orderNumber,
   });
 }
 
@@ -391,6 +417,10 @@ export async function sendBespokeDeliveredEmail(params: {
     to: params.to,
     subject: subjectBespokeDelivered(params.orderRef),
     html,
+    template: "bespoke-delivered",
+    idempotencyKey: `bespoke-delivered:${params.orderRef}`,
+    relatedType: "BespokeOrder",
+    relatedId: params.orderRef,
   });
 }
 
@@ -411,6 +441,10 @@ export async function sendReceiptReminderEmail(params: {
     to: params.to,
     subject: subjectReceiptReminder(params.orderRef),
     html,
+    template: "receipt-reminder",
+    idempotencyKey: `receipt-reminder:${params.orderRef}`,
+    relatedType: "BespokeOrder",
+    relatedId: params.orderRef,
   });
 }
 
@@ -433,6 +467,10 @@ export async function sendBespokeReviewRequestEmail(params: {
     to: params.to,
     subject: `How was your commission ${params.orderRef}? — Prudential Atelier`,
     html,
+    template: "bespoke-review-request",
+    idempotencyKey: `bespoke-review:${params.orderRef}`,
+    relatedType: "BespokeOrder",
+    relatedId: params.orderRef,
   });
 }
 
@@ -449,6 +487,8 @@ export async function sendLoyaltyTierUpgradeEmail(params: {
     to: params.to,
     subject: `You've reached a new loyalty tier — Prudential Atelier`,
     html,
+    template: "loyalty-tier-upgrade",
+    idempotencyKey: `loyalty-tier:${params.to}:${params.newTier}`,
   });
 }
 
@@ -464,6 +504,8 @@ export async function sendReferralRewardEmail(params: {
     to: params.to,
     subject: "You've earned a referral reward — Prudential Atelier",
     html,
+    template: "referral-reward",
+    idempotencyKey: `referral-reward:${params.to}:${params.creditNGN}`,
   });
 }
 
@@ -488,6 +530,10 @@ export async function sendStageAssignmentEmail(params: {
     to: params.to,
     subject: `New assignment — ${params.orderRef}`,
     html,
+    template: "stage-assignment",
+    idempotencyKey: `stage-assignment:${params.orderRef}:${params.stageName}:${params.to}`,
+    relatedType: "BespokeOrder",
+    relatedId: params.orderRef,
   });
 }
 
@@ -510,6 +556,8 @@ export async function sendBackInStockEmail(params: {
     to: params.to,
     subject: `${params.productName} is back in stock`,
     html,
+    template: "back-in-stock",
+    idempotencyKey: `back-in-stock:${params.productSlug}:${params.size}:${params.to}`,
   });
 }
 
@@ -565,6 +613,10 @@ export async function sendStageApprovalRequestEmail(params: {
     to: params.to,
     subject: `Please review ${params.stageLabel} — ${params.orderRef} | Prudential Atelier`,
     html: wrapHtml("Prudential Atelier", inner),
+    template: "stage-approval-request",
+    idempotencyKey: `stage-approval:${params.orderRef}:${params.stageLabel}`,
+    relatedType: "BespokeOrder",
+    relatedId: params.orderRef,
   });
 }
 
@@ -594,6 +646,10 @@ export async function sendStageApprovalReminderEmail(params: {
     to: params.to,
     subject: `Reminder: review ${params.stageLabel} — ${params.orderRef}`,
     html: wrapHtml("Prudential Atelier", inner),
+    template: "stage-approval-reminder",
+    idempotencyKey: `stage-approval-reminder:${params.orderRef}:${params.stageLabel}`,
+    relatedType: "BespokeOrder",
+    relatedId: params.orderRef,
   });
 }
 
@@ -624,17 +680,31 @@ export async function sendStageChangesRequestedEmail(params: {
     to: params.to,
     subject: `Changes requested — ${params.orderRef} / ${params.stageLabel}`,
     html: wrapHtml("Prudential Atelier", inner),
+    template: "stage-changes-requested",
+    idempotencyKey: `stage-changes:${params.orderRef}:${params.stageLabel}`,
+    relatedType: "BespokeOrder",
+    relatedId: params.orderRef,
   });
 }
 
-export async function sendAdminNotificationEmail(subject: string, htmlInner: string): Promise<void> {
+export async function sendAdminNotificationEmail(
+  subject: string,
+  htmlInner: string,
+  idempotencyKey?: string,
+): Promise<void> {
   const admin = process.env.ADMIN_EMAIL;
   if (!admin) {
     console.log("[EMAIL admin]", subject);
     return;
   }
   await primeEmailBranding();
-  await sendEmail({ to: admin, subject, html: wrapHtml("Admin", htmlInner) });
+  await sendEmail({
+    to: admin,
+    subject,
+    html: wrapHtml("Admin", htmlInner),
+    template: "admin-notification",
+    idempotencyKey: idempotencyKey ?? `admin-notify:${subject}`,
+  });
 }
 
 export async function sendConsultationPendingEmail(params: {
@@ -666,6 +736,10 @@ export async function sendConsultationPendingEmail(params: {
     to: params.to,
     subject: `Consultation Request Received — #${params.bookingNumber} | Prudential Atelier`,
     html,
+    template: "consultation-pending",
+    idempotencyKey: `consultation-pending:${params.bookingNumber}`,
+    relatedType: "ConsultationBooking",
+    relatedId: params.bookingNumber,
   });
 }
 
@@ -710,6 +784,10 @@ export async function sendConsultationConfirmedEmail(params: {
     to: params.to,
     subject: `Consultation Confirmed — #${params.bookingNumber} · ${dateLabel} | Prudential Atelier`,
     html,
+    template: "consultation-confirmed",
+    idempotencyKey: `consultation-confirmed:${params.bookingNumber}`,
+    relatedType: "ConsultationBooking",
+    relatedId: params.bookingNumber,
   });
 }
 
@@ -732,6 +810,10 @@ export async function sendConsultationCancelledEmail(params: {
     to: params.to,
     subject: `Consultation Cancelled — #${params.bookingNumber}`,
     html,
+    template: "consultation-cancelled",
+    idempotencyKey: `consultation-cancelled:${params.bookingNumber}`,
+    relatedType: "ConsultationBooking",
+    relatedId: params.bookingNumber,
   });
 }
 
@@ -758,6 +840,8 @@ export async function sendConsultationSessionSummaryEmail(params: {
     to: params.to,
     subject: "Thank you for your consultation — Prudential Atelier",
     html,
+    template: "consultation-session-summary",
+    idempotencyKey: `consultation-summary:${params.to}:${params.moodboardUrl ?? "none"}`,
   });
 }
 
@@ -784,6 +868,8 @@ export async function sendConsultationMeetingLinkEmail(params: {
     to: params.to,
     subject: "Your consultation link — Prudential Atelier",
     html,
+    template: "consultation-meeting-link",
+    idempotencyKey: `consultation-meeting-link:${params.to}:${params.meetingLink}`,
   });
 }
 
@@ -808,6 +894,10 @@ export async function sendConsultationRescheduleEmail(params: {
     to: params.to,
     subject: `New Date Proposed — #${params.bookingNumber}`,
     html,
+    template: "consultation-reschedule",
+    idempotencyKey: `consultation-reschedule:${params.bookingNumber}`,
+    relatedType: "ConsultationBooking",
+    relatedId: params.bookingNumber,
   });
 }
 
@@ -842,6 +932,10 @@ export async function sendInvoiceEmail(params: {
     to: params.to,
     subject: subjectInvoiceEmail(props),
     html,
+    template: "invoice",
+    idempotencyKey: `invoice:${params.invoiceNumber}`,
+    relatedType: "Invoice",
+    relatedId: params.invoiceNumber,
   });
 }
 
@@ -868,7 +962,11 @@ export async function sendAdminConsultationNotification(params: {
     ${pref}
     <p><a href="${getPublicAppUrl()}/admin/consultations">Open admin</a></p>
   `;
-  await sendAdminNotificationEmail(`New Consultation Booking — #${params.bookingNumber}${tag}`, inner);
+  await sendAdminNotificationEmail(
+    `New Consultation Booking — #${params.bookingNumber}${tag}`,
+    inner,
+    `consultation-admin:${params.bookingNumber}`,
+  );
 }
 
 export async function sendProductReviewRequestEmail(params: {
@@ -893,6 +991,10 @@ export async function sendProductReviewRequestEmail(params: {
     to: params.to,
     subject: `How was your ${params.productName}? — Prudential Atelier`,
     html,
+    template: "product-review-request",
+    idempotencyKey: `product-review:${params.orderId}:${params.productId}`,
+    relatedType: "Order",
+    relatedId: params.orderId,
   });
 }
 
@@ -916,6 +1018,10 @@ export async function sendConsultationReviewRequestEmail(params: {
     to: params.to,
     subject: "How was your consultation? — Prudential Atelier",
     html,
+    template: "consultation-review-request",
+    idempotencyKey: `consultation-review:${params.consultationId}`,
+    relatedType: "ConsultationBooking",
+    relatedId: params.consultationId,
   });
 }
 
@@ -938,6 +1044,10 @@ export async function sendJobApplicationConfirmationEmail(params: {
     to: params.to,
     subject: `Application received — ${params.jobTitle} at Prudential Atelier`,
     html,
+    template: "job-application-confirmation",
+    idempotencyKey: `job-application-confirm:${params.applicationId}`,
+    relatedType: "JobApplication",
+    relatedId: params.applicationId,
   });
 }
 
@@ -963,6 +1073,7 @@ export async function sendJobApplicationAdminEmail(params: {
       <p><strong>Experience:</strong> ${exp}</p>
       <p><a href="${reviewUrl}">Review application</a></p>
     `,
+    `job-application-admin:${params.applicationId}`,
   );
 }
 
@@ -984,5 +1095,7 @@ export async function sendJobApplicationStatusEmail(params: {
     to: params.to,
     subject: `${copy.subject} — ${params.jobTitle}`,
     html,
+    template: "job-application-status",
+    idempotencyKey: `job-application-status:${params.to}:${params.jobTitle}:${params.status}`,
   });
 }

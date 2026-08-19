@@ -3,7 +3,7 @@ import { EmploymentType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { validateCronSecret } from "@/lib/api-auth";
 import { logError } from "@/lib/logger";
-import { sendSmtpMail } from "@/lib/email-transport";
+import { sendEmail } from "@/lib/email";
 
 function startOfToday(): Date {
   const d = new Date();
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       )
       .join("");
 
-    await sendSmtpMail({
+    await sendEmail({
       to: hrEmail,
       subject: `[Prudential Atelier] Late resumption alert — ${absent.length} staff not clocked in`,
       html: `
@@ -60,6 +60,8 @@ export async function POST(req: NextRequest) {
         <ul>${listHtml}</ul>
         <p>Date: ${today.toLocaleDateString("en-GB")}</p>
       `,
+      template: "late-alert",
+      idempotencyKey: `late-alert:${today.toISOString().slice(0, 10)}`,
     });
 
     return NextResponse.json({

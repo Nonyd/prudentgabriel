@@ -5,7 +5,8 @@
 export function cronIntervalMs(schedule: string): number {
   const parts = schedule.trim().split(/\s+/);
   if (parts.length < 5) return 24 * 60 * 60 * 1000;
-  const [, , dom, , dow] = parts;
+  const [minute, , dom, , dow] = parts;
+  if (minute === "*") return 60 * 1000;
 
   if (dow !== "*" && !dow.includes("-") && !dow.includes(",") && /^\d+$/.test(dow)) {
     return 7 * 24 * 60 * 60 * 1000;

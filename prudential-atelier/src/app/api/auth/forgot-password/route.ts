@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       },
     });
     const resetUrl = `${getPublicAppUrl()}/auth/reset-password/${raw}`;
-    void sendPasswordResetEmail(email, resetUrl).catch((e) =>
+    void sendPasswordResetEmail(email, resetUrl, hash).catch((e) =>
       console.warn("[forgot-password] mail", e),
     );
   }

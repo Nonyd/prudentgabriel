@@ -3,8 +3,7 @@ import type { CronJobContext, JobResult } from "@/lib/cron/types";
 import { prisma } from "@/lib/prisma";
 import { createAdminNotification } from "@/lib/notify";
 import { createStaffNotification } from "@/lib/staff-notifications";
-import { sendAdminNotificationEmail } from "@/lib/email";
-import { sendSmtpMail } from "@/lib/email-transport";
+import { sendAdminNotificationEmail, sendEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
 
 const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
@@ -87,6 +86,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
         `<p>Consultation <strong>${booking.bookingNumber}</strong> for <strong>${booking.clientName}</strong>
         was completed on ${completedAt} and still has no quotation.</p>
         <p><a href="${adminUrl}">Open consultation</a></p>`,
+        `unsent-quote-admin:${booking.id}`,
       );
 
       const staffUser = await resolveConsultantStaffUser(booking.consultant.name);
@@ -100,7 +100,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
           entityId: booking.id,
         });
 
-        await sendSmtpMail({
+        await sendEmail({
           to: staffUser.email,
           subject: `Quotation overdue — ${booking.bookingNumber}`,
           html: consultantAlertHtml({
@@ -110,6 +110,10 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
             completedAt,
             adminUrl,
           }),
+          template: "unsent-quote-alert",
+          idempotencyKey: `unsent-quote:${booking.id}`,
+          relatedType: "ConsultationBooking",
+          relatedId: booking.id,
         });
       }
 
