@@ -6,9 +6,20 @@ const TAG_LENGTH = 16;
 const PREFIX_GCM = "gcm:";
 const PREFIX_LEGACY_CBC = "v1:";
 
+function isNextCompileTime(): boolean {
+  return (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.SKIP_DB_BUILD === "1"
+  );
+}
+
 function requireEncryptionSecret(): string {
   const raw = (process.env.ENCRYPTION_KEY ?? process.env.SETTINGS_ENCRYPTION_KEY ?? "").trim();
   if (!raw) {
+    if (isNextCompileTime()) {
+      // `next build` imports API routes; the real key is injected at container start.
+      return "build-time-placeholder-not-a-runtime-key";
+    }
     throw new Error(
       "ENCRYPTION_KEY or SETTINGS_ENCRYPTION_KEY must be set. Refusing to start without an encryption key.",
     );
