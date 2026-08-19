@@ -1,5 +1,5 @@
 import { handlers } from "@/auth";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { rateLimitOr429 } from "@/lib/rate-limit";
 
 export const { GET } = handlers;
