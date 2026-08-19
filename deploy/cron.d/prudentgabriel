@@ -1,0 +1,29 @@
+# Generated from prudential-atelier/src/lib/cron/catalog.ts. Do not edit.
+# Regenerate: cd prudential-atelier && pnpm exec tsx --tsconfig tsconfig.scripts.json scripts/render-host-cron.ts
+#
+# Production schedule (UTC). CRON_SECRET is not in this file — cron-fire.sh
+# reads it from /opt/prudentgabriel/deploy/.env.production.
+#
+# Install (needs root):
+#   sudo install -m 0755 deploy/cron-fire.sh /opt/prudentgabriel/deploy/cron-fire.sh
+#   sudo install -m 600 -o root -g root deploy/cron.d/prudentgabriel /etc/cron.d/prudentgabriel
+SHELL=/bin/bash
+PATH=/usr/bin:/bin
+MAILTO=""
+CRON_TZ=UTC
+
+0 0 * * * root /opt/prudentgabriel/deploy/cron-fire.sh abandoned-cart
+0 0 * * * root /opt/prudentgabriel/deploy/cron-fire.sh expired-coupons
+0 0 * * * root /opt/prudentgabriel/deploy/cron-fire.sh rotate-qr
+0 9 * * 1-6 root /opt/prudentgabriel/deploy/cron-fire.sh late-alert
+0 9 * * * root /opt/prudentgabriel/deploy/cron-fire.sh event-reminders
+0 23 * * * root /opt/prudentgabriel/deploy/cron-fire.sh daily-report
+0 7 * * 1 root /opt/prudentgabriel/deploy/cron-fire.sh weekly-report
+0 2 * * * root /opt/prudentgabriel/deploy/cron-fire.sh update-performance
+0 9 * * * root /opt/prudentgabriel/deploy/cron-fire.sh review-requests
+0 9 * * * root /opt/prudentgabriel/deploy/cron-fire.sh balance-reminders
+0 10 * * * root /opt/prudentgabriel/deploy/cron-fire.sh stage-approval-reminders
+0 2 * * * root /opt/prudentgabriel/deploy/cron-fire.sh update-bestsellers
+0 11 * * * root /opt/prudentgabriel/deploy/cron-fire.sh unsent-quote-alerts
+0 10 * * * root /opt/prudentgabriel/deploy/cron-fire.sh receipt-reminders
+* * * * * root /opt/prudentgabriel/deploy/cron-fire.sh email-outbox

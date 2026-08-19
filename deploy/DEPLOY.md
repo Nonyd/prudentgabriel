@@ -179,26 +179,18 @@ Then open https://staging.prudentgabriel.com and https://prudentgabriel.com.
 
 ## 6. Cron (replaces Vercel crons)
 
-Vercel `vercel.json` crons do **not** run on this host. Call the same routes with `CRON_SECRET`:
+The job list is `prudential-atelier/src/lib/cron/catalog.ts`. Render the host
+file with `scripts/render-host-cron.ts` (see `prudential-atelier/docs/CRON.md`).
 
-```cron
-0 0 * * *   curl -fsS -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" https://prudentgabriel.com/api/cron/abandoned-cart >/dev/null 2>&1
-0 0 * * *   curl -fsS -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" https://prudentgabriel.com/api/cron/expired-coupons >/dev/null 2>&1
-0 0 * * *   curl -fsS -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" https://prudentgabriel.com/api/cron/rotate-qr >/dev/null 2>&1
-0 9 * * 1-6 curl -fsS -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" https://prudentgabriel.com/api/cron/late-alert >/dev/null 2>&1
-0 9 * * *   curl -fsS -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" https://prudentgabriel.com/api/cron/event-reminders >/dev/null 2>&1
-0 23 * * *  curl -fsS -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" https://prudentgabriel.com/api/cron/daily-report >/dev/null 2>&1
-0 7 * * 1   curl -fsS -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" https://prudentgabriel.com/api/cron/weekly-report >/dev/null 2>&1
-0 2 * * *   curl -fsS -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" https://prudentgabriel.com/api/cron/update-performance >/dev/null 2>&1
-0 9 * * *   curl -fsS -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" https://prudentgabriel.com/api/cron/review-requests >/dev/null 2>&1
-0 9 * * *   curl -fsS -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" https://prudentgabriel.com/api/cron/balance-reminders >/dev/null 2>&1
-0 10 * * *  curl -fsS -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" https://prudentgabriel.com/api/cron/stage-approval-reminders >/dev/null 2>&1
-0 2 * * *   curl -fsS -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" https://prudentgabriel.com/api/cron/update-bestsellers >/dev/null 2>&1
-0 11 * * *  curl -fsS -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" https://prudentgabriel.com/api/cron/unsent-quote-alerts >/dev/null 2>&1
-0 10 * * *  curl -fsS -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" https://prudentgabriel.com/api/cron/receipt-reminders >/dev/null 2>&1
+Install on the VPS (sudo):
+
+```bash
+cd /opt/prudentgabriel/deploy
+sudo bash install-host-cron.sh
 ```
 
-Use the same `CRON_SECRET` as in `.env.production`. Repeat with the staging host if you want jobs there too.
+`cron-fire.sh` reads `CRON_SECRET` from `.env.production`. Do not put the secret
+in the crontab. Do not enable `CRON_SCHEDULER=1` on production.
 
 ---
 

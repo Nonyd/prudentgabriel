@@ -94,11 +94,12 @@ jobs:
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE_OWNER: ${{ env.IMAGE_OWNER }}
+          DEPLOY_SHA: ${{ github.sha }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: GHCR_PAT,GITHUB_TOKEN,IMAGE_OWNER
+          envs: GHCR_PAT,GITHUB_TOKEN,IMAGE_OWNER,DEPLOY_SHA
           script: |
             set -euo pipefail
             TOKEN="${GHCR_PAT:-$GITHUB_TOKEN}"
@@ -129,3 +130,30 @@ jobs:
               sleep 30
             done
             docker compose --env-file .env.production -f compose.production.yaml up -d --force-recreate app
+            # Host crontab lives in the repo. Copy the runner next to compose (deploy can write this).
+            # Installing /etc/cron.d still needs root; until then, fire email-outbox from the deploy user crontab.
+            mkdir -p /opt/prudentgabriel/deploy/cron.d
+            if [ -n "${GITHUB_TOKEN:-}" ]; then
+              curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.raw" \
+                "https://api.github.com/repos/Nonyd/prudentgabriel/contents/deploy/cron-fire.sh?ref=${DEPLOY_SHA}" \
+                -o /opt/prudentgabriel/deploy/cron-fire.sh
+              curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.raw" \
+                "https://api.github.com/repos/Nonyd/prudentgabriel/contents/deploy/cron.d/prudentgabriel?ref=${DEPLOY_SHA}" \
+                -o /opt/prudentgabriel/deploy/cron.d/prudentgabriel
+              curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.raw" \
+                "https://api.github.com/repos/Nonyd/prudentgabriel/contents/deploy/install-host-cron.sh?ref=${DEPLOY_SHA}" \
+                -o /opt/prudentgabriel/deploy/install-host-cron.sh
+              chmod 0755 /opt/prudentgabriel/deploy/install-host-cron.sh
+            fi
+            chmod 0755 /opt/prudentgabriel/deploy/cron-fire.sh || true
+            if sudo -n bash /opt/prudentgabriel/deploy/install-host-cron.sh 2>/dev/null; then
+              echo "Installed /etc/cron.d/prudentgabriel"
+              crontab -l 2>/dev/null | grep -v cron-fire.sh | crontab - || true
+            else
+              echo "No passwordless sudo; scheduling email-outbox on the deploy user crontab"
+              {
+                crontab -l 2>/dev/null | grep -v 'cron-fire.sh email-outbox' | grep -v '^CRON_TZ=UTC$' || true
+                echo "CRON_TZ=UTC"
+                echo "* * * * * /opt/prudentgabriel/deploy/cron-fire.sh email-outbox"
+              } | crontab -
+            fi

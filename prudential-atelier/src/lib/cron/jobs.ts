@@ -19,9 +19,9 @@ const HANDLERS: Record<string, CronJobHandler> = {
 };
 
 /**
- * Single source of truth for scheduled jobs (catalog + handlers).
- * The VPS process with CRON_SCHEDULER=1 reads the catalog and POSTs each
- * `/api/cron/${name}` on `schedule` (UTC). vercel.json no longer lists crons.
+ * Catalog + handlers. Schedules are in catalog.ts; production host cron is
+ * generated from that list (deploy/cron.d/prudentgabriel). Staging fires the
+ * same routes in-process when CRON_SCHEDULER=1.
  */
 export const CRON_JOBS: CronJobDefinition[] = CRON_CATALOG.map((entry) => ({
   ...entry,

@@ -1,11 +1,13 @@
 /**
  * Asserts every registry job has a route file and a 5-field schedule,
- * and that schedule matching / stale windows behave as documented.
+ * that the committed host crontab matches the registry, and that
+ * vercel.json does not list crons.
  */
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { CRON_JOBS, cronPath } from "../src/lib/cron/jobs";
 import { cronMatches, isJobStale } from "../src/lib/cron/schedule";
+import { HOST_CRON_FIRE, HOST_CRON_PATH, renderHostCronFile } from "./render-host-cron";
 
 function assert(cond: unknown, message: string) {
   if (!cond) throw new Error(message);
@@ -14,6 +16,48 @@ function assert(cond: unknown, message: string) {
 function main() {
   const errors: string[] = [];
   const root = resolve(__dirname, "..");
+
+  const vercel = JSON.parse(readFileSync(resolve(root, "vercel.json"), "utf8")) as {
+    crons?: unknown;
+  };
+  if (vercel.crons != null) {
+    errors.push("vercel.json still has a crons block; Vercel does not schedule this app");
+  }
+
+  const repoRoot = resolve(root, "..");
+  const hostCronPath = resolve(repoRoot, HOST_CRON_PATH);
+  if (!existsSync(hostCronPath)) {
+    errors.push(`Missing ${HOST_CRON_PATH} — run scripts/render-host-cron.ts`);
+  } else {
+    const committed = readFileSync(hostCronPath, "utf8").replace(/\r\n/g, "\n");
+    const expected = renderHostCronFile();
+    if (committed !== expected) {
+      errors.push(
+        `${HOST_CRON_PATH} is out of date. Run: pnpm exec tsx --tsconfig tsconfig.scripts.json scripts/render-host-cron.ts`,
+      );
+    }
+    const named = new Set<string>();
+    for (const line of committed.split("\n")) {
+      const m = line.match(/^(\S+(?:\s+\S+){4})\s+root\s+(\S+)\s+(\S+)\s*$/);
+      if (!m) continue;
+      const [, schedule, fire, name] = m;
+      named.add(name);
+      if (fire !== HOST_CRON_FIRE) {
+        errors.push(`Host cron for "${name}" does not call ${HOST_CRON_FIRE}`);
+      }
+      const job = CRON_JOBS.find((j) => j.name === name);
+      if (!job) {
+        errors.push(`Host cron lists unknown job "${name}"`);
+      } else if (job.schedule !== schedule) {
+        errors.push(`Host cron "${name}" schedule "${schedule}" != registry "${job.schedule}"`);
+      }
+    }
+    for (const job of CRON_JOBS) {
+      if (!named.has(job.name)) {
+        errors.push(`Registry job "${job.name}" is missing from ${HOST_CRON_PATH}`);
+      }
+    }
+  }
 
   for (const job of CRON_JOBS) {
     const parts = job.schedule.trim().split(/\s+/);
@@ -62,7 +106,9 @@ function main() {
     process.exit(1);
   }
 
-  console.log(`OK — ${CRON_JOBS.length} jobs have routes; schedule matcher and stale window checked`);
+  console.log(
+    `OK — ${CRON_JOBS.length} jobs have routes; host crontab matches registry; schedule matcher and stale window checked`,
+  );
 }
 
 main();
