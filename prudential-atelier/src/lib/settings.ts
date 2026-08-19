@@ -44,6 +44,7 @@ export function clearContentSettingsCache() {
 }
 
 export async function getSetting(key: string): Promise<string | null> {
+  if (process.env.SKIP_DB_BUILD === "1") return null;
   const cached = cacheGet(key);
   if (cached !== null) return cached;
 
@@ -87,6 +88,7 @@ export async function getSettings(group: SettingGroup): Promise<Record<string, s
 }
 
 export async function getPublicSettings(): Promise<Record<string, string>> {
+  if (process.env.SKIP_DB_BUILD === "1") return {};
   if (publicSettingsCache && Date.now() < publicSettingsCache.expiresAt) {
     return publicSettingsCache.data;
   }
