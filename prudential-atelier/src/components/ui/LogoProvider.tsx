@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { LogoSettings } from "@/lib/logos";
+import type { LogoSettings } from "@/lib/logo-settings";
 
 const EMPTY_LOGOS: LogoSettings = {
   logoDark: "",

@@ -27,8 +27,9 @@ function requireEncryptionSecret(): string {
   return raw;
 }
 
-/** Resolved at module load so a missing key fails closed on boot, not on first encrypt. */
-const ENCRYPTION_SECRET = requireEncryptionSecret();
+/** Resolved at module load on the server so a missing key fails closed on boot, not on first encrypt. */
+const ENCRYPTION_SECRET =
+  typeof window === "undefined" ? requireEncryptionSecret() : "";
 
 function deriveKey(): Buffer {
   return crypto.createHash("sha256").update(ENCRYPTION_SECRET, "utf8").digest();

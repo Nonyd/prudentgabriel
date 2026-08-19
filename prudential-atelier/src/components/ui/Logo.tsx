@@ -5,7 +5,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useLogoSettings } from "@/components/ui/LogoProvider";
 import { useTheme } from "@/components/ui/ThemeProvider";
-import { resolveSubBrandLogo } from "@/lib/logos";
+import { resolveSubBrandLogo } from "@/lib/logo-settings";
 import type { SubBrand } from "@/lib/sub-brand";
 
 const SIZES = {

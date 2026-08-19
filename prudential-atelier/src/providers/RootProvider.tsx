@@ -11,7 +11,7 @@ import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import { LogoProvider } from "@/components/ui/LogoProvider";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { AuthLinkInterceptor } from "@/components/auth/AuthLinkInterceptor";
-import type { LogoSettings } from "@/lib/logos";
+import type { LogoSettings } from "@/lib/logo-settings";
 
 interface RootProviderProps {
   children: React.ReactNode;
