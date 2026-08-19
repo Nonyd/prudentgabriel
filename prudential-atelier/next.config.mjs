@@ -10,7 +10,8 @@ const nextConfig = {
     minimumCacheTTL: 31536000,
   },
   compress: true,
-  output: process.env.SKIP_STANDALONE === "1" ? undefined : "standalone",
+  // SKIP_STANDALONE is local Windows only. CI/Docker must always emit standalone.
+  output: process.env.SKIP_STANDALONE === "1" && !process.env.CI ? undefined : "standalone",
 };
 
 export default nextConfig;

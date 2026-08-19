@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { SettingType } from "@prisma/client";
 import { requireAdminApi } from "@/lib/admin-auth";
@@ -102,6 +102,7 @@ export async function PATCH(req: NextRequest) {
 
     clearSettingCacheKey("maintenance_mode_enabled");
     revalidatePath("/api/maintenance-status");
+    revalidateTag("maintenance");
   }
 
   if (maintenanceModeMessage !== undefined) {

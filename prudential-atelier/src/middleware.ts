@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { auth } from "@/lib/auth.config";
 
 const ADMIN_ROLES = [
@@ -12,6 +13,37 @@ const ADMIN_ROLES = [
   "HR_MANAGER",
   "CONSULTATION_MANAGER",
 ];
+
+const MAINTENANCE_TTL_MS = 15_000;
+
+/** Per-isolate memo so HTML navigations do not hit the status route on every request. */
+let maintenanceMemo: { at: number; enabled: boolean } | null = null;
+
+/**
+ * Fail-open: if the status route errors or is unreachable, the storefront stays up.
+ * A stale memo is preferred over a hard-down when a later fetch fails.
+ */
+async function isMaintenanceEnabled(request: NextRequest): Promise<boolean> {
+  const now = Date.now();
+  if (maintenanceMemo && now - maintenanceMemo.at < MAINTENANCE_TTL_MS) {
+    return maintenanceMemo.enabled;
+  }
+
+  try {
+    const statusRes = await fetch(new URL("/api/maintenance-status", request.url), {
+      headers: { Accept: "application/json" },
+    });
+    if (!statusRes.ok) {
+      return maintenanceMemo?.enabled ?? false;
+    }
+    const body = (await statusRes.json()) as { enabled?: boolean };
+    const enabled = body.enabled === true;
+    maintenanceMemo = { at: now, enabled };
+    return enabled;
+  } catch {
+    return maintenanceMemo?.enabled ?? false;
+  }
+}
 
 export default auth(async function middleware(request) {
   const session = request.auth;
@@ -43,20 +75,8 @@ export default auth(async function middleware(request) {
     pathname.startsWith("/accept-invite");
 
   if (!isAdminUser && !skipMaintenanceGate) {
-    try {
-      const statusUrl = new URL("/api/maintenance-status", request.url);
-      const statusRes = await fetch(statusUrl, {
-        headers: { Accept: "application/json" },
-        next: { revalidate: 15 },
-      });
-      if (statusRes.ok) {
-        const body = (await statusRes.json()) as { enabled?: boolean };
-        if (body.enabled === true) {
-          return NextResponse.redirect(new URL("/maintenance", request.url));
-        }
-      }
-    } catch {
-      /* fail open so a status blip does not take the storefront down */
+    if (await isMaintenanceEnabled(request)) {
+      return NextResponse.redirect(new URL("/maintenance", request.url));
     }
   }
 
@@ -189,5 +209,7 @@ export default auth(async function middleware(request) {
 });
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|_next/data|favicon.ico|robots.txt|sitemap.xml|images/|icons/|.*\\..*).*)",
+  ],
 };
