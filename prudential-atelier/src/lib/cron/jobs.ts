@@ -1,4 +1,5 @@
-import type { CronJobDefinition } from "@/lib/cron/types";
+import type { CronJobDefinition, CronJobHandler } from "@/lib/cron/types";
+import { CRON_CATALOG, cronPath } from "@/lib/cron/catalog";
 import { run as runBalanceReminders } from "@/lib/cron/jobs/balance-reminders";
 import { run as runStageApprovalReminders } from "@/lib/cron/jobs/stage-approval-reminders";
 import { run as runUnsentQuoteAlerts } from "@/lib/cron/jobs/unsent-quote-alerts";
@@ -7,124 +8,28 @@ import { run as runReceiptReminders } from "@/lib/cron/jobs/receipt-reminders";
 import { run as runUpdatePerformance } from "@/lib/cron/jobs/update-performance";
 import { run as runEmailOutbox } from "@/lib/cron/jobs/email-outbox";
 
+const HANDLERS: Record<string, CronJobHandler> = {
+  "update-performance": runUpdatePerformance,
+  "review-requests": runReviewRequests,
+  "balance-reminders": runBalanceReminders,
+  "stage-approval-reminders": runStageApprovalReminders,
+  "unsent-quote-alerts": runUnsentQuoteAlerts,
+  "receipt-reminders": runReceiptReminders,
+  "email-outbox": runEmailOutbox,
+};
+
 /**
- * Single source of truth for scheduled jobs.
- * The VPS process with CRON_SCHEDULER=1 reads this registry and POSTs each
+ * Single source of truth for scheduled jobs (catalog + handlers).
+ * The VPS process with CRON_SCHEDULER=1 reads the catalog and POSTs each
  * `/api/cron/${name}` on `schedule` (UTC). vercel.json no longer lists crons.
  */
-export const CRON_JOBS: CronJobDefinition[] = [
-  {
-    name: "abandoned-cart",
-    schedule: "0 0 * * *",
-    description: "Abandoned cart recovery emails",
-    handler: null,
-    migrated: false,
-  },
-  {
-    name: "expired-coupons",
-    schedule: "0 0 * * *",
-    description: "Expire coupons past their end date",
-    handler: null,
-    migrated: false,
-  },
-  {
-    name: "rotate-qr",
-    schedule: "0 0 * * *",
-    description: "Rotate staff attendance QR secrets",
-    handler: null,
-    migrated: false,
-  },
-  {
-    name: "late-alert",
-    schedule: "0 9 * * 1-6",
-    description: "Staff late-clock-in alerts (Mon–Sat)",
-    handler: null,
-    migrated: false,
-  },
-  {
-    name: "event-reminders",
-    schedule: "0 9 * * *",
-    description: "Client event date reminders",
-    handler: null,
-    migrated: false,
-  },
-  {
-    name: "daily-report",
-    schedule: "0 23 * * *",
-    description: "Daily atelier operations report",
-    handler: null,
-    migrated: false,
-  },
-  {
-    name: "weekly-report",
-    schedule: "0 7 * * 1",
-    description: "Weekly operations report (Mondays)",
-    handler: null,
-    migrated: false,
-  },
-  {
-    name: "update-performance",
-    schedule: "0 2 * * *",
-    description: "Staff performance score refresh",
-    handler: runUpdatePerformance,
-    migrated: true,
-  },
-  {
-    name: "review-requests",
-    schedule: "0 9 * * *",
-    description: "Product + consultation + bespoke review request emails",
-    handler: runReviewRequests,
-    migrated: true,
-  },
-  {
-    name: "balance-reminders",
-    schedule: "0 9 * * *",
-    description: "Bespoke outstanding-balance reminders (14-day delivery window)",
-    handler: runBalanceReminders,
-    migrated: true,
-  },
-  {
-    name: "stage-approval-reminders",
-    schedule: "0 10 * * *",
-    description: "Client stage-approval reminders after 72h pending",
-    handler: runStageApprovalReminders,
-    migrated: true,
-  },
-  {
-    name: "update-bestsellers",
-    schedule: "0 2 * * *",
-    description: "Refresh bestseller product flags",
-    handler: null,
-    migrated: false,
-  },
-  {
-    name: "unsent-quote-alerts",
-    schedule: "0 11 * * *",
-    description: "Alert when COMPLETED consultations have no quotation after 48h",
-    handler: runUnsentQuoteAlerts,
-    migrated: true,
-  },
-  {
-    name: "receipt-reminders",
-    schedule: "0 10 * * *",
-    description: "Remind clients to confirm bespoke garment receipt after 7 days",
-    handler: runReceiptReminders,
-    migrated: true,
-  },
-  {
-    name: "email-outbox",
-    schedule: "* * * * *",
-    description: "Drain queued and failed outbound emails",
-    handler: runEmailOutbox,
-    migrated: true,
-    budgetMs: 50_000,
-  },
-];
+export const CRON_JOBS: CronJobDefinition[] = CRON_CATALOG.map((entry) => ({
+  ...entry,
+  handler: HANDLERS[entry.name] ?? null,
+}));
+
+export { cronPath };
 
 export function getCronJob(name: string): CronJobDefinition | undefined {
   return CRON_JOBS.find((j) => j.name === name);
-}
-
-export function cronPath(name: string): string {
-  return `/api/cron/${name}`;
 }

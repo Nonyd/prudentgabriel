@@ -1,4 +1,4 @@
-import { CRON_JOBS, cronPath } from "@/lib/cron/jobs";
+import { CRON_CATALOG, cronPath } from "@/lib/cron/catalog";
 import { cronMatches } from "@/lib/cron/schedule";
 
 const TICK_MS = 15_000;
@@ -44,7 +44,7 @@ async function fireJob(name: string, path: string): Promise<void> {
 export async function tickCronScheduler(now = new Date()): Promise<string[]> {
   const minute = utcMinuteKey(now);
   const due: string[] = [];
-  for (const job of CRON_JOBS) {
+  for (const job of CRON_CATALOG) {
     if (!cronMatches(job.schedule, now)) continue;
     if (lastFiredMinute.get(job.name) === minute) continue;
     if (inFlight.has(job.name)) continue;
