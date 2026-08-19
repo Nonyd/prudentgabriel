@@ -6,9 +6,9 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
 import { jwtIssuedBeforePasswordChange } from "@/lib/password-reset";
+import { isGoogleOAuthConfigured } from "@/lib/auth-google";
 
-const googleEnabled =
-  Boolean(process.env.GOOGLE_CLIENT_ID?.length) && Boolean(process.env.GOOGLE_CLIENT_SECRET?.length);
+const googleEnabled = isGoogleOAuthConfigured();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,

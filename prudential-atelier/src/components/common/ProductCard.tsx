@@ -147,7 +147,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
 
           <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-1">
             {showSaleBadge && (
-              <span className="bg-olive px-2 py-0.5 font-body text-[9px] font-medium uppercase tracking-wide text-white">
+              <span className="bg-choc px-2 py-0.5 font-body text-[9px] font-medium uppercase tracking-wide text-cream">
                 Sale
               </span>
             )}
@@ -174,7 +174,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
                 <button
                   type="button"
                   onClick={() => addToBag(product.variants[0])}
-                  className="h-10 w-full bg-olive font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white transition-opacity hover:opacity-90"
+                  className="h-10 w-full bg-choc font-body text-[11px] font-medium uppercase tracking-[0.12em] text-cream transition-opacity hover:opacity-90"
                 >
                   Add to bag
                 </button>
@@ -192,7 +192,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
                           onClick={() => setSizeId(v.id)}
                           className={cn(
                             "border px-2 py-1 font-body text-[10px] uppercase tracking-wide transition-colors",
-                            active ? "border-olive bg-olive text-white" : "border-mid-grey text-charcoal",
+                            active ? "border-choc bg-choc text-cream" : "border-mid-grey text-charcoal",
                             oos && "opacity-40 line-through",
                           )}
                         >
@@ -208,14 +208,14 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
                       const v = product.variants.find((x) => x.id === sizeId);
                       if (v) addToBag(v);
                     }}
-                    className="h-10 w-full bg-olive font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="h-10 w-full bg-choc font-body text-[11px] font-medium uppercase tracking-[0.12em] text-cream transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Add to bag
                   </button>
                   <button
                     type="button"
                     onClick={() => setQv(product.slug)}
-                    className="mt-2 w-full text-center font-body text-[10px] font-medium uppercase tracking-[0.14em] text-charcoal underline-offset-2 hover:text-olive hover:underline"
+                    className="mt-2 w-full text-center font-body text-[10px] font-medium uppercase tracking-[0.14em] text-charcoal underline-offset-2 hover:text-choc hover:underline"
                   >
                     Quick view →
                   </button>
@@ -244,7 +244,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
             {product.isOnSale && lowestSale != null ? (
               <p className="flex flex-wrap items-baseline gap-2">
                 <del className="font-body text-[12px] font-light text-text-light">{formatN(lowestOrig)}</del>
-                <span className="font-body text-[13px] font-medium text-olive">{formatN(lowestSale)}</span>
+                <span className="font-body text-[13px] font-medium text-choc">{formatN(lowestSale)}</span>
               </p>
             ) : (
               <p className="font-body text-[13px] text-text-mid">

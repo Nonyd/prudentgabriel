@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,6 +14,8 @@ import {
 } from "@/validations/auth";
 import { useAuthModalStore } from "@/store/authModalStore";
 import { Logo } from "@/components/ui/Logo";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { useGoogleAuthEnabled } from "@/hooks/useGoogleAuthEnabled";
 
 function GoogleIcon() {
   return (
@@ -45,6 +47,9 @@ function ModalShell({
   children: React.ReactNode;
   onClose: () => void;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(true, panelRef);
+
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
@@ -53,17 +58,19 @@ function ModalShell({
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
       }}
-      role="dialog"
-      aria-modal="true"
       onClick={onClose}
     >
       <div
+        ref={panelRef}
         className="relative max-h-[90vh] w-full max-w-[420px] overflow-y-auto"
         style={{
           background: "var(--bg-card)",
           borderRadius: "12px",
           padding: "48px 40px",
         }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-title"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -138,6 +145,7 @@ const inputStyle: React.CSSProperties = {
 function LoginForm() {
   const callbackUrl = useAuthModalStore((s) => s.callbackUrl);
   const setView = useAuthModalStore((s) => s.setView);
+  const googleEnabled = useGoogleAuthEnabled();
 
   const {
     register,
@@ -153,8 +161,6 @@ function LoginForm() {
       redirect: false,
     });
 
-    console.log("CLIENT LOGIN RESULT:", result);
-
     if (result?.ok) {
       setTimeout(() => {
         window.location.href = callbackUrl?.startsWith("/") ? callbackUrl : "/account";
@@ -168,6 +174,7 @@ function LoginForm() {
   return (
     <>
       <h2
+        id="auth-modal-title"
         className="mt-6 text-center"
         style={{
           fontFamily: "var(--font-display)",
@@ -235,8 +242,8 @@ function LoginForm() {
           disabled={isSubmitting}
           className="w-full uppercase transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{
-            background: "#6B1C2A",
-            color: "white",
+            background: "var(--choc)",
+            color: "var(--cream)",
             fontFamily: "var(--font-ui)",
             fontSize: "10px",
             fontWeight: 600,
@@ -249,25 +256,28 @@ function LoginForm() {
         </button>
       </form>
 
-      <OrDivider />
-
-      <button
-        type="button"
-        onClick={() => void signIn("google", { callbackUrl })}
-        className="flex w-full items-center justify-center gap-3 transition-opacity hover:opacity-90"
-        style={{
-          border: "0.5px solid var(--sand)",
-          background: "white",
-          fontFamily: "var(--font-ui)",
-          fontSize: "13px",
-          color: "var(--choc)",
-          borderRadius: "4px",
-          padding: "14px",
-        }}
-      >
-        <GoogleIcon />
-        Continue with Google
-      </button>
+      {googleEnabled ? (
+        <>
+          <OrDivider />
+          <button
+            type="button"
+            onClick={() => void signIn("google", { callbackUrl })}
+            className="flex w-full items-center justify-center gap-3 transition-opacity hover:opacity-90"
+            style={{
+              border: "0.5px solid var(--sand)",
+              background: "white",
+              fontFamily: "var(--font-ui)",
+              fontSize: "13px",
+              color: "var(--choc)",
+              borderRadius: "4px",
+              padding: "14px",
+            }}
+          >
+            <GoogleIcon />
+            Continue with Google
+          </button>
+        </>
+      ) : null}
 
       <p
         className="mt-8 text-center"
@@ -338,6 +348,7 @@ function RegisterForm() {
   return (
     <>
       <h2
+        id="auth-modal-title"
         className="mt-6 text-center"
         style={{
           fontFamily: "var(--font-display)",
@@ -418,7 +429,7 @@ function RegisterForm() {
           <span className="mb-2 block" style={labelStyle}>
             Phone
           </span>
-          <input type="tel" className={inputClass} style={inputStyle} {...register("phone")} />
+          <input type="tel" autoComplete="tel" inputMode="numeric" className={inputClass} style={inputStyle} {...register("phone")} />
           {errors.phone ? (
             <p className="mt-1 font-sans text-xs text-danger">{errors.phone.message}</p>
           ) : null}
@@ -472,8 +483,8 @@ function RegisterForm() {
           disabled={isSubmitting}
           className="w-full uppercase transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{
-            background: "#6B1C2A",
-            color: "white",
+            background: "var(--choc)",
+            color: "var(--cream)",
             fontFamily: "var(--font-ui)",
             fontSize: "10px",
             fontWeight: 600,

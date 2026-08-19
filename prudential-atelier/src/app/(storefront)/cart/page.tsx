@@ -38,7 +38,7 @@ export default function CartPage() {
               <li key={item.id} className="flex gap-4 border-b border-border pb-6">
                 <div className="relative h-24 w-20 shrink-0 overflow-hidden bg-ivory-dark">
                   {item.imageUrl ? (
-                    <Image src={item.imageUrl} alt="" fill className="object-cover" sizes="80px" />
+                    <Image src={item.imageUrl} alt={item.productName} fill className="object-cover" sizes="80px" />
                   ) : null}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -52,6 +52,7 @@ export default function CartPage() {
                       type="button"
                       disabled={item.quantity <= 1}
                       className="flex h-8 w-8 items-center justify-center border border-border text-sm disabled:opacity-40"
+                      aria-label={`Decrease quantity of ${item.productName}`}
                       onClick={() => updateQty(item.id, item.quantity - 1)}
                     >
                       −
@@ -60,6 +61,7 @@ export default function CartPage() {
                     <button
                       type="button"
                       className="flex h-8 w-8 items-center justify-center border border-border text-sm"
+                      aria-label={`Increase quantity of ${item.productName}`}
                       onClick={() => updateQty(item.id, item.quantity + 1)}
                     >
                       +
@@ -67,6 +69,7 @@ export default function CartPage() {
                     <button
                       type="button"
                       className="ml-4 font-body text-[11px] uppercase text-dark-grey underline"
+                      aria-label={`Remove ${item.productName} from bag`}
                       onClick={() => removeItem(item.id)}
                     >
                       Remove
@@ -89,7 +92,7 @@ export default function CartPage() {
             </Button>
             <Link
               href="/shop"
-              className="mt-4 block text-center font-body text-[11px] uppercase tracking-wider text-olive hover:underline"
+              className="mt-4 block text-center font-body text-[11px] uppercase tracking-wider text-choc hover:underline"
             >
               Continue shopping
             </Link>

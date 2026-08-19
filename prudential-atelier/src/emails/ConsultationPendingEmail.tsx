@@ -81,7 +81,7 @@ export default function ConsultationPendingEmail({
         <Button
           href={`${APP}/consultation/${encodeURIComponent(bookingNumber)}`}
           style={{
-            backgroundColor: "#6B1C2A",
+            backgroundColor: "#442913",
             color: "#C9A84C",
             padding: "12px 28px",
             textDecoration: "none",

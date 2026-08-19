@@ -71,7 +71,7 @@ export function SizeGuideModal({ children }: { children: React.ReactNode }) {
         >
           <div className="mb-4 flex items-center justify-between">
             <Dialog.Title className="font-display text-xl text-charcoal">Size Guide</Dialog.Title>
-            <Dialog.Close className="rounded-sm p-2 hover:bg-wine-muted" aria-label="Close">
+            <Dialog.Close className="rounded-sm p-2 hover:bg-cream" aria-label="Close">
               <X className="h-5 w-5" />
             </Dialog.Close>
           </div>
@@ -81,7 +81,7 @@ export function SizeGuideModal({ children }: { children: React.ReactNode }) {
                 <Tabs.Trigger
                   key={t}
                   value={t}
-                  className="border-b-2 border-transparent px-3 py-2 font-label text-[10px] uppercase data-[state=active]:border-wine data-[state=active]:text-wine"
+                  className="border-b-2 border-transparent px-3 py-2 font-label text-[10px] uppercase data-[state=active]:border-choc data-[state=active]:text-choc"
                 >
                   {t === "dresses" ? "Dresses" : t === "suits" ? "Suits" : "Kiddies"}
                 </Tabs.Trigger>
@@ -99,7 +99,7 @@ export function SizeGuideModal({ children }: { children: React.ReactNode }) {
           </Tabs.Root>
           <div className="mt-4 space-y-2 border-t border-border pt-4 text-xs text-charcoal-light">
             <p>For atelier commissions, we take exact measurements. All sizes in centimetres.</p>
-            <Link href="/atelier" className="font-label text-wine underline">
+            <Link href="/atelier" className="font-label text-choc underline">
               Begin a Commission
             </Link>
           </div>

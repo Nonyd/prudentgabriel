@@ -25,7 +25,7 @@ export default function WelcomeCredentialsEmail({
   return (
     <EmailLayout previewText={`Your Prudential Atelier account is ready, ${firstName}`}>
       <Heading className="font-serif text-2xl text-[#442913]">Welcome, {firstName}.</Heading>
-      <Text className="text-[#37392d]">
+      <Text className="text-[#2a1a0e]">
         Your account has been created so you can follow your {sourceLabel} with us.
       </Text>
 
@@ -44,18 +44,18 @@ export default function WelcomeCredentialsEmail({
 
       <Section className="my-6">
         <Text className="text-xs uppercase tracking-wider text-[#8B7355]">Track your order (no login needed)</Text>
-        <Text className="text-sm text-[#37392d]">Follow your commission at any time:</Text>
-        <Button href={trackUrl} className="mt-3 rounded bg-[#6B3A2A] px-6 py-3 text-sm text-[#F7F2EC]">
+        <Text className="text-sm text-[#2a1a0e]">Follow your commission at any time:</Text>
+        <Button href={trackUrl} className="mt-3 rounded bg-[#442913] px-6 py-3 text-sm text-[#F7F2EC]">
           Track my order
         </Button>
       </Section>
 
-      <Text className="text-sm text-[#37392d]">Once you&apos;re logged in, you can:</Text>
-      <Text className="text-sm text-[#37392d]">✓ See your measurements saved forever</Text>
-      <Text className="text-sm text-[#37392d]">✓ View your moodboard and design references</Text>
-      <Text className="text-sm text-[#37392d]">✓ Earn loyalty points on every order</Text>
-      <Text className="text-sm text-[#37392d]">✓ Refer friends and earn ₦5,000 credit</Text>
-      <Text className="text-sm text-[#37392d]">✓ Book your next consultation in seconds</Text>
+      <Text className="text-sm text-[#2a1a0e]">Once you&apos;re logged in, you can:</Text>
+      <Text className="text-sm text-[#2a1a0e]">✓ See your measurements saved forever</Text>
+      <Text className="text-sm text-[#2a1a0e]">✓ View your moodboard and design references</Text>
+      <Text className="text-sm text-[#2a1a0e]">✓ Earn loyalty points on every order</Text>
+      <Text className="text-sm text-[#2a1a0e]">✓ Refer friends and earn ₦5,000 credit</Text>
+      <Text className="text-sm text-[#2a1a0e]">✓ Book your next consultation in seconds</Text>
     </EmailLayout>
   );
 }

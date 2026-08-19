@@ -43,7 +43,7 @@ export function PaymentPendingClient() {
         <p className="mt-6 text-center">
           <Link
             href={`/account/orders/bespoke/${orderId}/pay`}
-            className="font-body text-sm text-[var(--wine)] underline"
+            className="font-body text-sm text-[var(--choc)] underline"
           >
             Return to payment page to upload receipt
           </Link>
@@ -52,11 +52,11 @@ export function PaymentPendingClient() {
 
       <div className="mt-8 text-center">
         {type === "consultation" ? (
-          <Link href="/account/consultations" className="font-body text-sm text-[var(--wine)] underline">
+          <Link href="/account/consultations" className="font-body text-sm text-[var(--choc)] underline">
             View my consultations
           </Link>
         ) : (
-          <Link href="/account/orders" className="font-body text-sm text-[var(--wine)] underline">
+          <Link href="/account/orders" className="font-body text-sm text-[var(--choc)] underline">
             View my orders
           </Link>
         )}

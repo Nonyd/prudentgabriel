@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { convertFromNGN, formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import type { ProductListItem } from "@/types/product";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 const RECENT_KEY = "pa-recent-searches";
 
@@ -44,6 +45,8 @@ export function SearchModal() {
   const [recent, setRecent] = useState<string[]>([]);
   const currency = useCurrencyStore((s) => s.currency);
   const rates = useCurrencyStore((s) => s.rates);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(isOpen, panelRef);
 
   const fmt = useCallback(
     (ngn: number) => formatPrice(convertFromNGN(ngn, currency, rates), currency),
@@ -114,6 +117,10 @@ export function SearchModal() {
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Search"
           className="fixed inset-0 z-[60] bg-[var(--white)]/98 backdrop-blur-md"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -133,7 +140,7 @@ export function SearchModal() {
             <button
               type="button"
               onClick={closeSearch}
-              className="absolute right-4 top-6 text-charcoal hover:text-olive"
+              className="absolute right-4 top-6 text-charcoal hover:text-choc"
               aria-label="Close search"
             >
               <X className="h-6 w-6" />
@@ -143,7 +150,7 @@ export function SearchModal() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search for a piece..."
-              className="h-14 w-full border-0 border-b border-mid-grey bg-transparent font-display text-2xl italic text-charcoal placeholder:text-dark-grey focus:border-olive focus:outline-none focus:ring-0 md:text-[32px]"
+              className="h-14 w-full border-0 border-b border-mid-grey bg-transparent font-display text-2xl italic text-charcoal placeholder:text-dark-grey focus:border-choc focus:outline-none focus:ring-0 md:text-[32px]"
             />
 
             {showRecent && (
@@ -154,7 +161,7 @@ export function SearchModal() {
                   </span>
                   <button
                     type="button"
-                    className="font-body text-[10px] font-medium uppercase tracking-wider text-olive hover:underline"
+                    className="font-body text-[10px] font-medium uppercase tracking-wider text-choc hover:underline"
                     onClick={() => {
                       localStorage.removeItem(RECENT_KEY);
                       setRecent([]);
@@ -169,7 +176,7 @@ export function SearchModal() {
                       key={r}
                       type="button"
                       onClick={() => setQ(r)}
-                      className="border border-mid-grey px-3 py-1.5 font-body text-sm text-charcoal hover:border-olive"
+                      className="border border-mid-grey px-3 py-1.5 font-body text-sm text-charcoal hover:border-choc"
                     >
                       {r}
                     </button>
@@ -250,7 +257,7 @@ export function SearchModal() {
                             <p className="font-body text-sm text-charcoal line-clamp-1">{p.name}</p>
                             <BadgeGold>{String(p.category).replace(/_/g, " ")}</BadgeGold>
                           </div>
-                          <span className="shrink-0 text-sm text-olive">{fmt(lowest(p))}</span>
+                          <span className="shrink-0 text-sm text-choc">{fmt(lowest(p))}</span>
                         </button>
                       </li>
                     ))}
@@ -267,7 +274,7 @@ export function SearchModal() {
 
 function BadgeGold({ children }: { children: React.ReactNode }) {
   return (
-    <span className="mt-1 inline-block font-body text-[9px] font-medium uppercase tracking-wider text-olive">
+    <span className="mt-1 inline-block font-body text-[9px] font-medium uppercase tracking-wider text-choc">
       {children}
     </span>
   );

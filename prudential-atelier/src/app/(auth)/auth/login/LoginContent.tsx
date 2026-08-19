@@ -9,10 +9,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/validations/auth";
 import { Button } from "@/components/ui/Button";
+import { useGoogleAuthEnabled } from "@/hooks/useGoogleAuthEnabled";
 
 export function LoginContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/account";
+  const googleEnabled = useGoogleAuthEnabled();
 
   const {
     register,
@@ -113,14 +115,16 @@ export function LoginContent() {
             </Button>
           </form>
 
-          <Button
-            type="button"
-            variant="ghost-light"
-            className="mt-4 w-full"
-            onClick={() => void signIn("google", { callbackUrl })}
-          >
-            Continue with Google
-          </Button>
+          {googleEnabled ? (
+            <Button
+              type="button"
+              variant="ghost-light"
+              className="mt-4 w-full"
+              onClick={() => void signIn("google", { callbackUrl })}
+            >
+              Continue with Google
+            </Button>
+          ) : null}
         </div>
       </div>
     </div>

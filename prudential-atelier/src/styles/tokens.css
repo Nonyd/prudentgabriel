@@ -4,6 +4,7 @@
   --bg-surface: #f0e8dd;
   --bg-card: #ffffff;
   --choc: #442913;
+  --chocolate: var(--choc);
   --nut: #5c3422;
   --lightbr: #98755b;
   --cream: #e2d1c2;
@@ -25,10 +26,13 @@
   --border: 0.5px solid var(--border-color);
   --border-dark: 0.5px solid rgba(152, 117, 91, 0.3);
 
-  --success: #2d7d4f;
-  --warning: #b87333;
-  --danger: #8b2020;
-  --info: #1a5c8b;
+  /* Semantic status — warm umber/forest/copper/slate, not Tailwind red/green/blue */
+  --error: #7a2418;
+  --success: #2f5e3d;
+  --warning: #8a5220;
+  --danger: var(--error);
+  --info: #3d4a52;
+  --ivory-dark: #ebe3d8;
 
   /* Storefront / admin compatibility (Tailwind: olive, charcoal, canvas, etc.) */
   --olive: #37392d;
@@ -70,6 +74,7 @@
   --bg-surface: #221408;
   --bg-card: #2a1a0e;
   --choc: #e2d1c2;
+  --chocolate: var(--choc);
   --nut: #d4bbac;
   --lightbr: #c9a88a;
   --cream: #f7f2ec;
@@ -88,6 +93,13 @@
   --bg: var(--bg-surface);
   --text-dark: var(--text-primary);
   --border: 0.5px solid var(--border-color);
+
+  --error: #e8b4a8;
+  --success: #8fbf9a;
+  --warning: #e0b060;
+  --danger: var(--error);
+  --info: #c4b5a5;
+  --ivory-dark: #221408;
 
   --olive: #5a5d4a;
   --olive-hover: #6b6e58;

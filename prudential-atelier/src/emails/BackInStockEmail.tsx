@@ -21,12 +21,12 @@ export default function BackInStockEmail({ productName, size, productSlug, price
       <Text style={{ fontSize: 15, color: "#444" }}>
         {productName} · Size: {size} · ₦{Math.round(priceNGN).toLocaleString("en-NG")}
       </Text>
-      <Text style={{ fontSize: 14, color: "#6B1C2A" }}>Limited stock — act fast.</Text>
+      <Text style={{ fontSize: 14, color: "#442913" }}>Limited stock — act fast.</Text>
       <div style={{ marginTop: 28, textAlign: "center" as const }}>
         <Button
           href={`${APP}/shop/${productSlug}`}
           style={{
-            backgroundColor: "#6B1C2A",
+            backgroundColor: "#442913",
             color: "#C9A84C",
             padding: "12px 32px",
             textDecoration: "none",

@@ -307,7 +307,7 @@ export async function sendBespokeBalancePaymentLinkEmail(params: {
       <strong>₦${params.amountNGN.toLocaleString("en-NG")}</strong>.
     </p>
     <p style="margin:24px 0;">
-      <a href="${href}" style="display:inline-block;background:#37392d;color:#fff;padding:14px 28px;text-decoration:none;font-size:14px;">
+      <a href="${href}" style="display:inline-block;background:#442913;color:#F7F2EC;padding:14px 28px;text-decoration:none;font-size:14px;">
         Pay now
       </a>
     </p>
@@ -574,6 +574,46 @@ function wrapHtml(title: string, inner: string): string {
 </body></html>`;
 }
 
+export async function sendAbandonedCartEmail(params: {
+  to: string;
+  firstName: string;
+  lines: { name: string; quantity: number }[];
+  checkoutUrl: string;
+  idempotencyKey: string;
+  userId: string;
+}): Promise<{ created: boolean }> {
+  await primeEmailBranding();
+  const href = params.checkoutUrl.replace(/"/g, "%22");
+  const list = params.lines
+    .map(
+      (l) =>
+        `<li style="margin:0 0 6px;font-size:15px;line-height:1.5;">${escapeHtml(l.name)} × ${l.quantity}</li>`,
+    )
+    .join("");
+  const inner = `
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Dear ${escapeHtml(params.firstName)},</p>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">
+      You left a few pieces in your bag. They are still waiting for you.
+    </p>
+    <ul style="margin:0 0 16px;padding-left:18px;">${list}</ul>
+    <p style="margin:24px 0;">
+      <a href="${href}" style="display:inline-block;background:#442913;color:#F7F2EC;padding:14px 28px;text-decoration:none;font-size:14px;">
+        Return to checkout
+      </a>
+    </p>
+  `;
+  const queued = await queueEmail({
+    to: params.to,
+    subject: "Your bag is waiting | Prudential Atelier",
+    html: wrapHtml("Prudential Atelier", inner),
+    template: "abandoned-cart",
+    idempotencyKey: params.idempotencyKey,
+    relatedType: "User",
+    relatedId: params.userId,
+  });
+  return { created: queued.created };
+}
+
 export async function sendStageApprovalRequestEmail(params: {
   to: string;
   clientName: string;
@@ -604,7 +644,7 @@ export async function sendStageApprovalRequestEmail(params: {
     ${notes}
     ${images ? `<div style="margin:16px 0;">${images}</div>` : ""}
     <p style="margin:24px 0;">
-      <a href="${href}" style="display:inline-block;background:#37392d;color:#fff;padding:14px 28px;text-decoration:none;font-size:14px;">
+      <a href="${href}" style="display:inline-block;background:#442913;color:#F7F2EC;padding:14px 28px;text-decoration:none;font-size:14px;">
         Review &amp; approve
       </a>
     </p>
@@ -637,7 +677,7 @@ export async function sendStageApprovalReminderEmail(params: {
       is still waiting for your approval.
     </p>
     <p style="margin:24px 0;">
-      <a href="${href}" style="display:inline-block;background:#37392d;color:#fff;padding:14px 28px;text-decoration:none;font-size:14px;">
+      <a href="${href}" style="display:inline-block;background:#442913;color:#F7F2EC;padding:14px 28px;text-decoration:none;font-size:14px;">
         Review now
       </a>
     </p>
@@ -671,7 +711,7 @@ export async function sendStageChangesRequestedEmail(params: {
     </p>
     <p style="margin:16px 0;font-size:15px;line-height:1.5;white-space:pre-wrap;">${escapeHtml(params.comment)}</p>
     <p style="margin:24px 0;">
-      <a href="${href}" style="display:inline-block;background:#37392d;color:#fff;padding:14px 28px;text-decoration:none;font-size:14px;">
+      <a href="${href}" style="display:inline-block;background:#442913;color:#F7F2EC;padding:14px 28px;text-decoration:none;font-size:14px;">
         Open order
       </a>
     </p>

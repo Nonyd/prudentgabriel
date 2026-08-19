@@ -15,7 +15,7 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     name: "abandoned-cart",
     schedule: "0 0 * * *",
     description: "Abandoned cart recovery emails",
-    migrated: false,
+    migrated: true,
   },
   {
     name: "expired-coupons",

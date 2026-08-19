@@ -38,7 +38,7 @@ const InputInner = forwardRef<HTMLInputElement, InputProps>(
             className={cn(
               "pointer-events-none absolute left-0 origin-left font-body text-sm transition-all duration-200 ease-out",
               icon ? "left-7" : "left-0",
-              floated ? "top-0 -translate-y-5 scale-75 text-wine" : "top-3.5 translate-y-0 scale-100 text-charcoal-light",
+              floated ? "top-0 -translate-y-5 scale-75 text-choc" : "top-3.5 translate-y-0 scale-100 text-charcoal-light",
             )}
           >
             {label}
@@ -66,7 +66,7 @@ const InputInner = forwardRef<HTMLInputElement, InputProps>(
             }}
             className={cn(
               "w-full border-0 border-b border-border bg-transparent pb-1 pt-5 font-body text-base text-charcoal outline-none transition-[border-color] duration-200",
-              "focus:border-b-2 focus:border-wine",
+              "focus:border-b-2 focus:border-choc",
               error && "border-b-2 border-[var(--error)] focus:border-[var(--error)]",
               icon ? "pl-7 pr-0" : "px-0",
               (isPassword || suffix) && "pr-10",
@@ -78,7 +78,7 @@ const InputInner = forwardRef<HTMLInputElement, InputProps>(
             <button
               type="button"
               tabIndex={-1}
-              className="absolute right-0 top-3 text-charcoal-light hover:text-wine"
+              className="absolute right-0 top-3 text-charcoal-light hover:text-choc"
               onClick={() => setShowPw((s) => !s)}
               aria-label={showPw ? "Hide password" : "Show password"}
             >

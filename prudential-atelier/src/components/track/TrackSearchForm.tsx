@@ -42,7 +42,7 @@ export function TrackSearchForm({
           />
           <button
             type="submit"
-            className="shrink-0 bg-wine px-8 py-3.5 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90"
+            className="shrink-0 bg-choc px-8 py-3.5 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90"
           >
             Track
           </button>

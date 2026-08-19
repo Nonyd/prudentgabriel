@@ -28,7 +28,7 @@ function Inner({ returnUrl }: { returnUrl: string }) {
       <button
         type="submit"
         disabled={busy}
-        className="w-full rounded-sm bg-wine py-3 text-sm font-medium text-ivory hover:bg-wine-hover disabled:opacity-50"
+        className="w-full rounded-sm bg-choc py-3 text-sm font-medium text-cream hover:bg-nut disabled:opacity-50"
       >
         {busy ? "Processing…" : "Pay with card"}
       </button>

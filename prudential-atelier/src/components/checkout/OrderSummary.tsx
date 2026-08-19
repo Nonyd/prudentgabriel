@@ -50,14 +50,14 @@ export function OrderSummary({
 
   return (
     <div className="rounded-sm border border-border bg-cream p-5">
-      <h3 className="font-display text-lg text-wine">Order summary</h3>
+      <h3 className="font-display text-lg text-choc">Order summary</h3>
       <ul className="mt-4 max-h-64 space-y-3 overflow-y-auto">
         {step > 1 ? (
           <li className="text-sm text-charcoal-mid">{items.length} items</li>
         ) : (
           items.map((i) => (
             <li key={i.id} className="flex gap-3 text-sm">
-              <Image src={i.imageUrl} alt="" width={48} height={60} className="rounded-sm object-cover" />
+              <Image src={i.imageUrl} alt={i.productName} width={48} height={60} className="rounded-sm object-cover" />
               <div className="flex-1">
                 <p className="font-medium text-charcoal">{i.productName}</p>
                 <p className="text-charcoal-mid">
@@ -90,7 +90,7 @@ export function OrderSummary({
             <span>−{fmt(pts)}</span>
           </div>
         )}
-        <div className="flex justify-between border-t border-border pt-2 font-display text-lg text-wine">
+        <div className="flex justify-between border-t border-border pt-2 font-display text-lg text-choc">
           <span>Total</span>
           <span>{fmt(total)}</span>
         </div>

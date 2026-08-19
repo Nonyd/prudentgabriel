@@ -38,7 +38,7 @@ export default function ConsultationCancelledEmail({
         <Button
           href={`${APP}/consultation`}
           style={{
-            backgroundColor: "#6B1C2A",
+            backgroundColor: "#442913",
             color: "#C9A84C",
             padding: "12px 28px",
             textDecoration: "none",

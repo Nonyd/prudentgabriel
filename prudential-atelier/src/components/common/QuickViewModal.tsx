@@ -136,7 +136,7 @@ export function QuickViewModal({ productSlug, onClose }: QuickViewModalProps) {
                 <button
                   type="button"
                   onClick={onClose}
-                  className="absolute right-3 top-3 z-10 rounded-sm p-2 text-charcoal hover:bg-wine-muted"
+                  className="absolute right-3 top-3 z-10 rounded-sm p-2 text-charcoal hover:bg-cream"
                   aria-label="Close"
                 >
                   <X className="h-5 w-5" />
@@ -173,7 +173,7 @@ export function QuickViewModal({ productSlug, onClose }: QuickViewModalProps) {
                         {onSale ? (
                           <p>
                             <del className="text-charcoal-light">{fmt(orig)}</del>{" "}
-                            <span className="font-semibold text-wine">{fmt(effective ?? 0)}</span>
+                            <span className="font-semibold text-choc">{fmt(effective ?? 0)}</span>
                           </p>
                         ) : (
                           <p className="font-semibold text-charcoal">{fmt(effective ?? 0)}</p>
@@ -193,7 +193,7 @@ export function QuickViewModal({ productSlug, onClose }: QuickViewModalProps) {
                                 onClick={() => setColorId(c.id)}
                                 className={cn(
                                   "h-8 w-8 rounded-full ring-2 ring-offset-2 ring-offset-cream transition-shadow",
-                                  colorId === c.id ? "ring-wine" : "ring-transparent hover:ring-border",
+                                  colorId === c.id ? "ring-choc" : "ring-transparent hover:ring-border",
                                 )}
                                 style={{ backgroundColor: c.hex }}
                                 title={c.name}
@@ -215,8 +215,8 @@ export function QuickViewModal({ productSlug, onClose }: QuickViewModalProps) {
                                 "rounded-sm border px-3 py-2 font-label text-[11px] uppercase tracking-wide",
                                 v.stock === 0 && "cursor-not-allowed opacity-50 line-through",
                                 variantId === v.id
-                                  ? "border-wine bg-wine text-ivory"
-                                  : "border-border bg-cream text-charcoal hover:border-wine",
+                                  ? "border-choc bg-choc text-cream"
+                                  : "border-border bg-cream text-charcoal hover:border-choc",
                               )}
                             >
                               {v.size}
@@ -227,7 +227,7 @@ export function QuickViewModal({ productSlug, onClose }: QuickViewModalProps) {
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
-                          className="flex h-9 w-9 items-center justify-center rounded-sm border border-border hover:border-wine"
+                          className="flex h-9 w-9 items-center justify-center rounded-sm border border-border hover:border-choc"
                           onClick={() => setQty((q) => Math.max(1, q - 1))}
                         >
                           −
@@ -235,7 +235,7 @@ export function QuickViewModal({ productSlug, onClose }: QuickViewModalProps) {
                         <span className="w-8 text-center font-medium">{qty}</span>
                         <button
                           type="button"
-                          className="flex h-9 w-9 items-center justify-center rounded-sm border border-border hover:border-wine"
+                          className="flex h-9 w-9 items-center justify-center rounded-sm border border-border hover:border-choc"
                           onClick={() =>
                             setQty((q) => (variant ? Math.min(variant.stock, q + 1) : q + 1))
                           }
@@ -249,7 +249,7 @@ export function QuickViewModal({ productSlug, onClose }: QuickViewModalProps) {
                       <Link
                         href={`/shop/${p.slug}`}
                         onClick={onClose}
-                        className="text-center font-label text-xs uppercase tracking-wider text-wine underline-offset-4 hover:underline"
+                        className="text-center font-label text-xs uppercase tracking-wider text-choc underline-offset-4 hover:underline"
                       >
                         View Full Details →
                       </Link>

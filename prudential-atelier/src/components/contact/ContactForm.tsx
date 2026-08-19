@@ -128,7 +128,7 @@ export function ContactForm({ autoReplyHint }: { autoReplyHint?: string }) {
             id="contact-name"
             name="name"
             required
-            className="mt-2 w-full bg-transparent py-2 outline-none"
+            className="mt-2 w-full bg-transparent py-2"
             style={inputStyle}
           />
           {errors.name ? (
@@ -147,7 +147,7 @@ export function ContactForm({ autoReplyHint }: { autoReplyHint?: string }) {
             name="email"
             type="email"
             required
-            className="mt-2 w-full bg-transparent py-2 outline-none"
+            className="mt-2 w-full bg-transparent py-2"
             style={inputStyle}
           />
           {errors.email ? (
@@ -165,7 +165,7 @@ export function ContactForm({ autoReplyHint }: { autoReplyHint?: string }) {
             id="contact-phone"
             name="phone"
             type="tel"
-            className="mt-2 w-full bg-transparent py-2 outline-none"
+            className="mt-2 w-full bg-transparent py-2"
             style={inputStyle}
           />
         </div>
@@ -179,7 +179,7 @@ export function ContactForm({ autoReplyHint }: { autoReplyHint?: string }) {
             name="subject"
             required
             defaultValue=""
-            className="mt-2 w-full bg-transparent py-2 outline-none"
+            className="mt-2 w-full bg-transparent py-2"
             style={inputStyle}
           >
             <option value="" disabled>
@@ -209,7 +209,7 @@ export function ContactForm({ autoReplyHint }: { autoReplyHint?: string }) {
             minLength={20}
             rows={5}
             placeholder="Tell us how we can help (min. 20 characters)"
-            className="mt-2 w-full resize-y rounded-[3px] border border-sand bg-input-bg p-3 outline-none focus:border-choc"
+            className="mt-2 w-full resize-y rounded-[3px] border border-sand bg-input-bg p-3 focus:border-choc"
             style={{
               fontFamily: "var(--font-body)",
               fontSize: "14px",

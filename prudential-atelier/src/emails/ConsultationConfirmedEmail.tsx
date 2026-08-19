@@ -57,7 +57,7 @@ export default function ConsultationConfirmedEmail({
         style={{
           marginTop: 20,
           padding: 20,
-          border: "2px solid #6B1C2A",
+          border: "2px solid #442913",
           backgroundColor: "rgba(201,168,76,0.08)",
         }}
       >
@@ -77,7 +77,7 @@ export default function ConsultationConfirmedEmail({
               <Button
                 href={meetingLink}
                 style={{
-                  backgroundColor: "#6B1C2A",
+                  backgroundColor: "#442913",
                   color: "#C9A84C",
                   padding: "12px 28px",
                   textDecoration: "none",
@@ -118,7 +118,7 @@ export default function ConsultationConfirmedEmail({
         <Button
           href={`${APP}/consultation/${encodeURIComponent(bookingNumber)}`}
           style={{
-            backgroundColor: "#6B1C2A",
+            backgroundColor: "#442913",
             color: "#C9A84C",
             padding: "12px 28px",
             textDecoration: "none",

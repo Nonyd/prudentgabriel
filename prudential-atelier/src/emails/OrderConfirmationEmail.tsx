@@ -76,7 +76,7 @@ export default function OrderConfirmationEmail({
             <Text style={{ margin: "4px 0", fontSize: 14, color: "#166534" }}>Discount</Text>
           ) : null}
           {pointsDiscNGN > 0 ? (
-            <Text style={{ margin: "4px 0", fontSize: 14, color: "#6B1C2A" }}>Points discount</Text>
+            <Text style={{ margin: "4px 0", fontSize: 14, color: "#442913" }}>Points discount</Text>
           ) : null}
           <Text style={{ margin: "12px 0 4px", fontSize: 16, fontWeight: 600 }}>Total</Text>
         </Column>
@@ -91,11 +91,11 @@ export default function OrderConfirmationEmail({
             </Text>
           ) : null}
           {pointsDiscNGN > 0 ? (
-            <Text style={{ margin: "4px 0", fontSize: 14, color: "#6B1C2A" }}>
+            <Text style={{ margin: "4px 0", fontSize: 14, color: "#442913" }}>
               −₦{Math.round(pointsDiscNGN).toLocaleString("en-NG")}
             </Text>
           ) : null}
-          <Text style={{ margin: "12px 0 4px", fontSize: 16, fontWeight: 600, color: "#6B1C2A" }}>
+          <Text style={{ margin: "12px 0 4px", fontSize: 16, fontWeight: 600, color: "#442913" }}>
             ₦{Math.round(totalNGN).toLocaleString("en-NG")}
           </Text>
         </Column>
@@ -119,7 +119,7 @@ export default function OrderConfirmationEmail({
         <Button
           href={`${APP}/account/orders`}
           style={{
-            backgroundColor: "#6B1C2A",
+            backgroundColor: "#442913",
             color: "#C9A84C",
             padding: "12px 32px",
             textDecoration: "none",

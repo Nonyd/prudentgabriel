@@ -100,26 +100,71 @@ export async function getBankTransferDetails(): Promise<{
   };
 }
 
+const DUMMY_BANK_ACCOUNT = "0123456789";
+
+function isUsableCredential(value: string | null | undefined): boolean {
+  const v = value?.trim() ?? "";
+  if (!v) return false;
+  const lower = v.toLowerCase();
+  if (lower.includes("your_key") || lower.includes("changeme") || lower.includes("placeholder")) return false;
+  if (lower.endsWith("_here") || lower === "test") return false;
+  return true;
+}
+
 export async function getSupportedGateways(currency: PaymentCurrency): Promise<PaymentGatewayType[]> {
-  const [paystack, flutterwave, stripe, monnify] = await Promise.all([
+  const [
+    paystackOn,
+    flutterwaveOn,
+    stripeOn,
+    monnifyOn,
+    paystackSecret,
+    paystackPk,
+    flutterwaveSecret,
+    flutterwavePk,
+    stripeSecret,
+    stripePk,
+    monnifyKey,
+    monnifySecret,
+    monnifyContract,
+    bank,
+  ] = await Promise.all([
     isEnabled("paystack_enabled"),
     isEnabled("flutterwave_enabled"),
     isEnabled("stripe_enabled"),
     isEnabled("monnify_enabled"),
+    getPaystackSecret(),
+    getPaystackPublicKey(),
+    getFlutterwaveSecret(),
+    getFlutterwavePublicKey(),
+    getStripeSecret(),
+    getStripePublicKey(),
+    getMonnifyApiKey(),
+    getMonnifySecret(),
+    getMonnifyContractCode(),
+    getBankTransferDetails(),
   ]);
+
+  const paystackReady = paystackOn && isUsableCredential(paystackSecret) && isUsableCredential(paystackPk);
+  const flutterwaveReady =
+    flutterwaveOn && isUsableCredential(flutterwaveSecret) && isUsableCredential(flutterwavePk);
+  const stripeReady = stripeOn && isUsableCredential(stripeSecret) && isUsableCredential(stripePk);
+  const monnifyReady =
+    monnifyOn &&
+    isUsableCredential(monnifyKey) &&
+    isUsableCredential(monnifySecret) &&
+    isUsableCredential(monnifyContract);
+  const bankReady =
+    Boolean(bank.accountNumber?.trim()) && bank.accountNumber.trim() !== DUMMY_BANK_ACCOUNT;
 
   const out: PaymentGatewayType[] = [];
   if (currency === "NGN") {
-    if (paystack) out.push("PAYSTACK");
-    if (flutterwave) out.push("FLUTTERWAVE");
-    if (monnify) out.push("MONNIFY");
-    out.push("BANK_TRANSFER");
-  } else if (currency === "USD") {
-    if (flutterwave) out.push("FLUTTERWAVE");
-    if (stripe) out.push("STRIPE");
-  } else if (currency === "GBP") {
-    if (flutterwave) out.push("FLUTTERWAVE");
-    if (stripe) out.push("STRIPE");
+    if (paystackReady) out.push("PAYSTACK");
+    if (flutterwaveReady) out.push("FLUTTERWAVE");
+    if (monnifyReady) out.push("MONNIFY");
+    if (bankReady) out.push("BANK_TRANSFER");
+  } else if (currency === "USD" || currency === "GBP") {
+    if (flutterwaveReady) out.push("FLUTTERWAVE");
+    if (stripeReady) out.push("STRIPE");
   }
   return out;
 }
@@ -143,13 +188,18 @@ export async function getPublicPaymentConfig(): Promise<{
     getStripePublicKey(),
   ]);
 
+  const bankPublic =
+    bank.accountNumber.trim() === DUMMY_BANK_ACCOUNT
+      ? { bankName: "", accountNumber: "", accountName: "" }
+      : bank;
+
   return {
-    bank,
+    bank: bankPublic,
     gateways: { NGN: ngn, USD: usd, GBP: gbp },
     publicKeys: {
-      paystack: paystackPk ?? "",
-      flutterwave: flutterwavePk ?? "",
-      stripe: stripePk ?? "",
+      paystack: isUsableCredential(paystackPk) ? paystackPk! : "",
+      flutterwave: isUsableCredential(flutterwavePk) ? flutterwavePk! : "",
+      stripe: isUsableCredential(stripePk) ? stripePk! : "",
     },
   };
 }

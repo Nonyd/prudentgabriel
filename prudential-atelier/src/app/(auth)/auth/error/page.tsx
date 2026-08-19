@@ -18,7 +18,7 @@ export default function AuthErrorPage({
       </p>
       <Link
         href="/auth/login"
-        className="mt-8 font-label text-[11px] uppercase tracking-[0.15em] text-wine underline-offset-4 hover:underline"
+        className="mt-8 font-label text-[11px] uppercase tracking-[0.15em] text-choc underline-offset-4 hover:underline"
       >
         Return to sign in
       </Link>

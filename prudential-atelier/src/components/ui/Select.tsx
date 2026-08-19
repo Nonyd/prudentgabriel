@@ -24,7 +24,7 @@ export function SelectField({ label, value, onValueChange, options, placeholder,
       <span
         className={cn(
           "pointer-events-none absolute left-0 top-0 z-[1] origin-left font-body text-xs transition-all duration-200",
-          value ? "text-wine" : "text-charcoal-light",
+          value ? "text-choc" : "text-charcoal-light",
         )}
       >
         {label}
@@ -35,7 +35,7 @@ export function SelectField({ label, value, onValueChange, options, placeholder,
           aria-describedby={error ? errorId : undefined}
           className={cn(
             "mt-5 flex h-11 w-full items-center justify-between border-0 border-b border-border bg-transparent pb-1 pl-0 pr-6 pt-0 font-body text-sm text-charcoal outline-none",
-            "focus:border-b-2 focus:border-wine data-[state=open]:border-b-2 data-[state=open]:border-wine",
+            "focus:border-b-2 focus:border-choc data-[state=open]:border-b-2 data-[state=open]:border-choc",
             error && "border-b-2 border-[var(--error)]",
             disabled && "cursor-not-allowed opacity-50",
           )}
@@ -60,7 +60,7 @@ export function SelectField({ label, value, onValueChange, options, placeholder,
                   className={cn(
                     "relative flex cursor-pointer select-none items-center py-2.5 pl-8 pr-4 font-body text-sm text-charcoal outline-none",
                     "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40",
-                    "data-[highlighted]:bg-wine/10 data-[highlighted]:text-wine",
+                    "data-[highlighted]:bg-choc/10 data-[highlighted]:text-choc",
                   )}
                 >
                   <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">

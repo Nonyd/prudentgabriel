@@ -69,7 +69,7 @@ function ShopProductCard({ product, priority }: { product: ProductListItem; prio
           priority={priority}
         />
         {showBestSeller ? (
-          <span className="absolute left-3 top-3 rounded-sm bg-wine px-2 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-cream">
+          <span className="absolute left-3 top-3 rounded-sm bg-choc px-2 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-cream">
             Best seller
           </span>
         ) : null}

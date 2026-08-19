@@ -56,7 +56,7 @@ function Inner() {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 bg-ivory px-4">
         <p className="text-charcoal">We could not find this booking.</p>
-        <Link href="/consultation" className="text-wine underline">
+        <Link href="/consultation" className="text-choc underline">
           Back to consultation
         </Link>
       </div>
@@ -72,17 +72,17 @@ function Inner() {
         <p className="font-label text-gold">#{booking.bookingNumber}</p>
         {confirmed ? (
           <>
-            <h1 className="mt-2 font-display text-3xl text-wine">Consultation confirmed</h1>
+            <h1 className="mt-2 font-display text-3xl text-choc">Consultation confirmed</h1>
             <p className="mt-2 text-sm text-charcoal-mid">Your session is booked.</p>
           </>
         ) : pending ? (
           <>
-            <h1 className="mt-2 font-display text-3xl text-wine">Request submitted</h1>
+            <h1 className="mt-2 font-display text-3xl text-choc">Request submitted</h1>
             <p className="mt-2 text-sm text-charcoal-mid">We will confirm your slot within 24–48 hours.</p>
           </>
         ) : (
           <>
-            <h1 className="mt-2 font-display text-3xl text-wine">Thank you</h1>
+            <h1 className="mt-2 font-display text-3xl text-choc">Thank you</h1>
             <p className="mt-2 text-sm text-charcoal-mid">Status: {booking.status}</p>
           </>
         )}
@@ -124,7 +124,7 @@ function Inner() {
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link
             href="/account/consultations"
-            className="rounded-sm bg-wine px-6 py-3 text-center text-sm font-medium text-ivory"
+            className="rounded-sm bg-choc px-6 py-3 text-center text-sm font-medium text-cream"
           >
             View my bookings
           </Link>
@@ -135,7 +135,7 @@ function Inner() {
 
         {!session && (
           <p className="mt-8 text-sm text-charcoal-mid">
-            <Link href="/register" className="text-wine underline">
+            <Link href="/register" className="text-choc underline">
               Create an account
             </Link>{" "}
             to track your consultations.

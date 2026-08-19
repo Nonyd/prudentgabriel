@@ -23,7 +23,7 @@ export default function InvoiceEmail(props: InvoiceEmailProps) {
       <Head />
       <Preview>{`Invoice ${props.invoiceNumber} — ${props.total}`}</Preview>
       <Body style={{ backgroundColor: "#FAF6EF", fontFamily: "Georgia, serif", color: "#2d2d2d" }}>
-        <Section style={{ backgroundColor: "#37392d", padding: "20px 24px", textAlign: "center" as const }}>
+        <Section style={{ backgroundColor: "#442913", padding: "20px 24px", textAlign: "center" as const }}>
           <Text style={{ color: "#fff", fontSize: 14, letterSpacing: "0.2em", margin: 0 }}>PRUDENTIAL ATELIER</Text>
         </Section>
         <Container style={{ padding: "28px 24px", maxWidth: 560 }}>
@@ -36,7 +36,7 @@ export default function InvoiceEmail(props: InvoiceEmailProps) {
               marginTop: 24,
               borderWidth: 1,
               borderStyle: "solid",
-              borderColor: "#37392d",
+              borderColor: "#442913",
               padding: 20,
               backgroundColor: "#fff",
             }}
@@ -65,7 +65,7 @@ export default function InvoiceEmail(props: InvoiceEmailProps) {
             <Button
               href={props.publicLink}
               style={{
-                backgroundColor: "#37392d",
+                backgroundColor: "#442913",
                 color: "#fff",
                 padding: "14px 28px",
                 textDecoration: "none",

@@ -45,7 +45,7 @@ export function BestSellersGrid({ products }: { products: BestSellerProduct[] })
                   No image
                 </div>
               )}
-              <span className="absolute left-3 top-3 rounded-sm bg-wine px-2.5 py-1 font-sans text-[9px] font-semibold uppercase tracking-[0.12em] text-cream">
+              <span className="absolute left-3 top-3 rounded-sm bg-choc px-2.5 py-1 font-sans text-[9px] font-semibold uppercase tracking-[0.12em] text-cream">
                 Best Seller
               </span>
             </div>

@@ -16,7 +16,7 @@ export default function AccountExistsEmail({ loginUrl }: Props) {
         <Button
           href={loginUrl}
           style={{
-            backgroundColor: "#6B1C2A",
+            backgroundColor: "#442913",
             color: "#C9A84C",
             padding: "14px 36px",
             textDecoration: "none",

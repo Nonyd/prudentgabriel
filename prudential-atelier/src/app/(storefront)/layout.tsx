@@ -37,13 +37,18 @@ export default async function StorefrontLayout({ children }: { children: React.R
 
   return (
     <>
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
       <Navbar
         collections={collections}
         showAnnouncement={showAnnouncement}
         announcementMessages={messages}
         announcementIntervalMs={intervalMs}
       />
-      <main className="min-h-screen">{children}</main>
+      <main id="main-content" tabIndex={-1} className="min-h-screen">
+        {children}
+      </main>
       <Footer cms={footerCms} />
       <CartDrawer />
       <SearchModal />

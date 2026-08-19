@@ -37,7 +37,7 @@ function SuccessInner() {
 
   useEffect(() => {
     void import("canvas-confetti").then((m) =>
-      m.default({ particleCount: 100, spread: 70, colors: ["#6B1C2A", "#C9A84C", "#FAF6EF"], origin: { y: 0.3 } }),
+      m.default({ particleCount: 100, spread: 70, colors: ["#442913", "#C9A84C", "#F7F2EC"], origin: { y: 0.3 } }),
     );
   }, []);
 
@@ -47,10 +47,10 @@ function SuccessInner() {
 
   return (
     <div className="mx-auto max-w-lg px-5 py-20 text-center">
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border-2 border-wine text-4xl text-wine">
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border-2 border-choc text-4xl text-choc">
         ✓
       </motion.div>
-      <h1 className="mt-6 font-display text-3xl text-wine">Order placed!</h1>
+      <h1 className="mt-6 font-display text-3xl text-choc">Order placed!</h1>
       <p className="mt-2 font-label text-lg text-gold">#{orderNumber}</p>
       {email && <p className="mt-4 text-sm text-charcoal-mid">Confirmation sent to {email}</p>}
       <div className="mt-8 rounded-sm border border-border bg-cream p-6 text-left text-sm">
@@ -70,18 +70,18 @@ function SuccessInner() {
         )}
       </div>
       <div className="mt-8 flex flex-wrap justify-center gap-4">
-        <Link href={trackHref} className="rounded-sm bg-wine px-6 py-2 text-sm text-ivory">
+        <Link href={trackHref} className="rounded-sm bg-choc px-6 py-2 text-sm text-cream">
           Track my order
         </Link>
-        <Link href="/shop" className="rounded-sm border border-wine px-6 py-2 text-sm text-wine">
+        <Link href="/shop" className="rounded-sm border border-choc px-6 py-2 text-sm text-choc">
           Continue shopping
         </Link>
       </div>
       {status === "unauthenticated" && email && (
         <div className="mt-10 rounded-sm border border-gold bg-ivory p-6 text-left text-sm">
-          <p className="font-medium text-wine">Save your order history</p>
+          <p className="font-medium text-choc">Save your order history</p>
           <p className="mt-2 text-charcoal-mid">Create a free account with the same email to access your orders.</p>
-          <Link href={`/auth/register?email=${encodeURIComponent(email)}`} className="mt-4 inline-block rounded-sm bg-wine px-4 py-2 text-ivory">
+          <Link href={`/auth/register?email=${encodeURIComponent(email)}`} className="mt-4 inline-block rounded-sm bg-choc px-4 py-2 text-cream">
             Create account
           </Link>
         </div>

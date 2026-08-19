@@ -52,8 +52,8 @@ export function PriceDisplay({ product, selectedVariant, className }: PriceDispl
       {sale ? (
         <div className="flex flex-wrap items-center gap-3">
           <del className="text-lg text-charcoal-light">{fmt(price)}</del>
-          <span className="text-2xl font-semibold text-wine">{fmt(saleP)}</span>
-          <Badge variant="wine">Save {pct}%</Badge>
+          <span className="text-2xl font-semibold text-choc">{fmt(saleP)}</span>
+          <Badge variant="gold">Save {pct}%</Badge>
         </div>
       ) : (
         <span className="text-2xl font-semibold text-charcoal">{fmt(price)}</span>

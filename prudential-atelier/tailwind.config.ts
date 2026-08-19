@@ -16,6 +16,7 @@ const config: Config = {
         cream: "var(--cream)",
         sand: "var(--sand)",
         ivory: "var(--ivory)",
+        "ivory-dark": "var(--ivory-dark)",
         olive: {
           DEFAULT: "var(--olive)",
           hover: "var(--olive-hover)",
@@ -49,6 +50,7 @@ const config: Config = {
         "text-dark": "var(--text-primary)",
         "text-mid": "var(--text-mid)",
         "text-light": "var(--text-light)",
+        error: "var(--error)",
         success: "var(--success)",
         warning: "var(--warning)",
         danger: "var(--danger)",

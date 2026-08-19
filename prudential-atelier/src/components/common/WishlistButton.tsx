@@ -59,7 +59,7 @@ export function WishlistButton({ productId, className }: WishlistButtonProps) {
       onClick={onClick}
       className={cn(
         "flex h-9 w-9 items-center justify-center p-0 transition-colors",
-        "hover:bg-olive-light/50",
+        "hover:bg-cream",
         className,
       )}
       aria-label={inList ? "Remove from wishlist" : "Add to wishlist"}
@@ -67,7 +67,7 @@ export function WishlistButton({ productId, className }: WishlistButtonProps) {
       <Heart
         className={cn(
           "h-4 w-4 transition-colors",
-          inList ? "fill-olive text-olive" : "text-charcoal/50 hover:text-olive",
+          inList ? "fill-choc text-choc" : "text-charcoal/50 hover:text-choc",
         )}
         strokeWidth={inList ? 0 : 1.5}
       />

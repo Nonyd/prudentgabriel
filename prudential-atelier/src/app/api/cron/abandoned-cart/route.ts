@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyCronRequest } from "@/lib/cron/verify";
+import { executeCronJob } from "@/lib/cron/runner";
 
-export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+export async function POST(req: NextRequest) {
+  if (!verifyCronRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // TODO: Stage 9 — implement abandoned cart email logic
-  return NextResponse.json({ ok: true, ran: new Date().toISOString() });
+  try {
+    const { result, runId, status } = await executeCronJob("abandoned-cart");
+    return NextResponse.json({
+      ok: true,
+      runId,
+      status,
+      processed: result.processed,
+      failed: result.failed,
+      hasMore: result.hasMore ?? false,
+      ...result.detail,
+    });
+  } catch {
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
 }

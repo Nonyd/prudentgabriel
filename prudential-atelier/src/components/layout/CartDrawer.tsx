@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { useCartStore } from "@/store/cartStore";
 import { convertFromNGN, formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 export function CartDrawer() {
   const router = useRouter();
@@ -21,6 +22,8 @@ export function CartDrawer() {
   const removeItem = useCartStore((s) => s.removeItem);
   const currency = useCurrencyStore((s) => s.currency);
   const rates = useCurrencyStore((s) => s.rates);
+  const panelRef = useRef<HTMLElement>(null);
+  useFocusTrap(isOpen, panelRef);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -48,6 +51,10 @@ export function CartDrawer() {
             onClick={closeCart}
           />
           <motion.aside
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Your bag"
             className="fixed bottom-0 right-0 top-0 z-50 flex h-full min-h-0 w-full max-w-[420px] flex-col border-l border-[var(--border)] bg-[var(--white)] shadow-xl"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
@@ -75,7 +82,7 @@ export function CartDrawer() {
               {items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <svg
-                    className="mb-4 h-16 w-16 text-olive/80"
+                    className="mb-4 h-16 w-16 text-choc/80"
                     viewBox="0 0 64 64"
                     fill="none"
                     stroke="currentColor"
@@ -104,14 +111,14 @@ export function CartDrawer() {
                       <button
                         type="button"
                         onClick={() => removeItem(item.id)}
-                        className="absolute right-0 top-0 text-dark-grey hover:text-olive"
+                        className="absolute right-0 top-0 text-dark-grey hover:text-choc"
                         aria-label="Remove"
                       >
                         <X className="h-4 w-4" />
                       </button>
                       <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-sm bg-ivory-dark">
                         {item.imageUrl && (
-                          <Image src={item.imageUrl} alt="" fill className="object-cover" sizes="64px" />
+                          <Image src={item.imageUrl} alt={item.productName} fill className="object-cover" sizes="64px" />
                         )}
                       </div>
                       <div className="min-w-0 flex-1 pr-6">
@@ -127,6 +134,7 @@ export function CartDrawer() {
                             type="button"
                             disabled={item.quantity <= 1}
                             className="flex h-7 w-7 items-center justify-center rounded-sm border border-border text-sm disabled:opacity-40"
+                            aria-label={`Decrease quantity of ${item.productName}`}
                             onClick={() => updateQty(item.id, item.quantity - 1)}
                           >
                             −
@@ -135,6 +143,7 @@ export function CartDrawer() {
                           <button
                             type="button"
                             className="flex h-7 w-7 items-center justify-center rounded-sm border border-border text-sm"
+                            aria-label={`Increase quantity of ${item.productName}`}
                             onClick={() => updateQty(item.id, item.quantity + 1)}
                           >
                             +
@@ -153,7 +162,7 @@ export function CartDrawer() {
             {items.length > 0 && (
               <footer className="shrink-0 border-t border-[var(--border)] bg-[var(--off-white)] px-5 py-5">
                 {points > 0 && (
-                  <div className="mb-3 inline-flex bg-olive-light px-3 py-1 font-body text-[10px] font-medium uppercase tracking-wide text-charcoal">
+                  <div className="mb-3 inline-flex bg-cream px-3 py-1 font-body text-[10px] font-medium uppercase tracking-wide text-charcoal">
                     🌟 You&apos;ll earn ~{points} points with this order
                   </div>
                 )}
@@ -177,7 +186,7 @@ export function CartDrawer() {
                   <button
                     type="button"
                     onClick={closeCart}
-                    className="font-body text-[11px] font-medium uppercase tracking-wider text-olive underline-offset-4 hover:underline"
+                    className="font-body text-[11px] font-medium uppercase tracking-wider text-choc underline-offset-4 hover:underline"
                   >
                     Continue Shopping
                   </button>

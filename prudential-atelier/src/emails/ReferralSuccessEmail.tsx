@@ -33,7 +33,7 @@ export default function ReferralSuccessEmail({
           backgroundColor: "rgba(201,168,76,0.08)",
         }}
       >
-        <Text style={{ margin: 0, fontSize: 16, color: "#6B1C2A" }}>+{pointsEarned} points added</Text>
+        <Text style={{ margin: 0, fontSize: 16, color: "#442913" }}>+{pointsEarned} points added</Text>
         <Text style={{ margin: "8px 0 0", fontSize: 15 }}>
           Your new balance: {newBalance} pts = ₦{newBalance.toLocaleString("en-NG")}
         </Text>
@@ -42,7 +42,7 @@ export default function ReferralSuccessEmail({
         <Button
           href={`${APP}/account/wallet`}
           style={{
-            backgroundColor: "#6B1C2A",
+            backgroundColor: "#442913",
             color: "#C9A84C",
             padding: "12px 32px",
             textDecoration: "none",

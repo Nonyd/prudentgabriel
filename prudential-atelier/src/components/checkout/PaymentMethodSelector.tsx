@@ -60,9 +60,11 @@ export function PaymentMethodSelector({
   const [uploading, setUploading] = useState(false);
   const [gateways, setGateways] = useState<PaymentGatewayType[]>([]);
   const [bank, setBank] = useState({ bankName: "", accountNumber: "", accountName: "" });
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    setLoaded(false);
     void fetch("/api/payments/public-config")
       .then((r) => r.json())
       .then((data: {
@@ -72,14 +74,12 @@ export function PaymentMethodSelector({
         if (cancelled) return;
         if (data.bank) setBank(data.bank);
         setGateways(data.gateways?.[currency] ?? []);
+        setLoaded(true);
       })
       .catch(() => {
         if (!cancelled) {
-          setGateways(
-            currency === "NGN"
-              ? ["PAYSTACK", "FLUTTERWAVE", "MONNIFY", "BANK_TRANSFER"]
-              : ["FLUTTERWAVE", "STRIPE"],
-          );
+          setGateways([]);
+          setLoaded(true);
         }
       });
     return () => {
@@ -123,6 +123,12 @@ export function PaymentMethodSelector({
     <div>
       <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">How would you like to pay?</p>
       <div className="mt-4 space-y-2">
+        {loaded && gateways.length === 0 ? (
+          <p className="font-body text-sm text-text-mid">
+            No payment methods are available right now. Please try again later or contact the atelier.
+          </p>
+        ) : null}
+        {!loaded ? <p className="font-body text-sm text-text-mid">Loading payment methods…</p> : null}
         {gateways.map((gw) => {
           if (gw === "BANK_TRANSFER") {
             const isSelected = selected === "BANK_TRANSFER";

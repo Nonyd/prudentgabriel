@@ -49,7 +49,7 @@ export default function ConsultationMeetingLinkEmail({
         <Button
           href={meetingLink}
           style={{
-            backgroundColor: "#6B1C2A",
+            backgroundColor: "#442913",
             color: "#FAFAFA",
             padding: "14px 28px",
             fontSize: 14,

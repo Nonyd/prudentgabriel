@@ -81,6 +81,29 @@ body {
     outline: 2px solid var(--lightbr);
     outline-offset: 2px;
   }
+
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -100px;
+    z-index: 200;
+    background: var(--choc);
+    color: var(--cream);
+    padding: 0.5rem 1rem;
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .skip-link:focus,
+  .skip-link:focus-visible {
+    top: 1rem;
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
 }
 
 @layer components {

@@ -124,7 +124,7 @@ export function ProductDetailClient({
   return (
     <div className="mx-auto max-w-site px-4 pb-20">
       <nav className="py-4 font-body text-[11px] font-medium uppercase tracking-[0.08em] text-dark-grey">
-        <Link href="/shop" className="hover:text-olive">
+        <Link href="/shop" className="hover:text-choc">
           Shop
         </Link>
         <span className="mx-2">/</span>
@@ -179,6 +179,8 @@ export function ProductDetailClient({
                     key={c.id}
                     type="button"
                     onClick={() => setColorId(c.id)}
+                    aria-label={c.name}
+                    aria-pressed={colorId === c.id}
                     className="h-5 w-5 rounded-full ring-1 ring-offset-2 ring-offset-white transition-shadow"
                     style={{
                       backgroundColor: c.hex,
@@ -198,7 +200,7 @@ export function ProductDetailClient({
                 <SizeGuideModal>
                   <button
                     type="button"
-                    className="font-body text-[10px] font-medium uppercase tracking-wide text-olive underline"
+                    className="font-body text-[10px] font-medium uppercase tracking-wide text-choc underline"
                   >
                     Size Guide
                   </button>
@@ -221,6 +223,7 @@ export function ProductDetailClient({
                           ? "cursor-not-allowed border-sand text-text-light/40 line-through"
                           : "border-sand text-text-mid hover:border-choc"
                     }`}
+                    aria-pressed={variantId === v.id}
                     title={v.stock === 0 ? "Sold Out" : undefined}
                   >
                     {v.size}
@@ -230,7 +233,7 @@ export function ProductDetailClient({
             </>
           ) : null}
           {lowStock > 0 && (
-            <p className="mt-2 font-body text-[10px] font-medium uppercase tracking-wide text-olive">Only {lowStock} left!</p>
+            <p className="mt-2 font-body text-[10px] font-medium uppercase tracking-wide text-choc">Only {lowStock} left!</p>
           )}
           {variant && variant.stock === 0 && (
             <StockAlertForm productId={product.id} variantId={variant.id} />
@@ -242,7 +245,8 @@ export function ProductDetailClient({
             <div className="mt-2 flex items-center gap-3">
               <button
                 type="button"
-                className="flex h-9 w-9 items-center justify-center rounded-sm border border-border hover:border-olive"
+                aria-label="Decrease quantity"
+                className="flex h-9 w-9 items-center justify-center rounded-sm border border-border hover:border-choc"
                 disabled={qty <= 1}
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
               >
@@ -251,7 +255,8 @@ export function ProductDetailClient({
               <span className="w-8 text-center">{qty}</span>
               <button
                 type="button"
-                className="flex h-9 w-9 items-center justify-center rounded-sm border border-border hover:border-olive"
+                aria-label="Increase quantity"
+                className="flex h-9 w-9 items-center justify-center rounded-sm border border-border hover:border-choc"
                 disabled={!variant || qty >= variant.stock}
                 onClick={() => setQty((q) => (variant ? Math.min(variant.stock, q + 1) : q))}
               >
@@ -305,7 +310,7 @@ export function ProductDetailClient({
               </Accordion.Header>
               <Accordion.Content className="space-y-3 pb-4 text-sm text-charcoal-mid">
                 <SizeGuideModal>
-                  <button type="button" className="font-body text-[11px] font-medium uppercase tracking-wide text-olive underline">
+                  <button type="button" className="font-body text-[11px] font-medium uppercase tracking-wide text-choc underline">
                     View Full Size Guide
                   </button>
                 </SizeGuideModal>
@@ -333,7 +338,7 @@ export function ProductDetailClient({
                 <Accordion.Content className="space-y-3 pb-4 text-sm text-charcoal-mid">
                   <p>Have this piece made to your exact measurements.</p>
                   <p>Lead time: 3–6 weeks. Starts from ₦{Math.round(product.basePriceNGN * 1.3).toLocaleString()}</p>
-                  <Link href="/atelier" className="font-body text-[11px] font-medium uppercase tracking-wide text-olive underline">
+                  <Link href="/atelier" className="font-body text-[11px] font-medium uppercase tracking-wide text-choc underline">
                     Book Atelier Consultation
                   </Link>
                 </Accordion.Content>

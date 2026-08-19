@@ -70,7 +70,7 @@ export function FooterNewsletter({
           <input
             type="email"
             placeholder={placeholder}
-            className="min-w-0 flex-1 border-0 border-b bg-transparent py-2.5 placeholder:text-text-light focus:outline-none"
+            className="min-w-0 flex-1 border-0 border-b bg-transparent py-2.5 placeholder:text-text-light focus-visible:border-cream"
             style={{
               fontFamily: "var(--font-ui)",
               fontSize: "12px",

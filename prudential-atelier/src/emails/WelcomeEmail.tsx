@@ -41,8 +41,8 @@ export default function WelcomeEmail({ firstName, pointsBalance, referralCode }:
         <Button
           href={`${APP}/shop`}
           style={{
-            backgroundColor: "#6B1C2A",
-            color: "#C9A84C",
+            backgroundColor: "#442913",
+            color: "#F7F2EC",
             padding: "12px 32px",
             textDecoration: "none",
             fontSize: 15,

@@ -86,7 +86,7 @@ export function ResetPasswordClient() {
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 w-full border border-[var(--border)] bg-input-bg px-3 py-2.5 font-body text-sm outline-none focus:border-[var(--wine)]"
+            className="mt-1 w-full border border-[var(--border)] bg-input-bg px-3 py-2.5 font-body text-sm outline-none focus:border-[var(--choc)]"
             required
             minLength={8}
           />
@@ -100,7 +100,7 @@ export function ResetPasswordClient() {
             autoComplete="new-password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="mt-1 w-full border border-[var(--border)] bg-input-bg px-3 py-2.5 font-body text-sm outline-none focus:border-[var(--wine)]"
+            className="mt-1 w-full border border-[var(--border)] bg-input-bg px-3 py-2.5 font-body text-sm outline-none focus:border-[var(--choc)]"
             required
             minLength={8}
           />
@@ -108,7 +108,7 @@ export function ResetPasswordClient() {
         <button
           type="submit"
           disabled={busy}
-          className="mt-2 w-full bg-[var(--wine)] py-3 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white transition hover:opacity-90 disabled:opacity-50"
+          className="mt-2 w-full bg-[var(--choc)] py-3 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--cream)] transition hover:opacity-90 disabled:opacity-50"
         >
           {busy ? "Saving…" : "Set password →"}
         </button>
