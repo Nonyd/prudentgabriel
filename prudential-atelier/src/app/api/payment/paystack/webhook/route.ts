@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PaymentGateway, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { verifyWebhookSignature } from "@/lib/payments/paystack";
+import { verifyWebhookSignature, verifyTransaction } from "@/lib/payments/paystack";
 import { fulfillPaidOrder } from "@/lib/order-payment";
 import { notifyPaymentFailed } from "@/lib/notifications";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
 import { fulfillPaidBespokeBalance } from "@/lib/bespoke-payment";
+import {
+  assertPspChargeBinds,
+  expectedAmountInPspUnits,
+  PaymentBindError,
+} from "@/lib/payment-bind";
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
@@ -19,6 +24,8 @@ export async function POST(req: NextRequest) {
     event?: string;
     data?: {
       status?: string;
+      amount?: number;
+      currency?: string;
       reference?: string;
       metadata?: { orderId?: string; bookingId?: string; bespokeRequestId?: string; type?: string };
     };
@@ -37,20 +44,68 @@ export async function POST(req: NextRequest) {
   const ref = event.data?.reference;
 
   if (event.event === "charge.success" && ref && event.data?.status === "success") {
-    if (isBespokeBalance && bespokeRequestId) {
-      await fulfillPaidBespokeBalance({
-        bespokeRequestId,
-        paymentRef: ref,
-        gateway: PaymentGateway.PAYSTACK,
-      });
-    } else if (isConsultation && bookingId) {
-      await fulfillPaidConsultationBooking({
-        bookingId,
-        paymentRef: ref,
-        gateway: PaymentGateway.PAYSTACK,
-      });
-    } else if (orderId) {
-      await fulfillPaidOrder({ orderId, paymentRef: ref, gateway: PaymentGateway.PAYSTACK });
+    try {
+      if (isBespokeBalance && bespokeRequestId) {
+        const verified = await verifyTransaction(ref);
+        const metaId = verified.metadata.bespokeRequestId;
+        if (metaId && metaId !== bespokeRequestId) {
+          throw new PaymentBindError(
+            "REFERENCE_MISMATCH",
+            "Paystack bespoke metadata does not match the webhook booking",
+          );
+        }
+        await fulfillPaidBespokeBalance({
+          bespokeRequestId,
+          paymentRef: ref,
+          gateway: PaymentGateway.PAYSTACK,
+        });
+      } else if (isConsultation && bookingId) {
+        const booking = await prisma.consultationBooking.findUnique({ where: { id: bookingId } });
+        if (booking) {
+          assertPspChargeBinds(
+            {
+              id: booking.id,
+              storedReference: booking.paymentRef,
+              expectedAmount: expectedAmountInPspUnits(PaymentGateway.PAYSTACK, booking.feeNGN),
+              expectedCurrency: "NGN",
+            },
+            {
+              gateway: PaymentGateway.PAYSTACK,
+              reference: ref,
+              amount: event.data.amount ?? 0,
+              currency: event.data.currency ?? "NGN",
+              metadataEntityId: bookingId,
+            },
+          );
+          await fulfillPaidConsultationBooking({
+            bookingId,
+            paymentRef: ref,
+            gateway: PaymentGateway.PAYSTACK,
+          });
+        }
+      } else if (orderId) {
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (order) {
+          assertPspChargeBinds(
+            {
+              id: order.id,
+              storedReference: order.paymentRef,
+              expectedAmount: expectedAmountInPspUnits(PaymentGateway.PAYSTACK, order.total),
+              expectedCurrency: String(order.currency),
+            },
+            {
+              gateway: PaymentGateway.PAYSTACK,
+              reference: ref,
+              amount: event.data.amount ?? 0,
+              currency: event.data.currency ?? "NGN",
+              metadataEntityId: orderId,
+            },
+          );
+          await fulfillPaidOrder({ orderId, paymentRef: ref, gateway: PaymentGateway.PAYSTACK });
+        }
+      }
+    } catch (e) {
+      if (!(e instanceof PaymentBindError)) throw e;
     }
   }
 

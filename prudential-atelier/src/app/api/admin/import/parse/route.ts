@@ -4,7 +4,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { parseWooCommerceCSV, type ParsedProduct } from "@/lib/woocommerce-parser";
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("shop.products");
   if (!gate.ok) return gate.response;
 
   let formData: FormData;

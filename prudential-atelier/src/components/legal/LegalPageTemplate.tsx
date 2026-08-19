@@ -1,3 +1,5 @@
+import { sanitizeCmsHtml } from "@/lib/sanitize-html";
+
 type LegalPageTemplateProps = {
   title: string;
   lastUpdated: string;
@@ -46,7 +48,7 @@ export function LegalPageTemplate({ title, lastUpdated, html }: LegalPageTemplat
 
       <div
         className="legal-content mx-auto mt-12 max-w-[760px]"
-        dangerouslySetInnerHTML={{ __html: html }}
+        dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(html) }}
       />
     </article>
   );

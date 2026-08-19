@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 
 export async function GET(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("bespoke");
   if (!gate.ok) return gate.response;
 
   const { searchParams } = new URL(req.url);

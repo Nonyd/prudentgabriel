@@ -27,7 +27,14 @@ export default async function TrackOrderPage({ params }: Props) {
 
   const order = await prisma.bespokeOrder.findUnique({
     where: { trackingToken },
-    include: { stageHistory: { orderBy: { completedAt: "asc" } } },
+    select: {
+      orderRef: true,
+      clientName: true,
+      deliveryDate: true,
+      outfitDescription: true,
+      currentStage: true,
+      stageHistory: { orderBy: { completedAt: "asc" }, select: { stage: true, completedAt: true } },
+    },
   });
 
   if (!order) {

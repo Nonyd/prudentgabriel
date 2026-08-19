@@ -25,9 +25,17 @@ export type AdminPermission =
   | "settings"
   | "settings.developer";
 
+/** CMS surfaces: parent `content` plus CONTENT_MANAGER's dotted keys. */
+export const CMS_ADMIN_PERMISSIONS = [
+  "content",
+  "content.blog",
+  "content.pages",
+] as const satisfies readonly AdminPermission[];
+
 /** General Admin (Mrs. Prudent + deputies) — maps to ADMIN in the schema. */
 export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]> = {
   SUPER_ADMIN: ["*"],
+
 
   ADMIN: [
     "dashboard",
@@ -40,6 +48,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
     "staff",
     "attendance",
     "finance",
+    "payments",
     "reports",
     "content",
     "logs",
@@ -57,13 +66,14 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
     "staff",
     "attendance",
     "finance",
+    "payments",
     "content",
   ],
 
   BESPOKE_MANAGER: ["bespoke", "consultations", "clients.view"],
   RTW_MANAGER: ["shop.products", "shop.orders"],
   CONTENT_MANAGER: ["content.blog", "content.pages"],
-  FINANCE_MANAGER: ["invoices", "quotations", "finance"],
+  FINANCE_MANAGER: ["invoices", "quotations", "finance", "payments"],
   HR_MANAGER: ["staff", "attendance"],
   CONSULTATION_MANAGER: ["consultations", "clients.view"],
   STAFF: [],
@@ -74,14 +84,12 @@ export const PROTECTED_ACCOUNTS = [
   process.env.GENERAL_ADMIN_EMAIL,
 ].filter(Boolean) as string[];
 
-export function isAdminRole(role: string | undefined | null): boolean {
+export function hasAnyAdminPermission(role: string | undefined | null): boolean {
   if (!role) return false;
-  return (
-    role === "ADMIN" ||
-    role === "SUPER_ADMIN" ||
-    role === "STAFF_ADMIN" ||
-    role.endsWith("_MANAGER")
-  );
+  const perms = ROLE_PERMISSIONS[role];
+  if (!perms) return false;
+  if (perms[0] === "*") return true;
+  return perms.length > 0;
 }
 
 export function isGeneralAdmin(role: string | undefined | null): boolean {
@@ -113,7 +121,7 @@ export function canModifyAdminUser(
   actorEmail: string | null | undefined,
   targetEmail: string | null | undefined,
 ): boolean {
-  if (!isAdminRole(actorRole)) return false;
+  if (!isGeneralAdmin(actorRole) && actorRole !== "SUPER_ADMIN") return false;
   if (isSuperAdmin(actorRole, actorEmail)) return true;
   if (isSuperAdminAccount(targetEmail)) return false;
   if (isGeneralAdminAccount(targetEmail)) return false;
@@ -128,7 +136,66 @@ export function hasPermission(
   const perms = ROLE_PERMISSIONS[role];
   if (!perms) return false;
   if (perms[0] === "*") return true;
-  return (perms as readonly AdminPermission[]).includes(permission);
+  const list = perms as readonly AdminPermission[];
+  if (list.includes(permission)) return true;
+  const dot = permission.indexOf(".");
+  if (dot > 0) {
+    const parent = permission.slice(0, dot) as AdminPermission;
+    // Developer settings are SUPER_ADMIN-only; `settings` must not unlock them.
+    if (permission === "settings.developer") return false;
+    if (list.includes(parent)) return true;
+  }
+  return false;
+}
+
+/** Same predicate `requireAdminApi` uses after a session exists. */
+export function roleAllows(
+  role: string | undefined | null,
+  needed: AdminPermission | readonly AdminPermission[],
+): boolean {
+  const list = Array.isArray(needed) ? needed : [needed];
+  return list.some((p) => hasPermission(role, p));
+}
+
+const ALL_PERMISSIONS: readonly AdminPermission[] = [
+  "dashboard",
+  "bespoke",
+  "consultations",
+  "invoices",
+  "quotations",
+  "shop",
+  "shop.products",
+  "shop.orders",
+  "clients",
+  "clients.view",
+  "staff",
+  "staff.view",
+  "attendance",
+  "finance",
+  "reports",
+  "reports.staff",
+  "content",
+  "content.blog",
+  "content.pages",
+  "payments",
+  "logs",
+  "settings",
+  "settings.developer",
+];
+
+/** Dotted children unlocked only because the parent key is on the role. */
+export function inheritedDottedPermissions(role: string): AdminPermission[] {
+  const perms = ROLE_PERMISSIONS[role];
+  if (!perms || perms[0] === "*") return [];
+  const list = perms as readonly AdminPermission[];
+  const out: AdminPermission[] = [];
+  for (const p of ALL_PERMISSIONS) {
+    const dot = p.indexOf(".");
+    if (dot < 0) continue;
+    if (list.includes(p)) continue;
+    if (hasPermission(role, p)) out.push(p);
+  }
+  return out;
 }
 
 export function canAccessLogs(role: string | undefined | null, email?: string | null): boolean {

@@ -2,6 +2,7 @@ import { OrderStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { maybeArchiveBespokeOrder } from "@/lib/bespoke-archive";
 import { maybeSendBespokeReviewRequest } from "@/lib/bespoke-review";
+import { actorOwnsBespokeOrder } from "@/lib/public-pii-dtos";
 
 export class ReceiptConfirmError extends Error {
   constructor(
@@ -57,23 +58,15 @@ export async function confirmBespokeReceipt(params: {
         select: { userId: true },
       })
     : null;
-  const owns =
-    profile?.userId === params.actor.id ||
-    (order.clientEmail &&
-      params.actor.email &&
-      order.clientEmail.toLowerCase() === params.actor.email.toLowerCase());
+  const owns = actorOwnsBespokeOrder({
+    actorId: params.actor.id,
+    actorEmail: params.actor.email,
+    clientEmail: order.clientEmail,
+    profileUserId: profile?.userId,
+  });
 
-  // Token path: email link proves possession of the token; still require actor is CUSTOMER
-  // and (when logged in) matches the order client when possible.
-  if (params.token) {
-    if (params.actor.email && order.clientEmail) {
-      if (order.clientEmail.toLowerCase() !== params.actor.email.toLowerCase() && !owns) {
-        // Allow token-only confirm for guest who created an account later with same email —
-        // if emails diverge, still allow token (email inbox possession).
-      }
-    }
-  } else if (!owns) {
-    throw new ReceiptConfirmError("You can only confirm receipt for your own order", 403);
+  if (!owns) {
+    throw new ReceiptConfirmError("Unable to confirm receipt", 403);
   }
 
   await prisma.bespokeOrder.update({

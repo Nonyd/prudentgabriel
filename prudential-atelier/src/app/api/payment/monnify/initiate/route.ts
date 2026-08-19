@@ -58,5 +58,10 @@ export async function POST(req: NextRequest) {
     redirectUrl,
   });
 
+  await prisma.order.update({
+    where: { id: order.id },
+    data: { paymentRef: order.orderNumber },
+  });
+
   return NextResponse.json({ checkoutUrl: init.checkoutUrl });
 }

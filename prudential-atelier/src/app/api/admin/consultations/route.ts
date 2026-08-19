@@ -19,7 +19,7 @@ const querySchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("consultations");
   if (!gate.ok) return gate.response;
 
   const sp = Object.fromEntries(new URL(req.url).searchParams.entries());

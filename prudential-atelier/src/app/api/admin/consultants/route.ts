@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { consultantAdminSchema } from "@/validations/consultation";
 
 export async function GET() {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("consultations");
   if (!gate.ok) return gate.response;
 
   const consultants = await prisma.consultant.findMany({
@@ -20,7 +20,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("consultations");
   if (!gate.ok) return gate.response;
 
   let body: unknown;

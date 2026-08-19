@@ -4,6 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { verifyWebhookSignature, verifyTransaction } from "@/lib/payments/monnify";
 import { fulfillPaidOrder } from "@/lib/order-payment";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
+import {
+  assertPspChargeBinds,
+  expectedAmountInPspUnits,
+  PaymentBindError,
+} from "@/lib/payment-bind";
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
@@ -27,6 +32,21 @@ export async function POST(req: NextRequest) {
           where: { bookingNumber: v.paymentReference },
         });
         if (booking) {
+          assertPspChargeBinds(
+            {
+              id: booking.id,
+              storedReference: booking.paymentRef,
+              expectedAmount: expectedAmountInPspUnits(PaymentGateway.MONNIFY, booking.feeNGN),
+              expectedCurrency: "NGN",
+            },
+            {
+              gateway: PaymentGateway.MONNIFY,
+              reference: v.paymentReference,
+              amount: v.amountPaid,
+              currency: v.currency,
+              metadataEntityId: v.paymentReference === booking.bookingNumber ? booking.id : null,
+            },
+          );
           await fulfillPaidConsultationBooking({
             bookingId: booking.id,
             paymentRef: v.paymentReference,
@@ -37,6 +57,21 @@ export async function POST(req: NextRequest) {
             where: { orderNumber: v.paymentReference },
           });
           if (order) {
+            assertPspChargeBinds(
+              {
+                id: order.id,
+                storedReference: order.paymentRef,
+                expectedAmount: expectedAmountInPspUnits(PaymentGateway.MONNIFY, order.total),
+                expectedCurrency: String(order.currency),
+              },
+              {
+                gateway: PaymentGateway.MONNIFY,
+                reference: v.paymentReference,
+                amount: v.amountPaid,
+                currency: v.currency,
+                metadataEntityId: v.paymentReference === order.orderNumber ? order.id : null,
+              },
+            );
             await fulfillPaidOrder({
               orderId: order.id,
               paymentRef: v.paymentReference,
@@ -46,8 +81,10 @@ export async function POST(req: NextRequest) {
         }
       }
     }
-  } catch {
-    /* ignore parse / verify errors */
+  } catch (e) {
+    if (!(e instanceof PaymentBindError)) {
+      /* ignore parse / verify errors */
+    }
   }
 
   return NextResponse.json({ received: true });

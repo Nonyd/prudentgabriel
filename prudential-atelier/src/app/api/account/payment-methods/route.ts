@@ -34,20 +34,12 @@ function toSafeMethod(method: {
 const bodySchema = z.discriminatedUnion("gateway", [
   z.object({
     gateway: z.literal("PAYSTACK"),
-    authCode: z.string().min(3),
-    last4: z.string().min(1),
-    brand: z.string().min(1),
-    expiry: z.string().min(1),
-    email: z.string().email(),
     isDefault: z.boolean().optional(),
     nickname: z.string().optional(),
   }),
   z.object({
     gateway: z.literal("STRIPE"),
     paymentMethodId: z.string().min(3),
-    last4: z.string().min(1),
-    brand: z.string().min(1),
-    expiry: z.string().min(1),
     isDefault: z.boolean().optional(),
     nickname: z.string().optional(),
   }),
@@ -80,12 +72,30 @@ export async function POST(req: NextRequest) {
     const secret = await getPaystackSecret();
     if (!secret) return NextResponse.json({ error: "Paystack not configured" }, { status: 400 });
 
-    const verifyRes = await fetch(`https://api.paystack.co/customer/${encodeURIComponent(parsed.data.email)}`, {
+    const verifyRes = await fetch(`https://api.paystack.co/customer/${encodeURIComponent(user.email)}`, {
       headers: { Authorization: `Bearer ${secret}` },
     });
     if (!verifyRes.ok) {
-      return NextResponse.json({ error: "Unable to verify Paystack authorization code" }, { status: 400 });
+      return NextResponse.json({ error: "Unable to verify Paystack customer" }, { status: 400 });
     }
+    const payload = (await verifyRes.json()) as {
+      data?: {
+        authorizations?: Array<{
+          authorization_code?: string;
+          last4?: string;
+          brand?: string;
+          exp_month?: string;
+          exp_year?: string;
+          reusable?: boolean;
+        }>;
+      };
+    };
+    const authz = payload.data?.authorizations?.find((a) => a.reusable && a.authorization_code);
+    if (!authz?.authorization_code) {
+      return NextResponse.json({ error: "No reusable Paystack authorization found" }, { status: 400 });
+    }
+    const expiry =
+      authz.exp_month && authz.exp_year ? `${authz.exp_month}/${authz.exp_year}` : "";
 
     if (parsed.data.isDefault) {
       await prisma.savedPaymentMethod.updateMany({
@@ -98,11 +108,11 @@ export async function POST(req: NextRequest) {
       data: {
         userId: session.user.id,
         gateway: "PAYSTACK",
-        paystackAuthCode: parsed.data.authCode,
-        paystackCardLast4: parsed.data.last4,
-        paystackCardBrand: parsed.data.brand,
-        paystackCardExpiry: parsed.data.expiry,
-        paystackEmail: parsed.data.email,
+        paystackAuthCode: authz.authorization_code,
+        paystackCardLast4: authz.last4 ?? null,
+        paystackCardBrand: authz.brand ?? null,
+        paystackCardExpiry: expiry || null,
+        paystackEmail: user.email,
         nickname: parsed.data.nickname ?? null,
         isDefault: Boolean(parsed.data.isDefault),
       },
@@ -117,6 +127,11 @@ export async function POST(req: NextRequest) {
 
   const customer = await stripe.customers.create({ email: user.email });
   await stripe.paymentMethods.attach(parsed.data.paymentMethodId, { customer: customer.id });
+  const pm = await stripe.paymentMethods.retrieve(parsed.data.paymentMethodId);
+  const card = pm.card;
+  const last4 = card?.last4 ?? null;
+  const brand = card?.brand ?? null;
+  const expiry = card?.exp_month && card?.exp_year ? `${card.exp_month}/${card.exp_year}` : null;
 
   if (parsed.data.isDefault) {
     await prisma.savedPaymentMethod.updateMany({
@@ -130,9 +145,9 @@ export async function POST(req: NextRequest) {
       userId: session.user.id,
       gateway: "STRIPE",
       stripePaymentMethodId: parsed.data.paymentMethodId,
-      stripeCardLast4: parsed.data.last4,
-      stripeCardBrand: parsed.data.brand,
-      stripeCardExpiry: parsed.data.expiry,
+      stripeCardLast4: last4,
+      stripeCardBrand: brand,
+      stripeCardExpiry: expiry,
       stripeCustomerId: customer.id,
       nickname: parsed.data.nickname ?? null,
       isDefault: Boolean(parsed.data.isDefault),

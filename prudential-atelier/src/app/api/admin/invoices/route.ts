@@ -49,7 +49,7 @@ const postSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("invoices");
   if (!gate.ok) return gate.response;
 
   const { searchParams } = new URL(req.url);
@@ -152,7 +152,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("invoices");
   if (!gate.ok) return gate.response;
 
   let body: unknown;

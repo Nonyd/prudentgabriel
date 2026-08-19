@@ -5,7 +5,9 @@ import { cn, formatDate } from "@/lib/utils";
 
 type Props = {
   currentStage: BespokeStage;
-  stageHistory: StageUpdate[];
+  stageHistory: Array<
+    Pick<StageUpdate, "stage" | "completedAt"> & Partial<Pick<StageUpdate, "notes" | "images">>
+  >;
   compact?: boolean;
 };
 
@@ -92,9 +94,9 @@ export function BespokeStageTracker({ currentStage, stageHistory, compact }: Pro
                     {history.notes ? (
                       <p className="mt-2 line-clamp-3 font-body text-[13px] text-text-mid">{history.notes}</p>
                     ) : null}
-                    {history.images.length > 0 && !compact ? (
+                    {(history.images?.length ?? 0) > 0 && !compact ? (
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {history.images.slice(0, 4).map((img) => (
+                        {(history.images ?? []).slice(0, 4).map((img) => (
                           <div key={img} className="relative h-12 w-12 overflow-hidden rounded border border-sand">
                             <Image src={img} alt="" fill className="object-cover" unoptimized />
                           </div>

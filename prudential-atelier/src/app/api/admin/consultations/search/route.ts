@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getOfferingTypeLabel } from "@/lib/consultation-types";
 
 export async function GET(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("consultations");
   if (!gate.ok) return gate.response;
 
   const ref = new URL(req.url).searchParams.get("ref")?.trim();

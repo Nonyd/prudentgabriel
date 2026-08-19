@@ -8,7 +8,7 @@ import { revalidateCollection } from "@/lib/revalidate";
 import { revalidatePath } from "next/cache";
 
 export async function GET() {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("shop.products");
   if (!gate.ok) return gate.response;
 
   const rows = await prisma.collection.findMany({
@@ -30,7 +30,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("shop.products");
   if (!gate.ok) return gate.response;
 
   let body: unknown;

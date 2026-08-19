@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import { requireAdminApi } from "@/lib/admin-auth";
+import { requireAdminPortalApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { passwordPolicySchema } from "@/lib/password-policy";
+import { applyPasswordHash } from "@/lib/password-reset";
 
 const schema = z
   .object({
     currentPassword: z.string().min(1),
-    newPassword: z.string().min(8),
+    newPassword: passwordPolicySchema,
     confirmPassword: z.string().min(1),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {
@@ -16,7 +18,7 @@ const schema = z
   });
 
 export async function PATCH(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminPortalApi();
   if (!gate.ok) return gate.response;
 
   let body: unknown;
@@ -42,10 +44,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const hash = await bcrypt.hash(parsed.data.newPassword, 12);
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { password: hash },
-  });
+  await applyPasswordHash(user.id, hash);
 
   return NextResponse.json({ success: true });
 }

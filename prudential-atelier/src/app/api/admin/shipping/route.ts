@@ -15,14 +15,14 @@ const zoneSchema = z.object({
 });
 
 export async function GET() {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
   const zones = await prisma.shippingZone.findMany({ orderBy: { name: "asc" } });
   return NextResponse.json({ items: zones });
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
   let body: unknown;
   try {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GalleryCategory } from "@prisma/client";
-import { requireAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi, CMS_ADMIN_PERMISSIONS } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { cloudinary } from "@/lib/cloudinary";
 import { resolveImageMimeType } from "@/lib/image-upload-mime";
@@ -17,7 +17,7 @@ function parseCategory(v: string | null): GalleryCategory | null {
 }
 
 export async function GET(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi(CMS_ADMIN_PERMISSIONS);
   if (!gate.ok) return gate.response;
 
   const { searchParams } = new URL(req.url);
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi(CMS_ADMIN_PERMISSIONS);
   if (!gate.ok) return gate.response;
 
   let form: FormData;

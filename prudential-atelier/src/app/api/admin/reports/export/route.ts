@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/api-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { logError } from "@/lib/logger";
 import { renderReportPdfBuffer } from "@/lib/render-report-pdf";
 
@@ -8,7 +8,7 @@ function formatNGN(n: number) {
 }
 
 export async function GET(req: NextRequest) {
-  const gate = await requireAdmin();
+  const gate = await requireAdminApi("reports");
   if (!gate.ok) return gate.response;
 
   try {

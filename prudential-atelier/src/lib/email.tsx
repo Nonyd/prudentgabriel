@@ -10,6 +10,7 @@ import type { OrderItemLine } from "@/emails/OrderConfirmationEmail";
 import OrderShippedEmail from "@/emails/OrderShippedEmail";
 import BespokeConfirmationEmail from "@/emails/BespokeConfirmationEmail";
 import PasswordResetEmail from "@/emails/PasswordResetEmail";
+import AccountExistsEmail from "@/emails/AccountExistsEmail";
 import ReferralSuccessEmail from "@/emails/ReferralSuccessEmail";
 import BackInStockEmail from "@/emails/BackInStockEmail";
 import ConsultationPendingEmail from "@/emails/ConsultationPendingEmail";
@@ -238,6 +239,15 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
   await sendEmail({
     to,
     subject: "Reset your Prudential Atelier password",
+    html,
+  });
+}
+
+export async function sendAccountExistsEmail(to: string, loginUrl: string): Promise<void> {
+  const html = await renderBrandedEmail(<AccountExistsEmail loginUrl={loginUrl} />);
+  await sendEmail({
+    to,
+    subject: "You already have a Prudential Atelier account",
     html,
   });
 }

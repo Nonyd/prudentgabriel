@@ -30,7 +30,7 @@ const manualSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("bespoke");
   if (!gate.ok) return gate.response;
 
   const json = await req.json().catch(() => null);

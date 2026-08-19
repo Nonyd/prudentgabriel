@@ -5,7 +5,7 @@ import { buildQuotationPdfModel } from "@/lib/quotation-pdf-data";
 import { renderQuotationPdfBuffer } from "@/lib/render-quotation-pdf";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("quotations");
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
 

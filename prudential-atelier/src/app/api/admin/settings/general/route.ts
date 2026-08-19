@@ -13,7 +13,7 @@ const patchSchema = z.object({
 });
 
 export async function GET() {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
 
   const [autoConvertRow, maintenanceEnabledRow, maintenanceMessageRow] = await Promise.all([
@@ -39,7 +39,7 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
 
   const json = await req.json().catch(() => null);

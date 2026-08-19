@@ -58,5 +58,10 @@ export async function POST(req: NextRequest) {
     metadata: { orderId: order.id, orderNumber: order.orderNumber },
   });
 
+  await prisma.order.update({
+    where: { id: order.id },
+    data: { paymentRef: init.reference },
+  });
+
   return NextResponse.json({ authorizationUrl: init.authorizationUrl, reference: init.reference });
 }

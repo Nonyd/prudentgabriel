@@ -1,24 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { cloudinary } from "@/lib/cloudinary";
+import { permissionForUploadFolder, sanitizeUploadFolder } from "@/lib/admin-upload-folder";
 
 const PLACEHOLDER =
   "https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80&auto=format";
 
 function sanitizeFolder(raw: unknown): string {
-  if (typeof raw !== "string" || !raw.trim()) return "prudential-atelier/uploads";
-  return raw.replace(/[^a-zA-Z0-9/_-]/g, "").slice(0, 120);
+  return sanitizeUploadFolder(raw, "prudential-atelier/uploads");
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi();
-  if (!gate.ok) return gate.response;
-
-  const configured =
-    Boolean(process.env.CLOUDINARY_API_KEY?.length) &&
-    Boolean(process.env.CLOUDINARY_API_SECRET?.length) &&
-    Boolean(process.env.CLOUDINARY_CLOUD_NAME?.length);
-
   let body: { folder?: string; resourceType?: string } = {};
   try {
     body = (await req.json()) as { folder?: string; resourceType?: string };
@@ -27,6 +19,18 @@ export async function POST(req: NextRequest) {
   }
 
   const folder = sanitizeFolder(body.folder);
+  const needed = permissionForUploadFolder(folder);
+  if (!needed) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  const gate = await requireAdminApi(needed);
+  if (!gate.ok) return gate.response;
+
+  const configured =
+    Boolean(process.env.CLOUDINARY_API_KEY?.length) &&
+    Boolean(process.env.CLOUDINARY_API_SECRET?.length) &&
+    Boolean(process.env.CLOUDINARY_CLOUD_NAME?.length);
+
   const resourceType = body.resourceType === "video" ? "video" : "image";
 
   if (!configured) {

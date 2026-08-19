@@ -1,4 +1,10 @@
-import { OrderStatus, PaymentGateway, PaymentStatus } from "@prisma/client";
+import {
+  OrderStatus,
+  PaymentGateway,
+  PaymentPurpose,
+  PaymentStatus,
+  type PrismaClient,
+} from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { awardPurchasePoints } from "@/lib/points";
@@ -6,13 +12,20 @@ import { autoOnboardClient } from "@/lib/client-onboarding";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import { notifyOrderConfirmed, notifyPaymentConfirmed } from "@/lib/customer-notifications";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { gatewayToPaymentMethod, resolveClientId } from "@/lib/payments/ledger";
+
+export type OrderFulfillDb = Pick<PrismaClient, "$transaction" | "order">;
 
 export async function fulfillPaidOrder(params: {
   orderId: string;
   paymentRef: string;
   gateway?: PaymentGateway;
+  db?: OrderFulfillDb;
+  clientId?: string;
+  notify?: boolean;
 }): Promise<boolean> {
-  const order = await prisma.order.findUnique({
+  const db = params.db ?? prisma;
+  const order = await db.order.findUnique({
     where: { id: params.orderId },
     include: {
       items: { include: { product: { select: { name: true } } } },
@@ -20,13 +33,26 @@ export async function fulfillPaidOrder(params: {
     },
   });
 
-  if (!order || order.paymentStatus !== PaymentStatus.PENDING) {
+  if (!order) return false;
+
+  if (order.paymentStatus === PaymentStatus.PAID) {
+    return true;
+  }
+
+  if (order.paymentStatus !== PaymentStatus.PENDING) {
     return false;
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.order.update({
-      where: { id: order.id },
+  const clientId =
+    params.clientId ??
+    (await resolveClientId({
+      userId: order.userId,
+      email: order.guestEmail ?? order.user?.email,
+    }));
+
+  const claimed = await db.$transaction(async (tx) => {
+    const flipped = await tx.order.updateMany({
+      where: { id: order.id, paymentStatus: PaymentStatus.PENDING },
       data: {
         paymentStatus: PaymentStatus.PAID,
         paidAt: new Date(),
@@ -36,6 +62,10 @@ export async function fulfillPaidOrder(params: {
       },
     });
 
+    if (flipped.count === 0) {
+      return false;
+    }
+
     for (const item of order.items) {
       if (item.variantId) {
         await tx.productVariant.update({
@@ -44,7 +74,35 @@ export async function fulfillPaidOrder(params: {
         });
       }
     }
+
+    await tx.payment.create({
+      data: {
+        reference: params.paymentRef,
+        amount: order.total,
+        currency: String(order.currency),
+        method: gatewayToPaymentMethod(params.gateway ?? null),
+        status: PaymentStatus.CONFIRMED,
+        purpose: PaymentPurpose.RTW_ORDER,
+        orderId: order.id,
+        clientId,
+        confirmedAt: new Date(),
+      },
+    });
+
+    return true;
   }, INTERACTIVE_TX);
+
+  if (!claimed) {
+    const latest = await db.order.findUnique({
+      where: { id: order.id },
+      select: { paymentStatus: true },
+    });
+    return latest?.paymentStatus === PaymentStatus.PAID;
+  }
+
+  if (params.notify === false) {
+    return true;
+  }
 
   let userId = order.userId;
   const clientEmail = order.guestEmail ?? order.user?.email;

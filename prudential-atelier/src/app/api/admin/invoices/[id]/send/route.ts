@@ -14,7 +14,7 @@ function asCurrency(c: string): InvoiceCurrency {
 }
 
 export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("invoices");
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
 

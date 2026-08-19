@@ -8,7 +8,7 @@ export async function DELETE(
   _req: NextRequest,
   ctx: { params: Promise<{ id: string; imageId: string }> },
 ) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("shop.products");
   if (!gate.ok) return gate.response;
   const { id: productId, imageId } = await ctx.params;
 

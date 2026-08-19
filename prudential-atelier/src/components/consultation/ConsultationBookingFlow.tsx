@@ -734,6 +734,7 @@ export function ConsultationBookingFlow({
               }}
               receiptUrl={receiptUrl}
               onReceiptUploaded={setReceiptUrl}
+              guestEmail={clientEmail}
             />
 
             {stripeClientSecret && stripePk ? (

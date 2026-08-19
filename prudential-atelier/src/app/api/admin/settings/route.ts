@@ -6,7 +6,7 @@ import type { SettingGroup } from "@prisma/client";
 const PASSWORD_MASK = "••••••••";
 
 export async function GET() {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
 
   const rows = await prisma.siteSetting.findMany({

@@ -42,7 +42,7 @@ const patchSchema = z.object({
 });
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("invoices");
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
 
@@ -74,7 +74,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
 }
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("invoices");
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
 
@@ -192,7 +192,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 }
 
 export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("invoices");
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
 

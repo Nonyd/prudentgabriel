@@ -5,7 +5,7 @@ import { buildInvoicePdfModel } from "@/lib/invoice-pdf-data";
 import { renderInvoicePdfBuffer } from "@/lib/render-invoice-pdf";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("invoices");
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
 

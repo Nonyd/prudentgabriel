@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { getPaystackSecret } from "@/lib/payments/config";
+import { timingSafeEqualString } from "@/lib/crypto-compare";
 
 export interface PaystackInitResult {
   authorizationUrl: string;
@@ -52,6 +53,7 @@ export async function initializeTransaction(params: {
 export async function verifyTransaction(reference: string): Promise<{
   status: string;
   amount: number;
+  currency: string;
   reference: string;
   metadata: Record<string, string | undefined>;
 }> {
@@ -65,7 +67,13 @@ export async function verifyTransaction(reference: string): Promise<{
   const json = (await res.json()) as {
     status?: boolean;
     message?: string;
-    data?: { status: string; amount: number; reference: string; metadata?: Record<string, string | undefined> };
+    data?: {
+      status: string;
+      amount: number;
+      currency?: string;
+      reference: string;
+      metadata?: Record<string, string | undefined>;
+    };
   };
 
   if (!res.ok || !json.status || !json.data) {
@@ -75,6 +83,7 @@ export async function verifyTransaction(reference: string): Promise<{
   return {
     status: json.data.status,
     amount: json.data.amount,
+    currency: json.data.currency ?? "NGN",
     reference: json.data.reference,
     metadata: (json.data.metadata ?? {}) as Record<string, string | undefined>,
   };
@@ -84,5 +93,5 @@ export async function verifyWebhookSignature(rawBody: string, signature: string 
   const secret = await getPaystackSecret();
   if (!secret || !signature) return false;
   const hash = crypto.createHmac("sha512", secret).update(rawBody).digest("hex");
-  return hash === signature;
+  return timingSafeEqualString(hash, signature);
 }

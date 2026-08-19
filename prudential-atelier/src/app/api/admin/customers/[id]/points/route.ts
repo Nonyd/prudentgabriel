@@ -11,7 +11,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("clients");
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
 

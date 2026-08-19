@@ -5,7 +5,7 @@ import { requireAdminApi, requireSuperAdminApi } from "@/lib/admin-auth";
 import { z } from "zod";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("clients");
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
 

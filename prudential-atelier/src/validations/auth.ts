@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { passwordPolicySchema } from "@/lib/password-policy";
 
 export const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -10,11 +11,7 @@ const registerFieldsSchema = z.object({
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
   phone: z.string().min(10, "Please enter a valid phone number"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
+  password: passwordPolicySchema,
   confirmPassword: z.string(),
   referralCode: z.string().optional(),
   acceptTerms: z.boolean().refine((v) => v === true, {
@@ -48,7 +45,7 @@ export const forgotPasswordSchema = z.object({
 export const resetPasswordSchema = z
   .object({
     token: z.string().min(1),
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    password: passwordPolicySchema,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {

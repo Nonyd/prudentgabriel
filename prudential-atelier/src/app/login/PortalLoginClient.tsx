@@ -16,7 +16,7 @@ import {
   resolveStaffPortalRedirect,
   waitForClientSession,
 } from "@/lib/client-auth";
-import { isAdminRole } from "@/lib/roles";
+import { hasAnyAdminPermission } from "@/lib/roles";
 
 type PortalTab = "admin" | "staff";
 
@@ -176,7 +176,7 @@ export function PortalLoginClient() {
       }
 
       if (tab === "admin") {
-        if (!isAdminRole(session.user.role)) {
+        if (!hasAnyAdminPermission(session.user.role)) {
           await signOut({ redirect: false });
           setError("root", {
             message: "This account does not have admin access. Try the Staff tab or contact your manager.",

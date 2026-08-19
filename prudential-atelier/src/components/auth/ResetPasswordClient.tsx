@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { Logo } from "@/components/ui/Logo";
-import { isAdminRole } from "@/lib/roles";
+import { hasAnyAdminPermission } from "@/lib/roles";
 
 export function ResetPasswordClient() {
   const router = useRouter();
@@ -46,7 +46,7 @@ export function ResetPasswordClient() {
       toast.success("Password updated");
       const role = session?.user?.role ?? "";
       const isStaffUser = session?.user?.isStaff === true || role === "STAFF";
-      const destination = isStaffUser ? "/staff" : isAdminRole(role) ? "/admin" : "/account";
+      const destination = isStaffUser ? "/staff" : hasAnyAdminPermission(role) ? "/admin" : "/account";
       router.push(destination);
       router.refresh();
     } catch (err) {

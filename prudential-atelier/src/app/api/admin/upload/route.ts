@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { cloudinary } from "@/lib/cloudinary";
-import { resolveImageMimeType, resolveVideoMimeType } from "@/lib/image-upload-mime";
+import { mimeFromMagicBytes, resolveVideoMimeType } from "@/lib/image-upload-mime";
+import { permissionForUploadFolder, sanitizeUploadFolder } from "@/lib/admin-upload-folder";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
@@ -14,9 +15,6 @@ function isFileLike(v: unknown): v is Blob & { name?: string } {
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi();
-  if (!gate.ok) return gate.response;
-
   const configured =
     Boolean(process.env.CLOUDINARY_API_KEY?.length) &&
     Boolean(process.env.CLOUDINARY_API_SECRET?.length) &&
@@ -37,27 +35,37 @@ export async function POST(req: NextRequest) {
   const fileName = "name" in raw && typeof raw.name === "string" ? raw.name : undefined;
   const allowPdf = form.get("allowPdf") === "true";
   const allowVideo = form.get("allowVideo") === "true";
-  const isPdf = raw.type === "application/pdf";
+  if (raw.size > (allowVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES)) {
+    return NextResponse.json({ error: "File is too large" }, { status: 400 });
+  }
+
+  const buffer = Buffer.from(await raw.arrayBuffer());
   const videoMime = allowVideo ? resolveVideoMimeType(raw.type ?? "", fileName) : null;
   const isVideo = Boolean(videoMime);
-
+  const magic = mimeFromMagicBytes(buffer, { allowPdf, allowGif: false });
   if (isVideo) {
-    if (raw.size > MAX_VIDEO_BYTES) {
-      return NextResponse.json({ error: "Video must be 50MB or smaller" }, { status: 400 });
+    if (!videoMime) {
+      return NextResponse.json({ error: "Unsupported video type" }, { status: 400 });
     }
-  } else if (allowPdf && isPdf) {
-    if (raw.size > MAX_IMAGE_BYTES) {
-      return NextResponse.json({ error: "PDF must be 5MB or smaller" }, { status: 400 });
-    }
-  } else {
-    const mime = resolveImageMimeType(raw.type ?? "", fileName, { allowGif: false });
-    if (!mime) {
-      return NextResponse.json({ error: "Only JPEG, PNG, or WebP images are allowed" }, { status: 400 });
-    }
-    if (raw.size > MAX_IMAGE_BYTES) {
-      return NextResponse.json({ error: "Image must be 5MB or smaller" }, { status: 400 });
-    }
+  } else if (!magic) {
+    return NextResponse.json(
+      { error: allowPdf ? "Only JPEG, PNG, WebP, or PDF files are allowed" : "Only JPEG, PNG, or WebP images are allowed" },
+      { status: 400 },
+    );
   }
+  const isPdf = magic === "application/pdf";
+
+  const folderField = form.get("folder");
+  const folder = sanitizeUploadFolder(
+    typeof folderField === "string" ? folderField : "",
+    "prudential-atelier/products",
+  );
+  const needed = permissionForUploadFolder(folder);
+  if (!needed) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  const gate = await requireAdminApi(needed);
+  if (!gate.ok) return gate.response;
 
   if (!configured) {
     return NextResponse.json({
@@ -70,18 +78,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const folderField = form.get("folder");
-  const folder =
-    typeof folderField === "string" && folderField.trim().length > 0
-      ? folderField.replace(/[^a-zA-Z0-9/_-]/g, "").slice(0, 120)
-      : "prudential-atelier/products";
-
-  const buffer = Buffer.from(await raw.arrayBuffer());
-  const dataMime = isVideo
-    ? videoMime!
-    : isPdf
-      ? "application/pdf"
-      : resolveImageMimeType(raw.type ?? "", fileName, { allowGif: false })!;
+  const dataMime = isVideo ? videoMime! : magic!;
   const base64 = `data:${dataMime};base64,${buffer.toString("base64")}`;
 
   try {

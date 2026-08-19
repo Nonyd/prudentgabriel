@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { isAdminRole } from "@/lib/roles";
+import { hasAnyAdminPermission } from "@/lib/roles";
 
 export async function isMaintenanceEnabled(): Promise<boolean> {
   try {
@@ -18,6 +18,6 @@ export async function isMaintenanceEnabled(): Promise<boolean> {
 export async function enforcePublicMaintenance(role?: string | null) {
   const enabled = await isMaintenanceEnabled();
   if (!enabled) return;
-  if (isAdminRole(role)) return;
+  if (hasAnyAdminPermission(role)) return;
   redirect("/maintenance");
 }

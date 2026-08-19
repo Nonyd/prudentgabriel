@@ -78,7 +78,17 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ orderId: st
 
       const result = await verifyPaystack(reference);
       if (result.status === "success") {
+        const metaId = result.metadata.orderId ?? result.metadata.bespokeOrderId ?? result.metadata.bespokeRequestId;
+        if (metaId && metaId !== orderId) {
+          return redirectFailed(appUrl, orderId, reference);
+        }
+        if (stored.reference && stored.reference !== result.reference) {
+          return redirectFailed(appUrl, orderId, reference);
+        }
         const paidNGN = result.amount / 100;
+        if (paidNGN + 0.01 < amountNGN) {
+          return redirectFailed(appUrl, orderId, reference);
+        }
         await completeBespokePayment({
           orderId,
           paymentRef: reference,
@@ -96,10 +106,17 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ orderId: st
 
       const result = await verifyFlutterwave(transactionId);
       if (result.status === "successful") {
+        if (result.meta?.orderId && result.meta.orderId !== orderId) {
+          return redirectFailed(appUrl, orderId, result.txRef);
+        }
+        const paid = result.amount;
+        if (result.currency.toUpperCase() === "NGN" && paid + 0.01 < amountNGN) {
+          return redirectFailed(appUrl, orderId, result.txRef);
+        }
         await completeBespokePayment({
           orderId,
           paymentRef: result.txRef,
-          amountNGN,
+          amountNGN: result.currency.toUpperCase() === "NGN" ? Math.min(paid, amountNGN) : amountNGN,
           gateway: PaymentGateway.FLUTTERWAVE,
         });
         return redirectSuccess(appUrl, orderId, result.txRef);
@@ -113,6 +130,12 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ orderId: st
 
       const result = await verifyMonnify(reference);
       if (result.status === "PAID" || result.status === "OVERPAID" || result.status === "PAID_FULL") {
+        if (stored.reference && stored.reference !== result.paymentReference && stored.reference !== reference) {
+          return redirectFailed(appUrl, orderId, reference);
+        }
+        if (result.amountPaid + 0.01 < amountNGN) {
+          return redirectFailed(appUrl, orderId, reference);
+        }
         await completeBespokePayment({
           orderId,
           paymentRef: reference,

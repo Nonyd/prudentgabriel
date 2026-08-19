@@ -4,7 +4,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { getSettings } from "@/lib/settings";
 
 export async function POST() {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
 
   const emailSettings = await getSettings("EMAIL");

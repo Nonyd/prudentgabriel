@@ -6,12 +6,21 @@ const TAG_LENGTH = 16;
 const PREFIX_GCM = "gcm:";
 const PREFIX_LEGACY_CBC = "v1:";
 
+function requireEncryptionSecret(): string {
+  const raw = (process.env.ENCRYPTION_KEY ?? process.env.SETTINGS_ENCRYPTION_KEY ?? "").trim();
+  if (!raw) {
+    throw new Error(
+      "ENCRYPTION_KEY or SETTINGS_ENCRYPTION_KEY must be set. Refusing to start without an encryption key.",
+    );
+  }
+  return raw;
+}
+
+/** Resolved at module load so a missing key fails closed on boot, not on first encrypt. */
+const ENCRYPTION_SECRET = requireEncryptionSecret();
+
 function deriveKey(): Buffer {
-  const raw =
-    process.env.ENCRYPTION_KEY ??
-    process.env.SETTINGS_ENCRYPTION_KEY ??
-    "prudent-gabriel-settings-key-2024";
-  return crypto.createHash("sha256").update(raw, "utf8").digest();
+  return crypto.createHash("sha256").update(ENCRYPTION_SECRET, "utf8").digest();
 }
 
 /** AES-256-GCM encrypt; output prefixed with `gcm:` for version detection. */

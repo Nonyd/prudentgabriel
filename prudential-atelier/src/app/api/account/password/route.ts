@@ -3,11 +3,13 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { requireSession } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
+import { passwordPolicySchema } from "@/lib/password-policy";
+import { applyPasswordHash } from "@/lib/password-reset";
 import { logActivity, logError } from "@/lib/logger";
 
 const schema = z.object({
   currentPassword: z.string().min(1),
-  newPassword: z.string().min(8),
+  newPassword: passwordPolicySchema,
   confirmPassword: z.string().min(8),
 }).refine((d) => d.newPassword === d.confirmPassword, {
   message: "Passwords do not match",
@@ -45,10 +47,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const hashed = await bcrypt.hash(parsed.data.newPassword, 12);
-    await prisma.user.update({
-      where: { id: gate.session.user.id! },
-      data: { password: hashed },
-    });
+    await applyPasswordHash(gate.session.user.id!, hashed);
 
     await logActivity({
       userId: gate.session.user.id,

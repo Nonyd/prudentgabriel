@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { toPublicRtwOrderDto } from "@/lib/public-pii-dtos";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 
 export async function GET(
   req: NextRequest,
@@ -14,6 +16,10 @@ export async function GET(
 
   const session = await auth();
   const emailParam = req.nextUrl.searchParams.get("email")?.trim().toLowerCase();
+  if (!session?.user?.id) {
+    const limited = rateLimitOr429(req, "rtw-order-lookup", 20, 15 * 60 * 1000);
+    if (limited) return limited;
+  }
 
   const order = await prisma.order.findUnique({
     where: { orderNumber },
@@ -44,24 +50,6 @@ export async function GET(
   }
 
   return NextResponse.json({
-    order: {
-      orderNumber: order.orderNumber,
-      guestEmail: order.guestEmail,
-      subtotal: order.subtotal,
-      shippingAmount: order.shippingAmount,
-      discount: order.discount,
-      pointsDiscountNGN: order.pointsDiscountNGN,
-      total: order.total,
-      paymentStatus: order.paymentStatus,
-      status: order.status,
-      addressSnapshot: order.addressSnapshot,
-      shippingZone: order.shippingZone,
-      items: order.items.map((i) => ({
-        name: i.product.name,
-        size: i.size,
-        quantity: i.quantity,
-        lineTotal: i.lineTotal,
-      })),
-    },
+    order: toPublicRtwOrderDto(order),
   });
 }

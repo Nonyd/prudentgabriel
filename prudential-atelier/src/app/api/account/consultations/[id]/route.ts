@@ -3,6 +3,8 @@ import { ConsultationStatus, PaymentStatus } from "@prisma/client";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { toPublicConsultationDto } from "@/lib/public-pii-dtos";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 
 function isBookingNumber(id: string): boolean {
   return id.startsWith("CB-");
@@ -34,7 +36,7 @@ function canAccessPublicSuccess(booking: { paymentStatus: PaymentStatus; status:
   return true;
 }
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
   const booking = await findBooking(id);
@@ -43,10 +45,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   if (isBookingNumber(id)) {
+    const limited = rateLimitOr429(req, "consultation-ref", 20, 15 * 60 * 1000);
+    if (limited) return limited;
     if (!canAccessPublicSuccess(booking)) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    return NextResponse.json({ booking });
+    return NextResponse.json({ booking: toPublicConsultationDto(booking) });
   }
 
   if (!session?.user?.id) {

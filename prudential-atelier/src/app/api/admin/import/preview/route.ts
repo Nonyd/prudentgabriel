@@ -109,7 +109,7 @@ function resolveVariationImages(
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("shop.products");
   if (!gate.ok) return gate.response;
 
   let formData: FormData;

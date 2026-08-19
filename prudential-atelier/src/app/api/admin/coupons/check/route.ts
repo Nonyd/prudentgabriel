@@ -3,7 +3,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("shop.orders");
   if (!gate.ok) return gate.response;
 
   const code = new URL(req.url).searchParams.get("code")?.trim().toUpperCase();

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatDate, optimizeImageUrl } from "@/lib/utils";
+import { sanitizeCmsHtml } from "@/lib/sanitize-html";
 
 type Article = {
   title: string;
@@ -102,7 +103,7 @@ export function JournalArticleClient({ slug }: { slug: string }) {
 
       <div
         className="prose prose-sm mx-auto mt-10 max-w-3xl font-body text-text-mid prose-headings:font-serif prose-headings:text-choc prose-a:text-nut"
-        dangerouslySetInnerHTML={{ __html: item.content }}
+        dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(item.content) }}
       />
 
       <div className="mx-auto mt-12 flex max-w-3xl flex-wrap gap-3 border-t border-sand pt-8">

@@ -5,7 +5,7 @@ import { uploadProductImageFromUrl } from "@/lib/product-image-migrate";
 import { revalidateProduct } from "@/lib/revalidate";
 
 export async function GET() {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("shop.products");
   if (!gate.ok) return gate.response;
 
   const total = await prisma.productImage.count({
@@ -16,7 +16,7 @@ export async function GET() {
 }
 
 export async function POST() {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("shop.products");
   if (!gate.ok) return gate.response;
 
   const legacy = await prisma.productImage.findMany({

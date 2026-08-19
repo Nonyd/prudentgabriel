@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { JOB_TYPE_LABELS } from "@/lib/job-custom-fields";
 import { JobApplicationForm } from "@/components/careers/JobApplicationForm";
+import { sanitizeCmsHtml } from "@/lib/sanitize-html";
 
 export const revalidate = 60;
 
@@ -53,7 +54,7 @@ export default async function CareerJobPage({
             <h2 className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">About this role</h2>
             <div
               className="prose prose-sm mt-3 max-w-none font-body text-choc"
-              dangerouslySetInnerHTML={{ __html: job.description }}
+              dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(job.description) }}
             />
           </section>
 
@@ -61,7 +62,7 @@ export default async function CareerJobPage({
             <h2 className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">What we&apos;re looking for</h2>
             <div
               className="prose prose-sm mt-3 max-w-none font-body text-choc"
-              dangerouslySetInnerHTML={{ __html: job.requirements }}
+              dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(job.requirements) }}
             />
           </section>
 
@@ -70,7 +71,7 @@ export default async function CareerJobPage({
               <h2 className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">What we offer</h2>
               <div
                 className="prose prose-sm mt-3 max-w-none font-body text-choc"
-                dangerouslySetInnerHTML={{ __html: job.benefits }}
+                dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(job.benefits) }}
               />
             </section>
           ) : null}

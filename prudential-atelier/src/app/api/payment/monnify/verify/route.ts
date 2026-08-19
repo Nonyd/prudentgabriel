@@ -4,6 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { verifyTransaction } from "@/lib/payments/monnify";
 import { fulfillPaidOrder } from "@/lib/order-payment";
+import {
+  assertPspChargeBinds,
+  expectedAmountInPspUnits,
+  PaymentBindError,
+} from "@/lib/payment-bind";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -23,6 +28,21 @@ export async function GET(req: NextRequest) {
     }
 
     if (result.status === "PAID") {
+      assertPspChargeBinds(
+        {
+          id: order.id,
+          storedReference: order.paymentRef,
+          expectedAmount: expectedAmountInPspUnits(PaymentGateway.MONNIFY, order.total),
+          expectedCurrency: String(order.currency),
+        },
+        {
+          gateway: PaymentGateway.MONNIFY,
+          reference: result.paymentReference,
+          amount: result.amountPaid,
+          currency: result.currency,
+          metadataEntityId: result.paymentReference === order.orderNumber ? order.id : null,
+        },
+      );
       await fulfillPaidOrder({
         orderId: order.id,
         paymentRef: result.paymentReference,
@@ -38,7 +58,10 @@ export async function GET(req: NextRequest) {
       where: { id: orderId, paymentStatus: PaymentStatus.PENDING },
       data: { paymentStatus: PaymentStatus.FAILED },
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof PaymentBindError) {
+      return NextResponse.redirect(`${appUrl}/checkout?error=payment-failed`);
+    }
     return NextResponse.redirect(`${appUrl}/checkout?error=payment-failed`);
   }
 

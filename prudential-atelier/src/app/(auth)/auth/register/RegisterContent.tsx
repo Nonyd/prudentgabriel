@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, type RegisterInput } from "@/validations/auth";
 import { Button } from "@/components/ui/Button";
 
 export function RegisterContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const refFromUrl = searchParams.get("ref") ?? "";
+  const [submitted, setSubmitted] = useState(false);
 
   const {
     register,
@@ -40,8 +41,7 @@ export function RegisterContent() {
       setError("root", { message });
       return;
     }
-    router.push("/login?registered=1");
-    router.refresh();
+    setSubmitted(true);
   };
 
   return (
@@ -72,6 +72,13 @@ export function RegisterContent() {
             <span className="text-lightbr">Gabriel</span>
           </Link>
           <h2 className="mt-10 font-serif text-3xl font-medium text-choc">Create account</h2>
+          {submitted ? (
+            <p className="mt-6 font-sans text-sm font-light text-text-mid">
+              Check your email. If you already have an account, we&apos;ll send a reminder instead of
+              creating a new one.
+            </p>
+          ) : (
+            <>
           <p className="mt-2 font-sans text-sm font-light text-text-mid">
             Already have an account?{" "}
             <Link href="/login" className="text-nut hover:underline">
@@ -179,6 +186,8 @@ export function RegisterContent() {
               Create account
             </Button>
           </form>
+            </>
+          )}
         </div>
       </div>
     </div>

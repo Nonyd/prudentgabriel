@@ -9,18 +9,17 @@
  * testimonials. Never deletes catalogue rows.
  *
  * Demo / fixture data lives in prisma/seed-fixtures.ts and scripts/seed-demo.ts
- * (both require ALLOW_FIXTURES=true and refuse the production Neon host).
+ * (both require ALLOW_FIXTURES=true and refuse staging/production hosts).
  */
-import bcrypt from "bcryptjs";
 import {
   PrismaClient,
-  Role,
   ConsultationSessionType,
   ConsultationDeliveryMode,
   SettingGroup,
   SettingType,
   GalleryCategory,
 } from "@prisma/client";
+import { seedBootstrapAdmin } from "./bootstrap-admin";
 
 const prisma = new PrismaClient();
 
@@ -595,17 +594,7 @@ async function upsertCollections() {
 async function main() {
   console.log("Bootstrap seed (production-safe) — settings, consultants, shipping, collections, gallery, admin.");
 
-  const adminHash = await bcrypt.hash("Admin@PA2024!", 12);
-  await prisma.user.upsert({
-    where: { email: "admin@prudentgabriel.com" },
-    update: { role: Role.SUPER_ADMIN },
-    create: {
-      email: "admin@prudentgabriel.com",
-      name: "PA Admin",
-      password: adminHash,
-      role: Role.SUPER_ADMIN,
-    },
-  });
+  await seedBootstrapAdmin(prisma);
 
   await upsertShippingZones();
   await upsertConsultants();

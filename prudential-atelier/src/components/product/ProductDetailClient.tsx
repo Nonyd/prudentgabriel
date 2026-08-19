@@ -13,6 +13,7 @@ import { PriceDisplay } from "@/components/product/PriceDisplay";
 import { WishlistButton } from "@/components/common/WishlistButton";
 import { StockAlertForm } from "@/components/common/StockAlertForm";
 import { SizeGuideModal } from "@/components/shop/SizeGuideModal";
+import { sanitizeCmsHtml } from "@/lib/sanitize-html";
 import { useCartStore } from "@/store/cartStore";
 import { convertFromNGN } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
@@ -291,7 +292,7 @@ export function ProductDetailClient({
                 <Accordion.Content className="pb-4">
                   <div
                     className="copy-body space-y-2 text-sm leading-relaxed text-charcoal-mid [&_p]:mb-2"
-                    dangerouslySetInnerHTML={{ __html: product.details }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(product.details) }}
                   />
                 </Accordion.Content>
               </Accordion.Item>

@@ -45,6 +45,7 @@ raise the schedule frequency (requires Pro) or move to the VPS.
 | `balance-reminders` | `BespokeOrder.balanceReminderSentAt` | Re-sends after 7-day cooldown |
 | `stage-approval-reminders` | `StageApproval.reminderSentAt` | Once per pending approval |
 | `unsent-quote-alerts` | `ConsultationBooking.quoteAlertSentAt` | Once; COMPLETED + no quotation + 48h |
+| `update-performance` | `PerformanceRecord` upsert | Staff scores; fail-closed cron auth |
 
 ## Pending migration (legacy route handlers)
 
@@ -57,7 +58,6 @@ Leave these on their current structure until a later sprint / Phase 5:
 - `event-reminders`
 - `daily-report`
 - `weekly-report`
-- `update-performance`
 - `review-requests`
 - `update-bestsellers`
 

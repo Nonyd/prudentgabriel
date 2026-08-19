@@ -4,6 +4,22 @@ import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { verifyTransaction } from "@/lib/payments/flutterwave";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
+import { convertFromNGN, getExchangeRates, type ShopCurrency } from "@/lib/currency";
+import {
+  assertPspChargeBinds,
+  expectedAmountInPspUnits,
+  PaymentBindError,
+} from "@/lib/payment-bind";
+
+async function expectedFlutterwaveCharge(totalNGN: number, pspCurrency: string) {
+  const cur = pspCurrency.trim().toUpperCase();
+  if (cur === "USD" || cur === "GBP") {
+    const rates = await getExchangeRates();
+    const major = convertFromNGN(totalNGN, cur as ShopCurrency, rates);
+    return { amount: expectedAmountInPspUnits(PaymentGateway.FLUTTERWAVE, major), currency: cur };
+  }
+  return { amount: expectedAmountInPspUnits(PaymentGateway.FLUTTERWAVE, totalNGN), currency: "NGN" };
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -23,9 +39,22 @@ export async function GET(req: NextRequest) {
     }
 
     if (result.status === "successful") {
-      if (result.meta?.bookingId && result.meta.bookingId !== bookingId) {
-        return NextResponse.redirect(`${appUrl}/consultation?error=payment-failed`);
-      }
+      const expected = await expectedFlutterwaveCharge(booking.feeNGN, result.currency);
+      assertPspChargeBinds(
+        {
+          id: booking.id,
+          storedReference: booking.paymentRef,
+          expectedAmount: expected.amount,
+          expectedCurrency: expected.currency,
+        },
+        {
+          gateway: PaymentGateway.FLUTTERWAVE,
+          reference: result.txRef,
+          amount: result.amount,
+          currency: result.currency,
+          metadataEntityId: result.meta.bookingId,
+        },
+      );
       await fulfillPaidConsultationBooking({
         bookingId: booking.id,
         paymentRef: result.txRef,
@@ -40,7 +69,10 @@ export async function GET(req: NextRequest) {
       where: { id: bookingId, paymentStatus: PaymentStatus.PENDING },
       data: { paymentStatus: PaymentStatus.FAILED },
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof PaymentBindError) {
+      return NextResponse.redirect(`${appUrl}/consultation?error=payment-failed`);
+    }
     return NextResponse.redirect(`${appUrl}/consultation?error=payment-failed`);
   }
 

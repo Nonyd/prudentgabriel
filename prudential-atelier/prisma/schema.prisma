@@ -48,6 +48,8 @@ model User {
   mustResetPassword Boolean @default(false)
   isActive          Boolean  @default(true)
   lastLogin         DateTime?
+  /// Set on password reset / change so JWTs issued earlier (`iat`) are rejected.
+  passwordChangedAt DateTime?
 
   jobRoleId  String?
   jobRole    JobRole? @relation("UserJobRole", fields: [jobRoleId], references: [id])

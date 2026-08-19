@@ -4,6 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { verifyTransaction } from "@/lib/payments/paystack";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
+import {
+  assertPspChargeBinds,
+  expectedAmountInPspUnits,
+  PaymentBindError,
+} from "@/lib/payment-bind";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -23,9 +28,24 @@ export async function GET(req: NextRequest) {
     }
 
     if (result.status === "success") {
+      assertPspChargeBinds(
+        {
+          id: booking.id,
+          storedReference: booking.paymentRef,
+          expectedAmount: expectedAmountInPspUnits(PaymentGateway.PAYSTACK, booking.feeNGN),
+          expectedCurrency: "NGN",
+        },
+        {
+          gateway: PaymentGateway.PAYSTACK,
+          reference: result.reference,
+          amount: result.amount,
+          currency: result.currency,
+          metadataEntityId: result.metadata.bookingId,
+        },
+      );
       await fulfillPaidConsultationBooking({
         bookingId: booking.id,
-        paymentRef: reference,
+        paymentRef: result.reference,
         gateway: PaymentGateway.PAYSTACK,
       });
       return NextResponse.redirect(
@@ -37,7 +57,10 @@ export async function GET(req: NextRequest) {
       where: { id: bookingId, paymentStatus: PaymentStatus.PENDING },
       data: { paymentStatus: PaymentStatus.FAILED },
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof PaymentBindError) {
+      return NextResponse.redirect(`${appUrl}/consultation?error=payment-failed`);
+    }
     return NextResponse.redirect(`${appUrl}/consultation?error=payment-failed`);
   }
 

@@ -102,7 +102,7 @@ async function importParsedProduct(product: ParsedProduct): Promise<{ id: string
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("shop.products");
   if (!gate.ok) return gate.response;
 
   let body: ImportBody;

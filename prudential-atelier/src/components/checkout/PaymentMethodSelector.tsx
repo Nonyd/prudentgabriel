@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
 import clsx from "clsx";
 import { Building2, CreditCard, Globe, Landmark, Upload } from "lucide-react";
 import toast from "react-hot-toast";
@@ -13,6 +14,7 @@ type Props = {
   onSelect: (gateway: PaymentGatewayType) => void;
   receiptUrl?: string | null;
   onReceiptUploaded?: (url: string) => void;
+  guestEmail?: string | null;
 };
 
 const GATEWAY_META: Record<
@@ -51,7 +53,9 @@ export function PaymentMethodSelector({
   onSelect,
   receiptUrl,
   onReceiptUploaded,
+  guestEmail,
 }: Props) {
+  const { status } = useSession();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [gateways, setGateways] = useState<PaymentGatewayType[]>([]);
@@ -89,6 +93,20 @@ export function PaymentMethodSelector({
     try {
       const fd = new FormData();
       fd.set("file", file);
+      if (status !== "authenticated") {
+        const email = guestEmail?.trim();
+        if (!email) throw new Error("Enter your email before uploading a receipt");
+        const tr = await fetch("/api/upload/receipt/ticket", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const tj = (await tr.json()) as { ticket?: string; exp?: number; error?: string };
+        if (!tr.ok || !tj.ticket || !tj.exp) throw new Error(tj.error ?? "Could not start upload");
+        fd.set("email", email);
+        fd.set("ticket", tj.ticket);
+        fd.set("exp", String(tj.exp));
+      }
       const res = await fetch("/api/upload/receipt", { method: "POST", body: fd });
       const j = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !j.url) throw new Error(j.error ?? "Upload failed");

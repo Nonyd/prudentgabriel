@@ -23,6 +23,13 @@ export async function GET(req: NextRequest) {
     }
 
     if (result.status === "success") {
+      const metaId = result.metadata.bespokeRequestId;
+      const stored = bespoke.balancePaystackRef;
+      const metaOk = Boolean(metaId && metaId === bespoke.id);
+      const refOk = Boolean(stored && stored === result.reference);
+      if (!metaOk && !refOk) {
+        return NextResponse.redirect(`${appUrl}/bespoke?error=payment-failed`);
+      }
       await fulfillPaidBespokeBalance({
         bespokeRequestId: bespoke.id,
         paymentRef: reference,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BespokeStage, PaymentStatus } from "@prisma/client";
-import { requireAdmin } from "@/lib/api-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { logError } from "@/lib/logger";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
@@ -50,7 +50,7 @@ function pctChange(current: number, previous: number): number {
 }
 
 export async function GET(req: NextRequest) {
-  const gate = await requireAdmin();
+  const gate = await requireAdminApi("reports");
   if (!gate.ok) return gate.response;
 
   const { from, to, prevFrom, prevTo } = parseRange(req);

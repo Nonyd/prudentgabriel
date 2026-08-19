@@ -6,7 +6,7 @@ import { parseBespokePaymentRef } from "@/lib/bespoke-order-access";
 import { toNumber } from "@/lib/payments/ledger";
 
 export async function GET() {
-  const session = await requireAdminApi();
+  const session = await requireAdminApi("payments");
   if (!session.ok) return session.response;
 
   const [orders, bookings, bespokes, pendingLedger] = await Promise.all([

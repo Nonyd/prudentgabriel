@@ -5,12 +5,17 @@ import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { registerSchema } from "@/validations/auth";
 import { awardReferralPoints } from "@/lib/points";
-import { sendWelcomeEmail } from "@/lib/email";
+import { sendWelcomeEmail, sendAccountExistsEmail } from "@/lib/email";
+import { getPublicAppUrl } from "@/lib/app-url";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 import { notifyNewCustomer } from "@/lib/notifications";
 import { getLoyaltyRulePoints } from "@/lib/loyalty";
 import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
 
 export async function POST(request: Request) {
+  const limited = rateLimitOr429(request, "register", 5, 15 * 60 * 1000);
+  if (limited) return limited;
+
   let body: unknown;
   try {
     body = await request.json();
@@ -27,7 +32,10 @@ export async function POST(request: Request) {
 
   const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
   if (existing) {
-    return NextResponse.json({ error: "Email already registered" }, { status: 409 });
+    void sendAccountExistsEmail(email.toLowerCase(), `${getPublicAppUrl()}/login`).catch((e) =>
+      console.warn("[register] exists mail", e),
+    );
+    return NextResponse.json({ success: true });
   }
 
   let referrerId: string | undefined;

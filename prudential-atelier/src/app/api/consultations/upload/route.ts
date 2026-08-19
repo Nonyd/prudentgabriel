@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cloudinary } from "@/lib/cloudinary";
-import { resolveImageMimeType } from "@/lib/image-upload-mime";
+import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const PLACEHOLDER =
@@ -11,6 +12,9 @@ function isFileLike(v: unknown): v is Blob & { name?: string } {
 }
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimitOr429(req, "consultations-upload", 8, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const configured =
     Boolean(process.env.CLOUDINARY_API_KEY?.length) &&
     Boolean(process.env.CLOUDINARY_API_SECRET?.length) &&
@@ -27,22 +31,20 @@ export async function POST(req: NextRequest) {
   if (!isFileLike(raw)) {
     return NextResponse.json({ error: "Missing file field" }, { status: 400 });
   }
-
-  const fileName = "name" in raw && typeof raw.name === "string" ? raw.name : undefined;
-  const mime = resolveImageMimeType(raw.type ?? "", fileName, { allowGif: false });
-  if (!mime) {
-    return NextResponse.json({ error: "Only JPEG, PNG, or WebP images are allowed" }, { status: 400 });
-  }
-
   if (raw.size > MAX_BYTES) {
     return NextResponse.json({ error: "Image must be 5MB or smaller" }, { status: 400 });
+  }
+
+  const buffer = Buffer.from(await raw.arrayBuffer());
+  const mime = mimeFromMagicBytes(buffer);
+  if (!mime || mime === "application/pdf") {
+    return NextResponse.json({ error: "Only JPEG, PNG, or WebP images are allowed" }, { status: 400 });
   }
 
   if (!configured) {
     return NextResponse.json({ url: PLACEHOLDER, publicId: `consult-dev-${Date.now()}` });
   }
 
-  const buffer = Buffer.from(await raw.arrayBuffer());
   const base64 = `data:${mime};base64,${buffer.toString("base64")}`;
 
   try {

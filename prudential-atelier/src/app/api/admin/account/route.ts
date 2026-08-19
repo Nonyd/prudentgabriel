@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAdminApi } from "@/lib/admin-auth";
+import { requireAdminPortalApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
 const patchSchema = z.object({
@@ -9,7 +9,7 @@ const patchSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminPortalApi();
   if (!gate.ok) return gate.response;
 
   let body: unknown;

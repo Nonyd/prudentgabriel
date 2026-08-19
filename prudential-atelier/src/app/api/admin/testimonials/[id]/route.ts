@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireAdminApi, requireGeneralAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi, requireGeneralAdminApi, CMS_ADMIN_PERMISSIONS } from "@/lib/admin-auth";
 import { adminTestimonialBodySchema, toTestimonialWriteData } from "@/lib/admin-testimonial-schema";
 
 const quickPatchSchema = z
@@ -14,7 +14,7 @@ const quickPatchSchema = z
   });
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi(CMS_ADMIN_PERMISSIONS);
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
 
@@ -80,7 +80,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 }
 
 export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi(CMS_ADMIN_PERMISSIONS);
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
   await prisma.testimonial.delete({ where: { id } });

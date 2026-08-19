@@ -6,8 +6,27 @@ import { verifyWebhookEvent } from "@/lib/payments/stripe";
 import { fulfillPaidOrder } from "@/lib/order-payment";
 import { notifyPaymentFailed } from "@/lib/notifications";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
+import { convertFromNGN, getExchangeRates, type ShopCurrency } from "@/lib/currency";
+import {
+  assertPspChargeBinds,
+  expectedAmountInPspUnits,
+  PaymentBindError,
+} from "@/lib/payment-bind";
 
 export const runtime = "nodejs";
+
+async function expectedStripeMinor(totalNGN: number, pspCurrency: string): Promise<{
+  amount: number;
+  currency: string;
+}> {
+  const cur = pspCurrency.trim().toUpperCase();
+  if (cur === "USD" || cur === "GBP") {
+    const rates = await getExchangeRates();
+    const major = convertFromNGN(totalNGN, cur as ShopCurrency, rates);
+    return { amount: expectedAmountInPspUnits(PaymentGateway.STRIPE, major), currency: cur };
+  }
+  return { amount: expectedAmountInPspUnits(PaymentGateway.STRIPE, totalNGN), currency: cur || "USD" };
+}
 
 export async function POST(req: NextRequest) {
   const buf = Buffer.from(await req.arrayBuffer());
@@ -25,18 +44,60 @@ export async function POST(req: NextRequest) {
     const orderId = pi.metadata?.orderId;
     const bookingId = pi.metadata?.consultationBookingId;
     const isConsultation = pi.metadata?.type === "consultation";
-    if (isConsultation && bookingId) {
-      await fulfillPaidConsultationBooking({
-        bookingId,
-        paymentRef: pi.id,
-        gateway: PaymentGateway.STRIPE,
-      });
-    } else if (orderId) {
-      await fulfillPaidOrder({
-        orderId,
-        paymentRef: pi.id,
-        gateway: PaymentGateway.STRIPE,
-      });
+    try {
+      if (isConsultation && bookingId) {
+        const booking = await prisma.consultationBooking.findUnique({ where: { id: bookingId } });
+        if (booking) {
+          const expected = await expectedStripeMinor(booking.feeNGN, pi.currency);
+          assertPspChargeBinds(
+            {
+              id: booking.id,
+              storedReference: booking.paymentRef,
+              expectedAmount: expected.amount,
+              expectedCurrency: expected.currency,
+            },
+            {
+              gateway: PaymentGateway.STRIPE,
+              reference: pi.id,
+              amount: pi.amount,
+              currency: pi.currency,
+              metadataEntityId: bookingId,
+            },
+          );
+          await fulfillPaidConsultationBooking({
+            bookingId,
+            paymentRef: pi.id,
+            gateway: PaymentGateway.STRIPE,
+          });
+        }
+      } else if (orderId) {
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (order) {
+          const expected = await expectedStripeMinor(order.total, pi.currency);
+          assertPspChargeBinds(
+            {
+              id: order.id,
+              storedReference: order.paymentRef,
+              expectedAmount: expected.amount,
+              expectedCurrency: expected.currency,
+            },
+            {
+              gateway: PaymentGateway.STRIPE,
+              reference: pi.id,
+              amount: pi.amount,
+              currency: pi.currency,
+              metadataEntityId: orderId,
+            },
+          );
+          await fulfillPaidOrder({
+            orderId,
+            paymentRef: pi.id,
+            gateway: PaymentGateway.STRIPE,
+          });
+        }
+      }
+    } catch (e) {
+      if (!(e instanceof PaymentBindError)) throw e;
     }
   }
 

@@ -8,7 +8,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("shop.orders");
   if (!gate.ok) return gate.response;
 
   let body: unknown;

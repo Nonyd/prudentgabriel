@@ -1,8 +1,6 @@
 import { getSetting } from "@/lib/settings";
 import type { PaymentCurrency, PaymentGatewayType } from "@/lib/payments/index";
 
-const WEBHOOK_BASE = "https://prudentgabriel.vercel.app/api/webhooks";
-
 function envOrNull(key: string): string | null {
   const v = process.env[key];
   return v?.trim() ? v.trim() : null;
@@ -22,7 +20,10 @@ async function isEnabled(settingKey: string, fallback = true): Promise<boolean> 
 }
 
 export function getWebhookUrl(gateway: "paystack" | "flutterwave" | "stripe" | "monnify"): string {
-  return `${WEBHOOK_BASE}/${gateway}`;
+  const app =
+    (process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? "").replace(/\/$/, "");
+  const base = app || "https://prudentgabriel.com";
+  return `${base}/api/payment/${gateway}/webhook`;
 }
 
 export async function getPaystackSecret(): Promise<string | null> {
@@ -35,6 +36,14 @@ export async function getPaystackPublicKey(): Promise<string | null> {
 
 export async function getFlutterwaveSecret(): Promise<string | null> {
   return settingOrEnv("flutterwave_secret_key", "FLUTTERWAVE_SECRET_KEY");
+}
+
+/** Dashboard `verif-hash` secret. Falls back to the API secret if no dedicated hash is set. */
+export async function getFlutterwaveWebhookHash(): Promise<string | null> {
+  return (
+    (await settingOrEnv("flutterwave_secret_hash", "FLUTTERWAVE_SECRET_HASH")) ??
+    (await getFlutterwaveSecret())
+  );
 }
 
 export async function getFlutterwavePublicKey(): Promise<string | null> {

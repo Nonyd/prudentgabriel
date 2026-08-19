@@ -5,6 +5,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
+import { jwtIssuedBeforePasswordChange } from "@/lib/password-reset";
 
 const googleEnabled =
   Boolean(process.env.GOOGLE_CLIENT_ID?.length) && Boolean(process.env.GOOGLE_CLIENT_SECRET?.length);
@@ -81,6 +82,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             role: true,
             isStaff: true,
             mustResetPassword: true,
+            passwordChangedAt: true,
             jobTitle: true,
             department: true,
             jobRole: { select: { permissions: true } },
@@ -112,6 +114,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { id: token.id as string },
           select: {
             mustResetPassword: true,
+            passwordChangedAt: true,
             isStaff: true,
             jobTitle: true,
             department: true,
@@ -120,6 +123,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           },
         });
         if (dbUser) {
+          if (
+            jwtIssuedBeforePasswordChange(
+              typeof token.iat === "number" ? token.iat : undefined,
+              dbUser.passwordChangedAt,
+            )
+          ) {
+            return null;
+          }
           token.mustResetPassword = dbUser.mustResetPassword;
           token.isStaff = dbUser.isStaff === true || dbUser.role === "STAFF";
           token.jobTitle = dbUser.jobTitle ?? undefined;

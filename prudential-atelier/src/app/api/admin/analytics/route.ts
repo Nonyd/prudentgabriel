@@ -8,7 +8,7 @@ function daysAgo(n: number) {
 }
 
 export async function GET(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("reports");
   if (!gate.ok) return gate.response;
 
   const { searchParams } = new URL(req.url);

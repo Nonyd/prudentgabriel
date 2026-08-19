@@ -8,7 +8,7 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: { key: string } },
 ) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
 
   const key = params.key;

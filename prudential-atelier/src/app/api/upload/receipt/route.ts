@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { cloudinary } from "@/lib/cloudinary";
+import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
+import { rateLimitOr429 } from "@/lib/rate-limit";
+import { verifyReceiptUploadTicket } from "@/lib/receipt-upload-ticket";
 
 const MAX_BYTES = 5 * 1024 * 1024;
-const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
 
 function isFileLike(v: unknown): v is Blob & { name?: string } {
   return typeof v === "object" && v !== null && typeof (v as Blob).arrayBuffer === "function";
 }
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimitOr429(req, "receipt-upload", 12, 15 * 60 * 1000);
+  if (limited) return limited;
+
+  const session = await auth();
+
   const configured =
     Boolean(process.env.CLOUDINARY_API_KEY?.length) &&
     Boolean(process.env.CLOUDINARY_API_SECRET?.length) &&
@@ -21,25 +29,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
   }
 
+  if (!session?.user?.id) {
+    const email = String(form.get("email") ?? "");
+    const ticket = String(form.get("ticket") ?? "");
+    const exp = Number(form.get("exp") ?? 0);
+    if (!verifyReceiptUploadTicket(email, ticket, exp)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
+
   const raw = form.get("file");
   if (!isFileLike(raw)) {
     return NextResponse.json({ error: "Missing file field" }, { status: 400 });
   }
-
-  const mime = raw.type || "application/octet-stream";
-  if (!ALLOWED.has(mime)) {
-    return NextResponse.json({ error: "Only JPG, PNG, WebP, or PDF files are allowed" }, { status: 400 });
-  }
-
   if (raw.size > MAX_BYTES) {
     return NextResponse.json({ error: "File must be 5MB or smaller" }, { status: 400 });
+  }
+
+  const buffer = Buffer.from(await raw.arrayBuffer());
+  const mime = mimeFromMagicBytes(buffer, { allowPdf: true });
+  if (!mime) {
+    return NextResponse.json({ error: "Only JPG, PNG, WebP, or PDF files are allowed" }, { status: 400 });
   }
 
   if (!configured) {
     return NextResponse.json({ url: `https://placehold.co/receipt-${Date.now()}.png` });
   }
 
-  const buffer = Buffer.from(await raw.arrayBuffer());
   const base64 = `data:${mime};base64,${buffer.toString("base64")}`;
 
   try {

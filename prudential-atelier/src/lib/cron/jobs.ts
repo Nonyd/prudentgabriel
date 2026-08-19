@@ -4,6 +4,7 @@ import { run as runStageApprovalReminders } from "@/lib/cron/jobs/stage-approval
 import { run as runUnsentQuoteAlerts } from "@/lib/cron/jobs/unsent-quote-alerts";
 import { run as runReviewRequests } from "@/lib/cron/jobs/review-requests";
 import { run as runReceiptReminders } from "@/lib/cron/jobs/receipt-reminders";
+import { run as runUpdatePerformance } from "@/lib/cron/jobs/update-performance";
 
 /**
  * Single source of truth for scheduled jobs.
@@ -64,8 +65,8 @@ export const CRON_JOBS: CronJobDefinition[] = [
     name: "update-performance",
     schedule: "0 2 * * *",
     description: "Staff performance score refresh",
-    handler: null,
-    migrated: false,
+    handler: runUpdatePerformance,
+    migrated: true,
   },
   {
     name: "review-requests",

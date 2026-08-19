@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
-import { nanoid } from "nanoid";
 import { prisma } from "@/lib/prisma";
 import { forgotPasswordSchema } from "@/validations/auth";
+import { sendPasswordResetEmail } from "@/lib/email";
+import { generateResetToken, RESET_TTL_MS } from "@/lib/password-reset";
+import { getPublicAppUrl } from "@/lib/app-url";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const limited = rateLimitOr429(request, "forgot-password", 5, 15 * 60 * 1000);
+  if (limited) return limited;
+
   let body: unknown;
   try {
     body = await request.json();
@@ -21,14 +27,18 @@ export async function POST(request: Request) {
 
   if (user?.password) {
     await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
+    const { raw, hash } = generateResetToken();
     await prisma.passwordResetToken.create({
       data: {
-        token: nanoid(32),
+        token: hash,
         userId: user.id,
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        expiresAt: new Date(Date.now() + RESET_TTL_MS),
       },
     });
-    // TODO: Stage 9 — send reset email with link containing token
+    const resetUrl = `${getPublicAppUrl()}/auth/reset-password/${raw}`;
+    void sendPasswordResetEmail(email, resetUrl).catch((e) =>
+      console.warn("[forgot-password] mail", e),
+    );
   }
 
   return NextResponse.json({ success: true });

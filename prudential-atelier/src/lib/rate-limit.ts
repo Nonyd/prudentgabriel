@@ -1,3 +1,5 @@
+import { NextResponse } from "next/server";
+
 type Bucket = { count: number; resetAt: number };
 
 const store = new Map<string, Bucket>();
@@ -23,4 +25,19 @@ export function getClientIp(req: Request): string {
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0]?.trim() || "unknown";
   return req.headers.get("x-real-ip") || "unknown";
+}
+
+export function rateLimitOr429(
+  req: Request,
+  bucket: string,
+  limit: number,
+  windowMs: number,
+): NextResponse | null {
+  const ip = getClientIp(req);
+  const result = checkRateLimit(`${bucket}:${ip}`, limit, windowMs);
+  if (result.ok) return null;
+  return NextResponse.json(
+    { error: "Too many requests" },
+    { status: 429, headers: { "Retry-After": String(result.retryAfterSec) } },
+  );
 }

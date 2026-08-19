@@ -1,10 +1,15 @@
 /**
  * Shared guard for fixture / demo seed scripts.
- * Production must never receive demo clients, orders, or invoices again.
+ * Staging and production must never receive demo clients, orders, or invoices.
  */
 export const PRODUCTION_DB_HOST_MARKERS = [
-  "ep-sparkling-field-abfslmfw", // Neon production compute (jolly-feather-41999434 / production)
+  "ep-sparkling-field-abfslmfw", // Neon production compute (jolly-feather-41999434)
   "br-bold-boat-abs0vzgk",
+  "prudentgabriel-postgres", // VPS production compose hostname
+];
+
+export const STAGING_DB_HOST_MARKERS = [
+  "prudentgabriel-staging-postgres",
 ];
 
 export function databaseUrlHost(url: string | undefined): string {
@@ -23,12 +28,25 @@ export function looksLikeProductionDatabase(url = process.env.DATABASE_URL ?? pr
   return PRODUCTION_DB_HOST_MARKERS.some((marker) => host.includes(marker.toLowerCase()));
 }
 
+export function looksLikeStagingDatabase(url = process.env.DATABASE_URL ?? process.env.DIRECT_URL): boolean {
+  const host = databaseUrlHost(url);
+  if (!host) return false;
+  return STAGING_DB_HOST_MARKERS.some((marker) => host.includes(marker.toLowerCase()));
+}
+
 /** Call at the top of any fixture seed. Exits non-zero if unsafe. */
 export function assertFixturesAllowed(scriptName: string): void {
   if (looksLikeProductionDatabase()) {
     console.error(
-      `${scriptName}: refused — DATABASE_URL points at the production Neon branch.\n` +
+      `${scriptName}: refused — DATABASE_URL points at production.\n` +
         "Fixture / demo seeds must never run against production.",
+    );
+    process.exit(1);
+  }
+  if (looksLikeStagingDatabase()) {
+    console.error(
+      `${scriptName}: refused — DATABASE_URL points at staging.\n` +
+        "Fixture / demo seeds must never run against staging.",
     );
     process.exit(1);
   }

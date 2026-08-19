@@ -11,7 +11,7 @@ export const registerSchema = z
     lastName: z.string().min(1),
     email: z.string().email(),
     phone: z.string().min(6),
-    password: z.string().min(8),
+    password: z.string().min(8).regex(/[A-Z]/).regex(/[0-9]/),
     confirmPassword: z.string().min(8),
     referralCode: z.string().optional(),
     terms: z.literal(true),

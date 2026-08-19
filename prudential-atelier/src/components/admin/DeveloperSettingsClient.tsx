@@ -9,7 +9,7 @@ import { FieldInput, patchGroup } from "@/components/admin/AdminSettingsClient";
 
 type SettingRow = { key: string; value: string; label: string; type: SettingType; isPublic?: boolean; sortOrder?: number };
 
-const WEBHOOK_BASE = "https://prudentgabriel.vercel.app/api/webhooks";
+const WEBHOOK_BASE = `${(process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "")}/api/payment`;
 
 const GATEWAYS = [
   {
@@ -53,7 +53,7 @@ const GATEWAYS = [
 ];
 
 function WebhookUrl({ gateway }: { gateway: string }) {
-  const url = `${WEBHOOK_BASE}/${gateway}`;
+  const url = `${WEBHOOK_BASE}/${gateway}/webhook`;
 
   return (
     <div className="mt-4">

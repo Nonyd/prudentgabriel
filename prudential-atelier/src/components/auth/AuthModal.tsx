@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -291,8 +291,8 @@ function LoginForm() {
 }
 
 function RegisterForm() {
-  const callbackUrl = useAuthModalStore((s) => s.callbackUrl);
   const setView = useAuthModalStore((s) => s.setView);
+  const [submitted, setSubmitted] = useState(false);
 
   const {
     register,
@@ -332,20 +332,7 @@ function RegisterForm() {
       setError("root", { message });
       return;
     }
-
-    const result = await signIn("credentials", {
-      email: data.email,
-      password: data.password,
-      redirect: false,
-    });
-    if (!result?.ok) {
-      setView("login");
-      return;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const target = callbackUrl?.startsWith("/") ? callbackUrl : "/account";
-    window.location.replace(target);
+    setSubmitted(true);
   };
 
   return (
@@ -361,6 +348,20 @@ function RegisterForm() {
       >
         Create account
       </h2>
+      {submitted ? (
+        <p
+          className="mt-6 text-center"
+          style={{
+            fontFamily: "var(--font-ui)",
+            fontSize: "13px",
+            color: "var(--text-mid)",
+          }}
+        >
+          Check your email. If you already have an account, we&apos;ll send a reminder instead of
+          creating a new one.
+        </p>
+      ) : (
+        <>
       <p
         className="mt-2 text-center"
         style={{
@@ -502,6 +503,8 @@ function RegisterForm() {
           Sign in
         </button>
       </p>
+        </>
+      )}
     </>
   );
 }

@@ -5,14 +5,14 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { couponAdminSchema } from "@/validations/coupon";
 
 export async function GET() {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("shop.orders");
   if (!gate.ok) return gate.response;
   const coupons = await prisma.coupon.findMany({ orderBy: { createdAt: "desc" } });
   return NextResponse.json({ items: coupons });
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("shop.orders");
   if (!gate.ok) return gate.response;
 
   let body: unknown;

@@ -1,7 +1,7 @@
 import { getSession } from "next-auth/react";
 import type { Session } from "next-auth";
 import type { SignInResponse } from "next-auth/react";
-import { isAdminRole } from "@/lib/roles";
+import { hasAnyAdminPermission } from "@/lib/roles";
 
 export function isSignInFailure(res: SignInResponse | undefined): boolean {
   return !res?.ok || Boolean(res?.error);
@@ -22,7 +22,7 @@ export function resolveStaffPortalRedirect(session: Session | null | undefined):
   }
 
   const role = session.user.role ?? "";
-  if (isAdminRole(role)) {
+  if (hasAnyAdminPermission(role)) {
     return "/admin";
   }
 

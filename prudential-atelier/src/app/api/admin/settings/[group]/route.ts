@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAdminApi } from "@/lib/admin-auth";
+import { permissionForSettingsGroup, requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { clearPublicSettingsCache, clearSettingCacheKey, setSetting } from "@/lib/settings";
 import { ensurePaymentSettingKeys } from "@/lib/payment-settings-bootstrap";
@@ -34,13 +34,13 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { group: string } },
 ) {
-  const gate = await requireAdminApi();
-  if (!gate.ok) return gate.response;
-
   const group = params.group.toUpperCase();
   if (!GROUPS.has(group)) {
     return NextResponse.json({ error: "Invalid group" }, { status: 400 });
   }
+
+  const gate = await requireAdminApi(permissionForSettingsGroup(group));
+  if (!gate.ok) return gate.response;
 
   if (group === "PAYMENTS") {
     await ensurePaymentSettingKeys();
@@ -78,13 +78,13 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { group: string } },
 ) {
-  const gate = await requireAdminApi();
-  if (!gate.ok) return gate.response;
-
   const group = params.group.toUpperCase();
   if (!GROUPS.has(group)) {
     return NextResponse.json({ error: "Invalid group" }, { status: 400 });
   }
+
+  const gate = await requireAdminApi(permissionForSettingsGroup(group));
+  if (!gate.ok) return gate.response;
 
   if (group === "PAYMENTS") {
     await ensurePaymentSettingKeys();

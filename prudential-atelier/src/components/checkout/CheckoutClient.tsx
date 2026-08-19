@@ -543,6 +543,7 @@ export function CheckoutClient() {
               }}
               receiptUrl={receiptUrl}
               onReceiptUploaded={setReceiptUrl}
+              guestEmail={guestEmail || session?.user?.email}
             />
             {!stripeClientSecret && (
               <button type="button" disabled={submitting || !gateway} onClick={submitOrder} className="w-full bg-wine py-3 text-ivory disabled:opacity-50">

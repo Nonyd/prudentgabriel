@@ -121,12 +121,10 @@ export function CustomerProfileDrawer({
 
   async function addQuickMethod(gateway: "PAYSTACK" | "STRIPE") {
     if (gateway === "PAYSTACK") {
-      const authCode = window.prompt("Enter Paystack auth code");
-      if (!authCode) return;
       await fetch("/api/account/payment-methods", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gateway: "PAYSTACK", authCode, last4: "0000", brand: "Card", expiry: "12/26", email }),
+        body: JSON.stringify({ gateway: "PAYSTACK" }),
       });
     } else {
       const paymentMethodId = window.prompt("Enter Stripe payment method id");
@@ -134,7 +132,7 @@ export function CustomerProfileDrawer({
       await fetch("/api/account/payment-methods", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gateway: "STRIPE", paymentMethodId, last4: "0000", brand: "Card", expiry: "12/2026" }),
+        body: JSON.stringify({ gateway: "STRIPE", paymentMethodId }),
       });
     }
     const methodsRes = await fetch("/api/account/payment-methods");

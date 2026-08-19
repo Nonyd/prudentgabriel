@@ -69,5 +69,10 @@ export async function POST(req: NextRequest) {
     meta: { bookingId: booking.id },
   });
 
+  await prisma.consultationBooking.update({
+    where: { id: booking.id },
+    data: { paymentRef: init.txRef },
+  });
+
   return NextResponse.json({ paymentLink: init.paymentLink });
 }

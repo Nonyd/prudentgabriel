@@ -1,5 +1,5 @@
-import crypto from "crypto";
-import { getFlutterwaveSecret } from "@/lib/payments/config";
+import { getFlutterwaveSecret, getFlutterwaveWebhookHash } from "@/lib/payments/config";
+import { timingSafeEqualString } from "@/lib/crypto-compare";
 
 export interface FlutterwaveInitResult {
   paymentLink: string;
@@ -75,7 +75,7 @@ export async function verifyTransaction(transactionId: string): Promise<{
       tx_ref: string;
       amount: number;
       currency: string;
-      meta?: { orderId?: string };
+      meta?: { orderId?: string; bookingId?: string };
     };
   };
 
@@ -93,9 +93,8 @@ export async function verifyTransaction(transactionId: string): Promise<{
   };
 }
 
-export async function verifyWebhookSignature(rawBody: string, signature: string | null): Promise<boolean> {
-  const secret = await getFlutterwaveSecret();
-  if (!secret || !signature) return false;
-  const hash = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
-  return hash === signature;
+export async function verifyWebhookSignature(_rawBody: string, signature: string | null): Promise<boolean> {
+  const expected = await getFlutterwaveWebhookHash();
+  if (!expected || !signature) return false;
+  return timingSafeEqualString(expected, signature);
 }

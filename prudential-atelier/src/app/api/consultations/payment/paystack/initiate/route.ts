@@ -58,5 +58,10 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  await prisma.consultationBooking.update({
+    where: { id: booking.id },
+    data: { paymentRef: init.reference },
+  });
+
   return NextResponse.json({ authorizationUrl: init.authorizationUrl, reference: init.reference });
 }

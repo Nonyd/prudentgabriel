@@ -29,7 +29,7 @@ function parsePaymentId(
 }
 
 export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi();
+  const gate = await requireAdminApi("payments");
   if (!gate.ok) return gate.response;
 
   const { id } = await ctx.params;

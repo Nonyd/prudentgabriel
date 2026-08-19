@@ -5,11 +5,13 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 
+import { passwordPolicySchema } from "@/lib/password-policy";
+
 const bodySchema = z.object({
   token: z.string().min(1),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  password: z.string().min(8),
+  password: passwordPolicySchema,
 });
 
 export async function POST(req: NextRequest) {

@@ -3,10 +3,14 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { passwordPolicySchema } from "@/lib/password-policy";
+import { applyPasswordHash, hashResetToken } from "@/lib/password-reset";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 
 const bodySchema = z
   .object({
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    token: z.string().optional(),
+    password: passwordPolicySchema,
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -15,10 +19,8 @@ const bodySchema = z
   });
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const limited = rateLimitOr429(req, "reset-password", 8, 15 * 60 * 1000);
+  if (limited) return limited;
 
   let body: unknown;
   try {
@@ -33,10 +35,32 @@ export async function POST(req: NextRequest) {
   }
 
   const hashed = await bcrypt.hash(parsed.data.password, 12);
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { password: hashed, mustResetPassword: false },
-  });
+  const token = parsed.data.token?.trim();
 
+  if (token) {
+    const tokenHash = hashResetToken(token);
+    const row = await prisma.passwordResetToken.findUnique({ where: { token: tokenHash } });
+    if (!row || row.expiresAt < new Date()) {
+      return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
+    }
+    const consumed = await prisma.passwordResetToken.deleteMany({
+      where: { id: row.id, expiresAt: { gt: new Date() } },
+    });
+    if (consumed.count !== 1) {
+      return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
+    }
+    await applyPasswordHash(row.userId, hashed);
+    return NextResponse.json({ success: true });
+  }
+
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!session.user.mustResetPassword) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  await applyPasswordHash(session.user.id, hashed);
   return NextResponse.json({ success: true });
 }

@@ -5,6 +5,7 @@ import {
   getMonnifyContractCode,
   getMonnifySecret,
 } from "@/lib/payments/config";
+import { timingSafeEqualString } from "@/lib/crypto-compare";
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
@@ -94,6 +95,7 @@ export async function initializeTransaction(params: {
 export async function verifyTransaction(paymentReference: string): Promise<{
   status: string;
   amountPaid: number;
+  currency: string;
   paymentReference: string;
 }> {
   const baseUrl = await getMonnifyBaseUrl();
@@ -106,7 +108,13 @@ export async function verifyTransaction(paymentReference: string): Promise<{
   const json = (await res.json()) as {
     requestSuccessful?: boolean;
     responseMessage?: string;
-    responseBody?: { paymentStatus?: string; amountPaid?: number; paymentReference?: string };
+    responseBody?: {
+      paymentStatus?: string;
+      amountPaid?: number;
+      currency?: string;
+      currencyCode?: string;
+      paymentReference?: string;
+    };
   };
 
   if (!res.ok || !json.requestSuccessful || !json.responseBody) {
@@ -117,6 +125,7 @@ export async function verifyTransaction(paymentReference: string): Promise<{
   return {
     status: b.paymentStatus ?? "UNKNOWN",
     amountPaid: b.amountPaid ?? 0,
+    currency: b.currencyCode ?? b.currency ?? "NGN",
     paymentReference: b.paymentReference ?? paymentReference,
   };
 }
@@ -125,5 +134,5 @@ export async function verifyWebhookSignature(rawBody: string, signature: string 
   const secretKey = await getMonnifySecret();
   if (!secretKey || !signature) return false;
   const hash = crypto.createHmac("sha512", secretKey).update(rawBody).digest("hex");
-  return hash === signature;
+  return timingSafeEqualString(hash, signature);
 }

@@ -9,9 +9,14 @@ export interface PFAStudentInfo {
   error?: string;
 }
 
+function refuse(): PFAStudentInfo {
+  return { valid: false, error: "Verification unavailable" };
+}
+
 export async function verifyPFAStudent(regNumber: string): Promise<PFAStudentInfo> {
-  const method = process.env.PFA_VERIFY_METHOD || "mock";
+  const method = process.env.PFA_VERIFY_METHOD;
   const normalized = regNumber.trim().toUpperCase();
+  const isDev = process.env.NODE_ENV === "development";
 
   if (method === "api") {
     try {
@@ -32,21 +37,25 @@ export async function verifyPFAStudent(regNumber: string): Promise<PFAStudentInf
     return { valid: false, error: "DB method not yet configured" };
   }
 
-  const pfaRegPattern = /^PFA\/\d{4}\/\d{3,4}$/;
-  if (!pfaRegPattern.test(normalized)) {
+  if (method === "mock") {
+    if (!isDev) return refuse();
+    const pfaRegPattern = /^PFA\/\d{4}\/\d{3,4}$/;
+    if (!pfaRegPattern.test(normalized)) {
+      return {
+        valid: false,
+        error: "Invalid registration number format. Expected: PFA/YYYY/NNNN",
+      };
+    }
     return {
-      valid: false,
-      error: "Invalid registration number format. Expected: PFA/YYYY/NNNN",
+      valid: true,
+      regNumber: normalized,
+      name: "Demo PFA Student",
+      course: "Fashion Design & Technology",
+      year: 3,
+      graduationYear: 2026,
+      isEligibleForIT: true,
     };
   }
 
-  return {
-    valid: true,
-    regNumber: normalized,
-    name: "Demo PFA Student",
-    course: "Fashion Design & Technology",
-    year: 3,
-    graduationYear: 2026,
-    isEligibleForIT: true,
-  };
+  return refuse();
 }
