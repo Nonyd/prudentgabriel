@@ -4,13 +4,26 @@
  *   pnpm test:authz
  */
 import "./preload-test-env";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Role } from "@prisma/client";
 import {
   CMS_ADMIN_PERMISSIONS,
+  hasAnyAdminPermission,
   hasPermission,
   inheritedDottedPermissions,
   roleAllows,
 } from "../src/lib/roles";
+import {
+  BESPOKE_ADMIN_ROLES,
+  BESPOKE_MANAGER_ROLES,
+  BESPOKE_ROLES,
+  BESPOKE_STAFF_ROLES,
+  sessionHasRole,
+} from "../src/lib/bespoke-roles";
+import { canAccessStaffPortal } from "../src/lib/client-auth";
+import type { Session } from "next-auth";
 import {
   actorOwnsBespokeOrder,
   toPublicConsultationDto,
@@ -32,9 +45,24 @@ function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
 }
 
+const srcRoot = join(dirname(fileURLToPath(import.meta.url)), "../src");
+
+function routeSource(rel: string): string {
+  return readFileSync(join(srcRoot, rel), "utf8");
+}
+
+function statusForRoles(role: string, allowed: string[]): 200 | 403 {
+  return sessionHasRole(role, null, allowed) ? 200 : 403;
+}
+
+/** Same gate as `(staff)/layout.tsx` and `canAccessStaffPortal`. */
+function staffLayoutAllows(role: string, isStaff: boolean): boolean {
+  return isStaff === true || role === "STAFF";
+}
+
 async function main() {
-  // Production User.role snapshot (Neon branch `production`, 2026-08-19).
-  // CUSTOMER count was 0. No CONTENT_MANAGER / RTW_MANAGER / etc.
+  // Live VPS User.role counts (prudentgabriel-postgres + staging, 2026-08-19).
+  // CUSTOMER count 0. No CONTENT_MANAGER / RTW_MANAGER / etc. Neon is not evidence.
   const productionRoles: Record<string, number> = {
     STAFF: 6,
     SUPER_ADMIN: 2,
@@ -111,6 +139,51 @@ async function main() {
   assert(inheritedDottedPermissions("STAFF_ADMIN").includes("shop.orders"), "STAFF_ADMIN inherits shop.orders from shop");
   assert(!inheritedDottedPermissions("ADMIN").includes("settings.developer"), "settings.developer is not inherited");
   assert(inheritedDottedPermissions("CONTENT_MANAGER").length === 0, "CONTENT_MANAGER has no parent-key inheritance");
+
+  // STAFF portal (Sprint B stage-gates) — not ROLE_PERMISSIONS / requireAdminApi
+  assert(BESPOKE_STAFF_ROLES.includes("STAFF"), "STAFF is on BESPOKE_STAFF_ROLES");
+  assert(!BESPOKE_MANAGER_ROLES.includes("STAFF"), "STAFF is not a bespoke manager");
+  assert(!BESPOKE_ADMIN_ROLES.includes("STAFF"), "STAFF is not a bespoke admin");
+  assert(BESPOKE_ROLES === BESPOKE_STAFF_ROLES, "BESPOKE_ROLES is the staff list");
+
+  const staffSession = { user: { id: "staff_1", role: "STAFF", isStaff: true } } as Session;
+  assert(canAccessStaffPortal(staffSession), "STAFF reaches /staff via canAccessStaffPortal");
+  assert(staffLayoutAllows("STAFF", true), "STAFF layout allows isStaff");
+  assert(staffLayoutAllows("STAFF", false), "STAFF layout allows role STAFF even if isStaff flag missing");
+  assert(!staffLayoutAllows("CUSTOMER", false), "customers cannot enter /staff");
+  assert(!hasAnyAdminPermission("STAFF"), "empty ROLE_PERMISSIONS must not be the staff-portal gate");
+  assert(
+    staffLayoutAllows("STAFF", true) || hasAnyAdminPermission("STAFF"),
+    "requireStaffPortal: STAFF still enters via isStaff/role, not permissions",
+  );
+
+  const staffStageRoutes: { file: string; gate: string }[] = [
+    { file: "app/api/bespoke/[orderId]/complete-stage/route.ts", gate: "BESPOKE_STAFF_ROLES" },
+    { file: "app/api/bespoke/[orderId]/request-approval/route.ts", gate: "BESPOKE_STAFF_ROLES" },
+    { file: "app/api/bespoke/[orderId]/stage-media/route.ts", gate: "BESPOKE_STAFF_ROLES" },
+    { file: "app/api/bespoke/[orderId]/stage-draft/route.ts", gate: "BESPOKE_STAFF_ROLES" },
+    { file: "app/api/bespoke/route.ts", gate: "BESPOKE_STAFF_ROLES" },
+    { file: "app/api/bespoke/[orderId]/route.ts", gate: "BESPOKE_STAFF_ROLES" },
+    { file: "app/api/clients/[clientId]/measurements/route.ts", gate: "BESPOKE_ROLES" },
+    { file: "app/api/clients/[clientId]/notes/route.ts", gate: "BESPOKE_ROLES" },
+    { file: "app/api/clients/[clientId]/communications/route.ts", gate: "BESPOKE_ROLES" },
+    { file: "app/api/moodboards/route.ts", gate: "BESPOKE_ROLES" },
+    { file: "app/api/moodboards/[id]/route.ts", gate: "BESPOKE_ROLES" },
+  ];
+  for (const r of staffStageRoutes) {
+    const src = routeSource(r.file);
+    assert(src.includes("requireRoles"), `${r.file} must use requireRoles`);
+    assert(src.includes(r.gate), `${r.file} must gate on ${r.gate}`);
+    assert(!src.includes("requireAdminApi"), `${r.file} must not use requireAdminApi`);
+    assert(statusForRoles("STAFF", BESPOKE_STAFF_ROLES) === 200, `STAFF 200 on ${r.file}`);
+  }
+  const revertSrc = routeSource("app/api/bespoke/[orderId]/revert-stage/route.ts");
+  assert(revertSrc.includes("BESPOKE_ADMIN_ROLES"), "revert-stage uses BESPOKE_ADMIN_ROLES");
+  assert(!revertSrc.includes("requireAdminApi"), "revert-stage must not use requireAdminApi");
+  assert(statusForRoles("STAFF", BESPOKE_ADMIN_ROLES) === 403, "STAFF 403 on revert-stage");
+  const payConfirmSrc = routeSource("app/api/admin/payments/[id]/confirm/route.ts");
+  assert(payConfirmSrc.includes('requireAdminApi("payments")'), "payment confirm is requireAdminApi(payments)");
+  assert(!roleAllows("STAFF", "payments"), "STAFF 403 on payment confirm");
 
   // B1 — CONTENT_MANAGER cannot hit money / user admin surfaces
   assert(!hasPermission("CONTENT_MANAGER", "payments"), "CONTENT_MANAGER must not have payments");
