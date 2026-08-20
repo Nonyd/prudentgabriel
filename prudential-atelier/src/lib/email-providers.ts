@@ -33,6 +33,42 @@ export async function resolveReplyTo(): Promise<string | undefined> {
   return addr || undefined;
 }
 
+/** Domains allowed in From (anti-spoof). Override with EMAIL_ALLOWED_FROM_DOMAINS=a.com,b.com */
+export function allowedFromDomains(): string[] {
+  const raw = process.env.EMAIL_ALLOWED_FROM_DOMAINS?.trim();
+  if (raw) {
+    return raw
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  return ["prudentgabriel.com"];
+}
+
+export function extractEmailAddress(from: string): string | null {
+  const m = from.match(/<([^>]+)>/);
+  const addr = (m?.[1] ?? from).trim().toLowerCase();
+  return addr.includes("@") ? addr : null;
+}
+
+/** True when From uses an allowlisted brand domain (not a free Gmail/clone domain). */
+export function isAllowedFromAddress(from: string, domains = allowedFromDomains()): boolean {
+  const addr = extractEmailAddress(from);
+  if (!addr) return false;
+  const host = addr.split("@")[1] ?? "";
+  return domains.some((d) => host === d || host.endsWith(`.${d}`));
+}
+
+/**
+ * Force From onto the configured brand address when a caller (or stale DB row)
+ * tries to send as an external/cloned domain.
+ */
+export async function sanitizeFromAddress(from: string | null | undefined): Promise<string> {
+  const candidate = from?.trim();
+  if (candidate && isAllowedFromAddress(candidate)) return candidate;
+  return resolveFromAddress().catch(() => EMAIL_FROM);
+}
+
 function asError(err: unknown): EmailError {
   const message = err instanceof Error ? err.message : String(err);
   const any = err as { statusCode?: number; responseCode?: number; code?: string };

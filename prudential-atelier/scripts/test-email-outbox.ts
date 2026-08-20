@@ -244,6 +244,13 @@ async function main() {
   await deliverEmail(qAtt.id);
   assert(sawAttachment, "attachment reached provider");
 
+  const { isAllowedFromAddress, sanitizeFromAddress } = await import("../src/lib/email-providers");
+  assert(isAllowedFromAddress('"Prudential Atelier" <noreply@prudentgabriel.com>'), "brand From allowed");
+  assert(!isAllowedFromAddress("Evil <phish@gmail.com>"), "gmail From rejected");
+  assert(!isAllowedFromAddress("Clone <ceo@prudentgabriel.com.evil.com>"), "suffix clone rejected");
+  const safe = await sanitizeFromAddress("Attacker <attacker@evil.test>");
+  assert(isAllowedFromAddress(safe), "sanitize recovers brand From");
+
   console.log("OK — email outbox");
 }
 

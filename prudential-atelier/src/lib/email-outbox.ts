@@ -13,6 +13,7 @@ import {
   normalizeAttachments,
   resolveFromAddress,
   resolveReplyTo,
+  sanitizeFromAddress,
 } from "@/lib/email-providers";
 import { nextBackoffMs, type EmailError } from "@/lib/email-outbox-types";
 
@@ -48,7 +49,9 @@ export async function queueEmail(params: QueueEmailParams): Promise<{ id: string
     recordCapturedEmail({ to: params.to, subject: params.subject, html: params.html });
   }
 
-  const fromAddress = params.fromAddress?.trim() || (await resolveFromAddress().catch(() => EMAIL_FROM));
+  const fromAddress = await sanitizeFromAddress(
+    params.fromAddress?.trim() || (await resolveFromAddress().catch(() => EMAIL_FROM)),
+  );
   const nextAttemptAt = new Date();
 
   try {
@@ -186,11 +189,18 @@ export async function deliverEmail(id: string): Promise<void> {
   }
 
   const replyTo = await resolveReplyTo().catch(() => undefined);
+  const from = await sanitizeFromAddress(row.fromAddress);
+  if (from !== row.fromAddress) {
+    await prisma.emailMessage.update({
+      where: { id },
+      data: { fromAddress: from },
+    });
+  }
   const outbound = {
     to: row.to,
     cc: row.cc ?? undefined,
     bcc: row.bcc ?? undefined,
-    from: row.fromAddress,
+    from,
     replyTo,
     subject: row.subject,
     html: row.html,

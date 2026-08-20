@@ -85,6 +85,26 @@ To stop `550 mailbox does not exist` on `hello@` / `admin@`:
 
 Current DMARC is `p=none`. Unaligned Brevo mail can still deliver today. Moving DMARC to `quarantine` / `reject` **without** Brevo’s DKIM (already published) and a coherent SPF would send every failover email to spam exactly when Resend is already down.
 
+## Anti-impersonation / anti-clone
+
+Spoofers can put `From: Prudential Atelier <hello@prudentgabriel.com>` in any
+client. Only **DNS authentication** makes Gmail/Outlook reject or quarantine
+that mail.
+
+| Control | Status | Action |
+| --- | --- | --- |
+| DKIM (Resend + Brevo) | Published | Keep; never delete selectors |
+| Apex SPF | **Missing** | Add TXT per `deploy/dns-email-anti-spoof.md` |
+| DMARC | `p=none` (monitor only) | Move to `p=quarantine` then `p=reject` |
+| App From lock | Enforced | Outbox only sends as `@prudentgabriel.com` (`sanitizeFromAddress`) |
+| Contact form | Rate-limited | 5 POSTs / 15 min / IP |
+
+Exact Cloudflare rows (this zone only): see
+[`deploy/dns-email-anti-spoof.md`](../../deploy/dns-email-anti-spoof.md).
+
+App-side: `EMAIL_ALLOWED_FROM_DOMAINS` (default `prudentgabriel.com`) rejects
+From addresses on Gmail or lookalike hosts such as `prudentgabriel.com.evil.com`.
+
 ## Admin
 
 `/admin/system/emails` lists the outbox. The **Resend** button creates a **new**

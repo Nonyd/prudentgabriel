@@ -5,8 +5,12 @@ import { createNotification } from "@/lib/notifications";
 import { contactSchema } from "@/validations/contact";
 import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimitOr429(req, "contact-form", 5, 15 * 60 * 1000);
+  if (limited) return limited;
+
   let body: unknown;
   try {
     body = await req.json();
