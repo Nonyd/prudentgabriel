@@ -47,6 +47,25 @@ function asError(err: unknown): EmailError {
   return { kind: "retryable", message };
 }
 
+function parseAddressList(raw: string): Array<{ email: string; name?: string }> {
+  return raw
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const m = part.match(/^(?:"?([^"<]*)"?\s*)?<([^>]+)>$|^([^\s<>]+@[^\s<>]+)$/);
+      if (!m) return { email: part };
+      if (m[3]) return { email: m[3] };
+      const name = m[1]?.trim();
+      return name ? { email: m[2]!, name } : { email: m[2]! };
+    });
+}
+
+function parseFrom(from: string): { email: string; name?: string } {
+  const [first] = parseAddressList(from);
+  return first ?? { email: from };
+}
+
 export function createResendProvider(opts?: { apiKey?: string | null }): EmailProvider {
   const key = () => opts?.apiKey ?? process.env.RESEND_API_KEY?.trim() ?? "";
   return {
@@ -73,6 +92,53 @@ export function createResendProvider(opts?: { apiKey?: string | null }): EmailPr
           return { error: classifyHttpStatus(status, error.message) };
         }
         return { id: data?.id ?? "resend-unknown" };
+      } catch (e) {
+        return { error: asError(e) };
+      }
+    },
+  };
+}
+
+export function createBrevoProvider(opts?: { apiKey?: string | null }): EmailProvider {
+  const key = () =>
+    opts?.apiKey ?? process.env.BREVO_API_KEY?.trim() ?? process.env.SIB_API_KEY?.trim() ?? "";
+  return {
+    name: "brevo",
+    isConfigured() {
+      return Boolean(key());
+    },
+    async send(msg) {
+      const apiKey = key();
+      if (!apiKey) return { error: { kind: "auth", message: "Brevo API key not configured" } };
+      try {
+        const sender = parseFrom(msg.from);
+        const body: Record<string, unknown> = {
+          sender,
+          to: parseAddressList(msg.to),
+          subject: msg.subject,
+          htmlContent: msg.html,
+        };
+        if (msg.text) body.textContent = msg.text;
+        if (msg.cc) body.cc = parseAddressList(msg.cc);
+        if (msg.bcc) body.bcc = parseAddressList(msg.bcc);
+
+        const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: {
+            accept: "application/json",
+            "content-type": "application/json",
+            "api-key": apiKey,
+          },
+          body: JSON.stringify(body),
+        });
+        const payload = (await res.json().catch(() => null)) as
+          | { messageId?: string; message?: string; code?: string }
+          | null;
+        if (!res.ok) {
+          const message = payload?.message || `Brevo HTTP ${res.status}`;
+          return { error: classifyHttpStatus(res.status, message) };
+        }
+        return { id: payload?.messageId ?? "brevo-unknown" };
       } catch (e) {
         return { error: asError(e) };
       }
@@ -132,6 +198,7 @@ export async function listEmailProviders(): Promise<EmailProvider[]> {
   if (testProviders) return testProviders;
 
   const resendKey = await envOrSetting("RESEND_API_KEY", "resend_api_key");
+  const brevoKey = await envOrSetting("BREVO_API_KEY", "brevo_api_key");
   const smtpPass = await envOrSetting("SMTP_PASSWORD", "smtp_password");
   const smtpUser = (await envOrSetting("SMTP_USER", "smtp_username")) ?? process.env.SMTP_USER;
   const smtpHost = (await envOrSetting("SMTP_HOST", "smtp_host")) ?? process.env.SMTP_HOST;
@@ -139,6 +206,7 @@ export async function listEmailProviders(): Promise<EmailProvider[]> {
 
   const catalog: Record<string, EmailProvider> = {
     resend: createResendProvider({ apiKey: resendKey }),
+    brevo: createBrevoProvider({ apiKey: brevoKey }),
     smtp: createSmtpProvider({
       host: smtpHost ?? undefined,
       port: smtpPortRaw ? Number(smtpPortRaw) : undefined,
@@ -147,7 +215,7 @@ export async function listEmailProviders(): Promise<EmailProvider[]> {
     }),
   };
 
-  const orderRaw = (await getSetting("email_provider_order"))?.trim() || "resend,smtp";
+  const orderRaw = (await getSetting("email_provider_order"))?.trim() || "resend,brevo,smtp";
   const names = orderRaw
     .split(",")
     .map((s) => s.trim().toLowerCase())

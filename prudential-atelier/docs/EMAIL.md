@@ -8,15 +8,14 @@ or `FAILED` for the drain.
 
 ## Providers
 
-Order is CMS setting `email_provider_order`, default `resend,smtp`. A provider
-is skipped when `isConfigured()` is false.
+Order is CMS setting `email_provider_order`, default `resend,brevo,smtp`. A
+provider is skipped when `isConfigured()` is false.
 
 | Provider | Config |
 | --- | --- |
 | Resend | `RESEND_API_KEY` or CMS `resend_api_key` |
+| Brevo | `BREVO_API_KEY` (or `SIB_API_KEY`) or CMS `brevo_api_key`. If Brevo returns 401 about an unrecognised IP, allowlist the sender IP (and the VPS) under Brevo → Security → Authorised IPs. Domain must also be verified in Brevo. |
 | SMTP | `SMTP_PASSWORD` (and optional `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER`) |
-
-Brevo is not wired. Do not add an unconfigured third provider.
 
 With no credentials, messages go `DEAD` with `no provider configured`. That is
 expected until keys exist.
