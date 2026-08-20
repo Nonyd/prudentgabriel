@@ -4,13 +4,15 @@ import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import { EMAIL_FROM } from "@/lib/email-transport";
 import { getSetting } from "@/lib/settings";
 import {
+  classifyBrevoError,
   classifyHttpStatus,
+  type EmailAttachment,
   type EmailError,
   type EmailProvider,
   type OutboundEmail,
 } from "@/lib/email-outbox-types";
 
-export type { EmailProvider, OutboundEmail, EmailError };
+export type { EmailProvider, OutboundEmail, EmailError, EmailAttachment };
 
 async function envOrSetting(envKey: string, settingKey: string): Promise<string | null> {
   const fromEnv = process.env[envKey]?.trim();
@@ -24,6 +26,11 @@ export async function resolveFromAddress(): Promise<string> {
   const addr = (await getSetting("email_from_address"))?.trim();
   if (addr) return `"${name}" <${addr}>`;
   return EMAIL_FROM;
+}
+
+export async function resolveReplyTo(): Promise<string | undefined> {
+  const addr = (await getSetting("email_reply_to"))?.trim();
+  return addr || undefined;
 }
 
 function asError(err: unknown): EmailError {
@@ -66,6 +73,30 @@ function parseFrom(from: string): { email: string; name?: string } {
   return first ?? { email: from };
 }
 
+function normalizeAttachments(raw: unknown): EmailAttachment[] | undefined {
+  if (!Array.isArray(raw) || raw.length === 0) return undefined;
+  const out: EmailAttachment[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const rec = item as Record<string, unknown>;
+    const filename =
+      (typeof rec.filename === "string" && rec.filename) ||
+      (typeof rec.name === "string" && rec.name) ||
+      "";
+    const content =
+      (typeof rec.content === "string" && rec.content) ||
+      (typeof rec.contentBase64 === "string" && rec.contentBase64) ||
+      "";
+    if (!filename || !content) continue;
+    out.push({
+      filename,
+      content: content.replace(/^data:[^;]+;base64,/, ""),
+      contentType: typeof rec.contentType === "string" ? rec.contentType : undefined,
+    });
+  }
+  return out.length ? out : undefined;
+}
+
 export function createResendProvider(opts?: { apiKey?: string | null }): EmailProvider {
   const key = () => opts?.apiKey ?? process.env.RESEND_API_KEY?.trim() ?? "";
   return {
@@ -83,9 +114,15 @@ export function createResendProvider(opts?: { apiKey?: string | null }): EmailPr
           to: msg.to,
           cc: msg.cc,
           bcc: msg.bcc,
+          replyTo: msg.replyTo,
           subject: msg.subject,
           html: msg.html,
           text: msg.text,
+          attachments: msg.attachments?.map((a) => ({
+            filename: a.filename,
+            content: Buffer.from(a.content, "base64"),
+            contentType: a.contentType,
+          })),
         });
         if (error) {
           const status = (error as { statusCode?: number }).statusCode ?? 500;
@@ -121,6 +158,16 @@ export function createBrevoProvider(opts?: { apiKey?: string | null }): EmailPro
         if (msg.text) body.textContent = msg.text;
         if (msg.cc) body.cc = parseAddressList(msg.cc);
         if (msg.bcc) body.bcc = parseAddressList(msg.bcc);
+        if (msg.replyTo) {
+          const reply = parseFrom(msg.replyTo);
+          body.replyTo = reply;
+        }
+        if (msg.attachments?.length) {
+          body.attachment = msg.attachments.map((a) => ({
+            name: a.filename,
+            content: a.content,
+          }));
+        }
 
         const res = await fetch("https://api.brevo.com/v3/smtp/email", {
           method: "POST",
@@ -135,8 +182,9 @@ export function createBrevoProvider(opts?: { apiKey?: string | null }): EmailPro
           | { messageId?: string; message?: string; code?: string }
           | null;
         if (!res.ok) {
-          const message = payload?.message || `Brevo HTTP ${res.status}`;
-          return { error: classifyHttpStatus(res.status, message) };
+          return {
+            error: classifyBrevoError(res.status, payload?.message || `Brevo HTTP ${res.status}`, payload?.code),
+          };
         }
         return { id: payload?.messageId ?? "brevo-unknown" };
       } catch (e) {
@@ -176,9 +224,15 @@ export function createSmtpProvider(opts?: {
           to: msg.to,
           cc: msg.cc,
           bcc: msg.bcc,
+          replyTo: msg.replyTo,
           subject: msg.subject,
           html: msg.html,
           text: msg.text,
+          attachments: msg.attachments?.map((a) => ({
+            filename: a.filename,
+            content: Buffer.from(a.content, "base64"),
+            contentType: a.contentType,
+          })),
         });
         return { id: String(info.messageId ?? "smtp-unknown") };
       } catch (e) {
@@ -187,6 +241,8 @@ export function createSmtpProvider(opts?: {
     },
   };
 }
+
+export { normalizeAttachments };
 
 let testProviders: EmailProvider[] | null = null;
 

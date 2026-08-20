@@ -1,10 +1,10 @@
 # Email (outbox, providers, DNS)
 
 Outbound mail is queued in `EmailMessage` and drained by the `email-outbox` cron
-job (`* * * * *`). Call sites use `queueEmail` / `sendEmail` — never Resend or
-SMTP directly. Immediate delivery is attempted after enqueue so password reset
-does not wait for the minute job; if that attempt fails the row stays `QUEUED`
-or `FAILED` for the drain.
+job (`* * * * *`). Call sites use `queueEmail` / `sendEmail` — never Resend,
+Brevo, or SMTP directly. Immediate delivery is attempted after enqueue so
+password reset does not wait for the minute job; if that attempt fails the row
+stays `QUEUED` or `FAILED` for the drain.
 
 ## Providers
 
@@ -14,48 +14,70 @@ provider is skipped when `isConfigured()` is false.
 | Provider | Config |
 | --- | --- |
 | Resend | `RESEND_API_KEY` or CMS `resend_api_key` |
-| Brevo | `BREVO_API_KEY` (or `SIB_API_KEY`) or CMS `brevo_api_key`. If Brevo returns 401 about an unrecognised IP, allowlist the sender IP (and the VPS) under Brevo → Security → Authorised IPs. Domain must also be verified in Brevo. |
+| Brevo | `BREVO_API_KEY` (or `SIB_API_KEY`) or CMS `brevo_api_key`. Allowlist sender IPs under Brevo → Security → Authorised IPs (local + VPS). Domain **and** sender address must be verified in Brevo. |
 | SMTP | `SMTP_PASSWORD` (and optional `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER`) |
+
+**Do not** put Brevo’s SMTP relay credentials into `SMTP_*`. That would make two
+chain entries point at the same Brevo account: the circuit breaker would think
+it has a second fallback when it does not, and a Brevo quota/outage would take
+out both. Leave SMTP empty unless you have a **different** MTA (e.g. Contabo
+mail). Unconfigured SMTP is skipped; the live chain is Resend → Brevo.
 
 With no credentials, messages go `DEAD` with `no provider configured`. That is
 expected until keys exist.
 
-Terminal 4xx (bad recipient, unverified domain, rejected content) mark `DEAD`
-immediately and **do not fail over**. Retryable errors (timeout, 5xx, 429)
-try the next configured provider, then back off: 1m, 5m, 30m, 2h, 12h.
+### Error / failover rules
 
-A circuit breaker skips a provider after 3 consecutive failures for 5 minutes,
-then allows one probe. Auth failures (bad API key) may fail over but raise an
-admin `EMAIL_PROVIDER_AUTH` notification on first occurrence.
+| Kind | Behaviour |
+| --- | --- |
+| `terminal` (bad recipient, rejected content, unverified Brevo sender) | Mark `DEAD` immediately. **No failover.** Unverified-sender also raises an admin `EMAIL_PROVIDER_AUTH` config alert. |
+| `auth` (401/403) | Fail over to the next provider. Raise `EMAIL_PROVIDER_AUTH` on first occurrence per process. |
+| `retryable` (5xx, 429, network, Brevo `402` / `not_enough_credits`) | Try the next provider, then back off: 1m, 5m, 30m, 2h, 12h. Brevo quota exhaustion must **not** mark `DEAD` — another ESP can send, and the quota resets. Failures still feed the circuit breaker so Brevo is not hammered. |
 
-## DNS (when you add a second or third sender)
+A circuit breaker skips a provider after 3 consecutive failures for 5 minutes.
 
-Each provider that sends as `@prudentgabriel.com` needs:
+Attachments are stored as JSON on `EmailMessage` (`filename`/`name`, base64
+`content`) and passed through to Resend, Brevo, and SMTP. Quote send today uses
+a PDF **link** in HTML rather than an attachment; when a PDF is queued as an
+attachment, the same base64 bytes are what Brevo receives.
 
-- Domain verification at that provider
-- Its own DKIM selector (CNAME)
-- An SPF include
+## From / Reply-To
 
-SPF has a hard **10 DNS-lookup** limit. Three includes is usually fine; a fourth
-or nested includes (Google Workspace + three ESPs) can exceed it. Over-limit SPF
-fails quietly and looks like a spam problem, not a bounce.
+| Setting | Default | Role |
+| --- | --- | --- |
+| `email_from_name` | `Prudential Atelier` | Display name clients see |
+| `email_from_address` | `noreply@prudentgabriel.com` | Envelope / From (must be verified on **both** Resend and Brevo) |
+| `email_reply_to` | `hello@prudentgabriel.com` | Human inbox for replies (contact form still uses hello@ as recipient) |
 
-Example (adjust selectors to what each dashboard shows):
+Do not use `hello@` as the From if it is also the public contact address — keep
+transactional From on `noreply@` and Reply-To on `hello@`.
+
+## DNS (Cloudflare) — current for `prudentgabriel.com`
+
+| Record | Type | Value / notes |
+| --- | --- | --- |
+| `@` | TXT | `brevo-code:3fd38860523365d02da40fefe91d5079` (Brevo domain ownership) |
+| `brevo1._domainkey` | CNAME | `b1.prudentgabriel-com.dkim.brevo.com` |
+| `brevo2._domainkey` | CNAME | `b2.prudentgabriel-com.dkim.brevo.com` |
+| `resend._domainkey` | TXT | Resend DKIM (`p=MIGf…`) — verified |
+| `send` | MX / TXT | Resend sending (Amazon SES feedback + SPF `include:amazonses.com`) |
+| `_dmarc` | TXT | `v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com` |
+
+**Root SPF:** as of Slice F there is **no** apex `v=spf1` TXT — only the Brevo ownership code. Resend authenticates via the `send` subdomain. For Brevo From addresses on the apex (`noreply@…`), publish:
 
 ```
-prudentgabriel.com.  TXT  "v=spf1 include:_spf.google.com include:amazonses.com include:spf.resend.com ~all"
-resend._domainkey    CNAME  …
-smtp._domainkey      CNAME  …
+prudentgabriel.com.  TXT  "v=spf1 include:spf.brevo.com ~all"
 ```
 
-Failover changes transport, not inbox placement. Reputation and content still
-decide spam.
+(or merge with any future Google Workspace include). Keep the lookup count under 10.
+
+Current DMARC is `p=none`. Unaligned Brevo mail can still deliver today. Moving DMARC to `quarantine` / `reject` **without** Brevo’s DKIM (already published) and a coherent SPF would send every failover email to spam exactly when Resend is already down.
 
 ## Admin
 
-`/admin/system/emails` lists the outbox. Resend creates a **new** row with a
-fresh idempotency key. The DEAD badge is the number of messages a client did
-not receive.
+`/admin/system/emails` lists the outbox. The **Resend** button creates a **new**
+row with a fresh idempotency key (`resend:<id>:<uuid>`). `DEAD` rows are never
+auto-retried.
 
 Idempotency keys are derived from the event, not the clock, e.g.
 `stage-complete:<orderRef>:<stage>`, `quote-sent:<quotationId>:v<n>`,

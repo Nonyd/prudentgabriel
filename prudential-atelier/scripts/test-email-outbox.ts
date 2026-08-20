@@ -151,6 +151,99 @@ async function main() {
   const cbRow = await prisma.emailMessage.findUnique({ where: { id: cb.id } });
   assert(cbRow?.provider === "smtp", "delivered by backup");
 
+  // --- Brevo error mapping (Slice F) ---
+  const { classifyBrevoError } = await import("../src/lib/email-outbox-types");
+  assert(classifyBrevoError(402, "quota", "not_enough_credits").kind === "retryable", "402 → retryable");
+  assert(classifyBrevoError(400, "invalid recipient").kind === "terminal", "400 recipient → terminal");
+  assert(
+    classifyBrevoError(400, "sender is not valid", "invalid_parameter").alert === "provider_config",
+    "unverified sender alerts",
+  );
+  assert(classifyBrevoError(401, "nope", "unauthorized").kind === "auth", "401 → auth");
+
+  let brevo402 = 0;
+  let after402 = 0;
+  setEmailProvidersForTest([
+    provider("brevo", async () => {
+      brevo402 += 1;
+      return { error: classifyBrevoError(402, "not enough credits", "not_enough_credits") };
+    }),
+    provider("resend", async () => {
+      after402 += 1;
+      return { id: "resend-after-402" };
+    }),
+  ]);
+  resetEmailCircuitBreakers();
+  const q402 = await queue("brevo402");
+  await deliverEmail(q402.id);
+  const row402 = await prisma.emailMessage.findUnique({ where: { id: q402.id } });
+  assert(brevo402 === 1 && after402 === 1, "402 fails over once");
+  assert(row402?.status === EmailStatus.SENT, "402 does not DEAD");
+  assert(row402?.provider === "resend", "402 delivered by next provider");
+
+  let after400 = 0;
+  setEmailProvidersForTest([
+    provider("brevo", async () => ({
+      error: classifyBrevoError(400, "invalid recipient email"),
+    })),
+    provider("resend", async () => {
+      after400 += 1;
+      return { id: "should-not" };
+    }),
+  ]);
+  resetEmailCircuitBreakers();
+  const q400 = await queue("brevo400");
+  await deliverEmail(q400.id);
+  const row400 = await prisma.emailMessage.findUnique({ where: { id: q400.id } });
+  assert(row400?.status === EmailStatus.DEAD, "Brevo 400 recipient → DEAD");
+  assert(after400 === 0, "Brevo 400 does not try next provider");
+
+  resetEmailCircuitBreakers();
+  for (let i = 0; i < 3; i += 1) recordEmailProviderFailure("brevo");
+  assert(isEmailProviderCircuitOpen("brevo"), "Brevo open after 3 failures");
+  let brevoProbed = 0;
+  let resendTook = 0;
+  setEmailProvidersForTest([
+    provider("brevo", async () => {
+      brevoProbed += 1;
+      return { id: "nope" };
+    }),
+    provider("resend", async () => {
+      resendTook += 1;
+      return { id: "resend-cb" };
+    }),
+  ]);
+  const qCb = await queue("brevo-circuit");
+  await deliverEmail(qCb.id);
+  assert(brevoProbed === 0, "open Brevo circuit skips Brevo");
+  assert(resendTook === 1, "falls through to Resend");
+
+  // Attachments survive into the provider payload (base64 round-trip)
+  const pdfB64 = Buffer.from("%PDF-1.4 test").toString("base64");
+  let sawAttachment = false;
+  setEmailProvidersForTest([
+    provider("brevo", async (msg) => {
+      assert(msg.attachments?.length === 1, "attachment present");
+      assert(msg.attachments![0]!.content === pdfB64, "base64 unchanged");
+      assert(msg.attachments![0]!.filename === "quote.pdf", "filename preserved");
+      sawAttachment = true;
+      return { id: "brevo-att" };
+    }),
+  ]);
+  resetEmailCircuitBreakers();
+  const qAtt = await queueEmail({
+    to: "client@example.test",
+    fromAddress: '"Test" <noreply@example.test>',
+    subject: "Quote PDF",
+    html: "<p>pdf</p>",
+    template: "test-att",
+    idempotencyKey: `${prefix}:att`,
+    attachments: [{ filename: "quote.pdf", content: pdfB64, contentType: "application/pdf" }],
+  });
+  ids.push(qAtt.id);
+  await deliverEmail(qAtt.id);
+  assert(sawAttachment, "attachment reached provider");
+
   console.log("OK — email outbox");
 }
 

@@ -52,6 +52,7 @@ export async function sendEmail(params: {
   cc?: string;
   bcc?: string;
   fromAddress?: string;
+  attachments?: import("@prisma/client").Prisma.InputJsonValue;
 }): Promise<void> {
   await queueEmail(params);
 }

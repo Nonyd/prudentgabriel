@@ -15,9 +15,9 @@ export async function POST() {
     return NextResponse.json({ error: "Set admin notification or from email first" }, { status: 400 });
   }
 
-  const fromName = emailSettings.email_from_name?.trim() || "Prudent Gabriel";
-  const fromAddr = emailSettings.email_from_address?.trim() || "hello@prudentgabriel.com";
-  const from = `${fromName} <${fromAddr}>`;
+  const fromName = emailSettings.email_from_name?.trim() || "Prudential Atelier";
+  const fromAddr = emailSettings.email_from_address?.trim() || "noreply@prudentgabriel.com";
+  const from = `"${fromName}" <${fromAddr}>`;
 
   const queued = await queueEmail({
     to,

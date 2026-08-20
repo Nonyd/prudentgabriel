@@ -23,6 +23,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     idempotencyKey: `resend:${orig.id}:${randomUUID()}`,
     relatedType: orig.relatedType ?? undefined,
     relatedId: orig.relatedId ?? undefined,
+    attachments: orig.attachments ?? undefined,
   });
 
   return NextResponse.json({ id: queued.id, created: queued.created });

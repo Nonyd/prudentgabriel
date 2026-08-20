@@ -8,7 +8,12 @@ import {
   recordEmailProviderFailure,
   recordEmailProviderSuccess,
 } from "@/lib/email-circuit-breaker";
-import { listEmailProviders, resolveFromAddress } from "@/lib/email-providers";
+import {
+  listEmailProviders,
+  normalizeAttachments,
+  resolveFromAddress,
+  resolveReplyTo,
+} from "@/lib/email-providers";
 import { nextBackoffMs, type EmailError } from "@/lib/email-outbox-types";
 
 export type QueueEmailParams = {
@@ -140,6 +145,18 @@ async function alertAuth(provider: string, message: string): Promise<void> {
   }).catch((e) => console.warn("[email-outbox] notify auth", e));
 }
 
+async function alertProviderConfig(provider: string, message: string): Promise<void> {
+  const key = `config:${provider}:${message.slice(0, 80)}`;
+  if (authAlerted.has(key)) return;
+  authAlerted.add(key);
+  await createNotification({
+    type: "EMAIL_PROVIDER_AUTH",
+    title: `Email provider config error (${provider})`,
+    message,
+    link: "/admin/system/emails",
+  }).catch((e) => console.warn("[email-outbox] notify config", e));
+}
+
 export async function deliverEmail(id: string): Promise<void> {
   if (!id) return;
   const now = new Date();
@@ -168,14 +185,17 @@ export async function deliverEmail(id: string): Promise<void> {
     return;
   }
 
+  const replyTo = await resolveReplyTo().catch(() => undefined);
   const outbound = {
     to: row.to,
     cc: row.cc ?? undefined,
     bcc: row.bcc ?? undefined,
     from: row.fromAddress,
+    replyTo,
     subject: row.subject,
     html: row.html,
     text: row.text ?? undefined,
+    attachments: normalizeAttachments(row.attachments),
   };
 
   let lastError: EmailError | null = null;
@@ -207,6 +227,9 @@ export async function deliverEmail(id: string): Promise<void> {
     }
 
     if (result.error.kind === "terminal") {
+      if (result.error.alert === "provider_config") {
+        await alertProviderConfig(provider.name, result.error.message);
+      }
       await markDead(id, result.error.message);
       return;
     }
