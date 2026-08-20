@@ -123,14 +123,14 @@ export function ReviewForm({
       <div className="space-y-4 rounded-sm border border-mid-grey bg-cream p-5">
         <p className="font-body text-sm text-charcoal">✓ Review submitted! It will appear after our team approves it.</p>
         {done.points > 0 && (
-          <p className="font-body text-sm text-olive">
+          <p className="font-body text-sm text-choc">
             You&apos;ve earned {done.points} loyalty points for this review.
           </p>
         )}
         <button
           type="button"
           onClick={() => onDone()}
-          className="font-body text-[11px] font-medium uppercase tracking-wider text-olive underline"
+          className="font-body text-[11px] font-medium uppercase tracking-wider text-choc underline"
         >
           Close
         </button>
@@ -141,7 +141,7 @@ export function ReviewForm({
   if (eligibility.reason === "Sign in to leave a review.") {
     return (
       <p className="font-body text-sm text-charcoal">
-        <Link href="/auth/login" className="text-olive underline">
+        <Link href="/auth/login" className="text-choc underline">
           Log in
         </Link>{" "}
         to write a review.
@@ -182,7 +182,7 @@ export function ReviewForm({
           Title (optional)
         </label>
         <input
-          className="mt-1 w-full border border-mid-grey bg-canvas px-3 py-2 font-body text-sm text-charcoal outline-none focus:border-olive"
+          className="mt-1 w-full border border-mid-grey bg-canvas px-3 py-2 font-body text-sm text-charcoal outline-none focus:border-choc"
           placeholder="Summarise your experience"
           maxLength={80}
           {...register("title")}
@@ -191,7 +191,7 @@ export function ReviewForm({
       <div>
         <label className="font-body text-[11px] font-medium uppercase tracking-[0.12em] text-dark-grey">Review *</label>
         <textarea
-          className="mt-1 min-h-[120px] w-full border border-mid-grey bg-canvas px-3 py-2 font-body text-sm text-charcoal outline-none focus:border-olive"
+          className="mt-1 min-h-[120px] w-full border border-mid-grey bg-canvas px-3 py-2 font-body text-sm text-charcoal outline-none focus:border-choc"
           placeholder="Tell others about the fit, quality, and delivery..."
           maxLength={500}
           {...register("body")}
@@ -201,7 +201,7 @@ export function ReviewForm({
           <span>{bodyLen}/500</span>
         </div>
       </div>
-      <Button type="submit" loading={isSubmitting} className="h-11 w-full bg-olive text-white hover:opacity-90">
+      <Button type="submit" loading={isSubmitting} className="h-11 w-full bg-choc text-cream hover:opacity-90">
         Submit review
       </Button>
     </form>

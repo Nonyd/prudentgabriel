@@ -110,7 +110,7 @@ export async function queryProductList(
     if (Number.isFinite(maxP)) where.basePriceNGN.lte = maxP;
   }
 
-  const inStockOnly = searchParams.get("inStock") !== "false";
+  const inStockOnly = searchParams.get("inStock") === "true";
   const variantSome: Prisma.ProductVariantWhereInput = {};
   if (sizesList.length) variantSome.size = { in: sizesList };
   if (inStockOnly) variantSome.stock = { gt: 0 };

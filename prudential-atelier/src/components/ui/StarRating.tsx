@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 interface StarRatingProps {
   rating: number;
   size?: "sm" | "md" | "lg";
-  variant?: "olive" | "gold";
+  variant?: "choc" | "olive" | "gold";
   interactive?: boolean;
   onChange?: (r: number) => void;
   className?: string;
@@ -27,14 +27,14 @@ const starSizeMap = {
 export function StarRating({
   rating,
   size = "md",
-  variant = "olive",
+  variant = "choc",
   interactive,
   onChange,
   className,
 }: StarRatingProps) {
   const [hover, setHover] = useState(0);
   const display = interactive ? hover || rating : rating;
-  const filledClass = variant === "gold" ? "text-[#C9A84C]" : "text-olive";
+  const filledClass = variant === "gold" ? "text-[#C9A84C]" : "text-choc";
   const emptyClass = variant === "gold" ? "text-sand" : "text-mid-grey";
 
   return (
@@ -58,7 +58,7 @@ export function StarRating({
               starSizeMap[size],
               emptyClass,
               interactive &&
-                "cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-olive",
+                "cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-choc",
               !interactive && "pointer-events-none",
             )}
             aria-label={`${i} stars`}

@@ -99,7 +99,7 @@ export default function PressPage() {
           <p className="mt-4 font-body text-base text-charcoal-mid">
             For interview requests, event coverage, and editorial collaborations:
           </p>
-          <a href="mailto:press@prudentgabriel.com" className="mt-4 inline-block font-display text-2xl text-wine hover:underline">
+          <a href="mailto:press@prudentgabriel.com" className="mt-4 inline-block font-display text-2xl text-choc hover:underline">
             press@prudentgabriel.com
           </a>
           <p className="mt-3 text-sm text-charcoal-light">We typically respond within 48 hours.</p>

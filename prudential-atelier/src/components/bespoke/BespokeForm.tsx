@@ -88,10 +88,10 @@ export function BespokeForm() {
     return (
       <div className="py-16 text-center">
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-          <p className="font-display text-3xl text-wine">Request received!</p>
+          <p className="font-display text-3xl text-choc">Request received!</p>
           <p className="mt-2 font-label text-gold">#{done}</p>
           <p className="mt-4 text-sm text-charcoal-mid">Our team will contact you within 24–48 hours.</p>
-          <Link href="/shop" className="mt-8 inline-block rounded-sm bg-wine px-6 py-2 text-ivory">
+          <Link href="/shop" className="mt-8 inline-block rounded-sm bg-choc px-6 py-2 text-cream">
             Back to shop
           </Link>
         </motion.div>
@@ -102,11 +102,11 @@ export function BespokeForm() {
   return (
     <div className="mx-auto max-w-xl py-10">
       <div className="mb-6 h-1 w-full overflow-hidden rounded-full bg-border">
-        <div className="h-full bg-wine transition-all" style={{ width: `${(step / 3) * 100}%` }} />
+        <div className="h-full bg-choc transition-all" style={{ width: `${(step / 3) * 100}%` }} />
       </div>
       {step === 1 && (
         <div className="space-y-4">
-          <h2 className="font-display text-xl text-wine">About you</h2>
+          <h2 className="font-display text-xl text-choc">About you</h2>
           <input className="w-full border-b border-border bg-transparent py-2" placeholder="Full name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <input className="w-full border-b border-border bg-transparent py-2" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           <input className="w-full border-b border-border bg-transparent py-2" placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
@@ -122,14 +122,14 @@ export function BespokeForm() {
               </option>
             ))}
           </select>
-          <button type="button" className="w-full bg-wine py-2 text-ivory" onClick={() => setStep(2)}>
+          <button type="button" className="w-full bg-choc py-2 text-cream" onClick={() => setStep(2)}>
             Continue
           </button>
         </div>
       )}
       {step === 2 && (
         <div className="space-y-4">
-          <h2 className="font-display text-xl text-wine">Your piece</h2>
+          <h2 className="font-display text-xl text-choc">Your piece</h2>
           <select className="w-full border-b bg-transparent py-2" value={form.occasion} onChange={(e) => setForm({ ...form, occasion: e.target.value })}>
             <option value="">Occasion</option>
             {OCCASIONS.map((o) => (
@@ -159,7 +159,7 @@ export function BespokeForm() {
             <button type="button" className="flex-1 border py-2" onClick={() => setStep(1)}>
               Back
             </button>
-            <button type="button" className="flex-1 bg-wine py-2 text-ivory" onClick={() => setStep(3)}>
+            <button type="button" className="flex-1 bg-choc py-2 text-cream" onClick={() => setStep(3)}>
               Continue
             </button>
           </div>
@@ -167,7 +167,7 @@ export function BespokeForm() {
       )}
       {step === 3 && (
         <div className="space-y-4">
-          <h2 className="font-display text-xl text-wine">Measurements (optional)</h2>
+          <h2 className="font-display text-xl text-choc">Measurements (optional)</h2>
           <div className="grid grid-cols-2 gap-3">
             <input placeholder="Bust cm" className="border-b bg-transparent py-2" value={form.bust} onChange={(e) => setForm({ ...form, bust: e.target.value })} />
             <input placeholder="Waist cm" className="border-b bg-transparent py-2" value={form.waist} onChange={(e) => setForm({ ...form, waist: e.target.value })} />
@@ -183,7 +183,7 @@ export function BespokeForm() {
             <button type="button" className="flex-1 border py-2" onClick={() => setStep(2)}>
               Back
             </button>
-            <button type="button" disabled={busy} className="flex-1 bg-wine py-2 text-ivory disabled:opacity-50" onClick={submit}>
+            <button type="button" disabled={busy} className="flex-1 bg-choc py-2 text-cream disabled:opacity-50" onClick={submit}>
               Submit
             </button>
           </div>

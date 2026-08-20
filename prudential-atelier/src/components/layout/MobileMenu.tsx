@@ -63,7 +63,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             <Link href="/" onClick={onClose} className="relative block h-11 w-11">
               <BrandLogo width={44} height={44} />
             </Link>
-            <button type="button" onClick={onClose} className="p-2 text-olive" aria-label="Close menu">
+            <button type="button" onClick={onClose} className="p-2 text-choc" aria-label="Close menu">
               <X size={22} strokeWidth={1.5} />
             </button>
           </div>
@@ -90,7 +90,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                         <Link
                           href={s.href}
                           onClick={onClose}
-                          className="font-body text-[13px] font-medium uppercase tracking-[0.1em] text-dark-grey hover:text-olive"
+                          className="font-body text-[13px] font-medium uppercase tracking-[0.1em] text-dark-grey hover:text-choc"
                         >
                           {s.label}
                         </Link>
@@ -105,7 +105,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                         <Link
                           href={s.href}
                           onClick={onClose}
-                          className="font-body text-[13px] font-medium uppercase tracking-[0.1em] text-dark-grey hover:text-olive"
+                          className="font-body text-[13px] font-medium uppercase tracking-[0.1em] text-dark-grey hover:text-choc"
                         >
                           {s.label}
                         </Link>
@@ -179,16 +179,16 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             <div className="mt-8 flex items-center justify-between">
               <span className="font-body text-[12px] text-charcoal">@the_prudentgabriel</span>
               <div className="flex items-center gap-4 text-charcoal">
-                <a href="https://instagram.com/the_prudentgabriel" target="_blank" rel="noopener noreferrer" className="hover:text-olive">
+                <a href="https://instagram.com/the_prudentgabriel" target="_blank" rel="noopener noreferrer" className="hover:text-choc">
                   <InstagramIcon size={18} />
                 </a>
-                <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="hover:text-olive">
+                <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="hover:text-choc">
                   <TikTokIcon size={18} />
                 </a>
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-olive">
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-choc">
                   <FacebookIcon size={18} />
                 </a>
-                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="hover:text-olive">
+                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="hover:text-choc">
                   <YouTubeIcon size={18} />
                 </a>
               </div>

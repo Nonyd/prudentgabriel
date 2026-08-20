@@ -91,9 +91,9 @@ export function ActiveFilters({ className }: { className?: string }) {
       },
     });
   }
-  if (inStock === "false") {
+  if (inStock === "true") {
     pills.push({
-      label: "Include out of stock",
+      label: "In stock only",
       onRemove: () => remove(["inStock"]),
     });
   }
@@ -110,7 +110,7 @@ export function ActiveFilters({ className }: { className?: string }) {
       {pills.map((p, i) => (
         <span
           key={`${p.label}-${i}`}
-          className="inline-flex shrink-0 items-center gap-2 border border-olive px-3 py-1 font-body text-[11px] text-olive"
+          className="inline-flex shrink-0 items-center gap-2 border border-choc px-3 py-1 font-body text-[11px] text-choc"
         >
           {p.label}
           <button type="button" className="p-0.5 hover:opacity-70" aria-label={`Remove ${p.label}`} onClick={p.onRemove}>
@@ -121,7 +121,7 @@ export function ActiveFilters({ className }: { className?: string }) {
       {pills.length > 1 && (
         <Link
           href="/shop"
-          className="shrink-0 self-center font-body text-[11px] text-dark-grey underline-offset-2 hover:text-olive hover:underline"
+          className="shrink-0 self-center font-body text-[11px] text-dark-grey underline-offset-2 hover:text-choc hover:underline"
         >
           Clear all
         </Link>

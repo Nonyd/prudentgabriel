@@ -64,7 +64,7 @@ export function FilterPanel({ className }: { className?: string }) {
   const sale = sp.get("sale") === "true";
   const minP = sp.get("minPrice") ?? "0";
   const maxP = sp.get("maxPrice") ?? "1000000";
-  const inStock = sp.get("inStock") !== "false";
+  const inStock = sp.get("inStock") === "true";
 
   const active =
     Boolean(category) ||
@@ -74,14 +74,14 @@ export function FilterPanel({ className }: { className?: string }) {
     sale ||
     minP !== "0" ||
     maxP !== "1000000" ||
-    !inStock;
+    inStock;
 
   return (
     <aside className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between">
         <h2 className="font-display text-xl text-charcoal">Refine</h2>
         {active && (
-          <Link href="/shop" className="font-label text-[10px] uppercase tracking-wider text-olive hover:underline">
+          <Link href="/shop" className="font-label text-[10px] uppercase tracking-wider text-choc hover:underline">
             Clear All
           </Link>
         )}
@@ -97,7 +97,7 @@ export function FilterPanel({ className }: { className?: string }) {
                   name="sort"
                   checked={sort === s.value}
                   onChange={() => set({ sort: s.value })}
-                  className="accent-olive"
+                  className="accent-choc"
                 />
                 {s.label}
               </label>
@@ -114,7 +114,7 @@ export function FilterPanel({ className }: { className?: string }) {
                   name="category"
                   checked={(category || "") === c.value}
                   onChange={() => set({ category: c.value || null })}
-                  className="accent-olive"
+                  className="accent-choc"
                 />
                 {c.label}
               </label>
@@ -135,7 +135,7 @@ export function FilterPanel({ className }: { className?: string }) {
                   name="type"
                   checked={type === o.v}
                   onChange={() => set({ type: o.v || null })}
-                  className="accent-olive"
+                  className="accent-choc"
                 />
                 {o.l}
               </label>
@@ -158,7 +158,7 @@ export function FilterPanel({ className }: { className?: string }) {
                   onClick={() => set({ sizes: toggleCsv(sizes, sz) || null })}
                   className={cn(
                     "border px-3 py-1 font-body text-[11px] uppercase tracking-wide",
-                    on ? "border-olive bg-olive text-white" : "border-mid-grey text-charcoal hover:border-olive",
+                    on ? "border-choc bg-choc text-cream" : "border-mid-grey text-charcoal hover:border-choc",
                   )}
                 >
                   {sz}
@@ -179,7 +179,7 @@ export function FilterPanel({ className }: { className?: string }) {
                   onClick={() => set({ tags: toggleCsv(tags, tg) || null })}
                   className={cn(
                     "border px-2 py-1 font-label text-[10px] uppercase tracking-wide",
-                    on ? "border-olive bg-olive text-white" : "border-border text-charcoal hover:border-olive",
+                    on ? "border-choc bg-choc text-cream" : "border-border text-charcoal hover:border-choc",
                   )}
                 >
                   {tg}
@@ -195,7 +195,7 @@ export function FilterPanel({ className }: { className?: string }) {
               type="checkbox"
               checked={sale}
               onChange={(e) => set({ sale: e.target.checked ? "true" : null })}
-              className="accent-olive"
+              className="accent-choc"
             />
             Show sale items only
           </label>
@@ -203,8 +203,8 @@ export function FilterPanel({ className }: { className?: string }) {
             <input
               type="checkbox"
               checked={inStock}
-              onChange={(e) => set({ inStock: e.target.checked ? "true" : "false" })}
-              className="accent-olive"
+              onChange={(e) => set({ inStock: e.target.checked ? "true" : null })}
+              className="accent-choc"
             />
             In stock only
           </label>
@@ -245,20 +245,20 @@ function PriceSlider({
         minStepsBetweenThumbs={1}
       >
         <Slider.Track className="relative h-1 grow rounded-full bg-mid-grey">
-          <Slider.Range className="absolute h-full rounded-full bg-olive" />
+          <Slider.Range className="absolute h-full rounded-full bg-choc" />
         </Slider.Track>
         <Slider.Thumb
-          className="block h-4 w-4 border border-olive bg-canvas focus:outline-none focus:ring-2 focus:ring-olive/40"
+          className="block h-4 w-4 border border-choc bg-canvas focus:outline-none focus:ring-2 focus:ring-choc/40"
           aria-label="Minimum price"
         />
         <Slider.Thumb
-          className="block h-4 w-4 border border-olive bg-canvas focus:outline-none focus:ring-2 focus:ring-olive/40"
+          className="block h-4 w-4 border border-choc bg-canvas focus:outline-none focus:ring-2 focus:ring-choc/40"
           aria-label="Maximum price"
         />
       </Slider.Root>
       <button
         type="button"
-        className="font-body text-[12px] text-dark-grey underline-offset-2 hover:text-olive hover:underline"
+        className="font-body text-[12px] text-dark-grey underline-offset-2 hover:text-choc hover:underline"
         onClick={() => onApply(String(range[0]), String(range[1]))}
       >
         Apply price range
@@ -279,7 +279,7 @@ function AccItem({
   return (
     <Accordion.Item value={value} className="border-b border-border">
       <Accordion.Header>
-        <Accordion.Trigger className="flex w-full items-center justify-between py-3 font-body text-[10px] uppercase tracking-[0.14em] text-dark-grey hover:text-olive">
+        <Accordion.Trigger className="flex w-full items-center justify-between py-3 font-body text-[10px] uppercase tracking-[0.14em] text-dark-grey hover:text-choc">
           {title}
         </Accordion.Trigger>
       </Accordion.Header>

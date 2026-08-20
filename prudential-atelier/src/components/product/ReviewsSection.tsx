@@ -83,7 +83,7 @@ export function ReviewsSection({
   }
 
   const writeReviewButtonClass =
-    "border border-olive px-5 py-2.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-olive transition-colors hover:bg-olive hover:text-white";
+    "border border-choc px-5 py-2.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-choc transition-colors hover:bg-choc hover:text-cream";
 
   return (
     <Dialog.Root open={openForm} onOpenChange={setOpenForm}>
@@ -98,7 +98,7 @@ export function ReviewsSection({
         {reviews.length > 0 && (
           <div className="mb-10 grid gap-8 md:grid-cols-2">
             <div>
-              <p className="font-display text-[48px] font-normal italic leading-none text-olive md:text-[52px]">
+              <p className="font-display text-[48px] font-normal italic leading-none text-choc md:text-[52px]">
                 {averageRating.toFixed(1)}
               </p>
               <StarRating rating={averageRating} size="sm" variant="gold" className="mt-2" />
@@ -109,7 +109,7 @@ export function ReviewsSection({
                 <div key={star} className="flex items-center gap-2 font-body text-sm">
                   <span className="w-8 text-charcoal">{star}★</span>
                   <div className="h-1 flex-1 bg-mid-grey">
-                    <div className="h-full bg-olive" style={{ width: `${reviewCount ? (n / reviewCount) * 100 : 0}%` }} />
+                    <div className="h-full bg-choc" style={{ width: `${reviewCount ? (n / reviewCount) * 100 : 0}%` }} />
                   </div>
                   <span className="w-6 text-right text-dark-grey">{n}</span>
                 </div>
@@ -176,7 +176,7 @@ export function ReviewsSection({
                 <div className="mt-3">
                   <button
                     type="button"
-                    className="font-body text-[11px] text-text-light transition-colors hover:text-olive"
+                    className="font-body text-[11px] text-text-light transition-colors hover:text-choc"
                     onClick={() => void markHelpful(r.id)}
                   >
                     Helpful? 👍 {counts[r.id] ?? r.helpfulCount}
@@ -189,7 +189,7 @@ export function ReviewsSection({
           {sorted.length > 5 && !expanded && (
             <button
               type="button"
-              className="mt-6 font-body text-[11px] font-medium uppercase tracking-wider text-olive underline"
+              className="mt-6 font-body text-[11px] font-medium uppercase tracking-wider text-choc underline"
               onClick={() => setExpanded(true)}
             >
               Load more

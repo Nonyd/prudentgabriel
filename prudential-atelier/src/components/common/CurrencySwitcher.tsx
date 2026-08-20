@@ -33,7 +33,7 @@ export function CurrencySwitcher({
         <SelectPrimitive.Trigger
           aria-label="Currency"
           className={cn(
-            "flex h-8 min-w-[2.75rem] shrink-0 items-center justify-center gap-0.5 rounded-sm border border-transparent px-1.5 font-body text-[12px] font-medium text-charcoal outline-none transition-colors hover:text-olive focus-visible:border-mid-grey data-[state=open]:text-olive",
+            "flex h-8 min-w-[2.75rem] shrink-0 items-center justify-center gap-0.5 rounded-sm border border-transparent px-1.5 font-body text-[12px] font-medium text-charcoal outline-none transition-colors hover:text-choc focus-visible:border-mid-grey data-[state=open]:text-choc",
             className,
           )}
         >
@@ -54,7 +54,7 @@ export function CurrencySwitcher({
                   key={c.code}
                   value={c.code}
                   className={cn(
-                    "relative flex cursor-pointer select-none items-center py-2 pl-7 pr-3 font-body text-[12px] text-charcoal outline-none data-[highlighted]:bg-light-grey data-[state=checked]:text-olive",
+                    "relative flex cursor-pointer select-none items-center py-2 pl-7 pr-3 font-body text-[12px] text-charcoal outline-none data-[highlighted]:bg-light-grey data-[state=checked]:text-choc",
                   )}
                 >
                   <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
@@ -84,7 +84,7 @@ export function CurrencySwitcher({
             onClick={() => setCurrency(c.code)}
             className={cn(
               "min-w-[1.75rem] px-1 py-0.5 font-body text-[12px] font-medium transition-colors duration-200",
-              currency === c.code ? "text-olive" : "text-charcoal hover:text-olive",
+              currency === c.code ? "text-choc" : "text-charcoal hover:text-choc",
             )}
             aria-pressed={currency === c.code}
             aria-label={`Switch to ${c.code}`}
@@ -106,7 +106,7 @@ export function CurrencySwitcher({
             onClick={() => setCurrency(c.code)}
             className={cn(
               "min-w-[2.25rem] px-2 py-1.5 font-body text-[12px] font-medium transition-colors duration-200",
-              currency === c.code ? "bg-olive text-white" : "bg-light-grey text-charcoal hover:bg-mid-grey",
+              currency === c.code ? "bg-choc text-cream" : "bg-light-grey text-charcoal hover:bg-mid-grey",
             )}
             aria-pressed={currency === c.code}
             aria-label={`Switch to ${c.code}`}
@@ -127,7 +127,7 @@ export function CurrencySwitcher({
           onClick={() => setCurrency(c.code)}
           className={cn(
             "px-2.5 py-1 font-label text-[10px] uppercase tracking-[0.1em] transition-all duration-150",
-            currency === c.code ? "bg-olive text-white" : "text-charcoal-mid hover:text-olive",
+            currency === c.code ? "bg-choc text-cream" : "text-charcoal-mid hover:text-choc",
           )}
           aria-pressed={currency === c.code}
           aria-label={`Switch to ${c.code}`}

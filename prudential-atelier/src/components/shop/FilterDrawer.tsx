@@ -32,7 +32,7 @@ export function FilterDrawer({
           <button
             type="button"
             className={cn(
-              "inline-flex h-12 items-center gap-2 border-0 bg-transparent px-0 font-body text-[11px] font-medium uppercase tracking-[0.14em] text-charcoal hover:text-olive",
+              "inline-flex h-12 items-center gap-2 border-0 bg-transparent px-0 font-body text-[11px] font-medium uppercase tracking-[0.14em] text-charcoal hover:text-choc",
               triggerClassName,
             )}
           >
@@ -65,7 +65,7 @@ export function FilterDrawer({
             <Dialog.Close asChild>
               <button
                 type="button"
-                className="h-10 w-full bg-olive font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white transition-opacity hover:opacity-90"
+                className="h-10 w-full bg-choc font-body text-[11px] font-medium uppercase tracking-[0.12em] text-cream transition-opacity hover:opacity-90"
               >
                 Apply filters
               </button>
@@ -73,7 +73,7 @@ export function FilterDrawer({
             <Dialog.Close asChild>
               <Link
                 href="/shop"
-                className="mt-3 block w-full text-left font-body text-[12px] text-dark-grey underline-offset-2 hover:text-olive hover:underline"
+                className="mt-3 block w-full text-left font-body text-[12px] text-dark-grey underline-offset-2 hover:text-choc hover:underline"
               >
                 Clear all
               </Link>
