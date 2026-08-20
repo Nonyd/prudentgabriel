@@ -71,6 +71,18 @@ prudentgabriel.com.  TXT  "v=spf1 include:spf.brevo.com ~all"
 
 (or merge with any future Google Workspace include). Keep the lookup count under 10.
 
+### Inbound mailboxes (PFA-style — Brevo, not Contabo)
+
+PFA (`pfacademy.ng`) uses Cloudflare DNS + Brevo auth + `MX → mail.…`. Atelier matches that for `prudentgabriel.com` (`mail` → `*.brand.brevosend.com`). Contabo VPS mail is **not** used.
+
+To stop `550 mailbox does not exist` on `hello@` / `admin@`:
+
+1. Brevo → Security → Authorised IPs: allowlist VPS `5.189.168.55` and your PC IP (API is blocked until this is done).
+2. Brevo → Senders: verify `noreply@prudentgabriel.com` and `hello@prudentgabriel.com`.
+3. Brevo inbound / domain mail for the branded `mail` host: create inbox or forwarder for `hello@` (and optionally `admin@`) — or forward both to a Gmail you read.
+4. Resend → Suppressions: remove bounce entries for those addresses after mailboxes exist (staging go-live already cleared them once).
+5. Do **not** change `pfacademy.ng` DNS or `/opt/pfa` when fixing atelier mail.
+
 Current DMARC is `p=none`. Unaligned Brevo mail can still deliver today. Moving DMARC to `quarantine` / `reject` **without** Brevo’s DKIM (already published) and a coherent SPF would send every failover email to spam exactly when Resend is already down.
 
 ## Admin
