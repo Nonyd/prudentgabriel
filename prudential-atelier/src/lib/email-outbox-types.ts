@@ -46,6 +46,27 @@ export function classifyHttpStatus(status: number, message: string): EmailError 
   return { kind: "retryable", message, status };
 }
 
+/** Resend free-tier / rate-limit exhaustion must fail over, not DEAD the message. */
+export function classifyResendError(status: number, message: string): EmailError {
+  const msg = message || `Resend HTTP ${status}`;
+  const msgLower = msg.toLowerCase();
+  const quota =
+    status === 402 ||
+    status === 429 ||
+    msgLower.includes("rate limit") ||
+    msgLower.includes("too many requests") ||
+    msgLower.includes("daily quota") ||
+    msgLower.includes("monthly quota") ||
+    msgLower.includes("quota exceeded") ||
+    msgLower.includes("usage limit") ||
+    msgLower.includes("out of credits");
+
+  if (quota) {
+    return { kind: "retryable", message: msg, status: status || 429 };
+  }
+  return classifyHttpStatus(status, msg);
+}
+
 /**
  * Brevo-specific mapping. Do not use status alone — `402` and some `400`s are
  * config/quota, not bad message content.

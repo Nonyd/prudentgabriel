@@ -6,6 +6,7 @@ import { getSetting } from "@/lib/settings";
 import {
   classifyBrevoError,
   classifyHttpStatus,
+  classifyResendError,
   type EmailAttachment,
   type EmailError,
   type EmailProvider,
@@ -162,7 +163,7 @@ export function createResendProvider(opts?: { apiKey?: string | null }): EmailPr
         });
         if (error) {
           const status = (error as { statusCode?: number }).statusCode ?? 500;
-          return { error: classifyHttpStatus(status, error.message) };
+          return { error: classifyResendError(status, error.message) };
         }
         return { id: data?.id ?? "resend-unknown" };
       } catch (e) {

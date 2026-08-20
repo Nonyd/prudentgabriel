@@ -154,6 +154,29 @@ async function main() {
   // --- Brevo error mapping (Slice F) ---
   const { classifyBrevoError } = await import("../src/lib/email-outbox-types");
   assert(classifyBrevoError(402, "quota", "not_enough_credits").kind === "retryable", "402 → retryable");
+  const { classifyResendError } = await import("../src/lib/email-outbox-types");
+  assert(classifyResendError(429, "rate limit exceeded").kind === "retryable", "Resend 429 → retryable");
+  assert(classifyResendError(403, "monthly quota exceeded").kind === "retryable", "Resend quota → retryable");
+
+  let resendQuota = 0;
+  let afterResend = 0;
+  setEmailProvidersForTest([
+    provider("resend", async () => {
+      resendQuota += 1;
+      return { error: classifyResendError(429, "Too many requests") };
+    }),
+    provider("brevo", async () => {
+      afterResend += 1;
+      return { id: "brevo-after-resend-quota" };
+    }),
+  ]);
+  resetEmailCircuitBreakers();
+  const qResendQuota = await queue("resend-quota");
+  await deliverEmail(qResendQuota.id);
+  const rowResendQuota = await prisma.emailMessage.findUnique({ where: { id: qResendQuota.id } });
+  assert(resendQuota === 1 && afterResend === 1, "Resend quota fails over to Brevo");
+  assert(rowResendQuota?.status === EmailStatus.SENT && rowResendQuota.provider === "brevo", "Brevo delivers after Resend quota");
+
   assert(classifyBrevoError(400, "invalid recipient").kind === "terminal", "400 recipient → terminal");
   assert(
     classifyBrevoError(400, "sender is not valid", "invalid_parameter").alert === "provider_config",

@@ -21,7 +21,26 @@ provider is skipped when `isConfigured()` is false.
 chain entries point at the same Brevo account: the circuit breaker would think
 it has a second fallback when it does not, and a Brevo quota/outage would take
 out both. Leave SMTP empty unless you have a **different** MTA (e.g. Contabo
-mail). Unconfigured SMTP is skipped; the live chain is Resend → Brevo.
+mail or Namecheap/cPanel). Unconfigured SMTP is skipped; the live chain is
+Resend → Brevo.
+
+### Failover (automatic)
+
+Order default: `resend,brevo,smtp` (CMS `email_provider_order`).
+
+1. Try **Resend**. If it fails with retryable/auth errors (including free-tier
+   rate limit / quota), try the next provider.
+2. Try **Brevo** the same way (its own quota → fail over, not `DEAD`).
+3. Try **SMTP** only if host credentials are configured (env or admin Email
+   settings: `smtp_host`, `smtp_port`, `smtp_username`, `smtp_password`).
+
+Terminal errors (bad recipient, etc.) still mark `DEAD` and do **not** fail
+over — that would spam other ESPs with the same bad address.
+
+Admin UI: **Admin → Settings → Email & SMS**. SMTP fields are already there;
+fill password (and host/user if not using env defaults) to enable the third
+fallback. Prefer env keys on the VPS for API secrets; CMS password fields work
+as a backup when env is empty.
 
 With no credentials, messages go `DEAD` with `no provider configured`. That is
 expected until keys exist.
