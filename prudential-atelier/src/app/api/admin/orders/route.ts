@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { OrderStatus, PaymentGateway, PaymentStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
+import { applyOrderAttention } from "@/lib/admin-orders-filter";
 
 export async function GET(req: NextRequest) {
   const gate = await requireAdminApi("shop.orders");
@@ -15,9 +16,10 @@ export async function GET(req: NextRequest) {
   const search = (searchParams.get("search") ?? "").trim();
   const status = searchParams.get("status");
   const paymentStatus = searchParams.get("paymentStatus");
+  const attention = searchParams.get("attention");
   const gateway = searchParams.get("gateway");
 
-  const where: Prisma.OrderWhereInput = {};
+  let where: Prisma.OrderWhereInput = {};
   if (search) {
     where.OR = [
       { orderNumber: { contains: search, mode: "insensitive" } },
@@ -34,6 +36,7 @@ export async function GET(req: NextRequest) {
   if (gateway && gateway !== "all" && (Object.values(PaymentGateway) as string[]).includes(gateway)) {
     where.paymentGateway = gateway as PaymentGateway;
   }
+  where = applyOrderAttention(where, attention);
 
   const [total, orders] = await Promise.all([
     prisma.order.count({ where }),

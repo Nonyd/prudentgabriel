@@ -3,6 +3,7 @@ import { OrderStatus, PaymentStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AdminOrdersCsvExport } from "@/components/admin/AdminOrdersCsvExport";
 import { AdminOrdersListClient, type AdminOrderListRow } from "@/components/admin/AdminOrdersListClient";
+import { REFUND_REQUIRED_ATTENTION, applyOrderAttention } from "@/lib/admin-orders-filter";
 
 const PAGE = 20;
 
@@ -14,8 +15,9 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   const search = (Array.isArray(sp.search) ? sp.search[0] : sp.search)?.trim() ?? "";
   const status = (Array.isArray(sp.status) ? sp.status[0] : sp.status) ?? "";
   const paymentStatus = (Array.isArray(sp.paymentStatus) ? sp.paymentStatus[0] : sp.paymentStatus) ?? "";
+  const attention = (Array.isArray(sp.attention) ? sp.attention[0] : sp.attention) ?? "";
 
-  const where: Prisma.OrderWhereInput = {};
+  let where: Prisma.OrderWhereInput = {};
   if (search) {
     where.OR = [
       { orderNumber: { contains: search, mode: "insensitive" } },
@@ -29,8 +31,9 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   if (paymentStatus && (Object.values(PaymentStatus) as string[]).includes(paymentStatus)) {
     where.paymentStatus = paymentStatus as PaymentStatus;
   }
+  where = applyOrderAttention(where, attention);
 
-  const [total, orders] = await Promise.all([
+  const [total, orders, refundRequiredCount] = await Promise.all([
     prisma.order.count({ where }),
     prisma.order.findMany({
       where,
@@ -43,6 +46,9 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
         items: { take: 1, include: { product: { select: { name: true } } } },
       },
     }),
+    prisma.order.count({
+      where: { status: OrderStatus.CANCELLED, paymentStatus: PaymentStatus.PAID },
+    }),
   ]);
 
   function pageHref(p: number) {
@@ -50,6 +56,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
     if (search) q.set("search", search);
     if (status) q.set("status", status);
     if (paymentStatus) q.set("paymentStatus", paymentStatus);
+    if (attention) q.set("attention", attention);
     q.set("page", String(p));
     return `/admin/orders?${q.toString()}`;
   }
@@ -58,6 +65,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   if (search) exportQuery.set("search", search);
   if (status) exportQuery.set("status", status);
   if (paymentStatus) exportQuery.set("paymentStatus", paymentStatus);
+  if (attention) exportQuery.set("attention", attention);
 
   const listRows: AdminOrderListRow[] = orders.map((o) => {
     const email = o.user?.email ?? o.guestEmail ?? "";
@@ -82,7 +90,17 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-2xl text-charcoal">Orders</h1>
-        <AdminOrdersCsvExport query={exportQuery.toString()} />
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href={`/admin/orders?attention=${REFUND_REQUIRED_ATTENTION}`}
+            className={`font-body text-[11px] uppercase tracking-wide ${
+              attention === REFUND_REQUIRED_ATTENTION ? "text-choc underline" : "text-olive hover:underline"
+            }`}
+          >
+            Refund required{refundRequiredCount > 0 ? ` (${refundRequiredCount})` : ""}
+          </Link>
+          <AdminOrdersCsvExport query={exportQuery.toString()} />
+        </div>
       </div>
       <form className="mt-6 flex flex-wrap gap-2 text-sm" method="get">
         <input
@@ -111,9 +129,15 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
             </option>
           ))}
         </select>
+        <input type="hidden" name="attention" value={attention} />
         <button type="submit" className="bg-olive px-4 py-2 font-body text-xs uppercase tracking-wide text-white">
           Filter
         </button>
+        {attention === REFUND_REQUIRED_ATTENTION ? (
+          <Link href="/admin/orders" className="px-3 py-2 font-body text-xs uppercase tracking-wide text-olive hover:underline">
+            Clear refund filter
+          </Link>
+        ) : null}
       </form>
 
       <div className="mt-8">

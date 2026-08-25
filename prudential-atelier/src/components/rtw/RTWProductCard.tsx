@@ -8,7 +8,7 @@ import { cn, optimizeImageUrl } from "@/lib/utils";
 import { PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/product-image-url";
 import { convertFromNGN, formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
-import { useCartStore } from "@/store/cartStore";
+import { useBagActions } from "@/hooks/useBagActions";
 import type { ProductListItem } from "@/types/product";
 
 export interface RTWProductCardProps {
@@ -24,7 +24,7 @@ export function RTWProductCard({ product, priority }: RTWProductCardProps) {
   const router = useRouter();
   const currency = useCurrencyStore((s) => s.currency);
   const rates = useCurrencyStore((s) => s.rates);
-  const addItem = useCartStore((s) => s.addItem);
+  const { addToBag } = useBagActions();
   const [colorId, setColorId] = useState<string | null>(product.colors[0]?.id ?? null);
   const [sizeId, setSizeId] = useState<string | null>(null);
 
@@ -62,17 +62,16 @@ export function RTWProductCard({ product, priority }: RTWProductCardProps) {
   const imgPrimary = optimizeImageUrl(primary?.url || PRODUCT_IMAGE_PLACEHOLDER, 600);
   const imgSecondary = secondary?.url ? optimizeImageUrl(secondary.url, 600) : null;
 
-  const addToBag = (variant: ProductListItem["variants"][0]) => {
+  const addToBagClick = async (variant: ProductListItem["variants"][0]) => {
     if (variant.stock < 1) {
       toast.error("This size is sold out.");
       return;
     }
     const unit = variant.salePriceNGN ?? variant.priceNGN;
-    const id = `${variant.id}-${selectedColor?.id ?? "none"}`;
     const imageUrl =
       (selectedColor?.imageUrl?.trim() || primary?.url || PRODUCT_IMAGE_PLACEHOLDER) as string;
-    addItem({
-      id,
+    const ok = await addToBag({
+      id: `${variant.id}-${selectedColor?.id ?? "none"}`,
       productId: product.id,
       productName: product.name,
       productSlug: product.slug,
@@ -89,7 +88,7 @@ export function RTWProductCard({ product, priority }: RTWProductCardProps) {
       stock: variant.stock,
       category: product.category,
     });
-    toast.success("Added to bag ✓");
+    if (ok) toast.success("Added to bag ✓");
   };
 
   const goToProduct = () => {
@@ -156,7 +155,7 @@ export function RTWProductCard({ product, priority }: RTWProductCardProps) {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                addToBag(product.variants[0]);
+                void addToBagClick(product.variants[0]);
               }}
               className="h-10 w-full bg-choc font-body text-[10px] font-medium uppercase tracking-[0.12em] text-cream transition-opacity hover:opacity-90"
             >
@@ -200,7 +199,7 @@ export function RTWProductCard({ product, priority }: RTWProductCardProps) {
                   onClick={(e) => {
                     e.stopPropagation();
                     const v = product.variants.find((x) => x.id === sizeId);
-                    if (v) addToBag(v);
+                    if (v) void addToBagClick(v);
                   }}
                   className="h-10 w-full bg-choc font-body text-[10px] font-medium uppercase tracking-[0.12em] text-cream transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                 >

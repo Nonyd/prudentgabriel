@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { auth } from "@/lib/auth.config";
+import { shouldBlockAtelierStorefront } from "@/lib/atelier-storefront";
 
 const ADMIN_ROLES = [
   "SUPER_ADMIN",
@@ -16,17 +17,22 @@ const ADMIN_ROLES = [
 
 const MAINTENANCE_TTL_MS = 15_000;
 
+type StorefrontFlags = { at: number; maintenance: boolean; atelierEnabled: boolean };
+
 /** Per-isolate memo so HTML navigations do not hit the status route on every request. */
-let maintenanceMemo: { at: number; enabled: boolean } | null = null;
+let storefrontMemo: StorefrontFlags | null = null;
 
 /**
- * Fail-open: if the status route errors or is unreachable, the storefront stays up.
- * A stale memo is preferred over a hard-down when a later fetch fails.
+ * Fail-open for maintenance (keep the shop up). Fail-closed for atelier
+ * (hide commissions if the flag cannot be read — RTW-first launch).
  */
-async function isMaintenanceEnabled(request: NextRequest): Promise<boolean> {
+async function getStorefrontFlags(request: NextRequest): Promise<{
+  maintenance: boolean;
+  atelierEnabled: boolean;
+}> {
   const now = Date.now();
-  if (maintenanceMemo && now - maintenanceMemo.at < MAINTENANCE_TTL_MS) {
-    return maintenanceMemo.enabled;
+  if (storefrontMemo && now - storefrontMemo.at < MAINTENANCE_TTL_MS) {
+    return { maintenance: storefrontMemo.maintenance, atelierEnabled: storefrontMemo.atelierEnabled };
   }
 
   try {
@@ -34,14 +40,27 @@ async function isMaintenanceEnabled(request: NextRequest): Promise<boolean> {
       headers: { Accept: "application/json" },
     });
     if (!statusRes.ok) {
-      return maintenanceMemo?.enabled ?? false;
+      return {
+        maintenance: storefrontMemo?.maintenance ?? false,
+        atelierEnabled: storefrontMemo?.atelierEnabled ?? false,
+      };
     }
-    const body = (await statusRes.json()) as { enabled?: boolean };
-    const enabled = body.enabled === true;
-    maintenanceMemo = { at: now, enabled };
-    return enabled;
+    const body = (await statusRes.json()) as {
+      enabled?: boolean;
+      atelierStorefrontEnabled?: boolean;
+    };
+    const flags = {
+      at: now,
+      maintenance: body.enabled === true,
+      atelierEnabled: body.atelierStorefrontEnabled === true,
+    };
+    storefrontMemo = flags;
+    return { maintenance: flags.maintenance, atelierEnabled: flags.atelierEnabled };
   } catch {
-    return maintenanceMemo?.enabled ?? false;
+    return {
+      maintenance: storefrontMemo?.maintenance ?? false,
+      atelierEnabled: storefrontMemo?.atelierEnabled ?? false,
+    };
   }
 }
 
@@ -56,7 +75,8 @@ export default auth(async function middleware(request) {
     pathname.includes("favicon") ||
     pathname.includes(".") ||
     pathname.startsWith("/api/") ||
-    pathname === "/maintenance"
+    pathname === "/maintenance" ||
+    pathname === "/__storefront-hidden"
   ) {
     return NextResponse.next();
   }
@@ -75,8 +95,17 @@ export default auth(async function middleware(request) {
     pathname.startsWith("/accept-invite");
 
   if (!isAdminUser && !skipMaintenanceGate) {
-    if (await isMaintenanceEnabled(request)) {
+    const flags = await getStorefrontFlags(request);
+    if (flags.maintenance) {
       return NextResponse.redirect(new URL("/maintenance", request.url));
+    }
+    if (shouldBlockAtelierStorefront(flags.atelierEnabled, pathname)) {
+      return NextResponse.rewrite(new URL("/__storefront-hidden", request.url));
+    }
+  } else if (!pathname.startsWith("/admin") && !pathname.startsWith("/staff")) {
+    const flags = await getStorefrontFlags(request);
+    if (shouldBlockAtelierStorefront(flags.atelierEnabled, pathname)) {
+      return NextResponse.rewrite(new URL("/__storefront-hidden", request.url));
     }
   }
 

@@ -9,6 +9,7 @@ import { sendPaymentConfirmedEmail } from "@/lib/email";
 import { notifyBankTransferConfirmed, notifyPaymentConfirmed } from "@/lib/customer-notifications";
 import { logActivity } from "@/lib/logger";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { rtwOrderSuccessPath } from "@/lib/atelier-storefront";
 import {
   appendPayment,
   confirmPayment,
@@ -99,7 +100,7 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
         ref: order.orderNumber,
         amountNGN: order.total,
         kind: "order",
-        trackUrl: `${appUrl}/track/${encodeURIComponent(order.orderNumber)}`,
+        trackUrl: `${appUrl}${rtwOrderSuccessPath(order.orderNumber, email)}`,
       });
       notifyPaymentConfirmed({
         userId: order.userId,

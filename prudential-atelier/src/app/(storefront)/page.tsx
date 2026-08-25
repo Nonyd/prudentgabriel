@@ -6,15 +6,19 @@ import { HomeTestimonialsSection } from "@/components/home/HomeTestimonialsSecti
 import { BrandQuoteSection } from "@/components/public/BrandQuoteSection";
 import { PFACrosslinkBanner } from "@/components/public/PFACrosslinkBanner";
 import { BlogPreview } from "@/components/public/BlogPreview";
+import { getSetting } from "@/lib/settings";
+import { ATELIER_STOREFRONT_SETTING_KEY } from "@/lib/atelier-storefront";
 
 export const revalidate = 300;
 
-export default function HomePage() {
+export default async function HomePage() {
+  const atelierEnabled = (await getSetting(ATELIER_STOREFRONT_SETTING_KEY)) === "true";
+
   return (
     <>
       <HeroSection />
       <BestSellers />
-      <CategoryGrid />
+      <CategoryGrid atelierEnabled={atelierEnabled} />
       <BespokeJourney />
       <HomeTestimonialsSection />
       <BrandQuoteSection />

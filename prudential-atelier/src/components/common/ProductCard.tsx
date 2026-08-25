@@ -9,7 +9,7 @@ import { WishlistButton } from "@/components/common/WishlistButton";
 import { QuickViewModal } from "@/components/common/QuickViewModal";
 import { convertFromNGN, formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
-import { useCartStore } from "@/store/cartStore";
+import { useBagActions } from "@/hooks/useBagActions";
 import { optimizeProductCardImageUrl } from "@/lib/product-image-url";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import type { ProductListItem } from "@/types/product";
@@ -28,7 +28,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
   const router = useRouter();
   const currency = useCurrencyStore((s) => s.currency);
   const rates = useCurrencyStore((s) => s.rates);
-  const addItem = useCartStore((s) => s.addItem);
+  const { addToBag } = useBagActions();
   const [qv, setQv] = useState<string | null>(null);
   const [colorId, setColorId] = useState<string | null>(product.colors[0]?.id ?? null);
   const [sizeId, setSizeId] = useState<string | null>(null);
@@ -70,16 +70,15 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
   const imgPrimary = primary?.url?.trim() ? optimizeProductCardImageUrl(primary.url) : "";
   const imgSecondary = secondary ? optimizeProductCardImageUrl(secondary.url) : null;
 
-  const addToBag = (variant: ProductListItem["variants"][0]) => {
+  const addToBagClick = async (variant: ProductListItem["variants"][0]) => {
     if (variant.stock < 1) {
       toast.error("This size is sold out.");
       return;
     }
     const unit = variant.salePriceNGN ?? variant.priceNGN;
-    const id = `${variant.id}-${selectedColor?.id ?? "none"}`;
     const imageUrl = (selectedColor?.imageUrl?.trim() || primary?.url || "") as string;
-    addItem({
-      id,
+    const ok = await addToBag({
+      id: `${variant.id}-${selectedColor?.id ?? "none"}`,
       productId: product.id,
       productName: product.name,
       productSlug: product.slug,
@@ -96,7 +95,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
       stock: variant.stock,
       category: product.category,
     });
-    toast.success("Added to bag ✓");
+    if (ok) toast.success("Added to bag ✓");
   };
 
   return (
@@ -173,7 +172,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
               {oneSizeOnly ? (
                 <button
                   type="button"
-                  onClick={() => addToBag(product.variants[0])}
+                  onClick={() => void addToBagClick(product.variants[0])}
                   className="h-10 w-full bg-choc font-body text-[11px] font-medium uppercase tracking-[0.12em] text-cream transition-opacity hover:opacity-90"
                 >
                   Add to bag
@@ -206,7 +205,7 @@ export function ProductCard({ product, priority, compact }: ProductCardProps) {
                     disabled={!sizeId || product.variants.find((v) => v.id === sizeId)?.stock === 0}
                     onClick={() => {
                       const v = product.variants.find((x) => x.id === sizeId);
-                      if (v) addToBag(v);
+                      if (v) void addToBagClick(v);
                     }}
                     className="h-10 w-full bg-choc font-body text-[11px] font-medium uppercase tracking-[0.12em] text-cream transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                   >

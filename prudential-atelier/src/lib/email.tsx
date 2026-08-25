@@ -30,6 +30,8 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { primeEmailBranding, emailLogoWhiteUrl } from "@/lib/email-branding";
 import { prisma } from "@/lib/prisma";
 import { queueEmail } from "@/lib/email-outbox";
+import { getSetting } from "@/lib/settings";
+import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
 
 async function renderBrandedEmail(element: ReactElement) {
   await primeEmailBranding();
@@ -235,6 +237,52 @@ export async function sendOrderConfirmationEmail(params: {
     relatedType: "Order",
     relatedId: params.orderNumber,
   });
+}
+
+export async function sendRtwFulfilmentRefusedEmails(params: {
+  orderId: string;
+  orderNumber: string;
+  to: string;
+  firstName: string;
+  amountNGN: number;
+}): Promise<void> {
+  const amount = `₦${Math.round(params.amountNGN).toLocaleString("en-NG")}`;
+  const contactUrl = `${getPublicAppUrl()}/contact`;
+
+  await sendEmail({
+    to: params.to,
+    subject: `We could not fulfil order #${params.orderNumber} — refund underway`,
+    html: wrapHtml(
+      "Prudential Atelier",
+      `<p>Dear ${escapeHtml(params.firstName)},</p>
+       <p>Thank you for your order <strong>#${escapeHtml(params.orderNumber)}</strong>. Your payment of <strong>${amount}</strong> was received, but the piece sold out before we could reserve it.</p>
+       <p>We will not ship a substitute. A refund of the full amount will be issued. If you have not seen it within a few working days, write to us at <a href="${escapeHtml(contactUrl)}">our contact page</a>.</p>
+       <p>We are sorry — this should not happen, and we are treating it as such.</p>`,
+    ),
+    template: "rtw-fulfilment-refused",
+    idempotencyKey: `rtw-fulfil-refused-customer:${params.orderId}`,
+    relatedType: "Order",
+    relatedId: params.orderId,
+  });
+
+  const adminTo = await resolveAdminAlertEmail(getSetting);
+  if (adminTo.toLowerCase() !== params.to.toLowerCase()) {
+    await sendEmail({
+      to: adminTo,
+      subject: `Refund required — RTW oversell #${params.orderNumber}`,
+      html: wrapHtml(
+        "Prudential Atelier",
+        `<p>Order <strong>#${escapeHtml(params.orderNumber)}</strong> was paid (${amount}) but stock was insufficient at fulfilment.</p>
+         <p>The order is cancelled. Refund ${escapeHtml(params.to)} in the PSP, then record the ledger correction (see PAYMENT_LEDGER.md — oversell / gap 7).</p>
+         <p><a href="${escapeHtml(`${getPublicAppUrl()}/admin/orders/${params.orderId}`)}">Open the order</a>
+         · <a href="${escapeHtml(`${getPublicAppUrl()}/admin/orders?attention=refund-required`)}">All paid · cancelled</a></p>`,
+      ),
+      template: "rtw-fulfilment-refused-admin",
+      idempotencyKey: `rtw-fulfil-refused-admin:${params.orderId}`,
+      relatedType: "Order",
+      relatedId: params.orderId,
+    });
+  }
 }
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string, tokenHash: string): Promise<void> {

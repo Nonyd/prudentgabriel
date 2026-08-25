@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useCartStore } from "@/store/cartStore";
+import { useBagActions } from "@/hooks/useBagActions";
 import { convertFromNGN, formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
@@ -18,8 +19,7 @@ export function CartDrawer() {
   const items = useCartStore((s) => s.items);
   const totalItems = useCartStore((s) => s.totalItems);
   const totalNGN = useCartStore((s) => s.totalNGN);
-  const updateQty = useCartStore((s) => s.updateQty);
-  const removeItem = useCartStore((s) => s.removeItem);
+  const { changeQty, removeFromBag } = useBagActions();
   const currency = useCurrencyStore((s) => s.currency);
   const rates = useCurrencyStore((s) => s.rates);
   const panelRef = useRef<HTMLElement>(null);
@@ -110,7 +110,7 @@ export function CartDrawer() {
                     <li key={item.id} className="relative flex gap-3 border-b border-border pb-6">
                       <button
                         type="button"
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => void removeFromBag(item.id)}
                         className="absolute right-0 top-0 text-dark-grey hover:text-choc"
                         aria-label="Remove"
                       >
@@ -135,7 +135,7 @@ export function CartDrawer() {
                             disabled={item.quantity <= 1}
                             className="flex h-7 w-7 items-center justify-center rounded-sm border border-border text-sm disabled:opacity-40"
                             aria-label={`Decrease quantity of ${item.productName}`}
-                            onClick={() => updateQty(item.id, item.quantity - 1)}
+                            onClick={() => void changeQty(item.id, item.quantity - 1)}
                           >
                             −
                           </button>
@@ -144,7 +144,7 @@ export function CartDrawer() {
                             type="button"
                             className="flex h-7 w-7 items-center justify-center rounded-sm border border-border text-sm"
                             aria-label={`Increase quantity of ${item.productName}`}
-                            onClick={() => updateQty(item.id, item.quantity + 1)}
+                            onClick={() => void changeQty(item.id, item.quantity + 1)}
                           >
                             +
                           </button>

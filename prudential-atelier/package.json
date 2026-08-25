@@ -30,6 +30,7 @@
     "test:quotation": "tsx --tsconfig tsconfig.scripts.json scripts/test-quotation.ts",
     "test:post-delivery": "tsx --tsconfig tsconfig.scripts.json scripts/test-post-delivery.ts",
     "test:payment-bind": "tsx --tsconfig tsconfig.scripts.json scripts/test-payment-bind.ts",
+    "test:rtw-launch": "tsx --tsconfig tsconfig.scripts.json scripts/test-rtw-launch.ts",
     "test:authz": "tsx --tsconfig tsconfig.scripts.json scripts/test-authz.ts",
     "email:dev": "email dev src/emails --port 3001"
   },

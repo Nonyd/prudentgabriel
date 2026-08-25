@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { removeCartLine, updateCartLineQty } from "@/lib/cart-service";
 
 const patchSchema = z.object({
   quantity: z.number().int().min(1),
@@ -22,37 +22,12 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  const item = await prisma.cartItem.findFirst({
-    where: { id: params.itemId, userId: session.user.id },
-    include: { variant: true },
-  });
-
-  if (!item) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const result = await updateCartLineQty(session.user.id, params.itemId, parsed.data.quantity);
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
-  if (parsed.data.quantity > item.variant.stock) {
-    return NextResponse.json({ error: "Quantity exceeds stock" }, { status: 400 });
-  }
-
-  const updated = await prisma.cartItem.update({
-    where: { id: item.id },
-    data: { quantity: parsed.data.quantity },
-    include: {
-      product: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          images: { where: { isPrimary: true }, take: 1 },
-        },
-      },
-      variant: true,
-      color: true,
-    },
-  });
-
-  return NextResponse.json(updated);
+  return NextResponse.json(result.cartItem);
 }
 
 export async function DELETE(
@@ -64,15 +39,10 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const item = await prisma.cartItem.findFirst({
-    where: { id: params.itemId, userId: session.user.id },
-  });
-
-  if (!item) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const result = await removeCartLine(session.user.id, params.itemId);
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
   }
-
-  await prisma.cartItem.delete({ where: { id: item.id } });
 
   return NextResponse.json({ success: true });
 }

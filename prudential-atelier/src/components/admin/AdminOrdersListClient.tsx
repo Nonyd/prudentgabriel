@@ -204,7 +204,14 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
           </thead>
           <tbody>
             {orders.map((o) => (
-              <tr key={o.id} className="border-b border-[#F5F5F3] hover:bg-[#FAFAFA]">
+              <tr
+                key={o.id}
+                className={
+                  o.paymentStatus === "PAID" && o.status === "CANCELLED"
+                    ? "border-b border-[#F5F5F3] bg-[#F8F1E8] hover:bg-[#F3E6D8]"
+                    : "border-b border-[#F5F5F3] hover:bg-[#FAFAFA]"
+                }
+              >
                 <td className="p-3">
                   <input type="checkbox" checked={selected.has(o.id)} onChange={() => toggle(o.id)} aria-label={`Select ${o.orderNumber}`} />
                 </td>
@@ -221,7 +228,13 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                   <GatewayPill gateway={o.paymentGateway} />
                 </td>
                 <td className="hidden p-3 text-xs md:table-cell">{o.paymentStatus}</td>
-                <td className="p-3 text-xs">{o.status}</td>
+                <td className="p-3 text-xs">
+                  {o.paymentStatus === "PAID" && o.status === "CANCELLED" ? (
+                    <span className="font-medium text-choc">Refund required</span>
+                  ) : (
+                    o.status
+                  )}
+                </td>
                 <td className="p-3 text-xs text-[#A8A8A4]">{new Date(o.createdAt).toLocaleDateString("en-NG")}</td>
                 <td className="p-3">
                   <div className="flex flex-wrap items-center gap-2">

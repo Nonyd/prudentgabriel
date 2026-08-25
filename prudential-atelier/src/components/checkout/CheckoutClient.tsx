@@ -7,6 +7,7 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import clsx from "clsx";
 import { useCartStore } from "@/store/cartStore";
+import { useBagActions } from "@/hooks/useBagActions";
 import { useCurrencyStore } from "@/store/currencyStore";
 import type { ShopCurrency } from "@/lib/currency";
 import type { AddressInput } from "@/validations/order";
@@ -54,8 +55,7 @@ export function CheckoutClient() {
   const currency = useCurrencyStore((s) => s.currency);
   const setCurrency = useCurrencyStore((s) => s.setCurrency);
   const items = useCartStore((s) => s.items);
-  const updateQty = useCartStore((s) => s.updateQty);
-  const removeItem = useCartStore((s) => s.removeItem);
+  const { changeQty, removeFromBag } = useBagActions();
 
   const [step, setStep] = useState(1);
   const [couponCode, setCouponCode] = useState("");
@@ -557,7 +557,7 @@ export function CheckoutClient() {
                       aria-label={`Decrease quantity of ${i.productName}`}
                       onClick={() => {
                         const next = Math.max(1, i.quantity - 1);
-                        updateQty(i.id, next);
+                        void changeQty(i.id, next);
                       }}
                     >
                       −
@@ -570,7 +570,7 @@ export function CheckoutClient() {
                       onClick={() => {
                         const max = i.stock ?? 999;
                         const next = Math.min(max, i.quantity + 1);
-                        updateQty(i.id, next);
+                        void changeQty(i.id, next);
                       }}
                     >
                       +
@@ -579,7 +579,7 @@ export function CheckoutClient() {
                       type="button"
                       className="ml-auto text-charcoal-light hover:text-choc"
                       aria-label={`Remove ${i.productName} from bag`}
-                      onClick={() => removeItem(i.id)}
+                      onClick={() => void removeFromBag(i.id)}
                     >
                       Remove
                     </button>

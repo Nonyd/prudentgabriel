@@ -300,11 +300,13 @@ export function Navbar({
   showAnnouncement = true,
   announcementMessages = ["WORLDWIDE SHIPPING · ₦ · $ · £"],
   announcementIntervalMs = 3000,
+  atelierEnabled = true,
 }: {
   collections?: CollectionNav[];
   showAnnouncement?: boolean;
   announcementMessages?: string[];
   announcementIntervalMs?: number;
+  atelierEnabled?: boolean;
 }) {
   const pathname = usePathname();
   const subBrand = getSubBrand(pathname);
@@ -320,6 +322,10 @@ export function Navbar({
     }
     openLogin("/account");
   };
+
+  const primaryLinks = atelierEnabled
+    ? PRIMARY_LINKS
+    : PRIMARY_LINKS.filter((l) => l.href !== "/atelier" && l.href !== "/bridal");
 
   return (
     <>
@@ -363,7 +369,7 @@ export function Navbar({
             <nav className="flex min-w-0 items-center gap-6 xl:gap-8" aria-label="Primary">
               <NavLink href="/shop" label="Shop" />
               <RtwDropdown collections={collections} />
-              {PRIMARY_LINKS.filter((l) => l.href !== "/shop").map((link) => (
+              {primaryLinks.filter((l) => l.href !== "/shop").map((link) => (
                 <NavLink key={link.href} href={link.href} label={link.label} />
               ))}
             </nav>
@@ -415,7 +421,7 @@ export function Navbar({
             Shop
           </Link>
           <MobileRtwSection collections={collections} onClose={() => setOpen(false)} />
-          {PRIMARY_LINKS.filter((l) => l.href !== "/shop").map((link) => (
+          {primaryLinks.filter((l) => l.href !== "/shop").map((link) => (
             <Link
               key={link.href}
               href={link.href}

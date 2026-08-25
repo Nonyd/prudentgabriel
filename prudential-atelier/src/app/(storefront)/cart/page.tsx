@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useCartStore } from "@/store/cartStore";
+import { useBagActions } from "@/hooks/useBagActions";
 import { convertFromNGN, formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 
@@ -13,8 +14,7 @@ export default function CartPage() {
   const items = useCartStore((s) => s.items);
   const totalItems = useCartStore((s) => s.totalItems);
   const totalNGN = useCartStore((s) => s.totalNGN);
-  const updateQty = useCartStore((s) => s.updateQty);
-  const removeItem = useCartStore((s) => s.removeItem);
+  const { changeQty, removeFromBag } = useBagActions();
   const currency = useCurrencyStore((s) => s.currency);
   const rates = useCurrencyStore((s) => s.rates);
 
@@ -53,7 +53,7 @@ export default function CartPage() {
                       disabled={item.quantity <= 1}
                       className="flex h-8 w-8 items-center justify-center border border-border text-sm disabled:opacity-40"
                       aria-label={`Decrease quantity of ${item.productName}`}
-                      onClick={() => updateQty(item.id, item.quantity - 1)}
+                      onClick={() => void changeQty(item.id, item.quantity - 1)}
                     >
                       −
                     </button>
@@ -62,7 +62,7 @@ export default function CartPage() {
                       type="button"
                       className="flex h-8 w-8 items-center justify-center border border-border text-sm"
                       aria-label={`Increase quantity of ${item.productName}`}
-                      onClick={() => updateQty(item.id, item.quantity + 1)}
+                      onClick={() => void changeQty(item.id, item.quantity + 1)}
                     >
                       +
                     </button>
@@ -70,7 +70,7 @@ export default function CartPage() {
                       type="button"
                       className="ml-4 font-body text-[11px] uppercase text-dark-grey underline"
                       aria-label={`Remove ${item.productName} from bag`}
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => void removeFromBag(item.id)}
                     >
                       Remove
                     </button>

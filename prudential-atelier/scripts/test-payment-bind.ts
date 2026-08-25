@@ -91,8 +91,9 @@ function makeFulfillDb(order: {
       },
     },
     productVariant: {
-      update: async () => {
+      updateMany: async () => {
         stockDecrements += 1;
+        return { count: 1 };
       },
     },
     payment: {

@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Divider } from "@/components/ui/Divider";
 import { cn } from "@/lib/utils";
-import { useCartStore } from "@/store/cartStore";
+import { useBagActions } from "@/hooks/useBagActions";
 import { convertFromNGN, formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 
@@ -38,7 +38,7 @@ export function QuickViewModal({ productSlug, onClose }: QuickViewModalProps) {
 
   const currency = useCurrencyStore((s) => s.currency);
   const rates = useCurrencyStore((s) => s.rates);
-  const addItem = useCartStore((s) => s.addItem);
+  const { addToBag } = useBagActions();
 
   const [colorId, setColorId] = useState<string | null>(null);
   const [variantId, setVariantId] = useState<string | null>(null);
@@ -80,16 +80,15 @@ export function QuickViewModal({ productSlug, onClose }: QuickViewModalProps) {
 
   const fmt = (ngn: number) => formatPrice(convertFromNGN(ngn, currency, rates), currency);
 
-  const addToBag = () => {
+  const addToBagClick = async () => {
     if (!p || !variant) return;
     if (variant.stock < 1) {
       toast.error("This size is sold out.");
       return;
     }
-    const id = `${variant.id}-${color?.id ?? "none"}`;
     const unit = variant.salePriceNGN ?? variant.priceNGN;
-    addItem({
-      id,
+    const ok = await addToBag({
+      id: `${variant.id}-${color?.id ?? "none"}`,
       productId: p.id,
       productName: p.name,
       productSlug: p.slug,
@@ -105,8 +104,10 @@ export function QuickViewModal({ productSlug, onClose }: QuickViewModalProps) {
       quantity: Math.min(qty, variant.stock),
       stock: variant.stock,
     });
-    toast.success("Added to bag ✓");
-    onClose();
+    if (ok) {
+      toast.success("Added to bag ✓");
+      onClose();
+    }
   };
 
   return (
@@ -243,7 +244,7 @@ export function QuickViewModal({ productSlug, onClose }: QuickViewModalProps) {
                           +
                         </button>
                       </div>
-                      <Button type="button" className="w-full" size="lg" onClick={addToBag}>
+                      <Button type="button" className="w-full" size="lg" onClick={() => void addToBagClick()}>
                         Add to Bag
                       </Button>
                       <Link

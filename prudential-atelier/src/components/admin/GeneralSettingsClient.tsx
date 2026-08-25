@@ -31,6 +31,10 @@ export function GeneralSettingsClient() {
   const [maintenanceSaving, setMaintenanceSaving] = useState(false);
   const [maintenanceSavedEnabled, setMaintenanceSavedEnabled] = useState(false);
 
+  const [atelierEnabled, setAtelierEnabled] = useState(false);
+  const [atelierSaving, setAtelierSaving] = useState(false);
+  const [atelierSavedEnabled, setAtelierSavedEnabled] = useState(false);
+
   useEffect(() => {
     void (async () => {
       try {
@@ -43,11 +47,14 @@ export function GeneralSettingsClient() {
             autoConvertApprovedQuotes?: boolean;
             maintenanceModeEnabled?: boolean;
             maintenanceModeMessage?: string;
+            atelierStorefrontEnabled?: boolean;
           };
           setAutoConvert(Boolean(data.autoConvertApprovedQuotes));
           setMaintenanceEnabled(Boolean(data.maintenanceModeEnabled));
           setMaintenanceSavedEnabled(Boolean(data.maintenanceModeEnabled));
           setMaintenanceMessage(data.maintenanceModeMessage ?? "");
+          setAtelierEnabled(Boolean(data.atelierStorefrontEnabled));
+          setAtelierSavedEnabled(Boolean(data.atelierStorefrontEnabled));
         }
       } finally {
         setAutoConvertLoading(false);
@@ -117,6 +124,36 @@ export function GeneralSettingsClient() {
     }
   };
 
+  const onSaveAtelier = async () => {
+    setAtelierSaving(true);
+    try {
+      const res = await fetch("/api/admin/settings/general", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ atelierStorefrontEnabled: atelierEnabled }),
+      });
+      if (!res.ok) {
+        toast.error("Could not save atelier storefront setting");
+        return;
+      }
+
+      const wasEnabled = atelierSavedEnabled;
+      setAtelierSavedEnabled(atelierEnabled);
+
+      if (atelierEnabled && !wasEnabled) {
+        toast.success("Atelier storefront is live — consultation and bridal routes are public again.");
+      } else if (!atelierEnabled && wasEnabled) {
+        toast.success("Atelier storefront hidden. Public atelier and consultation routes now 404.");
+      } else {
+        toast.success("Atelier storefront setting saved");
+      }
+    } catch {
+      toast.error("Could not save atelier storefront setting");
+    } finally {
+      setAtelierSaving(false);
+    }
+  };
+
   const onSave = async () => {
     setSaving(true);
     try {
@@ -180,6 +217,48 @@ export function GeneralSettingsClient() {
               loading={maintenanceSaving}
               disabled={maintenanceLoading}
               onClick={() => void onSaveMaintenance()}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="card-surface p-6">
+        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+          Atelier storefront
+        </p>
+        <div className="mt-4 border-t border-sand pt-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <p className="font-sans text-sm font-medium text-ink">Show Atelier on the public site</p>
+              <p className="mt-1 font-sans text-xs leading-relaxed text-text-mid">
+                When off, /atelier, /bridal, /consultation, /quote, and /track 404 for customers. Admin
+                screens stay available. Turn this on when bespoke photography and capacity are ready.
+              </p>
+            </div>
+            <Toggle
+              checked={atelierEnabled}
+              onChange={setAtelierEnabled}
+              disabled={maintenanceLoading || atelierSaving}
+              srLabel="Atelier storefront"
+            />
+          </div>
+
+          <p className="mt-3 font-sans text-xs font-medium">
+            {maintenanceLoading
+              ? "Loading status…"
+              : atelierEnabled
+                ? "Current status: ● ATELIER VISIBLE"
+                : "Current status: hidden from the public site"}
+          </p>
+
+          <div className="mt-5">
+            <Button
+              type="button"
+              loading={atelierSaving}
+              disabled={maintenanceLoading}
+              onClick={() => void onSaveAtelier()}
             >
               Save
             </Button>

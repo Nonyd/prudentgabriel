@@ -24,7 +24,8 @@ const COLLECTIONS = [
   },
 ];
 
-export function CategoryGrid() {
+export function CategoryGrid({ atelierEnabled = true }: { atelierEnabled?: boolean }) {
+  const cards = atelierEnabled ? COLLECTIONS : COLLECTIONS.filter((c) => c.href === "/shop");
   return (
     <section className="bg-bg-page px-6 py-20 lg:px-10">
       <div className="mx-auto max-w-site">
@@ -49,12 +50,12 @@ export function CategoryGrid() {
               color: "var(--choc)",
             }}
           >
-            Three ways to wear the house
+            {atelierEnabled ? "Three ways to wear the house" : "The collection"}
           </h2>
         </div>
 
-        <div className="mt-12 grid gap-4 md:grid-cols-3">
-          {COLLECTIONS.map((card, index) => (
+        <div className={cards.length === 1 ? "mt-12 grid gap-4" : "mt-12 grid gap-4 md:grid-cols-3"}>
+          {cards.map((card, index) => (
             <motion.div
               key={card.href}
               initial={{ opacity: 0, y: 40 }}

@@ -25,6 +25,7 @@ interface ShopBrowseProps {
   heroHeadline?: string;
   heroSubtext?: string;
   hideFilters?: boolean;
+  atelierEnabled?: boolean;
 }
 
 const FILTERS = [
@@ -101,11 +102,14 @@ export function ShopBrowse({
   products: initialProducts,
   total,
   page: initialPage,
+  totalPages: _totalPages,
   hasNext: initialHasNext,
+  hasPrev: _hasPrev,
   heroEyebrow = "THE COLLECTION",
   heroHeadline = "Prudent Gabriel",
   heroSubtext = "Ready-to-wear, bridal, and atelier couture.",
   hideFilters = false,
+  atelierEnabled = true,
 }: ShopBrowseProps) {
   const sp = useSearchParams();
   const router = useRouter();
@@ -182,7 +186,7 @@ export function ShopBrowse({
       <div className="border-y border-[0.5px] border-sand bg-ivory px-4 py-4 md:px-8">
         <div className="mx-auto flex max-w-site flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap gap-2">
-            {FILTERS.map((f) => (
+            {FILTERS.filter((f) => atelierEnabled || (f.id !== "bridal" && f.id !== "atelier")).map((f) => (
               <button
                 key={f.id}
                 type="button"

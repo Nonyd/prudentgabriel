@@ -30,6 +30,8 @@ import {
   UserRoundCog,
   Users,
   Wallet,
+  Truck,
+  Ticket,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -93,6 +95,8 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
       { href: "/admin/shop/import", label: "Import Products", icon: Package, permission: "shop" },
       { href: "/admin/collections", label: "Collections", icon: Package, permission: "shop" },
       { href: "/admin/orders", label: "Orders", icon: ShoppingBag, badgeKey: "orders", permission: "shop" },
+      { href: "/admin/shipping", label: "Shipping", icon: Truck, permission: "shop" },
+      { href: "/admin/coupons", label: "Coupons", icon: Ticket, permission: "shop" },
     ],
   },
   {

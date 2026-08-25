@@ -38,6 +38,33 @@ COMMIT;
 `SET LOCAL` ends with the transaction. Prefer inserting a correction row over
 mutating history whenever possible.
 
+## RTW oversell (PAID + CANCELLED) — manual refund until gap 7
+
+`fulfillPaidOrder` can refuse fulfilment when stock cannot be decremented. The
+order is stored as **`paymentStatus = PAID`** (money at the PSP) and
+**`status = CANCELLED`** (do not ship). A `CONFIRMED` ledger row already exists.
+The admin list **Orders → Refund required** (`/admin/orders?attention=refund-required`)
+is the queue.
+
+Application code must **not** rewrite that `CONFIRMED` amount. After you refund
+in Paystack (or the PSP), record the correction as a **new** `Payment` row
+(negative amount, same `purpose` / `orderId` / `clientId`, `status = REFUNDED`,
+new `reference` such as `<original>-refund`). Then set the order
+`paymentStatus` to `REFUNDED`.
+
+If you must edit an immutable column (you almost never should), humans only:
+
+```sql
+-- Staging example. Production: same, on pa_prod, after the PSP refund exists.
+BEGIN;
+SET LOCAL app.ledger_bypass = 'on';
+-- Prefer INSERT of a correction row. Bypass is for true mistakes only.
+COMMIT;
+```
+
+Gap 7 (in-app refund/cancel ledger) stays post-launch. This procedure is the
+bridge for the G3 oversell case.
+
 ## `clientId`
 
 Not a foreign key. Prefer `User.id` when a user exists; otherwise the stable

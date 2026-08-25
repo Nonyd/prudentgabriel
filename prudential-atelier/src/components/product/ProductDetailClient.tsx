@@ -14,7 +14,7 @@ import { WishlistButton } from "@/components/common/WishlistButton";
 import { StockAlertForm } from "@/components/common/StockAlertForm";
 import { SizeGuideModal } from "@/components/shop/SizeGuideModal";
 import { sanitizeCmsHtml } from "@/lib/sanitize-html";
-import { useCartStore } from "@/store/cartStore";
+import { useBagActions } from "@/hooks/useBagActions";
 import { convertFromNGN } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import type { ProductType } from "@prisma/client";
@@ -44,17 +44,21 @@ interface ProductDetailClientProps {
   product: DetailProduct;
   averageRating: number;
   reviewCount: number;
+  freeLagosAboveNGN?: number | null;
+  atelierEnabled?: boolean;
 }
 
 export function ProductDetailClient({
   product,
   averageRating,
   reviewCount,
+  freeLagosAboveNGN = null,
+  atelierEnabled = true,
 }: ProductDetailClientProps) {
   const [variantId, setVariantId] = useState<string | null>(product.variants[0]?.id ?? null);
   const [colorId, setColorId] = useState<string | null>(product.colors[0]?.id ?? null);
   const [qty, setQty] = useState(1);
-  const addItem = useCartStore((s) => s.addItem);
+  const { addToBag } = useBagActions();
   const rates = useCurrencyStore((s) => s.rates);
 
   const variant = useMemo(
@@ -89,7 +93,7 @@ export function ProductDetailClient({
   const lowStock =
     variant && variant.stock > 0 && variant.stock <= product.lowStockAt ? variant.stock : 0;
 
-  const addToBag = () => {
+  const addToBagClick = async () => {
     if (!variant) {
       toast.error("Please select a size");
       return;
@@ -99,9 +103,8 @@ export function ProductDetailClient({
       return;
     }
     const unit = variant.salePriceNGN ?? variant.priceNGN;
-    const id = `${variant.id}-${color?.id ?? "none"}`;
-    addItem({
-      id,
+    const ok = await addToBag({
+      id: `${variant.id}-${color?.id ?? "none"}`,
       productId: product.id,
       productName: product.name,
       productSlug: product.slug,
@@ -118,7 +121,7 @@ export function ProductDetailClient({
       stock: variant.stock,
       category: product.category,
     });
-    toast.success("Added to your bag ✓");
+    if (ok) toast.success("Added to your bag ✓");
   };
 
   return (
@@ -270,7 +273,7 @@ export function ProductDetailClient({
             type="button"
             className="mt-8 h-[52px] w-full bg-choc font-body text-[11px] font-semibold uppercase tracking-[0.18em] text-cream hover:bg-nut"
             size="lg"
-            onClick={addToBag}
+            onClick={() => void addToBagClick()}
           >
             Add to Bag
           </Button>
@@ -324,11 +327,18 @@ export function ProductDetailClient({
                 </Accordion.Trigger>
               </Accordion.Header>
               <Accordion.Content className="space-y-2 pb-4 text-sm text-charcoal-mid">
-                <p>Free Lagos delivery on orders over ₦150,000. Ships worldwide.</p>
+                {freeLagosAboveNGN != null ? (
+                  <p>
+                    Free Lagos delivery on orders over ₦{Math.round(freeLagosAboveNGN).toLocaleString("en-NG")}.
+                    Ships worldwide.
+                  </p>
+                ) : (
+                  <p>Ships worldwide.</p>
+                )}
                 <p>Returns accepted within 14 days in original condition.</p>
               </Accordion.Content>
             </Accordion.Item>
-            {product.isBespokeAvail && (
+            {atelierEnabled && product.isBespokeAvail && (
               <Accordion.Item value="b" className="border-b border-border">
                 <Accordion.Header>
                   <Accordion.Trigger className="flex w-full py-3 font-label text-xs uppercase tracking-wider">

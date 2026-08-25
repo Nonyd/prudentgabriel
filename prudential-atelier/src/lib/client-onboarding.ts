@@ -6,6 +6,7 @@ import { getLoyaltyRulePoints } from "@/lib/loyalty";
 import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
 import { sendWelcomeCredentialsEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { rtwOrderSuccessPath } from "@/lib/atelier-storefront";
 import { generateTempPassword } from "@/lib/temp-password";
 
 export type OnboardSource = "CONSULTATION" | "RTW_ORDER" | "BESPOKE_ORDER";
@@ -145,7 +146,7 @@ export async function autoOnboardClient(params: {
 
   let trackUrl = `${getPublicAppUrl()}/account`;
   if (params.source === "RTW_ORDER" && trackToken && "orderNumber" in trackToken) {
-    trackUrl = `${getPublicAppUrl()}/track/${encodeURIComponent(trackToken.orderNumber)}`;
+    trackUrl = `${getPublicAppUrl()}${rtwOrderSuccessPath(trackToken.orderNumber, email)}`;
   } else if (params.source === "CONSULTATION" && trackToken && "bookingNumber" in trackToken) {
     trackUrl = `${getPublicAppUrl()}/consultation/${encodeURIComponent(trackToken.bookingNumber)}`;
   } else if (params.source === "BESPOKE_ORDER" && trackToken && "trackingToken" in trackToken) {

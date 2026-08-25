@@ -780,8 +780,7 @@ export const CMS_PAGES: CmsPageDef[] = [
             label: "CLIENT CARE column links",
             type: "links",
             default: JSON.stringify([
-              { label: "Track Your Order", url: "/track" },
-              { label: "Size Guide", url: "/rtw" },
+              { label: "Size Guide", url: "/size-guide" },
               { label: "Shipping & Returns", url: "/returns-policy" },
               { label: "Book Consultation", url: "/consultation" },
               { label: "Contact", url: "/contact" },

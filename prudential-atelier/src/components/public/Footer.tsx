@@ -10,6 +10,7 @@ import { usePublicSettings, getSettingFromPublic } from "@/hooks/usePublicSettin
 import { cmsGet, cmsJson } from "@/lib/cms-helpers";
 import { instagramHandleToUrl } from "@/lib/sub-brand";
 import { useCookieConsentStore } from "@/store/cookieConsentStore";
+import { filterStorefrontLinks } from "@/lib/atelier-storefront";
 
 type LinkItem = { label: string; url: string };
 
@@ -24,7 +25,6 @@ const DEFAULT_HOUSE_LINKS: LinkItem[] = [
 ];
 
 const DEFAULT_CLIENT_LINKS: LinkItem[] = [
-  { label: "Track Your Order", url: "/track" },
   { label: "Size Guide", url: "/size-guide" },
   { label: "Shipping & Returns", url: "/returns-policy" },
   { label: "Book Consultation", url: "/consultation" },
@@ -128,7 +128,13 @@ function FooterLinks({
   );
 }
 
-export function Footer({ cms = {} }: { cms?: Record<string, string> }) {
+export function Footer({
+  cms = {},
+  atelierEnabled = true,
+}: {
+  cms?: Record<string, string>;
+  atelierEnabled?: boolean;
+}) {
   const settings = usePublicSettings();
   const openCookieModal = useCookieConsentStore((s) => s.openModal);
 
@@ -138,17 +144,23 @@ export function Footer({ cms = {} }: { cms?: Record<string, string> }) {
   const facebookUrl = facebookHandleToUrl(getSettingFromPublic(settings, "social_facebook", "prudentgabriel"));
   const whatsappUrl = whatsappNumberToUrl(getSettingFromPublic(settings, "social_whatsapp", ""));
 
-  const houseLinks = cmsJson<LinkItem[]>(cms, "footer_house_links", DEFAULT_HOUSE_LINKS).map((l) => ({
-    href: l.url,
-    label: l.label,
-    external: l.url.startsWith("http"),
-  }));
+  const houseLinks = filterStorefrontLinks(
+    cmsJson<LinkItem[]>(cms, "footer_house_links", DEFAULT_HOUSE_LINKS).map((l) => ({
+      href: l.url,
+      label: l.label,
+      external: l.url.startsWith("http"),
+    })),
+    atelierEnabled,
+  );
 
-  const clientLinks = cmsJson<LinkItem[]>(cms, "footer_client_links", DEFAULT_CLIENT_LINKS).map((l) => ({
-    href: l.url,
-    label: l.label,
-    external: l.url.startsWith("http"),
-  }));
+  const clientLinks = filterStorefrontLinks(
+    cmsJson<LinkItem[]>(cms, "footer_client_links", DEFAULT_CLIENT_LINKS).map((l) => ({
+      href: l.url,
+      label: l.label,
+      external: l.url.startsWith("http"),
+    })),
+    atelierEnabled,
+  );
 
   const copyright = cmsGet(
     cms,
