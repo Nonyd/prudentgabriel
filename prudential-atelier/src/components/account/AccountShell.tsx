@@ -16,7 +16,6 @@ export function AccountShell({
   points,
   activeOrders,
   wishlistCount,
-  atelierEnabled = true,
   children,
 }: {
   session: Session;
@@ -24,7 +23,6 @@ export function AccountShell({
   points: number;
   activeOrders: number;
   wishlistCount: number;
-  atelierEnabled?: boolean;
   children: React.ReactNode;
 }) {
   const name = session.user?.name ?? "Member";
@@ -38,7 +36,6 @@ export function AccountShell({
           points={points}
           activeOrders={activeOrders}
           wishlistCount={wishlistCount}
-          atelierEnabled={atelierEnabled}
         />
         <div className="flex min-w-0 flex-1 flex-col pb-[60px] lg:pb-0">
           <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-sand bg-ivory px-4 dark:bg-bg-page sm:px-6 lg:static lg:h-12 lg:justify-end lg:px-6">

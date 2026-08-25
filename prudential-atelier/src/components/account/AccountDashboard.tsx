@@ -118,7 +118,6 @@ export type AccountDashboardProps = {
   eventDates: EventDate[];
   personalizedPicks: ProductListItem[];
   testimonialCard?: "write" | "pending" | null;
-  atelierEnabled?: boolean;
 };
 
 function getGreeting(): string {
@@ -378,10 +377,8 @@ function MeasurementVaultPanel({ measurements }: { measurements: Measurements })
 
 function EventsPanel({
   eventDates,
-  atelierEnabled,
 }: {
   eventDates: EventDate[];
-  atelierEnabled: boolean;
 }) {
   return (
     <Card>
@@ -418,7 +415,7 @@ function EventsPanel({
                 <div className="min-w-0 flex-1">
                   <p className="font-sans text-sm font-medium text-choc dark:text-cream">{ev.label}</p>
                   <p className="mt-0.5 font-sans text-[11px] text-text-light">{days} days away</p>
-                  {atelierEnabled && days <= 60 ? (
+                  {days <= 60 ? (
                     <Link
                       href="/consultation"
                       className="mt-1 inline-block font-sans text-[11px] text-nut underline-offset-2 hover:underline"
@@ -504,7 +501,6 @@ export function AccountDashboard({
   eventDates,
   personalizedPicks,
   testimonialCard = null,
-  atelierEnabled = true,
 }: AccountDashboardProps) {
   const greeting = getGreeting();
   const member = formatMemberSince(memberSince);
@@ -529,27 +525,23 @@ export function AccountDashboard({
               {points.toLocaleString()} points
             </p>
           </div>
-          {atelierEnabled ? (
-            <Link
-              href="/consultation"
-              className="btn-primary shrink-0 self-start px-6 py-3 text-[10px] tracking-[0.2em]"
-            >
-              Book consultation
-            </Link>
-          ) : null}
+          <Link
+            href="/consultation"
+            className="btn-primary shrink-0 self-start px-6 py-3 text-[10px] tracking-[0.2em]"
+          >
+            Book consultation
+          </Link>
         </div>
       </header>
 
       <div className="mt-6 grid grid-cols-2 gap-4 xl:grid-cols-4">
-        {atelierEnabled ? (
-          <StatCard
-            label="Active commissions"
-            value={bespokeActiveCount > 0 ? String(bespokeActiveCount) : "—"}
-            sub={bespokeActiveCount === 0 ? "Begin a commission →" : undefined}
-            href={bespokeActiveCount === 0 ? "/consultation" : "/account/orders"}
-            hrefLabel={bespokeActiveCount === 0 ? "Begin a commission →" : undefined}
-          />
-        ) : null}
+        <StatCard
+          label="Active commissions"
+          value={bespokeActiveCount > 0 ? String(bespokeActiveCount) : "—"}
+          sub={bespokeActiveCount === 0 ? "Begin a commission →" : undefined}
+          href={bespokeActiveCount === 0 ? "/consultation" : "/account/orders"}
+          hrefLabel={bespokeActiveCount === 0 ? "Begin a commission →" : undefined}
+        />
         <StatCard
           label="Next reward"
           value={nextTier ? `${toNext.toLocaleString()} pts` : "—"}
@@ -576,7 +568,7 @@ export function AccountDashboard({
 
       {testimonialCard ? <ShareYourStoryCard status={testimonialCard} /> : null}
 
-      {atelierEnabled && dashboardState === "new_client" ? (
+      {dashboardState === "new_client" ? (
         <section className="mt-8 rounded-md bg-[#442913] px-6 py-10 text-cream md:px-10 md:py-12">
           <h2 className="font-display text-2xl md:text-3xl">
             Welcome to your Atelier Portal, {firstName}.
@@ -598,7 +590,7 @@ export function AccountDashboard({
         </section>
       ) : null}
 
-      {atelierEnabled && dashboardState === "has_consultation" && upcomingConsultation ? (
+      {dashboardState === "has_consultation" && upcomingConsultation ? (
         <section className="mt-8 rounded-md bg-[#442913] px-6 py-8 text-cream md:px-10">
           <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-lightbr">
             Your upcoming consultation
@@ -624,7 +616,7 @@ export function AccountDashboard({
         </section>
       ) : null}
 
-      {atelierEnabled && consultationMoodboards.length > 0 ? (
+      {consultationMoodboards.length > 0 ? (
         <section className="mt-8 rounded-md border border-sand bg-ivory px-6 py-8 dark:border-sand/40 dark:bg-bg-card md:px-10">
           <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
             Your moodboard
@@ -668,11 +660,9 @@ export function AccountDashboard({
               It&apos;s been a while since your last commission. Ready for something new?
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              {atelierEnabled ? (
-                <Link href="/consultation" className="btn-primary justify-center">
-                  Begin a new commission →
-                </Link>
-              ) : null}
+              <Link href="/consultation" className="btn-primary justify-center">
+                Begin a new commission →
+              </Link>
               <Link
                 href="/shop"
                 className="btn-ghost-light justify-center border-sand text-choc dark:text-cream"
@@ -720,7 +710,7 @@ export function AccountDashboard({
                 nextTier={nextTier}
                 progressPct={progressPct}
               />
-              {atelierEnabled ? <MeasurementVaultPanel measurements={measurements} /> : null}
+              <MeasurementVaultPanel measurements={measurements} />
             </aside>
           </div>
         </>
@@ -729,14 +719,14 @@ export function AccountDashboard({
       {(dashboardState === "new_client" || dashboardState === "has_consultation") ? (
         <div className="mt-8 grid gap-6 md:grid-cols-2">
           <StyleProfilePanel complete={styleProfileComplete} preferences={stylePreferences} />
-          {atelierEnabled ? <MeasurementVaultPanel measurements={measurements} /> : null}
+          <MeasurementVaultPanel measurements={measurements} />
         </div>
       ) : null}
 
       {dashboardState === "has_active_order" ? (
         <div className="mt-8 grid gap-6 lg:grid-cols-12 lg:items-start">
           <div className="space-y-6 lg:col-span-7 xl:col-span-8">
-            {atelierEnabled && activeBespoke ? (
+            {activeBespoke ? (
               <Card>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sand/50 px-5 py-4 dark:border-sand/30 md:px-6">
                   <h2 className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
@@ -877,7 +867,7 @@ export function AccountDashboard({
               progressPct={progressPct}
             />
             <MeasurementVaultPanel measurements={measurements} />
-            <EventsPanel eventDates={eventDates} atelierEnabled={atelierEnabled} />
+            <EventsPanel eventDates={eventDates} />
           </aside>
         </div>
       ) : null}

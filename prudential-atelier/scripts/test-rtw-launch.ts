@@ -1,7 +1,10 @@
 /**
- * RTW launch blockers: logged-in cart → checkout, stock floor, atelier kill-switch paths.
+ * RTW launch blockers: logged-in cart → checkout, stock floor, atelier bookings gate.
  *
  *   pnpm test:rtw-launch
+ *
+ * Optional: RTW_LAUNCH_PUBLIC_ORIGIN=https://staging.prudentgabriel.com
+ * asserts GET /consultation is 200 while bookings stay closed.
  */
 import "./preload-test-env";
 import {
@@ -12,17 +15,15 @@ import {
   ProductCategory,
   ProductType,
   Role,
+  SettingGroup,
+  SettingType,
 } from "@prisma/client";
 import { prisma } from "../src/lib/prisma";
 import { addCartLine, listCartLines } from "../src/lib/cart-service";
 import { fulfillPaidOrder } from "../src/lib/order-payment";
-import {
-  isAtelierStorefrontPath,
-  isOrderTrackLink,
-  isRtwCommercePath,
-  rtwOrderSuccessPath,
-  shouldBlockAtelierStorefront,
-} from "../src/lib/atelier-storefront";
+import { filterStorefrontLinks, isOrderTrackLink, rtwOrderSuccessPath } from "../src/lib/atelier-storefront";
+import { ATELIER_BOOKINGS_CLOSED_MESSAGE, ATELIER_BOOKINGS_SETTING_KEY } from "../src/lib/atelier-bookings";
+import { clearSettingCacheKey } from "../src/lib/settings";
 import { planGuestServerMerge } from "../src/lib/cart-merge";
 import { resolveAdminAlertEmail } from "../src/lib/admin-alert-email";
 import { applyOrderAttention, REFUND_REQUIRED_ATTENTION } from "../src/lib/admin-orders-filter";
@@ -32,25 +33,20 @@ function assert(cond: unknown, message: string): asserts cond {
 }
 
 async function testAtelierPaths() {
-  assert(shouldBlockAtelierStorefront(false, "/atelier"), "flag off must block /atelier");
-  assert(shouldBlockAtelierStorefront(false, "/consultation"), "flag off must block /consultation");
-  assert(shouldBlockAtelierStorefront(false, "/consultation/book"), "flag off must block nested consultation");
-  assert(shouldBlockAtelierStorefront(false, "/bridal"), "flag off must block /bridal");
-  assert(shouldBlockAtelierStorefront(false, "/quote/abc"), "flag off must block /quote");
-  assert(shouldBlockAtelierStorefront(false, "/track"), "flag off must block /track");
-  assert(!shouldBlockAtelierStorefront(false, "/shop"), "/shop must stay live");
-  assert(!shouldBlockAtelierStorefront(false, "/shop/a-dress"), "PDP must stay live");
-  assert(!shouldBlockAtelierStorefront(false, "/checkout"), "/checkout must stay live");
-  assert(!shouldBlockAtelierStorefront(false, "/checkout/success"), "checkout success must stay live");
-  assert(!shouldBlockAtelierStorefront(false, "/cart"), "/cart must stay live");
-  assert(!shouldBlockAtelierStorefront(true, "/atelier"), "flag on must not block /atelier");
-  assert(isAtelierStorefrontPath("/atelier"), "/atelier is an atelier path");
-  assert(isRtwCommercePath("/shop"), "/shop is an RTW commerce path");
+  assert(
+    filterStorefrontLinks([{ href: "/atelier", label: "The Atelier" }]).length === 1,
+    "atelier footer link must stay visible",
+  );
+  assert(
+    filterStorefrontLinks([{ href: "/consultation", label: "Book Consultation" }]).length === 1,
+    "consultation footer link must stay visible",
+  );
   assert(
     isOrderTrackLink({ label: "Track Your Order", url: "/account/orders" }),
     "footer Track must be recognized even when pointed at /account/orders",
   );
   assert(!isOrderTrackLink({ label: "Size Guide", url: "/size-guide" }), "size guide is not a track link");
+  assert(filterStorefrontLinks([{ href: "/track", label: "Track" }]).length === 0, "Track stays hidden");
   assert(rtwOrderSuccessPath("PA-26-1", "a@b.c").includes("order=PA-26-1"), "success path includes order");
   assert(rtwOrderSuccessPath("PA-26-1", "a@b.c").includes("email=a%40b.c"), "success path includes email");
 
@@ -221,8 +217,65 @@ async function testStockCannotGoNegative() {
   }
 }
 
+async function testAtelierBookingsGate() {
+  const existing = await prisma.siteSetting.findUnique({
+    where: { key: ATELIER_BOOKINGS_SETTING_KEY },
+    select: { value: true },
+  });
+  const previous = existing?.value ?? null;
+
+  await prisma.siteSetting.upsert({
+    where: { key: ATELIER_BOOKINGS_SETTING_KEY },
+    create: {
+      key: ATELIER_BOOKINGS_SETTING_KEY,
+      value: "false",
+      group: SettingGroup.STORE,
+      label: "Atelier bookings enabled",
+      type: SettingType.BOOLEAN,
+      isPublic: false,
+      sortOrder: 9,
+    },
+    update: { value: "false" },
+  });
+  clearSettingCacheKey(ATELIER_BOOKINGS_SETTING_KEY);
+
+  try {
+    const { POST } = await import("../src/app/api/consultations/create/route");
+    const { NextRequest } = await import("next/server");
+    const req = new NextRequest("http://localhost/api/consultations/create", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const res = await POST(req);
+    assert(res.status === 403, `POST /api/consultations/create must 403 when bookings closed, got ${res.status}`);
+    const body = (await res.json()) as { error?: string };
+    assert(body.error === ATELIER_BOOKINGS_CLOSED_MESSAGE, "403 body must explain that bookings are closed");
+
+    const origin = process.env.RTW_LAUNCH_PUBLIC_ORIGIN?.replace(/\/$/, "");
+    if (origin) {
+      const page = await fetch(`${origin}/consultation`, {
+        redirect: "manual",
+        signal: AbortSignal.timeout(8000),
+      });
+      assert(page.status === 200, `${origin}/consultation must return 200, got ${page.status}`);
+    }
+  } finally {
+    if (previous === null) {
+      await prisma.siteSetting.deleteMany({ where: { key: ATELIER_BOOKINGS_SETTING_KEY } });
+    } else {
+      await prisma.siteSetting.update({
+        where: { key: ATELIER_BOOKINGS_SETTING_KEY },
+        data: { value: previous },
+      });
+    }
+    clearSettingCacheKey(ATELIER_BOOKINGS_SETTING_KEY);
+  }
+}
+
 async function main() {
   await testAtelierPaths();
+  await testAtelierBookingsGate();
   testCartMergeAndAlertEmail();
   await testAdminAlertSkipsBounceMailbox();
   await testLoggedInCartSurvivesToCheckout();

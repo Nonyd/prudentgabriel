@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rejectIfAtelierBookingsClosed } from "@/lib/atelier-bookings";
 import { cloudinary } from "@/lib/cloudinary";
 import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
 import { rateLimitOr429 } from "@/lib/rate-limit";
@@ -12,6 +13,9 @@ function isFileLike(v: unknown): v is Blob & { name?: string } {
 }
 
 export async function POST(req: NextRequest) {
+  const blocked = await rejectIfAtelierBookingsClosed();
+  if (blocked) return blocked;
+
   const limited = rateLimitOr429(req, "consultations-upload", 8, 15 * 60 * 1000);
   if (limited) return limited;
 

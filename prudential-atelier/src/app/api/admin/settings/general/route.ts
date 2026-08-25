@@ -5,13 +5,13 @@ import { SettingType } from "@prisma/client";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { clearSettingCacheKey } from "@/lib/settings";
-import { ATELIER_STOREFRONT_SETTING_KEY } from "@/lib/atelier-storefront";
+import { ATELIER_BOOKINGS_SETTING_KEY } from "@/lib/atelier-bookings";
 
 const patchSchema = z.object({
   autoConvertApprovedQuotes: z.boolean().optional(),
   maintenanceModeEnabled: z.boolean().optional(),
   maintenanceModeMessage: z.string().max(500).optional(),
-  atelierStorefrontEnabled: z.boolean().optional(),
+  atelierBookingsEnabled: z.boolean().optional(),
 });
 
 export async function GET() {
@@ -32,7 +32,7 @@ export async function GET() {
       select: { value: true },
     }),
     prisma.siteSetting.findUnique({
-      where: { key: ATELIER_STOREFRONT_SETTING_KEY },
+      where: { key: ATELIER_BOOKINGS_SETTING_KEY },
       select: { value: true },
     }),
   ]);
@@ -41,7 +41,7 @@ export async function GET() {
     autoConvertApprovedQuotes: autoConvertRow?.value === "true",
     maintenanceModeEnabled: maintenanceEnabledRow?.value === "true",
     maintenanceModeMessage: maintenanceMessageRow?.value ?? "",
-    atelierStorefrontEnabled: atelierRow?.value === "true",
+    atelierBookingsEnabled: atelierRow?.value === "true",
   });
 }
 
@@ -59,14 +59,14 @@ export async function PATCH(req: NextRequest) {
     autoConvertApprovedQuotes,
     maintenanceModeEnabled,
     maintenanceModeMessage,
-    atelierStorefrontEnabled,
+    atelierBookingsEnabled,
   } = parsed.data;
 
   if (
     autoConvertApprovedQuotes === undefined &&
     maintenanceModeEnabled === undefined &&
     maintenanceModeMessage === undefined &&
-    atelierStorefrontEnabled === undefined
+    atelierBookingsEnabled === undefined
   ) {
     return NextResponse.json({ error: "No updates provided" }, { status: 400 });
   }
@@ -137,16 +137,16 @@ export async function PATCH(req: NextRequest) {
     revalidatePath("/api/maintenance-status");
   }
 
-  if (atelierStorefrontEnabled !== undefined) {
-    const value = atelierStorefrontEnabled ? "true" : "false";
+  if (atelierBookingsEnabled !== undefined) {
+    const value = atelierBookingsEnabled ? "true" : "false";
 
     await prisma.siteSetting.upsert({
-      where: { key: ATELIER_STOREFRONT_SETTING_KEY },
+      where: { key: ATELIER_BOOKINGS_SETTING_KEY },
       create: {
-        key: ATELIER_STOREFRONT_SETTING_KEY,
+        key: ATELIER_BOOKINGS_SETTING_KEY,
         value,
         group: "STORE",
-        label: "Atelier storefront enabled",
+        label: "Atelier bookings enabled",
         type: SettingType.BOOLEAN,
         isPublic: false,
         sortOrder: 2,
@@ -155,9 +155,7 @@ export async function PATCH(req: NextRequest) {
       update: { value, updatedBy: userId },
     });
 
-    clearSettingCacheKey(ATELIER_STOREFRONT_SETTING_KEY);
-    revalidatePath("/api/maintenance-status");
-    revalidateTag("maintenance");
+    clearSettingCacheKey(ATELIER_BOOKINGS_SETTING_KEY);
   }
 
   return NextResponse.json({
@@ -165,6 +163,6 @@ export async function PATCH(req: NextRequest) {
     autoConvertApprovedQuotes,
     maintenanceModeEnabled,
     maintenanceModeMessage,
-    atelierStorefrontEnabled,
+    atelierBookingsEnabled,
   });
 }

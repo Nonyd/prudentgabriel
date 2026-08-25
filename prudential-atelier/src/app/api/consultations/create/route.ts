@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ConsultationStatus, PaymentGateway, PaymentStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { rejectIfAtelierBookingsClosed } from "@/lib/atelier-bookings";
 import { generatePaymentReference } from "@/lib/payments/index";
 import {
   addDaysToWatYmd,
@@ -30,6 +31,9 @@ function parseDateParamToUtcDay(ymd: string): Date {
 }
 
 export async function POST(req: NextRequest) {
+  const blocked = await rejectIfAtelierBookingsClosed();
+  if (blocked) return blocked;
+
   const session = await auth();
   let body: unknown;
   try {

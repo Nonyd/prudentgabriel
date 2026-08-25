@@ -300,13 +300,11 @@ export function Navbar({
   showAnnouncement = true,
   announcementMessages = ["WORLDWIDE SHIPPING · ₦ · $ · £"],
   announcementIntervalMs = 3000,
-  atelierEnabled = true,
 }: {
   collections?: CollectionNav[];
   showAnnouncement?: boolean;
   announcementMessages?: string[];
   announcementIntervalMs?: number;
-  atelierEnabled?: boolean;
 }) {
   const pathname = usePathname();
   const subBrand = getSubBrand(pathname);
@@ -323,9 +321,7 @@ export function Navbar({
     openLogin("/account");
   };
 
-  const primaryLinks = atelierEnabled
-    ? PRIMARY_LINKS
-    : PRIMARY_LINKS.filter((l) => l.href !== "/atelier" && l.href !== "/bridal");
+  const primaryLinks = PRIMARY_LINKS;
 
   return (
     <>

@@ -5,7 +5,13 @@ import { CONTACT_SUBJECTS } from "@/validations/contact";
 
 type FieldErrors = Partial<Record<"name" | "email" | "phone" | "subject" | "message", string>>;
 
-export function ContactForm({ autoReplyHint }: { autoReplyHint?: string }) {
+export function ContactForm({
+  autoReplyHint,
+  initialSubject,
+}: {
+  autoReplyHint?: string;
+  initialSubject?: string;
+}) {
   const [sent, setSent] = useState(false);
   const [sentName, setSentName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -178,7 +184,11 @@ export function ContactForm({ autoReplyHint }: { autoReplyHint?: string }) {
             id="contact-subject"
             name="subject"
             required
-            defaultValue=""
+            defaultValue={
+              initialSubject && (CONTACT_SUBJECTS as readonly string[]).includes(initialSubject)
+                ? initialSubject
+                : ""
+            }
             className="mt-2 w-full bg-transparent py-2"
             style={inputStyle}
           >

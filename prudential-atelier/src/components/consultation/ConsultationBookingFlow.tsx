@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import clsx from "clsx";
 import { Check } from "lucide-react";
 import toast from "react-hot-toast";
@@ -26,6 +27,11 @@ import { formatPrice } from "@/lib/currency";
 import { cmsGet } from "@/lib/cms-helpers";
 import { ConsultationReviewsSlider } from "@/components/consultation/ConsultationReviewsSlider";
 import type { ConsultationReviewSlide } from "@/lib/consultation-reviews";
+import {
+  ATELIER_BOOKINGS_CLOSED_COPY,
+  ATELIER_ENQUIRE_CTA,
+  ATELIER_ENQUIRE_HREF,
+} from "@/lib/atelier-bookings";
 
 type Gateway = PaymentGatewayType;
 type ShopCur = "NGN" | "USD" | "GBP";
@@ -97,10 +103,12 @@ export function ConsultationBookingFlow({
   consultants,
   cms = {},
   consultationReviews = [],
+  bookingsEnabled = true,
 }: {
   consultants: ConsultantWithOfferings[];
   cms?: Record<string, string>;
   consultationReviews?: ConsultationReviewSlide[];
+  bookingsEnabled?: boolean;
 }) {
   const { data: session } = useSession();
   const [step, setStep] = useState(1);
@@ -405,7 +413,19 @@ export function ConsultationBookingFlow({
           </p>
         </header>
 
-        <StepIndicator step={step} />
+        {!bookingsEnabled ? (
+          <div className="mb-10 rounded-lg border border-sand bg-bg-card px-6 py-6 text-center">
+            <p className="font-body text-[15px] leading-relaxed text-text-mid">{ATELIER_BOOKINGS_CLOSED_COPY}</p>
+            <Link
+              href={ATELIER_ENQUIRE_HREF}
+              className="mt-5 inline-flex rounded-sm bg-nut px-8 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-cream transition-colors hover:bg-choc"
+            >
+              {ATELIER_ENQUIRE_CTA}
+            </Link>
+          </div>
+        ) : (
+          <StepIndicator step={step} />
+        )}
 
         {step === 1 && (
           <div>
@@ -415,19 +435,9 @@ export function ConsultationBookingFlow({
                 if (!cfg.enabled) return null;
                 const resolved = resolveOfferingType(consultants, key);
                 if (!resolved) return null;
-                const selected = selectedType === key;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => selectType(key)}
-                    className={clsx(
-                      "relative rounded-lg border bg-bg-card p-8 text-left transition-shadow",
-                      selected
-                        ? "border-[1.5px] border-choc shadow-[0_4px_24px_rgba(68,41,19,0.08)]"
-                        : "border-[0.5px] border-sand hover:border-nut/40",
-                    )}
-                  >
+                const selected = bookingsEnabled && selectedType === key;
+                const inner = (
+                  <>
                     <span className="absolute left-4 top-4 rounded-full bg-gold px-2.5 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-white">
                       {cfg.formatLabel}
                     </span>
@@ -446,19 +456,37 @@ export function ConsultationBookingFlow({
                       ))}
                     </ul>
                     <div className="mt-6 flex items-end justify-between">
-                      <p className="font-serif text-[28px] text-choc">
-                        {formatPrice(cfg.priceNgn, "NGN")}
-                      </p>
+                      <p className="font-serif text-[28px] text-choc">{formatPrice(cfg.priceNgn, "NGN")}</p>
                       <span className="font-sans text-[10px] uppercase tracking-[0.14em] text-text-light">
-                        {selected ? "SELECTED" : "SELECT"}
+                        {bookingsEnabled ? (selected ? "SELECTED" : "SELECT") : "Not open yet"}
                       </span>
                     </div>
+                  </>
+                );
+                const cardClass = clsx(
+                  "relative rounded-lg border bg-bg-card p-8 text-left",
+                  bookingsEnabled
+                    ? selected
+                      ? "border-[1.5px] border-choc shadow-[0_4px_24px_rgba(68,41,19,0.08)] transition-shadow"
+                      : "border-[0.5px] border-sand transition-shadow hover:border-nut/40"
+                    : "border-[0.5px] border-sand",
+                );
+                if (!bookingsEnabled) {
+                  return (
+                    <article key={key} className={cardClass}>
+                      {inner}
+                    </article>
+                  );
+                }
+                return (
+                  <button key={key} type="button" onClick={() => selectType(key)} className={cardClass}>
+                    {inner}
                   </button>
                 );
               })}
             </div>
 
-            {showVirtualPlatform ? (
+            {bookingsEnabled && showVirtualPlatform ? (
               <div className="mx-auto mt-8 max-w-xl rounded-lg border border-sand bg-bg-card p-6">
                 <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Choose your platform</p>
                 <div className="mt-4 space-y-3">
@@ -489,23 +517,34 @@ export function ConsultationBookingFlow({
 
             <ConsultationReviewsSlider items={consultationReviews} />
 
-            <div className="mt-10 flex justify-center">
-              <button
-                type="button"
-                disabled={!stepValid}
-                onClick={() => setStep(2)}
-                className={clsx(
-                  "rounded-sm px-12 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-cream transition-colors disabled:cursor-not-allowed disabled:opacity-60",
-                  stepValid ? "bg-nut hover:bg-choc" : "bg-sand text-text-mid",
-                )}
-              >
-                Continue to schedule →
-              </button>
-            </div>
+            {bookingsEnabled ? (
+              <div className="mt-10 flex justify-center">
+                <button
+                  type="button"
+                  disabled={!stepValid}
+                  onClick={() => setStep(2)}
+                  className={clsx(
+                    "rounded-sm px-12 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-cream transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+                    stepValid ? "bg-nut hover:bg-choc" : "bg-sand text-text-mid",
+                  )}
+                >
+                  Continue to schedule →
+                </button>
+              </div>
+            ) : (
+              <div className="mt-10 flex justify-center">
+                <Link
+                  href={ATELIER_ENQUIRE_HREF}
+                  className="rounded-sm bg-nut px-12 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-cream transition-colors hover:bg-choc"
+                >
+                  {ATELIER_ENQUIRE_CTA} →
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
-        {step === 2 && consultant && offering && (
+        {bookingsEnabled && step === 2 && consultant && offering && (
           <div className="mx-auto max-w-xl">
             <h2 className="text-center font-serif text-[32px] text-choc">Choose your time</h2>
             <p className="mt-2 text-center font-body text-sm text-text-mid">
@@ -617,7 +656,7 @@ export function ConsultationBookingFlow({
           </div>
         )}
 
-        {step === 3 && consultant && offering && selectedType && typeConfig && (
+        {bookingsEnabled && step === 3 && consultant && offering && selectedType && typeConfig && (
           <div className="mx-auto max-w-2xl space-y-8">
             <div className="rounded-lg border border-sand bg-bg-card p-6">
               <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Booking summary</p>

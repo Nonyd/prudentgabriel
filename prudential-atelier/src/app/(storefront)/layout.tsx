@@ -8,8 +8,6 @@ import {
   getCachedCMSContent,
   getNavCollections,
 } from "@/lib/storefront-cache";
-import { getSetting } from "@/lib/settings";
-import { ATELIER_STOREFRONT_SETTING_KEY } from "@/lib/atelier-storefront";
 
 const ANNOUNCEMENT_KEYS = ["announcement_bar_enabled", "announcement_bar_messages", "announcement_bar_speed"] as const;
 
@@ -23,13 +21,11 @@ const FOOTER_KEYS = [
 ] as const;
 
 export default async function StorefrontLayout({ children }: { children: React.ReactNode }) {
-  const [announcementCms, footerCms, collections, atelierSetting] = await Promise.all([
+  const [announcementCms, footerCms, collections] = await Promise.all([
     getCachedCMSContent([...ANNOUNCEMENT_KEYS], STOREFRONT_CACHE_TAGS.cmsChrome),
     getCachedCMSContent([...FOOTER_KEYS], STOREFRONT_CACHE_TAGS.cmsChrome),
     getNavCollections(),
-    getSetting(ATELIER_STOREFRONT_SETTING_KEY),
   ]);
-  const atelierEnabled = atelierSetting === "true";
 
   const showAnnouncement = cmsBool(announcementCms, "announcement_bar_enabled", true);
   const messages = cmsJson<string[]>(announcementCms, "announcement_bar_messages", [
@@ -49,12 +45,11 @@ export default async function StorefrontLayout({ children }: { children: React.R
         showAnnouncement={showAnnouncement}
         announcementMessages={messages}
         announcementIntervalMs={intervalMs}
-        atelierEnabled={atelierEnabled}
       />
       <main id="main-content" tabIndex={-1} className="min-h-screen">
         {children}
       </main>
-      <Footer cms={footerCms} atelierEnabled={atelierEnabled} />
+      <Footer cms={footerCms} />
       <CartDrawer />
       <SearchModal />
     </>

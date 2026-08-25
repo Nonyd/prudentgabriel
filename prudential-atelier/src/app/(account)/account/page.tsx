@@ -12,8 +12,6 @@ import { mapProductToListItem } from "@/lib/map-product-list-item";
 import { AccountDashboard } from "@/components/account/AccountDashboard";
 import type { DashboardState } from "@/components/account/AccountDashboard";
 import { canSubmitTestimonial } from "@/lib/testimonial-eligibility";
-import { getSetting } from "@/lib/settings";
-import { ATELIER_STOREFRONT_SETTING_KEY } from "@/lib/atelier-storefront";
 
 const BUDGET_RANGES: Record<string, [number, number]> = {
   "₦50k–₦150k": [50000, 150000],
@@ -245,7 +243,6 @@ export default async function AccountDashboardPage() {
       eventDates={eventDates}
       personalizedPicks={personalizedPicks.map(mapProductToListItem)}
       testimonialCard={testimonialCard}
-      atelierEnabled={(await getSetting(ATELIER_STOREFRONT_SETTING_KEY)) === "true"}
     />
   );
 }

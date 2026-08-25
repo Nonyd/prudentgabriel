@@ -1,6 +1,7 @@
 import { FacebookIcon, InstagramIcon, TikTokIcon } from "@/components/icons/SocialIcons";
 import { ContactForm } from "@/components/contact/ContactForm";
 import { cmsGet, getCMSContent } from "@/lib/cms";
+import { CONTACT_SUBJECTS } from "@/validations/contact";
 
 export const revalidate = 300;
 
@@ -55,7 +56,18 @@ function DetailBlock({ label, children }: { label: string; children: React.React
   );
 }
 
-export default async function ContactPage() {
+function subjectFromSearch(sp: Record<string, string | string[] | undefined>): string | undefined {
+  const raw = sp.subject;
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  if (value && (CONTACT_SUBJECTS as readonly string[]).includes(value)) return value;
+  return undefined;
+}
+
+export default async function ContactPage({
+  searchParams,
+}: {
+  searchParams: Record<string, string | string[] | undefined>;
+}) {
   let cms: Record<string, string> = {};
   try {
     cms = await getCMSContent([...CONTACT_KEYS]);
@@ -116,7 +128,7 @@ export default async function ContactPage() {
       </header>
 
       <div className="mx-auto grid max-w-site gap-12 px-6 py-16 lg:grid-cols-[55fr_45fr] lg:gap-16 lg:px-10 lg:py-20">
-        <ContactForm autoReplyHint={autoReply} />
+        <ContactForm autoReplyHint={autoReply} initialSubject={subjectFromSearch(searchParams)} />
 
         <aside className="space-y-8 lg:pt-2">
           <div>

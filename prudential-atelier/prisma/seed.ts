@@ -261,6 +261,7 @@ async function upsertSiteSettings() {
     { key: "store_currency_default", value: "NGN", group: SettingGroup.STORE, label: "Default Currency", type: SettingType.SELECT, isPublic: true, sortOrder: 6 },
     { key: "free_shipping_lagos", value: "150000", group: SettingGroup.STORE, label: "Free Shipping Threshold — Lagos (₦)", type: SettingType.NUMBER, isPublic: false, sortOrder: 7 },
     { key: "free_shipping_nigeria", value: "250000", group: SettingGroup.STORE, label: "Free Shipping Threshold — Nigeria (₦)", type: SettingType.NUMBER, isPublic: false, sortOrder: 8 },
+    { key: "atelier_bookings_enabled", value: "false", group: SettingGroup.STORE, label: "Atelier bookings enabled", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 9 },
     { key: "paystack_enabled", value: "true", group: SettingGroup.PAYMENTS, label: "Paystack Enabled", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 0 },
     { key: "paystack_public_key", value: "", group: SettingGroup.PAYMENTS, label: "Paystack Public Key", type: SettingType.TEXT, isPublic: true, sortOrder: 1 },
     { key: "paystack_secret_key", value: "", group: SettingGroup.PAYMENTS, label: "Paystack Secret Key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 2 },

@@ -130,10 +130,8 @@ function FooterLinks({
 
 export function Footer({
   cms = {},
-  atelierEnabled = true,
 }: {
   cms?: Record<string, string>;
-  atelierEnabled?: boolean;
 }) {
   const settings = usePublicSettings();
   const openCookieModal = useCookieConsentStore((s) => s.openModal);
@@ -150,7 +148,6 @@ export function Footer({
       label: l.label,
       external: l.url.startsWith("http"),
     })),
-    atelierEnabled,
   );
 
   const clientLinks = filterStorefrontLinks(
@@ -159,7 +156,6 @@ export function Footer({
       label: l.label,
       external: l.url.startsWith("http"),
     })),
-    atelierEnabled,
   );
 
   const copyright = cmsGet(

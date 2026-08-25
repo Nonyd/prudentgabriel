@@ -45,7 +45,6 @@ interface ProductDetailClientProps {
   averageRating: number;
   reviewCount: number;
   freeLagosAboveNGN?: number | null;
-  atelierEnabled?: boolean;
 }
 
 export function ProductDetailClient({
@@ -53,7 +52,6 @@ export function ProductDetailClient({
   averageRating,
   reviewCount,
   freeLagosAboveNGN = null,
-  atelierEnabled = true,
 }: ProductDetailClientProps) {
   const [variantId, setVariantId] = useState<string | null>(product.variants[0]?.id ?? null);
   const [colorId, setColorId] = useState<string | null>(product.colors[0]?.id ?? null);
@@ -338,7 +336,7 @@ export function ProductDetailClient({
                 <p>Returns accepted within 14 days in original condition.</p>
               </Accordion.Content>
             </Accordion.Item>
-            {atelierEnabled && product.isBespokeAvail && (
+            {product.isBespokeAvail && (
               <Accordion.Item value="b" className="border-b border-border">
                 <Accordion.Header>
                   <Accordion.Trigger className="flex w-full py-3 font-label text-xs uppercase tracking-wider">

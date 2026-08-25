@@ -31,7 +31,7 @@ export function GeneralSettingsClient() {
   const [maintenanceSaving, setMaintenanceSaving] = useState(false);
   const [maintenanceSavedEnabled, setMaintenanceSavedEnabled] = useState(false);
 
-  const [atelierEnabled, setAtelierEnabled] = useState(false);
+  const [atelierBookings, setAtelierBookings] = useState(false);
   const [atelierSaving, setAtelierSaving] = useState(false);
   const [atelierSavedEnabled, setAtelierSavedEnabled] = useState(false);
 
@@ -47,14 +47,14 @@ export function GeneralSettingsClient() {
             autoConvertApprovedQuotes?: boolean;
             maintenanceModeEnabled?: boolean;
             maintenanceModeMessage?: string;
-            atelierStorefrontEnabled?: boolean;
+            atelierBookingsEnabled?: boolean;
           };
           setAutoConvert(Boolean(data.autoConvertApprovedQuotes));
           setMaintenanceEnabled(Boolean(data.maintenanceModeEnabled));
           setMaintenanceSavedEnabled(Boolean(data.maintenanceModeEnabled));
           setMaintenanceMessage(data.maintenanceModeMessage ?? "");
-          setAtelierEnabled(Boolean(data.atelierStorefrontEnabled));
-          setAtelierSavedEnabled(Boolean(data.atelierStorefrontEnabled));
+          setAtelierBookings(Boolean(data.atelierBookingsEnabled));
+          setAtelierSavedEnabled(Boolean(data.atelierBookingsEnabled));
         }
       } finally {
         setAutoConvertLoading(false);
@@ -130,25 +130,25 @@ export function GeneralSettingsClient() {
       const res = await fetch("/api/admin/settings/general", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ atelierStorefrontEnabled: atelierEnabled }),
+        body: JSON.stringify({ atelierBookingsEnabled: atelierBookings }),
       });
       if (!res.ok) {
-        toast.error("Could not save atelier storefront setting");
+        toast.error("Could not save atelier bookings setting");
         return;
       }
 
       const wasEnabled = atelierSavedEnabled;
-      setAtelierSavedEnabled(atelierEnabled);
+      setAtelierSavedEnabled(atelierBookings);
 
-      if (atelierEnabled && !wasEnabled) {
-        toast.success("Atelier storefront is live — consultation and bridal routes are public again.");
-      } else if (!atelierEnabled && wasEnabled) {
-        toast.success("Atelier storefront hidden. Public atelier and consultation routes now 404.");
+      if (atelierBookings && !wasEnabled) {
+        toast.success("Consultation bookings are open.");
+      } else if (!atelierBookings && wasEnabled) {
+        toast.success("Consultation bookings closed. Pages stay live; new bookings return 403.");
       } else {
-        toast.success("Atelier storefront setting saved");
+        toast.success("Atelier bookings setting saved");
       }
     } catch {
-      toast.error("Could not save atelier storefront setting");
+      toast.error("Could not save atelier bookings setting");
     } finally {
       setAtelierSaving(false);
     }
@@ -226,31 +226,31 @@ export function GeneralSettingsClient() {
 
       <section className="card-surface p-6">
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-text-mid">
-          Atelier storefront
+          Atelier bookings
         </p>
         <div className="mt-4 border-t border-sand pt-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <p className="font-sans text-sm font-medium text-ink">Show Atelier on the public site</p>
+              <p className="font-sans text-sm font-medium text-ink">Allow new consultation bookings</p>
               <p className="mt-1 font-sans text-xs leading-relaxed text-text-mid">
-                When off, /atelier, /bridal, /consultation, /quote, and /track 404 for customers. Admin
-                screens stay available. Turn this on when bespoke photography and capacity are ready.
+                When off, atelier pages stay public. Visitors can read the offerings but cannot start a
+                booking. Existing bookings remain viewable and payable. Admin screens are unchanged.
               </p>
             </div>
             <Toggle
-              checked={atelierEnabled}
-              onChange={setAtelierEnabled}
+              checked={atelierBookings}
+              onChange={setAtelierBookings}
               disabled={maintenanceLoading || atelierSaving}
-              srLabel="Atelier storefront"
+              srLabel="Atelier bookings"
             />
           </div>
 
           <p className="mt-3 font-sans text-xs font-medium">
             {maintenanceLoading
               ? "Loading status…"
-              : atelierEnabled
-                ? "Current status: ● ATELIER VISIBLE"
-                : "Current status: hidden from the public site"}
+              : atelierBookings
+                ? "Current status: ● BOOKINGS OPEN"
+                : "Current status: pages live · bookings closed"}
           </p>
 
           <div className="mt-5">

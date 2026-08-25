@@ -4,8 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { getOrCreateClientProfile } from "@/lib/account-helpers";
 import { AccountShell } from "@/components/account/AccountShell";
 import { enforcePublicMaintenance } from "@/lib/maintenance";
-import { getSetting } from "@/lib/settings";
-import { ATELIER_STOREFRONT_SETTING_KEY } from "@/lib/atelier-storefront";
 
 export default async function AccountGroupLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -21,7 +19,7 @@ export default async function AccountGroupLayout({ children }: { children: React
   }
   const profile = await getOrCreateClientProfile(userId);
 
-  const [rtwActive, bespokeActive, wishlistCount, userPoints, atelierSetting] = await Promise.all([
+  const [rtwActive, bespokeActive, wishlistCount, userPoints] = await Promise.all([
     prisma.order.count({
       where: { userId, status: { not: "DELIVERED" }, isBespoke: false },
     }),
@@ -36,18 +34,15 @@ export default async function AccountGroupLayout({ children }: { children: React
       where: { id: userId },
       select: { pointsBalance: true },
     }),
-    getSetting(ATELIER_STOREFRONT_SETTING_KEY),
   ]);
-  const atelierEnabled = atelierSetting === "true";
 
   return (
     <AccountShell
       session={session}
       tier={profile.loyaltyTier}
       points={userPoints?.pointsBalance ?? 0}
-      activeOrders={atelierEnabled ? rtwActive + bespokeActive : rtwActive}
+      activeOrders={rtwActive + bespokeActive}
       wishlistCount={wishlistCount}
-      atelierEnabled={atelierEnabled}
     >
       {children}
     </AccountShell>

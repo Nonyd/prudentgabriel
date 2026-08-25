@@ -24,8 +24,8 @@ const COLLECTIONS = [
   },
 ];
 
-export function CategoryGrid({ atelierEnabled = true }: { atelierEnabled?: boolean }) {
-  const cards = atelierEnabled ? COLLECTIONS : COLLECTIONS.filter((c) => c.href === "/shop");
+export function CategoryGrid() {
+  const cards = COLLECTIONS;
   return (
     <section className="bg-bg-page px-6 py-20 lg:px-10">
       <div className="mx-auto max-w-site">
@@ -50,7 +50,7 @@ export function CategoryGrid({ atelierEnabled = true }: { atelierEnabled?: boole
               color: "var(--choc)",
             }}
           >
-            {atelierEnabled ? "Three ways to wear the house" : "The collection"}
+            Three ways to wear the house
           </h2>
         </div>
 

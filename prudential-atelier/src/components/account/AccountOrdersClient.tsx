@@ -24,13 +24,11 @@ type Bespoke = BespokeOrder & {
 export function AccountOrdersClient({
   bespokeOrders,
   rtwOrders,
-  atelierEnabled = true,
 }: {
   bespokeOrders: Bespoke[];
   rtwOrders: RtwOrder[];
-  atelierEnabled?: boolean;
 }) {
-  const [tab, setTab] = useState<"bespoke" | "rtw">(atelierEnabled ? "bespoke" : "rtw");
+  const [tab, setTab] = useState<"bespoke" | "rtw">("bespoke");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [rtwDetail, setRtwDetail] = useState<RtwOrder | null>(null);
 
@@ -38,7 +36,7 @@ export function AccountOrdersClient({
     <div className="mx-auto max-w-4xl">
       <h1 className="font-display text-4xl text-choc">My Orders</h1>
       <div className="mt-6 flex gap-2 border-b border-sand">
-        {(atelierEnabled ? (["bespoke", "rtw"] as const) : (["rtw"] as const)).map((t) => (
+        {(["bespoke", "rtw"] as const).map((t) => (
           <button
             key={t}
             type="button"

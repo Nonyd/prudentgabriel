@@ -6,6 +6,8 @@ import { ConsultationBookingFlow } from "@/components/consultation/ConsultationB
 import { getConsultationPageReviews } from "@/lib/consultation-reviews";
 import { getPageFieldKeys } from "@/lib/cms-config";
 import { getCMSContent } from "@/lib/cms";
+import { getSetting } from "@/lib/settings";
+import { ATELIER_BOOKINGS_SETTING_KEY } from "@/lib/atelier-bookings";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ConsultationPage() {
-  const [rows, cms, consultationReviews] = await Promise.all([
+  const [rows, cms, consultationReviews, bookingsSetting] = await Promise.all([
     prisma.consultant.findMany({
       where: { isActive: true },
       orderBy: { displayOrder: "asc" },
@@ -33,8 +35,16 @@ export default async function ConsultationPage() {
     }),
     getCMSContent(getPageFieldKeys("consultation")),
     getConsultationPageReviews(),
+    getSetting(ATELIER_BOOKINGS_SETTING_KEY),
   ]);
   const consultants = rows as ConsultantWithOfferings[];
 
-  return <ConsultationBookingFlow consultants={consultants} cms={cms} consultationReviews={consultationReviews} />;
+  return (
+    <ConsultationBookingFlow
+      consultants={consultants}
+      cms={cms}
+      consultationReviews={consultationReviews}
+      bookingsEnabled={bookingsSetting === "true"}
+    />
+  );
 }

@@ -117,14 +117,12 @@ export function AccountSidebar({
   points,
   activeOrders,
   wishlistCount,
-  atelierEnabled = true,
 }: {
   name: string;
   tier: LoyaltyTier;
   points: number;
   activeOrders: number;
   wishlistCount: number;
-  atelierEnabled?: boolean;
 }) {
   const pathname = usePathname();
   const initials = name
@@ -134,12 +132,9 @@ export function AccountSidebar({
     .slice(0, 2)
     .toUpperCase();
 
-  const atelierNav = MY_ATELIER.filter((item) => {
-    if (atelierEnabled) return true;
-    if (item.label === "Dashboard") return true;
-    if (item.label === "Ready-to-Wear") return true;
-    return false;
-  }).map((item) => (item.label === "My Commissions" ? { ...item, badge: activeOrders } : item));
+  const atelierNav = MY_ATELIER.map((item) =>
+    item.label === "My Commissions" ? { ...item, badge: activeOrders } : item,
+  );
   const perksNav = MY_PERKS.map((item) =>
     item.href === "/account/wishlist" ? { ...item, badge: wishlistCount } : item,
   );
@@ -150,11 +145,9 @@ export function AccountSidebar({
         <div className="border-b border-sand px-6 py-5 dark:border-sand/20">
           <Logo variant="dark" size="sm" themeAdaptive className="dark:hidden" />
           <Logo variant="white" size="sm" themeAdaptive={false} className="hidden dark:block" />
-          {atelierEnabled ? (
-            <p className="mt-1 font-sans text-[9px] uppercase tracking-[0.3em] text-text-light dark:text-lightbr/70">
-              / ATELIER
-            </p>
-          ) : null}
+          <p className="mt-1 font-sans text-[9px] uppercase tracking-[0.3em] text-text-light dark:text-lightbr/70">
+            / ATELIER
+          </p>
         </div>
 
         <div className="border-b border-sand px-6 py-5 dark:border-sand/20">

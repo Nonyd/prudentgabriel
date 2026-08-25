@@ -16,6 +16,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  // Intentionally not gated by atelier_bookings_enabled: this pays an existing booking.
   const session = await auth();
   let body: unknown;
   try {

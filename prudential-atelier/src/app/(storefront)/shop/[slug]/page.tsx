@@ -12,7 +12,6 @@ import { ViewTracker } from "@/components/product/ViewTracker";
 import type { ProductListItem } from "@/types/product";
 import type { ReviewItem } from "@/components/product/ReviewsSection";
 import { mapProductToListItem } from "@/lib/map-product-list-item";
-import { ATELIER_STOREFRONT_SETTING_KEY } from "@/lib/atelier-storefront";
 
 
 const ReviewsSection = nextDynamic(() => import("@/components/product/ReviewsSection").then((m) => ({ default: m.ReviewsSection })), {
@@ -142,17 +141,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
     }),
   );
 
-  const [lagosZone, atelierSetting] = await Promise.all([
-    prisma.shippingZone.findFirst({
-      where: { isActive: true, name: { contains: "Lagos", mode: "insensitive" } },
-      orderBy: { sortOrder: "asc" },
-      select: { freeAboveNGN: true },
-    }),
-    prisma.siteSetting.findUnique({
-      where: { key: ATELIER_STOREFRONT_SETTING_KEY },
-      select: { value: true },
-    }),
-  ]);
+  const lagosZone = await prisma.shippingZone.findFirst({
+    where: { isActive: true, name: { contains: "Lagos", mode: "insensitive" } },
+    orderBy: { sortOrder: "asc" },
+    select: { freeAboveNGN: true },
+  });
 
   return (
     <>
@@ -181,7 +174,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
         averageRating={averageRating}
         reviewCount={reviewCount}
         freeLagosAboveNGN={lagosZone?.freeAboveNGN ?? null}
-        atelierEnabled={atelierSetting?.value === "true"}
       />
       <div className="mx-auto max-w-site px-4">
         <ReviewsSection

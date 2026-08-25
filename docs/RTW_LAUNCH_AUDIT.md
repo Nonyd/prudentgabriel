@@ -515,4 +515,17 @@ Nothing else is required for that sentence. Guest checkout, address, shipping qu
 | Admin low-stock notify | MISSING |
 | Per-variant stock UI | BUILT |
 | Bulk stock | MISSING |
-| Hide-atelier flag | MISSING |
+| Hide-atelier flag | SUPERSEDED (Slice G2: pages stay live; `atelier_bookings_enabled` gates new bookings only) |
+
+---
+
+## Slice G2 — Atelier visible, bookings disabled (26 Aug 2026)
+
+Slice G's G4 hide (`atelier_storefront_enabled` + middleware rewrite to `/__storefront-hidden`) is withdrawn. Public atelier pages stay live for story and SEO.
+
+- **Flag:** `atelier_bookings_enabled` (Admin → Settings → General). Missing or anything other than `"true"` is off (fail-closed).
+- **UI:** `/consultation` renders offerings; type cards are not selectable; schedule and payment steps do not render. Enquire CTA → `/contact?subject=Atelier%20Commission`.
+- **API:** `POST /api/consultations/create` and `POST /api/consultations/upload` return **403**. Consultation payment-initiate and bank-transfer stay open so existing bookings remain payable.
+- **Nav:** Atelier / Bridal / Book Consultation restored. Footer **Track** stays hidden (bespoke-only; no RTW tracker).
+- **Homepage:** CategoryGrid, ShopBrowse chips, hero BOOK CONSULTATION, and `BespokeJourney` (gated only by `home_journey_enabled`) restored.
+
