@@ -82,7 +82,7 @@ export default function EmailFooter({ family, unsubscribeUrl }: EmailFooterProps
             {showUnsub ? (
               <Text
                 style={{
-                  margin: "0 0 14px",
+                  margin: 0,
                   fontFamily: FONT_UI,
                   fontSize: 11,
                   color: EMAIL_MUTED,
@@ -98,7 +98,7 @@ export default function EmailFooter({ family, unsubscribeUrl }: EmailFooterProps
             ) : (
               <Text
                 style={{
-                  margin: "0 0 14px",
+                  margin: 0,
                   fontFamily: FONT_UI,
                   fontSize: 11,
                   color: quiet,
@@ -108,9 +108,6 @@ export default function EmailFooter({ family, unsubscribeUrl }: EmailFooterProps
                 This message is about an order or account. It is not marketing mail.
               </Text>
             )}
-            <Text style={{ margin: 0, fontFamily: FONT_UI, fontSize: 10, color: "rgba(226,209,194,0.4)" }}>
-              SonsHub Media Ltd
-            </Text>
           </td>
         </tr>
       </tbody>

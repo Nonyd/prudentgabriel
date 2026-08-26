@@ -77,8 +77,7 @@ function emailWrapper(content: string, logoUrl?: string): string {
         <tr><td style="padding:8px 40px 32px;">${content}</td></tr>
         <tr><td style="padding:24px 40px;background:#F7F2EC;border-top:1px solid #D4BBAC;text-align:center;">
           <p style="margin:0;font-size:11px;color:#98755B;line-height:1.6;">
-            Prudential Atelier · prudentgabriel.com<br/>
-            Developed with love by SonsHub Media Ltd
+            Prudential Atelier · prudentgabriel.com
           </p>
         </td></tr>
       </table>

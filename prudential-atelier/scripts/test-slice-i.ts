@@ -134,6 +134,10 @@ async function main() {
   assert(mktHtml.includes(UNSUBSCRIBE_URL_PLACEHOLDER), "marketing footer has unsub placeholder");
   assert(mktHtml.includes("Return to your bag"), "marketing CTA present");
   assert(!mktHtml.includes("display:flex") && !mktHtml.includes("display:grid"), "no flex/grid in marketing html");
+  assert(
+    ![txHtml, relHtml, mktHtml].some((html) => html.includes("SonsHub")),
+    "no agency credit in email html",
+  );
 
   assert(isEmailCaptureEnabled(), "E2E_CAPTURE_EMAIL still on");
   getCapturedEmails();
