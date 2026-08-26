@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import toast from "react-hot-toast";
 import * as Accordion from "@radix-ui/react-accordion";
 import { Button } from "@/components/ui/Button";
 import { Divider } from "@/components/ui/Divider";
@@ -13,9 +12,16 @@ import { PriceDisplay } from "@/components/product/PriceDisplay";
 import { WishlistButton } from "@/components/common/WishlistButton";
 import { StockAlertForm } from "@/components/common/StockAlertForm";
 import { SizeGuideModal } from "@/components/shop/SizeGuideModal";
+import { QuickAddSizeRow } from "@/components/common/quick-add/QuickAddSizeRow";
 import { sanitizeCmsHtml } from "@/lib/sanitize-html";
 import { useBagActions } from "@/hooks/useBagActions";
-import { convertFromNGN } from "@/lib/currency";
+import { convertFromNGN, formatPrice } from "@/lib/currency";
+import {
+  displayPriceNGN,
+  hasPurchasableSize,
+  pickVariantForAdd,
+  stockGuardMessage,
+} from "@/lib/quick-add";
 import { useCurrencyStore } from "@/store/currencyStore";
 import type { ProductType } from "@prisma/client";
 import type { ProductListItem, ProductListVariant } from "@/types/product";
@@ -53,16 +59,29 @@ export function ProductDetailClient({
   reviewCount,
   freeLagosAboveNGN = null,
 }: ProductDetailClientProps) {
-  const [variantId, setVariantId] = useState<string | null>(product.variants[0]?.id ?? null);
+  const [variantId, setVariantId] = useState<string | null>(null);
   const [colorId, setColorId] = useState<string | null>(product.colors[0]?.id ?? null);
   const [qty, setQty] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+  const [bagError, setBagError] = useState<string | null>(null);
   const { addToBag } = useBagActions();
   const rates = useCurrencyStore((s) => s.rates);
+  const currency = useCurrencyStore((s) => s.currency);
 
   const variant = useMemo(
-    () => product.variants.find((v) => v.id === variantId) ?? product.variants[0] ?? null,
+    () => pickVariantForAdd(product.variants, variantId),
     [product.variants, variantId],
   );
+  const soldOut = !hasPurchasableSize(product.variants);
+  const priceLabel = formatPrice(
+    convertFromNGN(displayPriceNGN(product.variants, variantId), currency, rates),
+    currency,
+  );
+  const ctaLabel = soldOut
+    ? `Sold out · ${priceLabel}`
+    : !variant
+      ? `Select Size · ${priceLabel}`
+      : `Add to bag · ${priceLabel}`;
   const color = product.colors.find((c) => c.id === colorId) ?? null;
 
   const productLike: ProductListItem = {
@@ -92,34 +111,48 @@ export function ProductDetailClient({
     variant && variant.stock > 0 && variant.stock <= product.lowStockAt ? variant.stock : 0;
 
   const addToBagClick = async () => {
+    if (soldOut || submitting) return;
     if (!variant) {
-      toast.error("Please select a size");
+      setBagError("Select a size.");
       return;
     }
     if (variant.stock < 1) {
-      toast.error("This size is sold out.");
+      setBagError("That size just sold out.");
       return;
     }
-    const unit = variant.salePriceNGN ?? variant.priceNGN;
-    const result = await addToBag({
-      id: `${variant.id}-${color?.id ?? "none"}`,
-      productId: product.id,
-      productName: product.name,
-      productSlug: product.slug,
-      variantId: variant.id,
-      size: variant.size,
-      colorId: color?.id,
-      color: color?.name,
-      colorHex: color?.hex,
-      imageUrl: product.images[0]?.url ?? "",
-      priceNGN: unit,
-      priceUSD: convertFromNGN(unit, "USD", rates),
-      priceGBP: convertFromNGN(unit, "GBP", rates),
-      quantity: Math.min(qty, variant.stock),
-      stock: variant.stock,
-      category: product.category,
-    });
-    if (result.ok) toast.success("Added to your bag ✓");
+    setBagError(null);
+    setSubmitting(true);
+    try {
+      const unit = variant.salePriceNGN ?? variant.priceNGN;
+      const result = await addToBag(
+        {
+          id: `${variant.id}-${color?.id ?? "none"}`,
+          productId: product.id,
+          productName: product.name,
+          productSlug: product.slug,
+          variantId: variant.id,
+          size: variant.size,
+          colorId: color?.id,
+          color: color?.name,
+          colorHex: color?.hex,
+          imageUrl: product.images[0]?.url ?? "",
+          priceNGN: unit,
+          priceUSD: convertFromNGN(unit, "USD", rates),
+          priceGBP: convertFromNGN(unit, "GBP", rates),
+          quantity: Math.min(qty, variant.stock),
+          stock: variant.stock,
+          category: product.category,
+        },
+        { toastOnError: false },
+      );
+      if (!result.ok) {
+        setBagError(stockGuardMessage(result.error));
+      }
+    } catch {
+      setBagError(stockGuardMessage(null));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -194,7 +227,7 @@ export function ProductDetailClient({
             </div>
           )}
 
-          {product.variants.length > 1 ? (
+          {product.variants.length > 0 ? (
             <>
               <div className="mb-2 flex items-center justify-between">
                 <p className="font-body text-[10px] font-medium uppercase tracking-[0.14em] text-text-light">Size</p>
@@ -207,30 +240,16 @@ export function ProductDetailClient({
                   </button>
                 </SizeGuideModal>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {product.variants.map((v) => (
-                  <button
-                    key={v.id}
-                    type="button"
-                    disabled={v.stock === 0}
-                    onClick={() => {
-                      setVariantId(v.id);
-                      setQty(1);
-                    }}
-                    className={`flex h-9 w-12 items-center justify-center border font-body text-[11px] font-medium uppercase tracking-wide ${
-                      variantId === v.id
-                        ? "border-choc bg-choc text-cream"
-                        : v.stock === 0
-                          ? "cursor-not-allowed border-sand text-text-light/40 line-through"
-                          : "border-sand text-text-mid hover:border-choc"
-                    }`}
-                    aria-pressed={variantId === v.id}
-                    title={v.stock === 0 ? "Sold Out" : undefined}
-                  >
-                    {v.size}
-                  </button>
-                ))}
-              </div>
+              <QuickAddSizeRow
+                variants={product.variants}
+                selectedId={variantId}
+                onSelect={(id) => {
+                  setVariantId(id);
+                  setQty(1);
+                  setBagError(null);
+                }}
+                compact
+              />
             </>
           ) : null}
           {lowStock > 0 && (
@@ -269,12 +288,28 @@ export function ProductDetailClient({
 
           <Button
             type="button"
-            className="mt-8 h-[52px] w-full bg-choc font-body text-[11px] font-semibold uppercase tracking-[0.18em] text-cream hover:bg-nut"
+            className="mt-8 h-[52px] w-full bg-choc font-body text-[11px] font-semibold uppercase tracking-[0.18em] text-cream hover:bg-nut disabled:opacity-40"
             size="lg"
+            disabled={soldOut || !variant || submitting}
+            aria-busy={submitting}
             onClick={() => void addToBagClick()}
           >
-            Add to Bag
+            {submitting ? (
+              <span
+                className="h-4 w-4 animate-spin rounded-full border-2 border-cream/30 border-t-cream"
+                aria-hidden
+              />
+            ) : null}
+            {ctaLabel}
           </Button>
+          <p className="sr-only" aria-live="polite">
+            {bagError ?? (submitting ? "Adding to bag" : "")}
+          </p>
+          {bagError ? (
+            <p className="mt-3 font-body text-[12px] leading-5 text-choc" role="alert">
+              {bagError}
+            </p>
+          ) : null}
 
           <div className="mt-4 flex w-full items-center justify-center gap-2 border border-charcoal py-3">
             <WishlistButton productId={product.id} />

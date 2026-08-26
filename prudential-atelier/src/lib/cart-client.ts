@@ -2,6 +2,7 @@
 
 import { convertFromNGN } from "@/lib/currency";
 import { planGuestServerMerge } from "@/lib/cart-merge";
+import { stockGuardMessage } from "@/lib/quick-add";
 import { useCartStore, type CartItem } from "@/store/cartStore";
 
 type ServerCartRow = {
@@ -85,7 +86,9 @@ export async function postCartLine(line: {
     body: JSON.stringify(line),
   });
   const data = (await res.json().catch(() => ({}))) as { error?: string };
-  if (!res.ok) return { ok: false, error: data.error ?? "Could not update bag" };
+  if (!res.ok) {
+    return { ok: false, error: stockGuardMessage(data.error) };
+  }
   const replaced = await replaceCartFromServer();
   return replaced ? { ok: true } : { ok: false, error: "Could not refresh bag" };
 }

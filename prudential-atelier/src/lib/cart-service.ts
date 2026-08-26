@@ -30,7 +30,7 @@ export async function listCartLines(userId: string) {
 }
 
 export async function addCartLine(userId: string, input: CartLineInput) {
-  const colorIdNorm = input.colorId ?? null;
+  const colorIdNorm = input.colorId?.trim() ? input.colorId : null;
   const quantity = Math.max(1, Math.floor(input.quantity));
 
   const variant = await prisma.productVariant.findUnique({
@@ -49,27 +49,31 @@ export async function addCartLine(userId: string, input: CartLineInput) {
     where: { userId, variantId: input.variantId, colorId: colorIdNorm },
   });
 
-  if (existing) {
-    const nextQty = Math.min(existing.quantity + quantity, variant.stock);
-    const cartItem = await prisma.cartItem.update({
-      where: { id: existing.id },
-      data: { quantity: nextQty },
+  try {
+    if (existing) {
+      const nextQty = Math.min(existing.quantity + quantity, variant.stock);
+      const cartItem = await prisma.cartItem.update({
+        where: { id: existing.id },
+        data: { quantity: nextQty },
+        include: cartInclude,
+      });
+      return { ok: true as const, cartItem };
+    }
+
+    const cartItem = await prisma.cartItem.create({
+      data: {
+        userId,
+        productId: input.productId,
+        variantId: input.variantId,
+        colorId: colorIdNorm,
+        quantity: Math.min(quantity, variant.stock),
+      },
       include: cartInclude,
     });
     return { ok: true as const, cartItem };
+  } catch {
+    return { ok: false as const, status: 400, error: "Could not add to bag." };
   }
-
-  const cartItem = await prisma.cartItem.create({
-    data: {
-      userId,
-      productId: input.productId,
-      variantId: input.variantId,
-      colorId: colorIdNorm,
-      quantity: Math.min(quantity, variant.stock),
-    },
-    include: cartInclude,
-  });
-  return { ok: true as const, cartItem };
 }
 
 export async function updateCartLineQty(userId: string, itemId: string, quantity: number) {

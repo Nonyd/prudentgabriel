@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { deleteCartLine, patchCartLine, postCartLine } from "@/lib/cart-client";
+import { stockGuardMessage } from "@/lib/quick-add";
 import { useCartStore, type CartItem } from "@/store/cartStore";
 
 export type AddToBagResult = { ok: true } | { ok: false; error: string };
@@ -43,8 +44,9 @@ export function useBagActions() {
       quantity: item.quantity,
     });
     if (!result.ok) {
-      if (toastOnError) toast.error(result.error ?? "Could not add to bag");
-      return { ok: false, error: result.error ?? "Could not add to bag" };
+      const message = stockGuardMessage(result.error);
+      if (toastOnError) toast.error(message);
+      return { ok: false, error: message };
     }
     if (openOnSuccess) openCart();
     return { ok: true };

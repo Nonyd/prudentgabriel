@@ -123,6 +123,7 @@ function run() {
   assert(displayPriceNGN(sizes, "m") === 190000, "selected display uses that SKU");
   assert(stockGuardMessage("Out of stock") === "That size just sold out.", "stock API maps to inline copy");
   assert(stockGuardMessage("Quantity exceeds stock") === "That size just sold out.", "qty/stock maps to inline copy");
+  assert(stockGuardMessage(undefined) === "Could not add to bag.", "empty API body is not Could not update bag");
 
   console.log("slice-j: all checks passed");
 }
