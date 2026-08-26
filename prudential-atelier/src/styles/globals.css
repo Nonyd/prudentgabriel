@@ -263,3 +263,14 @@ body {
     display: none;
   }
 }
+
+.quick-add-size-scroller {
+  mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quick-add-motion {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}

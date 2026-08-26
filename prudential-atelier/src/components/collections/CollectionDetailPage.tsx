@@ -8,9 +8,8 @@ import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { cn, optimizeImageUrl } from "@/lib/utils";
 import { PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/product-image-url";
-import { RTWProductCard } from "@/components/rtw/RTWProductCard";
+import { ProductCardGrid } from "@/components/common/ProductCardGrid";
 import type { CollectionProductWithMeta } from "@/lib/collection-products";
-import type { ProductListItem } from "@/types/product";
 
 export type CollectionHero = {
   id: string;
@@ -281,9 +280,9 @@ export function CollectionDetailPage({
         ) : items.length === 0 ? (
           <p className="py-16 text-center font-body text-[14px] text-dark-grey">No products in this collection yet.</p>
         ) : (
-          <div className="mx-auto grid max-w-[1400px] grid-cols-2 gap-4 px-6 md:grid-cols-3 md:gap-5 xl:grid-cols-4 xl:gap-6">
-            {items.map((p, index) => {
-              const cardProduct: ProductListItem = {
+          <div className="mx-auto max-w-[1400px] px-6">
+            <ProductCardGrid
+              products={items.map((p) => ({
                 id: p.id,
                 name: p.name,
                 slug: p.slug,
@@ -300,9 +299,10 @@ export function CollectionDetailPage({
                 variants: p.variants,
                 colors: p.colors,
                 _count: p._count,
-              };
-              return <RTWProductCard key={p.id} product={cardProduct} priority={index < 8} />;
-            })}
+              }))}
+              priorityCount={8}
+              className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 xl:grid-cols-4 xl:gap-6"
+            />
           </div>
         )}
 

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import type { ClientProfile } from "@prisma/client";
-import { ProductCard } from "@/components/common/ProductCard";
+import { ProductCardGrid } from "@/components/common/ProductCardGrid";
 import type { ProductListItem } from "@/types/product";
 import { styleProfileComplete } from "@/lib/account-helpers";
 
@@ -89,11 +89,11 @@ export function StyleProfileClient({
         </div>
         <section className="mt-12">
           <h2 className="font-display text-2xl text-choc">Picked for you</h2>
-          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {picks.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          <ProductCardGrid
+            products={picks}
+            mobileColumns={1}
+            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+          />
           <Link href="/shop" className="btn-primary mt-8 inline-flex">
             Browse the full collection
           </Link>

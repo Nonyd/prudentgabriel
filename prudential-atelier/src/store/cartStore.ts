@@ -33,7 +33,7 @@ interface CartStore {
   closeCart: () => void;
   openSearch: () => void;
   closeSearch: () => void;
-  addItem: (item: CartItem) => void;
+  addItem: (item: CartItem, opts?: { open?: boolean }) => void;
   removeItem: (id: string) => void;
   updateQty: (id: string, qty: number) => void;
   clearCart: () => void;
@@ -54,7 +54,7 @@ export const useCartStore = create<CartStore>()(
       openSearch: () => set({ isSearchOpen: true }),
       closeSearch: () => set({ isSearchOpen: false }),
 
-      addItem: (item) => {
+      addItem: (item, opts) => {
         const { items } = get();
         const existing = items.find((i) => i.id === item.id);
         let newItems: CartItem[];
@@ -71,7 +71,7 @@ export const useCartStore = create<CartStore>()(
           items: newItems,
           totalItems: newItems.reduce((sum, i) => sum + i.quantity, 0),
           totalNGN: newItems.reduce((sum, i) => sum + i.priceNGN * i.quantity, 0),
-          isOpen: true,
+          ...(opts?.open === false ? {} : { isOpen: true }),
         });
       },
 

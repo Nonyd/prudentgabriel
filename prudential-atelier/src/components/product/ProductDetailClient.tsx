@@ -101,7 +101,7 @@ export function ProductDetailClient({
       return;
     }
     const unit = variant.salePriceNGN ?? variant.priceNGN;
-    const ok = await addToBag({
+    const result = await addToBag({
       id: `${variant.id}-${color?.id ?? "none"}`,
       productId: product.id,
       productName: product.name,
@@ -119,7 +119,7 @@ export function ProductDetailClient({
       stock: variant.stock,
       category: product.category,
     });
-    if (ok) toast.success("Added to your bag ✓");
+    if (result.ok) toast.success("Added to your bag ✓");
   };
 
   return (

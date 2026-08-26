@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import { ProductCard } from "@/components/common/ProductCard";
+import { ProductCardGrid } from "@/components/common/ProductCardGrid";
 import type { ProductListItem } from "@/types/product";
 
 export function NewArrivals({ products }: { products: ProductListItem[] }) {
@@ -22,18 +22,16 @@ export function NewArrivals({ products }: { products: ProductListItem[] }) {
             View All →
           </Link>
         </div>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5 lg:gap-6">
-          {products.map((p, i) => (
-            <motion.div
-              key={p.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-            >
-              <ProductCard product={p} priority={i < 4} />
-            </motion.div>
-          ))}
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5 }}
+        >
+          <ProductCardGrid
+            products={products}
+            className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5 lg:gap-6"
+          />
+        </motion.div>
       </div>
     </section>
   );

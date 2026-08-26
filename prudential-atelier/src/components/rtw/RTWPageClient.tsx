@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import * as Select from "@radix-ui/react-select";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { RTWProductCard } from "@/components/rtw/RTWProductCard";
+import { ProductCardGrid } from "@/components/common/ProductCardGrid";
 import type { ProductListItem } from "@/types/product";
 
 type ChipId = "ALL" | "DRESSES" | "JUMPSUITS" | "SETS" | "SUITS" | "KIDDIES" | "ACCESSORIES";
@@ -264,11 +264,11 @@ export function RTWPageClient({
         ) : items.length === 0 ? (
           <p className="py-20 text-center font-body text-sm text-dark-grey">No pieces in this view yet.</p>
         ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 xl:grid-cols-4 xl:gap-6">
-            {items.map((p, index) => (
-              <RTWProductCard key={p.id} product={p} priority={index < 8} />
-            ))}
-          </div>
+          <ProductCardGrid
+            products={items}
+            priorityCount={8}
+            className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 xl:grid-cols-4 xl:gap-6"
+          />
         )}
 
         <div className="mt-12 flex flex-col items-center gap-2">

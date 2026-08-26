@@ -1,18 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as Select from "@radix-ui/react-select";
 import { ChevronDown } from "lucide-react";
 import { useInView } from "react-intersection-observer";
-import { optimizeProductCardImageUrl, PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/product-image-url";
-import { convertFromNGN, formatPrice } from "@/lib/currency";
-import { useCurrencyStore } from "@/store/currencyStore";
 import { cn } from "@/lib/utils";
+import { ProductCardGrid } from "@/components/common/ProductCardGrid";
 import type { ProductListItem } from "@/types/product";
-import type { ProductCategory } from "@prisma/client";
 
 interface ShopBrowseProps {
   products: ProductListItem[];
@@ -34,68 +29,6 @@ const FILTERS = [
   { id: "atelier", label: "ATELIER", params: { type: "BESPOKE" } },
   { id: "kids", label: "KIDS", params: { category: "KIDDIES" } },
 ] as const;
-
-const CATEGORY_LABELS: Record<ProductCategory, string> = {
-  BRIDAL: "BRIDAL",
-  EVENING_WEAR: "EVENING WEAR",
-  CASUAL: "CASUAL",
-  FORMAL: "FORMAL",
-  KIDDIES: "KIDS",
-  ACCESSORIES: "ACCESSORIES",
-};
-
-function ShopProductCard({ product, priority }: { product: ProductListItem; priority?: boolean }) {
-  const currency = useCurrencyStore((s) => s.currency);
-  const rates = useCurrencyStore((s) => s.rates);
-  const prices = product.variants.map((v) => (v.salePriceNGN != null ? v.salePriceNGN : v.priceNGN));
-  const lowest = Math.min(...prices);
-  const multi = product.variants.length > 1;
-  const img = optimizeProductCardImageUrl(product.images[0]?.url || PRODUCT_IMAGE_PLACEHOLDER);
-  const showBestSeller = product.isFeatured;
-  const showNew = product.isNewArrival && !showBestSeller;
-
-  return (
-    <Link
-      href={`/shop/${product.slug}`}
-      className="group flex h-full flex-col overflow-hidden border border-sand/70 bg-bg-card transition-shadow duration-300 hover:shadow-[0_10px_32px_rgba(42,36,31,0.08)]"
-    >
-      <div className="product-image-wrapper relative aspect-[3/4] shrink-0 overflow-hidden bg-ivory-dark">
-        <Image
-          src={img}
-          alt={product.images[0]?.alt || product.name}
-          fill
-          sizes="(max-width: 768px) 50vw, 25vw"
-          className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
-          priority={priority}
-        />
-        {showBestSeller ? (
-          <span className="absolute left-3 top-3 rounded-sm bg-choc px-2 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-cream">
-            Best seller
-          </span>
-        ) : null}
-        {showNew ? (
-          <span className="absolute left-3 top-3 rounded-sm border border-sand bg-cream px-2 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-choc">
-            New in
-          </span>
-        ) : null}
-      </div>
-      <div className="flex flex-1 flex-col px-4 py-4 md:px-5 md:py-5">
-        <p className="font-sans text-[10px] font-medium uppercase tracking-[0.14em] text-lightbr">
-          {product.type === "RTW" ? "READY-TO-WEAR" : CATEGORY_LABELS[product.category]}
-        </p>
-        <h3 className="mt-2 line-clamp-2 font-serif text-[15px] leading-snug text-choc transition-colors group-hover:text-nut md:text-base">
-          {product.name}
-        </h3>
-        <p className="mt-2.5 font-body text-[13px] text-text-mid">
-          {multi ? <span className="text-text-light">From </span> : null}
-          <span className="font-medium text-choc">
-            {formatPrice(convertFromNGN(lowest, currency, rates), currency)}
-          </span>
-        </p>
-      </div>
-    </Link>
-  );
-}
 
 export function ShopBrowse({
   products: initialProducts,
@@ -229,11 +162,10 @@ export function ShopBrowse({
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4 lg:gap-6">
-            {items.map((p, i) => (
-              <ShopProductCard key={`${p.id}-${i}`} product={p} priority={i < 4} />
-            ))}
-          </div>
+          <ProductCardGrid
+            products={items}
+            className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4 lg:gap-6"
+          />
         )}
 
         {hasNext && (
