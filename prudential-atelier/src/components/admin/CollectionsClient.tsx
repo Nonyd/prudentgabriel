@@ -395,6 +395,27 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
       />
 
       <ConfirmDialog
+        open={deleteState !== null}
+        onOpenChange={(o) => {
+          if (!o) setDeleteState(null);
+        }}
+        title={
+          deleteState?.mode === "bulk"
+            ? `Delete ${deleteState.ids.length} collections?`
+            : "Delete this collection?"
+        }
+        description={
+          deleteState?.mode === "single"
+            ? `${deleteState.row.name} will be removed. Pieces stay in the catalogue.`
+            : "Selected collections will be removed. Pieces stay in the catalogue."
+        }
+        variant="danger"
+        confirmLabel="Delete"
+        loading={deleteBusy}
+        onConfirm={() => void confirmDelete()}
+      />
+
+      <ConfirmDialog
         open={unpublishIds !== null}
         onOpenChange={(o) => {
           if (!o) {

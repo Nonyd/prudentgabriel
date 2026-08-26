@@ -28,8 +28,6 @@ export type RecipientPreview = {
   sample: { id: string; name: string; email: string }[];
 };
 
-type NamedEmail = { email: string; name: string };
-
 function addNamed(map: Map<string, string>, email: string | null | undefined, name?: string | null) {
   if (!email) return;
   const e = normalizeEmail(email);

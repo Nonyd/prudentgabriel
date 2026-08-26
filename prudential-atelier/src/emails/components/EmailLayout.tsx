@@ -61,6 +61,8 @@ export default function EmailLayout({
             `.trim(),
           }}
         />
+        {/* react-email Head, not a Next page — webfonts are for mail clients. */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Jost:wght@400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap"
