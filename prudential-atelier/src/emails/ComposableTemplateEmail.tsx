@@ -1,5 +1,6 @@
-import { Button, Heading, Text } from "@react-email/components";
+import { Heading, Text } from "@react-email/components";
 import EmailLayout from "@/emails/components/EmailLayout";
+import EmailButton from "@/emails/components/EmailButton";
 
 type ComposableTemplateEmailProps = {
   heading: string;
@@ -23,7 +24,7 @@ export default function ComposableTemplateEmail({
   footerNote,
 }: ComposableTemplateEmailProps) {
   return (
-    <EmailLayout previewText={heading}>
+    <EmailLayout family="relationship" previewText={heading}>
       <Heading
         as="h2"
         style={{
@@ -66,23 +67,7 @@ export default function ComposableTemplateEmail({
             </Text>
           ))
         : null}
-      {ctaLabel && ctaLink ? (
-        <Button
-          href={ctaLink}
-          style={{
-            marginTop: 8,
-            marginBottom: 16,
-            backgroundColor: "#442913",
-            color: "#ffffff",
-            padding: "12px 24px",
-            borderRadius: 2,
-            fontSize: 14,
-            textDecoration: "none",
-          }}
-        >
-          {ctaLabel}
-        </Button>
-      ) : null}
+      {ctaLabel && ctaLink ? <EmailButton href={ctaLink}>{ctaLabel}</EmailButton> : null}
       {footerNote ? (
         <Text
           style={{

@@ -8,9 +8,11 @@ import { run as runReceiptReminders } from "@/lib/cron/jobs/receipt-reminders";
 import { run as runUpdatePerformance } from "@/lib/cron/jobs/update-performance";
 import { run as runEmailOutbox } from "@/lib/cron/jobs/email-outbox";
 import { run as runAbandonedCart } from "@/lib/cron/jobs/abandoned-cart";
+import { run as runAbandonedCheckout } from "@/lib/cron/jobs/abandoned-checkout";
 
 const HANDLERS: Record<string, CronJobHandler> = {
   "abandoned-cart": runAbandonedCart,
+  "abandoned-checkout": runAbandonedCheckout,
   "update-performance": runUpdatePerformance,
   "review-requests": runReviewRequests,
   "balance-reminders": runBalanceReminders,

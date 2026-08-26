@@ -3,11 +3,12 @@ import EmailLayout from "@/emails/components/EmailLayout";
 type BrandedHtmlEmailProps = {
   previewText: string;
   bodyHtml: string;
+  unsubscribeUrl?: string;
 };
 
-export default function BrandedHtmlEmail({ previewText, bodyHtml }: BrandedHtmlEmailProps) {
+export default function BrandedHtmlEmail({ previewText, bodyHtml, unsubscribeUrl }: BrandedHtmlEmailProps) {
   return (
-    <EmailLayout previewText={previewText}>
+    <EmailLayout family="marketing" previewText={previewText} unsubscribeUrl={unsubscribeUrl}>
       <div
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: bodyHtml }}

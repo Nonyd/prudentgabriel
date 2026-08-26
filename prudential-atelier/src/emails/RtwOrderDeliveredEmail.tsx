@@ -1,5 +1,6 @@
-import { Button, Heading, Text } from "@react-email/components";
+import { Heading, Text } from "@react-email/components";
 import { getPublicAppUrl } from "@/lib/app-url";
+import EmailButton from "./components/EmailButton";
 import EmailLayout from "./components/EmailLayout";
 
 const APP = getPublicAppUrl();
@@ -11,7 +12,7 @@ export type RtwOrderDeliveredEmailProps = {
 
 export default function RtwOrderDeliveredEmail({ firstName, orderNumber }: RtwOrderDeliveredEmailProps) {
   return (
-    <EmailLayout previewText={`Order #${orderNumber} delivered`}>
+    <EmailLayout family="transactional" previewText={`Order #${orderNumber} delivered`}>
       <Heading as="h1" style={{ fontSize: 28, fontWeight: 400, color: "#442913", margin: "0 0 12px" }}>
         Your order has been delivered, {firstName}.
       </Heading>
@@ -19,24 +20,9 @@ export default function RtwOrderDeliveredEmail({ firstName, orderNumber }: RtwOr
         We hope you love your new piece. Order #{orderNumber} is now with you.
       </Text>
       <Text style={{ marginTop: 20, fontSize: 14, color: "#666" }}>
-        In a day or so we&apos;ll invite you to share a quick review — your feedback means the world to us.
+        In a day or so we will invite you to share a quick review. Your feedback means a great deal to the house.
       </Text>
-      <div style={{ marginTop: 28, textAlign: "center" as const }}>
-        <Button
-          href={`${APP}/account/orders`}
-          style={{
-            backgroundColor: "#442913",
-            color: "#E2D1C2",
-            padding: "14px 28px",
-            fontSize: 14,
-            fontWeight: 600,
-            textDecoration: "none",
-            borderRadius: 2,
-          }}
-        >
-          View your order
-        </Button>
-      </div>
+      <EmailButton href={`${APP}/account/orders`}>View your order</EmailButton>
     </EmailLayout>
   );
 }

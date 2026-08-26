@@ -1,4 +1,5 @@
-import { Button, Heading, Text } from "@react-email/components";
+import { Heading, Text } from "@react-email/components";
+import EmailButton from "./components/EmailButton";
 import { getPublicAppUrl } from "@/lib/app-url";
 import EmailLayout from "./components/EmailLayout";
 
@@ -18,7 +19,7 @@ export default function ConsultationCancelledEmail({
   reason,
 }: ConsultationCancelledEmailProps) {
   return (
-    <EmailLayout previewText={`Consultation cancelled ${bookingNumber}`}>
+    <EmailLayout family="relationship" previewText={`Consultation cancelled ${bookingNumber}`}>
       <Heading as="h1" style={{ fontSize: 26, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
         Your consultation has been cancelled
       </Heading>
@@ -34,20 +35,7 @@ export default function ConsultationCancelledEmail({
       <Text style={{ fontSize: 14, color: "#555", marginTop: 16 }}>
         For questions, contact hello@prudentgabriel.com
       </Text>
-      <Text style={{ marginTop: 24, textAlign: "center" as const }}>
-        <Button
-          href={`${APP}/consultation`}
-          style={{
-            backgroundColor: "#442913",
-            color: "#C9A84C",
-            padding: "12px 28px",
-            textDecoration: "none",
-            fontSize: 15,
-          }}
-        >
-          Book another session
-        </Button>
-      </Text>
+      <EmailButton href={`${APP}/consultation`}>Book another session</EmailButton>
     </EmailLayout>
   );
 }

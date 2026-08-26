@@ -1,5 +1,6 @@
-import { Body, Container, Heading, Html, Preview, Text } from "@react-email/components";
+import { Heading, Text } from "@react-email/components";
 import EmailLayout from "./components/EmailLayout";
+import { EMAIL_CHOC, EMAIL_INK, EMAIL_MUTED, FONT_BODY } from "./components/email-tokens";
 
 export function JobApplicationConfirmationEmail({
   name,
@@ -11,33 +12,27 @@ export function JobApplicationConfirmationEmail({
   applicationId: string;
 }) {
   return (
-    <Html>
-      <Preview>Application received — {jobTitle}</Preview>
-      <EmailLayout>
-        <Body style={{ backgroundColor: "#FAF8F5", fontFamily: "Georgia, serif" }}>
-          <Container style={{ padding: "32px 24px", maxWidth: "560px" }}>
-            <Heading style={{ color: "#442913", fontSize: "24px", fontWeight: 400 }}>
-              Application received
-            </Heading>
-            <Text style={{ color: "#6B6B68", fontSize: "15px", lineHeight: 1.7 }}>
-              Hi {name},
-            </Text>
-            <Text style={{ color: "#6B6B68", fontSize: "15px", lineHeight: 1.7 }}>
-              Thank you for applying for the {jobTitle} position at Prudential Atelier.
-            </Text>
-            <Text style={{ color: "#6B6B68", fontSize: "15px", lineHeight: 1.7 }}>
-              We have received your application and will review it carefully. If your profile matches what we
-              are looking for, we will be in touch within 14 working days.
-            </Text>
-            <Text style={{ color: "#442913", fontSize: "13px", marginTop: "24px" }}>
-              Application reference: {applicationId}
-            </Text>
-            <Text style={{ color: "#A8A8A4", fontSize: "13px", marginTop: "32px" }}>
-              — The Prudential Atelier Team
-            </Text>
-          </Container>
-        </Body>
-      </EmailLayout>
-    </Html>
+    <EmailLayout family="transactional" previewText={`Application received — ${jobTitle}`}>
+      <Heading
+        as="h1"
+        style={{ color: EMAIL_CHOC, fontSize: 24, fontWeight: 400, margin: "0 0 16px", fontFamily: FONT_BODY }}
+      >
+        Application received
+      </Heading>
+      <Text style={{ color: EMAIL_INK, fontSize: 15, lineHeight: "24px", fontFamily: FONT_BODY }}>Hi {name},</Text>
+      <Text style={{ color: EMAIL_INK, fontSize: 15, lineHeight: "24px", fontFamily: FONT_BODY }}>
+        Thank you for applying for the {jobTitle} position at Prudential Atelier.
+      </Text>
+      <Text style={{ color: EMAIL_INK, fontSize: 15, lineHeight: "24px", fontFamily: FONT_BODY }}>
+        We have received your application and will review it carefully. If your profile matches what we are looking
+        for, we will be in touch within 14 working days.
+      </Text>
+      <Text style={{ color: EMAIL_CHOC, fontSize: 13, marginTop: 24, fontFamily: FONT_BODY }}>
+        Application reference: {applicationId}
+      </Text>
+      <Text style={{ color: EMAIL_MUTED, fontSize: 13, marginTop: 32, fontFamily: FONT_BODY }}>
+        The Prudential Atelier Team
+      </Text>
+    </EmailLayout>
   );
 }

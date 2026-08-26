@@ -1,4 +1,5 @@
-import { Button, Heading, Img, Section, Text } from "@react-email/components";
+import { Heading, Img, Section, Text } from "@react-email/components";
+import EmailButton from "./components/EmailButton";
 import EmailLayout from "./components/EmailLayout";
 import { getPublicAppUrl } from "@/lib/app-url";
 
@@ -24,7 +25,7 @@ export default function ConsultationSessionSummaryEmail({
   const commissionLink = commissionUrl ?? `${appUrl}/atelier`;
 
   return (
-    <EmailLayout previewText="Thank you for sitting with us — Prudential Atelier">
+    <EmailLayout family="relationship" previewText="Thank you for sitting with us — Prudential Atelier">
       <Heading as="h1" style={{ fontSize: 26, fontWeight: 400, color: "#442913", margin: "0 0 12px" }}>
         Thank you for sitting with us, {firstName}.
       </Heading>
@@ -53,20 +54,7 @@ export default function ConsultationSessionSummaryEmail({
             ))}
           </Section>
           <Section style={{ marginTop: 20, textAlign: "center" as const }}>
-            <Button
-              href={moodboardLink}
-              style={{
-                backgroundColor: "#442913",
-                color: "#E2D1C2",
-                padding: "14px 28px",
-                fontSize: 14,
-                fontWeight: 600,
-                textDecoration: "none",
-                borderRadius: 2,
-              }}
-            >
-              View your moodboard
-            </Button>
+            <EmailButton href={moodboardLink}>View your moodboard</EmailButton>
           </Section>
         </Section>
       ) : null}
@@ -91,20 +79,7 @@ export default function ConsultationSessionSummaryEmail({
             Your invoice will be prepared and sent to you shortly for your review and approval.
           </Text>
           <Section style={{ marginTop: 20, textAlign: "center" as const }}>
-            <Button
-              href={commissionLink}
-              style={{
-                backgroundColor: "#442913",
-                color: "#E2D1C2",
-                padding: "14px 28px",
-                fontSize: 14,
-                fontWeight: 600,
-                textDecoration: "none",
-                borderRadius: 2,
-              }}
-            >
-              Begin your commission
-            </Button>
+            <EmailButton href={commissionLink}>Begin your commission</EmailButton>
           </Section>
         </Section>
       ) : null}

@@ -32,6 +32,8 @@ import { prisma } from "@/lib/prisma";
 import { queueEmail } from "@/lib/email-outbox";
 import { getSetting } from "@/lib/settings";
 import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
+import { UNSUBSCRIBE_URL_PLACEHOLDER } from "@/lib/email-priority";
+import type { EmailFamily } from "@/emails/components/email-tokens";
 
 async function renderBrandedEmail(element: ReactElement) {
   await primeEmailBranding();
@@ -358,11 +360,7 @@ export async function sendBespokeBalancePaymentLinkEmail(params: {
       Please complete the secure checkout for the outstanding balance of
       <strong>₦${params.amountNGN.toLocaleString("en-NG")}</strong>.
     </p>
-    <p style="margin:24px 0;">
-      <a href="${href}" style="display:inline-block;background:#442913;color:#F7F2EC;padding:14px 28px;text-decoration:none;font-size:14px;">
-        Pay now
-      </a>
-    </p>
+    ${htmlCta(href, "Pay now")}
     <p style="margin:16px 0 0;font-size:13px;color:#6B6B68;line-height:1.5;">
       If the button does not work, copy and paste this link into your browser:<br/>
       <span style="word-break:break-all;">${escapeHtml(params.payUrl)}</span>
@@ -613,16 +611,60 @@ export async function sendBackInStockEmail(params: {
   });
 }
 
-function wrapHtml(title: string, inner: string): string {
+function htmlCta(href: string, label: string): string {
+  return `<table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin:24px 0 8px;">
+<tr><td bgcolor="#442913" style="background:#442913;">
+<a href="${href}" style="display:inline-block;padding:14px 28px;background:#442913;color:#F7F2EC;font-family:Helvetica,Arial,sans-serif;font-size:12px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;text-decoration:none;line-height:16px;">${label}</a>
+</td></tr>
+</table>`;
+}
+
+function wrapHtml(title: string, inner: string, family: EmailFamily = "transactional"): string {
   const logoBlock = emailLogoWhiteUrl
-    ? `<img src="${emailLogoWhiteUrl}" alt="${title}" width="160" style="max-width:160px;height:auto;display:block;margin:0 auto;" />`
-    : `<span style="color:#C9A84C;font-size:18px;">${title}</span>`;
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/></head>
-<body style="margin:0;background:#FAF6EF;font-family:Georgia,serif;color:#2d2d2d;">
-<div style="background:#442913;padding:20px;text-align:center;">
-  ${logoBlock}
-</div>
-<div style="padding:28px 24px;max-width:560px;margin:0 auto;">${inner}</div>
+    ? `<img src="${emailLogoWhiteUrl}" alt="${title}" width="168" height="56" style="max-width:168px;height:auto;display:block;margin:0 auto;border:0;" />`
+    : "";
+  const pageBg = family === "marketing" ? "#E2D1C2" : "#F7F2EC";
+  const cardBg = family === "marketing" ? "#F7F2EC" : "#FFFdf9";
+  const pad =
+    family === "transactional" ? "28px 36px 36px" : family === "relationship" ? "36px 40px 40px" : "24px 32px 36px";
+  const goldBar =
+    family === "transactional"
+      ? `<tr><td height="3" bgcolor="#C9A84C" style="background:#C9A84C;font-size:0;line-height:0;height:3px;">&nbsp;</td></tr>`
+      : "";
+  const headerHairline =
+    family === "relationship"
+      ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" align="center" style="margin:16px auto 0;"><tr><td height="1" width="48" bgcolor="#C9A84C" style="background:#C9A84C;font-size:0;line-height:0;">&nbsp;</td></tr></table>`
+      : "";
+  const footerNote =
+    family === "marketing"
+      ? `<p style="margin:14px 0 0;font-size:11px;line-height:18px;color:#6B5E52;">You received this because you subscribed or have shopped with the house.<br/><a href="${UNSUBSCRIBE_URL_PLACEHOLDER}" style="color:#C9A84C;text-decoration:underline;">Unsubscribe</a></p>`
+      : `<p style="margin:14px 0 0;font-size:10px;">This message is about an order or account. It is not marketing mail.</p>`;
+  return `<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="color-scheme" content="light dark"/>
+<meta name="supported-color-schemes" content="light dark"/>
+</head>
+<body style="margin:0;padding:0;background:${pageBg};font-family:Georgia,'Times New Roman',Times,serif;color:#2C241C;">
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:${pageBg};">
+<tr><td align="center" style="padding:24px 12px;">
+<table width="600" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;max-width:600px;background:${cardBg};">
+<tr><td bgcolor="#442913" style="background:#442913;padding:24px;text-align:center;">
+${logoBlock}
+<p style="margin:${logoBlock ? "14px 0 0" : "0"};font-size:11px;letter-spacing:0.28em;text-transform:uppercase;color:#C9A84C;font-family:Georgia,'Times New Roman',Times,serif;">Prudential Atelier</p>
+${headerHairline}
+</td></tr>
+${goldBar}
+<tr><td style="padding:${pad};">${inner}</td></tr>
+<tr><td bgcolor="#1A0F08" style="background:#1A0F08;padding:28px 36px;text-align:center;color:rgba(226,209,194,0.62);font-size:11px;font-family:Helvetica,Arial,sans-serif;">
+<p style="margin:0 0 8px;font-family:Georgia,serif;">Prudential Atelier</p>
+<p style="margin:0 0 6px;">14 Bode Thomas Street, Surulere, Lagos, Nigeria</p>
+<p style="margin:0;">hello@prudentgabriel.com</p>
+${footerNote}
+</td></tr>
+</table>
+</td></tr>
+</table>
 </body></html>`;
 }
 
@@ -648,16 +690,12 @@ export async function sendAbandonedCartEmail(params: {
       You left a few pieces in your bag. They are still waiting for you.
     </p>
     <ul style="margin:0 0 16px;padding-left:18px;">${list}</ul>
-    <p style="margin:24px 0;">
-      <a href="${href}" style="display:inline-block;background:#442913;color:#F7F2EC;padding:14px 28px;text-decoration:none;font-size:14px;">
-        Return to checkout
-      </a>
-    </p>
+    ${htmlCta(href, "Return to checkout")}
   `;
   const queued = await queueEmail({
     to: params.to,
     subject: "Your bag is waiting | Prudential Atelier",
-    html: wrapHtml("Prudential Atelier", inner),
+    html: wrapHtml("Prudential Atelier", inner, "marketing"),
     template: "abandoned-cart",
     idempotencyKey: params.idempotencyKey,
     relatedType: "User",
@@ -695,16 +733,12 @@ export async function sendStageApprovalRequestEmail(params: {
     </p>
     ${notes}
     ${images ? `<div style="margin:16px 0;">${images}</div>` : ""}
-    <p style="margin:24px 0;">
-      <a href="${href}" style="display:inline-block;background:#442913;color:#F7F2EC;padding:14px 28px;text-decoration:none;font-size:14px;">
-        Review &amp; approve
-      </a>
-    </p>
+    ${htmlCta(href, "Review &amp; approve")}
   `;
   await sendEmail({
     to: params.to,
     subject: `Please review ${params.stageLabel} — ${params.orderRef} | Prudential Atelier`,
-    html: wrapHtml("Prudential Atelier", inner),
+    html: wrapHtml("Prudential Atelier", inner, "relationship"),
     template: "stage-approval-request",
     idempotencyKey: `stage-approval:${params.orderRef}:${params.stageLabel}`,
     relatedType: "BespokeOrder",
@@ -728,16 +762,12 @@ export async function sendStageApprovalReminderEmail(params: {
       A reminder: ${escapeHtml(params.stageLabel)} on order <strong>${escapeHtml(params.orderRef)}</strong>
       is still waiting for your approval.
     </p>
-    <p style="margin:24px 0;">
-      <a href="${href}" style="display:inline-block;background:#442913;color:#F7F2EC;padding:14px 28px;text-decoration:none;font-size:14px;">
-        Review now
-      </a>
-    </p>
+    ${htmlCta(href, "Review now")}
   `;
   await sendEmail({
     to: params.to,
     subject: `Reminder: review ${params.stageLabel} — ${params.orderRef}`,
-    html: wrapHtml("Prudential Atelier", inner),
+    html: wrapHtml("Prudential Atelier", inner, "relationship"),
     template: "stage-approval-reminder",
     idempotencyKey: `stage-approval-reminder:${params.orderRef}:${params.stageLabel}`,
     relatedType: "BespokeOrder",
@@ -762,11 +792,7 @@ export async function sendStageChangesRequestedEmail(params: {
       (${escapeHtml(params.stageLabel)}).
     </p>
     <p style="margin:16px 0;font-size:15px;line-height:1.5;white-space:pre-wrap;">${escapeHtml(params.comment)}</p>
-    <p style="margin:24px 0;">
-      <a href="${href}" style="display:inline-block;background:#442913;color:#F7F2EC;padding:14px 28px;text-decoration:none;font-size:14px;">
-        Open order
-      </a>
-    </p>
+    ${htmlCta(href, "Open order")}
   `;
   await sendEmail({
     to: params.to,

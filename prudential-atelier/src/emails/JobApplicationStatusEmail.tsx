@@ -1,6 +1,7 @@
 import type { ApplicationStatus } from "@prisma/client";
-import { Body, Container, Heading, Html, Preview, Text } from "@react-email/components";
+import { Heading, Text } from "@react-email/components";
 import EmailLayout from "./components/EmailLayout";
+import { EMAIL_CHOC, EMAIL_INK, EMAIL_MUTED, FONT_BODY } from "./components/email-tokens";
 
 const STATUS_COPY: Record<
   ApplicationStatus,
@@ -47,23 +48,21 @@ export function JobApplicationStatusEmail({
   if (!copy) return null;
 
   return (
-    <Html>
-      <Preview>{copy.subject} — {jobTitle}</Preview>
-      <EmailLayout>
-        <Body style={{ backgroundColor: "#FAF8F5", fontFamily: "Georgia, serif" }}>
-          <Container style={{ padding: "32px 24px", maxWidth: "560px" }}>
-            <Heading style={{ color: "#442913", fontSize: "24px", fontWeight: 400 }}>{copy.headline}</Heading>
-            <Text style={{ color: "#6B6B68", fontSize: "15px", lineHeight: 1.7 }}>Hi {name},</Text>
-            <Text style={{ color: "#6B6B68", fontSize: "15px", lineHeight: 1.7 }}>
-              Re: your application for {jobTitle}.
-            </Text>
-            <Text style={{ color: "#6B6B68", fontSize: "15px", lineHeight: 1.7 }}>{copy.body}</Text>
-            <Text style={{ color: "#A8A8A4", fontSize: "13px", marginTop: "32px" }}>
-              — The Prudential Atelier Team
-            </Text>
-          </Container>
-        </Body>
-      </EmailLayout>
-    </Html>
+    <EmailLayout family="relationship" previewText={`${copy.subject} — ${jobTitle}`}>
+      <Heading
+        as="h1"
+        style={{ color: EMAIL_CHOC, fontSize: 24, fontWeight: 400, margin: "0 0 16px", fontFamily: FONT_BODY }}
+      >
+        {copy.headline}
+      </Heading>
+      <Text style={{ color: EMAIL_INK, fontSize: 15, lineHeight: "24px", fontFamily: FONT_BODY }}>Hi {name},</Text>
+      <Text style={{ color: EMAIL_INK, fontSize: 15, lineHeight: "24px", fontFamily: FONT_BODY }}>
+        Re: your application for {jobTitle}.
+      </Text>
+      <Text style={{ color: EMAIL_INK, fontSize: 15, lineHeight: "24px", fontFamily: FONT_BODY }}>{copy.body}</Text>
+      <Text style={{ color: EMAIL_MUTED, fontSize: 13, marginTop: 32, fontFamily: FONT_BODY }}>
+        The Prudential Atelier Team
+      </Text>
+    </EmailLayout>
   );
 }

@@ -1,4 +1,5 @@
-import { Button, Heading, Section, Text } from "@react-email/components";
+import { Heading, Section, Text } from "@react-email/components";
+import EmailButton from "./components/EmailButton";
 import { getPublicAppUrl } from "@/lib/app-url";
 import EmailLayout from "./components/EmailLayout";
 
@@ -20,7 +21,7 @@ export default function StageAssignmentEmail({
   deliveryDate,
 }: StageAssignmentEmailProps) {
   return (
-    <EmailLayout previewText={`New assignment — ${orderRef}`}>
+    <EmailLayout family="relationship" previewText={`New assignment — ${orderRef}`}>
       <Heading as="h1" style={{ fontSize: 26, fontWeight: 400, color: "#442913", margin: "0 0 12px" }}>
         You&apos;ve been assigned to a new commission
       </Heading>
@@ -41,22 +42,7 @@ export default function StageAssignmentEmail({
           </Text>
         ) : null}
       </Section>
-      <Section style={{ marginTop: 24, textAlign: "center" as const }}>
-        <Button
-          href={`${APP}/staff-login`}
-          style={{
-            backgroundColor: "#442913",
-            color: "#E2D1C2",
-            padding: "14px 28px",
-            fontSize: 14,
-            fontWeight: 600,
-            textDecoration: "none",
-            borderRadius: 2,
-          }}
-        >
-          View in staff portal
-        </Button>
-      </Section>
+      <EmailButton href={`${APP}/staff-login`}>View in staff portal</EmailButton>
     </EmailLayout>
   );
 }

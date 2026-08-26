@@ -13,6 +13,7 @@ MAILTO=""
 CRON_TZ=UTC
 
 0 0 * * * root /opt/prudentgabriel/deploy/cron-fire.sh abandoned-cart
+*/15 * * * * root /opt/prudentgabriel/deploy/cron-fire.sh abandoned-checkout
 0 0 * * * root /opt/prudentgabriel/deploy/cron-fire.sh expired-coupons
 0 0 * * * root /opt/prudentgabriel/deploy/cron-fire.sh rotate-qr
 0 9 * * 1-6 root /opt/prudentgabriel/deploy/cron-fire.sh late-alert

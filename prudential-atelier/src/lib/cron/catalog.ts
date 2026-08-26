@@ -18,6 +18,13 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     migrated: true,
   },
   {
+    name: "abandoned-checkout",
+    schedule: "*/15 * * * *",
+    description: "Abandoned checkout recovery (email captured at step 1)",
+    migrated: true,
+    budgetMs: 50_000,
+  },
+  {
     name: "expired-coupons",
     schedule: "0 0 * * *",
     description: "Expire coupons past their end date",

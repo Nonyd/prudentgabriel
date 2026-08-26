@@ -1,4 +1,5 @@
-import { Button, Heading, Section, Text } from "@react-email/components";
+import { Heading, Section, Text } from "@react-email/components";
+import EmailButton from "./components/EmailButton";
 import { getPublicAppUrl } from "@/lib/app-url";
 import EmailLayout from "./components/EmailLayout";
 
@@ -18,7 +19,7 @@ export default function BespokeConfirmationEmail({
   timeline,
 }: BespokeConfirmationEmailProps) {
   return (
-    <EmailLayout previewText={`Atelier request ${requestNumber}`}>
+    <EmailLayout family="relationship" previewText={`Atelier request ${requestNumber}`}>
       <Heading as="h1" style={{ fontSize: 28, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
         Your atelier request
       </Heading>
@@ -43,20 +44,7 @@ export default function BespokeConfirmationEmail({
         Occasion: {occasion} · Timeline: {timeline}
       </Text>
       <Text style={{ marginTop: 16, fontSize: 14 }}>In the meantime, browse our ready-to-wear collection.</Text>
-      <Section style={{ marginTop: 24, textAlign: "center" as const }}>
-        <Button
-          href={`${APP}/shop`}
-          style={{
-            backgroundColor: "#442913",
-            color: "#C9A84C",
-            padding: "12px 32px",
-            textDecoration: "none",
-            fontSize: 15,
-          }}
-        >
-          Browse collection
-        </Button>
-      </Section>
+      <EmailButton href={`${APP}/shop`}>Browse collection</EmailButton>
       <Text style={{ marginTop: 24, fontSize: 13, color: "#555" }}>
         Reach us at hello@prudentgabriel.com or @prudent_gabriel on Instagram.
       </Text>

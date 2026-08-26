@@ -1,5 +1,6 @@
-import { Button, Column, Heading, Hr, Row, Section, Text } from "@react-email/components";
+import { Column, Heading, Hr, Row, Section, Text } from "@react-email/components";
 import EmailLayout from "./components/EmailLayout";
+import EmailButton from "./components/EmailButton";
 
 import { getPublicAppUrl } from "@/lib/app-url";
 
@@ -45,7 +46,7 @@ export default function OrderConfirmationEmail({
   };
 
   return (
-    <EmailLayout previewText={`Order #${orderNumber} confirmed`}>
+    <EmailLayout family="transactional" previewText={`Order #${orderNumber} confirmed`}>
       <Heading as="h1" style={{ fontSize: 32, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
         Thank you, {firstName}.
       </Heading>
@@ -115,20 +116,7 @@ export default function OrderConfirmationEmail({
       {estimatedDays ? (
         <Text style={{ marginTop: 16, fontSize: 14 }}>Estimated delivery: {estimatedDays}</Text>
       ) : null}
-      <Section style={{ marginTop: 32, textAlign: "center" as const }}>
-        <Button
-          href={`${APP}/account/orders`}
-          style={{
-            backgroundColor: "#442913",
-            color: "#C9A84C",
-            padding: "12px 32px",
-            textDecoration: "none",
-            fontSize: 15,
-          }}
-        >
-          Track your order
-        </Button>
-      </Section>
+      <EmailButton href={`${APP}/account/orders`}>Track your order</EmailButton>
       <Text style={{ marginTop: 24, fontSize: 13, color: "#555" }}>
         Questions? Reply to this email or contact hello@prudentgabriel.com
       </Text>

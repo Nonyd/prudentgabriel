@@ -1,5 +1,7 @@
-import { Button, Heading, Text } from "@react-email/components";
+import { Heading, Text } from "@react-email/components";
 import EmailLayout from "./components/EmailLayout";
+import EmailButton from "./components/EmailButton";
+import { EMAIL_CHOC, FONT_DISPLAY } from "./components/email-tokens";
 
 type PasswordResetEmailProps = {
   resetUrl: string;
@@ -7,27 +9,14 @@ type PasswordResetEmailProps = {
 
 export default function PasswordResetEmail({ resetUrl }: PasswordResetEmailProps) {
   return (
-    <EmailLayout previewText="Reset your password">
-      <Heading as="h1" style={{ fontSize: 28, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
+    <EmailLayout family="transactional" previewText="Reset your password">
+      <Heading as="h1" style={{ fontSize: 26, fontWeight: 400, color: EMAIL_CHOC, margin: "0 0 12px", fontFamily: FONT_DISPLAY }}>
         Reset your password
       </Heading>
-      <Text style={{ fontSize: 16, color: "#2d2d2d" }}>
+      <Text style={{ fontSize: 16, color: "#2C241C" }}>
         We received a request to reset your Prudential Atelier password.
       </Text>
-      <div style={{ marginTop: 28, textAlign: "center" as const }}>
-        <Button
-          href={resetUrl}
-          style={{
-            backgroundColor: "#442913",
-            color: "#C9A84C",
-            padding: "14px 36px",
-            textDecoration: "none",
-            fontSize: 16,
-          }}
-        >
-          Reset password
-        </Button>
-      </div>
+      <EmailButton href={resetUrl}>Reset password</EmailButton>
       <Text style={{ marginTop: 24, fontSize: 14, color: "#444" }}>This link expires in 1 hour.</Text>
       <Text style={{ fontSize: 14, color: "#444" }}>If you didn&apos;t request this, you can safely ignore this email.</Text>
       <Text style={{ marginTop: 16, fontSize: 13, color: "#666" }}>

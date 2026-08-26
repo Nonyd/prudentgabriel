@@ -1,4 +1,5 @@
-import { Button, Heading, Section, Text } from "@react-email/components";
+import { Heading, Section, Text } from "@react-email/components";
+import EmailButton from "./components/EmailButton";
 import EmailLayout from "./components/EmailLayout";
 
 export type ConsultationMeetingLinkEmailProps = {
@@ -33,7 +34,7 @@ export default function ConsultationMeetingLinkEmail({
   isWhatsApp,
 }: ConsultationMeetingLinkEmailProps) {
   return (
-    <EmailLayout previewText="Your consultation link — Prudential Atelier">
+    <EmailLayout family="relationship" previewText="Your consultation link — Prudential Atelier">
       <Heading as="h1" style={{ fontSize: 26, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
         Your consultation link
       </Heading>
@@ -46,20 +47,7 @@ export default function ConsultationMeetingLinkEmail({
         <Text style={{ margin: "8px 0 0", fontSize: 15 }}>TIME: {confirmedTime} WAT</Text>
       </Section>
       <Section style={{ marginTop: 24, textAlign: "center" as const }}>
-        <Button
-          href={meetingLink}
-          style={{
-            backgroundColor: "#442913",
-            color: "#FAFAFA",
-            padding: "14px 28px",
-            fontSize: 14,
-            fontWeight: 600,
-            textDecoration: "none",
-            borderRadius: 2,
-          }}
-        >
-          Join consultation
-        </Button>
+        <EmailButton href={meetingLink}>Join consultation</EmailButton>
       </Section>
       <Text style={{ marginTop: 20, fontSize: 14, color: "#555", lineHeight: 1.6 }}>
         {isWhatsApp

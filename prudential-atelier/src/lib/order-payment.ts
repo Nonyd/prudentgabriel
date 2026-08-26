@@ -14,6 +14,7 @@ import { notifyOrderConfirmed, notifyPaymentConfirmed } from "@/lib/customer-not
 import { createNotification } from "@/lib/notifications";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { gatewayToPaymentMethod, resolveClientId } from "@/lib/payments/ledger";
+import { markCheckoutSessionsRecovered } from "@/lib/checkout-session";
 
 export type OrderFulfillDb = Pick<PrismaClient, "$transaction" | "order">;
 
@@ -96,6 +97,14 @@ export async function fulfillPaidOrder(params: {
   if (!order) return false;
 
   if (order.paymentStatus === PaymentStatus.PAID) {
+    const paidEmail = order.guestEmail ?? order.user?.email;
+    if (paidEmail) {
+      void markCheckoutSessionsRecovered({
+        email: paidEmail,
+        orderId: order.id,
+        lines: order.items.map((i) => ({ productId: i.productId, variantId: i.variantId })),
+      }).catch((e) => console.warn("[fulfillPaidOrder] checkout recover", e));
+    }
     return true;
   }
 
@@ -233,6 +242,12 @@ export async function fulfillPaidOrder(params: {
 
   const emailTo = clientEmail;
   if (emailTo) {
+    void markCheckoutSessionsRecovered({
+      email: emailTo,
+      orderId: order.id,
+      lines: order.items.map((i) => ({ productId: i.productId, variantId: i.variantId })),
+    }).catch((e) => console.warn("[fulfillPaidOrder] checkout recover", e));
+
     const snap = order.addressSnapshot as Record<string, string> | null;
     void sendOrderConfirmationEmail({
       to: emailTo,

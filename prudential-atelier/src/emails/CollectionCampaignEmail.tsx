@@ -1,5 +1,7 @@
 import { Heading, Img, Link, Text } from "@react-email/components";
 import EmailLayout from "@/emails/components/EmailLayout";
+import EmailButton from "@/emails/components/EmailButton";
+import { UNSUBSCRIBE_URL_PLACEHOLDER } from "@/lib/email-priority";
 
 export type CampaignProduct = {
   name: string;
@@ -19,6 +21,7 @@ type CollectionCampaignEmailProps = {
   ctaLink: string;
   shopBaseUrl: string;
   footerNote?: string;
+  unsubscribeUrl?: string;
 };
 
 function paragraphLines(text: string) {
@@ -36,9 +39,10 @@ export default function CollectionCampaignEmail({
   ctaLink,
   shopBaseUrl,
   footerNote,
+  unsubscribeUrl = UNSUBSCRIBE_URL_PLACEHOLDER,
 }: CollectionCampaignEmailProps) {
   return (
-    <EmailLayout previewText={heading}>
+    <EmailLayout family="marketing" previewText={heading} unsubscribeUrl={unsubscribeUrl}>
       {heroUrl ? (
         <Img
           src={heroUrl}
@@ -158,21 +162,7 @@ export default function CollectionCampaignEmail({
         </table>
       ) : null}
 
-      <p style={{ margin: "24px 0" }}>
-        <a
-          href={ctaLink}
-          style={{
-            display: "inline-block",
-            background: "#442913",
-            color: "#F7F2EC",
-            padding: "14px 28px",
-            textDecoration: "none",
-            fontSize: 14,
-          }}
-        >
-          {ctaLabel}
-        </a>
-      </p>
+      <EmailButton href={ctaLink}>{ctaLabel}</EmailButton>
       {footerNote ? (
         <Text
           style={{

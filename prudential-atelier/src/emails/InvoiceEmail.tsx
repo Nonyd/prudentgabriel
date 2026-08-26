@@ -1,4 +1,7 @@
-import { Body, Button, Container, Head, Html, Preview, Section, Text } from "@react-email/components";
+import { Heading, Text } from "@react-email/components";
+import EmailButton from "./components/EmailButton";
+import EmailLayout from "./components/EmailLayout";
+import { EMAIL_CHOC, EMAIL_INK, EMAIL_MUTED, FONT_BODY } from "./components/email-tokens";
 
 export interface InvoiceEmailProps {
   invoiceNumber: string;
@@ -19,72 +22,68 @@ export function subjectInvoiceEmail(props: InvoiceEmailProps): string {
 
 export default function InvoiceEmail(props: InvoiceEmailProps) {
   return (
-    <Html>
-      <Head />
-      <Preview>{`Invoice ${props.invoiceNumber} — ${props.total}`}</Preview>
-      <Body style={{ backgroundColor: "#FAF6EF", fontFamily: "Georgia, serif", color: "#2d2d2d" }}>
-        <Section style={{ backgroundColor: "#442913", padding: "20px 24px", textAlign: "center" as const }}>
-          <Text style={{ color: "#fff", fontSize: 14, letterSpacing: "0.2em", margin: 0 }}>PRUDENTIAL ATELIER</Text>
-        </Section>
-        <Container style={{ padding: "28px 24px", maxWidth: 560 }}>
-          <Text style={{ fontSize: 15, lineHeight: 1.5 }}>Dear {props.clientName},</Text>
-          <Text style={{ fontSize: 15, lineHeight: 1.5, marginTop: 12 }}>
-            Please find your invoice below. You can view and download it securely using the link.
-          </Text>
-          <Section
-            style={{
-              marginTop: 24,
-              borderWidth: 1,
-              borderStyle: "solid",
-              borderColor: "#442913",
-              padding: 20,
-              backgroundColor: "#fff",
-            }}
-          >
-            <Text style={{ margin: 0, fontSize: 13, color: "#6B6B68" }}>Invoice #</Text>
-            <Text style={{ margin: "4px 0 0", fontSize: 16, fontWeight: 600 }}>{props.invoiceNumber}</Text>
-            <Text style={{ margin: "16px 0 0", fontSize: 13, color: "#6B6B68" }}>Total ({props.currency})</Text>
-            <Text style={{ margin: "4px 0 0", fontSize: 18, fontWeight: 600 }}>{props.total}</Text>
-            {props.dueDate ? (
-              <>
-                <Text style={{ margin: "16px 0 0", fontSize: 13, color: "#6B6B68" }}>Due date</Text>
-                <Text style={{ margin: "4px 0 0", fontSize: 14 }}>{props.dueDate}</Text>
-              </>
-            ) : null}
-            {props.depositRequired ? (
-              <>
-                <Text style={{ margin: "16px 0 0", fontSize: 13, color: "#6B6B68" }}>Deposit required</Text>
-                <Text style={{ margin: "4px 0 0", fontSize: 14 }}>{props.depositRequired}</Text>
-              </>
-            ) : null}
-          </Section>
-          {props.clientNote ? (
-            <Text style={{ marginTop: 20, fontSize: 14, color: "#6B6B68", fontStyle: "italic" }}>{props.clientNote}</Text>
-          ) : null}
-          <Section style={{ textAlign: "center" as const, marginTop: 28 }}>
-            <Button
-              href={props.publicLink}
-              style={{
-                backgroundColor: "#442913",
-                color: "#fff",
-                padding: "14px 28px",
-                textDecoration: "none",
-                fontSize: 14,
-              }}
-            >
-              View &amp; download invoice
-            </Button>
-          </Section>
-          <Text style={{ marginTop: 16, fontSize: 13, color: "#6B6B68", textAlign: "center" as const }}>
-            You can also download the PDF from the page above.
-          </Text>
-          {props.footerNote ? (
-            <Text style={{ marginTop: 24, fontSize: 13, color: "#6B6B68", fontStyle: "italic", textAlign: "center" as const }}>
-              {props.footerNote}
-            </Text>
-          ) : null}
-        </Container>
-      </Body>
-    </Html>
+    <EmailLayout family="transactional" previewText={`Invoice ${props.invoiceNumber} — ${props.total}`}>
+      <Text style={{ fontFamily: FONT_BODY, fontSize: 15, lineHeight: "24px", color: EMAIL_INK, margin: "0 0 12px" }}>
+        Dear {props.clientName},
+      </Text>
+      <Text style={{ fontFamily: FONT_BODY, fontSize: 15, lineHeight: "24px", color: EMAIL_INK, margin: "0 0 20px" }}>
+        Please find your invoice below. You can view and download it securely using the link.
+      </Text>
+      <table
+        width="100%"
+        border={0}
+        cellPadding={0}
+        cellSpacing={0}
+        role="presentation"
+        style={{ border: "1px solid #E2D1C2", margin: "0 0 8px" }}
+      >
+        <tbody>
+          <tr>
+            <td style={{ padding: 20 }}>
+              <Text style={{ margin: 0, fontFamily: FONT_BODY, fontSize: 12, color: EMAIL_MUTED }}>Invoice #</Text>
+              <Heading as="h2" style={{ margin: "4px 0 0", fontFamily: FONT_BODY, fontSize: 16, fontWeight: 500, color: EMAIL_CHOC }}>
+                {props.invoiceNumber}
+              </Heading>
+              <Text style={{ margin: "16px 0 0", fontFamily: FONT_BODY, fontSize: 12, color: EMAIL_MUTED }}>
+                Total ({props.currency})
+              </Text>
+              <Text style={{ margin: "4px 0 0", fontFamily: FONT_BODY, fontSize: 18, fontWeight: 500, color: EMAIL_CHOC }}>
+                {props.total}
+              </Text>
+              {props.dueDate ? (
+                <>
+                  <Text style={{ margin: "16px 0 0", fontFamily: FONT_BODY, fontSize: 12, color: EMAIL_MUTED }}>Due date</Text>
+                  <Text style={{ margin: "4px 0 0", fontFamily: FONT_BODY, fontSize: 14, color: EMAIL_INK }}>{props.dueDate}</Text>
+                </>
+              ) : null}
+              {props.depositRequired ? (
+                <>
+                  <Text style={{ margin: "16px 0 0", fontFamily: FONT_BODY, fontSize: 12, color: EMAIL_MUTED }}>
+                    Deposit required
+                  </Text>
+                  <Text style={{ margin: "4px 0 0", fontFamily: FONT_BODY, fontSize: 14, color: EMAIL_INK }}>
+                    {props.depositRequired}
+                  </Text>
+                </>
+              ) : null}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      {props.clientNote ? (
+        <Text style={{ margin: "16px 0 0", fontFamily: FONT_BODY, fontSize: 14, color: EMAIL_MUTED, fontStyle: "italic" }}>
+          {props.clientNote}
+        </Text>
+      ) : null}
+      <EmailButton href={props.publicLink}>View invoice</EmailButton>
+      <Text style={{ margin: "8px 0 0", fontFamily: FONT_BODY, fontSize: 13, color: EMAIL_MUTED }}>
+        You can also download the PDF from the page above.
+      </Text>
+      {props.footerNote ? (
+        <Text style={{ margin: "20px 0 0", fontFamily: FONT_BODY, fontSize: 13, color: EMAIL_MUTED, fontStyle: "italic" }}>
+          {props.footerNote}
+        </Text>
+      ) : null}
+    </EmailLayout>
   );
 }

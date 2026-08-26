@@ -104,6 +104,7 @@ export function CheckoutClient() {
   const [stripePk, setStripePk] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const guestEmailTouched = useRef(false);
+  const checkoutSessionId = useRef<string | null>(null);
 
   const subtotalNGN = useMemo(() => items.reduce((s, i) => s + i.priceNGN * i.quantity, 0), [items]);
   const emailForCoupon = (session?.user?.email ?? guestEmail).trim();
@@ -277,7 +278,10 @@ export function CheckoutClient() {
         error: data.error,
       });
       if (!data.valid) toast.error(data.error ?? "This coupon could not be applied");
-      else toast.success("Coupon applied");
+      else {
+        toast.success("Coupon applied");
+        void persistCheckoutSession(1);
+      }
     } catch {
       toast.error("Could not validate coupon");
     } finally {
@@ -307,11 +311,37 @@ export function CheckoutClient() {
     };
   }
 
+  async function persistCheckoutSession(furthestStep: number) {
+    const email = (session?.user?.email ?? guestEmail).trim();
+    if (!email || !EMAIL_RE.test(email) || items.length === 0) return;
+    try {
+      const res = await fetch("/api/checkout/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: checkoutSessionId.current,
+          email,
+          currency,
+          furthestStep,
+          cartSnapshot: {
+            lines: items,
+            subtotalNGN,
+          },
+        }),
+      });
+      const json = (await res.json()) as { id?: string };
+      if (json.id) checkoutSessionId.current = json.id;
+    } catch {
+      /* recovery is best-effort */
+    }
+  }
+
   function goToDelivery() {
     if (isGuest && !validateGuestEmail()) {
       focusField("guest-email");
       return;
     }
+    void persistCheckoutSession(2);
     setStep(2);
   }
 
@@ -335,6 +365,7 @@ export function CheckoutClient() {
       toast.error("Please complete the highlighted fields");
       return;
     }
+    void persistCheckoutSession(3);
     setStep(3);
   }
 

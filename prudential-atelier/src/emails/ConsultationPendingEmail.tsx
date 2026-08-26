@@ -1,4 +1,5 @@
-import { Button, Heading, Section, Text } from "@react-email/components";
+import { Heading, Section, Text } from "@react-email/components";
+import EmailButton from "./components/EmailButton";
 import { getPublicAppUrl } from "@/lib/app-url";
 import EmailLayout from "./components/EmailLayout";
 
@@ -40,7 +41,7 @@ export default function ConsultationPendingEmail({
   preferredDate3,
 }: ConsultationPendingEmailProps) {
   return (
-    <EmailLayout previewText={`Consultation request ${bookingNumber}`}>
+    <EmailLayout family="relationship" previewText={`Consultation request ${bookingNumber}`}>
       <Heading as="h1" style={{ fontSize: 26, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
         Thank you, {clientName}
       </Heading>
@@ -77,20 +78,7 @@ export default function ConsultationPendingEmail({
       <Text style={{ marginTop: 16, fontSize: 14, color: "#555" }}>
         In the meantime, reply to this email or reach us at hello@prudentgabriel.com
       </Text>
-      <Section style={{ marginTop: 24, textAlign: "center" as const }}>
-        <Button
-          href={`${APP}/consultation/${encodeURIComponent(bookingNumber)}`}
-          style={{
-            backgroundColor: "#442913",
-            color: "#C9A84C",
-            padding: "12px 28px",
-            textDecoration: "none",
-            fontSize: 15,
-          }}
-        >
-          View your booking
-        </Button>
-      </Section>
+      <EmailButton href={`${APP}/consultation/${encodeURIComponent(bookingNumber)}`}>View your booking</EmailButton>
     </EmailLayout>
   );
 }

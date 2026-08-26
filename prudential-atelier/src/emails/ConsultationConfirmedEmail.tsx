@@ -1,5 +1,6 @@
-import { Button, Heading, Section, Text } from "@react-email/components";
+import { Heading, Section, Text } from "@react-email/components";
 import { getPublicAppUrl } from "@/lib/app-url";
+import EmailButton from "./components/EmailButton";
 import EmailLayout from "./components/EmailLayout";
 
 const APP = getPublicAppUrl();
@@ -48,7 +49,7 @@ export default function ConsultationConfirmedEmail({
   })();
 
   return (
-    <EmailLayout previewText={`Consultation confirmed ${bookingNumber}`}>
+    <EmailLayout family="relationship" previewText={`Consultation confirmed ${bookingNumber}`}>
       <Heading as="h1" style={{ fontSize: 26, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
         Your consultation is confirmed
       </Heading>
@@ -74,18 +75,7 @@ export default function ConsultationConfirmedEmail({
           <Text style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>📹 {meetingPlatform ?? "Video call"}</Text>
           {meetingLink ? (
             <Section style={{ marginTop: 12, textAlign: "center" as const }}>
-              <Button
-                href={meetingLink}
-                style={{
-                  backgroundColor: "#442913",
-                  color: "#C9A84C",
-                  padding: "12px 28px",
-                  textDecoration: "none",
-                  fontSize: 15,
-                }}
-              >
-                Join meeting
-              </Button>
+              <EmailButton href={meetingLink}>Join meeting</EmailButton>
             </Section>
           ) : (
             <Text style={{ marginTop: 8, fontSize: 14 }}>Your meeting link will be sent separately.</Text>
@@ -114,20 +104,7 @@ export default function ConsultationConfirmedEmail({
       <Text style={{ marginTop: 16, fontSize: 13, color: "#555" }}>
         Need to reschedule? Contact hello@prudentgabriel.com at least 48 hours before your session.
       </Text>
-      <Section style={{ marginTop: 24, textAlign: "center" as const }}>
-        <Button
-          href={`${APP}/consultation/${encodeURIComponent(bookingNumber)}`}
-          style={{
-            backgroundColor: "#442913",
-            color: "#C9A84C",
-            padding: "12px 28px",
-            textDecoration: "none",
-            fontSize: 15,
-          }}
-        >
-          View booking details
-        </Button>
-      </Section>
+      <EmailButton href={`${APP}/consultation/${encodeURIComponent(bookingNumber)}`}>View booking details</EmailButton>
     </EmailLayout>
   );
 }

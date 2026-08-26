@@ -1,4 +1,5 @@
-import { Button, Heading, Section, Text } from "@react-email/components";
+import { Heading, Section, Text } from "@react-email/components";
+import EmailButton from "./components/EmailButton";
 import EmailLayout from "./components/EmailLayout";
 
 export type ConsultationRescheduleEmailProps = {
@@ -17,7 +18,7 @@ export default function ConsultationRescheduleEmail({
   adminMessage,
 }: ConsultationRescheduleEmailProps) {
   return (
-    <EmailLayout previewText={`Alternative dates ${bookingNumber}`}>
+    <EmailLayout family="relationship" previewText={`Alternative dates ${bookingNumber}`}>
       <Heading as="h1" style={{ fontSize: 26, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
         New dates have been proposed
       </Heading>
@@ -40,20 +41,7 @@ export default function ConsultationRescheduleEmail({
       <Text style={{ marginTop: 20, fontSize: 14, color: "#555" }}>
         Please reply to this email to confirm your preferred date.
       </Text>
-      <Section style={{ marginTop: 24, textAlign: "center" as const }}>
-        <Button
-          href="mailto:hello@prudentgabriel.com"
-          style={{
-            backgroundColor: "#442913",
-            color: "#C9A84C",
-            padding: "12px 28px",
-            textDecoration: "none",
-            fontSize: 15,
-          }}
-        >
-          Contact us
-        </Button>
-      </Section>
+      <EmailButton href="mailto:hello@prudentgabriel.com">Contact us</EmailButton>
     </EmailLayout>
   );
 }

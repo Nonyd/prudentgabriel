@@ -1,5 +1,6 @@
-import { Button, Heading, Section, Text } from "@react-email/components";
+import { Heading, Section, Text } from "@react-email/components";
 import { getPublicAppUrl } from "@/lib/app-url";
+import EmailButton from "./components/EmailButton";
 import EmailLayout from "./components/EmailLayout";
 
 const APP = getPublicAppUrl();
@@ -15,7 +16,7 @@ type WelcomeEmailProps = {
 export default function WelcomeEmail({ firstName, pointsBalance, referralCode }: WelcomeEmailProps) {
   const credit = pointsBalance;
   return (
-    <EmailLayout previewText={`Welcome, ${firstName}`}>
+    <EmailLayout family="relationship" previewText={`Welcome, ${firstName}`}>
       <Heading as="h1" style={{ fontSize: 32, fontWeight: 400, color: "#2d2d2d", margin: "0 0 16px" }}>
         Welcome, {firstName}.
       </Heading>
@@ -37,20 +38,7 @@ export default function WelcomeEmail({ firstName, pointsBalance, referralCode }:
           </Text>
         </Section>
       ) : null}
-      <Section style={{ marginTop: 32, textAlign: "center" as const }}>
-        <Button
-          href={`${APP}/shop`}
-          style={{
-            backgroundColor: "#442913",
-            color: "#F7F2EC",
-            padding: "12px 32px",
-            textDecoration: "none",
-            fontSize: 15,
-          }}
-        >
-          Explore the collection
-        </Button>
-      </Section>
+      <EmailButton href={`${APP}/shop`}>Explore the collection</EmailButton>
       <Text style={{ marginTop: 32, fontSize: 13, color: "#555" }}>
         Your referral code: <strong>{referralCode}</strong>
         <br />

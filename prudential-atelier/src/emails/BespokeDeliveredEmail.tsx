@@ -1,4 +1,5 @@
-import { Button, Heading, Text } from "@react-email/components";
+import { Heading, Text } from "@react-email/components";
+import EmailButton from "./components/EmailButton";
 import EmailLayout from "./components/EmailLayout";
 
 export type BespokeDeliveredEmailProps = {
@@ -15,7 +16,7 @@ export default function BespokeDeliveredEmail({
   accountUrl,
 }: BespokeDeliveredEmailProps) {
   return (
-    <EmailLayout previewText={`Your commission ${orderRef} has been delivered`}>
+    <EmailLayout family="relationship" previewText={`Your commission ${orderRef} has been delivered`}>
       <Heading as="h1" style={{ fontSize: 28, fontWeight: 400, color: "#442913", margin: "0 0 12px" }}>
         Your commission is with you, {firstName}.
       </Heading>
@@ -28,20 +29,7 @@ export default function BespokeDeliveredEmail({
         properly.
       </Text>
       <div style={{ marginTop: 28, textAlign: "center" as const }}>
-        <Button
-          href={confirmUrl}
-          style={{
-            backgroundColor: "#442913",
-            color: "#E2D1C2",
-            padding: "14px 28px",
-            fontSize: 14,
-            fontWeight: 600,
-            textDecoration: "none",
-            borderRadius: 2,
-          }}
-        >
-          Confirm receipt
-        </Button>
+        <EmailButton href={confirmUrl}>Confirm receipt</EmailButton>
       </div>
       <Text style={{ marginTop: 20, fontSize: 13, color: "#666", textAlign: "center" as const }}>
         Or view your order in your account:{" "}

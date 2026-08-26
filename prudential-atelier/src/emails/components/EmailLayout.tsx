@@ -1,78 +1,210 @@
-import {
-  Body,
-  Container,
-  Head,
-  Html,
-  Img,
-  Link,
-  Preview,
-  Section,
-  Text,
-} from "@react-email/components";
+import { Body, Head, Html, Img, Preview, Text } from "@react-email/components";
 import type { ReactNode } from "react";
-import { emailLogoWhiteUrl } from "@/lib/email-branding";
+import { emailLogoDarkUrl, emailLogoWhiteUrl } from "@/lib/email-branding";
+import EmailFooter from "./EmailFooter";
+import {
+  EMAIL_CHOC,
+  EMAIL_GOLD,
+  EMAIL_WIDTH,
+  FONT_BODY,
+  FONT_DISPLAY,
+  familyBodyPad,
+  familyCardBg,
+  familyPageBg,
+  type EmailFamily,
+} from "./email-tokens";
 
 type EmailLayoutProps = {
   children: ReactNode;
   previewText?: string;
   logoUrl?: string;
+  logoDarkUrl?: string;
+  family?: EmailFamily;
+  /** Marketing only. Pass the placeholder; outbox replaces it per recipient. */
+  unsubscribeUrl?: string;
 };
 
-export default function EmailLayout({ children, previewText, logoUrl }: EmailLayoutProps) {
+export default function EmailLayout({
+  children,
+  previewText,
+  logoUrl,
+  logoDarkUrl,
+  family = "transactional",
+  unsubscribeUrl,
+}: EmailLayoutProps) {
   const headerLogo = logoUrl ?? emailLogoWhiteUrl;
+  const darkLogo = logoDarkUrl ?? emailLogoDarkUrl;
+  const pageBg = familyPageBg(family);
+  const cardBg = familyCardBg(family);
+  const pad = familyBodyPad(family);
+  const showUnsub = family === "marketing";
 
   return (
     <Html lang="en">
       <Head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="light dark" />
+        <meta name="supported-color-schemes" content="light dark" />
+        <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+        {/* Head styles: webfonts + dark-mode logo swap. Body <style> is not used. */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+:root { color-scheme: light dark; }
+@media (prefers-color-scheme: dark) {
+  .logo-on-choc { display: none !important; }
+  .logo-on-invert { display: block !important; max-height: 48px !important; }
+}
+[data-ogsc] .logo-on-choc { display: none !important; }
+[data-ogsc] .logo-on-invert { display: block !important; max-height: 48px !important; }
+            `.trim(),
+          }}
+        />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Jost:wght@400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap"
+        />
       </Head>
       {previewText ? <Preview>{previewText}</Preview> : null}
-      <Body style={{ margin: 0, backgroundColor: "#F7F2EC", fontFamily: "Georgia, serif" }}>
-        <Container style={{ maxWidth: 600, margin: "0 auto" }}>
-          <Section style={{ backgroundColor: "#442913", padding: 24, textAlign: "center" as const }}>
-            {headerLogo ? (
-              <Img
-                src={headerLogo}
-                alt="Prudential Atelier"
-                width={160}
-                height={56}
-                style={{ margin: "0 auto", objectFit: "contain" as const }}
-              />
-            ) : (
-              <Text
-                style={{
-                  margin: 0,
-                  color: "#C9A84C",
-                  letterSpacing: 4,
-                  fontSize: 14,
-                  textTransform: "uppercase" as const,
-                }}
-              >
-                Prudential Atelier
-              </Text>
-            )}
-            <div style={{ height: 1, width: 80, margin: "16px auto 0", backgroundColor: "rgba(201,168,76,0.5)" }} />
-          </Section>
-          <Section style={{ backgroundColor: "#ffffff", padding: "40px 48px" }}>{children}</Section>
-          <Section style={{ backgroundColor: "#1A0F08", padding: "24px 48px", textAlign: "center" as const }}>
-            <Text style={{ margin: "0 0 8px", fontSize: 12, color: "rgba(226,209,194,0.6)" }}>
-              Prudential Atelier · prudentgabriel.com
-            </Text>
-            <Text style={{ margin: "0 0 8px", fontSize: 11, color: "rgba(226,209,194,0.6)", lineHeight: 1.6 }}>
-              14 Bode Thomas Street, Surulere, Lagos, Nigeria
-            </Text>
-            <Text style={{ margin: "0 0 16px", fontSize: 11, color: "rgba(226,209,194,0.6)" }}>
-              <Link href="mailto:hello@prudentgabriel.com" style={{ color: "rgba(226,209,194,0.6)" }}>
-                hello@prudentgabriel.com
-              </Link>
-            </Text>
-            <div style={{ height: 1, width: 80, margin: "0 auto 16px", backgroundColor: "#C9A84C" }} />
-            <Text style={{ margin: 0, fontSize: 10, color: "rgba(226,209,194,0.45)" }}>
-              Developed with love by SonsHub Media Ltd
-            </Text>
-          </Section>
-        </Container>
+      <Body style={{ margin: 0, padding: 0, backgroundColor: pageBg, fontFamily: FONT_BODY }}>
+        <table
+          width="100%"
+          border={0}
+          cellPadding={0}
+          cellSpacing={0}
+          role="presentation"
+          style={{ backgroundColor: pageBg, margin: 0, padding: 0, width: "100%" }}
+        >
+          <tbody>
+            <tr>
+              <td align="center" style={{ padding: "24px 12px" }}>
+                <table
+                  width={EMAIL_WIDTH}
+                  border={0}
+                  cellPadding={0}
+                  cellSpacing={0}
+                  role="presentation"
+                  style={{
+                    width: "100%",
+                    maxWidth: EMAIL_WIDTH,
+                    backgroundColor: cardBg,
+                  }}
+                >
+                  <tbody>
+                    <tr>
+                      <td
+                        {...({ bgcolor: EMAIL_CHOC } as Record<string, string>)}
+                        style={{
+                          backgroundColor: EMAIL_CHOC,
+                          padding: family === "marketing" ? "28px 24px 24px" : "24px 24px 20px",
+                          textAlign: "center",
+                        }}
+                      >
+                        {headerLogo ? (
+                          <Img
+                            className="logo-on-choc"
+                            src={headerLogo}
+                            alt="Prudential Atelier"
+                            width={168}
+                            height={56}
+                            style={{
+                              margin: "0 auto",
+                              display: "block",
+                              maxWidth: 168,
+                              height: "auto",
+                              border: 0,
+                            }}
+                          />
+                        ) : null}
+                        {darkLogo && darkLogo !== headerLogo ? (
+                          <Img
+                            className="logo-on-invert"
+                            src={darkLogo}
+                            alt="Prudential Atelier"
+                            width={168}
+                            height={56}
+                            style={{
+                              margin: "0 auto",
+                              display: "none",
+                              maxWidth: 168,
+                              height: "auto",
+                              border: 0,
+                            }}
+                          />
+                        ) : null}
+                        <Text
+                          style={{
+                            margin: headerLogo ? "14px 0 0" : 0,
+                            fontFamily: FONT_DISPLAY,
+                            fontSize: 11,
+                            letterSpacing: "0.28em",
+                            textTransform: "uppercase",
+                            color: EMAIL_GOLD,
+                            lineHeight: "16px",
+                          }}
+                        >
+                          Prudential Atelier
+                        </Text>
+                        {family === "relationship" ? (
+                          <table
+                            border={0}
+                            cellPadding={0}
+                            cellSpacing={0}
+                            role="presentation"
+                            align="center"
+                            style={{ margin: "16px auto 0" }}
+                          >
+                            <tbody>
+                              <tr>
+                                <td
+                                  height={1}
+                                  width={48}
+                                  style={{ backgroundColor: EMAIL_GOLD, fontSize: 0, lineHeight: 0 }}
+                                >
+                                  &nbsp;
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        ) : null}
+                      </td>
+                    </tr>
+                    {family === "transactional" ? (
+                      <tr>
+                        <td
+                          height={3}
+                          style={{ backgroundColor: EMAIL_GOLD, fontSize: 0, lineHeight: 0, height: 3 }}
+                        >
+                          &nbsp;
+                        </td>
+                      </tr>
+                    ) : null}
+                    <tr>
+                      <td
+                        style={{
+                          padding: pad,
+                          backgroundColor: cardBg,
+                          fontFamily: FONT_BODY,
+                        }}
+                      >
+                        {children}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: 0 }}>
+                        <EmailFooter
+                          family={showUnsub ? "marketing" : family}
+                          unsubscribeUrl={unsubscribeUrl}
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </Body>
     </Html>
   );

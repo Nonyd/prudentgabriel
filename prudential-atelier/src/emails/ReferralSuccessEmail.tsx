@@ -1,4 +1,5 @@
-import { Button, Heading, Section, Text } from "@react-email/components";
+import { Heading, Section, Text } from "@react-email/components";
+import EmailButton from "./components/EmailButton";
 import { getPublicAppUrl } from "@/lib/app-url";
 import EmailLayout from "./components/EmailLayout";
 
@@ -18,7 +19,7 @@ export default function ReferralSuccessEmail({
   newBalance,
 }: ReferralSuccessEmailProps) {
   return (
-    <EmailLayout previewText={`You earned ${pointsEarned} points`}>
+    <EmailLayout family="relationship" previewText={`You earned ${pointsEarned} points`}>
       <Heading as="h1" style={{ fontSize: 28, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
         You just earned {pointsEarned} points!
       </Heading>
@@ -38,20 +39,7 @@ export default function ReferralSuccessEmail({
           Your new balance: {newBalance} pts = ₦{newBalance.toLocaleString("en-NG")}
         </Text>
       </Section>
-      <Section style={{ marginTop: 28, textAlign: "center" as const }}>
-        <Button
-          href={`${APP}/account/wallet`}
-          style={{
-            backgroundColor: "#442913",
-            color: "#C9A84C",
-            padding: "12px 32px",
-            textDecoration: "none",
-            fontSize: 15,
-          }}
-        >
-          View your wallet
-        </Button>
-      </Section>
+      <EmailButton href={`${APP}/account/wallet`}>View your wallet</EmailButton>
     </EmailLayout>
   );
 }

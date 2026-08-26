@@ -17,6 +17,7 @@ export const MARKETING_TEMPLATES = new Set([
   "admin-broadcast",
   "admin-single",
   "collection-campaign",
+  "abandoned-checkout",
   "abandoned-cart",
   "back-in-stock",
 ]);

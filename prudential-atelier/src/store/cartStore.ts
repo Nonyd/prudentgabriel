@@ -37,6 +37,7 @@ interface CartStore {
   removeItem: (id: string) => void;
   updateQty: (id: string, qty: number) => void;
   clearCart: () => void;
+  replaceItems: (items: CartItem[]) => void;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -97,6 +98,17 @@ export const useCartStore = create<CartStore>()(
       },
 
       clearCart: () => set({ items: [], totalItems: 0, totalNGN: 0 }),
+      replaceItems: (incoming: CartItem[]) => {
+        const items = incoming.map((i) => ({
+          ...i,
+          stock: typeof i.stock === "number" ? i.stock : 999,
+        }));
+        set({
+          items,
+          totalItems: items.reduce((sum, i) => sum + i.quantity, 0),
+          totalNGN: items.reduce((sum, i) => sum + i.priceNGN * i.quantity, 0),
+        });
+      },
     }),
     {
       name: "pa-cart",

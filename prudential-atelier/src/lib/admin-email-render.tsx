@@ -8,6 +8,7 @@ import {
   interpolateTemplateText,
   type EmailTemplateFields,
 } from "@/lib/admin-email-catalog";
+import { UNSUBSCRIBE_URL_PLACEHOLDER } from "@/lib/email-priority";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { optimizeImageUrl } from "@/lib/utils";
 
@@ -41,7 +42,13 @@ export async function renderTemplateEmailHtml(
 
 export async function renderCustomEmailHtml(subject: string, bodyHtml: string): Promise<string> {
   await primeEmailBranding();
-  return render(<BrandedHtmlEmail previewText={subject} bodyHtml={bodyHtml} />);
+  return render(
+    <BrandedHtmlEmail
+      previewText={subject}
+      bodyHtml={bodyHtml}
+      unsubscribeUrl={UNSUBSCRIBE_URL_PLACEHOLDER}
+    />,
+  );
 }
 
 export async function renderCollectionCampaignHtml(params: {

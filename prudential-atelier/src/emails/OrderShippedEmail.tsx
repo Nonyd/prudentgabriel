@@ -1,5 +1,6 @@
-import { Button, Heading, Section, Text } from "@react-email/components";
+import { Heading, Section, Text } from "@react-email/components";
 import { getPublicAppUrl } from "@/lib/app-url";
+import EmailButton from "./components/EmailButton";
 import EmailLayout from "./components/EmailLayout";
 
 const APP = getPublicAppUrl();
@@ -20,7 +21,7 @@ export default function OrderShippedEmail({
   estimatedDays,
 }: OrderShippedEmailProps) {
   return (
-    <EmailLayout previewText={`Order #${orderNumber} has shipped`}>
+    <EmailLayout family="transactional" previewText={`Order #${orderNumber} has shipped`}>
       <Heading as="h1" style={{ fontSize: 28, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
         Your order is on its way!
       </Heading>
@@ -49,20 +50,7 @@ export default function OrderShippedEmail({
       {estimatedDays ? (
         <Text style={{ marginTop: 16, fontSize: 14 }}>Estimated delivery: {estimatedDays}</Text>
       ) : null}
-      <Section style={{ marginTop: 28, textAlign: "center" as const }}>
-        <Button
-          href={`${APP}/account/orders`}
-          style={{
-            backgroundColor: "#442913",
-            color: "#C9A84C",
-            padding: "12px 32px",
-            textDecoration: "none",
-            fontSize: 15,
-          }}
-        >
-          Track your order
-        </Button>
-      </Section>
+      <EmailButton href={`${APP}/account/orders`}>Track your order</EmailButton>
     </EmailLayout>
   );
 }
