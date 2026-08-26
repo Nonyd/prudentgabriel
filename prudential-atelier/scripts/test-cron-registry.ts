@@ -3,6 +3,7 @@
  * that the committed host crontab matches the registry, and that
  * vercel.json does not list crons.
  */
+import "./preload-test-env";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { CRON_JOBS, cronPath } from "../src/lib/cron/jobs";

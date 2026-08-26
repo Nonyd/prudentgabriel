@@ -25,6 +25,7 @@ export type OutboundEmail = {
   html: string;
   text?: string;
   attachments?: EmailAttachment[];
+  headers?: Record<string, string>;
 };
 
 export interface EmailProvider {

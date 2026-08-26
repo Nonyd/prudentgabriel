@@ -15,7 +15,9 @@ export default async function AdminSendEmailPage() {
   return (
     <div>
       <h1 className="font-display text-2xl text-ink">Send Email</h1>
-      <p className="mt-1 font-body text-sm text-[#6B6B68]">Compose and send emails to clients</p>
+      <p className="mt-1 font-body text-sm text-[#6B6B68]">
+        Queue a campaign to the newsletter, customers, or past buyers. Sending continues after you leave this page.
+      </p>
       <AdminSendEmailClient templates={templates} />
     </div>
   );

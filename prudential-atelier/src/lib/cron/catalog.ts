@@ -98,9 +98,10 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
   {
     name: "email-outbox",
     schedule: "* * * * *",
-    description: "Drain queued and failed outbound emails",
+    description:
+      "Drain queued emails. Transactional first; marketing capped at 60/min. 90s budget ≈ a 500-recipient campaign in ~9 minutes.",
     migrated: true,
-    budgetMs: 50_000,
+    budgetMs: 90_000,
   },
 ];
 

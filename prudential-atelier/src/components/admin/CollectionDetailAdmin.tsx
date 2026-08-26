@@ -144,6 +144,12 @@ export function CollectionDetailAdmin({
           >
             View on site ↗
           </a>
+          <Link
+            href={`/admin/collections/${collection.id}/stock`}
+            className="border border-[#37392d] px-4 py-2 font-body text-[11px] font-medium uppercase tracking-wide text-[#37392d]"
+          >
+            Bulk stock
+          </Link>
         </div>
       </div>
 

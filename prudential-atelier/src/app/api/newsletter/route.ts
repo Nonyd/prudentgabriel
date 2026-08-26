@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { ensureEmailPreference, normalizeEmail } from "@/lib/email-consent";
 
 const bodySchema = z.object({
   email: z.string().email(),
@@ -13,13 +14,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
   }
 
-  const { email } = parsed.data;
+  const email = normalizeEmail(parsed.data.email);
 
   try {
     await prisma.newsletterSubscriber.upsert({
       where: { email },
       create: { email },
-      update: {},
+      update: { unsubscribedAt: null },
+    });
+    await ensureEmailPreference(email);
+    await prisma.emailPreference.updateMany({
+      where: { email, unsubscribedAt: { not: null } },
+      data: { unsubscribedAt: null },
     });
   } catch {
     return NextResponse.json({ success: true });

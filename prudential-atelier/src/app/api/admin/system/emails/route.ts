@@ -13,12 +13,14 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status")?.trim();
   const template = searchParams.get("template")?.trim();
   const to = searchParams.get("to")?.trim();
+  const relatedId = searchParams.get("relatedId")?.trim();
   const take = Math.min(Number(searchParams.get("take") ?? 50) || 50, 200);
 
   const where = {
     ...(status && STATUSES.has(status) ? { status: status as EmailStatus } : {}),
     ...(template ? { template: { contains: template, mode: "insensitive" as const } } : {}),
     ...(to ? { to: { contains: to, mode: "insensitive" as const } } : {}),
+    ...(relatedId ? { relatedId } : {}),
   };
 
   const [items, deadCount] = await Promise.all([

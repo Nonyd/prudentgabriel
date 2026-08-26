@@ -1,6 +1,7 @@
 import { getPublicAppUrl } from "@/lib/app-url";
 
 export const EMAIL_TEMPLATE_KEYS = {
+  COLLECTION_CAMPAIGN: "collection_campaign",
   WELCOME_CREDENTIALS: "welcome_credentials",
   CONSULTATION_CONFIRMED: "consultation_confirmed",
   MEETING_LINK: "meeting_link",
@@ -54,6 +55,21 @@ export type EmailTemplateMeta = {
 const APP = () => getPublicAppUrl();
 
 const CLIENT_TEMPLATES: EmailTemplateMeta[] = [
+  {
+    key: EMAIL_TEMPLATE_KEYS.COLLECTION_CAMPAIGN,
+    label: "Collection launch",
+    group: "client",
+    sortOrder: 0,
+    defaults: {
+      subject: "{{collectionName}} is here",
+      heading: "{{collectionName}}",
+      body_1: "A new collection from Prudential Atelier is ready. Explore the looks and shop the drop.",
+      body_2: "",
+      cta_label: "Shop the collection",
+      cta_link: "{{collectionUrl}}",
+      footer_note: "",
+    },
+  },
   {
     key: EMAIL_TEMPLATE_KEYS.WELCOME_CREDENTIALS,
     label: "Welcome & Credentials",
@@ -533,5 +549,7 @@ export function demoTemplateVariables(): Record<string, string> {
     amount: "₦325,000",
     date,
     link: getPublicAppUrl(),
+    collectionName: "Rich & Regal",
+    collectionUrl: `${getPublicAppUrl()}/collections/rich-regal`,
   };
 }

@@ -134,6 +134,41 @@ export async function mergePublishedCollectionProducts(
   return [...manualProducts, ...autoProducts];
 }
 
+/** Collection lookbook: include drafts so a drop email can go out at launch hour. */
+export async function mergeCollectionProductsForCampaign(
+  collectionId: string,
+  autoTag: string | null | undefined,
+  take = 8,
+): Promise<CollectionProductWithMeta[]> {
+  const manualRows = await prisma.collectionProduct.findMany({
+    where: { collectionId },
+    orderBy: { sortOrder: "asc" },
+    include: {
+      product: { include: collectionListProductInclude },
+    },
+  });
+  const manualProducts = manualRows.map((r) => mapProductToListItemWithMeta(r.product));
+  const manualIds = new Set(manualProducts.map((p) => p.id));
+
+  const tag = autoTag?.trim();
+  let autoProducts: CollectionProductWithMeta[] = [];
+  if (tag) {
+    const autoWhere: Prisma.ProductWhereInput = { tags: { has: tag } };
+    if (manualIds.size > 0) {
+      autoWhere.id = { notIn: Array.from(manualIds) };
+    }
+    const autoRows = await prisma.product.findMany({
+      where: autoWhere,
+      orderBy: { createdAt: "desc" },
+      take,
+      include: collectionListProductInclude,
+    });
+    autoProducts = autoRows.map(mapProductToListItemWithMeta);
+  }
+
+  return [...manualProducts, ...autoProducts].slice(0, take);
+}
+
 export function sortCollectionProducts(
   products: CollectionProductWithMeta[],
   sort: string,

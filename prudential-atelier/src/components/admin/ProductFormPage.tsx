@@ -369,6 +369,24 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
           </h1>
         </div>
         <div className="flex gap-2">
+          {mode === "edit" && product?.id ? (
+            <button
+              type="button"
+              onClick={() => {
+                void fetch(`/api/admin/products/${product.id}/duplicate`, { method: "POST" })
+                  .then(async (r) => {
+                    const j = (await r.json()) as { id?: string; error?: string };
+                    if (!r.ok || !j.id) throw new Error(j.error ?? "Duplicate failed");
+                    toast.success("Unpublished copy created");
+                    router.push(`/admin/products/${j.id}/edit`);
+                  })
+                  .catch((e: unknown) => toast.error(e instanceof Error ? e.message : "Duplicate failed"));
+              }}
+              className="rounded-sm border border-sand px-4 py-2 text-sm text-gold hover:bg-gold/10"
+            >
+              Duplicate
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => void saveDraft()}
@@ -685,6 +703,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                   </label>
                 )}
               />
+              <p className="text-[11px] text-[#A8A8A4]">Off until you click Publish. Saves as a draft.</p>
               <Controller
                 control={form.control}
                 name="isFeatured"

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { ProductAdminInput } from "@/validations/product";
 import { buildDefaultProductSku } from "@/lib/product-sku";
 
@@ -11,6 +12,8 @@ type VariantManagerProps = {
   onChange: (next: VariantRow[]) => void;
   basePriceNGN: number;
 };
+
+export const STANDARD_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
 export function VariantManager({ slug, variants, onChange, basePriceNGN }: VariantManagerProps) {
   const update = (index: number, patch: Partial<VariantRow>) => {
@@ -41,6 +44,31 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
     onChange(variants.map((v) => ({ ...v, priceNGN: basePriceNGN })));
   };
 
+  const [sizePick, setSizePick] = useState<Set<string>>(() => new Set(STANDARD_SIZES));
+
+  const generateSizes = () => {
+    const have = new Set(variants.map((v) => v.size.trim().toUpperCase()).filter(Boolean));
+    const extra: VariantRow[] = [];
+    let order = variants.length;
+    for (const size of STANDARD_SIZES) {
+      if (!sizePick.has(size)) continue;
+      if (have.has(size)) continue;
+      extra.push({
+        size,
+        sku: slug ? buildDefaultProductSku(slug, size) : `PA-ITEM-${size}`,
+        priceNGN: basePriceNGN || 0,
+        stock: 0,
+        lowStockAt: 3,
+        sortOrder: order,
+      });
+      order += 1;
+    }
+    if (extra.length === 0) return;
+    const first = variants[0];
+    const dropPlaceholder = variants.length === 1 && first && first.size.trim() === "";
+    onChange([...(dropPlaceholder ? [] : variants), ...extra]);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -57,6 +85,32 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
           className="rounded-sm bg-wine px-3 py-1.5 text-xs text-gold hover:bg-wine-hover"
         >
           + Add size
+        </button>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        {STANDARD_SIZES.map((sz) => (
+          <label key={sz} className="flex items-center gap-1 text-xs text-charcoal">
+            <input
+              type="checkbox"
+              checked={sizePick.has(sz)}
+              onChange={() => {
+                setSizePick((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(sz)) next.delete(sz);
+                  else next.add(sz);
+                  return next;
+                });
+              }}
+            />
+            {sz}
+          </label>
+        ))}
+        <button
+          type="button"
+          onClick={generateSizes}
+          className="rounded-sm border border-sand px-3 py-1.5 text-xs text-gold hover:bg-gold/10"
+        >
+          Generate size rows
         </button>
       </div>
 

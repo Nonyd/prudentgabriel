@@ -14,6 +14,8 @@ import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
 import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 import type { AdminCollectionRow } from "@/components/admin/CollectionsClient";
 import type { ProductListItem } from "@/types/product";
+import { AlertDialog as ConfirmDialog } from "@/components/ui/AlertDialog";
+import { formatUnpublishImpactMessage, type UnpublishImpact } from "@/lib/collection-unpublish-impact";
 
 type FormValues = z.infer<typeof collectionAdminSchema>;
 
@@ -41,6 +43,9 @@ export function CollectionFormModal({
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [baselineManual, setBaselineManual] = useState<string[]>([]);
   const [editLoading, setEditLoading] = useState(false);
+  const [unpublishMessage, setUnpublishMessage] = useState("");
+  const [pendingPatch, setPendingPatch] = useState<Record<string, unknown> | null>(null);
+  const [unpublishBusy, setUnpublishBusy] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(collectionAdminSchema),
@@ -53,7 +58,7 @@ export function CollectionFormModal({
       coverImageAlt: "",
       autoTag: null,
       isFeatured: false,
-      isPublished: true,
+      isPublished: false,
       displayOrder: 0,
       season: null,
       year: null,
@@ -127,7 +132,7 @@ export function CollectionFormModal({
         coverImageAlt: "",
         autoTag: null,
         isFeatured: false,
-        isPublished: true,
+        isPublished: false,
         displayOrder: 0,
         season: null,
         year: null,
@@ -243,6 +248,31 @@ export function CollectionFormModal({
     }
   };
 
+  const savePatch = async (collectionId: string, body: Record<string, unknown>, confirmed: boolean) => {
+    const res = await fetch(`/api/admin/collections/${collectionId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...body, confirmUnpublishProducts: confirmed || undefined }),
+    });
+    if (res.status === 409) {
+      const err = (await res.json().catch(() => ({}))) as { impact?: UnpublishImpact };
+      if (err.impact) {
+        setPendingPatch(body);
+        setUnpublishMessage(formatUnpublishImpactMessage(err.impact));
+        return "confirm";
+      }
+    }
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as { error?: string };
+      toast.error(typeof err.error === "string" ? err.error : "Save failed");
+      return "error";
+    }
+    await syncManualProducts(collectionId, baselineManual);
+    toast.success("Collection saved ✓");
+    onSaved();
+    return "ok";
+  };
+
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       const body = {
@@ -252,19 +282,7 @@ export function CollectionFormModal({
           values.coverImage === "" || values.coverImage === undefined ? null : values.coverImage,
       };
       if (isEdit && editing) {
-        const res = await fetch(`/api/admin/collections/${editing.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!res.ok) {
-          const err = (await res.json().catch(() => ({}))) as { error?: string };
-          toast.error(typeof err.error === "string" ? err.error : "Save failed");
-          return;
-        }
-        await syncManualProducts(editing.id, baselineManual);
-        toast.success("Collection saved ✓");
-        onSaved();
+        await savePatch(editing.id, body, false);
         return;
       }
 
@@ -295,6 +313,7 @@ export function CollectionFormModal({
   });
 
   return (
+    <>
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/50" />
@@ -458,6 +477,10 @@ export function CollectionFormModal({
                   <input type="checkbox" {...form.register("isPublished")} className="accent-olive" />
                   Published
                 </label>
+                <p className="font-body text-[11px] text-[#8A8A86]">
+                  Leave unchecked until launch. Unpublishing asks you to confirm before hiding products,
+                  including pieces that also sit in other collections.
+                </p>
                 <label className="flex items-center gap-2 font-body text-[13px]">
                   <input type="checkbox" {...form.register("isFeatured")} className="accent-olive" />
                   Featured on homepage
@@ -521,5 +544,33 @@ export function CollectionFormModal({
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+    <ConfirmDialog
+      open={pendingPatch !== null && Boolean(editing)}
+      onOpenChange={(o) => {
+        if (!o) {
+          setPendingPatch(null);
+          setUnpublishMessage("");
+        }
+      }}
+      title="Unpublish this collection?"
+      description={unpublishMessage}
+      variant="warning"
+      confirmLabel="Unpublish pieces"
+      loading={unpublishBusy}
+      onConfirm={async () => {
+        if (!editing || !pendingPatch) return;
+        setUnpublishBusy(true);
+        try {
+          const result = await savePatch(editing.id, pendingPatch, true);
+          if (result === "ok") {
+            setPendingPatch(null);
+            setUnpublishMessage("");
+          }
+        } finally {
+          setUnpublishBusy(false);
+        }
+      }}
+    />
+    </>
   );
 }

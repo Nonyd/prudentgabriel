@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 
 type EmailRow = {
@@ -36,6 +37,8 @@ function statusClass(status: string): string {
 }
 
 export function EmailOutboxClient() {
+  const searchParams = useSearchParams();
+  const relatedId = searchParams.get("relatedId")?.trim() ?? "";
   const [items, setItems] = useState<EmailRow[]>([]);
   const [deadCount, setDeadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -50,6 +53,7 @@ export function EmailOutboxClient() {
     if (status) q.set("status", status);
     if (template) q.set("template", template);
     if (to) q.set("to", to);
+    if (relatedId) q.set("relatedId", relatedId);
     const res = await fetch(`/api/admin/system/emails?${q.toString()}`);
     if (!res.ok) {
       toast.error("Could not load emails");
@@ -60,7 +64,7 @@ export function EmailOutboxClient() {
     setItems(j.items);
     setDeadCount(j.deadCount);
     setLoading(false);
-  }, [status, template, to]);
+  }, [status, template, to, relatedId]);
 
   useEffect(() => {
     void load();

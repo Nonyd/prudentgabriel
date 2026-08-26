@@ -7,6 +7,7 @@ import { slugifyText } from "@/lib/utils";
 import { collectionListProductInclude, mapProductToListItemWithMeta } from "@/lib/collection-products";
 import { revalidateCollection } from "@/lib/revalidate";
 import { revalidatePath } from "next/cache";
+import { previewUnpublishImpact, unpublishCollectionProducts } from "@/lib/collection-publish";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi("shop.products");
@@ -67,6 +68,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 
   const d = parsed.data;
+  const confirmUnpublishProducts = d.confirmUnpublishProducts === true;
   const data: Prisma.CollectionUpdateInput = {};
 
   if (d.name !== undefined) data.name = d.name.trim();
@@ -92,11 +94,24 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     return NextResponse.json(current);
   }
 
+  const existing = await prisma.collection.findUnique({ where: { id }, select: { isPublished: true } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  if (d.isPublished === false && existing.isPublished) {
+    const impact = await previewUnpublishImpact(id);
+    if (impact.products.length > 0 && !confirmUnpublishProducts) {
+      return NextResponse.json({ needsConfirm: true, impact }, { status: 409 });
+    }
+  }
+
   try {
     const updated = await prisma.collection.update({
       where: { id },
       data,
     });
+    if (d.isPublished === false && existing.isPublished) {
+      await unpublishCollectionProducts(id);
+    }
     await revalidateCollection(updated.slug);
     revalidatePath("/");
     return NextResponse.json(updated);

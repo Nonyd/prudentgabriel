@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
         coverImageAlt: d.coverImageAlt?.trim() || null,
         autoTag: d.autoTag?.trim() || null,
         isFeatured: d.isFeatured ?? false,
-        isPublished: d.isPublished ?? true,
+        isPublished: d.isPublished ?? false,
         displayOrder: d.displayOrder ?? 0,
         season: d.season?.trim() || null,
         year: d.year ?? null,

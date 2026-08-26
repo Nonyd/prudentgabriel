@@ -155,6 +155,7 @@ export function createResendProvider(opts?: { apiKey?: string | null }): EmailPr
           subject: msg.subject,
           html: msg.html,
           text: msg.text,
+          headers: msg.headers,
           attachments: msg.attachments?.map((a) => ({
             filename: a.filename,
             content: Buffer.from(a.content, "base64"),
@@ -204,6 +205,9 @@ export function createBrevoProvider(opts?: { apiKey?: string | null }): EmailPro
             name: a.filename,
             content: a.content,
           }));
+        }
+        if (msg.headers && Object.keys(msg.headers).length > 0) {
+          body.headers = msg.headers;
         }
 
         const res = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -265,6 +269,7 @@ export function createSmtpProvider(opts?: {
           subject: msg.subject,
           html: msg.html,
           text: msg.text,
+          headers: msg.headers,
           attachments: msg.attachments?.map((a) => ({
             filename: a.filename,
             content: Buffer.from(a.content, "base64"),

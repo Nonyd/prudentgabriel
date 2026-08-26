@@ -16,6 +16,14 @@ import {
   sanitizeFromAddress,
 } from "@/lib/email-providers";
 import { nextBackoffMs, type EmailError } from "@/lib/email-outbox-types";
+import {
+  EMAIL_PRIORITY_MARKETING,
+  EMAIL_PRIORITY_TRANSACTIONAL,
+  MARKETING_DRAIN_LIMIT,
+  TRANSACTIONAL_MIN_PRIORITY,
+  isMarketingTemplate,
+} from "@/lib/email-priority";
+import { lastErrorLooksLikeBounce, recordEmailBounce, applyMarketingUnsubscribe, ensureEmailPreference, normalizeEmail, suppressedEmailSet } from "@/lib/email-consent";
 
 export type QueueEmailParams = {
   to: string;
@@ -30,6 +38,10 @@ export type QueueEmailParams = {
   relatedId?: string;
   fromAddress?: string;
   attachments?: Prisma.InputJsonValue;
+  priority?: number;
+  headers?: Record<string, string>;
+  /** Skip fire-and-forget deliver; cron drain sends. Campaigns must set this. */
+  defer?: boolean;
 };
 
 const STALE_SENDING_MS = 2 * 60_000;
@@ -45,8 +57,25 @@ export function setSkipImmediateDeliverForTest(skip: boolean): void {
 }
 
 export async function queueEmail(params: QueueEmailParams): Promise<{ id: string; created: boolean }> {
+  let html = params.html;
+  let headers = params.headers;
+
+  if (isMarketingTemplate(params.template)) {
+    const suppressed = await suppressedEmailSet([params.to]);
+    if (suppressed.has(normalizeEmail(params.to))) {
+      return { id: "", created: false };
+    }
+    const pref = await ensureEmailPreference(params.to);
+    const applied = await applyMarketingUnsubscribe(html, pref.unsubscribeToken);
+    html = applied.html;
+    if (!html.includes(applied.url)) {
+      html += `<p style="font-size:11px;text-align:center;"><a href="${applied.url}">Unsubscribe</a></p>`;
+    }
+    headers = { ...applied.headers, ...(params.headers ?? {}) };
+  }
+
   if (isEmailCaptureEnabled()) {
-    recordCapturedEmail({ to: params.to, subject: params.subject, html: params.html });
+    recordCapturedEmail({ to: params.to, subject: params.subject, html });
   }
 
   const fromAddress = await sanitizeFromAddress(
@@ -61,6 +90,10 @@ export async function queueEmail(params: QueueEmailParams): Promise<{ id: string
     });
     if (existing) return { id: existing.id, created: false };
 
+    const priority =
+      params.priority ??
+      (isMarketingTemplate(params.template) ? EMAIL_PRIORITY_MARKETING : EMAIL_PRIORITY_TRANSACTIONAL);
+
     const row = await prisma.emailMessage.create({
       data: {
         idempotencyKey: params.idempotencyKey,
@@ -70,18 +103,21 @@ export async function queueEmail(params: QueueEmailParams): Promise<{ id: string
         fromAddress,
         subject: params.subject,
         template: params.template,
-        html: params.html,
+        html,
         text: params.text ?? null,
         attachments: params.attachments,
         status: EmailStatus.QUEUED,
         nextAttemptAt,
         relatedType: params.relatedType ?? null,
         relatedId: params.relatedId ?? null,
+        priority,
+        headers: headers ?? Prisma.JsonNull,
       },
       select: { id: true },
     });
 
-    if (!isEmailCaptureEnabled() && !skipImmediateDeliver) {
+    const defer = params.defer === true || skipImmediateDeliver;
+    if (!isEmailCaptureEnabled() && !defer) {
       void deliverEmail(row.id).catch((e) => console.warn("[email-outbox] immediate deliver", e));
     }
 
@@ -126,8 +162,13 @@ async function markDead(id: string, lastError: string): Promise<void> {
       lastError,
       nextAttemptAt: null,
     },
-    select: { to: true, template: true, subject: true },
+    select: { to: true, template: true, subject: true, lastError: true },
   });
+  if (lastErrorLooksLikeBounce(lastError)) {
+    await recordEmailBounce(row.to, lastError).catch((e) =>
+      console.warn("[email-outbox] bounce record", e),
+    );
+  }
   await createNotification({
     type: "EMAIL_DEAD",
     title: "Email could not be delivered",
@@ -196,6 +237,15 @@ export async function deliverEmail(id: string): Promise<void> {
       data: { fromAddress: from },
     });
   }
+  const headers =
+    row.headers && typeof row.headers === "object" && !Array.isArray(row.headers)
+      ? Object.fromEntries(
+          Object.entries(row.headers as Record<string, unknown>).filter(
+            (e): e is [string, string] => typeof e[1] === "string",
+          ),
+        )
+      : undefined;
+
   const outbound = {
     to: row.to,
     cc: row.cc ?? undefined,
@@ -206,6 +256,7 @@ export async function deliverEmail(id: string): Promise<void> {
     html: row.html,
     text: row.text ?? undefined,
     attachments: normalizeAttachments(row.attachments),
+    headers,
   };
 
   let lastError: EmailError | null = null;
@@ -261,24 +312,44 @@ export async function deliverEmail(id: string): Promise<void> {
   });
 }
 
+function dueWhere(now: Date, stale: Date): Prisma.EmailMessageWhereInput {
+  return {
+    OR: [
+      { status: { in: [EmailStatus.QUEUED, EmailStatus.FAILED] }, nextAttemptAt: { lte: now } },
+      { status: EmailStatus.QUEUED, nextAttemptAt: null },
+      { status: EmailStatus.SENDING, updatedAt: { lte: stale } },
+    ],
+  };
+}
+
 export async function drainQueuedEmails(opts: {
   now: Date;
   batchLimit: number;
   isBudgetExhausted: () => boolean;
 }): Promise<{ processed: number; failed: number; hasMore: boolean }> {
   const stale = new Date(opts.now.getTime() - STALE_SENDING_MS);
-  const rows = await prisma.emailMessage.findMany({
-    where: {
-      OR: [
-        { status: { in: [EmailStatus.QUEUED, EmailStatus.FAILED] }, nextAttemptAt: { lte: opts.now } },
-        { status: EmailStatus.QUEUED, nextAttemptAt: null },
-        { status: EmailStatus.SENDING, updatedAt: { lte: stale } },
-      ],
-    },
+  const due = dueWhere(opts.now, stale);
+
+  const transactional = await prisma.emailMessage.findMany({
+    where: { AND: [due, { priority: { gte: TRANSACTIONAL_MIN_PRIORITY } }] },
     orderBy: { createdAt: "asc" },
     take: opts.batchLimit,
     select: { id: true },
   });
+
+  const remainingSlots = Math.max(0, opts.batchLimit - transactional.length);
+  const marketingTake = Math.min(remainingSlots, MARKETING_DRAIN_LIMIT);
+  const marketing =
+    marketingTake > 0
+      ? await prisma.emailMessage.findMany({
+          where: { AND: [due, { priority: { lt: TRANSACTIONAL_MIN_PRIORITY } }] },
+          orderBy: { createdAt: "asc" },
+          take: marketingTake,
+          select: { id: true },
+        })
+      : [];
+
+  const rows = [...transactional, ...marketing];
 
   let processed = 0;
   let failed = 0;

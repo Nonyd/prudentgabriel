@@ -71,7 +71,8 @@ export default auth(async function middleware(request) {
     pathname.startsWith("/staff-login") ||
     pathname.startsWith("/reset-password") ||
     pathname.startsWith("/auth") ||
-    pathname.startsWith("/accept-invite");
+    pathname.startsWith("/accept-invite") ||
+    pathname.startsWith("/unsubscribe");
 
   if (!isAdminUser && !skipMaintenanceGate) {
     if (await isMaintenanceEnabled(request)) {
@@ -90,6 +91,7 @@ export default auth(async function middleware(request) {
     pathname.startsWith("/reset-password") ||
     pathname.startsWith("/track") ||
     pathname.startsWith("/quote") ||
+    pathname.startsWith("/unsubscribe") ||
     pathname.startsWith("/shop") ||
     pathname.startsWith("/consultation") ||
     pathname.startsWith("/journal") ||

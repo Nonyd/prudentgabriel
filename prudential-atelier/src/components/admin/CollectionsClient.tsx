@@ -8,6 +8,11 @@ import { ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 import { optimizeImageUrl } from "@/lib/utils";
 import { CollectionFormModal } from "@/components/admin/CollectionFormModal";
 import { AlertDialog as ConfirmDialog } from "@/components/ui/AlertDialog";
+import {
+  formatUnpublishImpactMessage,
+  mergeUnpublishImpacts,
+  type UnpublishImpact,
+} from "@/lib/collection-unpublish-impact";
 
 export type AdminCollectionRow = {
   id: string;
@@ -31,6 +36,9 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
   const [deleteState, setDeleteState] = useState<{ mode: "single"; row: AdminCollectionRow } | { mode: "bulk"; ids: string[] } | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [unpublishIds, setUnpublishIds] = useState<string[] | null>(null);
+  const [unpublishMessage, setUnpublishMessage] = useState("");
+  const [unpublishBusy, setUnpublishBusy] = useState(false);
 
   const sorted = useMemo(
     () => [...collections].sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name)),
@@ -43,11 +51,49 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
+    if (res.status === 409) {
+      const j = (await res.json()) as { impact?: UnpublishImpact };
+      if (j.impact) {
+        setUnpublishIds([id]);
+        setUnpublishMessage(formatUnpublishImpactMessage(j.impact));
+        return;
+      }
+    }
     if (!res.ok) toast.error("Update failed");
     else {
       toast.success("Saved");
       router.refresh();
     }
+  }
+
+  async function applyUnpublish(ids: string[], confirmed: boolean): Promise<boolean> {
+    const impacts: UnpublishImpact[] = [];
+    let failed = false;
+    for (const id of ids) {
+      const res = await fetch(`/api/admin/collections/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPublished: false, confirmUnpublishProducts: confirmed }),
+      });
+      if (res.status === 409) {
+        const j = (await res.json()) as { impact?: UnpublishImpact };
+        if (j.impact) impacts.push(j.impact);
+        continue;
+      }
+      if (!res.ok) failed = true;
+    }
+    if (impacts.length > 0 && !confirmed) {
+      setUnpublishIds(ids);
+      setUnpublishMessage(formatUnpublishImpactMessage(mergeUnpublishImpacts(impacts)));
+      return false;
+    }
+    if (failed) {
+      toast.error("Some updates failed");
+      return false;
+    }
+    toast.success("Unpublished");
+    router.refresh();
+    return true;
   }
 
   async function swapDisplayOrder(a: AdminCollectionRow, b: AdminCollectionRow) {
@@ -121,18 +167,23 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
   async function bulkPublish(published: boolean) {
     if (selected.size === 0) return;
     const ids = Array.from(selected);
+    if (!published) {
+      const ok = await applyUnpublish(ids, false);
+      if (ok) setSelected(new Set());
+      return;
+    }
     const results = await Promise.all(
       ids.map((id) =>
         fetch(`/api/admin/collections/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ isPublished: published }),
+          body: JSON.stringify({ isPublished: true }),
         }),
       ),
     );
     if (results.some((r) => !r.ok)) toast.error("Some updates failed");
     else {
-      toast.success(published ? "Published" : "Unpublished");
+      toast.success("Published");
       setSelected(new Set());
       router.refresh();
     }
@@ -278,7 +329,10 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
                   <input
                     type="checkbox"
                     checked={row.isPublished}
-                    onChange={() => void patch(row.id, { isPublished: !row.isPublished })}
+                    onChange={() => {
+                      if (row.isPublished) void applyUnpublish([row.id], false);
+                      else void patch(row.id, { isPublished: true });
+                    }}
                     className="accent-olive"
                   />
                 </td>
@@ -341,18 +395,32 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
       />
 
       <ConfirmDialog
-        open={deleteState !== null}
-        onOpenChange={(o) => !o && setDeleteState(null)}
-        title={
-          deleteState?.mode === "bulk"
-            ? `Delete ${deleteState.ids.length} collections?`
-            : `Delete ${deleteState?.mode === "single" ? deleteState.row.name : "collection"}?`
-        }
-        description="Products will not be deleted, just unassigned from these collections."
-        variant="danger"
-        confirmLabel={deleteState?.mode === "bulk" ? "Delete selected" : "Delete"}
-        onConfirm={confirmDelete}
-        loading={deleteBusy}
+        open={unpublishIds !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setUnpublishIds(null);
+            setUnpublishMessage("");
+          }
+        }}
+        title="Unpublish this collection?"
+        description={unpublishMessage || "Published pieces in this collection will be hidden from the shop."}
+        variant="warning"
+        confirmLabel="Unpublish pieces"
+        loading={unpublishBusy}
+        onConfirm={async () => {
+          if (!unpublishIds) return;
+          setUnpublishBusy(true);
+          try {
+            const ok = await applyUnpublish(unpublishIds, true);
+            if (ok) {
+              setSelected(new Set());
+              setUnpublishIds(null);
+              setUnpublishMessage("");
+            }
+          } finally {
+            setUnpublishBusy(false);
+          }
+        }}
       />
     </div>
   );

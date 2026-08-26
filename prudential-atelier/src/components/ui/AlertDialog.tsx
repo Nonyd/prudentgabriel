@@ -45,7 +45,7 @@ export function AlertDialog({
           >
             {title}
           </AlertDialogPrimitive.Title>
-          <AlertDialogPrimitive.Description className="mt-2 font-body text-sm text-charcoal-mid">
+          <AlertDialogPrimitive.Description className="mt-2 whitespace-pre-wrap font-body text-sm text-charcoal-mid">
             {description}
           </AlertDialogPrimitive.Description>
           <div className="mt-6 flex justify-end gap-3">

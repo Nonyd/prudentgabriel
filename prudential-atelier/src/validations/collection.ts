@@ -17,4 +17,7 @@ export const collectionAdminSchema = z.object({
   metaDescription: z.string().max(160).optional(),
 });
 
-export const collectionAdminPatchSchema = collectionAdminSchema.partial();
+export const collectionAdminPatchSchema = collectionAdminSchema.partial().extend({
+  /** Required when unpublishing would hide products. Not stored on Collection. */
+  confirmUnpublishProducts: z.boolean().optional(),
+});

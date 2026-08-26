@@ -434,6 +434,24 @@ export function ProductsTable({
                   </Link>
                   <button
                     type="button"
+                    className="ml-3 text-olive hover:underline"
+                    onClick={() => {
+                      void fetch(`/api/admin/products/${p.id}/duplicate`, { method: "POST" })
+                        .then(async (r) => {
+                          const j = (await r.json()) as { id?: string; error?: string };
+                          if (!r.ok || !j.id) throw new Error(j.error ?? "Duplicate failed");
+                          toast.success("Draft copy created");
+                          router.push(`/admin/products/${j.id}/edit`);
+                        })
+                        .catch((e: unknown) =>
+                          toast.error(e instanceof Error ? e.message : "Duplicate failed"),
+                        );
+                    }}
+                  >
+                    Duplicate
+                  </button>
+                  <button
+                    type="button"
                     className="ml-3 text-red-400 hover:underline"
                     onClick={() => setDeleteState({ mode: "single", id: p.id, name: p.name })}
                   >

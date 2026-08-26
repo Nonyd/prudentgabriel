@@ -303,7 +303,7 @@ model Product {
   priceUSD       Float?
   priceGBP       Float?
   inStock        Boolean         @default(true)
-  isPublished    Boolean         @default(true)
+  isPublished    Boolean         @default(false)
   isFeatured     Boolean         @default(false)
   isNewArrival   Boolean         @default(false)
   isOnSale       Boolean         @default(false)
@@ -342,7 +342,7 @@ model Collection {
   coverImageAlt   String?
   autoTag         String?
   isFeatured      Boolean   @default(false)
-  isPublished     Boolean   @default(true)
+  isPublished     Boolean   @default(false)
   displayOrder    Int       @default(0)
   season          String?
   year            Int?
@@ -452,9 +452,24 @@ model StockAlert {
 }
 
 model NewsletterSubscriber {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
+  id             String    @id @default(cuid())
+  email          String    @unique
+  unsubscribedAt DateTime?
+  createdAt      DateTime  @default(now())
+}
+
+/// Token + suppression ledger for marketing mail (unsubscribe and hard bounce).
+model EmailPreference {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  unsubscribeToken String    @unique @default(cuid())
+  unsubscribedAt   DateTime?
+  bounceAt         DateTime?
+  bounceReason     String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([unsubscribedAt])
 }
 
 model Order {
@@ -1997,6 +2012,7 @@ model EmailSendJob {
   subject       String
   body          String             @db.Text
   templateKey   String?
+  collectionId  String?
   createdBy     String
   error         String?
   createdAt     DateTime           @default(now())
@@ -2035,10 +2051,14 @@ model EmailMessage {
   sentAt             DateTime?
   relatedType        String?
   relatedId          String?
+  /// Higher drains first. Transactional = 100; marketing campaigns = 0.
+  priority           Int         @default(100)
+  headers            Json?
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
   @@index([status, nextAttemptAt])
   @@index([relatedType, relatedId])
   @@index([template])
+  @@index([priority, status, nextAttemptAt])
 }
