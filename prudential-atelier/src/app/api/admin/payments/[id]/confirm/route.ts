@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PaymentGateway, PaymentStatus } from "@prisma/client";
+import { PaymentGateway, PaymentPurpose, PaymentStatus } from "@prisma/client";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { fulfillPaidOrder } from "@/lib/order-payment";
@@ -17,7 +17,8 @@ import {
   resolveClientId,
   toNumber,
 } from "@/lib/payments/ledger";
-import { PaymentPurpose } from "@prisma/client";
+import { rtwHasOutstandingBalance } from "@/lib/payments/rtw-totals";
+import { generatePaymentReference } from "@/lib/payments/index";
 
 function parsePaymentId(
   id: string,
@@ -66,7 +67,8 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
     if (!order || order.paymentGateway !== PaymentGateway.BANK_TRANSFER) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    const ref = order.paymentRef ?? order.orderNumber;
+    const followUp = rtwHasOutstandingBalance(order);
+    const ref = followUp ? generatePaymentReference("BAL") : order.paymentRef ?? order.orderNumber;
     await fulfillPaidOrder({
       orderId: order.id,
       paymentRef: ref,

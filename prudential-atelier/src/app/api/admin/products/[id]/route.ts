@@ -156,6 +156,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           isNewArrival: data.isNewArrival,
           isBespokeAvail: data.isBespokeAvail,
           inStock: data.variants.some((v) => v.stock > 0),
+          defaultWeightKg: data.defaultWeightKg ?? null,
+          defaultLengthCm: data.defaultLengthCm ?? null,
+          defaultWidthCm: data.defaultWidthCm ?? null,
+          defaultHeightCm: data.defaultHeightCm ?? null,
         },
       });
 
@@ -191,6 +195,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
               stock: v.stock,
               lowStockAt: v.lowStockAt,
               sortOrder: v.sortOrder ?? i,
+              weightKg: v.weightKg ?? null,
+              lengthCm: v.lengthCm ?? null,
+              widthCm: v.widthCm ?? null,
+              heightCm: v.heightCm ?? null,
             },
           });
         } else {
@@ -206,6 +214,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
               stock: v.stock,
               lowStockAt: v.lowStockAt,
               sortOrder: v.sortOrder ?? i,
+              weightKg: v.weightKg ?? null,
+              lengthCm: v.lengthCm ?? null,
+              widthCm: v.widthCm ?? null,
+              heightCm: v.heightCm ?? null,
             },
           });
         }

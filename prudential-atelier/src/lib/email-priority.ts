@@ -20,6 +20,7 @@ export const MARKETING_TEMPLATES = new Set([
   "abandoned-checkout",
   "abandoned-cart",
   "back-in-stock",
+  "uncollected-pickup",
 ]);
 
 export const UNSUBSCRIBE_URL_PLACEHOLDER = "__UNSUBSCRIBE_URL__";

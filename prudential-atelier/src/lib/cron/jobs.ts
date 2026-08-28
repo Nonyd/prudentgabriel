@@ -9,6 +9,7 @@ import { run as runUpdatePerformance } from "@/lib/cron/jobs/update-performance"
 import { run as runEmailOutbox } from "@/lib/cron/jobs/email-outbox";
 import { run as runAbandonedCart } from "@/lib/cron/jobs/abandoned-cart";
 import { run as runAbandonedCheckout } from "@/lib/cron/jobs/abandoned-checkout";
+import { run as runUncollectedPickup } from "@/lib/cron/jobs/uncollected-pickup";
 
 const HANDLERS: Record<string, CronJobHandler> = {
   "abandoned-cart": runAbandonedCart,
@@ -19,6 +20,7 @@ const HANDLERS: Record<string, CronJobHandler> = {
   "stage-approval-reminders": runStageApprovalReminders,
   "unsent-quote-alerts": runUnsentQuoteAlerts,
   "receipt-reminders": runReceiptReminders,
+  "uncollected-pickup": runUncollectedPickup,
   "email-outbox": runEmailOutbox,
 };
 

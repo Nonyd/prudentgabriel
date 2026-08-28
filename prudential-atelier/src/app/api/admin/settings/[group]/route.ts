@@ -4,6 +4,7 @@ import { permissionForSettingsGroup, requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { clearPublicSettingsCache, clearSettingCacheKey, setSetting } from "@/lib/settings";
 import { ensurePaymentSettingKeys } from "@/lib/payment-settings-bootstrap";
+import { ensureShippingSettingKeys } from "@/lib/shipping-settings-bootstrap";
 import { ensureAppearanceLogoSettingKeys } from "@/lib/appearance-settings-bootstrap";
 import { revalidateSettings } from "@/lib/revalidate";
 import { EMAIL_TEMPLATE_META } from "@/lib/email-templates";
@@ -44,6 +45,10 @@ export async function GET(
 
   if (group === "PAYMENTS") {
     await ensurePaymentSettingKeys();
+  }
+
+  if (group === "SHIPPING") {
+    await ensureShippingSettingKeys();
   }
 
   if (group === "APPEARANCE") {
@@ -88,6 +93,10 @@ export async function PATCH(
 
   if (group === "PAYMENTS") {
     await ensurePaymentSettingKeys();
+  }
+
+  if (group === "SHIPPING") {
+    await ensureShippingSettingKeys();
   }
 
   if (group === "APPEARANCE") {

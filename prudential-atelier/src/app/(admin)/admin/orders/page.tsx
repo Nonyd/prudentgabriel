@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { OrderStatus, PaymentStatus, Prisma } from "@prisma/client";
+import { OrderStatus, PaymentStatus, Prisma, ShippingQuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AdminOrdersCsvExport } from "@/components/admin/AdminOrdersCsvExport";
 import { AdminOrdersListClient, type AdminOrderListRow } from "@/components/admin/AdminOrdersListClient";
-import { REFUND_REQUIRED_ATTENTION, applyOrderAttention } from "@/lib/admin-orders-filter";
+import { REFUND_REQUIRED_ATTENTION, QUOTE_PENDING_ATTENTION, applyOrderAttention } from "@/lib/admin-orders-filter";
 
 const PAGE = 20;
 
@@ -33,7 +33,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   }
   where = applyOrderAttention(where, attention);
 
-  const [total, orders, refundRequiredCount] = await Promise.all([
+  const [total, orders, refundRequiredCount, quotePendingCount] = await Promise.all([
     prisma.order.count({ where }),
     prisma.order.findMany({
       where,
@@ -48,6 +48,9 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
     }),
     prisma.order.count({
       where: { status: OrderStatus.CANCELLED, paymentStatus: PaymentStatus.PAID },
+    }),
+    prisma.order.count({
+      where: { shippingQuoteStatus: ShippingQuoteStatus.QUOTE_PENDING },
     }),
   ]);
 
@@ -91,6 +94,14 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-2xl text-charcoal">Orders</h1>
         <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href={`/admin/orders?attention=${QUOTE_PENDING_ATTENTION}`}
+            className={`font-body text-[11px] uppercase tracking-wide ${
+              attention === QUOTE_PENDING_ATTENTION ? "text-choc underline" : "text-olive hover:underline"
+            }`}
+          >
+            Awaiting shipping quote{quotePendingCount > 0 ? ` (${quotePendingCount})` : ""}
+          </Link>
           <Link
             href={`/admin/orders?attention=${REFUND_REQUIRED_ATTENTION}`}
             className={`font-body text-[11px] uppercase tracking-wide ${

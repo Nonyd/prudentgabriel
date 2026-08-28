@@ -55,6 +55,10 @@ function mapProductToForm(p: FullProduct): ProductAdminInput {
     isFeatured: p.isFeatured,
     isNewArrival: p.isNewArrival,
     isBespokeAvail: p.isBespokeAvail,
+    defaultWeightKg: p.defaultWeightKg ?? undefined,
+    defaultLengthCm: p.defaultLengthCm ?? undefined,
+    defaultWidthCm: p.defaultWidthCm ?? undefined,
+    defaultHeightCm: p.defaultHeightCm ?? undefined,
     metaTitle: p.metaTitle ?? undefined,
     metaDescription: p.metaDescription ?? undefined,
     variants: p.variants.map((v, i) => ({
@@ -68,6 +72,10 @@ function mapProductToForm(p: FullProduct): ProductAdminInput {
       stock: v.stock,
       lowStockAt: v.lowStockAt,
       sortOrder: v.sortOrder ?? i,
+      weightKg: v.weightKg ?? undefined,
+      lengthCm: v.lengthCm ?? undefined,
+      widthCm: v.widthCm ?? undefined,
+      heightCm: v.heightCm ?? undefined,
     })),
     colors: p.colors.map((c) => ({
       id: c.id,
@@ -103,6 +111,10 @@ const defaultCreate = (): ProductAdminInput => ({
   isFeatured: false,
   isNewArrival: false,
   isBespokeAvail: false,
+  defaultWeightKg: undefined,
+  defaultLengthCm: undefined,
+  defaultWidthCm: undefined,
+  defaultHeightCm: undefined,
   metaTitle: undefined,
   metaDescription: undefined,
   variants: [
@@ -545,7 +557,46 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                 />
               </label>
             </div>
-            <p className="mt-2 text-xs text-[#A8A8A4]">Leave USD/GBP blank to use live exchange rates on the storefront.</p>
+            <p className="mt-2 text-xs text-[#A8A8A4]">Leave USD/GBP blank to use live exchange rates on the storefront. A USD figure here is locked as the selling price and ignores the feed.</p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-4">
+              <label className="text-xs uppercase text-[#A8A8A4]">
+                Default kg
+                <input
+                  type="number"
+                  step="0.01"
+                  {...form.register("defaultWeightKg")}
+                  className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
+                />
+              </label>
+              <label className="text-xs uppercase text-[#A8A8A4]">
+                L cm
+                <input
+                  type="number"
+                  step="0.1"
+                  {...form.register("defaultLengthCm")}
+                  className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
+                />
+              </label>
+              <label className="text-xs uppercase text-[#A8A8A4]">
+                W cm
+                <input
+                  type="number"
+                  step="0.1"
+                  {...form.register("defaultWidthCm")}
+                  className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
+                />
+              </label>
+              <label className="text-xs uppercase text-[#A8A8A4]">
+                H cm
+                <input
+                  type="number"
+                  step="0.1"
+                  {...form.register("defaultHeightCm")}
+                  className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
+                />
+              </label>
+            </div>
+            <p className="mt-2 text-xs text-[#A8A8A4]">Used when a size has no parcel of its own. Carriers bill the greater of actual and volumetric weight.</p>
             <div className="mt-4 flex items-center gap-3">
               <Controller
                 control={form.control}

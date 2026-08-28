@@ -141,8 +141,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
     }),
   );
 
-  const lagosZone = await prisma.shippingZone.findFirst({
-    where: { isActive: true, name: { contains: "Lagos", mode: "insensitive" } },
+  const lagosLoc = await prisma.lagosLocation.findFirst({
+    where: { isActive: true, freeAboveNGN: { not: null } },
     orderBy: { sortOrder: "asc" },
     select: { freeAboveNGN: true },
   });
@@ -173,7 +173,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         }}
         averageRating={averageRating}
         reviewCount={reviewCount}
-        freeLagosAboveNGN={lagosZone?.freeAboveNGN ?? null}
+        freeLagosAboveNGN={lagosLoc?.freeAboveNGN ?? null}
       />
       <div className="mx-auto max-w-site px-4">
         <ReviewsSection

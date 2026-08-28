@@ -1,9 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { ShippingQuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { OrderTimeline } from "@/components/account/OrderTimeline";
 import { AdminOrderToolbar } from "@/components/admin/AdminOrderToolbar";
+import { ShippingQuotePanel } from "@/components/admin/ShippingQuotePanel";
 
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -41,12 +43,20 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           adminNotes: order.adminNotes,
           totalNGN: order.total,
           paymentGateway: order.paymentGateway,
+          shippingMethodKind: order.shippingMethodKind,
+          balance: order.balance,
+          collectionCode: order.collectionCode,
         }}
       />
 
       <div className="rounded-sm border border-sand bg-canvas p-6">
-        <OrderTimeline status={order.status} />
+        <OrderTimeline status={order.status} pickup={order.shippingMethodKind === "PICKUP"} />
       </div>
+
+      {order.shippingQuoteStatus === ShippingQuoteStatus.QUOTE_PENDING ||
+      order.shippingQuoteStatus === ShippingQuoteStatus.QUOTED ? (
+        <ShippingQuotePanel orderId={order.id} currentShipping={order.shippingAmount} />
+      ) : null}
 
       <div className="overflow-x-auto rounded-sm border border-sand bg-canvas p-6">
         <table className="w-full text-left text-sm">
@@ -87,6 +97,18 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           <p>Discount: ₦{Math.round(order.discount).toLocaleString("en-NG")}</p>
           <p>Points: ₦{Math.round(order.pointsDiscountNGN).toLocaleString("en-NG")}</p>
           <p className="mt-2 font-display text-xl text-gold">₦{Math.round(order.total).toLocaleString("en-NG")}</p>
+          {order.paymentRef ? <p className="mt-3 text-xs text-[#6B6B68]">Payment ref: {order.paymentRef}</p> : null}
+          {order.fxRateLocked != null ? (
+            <p className="mt-1 text-xs text-[#6B6B68]">
+              FX locked: ₦1 = ${order.fxRateLocked.toFixed(6)}
+              {order.fxRateStale ? " (stale — feed unavailable at checkout)" : ""}
+              {order.fxRateSource ? ` · ${order.fxRateSource}` : ""}
+            </p>
+          ) : null}
+          {order.collectionCode ? <p className="mt-1 text-xs text-[#6B6B68]">Collection code: {order.collectionCode}</p> : null}
+          {order.balance > 0.01 ? (
+            <p className="mt-2 text-xs text-[#92660A]">Balance owing ₦{Math.round(order.balance).toLocaleString("en-NG")}</p>
+          ) : null}
         </div>
         <div className="rounded-sm border border-sand bg-canvas p-6 text-sm text-charcoal">
           <h2 className="font-display text-lg text-gold">Customer</h2>

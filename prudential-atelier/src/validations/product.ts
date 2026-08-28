@@ -26,6 +26,10 @@ const variantSchema = z.object({
   stock: z.coerce.number().int().min(0),
   lowStockAt: z.coerce.number().int().min(0).default(3),
   sortOrder: z.coerce.number().int().default(0),
+  weightKg: optNonNegNumber(),
+  lengthCm: optNonNegNumber(),
+  widthCm: optNonNegNumber(),
+  heightCm: optNonNegNumber(),
 });
 
 const colorSchema = z.object({
@@ -60,6 +64,10 @@ export const productAdminSchema = z.object({
   isFeatured: z.boolean().default(false),
   isNewArrival: z.boolean().default(false),
   isBespokeAvail: z.boolean().default(false),
+  defaultWeightKg: optNonNegNumber(),
+  defaultLengthCm: optNonNegNumber(),
+  defaultWidthCm: optNonNegNumber(),
+  defaultHeightCm: optNonNegNumber(),
   metaTitle: z.string().max(60).optional(),
   metaDescription: z.string().max(160).optional(),
   variants: z.array(variantSchema).min(1),

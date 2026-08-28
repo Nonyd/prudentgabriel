@@ -9,6 +9,7 @@ import {
 } from "@/lib/email";
 import { notifyBankTransferReceipt } from "@/lib/notifications";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { canAcceptRtwPayment } from "@/lib/payments/rtw-totals";
 
 const bodySchema = z.object({
   orderId: z.string().min(1),
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
   if (!order || order.paymentGateway !== PaymentGateway.BANK_TRANSFER) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
-  if (order.paymentStatus !== PaymentStatus.PENDING) {
+  if (!canAcceptRtwPayment(order)) {
     return NextResponse.json({ error: "Order is not awaiting payment" }, { status: 400 });
   }
 

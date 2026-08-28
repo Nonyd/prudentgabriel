@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PaymentGateway, PaymentStatus, Prisma, ProductCategory } from "@prisma/client";
+import { PaymentGateway, PaymentStatus, Prisma, ProductCategory, ShippingQuoteStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { validateCoupon } from "@/lib/coupon";
-import { calculateShippingOptions } from "@/lib/shipping";
 import { generateOrderNumber } from "@/lib/order-number";
 import { redeemPoints } from "@/lib/points";
 import { generatePaymentReference } from "@/lib/payments/index";
 import { notifyNewOrder } from "@/lib/notifications";
 import { orderCreateBodySchema, type AddressInput } from "@/validations/order";
+import { resolveCheckoutShipping } from "@/lib/shipping/resolve-selection";
+import { generateCollectionCode } from "@/lib/shipping/collection";
+import { getLockedFx } from "@/lib/fx";
+import type { CartParcelLine } from "@/lib/shipping/options";
 
 function snapshotFromAddress(a: AddressInput) {
   return {
@@ -42,6 +45,10 @@ export async function POST(req: NextRequest) {
   }
 
   const data = parsed.data;
+  const shippingOptionId = data.shippingOptionId || data.shippingZoneId;
+  if (!shippingOptionId) {
+    return NextResponse.json({ error: "Choose a shipping method" }, { status: 400 });
+  }
 
   if (!userId) {
     if (!data.guestEmail?.trim()) {
@@ -56,10 +63,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Provide either addressId or address, not both" }, { status: 400 });
   }
 
-  if (!data.addressId && !data.address) {
-    return NextResponse.json({ error: "Delivery address is required" }, { status: 400 });
-  }
-
   type Line = {
     productId: string;
     variantId: string;
@@ -71,6 +74,7 @@ export async function POST(req: NextRequest) {
     unitPrice: number;
     category: ProductCategory;
     productName: string;
+    parcel: CartParcelLine;
   };
 
   let lines: Line[] = [];
@@ -79,7 +83,17 @@ export async function POST(req: NextRequest) {
     const cartItems = await prisma.cartItem.findMany({
       where: { userId },
       include: {
-        product: { select: { id: true, name: true, category: true } },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            defaultWeightKg: true,
+            defaultLengthCm: true,
+            defaultWidthCm: true,
+            defaultHeightCm: true,
+          },
+        },
         variant: true,
         color: true,
       },
@@ -102,6 +116,21 @@ export async function POST(req: NextRequest) {
         unitPrice: unit,
         category: ci.product.category,
         productName: ci.product.name,
+        parcel: {
+          quantity: ci.quantity,
+          variant: {
+            weightKg: ci.variant.weightKg ?? undefined,
+            lengthCm: ci.variant.lengthCm ?? undefined,
+            widthCm: ci.variant.widthCm ?? undefined,
+            heightCm: ci.variant.heightCm ?? undefined,
+          },
+          product: {
+            weightKg: ci.product.defaultWeightKg ?? undefined,
+            lengthCm: ci.product.defaultLengthCm ?? undefined,
+            widthCm: ci.product.defaultWidthCm ?? undefined,
+            heightCm: ci.product.defaultHeightCm ?? undefined,
+          },
+        },
       };
     });
   } else {
@@ -109,7 +138,19 @@ export async function POST(req: NextRequest) {
     for (const gl of guestLines) {
       const variant = await prisma.productVariant.findUnique({
         where: { id: gl.variantId },
-        include: { product: { select: { id: true, name: true, category: true } } },
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              category: true,
+              defaultWeightKg: true,
+              defaultLengthCm: true,
+              defaultWidthCm: true,
+              defaultHeightCm: true,
+            },
+          },
+        },
       });
       if (!variant || variant.productId !== gl.productId) {
         return NextResponse.json({ error: "Invalid cart item" }, { status: 400 });
@@ -126,6 +167,21 @@ export async function POST(req: NextRequest) {
         unitPrice: unit,
         category: variant.product.category,
         productName: variant.product.name,
+        parcel: {
+          quantity: gl.quantity,
+          variant: {
+            weightKg: variant.weightKg ?? undefined,
+            lengthCm: variant.lengthCm ?? undefined,
+            widthCm: variant.widthCm ?? undefined,
+            heightCm: variant.heightCm ?? undefined,
+          },
+          product: {
+            weightKg: variant.product.defaultWeightKg ?? undefined,
+            lengthCm: variant.product.defaultLengthCm ?? undefined,
+            widthCm: variant.product.defaultWidthCm ?? undefined,
+            heightCm: variant.product.defaultHeightCm ?? undefined,
+          },
+        },
       });
     }
   }
@@ -150,8 +206,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Email required for checkout" }, { status: 400 });
   }
 
-  let resolvedAddress: AddressInput;
-  let addressSnapshot: Record<string, unknown>;
+  const isPickupOption = shippingOptionId.startsWith("pickup:");
+
+  let resolvedAddress: AddressInput | null = null;
+  let addressSnapshot: Record<string, unknown> | null = null;
 
   if (data.addressId) {
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -184,13 +242,38 @@ export async function POST(req: NextRequest) {
       postalCode: addr.postalCode,
       phone: addr.phone,
     };
-  } else {
-    resolvedAddress = data.address as AddressInput;
+  } else if (data.address) {
+    resolvedAddress = data.address;
     addressSnapshot = snapshotFromAddress(resolvedAddress);
+  } else if (isPickupOption && data.pickupContact) {
+    resolvedAddress = {
+      firstName: data.pickupContact.firstName,
+      lastName: data.pickupContact.lastName,
+      phone: data.pickupContact.phone,
+      line1: "Collection",
+      city: data.pickupContact.city || "Lagos",
+      state: data.pickupContact.state || "Lagos",
+      country: data.pickupContact.country || "NG",
+      saveAddress: false,
+    };
+    addressSnapshot = {
+      firstName: data.pickupContact.firstName,
+      lastName: data.pickupContact.lastName,
+      phone: data.pickupContact.phone,
+      pickup: true,
+      country: data.pickupContact.country || "NG",
+      state: data.pickupContact.state || "Lagos",
+      city: data.pickupContact.city || "Lagos",
+    };
   }
 
-  const totalQty = lines.reduce((s, l) => s + l.quantity, 0);
-  const totalWeightKg = Math.max(0.5, totalQty * 0.5);
+  const destCountry = resolvedAddress?.country ?? data.pickupContact?.country ?? "NG";
+  const destState = resolvedAddress?.state ?? data.pickupContact?.state ?? (isPickupOption ? "Lagos" : "");
+  const destCity = resolvedAddress?.city ?? data.pickupContact?.city ?? "";
+
+  if (!isPickupOption && !resolvedAddress) {
+    return NextResponse.json({ error: "Delivery address is required" }, { status: 400 });
+  }
 
   let discountNGN = 0;
   let couponId: string | undefined;
@@ -218,38 +301,35 @@ export async function POST(req: NextRequest) {
     couponCode = couponResult.coupon?.code;
   }
 
-  const shippingOpts = await calculateShippingOptions(
-    {
-      city: resolvedAddress.city,
-      state: resolvedAddress.state,
-      country: resolvedAddress.country,
+  const shippingResolved = await resolveCheckoutShipping({
+    optionId: shippingOptionId,
+    destination: {
+      country: destCountry,
+      state: destState,
+      city: destCity,
     },
     subtotalNGN,
-    totalWeightKg,
+    lines: lines.map((l) => l.parcel),
     isFreeShippingCoupon,
-  );
+  });
 
-  const selectedOpt =
-    data.shippingZoneId === "manual"
-      ? shippingOpts.find((o) => o.zoneId === "manual")
-      : shippingOpts.find((o) => o.zoneId === data.shippingZoneId);
-
-  if (!selectedOpt && data.shippingZoneId !== "manual") {
-    return NextResponse.json({ error: "Invalid shipping zone" }, { status: 400 });
+  if (!shippingResolved.ok) {
+    return NextResponse.json({ error: shippingResolved.error }, { status: 400 });
   }
 
-  const shippingZoneIdToSave = data.shippingZoneId === "manual" ? null : data.shippingZoneId;
+  const ship = shippingResolved.shipping;
 
-  if (data.shippingZoneId !== "manual") {
-    const zone = await prisma.shippingZone.findFirst({
-      where: { id: data.shippingZoneId, isActive: true },
-    });
-    if (!zone) {
-      return NextResponse.json({ error: "Shipping zone not found" }, { status: 400 });
+  if (ship.requiresAddress && !resolvedAddress) {
+    return NextResponse.json({ error: "A free-text address cannot be priced — choose country and state" }, { status: 400 });
+  }
+
+  if (ship.requiresConsent) {
+    if (!data.shippingConsent) {
+      return NextResponse.json({ error: "Please confirm you understand shipping will be quoted separately" }, { status: 400 });
     }
   }
 
-  const shippingAfterCoupon = data.shippingZoneId === "manual" ? 0 : (selectedOpt?.costNGN ?? 0);
+  const shippingAfterCoupon = ship.shippingAmount;
 
   let pointsDiscNGN = 0;
   const pointsToRedeem = data.pointsToRedeem ?? 0;
@@ -284,9 +364,15 @@ export async function POST(req: NextRequest) {
   };
   const paymentGateway = gatewayMap[data.gateway];
   const paymentRef =
-    data.gateway === "BANK_TRANSFER" ? generatePaymentReference("ORDER") : undefined;
+    data.paymentRef && /^PA-ORDER-/i.test(data.paymentRef)
+      ? data.paymentRef
+      : generatePaymentReference("ORDER");
 
+  const fx = await getLockedFx();
   const orderNumber = generateOrderNumber();
+  const collectionCode = ship.kind === "PICKUP" ? generateCollectionCode() : null;
+  const consentAt = ship.requiresConsent ? new Date() : null;
+  const consentText = ship.requiresConsent ? (data.shippingConsentText?.trim() || ship.consentText) : null;
 
   try {
     const order = await prisma.$transaction(async (tx) => {
@@ -304,12 +390,26 @@ export async function POST(req: NextRequest) {
           pointsUsed: pointsDiscNGN,
           total: totalNGN,
           currency: data.currency,
-          addressSnapshot: addressSnapshot as Prisma.InputJsonValue,
-          shippingZoneId: shippingZoneIdToSave,
+          addressSnapshot: (addressSnapshot ?? undefined) as Prisma.InputJsonValue | undefined,
+          shippingMethodId: ship.methodId,
+          shippingMethodKind: ship.kind,
+          lagosLocationId: ship.lagosLocationId,
+          pickupLocationId: ship.pickupLocationId,
+          shippingQuoteStatus: ship.quoteStatus,
+          shippingQuoteLocked: ship.quoteLocked as Prisma.InputJsonValue | undefined,
+          shippingConsentAt: consentAt,
+          shippingConsentText: consentText,
+          collectionCode,
+          fxRateLocked: fx.rate,
+          fxRateSource: fx.source,
+          fxRateFetchedAt: fx.fetchedAt,
+          fxRateStale: fx.stale,
+          amountPaid: 0,
+          balance: totalNGN,
           couponId,
           couponCode: couponCode ?? null,
           paymentGateway,
-          paymentRef: paymentRef ?? null,
+          paymentRef,
           paymentStatus: PaymentStatus.PENDING,
           notes: data.notes ?? null,
           isGift: data.isGift ?? false,
@@ -360,19 +460,19 @@ export async function POST(req: NextRequest) {
       return orderRow;
     }, INTERACTIVE_TX);
 
-    if (userId && data.address?.saveAddress && data.address) {
+    if (userId && data.address?.saveAddress && data.address && !isPickupOption) {
       await prisma.address.create({
         data: {
           userId,
-          firstName: resolvedAddress.firstName,
-          lastName: resolvedAddress.lastName,
-          phone: resolvedAddress.phone,
-          street: resolvedAddress.line1,
-          addressLine2: resolvedAddress.line2 ?? null,
-          postalCode: resolvedAddress.postalCode ?? null,
-          city: resolvedAddress.city,
-          state: resolvedAddress.state,
-          country: resolvedAddress.country,
+          firstName: resolvedAddress!.firstName,
+          lastName: resolvedAddress!.lastName,
+          phone: resolvedAddress!.phone,
+          street: resolvedAddress!.line1,
+          addressLine2: resolvedAddress!.line2 ?? null,
+          postalCode: resolvedAddress!.postalCode ?? null,
+          city: resolvedAddress!.city,
+          state: resolvedAddress!.state,
+          country: resolvedAddress!.country,
           isDefault: false,
         },
       });
@@ -385,6 +485,12 @@ export async function POST(req: NextRequest) {
       orderNumber: order.orderNumber,
       totalNGN: order.total,
       currency: data.currency,
+      paymentRef: order.paymentRef,
+      shippingQuoteStatus: order.shippingQuoteStatus,
+      collectionCode: order.collectionCode,
+      fxRateLocked: order.fxRateLocked,
+      fxRateStale: order.fxRateStale,
+      quotePending: order.shippingQuoteStatus === ShippingQuoteStatus.QUOTE_PENDING,
     });
   } catch (e) {
     console.error("[orders/create]", e);

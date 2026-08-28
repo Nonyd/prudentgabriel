@@ -13,10 +13,23 @@ export const addressSchema = z.object({
   saveAddress: z.boolean().optional().default(false),
 });
 
+/** Pickup still needs a name and phone. Street is skipped. */
+export const pickupContactSchema = z.object({
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  phone: z.string().min(7),
+  country: z.string().length(2).default("NG"),
+  state: z.string().optional(),
+  city: z.string().optional(),
+});
+
 export const checkoutSchema = z.object({
   addressId: z.string().optional(),
   address: addressSchema.optional(),
-  shippingZoneId: z.string().min(1),
+  pickupContact: pickupContactSchema.optional(),
+  shippingOptionId: z.string().min(1),
+  /** @deprecated Slice K — use shippingOptionId */
+  shippingZoneId: z.string().optional(),
   notes: z.string().max(500).optional(),
   isGift: z.boolean().optional().default(false),
   giftMessage: z.string().max(200).optional(),
@@ -27,6 +40,9 @@ export const checkoutSchema = z.object({
   guestEmail: z.string().email().optional(),
   guestName: z.string().optional(),
   guestPhone: z.string().optional(),
+  shippingConsent: z.boolean().optional(),
+  shippingConsentText: z.string().optional(),
+  paymentRef: z.string().regex(/^PA-ORDER-[A-Z0-9-]+$/i).optional(),
 });
 
 export const guestCartLineSchema = z.object({

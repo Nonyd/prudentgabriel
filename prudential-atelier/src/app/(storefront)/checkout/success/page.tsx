@@ -18,6 +18,10 @@ function SuccessInner() {
     orderNumber: string;
     guestEmail: string | null;
     total: number;
+    paymentRef: string | null;
+    currency: string;
+    fxRateLocked: number | null;
+    collectionCode: string | null;
     items: { name: string; size: string | null; quantity: number; lineTotal: number }[];
     shippingZone: { name: string } | null;
     shippingAmount: number;
@@ -68,6 +72,19 @@ function SuccessInner() {
             <span>₦{Math.round(order.total).toLocaleString()}</span>
           </p>
         )}
+        {order?.paymentRef ? (
+          <p className="mt-3 text-xs text-charcoal-mid">
+            Payment reference: <span className="font-medium text-choc">{order.paymentRef}</span>
+          </p>
+        ) : null}
+        {order?.collectionCode ? (
+          <p className="mt-1 text-xs text-charcoal-mid">Collection code: {order.collectionCode}</p>
+        ) : null}
+        {order?.currency === "USD" && order.fxRateLocked != null ? (
+          <p className="mt-1 text-xs text-charcoal-mid">
+            ${(order.total * order.fxRateLocked).toFixed(2)} locked at ₦1 = ${order.fxRateLocked.toFixed(6)}
+          </p>
+        ) : null}
       </div>
       <div className="mt-8 flex flex-wrap justify-center gap-4">
         <Link href={trackHref} className="rounded-sm bg-choc px-6 py-2 text-sm text-cream">

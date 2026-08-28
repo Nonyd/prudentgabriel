@@ -1,21 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PointsType } from "@prisma/client";
+import { PointsType, ShippingQuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
-import { canTransitionOrder } from "@/lib/order-status";
+import {
+  assertCanMarkReadyForCollection,
+  assertCanMarkShipped,
+  canTransitionOrder,
+  isPickupFulfilment,
+  shippingRequiresTracking,
+} from "@/lib/order-status";
+import { generateCollectionCode, normalizeCollectionCode } from "@/lib/shipping/collection";
 import { awardPurchasePoints } from "@/lib/points";
-import { sendOrderShippedEmail, sendRtwOrderDeliveredEmail } from "@/lib/email";
+import { sendOrderShippedEmail, sendPickupReadyEmail, sendRtwOrderDeliveredEmail } from "@/lib/email";
 import { notifyOrderDelivered, notifyOrderShipped } from "@/lib/customer-notifications";
 import { deleteOrdersByIds } from "@/lib/order-delete";
+import { rtwHasOutstandingBalance } from "@/lib/payments/rtw-totals";
 import { z } from "zod";
 
 const patchSchema = z.object({
   status: z
-    .enum(["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"])
+    .enum([
+      "PENDING",
+      "CONFIRMED",
+      "PROCESSING",
+      "SHIPPED",
+      "DELIVERED",
+      "READY_FOR_COLLECTION",
+      "COLLECTED",
+      "CANCELLED",
+      "REFUNDED",
+    ])
     .optional(),
   adminNotes: z.string().optional().nullable(),
   trackingNumber: z.string().optional().nullable(),
   carrier: z.string().optional().nullable(),
+  collectionCode: z.string().optional(),
 });
 
 const recordRefundSchema = z.object({
@@ -92,8 +111,35 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const nextStatus = parsed.data.status;
   if (nextStatus !== undefined && nextStatus !== order.status) {
-    if (!canTransitionOrder(order.status, nextStatus)) {
+    if (!canTransitionOrder(order.status, nextStatus, { kind: order.shippingMethodKind })) {
       return NextResponse.json({ error: "Invalid status transition" }, { status: 400 });
+    }
+  }
+
+  if (nextStatus === "SHIPPED") {
+    const gateShip = assertCanMarkShipped(order);
+    if (!gateShip.ok) return NextResponse.json({ error: gateShip.error }, { status: 400 });
+    if (shippingRequiresTracking(order.shippingMethodKind) && !(parsed.data.trackingNumber ?? order.trackingNumber)) {
+      return NextResponse.json({ error: "Tracking number is required to mark shipped" }, { status: 400 });
+    }
+  }
+
+  if (nextStatus === "READY_FOR_COLLECTION") {
+    const gateReady = assertCanMarkReadyForCollection(order);
+    if (!gateReady.ok) return NextResponse.json({ error: gateReady.error }, { status: 400 });
+  }
+
+  if (nextStatus === "COLLECTED") {
+    if (!isPickupFulfilment(order.shippingMethodKind)) {
+      return NextResponse.json({ error: "Only pickup orders can be marked collected" }, { status: 400 });
+    }
+    if (rtwHasOutstandingBalance(order)) {
+      return NextResponse.json({ error: "Cannot collect while a balance is outstanding" }, { status: 400 });
+    }
+    const presented = parsed.data.collectionCode ? normalizeCollectionCode(parsed.data.collectionCode) : "";
+    const expected = order.collectionCode ? normalizeCollectionCode(order.collectionCode) : "";
+    if (!expected || presented !== expected) {
+      return NextResponse.json({ error: "Collection code does not match" }, { status: 400 });
     }
   }
 
@@ -108,6 +154,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   const firstName =
     userRow?.name?.split(" ")[0] ?? (order.guestName ?? "Customer").split(" ")[0] ?? "Customer";
 
+  const collectionCode =
+    parsed.data.status === "READY_FOR_COLLECTION"
+      ? order.collectionCode ?? generateCollectionCode()
+      : undefined;
+
   const updated = await prisma.$transaction(async (tx) => {
     const row = await tx.order.update({
       where: { id },
@@ -116,6 +167,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         ...(parsed.data.adminNotes !== undefined ? { adminNotes: parsed.data.adminNotes } : {}),
         ...(parsed.data.trackingNumber !== undefined ? { trackingNumber: parsed.data.trackingNumber } : {}),
         ...(parsed.data.carrier !== undefined ? { carrier: parsed.data.carrier } : {}),
+        ...(collectionCode ? { collectionCode, collectionReadyAt: new Date() } : {}),
+        ...(parsed.data.status === "COLLECTED" ? { collectedAt: new Date() } : {}),
+        ...(parsed.data.status === "SHIPPED" && order.shippingQuoteStatus === ShippingQuoteStatus.QUOTED
+          ? {}
+          : {}),
       },
     });
 
@@ -130,6 +186,22 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
     return row;
   });
+
+  if (parsed.data.status === "READY_FOR_COLLECTION" && email) {
+    const pickup = order.pickupLocationId
+      ? await prisma.pickupLocation.findUnique({ where: { id: order.pickupLocationId } })
+      : await prisma.pickupLocation.findFirst({ where: { isActive: true }, orderBy: { sortOrder: "asc" } });
+    void sendPickupReadyEmail({
+      to: email,
+      firstName,
+      orderNumber: order.orderNumber,
+      collectionCode: updated.collectionCode ?? collectionCode ?? "",
+      pickupName: pickup?.name ?? "the atelier",
+      address: pickup?.address ?? "",
+      hours: pickup?.hours ?? "",
+      instructions: pickup?.instructions,
+    });
+  }
 
   if (parsed.data.status === "SHIPPED" && email) {
     void sendOrderShippedEmail({

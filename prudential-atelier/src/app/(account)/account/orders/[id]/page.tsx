@@ -32,7 +32,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       <p className="text-sm text-charcoal-light">{new Date(order.createdAt).toLocaleString()}</p>
 
       <div className="mt-8 rounded-sm border border-border bg-cream p-6">
-        <OrderTimeline status={order.status} />
+        <OrderTimeline status={order.status} pickup={order.shippingMethodKind === "PICKUP"} />
       </div>
 
       <div className="mt-8 overflow-x-auto">
@@ -72,6 +72,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         {order.discount > 0 && <p>Coupon −₦{Math.round(order.discount).toLocaleString()}</p>}
         {order.pointsDiscountNGN > 0 && <p>Points −₦{Math.round(order.pointsDiscountNGN).toLocaleString()}</p>}
         <p className="mt-2 font-display text-xl text-wine">₦{Math.round(order.total).toLocaleString()}</p>
+        {order.paymentRef ? <p className="mt-2 text-left text-xs text-charcoal-mid">Payment reference: {order.paymentRef}</p> : null}
+        {order.collectionCode ? (
+          <p className="mt-1 text-left text-xs text-charcoal-mid">Collection code: {order.collectionCode}</p>
+        ) : null}
+        {order.currency === "USD" && order.fxRateLocked != null ? (
+          <p className="mt-1 text-left text-xs text-charcoal-mid">
+            ${((order.total * order.fxRateLocked)).toFixed(2)} at the rate locked on this order (₦1 = $
+            {order.fxRateLocked.toFixed(6)})
+          </p>
+        ) : null}
       </div>
 
       {order.shippingZone && (

@@ -103,6 +103,12 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     migrated: true,
   },
   {
+    name: "uncollected-pickup",
+    schedule: "0 10 * * *",
+    description: "Remind customers of uncollected store pickup after N days",
+    migrated: true,
+  },
+  {
     name: "email-outbox",
     schedule: "* * * * *",
     description:

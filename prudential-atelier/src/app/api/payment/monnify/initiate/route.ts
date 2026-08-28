@@ -5,6 +5,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { initializeTransaction } from "@/lib/payments/monnify";
+import { canAcceptRtwPayment, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
+import { generatePaymentReference } from "@/lib/payments/index";
 
 const bodySchema = z.object({
   orderId: z.string().min(1),
@@ -27,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   const { orderId, guestEmail } = parsed.data;
   const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order || order.paymentStatus !== PaymentStatus.PENDING) {
+  if (!order || !canAcceptRtwPayment(order)) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
@@ -49,9 +51,13 @@ export async function POST(req: NextRequest) {
   const customerName =
     session?.user?.name ?? order.guestName ?? customerEmail.split("@")[0] ?? "Customer";
 
+  const chargeNGN = rtwChargeAmountNGN(order);
+  const reference =
+    order.paymentStatus === PaymentStatus.PAID ? generatePaymentReference("BAL") : order.orderNumber;
+
   const init = await initializeTransaction({
-    amountNGN: Math.round(order.total),
-    reference: order.orderNumber,
+    amountNGN: Math.round(chargeNGN),
+    reference,
     customerEmail,
     customerName,
     description: `Prudential Atelier Order #${order.orderNumber}`,
@@ -60,7 +66,7 @@ export async function POST(req: NextRequest) {
 
   await prisma.order.update({
     where: { id: order.id },
-    data: { paymentRef: order.orderNumber },
+    data: { paymentRef: reference },
   });
 
   return NextResponse.json({ checkoutUrl: init.checkoutUrl });

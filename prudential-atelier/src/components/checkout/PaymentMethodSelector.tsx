@@ -15,6 +15,8 @@ type Props = {
   receiptUrl?: string | null;
   onReceiptUploaded?: (url: string) => void;
   guestEmail?: string | null;
+  paymentReference?: string | null;
+  amountNGN?: number | null;
 };
 
 const GATEWAY_META: Record<
@@ -54,6 +56,8 @@ export function PaymentMethodSelector({
   receiptUrl,
   onReceiptUploaded,
   guestEmail,
+  paymentReference,
+  amountNGN,
 }: Props) {
   const { status } = useSession();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -69,10 +73,14 @@ export function PaymentMethodSelector({
       .then((r) => r.json())
       .then((data: {
         bank?: { bankName: string; accountNumber: string; accountName: string };
+        banks?: Record<"NGN" | "USD", { bankName: string; accountNumber: string; accountName: string }>;
         gateways?: Record<PaymentCurrency, PaymentGatewayType[]>;
       }) => {
         if (cancelled) return;
-        if (data.bank) setBank(data.bank);
+        const match =
+          currency === "USD" ? data.banks?.USD : currency === "NGN" ? data.banks?.NGN ?? data.bank : undefined;
+        if (match) setBank(match);
+        else setBank({ bankName: "", accountNumber: "", accountName: "" });
         setGateways(data.gateways?.[currency] ?? []);
         setLoaded(true);
       })
@@ -156,7 +164,7 @@ export function PaymentMethodSelector({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-body text-sm text-choc">Direct Bank Transfer</p>
-                      <span className="font-sans text-[10px] uppercase text-lightbr">NGN</span>
+                      <span className="font-sans text-[10px] uppercase text-lightbr">{currency}</span>
                     </div>
                     <p className="mt-0.5 font-body text-xs text-text-light">Upload proof of payment</p>
                   </div>
@@ -173,6 +181,19 @@ export function PaymentMethodSelector({
                       <span className="text-text-light">Name:</span> {bank.accountName}
                     </p>
                     <p className="mt-2 font-serif text-lg text-choc">{formatPrice(amount, currency)}</p>
+                    {currency === "USD" && amountNGN != null ? (
+                      <p className="mt-1 font-body text-xs text-text-light">
+                        Equivalent ₦{Math.round(amountNGN).toLocaleString("en-NG")} at the rate locked on this order.
+                      </p>
+                    ) : null}
+                    {paymentReference ? (
+                      <p className="mt-3 rounded-sm border border-choc/20 bg-cream px-3 py-2 font-sans text-sm text-choc">
+                        Payment reference: <span className="font-medium tracking-wide">{paymentReference}</span>
+                        <span className="mt-1 block font-body text-xs font-normal text-text-light">
+                          Put this in your transfer narration so we can match your payment.
+                        </span>
+                      </p>
+                    ) : null}
                     <input
                       ref={fileRef}
                       type="file"

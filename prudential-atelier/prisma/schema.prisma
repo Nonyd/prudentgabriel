@@ -314,6 +314,14 @@ model Product {
   isBestSeller   Boolean         @default(false)
   lowStockAt     Int             @default(3)
 
+  /// Fallback parcel weight/dims when a variant leaves them blank. Carriers bill the greater of actual vs volumetric.
+  defaultWeightKg  Float?
+  defaultLengthCm  Float?
+  defaultWidthCm   Float?
+  defaultHeightCm  Float?
+  packagingProfileId String?
+  packagingProfile   PackagingProfile? @relation(fields: [packagingProfileId], references: [id], onDelete: SetNull)
+
   images         ProductImage[]
   variants       ProductVariant[]
   colors         ProductColor[]
@@ -330,6 +338,7 @@ model Product {
 
   @@index([isPublished, createdAt])
   @@index([isPublished, category])
+  @@index([packagingProfileId])
 }
 
 model Collection {
@@ -392,6 +401,11 @@ model ProductVariant {
   stock        Int         @default(0)
   lowStockAt   Int         @default(3)
   sortOrder    Int         @default(0)
+  /// Size-specific parcel; null falls back to Product.default* then the default packaging profile.
+  weightKg     Float?
+  lengthCm     Float?
+  widthCm      Float?
+  heightCm     Float?
   productId    String
   product      Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
   cartItems    CartItem[]
@@ -514,6 +528,31 @@ model Order {
   addressSnapshot  Json?
   shippingZoneId   String?
   shippingZone     ShippingZone?    @relation(fields: [shippingZoneId], references: [id])
+  shippingMethodId   String?
+  shippingMethod     ShippingMethod? @relation(fields: [shippingMethodId], references: [id])
+  shippingMethodKind ShippingMethodKind?
+  lagosLocationId    String?
+  lagosLocation      LagosLocation?  @relation(fields: [lagosLocationId], references: [id])
+  pickupLocationId   String?
+  pickupLocation     PickupLocation? @relation(fields: [pickupLocationId], references: [id])
+  shippingQuoteStatus ShippingQuoteStatus @default(NONE)
+  /// Locked carrier quote at order creation: amount, currency, service, billableKg, quotedAt.
+  shippingQuoteLocked Json?
+  shippingConsentAt   DateTime?
+  /// Exact consent wording shown at checkout (not a boolean).
+  shippingConsentText String?         @db.Text
+  collectionCode      String?
+  collectionReadyAt   DateTime?
+  collectedAt         DateTime?
+  collectionRemindedAt DateTime?
+  /// USD per ₦1, locked at checkout. Convert with convertFromNGN.
+  fxRateLocked        Float?
+  fxRateSource        String?
+  fxRateFetchedAt     DateTime?
+  fxRateStale         Boolean         @default(false)
+  /// Ledger denormalised cache. Writer: recomputeRtwOrderTotals.
+  amountPaid          Float           @default(0)
+  balance             Float           @default(0)
   couponId         String?
   coupon           Coupon?          @relation(fields: [couponId], references: [id])
   couponCode       String?
@@ -542,6 +581,8 @@ model Order {
 
   @@index([userId])
   @@index([createdAt])
+  @@index([shippingQuoteStatus])
+  @@index([status, collectionReadyAt])
 }
 
 model OrderItem {
@@ -732,6 +773,96 @@ model ShippingZone {
   orders        Order[]
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// One row per delivery mode. Lagos prices live on LagosLocation; GIG/DHL prices are live-rated.
+model ShippingMethod {
+  id            String             @id @default(cuid())
+  kind          ShippingMethodKind @unique
+  name          String
+  description   String?            @db.Text
+  isActive      Boolean            @default(true)
+  sortOrder     Int                @default(0)
+  markupKind    ShippingMarkupKind?
+  markupValue   Float?
+  defaultService String?
+  pickupLocations PickupLocation[]
+  lagosLocations  LagosLocation[]
+  orders          Order[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+}
+
+model PickupLocation {
+  id               String         @id @default(cuid())
+  shippingMethodId String
+  shippingMethod   ShippingMethod @relation(fields: [shippingMethodId], references: [id], onDelete: Cascade)
+  name             String
+  address          String         @db.Text
+  hours            String
+  instructions     String?        @db.Text
+  isActive         Boolean        @default(true)
+  sortOrder        Int            @default(0)
+  orders           Order[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([shippingMethodId, isActive])
+}
+
+model LagosLocation {
+  id               String         @id @default(cuid())
+  shippingMethodId String
+  shippingMethod   ShippingMethod @relation(fields: [shippingMethodId], references: [id], onDelete: Cascade)
+  name             String
+  price            Float
+  freeAboveNGN     Float?
+  etaText          String
+  isActive         Boolean        @default(true)
+  sortOrder        Int            @default(0)
+  orders           Order[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([shippingMethodId, isActive, sortOrder])
+}
+
+/// Outer box DHL/GIG charge against. Actual garment weight is added on top.
+model PackagingProfile {
+  id        String    @id @default(cuid())
+  name      String
+  weightKg  Float
+  lengthCm  Float
+  widthCm   Float
+  heightCm  Float
+  isDefault Boolean   @default(false)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model ShippingRateLog {
+  id         String   @id @default(cuid())
+  carrier    String
+  request    Json
+  response   Json?
+  durationMs Int
+  outcome    String
+  error      String?
+  createdAt  DateTime @default(now())
+
+  @@index([carrier, createdAt])
+}
+
+model ExchangeRateSnapshot {
+  id        String   @id @default(cuid())
+  pair      String   @unique
+  /// USD per ₦1 (same unit as SiteSetting exchange_rate_usd).
+  rate      Float
+  source    String
+  fetchedAt DateTime
+  stale     Boolean  @default(false)
   updatedAt DateTime @updatedAt
 }
 
@@ -1172,10 +1303,31 @@ enum OrderStatus {
   PROCESSING
   SHIPPED
   DELIVERED
+  READY_FOR_COLLECTION
+  COLLECTED
   CANCELLED
   REFUNDED
   /// Terminal: delivered, receipt confirmed, balance zero, no open alterations.
   ARCHIVED
+}
+
+enum ShippingMethodKind {
+  PICKUP
+  LOCAL_FLAT
+  CARRIER_GIG
+  CARRIER_DHL
+}
+
+enum ShippingQuoteStatus {
+  NONE
+  QUOTE_PENDING
+  QUOTED
+  PAID
+}
+
+enum ShippingMarkupKind {
+  PERCENT
+  FLAT
 }
 
 enum PaymentStatus {

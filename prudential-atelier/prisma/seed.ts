@@ -18,6 +18,8 @@ import {
   SettingGroup,
   SettingType,
   GalleryCategory,
+  ShippingMethodKind,
+  ShippingMarkupKind,
 } from "@prisma/client";
 import { seedBootstrapAdmin } from "./bootstrap-admin";
 
@@ -76,6 +78,110 @@ async function upsertShippingZones() {
       await prisma.shippingZone.create({ data: z });
     }
   }
+}
+
+async function upsertShippingMethods() {
+  await prisma.packagingProfile.upsert({
+    where: { id: "pkg-garment-box" },
+    update: {},
+    create: {
+      id: "pkg-garment-box",
+      name: "Garment box",
+      weightKg: 0.35,
+      lengthCm: 40,
+      widthCm: 30,
+      heightCm: 12,
+      isDefault: true,
+    },
+  });
+
+  await prisma.shippingMethod.upsert({
+    where: { id: "ship-pickup" },
+    update: {},
+    create: {
+      id: "ship-pickup",
+      kind: ShippingMethodKind.PICKUP,
+      name: "Collect from the atelier",
+      description: "Collect in person. We will email you a collection code when the piece is ready.",
+      isActive: true,
+      sortOrder: 0,
+    },
+  });
+  await prisma.shippingMethod.upsert({
+    where: { id: "ship-lagos" },
+    update: {},
+    create: {
+      id: "ship-lagos",
+      kind: ShippingMethodKind.LOCAL_FLAT,
+      name: "Lagos delivery",
+      description: "Flat-rate delivery within Lagos. Add or edit locations under Shipping — no deploy needed.",
+      isActive: true,
+      sortOrder: 1,
+    },
+  });
+  await prisma.shippingMethod.upsert({
+    where: { id: "ship-gig" },
+    update: {},
+    create: {
+      id: "ship-gig",
+      kind: ShippingMethodKind.CARRIER_GIG,
+      name: "GIG Logistics",
+      description:
+        "Nigeria outside Lagos. Live-rated when the corporate wallet is configured; otherwise we quote personally.",
+      isActive: true,
+      sortOrder: 2,
+      markupKind: ShippingMarkupKind.PERCENT,
+      markupValue: 10,
+      defaultService: "standard",
+    },
+  });
+  await prisma.shippingMethod.upsert({
+    where: { id: "ship-dhl" },
+    update: {},
+    create: {
+      id: "ship-dhl",
+      kind: ShippingMethodKind.CARRIER_DHL,
+      name: "DHL Express",
+      description:
+        "International. Live-rated when the DHL account is configured; otherwise we quote personally. DDU — duties are the recipient's.",
+      isActive: true,
+      sortOrder: 3,
+      markupKind: ShippingMarkupKind.PERCENT,
+      markupValue: 15,
+      defaultService: "EXPRESS WORLDWIDE",
+    },
+  });
+
+  await prisma.pickupLocation.upsert({
+    where: { id: "pickup-surulere" },
+    update: {},
+    create: {
+      id: "pickup-surulere",
+      shippingMethodId: "ship-pickup",
+      name: "Surulere atelier",
+      address: "14 Bode Thomas Street, Surulere, Lagos, Nigeria",
+      hours: "Monday–Friday 9:00–18:00, Saturday 10:00–16:00",
+      instructions: "Bring your collection code and a matching ID. We hold pieces for 14 days.",
+      isActive: true,
+      sortOrder: 0,
+    },
+  });
+
+  const lagosExpress = await prisma.shippingZone.findFirst({ where: { name: "Lagos — Express" } });
+  await prisma.lagosLocation.upsert({
+    where: { id: "lagos-from-express" },
+    update: {},
+    create: {
+      id: "lagos-from-express",
+      shippingMethodId: "ship-lagos",
+      name: "Lagos — Express",
+      price: lagosExpress?.flatRateNGN ?? 3500,
+      freeAboveNGN: lagosExpress?.freeAboveNGN ?? 250_000,
+      etaText: lagosExpress?.estimatedDays ?? "2–4 business days",
+      isActive: true,
+      sortOrder: 0,
+    },
+  });
 }
 
 async function upsertConsultants() {
@@ -277,13 +383,42 @@ async function upsertSiteSettings() {
     { key: "monnify_secret_key", value: "", group: SettingGroup.PAYMENTS, label: "Monnify Secret Key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 12 },
     { key: "monnify_contract_code", value: "", group: SettingGroup.PAYMENTS, label: "Monnify Contract Code", type: SettingType.TEXT, isPublic: false, sortOrder: 13 },
     { key: "monnify_environment", value: "sandbox", group: SettingGroup.PAYMENTS, label: "Monnify Environment", type: SettingType.SELECT, isPublic: false, sortOrder: 14 },
-    { key: "bank_name", value: "", group: SettingGroup.PAYMENTS, label: "Bank Transfer — Bank Name", type: SettingType.TEXT, isPublic: true, sortOrder: 20 },
-    { key: "bank_account_number", value: "", group: SettingGroup.PAYMENTS, label: "Bank Transfer — Account Number", type: SettingType.TEXT, isPublic: true, sortOrder: 21 },
-    { key: "bank_account_name", value: "", group: SettingGroup.PAYMENTS, label: "Bank Transfer — Account Name", type: SettingType.TEXT, isPublic: true, sortOrder: 22 },
+    { key: "bank_name", value: "", group: SettingGroup.PAYMENTS, label: "Bank Transfer — Bank Name (NGN)", type: SettingType.TEXT, isPublic: true, sortOrder: 20 },
+    { key: "bank_account_number", value: "", group: SettingGroup.PAYMENTS, label: "Bank Transfer — Account Number (NGN)", type: SettingType.TEXT, isPublic: true, sortOrder: 21 },
+    { key: "bank_account_name", value: "", group: SettingGroup.PAYMENTS, label: "Bank Transfer — Account Name (NGN)", type: SettingType.TEXT, isPublic: true, sortOrder: 22 },
+    { key: "bank_name_usd", value: "", group: SettingGroup.PAYMENTS, label: "Bank Transfer — Bank Name (USD)", type: SettingType.TEXT, isPublic: true, sortOrder: 23 },
+    { key: "bank_account_number_usd", value: "", group: SettingGroup.PAYMENTS, label: "Bank Transfer — Account Number (USD)", type: SettingType.TEXT, isPublic: true, sortOrder: 24 },
+    { key: "bank_account_name_usd", value: "", group: SettingGroup.PAYMENTS, label: "Bank Transfer — Account Name (USD)", type: SettingType.TEXT, isPublic: true, sortOrder: 25 },
     { key: "bespoke_deposit_percent", value: "70", group: SettingGroup.PAYMENTS, label: "Bespoke Deposit %", type: SettingType.NUMBER, isPublic: false, sortOrder: 25 },
     { key: "alteration_warranty_days", value: "30", group: SettingGroup.PAYMENTS, label: "Alteration warranty (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 26 },
     { key: "exchange_rate_usd", value: "0.00065", group: SettingGroup.PAYMENTS, label: "USD Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 30 },
     { key: "exchange_rate_gbp", value: "0.00052", group: SettingGroup.PAYMENTS, label: "GBP Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 31 },
+    {
+      key: "shipping_quote_pending_consent",
+      value:
+        "We'll confirm your shipping personally. Rates to your destination aren't available automatically right now — a representative will contact you within one business day to confirm the cost and method before we dispatch.",
+      group: SettingGroup.SHIPPING,
+      label: "Manual quote — consent wording",
+      type: SettingType.TEXTAREA,
+      isPublic: true,
+      sortOrder: 0,
+    },
+    {
+      key: "shipping_ddu_disclosure",
+      value:
+        "International orders may attract import duties and taxes on arrival, payable by the recipient. These are set by your country's customs authority and are not included in the price.",
+      group: SettingGroup.SHIPPING,
+      label: "International duties (DDU) disclosure",
+      type: SettingType.TEXTAREA,
+      isPublic: true,
+      sortOrder: 1,
+    },
+    { key: "shipping_uncollected_days", value: "7", group: SettingGroup.SHIPPING, label: "Uncollected pickup reminder (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 2 },
+    { key: "gig_api_key", value: "", group: SettingGroup.SHIPPING, label: "GIG API key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 10 },
+    { key: "gig_wallet_id", value: "", group: SettingGroup.SHIPPING, label: "GIG wallet ID", type: SettingType.TEXT, isPublic: false, sortOrder: 11 },
+    { key: "dhl_site_id", value: "", group: SettingGroup.SHIPPING, label: "DHL site ID", type: SettingType.TEXT, isPublic: false, sortOrder: 20 },
+    { key: "dhl_password", value: "", group: SettingGroup.SHIPPING, label: "DHL password", type: SettingType.PASSWORD, isPublic: false, sortOrder: 21 },
+    { key: "dhl_account_number", value: "", group: SettingGroup.SHIPPING, label: "DHL account number", type: SettingType.TEXT, isPublic: false, sortOrder: 22 },
     { key: "email_from_name", value: "Prudential Atelier", group: SettingGroup.EMAIL, label: "From Name", type: SettingType.TEXT, isPublic: false, sortOrder: 1 },
     { key: "email_from_address", value: "noreply@prudentgabriel.com", group: SettingGroup.EMAIL, label: "From Email", type: SettingType.TEXT, isPublic: false, sortOrder: 2 },
     { key: "email_reply_to", value: "hello@prudentgabriel.com", group: SettingGroup.EMAIL, label: "Reply-To", type: SettingType.TEXT, isPublic: false, sortOrder: 3 },
@@ -600,6 +735,7 @@ async function main() {
   await seedBootstrapAdmin(prisma);
 
   await upsertShippingZones();
+  await upsertShippingMethods();
   await upsertConsultants();
   await upsertSiteSettings();
 

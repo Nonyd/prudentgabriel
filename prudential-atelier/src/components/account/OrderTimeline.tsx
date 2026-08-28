@@ -3,22 +3,39 @@
 import type { OrderStatus } from "@prisma/client";
 import clsx from "clsx";
 
-const LABELS = ["Placed", "Confirmed", "Processing", "Shipped", "Delivered"] as const;
-const STATUSES: OrderStatus[] = ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED"];
+const DELIVERY_LABELS = ["Placed", "Confirmed", "Processing", "Shipped", "Delivered"] as const;
+const DELIVERY_STATUSES: OrderStatus[] = ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED"];
 
-function stepIndex(status: OrderStatus): number {
+const PICKUP_LABELS = ["Placed", "Confirmed", "Processing", "Ready", "Collected"] as const;
+const PICKUP_STATUSES: OrderStatus[] = [
+  "PENDING",
+  "CONFIRMED",
+  "PROCESSING",
+  "READY_FOR_COLLECTION",
+  "COLLECTED",
+];
+
+function stepIndex(status: OrderStatus, statuses: OrderStatus[]): number {
   if (status === "CANCELLED" || status === "REFUNDED") return 0;
-  const i = STATUSES.indexOf(status);
+  const i = statuses.indexOf(status);
   return i === -1 ? 0 : i;
 }
 
-export function OrderTimeline({ status }: { status: OrderStatus }) {
-  const current = stepIndex(status);
+export function OrderTimeline({
+  status,
+  pickup = false,
+}: {
+  status: OrderStatus;
+  pickup?: boolean;
+}) {
+  const labels = pickup ? PICKUP_LABELS : DELIVERY_LABELS;
+  const statuses = pickup ? PICKUP_STATUSES : DELIVERY_STATUSES;
+  const current = stepIndex(status, statuses);
   const cancelled = status === "CANCELLED" || status === "REFUNDED";
 
   return (
     <div className="flex justify-between gap-1 overflow-x-auto pb-2">
-      {LABELS.map((label, idx) => {
+      {labels.map((label, idx) => {
         const done = idx < current;
         const active = idx === current;
         return (

@@ -1,7 +1,13 @@
 import { prisma } from "@/lib/prisma";
-import { ShippingZonesClient } from "@/components/admin/ShippingZonesClient";
+import { ShippingAdminClient } from "@/components/admin/ShippingAdminClient";
 
 export default async function AdminShippingPage() {
-  const zones = await prisma.shippingZone.findMany({ orderBy: [{ name: "asc" }] });
-  return <ShippingZonesClient initialZones={zones} />;
+  const methods = await prisma.shippingMethod.findMany({
+    include: {
+      pickupLocations: { orderBy: { sortOrder: "asc" } },
+      lagosLocations: { orderBy: { sortOrder: "asc" } },
+    },
+    orderBy: { sortOrder: "asc" },
+  });
+  return <ShippingAdminClient initialMethods={methods} />;
 }

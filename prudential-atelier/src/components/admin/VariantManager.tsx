@@ -115,7 +115,7 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
       </div>
 
       <div className="overflow-x-auto rounded-sm border border-sand">
-        <table className="w-full min-w-[720px] text-left text-xs text-charcoal">
+        <table className="w-full min-w-[980px] text-left text-xs text-charcoal">
           <thead className="border-b border-sand bg-[#FAFAFA] font-label uppercase tracking-wide text-[#A8A8A4]">
             <tr>
               <th className="p-2">Size</th>
@@ -126,6 +126,10 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
               <th className="p-2">Sale ₦</th>
               <th className="p-2">Stock</th>
               <th className="p-2">Low at</th>
+              <th className="p-2">kg</th>
+              <th className="p-2">L</th>
+              <th className="p-2">W</th>
+              <th className="p-2">H</th>
               <th className="p-2" />
             </tr>
           </thead>
@@ -205,6 +209,50 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
                     className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
                     value={v.lowStockAt}
                     onChange={(e) => update(i, { lowStockAt: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
+                  />
+                </td>
+                <td className="p-1">
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
+                    value={v.weightKg ?? ""}
+                    onChange={(e) =>
+                      update(i, { weightKg: e.target.value === "" ? undefined : Number(e.target.value) })
+                    }
+                  />
+                </td>
+                <td className="p-1">
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
+                    value={v.lengthCm ?? ""}
+                    onChange={(e) =>
+                      update(i, { lengthCm: e.target.value === "" ? undefined : Number(e.target.value) })
+                    }
+                  />
+                </td>
+                <td className="p-1">
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
+                    value={v.widthCm ?? ""}
+                    onChange={(e) =>
+                      update(i, { widthCm: e.target.value === "" ? undefined : Number(e.target.value) })
+                    }
+                  />
+                </td>
+                <td className="p-1">
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
+                    value={v.heightCm ?? ""}
+                    onChange={(e) =>
+                      update(i, { heightCm: e.target.value === "" ? undefined : Number(e.target.value) })
+                    }
                   />
                 </td>
                 <td className="p-1 text-center">

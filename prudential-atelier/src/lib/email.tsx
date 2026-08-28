@@ -23,6 +23,8 @@ import LoyaltyTierUpgradeEmail from "@/emails/LoyaltyTierUpgradeEmail";
 import ReferralRewardEmail from "@/emails/ReferralRewardEmail";
 import StageAssignmentEmail from "@/emails/StageAssignmentEmail";
 import RtwOrderDeliveredEmail from "@/emails/RtwOrderDeliveredEmail";
+import PickupReadyEmail from "@/emails/PickupReadyEmail";
+import ShippingQuoteEmail from "@/emails/ShippingQuoteEmail";
 import BespokeDeliveredEmail, { subjectBespokeDelivered } from "@/emails/BespokeDeliveredEmail";
 import ReceiptReminderEmail, { subjectReceiptReminder } from "@/emails/ReceiptReminderEmail";
 import type { LoyaltyTier } from "@prisma/client";
@@ -215,6 +217,8 @@ export async function sendOrderConfirmationEmail(params: {
   subtotalNGN?: number;
   addressSnapshot?: Record<string, string>;
   estimatedDays?: string;
+  dduDisclosure?: string;
+  quotePending?: boolean;
 }): Promise<void> {
   const subtotal =
     params.subtotalNGN ??
@@ -231,6 +235,8 @@ export async function sendOrderConfirmationEmail(params: {
       totalNGN={params.totalNGN}
       addressSnapshot={params.addressSnapshot}
       estimatedDays={params.estimatedDays}
+      dduDisclosure={params.dduDisclosure}
+      quotePending={params.quotePending}
     />,
   );
   await sendEmail({
@@ -424,6 +430,100 @@ export async function sendOrderShippedEmail(params: {
     html,
     template: "order-shipped",
     idempotencyKey: `order-shipped:${params.orderNumber}`,
+    relatedType: "Order",
+    relatedId: params.orderNumber,
+  });
+}
+
+export async function sendPickupReadyEmail(params: {
+  to: string;
+  firstName: string;
+  orderNumber: string;
+  collectionCode: string;
+  pickupName: string;
+  address: string;
+  hours: string;
+  instructions?: string | null;
+}): Promise<void> {
+  const html = await renderBrandedEmail(
+    <PickupReadyEmail
+      firstName={params.firstName}
+      orderNumber={params.orderNumber}
+      collectionCode={params.collectionCode}
+      pickupName={params.pickupName}
+      address={params.address}
+      hours={params.hours}
+      instructions={params.instructions}
+    />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: `Your piece is ready — #${params.orderNumber}`,
+    html,
+    template: "pickup-ready",
+    idempotencyKey: `pickup-ready:${params.orderNumber}`,
+    relatedType: "Order",
+    relatedId: params.orderNumber,
+  });
+}
+
+export async function sendUncollectedPickupEmail(params: {
+  to: string;
+  firstName: string;
+  orderNumber: string;
+  collectionCode: string;
+  days: number;
+}): Promise<void> {
+  const html = wrapHtml(
+    "Your piece is still waiting",
+    `<p>Hi ${escapeHtml(params.firstName)},</p>
+     <p>Order <strong>#${escapeHtml(params.orderNumber)}</strong> has been ready for collection for ${params.days} days.</p>
+     <p>Your collection code is <strong>${escapeHtml(params.collectionCode)}</strong>.</p>
+     <p>Please collect it soon, or write to us if you need a little more time.</p>`,
+    "relationship",
+  );
+  await sendEmail({
+    to: params.to,
+    subject: `Still waiting for you — #${params.orderNumber}`,
+    html,
+    template: "uncollected-pickup",
+    idempotencyKey: `uncollected-pickup:${params.orderNumber}`,
+    relatedType: "Order",
+    relatedId: params.orderNumber,
+    priority: 0,
+  });
+}
+
+export async function sendShippingQuoteEmail(params: {
+  to: string;
+  firstName: string;
+  orderNumber: string;
+  amountNGN: number;
+  currency: string;
+  paymentRef: string;
+  bank: { bankName: string; accountNumber: string; accountName: string };
+  payUrl: string;
+}): Promise<void> {
+  const amountLabel =
+    params.currency === "USD"
+      ? `$${params.amountNGN.toLocaleString("en-US")}`
+      : `₦${Math.round(params.amountNGN).toLocaleString("en-NG")}`;
+  const html = await renderBrandedEmail(
+    <ShippingQuoteEmail
+      firstName={params.firstName}
+      orderNumber={params.orderNumber}
+      amountLabel={amountLabel}
+      paymentRef={params.paymentRef}
+      bank={params.bank}
+      payUrl={params.payUrl}
+    />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: `Shipping for order #${params.orderNumber}`,
+    html,
+    template: "shipping-quote",
+    idempotencyKey: `shipping-quote:${params.orderNumber}:${params.paymentRef}`,
     relatedType: "Order",
     relatedId: params.orderNumber,
   });

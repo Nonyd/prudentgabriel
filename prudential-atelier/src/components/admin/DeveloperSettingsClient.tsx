@@ -172,7 +172,15 @@ export function DeveloperSettingsClient() {
   };
 
   const bankFields = useMemo(
-    () => ["bank_name", "bank_account_number", "bank_account_name"] as const,
+    () =>
+      [
+        "bank_name",
+        "bank_account_number",
+        "bank_account_name",
+        "bank_name_usd",
+        "bank_account_number_usd",
+        "bank_account_name_usd",
+      ] as const,
     [],
   );
 
@@ -253,7 +261,10 @@ export function DeveloperSettingsClient() {
 
       <section className="card-surface p-6">
         <h2 className="font-serif text-lg font-medium text-choc">Bank transfer</h2>
-        <p className="mt-1 font-sans text-xs text-text-mid">Shown to customers who pay by direct bank transfer.</p>
+        <p className="mt-1 font-sans text-xs text-text-mid">
+          NGN (First Bank) and USD (domiciliary). Checkout shows only the account that matches the cart currency.
+          GBP stays card-only.
+        </p>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {bankFields.map((key) => (
             <div key={key}>
@@ -268,6 +279,8 @@ export function DeveloperSettingsClient() {
         <h2 className="font-serif text-lg font-medium text-choc">Exchange rates</h2>
         <p className="mt-1 font-sans text-xs text-text-mid">
           Manual rates per ₦1 (e.g. USD 0.00065 means ₦1 = $0.00065). Overrides Open Exchange Rates when set.
+          Checkout locks the rate onto the order. If the live feed is down, the last cached rate is used and the
+          order is flagged stale — checkout is never blocked.
         </p>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {(["exchange_rate_usd", "exchange_rate_gbp"] as const).map((key) => (

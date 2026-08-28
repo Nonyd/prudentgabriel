@@ -81,8 +81,10 @@ function yAxisMoney(v: number): string {
 function statusBadgeClass(status: OrderStatus): string {
   switch (status) {
     case "DELIVERED":
+    case "COLLECTED":
       return "bg-[#E8F5E9] text-[#1B5E20]";
     case "SHIPPED":
+    case "READY_FOR_COLLECTION":
       return "bg-[#F0E8FF] text-[#6B3FAD]";
     case "PROCESSING":
       return "bg-[#FFF3E0] text-[#C45E0A]";

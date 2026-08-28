@@ -25,6 +25,8 @@ type OrderConfirmationEmailProps = {
   totalNGN: number;
   addressSnapshot?: Record<string, string>;
   estimatedDays?: string;
+  dduDisclosure?: string;
+  quotePending?: boolean;
 };
 
 export default function OrderConfirmationEmail({
@@ -38,6 +40,8 @@ export default function OrderConfirmationEmail({
   totalNGN,
   addressSnapshot,
   estimatedDays,
+  dduDisclosure,
+  quotePending,
 }: OrderConfirmationEmailProps) {
   const addr = addressSnapshot ?? {};
   const line = (i: OrderItemLine) => {
@@ -113,8 +117,16 @@ export default function OrderConfirmationEmail({
           </Text>
         </Section>
       ) : null}
+      {quotePending ? (
+        <Text style={{ marginTop: 16, fontSize: 14, color: "#664c2a" }}>
+          Shipping will be confirmed with you within one business day. You have paid for the garment only.
+        </Text>
+      ) : null}
       {estimatedDays ? (
         <Text style={{ marginTop: 16, fontSize: 14 }}>Estimated delivery: {estimatedDays}</Text>
+      ) : null}
+      {dduDisclosure ? (
+        <Text style={{ marginTop: 16, fontSize: 13, color: "#555", lineHeight: 1.5 }}>{dduDisclosure}</Text>
       ) : null}
       <EmailButton href={`${APP}/account/orders`}>Track your order</EmailButton>
       <Text style={{ marginTop: 24, fontSize: 13, color: "#555" }}>

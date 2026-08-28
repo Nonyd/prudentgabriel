@@ -13,8 +13,11 @@ import { sendOrderConfirmationEmail, sendRtwFulfilmentRefusedEmails } from "@/li
 import { notifyOrderConfirmed, notifyPaymentConfirmed } from "@/lib/customer-notifications";
 import { createNotification } from "@/lib/notifications";
 import { getPublicAppUrl } from "@/lib/app-url";
-import { gatewayToPaymentMethod, resolveClientId } from "@/lib/payments/ledger";
+import { appendPayment, gatewayToPaymentMethod, resolveClientId } from "@/lib/payments/ledger";
 import { markCheckoutSessionsRecovered } from "@/lib/checkout-session";
+import { recomputeRtwOrderTotals, rtwHasOutstandingBalance } from "@/lib/payments/rtw-totals";
+import { getShippingCopy } from "@/lib/shipping/copy";
+import { countryIsNigeria } from "@/lib/shipping/destination";
 
 export type OrderFulfillDb = Pick<PrismaClient, "$transaction" | "order">;
 
@@ -95,6 +98,29 @@ export async function fulfillPaidOrder(params: {
   });
 
   if (!order) return false;
+
+  if (order.paymentStatus === PaymentStatus.PAID && rtwHasOutstandingBalance(order)) {
+    const existing = await prisma.payment.findUnique({ where: { reference: params.paymentRef } });
+    if (existing) return true;
+    const clientId =
+      params.clientId ??
+      (await resolveClientId({
+        userId: order.userId,
+        email: order.guestEmail ?? order.user?.email,
+      }));
+    await appendPayment({
+      reference: params.paymentRef,
+      amount: order.balance,
+      currency: String(order.currency),
+      method: gatewayToPaymentMethod(params.gateway ?? null),
+      status: PaymentStatus.CONFIRMED,
+      purpose: PaymentPurpose.BALANCE,
+      orderId: order.id,
+      clientId,
+      confirmedAt: new Date(),
+    });
+    return true;
+  }
 
   if (order.paymentStatus === PaymentStatus.PAID) {
     const paidEmail = order.guestEmail ?? order.user?.email;
@@ -215,6 +241,10 @@ export async function fulfillPaidOrder(params: {
     return latest?.paymentStatus === PaymentStatus.PAID;
   }
 
+  if (!params.db) {
+    await recomputeRtwOrderTotals(order.id).catch((e) => console.warn("[fulfillPaidOrder] rtw totals", e));
+  }
+
   if (params.notify === false) {
     return true;
   }
@@ -249,24 +279,31 @@ export async function fulfillPaidOrder(params: {
     }).catch((e) => console.warn("[fulfillPaidOrder] checkout recover", e));
 
     const snap = order.addressSnapshot as Record<string, string> | null;
-    void sendOrderConfirmationEmail({
-      to: emailTo,
-      firstName: snap?.firstName ?? clientName.split(/\s+/)[0] ?? "Client",
-      orderNumber: order.orderNumber,
-      items: order.items.map((i) => ({
-        name: i.product.name,
-        size: i.size ?? "",
-        color: i.color ?? "",
-        qty: i.quantity,
-        priceNGN: i.price,
-      })),
-      subtotalNGN: order.subtotal,
-      totalNGN: order.total,
-      shippingNGN: order.shippingAmount,
-      discountNGN: order.discount,
-      pointsDiscNGN: order.pointsDiscountNGN,
-      addressSnapshot: snap ?? undefined,
-    }).catch((e) => console.warn("[fulfillPaidOrder] email", e));
+    const international = snap?.country ? !countryIsNigeria(snap.country) : false;
+    void getShippingCopy()
+      .then((copy) =>
+        sendOrderConfirmationEmail({
+          to: emailTo,
+          firstName: snap?.firstName ?? clientName.split(/\s+/)[0] ?? "Client",
+          orderNumber: order.orderNumber,
+          items: order.items.map((i) => ({
+            name: i.product.name,
+            size: i.size ?? "",
+            color: i.color ?? "",
+            qty: i.quantity,
+            priceNGN: i.price,
+          })),
+          subtotalNGN: order.subtotal,
+          totalNGN: order.total,
+          shippingNGN: order.shippingAmount,
+          discountNGN: order.discount,
+          pointsDiscNGN: order.pointsDiscountNGN,
+          addressSnapshot: snap ?? undefined,
+          dduDisclosure: international ? copy.dduDisclosure : undefined,
+          quotePending: order.shippingQuoteStatus === "QUOTE_PENDING",
+        }),
+      )
+      .catch((e) => console.warn("[fulfillPaidOrder] email", e));
   }
 
   if (userId && clientEmail) {

@@ -1,24 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
-import { z } from "zod";
 
-const zoneSchema = z.object({
+const lagosSchema = z.object({
   name: z.string().min(2),
-  countries: z.array(z.string()).min(1),
-  states: z.array(z.string()).default([]),
-  flatRateNGN: z.number().min(0),
-  perKgNGN: z.number().min(0).default(0),
-  freeAboveNGN: z.number().optional().nullable(),
-  estimatedDays: z.string().min(1),
-  isActive: z.boolean().default(true),
+  price: z.number().min(0),
+  freeAboveNGN: z.number().min(0).optional().nullable(),
+  etaText: z.string().min(1),
+  isActive: z.boolean().optional().default(true),
+  sortOrder: z.number().int().optional(),
 });
 
 export async function GET() {
   const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
-  const zones = await prisma.shippingZone.findMany({ orderBy: { name: "asc" } });
-  return NextResponse.json({ items: zones });
+  const methods = await prisma.shippingMethod.findMany({
+    include: {
+      pickupLocations: { orderBy: { sortOrder: "asc" } },
+      lagosLocations: { orderBy: { sortOrder: "asc" } },
+    },
+    orderBy: { sortOrder: "asc" },
+  });
+  const packaging = await prisma.packagingProfile.findMany({ orderBy: { name: "asc" } });
+  return NextResponse.json({ methods, packaging });
 }
 
 export async function POST(req: NextRequest) {
@@ -30,20 +35,23 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
-  const parsed = zoneSchema.safeParse(body);
+  const parsed = lagosSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  const d = parsed.data;
-  const zone = await prisma.shippingZone.create({
+
+  const local = await prisma.shippingMethod.findUnique({ where: { kind: "LOCAL_FLAT" } });
+  if (!local) return NextResponse.json({ error: "Lagos delivery method is missing" }, { status: 500 });
+
+  const maxSort = await prisma.lagosLocation.aggregate({ _max: { sortOrder: true } });
+  const loc = await prisma.lagosLocation.create({
     data: {
-      name: d.name,
-      countries: d.countries,
-      states: d.states,
-      flatRateNGN: d.flatRateNGN,
-      perKgNGN: d.perKgNGN,
-      freeAboveNGN: d.freeAboveNGN ?? null,
-      estimatedDays: d.estimatedDays,
-      isActive: d.isActive,
+      shippingMethodId: local.id,
+      name: parsed.data.name,
+      price: parsed.data.price,
+      freeAboveNGN: parsed.data.freeAboveNGN ?? null,
+      etaText: parsed.data.etaText,
+      isActive: parsed.data.isActive ?? true,
+      sortOrder: parsed.data.sortOrder ?? (maxSort._max.sortOrder ?? 0) + 1,
     },
   });
-  return NextResponse.json(zone);
+  return NextResponse.json(loc);
 }

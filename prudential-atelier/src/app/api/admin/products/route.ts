@@ -156,6 +156,10 @@ export async function POST(req: NextRequest) {
           isNewArrival: data.isNewArrival,
           isBespokeAvail: data.isBespokeAvail,
           inStock: data.variants.some((v) => v.stock > 0),
+          defaultWeightKg: data.defaultWeightKg ?? null,
+          defaultLengthCm: data.defaultLengthCm ?? null,
+          defaultWidthCm: data.defaultWidthCm ?? null,
+          defaultHeightCm: data.defaultHeightCm ?? null,
         },
       });
 
@@ -174,6 +178,10 @@ export async function POST(req: NextRequest) {
             stock: v.stock,
             lowStockAt: v.lowStockAt,
             sortOrder: v.sortOrder ?? i,
+            weightKg: v.weightKg ?? null,
+            lengthCm: v.lengthCm ?? null,
+            widthCm: v.widthCm ?? null,
+            heightCm: v.heightCm ?? null,
           },
         });
       }

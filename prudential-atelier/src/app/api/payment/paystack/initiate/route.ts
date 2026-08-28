@@ -5,6 +5,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { initializeTransaction } from "@/lib/payments/paystack";
+import { canAcceptRtwPayment, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
+import { generatePaymentReference } from "@/lib/payments/index";
 
 const bodySchema = z.object({
   orderId: z.string().min(1),
@@ -27,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   const { orderId, guestEmail } = parsed.data;
   const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order || order.paymentStatus !== PaymentStatus.PENDING) {
+  if (!order || !canAcceptRtwPayment(order)) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
@@ -47,13 +49,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing email" }, { status: 400 });
   }
 
+  const chargeNGN = rtwChargeAmountNGN(order);
+  const reference =
+    order.paymentStatus === PaymentStatus.PAID ? generatePaymentReference("BAL") : order.orderNumber;
   const appUrl = getPublicAppUrl();
   const callbackUrl = `${appUrl}/api/payment/paystack/verify?orderId=${encodeURIComponent(orderId)}`;
 
   const init = await initializeTransaction({
     email,
-    amountKobo: Math.round(order.total * 100),
-    reference: order.orderNumber,
+    amountKobo: Math.round(chargeNGN * 100),
+    reference,
     callbackUrl,
     metadata: { orderId: order.id, orderNumber: order.orderNumber },
   });

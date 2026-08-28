@@ -71,6 +71,10 @@ export type PublicRtwOrderDto = {
   discount: number;
   pointsDiscountNGN: number;
   total: number;
+  paymentRef: string | null;
+  currency: string;
+  fxRateLocked: number | null;
+  collectionCode: string | null;
   shippingZone: { name: string; estimatedDays: string | null } | null;
   items: { name: string; size: string | null; quantity: number; lineTotal: number }[];
 };
@@ -84,6 +88,10 @@ export function toPublicRtwOrderDto(order: {
   discount: number;
   pointsDiscountNGN: number;
   total: number;
+  paymentRef?: string | null;
+  currency?: string;
+  fxRateLocked?: number | null;
+  collectionCode?: string | null;
   shippingZone: { name: string; estimatedDays: string | null } | null;
   items: { product: { name: string }; size: string | null; quantity: number; lineTotal: number }[];
 }): PublicRtwOrderDto {
@@ -96,6 +104,10 @@ export function toPublicRtwOrderDto(order: {
     discount: order.discount,
     pointsDiscountNGN: order.pointsDiscountNGN,
     total: order.total,
+    paymentRef: order.paymentRef ?? null,
+    currency: order.currency ?? "NGN",
+    fxRateLocked: order.fxRateLocked ?? null,
+    collectionCode: order.collectionCode ?? null,
     shippingZone: order.shippingZone,
     items: order.items.map((i) => ({
       name: i.product.name,

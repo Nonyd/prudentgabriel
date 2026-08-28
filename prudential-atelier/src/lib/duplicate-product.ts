@@ -42,6 +42,10 @@ export async function duplicateProduct(sourceId: string): Promise<{ id: string; 
         basePriceNGN: source.basePriceNGN,
         priceNGN: source.priceNGN,
         priceUSD: source.priceUSD,
+        defaultWeightKg: source.defaultWeightKg,
+        defaultLengthCm: source.defaultLengthCm,
+        defaultWidthCm: source.defaultWidthCm,
+        defaultHeightCm: source.defaultHeightCm,
         priceGBP: source.priceGBP,
         isOnSale: source.isOnSale,
         saleEndsAt: source.saleEndsAt,
@@ -69,6 +73,10 @@ export async function duplicateProduct(sourceId: string): Promise<{ id: string; 
           stock: v.stock,
           lowStockAt: v.lowStockAt,
           sortOrder: v.sortOrder,
+          weightKg: v.weightKg,
+          lengthCm: v.lengthCm,
+          widthCm: v.widthCm,
+          heightCm: v.heightCm,
         },
       });
     }

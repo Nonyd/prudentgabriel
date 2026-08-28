@@ -18,6 +18,8 @@ import type { PaymentGatewayType } from "@/lib/payments/index";
 import { formatPrice } from "@/lib/currency";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { NIGERIA_STATES } from "@/lib/geo/nigeria-states";
+import { COUNTRIES } from "@/lib/geo/countries";
 
 interface ShipOpt {
   zoneId: string;
@@ -25,6 +27,10 @@ interface ShipOpt {
   costNGN: number;
   isFree: boolean;
   estimatedDays: string;
+  kind?: string;
+  requiresConsent?: boolean;
+  requiresAddress?: boolean;
+  description?: string;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -93,6 +99,14 @@ export function CheckoutClient() {
   const [shippingOpts, setShippingOpts] = useState<ShipOpt[]>([]);
   const [zoneId, setZoneId] = useState<string | null>(null);
   const [shipLoading, setShipLoading] = useState(false);
+  const [quoteConsent, setQuoteConsent] = useState("");
+  const [dduDisclosure, setDduDisclosure] = useState("");
+  const [shippingConsent, setShippingConsent] = useState(false);
+  const paymentRef = useMemo(
+    () => `PA-ORDER-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+    [],
+  );
+  const [lockedUsdPerNgn, setLockedUsdPerNgn] = useState<number | null>(null);
 
   const [gateway, setGateway] = useState<PaymentGatewayType | null>(null);
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
@@ -120,23 +134,25 @@ export function CheckoutClient() {
 
   useEffect(() => {
     if (step !== 2) return;
-    if (!addr.city || !addr.state || !addr.country) return;
+    if (!addr.country) return;
+    if (addr.country === "NG" && !addr.state) return;
     setShipLoading(true);
     const isFree = couponResult?.valid && couponResult.isFreeShipping;
     void fetch("/api/shipping/calculate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        address: { city: addr.city, state: addr.state, country: addr.country },
+        address: { city: addr.city || "", state: addr.state || "", country: addr.country },
         subtotalNGN,
-        totalWeightKg: Math.max(0.5, items.reduce((s, i) => s + i.quantity, 0) * 0.5),
         isFreeShippingCoupon: isFree,
+        lines: items.map((i) => ({ quantity: i.quantity })),
       }),
     })
       .then((r) => r.json())
-      .then((j: { options?: ShipOpt[] }) => {
+      .then((j: { options?: ShipOpt[]; quoteConsent?: string }) => {
         const opts = j.options ?? [];
         setShippingOpts(opts);
+        if (j.quoteConsent) setQuoteConsent(j.quoteConsent);
         setZoneId((prev) => {
           if (opts.some((o) => o.zoneId === prev)) return prev;
           return opts[0]?.zoneId ?? null;
@@ -193,12 +209,15 @@ export function CheckoutClient() {
       if (!addr.phone?.trim() || addr.phone.replace(/\D/g, "").length < 7) {
         next.phone = "Enter a phone number";
       }
-      if (!addr.line1?.trim() || addr.line1.trim().length < 3) next.line1 = "Street address is required";
-      if (!addr.city?.trim()) next.city = "City is required";
+      if (!isPickup) {
+        if (!addr.line1?.trim() || addr.line1.trim().length < 3) next.line1 = "Street address is required";
+        if (!addr.city?.trim()) next.city = "City is required";
+      }
       if (!addr.state?.trim()) next.state = "State is required";
-      if (!addr.country || addr.country.length !== 2) next.country = "Use a 2-letter country code, e.g. NG";
+      if (!addr.country || addr.country.length !== 2) next.country = "Choose a country";
     }
     if (!zoneId) next.shipping = "Choose a shipping method";
+    if (needsConsent && !shippingConsent) next.consent = "Please confirm you understand shipping will be quoted separately";
     setErrors((prev) => ({ ...prev, ...next }));
     const order = [
       "guestEmail",
@@ -212,6 +231,7 @@ export function CheckoutClient() {
       "state",
       "country",
       "shipping",
+      "consent",
     ];
     return order.find((k) => next[k]) ?? null;
   }
@@ -290,6 +310,20 @@ export function CheckoutClient() {
   }
 
   const selectedShip = shippingOpts.find((z) => z.zoneId === zoneId);
+  const isPickup = selectedShip?.kind === "PICKUP" || zoneId?.startsWith("pickup:");
+  const needsConsent = Boolean(selectedShip?.requiresConsent);
+  const isInternational = (addr.country ?? "NG") !== "NG";
+
+  useEffect(() => {
+    void fetch("/api/shipping/calculate")
+      .then((r) => r.json())
+      .then((j: { quoteConsent?: string; dduDisclosure?: string; fx?: { rate: number } }) => {
+        if (j.quoteConsent) setQuoteConsent(j.quoteConsent);
+        if (j.dduDisclosure) setDduDisclosure(j.dduDisclosure);
+        if (j.fx?.rate) setLockedUsdPerNgn(j.fx.rate);
+      })
+      .catch(() => {});
+  }, []);
   const shipCost = selectedShip?.costNGN ?? null;
 
   function buildAddressPayload(): AddressInput | undefined {
@@ -390,8 +424,8 @@ export function CheckoutClient() {
     }
     clearFieldError("receipt");
 
-    const addressPayload = addressId ? undefined : buildAddressPayload();
-    if (!addressId && !addressPayload) {
+    const addressPayload = isPickup ? undefined : addressId ? undefined : buildAddressPayload();
+    if (!isPickup && !addressId && !addressPayload) {
       setStep(2);
       toast.error("Complete your address");
       return;
@@ -400,9 +434,21 @@ export function CheckoutClient() {
     setSubmitting(true);
     try {
       const body: Record<string, unknown> = {
-        addressId: addressId ?? undefined,
-        address: addressPayload,
-        shippingZoneId: zoneId,
+        addressId: isPickup ? undefined : addressId ?? undefined,
+        address: isPickup ? undefined : addressPayload,
+        pickupContact: isPickup
+          ? {
+              firstName: addr.firstName,
+              lastName: addr.lastName,
+              phone: addr.phone,
+              country: addr.country ?? "NG",
+              state: addr.state ?? "Lagos",
+              city: addr.city ?? "Lagos",
+            }
+          : undefined,
+        shippingOptionId: zoneId,
+        shippingConsent: needsConsent ? shippingConsent : undefined,
+        shippingConsentText: needsConsent ? quoteConsent : undefined,
         notes: notes || undefined,
         isGift,
         giftMessage: isGift ? giftMessage || undefined : undefined,
@@ -413,6 +459,7 @@ export function CheckoutClient() {
         guestEmail: isGuest ? guestEmail : undefined,
         guestName: isGuest ? guestName : undefined,
         guestPhone: isGuest ? guestPhone : undefined,
+        paymentRef,
       };
 
       if (isGuest) {
@@ -827,6 +874,70 @@ export function CheckoutClient() {
                     clearFieldError("phone");
                   }}
                 />
+                <label className="block sm:col-span-2">
+                  <span className="mb-1 block font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+                    Country
+                  </span>
+                  <select
+                    id="addr-country"
+                    className="w-full rounded-sm border border-border bg-ivory px-3 py-2 text-sm"
+                    value={addr.country ?? "NG"}
+                    onChange={(e) => {
+                      const country = e.target.value;
+                      setAddr((p) => ({
+                        ...p,
+                        country,
+                        state: country === "NG" ? p.state || "Lagos" : "",
+                      }));
+                      clearFieldError("country");
+                    }}
+                  >
+                    {COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <FieldError message={errors.country} />
+                </label>
+                {addr.country === "NG" ? (
+                  <label className="block">
+                    <span className="mb-1 block font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+                      State
+                    </span>
+                    <select
+                      id="addr-state"
+                      className="w-full rounded-sm border border-border bg-ivory px-3 py-2 text-sm"
+                      value={addr.state ?? ""}
+                      onChange={(e) => {
+                        setAddr((p) => ({ ...p, state: e.target.value }));
+                        clearFieldError("state");
+                      }}
+                    >
+                      <option value="">Select state</option>
+                      {NIGERIA_STATES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                    <FieldError message={errors.state} />
+                  </label>
+                ) : (
+                  <Input
+                    id="addr-state"
+                    label="Region / state"
+                    autoComplete="address-level1"
+                    value={addr.state ?? ""}
+                    error={errors.state}
+                    onChange={(e) => {
+                      setAddr((p) => ({ ...p, state: e.target.value }));
+                      clearFieldError("state");
+                    }}
+                  />
+                )}
+                {!isPickup ? (
+                  <>
                 <Input
                   id="addr-line1"
                   label="Address line 1"
@@ -859,33 +970,8 @@ export function CheckoutClient() {
                     clearFieldError("city");
                   }}
                 />
-                <Input
-                  id="addr-state"
-                  label="State"
-                  autoComplete="address-level1"
-                  value={addr.state ?? ""}
-                  error={errors.state}
-                  onBlur={() => {
-                    if (!addr.state?.trim()) setFieldError("state", "State is required");
-                    else clearFieldError("state");
-                  }}
-                  onChange={(e) => {
-                    setAddr((p) => ({ ...p, state: e.target.value }));
-                    clearFieldError("state");
-                  }}
-                />
-                <Input
-                  id="addr-country"
-                  label="Country"
-                  autoComplete="country"
-                  maxLength={2}
-                  value={addr.country ?? "NG"}
-                  error={errors.country}
-                  onChange={(e) => {
-                    setAddr((p) => ({ ...p, country: e.target.value.toUpperCase() }));
-                    clearFieldError("country");
-                  }}
-                />
+                  </>
+                ) : null}
                 {session?.user && (
                   <label className="flex items-center gap-2 text-sm sm:col-span-2">
                     <input
@@ -909,10 +995,26 @@ export function CheckoutClient() {
                   <input type="radio" name="ship" checked={zoneId === z.zoneId} onChange={() => setZoneId(z.zoneId)} />
                   <span className="text-sm">
                     {z.zoneName} — {z.isFree ? <span className="text-gold">FREE</span> : `₦${z.costNGN.toLocaleString()}`} · {z.estimatedDays}
+                    {z.requiresConsent ? <span className="mt-1 block text-xs text-charcoal-mid">{z.description}</span> : null}
                   </span>
                 </label>
               ))}
+              {needsConsent ? (
+                <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={shippingConsent}
+                    onChange={(e) => {
+                      setShippingConsent(e.target.checked);
+                      clearFieldError("consent");
+                    }}
+                  />
+                  <span>{quoteConsent}</span>
+                </label>
+              ) : null}
               <FieldError message={errors.shipping} />
+              <FieldError message={errors.consent} />
             </fieldset>
             <div>
               <label htmlFor="order-notes" className="mb-1 block font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
@@ -959,6 +1061,8 @@ export function CheckoutClient() {
               <PaymentMethodSelector
                 currency={currency}
                 amount={payable}
+                amountNGN={payable}
+                paymentReference={paymentRef}
                 selected={gateway}
                 onSelect={(g) => {
                   setGateway(g);
@@ -975,6 +1079,15 @@ export function CheckoutClient() {
               <FieldError message={errors.gateway} />
               <FieldError message={errors.receipt} />
             </div>
+            {currency === "USD" && lockedUsdPerNgn ? (
+              <p className="text-xs text-charcoal-mid">
+                {formatPrice(payable, "USD")} · ₦{Math.round(payable).toLocaleString("en-NG")} at ₦1 = $
+                {lockedUsdPerNgn.toFixed(6)}
+              </p>
+            ) : null}
+            {isInternational && dduDisclosure ? (
+              <p className="text-xs leading-relaxed text-charcoal-mid">{dduDisclosure}</p>
+            ) : null}
             {!stripeClientSecret && (
               <Button
                 type="button"

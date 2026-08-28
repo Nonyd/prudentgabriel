@@ -16,13 +16,20 @@ type ToolbarOrder = {
   adminNotes?: string | null;
   totalNGN: number;
   paymentGateway?: PaymentGateway | null;
+  shippingMethodKind?: string | null;
+  balance?: number;
+  collectionCode?: string | null;
 };
 
 const NEXT_OPTIONS: Partial<Record<OrderStatus, { value: OrderStatus; label: string }[]>> = {
   PENDING: [{ value: "CONFIRMED", label: "Confirm" }],
   CONFIRMED: [{ value: "PROCESSING", label: "Mark processing" }],
-  PROCESSING: [{ value: "SHIPPED", label: "Mark shipped" }],
+  PROCESSING: [
+    { value: "SHIPPED", label: "Mark shipped" },
+    { value: "READY_FOR_COLLECTION", label: "Ready for collection" },
+  ],
   SHIPPED: [{ value: "DELIVERED", label: "Mark delivered" }],
+  READY_FOR_COLLECTION: [{ value: "COLLECTED", label: "Mark collected" }],
 };
 
 function gatewayLabel(g: PaymentGateway | null | undefined) {
@@ -56,6 +63,7 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
 
   const [tracking, setTracking] = useState("");
   const [carrier, setCarrier] = useState("");
+  const [collectionCode, setCollectionCode] = useState(order.collectionCode ?? "");
   const [busy, setBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -132,8 +140,15 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
     }
   };
 
-  const options = NEXT_OPTIONS[order.status] ?? [];
-  const canShip = order.status === "PROCESSING";
+  const isPickup = order.shippingMethodKind === "PICKUP";
+  const options = (NEXT_OPTIONS[order.status] ?? []).filter((o) => {
+    if (isPickup && o.value === "SHIPPED") return false;
+    if (!isPickup && o.value === "READY_FOR_COLLECTION") return false;
+    return true;
+  });
+  const canShip = order.status === "PROCESSING" && !isPickup;
+  const canCollect = order.status === "READY_FOR_COLLECTION";
+  const outstanding = (order.balance ?? 0) > 0.01;
 
   return (
     <div className="rounded-sm border border-sand bg-canvas p-6">
@@ -216,12 +231,22 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
       />
 
       <p className="font-label text-xs uppercase text-[#A8A8A4]">Admin</p>
+      {outstanding ? (
+        <p className="mt-2 text-xs text-[#92660A]">Balance outstanding — cannot ship or release for collection.</p>
+      ) : null}
+      {order.collectionCode ? (
+        <p className="mt-2 font-body text-sm text-ink">Collection code: {order.collectionCode}</p>
+      ) : null}
       <div className="mt-3 flex flex-wrap items-end gap-3">
         {options.map((o) => (
           <button
             key={o.value}
             type="button"
-            disabled={busy}
+            disabled={
+              busy ||
+              (outstanding &&
+                (o.value === "SHIPPED" || o.value === "READY_FOR_COLLECTION" || o.value === "COLLECTED"))
+            }
             onClick={() => {
               if (o.value === "SHIPPED") {
                 void patch({
@@ -229,6 +254,8 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
                   trackingNumber: tracking || null,
                   carrier: carrier || null,
                 });
+              } else if (o.value === "COLLECTED") {
+                void patch({ status: "COLLECTED", collectionCode });
               } else {
                 void patch({ status: o.value });
               }
@@ -253,6 +280,14 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
               className="border border-sand bg-canvas px-2 py-1 text-xs text-charcoal"
             />
           </div>
+        ) : null}
+        {canCollect ? (
+          <input
+            value={collectionCode}
+            onChange={(e) => setCollectionCode(e.target.value)}
+            placeholder="Collection code"
+            className="border border-sand bg-canvas px-2 py-1 text-xs text-charcoal"
+          />
         ) : null}
         <button
           type="button"

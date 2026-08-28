@@ -377,6 +377,10 @@ export async function appendPayment(input: CreatePaymentInput): Promise<Payment>
   if (payment.invoiceId) {
     await recomputeInvoiceTotals(payment.invoiceId);
   }
+  if (payment.orderId) {
+    const { recomputeRtwOrderTotals } = await import("@/lib/payments/rtw-totals");
+    await recomputeRtwOrderTotals(payment.orderId);
+  }
 
   return payment;
 }
@@ -405,6 +409,10 @@ export async function confirmPayment(params: {
 
   if (payment.bespokeOrderId) await recomputeOrderTotals(payment.bespokeOrderId);
   if (payment.invoiceId) await recomputeInvoiceTotals(payment.invoiceId);
+  if (payment.orderId) {
+    const { recomputeRtwOrderTotals } = await import("@/lib/payments/rtw-totals");
+    await recomputeRtwOrderTotals(payment.orderId);
+  }
 
   return payment;
 }
@@ -438,6 +446,10 @@ export async function rejectPayment(params: {
 
   if (payment.bespokeOrderId) await recomputeOrderTotals(payment.bespokeOrderId);
   if (payment.invoiceId) await recomputeInvoiceTotals(payment.invoiceId);
+  if (payment.orderId) {
+    const { recomputeRtwOrderTotals } = await import("@/lib/payments/rtw-totals");
+    await recomputeRtwOrderTotals(payment.orderId);
+  }
 
   return payment;
 }

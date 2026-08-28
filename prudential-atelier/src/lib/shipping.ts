@@ -1,77 +1,33 @@
-import { prisma } from "@/lib/prisma";
+import { listCheckoutShippingOptions, type CartParcelLine, type CheckoutShippingOption } from "@/lib/shipping/options";
+import type { AddressForShipping, ShippingOption } from "@/lib/shipping/legacy";
 
-export interface AddressForShipping {
-  city: string;
-  state: string;
-  country: string;
-}
+export type { AddressForShipping, ShippingOption } from "@/lib/shipping/legacy";
+export type { CheckoutShippingOption, CartParcelLine } from "@/lib/shipping/options";
+export { listCheckoutShippingOptions, parseShippingOptionId, parcelForCart } from "@/lib/shipping/options";
 
-export interface ShippingOption {
-  zoneId: string;
-  zoneName: string;
-  costNGN: number;
-  isFree: boolean;
-  estimatedDays: string;
-}
-
-function zoneMatches(
-  zone: { countries: string[]; states: string[] },
-  address: AddressForShipping,
-): boolean {
-  const { countries, states } = zone;
-  if (countries.includes("*")) return true;
-  if (!countries.includes(address.country)) return false;
-  if (states.length === 0) return true;
-  return states.includes(address.state);
-}
-
+/** Back-compat wrapper used by older callers that still speak zoneId. */
 export async function calculateShippingOptions(
   address: AddressForShipping,
   subtotalNGN: number,
-  totalWeightKg: number,
+  _totalWeightKg: number,
   isFreeShippingCoupon: boolean,
+  lines: CartParcelLine[] = [],
 ): Promise<ShippingOption[]> {
-  const zones = await prisma.shippingZone.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: "asc" },
+  const { options } = await listCheckoutShippingOptions({
+    destination: address,
+    subtotalNGN,
+    lines,
+    isFreeShippingCoupon,
   });
+  return options.map(toLegacyOption);
+}
 
-  const matched: ShippingOption[] = [];
-
-  for (const zone of zones) {
-    if (!zoneMatches(zone, address)) continue;
-
-    const baseCost = zone.flatRateNGN + zone.perKgNGN * totalWeightKg;
-    const isFree =
-      isFreeShippingCoupon ||
-      (zone.freeAboveNGN != null && subtotalNGN >= zone.freeAboveNGN);
-    const finalCost = isFree ? 0 : baseCost;
-
-    matched.push({
-      zoneId: zone.id,
-      zoneName: zone.name,
-      costNGN: finalCost,
-      isFree,
-      estimatedDays: zone.estimatedDays,
-    });
-  }
-
-  matched.sort((a, b) => {
-    if (a.isFree !== b.isFree) return a.isFree ? -1 : 1;
-    return a.costNGN - b.costNGN;
-  });
-
-  if (matched.length === 0) {
-    return [
-      {
-        zoneId: "manual",
-        zoneName: "Custom Quote",
-        costNGN: 0,
-        isFree: false,
-        estimatedDays: "Contact us",
-      },
-    ];
-  }
-
-  return matched;
+function toLegacyOption(o: CheckoutShippingOption): ShippingOption {
+  return {
+    zoneId: o.optionId,
+    zoneName: o.name,
+    costNGN: o.costNGN,
+    isFree: o.isFree,
+    estimatedDays: o.etaText,
+  };
 }
