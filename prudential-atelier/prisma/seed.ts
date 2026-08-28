@@ -81,17 +81,20 @@ async function upsertShippingZones() {
 }
 
 async function upsertShippingMethods() {
+  const garmentBox = {
+    name: "Garment box",
+    weightKg: 0.8,
+    lengthCm: 60,
+    widthCm: 40,
+    heightCm: 20,
+    isDefault: true,
+  };
   await prisma.packagingProfile.upsert({
     where: { id: "pkg-garment-box" },
-    update: {},
+    update: garmentBox,
     create: {
       id: "pkg-garment-box",
-      name: "Garment box",
-      weightKg: 0.35,
-      lengthCm: 40,
-      widthCm: 30,
-      heightCm: 12,
-      isDefault: true,
+      ...garmentBox,
     },
   });
 

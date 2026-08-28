@@ -22,6 +22,7 @@ import type { ShippingCarrier } from "../src/lib/shipping/carriers/types";
 import { assertCanMarkShipped, shippingRequiresTracking } from "../src/lib/order-status";
 import { getLockedFx, setLockedFxForTest } from "../src/lib/fx";
 import { DEFAULT_QUOTE_CONSENT } from "../src/lib/shipping/copy";
+import { billableKgForCarrier, volumetricKg } from "../src/lib/shipping/weight";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -34,14 +35,14 @@ const orderIds: string[] = [];
 async function ensureMethods() {
   await prisma.packagingProfile.upsert({
     where: { id: "pkg-garment-box" },
-    update: {},
+    update: { weightKg: 0.8, lengthCm: 60, widthCm: 40, heightCm: 20, isDefault: true },
     create: {
       id: "pkg-garment-box",
       name: "Garment box",
-      weightKg: 0.35,
-      lengthCm: 40,
-      widthCm: 30,
-      heightCm: 12,
+      weightKg: 0.8,
+      lengthCm: 60,
+      widthCm: 40,
+      heightCm: 20,
       isDefault: true,
     },
   });
@@ -167,6 +168,14 @@ async function cleanup() {
 }
 
 async function main() {
+  const gownBox = { weightKg: 0.8, lengthCm: 60, widthCm: 40, heightCm: 20 };
+  assert(Math.abs(volumetricKg(gownBox) - 9.6) < 0.01, `60×40×20 volumetric expected 9.6kg, got ${volumetricKg(gownBox)}`);
+  assert(billableKgForCarrier(gownBox, "gig") === 0.8, "GIG bills actual weight, not volumetric");
+  assert(
+    Math.abs(billableKgForCarrier(gownBox, "dhl") - 9.6) < 0.01,
+    "DHL bills max(actual, volumetric/5000)",
+  );
+
   await ensureMethods();
   const product = await makeProduct();
   const variant = product.variants[0]!;
@@ -193,6 +202,43 @@ async function main() {
     lagos.options.some((o) => o.kind === "PICKUP") && lagos.options.some((o) => o.kind === "LOCAL_FLAT"),
     "Lagos offers both pickup and a local rate",
   );
+
+  const captured: { gig?: number; dhl?: number } = {};
+  setShippingCarriersForTest([
+    {
+      name: "gig",
+      isConfigured: () => true,
+      rate: async (req) => {
+        captured.gig = req.billableKg;
+        return { ok: true, amountNGN: 8_500, currency: "NGN", service: "standard", etaText: "3–5 days" };
+      },
+    },
+    {
+      name: "dhl",
+      isConfigured: () => true,
+      rate: async (req) => {
+        captured.dhl = req.billableKg;
+        return { ok: true, amountNGN: 45_000, currency: "NGN", service: "express", etaText: "5–8 days" };
+      },
+    },
+  ]);
+  clearShippingQuoteCacheForTest();
+  const nigeriaRated = await listCheckoutShippingOptions({
+    destination: { country: "NG", state: "Abuja", city: "Wuse" },
+    subtotalNGN: 100_000,
+    lines,
+    isFreeShippingCoupon: false,
+  });
+  const intlRated = await listCheckoutShippingOptions({
+    destination: { country: "US", state: "NY", city: "New York" },
+    subtotalNGN: 100_000,
+    lines,
+    isFreeShippingCoupon: false,
+  });
+  assert(nigeriaRated.options.some((o) => o.kind === "CARRIER_GIG"), "Abuja offers GIG when configured");
+  assert(intlRated.options.some((o) => o.kind === "CARRIER_DHL"), "US offers DHL when configured");
+  assert(captured.gig != null && captured.gig < 3, `GIG must not use DHL volumetric, got ${captured.gig}`);
+  assert(captured.dhl != null && captured.dhl > 8, `DHL must use volumetric gown box, got ${captured.dhl}`);
 
   const hanging: ShippingCarrier = {
     name: "gig",

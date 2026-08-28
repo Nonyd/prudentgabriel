@@ -6,6 +6,7 @@ import { verifyWebhookEvent } from "@/lib/payments/stripe";
 import { fulfillPaidOrder } from "@/lib/order-payment";
 import { notifyPaymentFailed } from "@/lib/notifications";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
+import { rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
 import { convertFromNGN, getExchangeRates, type ShopCurrency } from "@/lib/currency";
 import {
   assertPspChargeBinds,
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
       } else if (orderId) {
         const order = await prisma.order.findUnique({ where: { id: orderId } });
         if (order) {
-          const expected = await expectedStripeMinor(order.total, pi.currency);
+          const expected = await expectedStripeMinor(rtwChargeAmountNGN(order), pi.currency);
           assertPspChargeBinds(
             {
               id: order.id,

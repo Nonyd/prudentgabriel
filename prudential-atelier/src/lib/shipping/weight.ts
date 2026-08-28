@@ -14,11 +14,12 @@ export type PackagingLike = {
   heightCm: number;
 };
 
+/** Err large: a boxed couture gown with a train is nearer 60×40×20 than a shirt box. */
 const FALLBACK_GARMENT: ParcelDims = {
-  weightKg: 0.5,
-  lengthCm: 40,
-  widthCm: 30,
-  heightCm: 12,
+  weightKg: 0.8,
+  lengthCm: 60,
+  widthCm: 40,
+  heightCm: 20,
 };
 
 export function volumetricKg(dims: Pick<ParcelDims, "lengthCm" | "widthCm" | "heightCm">, divisor = DHL_VOLUMETRIC_DIVISOR): number {
@@ -26,11 +27,19 @@ export function volumetricKg(dims: Pick<ParcelDims, "lengthCm" | "widthCm" | "he
   return Number.isFinite(vol) && vol > 0 ? vol : 0;
 }
 
-/** Billable weight is the greater of actual and volumetric. DHL invoices volumetric on a bulky gown. */
+/** DHL bills the greater of actual and volumetric (divisor 5000). */
 export function billableKg(parcel: ParcelDims, divisor = DHL_VOLUMETRIC_DIVISOR): number {
   const actual = Math.max(0, parcel.weightKg);
   const vol = volumetricKg(parcel, divisor);
   return Math.max(actual, vol, 0.1);
+}
+
+/**
+ * GIG prices on actual weight bands. Applying DHL's 5000 divisor inflates domestic quotes.
+ */
+export function billableKgForCarrier(parcel: ParcelDims, carrier: "gig" | "dhl"): number {
+  if (carrier === "gig") return Math.max(parcel.weightKg, 0.1);
+  return billableKg(parcel, DHL_VOLUMETRIC_DIVISOR);
 }
 
 export function mergeParcel(params: {

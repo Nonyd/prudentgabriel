@@ -5,8 +5,8 @@ import { dec, toNumber, type PaymentSummary } from "@/lib/payments/ledger";
 const ZERO = new Prisma.Decimal(0);
 
 /**
- * Ledger-derived RTW totals. Raising order.total (e.g. a quoted shipping fee)
- * puts the order back in balance-owing without a parallel payment mechanism.
+ * Ledger-derived RTW totals. Writer for Order.amountPaid / Order.balance only.
+ * BespokeOrder caches stay on recomputeOrderTotals — different table, no overlap.
  */
 export async function getRtwPaymentSummary(orderId: string): Promise<PaymentSummary> {
   const order = await prisma.order.findUnique({
@@ -67,7 +67,10 @@ export function rtwHasOutstandingBalance(order: { balance?: number | null; total
   return balance > 0.01;
 }
 
-/** First payment, or a quoted shipping fee after the garment is already paid. */
+/**
+ * First payment, or a quoted shipping fee after the garment is already paid.
+ * PSP bind and initiate both use rtwChargeAmountNGN — never order.total on a top-up.
+ */
 export function canAcceptRtwPayment(order: {
   paymentStatus: PaymentStatus;
   balance?: number | null;
@@ -81,6 +84,7 @@ export function canAcceptRtwPayment(order: {
   return false;
 }
 
+/** Amount this charge must equal: outstanding balance after a quote, else total. */
 export function rtwChargeAmountNGN(order: {
   paymentStatus: PaymentStatus;
   total: number;

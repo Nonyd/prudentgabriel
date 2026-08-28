@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyWebhookSignature, verifyTransaction } from "@/lib/payments/monnify";
 import { fulfillPaidOrder } from "@/lib/order-payment";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
+import { rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
 import {
   assertPspChargeBinds,
   expectedAmountInPspUnits,
@@ -53,15 +54,15 @@ export async function POST(req: NextRequest) {
             gateway: PaymentGateway.MONNIFY,
           });
         } else {
-          const order = await prisma.order.findUnique({
-            where: { orderNumber: v.paymentReference },
-          });
+          const order =
+            (await prisma.order.findUnique({ where: { orderNumber: v.paymentReference } })) ??
+            (await prisma.order.findFirst({ where: { paymentRef: v.paymentReference } }));
           if (order) {
             assertPspChargeBinds(
               {
                 id: order.id,
                 storedReference: order.paymentRef,
-                expectedAmount: expectedAmountInPspUnits(PaymentGateway.MONNIFY, order.total),
+                expectedAmount: expectedAmountInPspUnits(PaymentGateway.MONNIFY, rtwChargeAmountNGN(order)),
                 expectedCurrency: String(order.currency),
               },
               {

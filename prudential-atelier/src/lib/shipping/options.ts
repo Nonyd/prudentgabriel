@@ -2,7 +2,7 @@ import { ShippingMethodKind, ShippingQuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { resolveDestinationBand, type DestinationInput } from "@/lib/shipping/destination";
 import { rateWithTimeout } from "@/lib/shipping/rate";
-import { billableKg, combineParcels, mergeParcel, type ParcelDims } from "@/lib/shipping/weight";
+import { billableKgForCarrier, combineParcels, mergeParcel, type ParcelDims } from "@/lib/shipping/weight";
 import { getShippingCopy } from "@/lib/shipping/copy";
 import type { RateRequest } from "@/lib/shipping/carriers/types";
 
@@ -27,7 +27,29 @@ export type CartParcelLine = {
   product?: Partial<ParcelDims> | null;
 };
 
-export async function parcelForCart(lines: CartParcelLine[]): Promise<{ parcel: ParcelDims; billable: number }> {
+/** GIG: actual kg. DHL: max(actual, L×W×H/5000). Never share one billable across carriers. */
+export function carrierRateRequest(
+  parcel: ParcelDims,
+  destination: DestinationInput,
+  declaredValueNGN: number,
+  carrier: "gig" | "dhl",
+): RateRequest {
+  return {
+    destination: {
+      country: destination.country,
+      state: destination.state ?? "",
+      city: destination.city ?? "",
+    },
+    actualKg: parcel.weightKg,
+    billableKg: billableKgForCarrier(parcel, carrier),
+    lengthCm: parcel.lengthCm,
+    widthCm: parcel.widthCm,
+    heightCm: parcel.heightCm,
+    declaredValueNGN,
+  };
+}
+
+export async function parcelForCart(lines: CartParcelLine[]): Promise<{ parcel: ParcelDims }> {
   const pack = await prisma.packagingProfile.findFirst({
     where: { isDefault: true },
     orderBy: { createdAt: "asc" },
@@ -40,8 +62,7 @@ export async function parcelForCart(lines: CartParcelLine[]): Promise<{ parcel: 
       quantity: line.quantity,
     }),
   );
-  const parcel = combineParcels(parcels);
-  return { parcel, billable: billableKg(parcel) };
+  return { parcel: combineParcels(parcels) };
 }
 
 export async function listCheckoutShippingOptions(params: {
@@ -108,23 +129,10 @@ export async function listCheckoutShippingOptions(params: {
     return { band, options, quoteConsent };
   }
 
-  const { parcel, billable } = await parcelForCart(params.lines);
-  const rateReq: RateRequest = {
-    destination: {
-      country: params.destination.country,
-      state: params.destination.state ?? "",
-      city: params.destination.city ?? "",
-    },
-    actualKg: parcel.weightKg,
-    billableKg: billable,
-    lengthCm: parcel.lengthCm,
-    widthCm: parcel.widthCm,
-    heightCm: parcel.heightCm,
-    declaredValueNGN: params.subtotalNGN,
-  };
+  const { parcel } = await parcelForCart(params.lines);
 
   if (band === "NIGERIA" && gig) {
-    const rated = await rateWithTimeout("gig", rateReq, gig);
+    const rated = await rateWithTimeout("gig", carrierRateRequest(parcel, params.destination, params.subtotalNGN, "gig"), gig);
     if (rated.ok) {
       options.push({
         optionId: `carrier:gig:${gig.id}`,
@@ -145,7 +153,7 @@ export async function listCheckoutShippingOptions(params: {
   }
 
   if (band === "INTERNATIONAL" && dhl) {
-    const rated = await rateWithTimeout("dhl", rateReq, dhl);
+    const rated = await rateWithTimeout("dhl", carrierRateRequest(parcel, params.destination, params.subtotalNGN, "dhl"), dhl);
     if (rated.ok) {
       options.push({
         optionId: `carrier:dhl:${dhl.id}`,

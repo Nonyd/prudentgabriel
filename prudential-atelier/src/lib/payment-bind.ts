@@ -17,7 +17,7 @@ export class PaymentBindError extends Error {
 export type BindTarget = {
   id: string;
   storedReference: string | null;
-  /** Order total / booking fee in major units of `expectedCurrency`. */
+  /** Amount this charge must cover, in PSP units. For RTW that is the outstanding balance (equals total when unpaid). */
   expectedAmount: number;
   expectedCurrency: string;
 };
@@ -51,6 +51,12 @@ export function expectedAmountInPspUnits(
   }
 }
 
+/**
+ * Must not underpay `expected`. `expected` is the amount owed on this charge
+ * (outstanding balance for an RTW top-up, full total on first payment).
+ * A floor (`>=`) survives kobo/FX rounding; a ceiling of `order.total` would
+ * accept a ₦1 charge against a ₦495,000 order.
+ */
 function amountMeetsExpected(gateway: PaymentGateway, pspAmount: number, expected: number): boolean {
   if (!Number.isFinite(pspAmount) || !Number.isFinite(expected)) return false;
   switch (gateway) {

@@ -371,6 +371,8 @@ export async function appendPayment(input: CreatePaymentInput): Promise<Payment>
     },
   });
 
+  // Dispatch by FK. recomputeOrderTotals writes BespokeOrder caches;
+  // recomputeRtwOrderTotals writes Order caches — different tables, no overlap.
   if (payment.bespokeOrderId) {
     await recomputeOrderTotals(payment.bespokeOrderId);
   }
@@ -378,6 +380,7 @@ export async function appendPayment(input: CreatePaymentInput): Promise<Payment>
     await recomputeInvoiceTotals(payment.invoiceId);
   }
   if (payment.orderId) {
+    // RTW Order row — never BespokeOrder.amountPaid / balance.
     const { recomputeRtwOrderTotals } = await import("@/lib/payments/rtw-totals");
     await recomputeRtwOrderTotals(payment.orderId);
   }
@@ -410,6 +413,7 @@ export async function confirmPayment(params: {
   if (payment.bespokeOrderId) await recomputeOrderTotals(payment.bespokeOrderId);
   if (payment.invoiceId) await recomputeInvoiceTotals(payment.invoiceId);
   if (payment.orderId) {
+    // RTW Order row — never BespokeOrder.amountPaid / balance.
     const { recomputeRtwOrderTotals } = await import("@/lib/payments/rtw-totals");
     await recomputeRtwOrderTotals(payment.orderId);
   }
@@ -447,6 +451,7 @@ export async function rejectPayment(params: {
   if (payment.bespokeOrderId) await recomputeOrderTotals(payment.bespokeOrderId);
   if (payment.invoiceId) await recomputeInvoiceTotals(payment.invoiceId);
   if (payment.orderId) {
+    // RTW Order row — never BespokeOrder.amountPaid / balance.
     const { recomputeRtwOrderTotals } = await import("@/lib/payments/rtw-totals");
     await recomputeRtwOrderTotals(payment.orderId);
   }

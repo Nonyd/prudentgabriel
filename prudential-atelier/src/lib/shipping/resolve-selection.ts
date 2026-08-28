@@ -1,8 +1,13 @@
 import { ShippingMethodKind, ShippingQuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { listCheckoutShippingOptions, parseShippingOptionId, type CartParcelLine } from "@/lib/shipping/options";
+import {
+  carrierRateRequest,
+  listCheckoutShippingOptions,
+  parcelForCart,
+  parseShippingOptionId,
+  type CartParcelLine,
+} from "@/lib/shipping/options";
 import { rateWithTimeout } from "@/lib/shipping/rate";
-import { parcelForCart } from "@/lib/shipping/options";
 import type { DestinationInput } from "@/lib/shipping/destination";
 import { getShippingCopy } from "@/lib/shipping/copy";
 
@@ -51,24 +56,9 @@ export async function resolveCheckoutShipping(params: {
     quoteLocked = { pending: true, carrier: parsed.carrier ?? "manual", quotedAt: new Date().toISOString() };
   } else if (parsed.type === "carrier" && parsed.carrier && selected.methodId) {
     const method = await prisma.shippingMethod.findUnique({ where: { id: selected.methodId } });
-    const { parcel, billable } = await parcelForCart(params.lines);
-    const rated = await rateWithTimeout(
-      parsed.carrier,
-      {
-        destination: {
-          country: params.destination.country,
-          state: params.destination.state ?? "",
-          city: params.destination.city ?? "",
-        },
-        actualKg: parcel.weightKg,
-        billableKg: billable,
-        lengthCm: parcel.lengthCm,
-        widthCm: parcel.widthCm,
-        heightCm: parcel.heightCm,
-        declaredValueNGN: params.subtotalNGN,
-      },
-      method,
-    );
+    const { parcel } = await parcelForCart(params.lines);
+    const rateReq = carrierRateRequest(parcel, params.destination, params.subtotalNGN, parsed.carrier);
+    const rated = await rateWithTimeout(parsed.carrier, rateReq, method);
     if (!rated.ok) {
       quoteStatus = ShippingQuoteStatus.QUOTE_PENDING;
       amount = 0;
@@ -79,7 +69,7 @@ export async function resolveCheckoutShipping(params: {
         amountNGN: amount,
         carrier: parsed.carrier,
         service: rated.service,
-        billableKg: billable,
+        billableKg: rateReq.billableKg,
         quotedAt: new Date().toISOString(),
       };
     }

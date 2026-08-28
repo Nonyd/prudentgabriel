@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { verifyTransaction } from "@/lib/payments/flutterwave";
 import { fulfillPaidOrder } from "@/lib/order-payment";
+import { rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
 import { convertFromNGN, getExchangeRates, type ShopCurrency } from "@/lib/currency";
 import {
   assertPspChargeBinds,
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (result.status === "successful") {
-      const expected = await expectedFlutterwaveCharge(order.total, result.currency);
+      const expected = await expectedFlutterwaveCharge(rtwChargeAmountNGN(order), result.currency);
       assertPspChargeBinds(
         {
           id: order.id,

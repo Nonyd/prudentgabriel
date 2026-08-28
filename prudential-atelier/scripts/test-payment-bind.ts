@@ -13,6 +13,7 @@ import {
   PaymentBindError,
 } from "../src/lib/payment-bind";
 import { fulfillPaidOrder } from "../src/lib/order-payment";
+import { rtwChargeAmountNGN } from "../src/lib/payments/rtw-totals";
 import { seedBootstrapAdmin } from "../prisma/bootstrap-admin";
 
 function assert(cond: unknown, message: string): asserts cond {
@@ -153,6 +154,49 @@ async function main() {
     currency: "NGN",
     metadataEntityId: null,
   });
+
+  // Shipping top-up: ₦45,000 against outstanding ₦45,000 binds.
+  // ₦45,000 against a still-unpaid ₦495,000 total is AMOUNT_MISMATCH (the cheap-order exploit).
+  const topUp = rtwChargeAmountNGN({
+    paymentStatus: PaymentStatus.PAID,
+    total: 495_000,
+    amountPaid: 450_000,
+    balance: 45_000,
+  });
+  assert(topUp === 45_000, `outstanding charge expected 45000, got ${topUp}`);
+  assert(
+    rtwChargeAmountNGN({
+      paymentStatus: PaymentStatus.PENDING,
+      total: 495_000,
+      amountPaid: 0,
+      balance: 495_000,
+    }) === 495_000,
+    "first payment still binds against full total",
+  );
+  bind(
+    {
+      id: "order-quote",
+      storedReference: "BAL-SHIP",
+      expectedAmount: expectedAmountInPspUnits(PaymentGateway.PAYSTACK, topUp),
+      expectedCurrency: "NGN",
+    },
+    {
+      gateway: PaymentGateway.PAYSTACK,
+      reference: "BAL-SHIP",
+      amount: 4_500_000,
+      currency: "NGN",
+      metadataEntityId: "order-quote",
+    },
+  );
+  expectThrow("AMOUNT_MISMATCH", () =>
+    bind(sampleOrder("order-quote", "PA-FIRST", 495_000), {
+      gateway: PaymentGateway.PAYSTACK,
+      reference: "PA-FIRST",
+      amount: 4_500_000,
+      currency: "NGN",
+      metadataEntityId: "order-quote",
+    }),
+  );
 
   // Amount lower than order.total is rejected (Paystack kobo).
   expectThrow("AMOUNT_MISMATCH", () =>

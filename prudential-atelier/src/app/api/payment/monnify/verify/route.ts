@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { verifyTransaction } from "@/lib/payments/monnify";
 import { fulfillPaidOrder } from "@/lib/order-payment";
+import { rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
 import {
   assertPspChargeBinds,
   expectedAmountInPspUnits,
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
         {
           id: order.id,
           storedReference: order.paymentRef,
-          expectedAmount: expectedAmountInPspUnits(PaymentGateway.MONNIFY, order.total),
+          expectedAmount: expectedAmountInPspUnits(PaymentGateway.MONNIFY, rtwChargeAmountNGN(order)),
           expectedCurrency: String(order.currency),
         },
         {
