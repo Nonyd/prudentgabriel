@@ -34,7 +34,7 @@ export async function resolveCheckoutShipping(params: {
   lines: CartParcelLine[];
   isFreeShippingCoupon: boolean;
 }): Promise<{ ok: true; shipping: ResolvedShipping } | { ok: false; error: string }> {
-  const { options, quoteConsent } = await listCheckoutShippingOptions({
+  const { options } = await listCheckoutShippingOptions({
     destination: params.destination,
     subtotalNGN: params.subtotalNGN,
     lines: params.lines,
