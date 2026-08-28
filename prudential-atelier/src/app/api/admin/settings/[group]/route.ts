@@ -6,6 +6,7 @@ import { clearPublicSettingsCache, clearSettingCacheKey, setSetting } from "@/li
 import { ensurePaymentSettingKeys } from "@/lib/payment-settings-bootstrap";
 import { ensureShippingSettingKeys } from "@/lib/shipping-settings-bootstrap";
 import { ensureAppearanceLogoSettingKeys } from "@/lib/appearance-settings-bootstrap";
+import { ensureStoreSettingKeys } from "@/lib/store-settings-bootstrap";
 import { revalidateSettings } from "@/lib/revalidate";
 import { EMAIL_TEMPLATE_META } from "@/lib/email-templates";
 import { SettingType, type SettingGroup } from "@prisma/client";
@@ -42,6 +43,10 @@ export async function GET(
 
   const gate = await requireAdminApi(permissionForSettingsGroup(group));
   if (!gate.ok) return gate.response;
+
+  if (group === "STORE") {
+    await ensureStoreSettingKeys();
+  }
 
   if (group === "PAYMENTS") {
     await ensurePaymentSettingKeys();

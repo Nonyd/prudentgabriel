@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { WishlistClient, type WishlistItemView } from "@/components/account/WishlistClient";
+import { derivedCatalogMinNGN } from "@/lib/pricing";
 
 export default async function WishlistPage() {
   const session = await auth();
@@ -26,7 +27,7 @@ export default async function WishlistPage() {
       productId: w.productId,
       name: w.product.name,
       slug: w.product.slug,
-      price: w.product.priceNGN,
+      price: variants.length ? derivedCatalogMinNGN(variants, w.product.isOnSale) : w.product.priceNGN,
       imageUrl: w.product.images[0]?.url ?? null,
       inStock,
       defaultVariantId: defaultVariant?.id ?? null,

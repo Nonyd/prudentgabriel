@@ -15,13 +15,13 @@ import { SizeGuideModal } from "@/components/shop/SizeGuideModal";
 import { QuickAddSizeRow } from "@/components/common/quick-add/QuickAddSizeRow";
 import { sanitizeCmsHtml } from "@/lib/sanitize-html";
 import { useBagActions } from "@/hooks/useBagActions";
-import { convertFromNGN, formatPrice } from "@/lib/currency";
+import { formatPrice } from "@/lib/currency";
 import {
-  displayPriceNGN,
   hasPurchasableSize,
   pickVariantForAdd,
   stockGuardMessage,
 } from "@/lib/quick-add";
+import { displayAmountInCurrency, effectiveUnitNGN, variantAmountInCurrency } from "@/lib/pricing";
 import { useCurrencyStore } from "@/store/currencyStore";
 import type { ProductType } from "@prisma/client";
 import type { ProductListItem, ProductListVariant } from "@/types/product";
@@ -38,6 +38,8 @@ interface DetailProduct {
   isBespokeAvail: boolean;
   lowStockAt: number;
   basePriceNGN: number;
+  priceUSD: number | null;
+  priceGBP: number | null;
   isNewArrival: boolean;
   isFeatured: boolean;
   tags: string[];
@@ -51,6 +53,7 @@ interface ProductDetailClientProps {
   averageRating: number;
   reviewCount: number;
   freeLagosAboveNGN?: number | null;
+  bespokeFromNGN?: number | null;
 }
 
 export function ProductDetailClient({
@@ -58,6 +61,7 @@ export function ProductDetailClient({
   averageRating,
   reviewCount,
   freeLagosAboveNGN = null,
+  bespokeFromNGN = null,
 }: ProductDetailClientProps) {
   const [variantId, setVariantId] = useState<string | null>(null);
   const [colorId, setColorId] = useState<string | null>(product.colors[0]?.id ?? null);
@@ -74,7 +78,7 @@ export function ProductDetailClient({
   );
   const soldOut = !hasPurchasableSize(product.variants);
   const priceLabel = formatPrice(
-    convertFromNGN(displayPriceNGN(product.variants, variantId), currency, rates),
+    displayAmountInCurrency(product.variants, variantId, product, currency, rates),
     currency,
   );
   const ctaLabel = soldOut
@@ -92,6 +96,8 @@ export function ProductDetailClient({
     category: product.category as ProductListItem["category"],
     type: product.type,
     basePriceNGN: product.basePriceNGN,
+    priceUSD: product.priceUSD,
+    priceGBP: product.priceGBP,
     isOnSale: product.isOnSale,
     isNewArrival: product.isNewArrival,
     isBespokeAvail: product.isBespokeAvail,
@@ -123,7 +129,7 @@ export function ProductDetailClient({
     setBagError(null);
     setSubmitting(true);
     try {
-      const unit = variant.salePriceNGN ?? variant.priceNGN;
+      const unit = effectiveUnitNGN(variant, product.isOnSale);
       const result = await addToBag(
         {
           id: `${variant.id}-${color?.id ?? "none"}`,
@@ -137,8 +143,8 @@ export function ProductDetailClient({
           colorHex: color?.hex,
           imageUrl: product.images[0]?.url ?? "",
           priceNGN: unit,
-          priceUSD: convertFromNGN(unit, "USD", rates),
-          priceGBP: convertFromNGN(unit, "GBP", rates),
+          priceUSD: variantAmountInCurrency(variant, product, "USD", rates),
+          priceGBP: variantAmountInCurrency(variant, product, "GBP", rates),
           quantity: Math.min(qty, variant.stock),
           stock: variant.stock,
           category: product.category,
@@ -380,7 +386,10 @@ export function ProductDetailClient({
                 </Accordion.Header>
                 <Accordion.Content className="space-y-3 pb-4 text-sm text-charcoal-mid">
                   <p>Have this piece made to your exact measurements.</p>
-                  <p>Lead time: 3–6 weeks. Starts from ₦{Math.round(product.basePriceNGN * 1.3).toLocaleString()}</p>
+                  <p>
+                    Lead time: 3–6 weeks. Starts from ₦
+                    {Math.round(bespokeFromNGN ?? product.basePriceNGN).toLocaleString()}
+                  </p>
                   <Link href="/atelier" className="font-body text-[11px] font-medium uppercase tracking-wide text-choc underline">
                     Book Atelier Consultation
                   </Link>

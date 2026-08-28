@@ -5,6 +5,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { productAdminSchema } from "@/validations/product";
 import { buildDefaultProductSku } from "@/lib/product-sku";
 import { revalidateProduct } from "@/lib/revalidate";
+import { derivedCatalogMinNGN } from "@/lib/pricing";
 
 const PAGE_SIZE_DEFAULT = 20;
 
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest) {
     sort === "name"
       ? { name: "asc" }
       : sort === "price"
-        ? { basePriceNGN: "desc" }
+        ? { priceNGN: "desc" }
         : { createdAt: "desc" };
 
   const [total, rows] = await Promise.all([
@@ -76,8 +77,7 @@ export async function GET(req: NextRequest) {
   ]);
 
   const items = rows.map((p) => {
-    const prices = p.variants.map((v) => v.salePriceNGN ?? v.priceNGN);
-    const minPrice = prices.length ? Math.min(...prices) : p.basePriceNGN;
+    const minPrice = derivedCatalogMinNGN(p.variants, p.isOnSale);
     const totalStock = p.variants.reduce((s, v) => s + v.stock, 0);
     return {
       id: p.id,
@@ -129,8 +129,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Slug already in use" }, { status: 409 });
   }
 
-  const prices = data.variants.map((v) => v.salePriceNGN ?? v.priceNGN);
-  const minPrice = Math.min(...prices);
+  const minPrice = derivedCatalogMinNGN(data.variants, data.isOnSale);
 
   try {
     const product = await prisma.$transaction(async (tx) => {
@@ -145,7 +144,7 @@ export async function POST(req: NextRequest) {
           category: data.category,
           type: data.type,
           tags: data.tags,
-          basePriceNGN: data.basePriceNGN,
+          basePriceNGN: minPrice,
           priceNGN: minPrice,
           priceUSD: data.basePriceUSD ?? null,
           priceGBP: data.basePriceGBP ?? null,

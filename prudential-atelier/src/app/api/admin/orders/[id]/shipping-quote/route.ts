@@ -8,6 +8,7 @@ import { sendShippingQuoteEmail } from "@/lib/email";
 import { generatePaymentReference } from "@/lib/payments/index";
 import { getBankTransferDetails } from "@/lib/payments/config";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { applyShippingQuoteToLocked, lockedFxFromOrder } from "@/lib/fx";
 
 const bodySchema = z.object({
   amountNGN: z.number().min(0),
@@ -37,6 +38,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   const nextShipping = parsed.data.amountNGN;
   const delta = nextShipping - order.shippingAmount;
   const nextTotal = Math.max(0, order.total + delta);
+  const fx = lockedFxFromOrder(order);
+  const usdLocked = applyShippingQuoteToLocked(order.fxUsdAmountLocked, delta, "USD", fx);
+  const gbpLocked = applyShippingQuoteToLocked(order.fxGbpAmountLocked, delta, "GBP", fx);
 
   const updated = await prisma.order.update({
     where: { id },
@@ -50,6 +54,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         quotedBy: gate.session.user?.id ?? null,
         purpose: PaymentPurpose.BALANCE,
       } as Prisma.InputJsonValue,
+      ...(usdLocked != null ? { fxUsdAmountLocked: usdLocked } : {}),
+      ...(gbpLocked != null ? { fxGbpAmountLocked: gbpLocked } : {}),
     },
   });
 

@@ -16,6 +16,7 @@ import { StripePayBlock } from "@/components/checkout/StripePayBlock";
 import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
 import type { PaymentGatewayType } from "@/lib/payments/index";
 import { formatPrice } from "@/lib/currency";
+import { cartLineAmountInCurrency, extrasAmountInCurrency } from "@/lib/pricing";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { NIGERIA_STATES } from "@/lib/geo/nigeria-states";
@@ -59,6 +60,7 @@ function FieldError({ id, message }: { id?: string; message?: string }) {
 export function CheckoutClient() {
   const { data: session, status } = useSession();
   const currency = useCurrencyStore((s) => s.currency);
+  const rates = useCurrencyStore((s) => s.rates);
   const setCurrency = useCurrencyStore((s) => s.setCurrency);
   const items = useCartStore((s) => s.items);
   const { changeQty, removeFromBag } = useBagActions();
@@ -575,6 +577,12 @@ export function CheckoutClient() {
     0,
     subtotalNGN + (shipCost ?? 0) - (couponResult?.valid ? couponResult.discountNGN : 0) - pointsToRedeem,
   );
+  const extrasNGN = (shipCost ?? 0) - (couponResult?.valid ? couponResult.discountNGN : 0) - pointsToRedeem;
+  const payableShopper = Math.max(
+    0,
+    items.reduce((s, i) => s + cartLineAmountInCurrency(i, currency, rates), 0) +
+      extrasAmountInCurrency(extrasNGN, currency, rates),
+  );
 
   if (!items.length) {
     return (
@@ -1060,7 +1068,7 @@ export function CheckoutClient() {
             <div id="payment-method">
               <PaymentMethodSelector
                 currency={currency}
-                amount={payable}
+                amount={payableShopper}
                 amountNGN={payable}
                 paymentReference={paymentRef}
                 selected={gateway}
@@ -1081,7 +1089,7 @@ export function CheckoutClient() {
             </div>
             {currency === "USD" && lockedUsdPerNgn ? (
               <p className="text-xs text-charcoal-mid">
-                {formatPrice(payable, "USD")} · ₦{Math.round(payable).toLocaleString("en-NG")} at ₦1 = $
+                {formatPrice(payableShopper, "USD")} · ₦{Math.round(payable).toLocaleString("en-NG")} at ₦1 = $
                 {lockedUsdPerNgn.toFixed(6)}
               </p>
             ) : null}
@@ -1101,7 +1109,7 @@ export function CheckoutClient() {
                   ? "Please wait…"
                   : gateway === "BANK_TRANSFER"
                     ? "Confirm order"
-                    : `Pay ${formatPrice(payable, currency)}`}
+                    : `Pay ${formatPrice(payableShopper, currency)}`}
               </Button>
             )}
             {stripeClientSecret && stripePk && createdOrder && stripeReturnUrl && (

@@ -1,12 +1,22 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { ProductListItem } from "@/types/product";
+import { derivedCatalogMinNGN, minEffectiveNGN } from "@/lib/pricing";
+import { mapListVariant } from "@/lib/map-product-list-item";
 
 export const collectionListProductInclude = {
   images: { orderBy: { sortOrder: "asc" as const }, take: 2 },
   variants: {
     orderBy: { priceNGN: "asc" as const },
-    select: { id: true, size: true, priceNGN: true, salePriceNGN: true, stock: true },
+    select: {
+      id: true,
+      size: true,
+      priceNGN: true,
+      salePriceNGN: true,
+      priceUSD: true,
+      priceGBP: true,
+      stock: true,
+    },
   },
   colors: { select: { id: true, name: true, hex: true, imageUrl: true } },
   _count: { select: { reviews: true } },
@@ -26,7 +36,9 @@ export function mapProductToListItemWithMeta(p: CollectionListProduct): Collecti
     description: p.description,
     category: p.category,
     type: p.type,
-    basePriceNGN: p.basePriceNGN,
+    basePriceNGN: p.variants.length ? derivedCatalogMinNGN(p.variants, p.isOnSale) : p.basePriceNGN,
+    priceUSD: p.priceUSD,
+    priceGBP: p.priceGBP,
     isOnSale: p.isOnSale,
     isNewArrival: p.isNewArrival,
     isBespokeAvail: p.isBespokeAvail,
@@ -37,13 +49,7 @@ export function mapProductToListItemWithMeta(p: CollectionListProduct): Collecti
       alt: im.alt,
       isPrimary: im.isPrimary,
     })),
-    variants: p.variants.map((v) => ({
-      id: v.id,
-      size: v.size,
-      priceNGN: v.priceNGN,
-      salePriceNGN: v.salePriceNGN,
-      stock: v.stock,
-    })),
+    variants: p.variants.map(mapListVariant),
     colors: p.colors,
     _count: p._count,
     createdAt: p.createdAt.toISOString(),
@@ -179,10 +185,10 @@ export function sortCollectionProducts(
   const copy = [...products];
   switch (sort) {
     case "price-asc":
-      copy.sort((a, b) => a.basePriceNGN - b.basePriceNGN);
+      copy.sort((a, b) => minEffectiveNGN(a.variants, a.isOnSale) - minEffectiveNGN(b.variants, b.isOnSale));
       break;
     case "price-desc":
-      copy.sort((a, b) => b.basePriceNGN - a.basePriceNGN);
+      copy.sort((a, b) => minEffectiveNGN(b.variants, b.isOnSale) - minEffectiveNGN(a.variants, a.isOnSale));
       break;
     case "newest":
       copy.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());

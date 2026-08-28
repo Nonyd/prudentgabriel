@@ -11,6 +11,8 @@ export interface ProductListVariant {
   size: string;
   priceNGN: number;
   salePriceNGN: number | null;
+  priceUSD: number | null;
+  priceGBP: number | null;
   stock: number;
 }
 
@@ -29,6 +31,8 @@ export interface ProductListItem {
   category: ProductCategory;
   type: ProductType;
   basePriceNGN: number;
+  priceUSD: number | null;
+  priceGBP: number | null;
   isOnSale: boolean;
   isNewArrival: boolean;
   isBespokeAvail: boolean;

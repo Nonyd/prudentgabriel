@@ -3,16 +3,13 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { convertFromNGN, formatPrice } from "@/lib/currency";
+import { formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import type { ProductListItem } from "@/types/product";
+import { minAmountInCurrency } from "@/lib/pricing";
 
 const PLACEHOLDER =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='1067'%3E%3Crect width='100%25' height='100%25' fill='%23F2F2F0'/%3E%3C/svg%3E";
-
-function effectivePrice(v: ProductListItem["variants"][0]) {
-  return v.salePriceNGN != null ? v.salePriceNGN : v.priceNGN;
-}
 
 function ProductCell({
   product,
@@ -26,10 +23,9 @@ function ProductCell({
   const currency = useCurrencyStore((s) => s.currency);
   const rates = useCurrencyStore((s) => s.rates);
   const img = product.images[0];
-  const prices = product.variants.map((v) => effectivePrice(v));
-  const low = Math.min(...prices);
+  const low = minAmountInCurrency(product.variants, product, currency, rates);
   const multi = product.variants.length > 1;
-  const fmt = formatPrice(convertFromNGN(low, currency, rates), currency);
+  const fmt = formatPrice(low, currency);
 
   return (
     <Link

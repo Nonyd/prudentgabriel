@@ -282,24 +282,7 @@ export function CollectionDetailPage({
         ) : (
           <div className="mx-auto max-w-[1400px] px-6">
             <ProductCardGrid
-              products={items.map((p) => ({
-                id: p.id,
-                name: p.name,
-                slug: p.slug,
-                description: p.description,
-                category: p.category,
-                type: p.type,
-                basePriceNGN: p.basePriceNGN,
-                isOnSale: p.isOnSale,
-                isNewArrival: p.isNewArrival,
-                isBespokeAvail: p.isBespokeAvail,
-                isFeatured: p.isFeatured,
-                tags: p.tags,
-                images: p.images,
-                variants: p.variants,
-                colors: p.colors,
-                _count: p._count,
-              }))}
+              products={items}
               priorityCount={8}
               className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 xl:grid-cols-4 xl:gap-6"
             />

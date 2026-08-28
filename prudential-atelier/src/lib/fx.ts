@@ -5,6 +5,7 @@ import {
   type ExchangeRatesNGN,
   type ShopCurrency,
 } from "@/lib/currency";
+import { overrideOrConvert } from "@/lib/pricing";
 
 export type LockedFx = {
   /** USD per ₦1 */
@@ -90,13 +91,68 @@ export async function getLockedFx(): Promise<LockedFx> {
   }
 }
 
+export function ratesFromLockedFx(fx: LockedFx): ExchangeRatesNGN {
+  return { NGN: 1, USD: fx.rate, GBP: fx.gbpRate };
+}
+
 export function convertAtLockedRate(amountNGN: number, to: ShopCurrency, fx: LockedFx): number {
   if (to === "NGN") return amountNGN;
-  const rates: ExchangeRatesNGN = { NGN: 1, USD: fx.rate, GBP: fx.gbpRate };
-  return convertFromNGN(amountNGN, to, rates);
+  return convertFromNGN(amountNGN, to, ratesFromLockedFx(fx));
+}
+
+export function roundMoney(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+/**
+ * Shipping is always converted at the locked rate (never overridden).
+ * Adding the rounded conversion keeps locked USD/GBP in cents so a later
+ * top-up of the same ₦ delta charges the same figure.
+ */
+export function applyShippingQuoteToLocked(
+  previousLocked: number | null | undefined,
+  deltaNGN: number,
+  currency: "USD" | "GBP",
+  fx: LockedFx,
+): number | null {
+  if (previousLocked == null) return null;
+  return Math.max(0, roundMoney(previousLocked + convertAtLockedRate(deltaNGN, currency, fx)));
+}
+
+export function lockedFxFromOrder(order: {
+  fxRateLocked?: number | null;
+  fxGbpRateLocked?: number | null;
+  fxRateSource?: string | null;
+  fxRateFetchedAt?: Date | null;
+  fxRateStale?: boolean | null;
+}): LockedFx {
+  return {
+    rate: order.fxRateLocked && order.fxRateLocked > 0 ? order.fxRateLocked : 0.00065,
+    gbpRate: order.fxGbpRateLocked && order.fxGbpRateLocked > 0 ? order.fxGbpRateLocked : 0.00052,
+    source: order.fxRateSource ?? "locked",
+    fetchedAt: order.fxRateFetchedAt ?? new Date(),
+    stale: Boolean(order.fxRateStale),
+  };
 }
 
 export function usdOverrideOrConvert(amountNGN: number, overrideUSD: number | null | undefined, fx: LockedFx): number {
-  if (overrideUSD != null && overrideUSD > 0) return overrideUSD;
-  return convertAtLockedRate(amountNGN, "USD", fx);
+  return overrideOrConvert(amountNGN, "USD", overrideUSD, ratesFromLockedFx(fx));
+}
+
+export function gbpOverrideOrConvert(amountNGN: number, overrideGBP: number | null | undefined, fx: LockedFx): number {
+  return overrideOrConvert(amountNGN, "GBP", overrideGBP, ratesFromLockedFx(fx));
+}
+
+export function lockForeignTotals(params: {
+  itemUsd: number;
+  itemGbp: number;
+  extrasNGN: number;
+  fx: LockedFx;
+}): { fxUsdAmountLocked: number; fxGbpAmountLocked: number } {
+  const extrasUsd = convertAtLockedRate(params.extrasNGN, "USD", params.fx);
+  const extrasGbp = convertAtLockedRate(params.extrasNGN, "GBP", params.fx);
+  return {
+    fxUsdAmountLocked: Math.max(0, roundMoney(params.itemUsd + extrasUsd)),
+    fxGbpAmountLocked: Math.max(0, roundMoney(params.itemGbp + extrasGbp)),
+  };
 }

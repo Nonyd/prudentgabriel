@@ -298,7 +298,9 @@ model Product {
   metaDescription String?
   category       ProductCategory
   type           ProductType     @default(RTW)
+  /// Denormalised cheapest effective unit (sale ₦ only while isOnSale). Filter, sort, wishlist.
   priceNGN       Float
+  /// Same figure as priceNGN after save. Seed for new size rows in admin; not an independent catalog price.
   basePriceNGN   Float
   priceUSD       Float?
   priceGBP       Float?
@@ -547,9 +549,15 @@ model Order {
   collectionRemindedAt DateTime?
   /// USD per ₦1, locked at checkout. Convert with convertFromNGN.
   fxRateLocked        Float?
+  /// GBP per ₦1, locked at checkout with the USD rate.
+  fxGbpRateLocked     Float?
   fxRateSource        String?
   fxRateFetchedAt     DateTime?
   fxRateStale         Boolean         @default(false)
+  /// USD payable for order.total at lock time (line overrides + converted extras). Scale by outstanding/total.
+  fxUsdAmountLocked   Float?
+  /// GBP payable for order.total at lock time. Scale by outstanding/total.
+  fxGbpAmountLocked   Float?
   /// Ledger denormalised cache. Writer: recomputeRtwOrderTotals.
   amountPaid          Float           @default(0)
   balance             Float           @default(0)

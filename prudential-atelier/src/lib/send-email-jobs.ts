@@ -5,6 +5,7 @@ import { renderCollectionCampaignHtml, renderCustomEmailHtml } from "@/lib/admin
 import { getEmailTemplate } from "@/lib/admin-email-template-store";
 import { EMAIL_TEMPLATE_KEYS } from "@/lib/admin-email-catalog";
 import { mergeCollectionProductsForCampaign } from "@/lib/collection-products";
+import { derivedCatalogMinNGN } from "@/lib/pricing";
 import { applyMarketingUnsubscribe, ensureEmailPreference, normalizeEmail, suppressedEmailSet } from "@/lib/email-consent";
 import { EMAIL_PRIORITY_MARKETING } from "@/lib/email-priority";
 import { optimizeImageUrl } from "@/lib/utils";
@@ -108,7 +109,7 @@ export async function buildCampaignHtml(params: {
         name: p.name,
         slug: p.slug,
         imageUrl: img?.url ? optimizeImageUrl(img.url, 240) : null,
-        priceLabel: `From ₦${Math.round(p.basePriceNGN).toLocaleString("en-NG")}`,
+        priceLabel: `From ₦${Math.round(p.variants.length ? derivedCatalogMinNGN(p.variants, p.isOnSale) : p.basePriceNGN).toLocaleString("en-NG")}`,
       };
     });
     const rendered = await renderCollectionCampaignHtml({

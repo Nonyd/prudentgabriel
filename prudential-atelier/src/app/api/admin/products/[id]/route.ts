@@ -5,6 +5,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { productAdminSchema, productToggleSchema } from "@/validations/product";
 import { buildDefaultProductSku } from "@/lib/product-sku";
 import { revalidateProduct } from "@/lib/revalidate";
+import { canInlineEditPrice, derivedCatalogMinNGN } from "@/lib/pricing";
 import { processRestockAlerts } from "@/lib/stock-alerts";
 import { destroyCloudinaryAsset } from "@/lib/cloudinary-public-id";
 
@@ -48,6 +49,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       const basePrice = Number(payload.basePriceNGN);
       if (!Number.isFinite(basePrice) || basePrice <= 0) {
         return NextResponse.json({ error: "basePriceNGN must be a positive number" }, { status: 400 });
+      }
+      const variantCount = await prisma.productVariant.count({ where: { productId: id } });
+      const inline = canInlineEditPrice(variantCount);
+      if (!inline.ok) {
+        return NextResponse.json({ error: inline.error }, { status: 409 });
       }
       const variantId = typeof payload.variantId === "string" ? payload.variantId : undefined;
       const updated = await prisma.$transaction(async (tx) => {
@@ -122,8 +128,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     return NextResponse.json({ error: "Slug already in use" }, { status: 409 });
   }
 
-  const prices = data.variants.map((v) => v.salePriceNGN ?? v.priceNGN);
-  const minPrice = Math.min(...prices);
+  const minPrice = derivedCatalogMinNGN(data.variants, data.isOnSale);
 
   const oldVariants = await prisma.productVariant.findMany({
     where: { productId: id },
@@ -145,7 +150,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           category: data.category,
           type: data.type,
           tags: data.tags,
-          basePriceNGN: data.basePriceNGN,
+          basePriceNGN: minPrice,
           priceNGN: minPrice,
           priceUSD: data.basePriceUSD ?? null,
           priceGBP: data.basePriceGBP ?? null,

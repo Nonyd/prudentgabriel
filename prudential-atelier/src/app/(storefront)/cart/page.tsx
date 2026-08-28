@@ -6,19 +6,21 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useCartStore } from "@/store/cartStore";
 import { useBagActions } from "@/hooks/useBagActions";
-import { convertFromNGN, formatPrice } from "@/lib/currency";
+import { formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
+import { cartLineAmountInCurrency } from "@/lib/pricing";
 
 export default function CartPage() {
   const router = useRouter();
   const items = useCartStore((s) => s.items);
   const totalItems = useCartStore((s) => s.totalItems);
-  const totalNGN = useCartStore((s) => s.totalNGN);
   const { changeQty, removeFromBag } = useBagActions();
   const currency = useCurrencyStore((s) => s.currency);
   const rates = useCurrencyStore((s) => s.rates);
 
-  const fmt = (ngn: number) => formatPrice(convertFromNGN(ngn, currency, rates), currency);
+  const fmtLine = (item: (typeof items)[number]) =>
+    formatPrice(cartLineAmountInCurrency(item, currency, rates), currency);
+  const subtotalShopper = items.reduce((s, i) => s + cartLineAmountInCurrency(i, currency, rates), 0);
 
   return (
     <div className="mx-auto max-w-site px-4 py-10">
@@ -76,7 +78,7 @@ export default function CartPage() {
                     </button>
                   </div>
                 </div>
-                <p className="shrink-0 font-medium text-charcoal">{fmt(item.priceNGN * item.quantity)}</p>
+                <p className="shrink-0 font-medium text-charcoal">{fmtLine(item)}</p>
               </li>
             ))}
           </ul>
@@ -84,7 +86,7 @@ export default function CartPage() {
           <aside className="h-fit border border-border bg-off-white p-6">
             <div className="flex items-baseline justify-between">
               <span className="font-label text-xs uppercase text-charcoal-mid">Subtotal</span>
-              <span className="font-display text-xl text-charcoal">{fmt(totalNGN)}</span>
+              <span className="font-display text-xl text-charcoal">{formatPrice(subtotalShopper, currency)}</span>
             </div>
             <p className="mt-2 text-xs text-charcoal-light">Shipping calculated at checkout</p>
             <Button type="button" className="mt-6 w-full" size="lg" onClick={() => router.push("/checkout")}>

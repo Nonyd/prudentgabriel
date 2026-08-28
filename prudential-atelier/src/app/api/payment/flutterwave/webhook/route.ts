@@ -4,8 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { verifyWebhookSignature, verifyTransaction } from "@/lib/payments/flutterwave";
 import { fulfillPaidOrder } from "@/lib/order-payment";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
-import { rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
+import { rtwChargeAmountForeign, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
 import { convertFromNGN, getExchangeRates, type ShopCurrency } from "@/lib/currency";
+import { lockedFxFromOrder } from "@/lib/fx";
 import {
   assertPspChargeBinds,
   expectedAmountInPspUnits,
@@ -89,7 +90,16 @@ export async function POST(req: NextRequest) {
       } else if (orderId && reference) {
         const order = await prisma.order.findUnique({ where: { id: orderId } });
         if (order) {
-          const expected = await expectedFlutterwaveCharge(rtwChargeAmountNGN(order), currency);
+          const cur = currency.trim().toUpperCase() as ShopCurrency | string;
+          const fx = lockedFxFromOrder(order);
+          const major =
+            cur === "USD" || cur === "GBP"
+              ? rtwChargeAmountForeign(order, cur, fx)
+              : rtwChargeAmountNGN(order);
+          const expected = {
+            amount: expectedAmountInPspUnits(PaymentGateway.FLUTTERWAVE, major),
+            currency: cur === "USD" || cur === "GBP" ? cur : "NGN",
+          };
           assertPspChargeBinds(
             {
               id: order.id,

@@ -4,23 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { verifyTransaction } from "@/lib/payments/flutterwave";
 import { fulfillPaidOrder } from "@/lib/order-payment";
-import { rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
-import { convertFromNGN, getExchangeRates, type ShopCurrency } from "@/lib/currency";
+import { rtwChargeAmountForeign, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
+import type { ShopCurrency } from "@/lib/currency";
+import { lockedFxFromOrder } from "@/lib/fx";
 import {
   assertPspChargeBinds,
   expectedAmountInPspUnits,
   PaymentBindError,
 } from "@/lib/payment-bind";
-
-async function expectedFlutterwaveCharge(totalNGN: number, pspCurrency: string) {
-  const cur = pspCurrency.trim().toUpperCase();
-  if (cur === "USD" || cur === "GBP") {
-    const rates = await getExchangeRates();
-    const major = convertFromNGN(totalNGN, cur as ShopCurrency, rates);
-    return { amount: expectedAmountInPspUnits(PaymentGateway.FLUTTERWAVE, major), currency: cur };
-  }
-  return { amount: expectedAmountInPspUnits(PaymentGateway.FLUTTERWAVE, totalNGN), currency: "NGN" };
-}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -40,7 +31,16 @@ export async function GET(req: NextRequest) {
     }
 
     if (result.status === "successful") {
-      const expected = await expectedFlutterwaveCharge(rtwChargeAmountNGN(order), result.currency);
+      const cur = result.currency.trim().toUpperCase() as ShopCurrency | string;
+      const fx = lockedFxFromOrder(order);
+      const major =
+        cur === "USD" || cur === "GBP"
+          ? rtwChargeAmountForeign(order, cur, fx)
+          : rtwChargeAmountNGN(order);
+      const expected = {
+        amount: expectedAmountInPspUnits(PaymentGateway.FLUTTERWAVE, major),
+        currency: cur === "USD" || cur === "GBP" ? cur : "NGN",
+      };
       assertPspChargeBinds(
         {
           id: order.id,

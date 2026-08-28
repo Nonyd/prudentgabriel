@@ -24,6 +24,8 @@ function variant(partial: Partial<ProductListVariant> & { id: string; size: stri
   return {
     priceNGN: 150000,
     salePriceNGN: null,
+    priceUSD: null,
+    priceGBP: null,
     stock: 3,
     ...partial,
   };
@@ -38,6 +40,8 @@ function product(variants: ProductListVariant[], id = "p1"): ProductListItem {
     category: "EVENING_WEAR",
     type: "RTW",
     basePriceNGN: 150000,
+    priceUSD: null,
+    priceGBP: null,
     isOnSale: false,
     isNewArrival: false,
     isBespokeAvail: false,
@@ -119,8 +123,8 @@ function run() {
   assert(quickAddCtaLabel("sizes", "₦180,000") === "Select Size · ₦180,000", "sizes CTA names next action + price");
   assert(quickAddCtaLabel("selected", "₦190,000") === "Add to bag · ₦190,000", "selected CTA names next action + price");
   assert(quickAddCtaLabel("done", "₦190,000") === "Added to bag · ₦190,000", "done keeps price visible");
-  assert(displayPriceNGN(sizes, null) === 180000, "unselected display uses lowest in-stock, not first variant");
-  assert(displayPriceNGN(sizes, "m") === 190000, "selected display uses that SKU");
+  assert(displayPriceNGN(sizes, null, false) === 180000, "unselected display uses lowest in-stock, not first variant");
+  assert(displayPriceNGN(sizes, "m", false) === 190000, "selected display uses that SKU");
   assert(stockGuardMessage("Out of stock") === "That size just sold out.", "stock API maps to inline copy");
   assert(stockGuardMessage("Quantity exceeds stock") === "That size just sold out.", "qty/stock maps to inline copy");
   assert(stockGuardMessage(undefined) === "Could not add to bag.", "empty API body is not Could not update bag");

@@ -11,7 +11,9 @@ import { RecentlyViewed } from "@/components/common/RecentlyViewed";
 import { ViewTracker } from "@/components/product/ViewTracker";
 import type { ProductListItem } from "@/types/product";
 import type { ReviewItem } from "@/components/product/ReviewsSection";
-import { mapProductToListItem } from "@/lib/map-product-list-item";
+import { mapListVariant, mapProductToListItem } from "@/lib/map-product-list-item";
+import { getSetting } from "@/lib/settings";
+import { bespokeFromNGN, derivedCatalogMinNGN } from "@/lib/pricing";
 
 
 const ReviewsSection = nextDynamic(() => import("@/components/product/ReviewsSection").then((m) => ({ default: m.ReviewsSection })), {
@@ -146,6 +148,12 @@ export default async function ProductPage({ params }: { params: { slug: string }
     orderBy: { sortOrder: "asc" },
     select: { freeAboveNGN: true },
   });
+  const bespokeFrom = product.isBespokeAvail
+    ? bespokeFromNGN(
+        derivedCatalogMinNGN(product.variants, product.isOnSale),
+        await getSetting("bespoke_from_markup"),
+      )
+    : null;
 
   return (
     <>
@@ -164,16 +172,19 @@ export default async function ProductPage({ params }: { params: { slug: string }
           isBespokeAvail: product.isBespokeAvail,
           lowStockAt: product.lowStockAt,
           basePriceNGN: product.basePriceNGN,
+          priceUSD: product.priceUSD,
+          priceGBP: product.priceGBP,
           isNewArrival: product.isNewArrival,
           isFeatured: product.isFeatured,
           tags: product.tags,
           images: product.images,
-          variants: product.variants,
+          variants: product.variants.map(mapListVariant),
           colors: product.colors,
         }}
         averageRating={averageRating}
         reviewCount={reviewCount}
         freeLagosAboveNGN={lagosLoc?.freeAboveNGN ?? null}
+        bespokeFromNGN={bespokeFrom}
       />
       <div className="mx-auto max-w-site px-4">
         <ReviewsSection

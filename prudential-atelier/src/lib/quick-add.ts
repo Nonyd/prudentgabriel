@@ -1,4 +1,5 @@
 import type { ProductListItem, ProductListVariant } from "@/types/product";
+import { displayPriceNGN, pickVariantForPrice } from "@/lib/pricing";
 
 export type QuickAddPhase = "idle" | "sizes" | "selected" | "submitting" | "done" | "error";
 
@@ -30,21 +31,10 @@ export function pickVariantForAdd(
   variants: ProductListVariant[],
   variantId: string | null,
 ): ProductListVariant | null {
-  if (!variantId) return null;
-  return variants.find((v) => v.id === variantId) ?? null;
+  return pickVariantForPrice(variants, variantId);
 }
 
-export function displayPriceNGN(
-  variants: ProductListVariant[],
-  variantId: string | null,
-): number {
-  const selected = pickVariantForAdd(variants, variantId);
-  if (selected) return selected.salePriceNGN ?? selected.priceNGN;
-  const pool = variants.filter((v) => v.stock > 0);
-  const source = pool.length ? pool : variants;
-  if (!source.length) return 0;
-  return Math.min(...source.map((v) => v.salePriceNGN ?? v.priceNGN));
-}
+export { displayPriceNGN };
 
 export function quickAddCtaLabel(phase: QuickAddPhase, price: string): string {
   switch (phase) {

@@ -1,6 +1,7 @@
 import { Prisma, ProductCategory, ProductType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { ProductListItem } from "@/types/product";
+import { derivedCatalogMinNGN } from "@/lib/pricing";
 
 const CATEGORIES = new Set(Object.values(ProductCategory));
 const TYPES = new Set(["RTW", "BESPOKE"] as const);
@@ -105,9 +106,9 @@ export async function queryProductList(
   const minP = minRaw ? parseFloat(minRaw) : NaN;
   const maxP = maxRaw ? parseFloat(maxRaw) : NaN;
   if (Number.isFinite(minP) || Number.isFinite(maxP)) {
-    where.basePriceNGN = {};
-    if (Number.isFinite(minP)) where.basePriceNGN.gte = minP;
-    if (Number.isFinite(maxP)) where.basePriceNGN.lte = maxP;
+    where.priceNGN = {};
+    if (Number.isFinite(minP)) where.priceNGN.gte = minP;
+    if (Number.isFinite(maxP)) where.priceNGN.lte = maxP;
   }
 
   const inStockOnly = searchParams.get("inStock") === "true";
@@ -124,10 +125,10 @@ export async function queryProductList(
 
   switch (sortParam) {
     case "price-asc":
-      orderBy = { basePriceNGN: "asc" };
+      orderBy = { priceNGN: "asc" };
       break;
     case "price-desc":
-      orderBy = { basePriceNGN: "desc" };
+      orderBy = { priceNGN: "desc" };
       break;
     case "featured":
       orderBy = [{ isFeatured: "desc" }, { createdAt: "desc" }];
@@ -152,6 +153,8 @@ export async function queryProductList(
         category: true,
         type: true,
         basePriceNGN: true,
+        priceUSD: true,
+        priceGBP: true,
         isOnSale: true,
         isNewArrival: true,
         isBespokeAvail: true,
@@ -164,7 +167,15 @@ export async function queryProductList(
         },
         variants: {
           orderBy: { priceNGN: "asc" },
-          select: { id: true, size: true, priceNGN: true, salePriceNGN: true, stock: true },
+          select: {
+            id: true,
+            size: true,
+            priceNGN: true,
+            salePriceNGN: true,
+            priceUSD: true,
+            priceGBP: true,
+            stock: true,
+          },
         },
         colors: { select: { id: true, name: true, hex: true, imageUrl: true } },
         _count: { select: { reviews: true } },
@@ -180,7 +191,9 @@ export async function queryProductList(
     description: "",
     category: p.category,
     type: p.type,
-    basePriceNGN: p.basePriceNGN,
+    basePriceNGN: p.variants.length ? derivedCatalogMinNGN(p.variants, p.isOnSale) : p.basePriceNGN,
+    priceUSD: p.priceUSD,
+    priceGBP: p.priceGBP,
     isOnSale: p.isOnSale,
     isNewArrival: p.isNewArrival,
     isBespokeAvail: p.isBespokeAvail,
@@ -196,6 +209,8 @@ export async function queryProductList(
       size: v.size,
       priceNGN: v.priceNGN,
       salePriceNGN: v.salePriceNGN,
+      priceUSD: v.priceUSD,
+      priceGBP: v.priceGBP,
       stock: v.stock,
     })),
     colors: p.colors,

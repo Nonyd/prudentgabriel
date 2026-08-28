@@ -1,9 +1,9 @@
 "use client";
 
-import { convertFromNGN } from "@/lib/currency";
 import { planGuestServerMerge } from "@/lib/cart-merge";
 import { stockGuardMessage } from "@/lib/quick-add";
 import { useCartStore, type CartItem } from "@/store/cartStore";
+import { effectiveUnitNGN, variantAmountInCurrency } from "@/lib/pricing";
 
 type ServerCartRow = {
   id: string;
@@ -16,9 +16,20 @@ type ServerCartRow = {
     name: string;
     slug: string;
     category: string;
+    isOnSale: boolean;
+    priceUSD: number | null;
+    priceGBP: number | null;
     images: { url: string }[];
   };
-  variant: { id: string; size: string; priceNGN: number; salePriceNGN: number | null; stock: number };
+  variant: {
+    id: string;
+    size: string;
+    priceNGN: number;
+    salePriceNGN: number | null;
+    priceUSD: number | null;
+    priceGBP: number | null;
+    stock: number;
+  };
   color: { name: string; hex: string } | null;
 };
 
@@ -26,8 +37,9 @@ function serverRowToCartItem(
   row: ServerCartRow,
   rates: { NGN: number; USD: number; GBP: number },
 ): CartItem {
-  const unit = row.variant.salePriceNGN ?? row.variant.priceNGN;
+  const unit = effectiveUnitNGN(row.variant, row.product.isOnSale);
   const img = row.product.images[0]?.url ?? "";
+  const priced = { isOnSale: row.product.isOnSale, priceUSD: row.product.priceUSD, priceGBP: row.product.priceGBP };
   return {
     id: row.id,
     productId: row.productId,
@@ -40,8 +52,8 @@ function serverRowToCartItem(
     colorHex: row.color?.hex,
     imageUrl: img,
     priceNGN: unit,
-    priceUSD: convertFromNGN(unit, "USD", rates),
-    priceGBP: convertFromNGN(unit, "GBP", rates),
+    priceUSD: variantAmountInCurrency(row.variant, priced, "USD", rates),
+    priceGBP: variantAmountInCurrency(row.variant, priced, "GBP", rates),
     quantity: row.quantity,
     stock: row.variant.stock,
     category: row.product.category,

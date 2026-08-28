@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { optimizeImageUrl } from "@/lib/utils";
 import type { CollectionProductWithMeta } from "@/lib/collection-products";
+import { derivedCatalogMinNGN } from "@/lib/pricing";
 import { CollectionFormModal } from "@/components/admin/CollectionFormModal";
 import type { AdminCollectionRow } from "@/components/admin/CollectionsClient";
 
@@ -202,7 +203,9 @@ export function CollectionDetailAdmin({
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-body text-[13px] font-medium text-ink">{p.name}</p>
-                  <p className="font-body text-[11px] text-[#6B6B68]">From ₦{Math.round(p.basePriceNGN).toLocaleString()}</p>
+                  <p className="font-body text-[11px] text-[#6B6B68]">
+                    From ₦{Math.round(p.variants.length ? derivedCatalogMinNGN(p.variants, p.isOnSale) : p.basePriceNGN).toLocaleString()}
+                  </p>
                 </div>
                 {tab === "manual" ? (
                   <button

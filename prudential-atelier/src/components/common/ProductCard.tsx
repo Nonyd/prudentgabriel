@@ -14,23 +14,20 @@ import {
   QuickAddMobileClose,
   QuickAddMobileTrigger,
 } from "@/components/common/quick-add/QuickAddMobile";
-import { convertFromNGN, formatPrice } from "@/lib/currency";
+import { formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import { useProductQuickAdd } from "@/hooks/useQuickAdd";
 import { useIsMdUp } from "@/hooks/useMediaQuery";
 import { optimizeProductCardImageUrl } from "@/lib/product-image-url";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import type { ProductListItem } from "@/types/product";
+import { minAmountInCurrency } from "@/lib/pricing";
 
 export interface ProductCardProps {
   product: ProductListItem;
   priority?: boolean;
   compact?: boolean;
   dimmed?: boolean;
-}
-
-function effectiveVariantPrice(v: ProductListItem["variants"][0]) {
-  return v.salePriceNGN != null ? v.salePriceNGN : v.priceNGN;
 }
 
 export function ProductCard({ product, priority, compact, dimmed }: ProductCardProps) {
@@ -50,15 +47,8 @@ export function ProductCard({ product, priority, compact, dimmed }: ProductCardP
   const qa = useProductQuickAdd(product, selectedColor);
   const isMd = useIsMdUp();
 
-  const prices = product.variants.map((v) => ({
-    orig: v.priceNGN,
-    sale: v.salePriceNGN,
-    eff: effectiveVariantPrice(v),
-  }));
-  const lowestOrig = prices.length ? Math.min(...prices.map((p) => p.orig)) : 0;
-  const salePrices = prices.map((p) => p.sale).filter((x): x is number => x != null);
-  const lowestSale = salePrices.length ? Math.min(...salePrices) : null;
-  const lowestEff = prices.length ? Math.min(...prices.map((p) => p.eff)) : 0;
+  const saleOn = product.isOnSale && product.variants.some((v) => v.salePriceNGN != null);
+  const lowestEffShopper = minAmountInCurrency(product.variants, product, currency, rates);
   const multi = product.variants.length > 1;
 
   const gallery = product.images.filter((im) => im.url?.trim());
@@ -69,7 +59,14 @@ export function ProductCard({ product, priority, compact, dimmed }: ProductCardP
   const secondary =
     !primaryFromColor && galleryIndex === 0 && gallery[1]?.url ? gallery[1] : undefined;
 
-  const formatN = (ngn: number) => formatPrice(convertFromNGN(ngn, currency, rates), currency);
+  const lowestListShopper = minAmountInCurrency(
+    product.variants,
+    { ...product, isOnSale: false },
+    currency,
+    rates,
+  );
+
+  const formatShopper = (n: number) => formatPrice(n, currency);
 
   const showSaleBadge = product.isOnSale;
   const showNewBadge = product.isNewArrival && !showSaleBadge;
@@ -82,16 +79,16 @@ export function ProductCard({ product, priority, compact, dimmed }: ProductCardP
 
   const priceBlock = (
     <>
-      {product.isOnSale && lowestSale != null ? (
+      {saleOn ? (
         <p className="flex flex-wrap items-baseline gap-2">
-          <del className="font-body text-[12px] font-light text-text-light">{formatN(lowestOrig)}</del>
-          <span className="font-body text-[13px] font-medium text-choc">{formatN(lowestSale)}</span>
+          <del className="font-body text-[12px] font-light text-text-light">{formatShopper(lowestListShopper)}</del>
+          <span className="font-body text-[13px] font-medium text-choc">{formatShopper(lowestEffShopper)}</span>
         </p>
       ) : (
         <p className="font-body text-[13px] text-text-mid">
           {multi ? <span className="text-text-light">From </span> : null}
           <span className={cn("font-medium", compact ? "text-ivory" : "text-choc")}>
-            {formatN(lowestEff)}
+            {formatShopper(lowestEffShopper)}
           </span>
         </p>
       )}

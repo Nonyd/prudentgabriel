@@ -1,14 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { convertFromNGN, formatPrice } from "@/lib/currency";
+import { formatPrice } from "@/lib/currency";
 import {
-  displayPriceNGN,
   hasPurchasableSize,
   pickVariantForAdd,
   quickAddCtaLabel,
   stockGuardMessage,
 } from "@/lib/quick-add";
+import { displayAmountInCurrency, effectiveUnitNGN, variantAmountInCurrency } from "@/lib/pricing";
 import { useBagActions } from "@/hooks/useBagActions";
 import { usePrefersReducedMotion } from "@/hooks/useMediaQuery";
 import { useCartStore } from "@/store/cartStore";
@@ -48,8 +48,10 @@ export function useProductQuickAdd(
   const doneTimer = useRef<number | null>(null);
   const inFlight = useRef(false);
 
-  const priceNGN = displayPriceNGN(product.variants, activeVariantId);
-  const priceLabel = formatPrice(convertFromNGN(priceNGN, currency, rates), currency);
+  const priceLabel = formatPrice(
+    displayAmountInCurrency(product.variants, activeVariantId, product, currency, rates),
+    currency,
+  );
   const ctaLabel = quickAddCtaLabel(activePhase, priceLabel);
 
   const announcement = useMemo(() => {
@@ -96,7 +98,7 @@ export function useProductQuickAdd(
     }
     inFlight.current = true;
     beginSubmit();
-    const unit = variant.salePriceNGN ?? variant.priceNGN;
+    const unit = effectiveUnitNGN(variant, product.isOnSale);
     const color = selectedColor ?? product.colors[0];
     const result = await addToBag(
       {
@@ -111,8 +113,8 @@ export function useProductQuickAdd(
         colorHex: color?.hex,
         imageUrl: (color?.imageUrl?.trim() || product.images[0]?.url || "") as string,
         priceNGN: unit,
-        priceUSD: convertFromNGN(unit, "USD", rates),
-        priceGBP: convertFromNGN(unit, "GBP", rates),
+        priceUSD: variantAmountInCurrency(variant, product, "USD", rates),
+        priceGBP: variantAmountInCurrency(variant, product, "GBP", rates),
         quantity: 1,
         stock: variant.stock,
         category: product.category,

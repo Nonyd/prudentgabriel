@@ -1,6 +1,8 @@
 import { PaymentStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { dec, toNumber, type PaymentSummary } from "@/lib/payments/ledger";
+import { convertAtLockedRate, roundMoney, type LockedFx } from "@/lib/fx";
+import type { ShopCurrency } from "@/lib/currency";
 
 const ZERO = new Prisma.Decimal(0);
 
@@ -95,4 +97,33 @@ export function rtwChargeAmountNGN(order: {
     return order.balance ?? Math.max(0, order.total - (order.amountPaid ?? 0));
   }
   return order.total;
+}
+
+/**
+ * USD/GBP to charge on this PSP attempt.
+ * First payment: the amount locked at checkout (line overrides + converted extras).
+ * Shipping top-up: convert the outstanding ₦ at the locked rate — shipping is never
+ * overridden, and scaling locked × (outstanding/total) overcharges when the garment
+ * was a $ override and the quote is converted ₦.
+ */
+export function rtwChargeAmountForeign(
+  order: {
+    paymentStatus: PaymentStatus;
+    total: number;
+    balance?: number | null;
+    amountPaid?: number | null;
+    fxUsdAmountLocked?: number | null;
+    fxGbpAmountLocked?: number | null;
+  },
+  currency: ShopCurrency,
+  fx: LockedFx,
+): number {
+  const ngn = rtwChargeAmountNGN(order);
+  if (currency === "NGN") return ngn;
+  if (order.paymentStatus === PaymentStatus.PAID && rtwHasOutstandingBalance(order)) {
+    return roundMoney(convertAtLockedRate(ngn, currency, fx));
+  }
+  const locked = currency === "USD" ? order.fxUsdAmountLocked : order.fxGbpAmountLocked;
+  if (locked != null && locked > 0) return roundMoney(locked);
+  return roundMoney(convertAtLockedRate(ngn, currency, fx));
 }

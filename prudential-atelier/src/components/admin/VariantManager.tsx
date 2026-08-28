@@ -77,8 +77,11 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
           onClick={applyBaseToAll}
           className="rounded-sm border border-sand px-3 py-1.5 text-xs text-gold hover:bg-gold/10"
         >
-          Apply ₦{Math.round(basePriceNGN).toLocaleString()} to all variants
+          Copy ₦{Math.round(basePriceNGN).toLocaleString()} onto every size
         </button>
+        <p className="w-full text-[11px] text-[#A8A8A4]">
+          This replaces per-size ₦ prices. Use it to start from one figure, then change individual sizes.
+        </p>
         <button
           type="button"
           onClick={addRow}

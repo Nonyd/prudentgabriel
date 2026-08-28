@@ -3,10 +3,9 @@ import { z } from "zod";
 import { PaymentStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getExchangeRates } from "@/lib/currency";
 import { createPaymentIntent } from "@/lib/payments/stripe";
-import { canAcceptRtwPayment, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
-import { convertAtLockedRate } from "@/lib/fx";
+import { canAcceptRtwPayment, rtwChargeAmountForeign } from "@/lib/payments/rtw-totals";
+import { lockedFxFromOrder } from "@/lib/fx";
 import { getStripePublicKey } from "@/lib/payments/config";
 
 const bodySchema = z.object({
@@ -46,16 +45,8 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const chargeNGN = rtwChargeAmountNGN(order);
-  const rates = await getExchangeRates();
-  const fx = {
-    rate: order.fxRateLocked ?? rates.USD,
-    gbpRate: rates.GBP,
-    source: order.fxRateSource ?? "live",
-    fetchedAt: order.fxRateFetchedAt ?? new Date(),
-    stale: order.fxRateStale,
-  };
-  const converted = convertAtLockedRate(chargeNGN, currency, fx);
+  const fx = lockedFxFromOrder(order);
+  const converted = rtwChargeAmountForeign(order, currency, fx);
   const amountCents = Math.max(50, Math.round(converted * 100));
 
   const email = session?.user?.email ?? order.guestEmail ?? guestEmail ?? "";

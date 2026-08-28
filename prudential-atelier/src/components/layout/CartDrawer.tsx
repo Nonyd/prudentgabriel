@@ -8,9 +8,10 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useCartStore } from "@/store/cartStore";
 import { useBagActions } from "@/hooks/useBagActions";
-import { convertFromNGN, formatPrice } from "@/lib/currency";
+import { formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { cartLineAmountInCurrency } from "@/lib/pricing";
 
 export function CartDrawer() {
   const router = useRouter();
@@ -34,7 +35,9 @@ export function CartDrawer() {
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, closeCart]);
 
-  const fmt = (ngn: number) => formatPrice(convertFromNGN(ngn, currency, rates), currency);
+  const fmtLine = (item: (typeof items)[number]) =>
+    formatPrice(cartLineAmountInCurrency(item, currency, rates), currency);
+  const subtotalShopper = items.reduce((s, i) => s + cartLineAmountInCurrency(i, currency, rates), 0);
   const points = Math.floor(totalNGN / 100);
 
   return (
@@ -151,7 +154,7 @@ export function CartDrawer() {
                         </div>
                       </div>
                       <div className="shrink-0 text-right font-medium text-charcoal">
-                        {fmt(item.priceNGN * item.quantity)}
+                        {fmtLine(item)}
                       </div>
                     </li>
                   ))}
@@ -168,7 +171,7 @@ export function CartDrawer() {
                 )}
                 <div className="flex items-baseline justify-between">
                   <span className="font-label text-xs uppercase text-charcoal-mid">Subtotal</span>
-                  <span className="font-display text-lg text-charcoal">{fmt(totalNGN)}</span>
+                  <span className="font-display text-lg text-charcoal">{formatPrice(subtotalShopper, currency)}</span>
                 </div>
                 <p className="mt-1 text-xs text-charcoal-light">Shipping calculated at checkout</p>
                 <Button

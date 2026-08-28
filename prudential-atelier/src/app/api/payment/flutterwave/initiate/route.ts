@@ -4,11 +4,10 @@ import { PaymentStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
-import { getExchangeRates } from "@/lib/currency";
 import { initializeTransaction } from "@/lib/payments/flutterwave";
 import { generatePaymentReference } from "@/lib/payments/index";
-import { canAcceptRtwPayment, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
-import { convertAtLockedRate } from "@/lib/fx";
+import { canAcceptRtwPayment, rtwChargeAmountNGN, rtwChargeAmountForeign } from "@/lib/payments/rtw-totals";
+import { lockedFxFromOrder } from "@/lib/fx";
 
 const bodySchema = z.object({
   orderId: z.string().min(1),
@@ -48,19 +47,10 @@ export async function POST(req: NextRequest) {
   }
 
   const chargeNGN = rtwChargeAmountNGN(order);
-  const rates = await getExchangeRates();
-  const fx = {
-    rate: order.fxRateLocked ?? rates.USD,
-    gbpRate: rates.GBP,
-    source: order.fxRateSource ?? "live",
-    fetchedAt: order.fxRateFetchedAt ?? new Date(),
-    stale: order.fxRateStale,
-  };
+  const fx = lockedFxFromOrder(order);
   let amount = chargeNGN;
-  if (currency === "USD") {
-    amount = Math.round(convertAtLockedRate(chargeNGN, "USD", fx) * 100) / 100;
-  } else if (currency === "GBP") {
-    amount = Math.round(convertAtLockedRate(chargeNGN, "GBP", fx) * 100) / 100;
+  if (currency === "USD" || currency === "GBP") {
+    amount = rtwChargeAmountForeign(order, currency, fx);
   }
 
   const email = session?.user?.email ?? order.guestEmail ?? guestEmail ?? "";

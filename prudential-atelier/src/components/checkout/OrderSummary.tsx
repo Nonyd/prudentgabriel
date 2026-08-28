@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import type { CartItem } from "@/store/cartStore";
-import { formatPrice, convertFromNGN, type ExchangeRatesNGN, type ShopCurrency } from "@/lib/currency";
+import { formatPrice, type ExchangeRatesNGN, type ShopCurrency } from "@/lib/currency";
+import { cartLineAmountInCurrency, extrasAmountInCurrency } from "@/lib/pricing";
 import { useEffect, useState } from "react";
 
 interface CouponResult {
@@ -39,14 +40,17 @@ export function OrderSummary({
       .catch(() => undefined);
   }, []);
 
-  const subtotal = items.reduce((s, i) => s + i.priceNGN * i.quantity, 0);
+  const subtotalNGN = items.reduce((s, i) => s + i.priceNGN * i.quantity, 0);
   const disc = couponResult?.valid ? couponResult.discountNGN : 0;
   const ship = shippingCostNGN ?? 0;
   const pts = pointsToRedeem;
-  const total = Math.max(0, subtotal + ship - disc - pts);
+  const totalNGN = Math.max(0, subtotalNGN + ship - disc - pts);
+  const extrasNGN = ship - disc - pts;
+  const subtotalShopper = items.reduce((s, i) => s + cartLineAmountInCurrency(i, currency, rates), 0);
+  const totalShopper = Math.max(0, subtotalShopper + extrasAmountInCurrency(extrasNGN, currency, rates));
 
-  const conv = (n: number) => convertFromNGN(n, currency, rates);
-  const fmt = (n: number) => formatPrice(conv(n), currency);
+  const fmtLine = (item: CartItem) => formatPrice(cartLineAmountInCurrency(item, currency, rates), currency);
+  const fmtExtra = (n: number) => formatPrice(extrasAmountInCurrency(n, currency, rates), currency);
 
   return (
     <div className="rounded-sm border border-border bg-cream p-5">
@@ -64,7 +68,7 @@ export function OrderSummary({
                   {i.size} ×{i.quantity}
                 </p>
               </div>
-              <p>{fmt(i.priceNGN * i.quantity)}</p>
+              <p>{fmtLine(i)}</p>
             </li>
           ))
         )}
@@ -72,32 +76,32 @@ export function OrderSummary({
       <div className="mt-4 space-y-1 border-t border-border pt-4 text-sm">
         <div className="flex justify-between">
           <span className="text-charcoal-mid">Subtotal</span>
-          <span>{fmt(subtotal)}</span>
+          <span>{formatPrice(subtotalShopper, currency)}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-charcoal-mid">Shipping</span>
-          <span>{shippingCostNGN == null ? "—" : ship === 0 ? <span className="text-gold">Free</span> : fmt(ship)}</span>
+          <span>{shippingCostNGN == null ? "—" : ship === 0 ? <span className="text-gold">Free</span> : fmtExtra(ship)}</span>
         </div>
         {disc > 0 && (
           <div className="flex justify-between text-success">
             <span>Coupon</span>
-            <span>−{fmt(disc)}</span>
+            <span>−{fmtExtra(disc)}</span>
           </div>
         )}
         {pts > 0 && (
           <div className="flex justify-between text-gold">
             <span>Points</span>
-            <span>−{fmt(pts)}</span>
+            <span>−{fmtExtra(pts)}</span>
           </div>
         )}
         <div className="flex justify-between border-t border-border pt-2 font-display text-lg text-choc">
           <span>Total</span>
-          <span>{fmt(total)}</span>
+          <span>{formatPrice(totalShopper, currency)}</span>
         </div>
       </div>
       {step < 3 && (
         <p className="mt-3 font-label text-[11px] text-gold">
-          Earn ~{Math.floor(total / 100)} pts with this order
+          Earn ~{Math.floor(totalNGN / 100)} pts with this order
         </p>
       )}
     </div>

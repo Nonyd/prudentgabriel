@@ -7,10 +7,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { convertFromNGN, formatPrice } from "@/lib/currency";
+import { formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import type { ProductListItem } from "@/types/product";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { minAmountInCurrency } from "@/lib/pricing";
 
 const RECENT_KEY = "pa-recent-searches";
 
@@ -48,10 +49,7 @@ export function SearchModal() {
   const panelRef = useRef<HTMLDivElement>(null);
   useFocusTrap(isOpen, panelRef);
 
-  const fmt = useCallback(
-    (ngn: number) => formatPrice(convertFromNGN(ngn, currency, rates), currency),
-    [currency, rates],
-  );
+  const fmt = useCallback((n: number) => formatPrice(n, currency), [currency]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(q.trim()), 300);
@@ -103,8 +101,7 @@ export function SearchModal() {
   const showFeatured = q.length === 0 && recent.length === 0 && featured.length > 0;
   const showResults = q.trim().length >= 2;
 
-  const lowest = (p: ProductListItem) =>
-    Math.min(...p.variants.map((v) => (v.salePriceNGN != null ? v.salePriceNGN : v.priceNGN)));
+  const lowest = (p: ProductListItem) => minAmountInCurrency(p.variants, p, currency, rates);
 
   const goProduct = (slug: string, query?: string) => {
     if (query) saveRecent(query);

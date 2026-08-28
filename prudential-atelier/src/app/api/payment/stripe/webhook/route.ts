@@ -6,8 +6,9 @@ import { verifyWebhookEvent } from "@/lib/payments/stripe";
 import { fulfillPaidOrder } from "@/lib/order-payment";
 import { notifyPaymentFailed } from "@/lib/notifications";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
-import { rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
+import { rtwChargeAmountForeign, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
 import { convertFromNGN, getExchangeRates, type ShopCurrency } from "@/lib/currency";
+import { lockedFxFromOrder } from "@/lib/fx";
 import {
   assertPspChargeBinds,
   expectedAmountInPspUnits,
@@ -74,7 +75,16 @@ export async function POST(req: NextRequest) {
       } else if (orderId) {
         const order = await prisma.order.findUnique({ where: { id: orderId } });
         if (order) {
-          const expected = await expectedStripeMinor(rtwChargeAmountNGN(order), pi.currency);
+          const cur = pi.currency.trim().toUpperCase() as ShopCurrency | string;
+          const fx = lockedFxFromOrder(order);
+          const major =
+            cur === "USD" || cur === "GBP"
+              ? rtwChargeAmountForeign(order, cur, fx)
+              : rtwChargeAmountNGN(order);
+          const expected = {
+            amount: expectedAmountInPspUnits(PaymentGateway.STRIPE, major),
+            currency: cur,
+          };
           assertPspChargeBinds(
             {
               id: order.id,

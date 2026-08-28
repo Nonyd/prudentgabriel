@@ -11,7 +11,8 @@ import { notifyNewOrder } from "@/lib/notifications";
 import { orderCreateBodySchema, type AddressInput } from "@/validations/order";
 import { resolveCheckoutShipping } from "@/lib/shipping/resolve-selection";
 import { generateCollectionCode } from "@/lib/shipping/collection";
-import { getLockedFx } from "@/lib/fx";
+import { getLockedFx, lockForeignTotals, usdOverrideOrConvert, gbpOverrideOrConvert } from "@/lib/fx";
+import { effectiveUnitNGN, resolveCurrencyOverride } from "@/lib/pricing";
 import type { CartParcelLine } from "@/lib/shipping/options";
 
 function snapshotFromAddress(a: AddressInput) {
@@ -72,28 +73,99 @@ export async function POST(req: NextRequest) {
     colorHex?: string;
     colorId?: string;
     unitPrice: number;
+    unitUsd: number;
+    unitGbp: number;
     category: ProductCategory;
     productName: string;
     parcel: CartParcelLine;
   };
 
+  function lineFromVariant(params: {
+    productId: string;
+    variant: {
+      id: string;
+      size: string;
+      priceNGN: number;
+      salePriceNGN: number | null;
+      priceUSD: number | null;
+      priceGBP: number | null;
+      weightKg: number | null;
+      lengthCm: number | null;
+      widthCm: number | null;
+      heightCm: number | null;
+    };
+    product: {
+      name: string;
+      category: ProductCategory;
+      isOnSale: boolean;
+      priceUSD: number | null;
+      priceGBP: number | null;
+      defaultWeightKg: number | null;
+      defaultLengthCm: number | null;
+      defaultWidthCm: number | null;
+      defaultHeightCm: number | null;
+    };
+    quantity: number;
+    color?: string;
+    colorHex?: string;
+    colorId?: string;
+    fx: Awaited<ReturnType<typeof getLockedFx>>;
+  }): Line {
+    const unit = effectiveUnitNGN(params.variant, params.product.isOnSale);
+    const overrideUsd = resolveCurrencyOverride("USD", params.variant, params.product);
+    const overrideGbp = resolveCurrencyOverride("GBP", params.variant, params.product);
+    return {
+      productId: params.productId,
+      variantId: params.variant.id,
+      quantity: params.quantity,
+      size: params.variant.size,
+      color: params.color,
+      colorHex: params.colorHex,
+      colorId: params.colorId,
+      unitPrice: unit,
+      unitUsd: usdOverrideOrConvert(unit, overrideUsd, params.fx),
+      unitGbp: gbpOverrideOrConvert(unit, overrideGbp, params.fx),
+      category: params.product.category,
+      productName: params.product.name,
+      parcel: {
+        quantity: params.quantity,
+        variant: {
+          weightKg: params.variant.weightKg ?? undefined,
+          lengthCm: params.variant.lengthCm ?? undefined,
+          widthCm: params.variant.widthCm ?? undefined,
+          heightCm: params.variant.heightCm ?? undefined,
+        },
+        product: {
+          weightKg: params.product.defaultWeightKg ?? undefined,
+          lengthCm: params.product.defaultLengthCm ?? undefined,
+          widthCm: params.product.defaultWidthCm ?? undefined,
+          heightCm: params.product.defaultHeightCm ?? undefined,
+        },
+      },
+    };
+  }
+
+  const fx = await getLockedFx();
   let lines: Line[] = [];
+
+  const productPriceSelect = {
+    id: true,
+    name: true,
+    category: true,
+    isOnSale: true,
+    priceUSD: true,
+    priceGBP: true,
+    defaultWeightKg: true,
+    defaultLengthCm: true,
+    defaultWidthCm: true,
+    defaultHeightCm: true,
+  } as const;
 
   if (userId) {
     const cartItems = await prisma.cartItem.findMany({
       where: { userId },
       include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
-            category: true,
-            defaultWeightKg: true,
-            defaultLengthCm: true,
-            defaultWidthCm: true,
-            defaultHeightCm: true,
-          },
-        },
+        product: { select: productPriceSelect },
         variant: true,
         color: true,
       },
@@ -103,86 +175,40 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Your bag is empty" }, { status: 400 });
     }
 
-    lines = cartItems.map((ci) => {
-      const unit = ci.variant.salePriceNGN ?? ci.variant.priceNGN;
-      return {
+    lines = cartItems.map((ci) =>
+      lineFromVariant({
         productId: ci.productId,
-        variantId: ci.variantId,
+        variant: ci.variant,
+        product: ci.product,
         quantity: ci.quantity,
-        size: ci.variant.size,
         color: ci.color?.name,
         colorHex: ci.color?.hex,
         colorId: ci.colorId ?? undefined,
-        unitPrice: unit,
-        category: ci.product.category,
-        productName: ci.product.name,
-        parcel: {
-          quantity: ci.quantity,
-          variant: {
-            weightKg: ci.variant.weightKg ?? undefined,
-            lengthCm: ci.variant.lengthCm ?? undefined,
-            widthCm: ci.variant.widthCm ?? undefined,
-            heightCm: ci.variant.heightCm ?? undefined,
-          },
-          product: {
-            weightKg: ci.product.defaultWeightKg ?? undefined,
-            lengthCm: ci.product.defaultLengthCm ?? undefined,
-            widthCm: ci.product.defaultWidthCm ?? undefined,
-            heightCm: ci.product.defaultHeightCm ?? undefined,
-          },
-        },
-      };
-    });
+        fx,
+      }),
+    );
   } else {
     const guestLines = data.cartLines ?? [];
     for (const gl of guestLines) {
       const variant = await prisma.productVariant.findUnique({
         where: { id: gl.variantId },
-        include: {
-          product: {
-            select: {
-              id: true,
-              name: true,
-              category: true,
-              defaultWeightKg: true,
-              defaultLengthCm: true,
-              defaultWidthCm: true,
-              defaultHeightCm: true,
-            },
-          },
-        },
+        include: { product: { select: productPriceSelect } },
       });
       if (!variant || variant.productId !== gl.productId) {
         return NextResponse.json({ error: "Invalid cart item" }, { status: 400 });
       }
-      const unit = variant.salePriceNGN ?? variant.priceNGN;
-      lines.push({
-        productId: gl.productId,
-        variantId: gl.variantId,
-        quantity: gl.quantity,
-        size: gl.size,
-        color: gl.color,
-        colorHex: gl.colorHex,
-        colorId: gl.colorId,
-        unitPrice: unit,
-        category: variant.product.category,
-        productName: variant.product.name,
-        parcel: {
+      lines.push(
+        lineFromVariant({
+          productId: gl.productId,
+          variant,
+          product: variant.product,
           quantity: gl.quantity,
-          variant: {
-            weightKg: variant.weightKg ?? undefined,
-            lengthCm: variant.lengthCm ?? undefined,
-            widthCm: variant.widthCm ?? undefined,
-            heightCm: variant.heightCm ?? undefined,
-          },
-          product: {
-            weightKg: variant.product.defaultWeightKg ?? undefined,
-            lengthCm: variant.product.defaultLengthCm ?? undefined,
-            widthCm: variant.product.defaultWidthCm ?? undefined,
-            heightCm: variant.product.defaultHeightCm ?? undefined,
-          },
-        },
-      });
+          color: gl.color,
+          colorHex: gl.colorHex,
+          colorId: gl.colorId,
+          fx,
+        }),
+      );
     }
   }
 
@@ -368,7 +394,10 @@ export async function POST(req: NextRequest) {
       ? data.paymentRef
       : generatePaymentReference("ORDER");
 
-  const fx = await getLockedFx();
+  const itemUsd = lines.reduce((s, l) => s + l.unitUsd * l.quantity, 0);
+  const itemGbp = lines.reduce((s, l) => s + l.unitGbp * l.quantity, 0);
+  const extrasNGN = shippingAfterCoupon - discountNGN - pointsDiscNGN;
+  const lockedForeign = lockForeignTotals({ itemUsd, itemGbp, extrasNGN, fx });
   const orderNumber = generateOrderNumber();
   const collectionCode = ship.kind === "PICKUP" ? generateCollectionCode() : null;
   const consentAt = ship.requiresConsent ? new Date() : null;
@@ -401,9 +430,12 @@ export async function POST(req: NextRequest) {
           shippingConsentText: consentText,
           collectionCode,
           fxRateLocked: fx.rate,
+          fxGbpRateLocked: fx.gbpRate,
           fxRateSource: fx.source,
           fxRateFetchedAt: fx.fetchedAt,
           fxRateStale: fx.stale,
+          fxUsdAmountLocked: lockedForeign.fxUsdAmountLocked,
+          fxGbpAmountLocked: lockedForeign.fxGbpAmountLocked,
           amountPaid: 0,
           balance: totalNGN,
           couponId,

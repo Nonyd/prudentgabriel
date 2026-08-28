@@ -18,6 +18,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { cn } from "@/lib/utils";
 import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
 import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
+import { saleFigureIsDormant } from "@/lib/pricing";
 import { isLegacyWordPressImageUrl } from "@/lib/product-image-url";
 
 type FullProduct = Product & {
@@ -156,6 +157,8 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
   const slugWatch = form.watch("slug");
   const nameWatch = form.watch("name");
   const basePriceWatch = form.watch("basePriceNGN");
+  const isOnSaleWatch = form.watch("isOnSale");
+  const variantsWatch = form.watch("variants");
   const bundleIds = form.watch("bundleProductIds");
 
   useEffect(() => {
@@ -531,7 +534,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
             <h2 className="font-display text-lg text-gold">Variants &amp; pricing</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-3">
               <label className="text-xs uppercase text-[#A8A8A4]">
-                Base ₦
+                Starting ₦ for new sizes
                 <input
                   type="number"
                   {...form.register("basePriceNGN", { valueAsNumber: true })}
@@ -557,7 +560,9 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                 />
               </label>
             </div>
-            <p className="mt-2 text-xs text-[#A8A8A4]">Leave USD/GBP blank to use live exchange rates on the storefront. A USD figure here is locked as the selling price and ignores the feed.</p>
+            <p className="mt-2 text-xs text-[#A8A8A4]">
+              Shop filter, cards, and emails use the cheapest size. Starting ₦ only seeds new rows and “copy onto every size”. Leave USD/GBP blank to convert from ₦; a figure here is the selling price in that currency and ignores the feed. Per-size $ / £ on the rows below win over this product figure.
+            </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-4">
               <label className="text-xs uppercase text-[#A8A8A4]">
                 Default kg
@@ -609,6 +614,11 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                 )}
               />
             </div>
+            {saleFigureIsDormant(Boolean(isOnSaleWatch), variantsWatch ?? []) ? (
+              <p className="mt-3 text-xs text-amber-800">
+                A sale ₦ is filled on at least one size, but “Product is on sale” is off. Shoppers see and pay the regular ₦ until you tick the flag (or clear the sale ₦).
+              </p>
+            ) : null}
             <Controller
               control={form.control}
               name="variants"

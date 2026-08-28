@@ -115,6 +115,10 @@ export function ProductsTable({
   };
 
   const saveInlinePrice = async (product: ProductRow, inputValue: string) => {
+    if (product.variantCount > 1) {
+      toast.error("This product has per-size prices. Edit them in the product form.");
+      return;
+    }
     const parsed = Number(inputValue.replace(/[^0-9.]/g, ""));
     if (!Number.isFinite(parsed) || parsed <= 0) {
       toast.error("Enter a valid price");
@@ -129,7 +133,14 @@ export function ProductsTable({
       }),
     });
     if (!res.ok) {
-      toast.error("Failed to save price");
+      let message = "Failed to save price";
+      try {
+        const data = (await res.json()) as { error?: string };
+        if (typeof data.error === "string" && data.error.trim()) message = data.error;
+      } catch {
+        /* keep default */
+      }
+      toast.error(message);
       return;
     }
     toast.success("Price saved ✓");
@@ -378,7 +389,11 @@ export function ProductsTable({
                   {p.variantCount} sizes · From {formatNGN(p.minPriceNGN)}
                 </td>
                 <td className="p-2 text-xs">
-                  {p.basePriceNGN === 0 ? (
+                  {p.variantCount > 1 ? (
+                    <Link href={`/admin/products/${p.id}/edit`} className="text-olive hover:underline">
+                      From {formatNGN(p.minPriceNGN)} — edit sizes
+                    </Link>
+                  ) : p.minPriceNGN === 0 || p.basePriceNGN === 0 ? (
                     <input
                       value={editingPrice[p.id] ?? ""}
                       onChange={(e) => setEditingPrice((prev) => ({ ...prev, [p.id]: e.target.value }))}
@@ -393,7 +408,7 @@ export function ProductsTable({
                       className="w-28 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-charcoal placeholder:text-amber-500"
                     />
                   ) : (
-                    <span>{formatNGN(p.basePriceNGN)}</span>
+                    <span>{formatNGN(p.minPriceNGN)}</span>
                   )}
                 </td>
                 <td

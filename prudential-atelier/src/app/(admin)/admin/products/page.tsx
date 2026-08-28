@@ -3,6 +3,7 @@ import { Prisma, ProductCategory, ProductType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ProductsTable, type ProductRow } from "@/components/admin/ProductsTable";
 import { MigrateImagesBanner } from "@/components/admin/MigrateImagesBanner";
+import { effectiveUnitNGN } from "@/lib/pricing";
 
 const PAGE_SIZE = 20;
 
@@ -61,7 +62,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   ]);
 
   const items: ProductRow[] = rows.map((p) => {
-    const prices = p.variants.map((v) => v.salePriceNGN ?? v.priceNGN);
+    const prices = p.variants.map((v) => effectiveUnitNGN(v, p.isOnSale));
     const minPrice = prices.length ? Math.min(...prices) : p.basePriceNGN;
     const totalStock = p.variants.reduce((s, v) => s + v.stock, 0);
     return {
