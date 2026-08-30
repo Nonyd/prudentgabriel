@@ -31,9 +31,10 @@ export interface ProductCardProps {
   priority?: boolean;
   compact?: boolean;
   dimmed?: boolean;
+  merchBadge?: string;
 }
 
-export function ProductCard({ product, priority, compact, dimmed }: ProductCardProps) {
+export function ProductCard({ product, priority, compact, dimmed, merchBadge }: ProductCardProps) {
   const router = useRouter();
   const nameId = useId();
   const currency = useCurrencyStore((s) => s.currency);
@@ -180,17 +181,24 @@ export function ProductCard({ product, priority, compact, dimmed }: ProductCardP
 
         <div className="product-gallery-scrim" aria-hidden />
 
-        <div className="product-gallery-hover-only pointer-events-none absolute left-3 top-3 z-[2] flex flex-col gap-1">
-          {showSaleBadge ? (
-            <span className="bg-choc px-2 py-0.5 font-body text-[9px] font-medium uppercase tracking-wide text-cream">
-              Sale
+        <div className="pointer-events-none absolute left-3 top-3 z-[2] flex flex-col items-start gap-1">
+          {merchBadge ? (
+            <span className="product-gallery-merch-badge px-2 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-[0.14em]">
+              {merchBadge}
             </span>
           ) : null}
-          {showNewBadge ? (
-            <span className="bg-choc px-2 py-0.5 font-body text-[9px] font-medium uppercase tracking-wide text-cream">
-              New
-            </span>
-          ) : null}
+          <div className="product-gallery-hover-only flex flex-col gap-1">
+            {showSaleBadge ? (
+              <span className="bg-choc px-2 py-0.5 font-body text-[9px] font-medium uppercase tracking-wide text-cream">
+                Sale
+              </span>
+            ) : null}
+            {showNewBadge ? (
+              <span className="bg-choc px-2 py-0.5 font-body text-[9px] font-medium uppercase tracking-wide text-cream">
+                New
+              </span>
+            ) : null}
+          </div>
         </div>
 
         {dimmed || qa.isOpen ? (

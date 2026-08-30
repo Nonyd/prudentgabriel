@@ -12,11 +12,13 @@ export function ProductCardGrid({
   className,
   priorityCount = 4,
   mobileColumns = 2,
+  merchBadge,
 }: {
   products: ProductListItem[];
   className?: string;
   priorityCount?: number;
   mobileColumns?: 1 | 2;
+  merchBadge?: string;
 }) {
   const activeId = useQuickAddStore((s) => s.product?.id ?? null);
   const isOpen = useQuickAddStore((s) => s.phase !== "idle");
@@ -33,7 +35,7 @@ export function ProductCardGrid({
         const showPanel = endOfRow && activeRow === row && isOpen;
         return (
           <Fragment key={p.id}>
-            <ProductCard product={p} priority={i < priorityCount} dimmed={dimmed} />
+            <ProductCard product={p} priority={i < priorityCount} dimmed={dimmed} merchBadge={merchBadge} />
             {showPanel ? (
               <div className={cols === 1 ? "md:hidden" : "col-span-2 md:hidden"}>
                 <QuickAddMobilePanel />

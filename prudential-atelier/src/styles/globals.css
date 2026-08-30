@@ -314,6 +314,11 @@ body {
   transition: opacity 280ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
+.product-gallery-merch-badge {
+  background: color-mix(in srgb, var(--choc) 82%, transparent);
+  color: var(--cream);
+}
+
 @media (hover: hover) and (pointer: fine) {
   @media (min-width: 768px) {
     .product-gallery-hover-only {
