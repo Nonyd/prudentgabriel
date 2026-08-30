@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { WishlistButton } from "@/components/common/WishlistButton";
 import {
   QuickAddDesktopChrome,
   QuickAddDesktopPriceSwap,
+  QuickAddDesktopSizes,
   QuickAddDesktopTrigger,
 } from "@/components/common/quick-add/QuickAddDesktop";
 import {
@@ -19,6 +21,7 @@ import { useCurrencyStore } from "@/store/currencyStore";
 import { useProductQuickAdd } from "@/hooks/useQuickAdd";
 import { useIsMdUp } from "@/hooks/useMediaQuery";
 import { optimizeProductCardImageUrl } from "@/lib/product-image-url";
+import { canGalleryHoverSwap } from "@/lib/product-gallery";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import type { ProductListItem } from "@/types/product";
 import { minAmountInCurrency } from "@/lib/pricing";
@@ -32,6 +35,7 @@ export interface ProductCardProps {
 
 export function ProductCard({ product, priority, compact, dimmed }: ProductCardProps) {
   const router = useRouter();
+  const nameId = useId();
   const currency = useCurrencyStore((s) => s.currency);
   const rates = useCurrencyStore((s) => s.rates);
   const [colorId, setColorId] = useState<string | null>(product.colors[0]?.id ?? null);
@@ -56,8 +60,8 @@ export function ProductCard({ product, priority, compact, dimmed }: ProductCardP
   const primary = primaryFromColor
     ? { url: primaryFromColor, alt: product.name }
     : gallery[galleryIndex] ?? gallery[0];
-  const secondary =
-    !primaryFromColor && galleryIndex === 0 && gallery[1]?.url ? gallery[1] : undefined;
+  const canSwap = canGalleryHoverSwap(gallery.length) && !primaryFromColor && galleryIndex === 0;
+  const secondary = canSwap && gallery[1]?.url ? gallery[1] : undefined;
 
   const lowestListShopper = minAmountInCurrency(
     product.variants,
@@ -74,6 +78,7 @@ export function ProductCard({ product, priority, compact, dimmed }: ProductCardP
   const hasImage = Boolean(primary?.url?.trim()) && !imgError;
   const imgPrimary = primary?.url?.trim() ? optimizeProductCardImageUrl(primary.url) : "";
   const imgSecondary = secondary ? optimizeProductCardImageUrl(secondary.url) : null;
+  const garmentAlt = primary?.alt?.trim() || product.name;
 
   const goToProduct = () => router.push(`/shop/${product.slug}`);
 
@@ -110,7 +115,7 @@ export function ProductCard({ product, priority, compact, dimmed }: ProductCardP
           {hasImage ? (
             <Image
               src={imgPrimary}
-              alt={primary?.alt || product.name}
+              alt={garmentAlt}
               fill
               sizes="(max-width: 768px) 50vw, 33vw"
               className="object-cover object-top"
@@ -136,45 +141,46 @@ export function ProductCard({ product, priority, compact, dimmed }: ProductCardP
 
   return (
     <article
-      className={cn(
-        "group relative flex h-full flex-col overflow-hidden border border-sand/70 bg-bg-card transition-shadow duration-300",
-        "hover:shadow-[0_10px_32px_rgba(42,36,31,0.08)]",
-      )}
+      className="product-gallery-card group"
+      data-gallery-open={qa.isOpen ? "true" : undefined}
     >
-      <div
-        className="relative aspect-[3/4] shrink-0 cursor-pointer overflow-hidden bg-ivory-dark"
-        onClick={goToProduct}
-      >
-        {hasImage ? (
-          <Image
-            src={imgPrimary}
-            alt={primary?.alt || product.name}
-            fill
-            sizes="(max-width: 768px) 50vw, 33vw"
-            className={cn(
-              "object-cover object-top",
-              secondary
-                ? "transition-opacity duration-500 ease-out [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-0"
-                : "transition-transform duration-700 ease-out [@media(hover:hover)_and_(pointer:fine)]:group-hover:scale-[1.04]",
-            )}
-            priority={priority}
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <ImagePlaceholder className="absolute inset-0 h-full w-full" />
-        )}
-        {secondary && !secondaryError ? (
-          <Image
-            src={imgSecondary!}
-            alt={secondary.alt || product.name}
-            fill
-            sizes="(max-width: 768px) 50vw, 33vw"
-            className="absolute inset-0 object-cover object-top opacity-0 transition-opacity duration-500 ease-out [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100"
-            onError={() => setSecondaryError(true)}
-          />
-        ) : null}
+      <div className="product-gallery-shot">
+        <Link
+          href={`/shop/${product.slug}`}
+          aria-labelledby={nameId}
+          className="absolute inset-0 z-[1] block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-cream"
+        >
+          {hasImage ? (
+            <Image
+              src={imgPrimary}
+              alt={garmentAlt}
+              fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className={cn(
+                "object-cover object-top",
+                secondary ? "product-gallery-crossfade [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-focus-within:opacity-0" : null,
+              )}
+              priority={priority}
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <ImagePlaceholder className="absolute inset-0 h-full w-full" />
+          )}
+          {secondary && !secondaryError ? (
+            <Image
+              src={imgSecondary!}
+              alt=""
+              fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="product-gallery-crossfade absolute inset-0 object-cover object-top opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:group-focus-within:opacity-100"
+              onError={() => setSecondaryError(true)}
+            />
+          ) : null}
+        </Link>
 
-        <div className="pointer-events-none absolute left-3 top-3 z-[1] flex flex-col gap-1">
+        <div className="product-gallery-scrim" aria-hidden />
+
+        <div className="product-gallery-hover-only pointer-events-none absolute left-3 top-3 z-[2] flex flex-col gap-1">
           {showSaleBadge ? (
             <span className="bg-choc px-2 py-0.5 font-body text-[9px] font-medium uppercase tracking-wide text-cream">
               Sale
@@ -199,39 +205,16 @@ export function ProductCard({ product, priority, compact, dimmed }: ProductCardP
         ) : null}
 
         <div
-          className={cn("absolute right-2 top-2 z-10", qa.isOpen && "max-md:hidden")}
+          className={cn("product-gallery-hover-only absolute right-2 top-2 z-10", qa.isOpen && "max-md:hidden")}
           onClick={(e) => e.stopPropagation()}
         >
           <WishlistButton
             productId={product.id}
-            className="h-8 min-h-[32px] w-8 min-w-[32px] bg-transparent hover:bg-transparent"
+            className="h-8 min-h-[32px] w-8 min-w-[32px] bg-transparent hover:bg-transparent md:bg-choc/40 [&_svg]:text-choc md:[&_svg]:text-cream"
           />
         </div>
 
-        {!qa.soldOut ? (
-          <QuickAddDesktopChrome
-            product={product}
-            isOpen={qa.isOpen}
-            phase={qa.phase}
-            variantId={qa.variantId}
-            onSelectSize={qa.selectSize}
-            imageCount={gallery.length}
-            onPrev={() => cycle(-1)}
-            onNext={() => cycle(1)}
-            autoFocus={isMd}
-          />
-        ) : gallery.length > 1 ? (
-          <QuickAddDesktopChrome
-            product={product}
-            isOpen={false}
-            phase="idle"
-            variantId={null}
-            onSelectSize={() => {}}
-            imageCount={gallery.length}
-            onPrev={() => cycle(-1)}
-            onNext={() => cycle(1)}
-          />
-        ) : null}
+        <QuickAddDesktopChrome imageCount={gallery.length} onPrev={() => cycle(-1)} onNext={() => cycle(1)} />
 
         <QuickAddMobileTrigger
           productName={product.name}
@@ -245,15 +228,16 @@ export function ProductCard({ product, priority, compact, dimmed }: ProductCardP
         ) : null}
       </div>
 
-      <div
-        className="relative flex flex-1 cursor-pointer flex-col px-4 pb-5 pt-4 md:px-5 md:pb-6"
-        onClick={goToProduct}
-      >
-        {qa.soldOut ? null : (
-          <QuickAddDesktopTrigger product={product} isOpen={qa.isOpen} onOpen={qa.open} />
-        )}
-
-        <h3 className="line-clamp-2 font-serif text-[15px] leading-snug text-choc transition-colors duration-200 group-hover:text-nut md:text-base">
+      <div className="product-gallery-meta" onClick={goToProduct}>
+        {!qa.soldOut && !qa.isOpen ? (
+          <div className="mb-3 hidden justify-center md:flex">
+            <QuickAddDesktopTrigger product={product} isOpen={qa.isOpen} onOpen={qa.open} />
+          </div>
+        ) : null}
+        <h3
+          id={nameId}
+          className="product-gallery-name line-clamp-2 font-serif text-[15px] leading-snug text-choc md:text-base"
+        >
           {product.name}
         </h3>
 
@@ -267,6 +251,14 @@ export function ProductCard({ product, priority, compact, dimmed }: ProductCardP
         ) : (
           <>
             <div className="mt-2.5 md:hidden">{priceBlock}</div>
+            <QuickAddDesktopSizes
+              product={product}
+              isOpen={qa.isOpen}
+              phase={qa.phase}
+              variantId={qa.variantId}
+              onSelectSize={qa.selectSize}
+              autoFocus={isMd}
+            />
             <QuickAddDesktopPriceSwap
               isOpen={qa.isOpen}
               phase={qa.phase}

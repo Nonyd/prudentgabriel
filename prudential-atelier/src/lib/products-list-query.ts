@@ -2,6 +2,7 @@ import { Prisma, ProductCategory, ProductType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { ProductListItem } from "@/types/product";
 import { derivedCatalogMinNGN } from "@/lib/pricing";
+import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
 
 const CATEGORIES = new Set(Object.values(ProductCategory));
 const TYPES = new Set(["RTW", "BESPOKE"] as const);
@@ -162,7 +163,7 @@ export async function queryProductList(
         tags: true,
         images: {
           orderBy: { sortOrder: "asc" },
-          take: 2,
+          take: GALLERY_GRID_IMAGE_TAKE,
           select: { url: true, alt: true, isPrimary: true },
         },
         variants: {

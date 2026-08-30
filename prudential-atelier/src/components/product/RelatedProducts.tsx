@@ -8,13 +8,11 @@ export function RelatedProducts({ products }: { products: ProductListItem[] }) {
   if (!products.length) return null;
   return (
     <section className="border-t border-border py-16">
-      <SectionLabel>YOU MAY ALSO LIKE</SectionLabel>
-      <div className="mt-8">
-        <ProductCardGrid
-          products={products}
-          priorityCount={2}
-          className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5 lg:gap-6"
-        />
+      <div className="px-4">
+        <SectionLabel>YOU MAY ALSO LIKE</SectionLabel>
+      </div>
+      <div className="-mx-4 mt-8">
+        <ProductCardGrid products={products} priorityCount={2} className="grid-cols-2 md:grid-cols-4" />
       </div>
     </section>
   );

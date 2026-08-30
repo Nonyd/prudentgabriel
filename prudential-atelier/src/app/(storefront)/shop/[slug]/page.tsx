@@ -14,6 +14,7 @@ import type { ReviewItem } from "@/components/product/ReviewsSection";
 import { mapListVariant, mapProductToListItem } from "@/lib/map-product-list-item";
 import { getSetting } from "@/lib/settings";
 import { bespokeFromNGN, derivedCatalogMinNGN } from "@/lib/pricing";
+import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
 
 
 const ReviewsSection = nextDynamic(() => import("@/components/product/ReviewsSection").then((m) => ({ default: m.ReviewsSection })), {
@@ -22,7 +23,7 @@ const ReviewsSection = nextDynamic(() => import("@/components/product/ReviewsSec
 
 const RelatedProducts = nextDynamic(() => import("@/components/product/RelatedProducts").then((m) => ({ default: m.RelatedProducts })), {
   loading: () => (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+    <div className="grid grid-cols-2 gap-px bg-white md:grid-cols-4">
       {[0, 1, 2, 3].map((i) => (
         <ProductCardSkeleton key={i} />
       ))}
@@ -64,7 +65,7 @@ const getPublishedProduct = cache(async (slug: string) =>
         include: {
           targetProduct: {
             include: {
-              images: { orderBy: { sortOrder: "asc" }, take: 2 },
+              images: { orderBy: { sortOrder: "asc" }, take: GALLERY_GRID_IMAGE_TAKE },
               variants: { orderBy: { priceNGN: "asc" } },
               colors: { take: 6 },
               _count: { select: { reviews: true } },
@@ -117,7 +118,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
     take: 4,
     orderBy: { orderCount: "desc" },
     include: {
-      images: { orderBy: { sortOrder: "asc" }, take: 2 },
+      images: { orderBy: { sortOrder: "asc" }, take: GALLERY_GRID_IMAGE_TAKE },
       variants: { orderBy: { priceNGN: "asc" } },
       colors: { take: 6 },
       _count: { select: { reviews: true } },

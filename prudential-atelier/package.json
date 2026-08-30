@@ -29,6 +29,7 @@
     "test:email-outbox": "tsx --tsconfig tsconfig.scripts.json scripts/test-email-outbox.ts",
     "test:slice-l": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-l.ts",
     "test:slice-k": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-k.ts",
+    "test:slice-m": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-m.ts",
     "test:slice-j": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-j.ts",
     "test:slice-i": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-i.ts",
     "test:slice-h": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-h.ts",

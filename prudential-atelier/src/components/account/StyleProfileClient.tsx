@@ -92,7 +92,7 @@ export function StyleProfileClient({
           <ProductCardGrid
             products={picks}
             mobileColumns={1}
-            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+            className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
           />
           <Link href="/shop" className="btn-primary mt-8 inline-flex">
             Browse the full collection

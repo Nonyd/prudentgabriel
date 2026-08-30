@@ -3,9 +3,10 @@ import { prisma } from "@/lib/prisma";
 import type { ProductListItem } from "@/types/product";
 import { derivedCatalogMinNGN, minEffectiveNGN } from "@/lib/pricing";
 import { mapListVariant } from "@/lib/map-product-list-item";
+import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
 
 export const collectionListProductInclude = {
-  images: { orderBy: { sortOrder: "asc" as const }, take: 2 },
+  images: { orderBy: { sortOrder: "asc" as const }, take: GALLERY_GRID_IMAGE_TAKE },
   variants: {
     orderBy: { priceNGN: "asc" as const },
     select: {

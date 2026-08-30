@@ -270,9 +270,9 @@ export function CollectionDetailPage({
         </div>
 
         {sortBusy ? (
-          <div className="mx-auto grid max-w-[1400px] grid-cols-2 gap-4 px-6 md:grid-cols-3 md:gap-5 xl:grid-cols-4 xl:gap-6">
+          <div className="grid grid-cols-2 gap-px bg-white md:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="overflow-hidden border border-sand/70 bg-bg-card">
+              <div key={i} className="overflow-hidden bg-ivory-dark">
                 <div className="aspect-[3/4] animate-pulse bg-ivory-dark" />
               </div>
             ))}
@@ -280,13 +280,11 @@ export function CollectionDetailPage({
         ) : items.length === 0 ? (
           <p className="py-16 text-center font-body text-[14px] text-dark-grey">No products in this collection yet.</p>
         ) : (
-          <div className="mx-auto max-w-[1400px] px-6">
-            <ProductCardGrid
-              products={items}
-              priorityCount={8}
-              className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 xl:grid-cols-4 xl:gap-6"
-            />
-          </div>
+          <ProductCardGrid
+            products={items}
+            priorityCount={8}
+            className="grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+          />
         )}
 
         <div className="mx-auto mt-12 flex max-w-[1400px] flex-col items-center gap-2 px-6">

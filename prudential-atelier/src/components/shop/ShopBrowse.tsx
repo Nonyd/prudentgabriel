@@ -149,9 +149,9 @@ export function ShopBrowse({
         </div>
       )}
 
-      <div className="mx-auto max-w-site px-4 py-10 md:px-8">
+      <div className={items.length === 0 ? "px-4 py-20 md:px-8" : undefined}>
         {items.length === 0 ? (
-          <div className="flex flex-col items-center py-20 text-center">
+          <div className="flex flex-col items-center text-center">
             <p className="font-serif text-lg text-choc">No pieces match your filters</p>
             <button
               type="button"
@@ -164,7 +164,7 @@ export function ShopBrowse({
         ) : (
           <ProductCardGrid
             products={items}
-            className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4 lg:gap-6"
+            className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
           />
         )}
 

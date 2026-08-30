@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
 
 export const revalidate = 60;
 
@@ -32,7 +33,7 @@ export async function GET(
           include: {
             targetProduct: {
               include: {
-                images: { orderBy: { sortOrder: "asc" }, take: 2 },
+                images: { orderBy: { sortOrder: "asc" }, take: GALLERY_GRID_IMAGE_TAKE },
                 variants: { orderBy: { priceNGN: "asc" } },
                 colors: { take: 6 },
                 _count: { select: { reviews: true } },

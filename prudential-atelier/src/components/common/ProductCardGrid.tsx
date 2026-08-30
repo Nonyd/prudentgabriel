@@ -25,7 +25,7 @@ export function ProductCardGrid({
   const activeRow = activeIndex >= 0 ? Math.floor(activeIndex / cols) : -1;
 
   return (
-    <div className={cn(className, isOpen && activeIndex >= 0 && "max-md:pb-28")}>
+    <div className={cn("grid gap-px bg-white", className, isOpen && activeIndex >= 0 && "max-md:pb-28")}>
       {products.map((p, i) => {
         const row = Math.floor(i / cols);
         const dimmed = activeRow >= 0 && row === activeRow && p.id !== activeId;
@@ -58,7 +58,7 @@ export function ProductCardRail({
 
   return (
     <div className={inRail ? "max-md:pb-28" : undefined}>
-      <div className="flex gap-6 overflow-x-auto pb-2">
+      <div className="flex gap-px overflow-x-auto bg-white pb-0">
         {products.map((p) => (
           <div key={p.id} className={itemClassName}>
             <ProductCard product={p} />

@@ -8,14 +8,58 @@ import { QuickAddSizeRow } from "@/components/common/quick-add/QuickAddSizeRow";
 import type { ProductListItem } from "@/types/product";
 
 export function QuickAddDesktopChrome({
+  imageCount,
+  onPrev,
+  onNext,
+}: {
+  imageCount: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  if (imageCount < 2) return null;
+
+  return (
+    <>
+      <button
+        type="button"
+        data-quick-add="chrome"
+        aria-label="Previous image"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onPrev();
+        }}
+        className={cn(
+          "product-gallery-hover-only quick-add-motion absolute left-1 top-1/2 z-10 hidden h-10 w-8 -translate-y-1/2 items-center justify-center bg-choc/40 text-cream md:flex",
+        )}
+      >
+        <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
+      </button>
+      <button
+        type="button"
+        data-quick-add="chrome"
+        aria-label="Next image"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onNext();
+        }}
+        className={cn(
+          "product-gallery-hover-only quick-add-motion absolute right-1 top-1/2 z-10 hidden h-10 w-8 -translate-y-1/2 items-center justify-center bg-choc/40 text-cream md:flex",
+        )}
+      >
+        <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
+      </button>
+    </>
+  );
+}
+
+export function QuickAddDesktopSizes({
   product,
   isOpen,
   phase,
   variantId,
   onSelectSize,
-  imageCount,
-  onPrev,
-  onNext,
   autoFocus,
 }: {
   product: ProductListItem;
@@ -23,74 +67,23 @@ export function QuickAddDesktopChrome({
   phase: QuickAddPhase;
   variantId: string | null;
   onSelectSize: (id: string) => void;
-  imageCount: number;
-  onPrev: () => void;
-  onNext: () => void;
   autoFocus?: boolean;
 }) {
-  return (
-    <>
-      {imageCount > 1 ? (
-        <>
-          <button
-            type="button"
-            data-quick-add="chrome"
-            aria-label="Previous image"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onPrev();
-            }}
-            className={cn(
-              "quick-add-motion absolute left-1 top-1/2 z-10 hidden h-10 w-8 -translate-y-1/2 items-center justify-center text-cream md:flex",
-              "opacity-0 transition-opacity duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]",
-              "[@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 [@media(hover:none)]:opacity-100",
-            )}
-          >
-            <ChevronLeft className="h-5 w-5 drop-shadow-sm" strokeWidth={1.5} />
-          </button>
-          <button
-            type="button"
-            data-quick-add="chrome"
-            aria-label="Next image"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onNext();
-            }}
-            className={cn(
-              "quick-add-motion absolute right-1 top-1/2 z-10 hidden h-10 w-8 -translate-y-1/2 items-center justify-center text-cream md:flex",
-              "opacity-0 transition-opacity duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]",
-              "[@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 [@media(hover:none)]:opacity-100",
-            )}
-          >
-            <ChevronRight className="h-5 w-5 drop-shadow-sm" strokeWidth={1.5} />
-          </button>
-        </>
-      ) : null}
+  if (!isOpen) return null;
 
-      <div
-        data-quick-add="sizes"
-        aria-hidden={!isOpen}
-        className={cn(
-          "quick-add-motion pointer-events-none absolute inset-x-0 bottom-0 z-10 hidden md:block",
-          "translate-y-2 opacity-0 transition-[opacity,transform] duration-[280ms] ease-[cubic-bezier(0.23,1,0.32,1)]",
-          isOpen && "pointer-events-auto translate-y-0 opacity-100",
-        )}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {isOpen ? (
-          <div className="bg-gradient-to-t from-bg-card via-bg-card/95 to-transparent px-3 pb-3 pt-8">
-            <QuickAddSizeRow
-              variants={product.variants}
-              selectedId={variantId}
-              onSelect={onSelectSize}
-              autoFocus={Boolean(autoFocus && isOpen && phase === "sizes")}
-            />
-          </div>
-        ) : null}
-      </div>
-    </>
+  return (
+    <div
+      data-quick-add="sizes"
+      className="quick-add-motion mt-3 hidden md:block"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <QuickAddSizeRow
+        variants={product.variants}
+        selectedId={variantId}
+        onSelect={onSelectSize}
+        autoFocus={Boolean(autoFocus && phase === "sizes")}
+      />
+    </div>
   );
 }
 
@@ -103,24 +96,23 @@ export function QuickAddDesktopTrigger({
   isOpen: boolean;
   onOpen: () => void;
 }) {
+  if (isOpen) return null;
+
   return (
     <button
       type="button"
       data-quick-add="trigger"
       data-quick-add-trigger={product.id}
       aria-label={`Quick add — ${product.name}`}
-      aria-expanded={isOpen}
+      aria-expanded={false}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
         onOpen();
       }}
       className={cn(
-        "quick-add-motion absolute left-1/2 z-10 hidden -translate-x-1/2 cursor-pointer items-center justify-center rounded-full bg-choc px-3.5 py-1.5 font-sans text-[10px] font-medium uppercase tracking-[0.14em] text-cream md:inline-flex",
-        "bottom-[calc(100%+10px)] transition-opacity duration-[280ms] ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97]",
-        isOpen
-          ? "pointer-events-none opacity-0"
-          : "opacity-0 [@media(hover:none)]:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100",
+        "quick-add-motion relative z-10 hidden cursor-pointer items-center justify-center rounded-full bg-choc px-3.5 py-1.5 font-sans text-[10px] font-medium uppercase tracking-[0.14em] text-cream md:inline-flex",
+        "active:scale-[0.97]",
       )}
     >
       Quick view
