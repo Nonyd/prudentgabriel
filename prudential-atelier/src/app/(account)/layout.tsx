@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getOrCreateClientProfile } from "@/lib/account-helpers";
+import { getOrCreateClientProfile, SessionUserMissingError } from "@/lib/account-helpers";
 import { AccountShell } from "@/components/account/AccountShell";
 import { enforcePublicMaintenance } from "@/lib/maintenance";
 
@@ -17,7 +17,15 @@ export default async function AccountGroupLayout({ children }: { children: React
   if (!userId) {
     redirect("/login?callbackUrl=/account");
   }
-  const profile = await getOrCreateClientProfile(userId);
+  let profile;
+  try {
+    profile = await getOrCreateClientProfile(userId);
+  } catch (error) {
+    if (error instanceof SessionUserMissingError) {
+      redirect("/login?callbackUrl=/account");
+    }
+    throw error;
+  }
 
   const [rtwActive, bespokeActive, wishlistCount, userPoints] = await Promise.all([
     prisma.order.count({

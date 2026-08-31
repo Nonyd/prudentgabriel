@@ -1,6 +1,9 @@
 import type { ClientProfile, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
+import { SessionUserMissingError } from "@/lib/session-user";
+
+export { SessionUserMissingError } from "@/lib/session-user";
 
 export async function getOrCreateClientProfile(userId: string): Promise<ClientProfile> {
   const existing = await prisma.clientProfile.findUnique({ where: { userId } });
@@ -10,16 +13,19 @@ export async function getOrCreateClientProfile(userId: string): Promise<ClientPr
     where: { id: userId },
     select: { pointsBalance: true, referredById: true },
   });
+  if (!user) {
+    throw new SessionUserMissingError(userId);
+  }
 
   const thresholds = await getTierThresholds();
-  const tier = tierFromPoints(user?.pointsBalance ?? 0, thresholds);
+  const tier = tierFromPoints(user.pointsBalance, thresholds);
 
   return prisma.clientProfile.create({
     data: {
       userId,
-      loyaltyPoints: user?.pointsBalance ?? 0,
+      loyaltyPoints: user.pointsBalance,
       loyaltyTier: tier,
-      referredBy: user?.referredById ?? undefined,
+      referredBy: user.referredById ?? undefined,
     },
   });
 }

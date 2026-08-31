@@ -36,6 +36,7 @@ import {
   jwtIssuedBeforePasswordChange,
   RESET_TTL_MS,
 } from "../src/lib/password-reset";
+import { bindSessionUser } from "../src/lib/session-user";
 import { sanitizeCmsHtml } from "../src/lib/sanitize-html";
 import { passwordPolicySchema } from "../src/lib/password-policy";
 import { mimeFromMagicBytes } from "../src/lib/image-upload-mime";
@@ -304,6 +305,28 @@ async function main() {
   assert(
     !jwtIssuedBeforePasswordChange(1_700_000_500_000, changed),
     "millisecond iat is normalised and not stale at the same instant",
+  );
+  assert(
+    bindSessionUser({
+      foundById: { id: "old", isActive: true },
+      foundByEmail: { id: "new", isActive: true },
+    })?.id === "old",
+    "existing user id wins over email",
+  );
+  assert(
+    bindSessionUser({
+      foundById: null,
+      foundByEmail: { id: "current", isActive: true },
+    })?.rebound === true,
+    "stale JWT rebinds to the current row for that email",
+  );
+  assert(
+    bindSessionUser({ foundById: { id: "gone", isActive: false }, foundByEmail: null }) === null,
+    "inactive user drops the session",
+  );
+  assert(
+    bindSessionUser({ foundById: null, foundByEmail: null }) === null,
+    "unknown JWT drops the session",
   );
   assert(passwordPolicySchema.safeParse("password").success === false, "policy rejects no upper/digit");
   assert(passwordPolicySchema.safeParse("Password1").success === true, "policy accepts upper+digit");

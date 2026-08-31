@@ -7,6 +7,19 @@ import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
 import { jwtIssuedBeforePasswordChange } from "@/lib/password-reset";
 import { isGoogleOAuthConfigured } from "@/lib/auth-google";
+import { bindSessionUser } from "@/lib/session-user";
+
+const jwtUserSelect = {
+  id: true,
+  isActive: true,
+  role: true,
+  isStaff: true,
+  mustResetPassword: true,
+  passwordChangedAt: true,
+  jobTitle: true,
+  department: true,
+  jobRole: { select: { permissions: true } },
+} as const;
 
 const googleEnabled = isGoogleOAuthConfigured();
 
@@ -109,28 +122,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       }
 
-      if (token.id && trigger !== "signIn") {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: {
-            mustResetPassword: true,
-            passwordChangedAt: true,
-            isStaff: true,
-            jobTitle: true,
-            department: true,
-            role: true,
-            jobRole: { select: { permissions: true } },
-          },
-        });
+      if (trigger !== "signIn") {
+        const tokenId = typeof token.id === "string" ? token.id : undefined;
+        const tokenEmail =
+          typeof token.email === "string" ? token.email.trim().toLowerCase() : "";
+        const foundById = tokenId
+          ? await prisma.user.findUnique({ where: { id: tokenId }, select: jwtUserSelect })
+          : null;
+        const foundByEmail =
+          !foundById && tokenEmail
+            ? await prisma.user.findUnique({ where: { email: tokenEmail }, select: jwtUserSelect })
+            : null;
+        const bound = bindSessionUser({ foundById, foundByEmail });
+        if (!bound) return null;
+        if (bound.rebound) {
+          token.id = bound.id;
+          token.sub = bound.id;
+        }
+        const dbUser = foundById ?? foundByEmail;
+        if (
+          dbUser &&
+          jwtIssuedBeforePasswordChange(
+            typeof token.iat === "number" ? token.iat : undefined,
+            dbUser.passwordChangedAt,
+          )
+        ) {
+          return null;
+        }
         if (dbUser) {
-          if (
-            jwtIssuedBeforePasswordChange(
-              typeof token.iat === "number" ? token.iat : undefined,
-              dbUser.passwordChangedAt,
-            )
-          ) {
-            return null;
-          }
           token.mustResetPassword = dbUser.mustResetPassword;
           token.isStaff = dbUser.isStaff === true || dbUser.role === "STAFF";
           token.jobTitle = dbUser.jobTitle ?? undefined;

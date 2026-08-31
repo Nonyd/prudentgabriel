@@ -1,4 +1,12 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+
+function isMissingCartUserError(error: unknown): boolean {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2003") {
+    return false;
+  }
+  return String(error.meta?.field_name ?? "").includes("userId");
+}
 
 export type CartLineInput = {
   productId: string;
@@ -74,7 +82,11 @@ export async function addCartLine(userId: string, input: CartLineInput) {
       include: cartInclude,
     });
     return { ok: true as const, cartItem };
-  } catch {
+  } catch (error) {
+    if (isMissingCartUserError(error)) {
+      return { ok: false as const, status: 401, error: "Please sign in again." };
+    }
+    console.error("[cart] addCartLine failed", error);
     return { ok: false as const, status: 400, error: "Could not add to bag." };
   }
 }
