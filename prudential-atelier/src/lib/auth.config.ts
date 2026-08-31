@@ -35,9 +35,10 @@ export const authConfig = {
       }
 
       if (trigger === "update" && session) {
-        const patch = session as { name?: string; image?: string };
+        const patch = session as { name?: string; image?: string; email?: string };
         if (patch.name !== undefined) token.name = patch.name;
         if (patch.image !== undefined) token.picture = patch.image;
+        if (patch.email !== undefined) token.email = patch.email;
       }
 
       return token;
@@ -52,6 +53,7 @@ export const authConfig = {
         session.user.referralCode = token.referralCode as string;
         session.user.pointsBalance = token.pointsBalance as number;
         if (token.name) session.user.name = token.name as string;
+        if (token.email) session.user.email = token.email as string;
         if (token.picture) session.user.image = token.picture as string;
         session.user.mustResetPassword = Boolean(token.mustResetPassword);
         session.user.jobRolePermissions = (token.jobRolePermissions as string[] | undefined) ?? [];

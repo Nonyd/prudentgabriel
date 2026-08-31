@@ -12,6 +12,7 @@ const SIZES = {
   sm: { width: 120, height: 32 },
   md: { width: 160, height: 44 },
   lg: { width: 200, height: 52 },
+  xl: { width: 240, height: 72 },
 } as const;
 
 const SUBLINE: Record<SubBrand, string> = {
@@ -50,7 +51,8 @@ function WordmarkFallback({
   className?: string;
 }) {
   const primary = tone === "white" ? "var(--cream)" : "var(--text-primary)";
-  const titleSize = size === "lg" ? "18px" : size === "md" ? "16px" : "14px";
+  const titleSize =
+    size === "xl" ? "22px" : size === "lg" ? "18px" : size === "md" ? "16px" : "14px";
 
   return (
     <span className={cn("block text-center uppercase", className)}>

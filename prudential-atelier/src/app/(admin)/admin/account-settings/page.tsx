@@ -25,6 +25,7 @@ export default async function AdminAccountSettingsPage() {
         email: user.email,
         image: user.image ?? "",
       }}
+      canChangeEmail={session.user.role === "SUPER_ADMIN"}
     />
   );
 }

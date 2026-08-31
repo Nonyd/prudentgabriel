@@ -2,16 +2,26 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { forgotPasswordSchema, type ForgotPasswordInput } from "@/validations/auth";
 import { Button } from "@/components/ui/Button";
 
-export default function ForgotPasswordPage() {
+function signInHref(from: string | null): string {
+  if (from === "staff") return "/login?tab=staff";
+  if (from === "admin") return "/login?tab=admin";
+  return "/auth/login";
+}
+
+function ForgotPasswordForm() {
+  const searchParams = useSearchParams();
+  const backHref = signInHref(searchParams.get("from"));
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isSubmitSuccessful },
   } = useForm<ForgotPasswordInput>({ resolver: zodResolver(forgotPasswordSchema) });
 
   const onSubmit = async (data: ForgotPasswordInput) => {
@@ -49,30 +59,44 @@ export default function ForgotPasswordPage() {
           </Link>
           <h2 className="mt-10 font-serif text-3xl font-medium text-choc">Forgot password</h2>
           <p className="mt-2 font-sans text-sm font-light text-text-mid">
-            <Link href="/login" className="text-nut hover:underline">
+            <Link href={backHref} className="text-nut hover:underline">
               Back to sign in
             </Link>
           </p>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
-            <label className="block">
-              <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
-                Email
-              </span>
-              <input type="email" autoComplete="email" className="input-field" {...register("email")} />
-              {errors.email ? (
-                <p className="mt-1 font-sans text-xs text-danger">{errors.email.message}</p>
-              ) : null}
-            </label>
-            <Button type="submit" className="w-full" loading={isSubmitting}>
-              Send reset link
-            </Button>
-            <p className="font-sans text-xs font-light text-text-mid">
+          {isSubmitSuccessful ? (
+            <p className="mt-8 font-sans text-sm font-light text-text-mid">
               If an account exists for this email, you will receive instructions shortly.
             </p>
-          </form>
+          ) : (
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
+              <label className="block">
+                <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+                  Email
+                </span>
+                <input type="email" autoComplete="email" className="input-field" {...register("email")} />
+                {errors.email ? (
+                  <p className="mt-1 font-sans text-xs text-danger">{errors.email.message}</p>
+                ) : null}
+              </label>
+              <Button type="submit" className="w-full" loading={isSubmitting}>
+                Send reset link
+              </Button>
+              <p className="font-sans text-xs font-light text-text-mid">
+                If an account exists for this email, you will receive instructions shortly.
+              </p>
+            </form>
+          )}
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ForgotPasswordForm />
+    </Suspense>
   );
 }

@@ -10,12 +10,15 @@ import { getInitials } from "@/lib/utils";
 
 type Props = {
   initial: { name: string; email: string; image: string };
+  canChangeEmail?: boolean;
 };
 
-export function AdminAccountSettingsClient({ initial }: Props) {
+export function AdminAccountSettingsClient({ initial, canChangeEmail = false }: Props) {
   const { update } = useSession();
   const [name, setName] = useState(initial.name);
-  const [email] = useState(initial.email);
+  const [email, setEmail] = useState(initial.email);
+  const [savedEmail, setSavedEmail] = useState(initial.email);
+  const [emailPassword, setEmailPassword] = useState("");
   const [image, setImage] = useState(initial.image);
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -32,18 +35,33 @@ export function AdminAccountSettingsClient({ initial }: Props) {
       toast.error("Name is required");
       return;
     }
+    const nextEmail = email.trim().toLowerCase();
+    const changingEmail = canChangeEmail && nextEmail !== savedEmail.toLowerCase();
+    if (changingEmail && !emailPassword) {
+      toast.error("Enter your current password to change email");
+      return;
+    }
     setSavingProfile(true);
     try {
       const res = await fetch("/api/admin/account", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({
+          name: name.trim(),
+          ...(changingEmail
+            ? { email: nextEmail, currentPassword: emailPassword }
+            : {}),
+        }),
       });
-      const data = (await res.json()) as { error?: string; name?: string };
+      const data = (await res.json()) as { error?: string; name?: string; email?: string };
       if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Save failed");
       const nextName = data.name ?? name.trim();
+      const persistedEmail = data.email ?? nextEmail;
       setName(nextName);
-      await update({ name: nextName, image });
+      setEmail(persistedEmail);
+      setSavedEmail(persistedEmail);
+      setEmailPassword("");
+      await update({ name: nextName, email: persistedEmail, image });
       toast.success("Profile updated");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save profile");
@@ -176,8 +194,40 @@ export function AdminAccountSettingsClient({ initial }: Props) {
           <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
             Email
           </span>
-          <input className="input-field w-full cursor-not-allowed opacity-60" value={email} readOnly disabled />
+          <input
+            type="email"
+            className={
+              canChangeEmail
+                ? "input-field w-full"
+                : "input-field w-full cursor-not-allowed opacity-60"
+            }
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            readOnly={!canChangeEmail}
+            disabled={!canChangeEmail}
+            required
+          />
+          {canChangeEmail ? (
+            <p className="mt-1.5 font-sans text-[11px] text-text-mid">
+              Changing this email updates how you sign in. Confirm with your current password below.
+            </p>
+          ) : null}
         </label>
+        {canChangeEmail && email.trim().toLowerCase() !== savedEmail.toLowerCase() ? (
+          <label className="block">
+            <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+              Current password
+            </span>
+            <input
+              type="password"
+              autoComplete="current-password"
+              className="input-field w-full"
+              value={emailPassword}
+              onChange={(e) => setEmailPassword(e.target.value)}
+              required
+            />
+          </label>
+        ) : null}
         <Button type="submit" loading={savingProfile}>
           Save changes
         </Button>

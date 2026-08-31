@@ -207,15 +207,7 @@ export function PortalLoginClient() {
     <div className="flex min-h-screen items-center justify-center px-6 py-12">
       <div className="w-[420px] max-w-full rounded-xl border-[0.5px] border-[var(--sand)] bg-[#F7F2EC] px-10 py-12 shadow-none">
         <div className="flex flex-col items-center text-center">
-          <Logo
-            variant="dark"
-            size="md"
-            themeAdaptive={false}
-            showSubline={false}
-            href={undefined}
-            wordmarkTitleClassName="font-serif text-[20px] font-medium tracking-[0.2em] text-[#442913]"
-          />
-          <p className="mt-1 font-sans text-[9px] uppercase tracking-[0.3em] text-[var(--lightbr)]">/ ATELIER</p>
+          <Logo variant="dark" size="xl" themeAdaptive={false} href={undefined} />
           <div className="mx-auto my-4 h-px w-10 bg-[#C9A84C]" aria-hidden />
           <p className="mb-6 font-sans text-[9px] font-semibold uppercase tracking-[0.24em] text-[var(--lightbr)]">
             {copy.badge}
@@ -292,6 +284,15 @@ export function PortalLoginClient() {
               if (errors.root) clearErrors("root");
             }}
           />
+
+          <p className="text-right">
+            <Link
+              href={`/auth/forgot-password?from=${tab}`}
+              className="font-sans text-[11px] font-light text-[var(--text-mid)] transition-colors hover:text-[#442913]"
+            >
+              Forgot password?
+            </Link>
+          </p>
 
           <button
             type="submit"
