@@ -76,6 +76,7 @@ export async function reviseQuotation(params: {
         consultationId: existing.consultationId,
         createdBy: params.actor.id,
         revisedBy: params.actor.id,
+        currency: existing.currency,
       },
     });
   });

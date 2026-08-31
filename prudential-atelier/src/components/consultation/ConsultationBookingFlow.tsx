@@ -145,6 +145,10 @@ export function ConsultationBookingFlow({
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
   const [stripePk, setStripePk] = useState("");
   const minManualDate = useMemo(() => addDaysToWatYmd(getWatYmd(), 3), []);
+  const paymentRef = useMemo(
+    () => `PA-CONSULT-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+    [],
+  );
 
   useEffect(() => {
     if (session?.user?.name) setClientName(session.user.name);
@@ -255,6 +259,7 @@ export function ConsultationBookingFlow({
         virtualPlatform: selectedType && isOfferingTypeVirtual(selectedType) ? virtualPlatform : undefined,
         currency: currency as Currency,
         gateway,
+        paymentRef: gateway === "BANK_TRANSFER" ? paymentRef : undefined,
         clientName,
         clientEmail,
         clientPhone,
@@ -765,7 +770,9 @@ export function ConsultationBookingFlow({
 
             <PaymentMethodSelector
               currency={currency}
+              businessLine="ATELIER"
               amount={paymentAmount(currency)}
+              paymentReference={paymentRef}
               selected={gateway}
               onSelect={(g) => {
                 setGateway(g);

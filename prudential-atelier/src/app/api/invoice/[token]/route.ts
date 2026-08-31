@@ -5,7 +5,7 @@ import { getBankDetails, getInvoiceSettings, parseInvoiceLineItems } from "@/lib
 import type { InvoiceCurrency, PublicInvoicePayload } from "@/types/invoice";
 
 function asCurrency(c: string): InvoiceCurrency {
-  if (c === "USD" || c === "GBP") return c;
+  if (c === "USD" || c === "GBP" || c === "EUR") return c;
   return "NGN";
 }
 

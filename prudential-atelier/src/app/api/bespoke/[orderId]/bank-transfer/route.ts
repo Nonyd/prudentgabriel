@@ -15,6 +15,7 @@ import {
   parseBespokePaymentRef,
 } from "@/lib/bespoke-order-access";
 import { generatePaymentReference } from "@/lib/payments/index";
+import { bankTransferAvailable } from "@/lib/payments/bank-account";
 import {
   appendPayment,
   getOrderPaymentSummary,
@@ -27,6 +28,7 @@ import { PaymentMethod, PaymentPurpose } from "@prisma/client";
 const bodySchema = z.object({
   amount: z.number().positive(),
   receiptUrl: z.string().url(),
+  currency: z.enum(["NGN", "USD", "GBP"]).optional(),
 });
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ orderId: string }> }) {
@@ -51,6 +53,11 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ orderId: s
   const order = await getBespokeOrderForUser(orderId, session.user.id);
   if (!order || order.balance <= 0) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  }
+
+  const payCurrency = parsed.data.currency ?? "NGN";
+  if (!(await bankTransferAvailable(payCurrency, "ATELIER"))) {
+    return NextResponse.json({ error: "Bank transfer is not available for this currency" }, { status: 400 });
   }
 
   const summary = await getOrderPaymentSummary(order.id);

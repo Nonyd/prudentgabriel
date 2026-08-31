@@ -244,10 +244,25 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfModel }) {
 
         <View style={styles.bankBlock}>
           <Text style={styles.blockTitle}>Payment details ({data.bank.currency})</Text>
-          <Text style={styles.lineMuted}>Bank: {data.bank.bankName}</Text>
-          <Text style={styles.lineMuted}>Account name: {data.bank.accountName}</Text>
-          <Text style={[styles.lineMuted, { fontFamily: "Helvetica-Bold" }]}>Account: {data.bank.accountNumber}</Text>
-          {data.bank.sortCode ? <Text style={styles.lineMuted}>Sort / routing: {data.bank.sortCode}</Text> : null}
+          {data.bank.bankName ? <Text style={styles.lineMuted}>Bank: {data.bank.bankName}</Text> : null}
+          {data.bank.accountName ? (
+            <Text style={styles.lineMuted}>Account name: {data.bank.accountName}</Text>
+          ) : null}
+          {data.bank.accountNumber ? (
+            <Text style={[styles.lineMuted, { fontFamily: "Helvetica-Bold" }]}>
+              Account: {data.bank.accountNumber}
+            </Text>
+          ) : null}
+          {data.bank.iban ? <Text style={styles.lineMuted}>IBAN: {data.bank.iban}</Text> : null}
+          {data.bank.swiftBic ? <Text style={styles.lineMuted}>SWIFT / BIC: {data.bank.swiftBic}</Text> : null}
+          {data.bank.sortCode ? <Text style={styles.lineMuted}>Sort code: {data.bank.sortCode}</Text> : null}
+          {data.bank.routingNumber ? (
+            <Text style={styles.lineMuted}>Routing number: {data.bank.routingNumber}</Text>
+          ) : null}
+          {data.bank.intermediaryBank ? (
+            <Text style={styles.lineMuted}>Intermediary: {data.bank.intermediaryBank}</Text>
+          ) : null}
+          {data.bank.instructions ? <Text style={styles.lineMuted}>{data.bank.instructions}</Text> : null}
         </View>
 
         {data.clientNote ? (

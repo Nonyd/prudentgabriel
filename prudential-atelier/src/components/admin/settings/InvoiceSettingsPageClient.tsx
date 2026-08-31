@@ -32,20 +32,6 @@ const BUSINESS_KEYS = [
   "invoice_logo_url",
 ];
 
-const BANK_KEYS = [
-  "invoice_bank_name_ngn",
-  "invoice_account_name_ngn",
-  "invoice_account_number_ngn",
-  "invoice_bank_name_usd",
-  "invoice_account_name_usd",
-  "invoice_account_number_usd",
-  "invoice_sort_code_usd",
-  "invoice_bank_name_gbp",
-  "invoice_account_name_gbp",
-  "invoice_account_number_gbp",
-  "invoice_sort_code_gbp",
-];
-
 const DEFAULT_KEYS = [
   "invoice_default_vat",
   "invoice_default_due_days",
@@ -77,7 +63,18 @@ export function InvoiceSettingsPageClient() {
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
       <div className="space-y-8">
         <SettingsGroupCard title="Business identity" group="INVOICE" rows={filterKeys(rows, BUSINESS_KEYS)} onSaved={load} />
-        <SettingsGroupCard title="Bank details" group="INVOICE" rows={filterKeys(rows, BANK_KEYS)} onSaved={load} />
+        <div className="border border-sand bg-canvas p-5">
+          <p className="font-body text-sm font-medium text-ink">Bank details</p>
+          <p className="mt-1 font-body text-[13px] text-[#6B6B68]">
+            Atelier accounts (including EUR for European invoices) are managed as records, not settings keys.
+          </p>
+          <a
+            href="/admin/settings/bank-accounts"
+            className="mt-3 inline-block font-body text-sm text-[#37392d] underline"
+          >
+            Open bank accounts →
+          </a>
+        </div>
         <SettingsGroupCard title="Invoice defaults" group="INVOICE" rows={filterKeys(rows, DEFAULT_KEYS)} onSaved={load} />
       </div>
       <aside className="h-fit border border-sand bg-[#FAFAF8] p-5 font-body text-xs text-[#6B6B68]">

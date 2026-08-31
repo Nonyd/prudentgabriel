@@ -7,8 +7,11 @@ import { Building2, CreditCard, Globe, Landmark, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import type { PaymentCurrency, PaymentGatewayType } from "@/lib/payments/index";
 import { formatPrice } from "@/lib/currency";
+import type { BusinessLineCode, PublicBankAccount } from "@/lib/payments/bank-account";
+import { BankTransferDetails } from "@/components/payment/BankTransferDetails";
 type Props = {
   currency: PaymentCurrency;
+  businessLine: BusinessLineCode;
   amount: number;
   selected: PaymentGatewayType | null;
   onSelect: (gateway: PaymentGatewayType) => void;
@@ -50,6 +53,7 @@ const GATEWAY_META: Record<
 
 export function PaymentMethodSelector({
   currency,
+  businessLine,
   amount,
   selected,
   onSelect,
@@ -63,37 +67,34 @@ export function PaymentMethodSelector({
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [gateways, setGateways] = useState<PaymentGatewayType[]>([]);
-  const [bank, setBank] = useState({ bankName: "", accountNumber: "", accountName: "" });
+  const [bank, setBank] = useState<PublicBankAccount | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setLoaded(false);
-    void fetch("/api/payments/public-config")
+    void fetch(`/api/payments/public-config?line=${encodeURIComponent(businessLine)}`)
       .then((r) => r.json())
       .then((data: {
-        bank?: { bankName: string; accountNumber: string; accountName: string };
-        banks?: Record<"NGN" | "USD", { bankName: string; accountNumber: string; accountName: string }>;
+        accounts?: Partial<Record<PaymentCurrency, PublicBankAccount>>;
         gateways?: Record<PaymentCurrency, PaymentGatewayType[]>;
       }) => {
         if (cancelled) return;
-        const match =
-          currency === "USD" ? data.banks?.USD : currency === "NGN" ? data.banks?.NGN ?? data.bank : undefined;
-        if (match) setBank(match);
-        else setBank({ bankName: "", accountNumber: "", accountName: "" });
+        setBank(data.accounts?.[currency] ?? null);
         setGateways(data.gateways?.[currency] ?? []);
         setLoaded(true);
       })
       .catch(() => {
         if (!cancelled) {
           setGateways([]);
+          setBank(null);
           setLoaded(true);
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [currency]);
+  }, [currency, businessLine]);
 
   async function uploadReceipt(file: File) {
     if (!onReceiptUploaded) return;
@@ -169,29 +170,13 @@ export function PaymentMethodSelector({
                     <p className="mt-0.5 font-body text-xs text-text-light">Upload proof of payment</p>
                   </div>
                 </button>
-                {isSelected ? (
-                  <div className="mt-2 rounded-sm border border-sand bg-[#FAF7F2] p-4 font-body text-sm text-text-mid">
-                    <p>
-                      <span className="text-text-light">Bank:</span> {bank.bankName}
-                    </p>
-                    <p className="mt-1">
-                      <span className="text-text-light">Account:</span> {bank.accountNumber}
-                    </p>
-                    <p className="mt-1">
-                      <span className="text-text-light">Name:</span> {bank.accountName}
-                    </p>
+                {isSelected && bank ? (
+                  <div className="mt-2 rounded-sm border border-sand bg-[#FAF7F2] p-4">
+                    <BankTransferDetails bank={bank} paymentReference={paymentReference} />
                     <p className="mt-2 font-serif text-lg text-choc">{formatPrice(amount, currency)}</p>
-                    {currency === "USD" && amountNGN != null ? (
+                    {currency !== "NGN" && amountNGN != null ? (
                       <p className="mt-1 font-body text-xs text-text-light">
                         Equivalent ₦{Math.round(amountNGN).toLocaleString("en-NG")} at the rate locked on this order.
-                      </p>
-                    ) : null}
-                    {paymentReference ? (
-                      <p className="mt-3 rounded-sm border border-choc/20 bg-cream px-3 py-2 font-sans text-sm text-choc">
-                        Payment reference: <span className="font-medium tracking-wide">{paymentReference}</span>
-                        <span className="mt-1 block font-body text-xs font-normal text-text-light">
-                          Put this in your transfer narration so we can match your payment.
-                        </span>
                       </p>
                     ) : null}
                     <input

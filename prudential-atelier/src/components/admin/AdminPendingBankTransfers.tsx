@@ -11,6 +11,16 @@ type PendingItem = {
   clientName: string;
   clientEmail: string;
   amountNGN: number;
+  currency?: string;
+  businessLine?: "RTW" | "ATELIER";
+  account?: {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+    currency: string;
+    businessLine: string;
+    isActive?: boolean;
+  } | null;
   receiptUrl: string;
   submittedAt: string;
 };
@@ -22,6 +32,7 @@ export function AdminPendingBankTransfers() {
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [arrivedById, setArrivedById] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -43,7 +54,13 @@ export function AdminPendingBankTransfers() {
   async function confirm(id: string) {
     setBusyId(id);
     try {
-      const res = await fetch(`/api/admin/payments/${id}/confirm`, { method: "PATCH" });
+      const raw = arrivedById[id]?.trim();
+      const arrivedAmount = raw ? Number(raw) : undefined;
+      const res = await fetch(`/api/admin/payments/${id}/confirm`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(arrivedAmount != null && Number.isFinite(arrivedAmount) ? { arrivedAmount } : {}),
+      });
       if (!res.ok) {
         const j = (await res.json()) as { error?: string };
         throw new Error(j.error ?? "Confirm failed");
@@ -101,13 +118,14 @@ export function AdminPendingBankTransfers() {
           Pending bank transfers ({items.length})
         </p>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse font-body text-sm">
+          <table className="w-full min-w-[960px] border-collapse font-body text-sm">
             <thead>
               <tr className="border-b border-sand text-left text-[10px] uppercase tracking-wide text-[#6B6B68]">
                 <th className="px-2 py-2">Type</th>
                 <th className="px-2 py-2">Reference</th>
                 <th className="px-2 py-2">Client</th>
-                <th className="px-2 py-2 text-right">Amount (₦)</th>
+                <th className="px-2 py-2">Account</th>
+                <th className="px-2 py-2 text-right">Amount</th>
                 <th className="px-2 py-2">Submitted</th>
                 <th className="px-2 py-2" />
               </tr>
@@ -115,15 +133,42 @@ export function AdminPendingBankTransfers() {
             <tbody>
               {items.map((item) => (
                 <tr key={item.id} className="border-b border-sand last:border-0">
-                  <td className="px-2 py-3 text-xs">{item.kind}</td>
+                  <td className="px-2 py-3 text-xs">
+                    {item.kind}
+                    {item.businessLine ? (
+                      <span className="mt-1 block text-[10px] uppercase tracking-wide text-[#A8A8A4]">
+                        {item.businessLine}
+                      </span>
+                    ) : null}
+                  </td>
                   <td className="px-2 py-3 font-medium">{item.ref}</td>
                   <td className="px-2 py-3 text-xs text-[#6B6B68]">
                     {item.clientName}
                     <br />
                     {item.clientEmail}
                   </td>
+                  <td className="px-2 py-3 text-xs text-[#6B6B68]">
+                    {item.account?.accountNumber ? (
+                      <>
+                        <span className="font-medium text-ink">
+                          {item.currency ?? item.account.currency} · {item.account.bankName}
+                        </span>
+                        <br />
+                        {item.account.accountNumber}
+                        <br />
+                        {item.account.accountName}
+                        {item.account.isActive === false ? (
+                          <span className="mt-1 block text-[10px] uppercase text-[#C45E0A]">Retired account</span>
+                        ) : null}
+                      </>
+                    ) : (
+                      <span>{item.currency ?? "NGN"}</span>
+                    )}
+                  </td>
                   <td className="px-2 py-3 text-right tabular-nums">
-                    {Math.round(item.amountNGN).toLocaleString("en-NG")}
+                    {item.currency && item.currency !== "NGN"
+                      ? `${item.currency} ${Math.round(item.amountNGN).toLocaleString("en-NG")}`
+                      : `₦${Math.round(item.amountNGN).toLocaleString("en-NG")}`}
                   </td>
                   <td className="px-2 py-3 text-xs text-[#6B6B68]">
                     {new Date(item.submittedAt).toLocaleString("en-GB", {
@@ -132,7 +177,16 @@ export function AdminPendingBankTransfers() {
                     })}
                   </td>
                   <td className="px-2 py-3 text-right">
-                    <div className="flex flex-wrap justify-end gap-2">
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="Arrived"
+                        value={arrivedById[item.id] ?? ""}
+                        onChange={(e) => setArrivedById((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                        className="w-24 border border-sand px-2 py-1 text-xs"
+                        aria-label="Amount received"
+                      />
                       <button
                         type="button"
                         className="text-xs uppercase text-[#37392d] underline"

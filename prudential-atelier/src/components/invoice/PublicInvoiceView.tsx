@@ -7,7 +7,7 @@ import { formatInvoiceCurrency, resolveAssetUrl } from "@/lib/invoice";
 import type { InvoiceCurrency, PublicInvoicePayload } from "@/types/invoice";
 
 function asCurrency(c: string): InvoiceCurrency {
-  if (c === "USD" || c === "GBP") return c;
+  if (c === "USD" || c === "GBP" || c === "EUR") return c;
   return "NGN";
 }
 
@@ -221,7 +221,18 @@ export function PublicInvoiceView({ token }: { token: string }) {
               Copy
             </button>
           </div>
-          {bank.sortCode ? <p className="mt-1 text-xs text-[#6B6B68]">Sort / routing: {bank.sortCode}</p> : null}
+          {bank.sortCode ? <p className="mt-1 text-xs text-[#6B6B68]">Sort code: {bank.sortCode}</p> : null}
+          {bank.iban ? <p className="mt-1 text-xs text-[#6B6B68]">IBAN: {bank.iban}</p> : null}
+          {bank.swiftBic ? <p className="mt-1 text-xs text-[#6B6B68]">SWIFT / BIC: {bank.swiftBic}</p> : null}
+          {bank.routingNumber ? (
+            <p className="mt-1 text-xs text-[#6B6B68]">Routing number: {bank.routingNumber}</p>
+          ) : null}
+          {bank.intermediaryBank ? (
+            <p className="mt-1 whitespace-pre-wrap text-xs text-[#6B6B68]">{bank.intermediaryBank}</p>
+          ) : null}
+          {bank.instructions ? (
+            <p className="mt-2 whitespace-pre-wrap text-xs text-[#6B6B68]">{bank.instructions}</p>
+          ) : null}
         </div>
 
         {data.clientNote ? <p className="mt-6 font-body text-sm italic text-[#6B6B68]">{data.clientNote}</p> : null}

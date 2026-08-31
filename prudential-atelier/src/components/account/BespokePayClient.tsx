@@ -38,6 +38,10 @@ export function BespokePayClient({
   const [gateway, setGateway] = useState<PaymentGatewayType | null>(null);
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const paymentRef = useMemo(
+    () => `PA-BESPOKE-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+    [],
+  );
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
   const [stripePk, setStripePk] = useState("");
 
@@ -82,7 +86,7 @@ export function BespokePayClient({
         const res = await fetch(`/api/bespoke/${order.id}/bank-transfer`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount: amountNGN, receiptUrl }),
+          body: JSON.stringify({ amount: amountNGN, receiptUrl, currency }),
         });
         const data = (await res.json()) as { redirectUrl?: string; error?: string };
         if (!res.ok) throw new Error(data.error ?? "Could not submit receipt");
@@ -245,7 +249,9 @@ export function BespokePayClient({
       <div className="mt-6 border border-[var(--border)] bg-bg-card p-6">
         <PaymentMethodSelector
           currency={currency}
+          businessLine="ATELIER"
           amount={displayAmount}
+          paymentReference={paymentRef}
           selected={gateway}
           onSelect={setGateway}
           receiptUrl={receiptUrl}

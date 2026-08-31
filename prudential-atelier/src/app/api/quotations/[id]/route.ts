@@ -135,6 +135,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (typeof body.clientEmail === "string") data.clientEmail = body.clientEmail.trim().toLowerCase();
     if (typeof body.clientPhone === "string") data.clientPhone = body.clientPhone.trim() || null;
     if (typeof body.notes === "string") data.notes = body.notes;
+    if (typeof body.currency === "string" && ["NGN", "USD", "GBP", "EUR"].includes(body.currency)) {
+      data.currency = body.currency;
+    }
     if (body.expiresAt !== undefined) {
       data.expiresAt = body.expiresAt ? new Date(String(body.expiresAt)) : null;
     }

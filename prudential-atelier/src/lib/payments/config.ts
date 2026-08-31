@@ -1,5 +1,11 @@
 import { getSetting } from "@/lib/settings";
 import type { PaymentCurrency, PaymentGatewayType } from "@/lib/payments/index";
+import {
+  bankTransferAvailable,
+  resolvePublicBankAccount,
+  type BusinessLineCode,
+  type PublicBankAccount,
+} from "@/lib/payments/bank-account";
 
 function envOrNull(key: string): string | null {
   const v = process.env[key];
@@ -82,43 +88,14 @@ export async function getMonnifyBaseUrl(): Promise<string> {
   return (env ?? "https://api.monnify.com").replace(/\/$/, "");
 }
 
-export type BankAccountDetails = {
-  bankName: string;
-  accountNumber: string;
-  accountName: string;
-  currency: "NGN" | "USD";
-};
+export type BankAccountDetails = PublicBankAccount;
 
-export async function getBankTransferDetails(currency: PaymentCurrency = "NGN"): Promise<BankAccountDetails> {
-  if (currency === "USD") {
-    const bankName = (await getSetting("bank_name_usd"))?.trim() || envOrNull("BANK_NAME_USD");
-    const accountNumber =
-      (await getSetting("bank_account_number_usd"))?.trim() || envOrNull("BANK_ACCOUNT_NUMBER_USD");
-    const accountName =
-      (await getSetting("bank_account_name_usd"))?.trim() || envOrNull("BANK_ACCOUNT_NAME_USD");
-    return {
-      bankName: bankName ?? "",
-      accountNumber: accountNumber ?? "",
-      accountName: accountName ?? "",
-      currency: "USD",
-    };
-  }
-
-  const bankName = (await getSetting("bank_name"))?.trim() || envOrNull("BANK_NAME");
-  const accountNumber =
-    (await getSetting("bank_account_number"))?.trim() || envOrNull("BANK_ACCOUNT_NUMBER");
-  const accountName =
-    (await getSetting("bank_account_name"))?.trim() || envOrNull("BANK_ACCOUNT_NAME");
-
-  return {
-    bankName: bankName ?? "Guaranty Trust Bank",
-    accountNumber: accountNumber ?? "0123456789",
-    accountName: accountName ?? "Prudential Atelier Limited",
-    currency: "NGN",
-  };
+export async function getBankTransferDetails(
+  currency: string,
+  businessLine: BusinessLineCode = "RTW",
+): Promise<PublicBankAccount | null> {
+  return resolvePublicBankAccount(currency, businessLine);
 }
-
-const DUMMY_BANK_ACCOUNT = "0123456789";
 
 function isUsableCredential(value: string | null | undefined): boolean {
   const v = value?.trim() ?? "";
@@ -129,7 +106,10 @@ function isUsableCredential(value: string | null | undefined): boolean {
   return true;
 }
 
-export async function getSupportedGateways(currency: PaymentCurrency): Promise<PaymentGatewayType[]> {
+export async function getSupportedGateways(
+  currency: PaymentCurrency,
+  businessLine: BusinessLineCode = "RTW",
+): Promise<PaymentGatewayType[]> {
   const [
     paystackOn,
     flutterwaveOn,
@@ -144,7 +124,7 @@ export async function getSupportedGateways(currency: PaymentCurrency): Promise<P
     monnifyKey,
     monnifySecret,
     monnifyContract,
-    bank,
+    bankReady,
   ] = await Promise.all([
     isEnabled("paystack_enabled"),
     isEnabled("flutterwave_enabled"),
@@ -159,7 +139,7 @@ export async function getSupportedGateways(currency: PaymentCurrency): Promise<P
     getMonnifyApiKey(),
     getMonnifySecret(),
     getMonnifyContractCode(),
-    getBankTransferDetails(currency === "USD" ? "USD" : "NGN"),
+    bankTransferAvailable(currency, businessLine),
   ]);
 
   const paystackReady = paystackOn && isUsableCredential(paystackSecret) && isUsableCredential(paystackPk);
@@ -171,10 +151,6 @@ export async function getSupportedGateways(currency: PaymentCurrency): Promise<P
     isUsableCredential(monnifyKey) &&
     isUsableCredential(monnifySecret) &&
     isUsableCredential(monnifyContract);
-  const bankReady =
-    Boolean(bank.accountNumber?.trim()) &&
-    bank.accountNumber.trim() !== DUMMY_BANK_ACCOUNT &&
-    Boolean(bank.bankName?.trim());
 
   const out: PaymentGatewayType[] = [];
   if (currency === "NGN") {
@@ -189,16 +165,15 @@ export async function getSupportedGateways(currency: PaymentCurrency): Promise<P
   } else if (currency === "GBP") {
     if (flutterwaveReady) out.push("FLUTTERWAVE");
     if (stripeReady) out.push("STRIPE");
+    if (bankReady) out.push("BANK_TRANSFER");
   }
   return out;
 }
 
-export async function getPublicPaymentConfig(): Promise<{
-  bank: { bankName: string; accountNumber: string; accountName: string; currency: "NGN" | "USD" };
-  banks: {
-    NGN: { bankName: string; accountNumber: string; accountName: string; currency: "NGN" | "USD" };
-    USD: { bankName: string; accountNumber: string; accountName: string; currency: "NGN" | "USD" };
-  };
+export async function getPublicPaymentConfig(businessLine: BusinessLineCode = "RTW"): Promise<{
+  line: BusinessLineCode;
+  bank: PublicBankAccount | null;
+  accounts: Partial<Record<PaymentCurrency, PublicBankAccount>>;
   gateways: Record<PaymentCurrency, PaymentGatewayType[]>;
   publicKeys: {
     paystack: string;
@@ -206,28 +181,27 @@ export async function getPublicPaymentConfig(): Promise<{
     stripe: string;
   };
 }> {
-  const [bankNgn, bankUsd, ngn, usd, gbp, paystackPk, flutterwavePk, stripePk] = await Promise.all([
-    getBankTransferDetails("NGN"),
-    getBankTransferDetails("USD"),
-    getSupportedGateways("NGN"),
-    getSupportedGateways("USD"),
-    getSupportedGateways("GBP"),
+  const [bankNgn, bankUsd, bankGbp, ngn, usd, gbp, paystackPk, flutterwavePk, stripePk] = await Promise.all([
+    resolvePublicBankAccount("NGN", businessLine),
+    resolvePublicBankAccount("USD", businessLine),
+    resolvePublicBankAccount("GBP", businessLine),
+    getSupportedGateways("NGN", businessLine),
+    getSupportedGateways("USD", businessLine),
+    getSupportedGateways("GBP", businessLine),
     getPaystackPublicKey(),
     getFlutterwavePublicKey(),
     getStripePublicKey(),
   ]);
 
-  const usable = (b: BankAccountDetails) =>
-    Boolean(b.accountNumber.trim()) && b.accountNumber.trim() !== DUMMY_BANK_ACCOUNT && Boolean(b.bankName.trim())
-      ? b
-      : { bankName: "", accountNumber: "", accountName: "", currency: b.currency };
-
-  const ngnPublic = usable(bankNgn);
-  const usdPublic = usable(bankUsd);
+  const accounts: Partial<Record<PaymentCurrency, PublicBankAccount>> = {};
+  if (bankNgn) accounts.NGN = bankNgn;
+  if (bankUsd) accounts.USD = bankUsd;
+  if (bankGbp) accounts.GBP = bankGbp;
 
   return {
-    bank: ngnPublic,
-    banks: { NGN: ngnPublic, USD: usdPublic },
+    line: businessLine,
+    bank: bankNgn,
+    accounts,
     gateways: { NGN: ngn, USD: usd, GBP: gbp },
     publicKeys: {
       paystack: isUsableCredential(paystackPk) ? paystackPk! : "",

@@ -503,13 +503,27 @@ export async function sendShippingQuoteEmail(params: {
   amountNGN: number;
   currency: string;
   paymentRef: string;
-  bank: { bankName: string; accountNumber: string; accountName: string };
+  bank: {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+    iban?: string;
+    swiftBic?: string;
+    sortCode?: string;
+    routingNumber?: string;
+    intermediaryBank?: string;
+    instructions?: string;
+  };
   payUrl: string;
 }): Promise<void> {
   const amountLabel =
     params.currency === "USD"
       ? `$${params.amountNGN.toLocaleString("en-US")}`
-      : `₦${Math.round(params.amountNGN).toLocaleString("en-NG")}`;
+      : params.currency === "GBP"
+        ? `£${params.amountNGN.toLocaleString("en-GB")}`
+        : params.currency === "EUR"
+          ? `€${params.amountNGN.toLocaleString("en-IE")}`
+          : `₦${Math.round(params.amountNGN).toLocaleString("en-NG")}`;
   const html = await renderBrandedEmail(
     <ShippingQuoteEmail
       firstName={params.firstName}

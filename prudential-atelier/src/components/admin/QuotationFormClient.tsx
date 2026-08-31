@@ -7,7 +7,8 @@ import Image from "next/image";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { InvoicesQuotationsNav } from "@/components/admin/InvoicesQuotationsNav";
-import { formatPrice } from "@/lib/utils";
+import { formatInvoiceCurrency } from "@/lib/invoice";
+import type { InvoiceCurrency } from "@/types/invoice";
 
 type LineItem = {
   description: string;
@@ -78,6 +79,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
   const [tax, setTax] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [expiresAt, setExpiresAt] = useState("");
+  const [currency, setCurrency] = useState<InvoiceCurrency>("NGN");
   const [lineItems, setLineItems] = useState<LineItem[]>([
     { description: "", quantity: 1, unitPrice: 0, total: 0 },
   ]);
@@ -225,6 +227,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
           discount,
           notes: notes || undefined,
           expiresAt: expiresAt || undefined,
+          currency,
           consultationId: consultationId ?? undefined,
         }),
       });
@@ -364,6 +367,27 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
           </label>
         </section>
 
+        <section>
+          <p className="mb-2 font-sans text-xs font-medium text-text-mid">Currency</p>
+          <div className="flex flex-wrap gap-2">
+            {(["NGN", "USD", "GBP", "EUR"] as const).map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setCurrency(c)}
+                className={`border px-4 py-2 font-body text-xs ${currency === c ? "border-[#37392d] ring-1 ring-[#37392d]" : "border-sand"}`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+          {currency === "EUR" ? (
+            <p className="mt-2 font-body text-xs text-[#6B6B68]">
+              Euro is for this quotation and the invoice it becomes — not a storefront checkout currency.
+            </p>
+          ) : null}
+        </section>
+
         {linkedConsultation && linkedConsultation.moodboardImages.length > 0 ? (
           <section>
             <h2 className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
@@ -425,7 +449,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
                   className="sm:col-span-2 rounded border border-sand px-2 py-2 font-sans text-sm"
                 />
                 <div className="sm:col-span-2 flex items-center font-sans text-sm text-text-mid">
-                  {formatPrice(row.total, "NGN")}
+                  {formatInvoiceCurrency(row.total, currency)}
                 </div>
                 <button
                   type="button"
@@ -442,7 +466,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
 
         <section className="grid gap-4 sm:grid-cols-3">
           <label className="block">
-            <span className="mb-1 block font-sans text-xs font-medium text-text-mid">Tax (NGN)</span>
+            <span className="mb-1 block font-sans text-xs font-medium text-text-mid">Tax ({currency})</span>
             <input
               type="number"
               min={0}
@@ -452,7 +476,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
             />
           </label>
           <label className="block">
-            <span className="mb-1 block font-sans text-xs font-medium text-text-mid">Discount (NGN)</span>
+            <span className="mb-1 block font-sans text-xs font-medium text-text-mid">Discount ({currency})</span>
             <input
               type="number"
               min={0}
@@ -484,8 +508,8 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
 
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-sand pt-4">
           <div className="font-sans text-sm text-text-mid">
-            Subtotal {formatPrice(subtotal, "NGN")} · Total{" "}
-            <span className="font-semibold text-choc">{formatPrice(total, "NGN")}</span>
+            Subtotal {formatInvoiceCurrency(subtotal, currency)} · Total{" "}
+            <span className="font-semibold text-choc">{formatInvoiceCurrency(total, currency)}</span>
           </div>
           <div className="flex gap-2">
             <Button variant="ghost" loading={saving} onClick={() => void handleSubmit(false)}>

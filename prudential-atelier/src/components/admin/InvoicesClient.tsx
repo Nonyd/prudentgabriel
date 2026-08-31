@@ -14,7 +14,7 @@ type Row = Invoice & {
 };
 
 function asCurrency(c: string): InvoiceCurrency {
-  if (c === "USD" || c === "GBP") return c;
+  if (c === "USD" || c === "GBP" || c === "EUR") return c;
   return "NGN";
 }
 
@@ -179,6 +179,7 @@ export function InvoicesClient() {
           <option value="NGN">NGN</option>
           <option value="USD">USD</option>
           <option value="GBP">GBP</option>
+          <option value="EUR">EUR</option>
         </select>
         <button
           type="button"

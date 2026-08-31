@@ -122,6 +122,13 @@ const CARD_SECTIONS: CardSection[] = [
         href: "/admin/settings/payments",
       },
       {
+        slug: "bank-accounts",
+        title: "Bank accounts",
+        description: "NGN, USD, GBP, EUR — Ready-to-Wear and Atelier",
+        icon: Wallet,
+        href: "/admin/settings/bank-accounts",
+      },
+      {
         slug: "email",
         title: "Email & SMS",
         description: "Email provider, SMS gateway, templates",
@@ -148,7 +155,7 @@ const CARD_SECTIONS: CardSection[] = [
       {
         slug: "invoice",
         title: "Invoice settings",
-        description: "Business details, bank accounts, VAT, invoice numbering",
+        description: "Business details, VAT, invoice numbering",
         icon: Wallet,
         countGroups: ["INVOICE"],
         href: "/admin/settings/invoice",

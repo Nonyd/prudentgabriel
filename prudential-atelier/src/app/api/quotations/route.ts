@@ -151,6 +151,10 @@ export async function POST(req: NextRequest) {
           expiresAt: body.expiresAt ? new Date(String(body.expiresAt)) : null,
           consultationId,
           createdBy: gate.session.user.id,
+          currency:
+            typeof body.currency === "string" && ["NGN", "USD", "GBP", "EUR"].includes(body.currency)
+              ? body.currency
+              : "NGN",
         },
       });
     });

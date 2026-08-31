@@ -27,6 +27,7 @@
     "test:cron": "tsx --tsconfig tsconfig.scripts.json scripts/test-cron-registry.ts",
     "render:cron": "tsx --tsconfig tsconfig.scripts.json scripts/render-host-cron.ts",
     "test:email-outbox": "tsx --tsconfig tsconfig.scripts.json scripts/test-email-outbox.ts",
+    "test:slice-p": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-p.ts",
     "test:slice-o": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-o.ts",
     "test:slice-l": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-l.ts",
     "test:slice-k": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-k.ts",

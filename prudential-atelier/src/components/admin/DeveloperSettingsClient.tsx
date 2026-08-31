@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Copy, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import type { SettingType } from "@prisma/client";
@@ -171,19 +171,6 @@ export function DeveloperSettingsClient() {
     }
   };
 
-  const bankFields = useMemo(
-    () =>
-      [
-        "bank_name",
-        "bank_account_number",
-        "bank_account_name",
-        "bank_name_usd",
-        "bank_account_number_usd",
-        "bank_account_name_usd",
-      ] as const,
-    [],
-  );
-
   if (loading) {
     return (
       <div className="flex items-center gap-2 py-20 text-text-mid">
@@ -199,7 +186,7 @@ export function DeveloperSettingsClient() {
         <p className="eyebrow">Super Admin</p>
         <h1 className="mt-2 font-serif text-2xl font-medium text-choc">Developer Settings</h1>
         <p className="mt-2 font-sans text-sm font-light text-text-mid">
-          Payment gateways, bank transfer details, and exchange rates. Secret keys are AES-256-GCM encrypted at rest.
+          Payment gateways and exchange rates. Secret keys are AES-256-GCM encrypted at rest.
         </p>
       </div>
 
@@ -262,17 +249,15 @@ export function DeveloperSettingsClient() {
       <section className="card-surface p-6">
         <h2 className="font-serif text-lg font-medium text-choc">Bank transfer</h2>
         <p className="mt-1 font-sans text-xs text-text-mid">
-          NGN (First Bank) and USD (domiciliary). Checkout shows only the account that matches the cart currency.
-          GBP stays card-only.
+          Accounts are records now — one per currency and business line — not settings keys. GBP bank transfer is
+          offered when a GBP row is active.
         </p>
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {bankFields.map((key) => (
-            <div key={key}>
-              <label className="mb-1 block font-sans text-xs text-text-mid">{rowFor(key).label}</label>
-              <FieldInput row={rowFor(key)} onChange={(v) => setValue(key, v)} />
-            </div>
-          ))}
-        </div>
+        <a
+          href="/admin/settings/bank-accounts"
+          className="mt-4 inline-block font-sans text-sm text-choc underline"
+        >
+          Open bank accounts →
+        </a>
       </section>
 
       <section className="card-surface p-6">

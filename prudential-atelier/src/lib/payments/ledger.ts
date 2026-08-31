@@ -73,7 +73,9 @@ export function buildDepositPaymentTerms(params: {
       ? `$${n.toLocaleString("en-US")}`
       : params.currency === "GBP"
         ? `£${n.toLocaleString("en-GB")}`
-        : `₦${n.toLocaleString("en-NG")}`;
+        : params.currency === "EUR"
+          ? `€${n.toLocaleString("en-IE")}`
+          : `₦${n.toLocaleString("en-NG")}`;
 
   return `PAYMENT TERMS\n\nOption A: ${pct}% Deposit\nPay ${fmt(deposit)} now to begin production.\nRemaining ${fmt(balance)} due before delivery.\n\nOption B: Full Payment\nPay ${fmt(total)} in full.`;
 }

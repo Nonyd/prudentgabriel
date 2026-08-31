@@ -45,6 +45,17 @@ export function AdminSettingsGroupClient({ groupSlug }: { groupSlug: AdminSettin
   }, [load]);
 
   const rowsFor = useCallback((g: SettingGroup) => settings?.[g] ?? [], [settings]);
+  const paymentRows = useCallback(() => {
+    const hidden = new Set([
+      "bank_name",
+      "bank_account_number",
+      "bank_account_name",
+      "bank_name_usd",
+      "bank_account_number_usd",
+      "bank_account_name_usd",
+    ]);
+    return rowsFor("PAYMENTS").filter((r) => !hidden.has(r.key));
+  }, [rowsFor]);
 
   const paymentsTest = useCallback(async (gateway: "paystack" | "flutterwave" | "stripe" | "monnify") => {
     const res = await fetch("/api/admin/settings/test-payment", {
@@ -141,13 +152,20 @@ export function AdminSettingsGroupClient({ groupSlug }: { groupSlug: AdminSettin
               </Accordion.Item>
             ))}
           </Accordion.Root>
-          <SettingsGroupCard title="Payment keys" group="PAYMENTS" rows={rowsFor("PAYMENTS")} onSaved={load} />
+          <p className="mb-4 font-body text-sm text-[#6B6B68]">
+            Bank transfer accounts live on{" "}
+            <a href="/admin/settings/bank-accounts" className="underline">
+              Bank accounts
+            </a>
+            , one row per currency and business line.
+          </p>
+          <SettingsGroupCard title="Payment keys" group="PAYMENTS" rows={paymentRows()} onSaved={load} />
         </div>
       );
     }
 
     return null;
-  }, [groupSlug, settings, rowsFor, load, paymentsTest]);
+  }, [groupSlug, settings, rowsFor, paymentRows, load, paymentsTest]);
 
   return <div className="min-w-0">{body}</div>;
 }

@@ -24,6 +24,7 @@ type QuotationRecord = {
   notes: string | null;
   status: QuoteStatus;
   consultationId?: string | null;
+  currency: string;
 };
 
 async function uniqueOrderRef(): Promise<string> {
@@ -106,7 +107,7 @@ export async function convertQuotationToOrder(
   const paymentTerms = buildDepositPaymentTerms({
     total: totals.total || quote.total,
     depositPercent,
-    currency: "NGN",
+    currency: quote.currency || "NGN",
   });
 
   const orderRef = await uniqueOrderRef();
@@ -127,7 +128,7 @@ export async function convertQuotationToOrder(
         clientName: quote.clientName,
         clientEmail: quote.clientEmail,
         clientPhone: quote.clientPhone,
-        currency: "NGN",
+        currency: quote.currency || "NGN",
         exchangeRate: 1,
         status: InvoiceStatus.DRAFT,
         lineItems: lineItemsPayload as unknown as Prisma.InputJsonValue,

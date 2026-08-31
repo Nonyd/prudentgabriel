@@ -19,6 +19,7 @@ export const consultationBookingSchema = z.object({
   virtualPlatform: z.enum(["zoom", "google_meet", "whatsapp_video"]).optional(),
   currency: z.nativeEnum(Currency).default(Currency.NGN),
   gateway: z.enum(["PAYSTACK", "FLUTTERWAVE", "STRIPE", "MONNIFY", "BANK_TRANSFER"]),
+  paymentRef: z.string().regex(/^PA-CONSULT-/i).optional(),
 
   clientName: z.string().min(2).max(100),
   clientEmail: z.string().email(),

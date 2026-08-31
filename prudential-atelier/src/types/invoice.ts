@@ -25,11 +25,18 @@ export interface InvoiceBusinessDetails {
 }
 
 export interface InvoiceBankDetails {
-  currency: "NGN" | "USD" | "GBP";
+  currency: InvoiceCurrency;
   bankName: string;
   accountName: string;
   accountNumber: string;
+  swiftBic?: string;
+  iban?: string;
   sortCode?: string;
+  routingNumber?: string;
+  intermediaryBank?: string;
+  instructions?: string;
+  feeBearer?: "CUSTOMER" | "HOUSE" | "SHARED";
+  feeTolerance?: number;
 }
 
 export interface InvoicePaymentEntry {
@@ -39,7 +46,7 @@ export interface InvoicePaymentEntry {
   reference?: string;
 }
 
-export type InvoiceCurrency = "NGN" | "USD" | "GBP";
+export type InvoiceCurrency = "NGN" | "USD" | "GBP" | "EUR";
 
 export type PublicInvoicePayload = {
   id: string;

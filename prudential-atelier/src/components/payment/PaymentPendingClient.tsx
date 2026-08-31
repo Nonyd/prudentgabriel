@@ -4,22 +4,26 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Clock3 } from "lucide-react";
+import type { PublicBankAccount } from "@/lib/payments/bank-account";
+import { BankTransferDetails } from "@/components/payment/BankTransferDetails";
 
 export function PaymentPendingClient() {
   const searchParams = useSearchParams();
   const reference = searchParams.get("reference") ?? "";
   const type = searchParams.get("type") ?? "order";
   const orderId = searchParams.get("orderId");
-  const [bank, setBank] = useState({ bankName: "", accountNumber: "", accountName: "" });
+  const line = type === "order" ? "RTW" : "ATELIER";
+  const [bank, setBank] = useState<PublicBankAccount | null>(null);
 
   useEffect(() => {
-    void fetch("/api/payments/public-config")
+    void fetch(`/api/payments/public-config?line=${line}`)
       .then((r) => r.json())
-      .then((data: { bank?: { bankName: string; accountNumber: string; accountName: string } }) => {
-        if (data.bank) setBank(data.bank);
+      .then((data: { accounts?: Partial<Record<string, PublicBankAccount>>; bank?: PublicBankAccount }) => {
+        const match = data.accounts?.NGN ?? data.bank ?? null;
+        if (match) setBank(match);
       })
       .catch(() => undefined);
-  }, []);
+  }, [line]);
 
   return (
     <div className="mx-auto max-w-lg px-4 py-20">
@@ -32,12 +36,14 @@ export function PaymentPendingClient() {
         </p>
       </div>
 
-      <div className="mt-8 border border-[var(--border)] bg-bg-card p-5 font-body text-sm">
-        <p className="text-[11px] uppercase tracking-wide text-[var(--text-light)]">Bank details</p>
-        <p className="mt-2">{bank.bankName || "—"}</p>
-        <p className="font-medium">{bank.accountNumber || "—"}</p>
-        <p>{bank.accountName || "—"}</p>
-      </div>
+      {bank ? (
+        <div className="mt-8 border border-[var(--border)] bg-bg-card p-5">
+          <p className="text-[11px] uppercase tracking-wide text-[var(--text-light)]">Bank details</p>
+          <div className="mt-2">
+            <BankTransferDetails bank={bank} paymentReference={reference || null} />
+          </div>
+        </div>
+      ) : null}
 
       {type === "bespoke" && orderId ? (
         <p className="mt-6 text-center">

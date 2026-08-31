@@ -7,6 +7,7 @@ import { validateCoupon } from "@/lib/coupon";
 import { generateOrderNumber } from "@/lib/order-number";
 import { redeemPoints } from "@/lib/points";
 import { generatePaymentReference } from "@/lib/payments/index";
+import { getSupportedGateways } from "@/lib/payments/config";
 import { notifyNewOrder } from "@/lib/notifications";
 import { orderCreateBodySchema, type AddressInput } from "@/validations/order";
 import { resolveCheckoutShipping } from "@/lib/shipping/resolve-selection";
@@ -389,6 +390,10 @@ export async function POST(req: NextRequest) {
     BANK_TRANSFER: PaymentGateway.BANK_TRANSFER,
   };
   const paymentGateway = gatewayMap[data.gateway];
+  const offered = await getSupportedGateways(data.currency, "RTW");
+  if (!offered.includes(data.gateway)) {
+    return NextResponse.json({ error: "That payment method is not available for this currency" }, { status: 400 });
+  }
   const paymentRef =
     data.paymentRef && /^PA-ORDER-/i.test(data.paymentRef)
       ? data.paymentRef

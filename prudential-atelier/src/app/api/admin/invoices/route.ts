@@ -32,7 +32,7 @@ const postSchema = z.object({
   clientCity: z.string().optional().nullable(),
   clientCountry: z.string().optional().nullable(),
   clientInstagram: z.string().optional().nullable(),
-  currency: z.enum(["NGN", "USD", "GBP"]).optional(),
+  currency: z.enum(["NGN", "USD", "GBP", "EUR"]).optional(),
   exchangeRate: z.number().positive().optional(),
   lineItems: z.array(lineItemInput).optional(),
   discountType: z.enum(["PERCENTAGE", "FIXED"]).optional().nullable(),
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
   if (status && status !== "all" && (Object.values(InvoiceStatus) as string[]).includes(status)) {
     where.status = status as InvoiceStatus;
   }
-  if (currency && currency !== "all" && ["NGN", "USD", "GBP"].includes(currency)) {
+  if (currency && currency !== "all" && ["NGN", "USD", "GBP", "EUR"].includes(currency)) {
     where.currency = currency;
   }
   if (search) {

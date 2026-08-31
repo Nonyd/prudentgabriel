@@ -75,7 +75,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     : null);
 
   if (parsed.data.notify && email) {
-    const bank = await getBankTransferDetails(order.currency === "USD" ? "USD" : "NGN");
+    const bank = await getBankTransferDetails(String(order.currency), "RTW");
     const ref = order.paymentRef ?? generatePaymentReference("SHIP");
     if (!order.paymentRef) {
       await prisma.order.update({ where: { id }, data: { paymentRef: ref } });
@@ -88,7 +88,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       amountNGN: nextShipping,
       currency: String(order.currency),
       paymentRef: ref,
-      bank,
+      bank: bank ?? { bankName: "", accountNumber: "", accountName: "" },
       payUrl: `${getPublicAppUrl()}/account/orders/${order.id}`,
     });
   }

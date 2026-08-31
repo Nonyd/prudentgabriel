@@ -2,7 +2,17 @@ import { Heading, Text } from "@react-email/components";
 import EmailLayout from "./components/EmailLayout";
 import EmailButton from "./components/EmailButton";
 
-type Bank = { bankName: string; accountNumber: string; accountName: string };
+type Bank = {
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  iban?: string;
+  swiftBic?: string;
+  sortCode?: string;
+  routingNumber?: string;
+  intermediaryBank?: string;
+  instructions?: string;
+};
 
 type Props = {
   firstName: string;
@@ -39,7 +49,32 @@ export default function ShippingQuoteEmail({
             {bank.accountNumber}
             <br />
             {bank.accountName}
+            {bank.iban ? (
+              <>
+                <br />
+                IBAN {bank.iban}
+              </>
+            ) : null}
+            {bank.swiftBic ? (
+              <>
+                <br />
+                SWIFT {bank.swiftBic}
+              </>
+            ) : null}
+            {bank.sortCode ? (
+              <>
+                <br />
+                Sort code {bank.sortCode}
+              </>
+            ) : null}
+            {bank.routingNumber ? (
+              <>
+                <br />
+                Routing {bank.routingNumber}
+              </>
+            ) : null}
           </Text>
+          {bank.instructions ? <Text style={{ fontSize: 13, color: "#666" }}>{bank.instructions}</Text> : null}
           <Text style={{ fontSize: 13, color: "#666" }}>
             Use the reference above as the transfer narration so we can match your payment.
           </Text>

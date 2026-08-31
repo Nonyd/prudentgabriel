@@ -32,7 +32,7 @@ function buildPaymentTermsText(
 }
 
 function asCurrency(c: string): InvoiceCurrency {
-  if (c === "USD" || c === "GBP") return c;
+  if (c === "USD" || c === "GBP" || c === "EUR") return c;
   return "NGN";
 }
 
@@ -457,7 +457,7 @@ export function InvoiceFormPage({
           <section className="border border-sand bg-canvas p-5">
             <h2 className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Invoice details</h2>
             <div className="mt-4 flex flex-wrap gap-3">
-              {(["NGN", "USD", "GBP"] as const).map((c) => (
+              {(["NGN", "USD", "GBP", "EUR"] as const).map((c) => (
                 <button
                   key={c}
                   type="button"

@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSetting, getSettings } from "@/lib/settings";
+import { resolvePublicBankAccount } from "@/lib/payments/bank-account";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { allocateInvoiceNumber } from "@/lib/document-numbers";
 import { getLogoSettings } from "@/lib/logos";
@@ -83,30 +84,28 @@ export function resolveAssetUrl(pathOrUrl: string): string {
 }
 
 export async function getBankDetails(currency: InvoiceCurrency): Promise<InvoiceBankDetails> {
-  const s = await getSettings("INVOICE");
-  if (currency === "NGN") {
+  const account = await resolvePublicBankAccount(currency, "ATELIER");
+  if (!account) {
     return {
-      currency: "NGN",
-      bankName: s.invoice_bank_name_ngn ?? "",
-      accountName: s.invoice_account_name_ngn ?? "",
-      accountNumber: s.invoice_account_number_ngn ?? "",
-    };
-  }
-  if (currency === "USD") {
-    return {
-      currency: "USD",
-      bankName: s.invoice_bank_name_usd ?? "",
-      accountName: s.invoice_account_name_usd ?? "",
-      accountNumber: s.invoice_account_number_usd ?? "",
-      sortCode: s.invoice_sort_code_usd?.trim() || undefined,
+      currency,
+      bankName: "",
+      accountName: "",
+      accountNumber: "",
     };
   }
   return {
-    currency: "GBP",
-    bankName: s.invoice_bank_name_gbp ?? "",
-    accountName: s.invoice_account_name_gbp ?? "",
-    accountNumber: s.invoice_account_number_gbp ?? "",
-    sortCode: s.invoice_sort_code_gbp?.trim() || undefined,
+    currency,
+    bankName: account.bankName,
+    accountName: account.accountName,
+    accountNumber: account.accountNumber,
+    swiftBic: account.swiftBic,
+    iban: account.iban,
+    sortCode: account.sortCode,
+    routingNumber: account.routingNumber,
+    intermediaryBank: account.intermediaryBank,
+    instructions: account.instructions,
+    feeBearer: account.feeBearer,
+    feeTolerance: account.feeTolerance,
   };
 }
 
@@ -174,6 +173,11 @@ export function calculateInvoiceTotals(params: {
   return { subtotal, discountAmount, vatAmount, total, depositRequired, balanceDue };
 }
 
+export function asInvoiceCurrency(c: string): InvoiceCurrency {
+  if (c === "USD" || c === "GBP" || c === "EUR") return c;
+  return "NGN";
+}
+
 export function formatInvoiceCurrency(amount: number, currency: InvoiceCurrency): string {
   const n = Math.abs(amount);
   const opts: Intl.NumberFormatOptions = { minimumFractionDigits: 0, maximumFractionDigits: 2 };
@@ -182,6 +186,9 @@ export function formatInvoiceCurrency(amount: number, currency: InvoiceCurrency)
   }
   if (currency === "USD") {
     return `$${n.toLocaleString("en-US", opts)}`;
+  }
+  if (currency === "EUR") {
+    return `€${n.toLocaleString("en-IE", opts)}`;
   }
   return `£${n.toLocaleString("en-GB", opts)}`;
 }

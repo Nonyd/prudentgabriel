@@ -24,7 +24,7 @@ const patchSchema = z.object({
   clientCity: z.string().optional().nullable(),
   clientCountry: z.string().optional().nullable(),
   clientInstagram: z.string().optional().nullable(),
-  currency: z.enum(["NGN", "USD", "GBP"]).optional(),
+  currency: z.enum(["NGN", "USD", "GBP", "EUR"]).optional(),
   exchangeRate: z.number().positive().optional(),
   lineItems: z.array(lineItemInput).optional(),
   discountType: z.enum(["PERCENTAGE", "FIXED"]).optional().nullable(),

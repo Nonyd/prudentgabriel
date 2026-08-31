@@ -1417,6 +1417,26 @@ enum Currency {
   GBP
 }
 
+/// Currencies a bank account may be held in. Storefront checkout stays on Currency
+/// (NGN/USD/GBP); EUR is for manual invoices and quotations until a later slice.
+enum BankAccountCurrency {
+  NGN
+  USD
+  GBP
+  EUR
+}
+
+enum BusinessLine {
+  RTW
+  ATELIER
+}
+
+enum WireFeeBearer {
+  CUSTOMER
+  HOUSE
+  SHARED
+}
+
 enum ActivityAction {
   CREATE
   UPDATE
@@ -1999,6 +2019,8 @@ model Quotation {
   tax       Float  @default(0)
   discount  Float  @default(0)
   total     Float
+  /// Document currency. EUR is valid here (manual atelier quotes); not a storefront switcher.
+  currency  String @default("NGN")
 
   notes  String?     @db.Text
   status QuoteStatus @default(DRAFT)
@@ -2075,6 +2097,33 @@ model BlogPost {
 
   @@index([slug])
   @@index([status, publishedAt])
+}
+
+/// One bank account per currency × business line. Mrs. Prudent adds, edits, or
+/// retires rows from admin — no deploy. Bank transfer is offered only when an
+/// active row matches the cart's currency and line.
+model BankAccount {
+  id               String              @id @default(cuid())
+  currency         BankAccountCurrency
+  businessLine     BusinessLine
+  accountName      String
+  accountNumber    String
+  bankName         String
+  swiftBic         String?
+  iban             String?
+  sortCode         String?
+  routingNumber    String?
+  intermediaryBank String?             @db.Text
+  instructions     String?             @db.Text
+  feeBearer        WireFeeBearer?
+  /// Amount in this account's currency. A shortfall within this margin still settles.
+  feeTolerance     Decimal?            @db.Decimal(12, 2)
+  isActive         Boolean             @default(true)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@unique([currency, businessLine])
+  @@index([isActive, currency, businessLine])
 }
 
 /// Append-only money ledger. Never update `amount` on an existing row —

@@ -4,6 +4,30 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { parseBespokePaymentRef } from "@/lib/bespoke-order-access";
 import { toNumber } from "@/lib/payments/ledger";
+import {
+  resolveBankAccount,
+  toPublicBankAccount,
+  type BusinessLineCode,
+} from "@/lib/payments/bank-account";
+
+async function accountFor(currency: string, line: BusinessLineCode) {
+  const row = await resolveBankAccount(currency, line, { activeOnly: false });
+  if (!row) return { currency, businessLine: line, bankName: "", accountNumber: "", accountName: "", accountId: null as string | null };
+  const pub = toPublicBankAccount({ ...row, isActive: true }) ?? {
+    bankName: row.bankName,
+    accountNumber: row.accountNumber,
+    accountName: row.accountName,
+  };
+  return {
+    currency: row.currency,
+    businessLine: line,
+    bankName: pub.bankName,
+    accountNumber: pub.accountNumber,
+    accountName: pub.accountName,
+    accountId: row.id,
+    isActive: row.isActive,
+  };
+}
 
 export async function GET() {
   const session = await requireAdminApi("payments");
@@ -25,6 +49,7 @@ export async function GET() {
         createdAt: true,
         guestName: true,
         guestEmail: true,
+        currency: true,
         user: { select: { name: true, email: true } },
       },
     }),
@@ -43,6 +68,7 @@ export async function GET() {
         createdAt: true,
         clientName: true,
         clientEmail: true,
+        currency: true,
       },
     }),
     prisma.bespokeOrder.findMany({
@@ -78,11 +104,12 @@ export async function GET() {
             orderNumber: true,
             guestName: true,
             guestEmail: true,
+            currency: true,
             user: { select: { name: true, email: true } },
           },
         },
         consultation: {
-          select: { id: true, bookingNumber: true, clientName: true, clientEmail: true },
+          select: { id: true, bookingNumber: true, clientName: true, clientEmail: true, currency: true },
         },
       },
     }),
@@ -100,6 +127,8 @@ export async function GET() {
       clientName: o.user?.name ?? o.guestName ?? "—",
       clientEmail: o.user?.email ?? o.guestEmail ?? "",
       amountNGN: o.total,
+      currency: String(o.currency),
+      businessLine: "RTW" as const,
       receiptUrl: o.paymentReceiptUrl!,
       submittedAt: o.createdAt.toISOString(),
     })),
@@ -110,10 +139,11 @@ export async function GET() {
       clientName: b.clientName,
       clientEmail: b.clientEmail,
       amountNGN: b.feeNGN,
+      currency: String(b.currency),
+      businessLine: "ATELIER" as const,
       receiptUrl: b.paymentReceiptUrl!,
       submittedAt: b.createdAt.toISOString(),
     })),
-    // Prefer ledger PENDING rows for bespoke; fall back to legacy receipt fields.
     ...pendingLedger
       .filter((p) => p.bespokeOrder)
       .map((p) => ({
@@ -123,6 +153,8 @@ export async function GET() {
         clientName: p.bespokeOrder!.clientName,
         clientEmail: p.bespokeOrder!.clientEmail,
         amountNGN: toNumber(p.amount),
+        currency: p.currency || "NGN",
+        businessLine: "ATELIER" as const,
         receiptUrl: p.receiptUrl ?? "",
         submittedAt: p.createdAt.toISOString(),
         paymentId: p.id,
@@ -138,11 +170,27 @@ export async function GET() {
           clientName: b.clientName,
           clientEmail: b.clientEmail,
           amountNGN: parsed.amountNGN ?? b.balance,
+          currency: "NGN",
+          businessLine: "ATELIER" as const,
           receiptUrl: b.paymentReceiptUrl!,
           submittedAt: b.updatedAt.toISOString(),
         };
       }),
   ].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
 
-  return NextResponse.json({ items });
+  const keys = Array.from(new Set(items.map((i) => `${i.currency}:${i.businessLine}`)));
+  const accounts = await Promise.all(
+    keys.map(async (k) => {
+      const [currency, line] = k.split(":") as [string, BusinessLineCode];
+      return [k, await accountFor(currency, line)] as const;
+    }),
+  );
+  const accountMap = Object.fromEntries(accounts);
+
+  return NextResponse.json({
+    items: items.map((item) => ({
+      ...item,
+      account: accountMap[`${item.currency}:${item.businessLine}`] ?? null,
+    })),
+  });
 }

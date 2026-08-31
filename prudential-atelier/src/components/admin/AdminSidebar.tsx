@@ -134,6 +134,7 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Finance",
     items: [
       { href: "/admin/payments", label: "Payments", icon: Wallet, permission: "finance" },
+      { href: "/admin/settings/bank-accounts", label: "Bank accounts", icon: Wallet, permission: "settings" },
       { href: "/admin/reports", label: "Financial Reports", icon: BarChart3, permission: "reports" },
     ],
   },

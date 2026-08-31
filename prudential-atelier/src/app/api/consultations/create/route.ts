@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { rejectIfAtelierBookingsClosed } from "@/lib/atelier-bookings";
 import { generatePaymentReference } from "@/lib/payments/index";
+import { getSupportedGateways } from "@/lib/payments/config";
 import {
   addDaysToWatYmd,
   dateToWatYmd,
@@ -126,8 +127,16 @@ export async function POST(req: NextRequest) {
     BANK_TRANSFER: PaymentGateway.BANK_TRANSFER,
   };
   const paymentGateway = gatewayMap[data.gateway];
+  const offered = await getSupportedGateways(data.currency, "ATELIER");
+  if (!offered.includes(data.gateway)) {
+    return NextResponse.json({ error: "That payment method is not available for this currency" }, { status: 400 });
+  }
   const paymentRef =
-    data.gateway === "BANK_TRANSFER" ? generatePaymentReference("CONSULT") : undefined;
+    data.gateway === "BANK_TRANSFER"
+      ? data.paymentRef && /^PA-CONSULT-/i.test(data.paymentRef)
+        ? data.paymentRef
+        : generatePaymentReference("CONSULT")
+      : undefined;
 
   const booking = await prisma.$transaction(async (tx) => {
     return tx.consultationBooking.create({
@@ -171,5 +180,6 @@ export async function POST(req: NextRequest) {
     bookingNumber: booking.bookingNumber,
     feeNGN: booking.feeNGN,
     currency: booking.currency,
+    paymentRef: booking.paymentRef,
   });
 }

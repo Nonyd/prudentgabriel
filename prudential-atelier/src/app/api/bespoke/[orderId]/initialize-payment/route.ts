@@ -10,7 +10,7 @@ import { initializeTransaction as initPaystack } from "@/lib/payments/paystack";
 import { initializeTransaction as initFlutterwave } from "@/lib/payments/flutterwave";
 import { initializeTransaction as initMonnify } from "@/lib/payments/monnify";
 import { createBespokePaymentIntent } from "@/lib/payments/stripe";
-import { getStripePublicKey } from "@/lib/payments/config";
+import { getStripePublicKey, getSupportedGateways } from "@/lib/payments/config";
 import {
   encodeBespokePaymentRef,
   getBespokeOrderForUser,
@@ -44,6 +44,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ orderId: s
   }
 
   const { amount, currency, gateway } = parsed.data;
+  const offered = await getSupportedGateways(currency, "ATELIER");
+  if (!offered.includes(gateway)) {
+    return NextResponse.json({ error: "That payment method is not available for this currency" }, { status: 400 });
+  }
   const order = await getBespokeOrderForUser(orderId, session.user.id);
   if (!order || order.balance <= 0) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });

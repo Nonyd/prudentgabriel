@@ -1099,6 +1099,7 @@ export function CheckoutClient() {
             <div id="payment-method">
               <PaymentMethodSelector
                 currency={currency}
+                businessLine="RTW"
                 amount={payableShopper}
                 amountNGN={payable}
                 paymentReference={paymentRef}

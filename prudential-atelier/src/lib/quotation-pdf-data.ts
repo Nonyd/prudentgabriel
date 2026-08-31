@@ -27,9 +27,12 @@ function parseQuoteLines(raw: unknown): QuotationPdfLineItem[] {
 }
 
 export async function buildQuotationPdfModel(quote: Quotation): Promise<QuotationPdfModel> {
+  const currency = (["NGN", "USD", "GBP", "EUR"].includes(quote.currency)
+    ? quote.currency
+    : "NGN") as "NGN" | "USD" | "GBP" | "EUR";
   const [business, bank, depositPercent] = await Promise.all([
     getInvoiceSettings(),
-    getBankDetails("NGN"),
+    getBankDetails(currency),
     getBespokeDepositPercent(),
   ]);
   const depositRequired = Math.round(quote.total * (depositPercent / 100) * 100) / 100;
@@ -45,7 +48,7 @@ export async function buildQuotationPdfModel(quote: Quotation): Promise<Quotatio
     quoteRef: quote.quoteRef,
     version: quote.version,
     status: quote.status,
-    currency: "NGN",
+    currency,
     issuedAt: quote.sentAt ?? quote.createdAt,
     expiresAt: quote.expiresAt,
     clientName: quote.clientName,

@@ -19,6 +19,7 @@ import {
 } from "@/lib/payments/ledger";
 import { rtwHasOutstandingBalance } from "@/lib/payments/rtw-totals";
 import { generatePaymentReference } from "@/lib/payments/index";
+import { feeShortfallWithinTolerance, resolveBankAccount, type BusinessLineCode } from "@/lib/payments/bank-account";
 
 function parsePaymentId(
   id: string,
@@ -30,7 +31,33 @@ function parsePaymentId(
   return null;
 }
 
-export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+function parseArrivedAmount(req: NextRequest): Promise<number | undefined> {
+  return req.json().then((body: unknown) => {
+    if (!body || typeof body !== "object") return undefined;
+    const n = Number((body as { arrivedAmount?: unknown }).arrivedAmount);
+    return Number.isFinite(n) && n >= 0 ? n : undefined;
+  }).catch(() => undefined);
+}
+
+async function rejectIfShortOfTolerance(params: {
+  expected: number;
+  arrived: number | undefined;
+  currency: string;
+  line: BusinessLineCode;
+}): Promise<NextResponse | null> {
+  if (params.arrived == null) return null;
+  const account = await resolveBankAccount(params.currency, params.line, { activeOnly: false });
+  const tolerance = account?.feeTolerance ?? 0;
+  if (feeShortfallWithinTolerance(params.expected, params.arrived, tolerance)) return null;
+  return NextResponse.json(
+    {
+      error: `Arrived amount is short of the expected ${params.expected} ${params.currency} by more than the ${tolerance} tolerance on this account. Do not confirm as settled — the ship gate will block an unpaid shortfall.`,
+    },
+    { status: 400 },
+  );
+}
+
+export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi("payments");
   if (!gate.ok) return gate.response;
 
@@ -43,8 +70,28 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
   const appUrl = getPublicAppUrl();
   const adminEmail = gate.session.user?.email ?? undefined;
   const adminId = gate.session.user?.id;
+  const arrivedAmount = await parseArrivedAmount(req);
 
   if (parsed.kind === "PAYMENT") {
+    const existing = await prisma.payment.findUnique({
+      where: { id: parsed.recordId },
+      include: { order: { select: { currency: true } }, consultation: { select: { currency: true } } },
+    });
+    if (existing) {
+      const line: BusinessLineCode = existing.orderId ? "RTW" : "ATELIER";
+      const currency = existing.order?.currency
+        ? String(existing.order.currency)
+        : existing.consultation?.currency
+          ? String(existing.consultation.currency)
+          : existing.currency;
+      const blocked = await rejectIfShortOfTolerance({
+        expected: toNumber(existing.amount),
+        arrived: arrivedAmount,
+        currency,
+        line,
+      });
+      if (blocked) return blocked;
+    }
     const payment = await confirmPayment({
       paymentId: parsed.recordId,
       confirmedById: adminId,
@@ -67,6 +114,13 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
     if (!order || order.paymentGateway !== PaymentGateway.BANK_TRANSFER) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+    const blocked = await rejectIfShortOfTolerance({
+      expected: order.total,
+      arrived: arrivedAmount,
+      currency: String(order.currency),
+      line: "RTW",
+    });
+    if (blocked) return blocked;
     const followUp = rtwHasOutstandingBalance(order);
     const ref = followUp ? generatePaymentReference("BAL") : order.paymentRef ?? order.orderNumber;
     await fulfillPaidOrder({
@@ -137,6 +191,13 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
     if (!booking || booking.paymentGateway !== PaymentGateway.BANK_TRANSFER) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+    const blocked = await rejectIfShortOfTolerance({
+      expected: booking.feeNGN,
+      arrived: arrivedAmount,
+      currency: String(booking.currency),
+      line: "ATELIER",
+    });
+    if (blocked) return blocked;
     const ref = booking.paymentRef ?? booking.bookingNumber;
     await fulfillPaidConsultationBooking({
       bookingId: booking.id,
@@ -216,6 +277,14 @@ export async function PATCH(_req: NextRequest, ctx: { params: Promise<{ id: stri
       ? Math.min(parsedAmount, bespoke.balance)
       : bespoke.balance;
   const paymentRef = pending?.reference ?? (refParts[0] || bespoke.orderRef);
+
+  const blocked = await rejectIfShortOfTolerance({
+    expected: payAmount,
+    arrived: arrivedAmount,
+    currency: pending?.currency || "NGN",
+    line: "ATELIER",
+  });
+  if (blocked) return blocked;
 
   await fulfillBespokeOrderBalance({
     orderId: bespoke.id,
