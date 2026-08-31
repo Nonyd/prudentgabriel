@@ -18,6 +18,7 @@ import { listCheckoutShippingOptions } from "../src/lib/shipping/options";
 import { resolveCheckoutShipping } from "../src/lib/shipping/resolve-selection";
 import { setShippingCarriersForTest } from "../src/lib/shipping/carriers";
 import { clearShippingQuoteCacheForTest } from "../src/lib/shipping/rate";
+import { setShippingBandModesForTest } from "../src/lib/shipping/mode";
 import type { ShippingCarrier } from "../src/lib/shipping/carriers/types";
 import { assertCanMarkShipped, shippingRequiresTracking } from "../src/lib/order-status";
 import { getLockedFx, setLockedFxForTest } from "../src/lib/fx";
@@ -165,6 +166,7 @@ async function cleanup() {
   setShippingCarriersForTest(null);
   setLockedFxForTest(null);
   clearShippingQuoteCacheForTest();
+  setShippingBandModesForTest(null);
 }
 
 async function main() {
@@ -177,6 +179,7 @@ async function main() {
   );
 
   await ensureMethods();
+  setShippingBandModesForTest({ nigeria: "LIVE", international: "LIVE" });
   const product = await makeProduct();
   const variant = product.variants[0]!;
   const lines = [

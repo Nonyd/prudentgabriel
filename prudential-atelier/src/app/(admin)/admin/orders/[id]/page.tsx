@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { OrderTimeline } from "@/components/account/OrderTimeline";
 import { AdminOrderToolbar } from "@/components/admin/AdminOrderToolbar";
 import { ShippingQuotePanel } from "@/components/admin/ShippingQuotePanel";
+import { orderWhatsAppUrl, phoneFromOrder } from "@/lib/shipping/whatsapp";
 
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -21,6 +22,8 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   if (!order) notFound();
 
   const snap = order.addressSnapshot as Record<string, string> | null;
+  const phone = phoneFromOrder(order);
+  const wa = orderWhatsAppUrl(phone, order.orderNumber);
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
@@ -44,6 +47,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           totalNGN: order.total,
           paymentGateway: order.paymentGateway,
           shippingMethodKind: order.shippingMethodKind,
+          carrier: order.carrier,
           balance: order.balance,
           collectionCode: order.collectionCode,
         }}
@@ -55,7 +59,15 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
       {order.shippingQuoteStatus === ShippingQuoteStatus.QUOTE_PENDING ||
       order.shippingQuoteStatus === ShippingQuoteStatus.QUOTED ? (
-        <ShippingQuotePanel orderId={order.id} currentShipping={order.shippingAmount} />
+        <ShippingQuotePanel
+          orderId={order.id}
+          currentShipping={order.shippingAmount}
+          currentCarrier={order.carrier}
+          currentNote={order.shippingQuoteNote}
+          orderStatus={order.status}
+          preferredContact={order.preferredContactMethod}
+          whatsappUrl={wa}
+        />
       ) : null}
 
       <div className="overflow-x-auto rounded-sm border border-sand bg-canvas p-6">
@@ -117,12 +129,31 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               <p className="mt-2">{order.user.name}</p>
               <p>{order.user.email}</p>
               <p>{order.user.phone}</p>
-              <Link href={`/admin/customers/${order.user.id}`} className="mt-2 inline-block text-gold hover:underline">
+              {order.preferredContactMethod ? (
+                <p className="mt-1 text-xs text-[#6B6B68]">Reach via {order.preferredContactMethod.toLowerCase()}</p>
+              ) : null}
+              {wa ? (
+                <a href={wa} target="_blank" rel="noreferrer" className="mt-2 inline-block text-gold hover:underline">
+                  WhatsApp about this order
+                </a>
+              ) : null}
+              <Link href={`/admin/customers/${order.user.id}`} className="mt-2 block text-gold hover:underline">
                 View customer
               </Link>
             </>
           ) : (
-            <p className="mt-2">Guest · {order.guestEmail}</p>
+            <>
+              <p className="mt-2">Guest · {order.guestEmail}</p>
+              {order.guestPhone ? <p>{order.guestPhone}</p> : null}
+              {order.preferredContactMethod ? (
+                <p className="mt-1 text-xs text-[#6B6B68]">Reach via {order.preferredContactMethod.toLowerCase()}</p>
+              ) : null}
+              {wa ? (
+                <a href={wa} target="_blank" rel="noreferrer" className="mt-2 inline-block text-gold hover:underline">
+                  WhatsApp about this order
+                </a>
+              ) : null}
+            </>
           )}
         </div>
       </div>

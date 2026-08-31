@@ -2,14 +2,77 @@
 
 import { useState } from "react";
 import type { LagosLocation, PickupLocation, ShippingMethod } from "@prisma/client";
+import type { BandAdminStatus } from "@/lib/shipping/mode";
 
 type MethodWithLocs = ShippingMethod & {
   pickupLocations: PickupLocation[];
   lagosLocations: LagosLocation[];
 };
 
-export function ShippingAdminClient({ initialMethods }: { initialMethods: MethodWithLocs[] }) {
+type AdminStatus = {
+  lagos: BandAdminStatus;
+  nigeria: BandAdminStatus;
+  international: BandAdminStatus;
+};
+
+type ShippingCopy = {
+  manualConsent: string;
+  unavailableConsent: string;
+};
+
+function ModeRadios({
+  value,
+  onChange,
+}: {
+  value: "MANUAL" | "LIVE";
+  onChange: (v: "MANUAL" | "LIVE") => void;
+}) {
+  return (
+    <div className="mt-2 flex gap-4">
+      {(["MANUAL", "LIVE"] as const).map((mode) => (
+        <label key={mode} className="inline-flex cursor-pointer items-center gap-2 font-body text-sm text-ink">
+          <input type="radio" checked={value === mode} onChange={() => onChange(mode)} />
+          {mode === "MANUAL" ? "Manual — we quote personally" : "Live — rate from the carrier"}
+        </label>
+      ))}
+    </div>
+  );
+}
+
+function BandStatusNote({ band }: { band: BandAdminStatus }) {
+  if (band.misconfigured) {
+    return (
+      <p className="mt-2 border border-[#E8D5B0] bg-[#FFF8E7] px-3 py-2 font-body text-xs text-[#92660A]">
+        Set to LIVE but credentials are not configured. Checkout still takes the personal-quote path until the account
+        is added — this is not the same as choosing Manual.
+      </p>
+    );
+  }
+  if (band.mode === "LIVE" && band.configured) {
+    return <p className="mt-2 font-body text-xs text-[#6B6B68]">Credentials present. Checkout will request a live rate.</p>;
+  }
+  if (band.mode === "MANUAL") {
+    return (
+      <p className="mt-2 font-body text-xs text-[#6B6B68]">
+        Checkout offers personal arrangement. A LIVE failure still falls back to this path.
+      </p>
+    );
+  }
+  return null;
+}
+
+export function ShippingAdminClient({
+  initialMethods,
+  initialStatus,
+  initialCopy,
+}: {
+  initialMethods: MethodWithLocs[];
+  initialStatus: AdminStatus;
+  initialCopy: ShippingCopy;
+}) {
   const [methods, setMethods] = useState(initialMethods);
+  const [status, setStatus] = useState(initialStatus);
+  const [copy, setCopy] = useState(initialCopy);
   const local = methods.find((m) => m.kind === "LOCAL_FLAT");
   const pickup = methods.find((m) => m.kind === "PICKUP");
   const gig = methods.find((m) => m.kind === "CARRIER_GIG");
@@ -26,8 +89,26 @@ export function ShippingAdminClient({ initialMethods }: { initialMethods: Method
   async function reload() {
     const res = await fetch("/api/admin/shipping");
     if (!res.ok) return;
-    const data = (await res.json()) as { methods: MethodWithLocs[] };
+    const data = (await res.json()) as {
+      methods: MethodWithLocs[];
+      status?: AdminStatus;
+      copy?: ShippingCopy;
+    };
     setMethods(data.methods);
+    if (data.status) setStatus(data.status);
+    if (data.copy) setCopy(data.copy);
+  }
+
+  async function patchSettings(body: Record<string, unknown>) {
+    const res = await fetch("/api/admin/shipping", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) return;
+    const data = (await res.json()) as { status?: AdminStatus; copy?: ShippingCopy };
+    if (data.status) setStatus(data.status);
+    if (data.copy) setCopy(data.copy);
   }
 
   async function addLagos() {
@@ -73,10 +154,80 @@ export function ShippingAdminClient({ initialMethods }: { initialMethods: Method
       <div>
         <h1 className="font-display text-[24px] text-ink">Shipping</h1>
         <p className="mt-1 max-w-2xl font-body text-[13px] text-[#6B6B68]">
-          Lagos locations appear at checkout as soon as you save them. Add Yaba, Ajah, or anywhere you deliver — set the
-          price here, no deploy.
+          Lagos is automatic. Nigeria and international can run as a personal quote until GIG and DHL accounts are live
+          — flip each band on its own, so Lekki never waits for a phone call.
         </p>
       </div>
+
+      <section className="border border-sand bg-bg-card p-6">
+        <h2 className="font-display text-xl text-ink">Mode by destination</h2>
+        <p className="mt-1 font-body text-xs text-[#6B6B68]">
+          One control per band. Mode is the intent; a LIVE timeout still falls back to the personal-quote path.
+        </p>
+
+        <div className="mt-6 border-t border-[#F5F5F3] pt-4">
+          <p className="font-body text-sm text-ink">Lagos</p>
+          <p className="mt-1 font-body text-xs uppercase tracking-wide text-[#A8A8A4]">Automatic only</p>
+          <p className="mt-2 font-body text-xs text-[#6B6B68]">
+            Pickup locations and flat rates. No carrier account, and no manual toggle — flipping a global switch would
+            put a phone call in front of every Lekki delivery.
+          </p>
+        </div>
+
+        <div className="mt-6 border-t border-[#F5F5F3] pt-4">
+          <p className="font-body text-sm text-ink">Nigeria (GIG)</p>
+          <ModeRadios
+            value={status.nigeria.mode === "LIVE" ? "LIVE" : "MANUAL"}
+            onChange={(nigeriaMode) => void patchSettings({ nigeriaMode })}
+          />
+          <BandStatusNote band={status.nigeria} />
+        </div>
+
+        <div className="mt-6 border-t border-[#F5F5F3] pt-4">
+          <p className="font-body text-sm text-ink">International (DHL)</p>
+          <ModeRadios
+            value={status.international.mode === "LIVE" ? "LIVE" : "MANUAL"}
+            onChange={(internationalMode) => void patchSettings({ internationalMode })}
+          />
+          <BandStatusNote band={status.international} />
+        </div>
+      </section>
+
+      <section className="border border-sand bg-bg-card p-6">
+        <h2 className="font-display text-xl text-ink">Checkout wording</h2>
+        <p className="mt-1 font-body text-xs text-[#6B6B68]">
+          Two strings, because a couture house arranging delivery is a service, not a failure. The wording shown is the
+          wording stored on the order. Nony to confirm.
+        </p>
+        <label className="mt-4 block font-body text-xs text-[#6B6B68]">
+          Manual mode
+          <textarea
+            rows={4}
+            defaultValue={copy.manualConsent}
+            key={copy.manualConsent}
+            className="mt-1 w-full border border-sand bg-canvas px-3 py-2 font-body text-sm text-ink"
+            onBlur={(e) => {
+              const manualConsent = e.target.value.trim();
+              if (manualConsent && manualConsent !== copy.manualConsent) void patchSettings({ manualConsent });
+            }}
+          />
+        </label>
+        <label className="mt-4 block font-body text-xs text-[#6B6B68]">
+          Live mode — when the carrier cannot quote
+          <textarea
+            rows={4}
+            defaultValue={copy.unavailableConsent}
+            key={copy.unavailableConsent}
+            className="mt-1 w-full border border-sand bg-canvas px-3 py-2 font-body text-sm text-ink"
+            onBlur={(e) => {
+              const unavailableConsent = e.target.value.trim();
+              if (unavailableConsent && unavailableConsent !== copy.unavailableConsent) {
+                void patchSettings({ unavailableConsent });
+              }
+            }}
+          />
+        </label>
+      </section>
 
       <section className="border border-sand bg-bg-card p-6">
         <h2 className="font-display text-xl text-ink">Lagos delivery</h2>
@@ -226,8 +377,8 @@ export function ShippingAdminClient({ initialMethods }: { initialMethods: Method
       <section className="border border-sand bg-bg-card p-6">
         <h2 className="font-display text-xl text-ink">Carriers</h2>
         <p className="mt-1 font-body text-xs text-[#6B6B68]">
-          GIG and DHL are live-rated. Until the accounts are open, checkout takes the personal-quote path. Markup is a
-          buffer — DHL adds fuel and remote-area charges after quoting.
+          Markup applies when a band is LIVE and the carrier returns a rate. DHL may add fuel and remote-area charges
+          after quoting.
         </p>
         {[gig, dhl].filter(Boolean).map((m) => (
           <div key={m!.id} className="mt-4 flex flex-wrap items-end gap-3 border-t border-[#F5F5F3] pt-4">

@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
+import { getShippingAdminStatus } from "@/lib/shipping/mode";
+import {
+  getShippingCopy,
+  SHIPPING_MODE_INTERNATIONAL_KEY,
+  SHIPPING_MODE_NIGERIA_KEY,
+  SHIPPING_QUOTE_CONSENT_KEY,
+  SHIPPING_QUOTE_MANUAL_CONSENT_KEY,
+} from "@/lib/shipping/copy";
+import { ensureShippingSettingKeys } from "@/lib/shipping-settings-bootstrap";
+import { setSetting } from "@/lib/settings";
 
 const lagosSchema = z.object({
   name: z.string().min(2),
@@ -15,15 +25,28 @@ const lagosSchema = z.object({
 export async function GET() {
   const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
-  const methods = await prisma.shippingMethod.findMany({
-    include: {
-      pickupLocations: { orderBy: { sortOrder: "asc" } },
-      lagosLocations: { orderBy: { sortOrder: "asc" } },
+  await ensureShippingSettingKeys();
+  const [methods, packaging, status, copy] = await Promise.all([
+    prisma.shippingMethod.findMany({
+      include: {
+        pickupLocations: { orderBy: { sortOrder: "asc" } },
+        lagosLocations: { orderBy: { sortOrder: "asc" } },
+      },
+      orderBy: { sortOrder: "asc" },
+    }),
+    prisma.packagingProfile.findMany({ orderBy: { name: "asc" } }),
+    getShippingAdminStatus(),
+    getShippingCopy(),
+  ]);
+  return NextResponse.json({
+    methods,
+    packaging,
+    status,
+    copy: {
+      manualConsent: copy.manualConsent,
+      unavailableConsent: copy.unavailableConsent,
     },
-    orderBy: { sortOrder: "asc" },
   });
-  const packaging = await prisma.packagingProfile.findMany({ orderBy: { name: "asc" } });
-  return NextResponse.json({ methods, packaging });
 }
 
 export async function POST(req: NextRequest) {
@@ -54,4 +77,44 @@ export async function POST(req: NextRequest) {
     },
   });
   return NextResponse.json(loc);
+}
+
+const patchSchema = z.object({
+  nigeriaMode: z.enum(["MANUAL", "LIVE"]).optional(),
+  internationalMode: z.enum(["MANUAL", "LIVE"]).optional(),
+  manualConsent: z.string().min(8).optional(),
+  unavailableConsent: z.string().min(8).optional(),
+});
+
+export async function PATCH(req: NextRequest) {
+  const gate = await requireAdminApi("settings");
+  if (!gate.ok) return gate.response;
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const parsed = patchSchema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+
+  await ensureShippingSettingKeys();
+  const userId = gate.session.user!.id!;
+  if (parsed.data.nigeriaMode) {
+    await setSetting(SHIPPING_MODE_NIGERIA_KEY, parsed.data.nigeriaMode, userId);
+  }
+  if (parsed.data.internationalMode) {
+    await setSetting(SHIPPING_MODE_INTERNATIONAL_KEY, parsed.data.internationalMode, userId);
+  }
+  if (parsed.data.manualConsent) {
+    await setSetting(SHIPPING_QUOTE_MANUAL_CONSENT_KEY, parsed.data.manualConsent, userId);
+  }
+  if (parsed.data.unavailableConsent) {
+    await setSetting(SHIPPING_QUOTE_CONSENT_KEY, parsed.data.unavailableConsent, userId);
+  }
+  const [status, copy] = await Promise.all([getShippingAdminStatus(), getShippingCopy()]);
+  return NextResponse.json({
+    status,
+    copy: { manualConsent: copy.manualConsent, unavailableConsent: copy.unavailableConsent },
+  });
 }

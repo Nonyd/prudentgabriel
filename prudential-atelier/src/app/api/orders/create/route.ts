@@ -428,6 +428,7 @@ export async function POST(req: NextRequest) {
           shippingQuoteLocked: ship.quoteLocked as Prisma.InputJsonValue | undefined,
           shippingConsentAt: consentAt,
           shippingConsentText: consentText,
+          preferredContactMethod: ship.requiresConsent ? (data.preferredContactMethod ?? null) : null,
           collectionCode,
           fxRateLocked: fx.rate,
           fxGbpRateLocked: fx.gbpRate,

@@ -17,6 +17,7 @@ type ToolbarOrder = {
   totalNGN: number;
   paymentGateway?: PaymentGateway | null;
   shippingMethodKind?: string | null;
+  carrier?: string | null;
   balance?: number;
   collectionCode?: string | null;
 };
@@ -54,6 +55,10 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
   }, [order.adminNotes]);
 
   useEffect(() => {
+    setCarrier(order.carrier ?? "");
+  }, [order.carrier]);
+
+  useEffect(() => {
     if (refundOpen) {
       setRefundFull(true);
       setRefundAmount(String(Math.round(order.totalNGN)));
@@ -62,7 +67,7 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
   }, [refundOpen, order.totalNGN]);
 
   const [tracking, setTracking] = useState("");
-  const [carrier, setCarrier] = useState("");
+  const [carrier, setCarrier] = useState(order.carrier ?? "");
   const [collectionCode, setCollectionCode] = useState(order.collectionCode ?? "");
   const [busy, setBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);

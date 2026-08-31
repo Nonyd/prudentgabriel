@@ -543,6 +543,10 @@ model Order {
   shippingConsentAt   DateTime?
   /// Exact consent wording shown at checkout (not a boolean).
   shippingConsentText String?         @db.Text
+  /// How the house should reach the client to agree shipping (Slice O).
+  preferredContactMethod PreferredContactMethod?
+  /// Note from the agreed quote conversation (carrier lives on `carrier`).
+  shippingQuoteNote   String?         @db.Text
   collectionCode      String?
   collectionReadyAt   DateTime?
   collectedAt         DateTime?
@@ -1331,6 +1335,12 @@ enum ShippingQuoteStatus {
   QUOTE_PENDING
   QUOTED
   PAID
+}
+
+enum PreferredContactMethod {
+  WHATSAPP
+  CALL
+  EMAIL
 }
 
 enum ShippingMarkupKind {

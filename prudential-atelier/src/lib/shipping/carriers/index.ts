@@ -11,6 +11,10 @@ export function setShippingCarriersForTest(carriers: ShippingCarrier[] | null): 
   testCarriers = carriers;
 }
 
+export function injectedShippingCarriersForTest(): ShippingCarrier[] | null {
+  return testCarriers;
+}
+
 export function listShippingCarriers(): ShippingCarrier[] {
   if (testCarriers) return testCarriers;
   return [createGigCarrier(), createDhlCarrier()];

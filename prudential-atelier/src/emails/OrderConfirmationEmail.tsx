@@ -27,6 +27,7 @@ type OrderConfirmationEmailProps = {
   estimatedDays?: string;
   dduDisclosure?: string;
   quotePending?: boolean;
+  quotePendingText?: string;
 };
 
 export default function OrderConfirmationEmail({
@@ -42,6 +43,7 @@ export default function OrderConfirmationEmail({
   estimatedDays,
   dduDisclosure,
   quotePending,
+  quotePendingText,
 }: OrderConfirmationEmailProps) {
   const addr = addressSnapshot ?? {};
   const line = (i: OrderItemLine) => {
@@ -119,7 +121,8 @@ export default function OrderConfirmationEmail({
       ) : null}
       {quotePending ? (
         <Text style={{ marginTop: 16, fontSize: 14, color: "#664c2a" }}>
-          Shipping will be confirmed with you within one business day. You have paid for the garment only.
+          {quotePendingText ??
+            "We'll contact you once your piece is packed to confirm the courier and cost. You have paid for the garment only."}
         </Text>
       ) : null}
       {estimatedDays ? (

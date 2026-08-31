@@ -104,6 +104,7 @@ export function CheckoutClient() {
   const [quoteConsent, setQuoteConsent] = useState("");
   const [dduDisclosure, setDduDisclosure] = useState("");
   const [shippingConsent, setShippingConsent] = useState(false);
+  const [preferredContact, setPreferredContact] = useState<"WHATSAPP" | "CALL" | "EMAIL">("WHATSAPP");
   const paymentRef = useMemo(
     () => `PA-ORDER-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
     [],
@@ -162,6 +163,10 @@ export function CheckoutClient() {
       })
       .finally(() => setShipLoading(false));
   }, [step, addr.city, addr.state, addr.country, subtotalNGN, items, couponResult?.valid, couponResult?.isFreeShipping]);
+
+  useEffect(() => {
+    setPreferredContact(addr.country === "NG" || !addr.country ? "WHATSAPP" : "EMAIL");
+  }, [addr.country]);
 
   useEffect(() => {
     if (!guestEmailTouched.current) return;
@@ -451,6 +456,7 @@ export function CheckoutClient() {
         shippingOptionId: zoneId,
         shippingConsent: needsConsent ? shippingConsent : undefined,
         shippingConsentText: needsConsent ? quoteConsent : undefined,
+        preferredContactMethod: needsConsent ? preferredContact : undefined,
         notes: notes || undefined,
         isGift,
         giftMessage: isGift ? giftMessage || undefined : undefined,
@@ -1020,6 +1026,31 @@ export function CheckoutClient() {
                   />
                   <span>{quoteConsent}</span>
                 </label>
+              ) : null}
+              {needsConsent ? (
+                <fieldset className="mt-4">
+                  <legend className="mb-2 font-medium">How should we reach you about delivery?</legend>
+                  <p className="mb-2 text-xs text-charcoal-mid">
+                    We contact you once the piece is packed, to agree the courier and cost.
+                  </p>
+                  {(
+                    [
+                      ["WHATSAPP", "WhatsApp"],
+                      ["CALL", "Phone call"],
+                      ["EMAIL", "Email"],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <label key={value} className="mb-1 flex cursor-pointer items-center gap-2 text-sm">
+                      <input
+                        type="radio"
+                        name="preferred-contact"
+                        checked={preferredContact === value}
+                        onChange={() => setPreferredContact(value)}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </fieldset>
               ) : null}
               <FieldError message={errors.shipping} />
               <FieldError message={errors.consent} />

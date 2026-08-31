@@ -10,6 +10,7 @@ import {
 import { rateWithTimeout } from "@/lib/shipping/rate";
 import type { DestinationInput } from "@/lib/shipping/destination";
 import { getShippingCopy } from "@/lib/shipping/copy";
+import { getShippingBandModes } from "@/lib/shipping/mode";
 
 export type ResolvedShipping = {
   optionId: string;
@@ -49,11 +50,18 @@ export async function resolveCheckoutShipping(params: {
   let amount = selected.costNGN;
   let quoteLocked: Record<string, unknown> | null = null;
   let quoteStatus: ShippingQuoteStatus = ShippingQuoteStatus.NONE;
+  const modes = await getShippingBandModes();
 
   if (selected.kind === "QUOTE_PENDING") {
     quoteStatus = ShippingQuoteStatus.QUOTE_PENDING;
     amount = 0;
-    quoteLocked = { pending: true, carrier: parsed.carrier ?? "manual", quotedAt: new Date().toISOString() };
+    const reason = selected.quoteReason ?? "unavailable";
+    quoteLocked = {
+      pending: true,
+      carrier: parsed.carrier ?? "manual",
+      mode: reason === "manual" ? "MANUAL" : "LIVE_FALLBACK",
+      quotedAt: new Date().toISOString(),
+    };
   } else if (parsed.type === "carrier" && parsed.carrier && selected.methodId) {
     const method = await prisma.shippingMethod.findUnique({ where: { id: selected.methodId } });
     const { parcel } = await parcelForCart(params.lines);
@@ -62,7 +70,13 @@ export async function resolveCheckoutShipping(params: {
     if (!rated.ok) {
       quoteStatus = ShippingQuoteStatus.QUOTE_PENDING;
       amount = 0;
-      quoteLocked = { pending: true, carrier: parsed.carrier, reason: rated.kind, quotedAt: new Date().toISOString() };
+      quoteLocked = {
+        pending: true,
+        carrier: parsed.carrier,
+        mode: "LIVE_FALLBACK",
+        reason: rated.kind,
+        quotedAt: new Date().toISOString(),
+      };
     } else {
       amount = params.isFreeShippingCoupon ? 0 : rated.amountNGN;
       quoteLocked = {
@@ -81,7 +95,15 @@ export async function resolveCheckoutShipping(params: {
     };
   }
 
-  const { quoteConsent: cmsConsent } = await getShippingCopy();
+  const copy = await getShippingCopy();
+  const consentFromOption =
+    selected.kind === "QUOTE_PENDING" ? selected.description?.trim() : undefined;
+  const fallbackConsent =
+    selected.quoteReason === "manual" ||
+    (parsed.carrier === "gig" && modes.nigeria === "MANUAL") ||
+    (parsed.carrier === "dhl" && modes.international === "MANUAL")
+      ? copy.manualConsent
+      : copy.unavailableConsent;
 
   return {
     ok: true,
@@ -96,7 +118,7 @@ export async function resolveCheckoutShipping(params: {
       quoteLocked,
       requiresConsent: selected.requiresConsent || quoteStatus === ShippingQuoteStatus.QUOTE_PENDING,
       requiresAddress: selected.requiresAddress,
-      consentText: cmsConsent,
+      consentText: consentFromOption || fallbackConsent,
       etaText: selected.etaText,
       name: selected.name,
     },

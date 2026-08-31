@@ -12,6 +12,8 @@ import { applyShippingQuoteToLocked, lockedFxFromOrder } from "@/lib/fx";
 
 const bodySchema = z.object({
   amountNGN: z.number().min(0),
+  carrier: z.string().min(1).max(80),
+  note: z.string().max(1000).optional(),
   notify: z.boolean().optional().default(true),
 });
 
@@ -41,6 +43,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   const fx = lockedFxFromOrder(order);
   const usdLocked = applyShippingQuoteToLocked(order.fxUsdAmountLocked, delta, "USD", fx);
   const gbpLocked = applyShippingQuoteToLocked(order.fxGbpAmountLocked, delta, "GBP", fx);
+  const prevLocked = (order.shippingQuoteLocked as Record<string, unknown> | null) ?? {};
+  const agreedCarrier = parsed.data.carrier.trim();
 
   const updated = await prisma.order.update({
     where: { id },
@@ -48,8 +52,14 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       shippingAmount: nextShipping,
       total: nextTotal,
       shippingQuoteStatus: ShippingQuoteStatus.QUOTED,
+      carrier: agreedCarrier,
+      shippingQuoteNote: parsed.data.note?.trim() || null,
       shippingQuoteLocked: {
+        ...prevLocked,
+        pending: false,
         amountNGN: nextShipping,
+        carrier: agreedCarrier,
+        note: parsed.data.note?.trim() || null,
         quotedAt: new Date().toISOString(),
         quotedBy: gate.session.user?.id ?? null,
         purpose: PaymentPurpose.BALANCE,

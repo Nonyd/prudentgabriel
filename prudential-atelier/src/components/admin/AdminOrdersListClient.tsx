@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 import type { OrderStatus, PaymentGateway, PaymentStatus } from "@prisma/client";
 import toast from "react-hot-toast";
 import { AlertDialog } from "@/components/ui/AlertDialog";
+import { orderWhatsAppUrl } from "@/lib/shipping/whatsapp";
 
 export type AdminOrderListRow = {
   id: string;
   orderNumber: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string | null;
   itemCount: number;
   firstItemName: string;
   total: number;
@@ -203,7 +205,9 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
             </tr>
           </thead>
           <tbody>
-            {orders.map((o) => (
+            {orders.map((o) => {
+              const wa = orderWhatsAppUrl(o.customerPhone, o.orderNumber);
+              return (
               <tr
                 key={o.id}
                 className={
@@ -241,6 +245,16 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                     <Link href={`/admin/orders/${o.id}`} className="font-body text-[11px] text-olive hover:underline">
                       View
                     </Link>
+                    {wa ? (
+                      <a
+                        href={wa}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-body text-[11px] text-olive hover:underline"
+                      >
+                        WhatsApp
+                      </a>
+                    ) : null}
                     <button
                       type="button"
                       className="font-body text-[11px] text-red-600 hover:underline"
@@ -251,7 +265,8 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

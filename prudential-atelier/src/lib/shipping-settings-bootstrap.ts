@@ -2,9 +2,13 @@ import { SettingGroup, SettingType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   DEFAULT_DDU_DISCLOSURE,
-  DEFAULT_QUOTE_CONSENT,
+  DEFAULT_MANUAL_QUOTE_CONSENT,
+  DEFAULT_UNAVAILABLE_QUOTE_CONSENT,
   SHIPPING_DDU_KEY,
+  SHIPPING_MODE_INTERNATIONAL_KEY,
+  SHIPPING_MODE_NIGERIA_KEY,
   SHIPPING_QUOTE_CONSENT_KEY,
+  SHIPPING_QUOTE_MANUAL_CONSENT_KEY,
   SHIPPING_UNCOLLECTED_DAYS_KEY,
 } from "@/lib/shipping/copy";
 
@@ -17,12 +21,36 @@ const SHIPPING_SETTING_DEFS: {
   sortOrder: number;
 }[] = [
   {
-    key: SHIPPING_QUOTE_CONSENT_KEY,
-    value: DEFAULT_QUOTE_CONSENT,
-    label: "Manual quote — consent wording",
+    key: SHIPPING_MODE_NIGERIA_KEY,
+    value: "MANUAL",
+    label: "Nigeria (GIG) — MANUAL until the wallet exists, then LIVE",
+    type: SettingType.SELECT,
+    isPublic: false,
+    sortOrder: 0,
+  },
+  {
+    key: SHIPPING_MODE_INTERNATIONAL_KEY,
+    value: "MANUAL",
+    label: "International (DHL) — MANUAL until the account exists, then LIVE",
+    type: SettingType.SELECT,
+    isPublic: false,
+    sortOrder: 1,
+  },
+  {
+    key: SHIPPING_QUOTE_MANUAL_CONSENT_KEY,
+    value: DEFAULT_MANUAL_QUOTE_CONSENT,
+    label: "Manual mode — consent wording",
     type: SettingType.TEXTAREA,
     isPublic: true,
-    sortOrder: 0,
+    sortOrder: 2,
+  },
+  {
+    key: SHIPPING_QUOTE_CONSENT_KEY,
+    value: DEFAULT_UNAVAILABLE_QUOTE_CONSENT,
+    label: "LIVE mode — when rates are unavailable",
+    type: SettingType.TEXTAREA,
+    isPublic: true,
+    sortOrder: 3,
   },
   {
     key: SHIPPING_DDU_KEY,
@@ -30,7 +58,7 @@ const SHIPPING_SETTING_DEFS: {
     label: "International duties (DDU) disclosure",
     type: SettingType.TEXTAREA,
     isPublic: true,
-    sortOrder: 1,
+    sortOrder: 4,
   },
   {
     key: SHIPPING_UNCOLLECTED_DAYS_KEY,
@@ -38,7 +66,7 @@ const SHIPPING_SETTING_DEFS: {
     label: "Uncollected pickup reminder (days)",
     type: SettingType.NUMBER,
     isPublic: false,
-    sortOrder: 2,
+    sortOrder: 5,
   },
   { key: "gig_api_key", value: "", label: "GIG API key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 10 },
   { key: "gig_wallet_id", value: "", label: "GIG wallet ID", type: SettingType.TEXT, isPublic: false, sortOrder: 11 },
@@ -63,4 +91,9 @@ export async function ensureShippingSettingKeys(): Promise<void> {
       update: {},
     });
   }
+  // Relabel the Slice K key so admin copy matches the new split.
+  await prisma.siteSetting.updateMany({
+    where: { key: SHIPPING_QUOTE_CONSENT_KEY, label: "Manual quote — consent wording" },
+    data: { label: "LIVE mode — when rates are unavailable", sortOrder: 3 },
+  });
 }

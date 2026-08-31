@@ -3,7 +3,7 @@ import { OrderStatus, PaymentStatus, Prisma, ShippingQuoteStatus } from "@prisma
 import { prisma } from "@/lib/prisma";
 import { AdminOrdersCsvExport } from "@/components/admin/AdminOrdersCsvExport";
 import { AdminOrdersListClient, type AdminOrderListRow } from "@/components/admin/AdminOrdersListClient";
-import { REFUND_REQUIRED_ATTENTION, QUOTE_PENDING_ATTENTION, applyOrderAttention } from "@/lib/admin-orders-filter";
+import { REFUND_REQUIRED_ATTENTION, QUOTE_PENDING_ATTENTION, QUOTE_PENDING_ALL_ATTENTION, applyOrderAttention } from "@/lib/admin-orders-filter";
 
 const PAGE = 20;
 
@@ -33,7 +33,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   }
   where = applyOrderAttention(where, attention);
 
-  const [total, orders, refundRequiredCount, quotePendingCount] = await Promise.all([
+  const [total, orders, refundRequiredCount, quoteReadyCount, quotePendingAllCount] = await Promise.all([
     prisma.order.count({ where }),
     prisma.order.findMany({
       where,
@@ -41,13 +41,16 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
       skip: (page - 1) * PAGE,
       take: PAGE,
       include: {
-        user: { select: { name: true, email: true } },
+        user: { select: { name: true, email: true, phone: true } },
         _count: { select: { items: true } },
         items: { take: 1, include: { product: { select: { name: true } } } },
       },
     }),
     prisma.order.count({
       where: { status: OrderStatus.CANCELLED, paymentStatus: PaymentStatus.PAID },
+    }),
+    prisma.order.count({
+      where: { shippingQuoteStatus: ShippingQuoteStatus.QUOTE_PENDING, status: OrderStatus.PROCESSING },
     }),
     prisma.order.count({
       where: { shippingQuoteStatus: ShippingQuoteStatus.QUOTE_PENDING },
@@ -74,11 +77,14 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
     const email = o.user?.email ?? o.guestEmail ?? "";
     const name = o.user?.name ?? o.guestName ?? "Guest";
     const first = o.items[0]?.product.name ?? "—";
+    const snap = o.addressSnapshot as { phone?: string } | null;
+    const phone = o.user?.phone || o.guestPhone || snap?.phone || null;
     return {
       id: o.id,
       orderNumber: o.orderNumber,
       customerName: name,
       customerEmail: email,
+      customerPhone: phone,
       itemCount: o._count.items,
       firstItemName: first,
       total: o.total,
@@ -100,7 +106,15 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
               attention === QUOTE_PENDING_ATTENTION ? "text-choc underline" : "text-olive hover:underline"
             }`}
           >
-            Awaiting shipping quote{quotePendingCount > 0 ? ` (${quotePendingCount})` : ""}
+            Ready to quote{quoteReadyCount > 0 ? ` (${quoteReadyCount})` : ""}
+          </Link>
+          <Link
+            href={`/admin/orders?attention=${QUOTE_PENDING_ALL_ATTENTION}`}
+            className={`font-body text-[11px] uppercase tracking-wide ${
+              attention === QUOTE_PENDING_ALL_ATTENTION ? "text-choc underline" : "text-olive hover:underline"
+            }`}
+          >
+            All awaiting quote{quotePendingAllCount > 0 ? ` (${quotePendingAllCount})` : ""}
           </Link>
           <Link
             href={`/admin/orders?attention=${REFUND_REQUIRED_ATTENTION}`}
@@ -147,6 +161,11 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
         {attention === REFUND_REQUIRED_ATTENTION ? (
           <Link href="/admin/orders" className="px-3 py-2 font-body text-xs uppercase tracking-wide text-olive hover:underline">
             Clear refund filter
+          </Link>
+        ) : null}
+        {attention === QUOTE_PENDING_ATTENTION || attention === QUOTE_PENDING_ALL_ATTENTION ? (
+          <Link href="/admin/orders" className="px-3 py-2 font-body text-xs uppercase tracking-wide text-olive hover:underline">
+            Clear quote filter
           </Link>
         ) : null}
       </form>

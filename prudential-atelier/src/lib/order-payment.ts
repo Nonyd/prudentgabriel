@@ -301,6 +301,7 @@ export async function fulfillPaidOrder(params: {
           addressSnapshot: snap ?? undefined,
           dduDisclosure: international ? copy.dduDisclosure : undefined,
           quotePending: order.shippingQuoteStatus === "QUOTE_PENDING",
+          quotePendingText: order.shippingConsentText ?? undefined,
         }),
       )
       .catch((e) => console.warn("[fulfillPaidOrder] email", e));

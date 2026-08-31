@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { resolveDestinationBand, type DestinationInput } from "@/lib/shipping/destination";
 import { rateWithTimeout } from "@/lib/shipping/rate";
 import { billableKgForCarrier, combineParcels, mergeParcel, type ParcelDims } from "@/lib/shipping/weight";
-import { getShippingCopy } from "@/lib/shipping/copy";
+import { consentForQuote, getShippingCopy, type QuoteConsentReason } from "@/lib/shipping/copy";
+import { getShippingBandModes } from "@/lib/shipping/mode";
 import type { RateRequest } from "@/lib/shipping/carriers/types";
 
 export type CheckoutShippingOption = {
@@ -19,6 +20,7 @@ export type CheckoutShippingOption = {
   pickupLocationId?: string;
   lagosLocationId?: string;
   methodId?: string;
+  quoteReason?: QuoteConsentReason;
 };
 
 export type CartParcelLine = {
@@ -72,7 +74,7 @@ export async function listCheckoutShippingOptions(params: {
   isFreeShippingCoupon: boolean;
 }): Promise<{ band: ReturnType<typeof resolveDestinationBand>; options: CheckoutShippingOption[]; quoteConsent: string }> {
   const band = resolveDestinationBand(params.destination);
-  const { quoteConsent } = await getShippingCopy();
+  const [copy, modes] = await Promise.all([getShippingCopy(), getShippingBandModes()]);
   const methods = await prisma.shippingMethod.findMany({
     where: { isActive: true },
     include: {
@@ -126,12 +128,16 @@ export async function listCheckoutShippingOptions(params: {
         });
       }
     }
-    return { band, options, quoteConsent };
+    return { band, options, quoteConsent: copy.unavailableConsent };
   }
 
-  const { parcel } = await parcelForCart(params.lines);
-
   if (band === "NIGERIA" && gig) {
+    if (modes.nigeria === "MANUAL") {
+      const opt = quotePendingOption(gig.id, gig.name, copy, "CARRIER_GIG", "manual");
+      options.push(opt);
+      return { band, options, quoteConsent: opt.description ?? copy.manualConsent };
+    }
+    const { parcel } = await parcelForCart(params.lines);
     const rated = await rateWithTimeout("gig", carrierRateRequest(parcel, params.destination, params.subtotalNGN, "gig"), gig);
     if (rated.ok) {
       options.push({
@@ -146,13 +152,20 @@ export async function listCheckoutShippingOptions(params: {
         requiresAddress: true,
         methodId: gig.id,
       });
-    } else {
-      options.push(quotePendingOption(gig.id, gig.name, quoteConsent, "CARRIER_GIG"));
+      return { band, options, quoteConsent: copy.unavailableConsent };
     }
-    return { band, options, quoteConsent };
+    const opt = quotePendingOption(gig.id, gig.name, copy, "CARRIER_GIG", "unavailable");
+    options.push(opt);
+    return { band, options, quoteConsent: opt.description ?? copy.unavailableConsent };
   }
 
   if (band === "INTERNATIONAL" && dhl) {
+    if (modes.international === "MANUAL") {
+      const opt = quotePendingOption(dhl.id, dhl.name, copy, "CARRIER_DHL", "manual");
+      options.push(opt);
+      return { band, options, quoteConsent: opt.description ?? copy.manualConsent };
+    }
+    const { parcel } = await parcelForCart(params.lines);
     const rated = await rateWithTimeout("dhl", carrierRateRequest(parcel, params.destination, params.subtotalNGN, "dhl"), dhl);
     if (rated.ok) {
       options.push({
@@ -167,43 +180,52 @@ export async function listCheckoutShippingOptions(params: {
         requiresAddress: true,
         methodId: dhl.id,
       });
-    } else {
-      options.push(quotePendingOption(dhl.id, dhl.name, quoteConsent, "CARRIER_DHL"));
+      return { band, options, quoteConsent: copy.unavailableConsent };
     }
-    return { band, options, quoteConsent };
+    const opt = quotePendingOption(dhl.id, dhl.name, copy, "CARRIER_DHL", "unavailable");
+    options.push(opt);
+    return { band, options, quoteConsent: opt.description ?? copy.unavailableConsent };
   }
 
+  const fallbackReason: QuoteConsentReason =
+    band === "NIGERIA" ? (modes.nigeria === "MANUAL" ? "manual" : "unavailable") : (modes.international === "MANUAL" ? "manual" : "unavailable");
+  const consent = consentForQuote(fallbackReason, copy);
   options.push({
     optionId: "quote:manual",
     kind: "QUOTE_PENDING",
-    name: "We'll confirm shipping",
-    description: quoteConsent,
+    name: fallbackReason === "manual" ? "We'll arrange delivery" : "We'll confirm shipping",
+    description: consent,
     costNGN: 0,
     isFree: false,
-    etaText: "Quoted within one business day",
+    etaText: fallbackReason === "manual" ? "We'll contact you once your piece is packed" : "Quoted within one business day",
     requiresConsent: true,
     requiresAddress: true,
+    quoteReason: fallbackReason,
   });
-  return { band, options, quoteConsent };
+  return { band, options, quoteConsent: consent };
 }
 
 function quotePendingOption(
   methodId: string,
   name: string,
-  consent: string,
+  copy: { manualConsent: string; unavailableConsent: string },
   kind: "CARRIER_GIG" | "CARRIER_DHL",
+  reason: QuoteConsentReason,
 ): CheckoutShippingOption {
+  const consent = consentForQuote(reason, copy);
+  const manual = reason === "manual";
   return {
     optionId: `quote:${kind === "CARRIER_DHL" ? "dhl" : "gig"}:${methodId}`,
     kind: "QUOTE_PENDING",
-    name: `${name} — we'll confirm the rate`,
+    name: manual ? "We'll arrange delivery" : `${name} — we'll confirm the rate`,
     description: consent,
     costNGN: 0,
     isFree: false,
-    etaText: "Quoted within one business day",
+    etaText: manual ? "We'll contact you once your piece is packed" : "Quoted within one business day",
     requiresConsent: true,
     requiresAddress: true,
     methodId,
+    quoteReason: reason,
   };
 }
 

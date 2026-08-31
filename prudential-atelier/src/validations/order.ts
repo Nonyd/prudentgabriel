@@ -42,6 +42,7 @@ export const checkoutSchema = z.object({
   guestPhone: z.string().optional(),
   shippingConsent: z.boolean().optional(),
   shippingConsentText: z.string().optional(),
+  preferredContactMethod: z.enum(["WHATSAPP", "CALL", "EMAIL"]).optional(),
   paymentRef: z.string().regex(/^PA-ORDER-[A-Z0-9-]+$/i).optional(),
 });
 
