@@ -77,7 +77,7 @@ export function parseHeroCarouselEditorItems(raw: string | null | undefined): He
   }
 }
 
+/** Runtime: only CMS-configured media. Never Unsplash placeholders. */
 export function resolveHeroCarouselItems(raw: string | null | undefined): HeroCarouselItem[] {
-  const parsed = parseHeroCarouselItems(raw);
-  return parsed.length > 0 ? parsed : FALLBACK_CAROUSEL_ITEMS;
+  return parseHeroCarouselItems(raw);
 }

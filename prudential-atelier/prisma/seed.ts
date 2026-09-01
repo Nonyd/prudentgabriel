@@ -784,8 +784,15 @@ async function main() {
   }
   console.log("  email template keys upserted (full bodies: pnpm seed:email-templates)");
 
-  await upsertGalleryPlaceholders();
-  await upsertCollections();
+  const dbUrl = process.env.DATABASE_URL ?? process.env.DIRECT_URL ?? "";
+  const skipUnsplashPlaceholders =
+    /prudentgabriel-postgres|prudentgabriel-staging-postgres|ep-sparkling-field/.test(dbUrl);
+  if (skipUnsplashPlaceholders) {
+    console.log("  skipping Unsplash gallery placeholders and demo collections on staging/production");
+  } else {
+    await upsertGalleryPlaceholders();
+    await upsertCollections();
+  }
 
   const [settings, consultants, products, orders, invoices, bookings] = await Promise.all([
     prisma.siteSetting.count(),

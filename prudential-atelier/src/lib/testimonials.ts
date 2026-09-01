@@ -112,7 +112,7 @@ export const FALLBACK_TESTIMONIALS: HomepageTestimonial[] = [
 
 /** Approved testimonials for the homepage — homepage-flagged first, then recent approved. */
 export async function getHomepageTestimonials(limit = 6): Promise<HomepageTestimonial[]> {
-  if (process.env.SKIP_DB_BUILD === "1") return FALLBACK_TESTIMONIALS.slice(0, limit);
+  if (process.env.SKIP_DB_BUILD === "1") return [];
 
   try {
   const flagged = await prisma.testimonial.findMany({
@@ -138,12 +138,9 @@ export async function getHomepageTestimonials(limit = 6): Promise<HomepageTestim
     rows = [...rows, ...filler];
   }
 
-  const mapped = rows.map(mapTestimonial);
-  if (mapped.length > 0) return mapped;
-
-  return FALLBACK_TESTIMONIALS.slice(0, limit);
+  return rows.map(mapTestimonial);
   } catch {
-    return FALLBACK_TESTIMONIALS.slice(0, limit);
+    return [];
   }
 }
 

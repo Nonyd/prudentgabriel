@@ -42,6 +42,8 @@ export async function BestSellers() {
     products = [];
   }
 
+  if (products.length === 0) return null;
+
   return (
     <section className="bg-bg-page py-20">
       <div className="mx-auto mb-12 max-w-site px-6 lg:px-10">
@@ -86,24 +88,11 @@ export async function BestSellers() {
         </div>
       </div>
 
-      {products.length === 0 ? (
-        <p
-          className="mx-auto max-w-site px-6 font-light lg:px-10"
-          style={{
-            fontFamily: "var(--font-body)",
-            fontSize: "14px",
-            color: "var(--text-mid)",
-          }}
-        >
-          New arrivals coming soon — explore our collections above.
-        </p>
-      ) : (
-        <ProductCardGrid
-          products={products}
-          merchBadge="Best seller"
-          className="grid-cols-2 md:grid-cols-4"
-        />
-      )}
+      <ProductCardGrid
+        products={products}
+        merchBadge="Best seller"
+        className="grid-cols-2 md:grid-cols-4"
+      />
     </section>
   );
 }

@@ -1,0 +1,44 @@
+# Copy logos, CMS, and catalogue from staging Postgres onto production.
+# Manual only. Does not copy payment secrets, orders, or customers.
+
+name: sync-storefront-staging-to-production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type COPY_STOREFRONT to copy staging logos/catalogue onto production
+        required: true
+        type: string
+
+concurrency:
+  group: sync-storefront-production
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.event.inputs.confirm == 'COPY_STOREFRONT'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Sync storefront from staging Postgres
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOY_SHA: ${{ github.sha }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 20m
+          envs: GITHUB_TOKEN,DEPLOY_SHA
+          script: |
+            set -euo pipefail
+            cd /opt/prudentgabriel/deploy
+            curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.raw" \
+              "https://api.github.com/repos/Nonyd/prudentgabriel/contents/deploy/sync-storefront-from-staging.sh?ref=${DEPLOY_SHA}" \
+              -o /opt/prudentgabriel/deploy/sync-storefront-from-staging.sh
+            chmod 0755 /opt/prudentgabriel/deploy/sync-storefront-from-staging.sh
+            bash /opt/prudentgabriel/deploy/sync-storefront-from-staging.sh
+            docker compose --env-file .env.production -f compose.production.yaml exec -T app \
+              node -e "console.log('app up')" || true

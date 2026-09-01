@@ -1,4 +1,3 @@
-import { FALLBACK_CAROUSEL_ITEMS } from "@/lib/hero-carousel";
 import {
   DEFAULT_ABOUT_VALUES,
   DEFAULT_BRIDAL_INTRO,
@@ -115,7 +114,7 @@ export const CMS_PAGES: CmsPageDef[] = [
             key: "home_hero_carousel",
             label: "Hero media carousel",
             type: "carousel",
-            default: JSON.stringify(FALLBACK_CAROUSEL_ITEMS),
+            default: "[]",
           },
           { key: "home_hero_stat_number", label: "Hero stat number", type: "text", default: "15+" },
           { key: "home_hero_stat_label", label: "Hero stat label", type: "text", default: "YEARS OF COUTURE" },
