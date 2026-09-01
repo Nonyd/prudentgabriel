@@ -2,8 +2,8 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
-import { FacebookIcon, InstagramIcon } from "@/components/icons/SocialIcons";
+import { FacebookIcon, InstagramIcon, TikTokIcon, WhatsAppIcon } from "@/components/icons/SocialIcons";
+import { PaymentMarks } from "@/components/icons/PaymentMarks";
 import { FooterNewsletter } from "./FooterNewsletter";
 import { Logo } from "@/components/ui/Logo";
 import { usePublicSettings, getSettingFromPublic } from "@/hooks/usePublicSettings";
@@ -90,8 +90,7 @@ function SocialIconLink({
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:border-[rgba(226,209,194,0.5)]"
-      style={{ border: "0.5px solid rgba(152, 117, 91, 0.3)" }}
+      className="flex h-11 w-11 items-center justify-center text-sand transition-colors duration-200 hover:text-cream"
     >
       {children}
     </a>
@@ -167,7 +166,7 @@ export function Footer({
   const newsletterHeadline = cmsGet(
     cms,
     "footer_newsletter_headline",
-    "Collections, ateliers and invitations — first.",
+    "New collections and atelier notes, first.",
   );
   const newsletterPlaceholder = cmsGet(cms, "footer_newsletter_placeholder", "Your email");
 
@@ -194,28 +193,18 @@ export function Footer({
             {HOUSE_TAGLINE}
           </p>
 
-          <div className="mb-6 flex items-center gap-3">
+          <div className="-ml-2 mb-6 flex items-center">
             <SocialIconLink href={instagramUrl} label="Instagram">
-              <InstagramIcon size={14} className="text-sand" />
+              <InstagramIcon size={16} />
             </SocialIconLink>
             <SocialIconLink href={tiktokUrl} label="TikTok">
-              <span
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: "var(--sand)",
-                  lineHeight: 1,
-                }}
-              >
-                T
-              </span>
+              <TikTokIcon size={16} />
             </SocialIconLink>
             <SocialIconLink href={facebookUrl} label="Facebook">
-              <FacebookIcon size={14} className="text-sand" />
+              <FacebookIcon size={16} />
             </SocialIconLink>
             <SocialIconLink href={whatsappUrl || "/contact"} label="WhatsApp">
-              <MessageCircle size={14} strokeWidth={1.5} className="text-sand" />
+              <WhatsAppIcon size={16} />
             </SocialIconLink>
           </div>
 
@@ -234,7 +223,7 @@ export function Footer({
 
       <div style={{ backgroundColor: "rgba(0, 0, 0, 0.2)", padding: "20px 0" }}>
         <div className="mx-auto flex max-w-site flex-col gap-4 px-6 lg:px-10">
-          <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row sm:gap-6">
             <p
               style={{
                 fontFamily: "var(--font-ui)",
@@ -244,18 +233,19 @@ export function Footer({
             >
               {copyright}
             </p>
+            <PaymentMarks className="flex items-center gap-1.5 text-sand" />
             <a
               href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="transition-colors hover:opacity-80"
+              className="transition-colors hover:text-cream"
               style={{
                 fontFamily: "var(--font-ui)",
                 fontSize: "11px",
                 color: "var(--lightbr)",
               }}
             >
-              {instagramHandle} ↗
+              {instagramHandle}
             </a>
           </div>
 

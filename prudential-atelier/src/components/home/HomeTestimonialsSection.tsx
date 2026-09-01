@@ -14,7 +14,7 @@ export async function HomeTestimonialsSection() {
   const enabled = cmsBool(cms, "home_testimonials_enabled", true);
   if (!enabled || items.length === 0) return null;
 
-  const heading = cmsGet(cms, "home_testimonials_heading", "What our clients say");
+  const heading = cmsGet(cms, "home_testimonials_heading", "From the atelier");
   const subtitle = cmsGet(cms, "home_testimonials_subtitle", "").trim();
 
   return <HomeTestimonialsCarousel items={items} heading={heading} subtitle={subtitle || undefined} />;

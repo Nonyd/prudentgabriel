@@ -75,7 +75,7 @@ export default async function MaintenancePage() {
           className="font-sans text-[11px] uppercase tracking-[0.12em]"
           style={{ color: "#a08060", fontFamily: "var(--font-jost), Jost, sans-serif" }}
         >
-          Follow us for updates:
+          Instagram
         </p>
         <a
           href="https://instagram.com/prudentgabriel"
@@ -101,7 +101,7 @@ export default async function MaintenancePage() {
           className="font-sans text-sm font-medium transition-colors hover:opacity-90"
           style={{ color: "#98755b" }}
         >
-          Log in →
+          Staff and client login
         </Link>
       </div>
     </div>

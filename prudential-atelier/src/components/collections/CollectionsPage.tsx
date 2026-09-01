@@ -26,7 +26,7 @@ function CollectionCard({ item, index }: { item: CollectionListItem; index: numb
     <Link
       href={`/collections/${item.slug}`}
       className="group relative block cursor-pointer overflow-hidden bg-[#F8F8F6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-olive"
-      aria-label={`Explore ${item.name} collection — ${item.productCount} ${item.productCount === 1 ? "piece" : "pieces"}`}
+      aria-label={`${item.name}, ${item.productCount} ${item.productCount === 1 ? "piece" : "pieces"}`}
     >
       <div className="relative aspect-[3/4] w-full overflow-hidden">
         <Image
@@ -55,7 +55,7 @@ function CollectionCard({ item, index }: { item: CollectionListItem; index: numb
               {item.productCount} {item.productCount === 1 ? "piece" : "pieces"}
             </p>
             <span className="translate-x-1 font-body text-[10px] font-medium uppercase tracking-[0.12em] text-white opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 motion-reduce:translate-x-0 motion-reduce:opacity-100 motion-reduce:transition-none">
-              Explore →
+              View
             </span>
           </div>
         </div>
@@ -149,7 +149,7 @@ export function CollectionsPage({ collections }: { collections: CollectionListIt
                 Browse every piece
               </h2>
               <p className="mt-2 max-w-md font-body text-[14px] font-light text-dark-grey">
-                Prefer to shop without a theme? Explore the complete ready-to-wear catalogue.
+                Shop the full ready-to-wear catalogue.
               </p>
             </div>
             <Link

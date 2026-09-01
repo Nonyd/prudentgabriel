@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { hardNavigate, isSignInFailure, waitForClientSession } from "@/lib/client-auth";
@@ -10,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/validations/auth";
 import { Button } from "@/components/ui/Button";
 import { useGoogleAuthEnabled } from "@/hooks/useGoogleAuthEnabled";
+import { AuthBrandPanel } from "@/components/auth/AuthBrandPanel";
 
 export function LoginContent() {
   const searchParams = useSearchParams();
@@ -43,24 +43,7 @@ export function LoginContent() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="relative hidden lg:block">
-        <Image
-          src="https://images.unsplash.com/photo-1496747611176-843222e1ad94?w=1200&q=80"
-          alt="Prudential Atelier"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-choc/50" />
-        <div className="absolute bottom-12 left-12 max-w-sm text-cream">
-          <p className="font-serif text-3xl font-medium leading-tight">
-            Where culture meets couture.
-          </p>
-          <p className="mt-4 font-sans text-xs font-light text-cream/80">
-            Prudential Atelier · Lagos, Nigeria
-          </p>
-        </div>
-      </div>
+      <AuthBrandPanel title="Couture from Lagos, for the world." />
 
       <div className="flex flex-col justify-center bg-ivory px-6 py-12 sm:px-12 lg:px-16">
         <div className="mx-auto w-full max-w-sm">

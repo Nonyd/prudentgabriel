@@ -30,7 +30,7 @@ export default function CartPage() {
         <div className="mt-16 text-center">
           <p className="font-display text-lg italic text-charcoal">Your bag is empty</p>
           <Button type="button" className="mt-8" onClick={() => router.push("/shop")}>
-            Explore collection
+            Shop ready-to-wear
           </Button>
         </div>
       ) : (

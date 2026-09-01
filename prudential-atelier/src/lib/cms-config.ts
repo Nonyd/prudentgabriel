@@ -189,7 +189,7 @@ export const CMS_PAGES: CmsPageDef[] = [
             key: "home_testimonials_heading",
             label: "Section heading",
             type: "text",
-            default: "What our clients say",
+            default: "From the atelier",
           },
           {
             key: "home_testimonials_subtitle",
@@ -789,7 +789,7 @@ export const CMS_PAGES: CmsPageDef[] = [
             key: "footer_newsletter_headline",
             label: "Newsletter headline",
             type: "text",
-            default: "Collections, ateliers and invitations — first.",
+            default: "New collections and atelier notes, first.",
           },
           { key: "footer_newsletter_placeholder", label: "Newsletter placeholder", type: "text", default: "Your email" },
           {

@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     url: siteUrl,
     siteName: "Prudential Atelier",
     title: "Prudential Atelier",
-    description: "Where culture meets couture. Every stitch is a story.",
+    description: "Bespoke couture and ready-to-wear by Mrs. Prudent Gabriel-Okopi. Luxury Nigerian fashion — bridal, evening, and everyday elegance.",
   },
 };
 

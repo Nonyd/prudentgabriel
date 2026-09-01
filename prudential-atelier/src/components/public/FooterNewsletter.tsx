@@ -18,7 +18,7 @@ const labelStyle = {
 } as const;
 
 export function FooterNewsletter({
-  headline = "Collections, ateliers and invitations — first.",
+  headline = "New collections and atelier notes, first.",
   placeholder = "Your email",
 }: {
   headline?: string;

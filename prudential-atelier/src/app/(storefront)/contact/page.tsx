@@ -123,7 +123,7 @@ export default async function ContactPage({
             color: "var(--text-mid)",
           }}
         >
-          We&apos;d love to hear from you.
+          Lagos atelier and Abuja studio. Form, WhatsApp, or phone.
         </p>
       </header>
 
@@ -141,16 +141,16 @@ export default async function ContactPage({
                 color: "var(--choc)",
               }}
             >
-              FIND US
+              Atelier
             </h2>
             <div className="mt-2 h-px w-full bg-sand" />
             <div className="mt-6 space-y-6">
-              <DetailBlock label="📍 Lagos Atelier">
+              <DetailBlock label="Lagos">
                 {lagos1}
                 <br />
                 {lagos2}
               </DetailBlock>
-              <DetailBlock label="📍 Abuja Studio">
+              <DetailBlock label="Abuja">
                 {abuja1}
                 <br />
                 {abuja2}
@@ -170,11 +170,11 @@ export default async function ContactPage({
                 color: "var(--choc)",
               }}
             >
-              GET IN TOUCH
+              Direct
             </h2>
             <div className="mt-2 h-px w-full bg-sand" />
             <div className="mt-6 space-y-6">
-              <DetailBlock label="📱 WhatsApp">
+              <DetailBlock label="WhatsApp">
                 {whatsapp}
                 <br />
                 <a
@@ -184,16 +184,16 @@ export default async function ContactPage({
                   className="mt-1 inline-block hover:underline"
                   style={{ color: "var(--nut)" }}
                 >
-                  Chat on WhatsApp →
+                  Open WhatsApp
                 </a>
               </DetailBlock>
-              <DetailBlock label="📞 Phone">{phone}</DetailBlock>
-              <DetailBlock label="✉ Email">
+              <DetailBlock label="Phone">{phone}</DetailBlock>
+              <DetailBlock label="Email">
                 <a href={`mailto:${email}`} className="hover:underline">
                   {email}
                 </a>
               </DetailBlock>
-              <DetailBlock label="⏰ Hours">
+              <DetailBlock label="Hours">
                 {hoursWeekday}
                 <br />
                 {hoursSaturday}
@@ -215,7 +215,7 @@ export default async function ContactPage({
                 color: "var(--choc)",
               }}
             >
-              FOLLOW US
+              Social
             </h2>
             <div className="mt-2 h-px w-full bg-sand" />
             <ul className="mt-6 space-y-3">

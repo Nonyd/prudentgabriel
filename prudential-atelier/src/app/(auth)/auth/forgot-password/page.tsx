@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { forgotPasswordSchema, type ForgotPasswordInput } from "@/validations/auth";
 import { Button } from "@/components/ui/Button";
+import { AuthBrandPanel } from "@/components/auth/AuthBrandPanel";
 
 function signInHref(from: string | null): string {
   if (from === "staff") return "/login?tab=staff";
@@ -34,22 +34,7 @@ function ForgotPasswordForm() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="relative hidden lg:block">
-        <Image
-          src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1200&q=80"
-          alt="Prudential Atelier"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-choc/50" />
-        <div className="absolute bottom-12 left-12 max-w-sm text-cream">
-          <p className="font-serif text-3xl font-medium leading-tight">Reset your access</p>
-          <p className="mt-4 font-sans text-xs font-light text-cream/80">
-            We will email you a secure link to choose a new password.
-          </p>
-        </div>
-      </div>
+      <AuthBrandPanel title="We'll send a reset link to your email." />
 
       <div className="flex flex-col justify-center bg-ivory px-6 py-12 sm:px-12 lg:px-16">
         <div className="mx-auto w-full max-w-sm">

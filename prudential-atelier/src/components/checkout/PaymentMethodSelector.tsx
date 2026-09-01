@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import clsx from "clsx";
-import { Building2, CreditCard, Globe, Landmark, Upload } from "lucide-react";
+import { Building2, Landmark, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import type { PaymentCurrency, PaymentGatewayType } from "@/lib/payments/index";
 import { formatPrice } from "@/lib/currency";
 import type { BusinessLineCode, PublicBankAccount } from "@/lib/payments/bank-account";
 import { BankTransferDetails } from "@/components/payment/BankTransferDetails";
+import { GatewayPaymentMarks } from "@/components/icons/PaymentMarks";
 type Props = {
   currency: PaymentCurrency;
   businessLine: BusinessLineCode;
@@ -24,29 +25,25 @@ type Props = {
 
 const GATEWAY_META: Record<
   Exclude<PaymentGatewayType, "BANK_TRANSFER">,
-  { title: string; subtitle: string; icon: typeof CreditCard; badge?: string }
+  { title: string; subtitle: string; badge?: string }
 > = {
   PAYSTACK: {
-    title: "Card Payment",
+    title: "Card",
     subtitle: "Visa, Mastercard, Verve",
-    icon: CreditCard,
     badge: "NGN",
   },
   FLUTTERWAVE: {
-    title: "Pay with Flutterwave",
-    subtitle: "Cards, Mobile Money, Bank",
-    icon: Globe,
+    title: "Card, bank, or mobile money",
+    subtitle: "Visa, Mastercard, Verve, PayPal",
   },
   STRIPE: {
-    title: "International Card",
-    subtitle: "Visa, Mastercard",
-    icon: CreditCard,
+    title: "International card",
+    subtitle: "Visa, Mastercard, PayPal",
     badge: "USD/£",
   },
   MONNIFY: {
-    title: "Bank Transfer / USSD",
-    subtitle: "Direct bank payment",
-    icon: Landmark,
+    title: "Bank transfer / USSD",
+    subtitle: "Pay from your Nigerian bank",
     badge: "NGN",
   },
 };
@@ -130,7 +127,7 @@ export function PaymentMethodSelector({
 
   return (
     <div>
-      <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">How would you like to pay?</p>
+      <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Payment</p>
       <div className="mt-4 space-y-2">
         {loaded && gateways.length === 0 ? (
           <p className="font-body text-sm text-text-mid">
@@ -213,7 +210,6 @@ export function PaymentMethodSelector({
           }
 
           const meta = GATEWAY_META[gw];
-          const Icon = meta.icon;
           const isSelected = selected === gw;
           const badge =
             gw === "STRIPE" ? (currency === "GBP" ? "GBP" : "USD") : gw === "FLUTTERWAVE" ? currency : meta.badge;
@@ -238,7 +234,9 @@ export function PaymentMethodSelector({
               >
                 {isSelected ? <span className="h-1.5 w-1.5 rounded-full bg-cream" /> : null}
               </span>
-              <Icon className="mt-0.5 h-5 w-5 shrink-0 text-choc" strokeWidth={1.25} />
+              {gw === "MONNIFY" ? (
+                <Landmark className="mt-0.5 h-5 w-5 shrink-0 text-choc" strokeWidth={1.25} />
+              ) : null}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-body text-sm text-choc">{meta.title}</p>
@@ -247,6 +245,12 @@ export function PaymentMethodSelector({
                   ) : null}
                 </div>
                 <p className="mt-0.5 font-body text-xs text-text-light">{meta.subtitle}</p>
+                {gw !== "MONNIFY" ? (
+                  <GatewayPaymentMarks
+                    gateway={gw}
+                    className="mt-2.5 flex flex-wrap items-center gap-1 text-choc"
+                  />
+                ) : null}
               </div>
             </button>
           );

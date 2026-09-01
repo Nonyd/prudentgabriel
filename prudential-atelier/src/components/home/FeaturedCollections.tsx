@@ -49,7 +49,7 @@ function CollectionCard({
             {item.productCount} {item.productCount === 1 ? "piece" : "pieces"}
           </p>
           <p className="mt-2 translate-y-1 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-            Explore →
+            View
           </p>
         </div>
       </div>

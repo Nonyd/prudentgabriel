@@ -306,7 +306,7 @@ export function CollectionDetailPage({
       {otherCollections.length > 0 ? (
         <section className="bg-[#F5F5F3] py-16 md:py-20">
           <h2 className="text-center font-display text-[28px] font-normal italic text-charcoal md:text-[36px]">
-            Explore more collections
+            More collections
           </h2>
           <div className="mx-auto mt-10 grid max-w-[1400px] gap-8 px-6 md:grid-cols-3">
             {otherCollections.map((o) => {

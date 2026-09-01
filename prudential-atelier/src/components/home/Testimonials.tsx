@@ -13,28 +13,24 @@ import { StarRating } from "@/components/ui/StarRating";
 
 const DATA = [
   {
-    quote:
-      "I wore the Amore Bridal Gown and every single guest could not stop staring. Mrs. Gabriel-Okopi understood my vision completely. This is not just a dress — it is an heirloom.",
+    quote: "The gown arrived in London looking better than the sitting. Packaging, finish, fit.",
+    name: "Ngozi O.",
+    occasion: "London",
+  },
+  {
+    quote: "Mrs. Gabriel-Okopi understood the brief on the first visit. Guests asked who made it.",
     name: "Amara O.",
     occasion: "Bride, Lagos 2024",
   },
   {
-    quote:
-      "The Lagos Power Suit made me walk into that boardroom and own every second. The tailoring is sharper than anything I have bought abroad. Nigerian excellence at its finest.",
+    quote: "Sharper than anything I have had made abroad. I wore it to a board meeting in Abuja.",
     name: "Chidinma E.",
-    occasion: "Corporate Client, Abuja",
+    occasion: "Abuja",
   },
   {
-    quote:
-      "I ordered the Celestial Sequin Gown from London and it arrived better than the photos. The packaging was luxurious, the quality was extraordinary. I will shop nowhere else.",
-    name: "Ngozi O.",
-    occasion: "Client, London UK",
-  },
-  {
-    quote:
-      "From my first consultation to the delivery of my bespoke piece, everything was handled with such professionalism and heart. This brand is the future of Nigerian fashion.",
+    quote: "From consultation to delivery, the studio kept every date they named.",
     name: "Temi A.",
-    occasion: "Bespoke Client, Lagos",
+    occasion: "Bespoke, Lagos",
   },
 ];
 
@@ -43,8 +39,8 @@ export function Testimonials() {
   return (
     <section className="bg-off-white py-section-mobile md:py-section">
       <div className="mx-auto max-w-site px-4 text-center">
-        <SectionLabel>Client Love</SectionLabel>
-        <h2 className="mt-4 font-display text-4xl font-normal italic text-charcoal md:text-5xl">From Our Women</h2>
+        <SectionLabel>Clients</SectionLabel>
+        <h2 className="mt-4 font-display text-4xl font-normal italic text-charcoal md:text-5xl">From the fitting room</h2>
       </div>
       <div className="relative mx-auto mt-12 max-w-3xl px-4">
         <button
@@ -77,9 +73,6 @@ export function Testimonials() {
           {DATA.map((t) => (
             <SwiperSlide key={t.name}>
               <div className="relative px-4 pb-8 pt-8 text-center md:px-12">
-                <span className="pointer-events-none absolute left-4 top-0 font-display text-[120px] leading-none text-olive/15">
-                  “
-                </span>
                 <p className="relative z-10 font-display text-xl italic text-charcoal md:text-2xl">{t.quote}</p>
                 <p className="mt-6 font-body text-sm font-medium text-charcoal">{t.name}</p>
                 <p className="mt-1 font-body text-xs text-olive">{t.occasion}</p>

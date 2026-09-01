@@ -135,7 +135,7 @@ export function BridalGalleryClient({
             className="inline-block border px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.12em]"
             style={{ borderColor: "var(--bride-dark)", color: "var(--bride-dark)" }}
           >
-            Explore bridal collection
+            Bridal collection
           </Link>
         </div>
       </section>

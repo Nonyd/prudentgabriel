@@ -36,10 +36,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         disabled={disabled || loading}
+        aria-busy={loading || undefined}
         className={cn(
-          "inline-flex items-center justify-center gap-2 font-sans font-semibold uppercase transition-colors duration-200",
+          "inline-flex cursor-pointer items-center justify-center gap-2 font-sans font-semibold uppercase transition-[color,background-color,transform,opacity] duration-200",
+          "active:scale-[0.97]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lightbr focus-visible:ring-offset-2",
-          "disabled:cursor-not-allowed disabled:opacity-50",
+          "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100",
           "rounded-sm",
           variantClasses[variant],
           sizeClasses[size],
@@ -49,8 +51,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Loading...</span>
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            <span className="sr-only">Please wait</span>
           </>
         ) : (
           children

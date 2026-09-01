@@ -6,6 +6,21 @@
 html {
   scroll-behavior: smooth;
   font-size: 16px;
+  overflow-x: clip;
+  scrollbar-width: thin;
+  scrollbar-color: var(--sand) transparent;
+}
+
+html::-webkit-scrollbar {
+  width: 8px;
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  background: var(--sand);
 }
 
 [data-lenis-prevent] {
@@ -40,6 +55,8 @@ body {
   font-weight: 300;
   background-color: var(--bg-page);
   color: var(--text-primary);
+  overflow-x: clip;
+  max-width: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition:
@@ -77,6 +94,12 @@ body {
     @apply min-h-screen;
   }
 
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href] {
+    cursor: pointer;
+  }
+
   *:focus-visible {
     outline: 2px solid var(--lightbr);
     outline-offset: 2px;
@@ -108,22 +131,48 @@ body {
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center bg-choc px-7 py-[13px] font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-cream transition-colors duration-200;
+    @apply inline-flex items-center justify-center bg-choc px-7 py-[13px] font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-cream;
     border-radius: var(--radius-sm);
-  }
-
-  .btn-primary:hover {
-    background-color: var(--nut);
+    transition:
+      background-color 0.2s ease,
+      transform 0.15s ease;
   }
 
   .btn-ghost-dark {
-    @apply inline-flex items-center justify-center border border-lightbr bg-transparent px-7 py-[13px] font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-cream transition-colors duration-200;
+    @apply inline-flex items-center justify-center border border-lightbr bg-transparent px-7 py-[13px] font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-cream;
     border-radius: var(--radius-sm);
+    transition:
+      background-color 0.2s ease,
+      transform 0.15s ease;
   }
 
   .btn-ghost-light {
-    @apply inline-flex items-center justify-center border border-nut bg-transparent px-7 py-[13px] font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-nut transition-colors duration-200;
+    @apply inline-flex items-center justify-center border border-nut bg-transparent px-7 py-[13px] font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-nut;
     border-radius: var(--radius-sm);
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.15s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .btn-primary:hover {
+      background-color: var(--nut);
+    }
+
+    .btn-ghost-dark:hover {
+      background-color: color-mix(in srgb, var(--lightbr) 12%, transparent);
+    }
+
+    .btn-ghost-light:hover {
+      background-color: color-mix(in srgb, var(--nut) 6%, transparent);
+    }
+
+    .btn-primary:active,
+    .btn-ghost-dark:active,
+    .btn-ghost-light:active {
+      transform: scale(0.97);
+    }
   }
 
   .card-surface {

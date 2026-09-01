@@ -65,7 +65,7 @@ function ModalShell({
         className="relative max-h-[90vh] w-full max-w-[420px] overflow-y-auto"
         style={{
           background: "var(--bg-card)",
-          borderRadius: "12px",
+          borderRadius: "4px",
           padding: "48px 40px",
         }}
         role="dialog"

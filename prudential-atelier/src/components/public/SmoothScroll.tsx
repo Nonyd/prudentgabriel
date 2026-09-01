@@ -12,7 +12,10 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     pathname?.startsWith("/login") ||
     pathname?.startsWith("/staff-login") ||
     pathname?.startsWith("/staff") ||
-    pathname?.startsWith("/account");
+    pathname?.startsWith("/account") ||
+    pathname?.startsWith("/checkout") ||
+    pathname?.startsWith("/payment") ||
+    pathname?.startsWith("/auth");
 
   useEffect(() => {
     if (skipLenis) {
@@ -25,8 +28,13 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    if (window.matchMedia("(pointer: coarse)").matches) {
+      document.documentElement.classList.remove("lenis", "lenis-smooth");
+      return;
+    }
+
     const lenis = new Lenis({
-      duration: 1,
+      duration: 0.72,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
     });

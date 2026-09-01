@@ -53,7 +53,7 @@ export function CollectionsGrid({
     <section className="py-section-mobile md:py-section">
       <div className="mx-auto max-w-site px-4 text-center">
         <SectionLabel>THE COLLECTIONS</SectionLabel>
-        <h2 className="mt-4 font-display text-4xl text-charcoal md:text-5xl">Crafted for Every Chapter</h2>
+        <h2 className="mt-4 font-display text-4xl text-charcoal md:text-5xl">Bridal, evening, ready-to-wear</h2>
       </div>
       <div className="mx-auto mt-16 grid max-w-site grid-cols-2 gap-3 px-4 md:grid-cols-3 md:gap-4">
         {CELLS.map((c) => (
@@ -75,7 +75,7 @@ export function CollectionsGrid({
               <p className="font-label text-[13px] text-ivory/80">{c.sub}</p>
               <h3 className="font-display text-2xl md:text-[28px]">{c.title}</h3>
               <p className="mt-2 translate-y-4 font-body text-sm text-gold opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                Explore →
+                View
               </p>
             </div>
           </Link>

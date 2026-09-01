@@ -322,10 +322,20 @@ export function ProductDetailClient({
             <span className="font-body text-[11px] font-medium uppercase tracking-wider text-charcoal">Add to Wishlist</span>
           </div>
 
-          <div className="mt-6 flex flex-wrap justify-center gap-4 text-center text-[11px] text-charcoal-light">
-            <span>🔒 Secure Checkout</span>
-            <span>✈️ Ships Worldwide</span>
-            <span>📏 Free Size Guide</span>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center font-sans text-[10px] uppercase tracking-[0.12em] text-charcoal-light">
+            <span>Secure checkout</span>
+            <span aria-hidden className="text-sand">
+              ·
+            </span>
+            <span>Ships worldwide</span>
+            <span aria-hidden className="text-sand">
+              ·
+            </span>
+            <SizeGuideModal>
+              <button type="button" className="uppercase tracking-[0.12em] text-charcoal-light underline-offset-4 hover:text-choc hover:underline">
+                Size guide
+              </button>
+            </SizeGuideModal>
           </div>
 
           <Accordion.Root type="multiple" className="mt-10 space-y-2 border-t border-border pt-6">

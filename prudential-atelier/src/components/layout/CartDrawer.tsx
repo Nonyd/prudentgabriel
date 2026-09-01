@@ -95,7 +95,6 @@ export function CartDrawer() {
                     <path d="M20 20V14a12 12 0 0124 0v6" />
                   </svg>
                   <p className="font-display text-lg italic text-charcoal">Your bag is empty</p>
-                  <p className="mt-2 text-sm text-charcoal-mid">Discover pieces made for you.</p>
                   <Button
                     type="button"
                     className="mt-8"
@@ -104,7 +103,7 @@ export function CartDrawer() {
                       router.push("/shop");
                     }}
                   >
-                    Explore Collection
+                    Shop ready-to-wear
                   </Button>
                 </div>
               ) : (
@@ -166,7 +165,7 @@ export function CartDrawer() {
               <footer className="shrink-0 border-t border-[var(--border)] bg-[var(--off-white)] px-5 py-5">
                 {points > 0 && (
                   <div className="mb-3 inline-flex bg-cream px-3 py-1 font-body text-[10px] font-medium uppercase tracking-wide text-charcoal">
-                    🌟 You&apos;ll earn ~{points} points with this order
+                    You&apos;ll earn {points} points on this order
                   </div>
                 )}
                 <div className="flex items-baseline justify-between">

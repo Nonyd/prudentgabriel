@@ -7,19 +7,22 @@ const COLLECTIONS = [
   {
     href: "/atelier",
     title: "The Atelier",
-    subtitle: "Commissions designed entirely around you.",
+    subtitle: "Commissions designed around you.",
+    cta: "Commission",
     bg: "#442913",
   },
   {
     href: "/bridal",
     title: "Bridal & Ceremony",
-    subtitle: "For the day you'll remember forever.",
+    subtitle: "Gowns for the day itself.",
+    cta: "Bridal",
     bg: "#5C3422",
   },
   {
     href: "/shop",
     title: "Ready-to-Wear",
     subtitle: "House signatures, ready to ship.",
+    cta: "Shop",
     bg: "#3a1f0c",
   },
 ];
@@ -40,7 +43,7 @@ export function CategoryGrid() {
               color: "var(--lightbr)",
             }}
           >
-            Explore
+            The house
           </p>
           <h2
             className="mt-3 leading-tight"
@@ -50,7 +53,7 @@ export function CategoryGrid() {
               color: "var(--choc)",
             }}
           >
-            Three ways to wear the house
+            Atelier, bridal, ready-to-wear
           </h2>
         </div>
 
@@ -58,9 +61,9 @@ export function CategoryGrid() {
           {cards.map((card, index) => (
             <motion.div
               key={card.href}
-              initial={{ opacity: 0, y: 40 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.4, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
               viewport={{ once: true, margin: "-80px" }}
             >
               <Link
@@ -100,7 +103,7 @@ export function CategoryGrid() {
                     color: "var(--cream)",
                   }}
                 >
-                  Discover
+                  {card.cta}
                 </span>
               </Link>
             </motion.div>
