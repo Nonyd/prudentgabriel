@@ -17,6 +17,7 @@ type ToolbarOrder = {
   totalNGN: number;
   paymentGateway?: PaymentGateway | null;
   shippingMethodKind?: string | null;
+  fulfilmentKind?: string | null;
   carrier?: string | null;
   balance?: number;
   collectionCode?: string | null;
@@ -24,7 +25,15 @@ type ToolbarOrder = {
 
 const NEXT_OPTIONS: Partial<Record<OrderStatus, { value: OrderStatus; label: string }[]>> = {
   PENDING: [{ value: "CONFIRMED", label: "Confirm" }],
-  CONFIRMED: [{ value: "PROCESSING", label: "Mark processing" }],
+  CONFIRMED: [
+    { value: "PROCESSING", label: "Mark processing" },
+    { value: "CUTTING", label: "Start cutting" },
+  ],
+  CUTTING: [{ value: "MAKING", label: "Start making" }],
+  MAKING: [
+    { value: "SHIPPED", label: "Mark shipped" },
+    { value: "READY_FOR_COLLECTION", label: "Ready for collection" },
+  ],
   PROCESSING: [
     { value: "SHIPPED", label: "Mark shipped" },
     { value: "READY_FOR_COLLECTION", label: "Ready for collection" },
@@ -146,12 +155,15 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
   };
 
   const isPickup = order.shippingMethodKind === "PICKUP";
+  const isMto = order.fulfilmentKind === "MADE_TO_ORDER" || order.fulfilmentKind === "MIXED";
   const options = (NEXT_OPTIONS[order.status] ?? []).filter((o) => {
     if (isPickup && o.value === "SHIPPED") return false;
     if (!isPickup && o.value === "READY_FOR_COLLECTION") return false;
+    if (isMto && o.value === "PROCESSING") return false;
+    if (!isMto && (o.value === "CUTTING" || o.value === "MAKING")) return false;
     return true;
   });
-  const canShip = order.status === "PROCESSING" && !isPickup;
+  const canShip = (order.status === "PROCESSING" || order.status === "MAKING") && !isPickup;
   const canCollect = order.status === "READY_FOR_COLLECTION";
   const outstanding = (order.balance ?? 0) > 0.01;
 

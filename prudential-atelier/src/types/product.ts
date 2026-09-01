@@ -42,4 +42,5 @@ export interface ProductListItem {
   variants: ProductListVariant[];
   colors: ProductListColor[];
   _count: { reviews: number };
+  customOffered?: boolean;
 }

@@ -5,9 +5,20 @@ import { addCartLine, listCartLines } from "@/lib/cart-service";
 
 const postSchema = z.object({
   productId: z.string().min(1),
-  variantId: z.string().min(1),
+  variantId: z.string().min(1).optional().nullable(),
   colorId: z.string().optional().nullable(),
   quantity: z.number().int().min(1).default(1),
+  sizeMode: z.enum(["STANDARD", "CUSTOM"]).optional().default("STANDARD"),
+  measurements: z
+    .array(
+      z.object({
+        key: z.string().min(1),
+        value: z.number(),
+        unit: z.enum(["cm", "in"]),
+      }),
+    )
+    .optional(),
+  typedUnit: z.enum(["cm", "in"]).optional(),
 });
 
 export async function GET() {

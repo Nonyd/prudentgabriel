@@ -46,7 +46,7 @@ export default function CartPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-display text-base text-charcoal">{item.productName}</p>
                   <p className="mt-1 font-body text-[11px] uppercase tracking-wider text-dark-grey">
-                    {item.size}
+                    {item.sizeMode === "CUSTOM" ? "Made to measure" : item.size}
                     {item.color ? ` · ${item.color}` : ""}
                   </p>
                   <div className="mt-3 flex items-center gap-2">

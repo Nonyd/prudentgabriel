@@ -13,6 +13,7 @@ import { WishlistButton } from "@/components/common/WishlistButton";
 import { StockAlertForm } from "@/components/common/StockAlertForm";
 import { SizeGuideModal } from "@/components/shop/SizeGuideModal";
 import { QuickAddSizeRow } from "@/components/common/quick-add/QuickAddSizeRow";
+import { CustomMeasurementsForm, typedFromForm } from "@/components/product/CustomMeasurementsForm";
 import { sanitizeCmsHtml } from "@/lib/sanitize-html";
 import { useBagActions } from "@/hooks/useBagActions";
 import { formatPrice } from "@/lib/currency";
@@ -21,10 +22,13 @@ import {
   pickVariantForAdd,
   stockGuardMessage,
 } from "@/lib/quick-add";
+import { CUSTOM_LEAD_COPY, CUSTOM_RETURNS_COPY, customSurchargeNGN, standardVariants, validateCustomMeasurements } from "@/lib/custom-size";
+import type { MeasurementFieldDef } from "@/lib/custom-size";
 import { displayAmountInCurrency, effectiveUnitNGN, variantAmountInCurrency } from "@/lib/pricing";
 import { useCurrencyStore } from "@/store/currencyStore";
 import type { ProductType } from "@prisma/client";
 import type { ProductListItem, ProductListVariant } from "@/types/product";
+import type { TypedUnit } from "@/lib/sizing";
 interface DetailProduct {
   id: string;
   name: string;
@@ -54,6 +58,13 @@ interface ProductDetailClientProps {
   reviewCount: number;
   freeLagosAboveNGN?: number | null;
   bespokeFromNGN?: number | null;
+  customOffered?: boolean;
+  customFields?: MeasurementFieldDef[];
+  customLeadTimeDays?: number;
+  customReturnable?: boolean;
+  customSurchargeKind?: "NONE" | "PERCENT" | "FLAT";
+  customSurchargeValue?: number;
+  previousCm?: Record<string, number>;
 }
 
 export function ProductDetailClient({
@@ -62,12 +73,22 @@ export function ProductDetailClient({
   reviewCount,
   freeLagosAboveNGN = null,
   bespokeFromNGN = null,
+  customOffered = false,
+  customFields = [],
+  customLeadTimeDays = 21,
+  customReturnable = false,
+  customSurchargeKind = "NONE",
+  customSurchargeValue = 0,
+  previousCm = {},
 }: ProductDetailClientProps) {
   const [variantId, setVariantId] = useState<string | null>(null);
   const [colorId, setColorId] = useState<string | null>(product.colors[0]?.id ?? null);
   const [qty, setQty] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [bagError, setBagError] = useState<string | null>(null);
+  const [fitMode, setFitMode] = useState<"standard" | "custom">(customOffered ? "standard" : "standard");
+  const [measureUnit, setMeasureUnit] = useState<TypedUnit>("cm");
+  const [measureValues, setMeasureValues] = useState<Record<string, string>>({});
   const { addToBag } = useBagActions();
   const rates = useCurrencyStore((s) => s.rates);
   const currency = useCurrencyStore((s) => s.currency);
@@ -76,16 +97,28 @@ export function ProductDetailClient({
     () => pickVariantForAdd(product.variants, variantId),
     [product.variants, variantId],
   );
-  const soldOut = !hasPurchasableSize(product.variants);
+  const standardSizes = useMemo(() => standardVariants(product.variants), [product.variants]);
+  const sizesSoldOut = !hasPurchasableSize(standardSizes);
+  const soldOut = sizesSoldOut && !customOffered;
+  const customSurcharge = customSurchargeNGN({
+    unitNGN: product.basePriceNGN,
+    kind: customSurchargeKind,
+    value: customSurchargeValue,
+  });
+  const customPriceNGN = product.basePriceNGN + customSurcharge;
   const priceLabel = formatPrice(
-    displayAmountInCurrency(product.variants, variantId, product, currency, rates),
+    fitMode === "custom"
+      ? customPriceNGN * (currency === "NGN" ? 1 : currency === "USD" ? rates.USD : rates.GBP)
+      : displayAmountInCurrency(product.variants, variantId, product, currency, rates),
     currency,
   );
   const ctaLabel = soldOut
     ? `Sold out · ${priceLabel}`
-    : !variant
-      ? `Select Size · ${priceLabel}`
-      : `Add to bag · ${priceLabel}`;
+    : fitMode === "custom"
+      ? `Add to bag · ${priceLabel}`
+      : !variant
+        ? `Select Size · ${priceLabel}`
+        : `Add to bag · ${priceLabel}`;
   const color = product.colors.find((c) => c.id === colorId) ?? null;
 
   const productLike: ProductListItem = {
@@ -118,6 +151,55 @@ export function ProductDetailClient({
 
   const addToBagClick = async () => {
     if (soldOut || submitting) return;
+    if (fitMode === "custom") {
+      if (!customOffered || !customFields.length) {
+        setBagError("Custom measurements are not available for this piece.");
+        return;
+      }
+      const typed = typedFromForm(customFields, measureValues, measureUnit);
+      const checked = validateCustomMeasurements(customFields, typed);
+      if (!checked.ok) {
+        setBagError(checked.errors[0]?.message ?? "Check your measurements");
+        return;
+      }
+      setBagError(null);
+      setSubmitting(true);
+      try {
+        const result = await addToBag(
+          {
+            id: `custom:${product.id}-${color?.id ?? "none"}`,
+            productId: product.id,
+            productName: product.name,
+            productSlug: product.slug,
+            variantId: `custom:${product.id}`,
+            size: "Custom",
+            colorId: color?.id,
+            color: color?.name,
+            colorHex: color?.hex,
+            imageUrl: product.images[0]?.url ?? "",
+            priceNGN: customPriceNGN,
+            priceUSD: customPriceNGN * rates.USD,
+            priceGBP: customPriceNGN * rates.GBP,
+            quantity: 1,
+            stock: 999,
+            category: product.category,
+            sizeMode: "CUSTOM",
+            measurements: checked.snapshot,
+            typedUnit: measureUnit,
+            surchargeNGN: customSurcharge,
+            customLeadTimeDays,
+            customReturnable,
+          },
+          { toastOnError: false },
+        );
+        if (!result.ok) setBagError(result.error);
+      } catch {
+        setBagError("Could not add to bag.");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
     if (!variant) {
       setBagError("Select a size.");
       return;
@@ -233,7 +315,37 @@ export function ProductDetailClient({
             </div>
           )}
 
-          {product.variants.length > 0 ? (
+          {customOffered ? (
+            <div className="mb-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setFitMode("standard");
+                  setBagError(null);
+                }}
+                className={`flex-1 border px-3 py-2 font-body text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                  fitMode === "standard" ? "border-choc bg-choc text-cream" : "border-border text-charcoal"
+                }`}
+              >
+                Select a size
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFitMode("custom");
+                  setVariantId(null);
+                  setBagError(null);
+                }}
+                className={`flex-1 border px-3 py-2 font-body text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                  fitMode === "custom" ? "border-choc bg-choc text-cream" : "border-border text-charcoal"
+                }`}
+              >
+                Made to your measurements
+              </button>
+            </div>
+          ) : null}
+
+          {fitMode === "standard" && standardSizes.length > 0 ? (
             <>
               <div className="mb-2 flex items-center justify-between">
                 <p className="font-body text-[10px] font-medium uppercase tracking-[0.14em] text-text-light">Size</p>
@@ -247,7 +359,7 @@ export function ProductDetailClient({
                 </SizeGuideModal>
               </div>
               <QuickAddSizeRow
-                variants={product.variants}
+                variants={standardSizes}
                 selectedId={variantId}
                 onSelect={(id) => {
                   setVariantId(id);
@@ -257,6 +369,28 @@ export function ProductDetailClient({
                 compact
               />
             </>
+          ) : null}
+          {fitMode === "custom" && customOffered ? (
+            <CustomMeasurementsForm
+              fields={customFields}
+              previousCm={previousCm}
+              leadTimeDays={customLeadTimeDays}
+              returnable={customReturnable}
+              surchargeLabel={
+                customSurcharge > 0
+                  ? `Custom surcharge: ₦${Math.round(customSurcharge).toLocaleString("en-NG")}`
+                  : null
+              }
+              unit={measureUnit}
+              onUnitChange={setMeasureUnit}
+              values={measureValues}
+              onChange={(key, value) => setMeasureValues((p) => ({ ...p, [key]: value }))}
+            />
+          ) : null}
+          {sizesSoldOut && customOffered && fitMode === "standard" ? (
+            <p className="mt-3 font-body text-[12px] leading-5 text-choc">
+              Standard sizes are sold out. This piece can still be made to your measurements.
+            </p>
           ) : null}
           {lowStock > 0 && (
             <p className="mt-2 font-body text-[10px] font-medium uppercase tracking-wide text-choc">Only {lowStock} left!</p>
@@ -296,7 +430,12 @@ export function ProductDetailClient({
             type="button"
             className="mt-8 h-[52px] w-full bg-choc font-body text-[11px] font-semibold uppercase tracking-[0.18em] text-cream hover:bg-nut disabled:opacity-40"
             size="lg"
-            disabled={soldOut || !variant || submitting}
+            disabled={
+              soldOut ||
+              submitting ||
+              (fitMode === "standard" && !variant) ||
+              (fitMode === "custom" && (!customOffered || !customFields.length))
+            }
             aria-busy={submitting}
             onClick={() => void addToBagClick()}
           >
@@ -384,7 +523,9 @@ export function ProductDetailClient({
                 ) : (
                   <p>Ships worldwide.</p>
                 )}
-                <p>Returns accepted within 14 days in original condition.</p>
+                {customOffered ? <p>{CUSTOM_LEAD_COPY(customLeadTimeDays)}</p> : null}
+                <p>Returns accepted within 14 days in original condition for standard sizes.</p>
+                {customOffered && !customReturnable ? <p>{CUSTOM_RETURNS_COPY}</p> : null}
               </Accordion.Content>
             </Accordion.Item>
             {product.isBespokeAvail && (

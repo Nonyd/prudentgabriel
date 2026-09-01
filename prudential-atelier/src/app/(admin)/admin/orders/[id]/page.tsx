@@ -7,6 +7,8 @@ import { OrderTimeline } from "@/components/account/OrderTimeline";
 import { AdminOrderToolbar } from "@/components/admin/AdminOrderToolbar";
 import { ShippingQuotePanel } from "@/components/admin/ShippingQuotePanel";
 import { orderWhatsAppUrl, phoneFromOrder } from "@/lib/shipping/whatsapp";
+import { OrderMeasurementsBlock } from "@/components/admin/OrderMeasurementsBlock";
+import { PrintGuideButton } from "@/components/admin/PrintGuideButton";
 
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -39,7 +41,16 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         <h1 className="font-display text-3xl text-wine">{order.orderNumber}</h1>
         <p className="mt-1 text-sm text-[#A8A8A4]">
           {order.paymentStatus} · {order.status} · {order.paymentGateway ?? "—"}
+          {order.fulfilmentKind !== "STOCK" ? " · Made to order" : ""}
         </p>
+        {order.guestCustom ? (
+          <p className="mt-3 border border-[#E8D5B0] bg-[#FFF8E7] px-3 py-2 text-sm text-[#92660A]">
+            Guest custom order — call before cutting. No account, no measurement history.
+          </p>
+        ) : null}
+        <div className="mt-3 print:hidden">
+          <PrintGuideButton />
+        </div>
       </div>
 
       <AdminOrderToolbar
@@ -52,6 +63,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           totalNGN: order.total,
           paymentGateway: order.paymentGateway,
           shippingMethodKind: order.shippingMethodKind,
+          fulfilmentKind: order.fulfilmentKind,
           carrier: order.carrier,
           balance: order.balance,
           collectionCode: order.collectionCode,
@@ -59,7 +71,11 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       />
 
       <div className="rounded-sm border border-sand bg-canvas p-6">
-        <OrderTimeline status={order.status} pickup={order.shippingMethodKind === "PICKUP"} />
+        <OrderTimeline
+          status={order.status}
+          pickup={order.shippingMethodKind === "PICKUP"}
+          madeToOrder={order.fulfilmentKind === "MADE_TO_ORDER" || order.fulfilmentKind === "MIXED"}
+        />
       </div>
 
       {order.shippingQuoteStatus === ShippingQuoteStatus.QUOTE_PENDING ||
@@ -74,6 +90,8 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           whatsappUrl={wa}
         />
       ) : null}
+
+      <OrderMeasurementsBlock items={order.items} />
 
       <div className="overflow-x-auto rounded-sm border border-sand bg-canvas p-6">
         <table className="w-full text-left text-sm">
@@ -96,7 +114,9 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                     ) : null}
                     <span className="text-charcoal">{it.product.name}</span>
                   </td>
-                  <td className="py-3 text-xs text-[#A8A8A4]">{it.variant?.id ?? "—"}</td>
+                  <td className="py-3 text-xs text-[#A8A8A4]">
+                    {it.sizeMode === "CUSTOM" ? "Custom" : it.size ?? it.variant?.size ?? "—"}
+                  </td>
                   <td className="py-3">{it.quantity}</td>
                   <td className="py-3 text-right">₦{Math.round(it.lineTotal).toLocaleString("en-NG")}</td>
                 </tr>

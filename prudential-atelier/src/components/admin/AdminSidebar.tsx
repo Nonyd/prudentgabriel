@@ -92,6 +92,7 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Shop",
     items: [
       { href: "/admin/products", label: "Products", icon: Package, permission: "shop" },
+      { href: "/admin/sizing", label: "Sizing", icon: Package, permission: "shop" },
       { href: "/admin/products/guide", label: "How to upload", icon: Package, permission: "shop" },
       { href: "/admin/shop/import", label: "Import Products", icon: Package, permission: "shop" },
       { href: "/admin/collections", label: "Collections", icon: Package, permission: "shop" },

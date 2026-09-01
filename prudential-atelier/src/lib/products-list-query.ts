@@ -159,6 +159,7 @@ export async function queryProductList(
         isOnSale: true,
         isNewArrival: true,
         isBespokeAvail: true,
+        customOffered: true,
         isFeatured: true,
         tags: true,
         images: {
@@ -198,6 +199,7 @@ export async function queryProductList(
     isOnSale: p.isOnSale,
     isNewArrival: p.isNewArrival,
     isBespokeAvail: p.isBespokeAvail,
+    customOffered: p.customOffered,
     isFeatured: p.isFeatured,
     tags: p.tags,
     images: p.images.map((im) => ({

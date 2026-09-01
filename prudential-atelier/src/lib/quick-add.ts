@@ -66,7 +66,7 @@ export function canSubmit(state: QuickAddState): boolean {
 export function reduceQuickAdd(state: QuickAddState, action: QuickAddAction): QuickAddState {
   switch (action.type) {
     case "open": {
-      if (!hasPurchasableSize(action.product.variants)) return state;
+      if (!hasPurchasableSize(action.product.variants) && !action.product.customOffered) return state;
       return {
         product: action.product,
         variantId: null,

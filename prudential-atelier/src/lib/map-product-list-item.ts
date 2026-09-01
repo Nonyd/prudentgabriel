@@ -48,6 +48,7 @@ export function mapProductToListItem(p: {
   }[];
   colors: { id: string; name: string; hex: string; imageUrl?: string | null }[];
   _count: { reviews: number };
+  customOffered?: boolean;
 }): ProductListItem {
   return {
     id: p.id,
@@ -72,5 +73,6 @@ export function mapProductToListItem(p: {
     variants: p.variants.map(mapListVariant),
     colors: p.colors,
     _count: p._count,
+    customOffered: p.customOffered ?? false,
   };
 }

@@ -20,6 +20,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
       images: { orderBy: { sortOrder: "asc" } },
       variants: { orderBy: { sortOrder: "asc" } },
       colors: true,
+      measurementFields: { include: { field: true }, orderBy: { sortOrder: "asc" } },
       bundleItems: {
         orderBy: { sortOrder: "asc" },
         include: { targetProduct: { select: { id: true, name: true } } },
@@ -160,6 +161,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           isFeatured: data.isFeatured,
           isNewArrival: data.isNewArrival,
           isBespokeAvail: data.isBespokeAvail,
+          customOffered: data.customOffered ?? false,
+          customSurchargeKind: data.customSurchargeKind ?? null,
+          customSurchargeValue: data.customSurchargeValue ?? null,
+          customLeadTimeDays: data.customLeadTimeDays ?? null,
+          customReturnable: data.customReturnable ?? null,
           inStock: data.variants.some((v) => v.stock > 0),
           defaultWeightKg: data.defaultWeightKg ?? null,
           defaultLengthCm: data.defaultLengthCm ?? null,
@@ -262,6 +268,19 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         if (!exists) continue;
         await tx.bundleItem.create({
           data: { sourceProductId: id, targetProductId: targetId, sortOrder: sortOrder++ },
+        });
+      }
+
+      await tx.productMeasurement.deleteMany({ where: { productId: id } });
+      for (let i = 0; i < (data.measurementFieldIds ?? []).length; i++) {
+        const mf = data.measurementFieldIds![i];
+        await tx.productMeasurement.create({
+          data: {
+            productId: id,
+            fieldId: mf.fieldId,
+            required: mf.required,
+            sortOrder: mf.sortOrder ?? i,
+          },
         });
       }
     });

@@ -18,6 +18,13 @@ import { markCheckoutSessionsRecovered } from "@/lib/checkout-session";
 import { recomputeRtwOrderTotals, rtwHasOutstandingBalance } from "@/lib/payments/rtw-totals";
 import { getShippingCopy } from "@/lib/shipping/copy";
 import { countryIsNigeria } from "@/lib/shipping/destination";
+import {
+  CUSTOM_RETURNS_COPY,
+  formatSnapshotLines,
+  parseSnapshot,
+  shouldDecrementStock,
+} from "@/lib/custom-size";
+import { syncProfileFromSnapshots } from "@/lib/custom-order-line";
 
 export type OrderFulfillDb = Pick<PrismaClient, "$transaction" | "order">;
 
@@ -189,6 +196,7 @@ export async function fulfillPaidOrder(params: {
 
       for (const item of order.items) {
         if (!item.variantId) continue;
+        if (!shouldDecrementStock(item.sizeMode)) continue;
         const decremented = await tx.productVariant.updateMany({
           where: { id: item.variantId, stock: { gte: item.quantity } },
           data: { stock: { decrement: item.quantity } },
@@ -294,6 +302,12 @@ export async function fulfillPaidOrder(params: {
   }
 
   if (userId) {
+    const snaps = order.items.flatMap((i) => parseSnapshot(i.measurements));
+    if (snaps.length) {
+      void syncProfileFromSnapshots(userId, snaps).catch((e) =>
+        console.warn("[fulfillPaidOrder] measurement profile", e),
+      );
+    }
     pointsEarned = await awardPurchasePoints(
       userId,
       Math.max(0, order.subtotal - order.discount),
@@ -322,13 +336,18 @@ export async function fulfillPaidOrder(params: {
           to: emailTo,
           firstName: snap?.firstName ?? clientName.split(/\s+/)[0] ?? "Client",
           orderNumber: order.orderNumber,
-          items: order.items.map((i) => ({
-            name: i.product.name,
-            size: i.size ?? "",
-            color: i.color ?? "",
-            qty: i.quantity,
-            priceNGN: i.price,
-          })),
+          items: order.items.map((i) => {
+            const snap = parseSnapshot(i.measurements);
+            return {
+              name: i.product.name,
+              size: i.size ?? "",
+              color: i.color ?? "",
+              qty: i.quantity,
+              priceNGN: i.price,
+              custom: i.sizeMode === "CUSTOM",
+              measurements: snap.length ? formatSnapshotLines(snap) : undefined,
+            };
+          }),
           subtotalNGN: order.subtotal,
           totalNGN: order.total,
           shippingNGN: order.shippingAmount,
@@ -339,6 +358,8 @@ export async function fulfillPaidOrder(params: {
           dduDisclosure: international ? copy.dduDisclosure : undefined,
           quotePending: order.shippingQuoteStatus === "QUOTE_PENDING",
           quotePendingText: order.shippingConsentText ?? undefined,
+          customLeadDays: order.customLeadTimeDays,
+          customReturnNote: order.customReturnable === false ? CUSTOM_RETURNS_COPY : null,
         }),
       )
       .catch((e) => console.warn("[fulfillPaidOrder] email", e));

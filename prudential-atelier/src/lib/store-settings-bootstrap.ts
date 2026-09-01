@@ -1,5 +1,6 @@
 import { SettingGroup, SettingType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { ensureCustomSettingKeys } from "@/lib/custom-settings";
 
 const STORE_SETTING_DEFS: {
   key: string;
@@ -36,4 +37,5 @@ export async function ensureStoreSettingKeys(): Promise<void> {
       update: {},
     });
   }
+  await ensureCustomSettingKeys();
 }

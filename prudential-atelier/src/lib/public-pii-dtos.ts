@@ -76,7 +76,13 @@ export type PublicRtwOrderDto = {
   fxRateLocked: number | null;
   collectionCode: string | null;
   shippingZone: { name: string; estimatedDays: string | null } | null;
-  items: { name: string; size: string | null; quantity: number; lineTotal: number }[];
+  items: {
+    name: string;
+    size: string | null;
+    sizeMode?: string;
+    quantity: number;
+    lineTotal: number;
+  }[];
 };
 
 export function toPublicRtwOrderDto(order: {
@@ -93,7 +99,13 @@ export function toPublicRtwOrderDto(order: {
   fxRateLocked?: number | null;
   collectionCode?: string | null;
   shippingZone: { name: string; estimatedDays: string | null } | null;
-  items: { product: { name: string }; size: string | null; quantity: number; lineTotal: number }[];
+  items: {
+    product: { name: string };
+    size: string | null;
+    sizeMode?: string | null;
+    quantity: number;
+    lineTotal: number;
+  }[];
 }): PublicRtwOrderDto {
   return {
     orderNumber: order.orderNumber,
@@ -111,7 +123,8 @@ export function toPublicRtwOrderDto(order: {
     shippingZone: order.shippingZone,
     items: order.items.map((i) => ({
       name: i.product.name,
-      size: i.size,
+      size: i.sizeMode === "CUSTOM" ? "Made to your measurements" : i.size,
+      sizeMode: i.sizeMode ?? "STANDARD",
       quantity: i.quantity,
       lineTotal: i.lineTotal,
     })),

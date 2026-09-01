@@ -10,7 +10,7 @@ function WomenTable({ rows }: { rows: SizeGuideWomenRow[] }) {
       <table className="w-full min-w-[560px] border-collapse text-left" style={{ border: "0.5px solid var(--sand)" }}>
         <thead>
           <tr style={{ backgroundColor: "var(--choc)", color: "var(--cream)" }}>
-            {["UK SIZE", "BUST (cm)", "WAIST (cm)", "HIPS (cm)", "DRESS LENGTH (cm)"].map((h) => (
+            {["UK SIZE", "BUST", "WAIST", "HIPS", "LENGTH"].map((h) => (
               <th
                 key={h}
                 className="px-4 py-3"

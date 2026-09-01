@@ -9,6 +9,7 @@ import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPane
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { formatDate, formatPrice } from "@/lib/utils";
 import { Modal } from "@/components/ui/Modal";
+import { formatSnapshotForDisplay, parseSnapshot } from "@/lib/custom-size";
 
 type RtwOrder = Order & {
   items: (OrderItem & {
@@ -190,8 +191,14 @@ export function AccountOrdersClient({
                   <div>
                     <p className="font-sans text-sm text-choc">{item.product.name}</p>
                     <p className="font-sans text-xs text-text-light">
-                      Size {item.size} · Qty {item.quantity}
+                      {item.sizeMode === "CUSTOM" ? "Made to your measurements" : `Size ${item.size}`} · Qty{" "}
+                      {item.quantity}
                     </p>
+                    {item.sizeMode === "CUSTOM" ? (
+                      <p className="mt-1 font-sans text-xs text-text-mid">
+                        {formatSnapshotForDisplay(parseSnapshot(item.measurements))}
+                      </p>
+                    ) : null}
                     <p className="font-sans text-sm text-nut">{formatPrice(item.price, "NGN")}</p>
                   </div>
                 </li>

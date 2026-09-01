@@ -31,7 +31,11 @@ export function useBagActions() {
       addItem(
         {
           ...item,
-          id: item.id ?? `${item.variantId}-${item.colorId ?? "none"}`,
+          id:
+            item.id ??
+            (item.sizeMode === "CUSTOM"
+              ? `custom:${item.productId}-${item.colorId ?? "none"}`
+              : `${item.variantId}-${item.colorId ?? "none"}`),
         },
         { open: openOnSuccess },
       );
@@ -39,9 +43,16 @@ export function useBagActions() {
     }
     const result = await postCartLine({
       productId: item.productId,
-      variantId: item.variantId,
+      variantId: item.sizeMode === "CUSTOM" ? null : item.variantId,
       colorId: item.colorId ?? null,
       quantity: item.quantity,
+      sizeMode: item.sizeMode,
+      measurements: item.measurements?.map((m) => ({
+        key: m.key,
+        value: m.typedValue,
+        unit: m.typedUnit,
+      })),
+      typedUnit: item.typedUnit === "in" || item.typedUnit === "cm" ? item.typedUnit : undefined,
     });
     if (!result.ok) {
       const message = stockGuardMessage(result.error);

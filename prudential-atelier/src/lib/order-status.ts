@@ -15,18 +15,40 @@ const PICKUP_EDGES: [OrderStatus, OrderStatus][] = [
   ["READY_FOR_COLLECTION", "COLLECTED"],
 ];
 
+const MTO_DELIVERY_EDGES: [OrderStatus, OrderStatus][] = [
+  ["PENDING", "CONFIRMED"],
+  ["CONFIRMED", "CUTTING"],
+  ["CUTTING", "MAKING"],
+  ["MAKING", "SHIPPED"],
+  ["SHIPPED", "DELIVERED"],
+];
+
+const MTO_PICKUP_EDGES: [OrderStatus, OrderStatus][] = [
+  ["PENDING", "CONFIRMED"],
+  ["CONFIRMED", "CUTTING"],
+  ["CUTTING", "MAKING"],
+  ["MAKING", "READY_FOR_COLLECTION"],
+  ["READY_FOR_COLLECTION", "COLLECTED"],
+];
+
 export function isPickupFulfilment(kind: ShippingMethodKind | string | null | undefined): boolean {
   return kind === "PICKUP";
+}
+
+export function isMadeToOrderFulfilment(kind: string | null | undefined): boolean {
+  return kind === "MADE_TO_ORDER" || kind === "MIXED";
 }
 
 export function canTransitionOrder(
   from: OrderStatus,
   to: OrderStatus,
-  opts?: { kind?: ShippingMethodKind | string | null },
+  opts?: { kind?: ShippingMethodKind | string | null; fulfilmentKind?: string | null },
 ): boolean {
   if (from === to) return true;
   if (to === "CANCELLED" || to === "REFUNDED") return true;
-  const edges = isPickupFulfilment(opts?.kind) ? PICKUP_EDGES : DELIVERY_EDGES;
+  const pickup = isPickupFulfilment(opts?.kind);
+  const mto = isMadeToOrderFulfilment(opts?.fulfilmentKind);
+  const edges = mto ? (pickup ? MTO_PICKUP_EDGES : MTO_DELIVERY_EDGES) : pickup ? PICKUP_EDGES : DELIVERY_EDGES;
   return edges.some(([a, b]) => a === from && b === to);
 }
 
@@ -37,6 +59,7 @@ export function shippingRequiresTracking(kind: ShippingMethodKind | string | nul
 export function assertCanMarkShipped(order: {
   status: OrderStatus;
   shippingMethodKind?: ShippingMethodKind | string | null;
+  fulfilmentKind?: string | null;
   balance?: number | null;
   amountPaid?: number | null;
   total: number;

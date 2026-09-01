@@ -15,6 +15,26 @@ const PICKUP_STATUSES: OrderStatus[] = [
   "COLLECTED",
 ];
 
+const MTO_DELIVERY_LABELS = ["Placed", "Confirmed", "Cutting", "Making", "Shipped", "Delivered"] as const;
+const MTO_DELIVERY_STATUSES: OrderStatus[] = [
+  "PENDING",
+  "CONFIRMED",
+  "CUTTING",
+  "MAKING",
+  "SHIPPED",
+  "DELIVERED",
+];
+
+const MTO_PICKUP_LABELS = ["Placed", "Confirmed", "Cutting", "Making", "Ready", "Collected"] as const;
+const MTO_PICKUP_STATUSES: OrderStatus[] = [
+  "PENDING",
+  "CONFIRMED",
+  "CUTTING",
+  "MAKING",
+  "READY_FOR_COLLECTION",
+  "COLLECTED",
+];
+
 function stepIndex(status: OrderStatus, statuses: OrderStatus[]): number {
   if (status === "CANCELLED" || status === "REFUNDED") return 0;
   const i = statuses.indexOf(status);
@@ -24,12 +44,26 @@ function stepIndex(status: OrderStatus, statuses: OrderStatus[]): number {
 export function OrderTimeline({
   status,
   pickup = false,
+  madeToOrder = false,
 }: {
   status: OrderStatus;
   pickup?: boolean;
+  madeToOrder?: boolean;
 }) {
-  const labels = pickup ? PICKUP_LABELS : DELIVERY_LABELS;
-  const statuses = pickup ? PICKUP_STATUSES : DELIVERY_STATUSES;
+  const labels = madeToOrder
+    ? pickup
+      ? MTO_PICKUP_LABELS
+      : MTO_DELIVERY_LABELS
+    : pickup
+      ? PICKUP_LABELS
+      : DELIVERY_LABELS;
+  const statuses = madeToOrder
+    ? pickup
+      ? MTO_PICKUP_STATUSES
+      : MTO_DELIVERY_STATUSES
+    : pickup
+      ? PICKUP_STATUSES
+      : DELIVERY_STATUSES;
   const current = stepIndex(status, statuses);
   const cancelled = status === "CANCELLED" || status === "REFUNDED";
 

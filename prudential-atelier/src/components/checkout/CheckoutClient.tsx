@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { NIGERIA_STATES } from "@/lib/geo/nigeria-states";
 import { COUNTRIES } from "@/lib/geo/countries";
+import { CUSTOM_RETURNS_COPY } from "@/lib/custom-size";
 
 interface ShipOpt {
   zoneId: string;
@@ -64,6 +65,8 @@ export function CheckoutClient() {
   const rates = useCurrencyStore((s) => s.rates);
   const setCurrency = useCurrencyStore((s) => s.setCurrency);
   const items = useCartStore((s) => s.items);
+  const hasCustom = items.some((i) => i.sizeMode === "CUSTOM");
+  const customNotReturnable = items.some((i) => i.sizeMode === "CUSTOM" && i.customReturnable !== true);
   const { changeQty, removeFromBag } = useBagActions();
 
   const [step, setStep] = useState(1);
@@ -107,6 +110,7 @@ export function CheckoutClient() {
   const [quoteConsent, setQuoteConsent] = useState("");
   const [dduDisclosure, setDduDisclosure] = useState("");
   const [shippingConsent, setShippingConsent] = useState(false);
+  const [customReturnConsent, setCustomReturnConsent] = useState(false);
   const [preferredContact, setPreferredContact] = useState<"WHATSAPP" | "CALL" | "EMAIL">("WHATSAPP");
   const paymentRef = useMemo(
     () => `PA-ORDER-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
@@ -238,6 +242,9 @@ export function CheckoutClient() {
     }
     if (!zoneId) next.shipping = "Choose a shipping method";
     if (needsConsent && !shippingConsent) next.consent = "Please confirm you understand shipping will be quoted separately";
+    if (hasCustom && customNotReturnable && !customReturnConsent) {
+      next.customReturn = "Please confirm you understand custom pieces cannot be returned";
+    }
     setErrors((prev) => ({ ...prev, ...next }));
     const order = [
       "guestEmail",
@@ -252,6 +259,7 @@ export function CheckoutClient() {
       "country",
       "shipping",
       "consent",
+      "customReturn",
     ];
     return order.find((k) => next[k]) ?? null;
   }
@@ -481,17 +489,25 @@ export function CheckoutClient() {
         guestName: isGuest ? guestName : undefined,
         guestPhone: isGuest ? guestPhone : undefined,
         paymentRef,
+        customReturnConsent: hasCustom && customNotReturnable ? customReturnConsent : undefined,
       };
 
       if (isGuest) {
         body.cartLines = items.map((i) => ({
           productId: i.productId,
-          variantId: i.variantId,
+          variantId: i.sizeMode === "CUSTOM" ? null : i.variantId,
           quantity: i.quantity,
           size: i.size,
           color: i.color,
           colorHex: i.colorHex,
           colorId: i.colorId,
+          sizeMode: i.sizeMode ?? "STANDARD",
+          measurements: i.measurements?.map((m) => ({
+            key: m.key,
+            value: m.typedValue,
+            unit: m.typedUnit,
+          })),
+          typedUnit: i.typedUnit === "in" || i.typedUnit === "cm" ? i.typedUnit : undefined,
         }));
       }
 
@@ -677,9 +693,14 @@ export function CheckoutClient() {
                 <div className="flex-1">
                   <p className="font-medium">{i.productName}</p>
                   <p className="text-sm text-charcoal-mid">
-                    {i.size}
+                    {i.sizeMode === "CUSTOM" ? "Made to your measurements" : i.size}
                     {i.color ? ` · ${i.color}` : ""}
                   </p>
+                  {i.sizeMode === "CUSTOM" && i.measurements?.length ? (
+                    <p className="mt-1 text-xs text-charcoal-mid">
+                      {i.measurements.map((m) => `${m.label}: ${m.typedValue} ${m.typedUnit}`).join(" · ")}
+                    </p>
+                  ) : null}
                   <div className="mt-2 flex items-center gap-2">
                     <button
                       type="button"
@@ -1105,6 +1126,25 @@ export function CheckoutClient() {
               <FieldError message={errors.shipping} />
               <FieldError message={errors.consent} />
             </fieldset>
+            {hasCustom && customNotReturnable ? (
+              <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={customReturnConsent}
+                  onChange={(e) => {
+                    setCustomReturnConsent(e.target.checked);
+                    setErrors((p) => {
+                      const next = { ...p };
+                      delete next.customReturn;
+                      return next;
+                    });
+                  }}
+                />
+                <span>{CUSTOM_RETURNS_COPY}</span>
+              </label>
+            ) : null}
+            <FieldError message={errors.customReturn} />
             <div>
               <label htmlFor="order-notes" className="mb-1 block font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
                 Order notes (optional)

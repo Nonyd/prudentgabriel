@@ -10,6 +10,7 @@ export default async function AdminEditProductPage({ params }: { params: Promise
       images: { orderBy: { sortOrder: "asc" } },
       variants: { orderBy: { sortOrder: "asc" } },
       colors: true,
+      measurementFields: { include: { field: true }, orderBy: { sortOrder: "asc" } },
       bundleItems: { select: { targetProductId: true, targetProduct: { select: { name: true } } } },
     },
   });

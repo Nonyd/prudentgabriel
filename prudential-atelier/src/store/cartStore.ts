@@ -16,10 +16,22 @@ export interface CartItem {
   priceUSD: number;
   priceGBP: number;
   quantity: number;
-  /** Variant stock at time of add — used for checkout qty cap */
+  /** Variant stock at time of add — used for checkout qty cap. Custom lines skip the cap. */
   stock: number;
   /** ProductCategory enum string — coupon scope */
   category?: string;
+  sizeMode?: "STANDARD" | "CUSTOM";
+  measurements?: {
+    key: string;
+    label: string;
+    valueCm: number;
+    typedValue: number;
+    typedUnit: "cm" | "in";
+  }[];
+  typedUnit?: string;
+  surchargeNGN?: number;
+  customLeadTimeDays?: number;
+  customReturnable?: boolean;
 }
 
 interface CartStore {
@@ -60,9 +72,11 @@ export const useCartStore = create<CartStore>()(
         let newItems: CartItem[];
 
         if (existing) {
-          newItems = items.map((i) =>
-            i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i,
-          );
+          const nextQty =
+            existing.sizeMode === "CUSTOM"
+              ? item.quantity
+              : existing.quantity + item.quantity;
+          newItems = items.map((i) => (i.id === item.id ? { ...i, ...item, quantity: nextQty } : i));
         } else {
           newItems = [...items, item];
         }

@@ -33,12 +33,15 @@ export async function createNotification(params: {
   });
 }
 
-export function notifyNewOrder(order: Pick<Order, "id" | "orderNumber" | "total" | "paymentGateway">): void {
+export function notifyNewOrder(
+  order: Pick<Order, "id" | "orderNumber" | "total" | "paymentGateway"> & { guestCustom?: boolean },
+): void {
   const gw = order.paymentGateway ?? "—";
+  const guestNote = order.guestCustom ? " · Guest custom — call before cutting" : "";
   void createNotification({
     type: "NEW_ORDER",
-    title: "New order",
-    message: `#${order.orderNumber} — ${formatNGN(order.total)} via ${gw}`,
+    title: order.guestCustom ? "New custom order (guest)" : "New order",
+    message: `#${order.orderNumber} — ${formatNGN(order.total)} via ${gw}${guestNote}`,
     link: `/admin/orders/${order.id}`,
     entityId: order.id,
   }).catch(() => {});

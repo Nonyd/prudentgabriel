@@ -1,5 +1,7 @@
 import { SizeGuideTabs } from "@/components/size-guide/SizeGuideTabs";
 import { cmsGet, cmsJson, getCMSContent } from "@/lib/cms";
+import { getHouseSizeChart } from "@/lib/custom-context";
+import { displayChartRow } from "@/lib/sizing";
 import {
   DEFAULT_BRIDAL_INTRO,
   DEFAULT_BRIDAL_NOTES,
@@ -28,7 +30,25 @@ export default async function SizeGuidePage() {
     /* defaults */
   }
 
-  const women = cmsJson(cms, "size_guide_women", DEFAULT_WOMEN_SIZE_CHART);
+  const womenCms = cmsJson(cms, "size_guide_women", DEFAULT_WOMEN_SIZE_CHART);
+  let women = womenCms;
+  try {
+    const chart = await getHouseSizeChart();
+    if (chart?.rows.length) {
+      women = chart.rows.map((r) => {
+        const d = displayChartRow({
+          label: r.label,
+          bustCm: r.bustCm,
+          waistCm: r.waistCm,
+          hipCm: r.hipCm,
+          lengthCm: r.lengthCm,
+        });
+        return { size: d.label, bust: d.bust, waist: d.waist, hips: d.hip, length: d.length };
+      });
+    }
+  } catch {
+    /* CMS fallback */
+  }
   const kids = cmsJson(cms, "size_guide_kids", DEFAULT_KIDS_SIZE_CHART);
   const bridalIntro = cmsGet(cms, "size_guide_bridal_intro", DEFAULT_BRIDAL_INTRO);
   const bridalNotes = cmsGet(cms, "size_guide_bridal_notes", DEFAULT_BRIDAL_NOTES);
@@ -69,7 +89,7 @@ export default async function SizeGuidePage() {
             color: "var(--text-mid)",
           }}
         >
-          All measurements in centimetres unless stated.
+          Figures in centimetres and inches. This is the house chart — a size label means these measurements.
         </p>
       </header>
 

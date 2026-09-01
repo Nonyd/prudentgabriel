@@ -73,7 +73,7 @@ export function OrderSummary({
               <div className="flex-1">
                 <p className="font-medium text-charcoal">{i.productName}</p>
                 <p className="text-charcoal-mid">
-                  {i.size} ×{i.quantity}
+                  {i.sizeMode === "CUSTOM" ? "Made to measure" : i.size} ×{i.quantity}
                 </p>
               </div>
               <p>{fmtLine(i)}</p>

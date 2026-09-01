@@ -222,6 +222,8 @@ export async function sendOrderConfirmationEmail(params: {
   dduDisclosure?: string;
   quotePending?: boolean;
   quotePendingText?: string;
+  customLeadDays?: number | null;
+  customReturnNote?: string | null;
 }): Promise<void> {
   const subtotal =
     params.subtotalNGN ??
@@ -242,6 +244,8 @@ export async function sendOrderConfirmationEmail(params: {
       dduDisclosure={params.dduDisclosure}
       quotePending={params.quotePending}
       quotePendingText={params.quotePendingText}
+      customLeadDays={params.customLeadDays}
+      customReturnNote={params.customReturnNote}
     />,
   );
   await sendEmail({

@@ -6,6 +6,7 @@ import { QuickAddSizeRow } from "@/components/common/quick-add/QuickAddSizeRow";
 import { useProductQuickAdd } from "@/hooks/useQuickAdd";
 import { useIsMdUp } from "@/hooks/useMediaQuery";
 import { useQuickAddStore } from "@/store/quickAddStore";
+import { standardVariants } from "@/lib/custom-size";
 import type { ProductListItem } from "@/types/product";
 
 export function QuickAddMobileTrigger({
@@ -94,13 +95,22 @@ function QuickAddMobilePanelInner({ product }: { product: ProductListItem }) {
       <p className="mt-2 font-body text-[13px] font-medium text-choc">{qa.priceLabel}</p>
       <div className="mt-4">
         <QuickAddSizeRow
-          variants={product.variants}
+          variants={standardVariants(product.variants)}
           selectedId={qa.variantId}
           onSelect={qa.selectSize}
           autoFocus={!isMd}
           compact
         />
       </div>
+      {product.customOffered ? (
+        <p className="mt-3 font-body text-[12px] leading-5 text-charcoal-mid">
+          Made to your measurements is on the{" "}
+          <a href={`/shop/${product.slug}`} className="text-choc underline">
+            product page
+          </a>
+          .
+        </p>
+      ) : null}
       {qa.error ? (
         <p className="mt-3 font-sans text-[12px] text-choc" role="alert">
           {qa.error}

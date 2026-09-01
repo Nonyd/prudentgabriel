@@ -25,6 +25,16 @@ import type { CartParcelLine } from "@/lib/shipping/options";
 import { fulfillPaidOrder } from "@/lib/order-payment";
 import { resolveClientId } from "@/lib/payments/ledger";
 import { recomputeRtwOrderTotals } from "@/lib/payments/rtw-totals";
+import {
+  customLinesReturnable,
+  fulfilmentKindForLines,
+  isCustomLine,
+  maxCustomLeadDays,
+  parseSnapshot,
+  type MeasurementSnapshotEntry,
+  type TypedMeasurement,
+} from "@/lib/custom-size";
+import { resolveCustomCheckoutLine, syncProfileFromSnapshots } from "@/lib/custom-order-line";
 
 function snapshotFromAddress(a: AddressInput) {
   return {
@@ -77,7 +87,7 @@ export async function POST(req: NextRequest) {
 
   type Line = {
     productId: string;
-    variantId: string;
+    variantId: string | null;
     quantity: number;
     size: string;
     color?: string;
@@ -89,6 +99,12 @@ export async function POST(req: NextRequest) {
     category: ProductCategory;
     productName: string;
     parcel: CartParcelLine;
+    sizeMode: "STANDARD" | "CUSTOM";
+    measurements?: MeasurementSnapshotEntry[];
+    typedUnit?: string;
+    surchargeNGN: number;
+    customLeadTimeDays?: number | null;
+    customReturnable?: boolean | null;
   };
 
   function lineFromVariant(params: {
@@ -153,6 +169,8 @@ export async function POST(req: NextRequest) {
           heightCm: params.product.defaultHeightCm ?? undefined,
         },
       },
+      sizeMode: "STANDARD",
+      surchargeNGN: 0,
     };
   }
 
@@ -186,21 +204,65 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Your bag is empty" }, { status: 400 });
     }
 
-    lines = cartItems.map((ci) =>
-      lineFromVariant({
-        productId: ci.productId,
-        variant: ci.variant,
-        product: ci.product,
-        quantity: ci.quantity,
-        color: ci.color?.name,
-        colorHex: ci.color?.hex,
-        colorId: ci.colorId ?? undefined,
-        fx,
-      }),
-    );
+    for (const ci of cartItems) {
+      if (isCustomLine(ci.sizeMode)) {
+        const resolved = await resolveCustomCheckoutLine({
+          productId: ci.productId,
+          quantity: ci.quantity,
+          measurements: parseSnapshot(ci.measurements).map((e) => ({
+            key: e.key,
+            value: e.typedValue,
+            unit: e.typedUnit,
+          })),
+          color: ci.color?.name,
+          colorHex: ci.color?.hex,
+          colorId: ci.colorId ?? undefined,
+          fx,
+        });
+        if (!resolved.ok) {
+          return NextResponse.json({ error: resolved.error }, { status: resolved.status });
+        }
+        lines.push(resolved.line);
+        continue;
+      }
+      if (!ci.variant) {
+        return NextResponse.json({ error: "Invalid cart item" }, { status: 400 });
+      }
+      lines.push(
+        lineFromVariant({
+          productId: ci.productId,
+          variant: ci.variant,
+          product: ci.product,
+          quantity: ci.quantity,
+          color: ci.color?.name,
+          colorHex: ci.color?.hex,
+          colorId: ci.colorId ?? undefined,
+          fx,
+        }),
+      );
+    }
   } else {
     const guestLines = data.cartLines ?? [];
     for (const gl of guestLines) {
+      if (gl.sizeMode === "CUSTOM") {
+        const resolved = await resolveCustomCheckoutLine({
+          productId: gl.productId,
+          quantity: gl.quantity,
+          measurements: (gl.measurements ?? []) as TypedMeasurement[],
+          color: gl.color,
+          colorHex: gl.colorHex,
+          colorId: gl.colorId,
+          fx,
+        });
+        if (!resolved.ok) {
+          return NextResponse.json({ error: resolved.error }, { status: resolved.status });
+        }
+        lines.push(resolved.line);
+        continue;
+      }
+      if (!gl.variantId) {
+        return NextResponse.json({ error: "Invalid cart item" }, { status: 400 });
+      }
       const variant = await prisma.productVariant.findUnique({
         where: { id: gl.variantId },
         include: { product: { select: productPriceSelect } },
@@ -224,6 +286,7 @@ export async function POST(req: NextRequest) {
   }
 
   for (const line of lines) {
+    if (isCustomLine(line.sizeMode) || !line.variantId) continue;
     const v = await prisma.productVariant.findUnique({
       where: { id: line.variantId },
       select: { stock: true, product: { select: { name: true } } },
@@ -234,6 +297,15 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
+  }
+
+  const hasCustom = lines.some((l) => isCustomLine(l.sizeMode));
+  const customReturnable = customLinesReturnable(lines);
+  if (hasCustom && !customReturnable && !data.customReturnConsent) {
+    return NextResponse.json(
+      { error: "Please confirm you understand custom pieces cannot be returned" },
+      { status: 400 },
+    );
   }
 
   const subtotalNGN = lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
@@ -484,6 +556,10 @@ export async function POST(req: NextRequest) {
           notes: data.notes ?? null,
           isGift: data.isGift ?? false,
           giftMessage: data.giftMessage ?? null,
+          fulfilmentKind: fulfilmentKindForLines(lines.map((l) => l.sizeMode)),
+          guestCustom: !userId && hasCustom,
+          customLeadTimeDays: maxCustomLeadDays(lines),
+          customReturnable,
         },
       });
 
@@ -500,6 +576,14 @@ export async function POST(req: NextRequest) {
             colorHex: line.colorHex ?? null,
             price: line.unitPrice,
             lineTotal,
+            sizeMode: line.sizeMode,
+            measurements: line.measurements
+              ? (line.measurements as unknown as Prisma.InputJsonValue)
+              : undefined,
+            typedUnit: line.typedUnit ?? null,
+            surchargeNGN: line.surchargeNGN,
+            customLeadTimeDays: line.customLeadTimeDays ?? null,
+            customReturnable: line.customReturnable ?? null,
           },
         });
       }
@@ -560,7 +644,17 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    void notifyNewOrder(order);
+    void notifyNewOrder({
+      ...order,
+      guestCustom: !userId && hasCustom,
+    });
+
+    if (userId) {
+      const snaps = lines.flatMap((l) => l.measurements ?? []);
+      void syncProfileFromSnapshots(userId, snaps).catch((e) =>
+        console.warn("[orders/create] measurement profile", e),
+      );
+    }
 
     if (pointsUsed > 0 && outstandingNGN > 0.01) {
       await recomputeRtwOrderTotals(order.id).catch((e) => console.warn("[orders/create] rtw totals", e));

@@ -126,7 +126,7 @@ export function CartDrawer() {
                       <div className="min-w-0 flex-1 pr-6">
                         <p className="font-display text-sm text-charcoal">{item.productName}</p>
                         <p className="mt-1 font-body text-[11px] font-medium uppercase tracking-wider text-dark-grey">
-                          {item.size}
+                          {item.sizeMode === "CUSTOM" ? "Made to measure" : item.size}
                         </p>
                         {item.color && (
                           <p className="mt-0.5 text-xs text-charcoal-light">{item.color}</p>

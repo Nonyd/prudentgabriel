@@ -64,6 +64,26 @@ export const productAdminSchema = z.object({
   isFeatured: z.boolean().default(false),
   isNewArrival: z.boolean().default(false),
   isBespokeAvail: z.boolean().default(false),
+  customOffered: z.boolean().optional(),
+  customSurchargeKind: z.enum(["NONE", "PERCENT", "FLAT"]).optional().nullable(),
+  customSurchargeValue: optNonNegNumber(),
+  customLeadTimeDays: z.preprocess((v) => {
+    if (v === "" || v === null || v === undefined) return undefined;
+    const n = typeof v === "number" ? v : Number(v);
+    if (!Number.isFinite(n)) return undefined;
+    return n;
+  }, z.number().int().min(1).max(180).optional()),
+  customReturnable: z.boolean().optional().nullable(),
+  measurementFieldIds: z
+    .array(
+      z.object({
+        fieldId: z.string().min(1),
+        required: z.boolean().default(true),
+        sortOrder: z.number().int().default(0),
+      }),
+    )
+    .optional()
+    .default([]),
   defaultWeightKg: optNonNegNumber(),
   defaultLengthCm: optNonNegNumber(),
   defaultWidthCm: optNonNegNumber(),

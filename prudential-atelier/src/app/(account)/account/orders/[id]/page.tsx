@@ -5,7 +5,7 @@ import { PaymentStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderTimeline } from "@/components/account/OrderTimeline";
-import { CustomerOrderDeleteButton } from "@/components/account/CustomerOrderDeleteButton";
+import { formatSnapshotForDisplay, parseSnapshot } from "@/lib/custom-size";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -37,7 +37,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       <p className="text-sm text-charcoal-light">{new Date(order.createdAt).toLocaleString()}</p>
 
       <div className="mt-8 rounded-sm border border-border bg-cream p-6">
-        <OrderTimeline status={order.status} pickup={order.shippingMethodKind === "PICKUP"} />
+        <OrderTimeline
+          status={order.status}
+          pickup={order.shippingMethodKind === "PICKUP"}
+          madeToOrder={order.fulfilmentKind === "MADE_TO_ORDER" || order.fulfilmentKind === "MIXED"}
+        />
       </div>
 
       <div className="mt-8 overflow-x-auto">
@@ -61,7 +65,23 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                     )}
                     <span>{it.product.name}</span>
                   </td>
-                  <td>{it.size}</td>
+                  <td>
+                    {it.sizeMode === "CUSTOM" ? (
+                      <span>
+                        Made to your measurements
+                        {parseSnapshot(it.measurements).length ? (
+                          <>
+                            <br />
+                            <span className="text-xs text-charcoal-mid">
+                              {formatSnapshotForDisplay(parseSnapshot(it.measurements))}
+                            </span>
+                          </>
+                        ) : null}
+                      </span>
+                    ) : (
+                      it.size
+                    )}
+                  </td>
                   <td>{it.quantity}</td>
                   <td className="text-right">₦{Math.round(it.lineTotal).toLocaleString()}</td>
                 </tr>

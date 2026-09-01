@@ -3,7 +3,7 @@ import { OrderStatus, PaymentStatus, Prisma, ShippingQuoteStatus } from "@prisma
 import { prisma } from "@/lib/prisma";
 import { AdminOrdersCsvExport } from "@/components/admin/AdminOrdersCsvExport";
 import { AdminOrdersListClient, type AdminOrderListRow } from "@/components/admin/AdminOrdersListClient";
-import { REFUND_REQUIRED_ATTENTION, QUOTE_PENDING_ATTENTION, QUOTE_PENDING_ALL_ATTENTION, applyOrderAttention } from "@/lib/admin-orders-filter";
+import { REFUND_REQUIRED_ATTENTION, QUOTE_PENDING_ATTENTION, QUOTE_PENDING_ALL_ATTENTION, GUEST_CUSTOM_ATTENTION, applyOrderAttention } from "@/lib/admin-orders-filter";
 
 const PAGE = 20;
 
@@ -33,7 +33,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   }
   where = applyOrderAttention(where, attention);
 
-  const [total, orders, refundRequiredCount, quoteReadyCount, quotePendingAllCount] = await Promise.all([
+  const [total, orders, refundRequiredCount, quoteReadyCount, quotePendingAllCount, guestCustomCount] = await Promise.all([
     prisma.order.count({ where }),
     prisma.order.findMany({
       where,
@@ -54,6 +54,9 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
     }),
     prisma.order.count({
       where: { shippingQuoteStatus: ShippingQuoteStatus.QUOTE_PENDING },
+    }),
+    prisma.order.count({
+      where: { guestCustom: true },
     }),
   ]);
 
@@ -123,6 +126,14 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
             }`}
           >
             Refund required{refundRequiredCount > 0 ? ` (${refundRequiredCount})` : ""}
+          </Link>
+          <Link
+            href={`/admin/orders?attention=${GUEST_CUSTOM_ATTENTION}`}
+            className={`font-body text-[11px] uppercase tracking-wide ${
+              attention === GUEST_CUSTOM_ATTENTION ? "text-choc underline" : "text-olive hover:underline"
+            }`}
+          >
+            Guest custom{guestCustomCount > 0 ? ` (${guestCustomCount})` : ""}
           </Link>
           <AdminOrdersCsvExport query={exportQuery.toString()} />
         </div>

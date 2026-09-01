@@ -154,6 +154,11 @@ export async function POST(req: NextRequest) {
           isFeatured: data.isFeatured,
           isNewArrival: data.isNewArrival,
           isBespokeAvail: data.isBespokeAvail,
+          customOffered: data.customOffered ?? false,
+          customSurchargeKind: data.customSurchargeKind ?? null,
+          customSurchargeValue: data.customSurchargeValue ?? null,
+          customLeadTimeDays: data.customLeadTimeDays ?? null,
+          customReturnable: data.customReturnable ?? null,
           inStock: data.variants.some((v) => v.stock > 0),
           defaultWeightKg: data.defaultWeightKg ?? null,
           defaultLengthCm: data.defaultLengthCm ?? null,
@@ -219,6 +224,19 @@ export async function POST(req: NextRequest) {
             sourceProductId: p.id,
             targetProductId: targetId,
             sortOrder: sortOrder++,
+          },
+        });
+      }
+
+      await tx.productMeasurement.deleteMany({ where: { productId: p.id } });
+      for (let i = 0; i < (data.measurementFieldIds ?? []).length; i++) {
+        const mf = data.measurementFieldIds![i];
+        await tx.productMeasurement.create({
+          data: {
+            productId: p.id,
+            fieldId: mf.fieldId,
+            required: mf.required,
+            sortOrder: mf.sortOrder ?? i,
           },
         });
       }

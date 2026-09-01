@@ -9,17 +9,30 @@ type ServerCartRow = {
   id: string;
   quantity: number;
   productId: string;
-  variantId: string;
+  variantId: string | null;
   colorId: string | null;
+  sizeMode?: "STANDARD" | "CUSTOM";
+  measurements?: CartItem["measurements"];
+  typedUnit?: string | null;
+  surchargeNGN?: number;
   product: {
     id: string;
     name: string;
     slug: string;
     category: string;
     isOnSale: boolean;
+    priceNGN?: number;
     priceUSD: number | null;
     priceGBP: number | null;
+    customLeadTimeDays?: number | null;
+    customReturnable?: boolean | null;
     images: { url: string }[];
+    variants?: {
+      priceNGN: number;
+      salePriceNGN: number | null;
+      priceUSD: number | null;
+      priceGBP: number | null;
+    }[];
   };
   variant: {
     id: string;
@@ -29,7 +42,7 @@ type ServerCartRow = {
     priceUSD: number | null;
     priceGBP: number | null;
     stock: number;
-  };
+  } | null;
   color: { name: string; hex: string } | null;
 };
 
@@ -37,7 +50,12 @@ function serverRowToCartItem(
   row: ServerCartRow,
   rates: { NGN: number; USD: number; GBP: number },
 ): CartItem {
-  const unit = effectiveUnitNGN(row.variant, row.product.isOnSale);
+  const sizeMode = row.sizeMode === "CUSTOM" ? "CUSTOM" : "STANDARD";
+  const priceSource = row.variant ?? row.product.variants?.[0];
+  const unitBase = priceSource
+    ? effectiveUnitNGN(priceSource, row.product.isOnSale)
+    : (row.product.priceNGN ?? 0);
+  const unit = unitBase + (row.surchargeNGN ?? 0);
   const img = row.product.images[0]?.url ?? "";
   const priced = { isOnSale: row.product.isOnSale, priceUSD: row.product.priceUSD, priceGBP: row.product.priceGBP };
   return {
@@ -45,18 +63,24 @@ function serverRowToCartItem(
     productId: row.productId,
     productName: row.product.name,
     productSlug: row.product.slug,
-    variantId: row.variantId,
-    size: row.variant.size,
+    variantId: row.variantId ?? `custom:${row.productId}`,
+    size: sizeMode === "CUSTOM" ? "Custom" : (row.variant?.size ?? ""),
     colorId: row.colorId ?? undefined,
     color: row.color?.name,
     colorHex: row.color?.hex,
     imageUrl: img,
     priceNGN: unit,
-    priceUSD: variantAmountInCurrency(row.variant, priced, "USD", rates),
-    priceGBP: variantAmountInCurrency(row.variant, priced, "GBP", rates),
+    priceUSD: priceSource ? variantAmountInCurrency(priceSource, priced, "USD", rates) + (row.surchargeNGN ?? 0) * rates.USD : unit * rates.USD,
+    priceGBP: priceSource ? variantAmountInCurrency(priceSource, priced, "GBP", rates) + (row.surchargeNGN ?? 0) * rates.GBP : unit * rates.GBP,
     quantity: row.quantity,
-    stock: row.variant.stock,
+    stock: sizeMode === "CUSTOM" ? 999 : (row.variant?.stock ?? 0),
     category: row.product.category,
+    sizeMode,
+    measurements: row.measurements,
+    typedUnit: row.typedUnit ?? undefined,
+    surchargeNGN: row.surchargeNGN,
+    customLeadTimeDays: row.product.customLeadTimeDays ?? undefined,
+    customReturnable: row.product.customReturnable ?? undefined,
   };
 }
 
@@ -88,9 +112,12 @@ export async function replaceCartFromServer(): Promise<boolean> {
 
 export async function postCartLine(line: {
   productId: string;
-  variantId: string;
+  variantId?: string | null;
   colorId?: string | null;
   quantity: number;
+  sizeMode?: "STANDARD" | "CUSTOM";
+  measurements?: { key: string; value: number; unit: "cm" | "in" }[];
+  typedUnit?: "cm" | "in";
 }): Promise<{ ok: boolean; error?: string }> {
   const res = await fetch("/api/cart", {
     method: "POST",
@@ -134,9 +161,15 @@ export async function mergeGuestLinesIntoServer(local: CartItem[]): Promise<bool
   for (const line of plan.create) {
     const result = await postCartLine({
       productId: line.productId,
-      variantId: line.variantId,
+      variantId: line.sizeMode === "CUSTOM" ? null : line.variantId,
       colorId: line.colorId ?? null,
       quantity: line.quantity,
+      sizeMode: line.sizeMode,
+      measurements: (line as CartItem).measurements?.map((m) => ({
+        key: m.key,
+        value: m.typedValue,
+        unit: m.typedUnit,
+      })),
     });
     if (!result.ok) return false;
   }

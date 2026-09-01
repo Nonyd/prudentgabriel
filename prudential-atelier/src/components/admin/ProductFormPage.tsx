@@ -26,6 +26,7 @@ type FullProduct = Product & {
   variants: ProductVariant[];
   colors: ProductColor[];
   bundleItems: { targetProductId: string; targetProduct?: { name: string } }[];
+  measurementFields?: { fieldId: string; required: boolean; sortOrder: number }[];
 };
 
 const CATEGORY_OPTIONS: ProductCategory[] = [
@@ -56,6 +57,16 @@ function mapProductToForm(p: FullProduct): ProductAdminInput {
     isFeatured: p.isFeatured,
     isNewArrival: p.isNewArrival,
     isBespokeAvail: p.isBespokeAvail,
+    customOffered: p.customOffered,
+    customSurchargeKind: p.customSurchargeKind,
+    customSurchargeValue: p.customSurchargeValue ?? undefined,
+    customLeadTimeDays: p.customLeadTimeDays ?? undefined,
+    customReturnable: p.customReturnable,
+    measurementFieldIds: (p.measurementFields ?? []).map((m) => ({
+      fieldId: m.fieldId,
+      required: m.required,
+      sortOrder: m.sortOrder,
+    })),
     defaultWeightKg: p.defaultWeightKg ?? undefined,
     defaultLengthCm: p.defaultLengthCm ?? undefined,
     defaultWidthCm: p.defaultWidthCm ?? undefined,
@@ -95,7 +106,13 @@ function mapProductToForm(p: FullProduct): ProductAdminInput {
   };
 }
 
-const defaultCreate = (): ProductAdminInput => ({
+const defaultCreate = (custom?: {
+  offeredDefault: boolean;
+  surchargeKind: "NONE" | "PERCENT" | "FLAT";
+  surchargeValue: number;
+  leadTimeDays: number;
+  returnable: boolean;
+}): ProductAdminInput => ({
   name: "",
   slug: "",
   description: "",
@@ -111,7 +128,13 @@ const defaultCreate = (): ProductAdminInput => ({
   isPublished: false,
   isFeatured: false,
   isNewArrival: false,
-  isBespokeAvail: false,
+    isBespokeAvail: false,
+    customOffered: custom?.offeredDefault ?? false,
+    customSurchargeKind: custom?.surchargeKind === "NONE" ? null : (custom?.surchargeKind ?? null),
+    customSurchargeValue: custom?.surchargeKind && custom.surchargeKind !== "NONE" ? custom.surchargeValue : undefined,
+    customLeadTimeDays: custom?.leadTimeDays,
+    customReturnable: custom?.returnable ?? false,
+    measurementFieldIds: [],
   defaultWeightKg: undefined,
   defaultLengthCm: undefined,
   defaultWidthCm: undefined,
@@ -133,10 +156,25 @@ const defaultCreate = (): ProductAdminInput => ({
   bundleProductIds: [],
 });
 
-export function ProductFormPage({ product }: { product?: FullProduct }) {
+export function ProductFormPage({
+  product,
+  customDefaults,
+}: {
+  product?: FullProduct;
+  customDefaults?: {
+    offeredDefault: boolean;
+    surchargeKind: "NONE" | "PERCENT" | "FLAT";
+    leadTimeDays: number;
+    surchargeValue: number;
+    returnable: boolean;
+  };
+}) {
   const router = useRouter();
   const mode = product ? "edit" : "create";
-  const defaults = useMemo(() => (product ? mapProductToForm(product) : defaultCreate()), [product]);
+  const defaults = useMemo(
+    () => (product ? mapProductToForm(product) : defaultCreate(customDefaults)),
+    [product, customDefaults],
+  );
 
   const form = useForm<ProductAdminInput>({
     resolver: zodResolver(productAdminSchema) as Resolver<ProductAdminInput>,
@@ -148,6 +186,7 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
     name: "colors",
   });
 
+  const [libraryFields, setLibraryFields] = useState<{ id: string; key: string; label: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [reuploadingId, setReuploadingId] = useState<string | null>(null);
@@ -160,6 +199,15 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
   const isOnSaleWatch = form.watch("isOnSale");
   const variantsWatch = form.watch("variants");
   const bundleIds = form.watch("bundleProductIds");
+  const customOfferedWatch = form.watch("customOffered");
+  const measurementIds = form.watch("measurementFieldIds") ?? [];
+
+  useEffect(() => {
+    void fetch("/api/admin/measurement-fields")
+      .then((r) => r.json())
+      .then((j: { items?: { id: string; key: string; label: string }[] }) => setLibraryFields(j.items ?? []))
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     if (bundleSearch.trim().length < 2) {
@@ -804,6 +852,119 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
                 Updated {new Date(product.updatedAt).toLocaleString()}
               </p>
             )}
+          </section>
+
+          <section className="rounded-sm border border-sand bg-canvas p-6">
+            <h2 className="font-display text-lg text-gold">Custom measurements</h2>
+            <p className="mt-1 text-xs text-[#A8A8A4]">
+              Made to order. Does not take stock. Stay available when sizes sell out.
+            </p>
+            <Controller
+              control={form.control}
+              name="customOffered"
+              render={({ field }) => (
+                <label className="mt-3 flex justify-between gap-2 text-sm text-charcoal">
+                  Offer custom on this piece
+                  <input type="checkbox" checked={Boolean(field.value)} onChange={(e) => field.onChange(e.target.checked)} />
+                </label>
+              )}
+            />
+            {customOfferedWatch ? (
+              <div className="mt-4 space-y-3 text-sm text-charcoal">
+                <label className="block text-xs uppercase text-[#A8A8A4]">
+                  Surcharge
+                  <select
+                    {...form.register("customSurchargeKind")}
+                    className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
+                  >
+                    <option value="">Use store default</option>
+                    <option value="NONE">None</option>
+                    <option value="PERCENT">Percent</option>
+                    <option value="FLAT">Flat ₦</option>
+                  </select>
+                </label>
+                <label className="block text-xs uppercase text-[#A8A8A4]">
+                  Surcharge value
+                  <input
+                    type="number"
+                    step="0.01"
+                    {...form.register("customSurchargeValue")}
+                    className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
+                  />
+                </label>
+                <label className="block text-xs uppercase text-[#A8A8A4]">
+                  Lead time (days)
+                  <input
+                    type="number"
+                    {...form.register("customLeadTimeDays")}
+                    className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
+                    placeholder="Store default"
+                  />
+                </label>
+                <Controller
+                  control={form.control}
+                  name="customReturnable"
+                  render={({ field }) => (
+                    <label className="flex justify-between gap-2">
+                      Returnable
+                      <input
+                        type="checkbox"
+                        checked={Boolean(field.value)}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                    </label>
+                  )}
+                />
+                <p className="text-[11px] text-[#A8A8A4]">Leave returnable off. A custom garment cannot be worn by anyone else.</p>
+                <p className="text-xs uppercase text-[#A8A8A4]">Fields for this piece</p>
+                <ul className="space-y-2">
+                  {libraryFields.map((f) => {
+                    const selected = measurementIds.find((m) => m.fieldId === f.id);
+                    return (
+                      <li key={f.id} className="flex items-center justify-between gap-2">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(selected)}
+                            onChange={(e) => {
+                              const cur = form.getValues("measurementFieldIds") ?? [];
+                              if (e.target.checked) {
+                                form.setValue("measurementFieldIds", [
+                                  ...cur,
+                                  { fieldId: f.id, required: true, sortOrder: cur.length },
+                                ]);
+                              } else {
+                                form.setValue(
+                                  "measurementFieldIds",
+                                  cur.filter((m) => m.fieldId !== f.id),
+                                );
+                              }
+                            }}
+                          />
+                          {f.label}
+                        </label>
+                        {selected ? (
+                          <label className="flex items-center gap-1 text-xs">
+                            Required
+                            <input
+                              type="checkbox"
+                              checked={selected.required}
+                              onChange={(e) => {
+                                const cur = form.getValues("measurementFieldIds") ?? [];
+                                form.setValue(
+                                  "measurementFieldIds",
+                                  cur.map((m) => (m.fieldId === f.id ? { ...m, required: e.target.checked } : m)),
+                                );
+                              }}
+                            />
+                          </label>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ) : null}
           </section>
 
           <section className="rounded-sm border border-sand bg-canvas p-6">

@@ -15,6 +15,7 @@ import { mapListVariant, mapProductToListItem } from "@/lib/map-product-list-ite
 import { getSetting } from "@/lib/settings";
 import { bespokeFromNGN, derivedCatalogMinNGN } from "@/lib/pricing";
 import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
+import { getProductCustomContext } from "@/lib/custom-context";
 
 
 const ReviewsSection = nextDynamic(() => import("@/components/product/ReviewsSection").then((m) => ({ default: m.ReviewsSection })), {
@@ -155,6 +156,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         await getSetting("bespoke_from_markup"),
       )
     : null;
+  const customCtx = await getProductCustomContext(product.id);
 
   return (
     <>
@@ -186,6 +188,13 @@ export default async function ProductPage({ params }: { params: { slug: string }
         reviewCount={reviewCount}
         freeLagosAboveNGN={lagosLoc?.freeAboveNGN ?? null}
         bespokeFromNGN={bespokeFrom}
+        customOffered={customCtx?.policy.offered ?? product.customOffered}
+        customFields={customCtx?.fields ?? []}
+        customLeadTimeDays={customCtx?.policy.leadTimeDays ?? 21}
+        customReturnable={customCtx?.policy.returnable ?? false}
+        customSurchargeKind={customCtx?.policy.surchargeKind ?? "NONE"}
+        customSurchargeValue={customCtx?.policy.surchargeValue ?? 0}
+        previousCm={customCtx?.previousCm ?? {}}
       />
       <div className="mx-auto max-w-site px-4">
         <ReviewsSection

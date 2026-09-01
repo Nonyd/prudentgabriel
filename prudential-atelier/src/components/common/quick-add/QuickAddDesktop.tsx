@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import type { QuickAddPhase } from "@/lib/quick-add";
 import { QuickAddCta } from "@/components/common/quick-add/QuickAddCta";
 import { QuickAddSizeRow } from "@/components/common/quick-add/QuickAddSizeRow";
+import { standardVariants } from "@/lib/custom-size";
 import type { ProductListItem } from "@/types/product";
 
 export function QuickAddDesktopChrome({
@@ -78,11 +79,20 @@ export function QuickAddDesktopSizes({
       onClick={(e) => e.stopPropagation()}
     >
       <QuickAddSizeRow
-        variants={product.variants}
+        variants={standardVariants(product.variants)}
         selectedId={variantId}
         onSelect={onSelectSize}
         autoFocus={Boolean(autoFocus && phase === "sizes")}
       />
+      {product.customOffered ? (
+        <p className="mt-3 font-body text-[11px] leading-5 text-charcoal-mid">
+          Made to your measurements is available on the{" "}
+          <a href={`/shop/${product.slug}`} className="text-choc underline">
+            product page
+          </a>
+          .
+        </p>
+      ) : null}
     </div>
   );
 }

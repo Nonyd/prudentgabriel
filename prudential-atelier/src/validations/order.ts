@@ -42,18 +42,30 @@ export const checkoutSchema = z.object({
   guestPhone: z.string().optional(),
   shippingConsent: z.boolean().optional(),
   shippingConsentText: z.string().optional(),
+  customReturnConsent: z.boolean().optional(),
   preferredContactMethod: z.enum(["WHATSAPP", "CALL", "EMAIL"]).optional(),
   paymentRef: z.string().regex(/^PA-ORDER-[A-Z0-9-]+$/i).optional(),
 });
 
 export const guestCartLineSchema = z.object({
   productId: z.string().min(1),
-  variantId: z.string().min(1),
+  variantId: z.string().min(1).optional().nullable(),
   quantity: z.number().int().positive(),
-  size: z.string().min(1),
+  size: z.string().min(1).optional(),
   color: z.string().optional(),
   colorHex: z.string().optional(),
   colorId: z.string().optional(),
+  sizeMode: z.enum(["STANDARD", "CUSTOM"]).optional().default("STANDARD"),
+  measurements: z
+    .array(
+      z.object({
+        key: z.string().min(1),
+        value: z.number(),
+        unit: z.enum(["cm", "in"]),
+      }),
+    )
+    .optional(),
+  typedUnit: z.enum(["cm", "in"]).optional(),
 });
 
 export const orderCreateBodySchema = checkoutSchema.extend({

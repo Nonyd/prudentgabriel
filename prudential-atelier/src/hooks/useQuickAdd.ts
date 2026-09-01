@@ -8,6 +8,7 @@ import {
   quickAddCtaLabel,
   stockGuardMessage,
 } from "@/lib/quick-add";
+import { standardVariants } from "@/lib/custom-size";
 import { displayAmountInCurrency, effectiveUnitNGN, variantAmountInCurrency } from "@/lib/pricing";
 import { useBagActions } from "@/hooks/useBagActions";
 import { usePrefersReducedMotion } from "@/hooks/useMediaQuery";
@@ -35,7 +36,8 @@ export function useProductQuickAdd(
   const markFail = useQuickAddStore((s) => s.fail);
 
   const isOpen = storeProductId === product.id && phase !== "idle";
-  const soldOut = !hasPurchasableSize(product.variants);
+  const sizesSoldOut = !hasPurchasableSize(standardVariants(product.variants));
+  const soldOut = sizesSoldOut && !product.customOffered;
   const activePhase: QuickAddPhase = isOpen ? phase : "idle";
   const activeVariantId = isOpen ? variantId : null;
   const activeError = isOpen ? error : null;

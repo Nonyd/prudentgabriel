@@ -117,7 +117,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const nextStatus = parsed.data.status;
   if (nextStatus !== undefined && nextStatus !== order.status) {
-    if (!canTransitionOrder(order.status, nextStatus, { kind: order.shippingMethodKind })) {
+    if (!canTransitionOrder(order.status, nextStatus, {
+      kind: order.shippingMethodKind,
+      fulfilmentKind: order.fulfilmentKind,
+    })) {
       return NextResponse.json({ error: "Invalid status transition" }, { status: 400 });
     }
   }

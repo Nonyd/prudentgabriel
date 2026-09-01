@@ -12,6 +12,10 @@ export type OrderItemLine = {
   color?: string;
   qty: number;
   priceNGN: number;
+  custom?: boolean;
+  measurements?: string[];
+  leadTimeDays?: number;
+  returnable?: boolean;
 };
 
 type OrderConfirmationEmailProps = {
@@ -29,6 +33,8 @@ type OrderConfirmationEmailProps = {
   dduDisclosure?: string;
   quotePending?: boolean;
   quotePendingText?: string;
+  customLeadDays?: number | null;
+  customReturnNote?: string | null;
 };
 
 export default function OrderConfirmationEmail({
@@ -46,10 +52,19 @@ export default function OrderConfirmationEmail({
   dduDisclosure,
   quotePending,
   quotePendingText,
+  customLeadDays,
+  customReturnNote,
 }: OrderConfirmationEmailProps) {
   const addr = addressSnapshot ?? {};
   const line = (i: OrderItemLine) => {
-    const bits = [i.name, `Size ${i.size}`, i.color ? i.color : null, `×${i.qty}`].filter(Boolean).join(" · ");
+    const bits = [
+      i.name,
+      i.custom ? "Made to your measurements" : `Size ${i.size}`,
+      i.color ? i.color : null,
+      `×${i.qty}`,
+    ]
+      .filter(Boolean)
+      .join(" · ");
     return `${bits} — ₦${Math.round(i.priceNGN * i.qty).toLocaleString("en-NG")}`;
   };
 
@@ -71,9 +86,14 @@ export default function OrderConfirmationEmail({
       </Section>
       <Section style={{ marginTop: 24 }}>
         {items.map((i, idx) => (
-          <Text key={idx} style={{ margin: "8px 0", fontSize: 14, color: "#333" }}>
-            {line(i)}
-          </Text>
+          <div key={idx}>
+            <Text style={{ margin: "8px 0 0", fontSize: 14, color: "#333" }}>{line(i)}</Text>
+            {i.measurements?.length ? (
+              <Text style={{ margin: "0 0 8px", fontSize: 13, color: "#664c2a", lineHeight: 1.5 }}>
+                {i.measurements.join(" · ")}
+              </Text>
+            ) : null}
+          </div>
         ))}
       </Section>
       <Hr style={{ borderColor: "#e8e4dc" }} />
@@ -135,6 +155,14 @@ export default function OrderConfirmationEmail({
           {quotePendingText ??
             "We'll contact you once your piece is packed to confirm the courier and cost. You have paid for the garment only."}
         </Text>
+      ) : null}
+      {customLeadDays ? (
+        <Text style={{ marginTop: 16, fontSize: 14 }}>
+          Made-to-order lead time: about {customLeadDays} day{customLeadDays === 1 ? "" : "s"} before dispatch.
+        </Text>
+      ) : null}
+      {customReturnNote ? (
+        <Text style={{ marginTop: 8, fontSize: 13, color: "#664c2a", lineHeight: 1.5 }}>{customReturnNote}</Text>
       ) : null}
       {estimatedDays ? (
         <Text style={{ marginTop: 16, fontSize: 14 }}>Estimated delivery: {estimatedDays}</Text>

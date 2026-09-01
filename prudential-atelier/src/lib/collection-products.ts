@@ -53,6 +53,7 @@ export function mapProductToListItemWithMeta(p: CollectionListProduct): Collecti
     variants: p.variants.map(mapListVariant),
     colors: p.colors,
     _count: p._count,
+    customOffered: p.customOffered,
     createdAt: p.createdAt.toISOString(),
   };
 }

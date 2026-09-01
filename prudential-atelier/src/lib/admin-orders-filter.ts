@@ -6,6 +6,8 @@ export const REFUND_REQUIRED_ATTENTION = "refund-required";
 export const QUOTE_PENDING_ATTENTION = "quote-pending";
 /** Every quote-pending order, including those not yet packed. */
 export const QUOTE_PENDING_ALL_ATTENTION = "quote-pending-all";
+/** Guest custom (made-to-order) — call before cutting. */
+export const GUEST_CUSTOM_ATTENTION = "guest-custom";
 
 export function isRefundRequiredOrder(row: {
   paymentStatus: PaymentStatus | string;
@@ -36,6 +38,12 @@ export function applyOrderAttention(
     return {
       ...where,
       shippingQuoteStatus: "QUOTE_PENDING",
+    };
+  }
+  if (attention === GUEST_CUSTOM_ATTENTION) {
+    return {
+      ...where,
+      guestCustom: true,
     };
   }
   return where;
