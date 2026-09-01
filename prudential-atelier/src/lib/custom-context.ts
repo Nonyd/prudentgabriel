@@ -32,7 +32,7 @@ export async function getProductCustomContext(productId: string) {
     sortOrder: pm.sortOrder,
   }));
 
-  let previousCm: Record<string, number> = {};
+  const previousCm: Record<string, number> = {};
   const session = await auth();
   if (session?.user?.id) {
     const profile = await prisma.clientProfile.findUnique({

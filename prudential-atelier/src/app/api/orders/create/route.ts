@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
   }
 
   const fx = await getLockedFx();
-  let lines: Line[] = [];
+  const lines: Line[] = [];
 
   const productPriceSelect = {
     id: true,

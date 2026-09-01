@@ -665,12 +665,15 @@ function instrumentFingerprint(row: { gatewayPayload: Prisma.JsonValue | null })
 
 /** @deprecated Referral points are awarded on first paid order, never on signup. */
 export async function awardReferralPoints(
-  _referrerId: string,
-  _newUserId: string,
-  _tx: Pick<PrismaClient, "user" | "pointsTransaction">,
-  _points?: { referrer: number; newUser: number },
+  referrerId: string,
+  newUserId: string,
+  tx: Pick<PrismaClient, "user" | "pointsTransaction">,
+  points?: { referrer: number; newUser: number },
 ): Promise<void> {
-  return;
+  void referrerId;
+  void newUserId;
+  void tx;
+  void points;
 }
 
 export function pointsPaymentReference(orderNumber: string): string {

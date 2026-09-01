@@ -5,6 +5,7 @@ import { PaymentStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderTimeline } from "@/components/account/OrderTimeline";
+import { CustomerOrderDeleteButton } from "@/components/account/CustomerOrderDeleteButton";
 import { formatSnapshotForDisplay, parseSnapshot } from "@/lib/custom-size";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
