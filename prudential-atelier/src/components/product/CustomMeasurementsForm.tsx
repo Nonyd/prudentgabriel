@@ -39,20 +39,29 @@ export function CustomMeasurementsForm({
   };
 
   return (
-    <div className="mt-6 space-y-4 border border-sand bg-ivory/60 p-4">
-      <p className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-choc">
-        Made to your measurements
-      </p>
-      <p className="font-body text-[13px] leading-5 text-charcoal-mid">{CUSTOM_LEAD_COPY(leadTimeDays)}</p>
+    <div
+      id="custom-measurements"
+      className="mt-5 space-y-5 border-2 border-choc bg-[#f7f2ec] p-5 md:p-6"
+    >
+      <div>
+        <p className="font-display text-2xl text-choc">Your measurements</p>
+        <p className="mt-2 font-body text-base leading-7 text-charcoal">
+          {CUSTOM_LEAD_COPY(leadTimeDays)} Enter each figure carefully — this is what the workroom cuts from.
+        </p>
+      </div>
       {!returnable ? (
-        <p className="font-body text-[13px] leading-5 text-choc">{CUSTOM_RETURNS_COPY}</p>
+        <p className="border border-[#E8D5B0] bg-white px-3 py-2.5 font-body text-base leading-6 text-choc">
+          {CUSTOM_RETURNS_COPY}
+        </p>
       ) : null}
-      {surchargeLabel ? <p className="font-body text-[12px] text-charcoal-mid">{surchargeLabel}</p> : null}
+      {surchargeLabel ? (
+        <p className="font-body text-base text-charcoal-mid">{surchargeLabel}</p>
+      ) : null}
 
-      <div className="flex items-center gap-3">
-        <p className="font-body text-[10px] font-medium uppercase tracking-[0.14em] text-text-light">Unit</p>
+      <div className="flex flex-wrap items-center gap-4">
+        <p className="font-body text-sm font-medium text-charcoal">Unit</p>
         {(["cm", "in"] as const).map((u) => (
-          <label key={u} className="inline-flex items-center gap-1 font-body text-sm text-charcoal">
+          <label key={u} className="inline-flex items-center gap-2 font-body text-base text-charcoal">
             <input type="radio" checked={unit === u} onChange={() => onUnitChange(u)} />
             {u === "cm" ? "Centimetres" : "Inches"}
           </label>
@@ -63,16 +72,16 @@ export function CustomMeasurementsForm({
         <button
           type="button"
           onClick={applyPrevious}
-          className="font-body text-[11px] font-medium uppercase tracking-wide text-choc underline"
+          className="font-body text-base text-choc underline underline-offset-4"
         >
-          {usePrevious ? "Previous measurements applied" : "Use my saved measurements"}
+          {usePrevious ? "Saved measurements applied" : "Use my saved measurements"}
         </button>
       ) : null}
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         {fields.map((f) => (
           <label key={f.key} className="block">
-            <span className="font-body text-[10px] font-medium uppercase tracking-[0.14em] text-text-light">
+            <span className="font-body text-base font-medium text-choc">
               {f.label}
               {f.required ? " *" : ""}
             </span>
@@ -83,10 +92,10 @@ export function CustomMeasurementsForm({
               min={0}
               value={values[f.key] ?? ""}
               onChange={(e) => onChange(f.key, e.target.value)}
-              className="mt-1 w-full border border-border bg-white px-3 py-2 font-body text-sm text-charcoal"
+              className="mt-1.5 w-full border border-choc/30 bg-white px-3 py-3 font-body text-lg text-choc outline-none focus:border-choc"
             />
             {f.helpText ? (
-              <span className="mt-1 block font-body text-[12px] leading-5 text-charcoal-mid">{f.helpText}</span>
+              <span className="mt-1.5 block font-body text-sm leading-6 text-charcoal-mid">{f.helpText}</span>
             ) : null}
           </label>
         ))}

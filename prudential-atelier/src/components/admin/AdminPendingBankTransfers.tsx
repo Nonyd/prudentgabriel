@@ -23,6 +23,7 @@ type PendingItem = {
   } | null;
   receiptUrl: string;
   submittedAt: string;
+  href?: string;
 };
 
 export function AdminPendingBankTransfers() {
@@ -109,7 +110,18 @@ export function AdminPendingBankTransfers() {
     );
   }
 
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    return (
+      <div className="mt-8 border border-sand bg-bg-card p-6">
+        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6B6B68]">
+          Pending bank transfers
+        </p>
+        <p className="mt-2 font-body text-base text-[#6B6B68]">
+          No receipts waiting. When a customer uploads proof, it appears here and on the order page.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -141,7 +153,15 @@ export function AdminPendingBankTransfers() {
                       </span>
                     ) : null}
                   </td>
-                  <td className="px-2 py-3 font-medium">{item.ref}</td>
+                  <td className="px-2 py-3 font-medium">
+                    {item.href ? (
+                      <a href={item.href} className="text-choc underline underline-offset-2">
+                        {item.ref}
+                      </a>
+                    ) : (
+                      item.ref
+                    )}
+                  </td>
                   <td className="px-2 py-3 text-xs text-[#6B6B68]">
                     {item.clientName}
                     <br />

@@ -7,6 +7,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { initializeTransaction } from "@/lib/payments/paystack";
 import { canAcceptRtwPayment, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
 import { generatePaymentReference } from "@/lib/payments/index";
+import { catchPaymentInit } from "@/lib/payments/catch-init";
 
 const bodySchema = z.object({
   orderId: z.string().min(1),
@@ -28,48 +29,50 @@ export async function POST(req: NextRequest) {
   }
 
   const { orderId, guestEmail } = parsed.data;
-  const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order || !canAcceptRtwPayment(order)) {
-    return NextResponse.json({ error: "Order not found" }, { status: 404 });
-  }
-
-  if (order.userId) {
-    if (session?.user?.id !== order.userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  return catchPaymentInit(orderId, async () => {
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order || !canAcceptRtwPayment(order)) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
-  } else {
-    const ge = guestEmail?.trim().toLowerCase();
-    if (!ge || ge !== (order.guestEmail ?? "").toLowerCase()) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    if (order.userId) {
+      if (session?.user?.id !== order.userId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } else {
+      const ge = guestEmail?.trim().toLowerCase();
+      if (!ge || ge !== (order.guestEmail ?? "").toLowerCase()) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
-  }
 
-  const email = session?.user?.email ?? order.guestEmail ?? guestEmail;
-  if (!email) {
-    return NextResponse.json({ error: "Missing email" }, { status: 400 });
-  }
+    const email = session?.user?.email ?? order.guestEmail ?? guestEmail;
+    if (!email) {
+      return NextResponse.json({ error: "Missing email" }, { status: 400 });
+    }
 
-  const chargeNGN = rtwChargeAmountNGN(order);
-  if (chargeNGN < 1) {
-    return NextResponse.json({ error: "This order is already paid" }, { status: 400 });
-  }
-  const reference =
-    order.paymentStatus === PaymentStatus.PAID ? generatePaymentReference("BAL") : order.orderNumber;
-  const appUrl = getPublicAppUrl();
-  const callbackUrl = `${appUrl}/api/payment/paystack/verify?orderId=${encodeURIComponent(orderId)}`;
+    const chargeNGN = rtwChargeAmountNGN(order);
+    if (chargeNGN < 1) {
+      return NextResponse.json({ error: "This order is already paid" }, { status: 400 });
+    }
+    const reference =
+      order.paymentStatus === PaymentStatus.PAID ? generatePaymentReference("BAL") : order.orderNumber;
+    const appUrl = getPublicAppUrl();
+    const callbackUrl = `${appUrl}/api/payment/paystack/verify?orderId=${encodeURIComponent(orderId)}`;
 
-  const init = await initializeTransaction({
-    email,
-    amountKobo: Math.round(chargeNGN * 100),
-    reference,
-    callbackUrl,
-    metadata: { orderId: order.id, orderNumber: order.orderNumber },
+    const init = await initializeTransaction({
+      email,
+      amountKobo: Math.round(chargeNGN * 100),
+      reference,
+      callbackUrl,
+      metadata: { orderId: order.id, orderNumber: order.orderNumber },
+    });
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { paymentRef: init.reference },
+    });
+
+    return NextResponse.json({ authorizationUrl: init.authorizationUrl, reference: init.reference });
   });
-
-  await prisma.order.update({
-    where: { id: order.id },
-    data: { paymentRef: init.reference },
-  });
-
-  return NextResponse.json({ authorizationUrl: init.authorizationUrl, reference: init.reference });
 }

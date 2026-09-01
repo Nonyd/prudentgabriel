@@ -127,14 +127,19 @@ export function PaymentMethodSelector({
 
   return (
     <div>
-      <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Payment</p>
+      <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-lightbr">Payment</p>
       <div className="mt-4 space-y-2">
         {loaded && gateways.length === 0 ? (
           <p className="font-body text-sm text-text-mid">
             No payment methods are available right now. Please try again later or contact the atelier.
           </p>
         ) : null}
-        {!loaded ? <p className="font-body text-sm text-text-mid">Loading payment methods…</p> : null}
+        {!loaded ? (
+          <div className="space-y-2" aria-busy="true" aria-label="Loading payment methods">
+            <div className="h-[4.5rem] animate-pulse rounded-sm bg-sand/70" />
+            <div className="h-[4.5rem] animate-pulse rounded-sm bg-sand/50" />
+          </div>
+        ) : null}
         {gateways.map((gw) => {
           if (gw === "BANK_TRANSFER") {
             const isSelected = selected === "BANK_TRANSFER";
@@ -161,10 +166,10 @@ export function PaymentMethodSelector({
                   <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-choc" strokeWidth={1.25} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="font-body text-sm text-choc">Direct Bank Transfer</p>
+                      <p className="font-body text-base text-choc">Direct Bank Transfer</p>
                       <span className="font-sans text-[10px] uppercase text-lightbr">{currency}</span>
                     </div>
-                    <p className="mt-0.5 font-body text-xs text-text-light">Upload proof of payment</p>
+                    <p className="mt-0.5 font-body text-sm text-text-light">Upload proof of payment</p>
                   </div>
                 </button>
                 {isSelected && bank ? (
@@ -239,12 +244,12 @@ export function PaymentMethodSelector({
               ) : null}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="font-body text-sm text-choc">{meta.title}</p>
+                  <p className="font-body text-base text-choc">{meta.title}</p>
                   {badge ? (
                     <span className="font-sans text-[10px] uppercase text-lightbr">{badge}</span>
                   ) : null}
                 </div>
-                <p className="mt-0.5 font-body text-xs text-text-light">{meta.subtitle}</p>
+                <p className="mt-0.5 font-body text-sm text-text-light">{meta.subtitle}</p>
                 {gw !== "MONNIFY" ? (
                   <GatewayPaymentMarks
                     gateway={gw}

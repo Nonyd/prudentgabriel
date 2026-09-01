@@ -6,6 +6,7 @@ import {
   getMonnifySecret,
 } from "@/lib/payments/config";
 import { timingSafeEqualString } from "@/lib/crypto-compare";
+import { parseJsonResponse } from "@/lib/http/read-json";
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
@@ -26,11 +27,11 @@ export async function getMonnifyToken(): Promise<string> {
     headers: { Authorization: `Basic ${basic}` },
   });
 
-  const json = (await res.json()) as {
+  const json = await parseJsonResponse<{
     requestSuccessful?: boolean;
     responseMessage?: string;
     responseBody?: { accessToken?: string; expiresIn?: number };
-  };
+  }>(res, "Monnify");
 
   if (!res.ok || !json.requestSuccessful || !json.responseBody?.accessToken) {
     throw new Error(json.responseMessage ?? "Monnify auth failed");
@@ -76,11 +77,11 @@ export async function initializeTransaction(params: {
     }),
   });
 
-  const json = (await res.json()) as {
+  const json = await parseJsonResponse<{
     requestSuccessful?: boolean;
     responseMessage?: string;
     responseBody?: { checkoutUrl?: string; transactionReference?: string };
-  };
+  }>(res, "Monnify");
 
   if (!res.ok || !json.requestSuccessful || !json.responseBody?.checkoutUrl) {
     throw new Error(json.responseMessage ?? "Monnify init failed");
@@ -105,7 +106,7 @@ export async function verifyTransaction(paymentReference: string): Promise<{
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  const json = (await res.json()) as {
+  const json = await parseJsonResponse<{
     requestSuccessful?: boolean;
     responseMessage?: string;
     responseBody?: {
@@ -115,7 +116,7 @@ export async function verifyTransaction(paymentReference: string): Promise<{
       currencyCode?: string;
       paymentReference?: string;
     };
-  };
+  }>(res, "Monnify");
 
   if (!res.ok || !json.requestSuccessful || !json.responseBody) {
     throw new Error(json.responseMessage ?? "Monnify verify failed");

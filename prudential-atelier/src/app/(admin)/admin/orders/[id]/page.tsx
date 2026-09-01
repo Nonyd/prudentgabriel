@@ -9,6 +9,20 @@ import { ShippingQuotePanel } from "@/components/admin/ShippingQuotePanel";
 import { orderWhatsAppUrl, phoneFromOrder } from "@/lib/shipping/whatsapp";
 import { OrderMeasurementsBlock } from "@/components/admin/OrderMeasurementsBlock";
 import { PrintGuideButton } from "@/components/admin/PrintGuideButton";
+import { AdminBankTransferProof } from "@/components/admin/AdminBankTransferProof";
+
+function formatAddress(snap: Record<string, string>) {
+  const lines = [
+    [snap.firstName, snap.lastName].filter(Boolean).join(" "),
+    snap.line1,
+    snap.line2,
+    [snap.city, snap.state].filter(Boolean).join(", "),
+    snap.country,
+    snap.postalCode,
+    snap.phone,
+  ].filter((v) => v && String(v).trim());
+  return lines.join("\n");
+}
 
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -52,6 +66,16 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           <PrintGuideButton />
         </div>
       </div>
+
+      <AdminBankTransferProof
+        orderId={order.id}
+        orderNumber={order.orderNumber}
+        paymentStatus={order.paymentStatus}
+        paymentGateway={order.paymentGateway}
+        receiptUrl={order.paymentReceiptUrl}
+        amountNGN={order.total}
+        currency={String(order.currency)}
+      />
 
       <AdminOrderToolbar
         order={{
@@ -194,7 +218,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       {snap && (
         <div className="rounded-sm border border-sand bg-canvas p-6 text-sm text-charcoal">
           <h2 className="font-display text-lg text-gold">Address</h2>
-          <pre className="mt-2 whitespace-pre-wrap font-body text-xs text-[#A8A8A4]">{JSON.stringify(snap, null, 2)}</pre>
+          <pre className="mt-2 whitespace-pre-wrap font-body text-base leading-7 text-charcoal">{formatAddress(snap)}</pre>
         </div>
       )}
     </div>

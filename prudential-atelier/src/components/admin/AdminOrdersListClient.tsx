@@ -33,6 +33,8 @@ function gatewayBadgeClass(g: PaymentGateway | null): string {
       return "bg-[#F0E8FF] text-[#6B3FAD]";
     case "MONNIFY":
       return "bg-[#FFF3E0] text-[#C45E0A]";
+    case "BANK_TRANSFER":
+      return "bg-[#F5F0E8] text-[#442913]";
     default:
       return "bg-[#FAFAFA] text-[#A8A8A4]";
   }
@@ -213,7 +215,9 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                 className={
                   o.paymentStatus === "PAID" && o.status === "CANCELLED"
                     ? "border-b border-[#F5F5F3] bg-[#F8F1E8] hover:bg-[#F3E6D8]"
-                    : "border-b border-[#F5F5F3] hover:bg-[#FAFAFA]"
+                    : o.paymentGateway === "BANK_TRANSFER" && o.paymentStatus === "PENDING"
+                      ? "border-b border-[#F5F5F3] bg-[#FFF8F0] hover:bg-[#FFF1E4]"
+                      : "border-b border-[#F5F5F3] hover:bg-[#FAFAFA]"
                 }
               >
                 <td className="p-3">
@@ -231,7 +235,11 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                 <td className="hidden p-3 text-xs lg:table-cell">
                   <GatewayPill gateway={o.paymentGateway} />
                 </td>
-                <td className="hidden p-3 text-xs md:table-cell">{o.paymentStatus}</td>
+                <td className="hidden p-3 text-xs md:table-cell">
+                  {o.paymentGateway === "BANK_TRANSFER" && o.paymentStatus === "PENDING"
+                    ? "Awaiting proof"
+                    : o.paymentStatus}
+                </td>
                 <td className="p-3 text-xs">
                   {o.paymentStatus === "PAID" && o.status === "CANCELLED" ? (
                     <span className="font-medium text-choc">Refund required</span>
@@ -243,7 +251,9 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                 <td className="p-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Link href={`/admin/orders/${o.id}`} className="font-body text-[11px] text-olive hover:underline">
-                      View
+                      {o.paymentGateway === "BANK_TRANSFER" && o.paymentStatus === "PENDING"
+                        ? "Review proof"
+                        : "View"}
                     </Link>
                     {wa ? (
                       <a

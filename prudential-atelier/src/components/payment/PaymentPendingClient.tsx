@@ -30,7 +30,7 @@ export function PaymentPendingClient() {
       <div className="text-center">
         <Clock3 className="mx-auto h-14 w-14 text-[var(--gold)]" strokeWidth={1.25} />
         <h1 className="mt-6 font-display text-3xl text-[var(--chocolate)]">Payment pending</h1>
-        <p className="mt-3 font-body text-sm text-[var(--text-mid)]">
+        <p className="mt-3 font-body text-base leading-7 text-[var(--text-mid)]">
           We received your bank transfer details{reference ? ` for ${reference}` : ""}. Confirmation usually takes
           2–4 hours on business days.
         </p>

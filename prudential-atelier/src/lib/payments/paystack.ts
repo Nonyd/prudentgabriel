@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { getPaystackSecret } from "@/lib/payments/config";
 import { timingSafeEqualString } from "@/lib/crypto-compare";
+import { parseJsonResponse } from "@/lib/http/read-json";
 
 export interface PaystackInitResult {
   authorizationUrl: string;
@@ -33,11 +34,11 @@ export async function initializeTransaction(params: {
     }),
   });
 
-  const json = (await res.json()) as {
+  const json = await parseJsonResponse<{
     status?: boolean;
     message?: string;
     data?: { authorization_url: string; access_code: string; reference: string };
-  };
+  }>(res, "Paystack");
 
   if (!res.ok || !json.status || !json.data) {
     throw new Error(json.message ?? "Paystack initialize failed");
@@ -64,7 +65,7 @@ export async function verifyTransaction(reference: string): Promise<{
     headers: { Authorization: `Bearer ${secret}` },
   });
 
-  const json = (await res.json()) as {
+  const json = await parseJsonResponse<{
     status?: boolean;
     message?: string;
     data?: {
@@ -74,7 +75,7 @@ export async function verifyTransaction(reference: string): Promise<{
       reference: string;
       metadata?: Record<string, string | undefined>;
     };
-  };
+  }>(res, "Paystack");
 
   if (!res.ok || !json.status || !json.data) {
     throw new Error(json.message ?? "Paystack verify failed");

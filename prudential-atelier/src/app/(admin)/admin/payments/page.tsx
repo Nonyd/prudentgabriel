@@ -197,8 +197,8 @@ export default async function AdminPaymentsPage() {
     <div>
       <h1 className="font-display text-2xl text-ink">Payments</h1>
       <p className="mt-2 max-w-2xl font-body text-sm text-[#6B6B68]">
-        Recent checkout and fee activity: shop orders, consultation payments, and bespoke agreements (including
-        online balance collection).
+        Recent checkout and fee activity. Bank transfer receipts can be approved here or on the order
+        itself — open the order number to see the proof.
       </p>
 
       <AdminPendingBankTransfers />

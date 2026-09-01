@@ -14,10 +14,12 @@ import type { AddressInput } from "@/validations/order";
 import { OrderSummary } from "@/components/checkout/OrderSummary";
 import { StripePayBlock } from "@/components/checkout/StripePayBlock";
 import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
+import { PrudentPointsPayOption } from "@/components/checkout/PrudentPointsPayOption";
 import type { PaymentGatewayType } from "@/lib/payments/index";
 import { formatPrice } from "@/lib/currency";
 import { extrasAmountInCurrency, cartLineAmountInCurrency } from "@/lib/pricing";
 import { clampRedemption } from "@/lib/points-value";
+import { readJsonBody, jsonErrorMessage } from "@/lib/http/read-json";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { NIGERIA_STATES } from "@/lib/geo/nigeria-states";
@@ -79,6 +81,7 @@ export function CheckoutClient() {
   } | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const [livePoints, setLivePoints] = useState<number | null>(null);
   const [pointRate, setPointRate] = useState(1);
   const [minRedemption, setMinRedemption] = useState(100);
   const [isGift, setIsGift] = useState(false);
@@ -151,6 +154,19 @@ export function CheckoutClient() {
       })
       .catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    if (status !== "authenticated") {
+      setLivePoints(null);
+      return;
+    }
+    void fetch("/api/account/wallet?limit=1")
+      .then((r) => r.json())
+      .then((j: { pointsBalance?: number }) => {
+        if (typeof j.pointsBalance === "number") setLivePoints(j.pointsBalance);
+      })
+      .catch(() => undefined);
+  }, [status]);
 
   useEffect(() => {
     if (step !== 2) return;
@@ -511,23 +527,40 @@ export function CheckoutClient() {
         }));
       }
 
-      const res = await fetch("/api/orders/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast.error(data.error ?? "Could not create order");
+      let orderId = createdOrder?.id;
+      let orderNumber = createdOrder?.number;
+      let paidWithPoints = false;
+      let outstandingNGN: number | undefined;
+
+      if (!orderId || !orderNumber) {
+        const res = await fetch("/api/orders/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          toast.error(jsonErrorMessage((data as { error?: unknown }).error, "Could not create order"));
+          setSubmitting(false);
+          return;
+        }
+        orderId = (data as { orderId: string }).orderId;
+        orderNumber = (data as { orderNumber: string }).orderNumber;
+        paidWithPoints = Boolean((data as { paidWithPoints?: boolean }).paidWithPoints);
+        outstandingNGN =
+          typeof (data as { outstandingNGN?: number }).outstandingNGN === "number"
+            ? (data as { outstandingNGN: number }).outstandingNGN
+            : undefined;
+        setCreatedOrder({ id: orderId, number: orderNumber, guestEmail: guestEmail || session?.user?.email });
+      }
+
+      if (!orderId || !orderNumber) {
+        toast.error("Could not create order");
         setSubmitting(false);
         return;
       }
 
-      const orderId = data.orderId as string;
-      const orderNumber = data.orderNumber as string;
-      setCreatedOrder({ id: orderId, number: orderNumber, guestEmail: guestEmail || session?.user?.email });
-
-      if (data.paidWithPoints || (typeof data.outstandingNGN === "number" && data.outstandingNGN <= 0.01)) {
+      if (paidWithPoints || (typeof outstandingNGN === "number" && outstandingNGN <= 0.01)) {
         useCartStore.getState().clearCart();
         const q = guestEmail ? `&email=${encodeURIComponent(guestEmail)}` : "";
         window.location.href = `/checkout/success?order=${encodeURIComponent(orderNumber)}${q}`;
@@ -544,10 +577,10 @@ export function CheckoutClient() {
             guestEmail: guestEmail || undefined,
           }),
         });
-        const btj = await bt.json();
-        if (!bt.ok) throw new Error((btj as { error?: string }).error ?? "Could not submit receipt");
+        const btj = await readJsonBody(bt);
+        if (!bt.ok) throw new Error(jsonErrorMessage(btj.error, "Could not submit receipt"));
         useCartStore.getState().clearCart();
-        window.location.href = (btj as { redirectUrl: string }).redirectUrl;
+        window.location.href = btj.redirectUrl as string;
         return;
       }
 
@@ -557,8 +590,8 @@ export function CheckoutClient() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ orderId, guestEmail: guestEmail || undefined }),
         });
-        const p = await pr.json();
-        if (!pr.ok) throw new Error(p.error);
+        const p = await readJsonBody(pr);
+        if (!pr.ok) throw new Error(jsonErrorMessage(p.error, "Could not start card payment"));
         window.location.href = p.authorizationUrl as string;
         return;
       }
@@ -568,8 +601,8 @@ export function CheckoutClient() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ orderId, currency, guestEmail: guestEmail || undefined }),
         });
-        const p = await pr.json();
-        if (!pr.ok) throw new Error(p.error);
+        const p = await readJsonBody(pr);
+        if (!pr.ok) throw new Error(jsonErrorMessage(p.error, "Could not start payment"));
         window.location.href = p.paymentLink as string;
         return;
       }
@@ -579,8 +612,8 @@ export function CheckoutClient() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ orderId, guestEmail: guestEmail || undefined }),
         });
-        const p = await pr.json();
-        if (!pr.ok) throw new Error(p.error);
+        const p = await readJsonBody(pr);
+        if (!pr.ok) throw new Error(jsonErrorMessage(p.error, "Could not start payment"));
         window.location.href = p.checkoutUrl as string;
         return;
       }
@@ -594,8 +627,8 @@ export function CheckoutClient() {
             guestEmail: guestEmail || undefined,
           }),
         });
-        const p = await pr.json();
-        if (!pr.ok) throw new Error(p.error);
+        const p = await readJsonBody(pr);
+        if (!pr.ok) throw new Error(jsonErrorMessage(p.error, "Could not start payment"));
         setStripeClientSecret(p.clientSecret as string);
         setStripePk((p.publishableKey as string) ?? "");
         useCartStore.getState().clearCart();
@@ -617,7 +650,7 @@ export function CheckoutClient() {
 
   const discNGN = couponResult?.valid ? couponResult.discountNGN : 0;
   const ship = shipCost ?? 0;
-  const availablePoints = session?.user?.pointsBalance ?? 0;
+  const availablePoints = livePoints ?? session?.user?.pointsBalance ?? 0;
   const clampedPts = clampRedemption({
     requested: pointsToRedeem,
     availablePoints,
@@ -1070,17 +1103,22 @@ export function CheckoutClient() {
               </div>
             )}
             <fieldset id="shipping-method">
-              <legend className="mb-2 font-medium">Shipping method</legend>
-              {shipLoading ? <p className="text-sm text-charcoal-mid">Loading…</p> : null}
+              <legend className="mb-2 font-body text-base font-medium">Shipping method</legend>
+              {shipLoading ? (
+                <div className="space-y-2" aria-busy="true" aria-label="Loading shipping methods">
+                  <div className="h-16 animate-pulse rounded-sm bg-sand/70" />
+                  <div className="h-16 animate-pulse rounded-sm bg-sand/50" />
+                </div>
+              ) : null}
               {!shipLoading && shippingOpts.length === 0 && (
-                <p className="text-sm text-charcoal-mid">Enter your city and state to see shipping options.</p>
+                <p className="font-body text-base text-charcoal-mid">Enter your city and state to see shipping options.</p>
               )}
               {shippingOpts.map((z) => (
-                <label key={z.zoneId} className="mb-2 flex cursor-pointer gap-2 rounded-sm border border-border p-3">
+                <label key={z.zoneId} className="mb-2 flex cursor-pointer gap-3 rounded-sm border border-border p-4">
                   <input type="radio" name="ship" checked={zoneId === z.zoneId} onChange={() => setZoneId(z.zoneId)} />
-                  <span className="text-sm">
+                  <span className="font-body text-base leading-6">
                     {z.zoneName} — {z.isFree ? <span className="text-gold">FREE</span> : `₦${z.costNGN.toLocaleString()}`} · {z.estimatedDays}
-                    {z.requiresConsent ? <span className="mt-1 block text-xs text-charcoal-mid">{z.description}</span> : null}
+                    {z.requiresConsent ? <span className="mt-1 block text-sm text-charcoal-mid">{z.description}</span> : null}
                   </span>
                 </label>
               ))}
@@ -1187,7 +1225,32 @@ export function CheckoutClient() {
               ))}
             </div>
             {payable > 0.01 ? (
-              <div id="payment-method">
+              <div id="payment-method" className="space-y-2">
+                <PrudentPointsPayOption
+                  isGuest={status !== "authenticated"}
+                  availablePoints={availablePoints}
+                  maxPts={maxPts}
+                  minRedemption={minRedemption}
+                  pointsToRedeem={pointsToRedeem}
+                  onChange={setPointsToRedeem}
+                  maxValueLabel={formatPrice(
+                    extrasAmountInCurrency(
+                      clampRedemption({
+                        requested: maxPts,
+                        availablePoints,
+                        subtotalNGN,
+                        discountNGN: discNGN,
+                        rateNGN: pointRate,
+                        minRedemption: 0,
+                      }).valueNGN,
+                      currency,
+                      rates,
+                    ),
+                    currency,
+                  )}
+                  remainingLabel={formatPrice(payableShopper, currency)}
+                  applied={pointsValueNGN > 0}
+                />
                 <PaymentMethodSelector
                   currency={currency}
                   businessLine="RTW"

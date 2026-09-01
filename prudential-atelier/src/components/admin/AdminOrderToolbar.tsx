@@ -156,15 +156,17 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
 
   const isPickup = order.shippingMethodKind === "PICKUP";
   const isMto = order.fulfilmentKind === "MADE_TO_ORDER" || order.fulfilmentKind === "MIXED";
+  const unpaid = order.paymentStatus !== "PAID";
   const options = (NEXT_OPTIONS[order.status] ?? []).filter((o) => {
+    if (unpaid && o.value !== "CANCELLED") return false;
     if (isPickup && o.value === "SHIPPED") return false;
     if (!isPickup && o.value === "READY_FOR_COLLECTION") return false;
     if (isMto && o.value === "PROCESSING") return false;
     if (!isMto && (o.value === "CUTTING" || o.value === "MAKING")) return false;
     return true;
   });
-  const canShip = (order.status === "PROCESSING" || order.status === "MAKING") && !isPickup;
-  const canCollect = order.status === "READY_FOR_COLLECTION";
+  const canShip = (order.status === "PROCESSING" || order.status === "MAKING") && !isPickup && !unpaid;
+  const canCollect = order.status === "READY_FOR_COLLECTION" && !unpaid;
   const outstanding = (order.balance ?? 0) > 0.01;
 
   return (
@@ -248,8 +250,13 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
       />
 
       <p className="font-label text-xs uppercase text-[#A8A8A4]">Admin</p>
+      {unpaid ? (
+        <p className="mt-2 font-body text-sm text-[#C45E0A]">
+          Payment is not approved yet. Use Proof of payment above before cutting or shipping.
+        </p>
+      ) : null}
       {outstanding ? (
-        <p className="mt-2 text-xs text-[#92660A]">Balance outstanding — cannot ship or release for collection.</p>
+        <p className="mt-2 font-body text-sm text-[#92660A]">Balance outstanding — cannot ship or release for collection.</p>
       ) : null}
       {order.collectionCode ? (
         <p className="mt-2 font-body text-sm text-ink">Collection code: {order.collectionCode}</p>

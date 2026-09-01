@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import * as Accordion from "@radix-ui/react-accordion";
 import { Button } from "@/components/ui/Button";
@@ -120,6 +120,10 @@ export function ProductDetailClient({
         ? `Select Size · ${priceLabel}`
         : `Add to bag · ${priceLabel}`;
   const color = product.colors.find((c) => c.id === colorId) ?? null;
+
+  useEffect(() => {
+    if (sizesSoldOut && customOffered) setFitMode("custom");
+  }, [sizesSoldOut, customOffered]);
 
   const productLike: ProductListItem = {
     id: product.id,
@@ -316,43 +320,55 @@ export function ProductDetailClient({
           )}
 
           {customOffered ? (
-            <div className="mb-4 flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setFitMode("standard");
-                  setBagError(null);
-                }}
-                className={`flex-1 border px-3 py-2 font-body text-[10px] font-semibold uppercase tracking-[0.14em] ${
-                  fitMode === "standard" ? "border-choc bg-choc text-cream" : "border-border text-charcoal"
-                }`}
-              >
-                Select a size
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setFitMode("custom");
-                  setVariantId(null);
-                  setBagError(null);
-                }}
-                className={`flex-1 border px-3 py-2 font-body text-[10px] font-semibold uppercase tracking-[0.14em] ${
-                  fitMode === "custom" ? "border-choc bg-choc text-cream" : "border-border text-charcoal"
-                }`}
-              >
-                Made to your measurements
-              </button>
+            <div className="mb-6">
+              <p className="mb-3 font-body text-base font-medium text-charcoal">How should this piece be made?</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFitMode("standard");
+                    setBagError(null);
+                  }}
+                  className={`min-h-[6.25rem] border-2 px-4 py-4 text-left ${
+                    fitMode === "standard" ? "border-choc bg-choc text-cream" : "border-choc/30 bg-white text-charcoal"
+                  }`}
+                >
+                  <span className="block font-body text-lg font-semibold">Standard size</span>
+                  <span className={`mt-1 block font-body text-sm leading-6 ${fitMode === "standard" ? "text-cream/85" : "text-charcoal-mid"}`}>
+                    Pick a UK size from stock.
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFitMode("custom");
+                    setVariantId(null);
+                    setBagError(null);
+                    requestAnimationFrame(() => {
+                      document.getElementById("custom-measurements")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                    });
+                  }}
+                  className={`min-h-[6.25rem] border-2 px-4 py-4 text-left ${
+                    fitMode === "custom" ? "border-choc bg-choc text-cream" : "border-choc bg-[#f7f2ec] text-charcoal"
+                  }`}
+                >
+                  <span className="block font-body text-lg font-semibold">Made to your measurements</span>
+                  <span className={`mt-1 block font-body text-sm leading-6 ${fitMode === "custom" ? "text-cream/85" : "text-charcoal"}`}>
+                    We cut this piece to the figures you enter below.
+                  </span>
+                </button>
+              </div>
             </div>
           ) : null}
 
           {fitMode === "standard" && standardSizes.length > 0 ? (
             <>
               <div className="mb-2 flex items-center justify-between">
-                <p className="font-body text-[10px] font-medium uppercase tracking-[0.14em] text-text-light">Size</p>
+                <p className="font-body text-sm font-medium uppercase tracking-[0.08em] text-charcoal">Size</p>
                 <SizeGuideModal>
                   <button
                     type="button"
-                    className="font-body text-[10px] font-medium uppercase tracking-wide text-choc underline"
+                    className="font-body text-sm text-choc underline underline-offset-4"
                   >
                     Size Guide
                   </button>
@@ -388,7 +404,7 @@ export function ProductDetailClient({
             />
           ) : null}
           {sizesSoldOut && customOffered && fitMode === "standard" ? (
-            <p className="mt-3 font-body text-[12px] leading-5 text-choc">
+            <p className="mt-3 font-body text-base leading-6 text-choc">
               Standard sizes are sold out. This piece can still be made to your measurements.
             </p>
           ) : null}

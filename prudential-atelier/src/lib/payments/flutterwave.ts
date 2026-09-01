@@ -1,5 +1,6 @@
 import { getFlutterwaveSecret, getFlutterwaveWebhookHash } from "@/lib/payments/config";
 import { timingSafeEqualString } from "@/lib/crypto-compare";
+import { parseJsonResponse } from "@/lib/http/read-json";
 
 export interface FlutterwaveInitResult {
   paymentLink: string;
@@ -41,11 +42,11 @@ export async function initializeTransaction(params: {
     body: JSON.stringify(body),
   });
 
-  const json = (await res.json()) as {
+  const json = await parseJsonResponse<{
     status?: string;
     message?: string;
     data?: { link: string };
-  };
+  }>(res, "Flutterwave");
 
   if (!res.ok || json.status !== "success" || !json.data?.link) {
     throw new Error(json.message ?? "Flutterwave initialize failed");
@@ -68,7 +69,7 @@ export async function verifyTransaction(transactionId: string): Promise<{
     headers: { Authorization: `Bearer ${secret}` },
   });
 
-  const json = (await res.json()) as {
+  const json = await parseJsonResponse<{
     status?: string;
     data?: {
       status: string;
@@ -77,7 +78,7 @@ export async function verifyTransaction(transactionId: string): Promise<{
       currency: string;
       meta?: { orderId?: string; bookingId?: string };
     };
-  };
+  }>(res, "Flutterwave");
 
   if (!res.ok || json.status !== "success" || !json.data) {
     throw new Error("Flutterwave verify failed");
