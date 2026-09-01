@@ -22,7 +22,7 @@ export function AdminShell({
   const [mobileNav, setMobileNav] = useState(false);
 
   return (
-    <div className="admin-area flex h-screen overflow-hidden bg-bg-page">
+    <div className="admin-area flex h-screen overflow-hidden bg-bg-page print:h-auto print:overflow-visible">
       {mobileNav ? (
         <button
           type="button"
@@ -32,16 +32,16 @@ export function AdminShell({
         />
       ) : null}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-[228px] shrink-0 transition-transform duration-200 md:static md:z-0 md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-[228px] shrink-0 transition-transform duration-200 print:hidden md:static md:z-0 md:translate-x-0 ${
           mobileNav ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
         <AdminSidebar session={session} badges={badges} onNavigate={() => setMobileNav(false)} />
       </div>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden print:overflow-visible">
         <AdminMaintenanceBanner isMaintenanceOn={isMaintenanceOn} />
         <AdminTopbar onOpenNav={() => setMobileNav(true)} />
-        <main className="admin-shell min-h-0 flex-1 overflow-y-auto bg-bg-page p-4 md:p-8">{children}</main>
+        <main className="admin-shell min-h-0 flex-1 overflow-y-auto bg-bg-page p-4 print:overflow-visible print:p-0 md:p-8">{children}</main>
       </div>
     </div>
   );

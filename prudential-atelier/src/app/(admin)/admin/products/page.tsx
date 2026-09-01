@@ -88,12 +88,20 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
     <div>
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-2xl text-ink">Products</h1>
-        <Link
-          href="/admin/products/new"
-          className="rounded-sm bg-wine px-4 py-2 font-label text-xs uppercase tracking-wide text-gold hover:bg-wine-hover"
-        >
-          + Add product
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/admin/products/guide"
+            className="rounded-sm border border-sand px-4 py-2 font-label text-xs uppercase tracking-wide text-gold hover:bg-gold/10"
+          >
+            How to upload
+          </Link>
+          <Link
+            href="/admin/products/new"
+            className="rounded-sm bg-wine px-4 py-2 font-label text-xs uppercase tracking-wide text-gold hover:bg-wine-hover"
+          >
+            + Add product
+          </Link>
+        </div>
       </div>
       <MigrateImagesBanner initialCount={legacyImageCount} />
       <ProductsTable

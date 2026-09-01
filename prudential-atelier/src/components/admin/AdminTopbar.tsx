@@ -16,7 +16,7 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
   const now = new Date();
 
   return (
-    <header className="flex h-auto min-h-14 shrink-0 items-center justify-between border-b border-sand bg-ivory px-4 py-3 md:px-8">
+    <header className="flex h-auto min-h-14 shrink-0 items-center justify-between border-b border-sand bg-ivory px-4 py-3 print:hidden md:px-8">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"

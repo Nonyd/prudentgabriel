@@ -382,6 +382,9 @@ export function ProductFormPage({ product }: { product?: FullProduct }) {
           <h1 className="mt-2 font-display text-2xl text-charcoal">
             {mode === "create" ? "Add new product" : `Edit: ${product?.name}`}
           </h1>
+          <Link href="/admin/products/guide" className="mt-1 inline-block text-xs text-gold hover:underline">
+            How to fill this page
+          </Link>
         </div>
         <div className="flex gap-2">
           {mode === "edit" && product?.id ? (

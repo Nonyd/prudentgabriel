@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>How to upload a new product — Prudent Gabriel</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 22mm 18mm 24mm 18mm;
+      @bottom-left { content: "Prudent Gabriel  ·  Staff guide"; font-size: 9px; color: #8A8A85; }
+      @bottom-right { content: "Page " counter(page) " of " counter(pages); font-size: 9px; color: #8A8A85; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: #442913;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 12.5px;
+      line-height: 1.55;
+      background: #fff;
+    }
+    h1, h2, h3 { font-weight: normal; page-break-after: avoid; }
+    h1 { font-size: 28px; margin: 0 0 8px; letter-spacing: 0.02em; }
+    h2 { font-size: 16px; color: #6b1c2a; margin: 22px 0 8px; border-bottom: 0.5px solid #E8E0D4; padding-bottom: 4px; }
+    h3 { font-size: 13.5px; margin: 14px 0 6px; }
+    p, li { margin: 0 0 8px; }
+    ol, ul { padding-left: 18px; margin: 0 0 10px; }
+    li { margin-bottom: 4px; }
+    strong { font-weight: 700; }
+    a { color: #6b1c2a; }
+    .cover {
+      page-break-after: always;
+      min-height: 240mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 24mm 8mm;
+    }
+    .eyebrow {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #C9A84C;
+      margin-bottom: 18px;
+    }
+    .rule { width: 48px; height: 1px; background: #C9A84C; margin: 16px 0 20px; }
+    .subtitle { font-size: 15px; color: #6B5E52; max-width: 420px; line-height: 1.6; }
+    .meta { margin-top: 48px; font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #8A8A85; }
+    .badge {
+      display: inline-block;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      vertical-align: middle;
+      margin-left: 6px;
+    }
+    .must { background: #6b1c2a; color: #E2D1C2; }
+    .skip { border: 0.5px solid #C9BBA8; color: #8A8A85; }
+    .callout {
+      background: #F7F2EC;
+      border-left: 3px solid #6b1c2a;
+      padding: 10px 14px;
+      margin: 12px 0 16px;
+      page-break-inside: avoid;
+    }
+    .warn {
+      background: #FBF4E8;
+      border-left: 3px solid #C9A84C;
+      padding: 10px 14px;
+      margin: 12px 0 16px;
+      page-break-inside: avoid;
+    }
+    .box {
+      border: 0.5px solid #E8E0D4;
+      padding: 12px 14px;
+      margin: 10px 0 14px;
+      page-break-inside: avoid;
+    }
+    .check { list-style: none; padding-left: 0; }
+    .check li { padding-left: 22px; position: relative; }
+    .check li::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 3px;
+      width: 11px; height: 11px;
+      border: 0.5px solid #442913;
+    }
+    .dt { font-weight: 700; margin-top: 10px; }
+    .dd { color: #6B5E52; margin-bottom: 8px; }
+    .two { display: table; width: 100%; border-spacing: 10px 0; margin: 8px 0 14px; }
+    .two > div { display: table-cell; width: 50%; border: 0.5px solid #E8E0D4; padding: 12px; vertical-align: top; }
+    footer.site { display: none; }
+  </style>
+</head>
+<body>
+  <section class="cover">
+    <p class="eyebrow">Prudent Gabriel  ·  Staff manual</p>
+    <h1>How to upload a<br>new product</h1>
+    <div class="rule"></div>
+    <p class="subtitle">A step-by-step guide for the people who put pieces on the shop. You do not need to be technical. If a box says “Skip if unsure”, leave it empty.</p>
+    <p class="meta">1 September 2026<br>Also inside Admin: Shop → How to upload</p>
+  </section>
+
+  <h2>Three rules</h2>
+  <ol>
+    <li>Do <strong>not</strong> click <strong>Publish</strong> until photos, naira price, sizes, and stock numbers are filled in.</li>
+    <li>Click <strong>Save draft</strong> often. If you close the tab without saving, the product is lost.</li>
+    <li>After you publish, open the shop and look at the product the way a customer would.</li>
+  </ol>
+
+  <h2>Before you sit down</h2>
+  <p>Get these ready on your computer or phone:</p>
+  <ul>
+    <li>The product name (exactly as it should appear, for example “The Avril Gown”).</li>
+    <li>At least <strong>2 photos</strong>, ideally 4–6. First photo = front. Second photo = the look that should appear when someone hovers on the shop.</li>
+    <li>The naira price for each size (or one price if every size costs the same).</li>
+    <li>How many pieces you have of each size (the stock count).</li>
+    <li>A short sentence about the piece, plus fabric and care notes if you have them.</li>
+  </ul>
+  <div class="warn">
+    <strong>iPhone photos:</strong> the website does not accept HEIC files. Save or export as JPG or PNG first. On iPhone: Settings → Camera → Formats → Most Compatible. Or AirDrop / share the photo and choose JPG.
+  </div>
+  <p>Allowed photo types: JPG, JPEG, PNG, or WebP. Each photo must be under 5 MB. Do not upload PDF, Word, GIF, or video here.</p>
+
+  <h2>Two ways to add a product</h2>
+  <div class="two">
+    <div>
+      <p class="eyebrow" style="margin:0 0 8px">Easier — use this if you can</p>
+      <h3 style="margin-top:0">Copy a similar product</h3>
+      <ol>
+        <li>Open Products and find a piece that is almost the same.</li>
+        <li>Click the name to open it.</li>
+        <li>Click <strong>Duplicate</strong> at the top.</li>
+        <li>Change the name, photos, price, and stock.</li>
+        <li>Save draft, check, then Publish.</li>
+      </ol>
+      <p>Duplicate makes an unpublished copy. Customers cannot see it until you publish.</p>
+    </div>
+    <div>
+      <p class="eyebrow" style="margin:0 0 8px">From scratch</p>
+      <h3 style="margin-top:0">Start with a blank form</h3>
+      <p>Use this when there is no similar product to copy. Follow steps 1–8 below.</p>
+    </div>
+  </div>
+
+  <h2>Step 1 — Log in and open Products</h2>
+  <ol>
+    <li>Go to the staff login: <strong>prudentgabriel.com/login</strong> (choose Staff).</li>
+    <li>Type the email and password your manager gave you. Click Sign in.</li>
+    <li>In the left menu, open <strong>Shop</strong>, then click <strong>Products</strong>.</li>
+    <li>Click the wine-coloured <strong>+ Add product</strong> button at the top right.</li>
+  </ol>
+  <p>Only use staging.prudentgabriel.com if your manager told you to practise there. The live shop is prudentgabriel.com.</p>
+
+  <h2>Step 2 — Name and description</h2>
+  <p><strong>Product name</strong><span class="badge must">Must fill</span><br>
+  Type the name customers should see. Example: <em>The Avril Gown</em>. Click outside the box when you are done. The <strong>Slug</strong> fills itself. Leave the slug alone.</p>
+  <p><strong>Short description</strong><span class="badge skip">Skip if unsure</span><br>
+  One or two sentences. Maximum 200 characters. This is a quick summary, not the full story.</p>
+  <p><strong>Full description</strong><span class="badge must">Must fill</span><br>
+  Write the product story here. Include fabric, lining, and care instructions in this same box (for example: “Dry clean only. Lined. Concealed back zip.”). This text appears on the product page under “Product Details”.</p>
+  <p>If you also see a box called “Materials &amp; care”, you can leave it. It currently shares the same text as Full description.</p>
+
+  <h2>Step 3 — Upload photos</h2>
+  <p>Click the dashed box that says <strong>Drop images here or click to upload</strong>. Select your photos. You can select several at once. Wait until it says “Images uploaded”.</p>
+  <p>Order matters. Upload in this order (or set Primary after):</p>
+  <ol>
+    <li><strong>Photo 1 — Primary (★)</strong> — the main front shot. This is what shoppers see first on the shop and in search.</li>
+    <li><strong>Photo 2</strong> — a second angle. When someone moves their mouse over the product on the shop, this photo appears.</li>
+    <li><strong>Photos 3–6</strong> — back, fabric close-up, styling. Nice to have, not required.</li>
+  </ol>
+  <p>To make a photo the main one, click <strong>☆ Set primary</strong> under it. The gold ★ means that photo is the main one.</p>
+  <p>To delete a photo, click <strong>Remove</strong>. If you remove the primary photo, the next one becomes primary automatically.</p>
+  <p>You need at least two photos for the hover change to work on the shop. One photo is allowed, but nothing will swap on hover.</p>
+
+  <h2>Step 4 — Price, sizes, and stock</h2>
+  <p>This is the part that makes the product buyable. Please go slowly.</p>
+  <p><strong>Starting ₦ for new sizes</strong><span class="badge must">Must fill</span><br>
+  Type the naira price, for example <em>185000</em> (no commas, no ₦ sign). The form starts at 1000 — that is only a placeholder. Change it.</p>
+  <p><strong>Base $ and Base £</strong><span class="badge skip">Skip if unsure</span><br>
+  Leave these empty. The website will convert from naira. Only fill them if your manager gave you a fixed dollar or pound selling price.</p>
+  <p><strong>Default kg / L / W / H</strong><span class="badge skip">Skip if unsure</span><br>
+  Parcel weight and size for shipping. Leave blank unless you have measured the packed garment.</p>
+  <p><strong>Sizes</strong><span class="badge must">Must fill</span></p>
+  <ol>
+    <li>Tick the sizes you sell (XS, S, M, L, XL, XXL). Un-tick sizes you do not have.</li>
+    <li>Click <strong>Generate size rows</strong>. This creates one row per size.</li>
+    <li>Click <strong>Copy ₦… onto every size</strong> if every size is the same price. Then change any size that costs more or less.</li>
+    <li>In each row, fill <strong>Stock</strong> with how many pieces you have of that size. Use 0 if that size is sold out. If stock is 0, customers cannot buy that size.</li>
+  </ol>
+  <p><strong>SKU</strong> fills itself (it looks like PA-AVRIL-M). Leave it.</p>
+  <p><strong>Low at</strong> is usually 3. That means you get a low-stock warning when 3 are left. You can leave it.</p>
+  <p>Need a size that is not in the list (for example 8, 10, 12, or One Size)? Click <strong>+ Add size</strong> and type the size name in the Size box.</p>
+  <div class="warn">You must keep at least one size row. Do not delete the last row.</div>
+
+  <h2>Step 5 — Sale prices (only if it is on sale)</h2>
+  <p>Skip this whole step if the product is not on sale.</p>
+  <ol>
+    <li>Tick <strong>Product is on sale</strong>.</li>
+    <li>On each size row, type the sale naira price in the <strong>Sale ₦</strong> column. This must be lower than the regular ₦ price.</li>
+  </ol>
+  <p>If you fill Sale ₦ but forget to tick “Product is on sale”, shoppers still pay the regular price. Both are required.</p>
+
+  <h2>Step 6 — Colours, Complete the Look, and SEO</h2>
+  <p><strong>Colours</strong><span class="badge skip">Skip if unsure</span><br>
+  Only if the same product comes in more than one colour. Click <strong>+ Add colour</strong>, type the colour name (Ivory, Black), and pick the colour square. Leave Image URL empty unless your manager gave you a link.</p>
+  <p><strong>Complete the Look</strong><span class="badge skip">Skip if unsure</span><br>
+  Optional. Search for up to 4 other published products shoppers might add with this piece (shoes, a wrap, jewellery).</p>
+  <p><strong>SEO (Meta title and Meta description)</strong><span class="badge skip">Skip if unsure</span><br>
+  Leave empty. Google will use the product name and description.</p>
+
+  <h2>Step 7 — The right-hand boxes (Status and Organisation)</h2>
+  <p><strong>Category</strong><span class="badge must">Must fill</span><br>
+  Choose the closest match: Bridal, Evening Wear, Casual, Formal, Kiddies, or Accessories.</p>
+  <p><strong>Product type</strong><span class="badge must">Must fill</span></p>
+  <ul>
+    <li><strong>RTW</strong> — ready to wear. The piece is made and in stock. Most shop products are this.</li>
+    <li><strong>Bespoke</strong> — made to order / by commission. Only choose this if that is truly the case.</li>
+  </ul>
+  <p><strong>Tags</strong><span class="badge skip">Skip if unsure</span><br>
+  Optional labels, separated by commas. Example: <em>bridal, autumn-2026</em>. If a collection uses an auto-tag, putting that same tag here will add the product to that collection automatically after you publish.</p>
+  <p><strong>The ticks on the right:</strong></p>
+  <ul>
+    <li><strong>Published</strong> — leave this off while you work. Use the Publish button at the top when everything is ready.</li>
+    <li><strong>Featured</strong> — only tick if your manager asked for this piece to be highlighted.</li>
+    <li><strong>New arrival</strong> — tick for new pieces. Shoppers see a “New” badge. Untick later when it is no longer new.</li>
+    <li><strong>Bespoke available</strong> — tick if customers can also commission a made-to-measure version of this RTW piece.</li>
+  </ul>
+
+  <h2>Step 8 — Save draft, check, then Publish</h2>
+  <ol>
+    <li>Click <strong>Save draft</strong> at the top. You should see “Product created” or “Changes saved”. The page will reopen in Edit mode.</li>
+    <li>Scroll through once more. Check name, photos, each size’s price, and each size’s stock.</li>
+    <li>When it is ready for customers, click the wine <strong>Publish</strong> button.</li>
+    <li>Open a new browser tab and go to the shop. Search for the product name, or open <em>prudentgabriel.com/shop/</em> plus the slug shown under the name box.</li>
+  </ol>
+  <p>If something looks wrong, come back to the product, fix it, and click <strong>Save draft</strong> (if you want it hidden) or <strong>Publish</strong> again (to keep it live with the fixes).</p>
+  <p>To hide a live product without deleting it: open it, untick Published, then click Save draft. Or on the Products list, switch the Published toggle off.</p>
+
+  <h2>Put it in a collection</h2>
+  <p>Publishing does not automatically put the product in a collection page (for example a named launch). Do this after the product exists:</p>
+  <ol>
+    <li>Left menu: <strong>Shop</strong> → <strong>Collections</strong>.</li>
+    <li>Click the collection name.</li>
+    <li>Click <strong>Edit collection</strong>.</li>
+    <li>Under <strong>Also include these products</strong>, type the product name, then click it in the list.</li>
+    <li>Save the collection.</li>
+  </ol>
+  <p>If the collection has an auto-tag, you can instead put that same tag on the product (step 7) and skip the manual search — but the product must be published for auto-tag to pick it up.</p>
+
+  <h2>Change an existing product</h2>
+  <ol>
+    <li>Go to Products.</li>
+    <li>Use the search box to find the name.</li>
+    <li>Click the product name.</li>
+    <li>Change what you need. Click Save draft or Publish when finished.</li>
+  </ol>
+  <p>On the Products list you can also:</p>
+  <ul>
+    <li>Turn Published on or off with the switch.</li>
+    <li>Turn Featured or New on or off with the switches.</li>
+    <li>Change the naira price inline only if the product has <em>one</em> size. If it has several sizes, click the name and edit each size row.</li>
+  </ul>
+  <div class="callout">Do not click Delete unless you are sure. Deleted products cannot be brought back. Hide with Unpublish instead.</div>
+
+  <h2>If something goes wrong</h2>
+  <p class="dt">The page says the name or slug is too short / invalid</p>
+  <p class="dd">Name needs at least 2 characters. Slug should be lowercase letters, numbers, and hyphens only — click outside the name box and let it fill itself.</p>
+  <p class="dt">Upload failed / file is too large / only JPEG PNG or WebP</p>
+  <p class="dd">Convert HEIC or GIF to JPG. Make sure the file is under 5 MB. Try one photo at a time.</p>
+  <p class="dt">I cannot click Publish / I see a red note about variants</p>
+  <p class="dd">Every size row needs a size name, a price of at least 1, and a stock number (0 is allowed). Starting ₦ cannot be 0.</p>
+  <p class="dt">The product is live but says sold out</p>
+  <p class="dd">Stock is 0 on every size. Open the product and type the real stock numbers, then save.</p>
+  <p class="dt">The product is not on the shop</p>
+  <p class="dd">It is still a draft. Click Publish. Also check you are looking at prudentgabriel.com, not staging.</p>
+  <p class="dt">Hover does not change the photo</p>
+  <p class="dd">Upload a second photo. The second photo is the hover image.</p>
+  <p class="dt">A photo shows “Hosted on old server”</p>
+  <p class="dd">Open the product (Edit) and click “Re-upload to Cloudinary”. Wait until it finishes.</p>
+  <p class="dt">Sale price is filled but customers still see the old price</p>
+  <p class="dd">Tick “Product is on sale”, then Publish / save again.</p>
+
+  <h2>Printable checklist</h2>
+  <p>Tick these before you click Publish.</p>
+  <ul class="check">
+    <li>Name is spelled correctly</li>
+    <li>Slug was left alone (filled itself)</li>
+    <li>Full description includes fabric and care</li>
+    <li>At least 2 photos uploaded</li>
+    <li>The front shot is marked ★ Primary</li>
+    <li>Starting ₦ is the real price, not 1000</li>
+    <li>Every size you sell has a row</li>
+    <li>Every size has the correct stock number</li>
+    <li>Category and RTW / Bespoke are correct</li>
+    <li>If on sale: tick is on AND Sale ₦ is filled</li>
+    <li>I clicked Save draft first and checked the page</li>
+    <li>After Publish, I opened the shop and looked at it</li>
+    <li>If it belongs in a collection, I added it there</li>
+  </ul>
+  <p>Stuck? Ask your manager before deleting anything.</p>
+</body>
+</html>
