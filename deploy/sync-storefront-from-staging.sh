@@ -20,6 +20,7 @@ BACKUP="$BACKUP_DIR/prod-before-storefront-sync-$STAMP.dump"
 echo "== backup production → $BACKUP"
 docker exec "$PROD_PG" pg_dump -U "$PROD_USER" -Fc "$PROD_DB" > "$BACKUP"
 ls -lh "$BACKUP"
+echo "== app DATABASE_URL=$(docker exec prudentgabriel-main printenv DATABASE_URL 2>/dev/null | sed -E 's#://([^:/]+):[^@]+@#://\1:***@#' || echo unset)"
 
 psql_prod() {
   docker exec -i "$PROD_PG" psql -U "$PROD_USER" -d "$PROD_DB" -v ON_ERROR_STOP=1 "$@"
@@ -57,14 +58,12 @@ psql_stag -c "\copy (
     AND key NOT ILIKE '%token%'
 ) TO STDOUT WITH CSV" > /tmp/storefront-settings.csv
 
-psql_prod <<'SQL'
-CREATE TEMP TABLE staging_settings (key text PRIMARY KEY, value text);
-SQL
-psql_prod -c "\copy staging_settings FROM STDIN WITH CSV" < /tmp/storefront-settings.csv
+psql_prod -c 'DROP TABLE IF EXISTS _sync_storefront_settings; CREATE TABLE _sync_storefront_settings (key text PRIMARY KEY, value text);'
+psql_prod -c "\copy _sync_storefront_settings FROM STDIN WITH CSV" < /tmp/storefront-settings.csv
 psql_prod <<'SQL'
 UPDATE "SiteSetting" AS t
 SET value = s.value, "updatedAt" = CURRENT_TIMESTAMP
-FROM staging_settings s
+FROM _sync_storefront_settings s
 WHERE t.key = s.key;
 
 INSERT INTO "SiteSetting" (id, key, value, "group", label, type, "isPublic", "sortOrder", "updatedAt")
@@ -78,10 +77,11 @@ SELECT
   true,
   0,
   CURRENT_TIMESTAMP
-FROM staging_settings s
+FROM _sync_storefront_settings s
 WHERE NOT EXISTS (SELECT 1 FROM "SiteSetting" t WHERE t.key = s.key);
 
-SELECT count(*) AS settings_updated FROM staging_settings;
+SELECT count(*) AS settings_updated FROM _sync_storefront_settings;
+DROP TABLE _sync_storefront_settings;
 SQL
 
 PROD_ORDERS=$(psql_prod -Atc 'SELECT count(*) FROM "Order"')
@@ -133,15 +133,13 @@ psql_stag -c "\copy (
 ) TO STDOUT WITH CSV" > /tmp/staging-testimonials.csv || true
 
 if [ -s /tmp/staging-testimonials.csv ]; then
-  psql_prod <<'SQL'
-CREATE TEMP TABLE staging_testimonials (
-  id text, "displayName" text, location text, body text, rating int,
-  "clientImage" text, "adminImage" text, "isApproved" boolean, "showOnHomepage" boolean,
-  "productContext" text, "orderContext" text, source text,
-  "createdAt" timestamptz, "updatedAt" timestamptz
-);
-SQL
-  psql_prod -c "\copy staging_testimonials FROM STDIN WITH CSV" < /tmp/staging-testimonials.csv
+  psql_prod -c 'DROP TABLE IF EXISTS _sync_testimonials; CREATE TABLE _sync_testimonials (
+    id text, "displayName" text, location text, body text, rating int,
+    "clientImage" text, "adminImage" text, "isApproved" boolean, "showOnHomepage" boolean,
+    "productContext" text, "orderContext" text, source text,
+    "createdAt" timestamptz, "updatedAt" timestamptz
+  );'
+  psql_prod -c "\copy _sync_testimonials FROM STDIN WITH CSV" < /tmp/staging-testimonials.csv
   psql_prod <<'SQL'
 DELETE FROM "Testimonial";
 INSERT INTO "Testimonial" (
@@ -152,7 +150,8 @@ SELECT
   id, NULL, "displayName", location, body, rating, "clientImage", "adminImage",
   "isApproved", "showOnHomepage", "productContext", "orderContext", COALESCE(source, 'CLIENT'),
   "createdAt", "updatedAt"
-FROM staging_testimonials;
+FROM _sync_testimonials;
+DROP TABLE _sync_testimonials;
 SQL
 fi
 
