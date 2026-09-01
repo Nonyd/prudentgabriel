@@ -34,7 +34,7 @@ export const checkoutSchema = z.object({
   isGift: z.boolean().optional().default(false),
   giftMessage: z.string().max(200).optional(),
   currency: z.enum(["NGN", "USD", "GBP"]),
-  gateway: z.enum(["PAYSTACK", "FLUTTERWAVE", "STRIPE", "MONNIFY", "BANK_TRANSFER"]),
+  gateway: z.enum(["PAYSTACK", "FLUTTERWAVE", "STRIPE", "MONNIFY", "BANK_TRANSFER"]).optional(),
   couponCode: z.string().optional(),
   pointsToRedeem: z.number().int().min(0).optional().default(0),
   guestEmail: z.string().email().optional(),

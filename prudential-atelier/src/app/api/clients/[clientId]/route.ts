@@ -115,7 +115,6 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       occasions?: string[];
       budgetRange?: string | null;
       loyaltyTier?: LoyaltyTier;
-      loyaltyPoints?: number;
     } = {};
 
     if (Array.isArray(body.preferredSilhouettes)) {
@@ -131,7 +130,6 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (typeof body.loyaltyTier === "string" && TIERS.has(body.loyaltyTier)) {
       data.loyaltyTier = body.loyaltyTier as LoyaltyTier;
     }
-    if (typeof body.loyaltyPoints === "number") data.loyaltyPoints = body.loyaltyPoints;
 
     const item = await prisma.clientProfile.update({
       where: { id: clientId },

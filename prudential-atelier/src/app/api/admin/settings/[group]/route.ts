@@ -7,6 +7,7 @@ import { ensurePaymentSettingKeys } from "@/lib/payment-settings-bootstrap";
 import { ensureShippingSettingKeys } from "@/lib/shipping-settings-bootstrap";
 import { ensureAppearanceLogoSettingKeys } from "@/lib/appearance-settings-bootstrap";
 import { ensureStoreSettingKeys } from "@/lib/store-settings-bootstrap";
+import { ensureLoyaltySettingKeys } from "@/lib/loyalty-settings-bootstrap";
 import { revalidateSettings } from "@/lib/revalidate";
 import { EMAIL_TEMPLATE_META } from "@/lib/email-templates";
 import { SettingType, type SettingGroup } from "@prisma/client";
@@ -46,6 +47,10 @@ export async function GET(
 
   if (group === "STORE") {
     await ensureStoreSettingKeys();
+  }
+
+  if (group === "LOYALTY") {
+    await ensureLoyaltySettingKeys();
   }
 
   if (group === "PAYMENTS") {

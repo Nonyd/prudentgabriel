@@ -21,6 +21,11 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   });
   if (!order) notFound();
 
+  const earned = await prisma.pointsTransaction.findFirst({
+    where: { orderId: order.id, type: "EARNED_PURCHASE" },
+    select: { amount: true },
+  });
+
   const snap = order.addressSnapshot as Record<string, string> | null;
   const phone = phoneFromOrder(order);
   const wa = orderWhatsAppUrl(phone, order.orderNumber);
@@ -107,8 +112,16 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           <p className="mt-2">Subtotal: ₦{Math.round(order.subtotal).toLocaleString("en-NG")}</p>
           <p>Shipping: ₦{Math.round(order.shippingAmount).toLocaleString("en-NG")}</p>
           <p>Discount: ₦{Math.round(order.discount).toLocaleString("en-NG")}</p>
-          <p>Points: ₦{Math.round(order.pointsDiscountNGN).toLocaleString("en-NG")}</p>
+          <p>Points: ₦{Math.round(order.pointsDiscountNGN).toLocaleString("en-NG")}
+            {order.pointsUsed > 0 ? ` (${order.pointsUsed.toLocaleString()} pts` : ""}
+            {order.pointsRateLocked != null ? ` at ₦${order.pointsRateLocked}/pt)` : order.pointsUsed > 0 ? ")" : ""}
+          </p>
           <p className="mt-2 font-display text-xl text-gold">₦{Math.round(order.total).toLocaleString("en-NG")}</p>
+          {earned && earned.amount > 0 ? (
+            <p className="mt-2 text-sm text-choc">This purchase earned {earned.amount.toLocaleString()} Prudent Points.</p>
+          ) : order.pointsUsed > 0 ? (
+            <p className="mt-2 text-sm text-choc">Paid with Prudent Points — no points earned on this order.</p>
+          ) : null}
           {order.paymentRef ? <p className="mt-3 text-xs text-[#6B6B68]">Payment ref: {order.paymentRef}</p> : null}
           {order.fxRateLocked != null ? (
             <p className="mt-1 text-xs text-[#6B6B68]">

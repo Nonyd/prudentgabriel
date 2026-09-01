@@ -10,7 +10,7 @@ import {
   shippingRequiresTracking,
 } from "@/lib/order-status";
 import { generateCollectionCode, normalizeCollectionCode } from "@/lib/shipping/collection";
-import { awardPurchasePoints } from "@/lib/points";
+import { awardPurchasePoints, returnRedeemedPoints } from "@/lib/points";
 import { sendOrderShippedEmail, sendPickupReadyEmail, sendRtwOrderDeliveredEmail } from "@/lib/email";
 import { notifyOrderDelivered, notifyOrderShipped } from "@/lib/customer-notifications";
 import { deleteOrdersByIds } from "@/lib/order-delete";
@@ -90,13 +90,19 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     const line = `\n[${stamp}] Refund recorded: ₦${Math.round(amountNGN).toLocaleString("en-NG")}. Reason: ${reason}`;
     const adminNotes = [order.adminNotes?.trim() ?? "", line].filter(Boolean).join("\n");
     const nextStatus = full ? "REFUNDED" : "PROCESSING";
-    const updated = await prisma.order.update({
-      where: { id },
-      data: {
-        paymentStatus: "REFUNDED",
-        status: nextStatus,
-        adminNotes,
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const row = await tx.order.update({
+        where: { id },
+        data: {
+          paymentStatus: "REFUNDED",
+          status: nextStatus,
+          adminNotes,
+        },
+      });
+      if (full) {
+        await returnRedeemedPoints(id, tx);
+      }
+      return row;
     });
     return NextResponse.json(updated);
   }
@@ -175,12 +181,25 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       },
     });
 
+    if (
+      (parsed.data.status === "CANCELLED" || parsed.data.status === "REFUNDED") &&
+      parsed.data.status !== order.status
+    ) {
+      await returnRedeemedPoints(id, tx);
+    }
+
     if (parsed.data.status === "DELIVERED" && order.userId && order.paymentStatus === "PAID") {
       const existing = await tx.pointsTransaction.findFirst({
         where: { orderId: id, type: PointsType.EARNED_PURCHASE },
       });
       if (!existing) {
-        await awardPurchasePoints(order.userId, order.total, id, tx);
+        await awardPurchasePoints(
+          order.userId,
+          Math.max(0, order.subtotal - order.discount),
+          id,
+          tx,
+          order.pointsDiscountNGN,
+        );
       }
     }
 

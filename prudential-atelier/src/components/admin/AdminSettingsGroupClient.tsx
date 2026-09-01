@@ -8,6 +8,7 @@ import { AppearanceSettingsForm } from "@/components/admin/settings/AppearanceSe
 import { ContentSettingsForm } from "@/components/admin/settings/ContentSettingsForm";
 import { EmailTemplatesEditor } from "@/components/admin/settings/EmailTemplatesEditor";
 import { SocialSettingsForm } from "@/components/admin/settings/SocialSettingsForm";
+import { LoyaltySettingsClient } from "@/components/admin/settings/LoyaltySettingsClient";
 import { SettingsGroupCard } from "@/components/admin/AdminSettingsClient";
 
 type Row = {
@@ -80,7 +81,7 @@ export function AdminSettingsGroupClient({ groupSlug }: { groupSlug: AdminSettin
     }
 
     if (groupSlug === "loyalty") {
-      return <SettingsGroupCard title="Loyalty" group="LOYALTY" rows={rowsFor("LOYALTY")} onSaved={load} />;
+      return <LoyaltySettingsClient />;
     }
 
     if (groupSlug === "notifications") {

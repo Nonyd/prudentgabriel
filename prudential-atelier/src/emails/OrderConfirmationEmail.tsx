@@ -22,6 +22,7 @@ type OrderConfirmationEmailProps = {
   shippingNGN: number;
   discountNGN: number;
   pointsDiscNGN: number;
+  pointsEarned?: number;
   totalNGN: number;
   addressSnapshot?: Record<string, string>;
   estimatedDays?: string;
@@ -38,6 +39,7 @@ export default function OrderConfirmationEmail({
   shippingNGN,
   discountNGN,
   pointsDiscNGN,
+  pointsEarned = 0,
   totalNGN,
   addressSnapshot,
   estimatedDays,
@@ -99,7 +101,7 @@ export default function OrderConfirmationEmail({
           ) : null}
           {pointsDiscNGN > 0 ? (
             <Text style={{ margin: "4px 0", fontSize: 14, color: "#442913" }}>
-              −₦{Math.round(pointsDiscNGN).toLocaleString("en-NG")}
+              {"-"}₦{Math.round(pointsDiscNGN).toLocaleString("en-NG")}
             </Text>
           ) : null}
           <Text style={{ margin: "12px 0 4px", fontSize: 16, fontWeight: 600, color: "#442913" }}>
@@ -107,6 +109,15 @@ export default function OrderConfirmationEmail({
           </Text>
         </Column>
       </Row>
+      {pointsEarned > 0 ? (
+        <Text style={{ marginTop: 16, fontSize: 14, color: "#442913" }}>
+          This purchase earned {pointsEarned.toLocaleString()} Prudent Points.
+        </Text>
+      ) : pointsDiscNGN > 0 ? (
+        <Text style={{ marginTop: 16, fontSize: 14, color: "#442913" }}>
+          This purchase earned no Prudent Points because it was paid with points.
+        </Text>
+      ) : null}
       {Object.keys(addr).length > 0 ? (
         <Section style={{ marginTop: 24 }}>
           <Text style={{ fontSize: 14, fontWeight: 600 }}>Delivery address</Text>

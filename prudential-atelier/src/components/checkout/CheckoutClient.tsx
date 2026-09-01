@@ -16,7 +16,8 @@ import { StripePayBlock } from "@/components/checkout/StripePayBlock";
 import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
 import type { PaymentGatewayType } from "@/lib/payments/index";
 import { formatPrice } from "@/lib/currency";
-import { cartLineAmountInCurrency, extrasAmountInCurrency } from "@/lib/pricing";
+import { extrasAmountInCurrency, cartLineAmountInCurrency } from "@/lib/pricing";
+import { clampRedemption } from "@/lib/points-value";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { NIGERIA_STATES } from "@/lib/geo/nigeria-states";
@@ -75,6 +76,8 @@ export function CheckoutClient() {
   } | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const [pointRate, setPointRate] = useState(1);
+  const [minRedemption, setMinRedemption] = useState(100);
   const [isGift, setIsGift] = useState(false);
   const [giftMessage, setGiftMessage] = useState("");
   const [notes, setNotes] = useState("");
@@ -134,6 +137,16 @@ export function CheckoutClient() {
       .then((j: { addresses?: typeof savedAddresses }) => setSavedAddresses(j.addresses ?? []))
       .catch(() => {});
   }, [status, session?.user?.id]);
+
+  useEffect(() => {
+    void fetch("/api/loyalty/config")
+      .then((r) => r.json())
+      .then((j: { rateNGN?: number; minRedemption?: number }) => {
+        if (typeof j.rateNGN === "number" && j.rateNGN > 0) setPointRate(j.rateNGN);
+        if (typeof j.minRedemption === "number" && j.minRedemption >= 0) setMinRedemption(j.minRedemption);
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     if (step !== 2) return;
@@ -417,14 +430,14 @@ export function CheckoutClient() {
       toast.error("Please complete delivery details first");
       return;
     }
-    if (!gateway) {
+    if (!gateway && payable > 0.01) {
       setFieldError("gateway", "Choose a payment method");
       focusField("payment-method");
       toast.error("Choose a payment method");
       return;
     }
     clearFieldError("gateway");
-    if (gateway === "BANK_TRANSFER" && !receiptUrl) {
+    if (payable > 0.01 && gateway === "BANK_TRANSFER" && !receiptUrl) {
       setFieldError("receipt", "Upload your payment receipt before confirming");
       toast.error("Upload your payment receipt");
       return;
@@ -461,7 +474,7 @@ export function CheckoutClient() {
         isGift,
         giftMessage: isGift ? giftMessage || undefined : undefined,
         currency,
-        gateway,
+        gateway: payable > 0.01 ? gateway : undefined,
         couponCode: couponResult?.valid ? couponCode : undefined,
         pointsToRedeem: session?.user ? pointsToRedeem : 0,
         guestEmail: isGuest ? guestEmail : undefined,
@@ -497,6 +510,13 @@ export function CheckoutClient() {
       const orderId = data.orderId as string;
       const orderNumber = data.orderNumber as string;
       setCreatedOrder({ id: orderId, number: orderNumber, guestEmail: guestEmail || session?.user?.email });
+
+      if (data.paidWithPoints || (typeof data.outstandingNGN === "number" && data.outstandingNGN <= 0.01)) {
+        useCartStore.getState().clearCart();
+        const q = guestEmail ? `&email=${encodeURIComponent(guestEmail)}` : "";
+        window.location.href = `/checkout/success?order=${encodeURIComponent(orderNumber)}${q}`;
+        return;
+      }
 
       if (gateway === "BANK_TRANSFER") {
         const bt = await fetch("/api/checkout/bank-transfer", {
@@ -579,16 +599,34 @@ export function CheckoutClient() {
     return `${origin}/checkout/success?order=${encodeURIComponent(createdOrder.number)}${q}`;
   }, [createdOrder?.number, guestEmail]);
 
-  const payable = Math.max(
-    0,
-    subtotalNGN + (shipCost ?? 0) - (couponResult?.valid ? couponResult.discountNGN : 0) - pointsToRedeem,
-  );
-  const extrasNGN = (shipCost ?? 0) - (couponResult?.valid ? couponResult.discountNGN : 0) - pointsToRedeem;
+  const discNGN = couponResult?.valid ? couponResult.discountNGN : 0;
+  const ship = shipCost ?? 0;
+  const availablePoints = session?.user?.pointsBalance ?? 0;
+  const clampedPts = clampRedemption({
+    requested: pointsToRedeem,
+    availablePoints,
+    subtotalNGN,
+    discountNGN: discNGN,
+    rateNGN: pointRate,
+    minRedemption,
+  });
+  const pointsValueNGN = clampedPts.valueNGN;
+  const payable = Math.max(0, subtotalNGN + ship - discNGN - pointsValueNGN);
+  const extrasNGN = ship - discNGN;
   const payableShopper = Math.max(
     0,
     items.reduce((s, i) => s + cartLineAmountInCurrency(i, currency, rates), 0) +
-      extrasAmountInCurrency(extrasNGN, currency, rates),
+      extrasAmountInCurrency(extrasNGN, currency, rates) -
+      extrasAmountInCurrency(pointsValueNGN, currency, rates),
   );
+  const maxPts = clampRedemption({
+    requested: availablePoints,
+    availablePoints,
+    subtotalNGN,
+    discountNGN: discNGN,
+    rateNGN: pointRate,
+    minRedemption: 0,
+  }).points;
 
   if (!items.length) {
     return (
@@ -727,17 +765,29 @@ export function CheckoutClient() {
                 {couponResult.isFreeShipping ? "Free shipping applied" : `₦${couponResult.discountNGN.toLocaleString()} off`}
               </p>
             )}
-            {session?.user && (session.user.pointsBalance ?? 0) > 0 && (
-              <Input
-                id="points-redeem"
-                label={`Redeem points (max ${Math.min(session.user.pointsBalance ?? 0, Math.floor(subtotalNGN))})`}
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={Math.min(session.user.pointsBalance ?? 0, Math.floor(subtotalNGN))}
-                value={pointsToRedeem}
-                onChange={(e) => setPointsToRedeem(Number(e.target.value) || 0)}
-              />
+            {session?.user && availablePoints > 0 && (
+              <div>
+                <Input
+                  id="points-redeem"
+                  label={`Redeem Prudent Points (max ${maxPts.toLocaleString()} · ${formatPrice(extrasAmountInCurrency(clampRedemption({ requested: maxPts, availablePoints, subtotalNGN, discountNGN: discNGN, rateNGN: pointRate, minRedemption: 0 }).valueNGN, currency, rates), currency)})`}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={maxPts}
+                  value={pointsToRedeem}
+                  onChange={(e) => setPointsToRedeem(Number(e.target.value) || 0)}
+                />
+                {pointsToRedeem > 0 ? (
+                  <p className="mt-1 font-sans text-xs text-charcoal-mid">
+                    {clampedPts.points.toLocaleString()} pts ={" "}
+                    {formatPrice(extrasAmountInCurrency(pointsValueNGN, currency, rates), currency)}. Remaining to pay{" "}
+                    {formatPrice(payableShopper, currency)}. Shipping cannot be paid with points.
+                    {pointsToRedeem > 0 && pointsToRedeem < minRedemption
+                      ? ` Minimum redemption is ${minRedemption} points.`
+                      : ""}
+                  </p>
+                ) : null}
+              </div>
             )}
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={isGift} onChange={(e) => setIsGift(e.target.checked)} />
@@ -1096,29 +1146,36 @@ export function CheckoutClient() {
                 </button>
               ))}
             </div>
-            <div id="payment-method">
-              <PaymentMethodSelector
-                currency={currency}
-                businessLine="RTW"
-                amount={payableShopper}
-                amountNGN={payable}
-                paymentReference={paymentRef}
-                selected={gateway}
-                onSelect={(g) => {
-                  setGateway(g);
-                  clearFieldError("gateway");
-                  if (g !== "BANK_TRANSFER") setReceiptUrl(null);
-                }}
-                receiptUrl={receiptUrl}
-                onReceiptUploaded={(url) => {
-                  setReceiptUrl(url);
-                  clearFieldError("receipt");
-                }}
-                guestEmail={guestEmail || session?.user?.email}
-              />
-              <FieldError message={errors.gateway} />
-              <FieldError message={errors.receipt} />
-            </div>
+            {payable > 0.01 ? (
+              <div id="payment-method">
+                <PaymentMethodSelector
+                  currency={currency}
+                  businessLine="RTW"
+                  amount={payableShopper}
+                  amountNGN={payable}
+                  paymentReference={paymentRef}
+                  selected={gateway}
+                  onSelect={(g) => {
+                    setGateway(g);
+                    clearFieldError("gateway");
+                    if (g !== "BANK_TRANSFER") setReceiptUrl(null);
+                  }}
+                  receiptUrl={receiptUrl}
+                  onReceiptUploaded={(url) => {
+                    setReceiptUrl(url);
+                    clearFieldError("receipt");
+                  }}
+                  guestEmail={guestEmail || session?.user?.email}
+                />
+                <FieldError message={errors.gateway} />
+                <FieldError message={errors.receipt} />
+              </div>
+            ) : (
+              <p className="rounded-sm border border-border bg-cream p-4 font-sans text-sm text-choc">
+                Prudent Points cover this order. Shipping is not included — collection and quoted shipping stay
+                payable separately when they apply.
+              </p>
+            )}
             {currency === "USD" && lockedUsdPerNgn ? (
               <p className="text-xs text-charcoal-mid">
                 {formatPrice(payableShopper, "USD")} · ₦{Math.round(payable).toLocaleString("en-NG")} at ₦1 = $
@@ -1133,15 +1190,17 @@ export function CheckoutClient() {
                 type="button"
                 className="w-full"
                 size="lg"
-                disabled={submitting || !gateway}
+                disabled={submitting || (payable > 0.01 && !gateway)}
                 aria-busy={submitting}
                 onClick={() => void submitOrder()}
               >
                 {submitting
                   ? "Please wait…"
-                  : gateway === "BANK_TRANSFER"
-                    ? "Confirm order"
-                    : `Pay ${formatPrice(payableShopper, currency)}`}
+                  : payable <= 0.01
+                    ? "Place order"
+                    : gateway === "BANK_TRANSFER"
+                      ? "Confirm order"
+                      : `Pay ${formatPrice(payableShopper, currency)}`}
               </Button>
             )}
             {stripeClientSecret && stripePk && createdOrder && stripeReturnUrl && (
@@ -1158,10 +1217,12 @@ export function CheckoutClient() {
         <OrderSummary
           items={items}
           couponResult={couponResult}
-          pointsToRedeem={pointsToRedeem}
+          pointsToRedeem={clampedPts.points}
+          pointsValueNGN={pointsValueNGN}
           shippingCostNGN={shipCost}
           currency={currency}
           step={step}
+          pointRate={pointRate}
         />
       </aside>
     </div>

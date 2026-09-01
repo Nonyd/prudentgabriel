@@ -46,6 +46,9 @@ export async function POST(req: NextRequest) {
 
   const fx = lockedFxFromOrder(order);
   const converted = rtwChargeAmountForeign(order, currency, fx);
+  if (converted < 0.5) {
+    return NextResponse.json({ error: "This order is already paid" }, { status: 400 });
+  }
   const amountCents = Math.max(50, Math.round(converted * 100));
 
   const email = session?.user?.email ?? order.guestEmail ?? guestEmail ?? "";

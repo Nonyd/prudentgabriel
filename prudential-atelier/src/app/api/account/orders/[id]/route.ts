@@ -3,6 +3,7 @@ import { PaymentStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { deleteOrdersByIds } from "@/lib/order-delete";
+import { returnRedeemedPoints } from "@/lib/points";
 
 export async function GET(
   _req: NextRequest,
@@ -68,7 +69,14 @@ export async function DELETE(_req: NextRequest, context: { params: Promise<{ id:
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Delete failed";
     if (msg.includes("payment records")) {
-      return NextResponse.json({ error: msg }, { status: 409 });
+      await prisma.$transaction(async (tx) => {
+        await tx.order.update({
+          where: { id: order.id },
+          data: { status: "CANCELLED" },
+        });
+        await returnRedeemedPoints(order.id, tx);
+      });
+      return NextResponse.json({ ok: true, cancelled: true });
     }
     console.error("[account/orders DELETE]", e);
     return NextResponse.json({ error: "Delete failed" }, { status: 500 });

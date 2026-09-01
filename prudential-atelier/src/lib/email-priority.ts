@@ -21,6 +21,7 @@ export const MARKETING_TEMPLATES = new Set([
   "abandoned-cart",
   "back-in-stock",
   "uncollected-pickup",
+  "prudent-points-expiry",
 ]);
 
 export const UNSUBSCRIBE_URL_PLACEHOLDER = "__UNSUBSCRIBE_URL__";

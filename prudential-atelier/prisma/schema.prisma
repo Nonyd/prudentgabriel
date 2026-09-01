@@ -22,7 +22,9 @@ model User {
   referredById  String?
   referredBy    User?     @relation("Referrals", fields: [referredById], references: [id])
   referrals     User[]    @relation("Referrals")
+  /// Denormalised SUM(PointsTransaction.amount). Writer: src/lib/points.ts only.
   pointsBalance Int       @default(0)
+  pointRateChanges PointRateHistory[]
 
   orders              Order[]
   addresses           Address[]
@@ -285,7 +287,17 @@ model PointsTransaction {
   balanceAfter Int?
   description  String
   orderId      String?
+  /// Naira per point locked on this row. Set on redeem and return so a later rate change cannot rewrite history.
+  rateNGN      Float?
+  /// When this credit lapses. Debits are null. Writer: src/lib/points.ts only.
+  expiresAt    DateTime?
+  /// Unspent remainder of a credit. Debits are 0. Writer: src/lib/points.ts only.
+  remaining    Int         @default(0)
   createdAt    DateTime    @default(now())
+
+  @@index([userId, createdAt])
+  @@index([orderId])
+  @@index([expiresAt, remaining])
 }
 
 model Product {
@@ -523,6 +535,8 @@ model Order {
   discount         Float            @default(0)
   pointsDiscountNGN Float         @default(0)
   pointsUsed       Int              @default(0)
+  /// Naira per point at redemption. A later rate change must not alter this order.
+  pointsRateLocked Float?
   total            Float
   currency         Currency         @default(NGN)
   addressId        String?
@@ -1375,6 +1389,7 @@ enum PaymentMethod {
   MONNIFY
   BANK_TRANSFER
   MANUAL
+  POINTS
 }
 
 enum PaymentPurpose {
@@ -1383,6 +1398,7 @@ enum PaymentPurpose {
   FULL
   CONSULTATION
   RTW_ORDER
+  POINTS_REDEMPTION
 }
 
 enum BespokeStatus {
@@ -1400,9 +1416,13 @@ enum PointsType {
   EARNED_REFERRAL
   EARNED_SIGNUP
   EARNED_REVIEW
+  EARNED_NEWSLETTER
+  EARNED_BIRTHDAY
+  EARNED_PROFILE
   REDEEMED
   EXPIRED
   ADJUSTED_ADMIN
+  RETURNED
 }
 
 enum CouponType {
@@ -1559,9 +1579,12 @@ model ClientProfile {
   occasions            String[]
   budgetRange          String?
 
+  /// Mirror of User.pointsBalance. Writer: src/lib/points.ts only.
   loyaltyPoints Int         @default(0)
   loyaltyTier   LoyaltyTier @default(BRONZE)
   totalSpend    Float       @default(0)
+  /// Used to award birthday Prudent Points once a year.
+  dateOfBirth   DateTime?   @db.Date
 
   referredBy String?
 
@@ -2187,6 +2210,20 @@ model LoyaltyRule {
   action   String  @unique
   points   Int
   isActive Boolean @default(true)
+}
+
+/// Append-only history of the naira-per-point rate. Changing the rate revalues every outstanding balance.
+model PointRateHistory {
+  id                String   @id @default(cuid())
+  rateNGN           Float
+  previousRateNGN   Float?
+  changedById       String?
+  changedBy         User?    @relation(fields: [changedById], references: [id], onDelete: SetNull)
+  outstandingPoints Int
+  liabilityNGN      Float
+  createdAt         DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model ContactMessage {

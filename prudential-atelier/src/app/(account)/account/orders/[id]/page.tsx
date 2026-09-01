@@ -20,6 +20,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   if (!order) notFound();
 
+  const earned = await prisma.pointsTransaction.findFirst({
+    where: { orderId: order.id, type: "EARNED_PURCHASE" },
+    select: { amount: true },
+  });
+
   const canDeleteOrder =
     order.paymentStatus === PaymentStatus.PENDING || order.paymentStatus === PaymentStatus.FAILED;
 
@@ -70,8 +75,23 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <p>Subtotal ₦{Math.round(order.subtotal).toLocaleString()}</p>
         <p>Shipping ₦{Math.round(order.shippingAmount).toLocaleString()}</p>
         {order.discount > 0 && <p>Coupon −₦{Math.round(order.discount).toLocaleString()}</p>}
-        {order.pointsDiscountNGN > 0 && <p>Points −₦{Math.round(order.pointsDiscountNGN).toLocaleString()}</p>}
+        {order.pointsDiscountNGN > 0 && (
+          <p>
+            Points −₦{Math.round(order.pointsDiscountNGN).toLocaleString()}
+            {order.pointsUsed > 0 ? ` (${order.pointsUsed.toLocaleString()} pts` : ""}
+            {order.pointsRateLocked != null ? ` at ₦${order.pointsRateLocked}/pt)` : order.pointsUsed > 0 ? ")" : ""}
+          </p>
+        )}
         <p className="mt-2 font-display text-xl text-wine">₦{Math.round(order.total).toLocaleString()}</p>
+        {earned && earned.amount > 0 ? (
+          <p className="mt-2 text-left text-sm text-choc">
+            This purchase earned {earned.amount.toLocaleString()} Prudent Points.
+          </p>
+        ) : order.pointsUsed > 0 && order.paymentStatus === PaymentStatus.PAID ? (
+          <p className="mt-2 text-left text-sm text-choc">
+            This purchase earned no Prudent Points because it was paid with points.
+          </p>
+        ) : null}
         {order.paymentRef ? <p className="mt-2 text-left text-xs text-charcoal-mid">Payment reference: {order.paymentRef}</p> : null}
         {order.collectionCode ? (
           <p className="mt-1 text-left text-xs text-charcoal-mid">Collection code: {order.collectionCode}</p>

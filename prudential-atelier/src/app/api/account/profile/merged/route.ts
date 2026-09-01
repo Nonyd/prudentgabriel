@@ -6,8 +6,10 @@ import {
   getNotificationPrefs,
   getOrCreateClientProfile,
   saveNotificationPrefs,
+  styleProfileComplete,
   syncClientLoyaltyTier,
 } from "@/lib/account-helpers";
+import { awardStyleProfilePoints } from "@/lib/points";
 import { getTierThresholds, tierFromPoints, pointsToNextTier, nextTier, TIER_LABELS } from "@/lib/loyalty";
 import { prisma } from "@/lib/prisma";
 import { logActivity, logError } from "@/lib/logger";
@@ -21,6 +23,7 @@ const patchSchema = z.object({
   preferredColors: z.array(z.string()).optional(),
   occasions: z.array(z.string()).optional(),
   budgetRange: z.string().nullable().optional(),
+  dateOfBirth: z.string().nullable().optional(),
   notificationPrefs: z
     .object({
       orderStage: z.boolean().optional(),
@@ -121,6 +124,9 @@ export async function PATCH(req: NextRequest) {
     if (data.preferredColors) profileUpdate.preferredColors = data.preferredColors;
     if (data.occasions) profileUpdate.occasions = data.occasions;
     if (data.budgetRange !== undefined) profileUpdate.budgetRange = data.budgetRange;
+    if (data.dateOfBirth !== undefined) {
+      profileUpdate.dateOfBirth = data.dateOfBirth ? new Date(`${data.dateOfBirth}T00:00:00.000Z`) : null;
+    }
 
     let updatedProfile = profile;
     if (Object.keys(profileUpdate).length > 0) {
@@ -140,6 +146,9 @@ export async function PATCH(req: NextRequest) {
       select: { pointsBalance: true },
     });
     if (user) await syncClientLoyaltyTier(userId, user.pointsBalance);
+    if (styleProfileComplete(updatedProfile)) {
+      await awardStyleProfilePoints(userId);
+    }
 
     await logActivity({
       userId,

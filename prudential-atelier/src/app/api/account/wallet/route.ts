@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getPointRateNGN, pointsToNaira } from "@/lib/points";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -16,6 +17,7 @@ export async function GET(req: NextRequest) {
     where: { id: session.user.id },
     select: { pointsBalance: true },
   });
+  const rate = await getPointRateNGN();
 
   const [transactions, total] = await Promise.all([
     prisma.pointsTransaction.findMany({
@@ -29,7 +31,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     pointsBalance: user?.pointsBalance ?? 0,
-    pointsNGN: user?.pointsBalance ?? 0,
+    pointsNGN: pointsToNaira(user?.pointsBalance ?? 0, rate),
     transactions,
     page,
     total,

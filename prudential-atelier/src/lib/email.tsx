@@ -20,6 +20,7 @@ import ConsultationSessionSummaryEmail from "@/emails/ConsultationSessionSummary
 import InvoiceEmail, { subjectInvoiceEmail } from "@/emails/InvoiceEmail";
 import ReviewRequestEmail from "@/emails/ReviewRequestEmail";
 import LoyaltyTierUpgradeEmail from "@/emails/LoyaltyTierUpgradeEmail";
+import PointsExpiryEmail from "@/emails/PointsExpiryEmail";
 import ReferralRewardEmail from "@/emails/ReferralRewardEmail";
 import StageAssignmentEmail from "@/emails/StageAssignmentEmail";
 import RtwOrderDeliveredEmail from "@/emails/RtwOrderDeliveredEmail";
@@ -34,7 +35,7 @@ import { prisma } from "@/lib/prisma";
 import { queueEmail } from "@/lib/email-outbox";
 import { getSetting } from "@/lib/settings";
 import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
-import { UNSUBSCRIBE_URL_PLACEHOLDER } from "@/lib/email-priority";
+import { UNSUBSCRIBE_URL_PLACEHOLDER, EMAIL_PRIORITY_MARKETING } from "@/lib/email-priority";
 import type { EmailFamily } from "@/emails/components/email-tokens";
 
 async function renderBrandedEmail(element: ReactElement) {
@@ -214,6 +215,7 @@ export async function sendOrderConfirmationEmail(params: {
   shippingNGN: number;
   discountNGN: number;
   pointsDiscNGN: number;
+  pointsEarned?: number;
   subtotalNGN?: number;
   addressSnapshot?: Record<string, string>;
   estimatedDays?: string;
@@ -233,6 +235,7 @@ export async function sendOrderConfirmationEmail(params: {
       shippingNGN={params.shippingNGN}
       discountNGN={params.discountNGN}
       pointsDiscNGN={params.pointsDiscNGN}
+      pointsEarned={params.pointsEarned ?? 0}
       totalNGN={params.totalNGN}
       addressSnapshot={params.addressSnapshot}
       estimatedDays={params.estimatedDays}
@@ -651,10 +654,33 @@ export async function sendLoyaltyTierUpgradeEmail(params: {
   );
   await sendEmail({
     to: params.to,
-    subject: `You've reached a new loyalty tier — Prudential Atelier`,
+    subject: `You've reached a new Prudent Points tier — Prudential Atelier`,
     html,
     template: "loyalty-tier-upgrade",
     idempotencyKey: `loyalty-tier:${params.to}:${params.newTier}`,
+  });
+}
+
+export async function sendPointsExpiryEmail(params: {
+  to: string;
+  firstName: string;
+  points: number;
+  expiryLabel: string;
+  userId: string;
+  batchKey: string;
+}): Promise<void> {
+  const html = await renderBrandedEmail(
+    <PointsExpiryEmail firstName={params.firstName} points={params.points} expiryLabel={params.expiryLabel} />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: "Prudent Points expiring soon — Prudential Atelier",
+    html,
+    template: "prudent-points-expiry",
+    idempotencyKey: `prudent-points-expiry:${params.userId}:${params.batchKey}`,
+    relatedType: "User",
+    relatedId: params.userId,
+    priority: EMAIL_PRIORITY_MARKETING,
   });
 }
 
@@ -662,6 +688,7 @@ export async function sendReferralRewardEmail(params: {
   to: string;
   firstName: string;
   creditNGN: number;
+  orderId?: string;
 }): Promise<void> {
   const html = await renderBrandedEmail(
     <ReferralRewardEmail firstName={params.firstName} creditNGN={params.creditNGN} />,
@@ -671,7 +698,11 @@ export async function sendReferralRewardEmail(params: {
     subject: "You've earned a referral reward — Prudential Atelier",
     html,
     template: "referral-reward",
-    idempotencyKey: `referral-reward:${params.to}:${params.creditNGN}`,
+    idempotencyKey: params.orderId
+      ? `referral-reward:${params.to}:${params.orderId}`
+      : `referral-reward:${params.to}:${params.creditNGN}`,
+    relatedType: params.orderId ? "Order" : undefined,
+    relatedId: params.orderId,
   });
 }
 

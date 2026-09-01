@@ -1,8 +1,7 @@
 import bcrypt from "bcryptjs";
-import { PointsType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
-import { getLoyaltyRulePoints } from "@/lib/loyalty";
+import { awardSignupPoints } from "@/lib/points";
 import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
 import { sendWelcomeCredentialsEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
@@ -62,7 +61,6 @@ export async function autoOnboardClient(params: {
 
   const tempPassword = generateTempPassword();
   const hashedPassword = await bcrypt.hash(tempPassword, 12);
-  const signupPoints = await getLoyaltyRulePoints("SIGNUP");
   const thresholds = await getTierThresholds();
 
   const user = await prisma.$transaction(async (tx) => {
@@ -73,22 +71,10 @@ export async function autoOnboardClient(params: {
         phone: params.phone?.trim() || null,
         password: hashedPassword,
         mustResetPassword: true,
-        ...(signupPoints > 0 ? { pointsBalance: signupPoints } : {}),
       },
     });
 
-    if (signupPoints > 0) {
-      await tx.pointsTransaction.create({
-        data: {
-          userId: created.id,
-          type: PointsType.EARNED_SIGNUP,
-          amount: signupPoints,
-          balanceAfter: signupPoints,
-          description: "Welcome bonus",
-        },
-      });
-    }
-
+    const signupPoints = await awardSignupPoints(created.id, tx);
     const tier = tierFromPoints(signupPoints, thresholds);
     await tx.clientProfile.create({
       data: {

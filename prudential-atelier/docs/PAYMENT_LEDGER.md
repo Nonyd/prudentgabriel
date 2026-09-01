@@ -38,7 +38,20 @@ COMMIT;
 `SET LOCAL` ends with the transaction. Prefer inserting a correction row over
 mutating history whenever possible.
 
-## RTW oversell (PAID + CANCELLED) — manual refund until gap 7
+### RTW Prudent Points (Slice Q)
+
+The programme name is **Prudent Points**. Redemption is a `Payment` row
+(`method: POINTS`, `purpose: POINTS_REDEMPTION`, `status: CONFIRMED`) for the
+naira value locked at checkout. `Order.total` is the true total (subtotal +
+shipping − coupon). Outstanding = total − confirmed (including the points row).
+A later change to the naira-per-point rate does not rewrite
+`Order.pointsRateLocked` or the Payment amount.
+
+A piece bought entirely with points earns no points. Each award expires after
+24 months; returns after that window get a fresh 24 months on a new
+`RETURNED` row.
+
+`User.pointsBalance` is a denormalised cache. Writer: `src/lib/points.ts` only.
 
 `fulfillPaidOrder` can refuse fulfilment when stock cannot be decremented. The
 order is stored as **`paymentStatus = PAID`** (money at the PSP) and

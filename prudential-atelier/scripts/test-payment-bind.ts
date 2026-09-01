@@ -101,6 +101,7 @@ function makeFulfillDb(order: {
       create: async () => {
         ledgerWrites += 1;
       },
+      aggregate: async () => ({ _sum: { amount: 0 } }),
     },
   };
 
@@ -167,11 +168,11 @@ async function main() {
   assert(
     rtwChargeAmountNGN({
       paymentStatus: PaymentStatus.PENDING,
-      total: 495_000,
-      amountPaid: 0,
-      balance: 495_000,
-    }) === 495_000,
-    "first payment still binds against full total",
+      total: 145_000,
+      amountPaid: 100_000,
+      balance: 45_000,
+    }) === 45_000,
+    "points-reduced outstanding binds at ₦45,000 not the full total",
   );
   bind(
     {

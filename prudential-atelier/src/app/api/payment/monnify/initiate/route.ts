@@ -52,6 +52,9 @@ export async function POST(req: NextRequest) {
     session?.user?.name ?? order.guestName ?? customerEmail.split("@")[0] ?? "Customer";
 
   const chargeNGN = rtwChargeAmountNGN(order);
+  if (chargeNGN < 1) {
+    return NextResponse.json({ error: "This order is already paid" }, { status: 400 });
+  }
   const reference =
     order.paymentStatus === PaymentStatus.PAID ? generatePaymentReference("BAL") : order.orderNumber;
 

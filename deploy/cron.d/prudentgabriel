@@ -28,4 +28,5 @@ CRON_TZ=UTC
 0 11 * * * root /opt/prudentgabriel/deploy/cron-fire.sh unsent-quote-alerts
 0 10 * * * root /opt/prudentgabriel/deploy/cron-fire.sh receipt-reminders
 0 10 * * * root /opt/prudentgabriel/deploy/cron-fire.sh uncollected-pickup
+0 9 * * * root /opt/prudentgabriel/deploy/cron-fire.sh prudent-points
 * * * * * root /opt/prudentgabriel/deploy/cron-fire.sh email-outbox

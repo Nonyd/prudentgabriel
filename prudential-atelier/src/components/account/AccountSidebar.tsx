@@ -41,7 +41,7 @@ const MY_ATELIER: NavItem[] = [
 ];
 
 const MY_PERKS: NavItem[] = [
-  { href: "/account/loyalty", label: "Loyalty & Rewards", icon: Crown },
+  { href: "/account/loyalty", label: "Prudent Points", icon: Crown },
   { href: "/account/transactions", label: "Transactions", icon: Receipt },
   { href: "/account/wishlist", label: "Wishlist", icon: Heart },
   { href: "/account/referrals", label: "Refer a Friend", icon: Users },
@@ -55,7 +55,7 @@ const MY_PROFILE: NavItem[] = [
 const MOBILE_TABS = [
   { href: "/account", label: "Home", icon: LayoutDashboard },
   { href: "/account/orders", label: "Orders", icon: Package },
-  { href: "/account/loyalty", label: "Loyalty", icon: Crown },
+  { href: "/account/loyalty", label: "Prudent Points", icon: Crown },
   { href: "/account/wishlist", label: "Wishlist", icon: Heart },
   { href: "/account/settings", label: "Profile", icon: Settings },
 ];

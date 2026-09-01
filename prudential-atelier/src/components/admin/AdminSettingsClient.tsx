@@ -8,6 +8,7 @@ import type { SettingGroup, SettingType } from "@prisma/client";
 import { AppearanceSettingsCard } from "@/components/admin/settings/AppearanceSettingsCard";
 import { EmailTemplatesEditor } from "@/components/admin/settings/EmailTemplatesEditor";
 import { MediaLibraryTab } from "@/components/admin/settings/MediaLibraryTab";
+import { LoyaltySettingsClient } from "@/components/admin/settings/LoyaltySettingsClient";
 
 type Row = {
   key: string;
@@ -26,7 +27,7 @@ const TABS: { id: string; label: string; groups: SettingGroup[] }[] = [
   { id: "email", label: "Email & SMS", groups: ["EMAIL", "SMS"] },
   { id: "appearance", label: "Appearance", groups: ["APPEARANCE"] },
   { id: "social", label: "Social", groups: ["SOCIAL"] },
-  { id: "loyalty", label: "Loyalty", groups: ["LOYALTY"] },
+  { id: "loyalty", label: "Prudent Points", groups: ["LOYALTY"] },
   { id: "notifications", label: "Notifications", groups: ["NOTIFICATIONS"] },
   { id: "seo", label: "SEO", groups: ["SEO"] },
   { id: "media", label: "Media", groups: [] },
@@ -243,6 +244,10 @@ export function AdminSettingsClient() {
     if (!settings) return <p className="p-6 text-sm text-[#6B6B68]">Loading…</p>;
 
     if (tab === "media") return <MediaLibraryTab />;
+
+    if (tab === "loyalty") {
+      return <LoyaltySettingsClient />;
+    }
 
     if (tab === "appearance") {
       return <AppearanceSettingsCard rows={rowsFor("APPEARANCE")} onSaved={load} />;

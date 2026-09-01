@@ -1,23 +1,26 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getExchangeRates, convertFromNGN, formatPrice } from "@/lib/currency";
+import { getPointRateNGN, pointsToNaira } from "@/lib/points";
 import Link from "next/link";
 
 export default async function WalletPage() {
   const session = await auth();
   const userId = session!.user!.id!;
-  const [user, txs] = await Promise.all([
+  const [user, txs, rateNGN] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId }, select: { pointsBalance: true } }),
     prisma.pointsTransaction.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
       take: 50,
     }),
+    getPointRateNGN(),
   ]);
   const pts = user?.pointsBalance ?? 0;
+  const valueNGN = pointsToNaira(pts, rateNGN);
   const rates = await getExchangeRates();
-  const usd = convertFromNGN(pts, "USD", rates);
-  const gbp = convertFromNGN(pts, "GBP", rates);
+  const usd = convertFromNGN(valueNGN, "USD", rates);
+  const gbp = convertFromNGN(valueNGN, "GBP", rates);
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -27,10 +30,10 @@ export default async function WalletPage() {
           background: "linear-gradient(135deg, var(--olive), var(--olive-hover))",
         }}
       >
-        <p className="font-label text-xs uppercase tracking-wider text-ivory/60">Your loyalty wallet</p>
+        <p className="font-label text-xs uppercase tracking-wider text-ivory/60">Prudent Points</p>
         <p className="mt-2 font-display text-5xl italic text-gold">{pts}</p>
         <p className="font-label text-xs text-ivory/60">points</p>
-        <p className="mt-4 font-body text-lg">= ₦{pts.toLocaleString()} store credit</p>
+        <p className="mt-4 font-body text-lg">= ₦{Math.round(valueNGN).toLocaleString("en-NG")} at ₦{rateNGN} per point</p>
         <p className="text-sm text-ivory/50">
           ≈ {formatPrice(usd, "USD")} · {formatPrice(gbp, "GBP")}
         </p>
@@ -45,9 +48,9 @@ export default async function WalletPage() {
       <div className="mt-8 rounded-sm border border-border bg-cream p-6 text-sm text-charcoal">
         <p className="font-medium text-olive">How points work</p>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-charcoal-mid">
-          <li>Earn 1 point per ₦100 spent</li>
-          <li>250 pts when a friend signs up with your link</li>
-          <li>500 pts welcome when you join via referral</li>
+          <li>Earn points per ₦100 of garment spend — the rate is set in the atelier</li>
+          <li>Referral points arrive when your friend completes their first paid order</li>
+          <li>Points cover the garment, never shipping, and may pay an order in full</li>
         </ul>
       </div>
 

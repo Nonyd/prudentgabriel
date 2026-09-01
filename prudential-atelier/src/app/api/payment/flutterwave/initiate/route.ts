@@ -47,6 +47,9 @@ export async function POST(req: NextRequest) {
   }
 
   const chargeNGN = rtwChargeAmountNGN(order);
+  if (chargeNGN < 1) {
+    return NextResponse.json({ error: "This order is already paid" }, { status: 400 });
+  }
   const fx = lockedFxFromOrder(order);
   let amount = chargeNGN;
   if (currency === "USD" || currency === "GBP") {

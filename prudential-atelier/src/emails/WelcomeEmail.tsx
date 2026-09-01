@@ -33,7 +33,7 @@ export default function WelcomeEmail({ firstName, pointsBalance, referralCode }:
           }}
         >
           <Text style={{ margin: 0, fontSize: 15, color: "#2d2d2d" }}>
-            You have {pointsBalance} loyalty points waiting — worth ₦{Math.round(credit).toLocaleString("en-NG")}{" "}
+            You have {pointsBalance} Prudent Points waiting — worth ₦{Math.round(credit).toLocaleString("en-NG")}{" "}
             store credit.
           </Text>
         </Section>

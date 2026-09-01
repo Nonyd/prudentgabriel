@@ -277,7 +277,7 @@ function LoyaltyPanel({
           ✦ {TIER_LABELS[tier]} Member
         </p>
         <p className="mt-4 font-display text-[48px] leading-none">{points.toLocaleString()}</p>
-        <p className="mt-1 font-sans text-sm text-sand">loyalty points</p>
+        <p className="mt-1 font-sans text-sm text-sand">Prudent Points</p>
         {nextTier ? (
           <>
             <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/10">
@@ -319,7 +319,7 @@ function LoyaltyPanel({
           href="/account/loyalty"
           className="inline-flex font-sans text-[11px] font-medium uppercase tracking-[0.1em] text-nut underline-offset-2 hover:underline"
         >
-          View rewards →
+          View Prudent Points →
         </Link>
       </div>
     </Card>

@@ -348,7 +348,7 @@ const CLIENT_TEMPLATES: EmailTemplateMeta[] = [
     defaults: {
       subject: "Your referral reward",
       heading: "Thank you for referring a friend",
-      body_1: "Dear {{firstName}},\n\nYour referral was successful — loyalty points have been added to your account.",
+      body_1: "Dear {{firstName}},\n\nYour referral was successful — Prudent Points have been added to your account.",
       body_2: "",
       cta_label: "View points",
       cta_link: `${APP()}/account`,

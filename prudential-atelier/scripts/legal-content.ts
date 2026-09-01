@@ -63,7 +63,7 @@ We use your personal information to:
 - Process and fulfil your orders and consultations
 - Communicate with you about your orders, including the 13-stage commission tracking system
 - Send you appointment reminders and meeting links for consultations
-- Manage your loyalty points and rewards
+- Manage your Prudent Points and rewards
 - Send you marketing communications if you have consented
 - Improve our website and services
 - Comply with our legal obligations

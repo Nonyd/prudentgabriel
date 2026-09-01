@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getSetting } from "@/lib/settings";
+import { getLoyaltyRulePoints } from "@/lib/loyalty";
 import { awardReviewPoints } from "@/lib/points";
 import { notifyConsultationReviewSubmitted, notifyReviewSubmitted } from "@/lib/notifications";
 
@@ -67,8 +67,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "You have already reviewed this product" }, { status: 409 });
     }
 
-    const pointsRaw = await getSetting("points_review");
-    const pointsAward = Math.max(0, parseInt(pointsRaw ?? "50", 10) || 0);
+    const pointsAward = await getLoyaltyRulePoints("REVIEW");
 
     let pointsGranted = 0;
     const review = await prisma.$transaction(async (tx) => {

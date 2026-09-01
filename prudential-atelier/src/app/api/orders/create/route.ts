@@ -5,7 +5,14 @@ import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { validateCoupon } from "@/lib/coupon";
 import { generateOrderNumber } from "@/lib/order-number";
-import { redeemPoints } from "@/lib/points";
+import {
+  clampRedemption,
+  getMinRedemptionPoints,
+  getPointRateNGN,
+  InsufficientPointsError,
+  pointsPaymentData,
+  redeemPoints,
+} from "@/lib/points";
 import { generatePaymentReference } from "@/lib/payments/index";
 import { getSupportedGateways } from "@/lib/payments/config";
 import { notifyNewOrder } from "@/lib/notifications";
@@ -15,6 +22,9 @@ import { generateCollectionCode } from "@/lib/shipping/collection";
 import { getLockedFx, lockForeignTotals, usdOverrideOrConvert, gbpOverrideOrConvert } from "@/lib/fx";
 import { effectiveUnitNGN, resolveCurrencyOverride } from "@/lib/pricing";
 import type { CartParcelLine } from "@/lib/shipping/options";
+import { fulfillPaidOrder } from "@/lib/order-payment";
+import { resolveClientId } from "@/lib/payments/ledger";
+import { recomputeRtwOrderTotals } from "@/lib/payments/rtw-totals";
 
 function snapshotFromAddress(a: AddressInput) {
   return {
@@ -358,29 +368,43 @@ export async function POST(req: NextRequest) {
 
   const shippingAfterCoupon = ship.shippingAmount;
 
+  const pointRate = await getPointRateNGN();
+  const minRedemption = await getMinRedemptionPoints();
+  const requestedPoints = data.pointsToRedeem ?? 0;
+  let pointsUsed = 0;
   let pointsDiscNGN = 0;
-  const pointsToRedeem = data.pointsToRedeem ?? 0;
 
-  if (pointsToRedeem > 0) {
+  if (requestedPoints > 0) {
     if (!userId) {
       return NextResponse.json({ error: "Must be logged in to use points" }, { status: 400 });
+    }
+    if (requestedPoints < minRedemption) {
+      return NextResponse.json(
+        { error: `Minimum redemption is ${minRedemption} points` },
+        { status: 400 },
+      );
     }
     const u = await prisma.user.findUnique({
       where: { id: userId },
       select: { pointsBalance: true },
     });
-    if (!u || u.pointsBalance < pointsToRedeem) {
+    if (!u || u.pointsBalance < requestedPoints) {
       return NextResponse.json({ error: "Insufficient points" }, { status: 400 });
     }
-    pointsDiscNGN = pointsToRedeem;
-    const maxPointsDisc = Math.max(0, subtotalNGN + shippingAfterCoupon - discountNGN);
-    if (pointsDiscNGN > maxPointsDisc) {
-      pointsDiscNGN = Math.floor(maxPointsDisc);
-    }
+    const clamped = clampRedemption({
+      requested: requestedPoints,
+      availablePoints: u.pointsBalance,
+      subtotalNGN,
+      discountNGN,
+      rateNGN: pointRate,
+      minRedemption,
+    });
+    pointsUsed = clamped.points;
+    pointsDiscNGN = clamped.valueNGN;
   }
 
-  let totalNGN = subtotalNGN + shippingAfterCoupon - discountNGN - pointsDiscNGN;
-  if (totalNGN < 0) totalNGN = 0;
+  const trueTotalNGN = Math.max(0, subtotalNGN + shippingAfterCoupon - discountNGN);
+  const outstandingNGN = Math.max(0, Math.round((trueTotalNGN - pointsDiscNGN) * 100) / 100);
 
   const gatewayMap: Record<string, PaymentGateway> = {
     PAYSTACK: PaymentGateway.PAYSTACK,
@@ -389,10 +413,17 @@ export async function POST(req: NextRequest) {
     MONNIFY: PaymentGateway.MONNIFY,
     BANK_TRANSFER: PaymentGateway.BANK_TRANSFER,
   };
-  const paymentGateway = gatewayMap[data.gateway];
-  const offered = await getSupportedGateways(data.currency, "RTW");
-  if (!offered.includes(data.gateway)) {
-    return NextResponse.json({ error: "That payment method is not available for this currency" }, { status: 400 });
+
+  let paymentGateway: PaymentGateway | null = null;
+  if (outstandingNGN > 0.01) {
+    if (!data.gateway) {
+      return NextResponse.json({ error: "Choose a payment method" }, { status: 400 });
+    }
+    paymentGateway = gatewayMap[data.gateway] ?? null;
+    const offered = await getSupportedGateways(data.currency, "RTW");
+    if (!offered.includes(data.gateway)) {
+      return NextResponse.json({ error: "That payment method is not available for this currency" }, { status: 400 });
+    }
   }
   const paymentRef =
     data.paymentRef && /^PA-ORDER-/i.test(data.paymentRef)
@@ -401,7 +432,7 @@ export async function POST(req: NextRequest) {
 
   const itemUsd = lines.reduce((s, l) => s + l.unitUsd * l.quantity, 0);
   const itemGbp = lines.reduce((s, l) => s + l.unitGbp * l.quantity, 0);
-  const extrasNGN = shippingAfterCoupon - discountNGN - pointsDiscNGN;
+  const extrasNGN = shippingAfterCoupon - discountNGN;
   const lockedForeign = lockForeignTotals({ itemUsd, itemGbp, extrasNGN, fx });
   const orderNumber = generateOrderNumber();
   const collectionCode = ship.kind === "PICKUP" ? generateCollectionCode() : null;
@@ -421,8 +452,9 @@ export async function POST(req: NextRequest) {
           shippingAmount: shippingAfterCoupon,
           discount: discountNGN,
           pointsDiscountNGN: pointsDiscNGN,
-          pointsUsed: pointsDiscNGN,
-          total: totalNGN,
+          pointsUsed,
+          pointsRateLocked: pointsUsed > 0 ? pointRate : null,
+          total: trueTotalNGN,
           currency: data.currency,
           addressSnapshot: (addressSnapshot ?? undefined) as Prisma.InputJsonValue | undefined,
           shippingMethodId: ship.methodId,
@@ -443,7 +475,7 @@ export async function POST(req: NextRequest) {
           fxUsdAmountLocked: lockedForeign.fxUsdAmountLocked,
           fxGbpAmountLocked: lockedForeign.fxGbpAmountLocked,
           amountPaid: 0,
-          balance: totalNGN,
+          balance: trueTotalNGN,
           couponId,
           couponCode: couponCode ?? null,
           paymentGateway,
@@ -487,8 +519,20 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      if (pointsDiscNGN > 0 && userId) {
-        await redeemPoints(userId, pointsDiscNGN, orderRow.id, tx);
+      if (pointsUsed > 0 && userId) {
+        await redeemPoints(userId, pointsUsed, orderRow.id, tx, pointRate);
+        const clientId = await resolveClientId({
+          userId,
+          email: session?.user?.email ?? data.guestEmail,
+        });
+        await tx.payment.create({
+          data: pointsPaymentData({
+            orderId: orderRow.id,
+            orderNumber: orderRow.orderNumber,
+            amountNGN: pointsDiscNGN,
+            clientId,
+          }),
+        });
       }
 
       if (userId) {
@@ -518,10 +562,24 @@ export async function POST(req: NextRequest) {
 
     void notifyNewOrder(order);
 
+    if (pointsUsed > 0 && outstandingNGN > 0.01) {
+      await recomputeRtwOrderTotals(order.id).catch((e) => console.warn("[orders/create] rtw totals", e));
+    }
+
+    const paidWithPoints = outstandingNGN <= 0.01;
+    if (paidWithPoints) {
+      await fulfillPaidOrder({
+        orderId: order.id,
+        paymentRef: order.paymentRef ?? order.orderNumber,
+      });
+    }
+
     return NextResponse.json({
       orderId: order.id,
       orderNumber: order.orderNumber,
       totalNGN: order.total,
+      outstandingNGN,
+      paidWithPoints,
       currency: data.currency,
       paymentRef: order.paymentRef,
       shippingQuoteStatus: order.shippingQuoteStatus,
@@ -531,6 +589,9 @@ export async function POST(req: NextRequest) {
       quotePending: order.shippingQuoteStatus === ShippingQuoteStatus.QUOTE_PENDING,
     });
   } catch (e) {
+    if (e instanceof InsufficientPointsError) {
+      return NextResponse.json({ error: "Insufficient points" }, { status: 400 });
+    }
     console.error("[orders/create]", e);
     return NextResponse.json({ error: "Could not create order" }, { status: 500 });
   }

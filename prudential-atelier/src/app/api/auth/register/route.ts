@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { PointsType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { registerSchema } from "@/validations/auth";
-import { awardReferralPoints } from "@/lib/points";
+import { awardSignupPoints, awardNewsletterPoints, emailRoot, phonesMatch } from "@/lib/points";
 import { sendWelcomeEmail, sendAccountExistsEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { rateLimitOr429 } from "@/lib/rate-limit";
 import { notifyNewCustomer } from "@/lib/notifications";
-import { getLoyaltyRulePoints } from "@/lib/loyalty";
 import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
 
 export async function POST(request: Request) {
@@ -29,10 +27,11 @@ export async function POST(request: Request) {
   }
 
   const { firstName, lastName, email, phone, password, referralCode } = parsed.data;
+  const emailNorm = email.toLowerCase();
 
-  const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+  const existing = await prisma.user.findUnique({ where: { email: emailNorm } });
   if (existing) {
-    void sendAccountExistsEmail(email.toLowerCase(), `${getPublicAppUrl()}/login`).catch((e) =>
+    void sendAccountExistsEmail(emailNorm, `${getPublicAppUrl()}/login`).catch((e) =>
       console.warn("[register] exists mail", e),
     );
     return NextResponse.json({ success: true });
@@ -41,14 +40,19 @@ export async function POST(request: Request) {
   let referrerId: string | undefined;
   const refCode = referralCode?.trim();
   if (refCode) {
-    const referrer = await prisma.user.findUnique({ where: { referralCode: refCode } });
-    if (referrer) referrerId = referrer.id;
+    const referrer = await prisma.user.findUnique({
+      where: { referralCode: refCode },
+      select: { id: true, email: true, phone: true },
+    });
+    if (referrer) {
+      const self =
+        emailRoot(referrer.email) === emailRoot(emailNorm) || phonesMatch(referrer.phone, phone);
+      if (!self) referrerId = referrer.id;
+    }
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
   const name = `${firstName} ${lastName}`.trim();
-  const signupPoints = await getLoyaltyRulePoints("SIGNUP");
-  const referralPoints = await getLoyaltyRulePoints("SIGNUP_REFERRAL");
   const thresholds = await getTierThresholds();
 
   let pointsBalance = 0;
@@ -57,40 +61,14 @@ export async function POST(request: Request) {
     const user = await tx.user.create({
       data: {
         name,
-        email: email.toLowerCase(),
+        email: emailNorm,
         phone,
         password: hashedPassword,
         referredById: referrerId,
       },
     });
 
-    if (referrerId) {
-      await awardReferralPoints(referrerId, user.id, tx, {
-        referrer: referralPoints,
-        newUser: signupPoints,
-      });
-      const u = await tx.user.findUnique({
-        where: { id: user.id },
-        select: { pointsBalance: true },
-      });
-      pointsBalance = u?.pointsBalance ?? 0;
-    } else if (signupPoints > 0) {
-      const updated = await tx.user.update({
-        where: { id: user.id },
-        data: { pointsBalance: { increment: signupPoints } },
-        select: { pointsBalance: true },
-      });
-      await tx.pointsTransaction.create({
-        data: {
-          userId: user.id,
-          type: PointsType.EARNED_SIGNUP,
-          amount: signupPoints,
-          balanceAfter: updated.pointsBalance,
-          description: "Welcome bonus",
-        },
-      });
-      pointsBalance = updated.pointsBalance;
-    }
+    pointsBalance = await awardSignupPoints(user.id, tx);
 
     const tier = tierFromPoints(pointsBalance, thresholds);
     await tx.clientProfile.create({
@@ -104,18 +82,19 @@ export async function POST(request: Request) {
   }, INTERACTIVE_TX);
 
   const createdUser = await prisma.user.findUnique({
-    where: { email: email.toLowerCase() },
+    where: { email: emailNorm },
     select: { id: true, name: true, email: true, referralCode: true },
   });
   if (createdUser) {
     void notifyNewCustomer(createdUser);
+    const onList = await prisma.newsletterSubscriber.findUnique({
+      where: { email: emailNorm },
+      select: { email: true },
+    });
+    if (onList) await awardNewsletterPoints(createdUser.id);
   }
-  void sendWelcomeEmail(
-    email.toLowerCase(),
-    firstName,
-    pointsBalance,
-    createdUser?.referralCode ?? "",
-  );
+
+  void sendWelcomeEmail(emailNorm, firstName, pointsBalance, createdUser?.referralCode ?? "");
 
   return NextResponse.json({ success: true });
 }

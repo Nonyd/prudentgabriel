@@ -7,7 +7,7 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
-import { awardPurchasePoints } from "@/lib/points";
+import { awardPurchasePoints, returnRedeemedPoints } from "@/lib/points";
 import { autoOnboardClient } from "@/lib/client-onboarding";
 import { sendOrderConfirmationEmail, sendRtwFulfilmentRefusedEmails } from "@/lib/email";
 import { notifyOrderConfirmed, notifyPaymentConfirmed } from "@/lib/customer-notifications";
@@ -36,6 +36,18 @@ export class InsufficientVariantStockError extends Error {
 const STOCK_REFUSE_NOTE =
   "Fulfilment refused: stock was insufficient after payment. Refund the customer — do not ship.";
 
+async function confirmedOnOrder(tx: object, orderId: string): Promise<number> {
+  const payment = (tx as {
+    payment?: { aggregate?: (args: Record<string, unknown>) => Promise<{ _sum?: { amount?: unknown } | null }> };
+  }).payment;
+  if (typeof payment?.aggregate !== "function") return 0;
+  const agg = await payment.aggregate({
+    where: { orderId, status: PaymentStatus.CONFIRMED },
+    _sum: { amount: true },
+  });
+  return Number(agg._sum?.amount ?? 0);
+}
+
 async function refuseFulfilmentForStock(params: {
   db: OrderFulfillDb;
   orderId: string;
@@ -44,13 +56,18 @@ async function refuseFulfilmentForStock(params: {
   clientId: string;
   total: number;
   currency: string;
+  userId?: string | null;
 }): Promise<boolean> {
-  return params.db.$transaction(async (tx) => {
+  const recorded = await params.db.$transaction(async (tx) => {
+    const already = await confirmedOnOrder(tx, params.orderId);
+    const remaining = Math.max(0, Math.round((params.total - already) * 100) / 100);
+    const pointsOnly = remaining <= 0.01;
+
     const flipped = await tx.order.updateMany({
       where: { id: params.orderId, paymentStatus: PaymentStatus.PENDING },
       data: {
-        paymentStatus: PaymentStatus.PAID,
-        paidAt: new Date(),
+        paymentStatus: pointsOnly ? PaymentStatus.REFUNDED : PaymentStatus.PAID,
+        paidAt: pointsOnly ? undefined : new Date(),
         paymentRef: params.paymentRef,
         status: OrderStatus.CANCELLED,
         adminNotes: STOCK_REFUSE_NOTE,
@@ -62,22 +79,29 @@ async function refuseFulfilmentForStock(params: {
       return false;
     }
 
-    await tx.payment.create({
-      data: {
-        reference: params.paymentRef,
-        amount: params.total,
-        currency: String(params.currency),
-        method: gatewayToPaymentMethod(params.gateway ?? null),
-        status: PaymentStatus.CONFIRMED,
-        purpose: PaymentPurpose.RTW_ORDER,
-        orderId: params.orderId,
-        clientId: params.clientId,
-        confirmedAt: new Date(),
-      },
-    });
+    if (remaining > 0.01) {
+      await tx.payment.create({
+        data: {
+          reference: params.paymentRef,
+          amount: remaining,
+          currency: String(params.currency),
+          method: gatewayToPaymentMethod(params.gateway ?? null),
+          status: PaymentStatus.CONFIRMED,
+          purpose: PaymentPurpose.RTW_ORDER,
+          orderId: params.orderId,
+          clientId: params.clientId,
+          confirmedAt: new Date(),
+        },
+      });
+    }
 
+    if ("pointsTransaction" in tx) {
+      await returnRedeemedPoints(params.orderId, tx);
+    }
     return true;
   }, INTERACTIVE_TX);
+
+  return recorded;
 }
 
 export async function fulfillPaidOrder(params: {
@@ -174,19 +198,23 @@ export async function fulfillPaidOrder(params: {
         }
       }
 
-      await tx.payment.create({
-        data: {
-          reference: params.paymentRef,
-          amount: order.total,
-          currency: String(order.currency),
-          method: gatewayToPaymentMethod(params.gateway ?? null),
-          status: PaymentStatus.CONFIRMED,
-          purpose: PaymentPurpose.RTW_ORDER,
-          orderId: order.id,
-          clientId,
-          confirmedAt: new Date(),
-        },
-      });
+      const already = await confirmedOnOrder(tx, order.id);
+      const remaining = Math.max(0, Math.round((order.total - already) * 100) / 100);
+      if (remaining > 0.01) {
+        await tx.payment.create({
+          data: {
+            reference: params.paymentRef,
+            amount: remaining,
+            currency: String(order.currency),
+            method: gatewayToPaymentMethod(params.gateway ?? null),
+            status: PaymentStatus.CONFIRMED,
+            purpose: PaymentPurpose.RTW_ORDER,
+            orderId: order.id,
+            clientId,
+            confirmedAt: new Date(),
+          },
+        });
+      }
 
       return true;
     }, INTERACTIVE_TX);
@@ -252,6 +280,7 @@ export async function fulfillPaidOrder(params: {
   let userId = order.userId;
   const clientEmail = order.guestEmail ?? order.user?.email;
   const clientName = order.guestName ?? order.user?.name ?? "Client";
+  let pointsEarned = 0;
 
   if (!userId && clientEmail) {
     const onboard = await autoOnboardClient({
@@ -265,9 +294,16 @@ export async function fulfillPaidOrder(params: {
   }
 
   if (userId) {
-    void awardPurchasePoints(userId, order.total, order.id).catch((e) =>
-      console.warn("[fulfillPaidOrder] points", e),
-    );
+    pointsEarned = await awardPurchasePoints(
+      userId,
+      Math.max(0, order.subtotal - order.discount),
+      order.id,
+      undefined,
+      order.pointsDiscountNGN,
+    ).catch((e) => {
+      console.warn("[fulfillPaidOrder] points", e);
+      return 0;
+    });
   }
 
   const emailTo = clientEmail;
@@ -298,6 +334,7 @@ export async function fulfillPaidOrder(params: {
           shippingNGN: order.shippingAmount,
           discountNGN: order.discount,
           pointsDiscNGN: order.pointsDiscountNGN,
+          pointsEarned,
           addressSnapshot: snap ?? undefined,
           dduDisclosure: international ? copy.dduDisclosure : undefined,
           quotePending: order.shippingQuoteStatus === "QUOTE_PENDING",

@@ -22,7 +22,7 @@ export const EMAIL_TEMPLATE_DEFAULTS: Record<string, { subject: string; body: st
   },
   email_tpl_referral_success: {
     subject: "Your referral reward",
-    body: "Hi {{firstName}},\n\nThanks for spreading the word — loyalty points have been added to your account.\n\n— Prudent Gabriel",
+    body: "Hi {{firstName}},\n\nThanks for spreading the word — Prudent Points have been added to your account.\n\n— Prudent Gabriel",
   },
   email_tpl_back_in_stock: {
     subject: "{{productName}} is back in stock",

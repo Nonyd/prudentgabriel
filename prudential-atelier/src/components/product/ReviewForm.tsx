@@ -124,7 +124,7 @@ export function ReviewForm({
         <p className="font-body text-sm text-charcoal">✓ Review submitted! It will appear after our team approves it.</p>
         {done.points > 0 && (
           <p className="font-body text-sm text-choc">
-            You&apos;ve earned {done.points} loyalty points for this review.
+            You&apos;ve earned {done.points} Prudent Points for this review.
           </p>
         )}
         <button

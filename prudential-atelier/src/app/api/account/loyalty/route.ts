@@ -4,6 +4,7 @@ import { getTierThresholds, tierFromPoints, pointsToNextTier, nextTier, TIER_LAB
 import { getOrCreateClientProfile } from "@/lib/account-helpers";
 import { prisma } from "@/lib/prisma";
 import { logError } from "@/lib/logger";
+import { getPointRateNGN, pointsToNaira } from "@/lib/points";
 
 export async function GET(req: NextRequest) {
   const gate = await requireSession();
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const userId = gate.session.user.id!;
-    const [user, profile, thresholds, rules, history, total] = await Promise.all([
+    const [user, profile, thresholds, rules, history, total, rateNGN] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: { pointsBalance: true },
@@ -30,6 +31,7 @@ export async function GET(req: NextRequest) {
         take: perPage,
       }),
       prisma.pointsTransaction.count({ where: { userId } }),
+      getPointRateNGN(),
     ]);
 
     const points = user?.pointsBalance ?? 0;
@@ -37,6 +39,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       pointsBalance: points,
+      pointsValueNGN: pointsToNaira(points, rateNGN),
+      rateNGN,
       tier,
       tierLabel: TIER_LABELS[tier],
       nextTier: nextTier(tier),

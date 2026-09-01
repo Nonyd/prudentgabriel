@@ -32,7 +32,7 @@ export async function getRtwPaymentSummary(orderId: string): Promise<PaymentSumm
   const confirmed = confirmedRows.reduce((acc, r) => acc.plus(r.amount), ZERO);
   const pending = pendingRows.reduce((acc, r) => acc.plus(r.amount), ZERO);
   const balance = Prisma.Decimal.max(ZERO, total.minus(confirmed));
-  const isFullyPaid = confirmed.gte(total) && total.gt(ZERO);
+  const isFullyPaid = confirmed.gte(total);
 
   return {
     total,
@@ -86,7 +86,15 @@ export function canAcceptRtwPayment(order: {
   return false;
 }
 
-/** Amount this charge must equal: outstanding balance after a quote, else total. */
+function outstandingNGN(order: {
+  total: number;
+  balance?: number | null;
+  amountPaid?: number | null;
+}): number {
+  return order.balance ?? Math.max(0, order.total - (order.amountPaid ?? 0));
+}
+
+/** Amount this charge must equal: outstanding after points or a quote, else total. */
 export function rtwChargeAmountNGN(order: {
   paymentStatus: PaymentStatus;
   total: number;
@@ -94,7 +102,10 @@ export function rtwChargeAmountNGN(order: {
   amountPaid?: number | null;
 }): number {
   if (order.paymentStatus === PaymentStatus.PAID && rtwHasOutstandingBalance(order)) {
-    return order.balance ?? Math.max(0, order.total - (order.amountPaid ?? 0));
+    return outstandingNGN(order);
+  }
+  if ((order.amountPaid ?? 0) > 0.01) {
+    return outstandingNGN(order);
   }
   return order.total;
 }
@@ -112,6 +123,7 @@ export function rtwChargeAmountForeign(
     total: number;
     balance?: number | null;
     amountPaid?: number | null;
+    pointsDiscountNGN?: number | null;
     fxUsdAmountLocked?: number | null;
     fxGbpAmountLocked?: number | null;
   },
@@ -124,6 +136,12 @@ export function rtwChargeAmountForeign(
     return roundMoney(convertAtLockedRate(ngn, currency, fx));
   }
   const locked = currency === "USD" ? order.fxUsdAmountLocked : order.fxGbpAmountLocked;
-  if (locked != null && locked > 0) return roundMoney(locked);
+  if (locked != null && locked > 0) {
+    const pointsNGN = order.pointsDiscountNGN ?? 0;
+    if (pointsNGN > 0.01) {
+      return Math.max(0, roundMoney(locked - convertAtLockedRate(pointsNGN, currency, fx)));
+    }
+    return roundMoney(locked);
+  }
   return roundMoney(convertAtLockedRate(ngn, currency, fx));
 }

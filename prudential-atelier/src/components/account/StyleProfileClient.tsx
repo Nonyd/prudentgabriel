@@ -25,6 +25,9 @@ export function StyleProfileClient({
   const [colors, setColors] = useState<string[]>(profile.preferredColors);
   const [occasions, setOccasions] = useState<string[]>(profile.occasions);
   const [budget, setBudget] = useState(profile.budgetRange ?? "");
+  const [dob, setDob] = useState(
+    profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().slice(0, 10) : "",
+  );
   const [editing, setEditing] = useState(!styleProfileComplete(profile));
   const [saving, setSaving] = useState(false);
 
@@ -43,6 +46,7 @@ export function StyleProfileClient({
           preferredColors: colors,
           occasions,
           budgetRange: budget || null,
+          dateOfBirth: dob || null,
         }),
       });
       if (!res.ok) throw new Error();
@@ -181,6 +185,16 @@ export function StyleProfileClient({
               </label>
             ))}
           </div>
+          <label className="mt-8 block font-sans text-sm text-choc">
+            Birthday
+            <input
+              type="date"
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+              className="mt-2 block w-full border border-sand bg-ivory px-3 py-2"
+            />
+          </label>
+          <p className="mt-2 font-sans text-xs text-text-mid">Optional. 2,500 Prudent Points each year.</p>
           <button
             type="button"
             onClick={save}

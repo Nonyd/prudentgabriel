@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { BespokeStage, ConsultationStatus, EmploymentType, PaymentStatus } from "@prisma/client";
-import { CalendarDays, CreditCard, Scissors, TrendingUp } from "lucide-react";
+import { CalendarDays, Coins, CreditCard, Scissors, TrendingUp } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ExecutiveKPICard } from "@/components/admin/ExecutiveKPICard";
 import { ExecutiveRevenueChart, type RevenueChartPoint } from "@/components/admin/ExecutiveRevenueChart";
 import { formatNGN, getInitials } from "@/lib/utils";
+import { getPointRateNGN, outstandingPointsTotal, pointsToNaira } from "@/lib/points";
 
 function startOfDay(d: Date): Date {
   const x = new Date(d);
@@ -63,6 +64,8 @@ export default async function AdminDashboardPage() {
   let consultationsLastWeek = 0;
   let outstandingBalance = 0;
   let outstandingOrders = 0;
+  let pointsOutstanding = 0;
+  let pointsLiabilityNGN = 0;
   let ordersAdvancedToday = 0;
   let deliveriesToday = 0;
   let paymentsToday = 0;
@@ -227,6 +230,8 @@ export default async function AdminDashboardPage() {
     consultationsLastWeek = consultBookedLastWeek;
     outstandingBalance = balanceAgg._sum.balance ?? 0;
     outstandingOrders = balanceOrders;
+    pointsOutstanding = await outstandingPointsTotal();
+    pointsLiabilityNGN = pointsToNaira(pointsOutstanding, await getPointRateNGN());
     ordersAdvancedToday = stageLogsToday;
     deliveriesToday = deliveryTodayCount;
     paymentsToday = (orderPaidToday._sum.total ?? 0) + (consultPaidToday._sum.feeNGN ?? 0);
@@ -314,7 +319,7 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <ExecutiveKPICard
           label="Revenue · This week"
           value={formatNGN(revenueThisWeek)}
@@ -346,6 +351,14 @@ export default async function AdminDashboardPage() {
           trendUp={null}
           icon={CreditCard}
           iconBg="bg-wine/10"
+        />
+        <ExecutiveKPICard
+          label="Prudent Points liability"
+          value={formatNGN(pointsLiabilityNGN)}
+          trend={`${pointsOutstanding.toLocaleString()} points outstanding`}
+          trendUp={null}
+          icon={Coins}
+          iconBg="bg-gold/20"
         />
       </div>
 

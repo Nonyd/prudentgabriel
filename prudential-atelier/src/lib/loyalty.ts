@@ -1,5 +1,6 @@
 import type { LoyaltyTier } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { PROGRAMME_DEFAULTS } from "@/lib/points-value";
 
 export type TierThresholds = {
   bronze: number;
@@ -111,6 +112,7 @@ export function getTierPerks(tier: LoyaltyTier): string[] {
 
 export async function getLoyaltyRulePoints(action: string): Promise<number> {
   const rule = await prisma.loyaltyRule.findUnique({ where: { action } });
-  if (!rule?.isActive) return 0;
-  return rule.points;
+  if (rule && !rule.isActive) return 0;
+  if (rule) return rule.points;
+  return PROGRAMME_DEFAULTS[action] ?? 0;
 }

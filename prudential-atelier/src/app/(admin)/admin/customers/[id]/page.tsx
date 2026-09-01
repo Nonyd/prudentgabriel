@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { AdminCustomerPointsForm } from "@/components/admin/AdminCustomerPointsForm";
+import { getPointRateNGN, pointsToNaira } from "@/lib/points";
 
 export default async function AdminCustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -15,10 +17,13 @@ export default async function AdminCustomerDetailPage({ params }: { params: Prom
   });
   if (!user) notFound();
 
-  const spent = await prisma.order.aggregate({
-    where: { userId: id, paymentStatus: "PAID" },
-    _sum: { total: true },
-  });
+  const [spent, rateNGN] = await Promise.all([
+    prisma.order.aggregate({
+      where: { userId: id, paymentStatus: "PAID" },
+      _sum: { total: true },
+    }),
+    getPointRateNGN(),
+  ]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -29,10 +34,12 @@ export default async function AdminCustomerDetailPage({ params }: { params: Prom
         <h1 className="font-display text-2xl text-charcoal">{user.name}</h1>
         <p className="text-sm text-[#A8A8A4]">{user.email}</p>
         <p className="mt-2 text-sm text-charcoal-mid">
-          Points: {user.pointsBalance} · Orders: {user.orders.length} · Spent: ₦
-          {Math.round(spent._sum.total ?? 0).toLocaleString("en-NG")}
+          Points: {user.pointsBalance.toLocaleString()} ({"₦"}
+          {Math.round(pointsToNaira(user.pointsBalance, rateNGN)).toLocaleString("en-NG")}) · Orders:{" "}
+          {user.orders.length} · Spent: ₦{Math.round(spent._sum.total ?? 0).toLocaleString("en-NG")}
         </p>
       </div>
+      <AdminCustomerPointsForm userId={user.id} currentBalance={user.pointsBalance} />
       <div className="rounded-sm border border-sand bg-canvas p-6">
         <h2 className="font-display text-lg text-gold">Recent orders</h2>
         <ul className="mt-3 space-y-2 text-sm">

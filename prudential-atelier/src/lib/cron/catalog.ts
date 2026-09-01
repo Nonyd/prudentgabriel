@@ -109,6 +109,12 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     migrated: true,
   },
   {
+    name: "prudent-points",
+    schedule: "0 9 * * *",
+    description: "Expire Prudent Points, send 30-day lapse reminders, award birthdays",
+    migrated: true,
+  },
+  {
     name: "email-outbox",
     schedule: "* * * * *",
     description:
