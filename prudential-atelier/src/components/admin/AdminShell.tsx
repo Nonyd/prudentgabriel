@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import type { Session } from "next-auth";
 import { AdminMaintenanceBanner } from "./AdminMaintenanceBanner";
 import { AdminSidebar } from "./AdminSidebar";
@@ -36,7 +36,9 @@ export function AdminShell({
           mobileNav ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
-        <AdminSidebar session={session} badges={badges} onNavigate={() => setMobileNav(false)} />
+        <Suspense fallback={null}>
+          <AdminSidebar session={session} badges={badges} onNavigate={() => setMobileNav(false)} />
+        </Suspense>
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden print:overflow-visible">
         <AdminMaintenanceBanner isMaintenanceOn={isMaintenanceOn} />

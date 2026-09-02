@@ -233,3 +233,259 @@ export const ADMIN_MATRIX_ROUTES: {
 export function matrixAccess(role: string, path: string): "allow" | "deny" {
   return roleMayAccessAdminPath(role, path) ? "allow" : "deny";
 }
+
+export const ADMIN_NAV_STORAGE_KEY = "prudentgabriel.adminNav.v1";
+
+export type AdminNavItemDef = {
+  href: string;
+  label: string;
+  icon: string;
+  badgeKey?: string;
+  alsoActive?: string[];
+};
+
+export type AdminNavSectionDef = {
+  id: string;
+  label: string;
+  /** Daily work starts open; configuration starts closed. */
+  defaultOpen: boolean;
+  items: AdminNavItemDef[];
+};
+
+/** Path used for Step 2 access (query and hash stripped). */
+export function adminNavAccessPath(href: string): string {
+  const path = href.split("?")[0]?.split("#")[0] ?? href;
+  return normalizeAdminPath(path);
+}
+
+/**
+ * Sidebar structure. Visibility is `roleMayAccessAdminPath` on each href —
+ * not a second permission field. Empty sections are omitted by
+ * `visibleAdminNavSections`.
+ */
+export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
+  {
+    id: "executive",
+    label: "Executive",
+    defaultOpen: true,
+    items: [{ href: "/admin", label: "Dashboard", icon: "dashboard" }],
+  },
+  {
+    id: "orders",
+    label: "Orders",
+    defaultOpen: true,
+    items: [
+      { href: "/admin/orders", label: "All orders", icon: "orders" },
+      {
+        href: `/admin/orders?attention=quote-pending-all`,
+        label: "Awaiting shipping quote",
+        icon: "quote",
+      },
+      {
+        href: `/admin/orders?attention=refund-required`,
+        label: "Refund required",
+        icon: "refund",
+      },
+    ],
+  },
+  {
+    id: "consultations",
+    label: "Consultations",
+    defaultOpen: true,
+    items: [
+      { href: "/admin/consultations", label: "Bookings", icon: "consultations", badgeKey: "consultations" },
+      { href: "/admin/consultants", label: "Consultants", icon: "consultants" },
+    ],
+  },
+  {
+    id: "atelier",
+    label: "Atelier",
+    defaultOpen: true,
+    items: [
+      { href: "/admin/bespoke", label: "Pipeline", icon: "atelier", badgeKey: "bespoke" },
+      { href: "/admin/quotations", label: "Quotations", icon: "quotations" },
+      { href: "/admin/invoices", label: "Invoices", icon: "invoices" },
+    ],
+  },
+  {
+    id: "payments",
+    label: "Payments",
+    defaultOpen: true,
+    items: [
+      { href: "/admin/payments", label: "Ledger", icon: "payments" },
+      { href: "/admin/payments#transfers", label: "Transfers to confirm", icon: "transfers" },
+      { href: "/admin/reports", label: "Financial reports", icon: "reports" },
+    ],
+  },
+  {
+    id: "people",
+    label: "People",
+    defaultOpen: true,
+    items: [
+      { href: "/admin/clients", label: "Clients", icon: "clients" },
+      { href: "/admin/staff", label: "Staff", icon: "staff" },
+      { href: "/admin/attendance", label: "Attendance", icon: "attendance" },
+      { href: "/admin/staff/performance", label: "Performance", icon: "performance" },
+    ],
+  },
+  {
+    id: "catalogue",
+    label: "Catalogue",
+    defaultOpen: false,
+    items: [
+      { href: "/admin/products", label: "Products", icon: "products" },
+      { href: "/admin/collections", label: "Collections", icon: "collections" },
+      { href: "/admin/content/media", label: "Media", icon: "media" },
+      { href: "/admin/shop/import", label: "Import", icon: "import" },
+      { href: "/admin/products/guide", label: "How to upload", icon: "guide" },
+    ],
+  },
+  {
+    id: "commerce",
+    label: "Commerce setup",
+    defaultOpen: false,
+    items: [
+      { href: "/admin/coupons", label: "Coupons", icon: "coupons" },
+      { href: "/admin/shipping", label: "Shipping", icon: "shipping" },
+      { href: "/admin/sizing", label: "Sizing", icon: "sizing" },
+    ],
+  },
+  {
+    id: "house",
+    label: "House",
+    defaultOpen: false,
+    items: [
+      { href: "/admin/content", label: "Content", icon: "content" },
+      { href: "/admin/content/blog", label: "Journal", icon: "journal" },
+      { href: "/admin/reviews", label: "Testimonials", icon: "reviews" },
+      { href: "/admin/gallery", label: "Gallery", icon: "gallery" },
+      { href: "/admin/careers", label: "Careers", icon: "careers", alsoActive: ["/admin/careers/new"] },
+      { href: "/admin/careers/applications", label: "Applications", icon: "applications" },
+      { href: "/admin/content/messages", label: "Messages", icon: "messages", badgeKey: "messages" },
+    ],
+  },
+  {
+    id: "site",
+    label: "Site",
+    defaultOpen: false,
+    items: [
+      { href: "/admin/settings/appearance", label: "Appearance", icon: "appearance" },
+      { href: "/admin/settings/seo", label: "SEO", icon: "seo" },
+      { href: "/admin/content/pages", label: "Pages", icon: "pages" },
+      { href: "/admin/settings/social", label: "Social", icon: "social" },
+    ],
+  },
+  {
+    id: "system",
+    label: "System",
+    defaultOpen: false,
+    items: [
+      { href: "/admin/system/jobs", label: "Jobs", icon: "jobs" },
+      { href: "/admin/system/emails", label: "Emails", icon: "sys-emails" },
+      { href: "/admin/checkouts", label: "Abandoned checkouts", icon: "checkouts" },
+      { href: "/admin/logs/activity", label: "Activity log", icon: "logs" },
+      { href: "/admin/logs/errors", label: "Error log", icon: "errors" },
+    ],
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    defaultOpen: false,
+    items: [
+      { href: "/admin/settings", label: "General", icon: "settings" },
+      { href: "/admin/settings/email", label: "Email", icon: "email" },
+      { href: "/admin/settings/notifications", label: "Notifications", icon: "notifications" },
+      { href: "/admin/settings/developer", label: "Developer", icon: "developer" },
+      { href: "/admin/settings/users", label: "Users & Roles", icon: "users" },
+      { href: "/admin/settings/roles", label: "Job roles", icon: "roles" },
+    ],
+  },
+];
+
+export function defaultAdminNavOpenState(): Record<string, boolean> {
+  const out: Record<string, boolean> = {};
+  for (const section of ADMIN_NAV_SECTIONS) {
+    out[section.id] = section.defaultOpen;
+  }
+  return out;
+}
+
+export function visibleAdminNavSections(
+  role: string | undefined | null,
+  email?: string | null,
+): AdminNavSectionDef[] {
+  return ADMIN_NAV_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter((item) =>
+      roleMayAccessAdminPath(role, adminNavAccessPath(item.href), email),
+    ),
+  })).filter((section) => section.items.length > 0);
+}
+
+export function adminNavSectionIdForPath(pathname: string): string | null {
+  const path = normalizeAdminPath(pathname);
+  let best: { id: string; len: number } | null = null;
+  for (const section of ADMIN_NAV_SECTIONS) {
+    for (const item of section.items) {
+      const itemPath = adminNavAccessPath(item.href);
+      let len = 0;
+      if (itemPath === "/admin") {
+        if (path === "/admin") len = itemPath.length;
+      } else if (path === itemPath || path.startsWith(`${itemPath}/`)) {
+        len = itemPath.length;
+      } else if (item.alsoActive?.some((p) => path === p || path.startsWith(`${p}/`))) {
+        len = itemPath.length;
+      }
+      if (len > 0 && (!best || len > best.len)) best = { id: section.id, len };
+    }
+  }
+  return best?.id ?? null;
+}
+
+export function adminNavItemIsActive(
+  pathname: string,
+  search: string,
+  hash: string,
+  item: AdminNavItemDef,
+): boolean {
+  const path = normalizeAdminPath(pathname);
+  const raw = item.href;
+  const [withoutHash, itemHash = ""] = raw.split("#");
+  const [itemPathRaw, itemQuery = ""] = (withoutHash ?? raw).split("?");
+  const itemPath = normalizeAdminPath(itemPathRaw ?? "/admin");
+  const currentSearch = search.startsWith("?") ? search.slice(1) : search;
+  const currentHash = hash.startsWith("#") ? hash : hash ? `#${hash}` : "";
+  const wantHash = itemHash ? `#${itemHash}` : "";
+
+  let pathOk = false;
+  if (itemPath === "/admin") {
+    pathOk = path === "/admin";
+  } else {
+    pathOk =
+      path === itemPath ||
+      path.startsWith(`${itemPath}/`) ||
+      Boolean(item.alsoActive?.some((p) => path === p || path.startsWith(`${p}/`)));
+  }
+  if (!pathOk) return false;
+
+  if (itemQuery) {
+    const want = new URLSearchParams(itemQuery);
+    const have = new URLSearchParams(currentSearch);
+    return Array.from(want.entries()).every(([key, value]) => have.get(key) === value);
+  }
+
+  if (wantHash) {
+    return path === itemPath && currentHash === wantHash;
+  }
+
+  if (itemPath === "/admin/orders" && path === "/admin/orders") {
+    const have = new URLSearchParams(currentSearch);
+    if (have.get("attention")) return false;
+  }
+
+  if (itemPath === "/admin/payments" && path === "/admin/payments") {
+    if (currentHash === "#transfers") return false;
+  }
+
+  return true;
+}

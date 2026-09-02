@@ -104,7 +104,7 @@ export function AdminPendingBankTransfers() {
 
   if (loading) {
     return (
-      <div className="mt-8 border border-sand bg-bg-card p-6">
+      <div id="transfers" className="mt-8 scroll-mt-8 border border-sand bg-bg-card p-6">
         <p className="font-body text-sm text-[#6B6B68]">Loading pending bank transfers…</p>
       </div>
     );
@@ -112,7 +112,7 @@ export function AdminPendingBankTransfers() {
 
   if (items.length === 0) {
     return (
-      <div className="mt-8 border border-sand bg-bg-card p-6">
+      <div id="transfers" className="mt-8 scroll-mt-8 border border-sand bg-bg-card p-6">
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6B6B68]">
           Pending bank transfers
         </p>
@@ -125,7 +125,7 @@ export function AdminPendingBankTransfers() {
 
   return (
     <>
-      <div className="mt-8 border border-[#C45E0A]/30 bg-[#FFF8F0] p-4">
+      <div id="transfers" className="mt-8 scroll-mt-8 border border-[#C45E0A]/30 bg-[#FFF8F0] p-4">
         <p className="font-body text-[11px] font-medium uppercase tracking-[0.08em] text-[#C45E0A]">
           Pending bank transfers ({items.length})
         </p>

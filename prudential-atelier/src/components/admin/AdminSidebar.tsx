@@ -7,6 +7,7 @@ import {
   BarChart3,
   Briefcase,
   CalendarDays,
+  ChevronDown,
   ClipboardCheck,
   FileText,
   Images,
@@ -15,7 +16,6 @@ import {
   LayoutDashboard,
   MessageSquare,
   Mail,
-  Send,
   Newspaper,
   Lock,
   LogOut,
@@ -23,19 +23,22 @@ import {
   Palette,
   Receipt,
   Scissors,
+  Search,
   Settings,
+  Share2,
   ShoppingBag,
   TrendingUp,
+  Truck,
+  Ticket,
   UserCircle,
   UserRoundCog,
   Users,
   Wallet,
-  Truck,
-  Ticket,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { useEffect, useMemo, useState } from "react";
 import type { Session } from "next-auth";
 import { cn, getInitials } from "@/lib/utils";
 import {
@@ -44,193 +47,100 @@ import {
   shouldEnforceJobPermissions,
   type PermissionSession,
 } from "@/lib/permissions";
-import {
-  CMS_ADMIN_PERMISSIONS,
-  canAccessLogs,
-  canAccessReports,
-  canAccessSettings,
-  isSuperAdmin,
-  roleAllows,
-  roleLabel,
-  type AdminPermission,
-} from "@/lib/roles";
+import { roleLabel } from "@/lib/roles";
 import { Logo } from "@/components/ui/Logo";
+import {
+  ADMIN_NAV_STORAGE_KEY,
+  accessRuleForAdminPath,
+  adminNavAccessPath,
+  adminNavItemIsActive,
+  adminNavSectionIdForPath,
+  defaultAdminNavOpenState,
+  visibleAdminNavSections,
+  type AdminNavItemDef,
+} from "@/lib/admin-route-access";
 
-type NavItem = {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  badgeKey?: string;
-  permission?: AdminPermission | readonly AdminPermission[];
-  superAdminOnly?: boolean;
-  generalAdminOnly?: boolean;
-  alsoActive?: string[];
+const NAV_ICONS: Record<string, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  orders: ShoppingBag,
+  quote: Truck,
+  refund: AlertTriangle,
+  consultations: CalendarDays,
+  consultants: UserCircle,
+  atelier: Scissors,
+  quotations: FileText,
+  invoices: Receipt,
+  payments: Wallet,
+  transfers: Wallet,
+  reports: BarChart3,
+  clients: UserCircle,
+  staff: Users,
+  attendance: ClipboardCheck,
+  performance: TrendingUp,
+  products: Package,
+  collections: Layout,
+  media: ImageIcon,
+  import: Package,
+  guide: FileText,
+  coupons: Ticket,
+  shipping: Truck,
+  sizing: Package,
+  content: Layout,
+  journal: Newspaper,
+  reviews: MessageSquare,
+  gallery: Images,
+  careers: Briefcase,
+  applications: FileText,
+  messages: MessageSquare,
+  appearance: Palette,
+  seo: Search,
+  pages: FileText,
+  social: Share2,
+  jobs: Activity,
+  "sys-emails": Mail,
+  checkouts: ShoppingBag,
+  logs: Activity,
+  errors: AlertTriangle,
+  settings: Settings,
+  email: Mail,
+  notifications: Mail,
+  developer: Lock,
+  users: UserRoundCog,
+  roles: UserRoundCog,
 };
 
-const SECTIONS: { label: string; items: NavItem[] }[] = [
-  {
-    label: "Operations",
-    items: [
-      { href: "/admin", label: "Executive", icon: LayoutDashboard, permission: "dashboard" },
-      { href: "/admin/bespoke", label: "Atelier Pipeline", icon: Scissors, badgeKey: "bespoke", permission: "bespoke" },
-      {
-        href: "/admin/consultations",
-        label: "Consultations",
-        icon: CalendarDays,
-        badgeKey: "consultations",
-        permission: "consultations",
-      },
-      {
-        href: "/admin/invoices",
-        label: "Quotations & Invoices",
-        icon: Receipt,
-        permission: "invoices",
-        alsoActive: ["/admin/quotations", "/admin/invoices/quotations"],
-      },
-    ],
-  },
-  {
-    label: "Shop",
-    items: [
-      { href: "/admin/products", label: "Products", icon: Package, permission: "shop.products" },
-      { href: "/admin/sizing", label: "Sizing", icon: Package, permission: "shop.products" },
-      { href: "/admin/products/guide", label: "How to upload", icon: Package, permission: "shop.products" },
-      { href: "/admin/shop/import", label: "Import Products", icon: Package, permission: "shop.products" },
-      { href: "/admin/collections", label: "Collections", icon: Package, permission: "shop.products" },
-      { href: "/admin/orders", label: "Orders", icon: ShoppingBag, badgeKey: "orders", permission: "shop.orders" },
-      { href: "/admin/checkouts", label: "Abandoned checkouts", icon: ShoppingBag, permission: "shop.orders" },
-      { href: "/admin/shipping", label: "Shipping", icon: Truck, permission: "shop" },
-      { href: "/admin/coupons", label: "Coupons", icon: Ticket, permission: "shop.orders" },
-    ],
-  },
-  {
-    label: "Staff & HR",
-    items: [
-      { href: "/admin/staff", label: "Staff Members", icon: Users, permission: "staff" },
-      { href: "/admin/attendance", label: "Attendance", icon: ClipboardCheck, permission: "attendance" },
-      { href: "/admin/staff/performance", label: "Performance", icon: TrendingUp, permission: "reports.staff" },
-    ],
-  },
-  {
-    label: "Careers",
-    items: [
-      {
-        href: "/admin/careers",
-        label: "Job Postings",
-        icon: Briefcase,
-        generalAdminOnly: true,
-        alsoActive: ["/admin/careers/new"],
-      },
-      {
-        href: "/admin/careers/applications",
-        label: "Applications",
-        icon: FileText,
-        generalAdminOnly: true,
-      },
-    ],
-  },
-  {
-    label: "Clients",
-    items: [{ href: "/admin/clients", label: "Client CRM", icon: UserCircle, permission: "clients" }],
-  },
-  {
-    label: "Finance",
-    items: [
-      { href: "/admin/payments", label: "Payments", icon: Wallet, permission: "payments" },
-      { href: "/admin/settings/bank-accounts", label: "Bank accounts", icon: Wallet, permission: "settings" },
-      { href: "/admin/reports", label: "Financial Reports", icon: BarChart3, permission: "reports" },
-    ],
-  },
-  {
-    label: "Content",
-    items: [
-      { href: "/admin/content", label: "Overview", icon: Layout, permission: CMS_ADMIN_PERMISSIONS, alsoActive: ["/admin/content/pages", "/admin/content/media"] },
-      { href: "/admin/content/messages", label: "Messages", icon: MessageSquare, generalAdminOnly: true, badgeKey: "messages" },
-      { href: "/admin/content/email-templates", label: "Email Templates", icon: Mail, generalAdminOnly: true },
-      { href: "/admin/content/send-email", label: "Send Email", icon: Send, generalAdminOnly: true },
-      { href: "/admin/content/unsubscribes", label: "Unsubscribes", icon: Mail, generalAdminOnly: true },
-      { href: "/admin/content/pages", label: "Page content", icon: FileText, permission: CMS_ADMIN_PERMISSIONS },
-      { href: "/admin/content/blog", label: "Blog / Journal", icon: Newspaper, permission: CMS_ADMIN_PERMISSIONS },
-      { href: "/admin/reviews", label: "Reviews", icon: MessageSquare, permission: CMS_ADMIN_PERMISSIONS },
-      { href: "/admin/gallery", label: "Portfolio gallery", icon: Images, permission: CMS_ADMIN_PERMISSIONS },
-      { href: "/admin/content/media", label: "Media library", icon: ImageIcon, permission: CMS_ADMIN_PERMISSIONS },
-    ],
-  },
-  {
-    label: "System",
-    items: [
-      { href: "/admin/system/jobs", label: "Scheduled jobs", icon: Activity, generalAdminOnly: true },
-      { href: "/admin/system/emails", label: "Emails", icon: Mail, generalAdminOnly: true },
-      { href: "/admin/logs/activity", label: "Activity Log", icon: Activity, permission: "logs" },
-      { href: "/admin/logs/errors", label: "Error Log", icon: AlertTriangle, permission: "logs" },
-    ],
-  },
-  {
-    label: "Settings",
-    items: [
-      { href: "/admin/settings", label: "General Settings", icon: Settings, permission: "settings" },
-      { href: "/admin/settings/appearance", label: "Brand & appearance", icon: Palette, permission: CMS_ADMIN_PERMISSIONS },
-      {
-        href: "/admin/settings/developer",
-        label: "Developer",
-        icon: Lock,
-        superAdminOnly: true,
-      },
-      {
-        href: "/admin/settings/users",
-        label: "Users & Roles",
-        icon: UserRoundCog,
-        superAdminOnly: true,
-      },
-      {
-        href: "/admin/settings/roles",
-        label: "Job Roles",
-        icon: UserRoundCog,
-        generalAdminOnly: true,
-      },
-    ],
-  },
-];
+function iconFor(item: AdminNavItemDef): LucideIcon {
+  return NAV_ICONS[item.icon] ?? Layout;
+}
 
-function canSeeNavItem(
-  item: NavItem,
-  session: Session,
-): boolean {
-  const role = session.user?.role ?? "ADMIN";
-  const email = session.user?.email;
+function jobRoleAllowsNavItem(item: AdminNavItemDef, session: Session): boolean {
   const permissionSession: PermissionSession = {
     user: {
       role: session.user?.role,
       jobRolePermissions: session.user?.jobRolePermissions,
     },
   };
-
-  if (item.superAdminOnly) return isSuperAdmin(role, email);
-  if (item.generalAdminOnly) return role === "ADMIN" || isSuperAdmin(role, email);
-
-  let legacyAllowed = true;
-  if (item.permission === "logs") legacyAllowed = canAccessLogs(role, email);
-  else if (item.permission === "reports") legacyAllowed = canAccessReports(role, email);
-  else if (item.permission === "settings") legacyAllowed = canAccessSettings(role, email);
-  else if (item.permission) legacyAllowed = roleAllows(role, item.permission);
-
-  if (!legacyAllowed) return false;
-
-  if (!shouldEnforceJobPermissions(permissionSession) || !item.permission) return true;
-
-  const jobLookup: string = Array.isArray(item.permission) ? "content" : String(item.permission);
-  const jobKeys = ADMIN_NAV_JOB_PERMISSIONS[jobLookup];
+  if (!shouldEnforceJobPermissions(permissionSession)) return true;
+  const path = adminNavAccessPath(item.href);
+  const gate = accessRuleForAdminPath(path);
+  if (!gate || gate.type !== "permission") return true;
+  const lookup: string = Array.isArray(gate.permission) ? "content" : String(gate.permission);
+  const jobKeys = ADMIN_NAV_JOB_PERMISSIONS[lookup];
   if (!jobKeys?.length) return true;
-
   return hasAnyPermission(permissionSession, jobKeys);
 }
 
-function isNavActive(pathname: string, item: NavItem): boolean {
-  const paths = [item.href, ...(item.alsoActive ?? [])];
-  if (item.href === "/admin") {
-    return pathname === "/admin";
+function readStoredOpen(): Record<string, boolean> | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(ADMIN_NAV_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed as Record<string, boolean>;
+  } catch {
+    return null;
   }
-  return paths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
 export function AdminSidebar({
@@ -243,6 +153,7 @@ export function AdminSidebar({
   badges?: Record<string, number>;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { data: liveSession } = useSession();
   const user = liveSession?.user ?? session.user;
   const displayName = user?.name ?? user?.email ?? "Admin";
@@ -254,10 +165,67 @@ export function AdminSidebar({
       ...session.user,
       ...user,
       role,
-      jobRolePermissions:
-        user?.jobRolePermissions ?? session.user?.jobRolePermissions ?? [],
+      jobRolePermissions: user?.jobRolePermissions ?? session.user?.jobRolePermissions ?? [],
     },
   };
+
+  const search = searchParams.toString();
+  const [hash, setHash] = useState("");
+  const [open, setOpen] = useState<Record<string, boolean>>(defaultAdminNavOpenState);
+
+  useEffect(() => {
+    const stored = readStoredOpen();
+    setOpen((prev) => ({ ...prev, ...(stored ?? {}) }));
+  }, []);
+
+  useEffect(() => {
+    const apply = () => setHash(window.location.hash);
+    apply();
+    window.addEventListener("hashchange", apply);
+    return () => window.removeEventListener("hashchange", apply);
+  }, [pathname]);
+
+  const currentSectionId = adminNavSectionIdForPath(pathname);
+
+  useEffect(() => {
+    if (!currentSectionId) return;
+    setOpen((prev) => {
+      if (prev[currentSectionId]) return prev;
+      const next = { ...prev, [currentSectionId]: true };
+      try {
+        window.localStorage.setItem(ADMIN_NAV_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* private mode */
+      }
+      return next;
+    });
+  }, [currentSectionId]);
+
+  const jobPermsKey = (navSession.user?.jobRolePermissions ?? []).join(",");
+  const email = navSession.user?.email ?? null;
+
+  const sections = useMemo(() => {
+    return visibleAdminNavSections(role, email)
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => jobRoleAllowsNavItem(item, navSession)),
+      }))
+      .filter((section) => section.items.length > 0);
+    // navSession is rebuilt each render; jobPermsKey is the JobRole AND input.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role, email, jobPermsKey]);
+
+  function toggleSection(id: string) {
+    setOpen((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      try {
+        window.localStorage.setItem(ADMIN_NAV_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* private mode */
+      }
+      return next;
+    });
+  }
 
   return (
     <aside
@@ -273,44 +241,61 @@ export function AdminSidebar({
       </div>
 
       <nav className="admin-sidebar-nav min-h-0 flex-1 px-3 py-4">
-        {SECTIONS.map((section) => {
-          const visibleItems = section.items.filter((item) => canSeeNavItem(item, navSession));
-          if (visibleItems.length === 0) return null;
+        {sections.map((section) => {
+          const expanded = open[section.id] !== false;
+          const panelId = `admin-nav-${section.id}`;
+          const headingId = `${panelId}-label`;
 
           return (
-            <div key={section.label} className="mb-6">
-              <p className="admin-nav-section-label mb-2 px-2 font-sans font-semibold uppercase text-[rgba(152,117,91,0.5)]">
-                {section.label}
-              </p>
-              <ul className="space-y-0.5">
-                {visibleItems.map((item) => {
-                  const active = isNavActive(pathname, item);
-                  const badge = item.badgeKey ? badges[item.badgeKey] : 0;
+            <div key={section.id} className="mb-3">
+              <button
+                type="button"
+                id={headingId}
+                aria-expanded={expanded}
+                aria-controls={panelId}
+                onClick={() => toggleSection(section.id)}
+                className="admin-nav-section-label mb-1 flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-left font-sans font-semibold uppercase text-[rgba(152,117,91,0.5)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lightbr"
+              >
+                <span>{section.label}</span>
+                <ChevronDown
+                  className={cn("h-3.5 w-3.5 shrink-0 transition-transform", expanded ? "rotate-0" : "-rotate-90")}
+                  strokeWidth={1.5}
+                  aria-hidden
+                />
+              </button>
+              {expanded ? (
+                <ul id={panelId} role="list" aria-labelledby={headingId} className="space-y-0.5">
+                  {section.items.map((item) => {
+                    const active = adminNavItemIsActive(pathname, search, hash, item);
+                    const badge = item.badgeKey ? badges[item.badgeKey] : 0;
+                    const Icon = iconFor(item);
 
-                  return (
-                    <li key={`${section.label}-${item.label}`}>
-                      <Link
-                        href={item.href}
-                        onClick={() => onNavigate?.()}
-                        className={cn(
-                          "admin-nav-item flex items-center gap-2.5 rounded-sm px-2 py-2 font-sans text-[13px] transition-colors",
-                          active
-                            ? "border-r-2 border-lightbr bg-[rgba(152,117,91,0.18)] text-cream"
-                            : "text-[rgba(226,209,194,0.65)] hover:bg-lightbr/10 hover:text-cream",
-                        )}
-                      >
-                        <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-                        <span className="flex-1 truncate">{item.label}</span>
-                        {badge ? (
-                          <span className="rounded-full bg-nut px-1.5 py-0.5 font-sans text-[9px] font-semibold text-cream">
-                            {badge}
-                          </span>
-                        ) : null}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={() => onNavigate?.()}
+                          aria-current={active ? "page" : undefined}
+                          className={cn(
+                            "admin-nav-item flex items-center gap-2.5 rounded-sm px-2 py-2 font-sans text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lightbr",
+                            active
+                              ? "border-r-2 border-lightbr bg-[rgba(152,117,91,0.18)] text-cream"
+                              : "text-[rgba(226,209,194,0.65)] hover:bg-lightbr/10 hover:text-cream",
+                          )}
+                        >
+                          <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                          <span className="flex-1 truncate">{item.label}</span>
+                          {badge ? (
+                            <span className="rounded-full bg-nut px-1.5 py-0.5 font-sans text-[9px] font-semibold text-cream">
+                              {badge}
+                            </span>
+                          ) : null}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : null}
             </div>
           );
         })}
@@ -337,7 +322,7 @@ export function AdminSidebar({
           href="/admin/account-settings"
           onClick={() => onNavigate?.()}
           className={cn(
-            "admin-nav-item mt-1 flex items-center gap-2 rounded-sm px-2 py-2 font-sans text-[13px] transition-colors",
+            "admin-nav-item mt-1 flex items-center gap-2 rounded-sm px-2 py-2 font-sans text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lightbr",
             pathname.startsWith("/admin/account-settings")
               ? "border-r-2 border-lightbr bg-[rgba(152,117,91,0.18)] text-cream"
               : "text-[rgba(226,209,194,0.65)] hover:bg-lightbr/10 hover:text-cream",
@@ -349,7 +334,7 @@ export function AdminSidebar({
         <button
           type="button"
           onClick={() => void signOut({ callbackUrl: "/login?tab=admin" })}
-          className="admin-nav-item mt-2 flex w-full items-center gap-2 px-2 py-2 font-sans text-[13px] text-[rgba(226,209,194,0.65)] transition-colors hover:text-cream"
+          className="admin-nav-item mt-2 flex w-full items-center gap-2 rounded-sm px-2 py-2 font-sans text-[13px] text-[rgba(226,209,194,0.65)] transition-colors hover:text-cream focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lightbr"
         >
           <LogOut className="h-4 w-4" strokeWidth={1.5} />
           Sign out

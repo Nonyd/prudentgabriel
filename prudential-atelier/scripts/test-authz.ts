@@ -30,10 +30,15 @@ import {
 } from "../src/lib/bespoke-roles";
 import {
   ADMIN_MATRIX_ROUTES,
+  ADMIN_NAV_SECTIONS,
   accessRuleForAdminPath,
+  adminNavAccessPath,
+  adminNavItemIsActive,
+  adminNavSectionIdForPath,
   firstAdminPathForRole,
   matrixAccess,
   roleMayAccessAdminPath,
+  visibleAdminNavSections,
 } from "../src/lib/admin-route-access";
 import { canAccessStaffPortal } from "../src/lib/client-auth";
 import type { Session } from "next-auth";
@@ -220,6 +225,31 @@ async function main() {
   assert(firstAdminPathForRole("HR_MANAGER") === "/admin/staff", "HR_MANAGER lands on staff");
   assert(firstAdminPathForRole("FINANCE_MANAGER") === "/admin/invoices", "FINANCE_MANAGER lands on invoices");
   assert(firstAdminPathForRole("ADMIN") === "/admin", "ADMIN lands on executive");
+
+  const rtwNav = visibleAdminNavSections("RTW_MANAGER");
+  assert(rtwNav.every((s) => s.items.length > 0), "visible nav never includes an empty section");
+  assert(!rtwNav.some((s) => s.id === "people"), "People is omitted for RTW_MANAGER (no visible items)");
+  assert(!rtwNav.some((s) => s.id === "executive"), "Executive is omitted for RTW_MANAGER");
+  assert(rtwNav.some((s) => s.id === "orders"), "RTW_MANAGER sees Orders");
+  assert(rtwNav.some((s) => s.id === "catalogue"), "RTW_MANAGER sees Catalogue");
+  const peopleDef = ADMIN_NAV_SECTIONS.find((s) => s.id === "people");
+  assert(peopleDef != null, "People section exists in the map");
+  assert(
+    peopleDef.items.every((item) => !roleMayAccessAdminPath("RTW_MANAGER", adminNavAccessPath(item.href))),
+    "RTW_MANAGER cannot access any People href (source of empty-section omit)",
+  );
+  assert(visibleAdminNavSections("SUPER_ADMIN").length === ADMIN_NAV_SECTIONS.length, "SUPER_ADMIN sees every nav section");
+  assert(adminNavSectionIdForPath("/admin/content/pages") === "site", "Pages belong to Site, not House content prefix");
+  assert(adminNavSectionIdForPath("/admin/settings/appearance") === "site", "Appearance belongs to Site");
+  const allOrders = { href: "/admin/orders", label: "All orders", icon: "orders" };
+  const refunds = { href: "/admin/orders?attention=refund-required", label: "Refund required", icon: "refund" };
+  assert(adminNavItemIsActive("/admin/orders", "attention=refund-required", "", refunds), "refund queue is active on its query");
+  assert(!adminNavItemIsActive("/admin/orders", "attention=refund-required", "", allOrders), "All orders is not active on a queue");
+  const commerce = ADMIN_NAV_SECTIONS.find((s) => s.id === "commerce");
+  assert(commerce?.items.at(-1)?.href === "/admin/sizing", "Sizing is last in Commerce setup");
+  const sidebarSrc = routeSource("components/admin/AdminSidebar.tsx");
+  assert(sidebarSrc.includes("visibleAdminNavSections"), "sidebar visibility comes from the Step 2 map");
+  assert(!sidebarSrc.includes("superAdminOnly"), "sidebar has no second permission flags");
 
   const shippingSrc = routeSource("app/api/admin/shipping/route.ts");
   assert(shippingSrc.includes('requireAdminApi("shop")'), "shipping API is shop, not settings");

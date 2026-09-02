@@ -20,7 +20,7 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
-          className="p-2 text-text-mid md:hidden"
+          className="p-2 text-text-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc md:hidden"
           onClick={() => onOpenNav?.()}
           aria-label="Toggle navigation"
         >
