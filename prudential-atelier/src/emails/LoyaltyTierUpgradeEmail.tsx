@@ -1,6 +1,7 @@
 import { Heading, Section, Text } from "@react-email/components";
 import EmailButton from "./components/EmailButton";
 import type { LoyaltyTier } from "@prisma/client";
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { TIER_LABELS } from "@/lib/loyalty";
 import EmailLayout from "./components/EmailLayout";
@@ -17,7 +18,7 @@ export default function LoyaltyTierUpgradeEmail({ firstName, newTier, perks }: L
   const tierLabel = TIER_LABELS[newTier];
 
   return (
-    <EmailLayout family="relationship" previewText={`You've reached ${tierLabel} status — Prudential Atelier`}>
+    <EmailLayout family="relationship" previewText={`You've reached ${tierLabel} status — ${CUSTOMER_HOUSE_NAME}`}>
       <Text style={{ fontSize: 16, color: "#333" }}>Congratulations, {firstName}!</Text>
       <Heading
         as="h1"

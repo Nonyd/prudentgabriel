@@ -1,3 +1,5 @@
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
+
 const WRAPPER = (title: string, body: string, ctaHref?: string, ctaLabel?: string) => `
 <!DOCTYPE html>
 <html>
@@ -5,7 +7,7 @@ const WRAPPER = (title: string, body: string, ctaHref?: string, ctaLabel?: strin
 <body style="margin:0;background:#F0E8DD;font-family:Jost,Arial,sans-serif;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
     <div style="background:#F7F2EC;border:1px solid #D4BBAC;padding:32px;">
-      <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#98755B;">Prudential Atelier</p>
+      <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#98755B;">${CUSTOMER_HOUSE_NAME}</p>
       <h1 style="margin:0 0 24px;font-family:Georgia,serif;font-size:24px;color:#442913;">${title}</h1>
       ${body}
       ${

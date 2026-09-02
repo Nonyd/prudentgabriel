@@ -4,6 +4,7 @@ import { cmsGet, getCMSContent } from "@/lib/cms";
 import { createNotification } from "@/lib/notifications";
 import { contactSchema } from "@/validations/contact";
 import { prisma } from "@/lib/prisma";
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { rateLimitOr429 } from "@/lib/rate-limit";
 
@@ -89,11 +90,11 @@ export async function POST(req: NextRequest) {
 
   await sendEmail({
     to: email,
-    subject: "We received your message — Prudential Atelier",
+    subject: `We received your message — ${CUSTOMER_HOUSE_NAME}`,
     html: `
       <p>Thank you for reaching out, ${name}.</p>
       <p>${autoReplyMessage.replace(/</g, "&lt;")}</p>
-      <p>— Prudential Atelier</p>
+      <p>— ${CUSTOMER_HOUSE_NAME}</p>
     `,
     template: "contact-receipt",
     idempotencyKey: `contact-receipt:${saved.id}`,

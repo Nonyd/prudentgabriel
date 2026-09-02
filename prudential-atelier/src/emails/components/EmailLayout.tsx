@@ -1,5 +1,6 @@
 import { Body, Head, Html, Img, Preview, Text } from "@react-email/components";
 import type { ReactNode } from "react";
+import { CUSTOMER_HOUSE_NAME, EMAIL_LOGO_PX } from "@/lib/customer-email";
 import { emailLogoDarkUrl, emailLogoWhiteUrl } from "@/lib/email-branding";
 import EmailFooter from "./EmailFooter";
 import {
@@ -13,6 +14,17 @@ import {
   familyPageBg,
   type EmailFamily,
 } from "./email-tokens";
+
+const logoBox = {
+  width: `${EMAIL_LOGO_PX}px`,
+  height: `${EMAIL_LOGO_PX}px`,
+  maxWidth: `${EMAIL_LOGO_PX}px`,
+  maxHeight: `${EMAIL_LOGO_PX}px`,
+  display: "block" as const,
+  margin: "0 auto",
+  border: 0,
+  outline: "none",
+};
 
 type EmailLayoutProps = {
   children: ReactNode;
@@ -54,10 +66,10 @@ export default function EmailLayout({
 :root { color-scheme: light dark; }
 @media (prefers-color-scheme: dark) {
   .logo-on-choc { display: none !important; }
-  .logo-on-invert { display: block !important; max-height: 48px !important; }
+  .logo-on-invert { display: block !important; width: ${EMAIL_LOGO_PX}px !important; height: ${EMAIL_LOGO_PX}px !important; max-width: ${EMAIL_LOGO_PX}px !important; max-height: ${EMAIL_LOGO_PX}px !important; }
 }
 [data-ogsc] .logo-on-choc { display: none !important; }
-[data-ogsc] .logo-on-invert { display: block !important; max-height: 48px !important; }
+[data-ogsc] .logo-on-invert { display: block !important; width: ${EMAIL_LOGO_PX}px !important; height: ${EMAIL_LOGO_PX}px !important; max-width: ${EMAIL_LOGO_PX}px !important; max-height: ${EMAIL_LOGO_PX}px !important; }
             `.trim(),
           }}
         />
@@ -104,36 +116,49 @@ export default function EmailLayout({
                         }}
                       >
                         {headerLogo ? (
-                          <Img
-                            className="logo-on-choc"
-                            src={headerLogo}
-                            alt="Prudential Atelier"
-                            width={168}
-                            height={56}
-                            style={{
-                              margin: "0 auto",
-                              display: "block",
-                              maxWidth: 168,
-                              height: "auto",
-                              border: 0,
-                            }}
-                          />
-                        ) : null}
-                        {darkLogo && darkLogo !== headerLogo ? (
-                          <Img
-                            className="logo-on-invert"
-                            src={darkLogo}
-                            alt="Prudential Atelier"
-                            width={168}
-                            height={56}
-                            style={{
-                              margin: "0 auto",
-                              display: "none",
-                              maxWidth: 168,
-                              height: "auto",
-                              border: 0,
-                            }}
-                          />
+                          <table
+                            align="center"
+                            border={0}
+                            cellPadding={0}
+                            cellSpacing={0}
+                            role="presentation"
+                            style={{ margin: "0 auto" }}
+                          >
+                            <tbody>
+                              <tr>
+                                <td
+                                  width={EMAIL_LOGO_PX}
+                                  height={EMAIL_LOGO_PX}
+                                  align="center"
+                                  style={{
+                                    width: `${EMAIL_LOGO_PX}px`,
+                                    height: `${EMAIL_LOGO_PX}px`,
+                                    lineHeight: 0,
+                                    fontSize: 0,
+                                  }}
+                                >
+                                  <Img
+                                    className="logo-on-choc"
+                                    src={headerLogo}
+                                    alt={CUSTOMER_HOUSE_NAME}
+                                    width={EMAIL_LOGO_PX}
+                                    height={EMAIL_LOGO_PX}
+                                    style={logoBox}
+                                  />
+                                  {darkLogo && darkLogo !== headerLogo ? (
+                                    <Img
+                                      className="logo-on-invert"
+                                      src={darkLogo}
+                                      alt={CUSTOMER_HOUSE_NAME}
+                                      width={EMAIL_LOGO_PX}
+                                      height={EMAIL_LOGO_PX}
+                                      style={{ ...logoBox, display: "none" }}
+                                    />
+                                  ) : null}
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
                         ) : null}
                         <Text
                           style={{
@@ -146,7 +171,7 @@ export default function EmailLayout({
                             lineHeight: "16px",
                           }}
                         >
-                          Prudential Atelier
+                          {CUSTOMER_HOUSE_NAME}
                         </Text>
                         {family === "relationship" ? (
                           <table

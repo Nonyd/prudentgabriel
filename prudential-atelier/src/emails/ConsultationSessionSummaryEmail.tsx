@@ -1,6 +1,7 @@
 import { Heading, Img, Section, Text } from "@react-email/components";
 import EmailButton from "./components/EmailButton";
 import EmailLayout from "./components/EmailLayout";
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import { getPublicAppUrl } from "@/lib/app-url";
 
 export type ConsultationSessionSummaryEmailProps = {
@@ -25,7 +26,7 @@ export default function ConsultationSessionSummaryEmail({
   const commissionLink = commissionUrl ?? `${appUrl}/atelier`;
 
   return (
-    <EmailLayout family="relationship" previewText="Thank you for sitting with us — Prudential Atelier">
+    <EmailLayout family="relationship" previewText={`Thank you for sitting with us — ${CUSTOMER_HOUSE_NAME}`}>
       <Heading as="h1" style={{ fontSize: 26, fontWeight: 400, color: "#442913", margin: "0 0 12px" }}>
         Thank you for sitting with us, {firstName}.
       </Heading>

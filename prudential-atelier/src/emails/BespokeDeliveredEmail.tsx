@@ -1,4 +1,5 @@
 import { Heading, Text } from "@react-email/components";
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import EmailButton from "./components/EmailButton";
 import EmailLayout from "./components/EmailLayout";
 
@@ -42,5 +43,5 @@ export default function BespokeDeliveredEmail({
 }
 
 export function subjectBespokeDelivered(orderRef: string): string {
-  return `Your commission ${orderRef} has been delivered — Prudential Atelier`;
+  return `Your commission ${orderRef} has been delivered — ${CUSTOMER_HOUSE_NAME}`;
 }

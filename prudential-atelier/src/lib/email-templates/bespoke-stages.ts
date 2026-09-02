@@ -1,4 +1,5 @@
 import type { BespokeStage } from "@prisma/client";
+import { CUSTOMER_HOUSE_NAME, EMAIL_LOGO_PX } from "@/lib/customer-email";
 import { STAGE_LABELS, STAGE_SHORT_LABELS, getStageProgress } from "@/lib/bespoke-stages";
 
 export interface StageEmailData {
@@ -14,7 +15,7 @@ export interface StageEmailData {
 }
 
 const STAGE_SUBJECTS: Record<BespokeStage, string> = {
-  CONSULTATION_BOOKING: "Your consultation is confirmed — Prudential Atelier",
+  CONSULTATION_BOOKING: `Your consultation is confirmed — ${CUSTOMER_HOUSE_NAME}`,
   CONSULTATION_SESSION: "Your consultation summary — {orderRef}",
   INVOICE_ISSUANCE: "Your quote is ready for review — {orderRef}",
   PAYMENT_CONFIRMATION: "Payment received — your order begins now",
@@ -60,8 +61,11 @@ const STAGE_INTROS: Record<BespokeStage, string> = {
 
 function emailWrapper(content: string, logoUrl?: string): string {
   const header = logoUrl
-    ? `<img src="${logoUrl}" alt="Prudential Atelier" width="160" style="max-width:160px;height:auto;margin:0 auto;display:block;" />`
-    : `<p style="margin:0;font-size:22px;letter-spacing:0.15em;color:#442913;">PRUDENTIAL ATELIER</p>`;
+    ? `<table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto;">
+<tr><td width="${EMAIL_LOGO_PX}" height="${EMAIL_LOGO_PX}" align="center" style="width:${EMAIL_LOGO_PX}px;height:${EMAIL_LOGO_PX}px;line-height:0;font-size:0;">
+<img src="${logoUrl}" alt="${CUSTOMER_HOUSE_NAME}" width="${EMAIL_LOGO_PX}" height="${EMAIL_LOGO_PX}" style="width:${EMAIL_LOGO_PX}px;height:${EMAIL_LOGO_PX}px;max-width:${EMAIL_LOGO_PX}px;max-height:${EMAIL_LOGO_PX}px;display:block;border:0;outline:none;" />
+</td></tr></table>`
+    : `<p style="margin:0;font-size:13px;letter-spacing:0.28em;text-transform:uppercase;color:#442913;">${CUSTOMER_HOUSE_NAME}</p>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -77,7 +81,7 @@ function emailWrapper(content: string, logoUrl?: string): string {
         <tr><td style="padding:8px 40px 32px;">${content}</td></tr>
         <tr><td style="padding:24px 40px;background:#F7F2EC;border-top:1px solid #D4BBAC;text-align:center;">
           <p style="margin:0;font-size:11px;color:#98755B;line-height:1.6;">
-            Prudential Atelier · prudentgabriel.com
+            ${CUSTOMER_HOUSE_NAME} · prudentgabriel.com
           </p>
         </td></tr>
       </table>

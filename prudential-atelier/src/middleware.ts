@@ -118,7 +118,7 @@ export default auth(async function middleware(request) {
   if (pathname.startsWith("/account")) {
     if (!session) {
       return NextResponse.redirect(
-        new URL(`/login?callbackUrl=${encodeURIComponent(pathname)}`, request.url),
+        new URL(`/auth/login?callbackUrl=${encodeURIComponent(pathname)}`, request.url),
       );
     }
     if (session.user?.mustResetPassword && !pathname.startsWith("/reset-password")) {

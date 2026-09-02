@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { getSettings } from "@/lib/settings";
 import { queueEmail } from "@/lib/email-outbox";
+import { resolveCustomerFromName } from "@/lib/customer-email";
 import { EMAIL_FROM } from "@/lib/email-transport";
 
 export async function POST() {
@@ -15,7 +16,7 @@ export async function POST() {
     return NextResponse.json({ error: "Set admin notification or from email first" }, { status: 400 });
   }
 
-  const fromName = emailSettings.email_from_name?.trim() || "Prudential Atelier";
+  const fromName = resolveCustomerFromName(emailSettings.email_from_name);
   const fromAddr = emailSettings.email_from_address?.trim() || "noreply@prudentgabriel.com";
   const from = `"${fromName}" <${fromAddr}>`;
 

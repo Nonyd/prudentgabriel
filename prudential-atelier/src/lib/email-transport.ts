@@ -13,7 +13,7 @@ const smtpOptions: SMTPTransport.Options = {
 
 export const transporter = nodemailer.createTransport(smtpOptions);
 
-export const EMAIL_FROM = '"Prudential Atelier" <noreply@prudentgabriel.com>';
+export const EMAIL_FROM = '"PRUDENT GABRIEL" <noreply@prudentgabriel.com>';
 export const ORDERS_EMAIL = "orders@prudentgabriel.com";
 export const FINANCE_EMAIL = "finance@prudentgabriel.com";
 

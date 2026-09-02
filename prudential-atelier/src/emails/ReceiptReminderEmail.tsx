@@ -1,4 +1,5 @@
 import { Heading, Text } from "@react-email/components";
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import EmailButton from "./components/EmailButton";
 import EmailLayout from "./components/EmailLayout";
 
@@ -28,5 +29,5 @@ export default function ReceiptReminderEmail({
 }
 
 export function subjectReceiptReminder(orderRef: string): string {
-  return `Reminder: confirm receipt of ${orderRef} — Prudential Atelier`;
+  return `Reminder: confirm receipt of ${orderRef} — ${CUSTOMER_HOUSE_NAME}`;
 }

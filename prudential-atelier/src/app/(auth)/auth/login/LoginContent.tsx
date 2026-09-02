@@ -38,6 +38,10 @@ export function LoginContent() {
       setError("root", { message: "Signed in, but the session did not load. Please try again." });
       return;
     }
+    if (session.user.mustResetPassword) {
+      hardNavigate("/reset-password?required=true");
+      return;
+    }
     hardNavigate(callbackUrl);
   };
 

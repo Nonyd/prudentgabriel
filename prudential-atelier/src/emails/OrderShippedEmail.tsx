@@ -1,4 +1,5 @@
 import { Heading, Section, Text } from "@react-email/components";
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import EmailButton from "./components/EmailButton";
 import EmailLayout from "./components/EmailLayout";
@@ -25,7 +26,7 @@ export default function OrderShippedEmail({
       <Heading as="h1" style={{ fontSize: 28, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
         Your order is on its way!
       </Heading>
-      <Text style={{ fontSize: 16, color: "#2d2d2d" }}>Hi {firstName}, your Prudential Atelier piece has shipped.</Text>
+      <Text style={{ fontSize: 16, color: "#2d2d2d" }}>Hi {firstName}, your {CUSTOMER_HOUSE_NAME} piece has shipped.</Text>
       <Text style={{ fontSize: 15, color: "#444" }}>Order #{orderNumber}</Text>
       {trackingNumber ? (
         <Section

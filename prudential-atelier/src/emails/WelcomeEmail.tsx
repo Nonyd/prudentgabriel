@@ -1,11 +1,12 @@
 import { Heading, Section, Text } from "@react-email/components";
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import EmailButton from "./components/EmailButton";
 import EmailLayout from "./components/EmailLayout";
 
 const APP = getPublicAppUrl();
 
-export const subject = (firstName: string) => `Welcome to Prudential Atelier, ${firstName} ✨`;
+export const subject = (firstName: string) => `Welcome to ${CUSTOMER_HOUSE_NAME}, ${firstName} ✨`;
 
 type WelcomeEmailProps = {
   firstName: string;

@@ -1,4 +1,5 @@
 import { Link, Text } from "@react-email/components";
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import { UNSUBSCRIBE_URL_PLACEHOLDER } from "@/lib/email-priority";
 import {
   EMAIL_FOOTER_BG,
@@ -61,7 +62,7 @@ export default function EmailFooter({ family, unsubscribeUrl }: EmailFooterProps
                 lineHeight: "18px",
               }}
             >
-              Prudential Atelier
+              {CUSTOMER_HOUSE_NAME}
             </Text>
             <Text
               style={{

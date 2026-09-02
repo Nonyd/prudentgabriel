@@ -1,4 +1,5 @@
 import { Heading, Text } from "@react-email/components";
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import EmailButton from "./components/EmailButton";
 import EmailLayout from "./components/EmailLayout";
 import { EMAIL_CHOC, EMAIL_INK, EMAIL_MUTED, FONT_BODY, FONT_UI } from "./components/email-tokens";
@@ -13,7 +14,7 @@ type Props = {
 };
 
 export function subjectWelcomeCredentials(firstName: string): string {
-  return `Welcome to Prudential Atelier, ${firstName} — your account is ready`;
+  return `Welcome to ${CUSTOMER_HOUSE_NAME}, ${firstName} — your account is ready`;
 }
 
 export default function WelcomeCredentialsEmail({
@@ -25,7 +26,7 @@ export default function WelcomeCredentialsEmail({
   loginUrl,
 }: Props) {
   return (
-    <EmailLayout family="transactional" previewText={`Your Prudential Atelier account is ready, ${firstName}`}>
+    <EmailLayout family="transactional" previewText={`Your ${CUSTOMER_HOUSE_NAME} account is ready, ${firstName}`}>
       <Heading as="h1" style={{ fontFamily: FONT_BODY, fontSize: 24, fontWeight: 400, color: EMAIL_CHOC, margin: "0 0 12px" }}>
         Welcome, {firstName}.
       </Heading>

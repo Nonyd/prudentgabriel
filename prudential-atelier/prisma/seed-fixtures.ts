@@ -988,7 +988,7 @@ async function main() {
     { key: "monnify_environment", value: "sandbox", group: SettingGroup.PAYMENTS, label: "Monnify Environment", type: SettingType.SELECT, isPublic: false, sortOrder: 14 },
     { key: "exchange_rate_usd", value: "0.00065", group: SettingGroup.PAYMENTS, label: "USD Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 30 },
     { key: "exchange_rate_gbp", value: "0.00052", group: SettingGroup.PAYMENTS, label: "GBP Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 31 },
-    { key: "email_from_name", value: "Prudential Atelier", group: SettingGroup.EMAIL, label: "From Name", type: SettingType.TEXT, isPublic: false, sortOrder: 1 },
+    { key: "email_from_name", value: "PRUDENT GABRIEL", group: SettingGroup.EMAIL, label: "From Name", type: SettingType.TEXT, isPublic: false, sortOrder: 1 },
     { key: "email_from_address", value: "noreply@prudentgabriel.com", group: SettingGroup.EMAIL, label: "From Email", type: SettingType.TEXT, isPublic: false, sortOrder: 2 },
     { key: "email_reply_to", value: "hello@prudentgabriel.com", group: SettingGroup.EMAIL, label: "Reply-To", type: SettingType.TEXT, isPublic: false, sortOrder: 3 },
     { key: "email_provider_order", value: "resend,brevo,smtp", group: SettingGroup.EMAIL, label: "Provider order", type: SettingType.TEXT, isPublic: false, sortOrder: 4 },

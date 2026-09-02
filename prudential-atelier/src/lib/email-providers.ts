@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import nodemailer from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
+import { resolveCustomerFromName } from "@/lib/customer-email";
 import { EMAIL_FROM } from "@/lib/email-transport";
 import { getSetting } from "@/lib/settings";
 import {
@@ -23,7 +24,7 @@ async function envOrSetting(envKey: string, settingKey: string): Promise<string 
 }
 
 export async function resolveFromAddress(): Promise<string> {
-  const name = (await getSetting("email_from_name"))?.trim() || "Prudential Atelier";
+  const name = resolveCustomerFromName(await getSetting("email_from_name"));
   const addr = (await getSetting("email_from_address"))?.trim();
   if (addr) return `"${name}" <${addr}>`;
   return EMAIL_FROM;

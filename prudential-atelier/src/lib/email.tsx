@@ -30,6 +30,7 @@ import BespokeDeliveredEmail, { subjectBespokeDelivered } from "@/emails/Bespoke
 import ReceiptReminderEmail, { subjectReceiptReminder } from "@/emails/ReceiptReminderEmail";
 import type { LoyaltyTier } from "@prisma/client";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { CUSTOMER_HOUSE_NAME, EMAIL_LOGO_PX, customerLoginUrl } from "@/lib/customer-email";
 import { primeEmailBranding, emailLogoWhiteUrl } from "@/lib/email-branding";
 import { prisma } from "@/lib/prisma";
 import { queueEmail } from "@/lib/email-outbox";
@@ -89,7 +90,7 @@ export async function sendWelcomeCredentialsEmail(params: {
   sourceLabel: string;
   trackUrl: string;
 }): Promise<void> {
-  const loginUrl = `${getPublicAppUrl()}/login`;
+  const loginUrl = customerLoginUrl();
   const html = await renderBrandedEmail(
     <WelcomeCredentialsEmail
       firstName={params.firstName}
@@ -121,7 +122,7 @@ export async function sendBankTransferReceiptReceivedEmail(params: {
     to: params.to,
     subject: `Payment receipt received — ${params.ref}`,
     html: wrapHtml(
-      "Prudential Atelier",
+      CUSTOMER_HOUSE_NAME,
       `<p>Dear ${escapeHtml(params.clientName)},</p>
        <p>We received your bank transfer receipt for <strong>₦${params.amountNGN.toLocaleString("en-NG")}</strong> (${escapeHtml(params.ref)}).</p>
        <p>Our team will verify within 2–4 hours and confirm your order by email.</p>`,
@@ -171,7 +172,7 @@ export async function sendPaymentConfirmedEmail(params: {
     to: params.to,
     subject: `Payment confirmed — ${params.ref}`,
     html: wrapHtml(
-      "Prudential Atelier",
+      CUSTOMER_HOUSE_NAME,
       `<p>We&apos;ve confirmed your payment of <strong>₦${params.amountNGN.toLocaleString("en-NG")}</strong>.</p>
        <p>Your ${kindLabel} is now active.</p>
        <p><a href="${escapeHtml(params.trackUrl)}">Track your order</a></p>`,
@@ -193,7 +194,7 @@ export async function sendPaymentRejectedEmail(params: {
     to: params.to,
     subject: "Payment not confirmed — action needed",
     html: wrapHtml(
-      "Prudential Atelier",
+      CUSTOMER_HOUSE_NAME,
       `<p>Unfortunately we couldn&apos;t confirm your payment of <strong>₦${params.amountNGN.toLocaleString("en-NG")}</strong>.</p>
        <p><strong>Reason:</strong> ${escapeHtml(params.reason)}</p>
        <p>Please contact us or try again.</p>
@@ -250,7 +251,7 @@ export async function sendOrderConfirmationEmail(params: {
   );
   await sendEmail({
     to: params.to,
-    subject: `Order Confirmed — #${params.orderNumber} | Prudential Atelier`,
+    subject: `Order Confirmed — #${params.orderNumber} | ${CUSTOMER_HOUSE_NAME}`,
     html,
     template: "order-confirmation",
     idempotencyKey: `order-confirmed:${params.orderNumber}`,
@@ -273,7 +274,7 @@ export async function sendRtwFulfilmentRefusedEmails(params: {
     to: params.to,
     subject: `We could not fulfil order #${params.orderNumber} — refund underway`,
     html: wrapHtml(
-      "Prudential Atelier",
+      CUSTOMER_HOUSE_NAME,
       `<p>Dear ${escapeHtml(params.firstName)},</p>
        <p>Thank you for your order <strong>#${escapeHtml(params.orderNumber)}</strong>. Your payment of <strong>${amount}</strong> was received, but the piece sold out before we could reserve it.</p>
        <p>We will not ship a substitute. A refund of the full amount will be issued. If you have not seen it within a few working days, write to us at <a href="${escapeHtml(contactUrl)}">our contact page</a>.</p>
@@ -291,7 +292,7 @@ export async function sendRtwFulfilmentRefusedEmails(params: {
       to: adminTo,
       subject: `Refund required — RTW oversell #${params.orderNumber}`,
       html: wrapHtml(
-        "Prudential Atelier",
+        CUSTOMER_HOUSE_NAME,
         `<p>Order <strong>#${escapeHtml(params.orderNumber)}</strong> was paid (${amount}) but stock was insufficient at fulfilment.</p>
          <p>The order is cancelled. Refund ${escapeHtml(params.to)} in the PSP, then record the ledger correction (see PAYMENT_LEDGER.md — oversell / gap 7).</p>
          <p><a href="${escapeHtml(`${getPublicAppUrl()}/admin/orders/${params.orderId}`)}">Open the order</a>
@@ -309,7 +310,7 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string, token
   const html = await renderBrandedEmail(<PasswordResetEmail resetUrl={resetUrl} />);
   await sendEmail({
     to,
-    subject: "Reset your Prudential Atelier password",
+    subject: `Reset your ${CUSTOMER_HOUSE_NAME} password`,
     html,
     template: "password-reset",
     idempotencyKey: `password-reset:${tokenHash}`,
@@ -322,7 +323,7 @@ export async function sendAccountExistsEmail(to: string, loginUrl: string): Prom
   const html = await renderBrandedEmail(<AccountExistsEmail loginUrl={loginUrl} />);
   await sendEmail({
     to,
-    subject: "You already have a Prudential Atelier account",
+    subject: `You already have a ${CUSTOMER_HOUSE_NAME} account`,
     html,
     template: "account-exists",
     idempotencyKey: `account-exists:${to}`,
@@ -383,8 +384,8 @@ export async function sendBespokeBalancePaymentLinkEmail(params: {
   `;
   await sendEmail({
     to: params.to,
-    subject: `Complete payment — ${params.requestNumber} | Prudential Atelier`,
-    html: wrapHtml("Prudential Atelier", inner),
+    subject: `Complete payment — ${params.requestNumber} | ${CUSTOMER_HOUSE_NAME}`,
+    html: wrapHtml(CUSTOMER_HOUSE_NAME, inner),
     template: "bespoke-balance-link",
     idempotencyKey: `bespoke-balance-link:${params.requestNumber}`,
     relatedType: "BespokeOrder",
@@ -638,7 +639,7 @@ export async function sendBespokeReviewRequestEmail(params: {
   );
   await sendEmail({
     to: params.to,
-    subject: `How was your commission ${params.orderRef}? — Prudential Atelier`,
+    subject: `How was your commission ${params.orderRef}? — ${CUSTOMER_HOUSE_NAME}`,
     html,
     template: "bespoke-review-request",
     idempotencyKey: `bespoke-review:${params.orderRef}`,
@@ -658,7 +659,7 @@ export async function sendLoyaltyTierUpgradeEmail(params: {
   );
   await sendEmail({
     to: params.to,
-    subject: `You've reached a new Prudent Points tier — Prudential Atelier`,
+    subject: `You've reached a new Prudent Points tier — ${CUSTOMER_HOUSE_NAME}`,
     html,
     template: "loyalty-tier-upgrade",
     idempotencyKey: `loyalty-tier:${params.to}:${params.newTier}`,
@@ -678,7 +679,7 @@ export async function sendPointsExpiryEmail(params: {
   );
   await sendEmail({
     to: params.to,
-    subject: "Prudent Points expiring soon — Prudential Atelier",
+    subject: `Prudent Points expiring soon — ${CUSTOMER_HOUSE_NAME}`,
     html,
     template: "prudent-points-expiry",
     idempotencyKey: `prudent-points-expiry:${params.userId}:${params.batchKey}`,
@@ -699,7 +700,7 @@ export async function sendReferralRewardEmail(params: {
   );
   await sendEmail({
     to: params.to,
-    subject: "You've earned a referral reward — Prudential Atelier",
+    subject: `You've earned a referral reward — ${CUSTOMER_HOUSE_NAME}`,
     html,
     template: "referral-reward",
     idempotencyKey: params.orderId
@@ -772,7 +773,10 @@ function htmlCta(href: string, label: string): string {
 
 function wrapHtml(title: string, inner: string, family: EmailFamily = "transactional"): string {
   const logoBlock = emailLogoWhiteUrl
-    ? `<img src="${emailLogoWhiteUrl}" alt="${title}" width="168" height="56" style="max-width:168px;height:auto;display:block;margin:0 auto;border:0;" />`
+    ? `<table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto;">
+<tr><td width="${EMAIL_LOGO_PX}" height="${EMAIL_LOGO_PX}" align="center" style="width:${EMAIL_LOGO_PX}px;height:${EMAIL_LOGO_PX}px;line-height:0;font-size:0;">
+<img src="${emailLogoWhiteUrl}" alt="${title}" width="${EMAIL_LOGO_PX}" height="${EMAIL_LOGO_PX}" style="width:${EMAIL_LOGO_PX}px;height:${EMAIL_LOGO_PX}px;max-width:${EMAIL_LOGO_PX}px;max-height:${EMAIL_LOGO_PX}px;display:block;border:0;outline:none;-ms-interpolation-mode:bicubic;" />
+</td></tr></table>`
     : "";
   const pageBg = family === "marketing" ? "#E2D1C2" : "#F7F2EC";
   const cardBg = family === "marketing" ? "#F7F2EC" : "#FFFdf9";
@@ -802,13 +806,13 @@ function wrapHtml(title: string, inner: string, family: EmailFamily = "transacti
 <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;max-width:600px;background:${cardBg};">
 <tr><td bgcolor="#442913" style="background:#442913;padding:24px;text-align:center;">
 ${logoBlock}
-<p style="margin:${logoBlock ? "14px 0 0" : "0"};font-size:11px;letter-spacing:0.28em;text-transform:uppercase;color:#C9A84C;font-family:Georgia,'Times New Roman',Times,serif;">Prudential Atelier</p>
+<p style="margin:${logoBlock ? "14px 0 0" : "0"};font-size:11px;letter-spacing:0.28em;text-transform:uppercase;color:#C9A84C;font-family:Georgia,'Times New Roman',Times,serif;">${CUSTOMER_HOUSE_NAME}</p>
 ${headerHairline}
 </td></tr>
 ${goldBar}
 <tr><td style="padding:${pad};">${inner}</td></tr>
 <tr><td bgcolor="#1A0F08" style="background:#1A0F08;padding:28px 36px;text-align:center;color:rgba(226,209,194,0.62);font-size:11px;font-family:Helvetica,Arial,sans-serif;">
-<p style="margin:0 0 8px;font-family:Georgia,serif;">Prudential Atelier</p>
+<p style="margin:0 0 8px;font-family:Georgia,serif;">${CUSTOMER_HOUSE_NAME}</p>
 <p style="margin:0 0 6px;">14 Bode Thomas Street, Surulere, Lagos, Nigeria</p>
 <p style="margin:0;">hello@prudentgabriel.com</p>
 ${footerNote}
@@ -845,8 +849,8 @@ export async function sendAbandonedCartEmail(params: {
   `;
   const queued = await queueEmail({
     to: params.to,
-    subject: "Your bag is waiting | Prudential Atelier",
-    html: wrapHtml("Prudential Atelier", inner, "marketing"),
+    subject: `Your bag is waiting | ${CUSTOMER_HOUSE_NAME}`,
+    html: wrapHtml(CUSTOMER_HOUSE_NAME, inner, "marketing"),
     template: "abandoned-cart",
     idempotencyKey: params.idempotencyKey,
     relatedType: "User",
@@ -888,8 +892,8 @@ export async function sendStageApprovalRequestEmail(params: {
   `;
   await sendEmail({
     to: params.to,
-    subject: `Please review ${params.stageLabel} — ${params.orderRef} | Prudential Atelier`,
-    html: wrapHtml("Prudential Atelier", inner, "relationship"),
+    subject: `Please review ${params.stageLabel} — ${params.orderRef} | ${CUSTOMER_HOUSE_NAME}`,
+    html: wrapHtml(CUSTOMER_HOUSE_NAME, inner, "relationship"),
     template: "stage-approval-request",
     idempotencyKey: `stage-approval:${params.orderRef}:${params.stageLabel}`,
     relatedType: "BespokeOrder",
@@ -918,7 +922,7 @@ export async function sendStageApprovalReminderEmail(params: {
   await sendEmail({
     to: params.to,
     subject: `Reminder: review ${params.stageLabel} — ${params.orderRef}`,
-    html: wrapHtml("Prudential Atelier", inner, "relationship"),
+    html: wrapHtml(CUSTOMER_HOUSE_NAME, inner, "relationship"),
     template: "stage-approval-reminder",
     idempotencyKey: `stage-approval-reminder:${params.orderRef}:${params.stageLabel}`,
     relatedType: "BespokeOrder",
@@ -948,7 +952,7 @@ export async function sendStageChangesRequestedEmail(params: {
   await sendEmail({
     to: params.to,
     subject: `Changes requested — ${params.orderRef} / ${params.stageLabel}`,
-    html: wrapHtml("Prudential Atelier", inner),
+    html: wrapHtml(CUSTOMER_HOUSE_NAME, inner),
     template: "stage-changes-requested",
     idempotencyKey: `stage-changes:${params.orderRef}:${params.stageLabel}`,
     relatedType: "BespokeOrder",
@@ -1003,7 +1007,7 @@ export async function sendConsultationPendingEmail(params: {
   );
   await sendEmail({
     to: params.to,
-    subject: `Consultation Request Received — #${params.bookingNumber} | Prudential Atelier`,
+    subject: `Consultation Request Received — #${params.bookingNumber} | ${CUSTOMER_HOUSE_NAME}`,
     html,
     template: "consultation-pending",
     idempotencyKey: `consultation-pending:${params.bookingNumber}`,
@@ -1051,7 +1055,7 @@ export async function sendConsultationConfirmedEmail(params: {
   );
   await sendEmail({
     to: params.to,
-    subject: `Consultation Confirmed — #${params.bookingNumber} · ${dateLabel} | Prudential Atelier`,
+    subject: `Consultation Confirmed — #${params.bookingNumber} · ${dateLabel} | ${CUSTOMER_HOUSE_NAME}`,
     html,
     template: "consultation-confirmed",
     idempotencyKey: `consultation-confirmed:${params.bookingNumber}`,
@@ -1107,7 +1111,7 @@ export async function sendConsultationSessionSummaryEmail(params: {
   );
   await sendEmail({
     to: params.to,
-    subject: "Thank you for your consultation — Prudential Atelier",
+    subject: `Thank you for your consultation — ${CUSTOMER_HOUSE_NAME}`,
     html,
     template: "consultation-session-summary",
     idempotencyKey: `consultation-summary:${params.to}:${params.moodboardUrl ?? "none"}`,
@@ -1135,7 +1139,7 @@ export async function sendConsultationMeetingLinkEmail(params: {
   );
   await sendEmail({
     to: params.to,
-    subject: "Your consultation link — Prudential Atelier",
+    subject: `Your consultation link — ${CUSTOMER_HOUSE_NAME}`,
     html,
     template: "consultation-meeting-link",
     idempotencyKey: `consultation-meeting-link:${params.to}:${params.meetingLink}`,
@@ -1183,7 +1187,7 @@ export async function sendInvoiceEmail(params: {
   footerNote?: string;
   businessName?: string;
 }): Promise<void> {
-  const businessName = params.businessName ?? "Prudential Atelier";
+  const businessName = params.businessName ?? CUSTOMER_HOUSE_NAME;
   const props = {
     invoiceNumber: params.invoiceNumber,
     clientName: params.clientName,
@@ -1258,7 +1262,7 @@ export async function sendProductReviewRequestEmail(params: {
   );
   await sendEmail({
     to: params.to,
-    subject: `How was your ${params.productName}? — Prudential Atelier`,
+    subject: `How was your ${params.productName}? — ${CUSTOMER_HOUSE_NAME}`,
     html,
     template: "product-review-request",
     idempotencyKey: `product-review:${params.orderId}:${params.productId}`,
@@ -1285,7 +1289,7 @@ export async function sendConsultationReviewRequestEmail(params: {
   );
   await sendEmail({
     to: params.to,
-    subject: "How was your consultation? — Prudential Atelier",
+    subject: `How was your consultation? — ${CUSTOMER_HOUSE_NAME}`,
     html,
     template: "consultation-review-request",
     idempotencyKey: `consultation-review:${params.consultationId}`,

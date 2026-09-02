@@ -5,7 +5,7 @@ import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { registerSchema } from "@/validations/auth";
 import { awardSignupPoints, awardNewsletterPoints, emailRoot, phonesMatch } from "@/lib/points";
 import { sendWelcomeEmail, sendAccountExistsEmail } from "@/lib/email";
-import { getPublicAppUrl } from "@/lib/app-url";
+import { customerLoginUrl } from "@/lib/customer-email";
 import { rateLimitOr429 } from "@/lib/rate-limit";
 import { notifyNewCustomer } from "@/lib/notifications";
 import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
   const existing = await prisma.user.findUnique({ where: { email: emailNorm } });
   if (existing) {
-    void sendAccountExistsEmail(emailNorm, `${getPublicAppUrl()}/login`).catch((e) =>
+    void sendAccountExistsEmail(emailNorm, customerLoginUrl()).catch((e) =>
       console.warn("[register] exists mail", e),
     );
     return NextResponse.json({ success: true });

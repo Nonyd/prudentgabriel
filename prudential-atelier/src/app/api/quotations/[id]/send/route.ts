@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { QuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { FINANCE_ROLES, requireRoles } from "@/lib/api-auth";
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { logActivity, logError } from "@/lib/logger";
 import { sendEmail } from "@/lib/email";
@@ -47,7 +48,7 @@ function buildQuoteEmailHtml(params: {
 
   return `
     <div style="font-family:Georgia,serif;background:#F7F2EC;padding:24px;color:#442913">
-      <h1 style="color:#442913;margin:0 0 8px">Prudential Atelier</h1>
+      <h1 style="color:#442913;margin:0 0 8px">${CUSTOMER_HOUSE_NAME}</h1>
       <hr style="border:none;border-top:2px solid #98755B;margin:16px 0" />
       <p>Dear ${params.clientName},</p>
       <p>Your quotation <strong>${params.quoteRef}</strong> is ready for review.</p>
@@ -71,7 +72,7 @@ function buildQuoteEmailHtml(params: {
           ? `<p style="margin-top:16px;font-size:13px"><a href="${params.pdfUrl}" style="color:#5C3422">Download PDF quotation</a> (for your records)</p>`
           : ""
       }
-      <p style="margin-top:32px;font-size:12px;color:#98755B">Prudential Atelier · prudentgabriel.com</p>
+      <p style="margin-top:32px;font-size:12px;color:#98755B">${CUSTOMER_HOUSE_NAME} · prudentgabriel.com</p>
     </div>
   `;
 }

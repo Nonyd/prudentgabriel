@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { queueEmail } from "@/lib/email-outbox";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { primeEmailBranding } from "@/lib/email-branding";
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import AbandonedCheckoutEmail from "@/emails/AbandonedCheckoutEmail";
 
 export const FIRST_REMINDER_MS = 4 * 60 * 60 * 1000;
@@ -239,7 +240,7 @@ export async function sendAbandonedCheckoutReminder(params: {
 
   const queued = await queueEmail({
     to: session.email,
-    subject: "Your bag is waiting | Prudential Atelier",
+    subject: `Your bag is waiting | ${CUSTOMER_HOUSE_NAME}`,
     html,
     template: "abandoned-checkout",
     idempotencyKey,

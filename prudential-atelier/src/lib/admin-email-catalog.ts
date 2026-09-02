@@ -1,3 +1,4 @@
+import { CUSTOMER_HOUSE_NAME, customerLoginUrl } from "@/lib/customer-email";
 import { getPublicAppUrl } from "@/lib/app-url";
 
 export const EMAIL_TEMPLATE_KEYS = {
@@ -63,7 +64,7 @@ const CLIENT_TEMPLATES: EmailTemplateMeta[] = [
     defaults: {
       subject: "{{collectionName}} is here",
       heading: "{{collectionName}}",
-      body_1: "A new collection from Prudential Atelier is ready. Explore the looks and shop the drop.",
+      body_1: `A new collection from ${CUSTOMER_HOUSE_NAME} is ready. Explore the looks and shop the drop.`,
       body_2: "",
       cta_label: "Shop the collection",
       cta_link: "{{collectionUrl}}",
@@ -76,12 +77,12 @@ const CLIENT_TEMPLATES: EmailTemplateMeta[] = [
     group: "client",
     sortOrder: 1,
     defaults: {
-      subject: "Welcome to Prudential Atelier, {{firstName}}",
-      heading: "Welcome to the Atelier",
+      subject: `Welcome to ${CUSTOMER_HOUSE_NAME}, {{firstName}}`,
+      heading: "Welcome to the house",
       body_1: "Dear {{firstName}},\n\nYour account is ready. Sign in with the credentials we provided to track orders, consultations, and your atelier journey.",
       body_2: "We are honoured to dress your story.",
       cta_label: "Sign in to your account",
-      cta_link: `${APP()}/login`,
+      cta_link: customerLoginUrl(),
       footer_note: "If you did not request this account, please contact us.",
     },
   },
@@ -93,7 +94,7 @@ const CLIENT_TEMPLATES: EmailTemplateMeta[] = [
     defaults: {
       subject: "Your consultation is confirmed — {{date}}",
       heading: "Consultation confirmed",
-      body_1: "Dear {{firstName}},\n\nYour consultation with Prudential Atelier is confirmed for {{date}}.",
+      body_1: "Dear {{firstName}},\n\nYour consultation with PRUDENT GABRIEL is confirmed for {{date}}.",
       body_2: "Please arrive a few minutes early. We look forward to meeting you.",
       cta_label: "View booking",
       cta_link: `${APP()}/account/consultations`,
@@ -184,7 +185,7 @@ const CLIENT_TEMPLATES: EmailTemplateMeta[] = [
       subject: "Payment received — {{amount}}",
       heading: "Payment confirmed",
       body_1: "Dear {{firstName}},\n\nWe have received your payment of {{amount}} for {{orderRef}}.",
-      body_2: "Thank you for your trust in Prudential Atelier.",
+      body_2: "Thank you for your trust in PRUDENT GABRIEL.",
       cta_label: "View receipt",
       cta_link: "{{link}}",
       footer_note: "",
@@ -288,7 +289,7 @@ const CLIENT_TEMPLATES: EmailTemplateMeta[] = [
     defaults: {
       subject: "How was your consultation?",
       heading: "Share your experience",
-      body_1: "Dear {{firstName}},\n\nThank you for consulting with Prudential Atelier. Your feedback helps us serve you better.",
+      body_1: "Dear {{firstName}},\n\nThank you for consulting with PRUDENT GABRIEL. Your feedback helps us serve you better.",
       body_2: "",
       cta_label: "Leave feedback",
       cta_link: "{{link}}",
@@ -318,7 +319,7 @@ const CLIENT_TEMPLATES: EmailTemplateMeta[] = [
     defaults: {
       subject: "Congratulations — you've reached a new tier",
       heading: "Loyalty tier upgrade",
-      body_1: "Dear {{firstName}},\n\nYou have unlocked new privileges in the Prudential Atelier loyalty programme.",
+      body_1: "Dear {{firstName}},\n\nYou have unlocked new privileges in the PRUDENT GABRIEL loyalty programme.",
       body_2: "Explore your benefits in your account.",
       cta_label: "View benefits",
       cta_link: `${APP()}/account`,

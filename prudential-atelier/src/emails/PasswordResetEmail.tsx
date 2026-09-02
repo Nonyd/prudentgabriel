@@ -1,3 +1,4 @@
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import { Heading, Text } from "@react-email/components";
 import EmailLayout from "./components/EmailLayout";
 import EmailButton from "./components/EmailButton";
@@ -14,7 +15,7 @@ export default function PasswordResetEmail({ resetUrl }: PasswordResetEmailProps
         Reset your password
       </Heading>
       <Text style={{ fontSize: 16, color: "#2C241C" }}>
-        We received a request to reset your Prudential Atelier password.
+        We received a request to reset your {CUSTOMER_HOUSE_NAME} password.
       </Text>
       <EmailButton href={resetUrl}>Reset password</EmailButton>
       <Text style={{ marginTop: 24, fontSize: 14, color: "#444" }}>This link expires in 1 hour.</Text>

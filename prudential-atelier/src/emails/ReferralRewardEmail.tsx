@@ -1,5 +1,6 @@
 import { Heading, Section, Text } from "@react-email/components";
 import EmailButton from "./components/EmailButton";
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import EmailLayout from "./components/EmailLayout";
 
@@ -12,7 +13,7 @@ export type ReferralRewardEmailProps = {
 
 export default function ReferralRewardEmail({ firstName, creditNGN }: ReferralRewardEmailProps) {
   return (
-    <EmailLayout family="relationship" previewText="You've earned a referral reward — Prudential Atelier">
+    <EmailLayout family="relationship" previewText={`You've earned a referral reward — ${CUSTOMER_HOUSE_NAME}`}>
       <Heading as="h1" style={{ fontSize: 26, fontWeight: 400, color: "#442913", margin: "0 0 12px" }}>
         You&apos;ve earned a referral reward, {firstName}!
       </Heading>

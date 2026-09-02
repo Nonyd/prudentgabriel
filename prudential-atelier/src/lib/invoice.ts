@@ -6,6 +6,7 @@ import { resolvePublicBankAccount } from "@/lib/payments/bank-account";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { allocateInvoiceNumber } from "@/lib/document-numbers";
 import { getLogoSettings } from "@/lib/logos";
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import type {
   InvoiceBankDetails,
   InvoiceBusinessDetails,
@@ -59,7 +60,7 @@ export async function getInvoiceSettings(): Promise<InvoiceBusinessDetails> {
     s.invoice_logo_url ||
     "";
   return {
-    businessName: s.invoice_business_name ?? "Prudential Atelier",
+    businessName: s.invoice_business_name ?? CUSTOMER_HOUSE_NAME,
     tagline: s.invoice_tagline ?? "",
     addressLine1: s.invoice_address_line1 ?? "",
     addressLine2: s.invoice_address_line2 ?? "",

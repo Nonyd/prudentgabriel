@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { restockEmailHtml } from "@/lib/email-templates/reports";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 
 /** Notify subscribers when a variant is back in stock, then remove alerts. */
 export async function processRestockAlerts(variantIds: string[]): Promise<number> {
@@ -25,7 +26,7 @@ export async function processRestockAlerts(variantIds: string[]): Promise<number
     const shopUrl = `${appUrl}/shop/${alert.variant.product.slug}`;
     await sendEmail({
       to: alert.email,
-      subject: `Back in stock — ${alert.variant.product.name} | Prudential Atelier`,
+      subject: `Back in stock — ${alert.variant.product.name} | ${CUSTOMER_HOUSE_NAME}`,
       html: restockEmailHtml(alert.variant.product.name, alert.variant.size, shopUrl),
       template: "stock-alert",
       idempotencyKey: `stock-alert:${alert.id}`,

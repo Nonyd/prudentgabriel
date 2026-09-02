@@ -1,3 +1,4 @@
+import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import { Heading, Text } from "@react-email/components";
 import EmailLayout from "./components/EmailLayout";
 import EmailButton from "./components/EmailButton";
@@ -26,7 +27,7 @@ export default function ReviewRequestEmail({
       <Text style={{ fontSize: 15, color: "#444", lineHeight: 1.6 }}>{bodyParagraph}</Text>
       <Text style={{ fontSize: 14, color: "#666", marginTop: 16 }}>This takes less than 2 minutes.</Text>
       <EmailButton href={ctaUrl}>{ctaLabel}</EmailButton>
-      <Text style={{ marginTop: 32, fontSize: 13, color: "#888" }}>— The Prudential Atelier Team</Text>
+      <Text style={{ marginTop: 32, fontSize: 13, color: "#888" }}>— {CUSTOMER_HOUSE_NAME}</Text>
     </EmailLayout>
   );
 }
