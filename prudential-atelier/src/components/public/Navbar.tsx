@@ -272,7 +272,7 @@ function HeaderUtilityIcons({
       </button>
       <ThemeToggle
         color={iconColor}
-        className="relative flex h-8 w-8 items-center justify-center transition-colors duration-200 hover:opacity-80"
+        className="relative flex h-7 w-7 items-center justify-center transition-colors duration-200 hover:opacity-80 sm:h-8 sm:w-8"
       />
       <button
         type="button"
@@ -331,7 +331,7 @@ export function Navbar({
 
       <header className="sticky top-0 z-50">
         <div className="overflow-hidden border-b border-sand/40 bg-ivory">
-          <div className="mx-auto flex h-14 max-w-site items-center justify-between gap-2 px-3 sm:px-4 lg:h-[72px] lg:justify-center lg:px-10">
+          <div className="mx-auto flex h-14 min-w-0 max-w-site items-center justify-between gap-2 px-4 lg:h-[72px] lg:justify-center lg:px-10">
             <div className="flex min-w-0 items-center gap-2 lg:hidden">
               <button
                 type="button"

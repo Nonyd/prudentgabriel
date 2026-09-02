@@ -248,7 +248,7 @@ export function ProductDetailClient({
   };
 
   return (
-    <div className="mx-auto max-w-site px-4 pb-20">
+    <div className="mx-auto max-w-site overflow-x-clip px-4 pb-20">
       <nav className="py-4 font-body text-[11px] font-medium uppercase tracking-[0.08em] text-dark-grey">
         <Link href="/shop" className="hover:text-choc">
           Shop
@@ -259,10 +259,12 @@ export function ProductDetailClient({
         <span className="text-charcoal">{product.name}</span>
       </nav>
 
-      <div className="grid gap-10 lg:grid-cols-[60%_40%] lg:gap-12">
-        <ProductGallery images={product.images} />
+      <div className="grid min-w-0 gap-10 lg:grid-cols-[60%_40%] lg:gap-12">
+        <div className="min-w-0">
+          <ProductGallery images={product.images} />
+        </div>
 
-        <div className="lg:sticky lg:top-32 lg:self-start">
+        <div className="min-w-0 lg:sticky lg:top-32 lg:self-start">
           <p className="mb-1 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">
             Prudent Gabriel
           </p>
@@ -320,9 +322,9 @@ export function ProductDetailClient({
           )}
 
           {customOffered ? (
-            <div className="mb-6">
+            <div className="mb-6 min-w-0">
               <p className="mb-3 font-body text-base font-medium text-charcoal">How should this piece be made?</p>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid min-w-0 gap-3 sm:grid-cols-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -363,12 +365,12 @@ export function ProductDetailClient({
 
           {fitMode === "standard" && standardSizes.length > 0 ? (
             <>
-              <div className="mb-2 flex items-center justify-between">
-                <p className="font-body text-sm font-medium uppercase tracking-[0.08em] text-charcoal">Size</p>
+              <div className="mb-3 mt-1 flex min-w-0 items-baseline justify-between gap-3">
+                <p className="shrink-0 font-body text-sm font-medium uppercase tracking-[0.08em] text-charcoal">Size</p>
                 <SizeGuideModal>
                   <button
                     type="button"
-                    className="font-body text-sm text-choc underline underline-offset-4"
+                    className="shrink-0 whitespace-nowrap font-body text-sm text-choc underline underline-offset-4"
                   >
                     Size Guide
                   </button>
@@ -477,7 +479,7 @@ export function ProductDetailClient({
             <span className="font-body text-[11px] font-medium uppercase tracking-wider text-charcoal">Add to Wishlist</span>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center font-sans text-[10px] uppercase tracking-[0.12em] text-charcoal-light">
+          <div className="mt-6 flex min-w-0 w-full flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center font-sans text-[10px] uppercase tracking-[0.12em] text-charcoal-light">
             <span>Secure checkout</span>
             <span aria-hidden className="text-sand">
               ·

@@ -30,8 +30,10 @@ export function QuickAddSizeRow({
       role="radiogroup"
       aria-label="Size"
       className={cn(
-        "quick-add-size-scroller flex gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-        compact ? "px-0" : "px-1",
+        "min-w-0 w-full",
+        compact
+          ? "flex flex-wrap gap-2"
+          : "quick-add-size-scroller flex min-w-0 gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-1",
       )}
     >
       {variants.map((v, i) => {
@@ -80,10 +82,10 @@ export function QuickAddSizeRow({
             }}
             data-size-id={v.id}
             className={cn(
-              "quick-add-motion shrink-0 border font-sans uppercase tracking-[0.08em] transition-colors duration-200",
+              "quick-add-motion border font-sans uppercase tracking-[0.08em] transition-colors duration-200",
               compact
-                ? "min-h-11 min-w-11 scroll-mb-28 px-3 text-[11px]"
-                : "min-h-8 min-w-8 px-2.5 py-1 text-[10px]",
+                ? "box-border h-11 w-11 shrink-0 scroll-mb-28 p-0 text-[11px]"
+                : "min-h-8 min-w-8 shrink-0 px-2.5 py-1 text-[10px]",
               selected
                 ? "border-choc bg-choc text-cream"
                 : "border-sand bg-bg-card text-choc",
