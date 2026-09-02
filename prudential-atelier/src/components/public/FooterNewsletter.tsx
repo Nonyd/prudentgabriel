@@ -40,7 +40,7 @@ export function FooterNewsletter({
   };
 
   return (
-    <div>
+    <div className="min-w-0">
       <p className="mb-4 uppercase" style={labelStyle}>
         The Newsletter
       </p>

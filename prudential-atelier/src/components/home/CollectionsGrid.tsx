@@ -51,11 +51,11 @@ export function CollectionsGrid({
   }));
   return (
     <section className="py-section-mobile md:py-section">
-      <div className="mx-auto max-w-site px-4 text-center">
+      <div className="mx-auto max-w-site px-4 text-center lg:px-10">
         <SectionLabel>THE COLLECTIONS</SectionLabel>
         <h2 className="mt-4 font-display text-4xl text-charcoal md:text-5xl">Bridal, evening, ready-to-wear</h2>
       </div>
-      <div className="mx-auto mt-16 grid max-w-site grid-cols-2 gap-3 px-4 md:grid-cols-3 md:gap-4">
+      <div className="mx-auto mt-16 grid max-w-site grid-cols-2 gap-3 px-4 md:grid-cols-3 md:gap-4 lg:px-10">
         {CELLS.map((c) => (
           <Link
             key={c.title}

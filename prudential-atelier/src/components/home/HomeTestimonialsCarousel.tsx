@@ -215,7 +215,7 @@ export function HomeTestimonialsCarousel({ items, heading, subtitle }: HomeTesti
 
   return (
     <section className="bg-ivory py-20">
-      <div className="mx-auto max-w-site px-4 lg:px-6">
+      <div className="mx-auto max-w-site px-4 lg:px-10">
         <div className="mb-12">
           <p className="text-center font-label text-[10px] uppercase tracking-[0.2em] text-lightbr">Client Words</p>
           <h2 className="mt-3 text-center font-display text-[42px] leading-tight text-choc">{heading}</h2>

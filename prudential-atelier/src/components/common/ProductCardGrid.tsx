@@ -29,7 +29,7 @@ export function ProductCardGrid({
 
   return (
     <GallerySwipeNudgeHost>
-      <div className={cn("grid gap-px bg-white", className, isOpen && activeIndex >= 0 && "max-md:pb-28")}>
+      <div className={cn("grid min-w-0 gap-px bg-white [&>*]:min-w-0", className, isOpen && activeIndex >= 0 && "max-md:pb-28")}>
         {products.map((p, i) => {
           const row = Math.floor(i / cols);
           const dimmed = activeRow >= 0 && row === activeRow && p.id !== activeId;

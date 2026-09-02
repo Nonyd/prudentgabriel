@@ -177,7 +177,7 @@ export function Footer({
       </div>
 
       <div className="mx-auto grid max-w-site gap-12 px-6 pb-16 md:grid-cols-3 lg:px-10 lg:gap-16">
-        <div>
+        <div className="min-w-0">
           <p className="mb-4 uppercase" style={labelStyle}>
             The House
           </p>
@@ -211,7 +211,7 @@ export function Footer({
           <FooterLinks links={houseLinks} />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <p className="mb-4 uppercase" style={labelStyle}>
             Client Care
           </p>

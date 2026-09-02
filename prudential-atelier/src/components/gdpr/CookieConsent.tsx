@@ -89,7 +89,7 @@ export function CookieConsent() {
           className="fixed inset-x-0 bottom-0 z-[100] border-t border-cream/10 px-4 py-4 sm:px-6"
           style={{ backgroundColor: "var(--choc)" }}
         >
-          <div className="mx-auto flex max-w-site flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="mx-auto flex min-w-0 max-w-site flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <p
               className="max-w-2xl leading-relaxed"
               style={{ fontFamily: "var(--font-lora)", fontSize: "13px", color: "var(--cream)" }}

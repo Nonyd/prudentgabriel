@@ -112,7 +112,7 @@ export function ShopBrowse({
       </header>
 
       {!hideFilters ? (
-      <div className="border-y border-[0.5px] border-sand bg-ivory px-4 py-4 md:px-8">
+      <div className="border-y border-[0.5px] border-sand bg-ivory px-4 py-4 md:px-8 lg:px-10">
         <div className="mx-auto flex max-w-site flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap gap-2">
             {FILTERS.map((f) => (
@@ -140,7 +140,7 @@ export function ShopBrowse({
         </div>
       </div>
       ) : (
-        <div className="border-y border-[0.5px] border-sand bg-ivory px-4 py-4 md:px-8">
+        <div className="border-y border-[0.5px] border-sand bg-ivory px-4 py-4 md:px-8 lg:px-10">
           <div className="mx-auto flex max-w-site justify-end">
             <span className="font-sans text-[11px] uppercase tracking-[0.1em] text-text-light">
               {total} {total === 1 ? "PIECE" : "PIECES"}
@@ -149,7 +149,7 @@ export function ShopBrowse({
         </div>
       )}
 
-      <div className={items.length === 0 ? "px-4 py-20 md:px-8" : undefined}>
+      <div className={items.length === 0 ? "px-4 py-20 md:px-8 lg:px-10" : undefined}>
         {items.length === 0 ? (
           <div className="flex flex-col items-center text-center">
             <p className="font-serif text-lg text-choc">No pieces match your filters</p>

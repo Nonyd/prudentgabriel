@@ -171,7 +171,7 @@ export function RTWPageClient({
       </header>
 
       <div className="sticky top-0 z-30 border-b border-mid-grey bg-bg-card">
-        <div className="mx-auto flex h-12 max-w-[1600px] items-center gap-4 px-6">
+        <div className="mx-auto flex h-12 max-w-site items-center gap-4 px-4 lg:px-10">
           <div className="scrollbar-hide flex min-w-0 flex-1 items-center gap-0 overflow-x-auto">
             {CHIPS.map((chip) => {
               const selected = activeChip === chip.id;

@@ -23,7 +23,7 @@ export default function CartPage() {
   const subtotalShopper = items.reduce((s, i) => s + cartLineAmountInCurrency(i, currency, rates), 0);
 
   return (
-    <div className="mx-auto max-w-site px-4 py-10">
+    <div className="mx-auto max-w-site px-4 py-10 lg:px-10">
       <h1 className="font-display text-3xl text-charcoal">Your bag ({totalItems})</h1>
 
       {items.length === 0 ? (
@@ -34,8 +34,8 @@ export default function CartPage() {
           </Button>
         </div>
       ) : (
-        <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_320px]">
-          <ul className="space-y-6">
+        <div className="mt-10 grid min-w-0 gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
+          <ul className="min-w-0 space-y-6">
             {items.map((item) => (
               <li key={item.id} className="flex gap-4 border-b border-border pb-6">
                 <div className="relative h-24 w-20 shrink-0 overflow-hidden bg-ivory-dark">
@@ -83,7 +83,7 @@ export default function CartPage() {
             ))}
           </ul>
 
-          <aside className="h-fit border border-border bg-off-white p-6">
+          <aside className="h-fit min-w-0 border border-border bg-off-white p-6">
             <div className="flex items-baseline justify-between">
               <span className="font-label text-xs uppercase text-charcoal-mid">Subtotal</span>
               <span className="font-display text-xl text-charcoal">{formatPrice(subtotalShopper, currency)}</span>

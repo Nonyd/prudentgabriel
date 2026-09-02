@@ -84,7 +84,7 @@ export function FeaturedCollections({
 
   return (
     <section className="bg-bg-page py-20 md:py-[100px]">
-      <div className="mx-auto max-w-[1400px] px-6">
+      <div className="mx-auto max-w-site px-6 lg:px-10">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <SectionLabel>Collections</SectionLabel>

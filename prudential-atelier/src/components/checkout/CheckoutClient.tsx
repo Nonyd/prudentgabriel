@@ -692,11 +692,11 @@ export function CheckoutClient() {
   }
 
   return (
-    <div className="mx-auto flex max-w-site flex-col gap-10 px-4 py-10 lg:flex-row lg:items-start">
-      <div className="flex-1">
-        <ol className="mb-8 flex items-center justify-between gap-2">
+    <div className="mx-auto flex max-w-site flex-col gap-10 px-4 py-10 lg:flex-row lg:items-start lg:px-10">
+      <div className="min-w-0 flex-1">
+        <ol className="mb-8 flex min-w-0 items-center justify-between gap-2">
           {STEPS.map((s, idx) => (
-            <li key={s.n} className="flex flex-1 items-center gap-2">
+            <li key={s.n} className="flex min-w-0 flex-1 items-center gap-2">
               <div className="flex flex-col items-center gap-1">
                 <div
                   className={clsx(
@@ -726,7 +726,7 @@ export function CheckoutClient() {
             {items.map((i) => (
               <div key={i.id} className="flex gap-4 border-b border-border pb-4">
                 <Image src={i.imageUrl} alt={i.productName} width={64} height={80} className="rounded-sm object-cover" />
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <p className="font-medium">{i.productName}</p>
                   <p className="text-sm text-charcoal-mid">
                     {i.sizeMode === "CUSTOM" ? "Made to your measurements" : i.size}
@@ -796,12 +796,12 @@ export function CheckoutClient() {
               />
             )}
 
-            <div className="flex items-end gap-2">
+            <div className="flex min-w-0 items-end gap-2">
               <Input
                 id="coupon-code"
                 label="Coupon code"
                 autoComplete="off"
-                className="flex-1"
+                className="min-w-0 flex-1"
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
               />
@@ -1340,7 +1340,7 @@ export function CheckoutClient() {
         )}
       </div>
 
-      <aside className="w-full shrink-0 lg:sticky lg:top-24 lg:w-[360px]">
+      <aside className="w-full min-w-0 shrink-0 lg:sticky lg:top-24 lg:w-[360px]">
         <OrderSummary
           items={items}
           couponResult={couponResult}

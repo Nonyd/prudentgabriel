@@ -248,7 +248,7 @@ export function ProductDetailClient({
   };
 
   return (
-    <div className="mx-auto max-w-site overflow-x-clip px-4 pb-20">
+    <div className="mx-auto max-w-site overflow-x-clip px-4 pb-20 lg:px-10">
       <nav className="py-4 font-body text-[11px] font-medium uppercase tracking-[0.08em] text-dark-grey">
         <Link href="/shop" className="hover:text-choc">
           Shop
@@ -259,7 +259,7 @@ export function ProductDetailClient({
         <span className="text-charcoal">{product.name}</span>
       </nav>
 
-      <div className="grid min-w-0 gap-10 lg:grid-cols-[60%_40%] lg:gap-12">
+      <div className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-12">
         <div className="min-w-0">
           <ProductGallery images={product.images} />
         </div>
@@ -324,14 +324,14 @@ export function ProductDetailClient({
           {customOffered ? (
             <div className="mb-6 min-w-0">
               <p className="mb-3 font-body text-base font-medium text-charcoal">How should this piece be made?</p>
-              <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+              <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                 <button
                   type="button"
                   onClick={() => {
                     setFitMode("standard");
                     setBagError(null);
                   }}
-                  className={`min-h-[6.25rem] border-2 px-4 py-4 text-left ${
+                  className={`min-h-[6.25rem] min-w-0 border-2 px-4 py-4 text-left ${
                     fitMode === "standard" ? "border-choc bg-choc text-cream" : "border-choc/30 bg-white text-charcoal"
                   }`}
                 >
@@ -350,7 +350,7 @@ export function ProductDetailClient({
                       document.getElementById("custom-measurements")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
                     });
                   }}
-                  className={`min-h-[6.25rem] border-2 px-4 py-4 text-left ${
+                  className={`min-h-[6.25rem] min-w-0 border-2 px-4 py-4 text-left ${
                     fitMode === "custom" ? "border-choc bg-choc text-cream" : "border-choc bg-[#f7f2ec] text-charcoal"
                   }`}
                 >

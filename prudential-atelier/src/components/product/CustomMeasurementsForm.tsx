@@ -41,7 +41,7 @@ export function CustomMeasurementsForm({
   return (
     <div
       id="custom-measurements"
-      className="mt-5 space-y-5 border-2 border-choc bg-[#f7f2ec] p-5 md:p-6"
+      className="mt-5 min-w-0 space-y-5 border-2 border-choc bg-[#f7f2ec] p-5 md:p-6"
     >
       <div>
         <p className="font-display text-2xl text-choc">Your measurements</p>

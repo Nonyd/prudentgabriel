@@ -29,7 +29,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="uppercase transition-colors hover:opacity-80"
+      className="shrink-0 uppercase transition-colors hover:opacity-80"
       style={{
         fontFamily: "var(--font-ui)",
         fontSize: "11px",
@@ -54,7 +54,7 @@ function RtwDropdown({ collections }: { collections: CollectionNav[] }) {
     >
       <Link
         href="/rtw"
-        className="inline-flex items-center gap-1 uppercase transition-colors hover:opacity-80"
+        className="inline-flex shrink-0 items-center gap-1 uppercase transition-colors hover:opacity-80"
         style={{
           fontFamily: "var(--font-ui)",
           fontSize: "11px",
@@ -361,8 +361,8 @@ export function Navbar({
         </div>
 
         <div className="hidden border-b border-sand/20 bg-sidebar-bg lg:block">
-          <div className="mx-auto grid h-12 max-w-site grid-cols-[1fr_auto] items-center gap-4 px-10">
-            <nav className="flex min-w-0 items-center gap-6 xl:gap-8" aria-label="Primary">
+          <div className="mx-auto grid h-12 max-w-site grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-10">
+            <nav className="flex min-w-0 items-center gap-4 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden xl:gap-6 2xl:gap-8" aria-label="Primary">
               <NavLink href="/shop" label="Shop" />
               <RtwDropdown collections={collections} />
               {primaryLinks.filter((l) => l.href !== "/shop").map((link) => (

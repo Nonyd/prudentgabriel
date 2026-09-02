@@ -31,7 +31,7 @@ export function HeroSectionClient({
 
   return (
     <section className="bg-hero-bg text-cream">
-      <div className="mx-auto grid max-w-site gap-10 px-6 py-16 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-10 lg:py-24">
+      <div className="mx-auto grid min-w-0 max-w-site gap-10 px-6 py-16 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-10 lg:py-24">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -60,7 +60,7 @@ export function HeroSectionClient({
         </motion.div>
 
         <motion.div
-          className="relative w-full min-h-[520px] overflow-visible md:min-h-[600px]"
+          className="relative min-h-[520px] w-full min-w-0 overflow-visible md:min-h-[600px]"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}

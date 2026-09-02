@@ -17,15 +17,15 @@ export function PFACrosslinkBannerClient({ cms = {} }: { cms?: Record<string, st
   const external = btnLink.startsWith("http");
 
   return (
-    <section className="px-6 py-14 lg:px-20 lg:py-14" style={{ backgroundColor: "#6B1C2A" }}>
+    <section className="px-6 py-14 lg:px-10 lg:py-14" style={{ backgroundColor: "#6B1C2A" }}>
       <motion.div
-        className="mx-auto flex max-w-site flex-col items-start justify-between gap-8 lg:flex-row lg:items-center"
+        className="mx-auto flex max-w-site min-w-0 flex-col items-start justify-between gap-8 lg:flex-row lg:items-center"
         initial={{ opacity: 0, y: 32 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         viewport={{ once: true, margin: "-80px" }}
       >
-        <div className="max-w-xl">
+        <div className="min-w-0 max-w-xl">
           <p
             className="uppercase"
             style={{

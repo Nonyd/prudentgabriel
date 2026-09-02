@@ -12,7 +12,7 @@ export function NewArrivals({ products }: { products: ProductListItem[] }) {
   if (!products.length) return null;
   return (
     <section ref={ref} className="bg-ivory py-section-mobile md:py-section">
-      <div className="mx-auto mb-12 max-w-site px-4">
+      <div className="mx-auto mb-12 max-w-site px-4 lg:px-10">
         <div className="flex flex-col justify-end gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <SectionLabel>JUST IN</SectionLabel>

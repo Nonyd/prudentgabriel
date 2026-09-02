@@ -196,7 +196,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         customSurchargeValue={customCtx?.policy.surchargeValue ?? 0}
         previousCm={customCtx?.previousCm ?? {}}
       />
-      <div className="mx-auto max-w-site px-4">
+      <div className="mx-auto max-w-site px-4 lg:px-10">
         <ReviewsSection
           reviews={reviews}
           averageRating={averageRating}
