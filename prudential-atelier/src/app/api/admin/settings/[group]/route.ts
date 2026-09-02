@@ -2,15 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { permissionForSettingsGroup, requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { clearPublicSettingsCache, clearSettingCacheKey, setSetting } from "@/lib/settings";
+import { setSetting } from "@/lib/settings";
 import { ensurePaymentSettingKeys } from "@/lib/payment-settings-bootstrap";
 import { ensureShippingSettingKeys } from "@/lib/shipping-settings-bootstrap";
 import { ensureAppearanceLogoSettingKeys } from "@/lib/appearance-settings-bootstrap";
 import { ensureStoreSettingKeys } from "@/lib/store-settings-bootstrap";
 import { ensureLoyaltySettingKeys } from "@/lib/loyalty-settings-bootstrap";
 import { revalidateSettings } from "@/lib/revalidate";
-import { EMAIL_TEMPLATE_META } from "@/lib/email-templates";
-import { SettingType, type SettingGroup } from "@prisma/client";
+import {
+  COMMERCIAL_PAYMENTS_KEYS,
+  deniedDeveloperWriteKey,
+  getGatewayAdminStatus,
+  isEmailTemplateSettingKey,
+  redactSettingsForRole,
+} from "@/lib/settings-developer";
+import { hasPermission } from "@/lib/roles";
+import type { SettingGroup } from "@prisma/client";
 
 const GROUPS = new Set<string>([
   "STORE",
@@ -81,10 +88,19 @@ export async function GET(
     },
   });
 
-  const items = rows.map((r) => ({
+  const visible = redactSettingsForRole(gate.session.user.role, rows).filter((r) => {
+    if (group === "PAYMENTS") return COMMERCIAL_PAYMENTS_KEYS.has(r.key);
+    return true;
+  });
+  const items = visible.map((r) => ({
     ...r,
     value: r.type === "PASSWORD" && r.value.length > 0 ? PASSWORD_MASK : r.value,
   }));
+
+  if (group === "PAYMENTS") {
+    const gateways = await getGatewayAdminStatus();
+    return NextResponse.json({ items, gateways });
+  }
 
   return NextResponse.json({ items });
 }
@@ -119,9 +135,25 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
+  const keys = parsed.data.updates.map((u) => u.key);
+  const denied = deniedDeveloperWriteKey(gate.session.user.role, keys);
+  if (denied) {
+    if (isEmailTemplateSettingKey(denied)) {
+      return NextResponse.json(
+        { error: "Email templates are edited under Content. This settings group does not write copy." },
+        { status: 403 },
+      );
+    }
+    return NextResponse.json(
+      { error: "This credential can only be changed from Developer settings." },
+      { status: 403 },
+    );
+  }
+
   const userId = gate.session.user!.id!;
   let updated = 0;
   let paymentKeysTouched = false;
+  const canTouchSecrets = hasPermission(gate.session.user.role, "settings.developer");
 
   for (const { key, value } of parsed.data.updates) {
     const row = await prisma.siteSetting.findUnique({
@@ -130,29 +162,6 @@ export async function PATCH(
     });
 
     if (!row) {
-      if (
-        (group as SettingGroup) === "EMAIL" &&
-        key.startsWith("email_tpl_") &&
-        EMAIL_TEMPLATE_META[key]
-      ) {
-        const meta = EMAIL_TEMPLATE_META[key];
-        await prisma.siteSetting.create({
-          data: {
-            key,
-            value,
-            group: "EMAIL",
-            label: meta.label,
-            type: SettingType.JSON,
-            isPublic: false,
-            sortOrder: meta.sortOrder,
-            updatedBy: userId,
-          },
-        });
-        clearSettingCacheKey(key);
-        clearPublicSettingsCache();
-        updated += 1;
-        continue;
-      }
       return NextResponse.json({ error: `Invalid key for group: ${key}` }, { status: 400 });
     }
 
@@ -180,9 +189,10 @@ export async function PATCH(
   return NextResponse.json({
     success: true,
     updated,
-    paymentKeysChanged: paymentKeysTouched,
-    note: paymentKeysTouched
-      ? "Payment secrets were updated. Restart the app if any services still read from environment variables only."
-      : undefined,
+    paymentKeysChanged: canTouchSecrets && paymentKeysTouched,
+    note:
+      canTouchSecrets && paymentKeysTouched
+        ? "Payment secrets were updated. Restart the app if any services still read from environment variables only."
+        : undefined,
   });
 }

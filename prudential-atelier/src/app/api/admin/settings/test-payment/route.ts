@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { requireSuperAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import {
   getFlutterwaveSecret,
   getMonnifyApiKey,
@@ -16,7 +16,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const gate = await requireSuperAdminApi();
+  const gate = await requireAdminApi("settings.developer");
   if (!gate.ok) return gate.response;
 
   const json = await req.json().catch(() => null);

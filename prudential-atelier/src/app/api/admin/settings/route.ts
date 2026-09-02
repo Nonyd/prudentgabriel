@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { isDeveloperSettingKey, isEmailTemplateSettingKey, redactSettingsForRole } from "@/lib/settings-developer";
+import { ensurePaymentSettingKeys } from "@/lib/payment-settings-bootstrap";
 import type { SettingGroup } from "@prisma/client";
 
 const PASSWORD_MASK = "••••••••";
@@ -8,6 +10,8 @@ const PASSWORD_MASK = "••••••••";
 export async function GET() {
   const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
+
+  await ensurePaymentSettingKeys();
 
   const rows = await prisma.siteSetting.findMany({
     orderBy: [{ group: "asc" }, { sortOrder: "asc" }],
@@ -23,6 +27,10 @@ export async function GET() {
       updatedBy: true,
     },
   });
+
+  const visible = redactSettingsForRole(gate.session.user.role, rows).filter(
+    (r) => !isDeveloperSettingKey(r.key) && !isEmailTemplateSettingKey(r.key),
+  );
 
   const settings: Partial<
     Record<
@@ -41,7 +49,7 @@ export async function GET() {
     >
   > = {};
 
-  for (const r of rows) {
+  for (const r of visible) {
     const displayValue =
       r.type === "PASSWORD" && r.value.length > 0 ? PASSWORD_MASK : r.value;
     const bucket = settings[r.group] ?? (settings[r.group] = []);

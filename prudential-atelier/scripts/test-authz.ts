@@ -16,6 +16,12 @@ import {
   roleAllows,
 } from "../src/lib/roles";
 import {
+  canWriteSettingKey,
+  deniedDeveloperWriteKey,
+  isDeveloperSettingKey,
+  COMMERCIAL_PAYMENTS_KEYS,
+} from "../src/lib/settings-developer";
+import {
   BESPOKE_ADMIN_ROLES,
   BESPOKE_MANAGER_ROLES,
   BESPOKE_ROLES,
@@ -101,6 +107,25 @@ async function main() {
   }
   assert(roleAllows("SUPER_ADMIN", "settings.developer"), "SUPER_ADMIN reaches developer settings");
   assert(!roleAllows("ADMIN", "settings.developer"), "ADMIN must not inherit settings.developer");
+  assert(!canWriteSettingKey("ADMIN", "paystack_secret_key"), "ADMIN cannot write Paystack secret");
+  assert(!canWriteSettingKey("ADMIN", "paystack_public_key"), "ADMIN cannot write Paystack public key");
+  assert(canWriteSettingKey("ADMIN", "paystack_enabled"), "ADMIN can toggle Paystack enabled");
+  assert(canWriteSettingKey("SUPER_ADMIN", "paystack_secret_key"), "SUPER_ADMIN can write Paystack secret");
+  assert(deniedDeveloperWriteKey("ADMIN", ["paystack_enabled", "paystack_secret_key"]) === "paystack_secret_key", "mixed PAYMENTS patch denies the secret");
+  assert(deniedDeveloperWriteKey("ADMIN", ["paystack_enabled"]) === null, "commercial PAYMENTS patch is allowed");
+  assert(deniedDeveloperWriteKey("SUPER_ADMIN", ["paystack_secret_key"]) === null, "SUPER_ADMIN secret patch is allowed");
+  assert(!canWriteSettingKey("ADMIN", "email_tpl_welcome"), "email templates are not a settings write");
+  assert(!canWriteSettingKey("ADMIN", "resend_api_key"), "ADMIN cannot write Resend key");
+  assert(isDeveloperSettingKey("slack_webhook_url"), "Slack webhook is a developer credential");
+  assert(!isDeveloperSettingKey("paystack_enabled"), "enabled flags are commercial");
+  assert(COMMERCIAL_PAYMENTS_KEYS.has("paystack_enabled"), "enabled flags are on the commercial set");
+
+  const paymentsPatchSrc = routeSource("app/api/admin/settings/[group]/route.ts");
+  assert(paymentsPatchSrc.includes("deniedDeveloperWriteKey"), "PAYMENTS PATCH uses deniedDeveloperWriteKey");
+  const testPaySrc = routeSource("app/api/admin/settings/test-payment/route.ts");
+  assert(testPaySrc.includes('requireAdminApi("settings.developer")'), "test-payment is settings.developer");
+  const devRouteSrc = routeSource("app/api/admin/settings/developer/route.ts");
+  assert(devRouteSrc.includes('requireAdminApi("settings.developer")'), "developer settings API is settings.developer");
 
   // Positive × negative matrix for route groups (200 iff roleAllows)
   const groups: { name: string; perm: Parameters<typeof roleAllows>[1] }[] = [

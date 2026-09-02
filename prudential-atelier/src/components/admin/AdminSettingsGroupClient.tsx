@@ -1,15 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import * as Accordion from "@radix-ui/react-accordion";
-import toast from "react-hot-toast";
 import type { SettingGroup, SettingType } from "@prisma/client";
 import { AppearanceSettingsForm } from "@/components/admin/settings/AppearanceSettingsForm";
 import { ContentSettingsForm } from "@/components/admin/settings/ContentSettingsForm";
-import { EmailTemplatesEditor } from "@/components/admin/settings/EmailTemplatesEditor";
 import { SocialSettingsForm } from "@/components/admin/settings/SocialSettingsForm";
 import { LoyaltySettingsClient } from "@/components/admin/settings/LoyaltySettingsClient";
 import { SettingsGroupCard } from "@/components/admin/AdminSettingsClient";
+import { PaymentsSettingsClient } from "@/components/admin/PaymentsSettingsClient";
 
 type Row = {
   key: string;
@@ -42,34 +40,17 @@ export function AdminSettingsGroupClient({ groupSlug }: { groupSlug: AdminSettin
   }, []);
 
   useEffect(() => {
+    if (groupSlug === "payments") return;
     void load();
-  }, [load]);
+  }, [load, groupSlug]);
 
   const rowsFor = useCallback((g: SettingGroup) => settings?.[g] ?? [], [settings]);
-  const paymentRows = useCallback(() => {
-    const hidden = new Set([
-      "bank_name",
-      "bank_account_number",
-      "bank_account_name",
-      "bank_name_usd",
-      "bank_account_number_usd",
-      "bank_account_name_usd",
-    ]);
-    return rowsFor("PAYMENTS").filter((r) => !hidden.has(r.key));
-  }, [rowsFor]);
-
-  const paymentsTest = useCallback(async (gateway: "paystack" | "flutterwave" | "stripe" | "monnify") => {
-    const res = await fetch("/api/admin/settings/test-payment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ gateway }),
-    });
-    const j = await res.json().catch(() => ({}));
-    if ((j as { ok?: boolean }).ok) toast.success((j as { message?: string }).message ?? "OK");
-    else toast.error((j as { message?: string }).message ?? "Failed");
-  }, []);
 
   const body = useMemo(() => {
+    if (groupSlug === "payments") {
+      return <PaymentsSettingsClient />;
+    }
+
     if (!settings) return <p className="p-6 font-body text-sm text-[#6B6B68]">Loading…</p>;
 
     if (groupSlug === "store") {
@@ -86,7 +67,16 @@ export function AdminSettingsGroupClient({ groupSlug }: { groupSlug: AdminSettin
 
     if (groupSlug === "notifications") {
       return (
-        <SettingsGroupCard title="Notifications" group="NOTIFICATIONS" rows={rowsFor("NOTIFICATIONS")} onSaved={load} />
+        <div className="space-y-4">
+          <p className="font-body text-sm text-[#6B6B68]">
+            Slack webhook is a credential — set it in{" "}
+            <a href="/admin/settings/developer" className="underline">
+              Developer settings
+            </a>
+            .
+          </p>
+          <SettingsGroupCard title="Notifications" group="NOTIFICATIONS" rows={rowsFor("NOTIFICATIONS")} onSaved={load} />
+        </div>
       );
     }
 
@@ -103,70 +93,27 @@ export function AdminSettingsGroupClient({ groupSlug }: { groupSlug: AdminSettin
     }
 
     if (groupSlug === "email") {
-      const emailConfig = rowsFor("EMAIL").filter((r) => !r.key.startsWith("email_tpl_"));
       return (
         <div className="space-y-6">
-          <SettingsGroupCard title="Email" group="EMAIL" rows={emailConfig} onSaved={load} />
-          <SettingsGroupCard title="SMS" group="SMS" rows={rowsFor("SMS")} onSaved={load} />
-          <EmailTemplatesEditor emailRows={rowsFor("EMAIL")} onSaved={load} />
-          <div className="border border-sand bg-canvas p-6">
-            <button
-              type="button"
-              className="font-body text-sm text-olive underline"
-              onClick={async () => {
-                const res = await fetch("/api/admin/emails/test", { method: "POST" });
-                const j = await res.json().catch(() => ({}));
-                if (res.ok) toast.success((j as { message?: string }).message ?? "Sent");
-                else toast.error((j as { error?: string }).error ?? "Failed");
-              }}
-            >
-              Send test email
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    if (groupSlug === "payments") {
-      return (
-        <div className="space-y-4">
-          <div className="border border-amber-200 bg-amber-50 px-4 py-3 font-body text-xs text-amber-950">
-            Payment keys are encrypted in the database. Changes apply to API routes that read from settings.
-          </div>
-          <Accordion.Root type="multiple" className="space-y-2">
-            {(["paystack", "flutterwave", "stripe", "monnify"] as const).map((gw) => (
-              <Accordion.Item key={gw} value={gw} className="border border-sand bg-canvas">
-                <Accordion.Header>
-                  <Accordion.Trigger className="flex w-full items-center justify-between px-4 py-3 font-body text-sm font-medium capitalize">
-                    {gw}
-                  </Accordion.Trigger>
-                </Accordion.Header>
-                <Accordion.Content className="border-t border-sand px-4 pb-4 pt-2">
-                  <button
-                    type="button"
-                    className="mb-3 text-xs text-olive underline"
-                    onClick={() => void paymentsTest(gw)}
-                  >
-                    Test connection
-                  </button>
-                </Accordion.Content>
-              </Accordion.Item>
-            ))}
-          </Accordion.Root>
-          <p className="mb-4 font-body text-sm text-[#6B6B68]">
-            Bank transfer accounts live on{" "}
-            <a href="/admin/settings/bank-accounts" className="underline">
-              Bank accounts
+          <p className="font-body text-sm text-[#6B6B68]">
+            API keys, SMTP password, and provider order are on{" "}
+            <a href="/admin/settings/developer" className="underline">
+              Developer settings
             </a>
-            , one row per currency and business line.
+            . Transactional copy is edited under{" "}
+            <a href="/admin/content/email-templates" className="underline">
+              Content → Email templates
+            </a>
+            .
           </p>
-          <SettingsGroupCard title="Payment keys" group="PAYMENTS" rows={paymentRows()} onSaved={load} />
+          <SettingsGroupCard title="From address" group="EMAIL" rows={rowsFor("EMAIL")} onSaved={load} />
+          <SettingsGroupCard title="SMS" group="SMS" rows={rowsFor("SMS")} onSaved={load} />
         </div>
       );
     }
 
     return null;
-  }, [groupSlug, settings, rowsFor, paymentRows, load, paymentsTest]);
+  }, [groupSlug, settings, rowsFor, load]);
 
   return <div className="min-w-0">{body}</div>;
 }

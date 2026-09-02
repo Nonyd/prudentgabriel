@@ -97,7 +97,7 @@ export async function getBankTransferDetails(
   return resolvePublicBankAccount(currency, businessLine);
 }
 
-function isUsableCredential(value: string | null | undefined): boolean {
+export function isUsableCredential(value: string | null | undefined): boolean {
   const v = value?.trim() ?? "";
   if (!v) return false;
   const lower = v.toLowerCase();

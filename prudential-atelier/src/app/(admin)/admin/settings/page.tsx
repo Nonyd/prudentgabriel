@@ -116,7 +116,7 @@ const CARD_SECTIONS: CardSection[] = [
       {
         slug: "payments",
         title: "Payments",
-        description: "Paystack, Flutterwave, Stripe, Monnify keys",
+        description: "Gateways, deposit, currencies — keys are in Developer",
         icon: CreditCard,
         countGroups: ["PAYMENTS"],
         href: "/admin/settings/payments",

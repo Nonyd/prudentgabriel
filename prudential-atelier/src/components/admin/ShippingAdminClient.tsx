@@ -155,7 +155,11 @@ export function ShippingAdminClient({
         <h1 className="font-display text-[24px] text-ink">Shipping</h1>
         <p className="mt-1 max-w-2xl font-body text-[13px] text-[#6B6B68]">
           Lagos is automatic. Nigeria and international can run as a personal quote until GIG and DHL accounts are live
-          — flip each band on its own, so Lekki never waits for a phone call.
+          — flip each band on its own, so Lekki never waits for a phone call. Carrier API keys are set in{" "}
+          <a href="/admin/settings/developer" className="underline">
+            Developer settings
+          </a>
+          .
         </p>
       </div>
 

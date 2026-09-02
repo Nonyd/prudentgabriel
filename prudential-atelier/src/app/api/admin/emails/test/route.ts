@@ -7,7 +7,7 @@ import { resolveCustomerFromName } from "@/lib/customer-email";
 import { EMAIL_FROM } from "@/lib/email-transport";
 
 export async function POST() {
-  const gate = await requireAdminApi("settings");
+  const gate = await requireAdminApi("settings.developer");
   if (!gate.ok) return gate.response;
 
   const emailSettings = await getSettings("EMAIL");
