@@ -148,6 +148,7 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
   return (
     <article
       className="product-gallery-card group"
+      data-gallery-card=""
       data-gallery-open={qa.isOpen ? "true" : undefined}
     >
       <div className="product-gallery-shot">

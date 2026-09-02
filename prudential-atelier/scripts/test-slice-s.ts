@@ -5,13 +5,23 @@
  */
 import {
   GALLERY_GRID_IMAGE_TAKE,
+  GALLERY_NUDGE_MS,
+  GALLERY_NUDGE_PEEK_RATIO,
   GALLERY_SWIPE_IMAGE_CAP,
+  cardIsMeaningfullyInViewport,
+  galleryNudgeOffset,
   gallerySwipeAlt,
   isQuickAddPlusHit,
   shouldShowGalleryDots,
   shouldSuppressCardNavigation,
   swipeableGallery,
 } from "../src/lib/product-gallery";
+import {
+  consumeGalleryNudge,
+  galleryNudgeStillAvailable,
+  markGallerySwipeUsed,
+  resetGallerySwipeSessionForTests,
+} from "../src/lib/gallery-swipe-session";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -41,6 +51,28 @@ function run() {
 
   assert(gallerySwipeAlt("Avril", 0, 4) === "Avril", "first alt is the product name");
   assert(gallerySwipeAlt("Avril", 2, 4) === "Avril, image 3 of 4", "later alts are numbered");
+
+  assert(GALLERY_NUDGE_PEEK_RATIO === 0.15, "nudge peeks a sixth of the card, not a permanent sliver");
+  assert(GALLERY_NUDGE_MS === 600, "nudge is a short out-and-back");
+  assert(galleryNudgeOffset(0, 200) === 0, "nudge starts at rest");
+  assert(galleryNudgeOffset(1, 200) === 0, "nudge ends at rest, no overshoot");
+  const mid = galleryNudgeOffset(0.5, 200);
+  assert(Math.abs(mid - 30) < 0.01, "peak is 15% of width");
+  assert(galleryNudgeOffset(0.25, 200) < mid, "ease-out on the way out");
+  assert(galleryNudgeOffset(0.75, 200) < mid, "ease-in on the way back");
+  assert(cardIsMeaningfullyInViewport({ top: 0, bottom: 200, height: 200 }, 800), "full card in view");
+  assert(!cardIsMeaningfullyInViewport({ top: 790, bottom: 990, height: 200 }, 800), "2px sliver is not in view");
+
+  resetGallerySwipeSessionForTests();
+  assert(galleryNudgeStillAvailable(), "fresh session can nudge");
+  assert(consumeGalleryNudge(true) === false, "reduced motion consumes without playing");
+  assert(!galleryNudgeStillAvailable(), "reduced motion still counts as the one hint");
+  resetGallerySwipeSessionForTests();
+  assert(consumeGalleryNudge() === true, "first call plays");
+  assert(consumeGalleryNudge() === false, "second call is silent");
+  resetGallerySwipeSessionForTests();
+  markGallerySwipeUsed();
+  assert(consumeGalleryNudge() === false, "a real swipe cancels the hint");
 
   console.log("slice-s: all checks passed");
 }

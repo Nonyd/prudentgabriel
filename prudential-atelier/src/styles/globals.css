@@ -401,6 +401,12 @@ body {
   scroll-snap-align: center;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .card-images {
+    scroll-behavior: auto;
+  }
+}
+
 .card-image-dots {
   pointer-events: none;
   position: absolute;

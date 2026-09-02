@@ -52,3 +52,37 @@ export function gallerySwipeAlt(productName: string, index: number, total: numbe
   if (index === 0) return productName;
   return `${productName}, image ${index + 1} of ${total}`;
 }
+
+/** How far the first-session hint peeks, as a fraction of the card width. */
+export const GALLERY_NUDGE_PEEK_RATIO = 0.15;
+/** Out and back. */
+export const GALLERY_NUDGE_MS = 600;
+
+/**
+ * Scroll offset for the session nudge. t=0 and t=1 sit at the origin.
+ * Ease-out to the peek, ease-in back. No overshoot.
+ */
+export function galleryNudgeOffset(
+  progress01: number,
+  width: number,
+  peekRatio = GALLERY_NUDGE_PEEK_RATIO,
+): number {
+  const t = Math.min(1, Math.max(0, progress01));
+  const peak = width * peekRatio;
+  if (t <= 0.5) {
+    const u = t * 2;
+    const eased = 1 - (1 - u) ** 3;
+    return peak * eased;
+  }
+  const u = (t - 0.5) * 2;
+  const eased = u ** 3;
+  return peak * (1 - eased);
+}
+
+export function cardIsMeaningfullyInViewport(
+  rect: { top: number; bottom: number; height: number },
+  viewportHeight: number,
+): boolean {
+  const visible = Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
+  return visible >= Math.min(rect.height * 0.4, 80);
+}

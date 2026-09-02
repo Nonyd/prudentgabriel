@@ -1,17 +1,20 @@
 "use client";
 
-import { useCallback, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { optimizeProductCardImageUrl } from "@/lib/product-image-url";
 import {
+  GALLERY_NUDGE_MS,
+  galleryNudgeOffset,
   gallerySwipeAlt,
   isQuickAddPlusHit,
   shouldShowGalleryDots,
   shouldSuppressCardNavigation,
   type GalleryShot,
 } from "@/lib/product-gallery";
+import { markGallerySwipeUsed } from "@/lib/gallery-swipe-session";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 
 type ProductCardImageSwipeProps = {
@@ -34,11 +37,42 @@ export function ProductCardImageSwipe({
   const router = useRouter();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const gesture = useRef({ x: 0, y: 0, scroll: 0 });
+  const nudging = useRef(false);
   const [index, setIndex] = useState(0);
   const [loadRest, setLoadRest] = useState(false);
   const showDots = shouldShowGalleryDots(images.length);
 
   const revealRest = useCallback(() => setLoadRest(true), []);
+
+  const playNudge = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el || nudging.current) return;
+    revealRest();
+    const width = el.clientWidth;
+    if (!width) return;
+    nudging.current = true;
+    const started = performance.now();
+    const tick = (now: number) => {
+      if (!nudging.current) return;
+      const t = Math.min(1, (now - started) / GALLERY_NUDGE_MS);
+      el.scrollLeft = galleryNudgeOffset(t, width);
+      if (t < 1) {
+        requestAnimationFrame(tick);
+        return;
+      }
+      el.scrollLeft = 0;
+      nudging.current = false;
+    };
+    requestAnimationFrame(tick);
+  }, [revealRest]);
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const onNudge = () => playNudge();
+    el.addEventListener("gallery-nudge", onNudge);
+    return () => el.removeEventListener("gallery-nudge", onNudge);
+  }, [playNudge]);
 
   const syncIndex = useCallback(() => {
     const el = scrollerRef.current;
@@ -52,7 +86,9 @@ export function ProductCardImageSwipe({
       if (!el) return;
       const clamped = Math.max(0, Math.min(images.length - 1, next));
       revealRest();
-      el.scrollTo({ left: clamped * el.clientWidth, behavior: "auto" });
+      const reduce =
+        typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      el.scrollTo({ left: clamped * el.clientWidth, behavior: reduce ? "auto" : "smooth" });
       setIndex(clamped);
     },
     [images.length, revealRest],
@@ -73,11 +109,23 @@ export function ProductCardImageSwipe({
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     revealRest();
+    if (nudging.current) {
+      nudging.current = false;
+      scrollerRef.current && (scrollerRef.current.scrollLeft = 0);
+    }
     gesture.current = {
       x: e.clientX,
       y: e.clientY,
       scroll: scrollerRef.current?.scrollLeft ?? 0,
     };
+  };
+
+  const onScrollerScroll = () => {
+    if (!nudging.current) {
+      const left = scrollerRef.current?.scrollLeft ?? 0;
+      if (left > 4) markGallerySwipeUsed();
+    }
+    syncIndex();
   };
 
   const onClick = (e: MouseEvent<HTMLDivElement>) => {
@@ -107,13 +155,15 @@ export function ProductCardImageSwipe({
       <div
         ref={scrollerRef}
         className="card-images"
+        data-gallery-swipe="true"
         role="region"
+        aria-roledescription="carousel"
         aria-label={`${productName} images`}
         tabIndex={0}
         onFocus={revealRest}
         onKeyDown={onKeyDown}
         onPointerDown={onPointerDown}
-        onScroll={syncIndex}
+        onScroll={onScrollerScroll}
         onClick={onClick}
       >
         {images.map((img, i) => {
@@ -126,7 +176,7 @@ export function ProductCardImageSwipe({
                   src={src}
                   alt={gallerySwipeAlt(productName, i, images.length)}
                   fill
-                  sizes="50vw"
+                  sizes="(max-width: 767px) 50vw, 25vw"
                   className="object-cover object-top"
                   priority={priority && i === 0}
                   draggable={false}

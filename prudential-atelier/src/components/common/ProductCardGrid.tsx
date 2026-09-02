@@ -2,6 +2,7 @@
 
 import { Fragment } from "react";
 import { ProductCard } from "@/components/common/ProductCard";
+import { GallerySwipeNudgeHost } from "@/components/common/GallerySwipeNudgeHost";
 import { QuickAddMobilePanel } from "@/components/common/quick-add/QuickAddMobile";
 import { cn } from "@/lib/utils";
 import { useQuickAddStore } from "@/store/quickAddStore";
@@ -27,24 +28,26 @@ export function ProductCardGrid({
   const activeRow = activeIndex >= 0 ? Math.floor(activeIndex / cols) : -1;
 
   return (
-    <div className={cn("grid gap-px bg-white", className, isOpen && activeIndex >= 0 && "max-md:pb-28")}>
-      {products.map((p, i) => {
-        const row = Math.floor(i / cols);
-        const dimmed = activeRow >= 0 && row === activeRow && p.id !== activeId;
-        const endOfRow = i % cols === cols - 1 || i === products.length - 1;
-        const showPanel = endOfRow && activeRow === row && isOpen;
-        return (
-          <Fragment key={p.id}>
-            <ProductCard product={p} priority={i < priorityCount} dimmed={dimmed} merchBadge={merchBadge} />
-            {showPanel ? (
-              <div className={cols === 1 ? "md:hidden" : "col-span-2 md:hidden"}>
-                <QuickAddMobilePanel />
-              </div>
-            ) : null}
-          </Fragment>
-        );
-      })}
-    </div>
+    <GallerySwipeNudgeHost>
+      <div className={cn("grid gap-px bg-white", className, isOpen && activeIndex >= 0 && "max-md:pb-28")}>
+        {products.map((p, i) => {
+          const row = Math.floor(i / cols);
+          const dimmed = activeRow >= 0 && row === activeRow && p.id !== activeId;
+          const endOfRow = i % cols === cols - 1 || i === products.length - 1;
+          const showPanel = endOfRow && activeRow === row && isOpen;
+          return (
+            <Fragment key={p.id}>
+              <ProductCard product={p} priority={i < priorityCount} dimmed={dimmed} merchBadge={merchBadge} />
+              {showPanel ? (
+                <div className={cols === 1 ? "md:hidden" : "col-span-2 md:hidden"}>
+                  <QuickAddMobilePanel />
+                </div>
+              ) : null}
+            </Fragment>
+          );
+        })}
+      </div>
+    </GallerySwipeNudgeHost>
   );
 }
 
@@ -59,19 +62,21 @@ export function ProductCardRail({
   const inRail = Boolean(activeId && products.some((p) => p.id === activeId));
 
   return (
-    <div className={inRail ? "max-md:pb-28" : undefined}>
-      <div className="flex gap-px overflow-x-auto bg-white pb-0">
-        {products.map((p) => (
-          <div key={p.id} className={itemClassName}>
-            <ProductCard product={p} />
-          </div>
-        ))}
-      </div>
-      {inRail ? (
-        <div className="mt-3 md:hidden">
-          <QuickAddMobilePanel />
+    <GallerySwipeNudgeHost>
+      <div className={inRail ? "max-md:pb-28" : undefined}>
+        <div className="flex gap-px overflow-x-auto bg-white pb-0">
+          {products.map((p) => (
+            <div key={p.id} className={itemClassName}>
+              <ProductCard product={p} />
+            </div>
+          ))}
         </div>
-      ) : null}
-    </div>
+        {inRail ? (
+          <div className="mt-3 md:hidden">
+            <QuickAddMobilePanel />
+          </div>
+        ) : null}
+      </div>
+    </GallerySwipeNudgeHost>
   );
 }
