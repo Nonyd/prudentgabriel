@@ -334,6 +334,71 @@ body {
   background: var(--ivory-dark);
 }
 
+/* Native paging on touch. Desktop keeps hover arrows — this strip is md-hidden via the React branch. */
+.card-images {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  touch-action: pan-x pan-y pinch-zoom;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.card-images:focus-visible {
+  outline: 2px solid var(--cream);
+  outline-offset: -2px;
+}
+
+.card-images::-webkit-scrollbar {
+  display: none;
+}
+
+.card-images > .card-image-slide {
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  scroll-snap-align: center;
+}
+
+.card-image-dots {
+  pointer-events: none;
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0.65rem;
+  z-index: 11;
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.card-image-dot {
+  pointer-events: auto;
+  width: 5px;
+  height: 5px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cream) 38%, transparent);
+  cursor: pointer;
+}
+
+.card-image-dot-active {
+  background: var(--cream);
+}
+
+.card-image-dot:focus-visible {
+  outline: 1px solid var(--cream);
+  outline-offset: 2px;
+}
+
 .product-gallery-scrim {
   pointer-events: none;
   position: absolute;

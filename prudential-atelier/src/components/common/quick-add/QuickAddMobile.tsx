@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { QuickAddCta } from "@/components/common/quick-add/QuickAddCta";
 import { QuickAddSizeRow } from "@/components/common/quick-add/QuickAddSizeRow";
 import { useProductQuickAdd } from "@/hooks/useQuickAdd";
@@ -15,12 +16,15 @@ export function QuickAddMobileTrigger({
   soldOut,
   isOpen,
   onOpen,
+  passThroughSwipe = false,
 }: {
   productName: string;
   productId: string;
   soldOut: boolean;
   isOpen: boolean;
   onOpen: () => void;
+  /** When the image strip is paging, let the swipe through; a tap in this corner still opens Quick Add. */
+  passThroughSwipe?: boolean;
 }) {
   if (soldOut) {
     return (
@@ -44,7 +48,10 @@ export function QuickAddMobileTrigger({
         e.stopPropagation();
         onOpen();
       }}
-      className="absolute bottom-2 left-2 z-10 flex h-11 w-11 cursor-pointer items-center justify-center bg-choc text-cream transition-transform duration-150 active:scale-[0.97] md:hidden"
+      className={cn(
+        "absolute bottom-2 left-2 z-10 flex h-11 w-11 cursor-pointer items-center justify-center bg-choc text-cream transition-transform duration-150 active:scale-[0.97] md:hidden",
+        passThroughSwipe && "pointer-events-none",
+      )}
     >
       <Plus className="h-4 w-4" strokeWidth={1.75} />
     </button>

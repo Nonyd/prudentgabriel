@@ -20,8 +20,9 @@ import { formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import { useProductQuickAdd } from "@/hooks/useQuickAdd";
 import { useIsMdUp } from "@/hooks/useMediaQuery";
+import { ProductCardImageSwipe } from "@/components/common/ProductCardImageSwipe";
 import { optimizeProductCardImageUrl } from "@/lib/product-image-url";
-import { canGalleryHoverSwap } from "@/lib/product-gallery";
+import { canGalleryHoverSwap, swipeableGallery } from "@/lib/product-gallery";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import type { ProductListItem } from "@/types/product";
 import { minAmountInCurrency } from "@/lib/pricing";
@@ -63,6 +64,10 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
     : gallery[galleryIndex] ?? gallery[0];
   const canSwap = canGalleryHoverSwap(gallery.length) && !primaryFromColor && galleryIndex === 0;
   const secondary = canSwap && gallery[1]?.url ? gallery[1] : undefined;
+  const swipeImages = primaryFromColor
+    ? [{ url: primaryFromColor, alt: product.name }]
+    : swipeableGallery(gallery);
+  const mobileSwipe = !isMd && swipeImages.length >= 2;
 
   const lowestListShopper = minAmountInCurrency(
     product.variants,
@@ -146,38 +151,49 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
       data-gallery-open={qa.isOpen ? "true" : undefined}
     >
       <div className="product-gallery-shot">
-        <Link
-          href={`/shop/${product.slug}`}
-          aria-labelledby={nameId}
-          className="absolute inset-0 z-[1] block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-cream"
-        >
-          {hasImage ? (
-            <Image
-              src={imgPrimary}
-              alt={garmentAlt}
-              fill
-              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className={cn(
-                "object-cover object-top",
-                secondary ? "product-gallery-crossfade [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-focus-within:opacity-0" : null,
-              )}
-              priority={priority}
-              onError={() => setImgError(true)}
-            />
-          ) : (
-            <ImagePlaceholder className="absolute inset-0 h-full w-full" />
-          )}
-          {secondary && !secondaryError ? (
-            <Image
-              src={imgSecondary!}
-              alt=""
-              fill
-              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="product-gallery-crossfade absolute inset-0 object-cover object-top opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:group-focus-within:opacity-100"
-              onError={() => setSecondaryError(true)}
-            />
-          ) : null}
-        </Link>
+        {mobileSwipe ? (
+          <ProductCardImageSwipe
+            href={`/shop/${product.slug}`}
+            productName={product.name}
+            images={swipeImages}
+            priority={priority}
+            enableQuickAddHit={!qa.soldOut && !qa.isOpen}
+            onQuickAdd={qa.open}
+          />
+        ) : (
+          <Link
+            href={`/shop/${product.slug}`}
+            aria-labelledby={nameId}
+            className="absolute inset-0 z-[1] block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-cream"
+          >
+            {hasImage ? (
+              <Image
+                src={imgPrimary}
+                alt={garmentAlt}
+                fill
+                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                className={cn(
+                  "object-cover object-top",
+                  secondary ? "product-gallery-crossfade [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-focus-within:opacity-0" : null,
+                )}
+                priority={priority}
+                onError={() => setImgError(true)}
+              />
+            ) : (
+              <ImagePlaceholder className="absolute inset-0 h-full w-full" />
+            )}
+            {secondary && !secondaryError ? (
+              <Image
+                src={imgSecondary!}
+                alt=""
+                fill
+                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                className="product-gallery-crossfade absolute inset-0 object-cover object-top opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:group-focus-within:opacity-100"
+                onError={() => setSecondaryError(true)}
+              />
+            ) : null}
+          </Link>
+        )}
 
         <div className="product-gallery-scrim" aria-hidden />
 
@@ -230,6 +246,7 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
           soldOut={qa.soldOut}
           isOpen={qa.isOpen}
           onOpen={qa.open}
+          passThroughSwipe={mobileSwipe}
         />
         {qa.isOpen ? (
           <QuickAddMobileClose productName={product.name} onClose={qa.close} />
