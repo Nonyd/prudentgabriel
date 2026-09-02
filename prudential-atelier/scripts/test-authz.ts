@@ -40,6 +40,12 @@ import {
   roleMayAccessAdminPath,
   visibleAdminNavSections,
 } from "../src/lib/admin-route-access";
+import {
+  canEditTargetUserPermissions,
+  isRolePermissionsEditable,
+  lastSuperAdminCannotBeRemoved,
+} from "../src/lib/permission-policy";
+import { KEMI_EMAIL } from "../src/lib/permission-catalog";
 import { canAccessStaffPortal } from "../src/lib/client-auth";
 import type { Session } from "next-auth";
 import {
@@ -295,7 +301,100 @@ async function main() {
   assert(inheritedDottedPermissions("ADMIN").includes("shop.orders"), "ADMIN inherits shop.orders from shop");
   assert(inheritedDottedPermissions("STAFF_ADMIN").includes("shop.orders"), "STAFF_ADMIN inherits shop.orders from shop");
   assert(!inheritedDottedPermissions("ADMIN").includes("settings.developer"), "settings.developer is not inherited");
+  assert(inheritedDottedPermissions("ADMIN").includes("settings.bank-accounts"), "ADMIN inherits bank accounts from settings");
   assert(inheritedDottedPermissions("CONTENT_MANAGER").length === 0, "CONTENT_MANAGER has no parent-key inheritance");
+
+  // Slice T Step 4 — resolved set, not a second map
+  assert(!isRolePermissionsEditable("SUPER_ADMIN"), "SUPER_ADMIN permissions are not editable");
+  assert(isRolePermissionsEditable("RTW_MANAGER"), "RTW_MANAGER permissions are editable");
+  assert(lastSuperAdminCannotBeRemoved(1), "the last SUPER_ADMIN cannot be removed");
+  assert(!lastSuperAdminCannotBeRemoved(2), "a spare SUPER_ADMIN can be removed");
+  assert(
+    canEditTargetUserPermissions({
+      actorId: "nony",
+      actorRole: "SUPER_ADMIN",
+      targetId: "nony",
+      targetRole: "RTW_MANAGER",
+    }).ok === false,
+    "a user cannot edit themselves",
+  );
+  assert(
+    canEditTargetUserPermissions({
+      actorId: "nony",
+      actorRole: "SUPER_ADMIN",
+      targetId: "kemi",
+      targetRole: "SUPER_ADMIN",
+    }).ok === false,
+    "SUPER_ADMIN accounts are not editable",
+  );
+
+  assert(roleAllows("ADMIN", "payments"), "role grant stands without a revoke");
+  assert(
+    !roleAllows("ADMIN", "payments", { revokes: ["payments"] }),
+    "a user REVOKE beats a role grant",
+  );
+  assert(
+    !hasPermission("ADMIN", "payments", { revokes: ["payments"] }),
+    "REVOKE removes payments even though ADMIN seed has it",
+  );
+  assert(
+    !hasPermission("ADMIN", "shop.orders", { revokes: ["shop.orders"] }),
+    "REVOKE beats parent-key inheritance (shop → shop.orders)",
+  );
+
+  const kemi = { grants: ["bespoke", "consultations"] as const };
+  assert(roleAllows("RTW_MANAGER", "bespoke", kemi), "Kemi atelier grant reaches bespoke");
+  assert(roleAllows("RTW_MANAGER", "consultations", kemi), "Kemi atelier grant reaches consultations");
+  assert(roleMayAccessAdminPath("RTW_MANAGER", "/admin/bespoke", KEMI_EMAIL, kemi), "Kemi path: bespoke");
+  assert(roleMayAccessAdminPath("RTW_MANAGER", "/admin/consultations", KEMI_EMAIL, kemi), "Kemi path: consultations");
+  assert(!roleAllows("RTW_MANAGER", "payments", kemi), "Kemi still cannot touch payments");
+  assert(!roleAllows("RTW_MANAGER", "settings", kemi), "Kemi still cannot touch settings");
+  assert(!roleAllows("RTW_MANAGER", "settings.developer", kemi), "Kemi still cannot touch developer");
+  assert(!roleMayAccessAdminPath("RTW_MANAGER", "/admin/payments", KEMI_EMAIL, kemi), "Kemi payments path denied");
+  assert(!roleMayAccessAdminPath("RTW_MANAGER", "/admin/settings", KEMI_EMAIL, kemi), "Kemi settings path denied");
+  assert(!roleMayAccessAdminPath("RTW_MANAGER", "/admin/settings/developer", KEMI_EMAIL, kemi), "Kemi developer path denied");
+  assert(!roleMayAccessAdminPath("RTW_MANAGER", "/admin/settings/users", KEMI_EMAIL, kemi), "Kemi users path denied");
+  const kemiNav = visibleAdminNavSections("RTW_MANAGER", KEMI_EMAIL, kemi);
+  assert(kemiNav.some((s) => s.id === "atelier"), "Kemi nav shows Atelier after grant");
+  assert(kemiNav.some((s) => s.id === "consultations"), "Kemi nav shows Consultations after grant");
+  assert(!kemiNav.some((s) => s.id === "payments"), "Kemi nav hides Payments");
+  assert(!kemiNav.some((s) => s.id === "settings"), "Kemi nav hides Settings");
+  const kemiHidden = ADMIN_NAV_SECTIONS.flatMap((s) => s.items).filter(
+    (item) =>
+      !kemiNav.some((section) => section.items.some((visible) => visible.href === item.href)),
+  );
+  for (const item of kemiHidden) {
+    const path = adminNavAccessPath(item.href);
+    assert(
+      !roleMayAccessAdminPath("RTW_MANAGER", path, KEMI_EMAIL, kemi),
+      `hidden nav ${item.href} must 403 (same gate as the API)`,
+    );
+  }
+
+  assert(!roleMayAccessAdminPath("FINANCE_MANAGER", "/admin/settings/bank-accounts"), "FINANCE_MANAGER does not get bank accounts via settings");
+  assert(
+    roleMayAccessAdminPath("FINANCE_MANAGER", "/admin/settings/bank-accounts", null, {
+      grants: ["settings.bank-accounts"],
+    }),
+    "FINANCE_MANAGER reaches bank accounts when granted the split permission",
+  );
+  assert(
+    !roleMayAccessAdminPath("FINANCE_MANAGER", "/admin/settings/email", null, {
+      grants: ["settings.bank-accounts"],
+    }),
+    "bank-accounts grant does not open the rest of Settings",
+  );
+
+  const authzSrc = routeSource("lib/admin-auth.ts");
+  assert(authzSrc.includes("resolveSessionAccess"), "APIs resolve the same set as the nav");
+  assert(authzSrc.includes("permissionGrants"), "user GRANTs are applied on the API");
+  const usersDeleteSrc = routeSource("app/api/admin/users/[id]/route.ts");
+  assert(usersDeleteSrc.includes("Cannot remove the last Super Admin"), "last SUPER_ADMIN cannot be deleted");
+  const seedSrc = routeSource("lib/permission-seed.ts");
+  assert(seedSrc.includes("ROLE_PERMISSIONS"), "ROLE_PERMISSIONS remains the seed");
+  const cacheSrc = routeSource("lib/permission-cache.ts");
+  assert(cacheSrc.includes("ROLE_PERMISSIONS"), "empty DB falls back to ROLE_PERMISSIONS");
+  assert(cacheSrc.includes("permissionCacheState"), "cache revision is shared, not process-only");
 
   // STAFF portal (Sprint B stage-gates) — not ROLE_PERMISSIONS / requireAdminApi
   assert(BESPOKE_STAFF_ROLES.includes("STAFF"), "STAFF is on BESPOKE_STAFF_ROLES");

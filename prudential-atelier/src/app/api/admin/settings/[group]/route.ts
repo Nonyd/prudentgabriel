@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { permissionForSettingsGroup, requireAdminApi } from "@/lib/admin-auth";
+import { permissionForSettingsGroup, requireAdminApi, resolveSessionAccess } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { setSetting } from "@/lib/settings";
 import { ensurePaymentSettingKeys } from "@/lib/payment-settings-bootstrap";
@@ -88,7 +88,8 @@ export async function GET(
     },
   });
 
-  const visible = redactSettingsForRole(gate.session.user.role, rows).filter((r) => {
+  const { role, actor } = await resolveSessionAccess(gate.session);
+  const visible = redactSettingsForRole(role, rows, actor).filter((r) => {
     if (group === "PAYMENTS") return COMMERCIAL_PAYMENTS_KEYS.has(r.key);
     return true;
   });
@@ -135,8 +136,9 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
+  const { role, actor } = await resolveSessionAccess(gate.session);
   const keys = parsed.data.updates.map((u) => u.key);
-  const denied = deniedDeveloperWriteKey(gate.session.user.role, keys);
+  const denied = deniedDeveloperWriteKey(role, keys, actor);
   if (denied) {
     if (isEmailTemplateSettingKey(denied)) {
       return NextResponse.json(
@@ -153,7 +155,7 @@ export async function PATCH(
   const userId = gate.session.user!.id!;
   let updated = 0;
   let paymentKeysTouched = false;
-  const canTouchSecrets = hasPermission(gate.session.user.role, "settings.developer");
+  const canTouchSecrets = hasPermission(role, "settings.developer", actor);
 
   for (const { key, value } of parsed.data.updates) {
     const row = await prisma.siteSetting.findUnique({

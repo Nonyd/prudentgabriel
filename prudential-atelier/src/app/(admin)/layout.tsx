@@ -5,6 +5,8 @@ import { BespokeStage, ConsultationStatus, OrderStatus, PaymentStatus } from "@p
 import { AdminShell } from "@/components/admin/AdminShell";
 import { prisma } from "@/lib/prisma";
 import { deniedAdminRedirect } from "@/lib/admin-route-access";
+import { resolveSessionAccess } from "@/lib/admin-auth";
+import { hasAnyAdminPermission } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -31,8 +33,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/login?tab=admin");
   }
 
+  const { role, actor, previewRole } = await resolveSessionAccess(session);
+  if (!hasAnyAdminPermission(role, actor) && !previewRole) {
+    redirect("/login?tab=admin");
+  }
+
   const pathname = (await headers()).get("x-pathname") ?? "/admin";
-  const denied = deniedAdminRedirect(session.user.role, pathname, session.user.email);
+  const denied = deniedAdminRedirect(role, pathname, actor.email ?? session.user.email, actor);
   if (denied) redirect(denied);
 
   let badges: Record<string, number> = {};
@@ -72,7 +79,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <AdminShell session={session} badges={badges} isMaintenanceOn={isMaintenanceOn}>
+    <AdminShell
+      session={session}
+      badges={badges}
+      isMaintenanceOn={isMaintenanceOn}
+      previewRole={previewRole}
+      accessRole={role}
+      permissionGrants={actor.grants ?? []}
+      permissionRevokes={actor.revokes ?? []}
+      rolePermissions={actor.rolePermissions}
+    >
       {children}
     </AdminShell>
   );

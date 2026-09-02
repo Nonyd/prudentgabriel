@@ -147,10 +147,20 @@ export function AdminSidebar({
   session,
   onNavigate,
   badges = {},
+  accessRole,
+  permissionGrants = [],
+  permissionRevokes = [],
+  rolePermissions,
+  previewRole = null,
 }: {
   session: Session;
   onNavigate?: () => void;
   badges?: Record<string, number>;
+  accessRole?: string;
+  permissionGrants?: readonly string[];
+  permissionRevokes?: readonly string[];
+  rolePermissions?: readonly string[] | "*";
+  previewRole?: string | null;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -158,7 +168,8 @@ export function AdminSidebar({
   const user = liveSession?.user ?? session.user;
   const displayName = user?.name ?? user?.email ?? "Admin";
   const avatarUrl = user?.image;
-  const role = user?.role ?? session.user?.role ?? "ADMIN";
+  const realRole = user?.role ?? session.user?.role ?? "ADMIN";
+  const role = accessRole ?? realRole;
   const navSession: Session = {
     ...session,
     user: {
@@ -202,10 +213,18 @@ export function AdminSidebar({
   }, [currentSectionId]);
 
   const jobPermsKey = (navSession.user?.jobRolePermissions ?? []).join(",");
-  const email = navSession.user?.email ?? null;
+  const email = previewRole ? null : (navSession.user?.email ?? null);
+  const grantsKey = permissionGrants.join(",");
+  const revokesKey = permissionRevokes.join(",");
+  const rolePermsKey = Array.isArray(rolePermissions) ? rolePermissions.join(",") : rolePermissions ?? "";
 
   const sections = useMemo(() => {
-    return visibleAdminNavSections(role, email)
+    return visibleAdminNavSections(role, email, {
+      email,
+      grants: permissionGrants,
+      revokes: permissionRevokes,
+      rolePermissions,
+    })
       .map((section) => ({
         ...section,
         items: section.items.filter((item) => jobRoleAllowsNavItem(item, navSession)),
@@ -213,7 +232,7 @@ export function AdminSidebar({
       .filter((section) => section.items.length > 0);
     // navSession is rebuilt each render; jobPermsKey is the JobRole AND input.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [role, email, jobPermsKey]);
+  }, [role, email, jobPermsKey, grantsKey, revokesKey, rolePermsKey]);
 
   function toggleSection(id: string) {
     setOpen((prev) => {
@@ -314,7 +333,7 @@ export function AdminSidebar({
           <div className="min-w-0 flex-1">
             <p className="truncate font-sans text-[13px] text-cream">{displayName}</p>
             <p className="mt-0.5 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-lightbr/70">
-              {roleLabel(role)}
+              {previewRole ? `As ${roleLabel(role)}` : roleLabel(realRole)}
             </p>
           </div>
         </div>

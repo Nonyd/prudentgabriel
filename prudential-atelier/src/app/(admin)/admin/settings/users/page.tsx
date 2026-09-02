@@ -1,5 +1,5 @@
-import { UserManagementClient } from "@/components/admin/settings/UserManagementClient";
+import { AccessManagementClient } from "@/components/admin/settings/AccessManagementClient";
 
 export default function UsersSettingsPage() {
-  return <UserManagementClient />;
+  return <AccessManagementClient />;
 }

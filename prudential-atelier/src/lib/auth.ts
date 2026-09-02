@@ -8,6 +8,10 @@ import { authConfig } from "@/lib/auth.config";
 import { jwtIssuedBeforePasswordChange } from "@/lib/password-reset";
 import { isGoogleOAuthConfigured } from "@/lib/auth-google";
 import { bindSessionUser } from "@/lib/session-user";
+import { cachedRoleActorPatch, ensurePermissionCache } from "@/lib/permission-cache";
+import { resolveEffectivePermissionSet } from "@/lib/roles";
+import { serializePermissionSet } from "@/lib/permission-resolve";
+import type { JWT } from "next-auth/jwt";
 
 const jwtUserSelect = {
   id: true,
@@ -19,7 +23,34 @@ const jwtUserSelect = {
   jobTitle: true,
   department: true,
   jobRole: { select: { permissions: true } },
+  userPermissions: { select: { permission: true, mode: true } },
 } as const;
+
+async function attachResolvedPermissions(
+  token: JWT,
+  dbUser: {
+    role: string;
+    userPermissions?: { permission: string; mode: string }[];
+  },
+  email?: string | null,
+) {
+  const grants = (dbUser.userPermissions ?? [])
+    .filter((p) => p.mode === "GRANT")
+    .map((p) => p.permission);
+  const revokes = (dbUser.userPermissions ?? [])
+    .filter((p) => p.mode === "REVOKE")
+    .map((p) => p.permission);
+  await ensurePermissionCache();
+  const resolved = resolveEffectivePermissionSet(dbUser.role, {
+    email,
+    grants,
+    revokes,
+    ...cachedRoleActorPatch(dbUser.role),
+  });
+  token.permissionGrants = grants;
+  token.permissionRevokes = revokes;
+  token.adminPermissions = serializePermissionSet(resolved);
+}
 
 const googleEnabled = isGoogleOAuthConfigured();
 
@@ -51,7 +82,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           const user = await prisma.user.findUnique({
             where: { email },
-            include: { jobRole: { select: { permissions: true } } },
+            include: {
+              jobRole: { select: { permissions: true } },
+              userPermissions: { select: { permission: true, mode: true } },
+            },
           });
 
           if (!user || !user.password) {
@@ -69,11 +103,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             data: { lastLogin: new Date() },
           });
 
-          const { jobRole, ...safeUser } = user;
+          const { jobRole, userPermissions, ...safeUser } = user;
           delete (safeUser as { password?: string | null }).password;
           return {
             ...safeUser,
             jobRole,
+            userPermissions,
           };
         } catch {
           return null;
@@ -99,6 +134,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             jobTitle: true,
             department: true,
             jobRole: { select: { permissions: true } },
+            userPermissions: { select: { permission: true, mode: true } },
           },
         });
         if (dbUser) {
@@ -108,6 +144,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.jobTitle = dbUser.jobTitle ?? undefined;
           token.department = dbUser.department ?? undefined;
           token.jobRolePermissions = dbUser.jobRole?.permissions ?? [];
+          await attachResolvedPermissions(token, dbUser, token.email as string | undefined);
         }
       }
 
@@ -156,6 +193,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.department = dbUser.department ?? undefined;
           token.role = dbUser.role;
           token.jobRolePermissions = dbUser.jobRole?.permissions ?? [];
+          await attachResolvedPermissions(token, dbUser, token.email as string | undefined);
         }
       }
 

@@ -22,6 +22,7 @@ import {
   ShippingMarkupKind,
 } from "@prisma/client";
 import { seedBootstrapAdmin } from "./bootstrap-admin";
+import { seedRolePermissionsFromBaseline } from "../src/lib/permission-seed";
 
 const prisma = new PrismaClient();
 
@@ -788,6 +789,9 @@ async function main() {
     });
   }
   console.log("  email template keys upserted (full bodies: pnpm seed:email-templates)");
+
+  await seedRolePermissionsFromBaseline(prisma);
+  console.log("  role permissions seeded from ROLE_PERMISSIONS");
 
   const dbUrl = process.env.DATABASE_URL ?? process.env.DIRECT_URL ?? "";
   const skipUnsplashPlaceholders =

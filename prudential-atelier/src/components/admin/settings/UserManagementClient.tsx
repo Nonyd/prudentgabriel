@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Role } from "@prisma/client";
-import { Loader2, Lock, Pencil, Trash2, UserMinus } from "lucide-react";
+import { Loader2, Lock, Pencil, Shield, Trash2, UserMinus } from "lucide-react";
 import toast from "react-hot-toast";
 import { BulkSelectTable, type BulkColumn } from "@/components/ui/BulkSelectTable";
 import { Badge } from "@/components/ui/Badge";
@@ -16,6 +16,7 @@ import {
   roleBadgeVariant,
 } from "@/lib/admin-users";
 import { cn, formatDate, getInitials } from "@/lib/utils";
+import { UserPermissionsModal } from "./UserPermissionsModal";
 
 type UserRow = {
   id: string;
@@ -350,7 +351,7 @@ function EditUserModal({
   );
 }
 
-export function UserManagementClient() {
+export function UserManagementClient({ embedded = false }: { embedded?: boolean }) {
   const [items, setItems] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -358,6 +359,7 @@ export function UserManagementClient() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editUser, setEditUser] = useState<UserRow | null>(null);
+  const [permUserId, setPermUserId] = useState<string | null>(null);
   const [deleteUser, setDeleteUser] = useState<UserRow | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -505,6 +507,14 @@ export function UserManagementClient() {
             <button
               type="button"
               className="rounded p-1.5 text-text-mid hover:bg-bg/80 hover:text-nut"
+              aria-label={`Permissions for ${row.email}`}
+              onClick={() => setPermUserId(row.id)}
+            >
+              <Shield className="h-3.5 w-3.5" strokeWidth={1.5} />
+            </button>
+            <button
+              type="button"
+              className="rounded p-1.5 text-text-mid hover:bg-bg/80 hover:text-nut"
               aria-label={`Edit ${row.email}`}
               onClick={() => setEditUser(row)}
             >
@@ -545,6 +555,13 @@ export function UserManagementClient() {
 
   return (
     <div className="space-y-6">
+      {embedded ? (
+        <div className="flex justify-end">
+          <Button type="button" onClick={() => setInviteOpen(true)}>
+            Invite User
+          </Button>
+        </div>
+      ) : (
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="eyebrow">Super Admin</p>
@@ -557,6 +574,7 @@ export function UserManagementClient() {
           Invite User
         </Button>
       </div>
+      )}
 
       <div className="flex flex-wrap gap-3">
         <input
@@ -614,6 +632,12 @@ export function UserManagementClient() {
         open={!!editUser}
         onClose={() => setEditUser(null)}
         onSaved={() => void refresh()}
+      />
+
+      <UserPermissionsModal
+        userId={permUserId}
+        open={!!permUserId}
+        onClose={() => setPermUserId(null)}
       />
 
       <Modal

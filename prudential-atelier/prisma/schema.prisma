@@ -64,6 +64,7 @@ model User {
   stageReverts      OrderStageCompletion[] @relation("StageReverts")
   stageMediaUploads OrderStageMedia[] @relation("StageMediaUploads")
   receiptsConfirmed BespokeOrder[] @relation("ReceiptConfirmedBy")
+  userPermissions   UserPermission[]
 }
 
 model Consultant {
@@ -2053,6 +2054,43 @@ model JobRole {
   createdBy   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+enum PermissionMode {
+  GRANT
+  REVOKE
+}
+
+/// Seeded from ROLE_PERMISSIONS. SUPER_ADMIN is never stored — always every permission.
+model RolePermission {
+  id         String   @id @default(cuid())
+  role       Role
+  permission String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([role, permission])
+  @@index([role])
+}
+
+model UserPermission {
+  id         String         @id @default(cuid())
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission String
+  mode       PermissionMode
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([userId, permission])
+  @@index([userId])
+}
+
+/// Shared revision so in-memory permission caches invalidate across containers.
+model PermissionCacheState {
+  id        String   @id
+  revision  Int      @default(0)
+  updatedAt DateTime @updatedAt
 }
 
 model StaffProfile {

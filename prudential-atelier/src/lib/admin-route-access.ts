@@ -4,6 +4,7 @@ import {
   isGeneralAdmin,
   isSuperAdmin,
   roleAllows,
+  type AccessActor,
   type AdminPermission,
 } from "@/lib/roles";
 import { sessionHasRole } from "@/lib/bespoke-roles";
@@ -46,7 +47,7 @@ const PATH_RULES: PathRule[] = [
   { prefix: "/admin/settings/developer", gate: perm("settings.developer") },
   { prefix: "/admin/settings/users", gate: { type: "super_admin" } },
   { prefix: "/admin/settings/roles", gate: { type: "general_admin" } },
-  { prefix: "/admin/settings/bank-accounts", gate: perm("settings") },
+  { prefix: "/admin/settings/bank-accounts", gate: perm(["settings", "settings.bank-accounts"]) },
   { prefix: "/admin/settings/invoice", gate: perm("settings") },
   { prefix: "/admin/settings/appearance", gate: perm(CMS_ADMIN_PERMISSIONS) },
   { prefix: "/admin/settings/seo", gate: perm(CMS_ADMIN_PERMISSIONS) },
@@ -128,19 +129,21 @@ export function roleAllowsGate(
   role: string | undefined | null,
   gate: AdminGate,
   email?: string | null,
+  actor?: AccessActor,
 ): boolean {
   if (!role) return false;
+  const merged: AccessActor = { ...actor, email: actor?.email ?? email };
   switch (gate.type) {
     case "permission":
-      return roleAllows(role, gate.permission);
+      return roleAllows(role, gate.permission, merged);
     case "super_admin":
-      return isSuperAdmin(role, email);
+      return isSuperAdmin(role, merged.email);
     case "general_admin":
       return isGeneralAdmin(role);
     case "portal":
-      return hasAnyAdminPermission(role);
+      return hasAnyAdminPermission(role, merged);
     case "roles":
-      return sessionHasRole(role, email, [...gate.roles]);
+      return sessionHasRole(role, merged.email, [...gate.roles]);
   }
 }
 
@@ -148,10 +151,11 @@ export function roleMayAccessAdminPath(
   role: string | undefined | null,
   pathname: string,
   email?: string | null,
+  actor?: AccessActor,
 ): boolean {
   const gate = accessRuleForAdminPath(pathname);
   if (!gate) return false;
-  return roleAllowsGate(role, gate, email);
+  return roleAllowsGate(role, gate, email, actor);
 }
 
 /** First sidebar-shaped landing a role may open. Account settings is last resort. */
@@ -176,11 +180,11 @@ export const ADMIN_LANDING_CANDIDATES = [
   "/admin/account-settings",
 ] as const;
 
-export function firstAdminPathForRole(role: string, email?: string | null): string {
+export function firstAdminPathForRole(role: string, email?: string | null, actor?: AccessActor): string {
   for (const path of ADMIN_LANDING_CANDIDATES) {
-    if (roleMayAccessAdminPath(role, path, email)) return path;
+    if (roleMayAccessAdminPath(role, path, email, actor)) return path;
   }
-  return hasAnyAdminPermission(role) ? "/admin/account-settings" : "/login?tab=admin";
+  return hasAnyAdminPermission(role, actor) ? "/admin/account-settings" : "/login?tab=admin";
 }
 
 /** Layout redirect when the current path is denied. Null means render. */
@@ -188,9 +192,10 @@ export function deniedAdminRedirect(
   role: string,
   pathname: string,
   email?: string | null,
+  actor?: AccessActor,
 ): string | null {
-  if (roleMayAccessAdminPath(role, pathname, email)) return null;
-  const dest = firstAdminPathForRole(role, email);
+  if (roleMayAccessAdminPath(role, pathname, email, actor)) return null;
+  const dest = firstAdminPathForRole(role, email, actor);
   if (dest === pathname) return "/admin/account-settings";
   return dest;
 }
@@ -413,11 +418,12 @@ export function defaultAdminNavOpenState(): Record<string, boolean> {
 export function visibleAdminNavSections(
   role: string | undefined | null,
   email?: string | null,
+  actor?: AccessActor,
 ): AdminNavSectionDef[] {
   return ADMIN_NAV_SECTIONS.map((section) => ({
     ...section,
     items: section.items.filter((item) =>
-      roleMayAccessAdminPath(role, adminNavAccessPath(item.href), email),
+      roleMayAccessAdminPath(role, adminNavAccessPath(item.href), email, actor),
     ),
   })).filter((section) => section.items.length > 0);
 }

@@ -27,7 +27,7 @@ const createSchema = z.object({
 });
 
 export async function GET() {
-  const gate = await requireAdminApi("settings");
+  const gate = await requireAdminApi(["settings", "settings.bank-accounts"]);
   if (!gate.ok) return gate.response;
   const accounts = await prisma.bankAccount.findMany({
     orderBy: [{ businessLine: "asc" }, { currency: "asc" }],
@@ -45,7 +45,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi("settings");
+  const gate = await requireAdminApi(["settings", "settings.bank-accounts"]);
   if (!gate.ok) return gate.response;
   let body: unknown;
   try {

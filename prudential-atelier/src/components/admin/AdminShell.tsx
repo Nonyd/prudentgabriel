@@ -3,14 +3,21 @@
 import { Suspense, useState } from "react";
 import type { Session } from "next-auth";
 import { AdminMaintenanceBanner } from "./AdminMaintenanceBanner";
+import { AdminPreviewBanner } from "./AdminPreviewBanner";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopbar } from "./AdminTopbar";
+import type { AccessActor } from "@/lib/roles";
 
 type AdminShellProps = {
   session: Session;
   children: React.ReactNode;
   badges?: Record<string, number>;
   isMaintenanceOn?: boolean;
+  previewRole?: string | null;
+  accessRole?: string;
+  permissionGrants?: readonly string[];
+  permissionRevokes?: readonly string[];
+  rolePermissions?: AccessActor["rolePermissions"];
 };
 
 export function AdminShell({
@@ -18,8 +25,14 @@ export function AdminShell({
   children,
   badges = {},
   isMaintenanceOn = false,
+  previewRole = null,
+  accessRole,
+  permissionGrants = [],
+  permissionRevokes = [],
+  rolePermissions,
 }: AdminShellProps) {
   const [mobileNav, setMobileNav] = useState(false);
+  const navRole = accessRole ?? session.user?.role ?? "ADMIN";
 
   return (
     <div className="admin-area flex h-screen overflow-hidden bg-bg-page print:h-auto print:overflow-visible">
@@ -37,10 +50,20 @@ export function AdminShell({
         }`}
       >
         <Suspense fallback={null}>
-          <AdminSidebar session={session} badges={badges} onNavigate={() => setMobileNav(false)} />
+          <AdminSidebar
+            session={session}
+            badges={badges}
+            onNavigate={() => setMobileNav(false)}
+            accessRole={navRole}
+            permissionGrants={permissionGrants}
+            permissionRevokes={permissionRevokes}
+            rolePermissions={rolePermissions}
+            previewRole={previewRole}
+          />
         </Suspense>
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden print:overflow-visible">
+        <AdminPreviewBanner previewRole={previewRole} />
         <AdminMaintenanceBanner isMaintenanceOn={isMaintenanceOn} />
         <AdminTopbar onOpenNav={() => setMobileNav(true)} />
         <main className="admin-shell min-h-0 flex-1 overflow-y-auto bg-bg-page p-4 print:overflow-visible print:p-0 md:p-8">{children}</main>

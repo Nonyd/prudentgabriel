@@ -57,6 +57,9 @@ export const authConfig = {
         if (token.picture) session.user.image = token.picture as string;
         session.user.mustResetPassword = Boolean(token.mustResetPassword);
         session.user.jobRolePermissions = (token.jobRolePermissions as string[] | undefined) ?? [];
+        session.user.permissionGrants = (token.permissionGrants as string[] | undefined) ?? [];
+        session.user.permissionRevokes = (token.permissionRevokes as string[] | undefined) ?? [];
+        session.user.adminPermissions = (token.adminPermissions as string[] | "*" | undefined) ?? [];
       }
       return session;
     },

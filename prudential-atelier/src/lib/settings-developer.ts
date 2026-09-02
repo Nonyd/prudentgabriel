@@ -1,4 +1,4 @@
-import { hasPermission } from "@/lib/roles";
+import { hasPermission, type AccessActor } from "@/lib/roles";
 import { EMAIL_TEMPLATE_FIELD_SUFFIXES } from "@/lib/admin-email-catalog";
 
 /** UI placeholder for stored secrets. Name avoids secret-scanner assignment patterns. */
@@ -71,20 +71,29 @@ export function isEmailTemplateSettingKey(key: string): boolean {
   return false;
 }
 
-export function canWriteSettingKey(role: string | undefined | null, key: string): boolean {
+export function canWriteSettingKey(
+  role: string | undefined | null,
+  key: string,
+  actor?: AccessActor,
+): boolean {
   if (isEmailTemplateSettingKey(key)) return false;
-  if (isDeveloperSettingKey(key)) return hasPermission(role, "settings.developer");
-  return hasPermission(role, "settings") || hasPermission(role, "content") || hasPermission(role, "content.pages");
+  if (isDeveloperSettingKey(key)) return hasPermission(role, "settings.developer", actor);
+  return (
+    hasPermission(role, "settings", actor) ||
+    hasPermission(role, "content", actor) ||
+    hasPermission(role, "content.pages", actor)
+  );
 }
 
 /** First key that this role must not write, if any. */
 export function deniedDeveloperWriteKey(
   role: string | undefined | null,
   keys: readonly string[],
+  actor?: AccessActor,
 ): string | null {
   for (const key of keys) {
     if (isEmailTemplateSettingKey(key)) return key;
-    if (isDeveloperSettingKey(key) && !hasPermission(role, "settings.developer")) return key;
+    if (isDeveloperSettingKey(key) && !hasPermission(role, "settings.developer", actor)) return key;
   }
   return null;
 }
@@ -92,8 +101,9 @@ export function deniedDeveloperWriteKey(
 export function redactSettingsForRole<T extends { key: string }>(
   role: string | undefined | null,
   rows: T[],
+  actor?: AccessActor,
 ): T[] {
-  const seeSecrets = hasPermission(role, "settings.developer");
+  const seeSecrets = hasPermission(role, "settings.developer", actor);
   return rows.filter((r) => {
     if (isEmailTemplateSettingKey(r.key)) return false;
     if (isDeveloperSettingKey(r.key) && !seeSecrets) return false;

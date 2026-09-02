@@ -12,6 +12,9 @@ declare module "next-auth" {
       pointsBalance?: number;
       mustResetPassword?: boolean;
       jobRolePermissions?: string[];
+      permissionGrants?: string[];
+      permissionRevokes?: string[];
+      adminPermissions?: string[] | "*";
     } & DefaultSession["user"];
   }
 
@@ -33,5 +36,8 @@ declare module "next-auth/jwt" {
     pointsBalance?: number;
     mustResetPassword?: boolean;
     jobRolePermissions?: string[];
+    permissionGrants?: string[];
+    permissionRevokes?: string[];
+    adminPermissions?: string[] | "*";
   }
 }

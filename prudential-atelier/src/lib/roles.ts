@@ -1,4 +1,13 @@
 import { Role } from "@prisma/client";
+import {
+  applyUserOverrides,
+  permissionSetAllows,
+  toPermissionSet,
+  type AccessActor,
+  type PermissionSource,
+} from "@/lib/permission-resolve";
+
+export type { AccessActor, PermissionSource };
 
 export type AdminPermission =
   | "dashboard"
@@ -23,6 +32,7 @@ export type AdminPermission =
   | "payments"
   | "logs"
   | "settings"
+  | "settings.bank-accounts"
   | "settings.developer";
 
 /** CMS surfaces: parent `content` plus CONTENT_MANAGER's dotted keys. */
@@ -84,12 +94,35 @@ export const PROTECTED_ACCOUNTS = [
   process.env.GENERAL_ADMIN_EMAIL,
 ].filter(Boolean) as string[];
 
-export function hasAnyAdminPermission(role: string | undefined | null): boolean {
-  if (!role) return false;
+export function seedRolePermissionSet(role: string | undefined | null): ReadonlySet<string> | "*" {
+  if (!role) return new Set();
   const perms = ROLE_PERMISSIONS[role];
-  if (!perms) return false;
-  if (perms[0] === "*") return true;
-  return perms.length > 0;
+  if (!perms) return new Set();
+  if (perms[0] === "*") return "*";
+  return new Set(perms as readonly string[]);
+}
+
+export function resolveEffectivePermissionSet(
+  role: string | undefined | null,
+  actor?: AccessActor,
+): ReadonlySet<string> | "*" {
+  if (isSuperAdmin(role, actor?.email)) return "*";
+  if (actor?.resolved !== undefined) return toPermissionSet(actor.resolved);
+  const roleSet =
+    actor?.rolePermissions !== undefined
+      ? toPermissionSet(actor.rolePermissions)
+      : seedRolePermissionSet(role);
+  return applyUserOverrides(roleSet, actor?.grants, actor?.revokes);
+}
+
+export function hasAnyAdminPermission(
+  role: string | undefined | null,
+  actor?: AccessActor,
+): boolean {
+  if (!role) return false;
+  const set = resolveEffectivePermissionSet(role, actor);
+  if (set === "*") return true;
+  return set.size > 0;
 }
 
 export function isGeneralAdmin(role: string | undefined | null): boolean {
@@ -131,30 +164,22 @@ export function canModifyAdminUser(
 export function hasPermission(
   role: string | undefined | null,
   permission: AdminPermission,
+  actor?: AccessActor,
 ): boolean {
-  if (!role) return false;
-  const perms = ROLE_PERMISSIONS[role];
-  if (!perms) return false;
-  if (perms[0] === "*") return true;
-  const list = perms as readonly AdminPermission[];
-  if (list.includes(permission)) return true;
-  const dot = permission.indexOf(".");
-  if (dot > 0) {
-    const parent = permission.slice(0, dot) as AdminPermission;
-    // Developer settings are SUPER_ADMIN-only; `settings` must not unlock them.
-    if (permission === "settings.developer") return false;
-    if (list.includes(parent)) return true;
-  }
-  return false;
+  if (!role && !actor?.resolved) return false;
+  if (isSuperAdmin(role, actor?.email)) return true;
+  if (actor?.revokes?.includes(permission)) return false;
+  return permissionSetAllows(resolveEffectivePermissionSet(role, actor), permission);
 }
 
 /** Same predicate `requireAdminApi` uses after a session exists. */
 export function roleAllows(
   role: string | undefined | null,
   needed: AdminPermission | readonly AdminPermission[],
+  actor?: AccessActor,
 ): boolean {
   const list = Array.isArray(needed) ? needed : [needed];
-  return list.some((p) => hasPermission(role, p));
+  return list.some((p) => hasPermission(role, p, actor));
 }
 
 const ALL_PERMISSIONS: readonly AdminPermission[] = [
@@ -180,34 +205,70 @@ const ALL_PERMISSIONS: readonly AdminPermission[] = [
   "payments",
   "logs",
   "settings",
+  "settings.bank-accounts",
   "settings.developer",
 ];
 
 /** Dotted children unlocked only because the parent key is on the role. */
-export function inheritedDottedPermissions(role: string): AdminPermission[] {
-  const perms = ROLE_PERMISSIONS[role];
-  if (!perms || perms[0] === "*") return [];
-  const list = perms as readonly AdminPermission[];
+export function inheritedDottedPermissions(role: string, actor?: AccessActor): AdminPermission[] {
+  const roleSet =
+    actor?.rolePermissions !== undefined
+      ? toPermissionSet(actor.rolePermissions)
+      : seedRolePermissionSet(role);
+  if (roleSet === "*") return [];
   const out: AdminPermission[] = [];
   for (const p of ALL_PERMISSIONS) {
     const dot = p.indexOf(".");
     if (dot < 0) continue;
-    if (list.includes(p)) continue;
-    if (hasPermission(role, p)) out.push(p);
+    if (roleSet.has(p)) continue;
+    if (hasPermission(role, p, { ...actor, grants: [], revokes: [], resolved: undefined, rolePermissions: actor?.rolePermissions })) {
+      out.push(p);
+    }
   }
   return out;
 }
 
-export function canAccessLogs(role: string | undefined | null, email?: string | null): boolean {
-  return isSuperAdmin(role, email) || hasPermission(role, "logs");
+export function permissionSourceFor(
+  role: string | undefined | null,
+  permission: AdminPermission,
+  actor?: AccessActor,
+): PermissionSource {
+  if (isSuperAdmin(role, actor?.email)) return "super_admin";
+  const roleSet =
+    actor?.rolePermissions !== undefined
+      ? toPermissionSet(actor.rolePermissions)
+      : seedRolePermissionSet(role);
+  const fromRole = permissionSetAllows(roleSet, permission);
+  const granted = (actor?.grants ?? []).includes(permission);
+  const revoked = (actor?.revokes ?? []).includes(permission);
+  if (revoked) return "revoked";
+  if (granted && !fromRole) return "granted";
+  if (fromRole) return "from_role";
+  return "from_role";
 }
 
-export function canAccessReports(role: string | undefined | null, email?: string | null): boolean {
-  return isSuperAdmin(role, email) || hasPermission(role, "reports");
+export function canAccessLogs(
+  role: string | undefined | null,
+  email?: string | null,
+  actor?: AccessActor,
+): boolean {
+  return isSuperAdmin(role, email) || hasPermission(role, "logs", { ...actor, email: actor?.email ?? email });
 }
 
-export function canAccessSettings(role: string | undefined | null, email?: string | null): boolean {
-  return isSuperAdmin(role, email) || hasPermission(role, "settings");
+export function canAccessReports(
+  role: string | undefined | null,
+  email?: string | null,
+  actor?: AccessActor,
+): boolean {
+  return isSuperAdmin(role, email) || hasPermission(role, "reports", { ...actor, email: actor?.email ?? email });
+}
+
+export function canAccessSettings(
+  role: string | undefined | null,
+  email?: string | null,
+  actor?: AccessActor,
+): boolean {
+  return isSuperAdmin(role, email) || hasPermission(role, "settings", { ...actor, email: actor?.email ?? email });
 }
 
 export function roleLabel(role: Role | string): string {
