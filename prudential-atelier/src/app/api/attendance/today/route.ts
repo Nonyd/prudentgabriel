@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { EmploymentType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { HR_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { logError } from "@/lib/logger";
 
 function startOfToday(): Date {
@@ -11,7 +11,7 @@ function startOfToday(): Date {
 }
 
 export async function GET() {
-  const gate = await requireRoles(HR_ROLES);
+  const gate = await requireAdminApi("attendance");
   if (!gate.ok) return gate.response;
 
   try {

@@ -251,79 +251,22 @@ export function hasAnyPermission(session: PermissionSession, keys: Permission[])
   return keys.some((key) => hasPermission(session, key));
 }
 
-/** When a user has a JobRole assigned, enforce granular permissions on admin routes. */
+/** When a user has a JobRole assigned, enforce granular permissions on admin nav. */
 export function shouldEnforceJobPermissions(session: PermissionSession): boolean {
   const role = session?.user?.role;
   if (role === "SUPER_ADMIN" || role === "ADMIN") return false;
   return (session?.user?.jobRolePermissions?.length ?? 0) > 0;
 }
 
-/** JobRole permission keys required for an admin path (any one grants access). */
-export function getJobPermissionsForAdminPath(pathname: string): Permission[] | null {
-  if (pathname.startsWith("/admin/account-settings")) return null;
-  if (pathname.startsWith("/admin/settings/developer")) return [PERMISSIONS.ACCESS_DEVELOPER];
-  if (pathname.startsWith("/admin/settings/users")) return [PERMISSIONS.MANAGE_USERS];
-  if (pathname.startsWith("/admin/settings/roles")) return [PERMISSIONS.MANAGE_ROLES];
-  if (pathname.startsWith("/admin/system")) return null;
-  if (pathname.startsWith("/admin/logs")) return [PERMISSIONS.VIEW_LOGS];
-  if (pathname.startsWith("/admin/reports")) {
-    return [
-      PERMISSIONS.VIEW_DAILY_REPORTS,
-      PERMISSIONS.VIEW_WEEKLY_REPORTS,
-      PERMISSIONS.VIEW_FINANCIAL_REPORTS,
-    ];
-  }
-  if (pathname.startsWith("/admin/settings")) return null;
-  if (pathname === "/admin") return null;
-
-  if (pathname.startsWith("/admin/bespoke")) return [PERMISSIONS.VIEW_BESPOKE_ORDERS];
-  if (pathname.startsWith("/admin/consultations")) return [PERMISSIONS.VIEW_CONSULTATIONS];
-  if (pathname.startsWith("/admin/invoices") || pathname.startsWith("/admin/quotations")) {
-    return [PERMISSIONS.VIEW_INVOICES, PERMISSIONS.MANAGE_INVOICES];
-  }
-  if (
-    pathname.startsWith("/admin/products") ||
-    pathname.startsWith("/admin/collections") ||
-    pathname.startsWith("/admin/coupons")
-  ) {
-    return [PERMISSIONS.MANAGE_PRODUCTS];
-  }
-  if (pathname.startsWith("/admin/orders")) {
-    return [PERMISSIONS.VIEW_RTW_ORDERS, PERMISSIONS.PROCESS_RTW_ORDERS];
-  }
-  if (pathname.startsWith("/admin/payments")) {
-    return [PERMISSIONS.CONFIRM_PAYMENTS, PERMISSIONS.VIEW_FINANCIAL_REPORTS];
-  }
-  if (pathname.startsWith("/admin/clients") || pathname.startsWith("/admin/customers")) {
-    return [PERMISSIONS.VIEW_CLIENTS];
-  }
-  if (pathname.startsWith("/admin/staff/performance")) return [PERMISSIONS.VIEW_PERFORMANCE];
-  if (pathname.startsWith("/admin/staff") || pathname.startsWith("/admin/team")) {
-    return [PERMISSIONS.VIEW_STAFF, PERMISSIONS.MANAGE_STAFF];
-  }
-  if (pathname.startsWith("/admin/attendance") || pathname.startsWith("/admin/clock-in")) {
-    return [PERMISSIONS.VIEW_ATTENDANCE];
-  }
-  if (pathname.startsWith("/admin/content") || pathname.startsWith("/admin/gallery") || pathname.startsWith("/admin/reviews")) {
-    return [PERMISSIONS.MANAGE_BLOG, PERMISSIONS.MANAGE_PAGES];
-  }
-  if (pathname.startsWith("/admin/import")) {
-    return [PERMISSIONS.MANAGE_PRODUCTS, PERMISSIONS.MANAGE_BLOG];
-  }
-  if (pathname.startsWith("/admin/notifications") || pathname.startsWith("/admin/referrals")) {
-    return [PERMISSIONS.VIEW_CLIENTS, PERMISSIONS.EDIT_CLIENTS];
-  }
-
-  return null;
-}
-
-/** Maps legacy admin nav permissions to JobRole keys (any one grants visibility). */
+/** Maps admin nav permissions to JobRole keys (any one grants visibility). */
 export const ADMIN_NAV_JOB_PERMISSIONS: Partial<Record<string, Permission[]>> = {
   bespoke: [PERMISSIONS.VIEW_BESPOKE_ORDERS],
   consultations: [PERMISSIONS.VIEW_CONSULTATIONS],
   invoices: [PERMISSIONS.VIEW_INVOICES, PERMISSIONS.MANAGE_INVOICES],
   quotations: [PERMISSIONS.VIEW_INVOICES, PERMISSIONS.MANAGE_INVOICES],
   shop: [PERMISSIONS.MANAGE_PRODUCTS, PERMISSIONS.VIEW_RTW_ORDERS, PERMISSIONS.PROCESS_RTW_ORDERS],
+  "shop.products": [PERMISSIONS.MANAGE_PRODUCTS],
+  "shop.orders": [PERMISSIONS.VIEW_RTW_ORDERS, PERMISSIONS.PROCESS_RTW_ORDERS],
   clients: [PERMISSIONS.VIEW_CLIENTS],
   staff: [PERMISSIONS.VIEW_STAFF, PERMISSIONS.MANAGE_STAFF],
   attendance: [PERMISSIONS.VIEW_ATTENDANCE],
@@ -335,6 +278,7 @@ export const ADMIN_NAV_JOB_PERMISSIONS: Partial<Record<string, Permission[]>> = 
     PERMISSIONS.VIEW_FINANCIAL_REPORTS,
     PERMISSIONS.VIEW_PERFORMANCE,
   ],
+  "reports.staff": [PERMISSIONS.VIEW_PERFORMANCE],
   content: [PERMISSIONS.MANAGE_BLOG, PERMISSIONS.MANAGE_PAGES],
   logs: [PERMISSIONS.VIEW_LOGS],
 };

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { EmploymentType, StaffDepartment } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { HR_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { logActivity, logError } from "@/lib/logger";
 
 type Params = { params: Promise<{ staffId: string }> };
@@ -10,7 +10,7 @@ const DEPARTMENTS = new Set<string>(Object.values(StaffDepartment));
 const EMPLOYMENT_TYPES = new Set<string>(Object.values(EmploymentType));
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(HR_ROLES);
+  const gate = await requireAdminApi("staff");
   if (!gate.ok) return gate.response;
 
   const { staffId } = await params;
@@ -51,7 +51,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(HR_ROLES);
+  const gate = await requireAdminApi("staff");
   if (!gate.ok) return gate.response;
 
   const { staffId } = await params;
@@ -136,7 +136,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(HR_ROLES);
+  const gate = await requireAdminApi("staff");
   if (!gate.ok) return gate.response;
 
   const { staffId } = await params;

@@ -8,12 +8,11 @@ import { ensureShippingSettingKeys } from "@/lib/shipping-settings-bootstrap";
 import { revalidateSettings } from "@/lib/revalidate";
 import {
   DEVELOPER_SETTING_KEYS,
+  SETTING_REDACTED,
   developerEnvStatus,
   isDeveloperSettingKey,
 } from "@/lib/settings-developer";
 import type { SettingGroup } from "@prisma/client";
-
-const PASSWORD_MASK = "••••••••";
 
 const patchSchema = z.object({
   updates: z.array(z.object({ key: z.string().min(1), value: z.string() })),
@@ -41,7 +40,7 @@ export async function GET() {
 
   const items = rows.map((r) => ({
     ...r,
-    value: r.type === "PASSWORD" && r.value.length > 0 ? PASSWORD_MASK : r.value,
+    value: r.type === "PASSWORD" && r.value.length > 0 ? SETTING_REDACTED : r.value,
   }));
 
   const byGroup: Partial<Record<SettingGroup, typeof items>> = {};
@@ -91,10 +90,10 @@ export async function PATCH(req: NextRequest) {
 
     if (row.type === "PASSWORD") {
       const trimmed = value.trim();
-      if (trimmed === "" || trimmed === PASSWORD_MASK) continue;
+      if (trimmed === "" || trimmed === SETTING_REDACTED) continue;
     }
 
-    if (row.group === "PAYMENTS" && row.type === "PASSWORD" && value.trim() !== "" && value !== PASSWORD_MASK) {
+    if (row.group === "PAYMENTS" && row.type === "PASSWORD" && value.trim() !== "" && value !== SETTING_REDACTED) {
       paymentKeysTouched = true;
     }
 

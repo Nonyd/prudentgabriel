@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BlogStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { CONTENT_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireAdminApi, CMS_ADMIN_PERMISSIONS } from "@/lib/admin-auth";
 import { slugifyText } from "@/lib/utils";
 import { logActivity, logError } from "@/lib/logger";
 import { revalidateJournal } from "@/lib/revalidate";
@@ -27,7 +27,7 @@ async function uniqueSlug(base: string, excludeId?: string): Promise<string> {
 }
 
 export async function GET(req: NextRequest) {
-  const gate = await requireRoles(CONTENT_ROLES);
+  const gate = await requireAdminApi(CMS_ADMIN_PERMISSIONS);
   if (!gate.ok) return gate.response;
 
   try {
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireRoles(CONTENT_ROLES);
+  const gate = await requireAdminApi(CMS_ADMIN_PERMISSIONS);
   if (!gate.ok) return gate.response;
 
   let body: Record<string, unknown>;

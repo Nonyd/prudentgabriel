@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { HR_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { logError } from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
-  const gate = await requireRoles(HR_ROLES);
+  const gate = await requireAdminApi("attendance");
   if (!gate.ok) return gate.response;
 
   try {

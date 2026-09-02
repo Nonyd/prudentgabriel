@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma, QuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { FINANCE_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { isQuotationEditable } from "@/lib/quotation-versioning";
 import { logActivity, logError } from "@/lib/logger";
 
@@ -35,7 +35,7 @@ function parseLineItems(raw: unknown): QuoteLineItem[] | null {
 }
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(FINANCE_ROLES);
+  const gate = await requireAdminApi("quotations");
   if (!gate.ok) return gate.response;
 
   const { id } = await params;
@@ -101,7 +101,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(FINANCE_ROLES);
+  const gate = await requireAdminApi("quotations");
   if (!gate.ok) return gate.response;
 
   const { id } = await params;
@@ -187,7 +187,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(FINANCE_ROLES);
+  const gate = await requireAdminApi("quotations");
   if (!gate.ok) return gate.response;
 
   const { id } = await params;

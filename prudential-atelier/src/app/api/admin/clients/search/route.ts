@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Role } from "@prisma/client";
-import { requireGeneralAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
-  const gate = await requireGeneralAdminApi();
+  const gate = await requireAdminApi("clients");
   if (!gate.ok) return gate.response;
 
   const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";

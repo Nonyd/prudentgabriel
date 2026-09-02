@@ -12,7 +12,7 @@ const pickupSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi("settings");
+  const gate = await requireAdminApi("shop");
   if (!gate.ok) return gate.response;
   let body: unknown;
   try {

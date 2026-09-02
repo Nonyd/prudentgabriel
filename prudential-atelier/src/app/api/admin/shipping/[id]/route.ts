@@ -13,7 +13,7 @@ const lagosSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi("settings");
+  const gate = await requireAdminApi("shop");
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
   let body: unknown;
@@ -66,7 +66,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 }
 
 export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi("settings");
+  const gate = await requireAdminApi("shop");
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
 

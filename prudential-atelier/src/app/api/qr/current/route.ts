@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { generateDailyQR, getActiveQRCode } from "@/lib/qr-attendance";
-import { HR_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { logError } from "@/lib/logger";
 
 export async function GET() {
-  const gate = await requireRoles(HR_ROLES);
+  const gate = await requireAdminApi("attendance");
   if (!gate.ok) return gate.response;
 
   try {

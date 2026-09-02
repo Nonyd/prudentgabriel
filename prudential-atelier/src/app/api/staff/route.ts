@@ -3,14 +3,14 @@ import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
 import { EmploymentType, Prisma, Role, StaffDepartment } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { HR_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { logActivity, logError } from "@/lib/logger";
 
 const DEPARTMENTS = new Set<string>(Object.values(StaffDepartment));
 const EMPLOYMENT_TYPES = new Set<string>(Object.values(EmploymentType));
 
 export async function GET(req: NextRequest) {
-  const gate = await requireRoles(HR_ROLES);
+  const gate = await requireAdminApi("staff");
   if (!gate.ok) return gate.response;
 
   try {
@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireRoles(HR_ROLES);
+  const gate = await requireAdminApi("staff");
   if (!gate.ok) return gate.response;
 
   let body: {

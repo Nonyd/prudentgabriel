@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { FINANCE_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { reviseQuotation } from "@/lib/quotation-versioning";
 import { logError } from "@/lib/logger";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function POST(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(FINANCE_ROLES);
+  const gate = await requireAdminApi("quotations");
   if (!gate.ok) return gate.response;
 
   const { id } = await params;

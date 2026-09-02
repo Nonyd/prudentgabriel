@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { HR_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { logError } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { rotateDailyQR } from "@/lib/qr-attendance";
 import QRCode from "qrcode";
 
 export async function POST() {
-  const gate = await requireRoles(HR_ROLES);
+  const gate = await requireAdminApi("attendance");
   if (!gate.ok) return gate.response;
 
   try {
@@ -29,7 +29,7 @@ export async function POST() {
 }
 
 export async function GET() {
-  const gate = await requireRoles(HR_ROLES);
+  const gate = await requireAdminApi("attendance");
   if (!gate.ok) return gate.response;
 
   const history = await prisma.qRCode.findMany({

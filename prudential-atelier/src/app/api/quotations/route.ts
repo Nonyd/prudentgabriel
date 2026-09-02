@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma, QuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { FINANCE_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { allocateQuotationBaseRef, formatQuotationRef } from "@/lib/document-numbers";
 import { logActivity, logError } from "@/lib/logger";
 
@@ -39,7 +39,7 @@ function calcTotals(items: QuoteLineItem[], tax = 0, discount = 0) {
 }
 
 export async function GET(req: NextRequest) {
-  const gate = await requireRoles(FINANCE_ROLES);
+  const gate = await requireAdminApi("quotations");
   if (!gate.ok) return gate.response;
 
   try {
@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireRoles(FINANCE_ROLES);
+  const gate = await requireAdminApi("quotations");
   if (!gate.ok) return gate.response;
 
   let body: Record<string, unknown>;

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BlogStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { CONTENT_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireAdminApi, CMS_ADMIN_PERMISSIONS } from "@/lib/admin-auth";
 import { slugifyText } from "@/lib/utils";
 import { logActivity, logError } from "@/lib/logger";
 import { revalidateJournal } from "@/lib/revalidate";
@@ -29,7 +29,7 @@ async function uniqueSlug(base: string, excludeId: string): Promise<string> {
 }
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(CONTENT_ROLES);
+  const gate = await requireAdminApi(CMS_ADMIN_PERMISSIONS);
   if (!gate.ok) return gate.response;
 
   const { id } = await params;
@@ -49,7 +49,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(CONTENT_ROLES);
+  const gate = await requireAdminApi(CMS_ADMIN_PERMISSIONS);
   if (!gate.ok) return gate.response;
 
   const { id } = await params;
@@ -127,7 +127,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(CONTENT_ROLES);
+  const gate = await requireAdminApi(CMS_ADMIN_PERMISSIONS);
   if (!gate.ok) return gate.response;
 
   const { id } = await params;

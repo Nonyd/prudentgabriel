@@ -45,11 +45,12 @@ import {
   type PermissionSession,
 } from "@/lib/permissions";
 import {
+  CMS_ADMIN_PERMISSIONS,
   canAccessLogs,
   canAccessReports,
   canAccessSettings,
-  hasPermission as hasRolePermission,
   isSuperAdmin,
+  roleAllows,
   roleLabel,
   type AdminPermission,
 } from "@/lib/roles";
@@ -60,7 +61,7 @@ type NavItem = {
   label: string;
   icon: LucideIcon;
   badgeKey?: string;
-  permission?: AdminPermission;
+  permission?: AdminPermission | readonly AdminPermission[];
   superAdminOnly?: boolean;
   generalAdminOnly?: boolean;
   alsoActive?: string[];
@@ -91,15 +92,15 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
   {
     label: "Shop",
     items: [
-      { href: "/admin/products", label: "Products", icon: Package, permission: "shop" },
-      { href: "/admin/sizing", label: "Sizing", icon: Package, permission: "shop" },
-      { href: "/admin/products/guide", label: "How to upload", icon: Package, permission: "shop" },
-      { href: "/admin/shop/import", label: "Import Products", icon: Package, permission: "shop" },
-      { href: "/admin/collections", label: "Collections", icon: Package, permission: "shop" },
-      { href: "/admin/orders", label: "Orders", icon: ShoppingBag, badgeKey: "orders", permission: "shop" },
-      { href: "/admin/checkouts", label: "Abandoned checkouts", icon: ShoppingBag, permission: "shop" },
+      { href: "/admin/products", label: "Products", icon: Package, permission: "shop.products" },
+      { href: "/admin/sizing", label: "Sizing", icon: Package, permission: "shop.products" },
+      { href: "/admin/products/guide", label: "How to upload", icon: Package, permission: "shop.products" },
+      { href: "/admin/shop/import", label: "Import Products", icon: Package, permission: "shop.products" },
+      { href: "/admin/collections", label: "Collections", icon: Package, permission: "shop.products" },
+      { href: "/admin/orders", label: "Orders", icon: ShoppingBag, badgeKey: "orders", permission: "shop.orders" },
+      { href: "/admin/checkouts", label: "Abandoned checkouts", icon: ShoppingBag, permission: "shop.orders" },
       { href: "/admin/shipping", label: "Shipping", icon: Truck, permission: "shop" },
-      { href: "/admin/coupons", label: "Coupons", icon: Ticket, permission: "shop" },
+      { href: "/admin/coupons", label: "Coupons", icon: Ticket, permission: "shop.orders" },
     ],
   },
   {
@@ -107,7 +108,7 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/admin/staff", label: "Staff Members", icon: Users, permission: "staff" },
       { href: "/admin/attendance", label: "Attendance", icon: ClipboardCheck, permission: "attendance" },
-      { href: "/admin/staff/performance", label: "Performance", icon: TrendingUp, permission: "reports" },
+      { href: "/admin/staff/performance", label: "Performance", icon: TrendingUp, permission: "reports.staff" },
     ],
   },
   {
@@ -135,7 +136,7 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
   {
     label: "Finance",
     items: [
-      { href: "/admin/payments", label: "Payments", icon: Wallet, permission: "finance" },
+      { href: "/admin/payments", label: "Payments", icon: Wallet, permission: "payments" },
       { href: "/admin/settings/bank-accounts", label: "Bank accounts", icon: Wallet, permission: "settings" },
       { href: "/admin/reports", label: "Financial Reports", icon: BarChart3, permission: "reports" },
     ],
@@ -143,16 +144,16 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
   {
     label: "Content",
     items: [
-      { href: "/admin/content", label: "Overview", icon: Layout, permission: "content", alsoActive: ["/admin/content/pages", "/admin/content/media"] },
+      { href: "/admin/content", label: "Overview", icon: Layout, permission: CMS_ADMIN_PERMISSIONS, alsoActive: ["/admin/content/pages", "/admin/content/media"] },
       { href: "/admin/content/messages", label: "Messages", icon: MessageSquare, generalAdminOnly: true, badgeKey: "messages" },
       { href: "/admin/content/email-templates", label: "Email Templates", icon: Mail, generalAdminOnly: true },
       { href: "/admin/content/send-email", label: "Send Email", icon: Send, generalAdminOnly: true },
       { href: "/admin/content/unsubscribes", label: "Unsubscribes", icon: Mail, generalAdminOnly: true },
-      { href: "/admin/content/pages", label: "Page content", icon: FileText, permission: "content" },
-      { href: "/admin/content/blog", label: "Blog / Journal", icon: Newspaper, permission: "content" },
-      { href: "/admin/reviews", label: "Reviews", icon: MessageSquare, permission: "content" },
-      { href: "/admin/gallery", label: "Portfolio gallery", icon: Images, permission: "content" },
-      { href: "/admin/content/media", label: "Media library", icon: ImageIcon, permission: "content" },
+      { href: "/admin/content/pages", label: "Page content", icon: FileText, permission: CMS_ADMIN_PERMISSIONS },
+      { href: "/admin/content/blog", label: "Blog / Journal", icon: Newspaper, permission: CMS_ADMIN_PERMISSIONS },
+      { href: "/admin/reviews", label: "Reviews", icon: MessageSquare, permission: CMS_ADMIN_PERMISSIONS },
+      { href: "/admin/gallery", label: "Portfolio gallery", icon: Images, permission: CMS_ADMIN_PERMISSIONS },
+      { href: "/admin/content/media", label: "Media library", icon: ImageIcon, permission: CMS_ADMIN_PERMISSIONS },
     ],
   },
   {
@@ -168,7 +169,7 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Settings",
     items: [
       { href: "/admin/settings", label: "General Settings", icon: Settings, permission: "settings" },
-      { href: "/admin/settings/appearance", label: "Brand & appearance", icon: Palette, permission: "settings" },
+      { href: "/admin/settings/appearance", label: "Brand & appearance", icon: Palette, permission: CMS_ADMIN_PERMISSIONS },
       {
         href: "/admin/settings/developer",
         label: "Developer",
@@ -211,13 +212,14 @@ function canSeeNavItem(
   if (item.permission === "logs") legacyAllowed = canAccessLogs(role, email);
   else if (item.permission === "reports") legacyAllowed = canAccessReports(role, email);
   else if (item.permission === "settings") legacyAllowed = canAccessSettings(role, email);
-  else if (item.permission) legacyAllowed = hasRolePermission(role, item.permission);
+  else if (item.permission) legacyAllowed = roleAllows(role, item.permission);
 
   if (!legacyAllowed) return false;
 
   if (!shouldEnforceJobPermissions(permissionSession) || !item.permission) return true;
 
-  const jobKeys = ADMIN_NAV_JOB_PERMISSIONS[item.permission];
+  const jobLookup: string = Array.isArray(item.permission) ? "content" : String(item.permission);
+  const jobKeys = ADMIN_NAV_JOB_PERMISSIONS[jobLookup];
   if (!jobKeys?.length) return true;
 
   return hasAnyPermission(permissionSession, jobKeys);

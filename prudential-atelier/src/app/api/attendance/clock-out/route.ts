@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { clockOutStaff } from "@/lib/qr-attendance";
-import { HR_ROLES, requireRoles, requireStaff } from "@/lib/api-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
+import { requireStaff } from "@/lib/api-auth";
 import { logActivity, logError } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
   const isSelf = targetUserId === sessionUserId;
 
   if (!isSelf) {
-    const hrGate = await requireRoles(HR_ROLES);
+    const hrGate = await requireAdminApi("attendance");
     if (!hrGate.ok) return hrGate.response;
   }
 

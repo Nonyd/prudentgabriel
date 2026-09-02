@@ -23,7 +23,7 @@ const lagosSchema = z.object({
 });
 
 export async function GET() {
-  const gate = await requireAdminApi("settings");
+  const gate = await requireAdminApi("shop");
   if (!gate.ok) return gate.response;
   await ensureShippingSettingKeys();
   const [methods, packaging, status, copy] = await Promise.all([
@@ -50,7 +50,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi("settings");
+  const gate = await requireAdminApi("shop");
   if (!gate.ok) return gate.response;
   let body: unknown;
   try {
@@ -87,7 +87,7 @@ const patchSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest) {
-  const gate = await requireAdminApi("settings");
+  const gate = await requireAdminApi("shop");
   if (!gate.ok) return gate.response;
   let body: unknown;
   try {

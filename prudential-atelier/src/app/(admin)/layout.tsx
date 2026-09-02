@@ -1,8 +1,10 @@
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { BespokeStage, ConsultationStatus, OrderStatus, PaymentStatus } from "@prisma/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { prisma } from "@/lib/prisma";
+import { deniedAdminRedirect } from "@/lib/admin-route-access";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +30,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!adminRoles.includes(session.user.role)) {
     redirect("/login?tab=admin");
   }
+
+  const pathname = (await headers()).get("x-pathname") ?? "/admin";
+  const denied = deniedAdminRedirect(session.user.role, pathname, session.user.email);
+  if (denied) redirect(denied);
 
   let badges: Record<string, number> = {};
   let isMaintenanceOn = false;

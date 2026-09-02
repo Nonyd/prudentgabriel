@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { QuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { FINANCE_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { logActivity, logError } from "@/lib/logger";
@@ -78,7 +78,7 @@ function buildQuoteEmailHtml(params: {
 }
 
 export async function POST(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(FINANCE_ROLES);
+  const gate = await requireAdminApi("quotations");
   if (!gate.ok) return gate.response;
 
   const { id } = await params;

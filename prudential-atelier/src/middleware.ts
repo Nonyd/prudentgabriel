@@ -175,11 +175,7 @@ export default auth(async function middleware(request) {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
 
-    if (
-      pathname.startsWith("/admin/settings/users") &&
-      role !== "SUPER_ADMIN" &&
-      role !== "ADMIN"
-    ) {
+    if (pathname.startsWith("/admin/settings/users") && role !== "SUPER_ADMIN") {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
 
@@ -203,7 +199,9 @@ export default auth(async function middleware(request) {
       return NextResponse.redirect(new URL("/reset-password?required=true", request.url));
     }
 
-    return NextResponse.next();
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-pathname", pathname);
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   return NextResponse.next();

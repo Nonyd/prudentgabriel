@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { SettingGroup } from "@prisma/client";
-import { HR_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const gate = await requireRoles(HR_ROLES);
+  const gate = await requireAdminApi("attendance");
   if (!gate.ok) return gate.response;
 
   const setting = await prisma.siteSetting.findUnique({
@@ -22,7 +22,7 @@ const patchSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest) {
-  const gate = await requireRoles(HR_ROLES);
+  const gate = await requireAdminApi("attendance");
   if (!gate.ok) return gate.response;
 
   const body = await req.json().catch(() => null);

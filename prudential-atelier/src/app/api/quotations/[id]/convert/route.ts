@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { QuoteStatus } from "@prisma/client";
-import { FINANCE_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { logActivity, logError } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { convertQuotationToOrder } from "@/lib/quotation-convert";
@@ -8,7 +8,7 @@ import { convertQuotationToOrder } from "@/lib/quotation-convert";
 type Params = { params: Promise<{ id: string }> };
 
 export async function POST(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(FINANCE_ROLES);
+  const gate = await requireAdminApi("quotations");
   if (!gate.ok) return gate.response;
 
   const { id } = await params;

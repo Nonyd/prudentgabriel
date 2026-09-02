@@ -4,7 +4,7 @@
  *   pnpm test:authz
  */
 import "./preload-test-env";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Role } from "@prisma/client";
@@ -28,6 +28,13 @@ import {
   BESPOKE_STAFF_ROLES,
   sessionHasRole,
 } from "../src/lib/bespoke-roles";
+import {
+  ADMIN_MATRIX_ROUTES,
+  accessRuleForAdminPath,
+  firstAdminPathForRole,
+  matrixAccess,
+  roleMayAccessAdminPath,
+} from "../src/lib/admin-route-access";
 import { canAccessStaffPortal } from "../src/lib/client-auth";
 import type { Session } from "next-auth";
 import {
@@ -117,6 +124,10 @@ async function main() {
   assert(!canWriteSettingKey("ADMIN", "email_tpl_welcome"), "email templates are not a settings write");
   assert(!canWriteSettingKey("ADMIN", "resend_api_key"), "ADMIN cannot write Resend key");
   assert(isDeveloperSettingKey("slack_webhook_url"), "Slack webhook is a developer credential");
+  assert(isDeveloperSettingKey("smtp_username"), "SMTP user field is a developer key");
+  assert(isDeveloperSettingKey("smtp_password"), "SMTP secret field is a developer key");
+  assert(isDeveloperSettingKey("dhl_password"), "DHL secret field is a developer key");
+  assert(isDeveloperSettingKey("smtp_use_ssl"), "SMTP SSL flag is a developer key");
   assert(!isDeveloperSettingKey("paystack_enabled"), "enabled flags are commercial");
   assert(COMMERCIAL_PAYMENTS_KEYS.has("paystack_enabled"), "enabled flags are on the commercial set");
 
@@ -160,6 +171,96 @@ async function main() {
       assert(actual === expected, `${role} × ${g.name}: expected ${expected} got ${actual}`);
     }
   }
+
+  const matrixRoles = [
+    "SUPER_ADMIN",
+    "ADMIN",
+    "STAFF_ADMIN",
+    "STAFF",
+    "CONTENT_MANAGER",
+    "FINANCE_MANAGER",
+    "RTW_MANAGER",
+    "BESPOKE_MANAGER",
+    "CONSULTATION_MANAGER",
+    "HR_MANAGER",
+  ];
+  for (const role of matrixRoles) {
+    for (const row of ADMIN_MATRIX_ROUTES) {
+      const page = matrixAccess(role, row.path);
+      const api = matrixAccess(role, row.path);
+      assert(page === api, `${role} × ${row.group}: page ${page} vs API ${api} must agree`);
+    }
+  }
+
+  assert(matrixAccess("RTW_MANAGER", "/admin/products") === "allow", "RTW_MANAGER reaches products (positive)");
+  assert(matrixAccess("RTW_MANAGER", "/admin/orders") === "allow", "RTW_MANAGER reaches orders (positive)");
+  assert(matrixAccess("RTW_MANAGER", "/admin/shipping") === "deny", "RTW_MANAGER does not configure shipping");
+  assert(matrixAccess("CONTENT_MANAGER", "/admin/content") === "allow", "CONTENT_MANAGER reaches content (positive)");
+  assert(matrixAccess("CONTENT_MANAGER", "/admin/content/blog") === "allow", "CONTENT_MANAGER reaches blog (positive)");
+  assert(matrixAccess("CONTENT_MANAGER", "/admin/payments") === "deny", "CONTENT_MANAGER is denied payments");
+  assert(matrixAccess("HR_MANAGER", "/admin/staff") === "allow", "HR_MANAGER reaches staff (positive)");
+  assert(matrixAccess("HR_MANAGER", "/admin/attendance") === "allow", "HR_MANAGER reaches attendance (positive)");
+  assert(matrixAccess("HR_MANAGER", "/admin/payments") === "deny", "HR_MANAGER is denied payments");
+  assert(matrixAccess("FINANCE_MANAGER", "/admin/payments") === "allow", "FINANCE_MANAGER reaches payments (positive)");
+  assert(matrixAccess("FINANCE_MANAGER", "/admin/invoices") === "allow", "FINANCE_MANAGER reaches invoices (positive)");
+  assert(matrixAccess("FINANCE_MANAGER", "/admin/quotations") === "allow", "FINANCE_MANAGER reaches quotations (positive)");
+  assert(matrixAccess("FINANCE_MANAGER", "/admin/products") === "deny", "FINANCE_MANAGER is denied products");
+  assert(matrixAccess("STAFF_ADMIN", "/admin/shipping") === "allow", "STAFF_ADMIN reaches shipping via shop (positive)");
+  assert(matrixAccess("STAFF_ADMIN", "/admin/settings") === "deny", "STAFF_ADMIN is denied settings");
+  assert(matrixAccess("ADMIN", "/admin/settings/users") === "deny", "ADMIN does not open Users & Roles");
+  assert(matrixAccess("SUPER_ADMIN", "/admin/settings/users") === "allow", "SUPER_ADMIN opens Users & Roles (positive)");
+  assert(matrixAccess("STAFF", "/admin") === "deny", "STAFF is denied the admin executive page");
+  assert(matrixAccess("STAFF", "/admin/bespoke") === "deny", "STAFF is denied admin bespoke");
+  assert(matrixAccess("BESPOKE_MANAGER", "/admin/bespoke") === "allow", "BESPOKE_MANAGER reaches atelier (positive)");
+  assert(matrixAccess("CONSULTATION_MANAGER", "/admin/consultations") === "allow", "CONSULTATION_MANAGER reaches consultations (positive)");
+  assert(matrixAccess("CONSULTATION_MANAGER", "/admin/clients") === "deny", "clients.view is not the clients page gate");
+
+  assert(firstAdminPathForRole("RTW_MANAGER") === "/admin/products", "RTW_MANAGER lands on products");
+  assert(firstAdminPathForRole("CONTENT_MANAGER") === "/admin/content", "CONTENT_MANAGER lands on content");
+  assert(firstAdminPathForRole("HR_MANAGER") === "/admin/staff", "HR_MANAGER lands on staff");
+  assert(firstAdminPathForRole("FINANCE_MANAGER") === "/admin/invoices", "FINANCE_MANAGER lands on invoices");
+  assert(firstAdminPathForRole("ADMIN") === "/admin", "ADMIN lands on executive");
+
+  const shippingSrc = routeSource("app/api/admin/shipping/route.ts");
+  assert(shippingSrc.includes('requireAdminApi("shop")'), "shipping API is shop, not settings");
+  assert(!shippingSrc.includes('requireAdminApi("settings")'), "shipping API no longer uses settings");
+  const usersMw = readFileSync(join(srcRoot, "middleware.ts"), "utf8");
+  assert(
+    usersMw.includes('pathname.startsWith("/admin/settings/users") && role !== "SUPER_ADMIN"'),
+    "Users & Roles middleware is Super Admin only",
+  );
+  assert(routeSource("app/api/staff/route.ts").includes('requireAdminApi("staff")'), "staff list API is staff permission");
+  assert(routeSource("app/api/attendance/today/route.ts").includes('requireAdminApi("attendance")'), "attendance API is attendance permission");
+  assert(routeSource("app/api/quotations/route.ts").includes('requireAdminApi("quotations")'), "quotations API is quotations permission");
+  assert(routeSource("app/api/blog/route.ts").includes("CMS_ADMIN_PERMISSIONS"), "blog admin API is CMS permissions");
+  assert(routeSource("app/api/admin/clients/search/route.ts").includes('requireAdminApi("clients")'), "client search matches Client CRM");
+  const layoutSrc = routeSource("app/(admin)/layout.tsx");
+  assert(layoutSrc.includes("deniedAdminRedirect"), "admin layout uses the shared path guard");
+  const permSrc = routeSource("lib/permissions.ts");
+  assert(!permSrc.includes("getJobPermissionsForAdminPath"), "dead JobRole path checks are gone");
+
+  const adminAppDir = join(srcRoot, "app/(admin)/admin");
+  const pageFiles: string[] = [];
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name);
+      if (statSync(p).isDirectory()) walk(p);
+      else if (name === "page.tsx") pageFiles.push(p);
+    }
+  };
+  walk(adminAppDir);
+  assert(pageFiles.length > 40, "expected a full set of admin pages");
+  const marker = "/app/(admin)/admin/";
+  for (const file of pageFiles) {
+    const posix = file.replace(/\\/g, "/");
+    const idx = posix.indexOf(marker);
+    assert(idx >= 0, `admin page outside expected tree: ${posix}`);
+    const rel = posix.slice(idx + marker.length);
+    const route = rel.replace(/\/page\.tsx$/, "").replace(/^page\.tsx$/, "");
+    const normalized = route ? `/admin/${route.replace(/\[.+?\]/g, "x")}` : "/admin";
+    assert(accessRuleForAdminPath(normalized) !== null, `unmapped admin page ${normalized} (${rel})`);
+  }
+  assert(roleMayAccessAdminPath("ADMIN", "/admin/products/x/edit"), "product edit inherits shop.products");
 
   assert(inheritedDottedPermissions("ADMIN").includes("shop.orders"), "ADMIN inherits shop.orders from shop");
   assert(inheritedDottedPermissions("STAFF_ADMIN").includes("shop.orders"), "STAFF_ADMIN inherits shop.orders from shop");
