@@ -111,7 +111,7 @@ export function ProductCardImageSwipe({
     revealRest();
     if (nudging.current) {
       nudging.current = false;
-      scrollerRef.current && (scrollerRef.current.scrollLeft = 0);
+      if (scrollerRef.current) scrollerRef.current.scrollLeft = 0;
     }
     gesture.current = {
       x: e.clientX,
