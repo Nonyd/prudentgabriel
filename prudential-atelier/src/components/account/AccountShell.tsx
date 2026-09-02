@@ -38,43 +38,42 @@ export function AccountShell({
           wishlistCount={wishlistCount}
         />
         <div className="flex min-w-0 flex-1 flex-col pb-[60px] lg:pb-0">
-          <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-sand bg-ivory px-4 dark:bg-bg-page sm:px-6 lg:static lg:h-12 lg:justify-end lg:px-6">
+          <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-[#d4bbac] bg-[#f7f2ec] px-4 sm:px-6 lg:static lg:h-12 lg:justify-end lg:px-6">
             <Link href="/account" className="shrink-0 lg:hidden" aria-label="Account home">
-              <Logo variant="dark" size="sm" themeAdaptive className="dark:hidden" />
-              <Logo variant="white" size="sm" themeAdaptive={false} className="hidden dark:block" />
+              <Logo variant="dark" size="sm" themeAdaptive={false} />
             </Link>
 
             <div className="flex items-center gap-2 sm:gap-3 lg:gap-5">
               <CustomerNotificationBell />
-              <ThemeToggle />
+              <ThemeToggle color="#5c3422" />
               <button
                 type="button"
                 onClick={() => void signOut({ callbackUrl: "/" })}
-                className="inline-flex items-center gap-1.5 rounded-sm p-1.5 font-sans text-[11px] text-text-light transition-colors hover:text-red-600 sm:px-2"
+                className="inline-flex items-center gap-1.5 rounded-sm p-1.5 font-sans text-[12px] font-medium text-[#5c3422] transition-colors hover:text-[#7a2418] sm:px-2"
                 aria-label="Logout"
               >
-                <LogOut className="h-4 w-4" strokeWidth={1.5} />
+                <LogOut className="h-4 w-4" strokeWidth={1.75} />
                 <span className="hidden sm:inline">Logout</span>
               </button>
-              <div className="hidden items-center gap-5 border-l border-sand pl-5 dark:border-sand/30 lg:flex">
+              <div className="hidden items-center gap-5 border-l border-sand pl-5 lg:flex">
                 <Link
                   href="/cart"
-                  className="inline-flex items-center gap-1.5 font-sans text-[11px] text-text-light transition-colors hover:text-nut"
+                  className="inline-flex items-center gap-1.5 font-sans text-[12px] font-medium text-[#5c3422] transition-colors hover:text-[#442913]"
                   aria-label="View cart"
                 >
-                  <ShoppingCart className="h-4 w-4" strokeWidth={1.5} />
+                  <ShoppingCart className="h-4 w-4" strokeWidth={1.75} />
                 </Link>
                 <Link
                   href="/shop"
-                  className="inline-flex items-center gap-1.5 font-sans text-[11px] text-text-light transition-colors hover:text-nut"
+                  className="inline-flex items-center gap-1.5 font-sans text-[12px] font-medium text-[#5c3422] transition-colors hover:text-[#442913]"
                 >
-                  <ShoppingBag className="h-4 w-4" strokeWidth={1.5} />
+                  <ShoppingBag className="h-4 w-4" strokeWidth={1.75} />
                   Back to shop
                 </Link>
               </div>
             </div>
           </header>
-          <main className="flex-1 bg-bg px-4 py-6 sm:px-6 lg:px-10 lg:py-8 dark:bg-bg-page">{children}</main>
+          <main className="flex-1 bg-bg px-4 py-6 sm:px-6 lg:px-10 lg:py-8">{children}</main>
         </div>
       </div>
     </div>

@@ -143,7 +143,7 @@ export function CustomerNotificationBell() {
     <div className="relative" ref={panelRef}>
       <button
         type="button"
-        className="relative p-1.5 text-text-mid transition-colors hover:text-choc dark:text-cream/70 dark:hover:text-cream"
+        className="relative p-1.5 text-[#5c3422] transition-colors hover:text-[#442913]"
         aria-label="Notifications"
         aria-expanded={isOpen}
         onClick={() => void toggleOpen()}

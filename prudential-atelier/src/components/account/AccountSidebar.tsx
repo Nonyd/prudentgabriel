@@ -61,10 +61,10 @@ const MOBILE_TABS = [
 ];
 
 const TIER_BADGE_STYLES: Record<LoyaltyTier, string> = {
-  BRONZE: "border-[#CD7F32]/50 text-[#CD7F32]",
-  SILVER: "border-[#A8A9AD]/50 text-[#A8A9AD]",
-  GOLD: "border-lightbr/50 text-lightbr",
-  PLATINUM: "border-choc/40 text-choc dark:border-cream/40 dark:text-cream",
+  BRONZE: "border-[#E0A070] text-[#E0A070]",
+  SILVER: "border-[#D8D8DC] text-[#D8D8DC]",
+  GOLD: "border-[#C9A84C] text-[#E8C96A]",
+  PLATINUM: "border-[#F0E6DC] text-[#F7F2EC]",
 };
 
 function NavSection({
@@ -77,10 +77,8 @@ function NavSection({
   pathname: string;
 }) {
   return (
-    <div className="mb-6">
-      <p className="mb-2 px-4 font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-text-light dark:text-[rgba(152,117,91,0.5)]">
-        {title}
-      </p>
+    <div className="mb-7">
+      <p className="account-rail-label mb-2 px-4 font-sans uppercase">{title}</p>
       <div className="flex flex-col gap-0.5">
         {items.map(({ href, label, icon: Icon, badge }) => {
           const active =
@@ -90,16 +88,14 @@ function NavSection({
               key={`${href}-${label}`}
               href={href}
               className={clsx(
-                "flex items-center gap-3 px-4 py-2.5 font-sans text-xs font-normal transition-colors",
-                active
-                  ? "border-r-2 border-choc bg-[rgba(68,41,19,0.08)] text-choc dark:border-lightbr dark:bg-[rgba(152,117,91,0.18)] dark:text-cream"
-                  : "text-text-mid hover:bg-[rgba(68,41,19,0.04)] hover:text-choc dark:text-cream/60 dark:hover:bg-[rgba(152,117,91,0.1)] dark:hover:text-cream",
+                "account-rail-link flex items-center gap-3 px-4 py-2.5 font-sans transition-colors duration-150",
+                active && "account-rail-link-active",
               )}
             >
-              <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-              <span className="flex-1">{label}</span>
+              <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+              <span className="flex-1 tracking-wide">{label}</span>
               {badge != null && badge > 0 ? (
-                <span className="rounded-full bg-nut px-1.5 py-0.5 font-sans text-[10px] text-cream">
+                <span className="rounded-full bg-[#c9a84c] px-1.5 py-0.5 font-sans text-[10px] font-semibold text-[#442913]">
                   {badge}
                 </span>
               ) : null}
@@ -141,21 +137,20 @@ export function AccountSidebar({
 
   return (
     <>
-      <aside className="hidden w-[240px] shrink-0 flex-col border-r border-sand bg-ivory dark:border-sand/20 dark:bg-sidebar-bg lg:flex">
-        <div className="border-b border-sand px-6 py-5 dark:border-sand/20">
-          <Logo variant="dark" size="sm" themeAdaptive className="dark:hidden" />
-          <Logo variant="white" size="sm" themeAdaptive={false} className="hidden dark:block" />
-          <p className="mt-1 font-sans text-[9px] uppercase tracking-[0.3em] text-text-light dark:text-lightbr/70">
+      <aside className="account-rail hidden h-screen w-[248px] shrink-0 flex-col lg:flex">
+        <div className="border-b border-white/10 px-6 py-5">
+          <Logo variant="white" size="sm" themeAdaptive={false} />
+          <p className="mt-2 font-sans text-[10px] font-semibold uppercase tracking-[0.28em] text-[#c9a84c]">
             / ATELIER
           </p>
         </div>
 
-        <div className="border-b border-sand px-6 py-5 dark:border-sand/20">
+        <div className="border-b border-white/10 px-6 py-6">
           <div className="flex flex-col items-center text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-lightbr font-display text-xl text-white">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#c9a84c] font-display text-xl text-[#442913]">
               {initials}
             </div>
-            <p className="mt-3 truncate font-sans text-sm font-medium text-choc dark:text-cream">{name}</p>
+            <p className="mt-3 truncate font-display text-lg text-[#f7f2ec]">{name}</p>
             <span
               className={clsx(
                 "mt-2 inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-[0.12em]",
@@ -164,7 +159,9 @@ export function AccountSidebar({
             >
               ✦ {TIER_LABELS[tier]} Member
             </span>
-            <p className="mt-2 font-sans text-xs text-lightbr">{points.toLocaleString()} points</p>
+            <p className="mt-2 font-sans text-xs font-medium tracking-wide text-[#c9a84c]">
+              {points.toLocaleString()} points
+            </p>
           </div>
         </div>
 
@@ -174,26 +171,26 @@ export function AccountSidebar({
           <NavSection title="My Profile" items={MY_PROFILE} pathname={pathname} />
         </nav>
 
-        <div className="space-y-1 border-t border-sand px-4 py-4 dark:border-sand/20">
+        <div className="space-y-1 border-t border-white/10 px-4 py-4">
           <Link
             href="/shop"
-            className="flex items-center gap-2 px-2 py-2 font-sans text-[11px] text-text-mid transition-colors hover:text-nut dark:text-cream/60 dark:hover:text-cream"
+            className="flex items-center gap-2 px-2 py-2 font-sans text-[12px] font-medium text-[#f0e6dc] transition-colors hover:text-white"
           >
-            <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.5} />
+            <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
             Back to shop
           </Link>
           <button
             type="button"
             onClick={() => void signOut({ callbackUrl: "/" })}
-            className="flex w-full items-center gap-2 px-2 py-2 font-sans text-[11px] text-text-mid transition-colors hover:text-red-600 dark:text-cream/60 dark:hover:text-red-400"
+            className="flex w-full items-center gap-2 px-2 py-2 font-sans text-[12px] font-medium text-[#f0e6dc] transition-colors hover:text-[#e8b4a8]"
           >
-            <LogOut className="h-3.5 w-3.5" strokeWidth={1.5} />
+            <LogOut className="h-3.5 w-3.5" strokeWidth={1.75} />
             Logout
           </button>
         </div>
       </aside>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 flex h-[60px] border-t border-sand bg-ivory dark:border-sand/20 dark:bg-sidebar-bg lg:hidden">
+      <nav className="account-rail fixed bottom-0 left-0 right-0 z-40 flex h-[60px] border-t border-white/10 lg:hidden">
         {MOBILE_TABS.map(({ href, label, icon: Icon }) => {
           const active =
             pathname === href || (href !== "/account" && pathname.startsWith(href));
@@ -202,11 +199,11 @@ export function AccountSidebar({
               key={href}
               href={href}
               className={clsx(
-                "flex flex-1 flex-col items-center justify-center gap-1 font-sans text-[10px]",
-                active ? "text-lightbr" : "text-text-light dark:text-cream/50",
+                "flex flex-1 flex-col items-center justify-center gap-1 font-sans text-[10px] font-medium",
+                active ? "text-[#c9a84c]" : "text-[#f0e6dc]",
               )}
             >
-              <Icon className="h-5 w-5" strokeWidth={1.5} />
+              <Icon className="h-5 w-5" strokeWidth={1.75} />
               {label}
             </Link>
           );
