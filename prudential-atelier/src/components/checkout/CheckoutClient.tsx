@@ -130,6 +130,8 @@ export function CheckoutClient() {
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
   const [stripePk, setStripePk] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const createdOrderRef = useRef(createdOrder);
+  createdOrderRef.current = createdOrder;
   const guestEmailTouched = useRef(false);
   const checkoutSessionId = useRef<string | null>(null);
 
@@ -191,7 +193,8 @@ export function CheckoutClient() {
         if (j.quoteConsent) setQuoteConsent(j.quoteConsent);
         setZoneId((prev) => {
           if (opts.some((o) => o.zoneId === prev)) return prev;
-          return opts[0]?.zoneId ?? null;
+          const delivery = opts.find((o) => o.kind !== "PICKUP");
+          return delivery?.zoneId ?? opts[0]?.zoneId ?? null;
         });
       })
       .finally(() => setShipLoading(false));
@@ -461,12 +464,7 @@ export function CheckoutClient() {
       return;
     }
     clearFieldError("gateway");
-    if (payable > 0.01 && gateway === "BANK_TRANSFER" && !receiptUrl) {
-      setFieldError("receipt", "Upload your payment receipt before confirming");
-      toast.error("Upload your payment receipt");
-      return;
-    }
-    clearFieldError("receipt");
+    // Create the order first. Receipt upload only looks up a row that already exists.
 
     const addressPayload = isPickup ? undefined : addressId ? undefined : buildAddressPayload();
     if (!isPickup && !addressId && !addressPayload) {
@@ -568,6 +566,11 @@ export function CheckoutClient() {
       }
 
       if (gateway === "BANK_TRANSFER") {
+        if (!receiptUrl) {
+          toast.success("Order placed. Upload your payment receipt to finish.");
+          setSubmitting(false);
+          return;
+        }
         const bt = await fetch("/api/checkout/bank-transfer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1267,6 +1270,27 @@ export function CheckoutClient() {
                   onReceiptUploaded={(url) => {
                     setReceiptUrl(url);
                     clearFieldError("receipt");
+                    const existing = createdOrderRef.current;
+                    if (!existing?.id) return;
+                    void (async () => {
+                      try {
+                        const bt = await fetch("/api/checkout/bank-transfer", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            orderId: existing.id,
+                            receiptUrl: url,
+                            guestEmail: guestEmail || undefined,
+                          }),
+                        });
+                        const btj = await readJsonBody(bt);
+                        if (!bt.ok) throw new Error(jsonErrorMessage(btj.error, "Could not submit receipt"));
+                        useCartStore.getState().clearCart();
+                        window.location.href = btj.redirectUrl as string;
+                      } catch (e) {
+                        toast.error(e instanceof Error ? e.message : "Could not submit receipt");
+                      }
+                    })();
                   }}
                   guestEmail={guestEmail || session?.user?.email}
                 />
@@ -1323,6 +1347,8 @@ export function CheckoutClient() {
           pointsToRedeem={clampedPts.points}
           pointsValueNGN={pointsValueNGN}
           shippingCostNGN={shipCost}
+          shippingIsFree={Boolean(selectedShip?.isFree)}
+          shippingQuoted={Boolean(selectedShip?.requiresConsent || selectedShip?.kind === "QUOTE_PENDING")}
           currency={currency}
           step={step}
           pointRate={pointRate}

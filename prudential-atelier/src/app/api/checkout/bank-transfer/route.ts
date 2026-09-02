@@ -32,9 +32,19 @@ export async function POST(req: NextRequest) {
   }
 
   const { orderId, receiptUrl, guestEmail } = parsed.data;
-  const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order || order.paymentGateway !== PaymentGateway.BANK_TRANSFER) {
+  const order = await prisma.order.findFirst({
+    where: {
+      OR: [{ id: orderId }, { paymentRef: orderId }, { orderNumber: orderId }],
+    },
+  });
+  if (!order) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  }
+  if (order.paymentGateway !== PaymentGateway.BANK_TRANSFER) {
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { paymentGateway: PaymentGateway.BANK_TRANSFER },
+    });
   }
   if (!canAcceptRtwPayment(order)) {
     return NextResponse.json({ error: "Order is not awaiting payment" }, { status: 400 });

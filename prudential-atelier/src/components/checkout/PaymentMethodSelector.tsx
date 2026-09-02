@@ -206,7 +206,8 @@ export function PaymentMethodSelector({
                       <p className="mt-2 font-sans text-xs text-nut">Receipt attached ✓</p>
                     ) : null}
                     <p className="mt-3 font-body text-xs text-text-light">
-                      After uploading, click confirm below. Our team will verify within 2–4 hours.
+                      Click confirm to place the order. You can upload your receipt before or after — we attach it
+                      once the order exists. Our team will verify within 2–4 hours.
                     </p>
                   </div>
                 ) : null}

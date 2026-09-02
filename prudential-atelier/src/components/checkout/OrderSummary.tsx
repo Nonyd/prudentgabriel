@@ -18,6 +18,8 @@ export function OrderSummary({
   pointsToRedeem,
   pointsValueNGN,
   shippingCostNGN,
+  shippingIsFree,
+  shippingQuoted,
   currency,
   step,
   pointRate,
@@ -27,6 +29,8 @@ export function OrderSummary({
   pointsToRedeem: number;
   pointsValueNGN: number;
   shippingCostNGN: number | null;
+  shippingIsFree?: boolean;
+  shippingQuoted?: boolean;
   currency: ShopCurrency;
   step: number;
   pointRate: number;
@@ -88,7 +92,15 @@ export function OrderSummary({
         </div>
         <div className="flex justify-between">
           <span className="text-charcoal-mid">Shipping</span>
-          <span>{shippingCostNGN == null ? "—" : ship === 0 ? <span className="text-gold">Free</span> : fmtExtra(ship)}</span>
+          <span>
+            {shippingCostNGN == null
+              ? "—"
+              : shippingQuoted
+                ? "Quoted after packing"
+                : shippingIsFree || ship === 0
+                  ? <span className="text-gold">Free</span>
+                  : fmtExtra(ship)}
+          </span>
         </div>
         {disc > 0 && (
           <div className="flex justify-between text-success">

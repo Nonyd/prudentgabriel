@@ -92,23 +92,7 @@ export async function listCheckoutShippingOptions(params: {
   const options: CheckoutShippingOption[] = [];
 
   if (band === "LAGOS") {
-    if (pickup) {
-      for (const loc of pickup.pickupLocations) {
-        options.push({
-          optionId: `pickup:${loc.id}`,
-          kind: "PICKUP",
-          name: loc.name,
-          description: loc.hours,
-          costNGN: 0,
-          isFree: true,
-          etaText: "Collect when ready",
-          requiresConsent: false,
-          requiresAddress: false,
-          pickupLocationId: loc.id,
-          methodId: pickup.id,
-        });
-      }
-    }
+    // Delivery first so checkout does not default to free atelier pickup.
     if (local) {
       for (const loc of local.lagosLocations) {
         const free =
@@ -125,6 +109,23 @@ export async function listCheckoutShippingOptions(params: {
           requiresAddress: true,
           lagosLocationId: loc.id,
           methodId: local.id,
+        });
+      }
+    }
+    if (pickup) {
+      for (const loc of pickup.pickupLocations) {
+        options.push({
+          optionId: `pickup:${loc.id}`,
+          kind: "PICKUP",
+          name: loc.name,
+          description: loc.hours,
+          costNGN: 0,
+          isFree: true,
+          etaText: "Collect when ready",
+          requiresConsent: false,
+          requiresAddress: false,
+          pickupLocationId: loc.id,
+          methodId: pickup.id,
         });
       }
     }
