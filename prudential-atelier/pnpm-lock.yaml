@@ -86,9 +86,6 @@ importers:
       '@types/canvas-confetti':
         specifier: ^1.9.0
         version: 1.9.0
-      '@types/papaparse':
-        specifier: ^5.5.2
-        version: 5.5.2
       axios:
         specifier: ^1.15.2
         version: 1.17.0
@@ -134,9 +131,6 @@ importers:
       nodemailer:
         specifier: ^7.0.13
         version: 7.0.13
-      papaparse:
-        specifier: ^5.5.3
-        version: 5.5.3
       paystack:
         specifier: ^2.0.1
         version: 2.0.1
@@ -1644,9 +1638,6 @@ packages:
 
   '@types/nodemailer@6.4.23':
     resolution: {integrity: sha512-aFV3/NsYFLSx9mbb5gtirBSXJnAlrusoKNuPbxsASWc7vrKLmIrTQRpdcxNcSFL3VW2A2XpeLEavwb2qMi6nlQ==}
-
-  '@types/papaparse@5.5.2':
-    resolution: {integrity: sha512-gFnFp/JMzLHCwRf7tQHrNnfhN4eYBVYYI897CGX4MY1tzY9l2aLkVyx2IlKZ/SAqDbB3I1AOZW5gTMGGsqWliA==}
 
   '@types/prop-types@15.7.15':
     resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
@@ -3436,9 +3427,6 @@ packages:
 
   pako@1.0.11:
     resolution: {integrity: sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==}
-
-  papaparse@5.5.3:
-    resolution: {integrity: sha512-5QvjGxYVjxO59MGU2lHVYpRWBBtKHnlIAcSe1uNFCkkptUh63NFRj0FJQm7nR67puEruUci/ZkjmEFrjCAyP4A==}
 
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
@@ -5836,10 +5824,6 @@ snapshots:
     dependencies:
       '@types/node': 20.19.41
 
-  '@types/papaparse@5.5.2':
-    dependencies:
-      '@types/node': 20.19.41
-
   '@types/prop-types@15.7.15': {}
 
   '@types/qrcode@1.5.6':
@@ -7782,8 +7766,6 @@ snapshots:
   pako@0.2.9: {}
 
   pako@1.0.11: {}
-
-  papaparse@5.5.3: {}
 
   parent-module@1.0.1:
     dependencies:

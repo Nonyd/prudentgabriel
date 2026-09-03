@@ -83,7 +83,6 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   products: Package,
   collections: Layout,
   media: ImageIcon,
-  import: Package,
   guide: FileText,
   coupons: Ticket,
   shipping: Truck,

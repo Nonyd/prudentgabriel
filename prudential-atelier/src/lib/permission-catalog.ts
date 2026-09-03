@@ -80,7 +80,7 @@ export const ADMIN_PERMISSION_CATALOG: readonly PermissionCatalogEntry[] = [
     key: "shop.products",
     group: "Shop",
     label: "Catalogue",
-    description: "Products, collections, sizing, and imports.",
+    description: "Products, collections, and sizing.",
   },
   {
     key: "shop.orders",

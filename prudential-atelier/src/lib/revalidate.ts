@@ -60,9 +60,3 @@ export async function revalidateGallery(category: "ATELIER" | "BRIDAL" | "KIDS")
   } as const;
   revalidatePath(pathMap[category]);
 }
-
-/** After bulk product import — avoid per-product revalidation. */
-export async function revalidateAfterBulkImport() {
-  revalidatePath("/shop");
-  revalidatePath("/rtw");
-}
