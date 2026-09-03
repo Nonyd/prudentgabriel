@@ -129,13 +129,16 @@ jobs:
             sudo -n chown -R 1001:1001 /opt/prudentgabriel/media-staging 2>/dev/null || chown -R 1001:1001 /opt/prudentgabriel/media-staging || true
             if [ -n "${GITHUB_TOKEN:-}" ]; then
               curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.raw" \
+                "https://api.github.com/repos/Nonyd/prudentgabriel/contents/deploy/compose.staging.yaml?ref=${GITHUB_SHA}" \
+                -o /opt/prudentgabriel/deploy/compose.staging.yaml
+              curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.raw" \
                 "https://api.github.com/repos/Nonyd/prudentgabriel/contents/deploy/backup-media.sh?ref=${GITHUB_SHA}" \
                 -o /opt/prudentgabriel/deploy/backup-media.sh || true
               curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.raw" \
                 "https://api.github.com/repos/Nonyd/prudentgabriel/contents/deploy/restore-media.sh?ref=${GITHUB_SHA}" \
                 -o /opt/prudentgabriel/deploy/restore-media.sh || true
               chmod 0755 /opt/prudentgabriel/deploy/backup-media.sh /opt/prudentgabriel/deploy/restore-media.sh || true
-              mkdir -p /opt/prudentgabriel/backups
+              mkdir -p /home/deploy/prudentgabriel-backups
               ( crontab -l 2>/dev/null | grep -v backup-media.sh || true; echo "15 2 * * * /opt/prudentgabriel/deploy/backup-media.sh" ) | crontab - || true
             fi
             # Pull only the app image from GHCR. A full `compose pull` also hits Docker Hub

@@ -4,7 +4,7 @@
 # If BACKUP_RCLONE_REMOTE is set (e.g. b2:prudentgabriel-backups), rclone copy runs after the tarball.
 set -euo pipefail
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)
-DEST=${BACKUP_DIR:-/opt/prudentgabriel/backups}
+DEST=${BACKUP_DIR:-/home/deploy/prudentgabriel-backups}
 mkdir -p "$DEST"
 KEEP=${BACKUP_KEEP:-14}
 

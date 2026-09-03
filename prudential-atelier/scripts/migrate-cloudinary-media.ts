@@ -192,11 +192,19 @@ async function writeScalar(source: string, id: string, newUrl: string): Promise<
     return;
   }
   if (source === "GalleryImage") {
-    await prisma.galleryImage.update({ where: { id }, data: { url: newUrl, publicId: newUrl.replace(/^\/media\//, "") } });
+    const key = newUrl.replace(/^\/media\//, "");
+    await prisma.galleryImage.update({
+      where: { id },
+      data: { url: newUrl, publicId: `${key}::${id}` },
+    });
     return;
   }
   if (source === "MediaItem") {
-    await prisma.mediaItem.update({ where: { id }, data: { url: newUrl, publicId: newUrl.replace(/^\/media\//, "") } });
+    const key = newUrl.replace(/^\/media\//, "");
+    await prisma.mediaItem.update({
+      where: { id },
+      data: { url: newUrl, publicId: `${key}::${id}` },
+    });
     return;
   }
   if (source === "BlogPost.featured") {
@@ -433,7 +441,7 @@ async function main() {
   }
   if (!APPLY) console.log("\nNo files written. Re-run with --apply to copy.");
 
-  const reportDir = join(process.cwd(), ".data");
+  const reportDir = process.env.MEDIA_ROOT?.trim() || join(process.cwd(), ".data");
   await mkdir(reportDir, { recursive: true });
   await writeFile(join(reportDir, "media-migrate-last.json"), JSON.stringify({ apply: APPLY, results }, null, 2));
 }
