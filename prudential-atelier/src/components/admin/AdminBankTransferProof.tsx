@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { adminReceiptSrc } from "@/lib/media/receipt-src";
 
 function isPdfUrl(url: string) {
   return /\.pdf(\?|#|$)/i.test(url);
@@ -32,6 +33,8 @@ export function AdminBankTransferProof({
   const [rejectOpen, setRejectOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [lightbox, setLightbox] = useState(false);
+
+  const proofSrc = adminReceiptSrc(receiptUrl);
 
   if (paymentGateway !== "BANK_TRANSFER") return null;
 
@@ -121,8 +124,8 @@ export function AdminBankTransferProof({
       {receiptUrl ? (
         <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_240px]">
           <div className="overflow-hidden rounded-sm border border-sand bg-white">
-            {isPdfUrl(receiptUrl) ? (
-              <iframe title="Payment receipt" src={receiptUrl} className="h-[420px] w-full" />
+            {isPdfUrl(proofSrc) ? (
+              <iframe title="Payment receipt" src={proofSrc} className="h-[420px] w-full" />
             ) : (
               <button
                 type="button"
@@ -131,7 +134,7 @@ export function AdminBankTransferProof({
                 aria-label="Enlarge receipt"
               >
                 <Image
-                  src={receiptUrl}
+                  src={proofSrc}
                   alt="Payment receipt"
                   width={900}
                   height={1200}
@@ -143,7 +146,7 @@ export function AdminBankTransferProof({
           </div>
           <div className="space-y-3">
             <a
-              href={receiptUrl}
+              href={proofSrc}
               target="_blank"
               rel="noreferrer"
               className="inline-block font-sans text-sm uppercase tracking-wider text-choc underline underline-offset-4"
@@ -197,7 +200,7 @@ export function AdminBankTransferProof({
         >
           <div className="relative max-h-[90vh] max-w-4xl" onClick={(e) => e.stopPropagation()}>
             <Image
-              src={receiptUrl}
+              src={proofSrc}
               alt="Payment receipt"
               width={1200}
               height={1600}

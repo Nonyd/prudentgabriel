@@ -61,6 +61,17 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+# X6: run `tsx --tsconfig tsconfig.scripts.json scripts/migrate-cloudinary-media.ts` in the container
+# so files land on MEDIA_ROOT, not a laptop disk.
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/migrate-cloudinary-media.ts ./scripts/migrate-cloudinary-media.ts
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/preload-test-env.ts ./scripts/preload-test-env.ts
+COPY --from=builder --chown=nextjs:nodejs /app/src/lib ./src/lib
+COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./tsconfig.json
+COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.scripts.json ./tsconfig.scripts.json
+# Standalone output does not always trace sharp; next/image needs the native binary.
+RUN npm install --omit=dev --os=linux --cpu=x64 sharp@0.33.5 \
+  && chown -R nextjs:nodejs /app/node_modules/sharp
+ENV NEXT_SHARP_PATH=/app/node_modules/sharp
 COPY --chown=root:root entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 

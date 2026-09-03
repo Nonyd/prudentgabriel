@@ -116,6 +116,8 @@ jobs:
               sleep 30
             done
             cd /opt/prudentgabriel/deploy
+            mkdir -p /opt/prudentgabriel/media/public /opt/prudentgabriel/media/private
+            sudo -n chown -R 1001:1001 /opt/prudentgabriel/media 2>/dev/null || chown -R 1001:1001 /opt/prudentgabriel/media || true
             # Pull only the app image from GHCR. A full `compose pull` also hits Docker Hub
             # for postgres:18-alpine and fails when Hub resets IPv6 connections.
             for attempt in 1 2 3 4 5; do

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { destroyCloudinaryAsset } from "@/lib/cloudinary-public-id";
+import { destroyStoredMedia } from "@/lib/media/destroy";
 import { revalidateProduct } from "@/lib/revalidate";
 
 export async function DELETE(
@@ -28,7 +28,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
-  await destroyCloudinaryAsset(image.url);
+  await destroyStoredMedia(image.url);
   await prisma.productImage.delete({ where: { id: imageId } });
 
   if (image.isPrimary) {

@@ -101,3 +101,16 @@ export function mimeFromMagicBytes(
   return null;
 }
 
+/** MP4/MOV (`ftyp`) and WebM (EBML). Declared MIME is ignored. */
+export function mimeFromVideoMagicBytes(buf: Uint8Array): string | null {
+  if (buf.length < 12) return null;
+  if (buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3) {
+    return "video/webm";
+  }
+  const brand = String.fromCharCode(buf[4], buf[5], buf[6], buf[7]);
+  if (brand !== "ftyp") return null;
+  const major = String.fromCharCode(buf[8], buf[9], buf[10], buf[11]);
+  if (major === "qt  ") return "video/quicktime";
+  return "video/mp4";
+}
+

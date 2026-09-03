@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdminApi, CMS_ADMIN_PERMISSIONS } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { cloudinary } from "@/lib/cloudinary";
+import { destroyStoredMedia } from "@/lib/media/destroy";
 import { revalidateGallery } from "@/lib/revalidate";
 
 const patchSchema = z.object({
@@ -46,19 +46,7 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const configured =
-    Boolean(process.env.CLOUDINARY_API_KEY?.length) &&
-    Boolean(process.env.CLOUDINARY_CLOUD_NAME?.length) &&
-    !row.publicId.startsWith("dev-") &&
-    !row.publicId.startsWith("seed-");
-
-  if (configured) {
-    try {
-      await cloudinary.uploader.destroy(row.publicId);
-    } catch (e) {
-      console.warn("[gallery DELETE] cloudinary", e);
-    }
-  }
+  await destroyStoredMedia(row.url, row.publicId);
 
   await prisma.galleryImage.delete({ where: { id } });
   await revalidateGallery(row.category as "ATELIER" | "BRIDAL" | "KIDS");

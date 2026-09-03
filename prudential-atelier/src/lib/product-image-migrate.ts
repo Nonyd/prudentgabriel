@@ -1,23 +1,28 @@
-import { cloudinary } from "@/lib/cloudinary";
+import { getMediaStore } from "@/lib/media";
+import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
+import { classifyMediaUrl } from "@/lib/media/migrate-plan";
 
 export const PRODUCT_CLOUDINARY_FOLDER = "prudential-atelier/products";
 
+/** Re-host a remote product image onto the local MediaStore. */
 export async function uploadProductImageFromUrl(sourceUrl: string): Promise<string> {
-  const configured =
-    Boolean(process.env.CLOUDINARY_API_KEY?.length) &&
-    Boolean(process.env.CLOUDINARY_API_SECRET?.length) &&
-    Boolean(process.env.CLOUDINARY_CLOUD_NAME?.length);
+  const cls = classifyMediaUrl(sourceUrl);
+  if (cls.action === "already-local") return sourceUrl;
 
-  if (!configured) {
-    return sourceUrl;
+  const res = await fetch(sourceUrl);
+  if (!res.ok) {
+    throw new Error(`Could not fetch source image (${res.status})`);
   }
-
-  const result = await cloudinary.uploader.upload(sourceUrl, {
+  const buf = Buffer.from(await res.arrayBuffer());
+  const mime = mimeFromMagicBytes(buf);
+  if (!mime || mime === "application/pdf") {
+    throw new Error("Source is not a JPEG, PNG, or WebP image");
+  }
+  const stored = await getMediaStore().put(buf, {
     folder: PRODUCT_CLOUDINARY_FOLDER,
-    fetch_format: "auto",
-    quality: "auto",
-    transformation: [{ width: 1200, crop: "limit" }],
+    mime,
+    private: false,
+    originalName: sourceUrl.split("/").pop(),
   });
-
-  return result.secure_url;
+  return stored.url;
 }

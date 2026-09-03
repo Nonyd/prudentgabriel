@@ -37,6 +37,11 @@ else
 fi
 
 echo "[entrypoint] Starting Next.js (cwd ${STANDALONE_APP_DIR})..."
+MEDIA_ROOT="${MEDIA_ROOT:-/data/media}"
+if [ "$(id -u)" = "0" ]; then
+  mkdir -p "${MEDIA_ROOT}/public" "${MEDIA_ROOT}/private"
+  chown -R nextjs:nodejs "${MEDIA_ROOT}"
+fi
 if echo "${NEXT_PUBLIC_APP_URL:-} ${APP_URL:-}" | grep -q "staging.prudentgabriel.com"; then
   export CRON_SCHEDULER="${CRON_SCHEDULER:-1}"
   export CRON_HOST="${CRON_HOST:-vps-staging}"

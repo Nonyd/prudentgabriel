@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import { adminReceiptSrc } from "@/lib/media/receipt-src";
 
 type PendingItem = {
   id: string;
@@ -210,7 +211,7 @@ export function AdminPendingBankTransfers() {
                       <button
                         type="button"
                         className="text-xs uppercase text-[#37392d] underline"
-                        onClick={() => setLightbox(item.receiptUrl)}
+                        onClick={() => setLightbox(adminReceiptSrc(item.receiptUrl))}
                       >
                         View receipt
                       </button>

@@ -34,6 +34,7 @@ import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPane
 import { STAGE_LABELS, STAGE_ORDER, STAGE_SHORT_LABELS, getPreviousStage, getStageProgress } from "@/lib/bespoke-stages";
 import { getStageRequirement } from "@/lib/atelier/stage-requirements";
 import { cn, formatDate, formatNGN } from "@/lib/utils";
+import { uploadAdminAsset, uploadAdminVideo } from "@/lib/admin-upload-xhr";
 
 type LedgerPayment = Payment & {
   confirmedBy?: Pick<User, "id" | "name" | "email"> | null;
@@ -167,30 +168,18 @@ export function BespokeOrderDetailClient({
     (!req.requiresMedia || stageMedia.length >= req.minMediaCount);
   const isAdminActor = actorRole === "SUPER_ADMIN" || actorRole === "ADMIN";
 
-  const uploadFile = async (file: File, folder: string) => {
-    const reader = new FileReader();
-    const base64 = await new Promise<string>((resolve, reject) => {
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-    const res = await fetch("/api/admin/upload", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ file: base64, folder }),
-    });
-    if (!res.ok) throw new Error("Upload failed");
-    const data = (await res.json()) as { url: string };
-    return data.url;
-  };
-
   const handleUpload = async (files: FileList | null, type: "images" | "videos") => {
     if (!files?.length) return;
     setUploading(true);
     try {
       const urls: string[] = [];
       for (const file of Array.from(files)) {
-        urls.push(await uploadFile(file, type === "videos" ? "bespoke-videos" : "bespoke-stages"));
+        const folder = type === "videos" ? "bespoke-videos" : "bespoke-stages";
+        urls.push(
+          type === "videos"
+            ? await uploadAdminVideo(file, folder)
+            : await uploadAdminAsset(file, folder),
+        );
       }
       await fetch(`/api/bespoke/${order.id}/stage-media`, {
         method: "POST",

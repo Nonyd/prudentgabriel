@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cloudinary } from "@/lib/cloudinary";
+import { getMediaStore } from "@/lib/media";
 import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
 import { rateLimitOr429 } from "@/lib/rate-limit";
 
 const MAX_BYTES = 5 * 1024 * 1024;
+const FOLDER = "prudential-atelier/careers";
 
 function isFileLike(v: unknown): v is Blob & { name?: string } {
   return typeof v === "object" && v !== null && typeof (v as Blob).arrayBuffer === "function";
@@ -12,11 +13,6 @@ function isFileLike(v: unknown): v is Blob & { name?: string } {
 export async function POST(req: NextRequest) {
   const limited = rateLimitOr429(req, "careers-upload", 8, 15 * 60 * 1000);
   if (limited) return limited;
-
-  const configured =
-    Boolean(process.env.CLOUDINARY_API_KEY?.length) &&
-    Boolean(process.env.CLOUDINARY_API_SECRET?.length) &&
-    Boolean(process.env.CLOUDINARY_CLOUD_NAME?.length);
 
   let form: FormData;
   try {
@@ -33,24 +29,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "File must be 5MB or smaller" }, { status: 400 });
   }
 
+  const fileName = "name" in raw && typeof raw.name === "string" ? raw.name : undefined;
   const buffer = Buffer.from(await raw.arrayBuffer());
   const mime = mimeFromMagicBytes(buffer, { allowPdf: true });
   if (!mime) {
     return NextResponse.json({ error: "Only JPG, PNG, WebP, or PDF files are allowed" }, { status: 400 });
   }
 
-  if (!configured) {
-    return NextResponse.json({ url: `https://placehold.co/careers-${Date.now()}.pdf` });
-  }
-
-  const base64 = `data:${mime};base64,${buffer.toString("base64")}`;
-
   try {
-    const uploaded = await cloudinary.uploader.upload(base64, {
-      folder: "prudential-atelier/careers",
-      resource_type: mime === "application/pdf" ? "raw" : "image",
+    const stored = await getMediaStore().put(buffer, {
+      folder: FOLDER,
+      originalName: fileName,
+      mime,
+      private: true,
     });
-    return NextResponse.json({ url: uploaded.secure_url, publicId: uploaded.public_id });
+    return NextResponse.json({ url: stored.url, publicId: stored.key });
   } catch (e) {
     console.error("[careers/upload]", e);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });

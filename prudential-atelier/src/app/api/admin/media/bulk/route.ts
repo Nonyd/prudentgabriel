@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdminApi, CMS_ADMIN_PERMISSIONS } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { cloudinary } from "@/lib/cloudinary";
+import { destroyStoredMedia } from "@/lib/media/destroy";
 
 const bodySchema = z.object({
   ids: z.array(z.string().min(1)).min(1).max(100),
@@ -22,7 +22,7 @@ export async function DELETE(req: NextRequest) {
 
   const items = await prisma.mediaItem.findMany({
     where: { id: { in: ids } },
-    select: { id: true, publicId: true },
+    select: { id: true, publicId: true, url: true },
   });
 
   if (items.length !== ids.length) {
@@ -30,11 +30,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   for (const item of items) {
-    try {
-      await cloudinary.uploader.destroy(item.publicId);
-    } catch (e) {
-      console.warn("[admin/media/bulk] destroy", item.publicId, e);
-    }
+    await destroyStoredMedia(item.url, item.publicId);
   }
 
   const result = await prisma.mediaItem.deleteMany({

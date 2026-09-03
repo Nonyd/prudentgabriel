@@ -105,9 +105,14 @@ export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** CDN-friendly URLs for product grids (Cloudinary / Unsplash). */
+/** Storefront image URLs. Local `/media/` paths become absolute so next/image can optimise them. */
 export function optimizeImageUrl(url: string, width = 600): string {
   if (!url || url.startsWith("data:")) return url;
+
+  if (url.startsWith("/media/")) {
+    const origin = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/+$/, "");
+    return origin ? `${origin}${url}` : url;
+  }
 
   if (url.includes("res.cloudinary.com")) {
     const marker = "/upload/";

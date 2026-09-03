@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminApi, CMS_ADMIN_PERMISSIONS } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { cloudinary } from "@/lib/cloudinary";
-import { resolveImageMimeType } from "@/lib/image-upload-mime";
+import { getMediaStore } from "@/lib/media";
+import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
+import { sanitizeUploadFolder } from "@/lib/admin-upload-folder";
 
 const PAGE_SIZE = 20;
-const MAX_BYTES = 8 * 1024 * 1024;
+const MAX_BYTES = 5 * 1024 * 1024;
+
 export async function GET(req: NextRequest) {
   const gate = await requireAdminApi(CMS_ADMIN_PERMISSIONS);
   if (!gate.ok) return gate.response;
@@ -41,11 +43,6 @@ export async function POST(req: NextRequest) {
   const gate = await requireAdminApi(CMS_ADMIN_PERMISSIONS);
   if (!gate.ok) return gate.response;
 
-  const configured =
-    Boolean(process.env.CLOUDINARY_API_KEY?.length) &&
-    Boolean(process.env.CLOUDINARY_API_SECRET?.length) &&
-    Boolean(process.env.CLOUDINARY_CLOUD_NAME?.length);
-
   let form: FormData;
   try {
     form = await req.formData();
@@ -61,40 +58,36 @@ export async function POST(req: NextRequest) {
   const file = raw as Blob & { name?: string };
   const fileName = typeof file.name === "string" ? file.name : undefined;
 
-  const mime = resolveImageMimeType(file.type ?? "", fileName, { allowGif: true });
-  if (!mime) {
-    return NextResponse.json({ error: "Unsupported file type" }, { status: 400 });
-  }
-
   if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "File too large (max 8MB)" }, { status: 400 });
-  }
-
-  const subfolder = (form.get("folder") as string | null)?.replace(/[^a-zA-Z0-9/_-]/g, "") || "general";
-  const cloudFolder = `prudent-gabriel/${subfolder}`;
-
-  if (!configured) {
-    return NextResponse.json({ error: "Cloudinary is not configured" }, { status: 503 });
+    return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 });
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const base64 = `data:${mime};base64,${buffer.toString("base64")}`;
+  const mime = mimeFromMagicBytes(buffer, { allowGif: true });
+  if (!mime || mime === "application/pdf") {
+    return NextResponse.json({ error: "Unsupported file type" }, { status: 400 });
+  }
+
+  const subfolder = sanitizeUploadFolder(form.get("folder"), "general");
+  const cloudFolder = `prudent-gabriel/${subfolder}`;
 
   try {
-    const uploaded = await cloudinary.uploader.upload(base64, {
+    const stored = await getMediaStore().put(buffer, {
       folder: cloudFolder,
-      resource_type: "image",
+      originalName: fileName,
+      mime,
+      private: false,
     });
 
     const item = await prisma.mediaItem.create({
       data: {
-        url: uploaded.secure_url,
-        publicId: uploaded.public_id,
-        filename: fileName || "upload",
+        url: stored.url,
+        publicId: stored.key,
+        filename: stored.originalName,
         mimeType: mime,
-        width: uploaded.width ?? null,
-        height: uploaded.height ?? null,
-        sizeBytes: uploaded.bytes ?? file.size,
+        width: null,
+        height: null,
+        sizeBytes: stored.bytes,
         folder: cloudFolder,
         uploadedBy: gate.session.user!.id!,
       },

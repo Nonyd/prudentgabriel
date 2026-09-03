@@ -7,7 +7,7 @@ import { buildDefaultProductSku } from "@/lib/product-sku";
 import { revalidateProduct } from "@/lib/revalidate";
 import { canInlineEditPrice, derivedCatalogMinNGN } from "@/lib/pricing";
 import { processRestockAlerts } from "@/lib/stock-alerts";
-import { destroyCloudinaryAsset } from "@/lib/cloudinary-public-id";
+import { destroyStoredMedia } from "@/lib/media/destroy";
 import { applyCountCorrection, applyOpening, afterStockWrites, syncProductInStock, type StockWriteResult } from "@/lib/stock-ledger";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -367,7 +367,7 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
       prisma.product.delete({ where: { id } }),
     ]);
 
-    await Promise.all(product.images.map((im) => destroyCloudinaryAsset(im.url)));
+    await Promise.all(product.images.map((im) => destroyStoredMedia(im.url)));
     await revalidateProduct(product.slug);
     return NextResponse.json({ ok: true });
   } catch (e) {

@@ -40,6 +40,10 @@ services:
     environment:
       CRON_SCHEDULER: "1"
       CRON_HOST: "vps-staging"
+      MEDIA_ROOT: /data/media
+    volumes:
+      # Host bind — files must survive GHCR image replace. Not public/.
+      - /opt/prudentgabriel/media-staging:/data/media
     ports:
       - "${PA_MAIN_BIND:-127.0.0.1:3011}:3000"
     networks:

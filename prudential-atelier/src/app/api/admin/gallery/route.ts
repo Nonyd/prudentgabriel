@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { GalleryCategory } from "@prisma/client";
 import { requireAdminApi, CMS_ADMIN_PERMISSIONS } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { cloudinary } from "@/lib/cloudinary";
-import { resolveImageMimeType } from "@/lib/image-upload-mime";
+import { getMediaStore } from "@/lib/media";
+import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
 import { revalidateGallery } from "@/lib/revalidate";
 
 const PAGE_DEFAULT = 30;
+const MAX_BYTES = 5 * 1024 * 1024;
 
 function parseCategory(v: string | null): GalleryCategory | null {
   const u = v?.toUpperCase();
@@ -68,63 +69,50 @@ export async function POST(req: NextRequest) {
   const alt = typeof form.get("alt") === "string" ? (form.get("alt") as string).trim() || null : null;
   const caption = typeof form.get("caption") === "string" ? (form.get("caption") as string).trim() || null : null;
 
-  const mime = resolveImageMimeType(file.type ?? "", fileName, { allowGif: false });
-  if (!mime) {
+  if (file.size > MAX_BYTES) {
+    return NextResponse.json({ error: "File is too large" }, { status: 400 });
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const mime = mimeFromMagicBytes(buffer, { allowGif: false });
+  if (!mime || mime === "application/pdf") {
     return NextResponse.json({ error: "Only JPEG, PNG, or WebP" }, { status: 400 });
   }
 
   const folder = `prudent-gabriel/gallery/${category.toLowerCase()}`;
-  const configured =
-    Boolean(process.env.CLOUDINARY_API_KEY?.length) &&
-    Boolean(process.env.CLOUDINARY_API_SECRET?.length) &&
-    Boolean(process.env.CLOUDINARY_CLOUD_NAME?.length);
 
-  if (!configured) {
-    return NextResponse.json(
-      { error: "Cloudinary is not configured. Please add CLOUDINARY credentials in Settings." },
-      { status: 400 },
-    );
-  }
-
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const base64 = `data:${mime};base64,${buffer.toString("base64")}`;
-  let uploaded;
   try {
-    uploaded = await cloudinary.uploader.upload(base64, {
+    const stored = await getMediaStore().put(buffer, {
       folder,
-      transformation: [{ width: 1600, crop: "limit" }, { quality: "auto" }],
+      originalName: fileName,
+      mime,
+      private: false,
     });
+    const maxSort = await prisma.galleryImage.aggregate({
+      where: { category },
+      _max: { sortOrder: true },
+    });
+    const sortOrder = (maxSort._max.sortOrder ?? -1) + 1;
+
+    const row = await prisma.galleryImage.create({
+      data: {
+        url: stored.url,
+        publicId: stored.key,
+        alt,
+        caption,
+        category,
+        width: null,
+        height: null,
+        sortOrder,
+        isPublished: true,
+        uploadedBy: gate.session.user?.id ?? null,
+      },
+    });
+
+    await revalidateGallery(category);
+    return NextResponse.json(row);
   } catch (e) {
     console.error("[admin/gallery POST]", e);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
-  const url = uploaded.secure_url;
-  const publicId = uploaded.public_id;
-  const width = uploaded.width ?? null;
-  const height = uploaded.height ?? null;
-
-  const maxSort = await prisma.galleryImage.aggregate({
-    where: { category },
-    _max: { sortOrder: true },
-  });
-  const sortOrder = (maxSort._max.sortOrder ?? -1) + 1;
-
-  const row = await prisma.galleryImage.create({
-    data: {
-      url,
-      publicId,
-      alt,
-      caption,
-      category,
-      width,
-      height,
-      sortOrder,
-      isPublished: true,
-      uploadedBy: gate.session.user?.id ?? null,
-    },
-  });
-
-  await revalidateGallery(category);
-
-  return NextResponse.json(row);
 }

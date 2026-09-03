@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdminApi, CMS_ADMIN_PERMISSIONS } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { cloudinary } from "@/lib/cloudinary";
+import { destroyStoredMedia } from "@/lib/media/destroy";
 
 const patchSchema = z.object({
   alt: z.string().optional(),
@@ -42,17 +42,13 @@ export async function DELETE(
 
   const item = await prisma.mediaItem.findUnique({
     where: { id: params.id },
-    select: { publicId: true },
+    select: { publicId: true, url: true },
   });
   if (!item) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  try {
-    await cloudinary.uploader.destroy(item.publicId);
-  } catch (e) {
-    console.warn("[admin/media DELETE] cloudinary destroy", e);
-  }
+  await destroyStoredMedia(item.url, item.publicId);
 
   await prisma.mediaItem.delete({ where: { id: params.id } });
   return NextResponse.json({ success: true });
