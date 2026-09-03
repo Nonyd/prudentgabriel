@@ -6,8 +6,9 @@ import { sendEmail } from "@/lib/email";
 import { eventReminderEmailHtml } from "@/lib/email-templates/reports";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { notifyEventReminder } from "@/lib/customer-notifications";
+import { customerAllowsPref } from "@/lib/account-helpers";
 
-const REMINDER_DAYS = [60, 30, 14];
+export const REMINDER_DAYS = [60, 30, 14] as const;
 
 function daysUntilEvent(eventDate: Date): number {
   const today = new Date();
@@ -24,11 +25,15 @@ export async function POST(req: NextRequest) {
 
   try {
     const appUrl = getPublicAppUrl();
+    const horizon = new Date();
+    horizon.setHours(0, 0, 0, 0);
+    horizon.setDate(horizon.getDate() + Math.max(...REMINDER_DAYS));
+
     const events = await prisma.eventDate.findMany({
-      where: { notified: false },
+      where: { date: { gte: new Date(), lte: horizon } },
       include: {
         client: {
-          include: { user: { select: { email: true, name: true } } },
+          include: { user: { select: { id: true, email: true, name: true } } },
         },
       },
     });
@@ -36,7 +41,11 @@ export async function POST(req: NextRequest) {
     let sent = 0;
     for (const ev of events) {
       const days = daysUntilEvent(ev.date);
-      if (!REMINDER_DAYS.includes(days)) continue;
+      if (!(REMINDER_DAYS as readonly number[]).includes(days)) continue;
+      if (ev.remindersSent.includes(days)) continue;
+
+      const wants = await customerAllowsPref(ev.client.userId, "eventReminders");
+      if (!wants) continue;
 
       const email = ev.client.user.email;
       const firstName = (ev.client.user.name ?? "there").split(/\s+/)[0] ?? "there";
@@ -59,20 +68,21 @@ export async function POST(req: NextRequest) {
 
       await prisma.eventDate.update({
         where: { id: ev.id },
-        data: { notified: true },
+        data: { remindersSent: { push: days } },
       });
 
       notifyEventReminder({
         userId: ev.client.userId,
         eventId: ev.id,
         eventLabel: ev.label,
+        daysUntil: days,
       });
 
       await logActivity({
         userId: ev.client.userId,
         action: "UPDATE",
         module: "account",
-        description: `Event reminder sent for ${ev.label}`,
+        description: `Event reminder sent for ${ev.label} (${days} days)`,
         recordId: ev.id,
         recordType: "EventDate",
       });

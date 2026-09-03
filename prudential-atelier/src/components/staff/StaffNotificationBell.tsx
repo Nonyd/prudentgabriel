@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import type { StaffNotification, StaffNotificationType } from "@prisma/client";
-import { Bell, Calendar, Check, ClipboardList, Package } from "lucide-react";
+import { Bell, Check, ClipboardList, Package } from "lucide-react";
 import Link from "next/link";
 
 function iconFor(type: StaffNotificationType) {
@@ -15,14 +15,9 @@ function iconFor(type: StaffNotificationType) {
   );
   switch (type) {
     case "STAGE_ASSIGNED":
-    case "STAGE_REASSIGNED":
-    case "JOB_ASSIGNED":
-    case "TASK_ASSIGNED":
       return wrap(<ClipboardList className="h-4 w-4 text-choc" strokeWidth={1.5} />, "bg-nut/15");
     case "ORDER_UPDATE":
       return wrap(<Package className="h-4 w-4 text-nut" strokeWidth={1.5} />, "bg-sand/50");
-    case "SCHEDULE":
-      return wrap(<Calendar className="h-4 w-4 text-lightbr" strokeWidth={1.5} />, "bg-lightbr/20");
     default:
       return wrap(<Bell className="h-4 w-4 text-nut" strokeWidth={1.5} />, "bg-sand/50");
   }

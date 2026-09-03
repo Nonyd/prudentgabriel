@@ -685,6 +685,14 @@ export function ProductFormPage({
             {form.formState.errors.variants && (
               <p className="mt-2 text-xs text-red-400">Check variant rows (size, price, stock).</p>
             )}
+            {product?.id ? (
+              <p className="mt-4 font-body text-[13px]">
+                <Link href={`/admin/products/${product.id}/stock`} className="text-olive hover:underline">
+                  Stock history
+                </Link>
+                <span className="text-[#6B6B68]"> — every sale, count, and return for each size.</span>
+              </p>
+            ) : null}
           </section>
 
           <section className="rounded-sm border border-sand bg-canvas p-6">

@@ -49,7 +49,15 @@ export function CollectionStockClient({ collectionId }: { collectionId: string }
         body: JSON.stringify({ updates }),
       });
       if (!res.ok) toast.error("Save failed");
-      else toast.success("Stock saved");
+      else {
+        const j = (await res.json()) as { updated?: number; skipped?: number };
+        const skipped = j.skipped ?? 0;
+        toast.success(
+          skipped > 0
+            ? `Saved ${j.updated ?? 0} sizes (${skipped} skipped — not in this collection)`
+            : "Stock saved",
+        );
+      }
     } finally {
       setSaving(false);
     }

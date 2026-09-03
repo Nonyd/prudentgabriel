@@ -10,6 +10,7 @@ import type {
   User,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { targetsForAdminNotificationType } from "@/lib/admin-notification-access";
 
 function formatNGN(n: number): string {
   return `₦${Math.round(n).toLocaleString("en-NG")}`;
@@ -21,6 +22,8 @@ export async function createNotification(params: {
   message: string;
   link?: string;
   entityId?: string;
+  /** Override the type's default targets. Use `["*"]` for an explicit broadcast. */
+  targetPermissions?: string[];
 }): Promise<void> {
   await prisma.adminNotification.create({
     data: {
@@ -29,6 +32,7 @@ export async function createNotification(params: {
       message: params.message,
       link: params.link ?? null,
       entityId: params.entityId ?? null,
+      targetPermissions: params.targetPermissions ?? targetsForAdminNotificationType(params.type),
     },
   });
 }
@@ -173,7 +177,7 @@ export function notifyBankTransferReceipt(params: {
   entityId: string;
 }): void {
   void createNotification({
-    type: "NEW_ORDER",
+    type: "BANK_TRANSFER_RECEIPT",
     title: "Bank transfer receipt",
     message: `${params.clientName} — ${params.ref} · ${formatNGN(params.amountNGN)}`,
     link: params.link,
@@ -183,7 +187,7 @@ export function notifyBankTransferReceipt(params: {
 
 export function notifyQuoteApproved(quote: Pick<Quotation, "id" | "quoteRef" | "clientName" | "total">): void {
   void createNotification({
-    type: "NEW_BESPOKE",
+    type: "QUOTE_APPROVED",
     title: "Quote approved",
     message: `${quote.quoteRef} — ${quote.clientName} · ${formatNGN(quote.total)}`,
     link: `/admin/quotations`,
@@ -197,7 +201,7 @@ export function notifyStageAdvanced(params: {
   stage: string;
 }): void {
   void createNotification({
-    type: "NEW_BESPOKE",
+    type: "STAGE_COMPLETED",
     title: "Production stage completed",
     message: `${params.orderRef} — ${params.stage}`,
     link: `/admin/bespoke/${params.orderId}`,

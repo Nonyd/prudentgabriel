@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ExecutiveKPICard } from "@/components/admin/ExecutiveKPICard";
 import { ExecutiveRevenueChart, type RevenueChartPoint } from "@/components/admin/ExecutiveRevenueChart";
+import { OutOfStockPanel, type OutOfStockRow } from "@/components/admin/OutOfStockPanel";
 import { formatNGN, getInitials } from "@/lib/utils";
 import { getPointRateNGN, outstandingPointsTotal, pointsToNaira } from "@/lib/points";
 
@@ -80,6 +81,7 @@ export default async function AdminDashboardPage() {
     time?: string;
     badge: string;
   }[] = [];
+  let oosRows: OutOfStockRow[] = [];
 
   try {
     const chartDays = Array.from({ length: 7 }, (_, i) => {
@@ -108,6 +110,7 @@ export default async function AdminDashboardPage() {
       pendingConfirm,
       chartData,
       staffList,
+      oosVariants,
     ] = await Promise.all([
       prisma.order.aggregate({
         where: { paymentStatus: PaymentStatus.PAID, paidAt: { gte: weekStart, lte: dayEnd }, isBespoke: false },
@@ -214,6 +217,15 @@ export default async function AdminDashboardPage() {
           },
         },
       }),
+      prisma.productVariant.findMany({
+        where: { stock: { lte: 0 }, product: { isPublished: true } },
+        orderBy: [{ stock: "asc" }, { size: "asc" }],
+        take: 12,
+        select: {
+          size: true,
+          product: { select: { id: true, name: true } },
+        },
+      }),
     ]);
 
     revenueThisWeek =
@@ -237,6 +249,12 @@ export default async function AdminDashboardPage() {
     paymentsToday = (orderPaidToday._sum.total ?? 0) + (consultPaidToday._sum.feeNGN ?? 0);
     confirmationsPending = pendingConfirm;
     revenueChart = chartData;
+
+    oosRows = oosVariants.map((v) => ({
+      productId: v.product.id,
+      productName: v.product.name,
+      size: v.size,
+    }));
 
     const resumptionSetting = await prisma.siteSetting.findUnique({ where: { key: "hr_resumption_time" } });
     const resumptionTime = resumptionSetting?.value ?? "09:00";
@@ -410,6 +428,8 @@ export default async function AdminDashboardPage() {
           </Link>
         </div>
       </div>
+
+      <OutOfStockPanel rows={oosRows} />
     </div>
   );
 }

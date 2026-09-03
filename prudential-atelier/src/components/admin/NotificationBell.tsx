@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
-import type { AdminNotification, AdminNotificationType } from "@prisma/client";
+import type { AdminNotificationType } from "@prisma/client";
 import {
   Bell,
   Briefcase,
@@ -14,9 +14,11 @@ import {
   CreditCard,
   FileText,
   AlertTriangle,
+  Banknote,
   Scissors,
 } from "lucide-react";
 import Link from "next/link";
+import type { AdminNotificationRow } from "@/lib/admin-notification-access";
 
 function iconFor(type: AdminNotificationType) {
   const wrap = (node: ReactNode, bg: string) => (
@@ -24,27 +26,39 @@ function iconFor(type: AdminNotificationType) {
   );
   switch (type) {
     case "NEW_CONSULTATION":
+    case "CONSULTATION_COMPLETED":
+    case "CONSULTATION_BOOKED_PRUDENT":
+    case "QUOTE_AWAITING":
       return wrap(<Calendar className="h-4 w-4 text-lightbr" strokeWidth={1.5} />, "bg-lightbr/20");
     case "PAYMENT_FAILED":
+      return wrap(<CreditCard className="h-4 w-4 text-danger" strokeWidth={1.5} />, "bg-danger/10");
+    case "RTW_OVERSELL":
+      return wrap(<Banknote className="h-4 w-4 text-danger" strokeWidth={1.5} />, "bg-danger/10");
     case "NEW_ORDER":
+    case "BANK_TRANSFER_RECEIPT":
       return wrap(<CreditCard className="h-4 w-4 text-success" strokeWidth={1.5} />, "bg-success/15");
     case "NEW_BESPOKE":
+    case "QUOTE_APPROVED":
+    case "STAGE_COMPLETED":
+    case "PRODUCTION_UNLOCKED":
+    case "PRODUCTION_RELOCKED":
+    case "STAGE_APPROVAL_RESPONSE":
       return wrap(<Scissors className="h-4 w-4 text-choc" strokeWidth={1.5} />, "bg-nut/15");
     case "CONTACT_FORM":
       return wrap(<FileText className="h-4 w-4 text-nut" strokeWidth={1.5} />, "bg-nut/15");
     case "REVIEW_PENDING":
+    case "TESTIMONIAL_SUBMITTED":
       return wrap(<FileText className="h-4 w-4 text-warning" strokeWidth={1.5} />, "bg-warning/15");
     case "JOB_APPLICATION":
       return wrap(<Briefcase className="h-4 w-4 text-olive" strokeWidth={1.5} />, "bg-olive/15");
     case "LOW_STOCK":
-    case "COUPON_EXPIRING":
       return wrap(<AlertTriangle className="h-4 w-4 text-danger" strokeWidth={1.5} />, "bg-danger/10");
     default:
       return wrap(<Bell className="h-4 w-4 text-nut" strokeWidth={1.5} />, "bg-sand/50");
   }
 }
 
-function timeLabel(createdAt: string) {
+function timeLabel(createdAt: string | Date) {
   try {
     return formatDistanceToNow(new Date(createdAt), { addSuffix: true });
   } catch {
@@ -57,7 +71,7 @@ export function NotificationBell() {
   const panelRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const [notifications, setNotifications] = useState<AdminNotificationRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [pulse, setPulse] = useState(false);
 
@@ -76,8 +90,8 @@ export function NotificationBell() {
     try {
       const res = await fetch("/api/admin/notifications");
       if (!res.ok) return;
-      const j = (await res.json()) as { notifications: AdminNotification[]; unreadCount?: number };
-      setNotifications(j.notifications.slice(0, 10));
+      const j = (await res.json()) as { notifications: AdminNotificationRow[]; unreadCount?: number };
+      setNotifications(j.notifications.filter((n) => !n.acknowledgedAt).slice(0, 10));
       if (typeof j.unreadCount === "number") setUnreadCount(j.unreadCount);
     } finally {
       setLoading(false);
@@ -126,7 +140,7 @@ export function NotificationBell() {
     setUnreadCount(0);
   }
 
-  async function openNotification(n: AdminNotification) {
+  async function openNotification(n: AdminNotificationRow) {
     if (!n.isRead) {
       await fetch("/api/admin/notifications/read", {
         method: "PATCH",
@@ -209,7 +223,7 @@ export function NotificationBell() {
                         <p className="mt-0.5 line-clamp-2 font-sans text-[11px] font-light text-text-light">
                           {n.message}
                         </p>
-                        <p className="mt-1 font-sans text-[11px] text-text-light">{timeLabel(n.createdAt.toString())}</p>
+                        <p className="mt-1 font-sans text-[11px] text-text-light">{timeLabel(n.createdAt)}</p>
                       </div>
                       {n.isRead ? (
                         <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-text-light" strokeWidth={1.5} />

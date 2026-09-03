@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { validateCronSecret } from "@/lib/api-auth";
 import { logError } from "@/lib/logger";
 import { sendEmail } from "@/lib/email";
+import { getSetting } from "@/lib/settings";
+import { resolveHrAlertEmail } from "@/lib/admin-alert-email";
 
 function startOfToday(): Date {
   const d = new Date();
@@ -22,7 +24,6 @@ export async function POST(req: NextRequest) {
       where: { key: "hr_resumption_time" },
     });
     const resumptionTime = resumptionSetting?.value ?? process.env.RESUMPTION_TIME ?? "09:00";
-    const hrEmail = process.env.HR_MANAGER_EMAIL ?? "hr@prudentgabriel.com";
 
     const staff = await prisma.staffProfile.findMany({
       where: { isActive: true, employmentType: EmploymentType.EMPLOYEE },
@@ -43,6 +44,11 @@ export async function POST(req: NextRequest) {
         absentCount: 0,
         notified: false,
       });
+    }
+
+    const hrEmail = await resolveHrAlertEmail(getSetting);
+    if (!hrEmail) {
+      return NextResponse.json({ ok: true, skipped: "no_hr_mailbox", absentCount: absent.length });
     }
 
     const listHtml = absent

@@ -182,7 +182,7 @@ export function roleAllows(
   return list.some((p) => hasPermission(role, p, actor));
 }
 
-const ALL_PERMISSIONS: readonly AdminPermission[] = [
+export const ALL_PERMISSIONS: readonly AdminPermission[] = [
   "dashboard",
   "bespoke",
   "consultations",

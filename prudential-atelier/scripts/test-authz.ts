@@ -297,6 +297,7 @@ async function main() {
     assert(accessRuleForAdminPath(normalized) !== null, `unmapped admin page ${normalized} (${rel})`);
   }
   assert(roleMayAccessAdminPath("ADMIN", "/admin/products/x/edit"), "product edit inherits shop.products");
+  assert(roleMayAccessAdminPath("ADMIN", "/admin/products/x/stock"), "product stock history inherits shop.products");
 
   assert(inheritedDottedPermissions("ADMIN").includes("shop.orders"), "ADMIN inherits shop.orders from shop");
   assert(inheritedDottedPermissions("STAFF_ADMIN").includes("shop.orders"), "STAFF_ADMIN inherits shop.orders from shop");

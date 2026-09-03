@@ -6,6 +6,7 @@ import { productAdminSchema } from "@/validations/product";
 import { buildDefaultProductSku } from "@/lib/product-sku";
 import { revalidateProduct } from "@/lib/revalidate";
 import { derivedCatalogMinNGN } from "@/lib/pricing";
+import { applyOpening, afterStockWrites, syncProductInStock, type StockWriteResult } from "@/lib/stock-ledger";
 
 const PAGE_SIZE_DEFAULT = 20;
 
@@ -159,7 +160,7 @@ export async function POST(req: NextRequest) {
           customSurchargeValue: data.customSurchargeValue ?? null,
           customLeadTimeDays: data.customLeadTimeDays ?? null,
           customReturnable: data.customReturnable ?? null,
-          inStock: data.variants.some((v) => v.stock > 0),
+          inStock: false,
           defaultWeightKg: data.defaultWeightKg ?? null,
           defaultLengthCm: data.defaultLengthCm ?? null,
           defaultWidthCm: data.defaultWidthCm ?? null,
@@ -167,10 +168,11 @@ export async function POST(req: NextRequest) {
         },
       });
 
+      const stockWrites: StockWriteResult[] = [];
       for (let i = 0; i < data.variants.length; i++) {
         const v = data.variants[i];
         const sku = v.sku.trim() || buildDefaultProductSku(data.slug, v.size);
-        await tx.productVariant.create({
+        const created = await tx.productVariant.create({
           data: {
             productId: p.id,
             sku,
@@ -179,7 +181,7 @@ export async function POST(req: NextRequest) {
             priceUSD: v.priceUSD ?? null,
             priceGBP: v.priceGBP ?? null,
             salePriceNGN: v.salePriceNGN ?? null,
-            stock: v.stock,
+            stock: 0,
             lowStockAt: v.lowStockAt,
             sortOrder: v.sortOrder ?? i,
             weightKg: v.weightKg ?? null,
@@ -188,6 +190,8 @@ export async function POST(req: NextRequest) {
             heightCm: v.heightCm ?? null,
           },
         });
+        const write = await applyOpening(tx, { variantId: created.id, stock: v.stock });
+        if (write) stockWrites.push(write);
       }
 
       for (const c of data.colors) {
@@ -241,12 +245,14 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      return p;
+      await syncProductInStock(tx, p.id);
+      return { product: p, stockWrites };
     });
 
-    await revalidateProduct(product.slug);
+    await revalidateProduct(product.product.slug);
+    if (product.stockWrites.length) await afterStockWrites(product.stockWrites);
 
-    return NextResponse.json({ id: product.id, slug: product.slug });
+    return NextResponse.json({ id: product.product.id, slug: product.product.slug });
   } catch (e) {
     console.error("[admin/products POST]", e);
     return NextResponse.json({ error: "Could not create product" }, { status: 500 });

@@ -7,6 +7,9 @@ import { sendEmail } from "@/lib/email";
 import { reportEmailHtml } from "@/lib/email-templates/reports";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
+import { listRefundRequiredOrders, listTodayOversellNotifications, oversellReportHtml } from "@/lib/oversell-report";
+import { getSetting } from "@/lib/settings";
+import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
 
 function startOfToday() {
   const d = new Date();
@@ -30,7 +33,7 @@ export async function POST(req: NextRequest) {
     const to = endOfToday();
     const appUrl = getPublicAppUrl();
 
-    const [rtwRev, stageUpdates, staffToday, consultations, upcoming, pendingPayments] =
+    const [rtwRev, stageUpdates, staffToday, consultations, upcoming, pendingPayments, refundRequired, oversellNotices] =
       await Promise.all([
         prisma.order.aggregate({
           where: { paymentStatus: PaymentStatus.PAID, createdAt: { gte: from, lte: to }, isBespoke: false },
@@ -59,6 +62,8 @@ export async function POST(req: NextRequest) {
         prisma.order.count({
           where: { paymentStatus: PaymentStatus.PENDING, createdAt: { gte: from, lte: to } },
         }),
+        listRefundRequiredOrders(),
+        listTodayOversellNotifications(from, to),
       ]);
 
     const bespokePaid = await prisma.bespokeOrder.aggregate({
@@ -66,6 +71,8 @@ export async function POST(req: NextRequest) {
       _sum: { amountPaid: true },
     });
     const revenue = (rtwRev._sum.total ?? 0) + (bespokePaid._sum.amountPaid ?? 0);
+
+    const oversellHtml = oversellReportHtml(refundRequired, oversellNotices);
 
     const dateLabel = from.toLocaleDateString("en-GB");
     const html = reportEmailHtml(
@@ -122,14 +129,16 @@ export async function POST(req: NextRequest) {
           heading: "Payments Pending",
           html: `<p><strong>${pendingPayments}</strong> bank transfer receipts awaiting confirmation</p>`,
         },
+        {
+          heading: "RTW oversell — refund required",
+          html: oversellHtml,
+        },
       ],
       appUrl,
     );
 
-    const recipients = [
-      process.env.GENERAL_ADMIN_EMAIL,
-      process.env.SUPER_ADMIN_EMAIL,
-    ].filter(Boolean) as string[];
+    const operational = await resolveAdminAlertEmail(getSetting);
+    const recipients = operational ? [operational] : [];
 
     for (const to of recipients) {
       await sendEmail({

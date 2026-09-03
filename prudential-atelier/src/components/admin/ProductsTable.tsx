@@ -417,7 +417,9 @@ export function ProductsTable({
                     p.totalStock === 0 ? "text-red-400" : p.totalStock < 10 ? "text-amber-300" : "text-emerald-300",
                   )}
                 >
-                  {p.totalStock}
+                  <Link href={`/admin/products/${p.id}/stock`} className="hover:underline">
+                    {p.totalStock}
+                  </Link>
                 </td>
                 <td className="hidden p-2 sm:table-cell">
                   <Toggle

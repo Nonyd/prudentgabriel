@@ -24,7 +24,6 @@ CRON_TZ=UTC
 0 9 * * * root /opt/prudentgabriel/deploy/cron-fire.sh review-requests
 0 9 * * * root /opt/prudentgabriel/deploy/cron-fire.sh balance-reminders
 0 10 * * * root /opt/prudentgabriel/deploy/cron-fire.sh stage-approval-reminders
-0 2 * * * root /opt/prudentgabriel/deploy/cron-fire.sh update-bestsellers
 0 11 * * * root /opt/prudentgabriel/deploy/cron-fire.sh unsent-quote-alerts
 0 10 * * * root /opt/prudentgabriel/deploy/cron-fire.sh receipt-reminders
 0 10 * * * root /opt/prudentgabriel/deploy/cron-fire.sh uncollected-pickup

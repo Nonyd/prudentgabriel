@@ -9,6 +9,7 @@ export function mapListVariant(v: {
   priceUSD?: number | null;
   priceGBP?: number | null;
   stock: number;
+  lowStockAt?: number;
 }): ProductListVariant {
   return {
     id: v.id,
@@ -18,6 +19,7 @@ export function mapListVariant(v: {
     priceUSD: v.priceUSD ?? null,
     priceGBP: v.priceGBP ?? null,
     stock: v.stock,
+    lowStockAt: v.lowStockAt,
   };
 }
 

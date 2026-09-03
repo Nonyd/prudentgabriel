@@ -264,6 +264,7 @@ export const ADMIN_PAGE_OWNERS: readonly {
   { path: "/admin/staff/performance", owns: "Staff performance", linksTo: "Nav" },
   { path: "/admin/team", owns: "Redirect to Users & Roles", linksTo: "/admin/settings/users" },
   { path: "/admin/products", owns: "Catalogue products", linksTo: "Nav" },
+  { path: "/admin/products/[id]/stock", owns: "Per-size stock movement history", linksTo: "Product edit" },
   { path: "/admin/collections", owns: "Collections", linksTo: "Nav" },
   { path: "/admin/content/media", owns: "Media library", linksTo: "Nav" },
   { path: "/admin/products/guide", owns: "Upload guide", linksTo: "Nav" },

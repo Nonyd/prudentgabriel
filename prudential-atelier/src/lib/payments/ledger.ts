@@ -237,7 +237,7 @@ async function syncProductionUnlock(
       data: { productionUnlockedAt: unlockedAt },
     });
     void createNotification({
-      type: "NEW_BESPOKE",
+      type: "PRODUCTION_UNLOCKED",
       title: "Production unlocked",
       message: `${order.orderRef} — deposit satisfied for ${order.clientName}. Production may begin.`,
       link: `/admin/bespoke/${order.id}`,

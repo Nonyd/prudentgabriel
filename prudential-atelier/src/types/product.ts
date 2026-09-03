@@ -14,6 +14,7 @@ export interface ProductListVariant {
   priceUSD: number | null;
   priceGBP: number | null;
   stock: number;
+  lowStockAt?: number;
 }
 
 export interface ProductListColor {

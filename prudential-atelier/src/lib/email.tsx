@@ -35,7 +35,7 @@ import { primeEmailBranding, emailLogoWhiteUrl } from "@/lib/email-branding";
 import { prisma } from "@/lib/prisma";
 import { queueEmail } from "@/lib/email-outbox";
 import { getSetting } from "@/lib/settings";
-import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
+import { resolveAdminAlertEmail, resolveHrAlertEmail } from "@/lib/admin-alert-email";
 import { UNSUBSCRIBE_URL_PLACEHOLDER, EMAIL_PRIORITY_MARKETING } from "@/lib/email-priority";
 import type { EmailFamily } from "@/emails/components/email-tokens";
 
@@ -140,7 +140,11 @@ export async function sendBankTransferAdminNotification(params: {
   amountNGN: number;
   receiptUrl: string;
 }): Promise<void> {
-  const adminEmail = process.env.ORDERS_ADMIN_EMAIL ?? "orders@prudentgabriel.com";
+  const adminEmail = await resolveAdminAlertEmail(getSetting);
+  if (!adminEmail) {
+    console.log("[EMAIL bank-transfer-admin] no operational mailbox configured");
+    return;
+  }
   await sendEmail({
     to: adminEmail,
     subject: `[Bank transfer pending] ${params.ref}`,
@@ -287,7 +291,7 @@ export async function sendRtwFulfilmentRefusedEmails(params: {
   });
 
   const adminTo = await resolveAdminAlertEmail(getSetting);
-  if (adminTo.toLowerCase() !== params.to.toLowerCase()) {
+  if (adminTo && adminTo.toLowerCase() !== params.to.toLowerCase()) {
     await sendEmail({
       to: adminTo,
       subject: `Refund required — RTW oversell #${params.orderNumber}`,
@@ -964,8 +968,10 @@ export async function sendAdminNotificationEmail(
   subject: string,
   htmlInner: string,
   idempotencyKey?: string,
+  mailbox: "operational" | "hr" = "operational",
 ): Promise<void> {
-  const admin = process.env.ADMIN_EMAIL;
+  const admin =
+    mailbox === "hr" ? await resolveHrAlertEmail(getSetting) : await resolveAdminAlertEmail(getSetting);
   if (!admin) {
     console.log("[EMAIL admin]", subject);
     return;
@@ -1347,6 +1353,7 @@ export async function sendJobApplicationAdminEmail(params: {
       <p><a href="${reviewUrl}">Review application</a></p>
     `,
     `job-application-admin:${params.applicationId}`,
+    "hr",
   );
 }
 

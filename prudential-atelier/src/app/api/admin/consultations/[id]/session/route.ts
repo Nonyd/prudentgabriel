@@ -83,7 +83,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     await createNotification({
-      type: "NEW_CONSULTATION",
+      type: "CONSULTATION_COMPLETED",
       title: "Consultation completed",
       message: `${updated.bookingNumber} — session notes saved`,
       link: `/admin/consultations/${updated.id}`,

@@ -7,6 +7,8 @@ import { sendEmail } from "@/lib/email";
 import { reportEmailHtml } from "@/lib/email-templates/reports";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
+import { getSetting } from "@/lib/settings";
+import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
 
 export async function POST(req: NextRequest) {
   if (!validateCronSecret(req)) {
@@ -111,10 +113,8 @@ export async function POST(req: NextRequest) {
       appUrl,
     );
 
-    const recipients = [
-      process.env.GENERAL_ADMIN_EMAIL,
-      process.env.SUPER_ADMIN_EMAIL,
-    ].filter(Boolean) as string[];
+    const operational = await resolveAdminAlertEmail(getSetting);
+    const recipients = operational ? [operational] : [];
 
     for (const email of recipients) {
       await sendEmail({

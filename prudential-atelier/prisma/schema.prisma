@@ -65,6 +65,9 @@ model User {
   stageMediaUploads OrderStageMedia[] @relation("StageMediaUploads")
   receiptsConfirmed BespokeOrder[] @relation("ReceiptConfirmedBy")
   userPermissions   UserPermission[]
+  stockMovements    StockMovement[] @relation("StockMovementActor")
+  adminNotificationReads AdminNotificationRead[]
+  acknowledgedAdminNotifications AdminNotification[] @relation("AdminNotificationAck")
 }
 
 model Consultant {
@@ -317,6 +320,7 @@ model Product {
   basePriceNGN   Float
   priceUSD       Float?
   priceGBP       Float?
+  /// Cached: any variant.stock > 0. Written by recomputeVariantStock / syncProductInStock.
   inStock        Boolean         @default(true)
   isPublished    Boolean         @default(false)
   isFeatured     Boolean         @default(false)
@@ -327,6 +331,7 @@ model Product {
   tags           String[]        @default([])
   orderCount     Int             @default(0)
   isBestSeller   Boolean         @default(false)
+  /// Leftover product-level threshold. PDP and notify read ProductVariant.lowStockAt. Do not remove this slice.
   lowStockAt     Int             @default(3)
 
   /// Fallback parcel weight/dims when a variant leaves them blank. Carriers bill the greater of actual vs volumetric.
@@ -422,6 +427,7 @@ model ProductVariant {
   priceUSD     Float?
   priceGBP     Float?
   salePriceNGN Float?
+  /// Cached sum of StockMovement.delta. Writer: recomputeVariantStock only.
   stock        Int         @default(0)
   lowStockAt   Int         @default(3)
   sortOrder    Int         @default(0)
@@ -435,8 +441,38 @@ model ProductVariant {
   cartItems    CartItem[]
   stockAlerts  StockAlert[]
   orderItems   OrderItem[]
+  stockMovements StockMovement[]
+  updatedAt    DateTime    @default(now()) @updatedAt
 
   @@index([productId])
+}
+
+enum StockMovementReason {
+  SALE
+  CANCEL_RETURN
+  REFUND_RETURN
+  COUNT_CORRECTION
+  RECEIPT
+  WRITE_OFF
+  OPENING
+}
+
+/// Source of truth for RTW size quantity. ProductVariant.stock is the cache.
+model StockMovement {
+  id        String              @id @default(cuid())
+  variantId String
+  variant   ProductVariant      @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  delta     Int
+  reason    StockMovementReason
+  orderId   String?
+  order     Order?              @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  actorId   String?
+  actor     User?               @relation("StockMovementActor", fields: [actorId], references: [id], onDelete: SetNull)
+  note      String?
+  createdAt DateTime            @default(now())
+
+  @@index([variantId, createdAt])
+  @@index([orderId])
 }
 
 model ProductColor {
@@ -624,6 +660,7 @@ model Order {
   customReturnable   Boolean             @default(true)
 
   payments Payment[]
+  stockMovements StockMovement[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1186,11 +1223,30 @@ model AdminNotification {
   title     String
   message   String
   link      String?
+  /// Legacy global flag. Unread is per user via AdminNotificationRead.
   isRead    Boolean               @default(false)
   entityId  String?
+  /// Permission keys that may see this row. `"*"` = every portal user (explicit broadcast).
+  targetPermissions String[]      @default([])
+  acknowledgedAt    DateTime?
+  acknowledgedById  String?
+  acknowledgedBy    User?         @relation("AdminNotificationAck", fields: [acknowledgedById], references: [id], onDelete: SetNull)
+  reads     AdminNotificationRead[]
   createdAt DateTime              @default(now())
 
-  @@index([isRead, createdAt])
+  @@index([createdAt])
+  @@index([acknowledgedAt])
+}
+
+model AdminNotificationRead {
+  userId         String
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notificationId String
+  notification   AdminNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  readAt         DateTime          @default(now())
+
+  @@id([userId, notificationId])
+  @@index([userId, readAt])
 }
 
 model CustomerNotification {
@@ -1262,15 +1318,20 @@ model SavedPaymentMethod {
 
 enum AdminNotificationType {
   NEW_ORDER
+  BANK_TRANSFER_RECEIPT
   NEW_BESPOKE
+  QUOTE_APPROVED
+  STAGE_COMPLETED
+  PRODUCTION_UNLOCKED
   NEW_CONSULTATION
+  CONSULTATION_COMPLETED
   CONSULTATION_BOOKED_PRUDENT
   REVIEW_PENDING
   TESTIMONIAL_SUBMITTED
   LOW_STOCK
   PAYMENT_FAILED
+  RTW_OVERSELL
   NEW_CUSTOMER
-  COUPON_EXPIRING
   CONTACT_FORM
   JOB_APPLICATION
   STAGE_APPROVAL_RESPONSE
@@ -1298,21 +1359,14 @@ enum CustomerNotificationType {
   ORDER_CONFIRMED
   BANK_TRANSFER_CONFIRMED
   STAGE_APPROVAL_REQUESTED
-  STAGE_CHANGES_REQUESTED
   RECEIPT_CONFIRMATION_REQUESTED
   RECEIPT_CONFIRMED
-  ALTERATION_UPDATE
 }
 
 enum StaffNotificationType {
   STAGE_ASSIGNED
-  STAGE_REASSIGNED
-  JOB_ASSIGNED
-  TASK_ASSIGNED
   ORDER_UPDATE
-  SCHEDULE
   LATE_ALERT
-  GENERAL
   QUOTE_AWAITING
 }
 
@@ -1755,7 +1809,9 @@ model EventDate {
 
   label    String
   date     DateTime
+  /// Legacy single-shot flag. Interval tracking is `remindersSent`.
   notified Boolean  @default(false)
+  remindersSent Int[] @default([])
 
   createdAt DateTime @default(now())
 }

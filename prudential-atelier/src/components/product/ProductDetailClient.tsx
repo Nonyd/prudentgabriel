@@ -151,7 +151,7 @@ export function ProductDetailClient({
   };
 
   const lowStock =
-    variant && variant.stock > 0 && variant.stock <= product.lowStockAt ? variant.stock : 0;
+    variant && variant.stock > 0 && variant.stock <= (variant.lowStockAt ?? 3) ? variant.stock : 0;
 
   const addToBagClick = async () => {
     if (soldOut || submitting) return;

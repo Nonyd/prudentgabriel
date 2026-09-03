@@ -15,7 +15,9 @@ import {
   notifyClientBespokeStageComplete,
   createClientNotification,
   resolveUserIdByEmail,
+  resolveUserIdForBespoke,
 } from "@/lib/customer-notifications";
+import { customerAllowsPref } from "@/lib/account-helpers";
 import { notifyStaffOrderUpdate } from "@/lib/staff-notifications";
 import { sendStageApprovalRequestEmail, sendStageChangesRequestedEmail, sendBespokeDeliveredEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
@@ -255,11 +257,15 @@ export async function completeOrderStage(params: {
     });
 
     try {
-      await sendBespokeStageEmail(stage, emailData, order.clientEmail);
-      await prisma.stageUpdate.update({
-        where: { id: stageUpdate.id },
-        data: { emailSent: true, emailSentAt: new Date() },
-      });
+      const prefUserId = await resolveUserIdForBespoke(order.clientProfileId, order.clientEmail);
+      const wantsStage = prefUserId ? await customerAllowsPref(prefUserId, "orderStage") : true;
+      if (wantsStage) {
+        await sendBespokeStageEmail(stage, emailData, order.clientEmail);
+        await prisma.stageUpdate.update({
+          where: { id: stageUpdate.id },
+          data: { emailSent: true, emailSentAt: new Date() },
+        });
+      }
     } catch (emailErr) {
       console.error("[bespoke-stage-email]", emailErr);
     }

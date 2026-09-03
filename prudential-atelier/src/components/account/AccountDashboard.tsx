@@ -394,7 +394,7 @@ function EventsPanel({
         <EmptyBlock
           icon={Calendar}
           title="Save your important dates"
-          message="We'll remind you 8 weeks before — so you're always dressed for the moment."
+          message="We'll remind you 60, 30, and 14 days before — so you're always dressed for the moment."
           actionHref="/account/settings"
           actionLabel="Add event"
         />

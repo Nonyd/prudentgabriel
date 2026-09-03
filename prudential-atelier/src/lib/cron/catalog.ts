@@ -85,12 +85,6 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     migrated: true,
   },
   {
-    name: "update-bestsellers",
-    schedule: "0 2 * * *",
-    description: "Refresh bestseller product flags",
-    migrated: false,
-  },
-  {
     name: "unsent-quote-alerts",
     schedule: "0 11 * * *",
     description: "Alert when COMPLETED consultations have no quotation after 48h",

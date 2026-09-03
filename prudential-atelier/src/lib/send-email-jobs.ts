@@ -9,6 +9,7 @@ import { derivedCatalogMinNGN } from "@/lib/pricing";
 import { applyMarketingUnsubscribe, ensureEmailPreference, normalizeEmail, suppressedEmailSet } from "@/lib/email-consent";
 import { EMAIL_PRIORITY_MARKETING } from "@/lib/email-priority";
 import { optimizeImageUrl } from "@/lib/utils";
+import { emailAllowsCollectionCampaign } from "@/lib/account-helpers";
 import type { CampaignProduct } from "@/emails/CollectionCampaignEmail";
 
 export async function createEmailSendJob(params: {
@@ -153,6 +154,9 @@ export async function queueCampaignEmails(jobId: string): Promise<void> {
   for (const raw of recipients) {
     const to = normalizeEmail(raw);
     if (suppressed.has(to)) continue;
+    if (built.template === "collection-campaign" && !(await emailAllowsCollectionCampaign(to))) {
+      continue;
+    }
     const pref = await ensureEmailPreference(to);
     const { html, headers } = await applyMarketingUnsubscribe(built.html, pref.unsubscribeToken);
     await sendEmail({
@@ -183,6 +187,9 @@ export async function sendSingleMarketingEmail(params: {
   defer?: boolean;
 }) {
   const to = normalizeEmail(params.to);
+  if (params.template === "collection-campaign" && !(await emailAllowsCollectionCampaign(to))) {
+    return;
+  }
   const pref = await ensureEmailPreference(to);
   const { html, headers } = await applyMarketingUnsubscribe(params.html, pref.unsubscribeToken);
   await sendEmail({

@@ -3,11 +3,12 @@ import { QuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logActivity, logError } from "@/lib/logger";
 import { sendEmail } from "@/lib/email";
-import { ORDERS_EMAIL } from "@/lib/email-transport";
 import { notifyQuoteApproved } from "@/lib/notifications";
 import { maybeAutoConvertApprovedQuote } from "@/lib/quotation-convert";
 import { findLatestQuotationVersion } from "@/lib/quotation-versioning";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { getSetting } from "@/lib/settings";
+import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -74,15 +75,18 @@ export async function POST(req: NextRequest, { params }: Params) {
       userEmail: quote.clientEmail,
     });
 
-    void sendEmail({
-      to: ORDERS_EMAIL,
-      subject: `Quote approved — ${quote.quoteRef}`,
-      html: `<p>${quote.clientName} (${quote.clientEmail}) approved quotation ${quote.quoteRef}.</p>`,
-      template: "quote-approved-admin",
-      idempotencyKey: `quote-approved:${quote.id}`,
-      relatedType: "Quotation",
-      relatedId: quote.id,
-    }).catch(() => undefined);
+    const adminTo = await resolveAdminAlertEmail(getSetting);
+    if (adminTo) {
+      void sendEmail({
+        to: adminTo,
+        subject: `Quote approved — ${quote.quoteRef}`,
+        html: `<p>${quote.clientName} (${quote.clientEmail}) approved quotation ${quote.quoteRef}.</p>`,
+        template: "quote-approved-admin",
+        idempotencyKey: `quote-approved:${quote.id}`,
+        relatedType: "Quotation",
+        relatedId: quote.id,
+      }).catch(() => undefined);
+    }
 
     notifyQuoteApproved(quote);
     void maybeAutoConvertApprovedQuote(quote.id);

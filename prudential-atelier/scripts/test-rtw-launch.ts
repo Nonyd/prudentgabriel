@@ -80,11 +80,12 @@ async function testAdminAlertSkipsBounceMailbox() {
   delete process.env.ORDERS_ADMIN_EMAIL;
   delete process.env.GENERAL_ADMIN_EMAIL;
   delete process.env.SUPER_ADMIN_EMAIL;
+  delete process.env.ORDERS_EMAIL;
   try {
     const to = await resolveAdminAlertEmail(async (key) =>
       key === "admin_notification_email" ? "admin@prudentgabriel.com" : key === "contact_email" ? "hello@prudentgabriel.com" : null,
     );
-    assert(to === "hello@prudentgabriel.com", `expected hello@, got ${to}`);
+    assert(to === null, `expected no deliverable mailbox, got ${to}`);
   } finally {
     if (prev === undefined) delete process.env.ADMIN_EMAIL;
     else process.env.ADMIN_EMAIL = prev;

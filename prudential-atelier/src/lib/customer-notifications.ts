@@ -1,8 +1,9 @@
 import type { BespokeStage, CustomerNotificationType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
+import { customerAllowsPref } from "@/lib/account-helpers";
 
-async function resolveUserIdForBespoke(
+export async function resolveUserIdForBespoke(
   clientProfileId: string | null,
   clientEmail: string,
 ): Promise<string | null> {
@@ -72,6 +73,7 @@ export function notifyClientBespokeStageComplete(params: {
   void (async () => {
     const userId = await resolveUserIdForBespoke(params.clientProfileId, params.clientEmail);
     if (!userId) return;
+    if (!(await customerAllowsPref(userId, "orderStage"))) return;
 
     const stageLabel = STAGE_SHORT_LABELS[params.stage];
     await createClientNotification({
@@ -313,11 +315,12 @@ export function notifyEventReminder(params: {
   userId: string;
   eventId: string;
   eventLabel: string;
+  daysUntil: number;
 }): void {
   void createClientNotification({
     userId: params.userId,
     type: "EVENT_REMINDER",
-    title: `${params.eventLabel} is coming up`,
+    title: `${params.eventLabel} is ${params.daysUntil} days away`,
     message: "It's a great time to begin your commission or browse our collection.",
     link: "/consultation",
     entityId: params.eventId,

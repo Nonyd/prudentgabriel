@@ -180,7 +180,7 @@ export function SettingsClient({
               ["orderStage", "Email me when my order advances a stage"],
               ["newCollections", "Email me about new collections"],
               ["wishlistRestock", "Email me when wishlisted items restock"],
-              ["eventReminders", "Email me 8 weeks before my saved event dates"],
+              ["eventReminders", "Email me 60 days, 30 days, and 14 days before my saved event dates"],
             ] as const
           ).map(([key, label]) => (
             <li key={key}>

@@ -80,6 +80,36 @@ function makeFulfillDb(order: {
     items: order.items.map((i) => ({ ...i, product: { name: "Dress" }, size: "M", color: "Black", price: order.total })),
   };
 
+  // Minimal in-memory mocks for the stock ledger path inside fulfillPaidOrder.
+  const variantsById: Record<
+    string,
+    {
+      id: string;
+      stock: number;
+      size: string;
+      lowStockAt: number;
+      productId: string;
+      product: { id: string; name: string; slug: string };
+    }
+  > = {
+    var_1: {
+      id: "var_1",
+      stock: 2,
+      size: "M",
+      lowStockAt: -1000, // avoid low-stock notifications in tests
+      productId: "prod_1",
+      product: { id: "prod_1", name: "Dress", slug: "dress" },
+    },
+  };
+
+  const stockMovementsByVariantId: Record<
+    string,
+    { delta: number; reason: string; orderId?: string | null }[]
+  > = {
+    // Seed OPENING so ensureOpeningIfBare is a no-op (keeps "ledger writes" expectation stable).
+    var_1: [{ delta: 2, reason: "OPENING" }],
+  };
+
   const tx = {
     order: {
       updateMany: async (args: { where: { paymentStatus: PaymentStatus } }) => {
@@ -92,9 +122,49 @@ function makeFulfillDb(order: {
       },
     },
     productVariant: {
-      updateMany: async () => {
-        stockDecrements += 1;
-        return { count: 1 };
+      findUnique: async (args: { where: { id: string } }) => {
+        const id = args.where.id;
+        const v = variantsById[id];
+        if (!v) return null;
+        return {
+          id: v.id,
+          stock: v.stock,
+          size: v.size,
+          lowStockAt: v.lowStockAt,
+          productId: v.productId,
+          product: v.product,
+        };
+      },
+      update: async (args: { where: { id: string }; data: { stock: number } }) => {
+        const id = args.where.id;
+        const v = variantsById[id];
+        if (!v) throw new Error(`Unknown variant ${id}`);
+        v.stock = args.data.stock;
+        return { id };
+      },
+      findFirst: async (args: { where: { productId: string; stock: { gt: number } }; select: { id: true } }) => {
+        const { productId } = args.where;
+        const hit = Object.values(variantsById).find((v) => v.productId === productId && v.stock > 0);
+        return hit ? { id: hit.id } : null;
+      },
+    },
+    stockMovement: {
+      count: async (args: { where: { variantId: string } }) => stockMovementsByVariantId[args.where.variantId]?.length ?? 0,
+      aggregate: async (args: { where: { variantId: string }; _sum: { delta: true } }) => {
+        const list = stockMovementsByVariantId[args.where.variantId] ?? [];
+        const sum = list.reduce((a, r) => a + r.delta, 0);
+        return { _sum: { delta: sum } };
+      },
+      create: async (args: { data: { variantId: string; delta: number; reason: string; orderId?: string | null } }) => {
+        const list = (stockMovementsByVariantId[args.data.variantId] ??= []);
+        list.push({ delta: args.data.delta, reason: args.data.reason, orderId: args.data.orderId });
+        if (args.data.reason === "SALE") stockDecrements += 1;
+        return { id: `sm-${Date.now()}` };
+      },
+    },
+    product: {
+      update: async () => {
+        // syncProductInStock: no-op for this test
       },
     },
     payment: {
@@ -111,7 +181,7 @@ function makeFulfillDb(order: {
     order: {
       findUnique: async () => ({ ...row, paymentStatus: status }),
     },
-    $transaction: async (fn: (inner: typeof tx) => Promise<boolean>) => fn(tx),
+    $transaction: async (fn: (inner: typeof tx) => Promise<any>) => fn(tx),
   };
 
   return { db, release: gate.release, stock: () => stockDecrements, ledger: () => ledgerWrites };

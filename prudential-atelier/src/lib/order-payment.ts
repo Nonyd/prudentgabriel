@@ -25,23 +25,17 @@ import {
   shouldDecrementStock,
 } from "@/lib/custom-size";
 import { syncProfileFromSnapshots } from "@/lib/custom-order-line";
+import {
+  applySale,
+  afterStockWrites,
+  FULFILMENT_STOCK_REFUSE_NOTE,
+  InsufficientVariantStockError,
+  type StockWriteResult,
+} from "@/lib/stock-ledger";
 
 export type OrderFulfillDb = Pick<PrismaClient, "$transaction" | "order">;
 
-export class InsufficientVariantStockError extends Error {
-  readonly variantId: string;
-  readonly quantity: number;
-
-  constructor(variantId: string, quantity: number) {
-    super("INSUFFICIENT_VARIANT_STOCK");
-    this.name = "InsufficientVariantStockError";
-    this.variantId = variantId;
-    this.quantity = quantity;
-  }
-}
-
-const STOCK_REFUSE_NOTE =
-  "Fulfilment refused: stock was insufficient after payment. Refund the customer — do not ship.";
+export { InsufficientVariantStockError, FULFILMENT_STOCK_REFUSE_NOTE };
 
 async function confirmedOnOrder(tx: object, orderId: string): Promise<number> {
   const payment = (tx as {
@@ -77,7 +71,7 @@ async function refuseFulfilmentForStock(params: {
         paidAt: pointsOnly ? undefined : new Date(),
         paymentRef: params.paymentRef,
         status: OrderStatus.CANCELLED,
-        adminNotes: STOCK_REFUSE_NOTE,
+        adminNotes: FULFILMENT_STOCK_REFUSE_NOTE,
         ...(params.gateway ? { paymentGateway: params.gateway } : {}),
       },
     });
@@ -123,7 +117,7 @@ export async function fulfillPaidOrder(params: {
   const order = await db.order.findUnique({
     where: { id: params.orderId },
     include: {
-      items: { include: { product: { select: { name: true } } } },
+      items: { include: { product: { select: { name: true, slug: true } } } },
       user: { select: { id: true, email: true, name: true } },
     },
   });
@@ -177,8 +171,9 @@ export async function fulfillPaidOrder(params: {
     }));
 
   let claimed = false;
+  let stockWrites: StockWriteResult[] = [];
   try {
-    claimed = await db.$transaction(async (tx) => {
+    const outcome = await db.$transaction(async (tx) => {
       const flipped = await tx.order.updateMany({
         where: { id: order.id, paymentStatus: PaymentStatus.PENDING },
         data: {
@@ -191,19 +186,20 @@ export async function fulfillPaidOrder(params: {
       });
 
       if (flipped.count === 0) {
-        return false;
+        return { claimed: false, writes: [] as StockWriteResult[] };
       }
 
+      const writes: StockWriteResult[] = [];
       for (const item of order.items) {
         if (!item.variantId) continue;
         if (!shouldDecrementStock(item.sizeMode)) continue;
-        const decremented = await tx.productVariant.updateMany({
-          where: { id: item.variantId, stock: { gte: item.quantity } },
-          data: { stock: { decrement: item.quantity } },
-        });
-        if (decremented.count === 0) {
-          throw new InsufficientVariantStockError(item.variantId, item.quantity);
-        }
+        writes.push(
+          await applySale(tx, {
+            variantId: item.variantId,
+            quantity: item.quantity,
+            orderId: order.id,
+          }),
+        );
       }
 
       const already = await confirmedOnOrder(tx, order.id);
@@ -224,8 +220,10 @@ export async function fulfillPaidOrder(params: {
         });
       }
 
-      return true;
+      return { claimed: true, writes };
     }, INTERACTIVE_TX);
+    claimed = outcome.claimed;
+    stockWrites = outcome.writes;
   } catch (err) {
     const isStock =
       err instanceof InsufficientVariantStockError ||
@@ -248,7 +246,7 @@ export async function fulfillPaidOrder(params: {
       const clientEmail = order.guestEmail ?? order.user?.email;
       const clientName = order.guestName ?? order.user?.name ?? "Client";
       void createNotification({
-        type: "PAYMENT_FAILED",
+        type: "RTW_OVERSELL",
         title: "RTW oversell — refund required",
         message: `#${order.orderNumber} paid but stock was gone. Refund ${clientEmail ?? "the customer"} — do not ship. Queue: Orders → Refund required.`,
         link: `/admin/orders?attention=refund-required`,
@@ -279,6 +277,10 @@ export async function fulfillPaidOrder(params: {
 
   if (!params.db) {
     await recomputeRtwOrderTotals(order.id).catch((e) => console.warn("[fulfillPaidOrder] rtw totals", e));
+  }
+
+  if (stockWrites.length) {
+    await afterStockWrites(stockWrites).catch((e) => console.warn("[fulfillPaidOrder] stock after", e));
   }
 
   if (params.notify === false) {

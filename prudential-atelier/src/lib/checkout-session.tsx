@@ -87,13 +87,13 @@ export async function allSnapshotItemsOutOfStock(raw: unknown): Promise<boolean>
   const variantIds = Array.from(new Set(lines.map((l) => l.variantId)));
   const variants = await prisma.productVariant.findMany({
     where: { id: { in: variantIds } },
-    select: { id: true, stock: true, product: { select: { inStock: true } } },
+    select: { id: true, stock: true },
   });
   const byId = new Map(variants.map((v) => [v.id, v]));
   return lines.every((l) => {
     const v = byId.get(l.variantId);
     if (!v) return true;
-    return v.stock < 1 || !v.product.inStock;
+    return v.stock < 1;
   });
 }
 

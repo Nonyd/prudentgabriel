@@ -15,6 +15,9 @@ import { sendOrderShippedEmail, sendPickupReadyEmail, sendRtwOrderDeliveredEmail
 import { notifyOrderDelivered, notifyOrderShipped } from "@/lib/customer-notifications";
 import { deleteOrdersByIds } from "@/lib/order-delete";
 import { rtwHasOutstandingBalance } from "@/lib/payments/rtw-totals";
+import { shouldDecrementStock } from "@/lib/custom-size";
+import { restockOrderLines, afterStockWrites, isOversellRefuse } from "@/lib/stock-ledger";
+import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { z } from "zod";
 
 const patchSchema = z.object({
@@ -35,6 +38,7 @@ const patchSchema = z.object({
   trackingNumber: z.string().optional().nullable(),
   carrier: z.string().optional().nullable(),
   collectionCode: z.string().optional(),
+  returnToStock: z.boolean().optional(),
 });
 
 const recordRefundSchema = z.object({
@@ -42,6 +46,7 @@ const recordRefundSchema = z.object({
     full: z.boolean(),
     amountNGN: z.number().nonnegative(),
     reason: z.string().min(1),
+    returnToStock: z.boolean().optional(),
   }),
 });
 
@@ -82,14 +87,24 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     if (order.paymentStatus !== "PAID") {
       return NextResponse.json({ error: "Refund can only be recorded for paid orders" }, { status: 400 });
     }
-    const { full, amountNGN, reason } = refundTry.data.recordRefund;
+    const { full, amountNGN, reason, returnToStock } = refundTry.data.recordRefund;
     if (!full && amountNGN > order.total) {
       return NextResponse.json({ error: "Refund amount exceeds order total" }, { status: 400 });
     }
     const stamp = new Date().toISOString().slice(0, 10);
-    const line = `\n[${stamp}] Refund recorded: ₦${Math.round(amountNGN).toLocaleString("en-NG")}. Reason: ${reason}`;
+    const wantStock = Boolean(returnToStock) && full && !isOversellRefuse(order.adminNotes);
+    const line = `\n[${stamp}] Refund recorded: ₦${Math.round(amountNGN).toLocaleString("en-NG")}. Reason: ${reason}${
+      wantStock ? ". Returned to stock." : returnToStock ? ". Not returned to stock (partial or oversell)." : ". Not returned to stock."
+    }`;
     const adminNotes = [order.adminNotes?.trim() ?? "", line].filter(Boolean).join("\n");
     const nextStatus = full ? "REFUNDED" : "PROCESSING";
+    const actorId = gate.session.user.id;
+    const items = wantStock
+      ? await prisma.orderItem.findMany({
+          where: { orderId: id },
+          select: { variantId: true, quantity: true, sizeMode: true },
+        })
+      : [];
     const updated = await prisma.$transaction(async (tx) => {
       const row = await tx.order.update({
         where: { id },
@@ -102,9 +117,22 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       if (full) {
         await returnRedeemedPoints(id, tx);
       }
-      return row;
-    });
-    return NextResponse.json(updated);
+      const writes = wantStock
+        ? await restockOrderLines(tx, {
+            orderId: id,
+            adminNotes: order.adminNotes,
+            paymentStatus: order.paymentStatus,
+            items,
+            reason: "REFUND_RETURN",
+            actorId,
+            note: `Refund recorded. ${reason}. Return to stock: yes.`,
+            shouldDecrementStock,
+          })
+        : [];
+      return { row, writes };
+    }, INTERACTIVE_TX);
+    if (updated.writes.length) await afterStockWrites(updated.writes);
+    return NextResponse.json(updated.row);
   }
 
   const parsed = patchSchema.safeParse(body);
@@ -168,6 +196,22 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       ? order.collectionCode ?? generateCollectionCode()
       : undefined;
 
+  const wantCancelRestock =
+    parsed.data.status === "CANCELLED" &&
+    parsed.data.status !== order.status &&
+    parsed.data.returnToStock === true &&
+    order.paymentStatus === "PAID" &&
+    !isOversellRefuse(order.adminNotes);
+
+  const cancelItems = wantCancelRestock
+    ? await prisma.orderItem.findMany({
+        where: { orderId: id },
+        select: { variantId: true, quantity: true, sizeMode: true },
+      })
+    : [];
+  const actorId = gate.session.user.id;
+  const cancelWrites: Awaited<ReturnType<typeof restockOrderLines>> = [];
+
   const updated = await prisma.$transaction(async (tx) => {
     const row = await tx.order.update({
       where: { id },
@@ -191,6 +235,20 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       await returnRedeemedPoints(id, tx);
     }
 
+    if (wantCancelRestock) {
+      const writes = await restockOrderLines(tx, {
+        orderId: id,
+        adminNotes: order.adminNotes,
+        paymentStatus: order.paymentStatus,
+        items: cancelItems,
+        reason: "CANCEL_RETURN",
+        actorId,
+        note: "Admin cancel. Return to stock: yes.",
+        shouldDecrementStock,
+      });
+      cancelWrites.push(...writes);
+    }
+
     if (parsed.data.status === "DELIVERED" && order.userId && order.paymentStatus === "PAID") {
       const existing = await tx.pointsTransaction.findFirst({
         where: { orderId: id, type: PointsType.EARNED_PURCHASE },
@@ -207,7 +265,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     }
 
     return row;
-  });
+  }, INTERACTIVE_TX);
+
+  if (cancelWrites.length) await afterStockWrites(cancelWrites);
 
   if (parsed.data.status === "READY_FOR_COLLECTION" && email) {
     const pickup = order.pickupLocationId

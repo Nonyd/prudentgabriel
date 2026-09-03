@@ -29,6 +29,7 @@ import {
   PointsType,
 } from "@prisma/client";
 import { STAGE_ORDER } from "../src/lib/bespoke-stages";
+import { ensureAllOpeningMovements } from "../src/lib/stock-ledger";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -1754,6 +1755,8 @@ async function main() {
   await seedQuotation();
   await seedCollections(productIds);
   await seedCareerJobs();
+  const opening = await ensureAllOpeningMovements(prisma);
+  if (opening > 0) console.log(`  ✅ ${opening} opening stock movements`);
 
   printCredentials();
   console.log("\n✅ Demo seed complete.\n");

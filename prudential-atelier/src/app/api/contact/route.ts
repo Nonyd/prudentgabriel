@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { rateLimitOr429 } from "@/lib/rate-limit";
+import { getSetting } from "@/lib/settings";
+import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
 
 export async function POST(req: NextRequest) {
   const limited = rateLimitOr429(req, "contact-form", 5, 15 * 60 * 1000);
@@ -33,10 +35,8 @@ export async function POST(req: NextRequest) {
     /* fall back to env */
   }
 
-  const contactEmail =
-    cmsGet(cms, "contact_notification_email", "") ||
-    process.env.ADMIN_EMAIL ||
-    "hello@prudentgabriel.com";
+  const cmsInbox = cmsGet(cms, "contact_notification_email", "").trim();
+  const contactEmail = cmsInbox || (await resolveAdminAlertEmail(getSetting));
   const autoReplyMessage = cmsGet(
     cms,
     "contact_auto_reply_message",
@@ -69,10 +69,11 @@ export async function POST(req: NextRequest) {
     link: `/admin/content/messages`,
   }).catch(() => {});
 
-  await sendEmail({
-    to: contactEmail,
-    subject: `New contact: ${subject} — ${name}`,
-    html: `
+  if (contactEmail) {
+    await sendEmail({
+      to: contactEmail,
+      subject: `New contact: ${subject} — ${name}`,
+      html: `
       <h2>New Contact Form Submission</h2>
       <p><strong>Name:</strong> ${name}</p>
       <p><strong>Email:</strong> ${email}</p>
@@ -82,11 +83,12 @@ export async function POST(req: NextRequest) {
       <p>${safeMessage}</p>
       <p><a href="${appUrl}/admin/content/messages">View in admin messages →</a></p>
     `,
-    template: "contact-admin",
-    idempotencyKey: `contact-admin:${saved.id}`,
-    relatedType: "ContactMessage",
-    relatedId: saved.id,
-  }).catch(() => {});
+      template: "contact-admin",
+      idempotencyKey: `contact-admin:${saved.id}`,
+      relatedType: "ContactMessage",
+      relatedId: saved.id,
+    }).catch(() => {});
+  }
 
   await sendEmail({
     to: email,

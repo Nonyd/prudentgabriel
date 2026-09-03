@@ -8,6 +8,7 @@ import { revalidateProduct } from "@/lib/revalidate";
 import { canInlineEditPrice, derivedCatalogMinNGN } from "@/lib/pricing";
 import { processRestockAlerts } from "@/lib/stock-alerts";
 import { destroyCloudinaryAsset } from "@/lib/cloudinary-public-id";
+import { applyCountCorrection, applyOpening, afterStockWrites, syncProductInStock, type StockWriteResult } from "@/lib/stock-ledger";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi("shop.products");
@@ -137,6 +138,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   });
   const oldStockMap = new Map(oldVariants.map((v) => [v.id, v.stock]));
 
+  const actorId = gate.session.user.id!;
+  const stockWrites: StockWriteResult[] = [];
+
   try {
     await prisma.$transaction(async (tx) => {
       await tx.product.update({
@@ -166,7 +170,6 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           customSurchargeValue: data.customSurchargeValue ?? null,
           customLeadTimeDays: data.customLeadTimeDays ?? null,
           customReturnable: data.customReturnable ?? null,
-          inStock: data.variants.some((v) => v.stock > 0),
           defaultWeightKg: data.defaultWeightKg ?? null,
           defaultLengthCm: data.defaultLengthCm ?? null,
           defaultWidthCm: data.defaultWidthCm ?? null,
@@ -203,7 +206,6 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
               priceUSD: v.priceUSD ?? null,
               priceGBP: v.priceGBP ?? null,
               salePriceNGN: v.salePriceNGN ?? null,
-              stock: v.stock,
               lowStockAt: v.lowStockAt,
               sortOrder: v.sortOrder ?? i,
               weightKg: v.weightKg ?? null,
@@ -212,8 +214,14 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
               heightCm: v.heightCm ?? null,
             },
           });
+          const write = await applyCountCorrection(tx, {
+            variantId: v.id,
+            newStock: v.stock,
+            actorId,
+          });
+          if (write) stockWrites.push(write);
         } else {
-          await tx.productVariant.create({
+          const created = await tx.productVariant.create({
             data: {
               productId: id,
               sku,
@@ -222,7 +230,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
               priceUSD: v.priceUSD ?? null,
               priceGBP: v.priceGBP ?? null,
               salePriceNGN: v.salePriceNGN ?? null,
-              stock: v.stock,
+              stock: 0,
               lowStockAt: v.lowStockAt,
               sortOrder: v.sortOrder ?? i,
               weightKg: v.weightKg ?? null,
@@ -231,6 +239,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
               heightCm: v.heightCm ?? null,
             },
           });
+          const write = await applyOpening(tx, { variantId: created.id, stock: v.stock });
+          if (write) stockWrites.push(write);
         }
       }
 
@@ -283,9 +293,12 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           },
         });
       }
+
+      await syncProductInStock(tx, id);
     });
 
     await revalidateProduct(data.slug);
+    if (stockWrites.length) await afterStockWrites(stockWrites);
 
     const restockedIds = data.variants
       .filter((v) => v.id && (oldStockMap.get(v.id) ?? 0) <= 0 && v.stock > 0)

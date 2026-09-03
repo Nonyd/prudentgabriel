@@ -105,6 +105,23 @@ export async function getNotificationPrefs(userId: string): Promise<Record<strin
   }
 }
 
+export async function customerAllowsPref(
+  userId: string,
+  key: "orderStage" | "newCollections" | "wishlistRestock" | "eventReminders",
+): Promise<boolean> {
+  const prefs = await getNotificationPrefs(userId);
+  return prefs[key] !== false;
+}
+
+export async function emailAllowsCollectionCampaign(email: string): Promise<boolean> {
+  const user = await prisma.user.findFirst({
+    where: { email: { equals: email.trim(), mode: "insensitive" } },
+    select: { id: true },
+  });
+  if (!user) return true;
+  return customerAllowsPref(user.id, "newCollections");
+}
+
 export async function saveNotificationPrefs(
   userId: string,
   prefs: Record<string, boolean>,

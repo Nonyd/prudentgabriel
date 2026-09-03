@@ -204,6 +204,7 @@ async function testDuplicateProduct() {
   });
   assert(loaded?.isPublished === false, "copy is unpublished");
   assert(loaded?.variants.length === 2, "variants copied");
+  assert(loaded?.variants.every((v) => v.stock === 0), "copy stock is 0");
 }
 
 async function testUnpublishPreviewListsSharedCollections() {

@@ -4,6 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { revalidateProduct } from "@/lib/revalidate";
 import { processRestockAlerts } from "@/lib/stock-alerts";
+import {
+  applyCountCorrection,
+  afterStockWrites,
+  collectionVariantIds,
+  type StockWriteResult,
+} from "@/lib/stock-ledger";
+import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 
 const patchSchema = z.object({
   updates: z
@@ -77,6 +84,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi("shop.products");
   if (!gate.ok) return gate.response;
+  const actorId = gate.session.user.id!;
   const { id: collectionId } = await ctx.params;
 
   const json = await req.json().catch(() => null);
@@ -91,25 +99,44 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   });
   if (!collection) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const restocked: string[] = [];
-  const slugs = new Set<string>();
+  const result = await prisma.$transaction(async (tx) => {
+    const allowed = await collectionVariantIds(tx, collectionId);
+    const restocked: string[] = [];
+    const slugs = new Set<string>();
+    const writes: StockWriteResult[] = [];
+    let updated = 0;
+    let skipped = 0;
 
-  for (const u of parsed.data.updates) {
-    const current = await prisma.productVariant.findUnique({
-      where: { id: u.variantId },
-      select: { stock: true, product: { select: { slug: true } } },
-    });
-    if (!current) continue;
-    await prisma.productVariant.update({
-      where: { id: u.variantId },
-      data: { stock: u.stock },
-    });
-    slugs.add(current.product.slug);
-    if (current.stock === 0 && u.stock > 0) restocked.push(u.variantId);
-  }
+    for (const u of parsed.data.updates) {
+      if (!allowed.has(u.variantId)) {
+        skipped += 1;
+        continue;
+      }
+      const current = await tx.productVariant.findUnique({
+        where: { id: u.variantId },
+        select: { stock: true, product: { select: { slug: true } } },
+      });
+      if (!current) {
+        skipped += 1;
+        continue;
+      }
+      const write = await applyCountCorrection(tx, {
+        variantId: u.variantId,
+        newStock: u.stock,
+        actorId,
+      });
+      if (write) writes.push(write);
+      slugs.add(current.product.slug);
+      if (current.stock === 0 && u.stock > 0) restocked.push(u.variantId);
+      updated += 1;
+    }
 
-  if (restocked.length) void processRestockAlerts(restocked);
-  await Promise.all(Array.from(slugs).map((s) => revalidateProduct(s)));
+    return { restocked, slugs: Array.from(slugs), writes, updated, skipped };
+  }, INTERACTIVE_TX);
 
-  return NextResponse.json({ ok: true, updated: parsed.data.updates.length });
+  if (result.restocked.length) void processRestockAlerts(result.restocked);
+  if (result.writes.length) await afterStockWrites(result.writes);
+  else await Promise.all(result.slugs.map((s) => revalidateProduct(s)));
+
+  return NextResponse.json({ ok: true, updated: result.updated, skipped: result.skipped });
 }
