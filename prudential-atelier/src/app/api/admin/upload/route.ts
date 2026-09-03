@@ -45,7 +45,6 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
-  const isPdf = magic === "application/pdf";
   const mime = isVideo ? videoMime! : magic!;
 
   const folderField = form.get("folder");
