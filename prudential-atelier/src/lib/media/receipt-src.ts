@@ -1,4 +1,4 @@
-import { keyFromMediaUrl } from "@/lib/media/keys";
+import { keyFromMediaUrl } from "@/lib/media/key-parse";
 
 /** Admin lightbox / iframe src. Local private files go through the cookie-authenticated route. */
 export function adminReceiptSrc(url: string | null | undefined): string {

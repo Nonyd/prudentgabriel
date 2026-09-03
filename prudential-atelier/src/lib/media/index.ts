@@ -8,7 +8,7 @@ export {
   isPrivateMediaKey,
   isValidMediaKey,
   keyFromMediaUrl,
-} from "@/lib/media/keys";
+} from "@/lib/media/key-parse";
 
 let testStore: MediaStore | null = null;
 

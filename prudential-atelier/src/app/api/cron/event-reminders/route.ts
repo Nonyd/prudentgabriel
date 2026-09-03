@@ -8,7 +8,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { notifyEventReminder } from "@/lib/customer-notifications";
 import { customerAllowsPref } from "@/lib/account-helpers";
 
-export const REMINDER_DAYS = [60, 30, 14] as const;
+const REMINDER_DAYS = [60, 30, 14] as const;
 
 function daysUntilEvent(eventDate: Date): number {
   const today = new Date();
