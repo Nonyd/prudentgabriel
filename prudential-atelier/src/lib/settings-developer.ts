@@ -100,11 +100,8 @@ export function deniedDeveloperWriteKey(
   return null;
 }
 
-export function redactSettingsForRole<T extends { key: string }>(
-  _role: string | undefined | null,
-  rows: T[],
-  _actor?: AccessActor,
-): T[] {
+/** Developer credentials never appear on commercial settings APIs, including Super Admin. */
+export function redactSettingsForRole<T extends { key: string }>(rows: T[]): T[] {
   return rows.filter((r) => {
     if (isEmailTemplateSettingKey(r.key)) return false;
     if (isDeveloperSettingKey(r.key)) return false;

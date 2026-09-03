@@ -88,8 +88,7 @@ export async function GET(
     },
   });
 
-  const { role, actor } = await resolveSessionAccess(gate.session);
-  const visible = redactSettingsForRole(role, rows, actor).filter((r) => {
+  const visible = redactSettingsForRole(rows).filter((r) => {
     if (group === "PAYMENTS") return COMMERCIAL_PAYMENTS_KEYS.has(r.key);
     return true;
   });

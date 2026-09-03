@@ -28,7 +28,7 @@ export async function GET() {
     },
   });
 
-  const visible = redactSettingsForRole(gate.session.user.role, rows).filter(
+  const visible = redactSettingsForRole(rows).filter(
     (r) => !isDeveloperSettingKey(r.key) && !isEmailTemplateSettingKey(r.key),
   );
 
