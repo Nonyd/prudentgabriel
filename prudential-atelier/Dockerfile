@@ -69,9 +69,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/src/lib ./src/lib
 COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./tsconfig.json
 COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.scripts.json ./tsconfig.scripts.json
 # Standalone output does not always trace sharp; next/image needs the native binary.
-RUN npm install --omit=dev --os=linux --cpu=x64 sharp@0.33.5 \
-  && chown -R nextjs:nodejs /app/node_modules/sharp
-ENV NEXT_SHARP_PATH=/app/node_modules/sharp
+# Install into an empty prefix — `npm i` inside the pnpm standalone tree hits isDescendantOf.
+RUN mkdir -p /opt/sharp \
+  && npm install --omit=dev --prefix /opt/sharp sharp@0.33.5 \
+  && chown -R nextjs:nodejs /opt/sharp
+ENV NEXT_SHARP_PATH=/opt/sharp/node_modules/sharp
 COPY --chown=root:root entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
