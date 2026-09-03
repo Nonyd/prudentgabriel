@@ -1,3 +1,4 @@
+import { getDashboardSecret } from "@/lib/credential-catalog";
 import { getSetting } from "@/lib/settings";
 import type { PaymentCurrency, PaymentGatewayType } from "@/lib/payments/index";
 import {
@@ -6,17 +7,6 @@ import {
   type BusinessLineCode,
   type PublicBankAccount,
 } from "@/lib/payments/bank-account";
-
-function envOrNull(key: string): string | null {
-  const v = process.env[key];
-  return v?.trim() ? v.trim() : null;
-}
-
-async function settingOrEnv(settingKey: string, envKey: string): Promise<string | null> {
-  const fromDb = await getSetting(settingKey);
-  if (fromDb?.trim()) return fromDb.trim();
-  return envOrNull(envKey);
-}
 
 async function isEnabled(settingKey: string, fallback = true): Promise<boolean> {
   const v = await getSetting(settingKey);
@@ -33,59 +23,53 @@ export function getWebhookUrl(gateway: "paystack" | "flutterwave" | "stripe" | "
 }
 
 export async function getPaystackSecret(): Promise<string | null> {
-  return settingOrEnv("paystack_secret_key", "PAYSTACK_SECRET_KEY");
+  return getDashboardSecret("paystack_secret_key");
 }
 
 export async function getPaystackPublicKey(): Promise<string | null> {
-  return settingOrEnv("paystack_public_key", "NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY");
+  return getDashboardSecret("paystack_public_key");
 }
 
 export async function getFlutterwaveSecret(): Promise<string | null> {
-  return settingOrEnv("flutterwave_secret_key", "FLUTTERWAVE_SECRET_KEY");
+  return getDashboardSecret("flutterwave_secret_key");
 }
 
 /** Dashboard `verif-hash` secret. Falls back to the API secret if no dedicated hash is set. */
 export async function getFlutterwaveWebhookHash(): Promise<string | null> {
-  return (
-    (await settingOrEnv("flutterwave_secret_hash", "FLUTTERWAVE_SECRET_HASH")) ??
-    (await getFlutterwaveSecret())
-  );
+  return (await getDashboardSecret("flutterwave_secret_hash")) ?? (await getFlutterwaveSecret());
 }
 
 export async function getFlutterwavePublicKey(): Promise<string | null> {
-  return settingOrEnv("flutterwave_public_key", "NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY");
+  return getDashboardSecret("flutterwave_public_key");
 }
 
 export async function getStripeSecret(): Promise<string | null> {
-  return settingOrEnv("stripe_secret_key", "STRIPE_SECRET_KEY");
+  return getDashboardSecret("stripe_secret_key");
 }
 
 export async function getStripePublicKey(): Promise<string | null> {
-  return settingOrEnv(
-    "stripe_public_key",
-    "NEXT_PUBLIC_STRIPE_PUBLIC_KEY",
-  ) ?? envOrNull("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY");
+  return getDashboardSecret("stripe_public_key");
 }
 
 export async function getStripeWebhookSecret(): Promise<string | null> {
-  return settingOrEnv("stripe_webhook_secret", "STRIPE_WEBHOOK_SECRET");
+  return getDashboardSecret("stripe_webhook_secret");
 }
 
 export async function getMonnifyApiKey(): Promise<string | null> {
-  return settingOrEnv("monnify_api_key", "MONNIFY_API_KEY");
+  return getDashboardSecret("monnify_api_key");
 }
 
 export async function getMonnifySecret(): Promise<string | null> {
-  return settingOrEnv("monnify_secret_key", "MONNIFY_SECRET_KEY");
+  return getDashboardSecret("monnify_secret_key");
 }
 
 export async function getMonnifyContractCode(): Promise<string | null> {
-  return settingOrEnv("monnify_contract_code", "MONNIFY_CONTRACT_CODE");
+  return getDashboardSecret("monnify_contract_code");
 }
 
 export async function getMonnifyBaseUrl(): Promise<string> {
-  const env = envOrNull("MONNIFY_BASE_URL");
-  return (env ?? "https://api.monnify.com").replace(/\/$/, "");
+  const env = process.env.MONNIFY_BASE_URL?.trim();
+  return (env || "https://api.monnify.com").replace(/\/$/, "");
 }
 
 export type BankAccountDetails = PublicBankAccount;

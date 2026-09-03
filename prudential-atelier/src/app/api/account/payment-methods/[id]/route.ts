@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getStripeSecret } from "@/lib/payments/config";
 
 const patchSchema = z.object({
   isDefault: z.boolean().optional(),
@@ -56,7 +57,7 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   if (existing.gateway === "STRIPE" && existing.stripePaymentMethodId) {
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    const stripeKey = await getStripeSecret();
     if (stripeKey) {
       const stripe = new Stripe(stripeKey);
       await stripe.paymentMethods.detach(existing.stripePaymentMethodId).catch(() => null);

@@ -55,9 +55,10 @@ export async function getLockedFx(): Promise<LockedFx> {
 
   try {
     const rates = await getExchangeRates();
-    const source =
-      process.env.OPEN_EXCHANGE_RATES_APP_ID?.trim() ? "openexchangerates" : "site_setting_or_fallback";
-    const stale = source === "site_setting_or_fallback" && !process.env.OPEN_EXCHANGE_RATES_APP_ID;
+    const { getDashboardSecret } = await import("@/lib/credential-catalog");
+    const oxr = await getDashboardSecret("open_exchange_rates_app_id");
+    const source = oxr ? "openexchangerates" : "site_setting_or_fallback";
+    const stale = source === "site_setting_or_fallback" && !oxr;
     await persistSnapshot(rates, source, stale);
     return {
       rate: rates.USD,

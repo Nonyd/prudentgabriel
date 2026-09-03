@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
       where.OR = [
         { description: { contains: search, mode: "insensitive" } },
         { userEmail: { contains: search, mode: "insensitive" } },
+        { impersonatedEmail: { contains: search, mode: "insensitive" } },
       ];
     }
     if (from || to) {

@@ -29,6 +29,28 @@ export async function applyPasswordHash(userId: string, passwordHash: string): P
   await invalidateUserAuth(userId);
 }
 
+/** Sign the user out everywhere without choosing a new password. */
+export async function forceSignOutUser(userId: string): Promise<void> {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordChangedAt: new Date() },
+  });
+  await prisma.session.deleteMany({ where: { userId } });
+}
+
+export async function issuePasswordResetToken(userId: string): Promise<{ raw: string; hash: string }> {
+  await prisma.passwordResetToken.deleteMany({ where: { userId } });
+  const { raw, hash } = generateResetToken();
+  await prisma.passwordResetToken.create({
+    data: {
+      token: hash,
+      userId,
+      expiresAt: new Date(Date.now() + RESET_TTL_MS),
+    },
+  });
+  return { raw, hash };
+}
+
 export function jwtIssuedBeforePasswordChange(
   tokenIat: number | undefined,
   passwordChangedAt: Date | null | undefined,

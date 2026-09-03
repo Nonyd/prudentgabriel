@@ -1,11 +1,14 @@
 import { ActivityAction, ErrorSeverity } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { queueEmail } from "@/lib/email-outbox";
+import { getAdminImpersonation } from "@/lib/admin-impersonate";
 
 export async function logActivity(params: {
   userId?: string;
   userEmail?: string;
   userRole?: string;
+  impersonatedUserId?: string;
+  impersonatedEmail?: string;
   action: ActivityAction;
   module: string;
   description: string;
@@ -14,7 +17,38 @@ export async function logActivity(params: {
   ipAddress?: string;
 }): Promise<void> {
   try {
-    await prisma.activityLog.create({ data: params });
+    let impersonatedUserId = params.impersonatedUserId;
+    let impersonatedEmail = params.impersonatedEmail;
+    let userId = params.userId;
+    let userEmail = params.userEmail;
+    let userRole = params.userRole;
+
+    if (!impersonatedUserId) {
+      const ctx = await getAdminImpersonation(params.userRole, params.userEmail);
+      if (ctx) {
+        userId = ctx.actorId;
+        userEmail = ctx.actorEmail;
+        userRole = "SUPER_ADMIN";
+        impersonatedUserId = ctx.targetId;
+        impersonatedEmail = ctx.targetEmail;
+      }
+    }
+
+    await prisma.activityLog.create({
+      data: {
+        userId,
+        userEmail,
+        userRole,
+        impersonatedUserId,
+        impersonatedEmail,
+        action: params.action,
+        module: params.module,
+        description: params.description,
+        recordId: params.recordId,
+        recordType: params.recordType,
+        ipAddress: params.ipAddress,
+      },
+    });
   } catch (error) {
     console.error("[activity-log]", params, error);
   }

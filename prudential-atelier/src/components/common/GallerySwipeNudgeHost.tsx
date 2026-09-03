@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
-import { cardIsMeaningfullyInViewport } from "@/lib/product-gallery";
+import { cardIsMeaningfullyInViewport, firstEligibleNudgeCard } from "@/lib/product-gallery";
 import {
   consumeGalleryNudge,
   galleryNudgeStillAvailable,
@@ -9,29 +9,28 @@ import {
 
 const IDLE_MS = 220;
 
-function firstCardInView(): HTMLElement | null {
+function firstSwipeCardInView(): HTMLElement | null {
   const cards = Array.from(document.querySelectorAll<HTMLElement>("[data-gallery-card]"));
-  for (const card of cards) {
-    if (cardIsMeaningfullyInViewport(card.getBoundingClientRect(), window.innerHeight)) {
-      return card;
-    }
-  }
-  return null;
+  const index = firstEligibleNudgeCard(
+    cards.map((card) => ({
+      inView: cardIsMeaningfullyInViewport(card.getBoundingClientRect(), window.innerHeight),
+      hasSwipe: Boolean(card.querySelector("[data-gallery-swipe]")),
+    })),
+  );
+  return index == null ? null : cards[index] ?? null;
 }
 
 function tryNudge(): void {
   if (!galleryNudgeStillAvailable()) return;
   if (window.matchMedia("(min-width: 768px)").matches) return;
 
-  const card = firstCardInView();
+  const card = firstSwipeCardInView();
   if (!card) return;
 
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const strip = card.querySelector("[data-gallery-swipe]");
-  if (!strip) {
-    consumeGalleryNudge(true);
-    return;
-  }
+  if (!strip) return;
+
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!consumeGalleryNudge(reduced)) return;
   strip.dispatchEvent(new Event("gallery-nudge"));
 }
@@ -42,16 +41,26 @@ export function GallerySwipeNudgeHost({ children }: { children: ReactNode }) {
     if (!galleryNudgeStillAvailable()) return;
 
     let idle: number | null = null;
+    let tries = 0;
     const arm = () => {
       if (idle != null) window.clearTimeout(idle);
-      idle = window.setTimeout(tryNudge, IDLE_MS);
+      idle = window.setTimeout(() => {
+        tryNudge();
+        tries += 1;
+        // Cards mount swipe after matchMedia; keep waiting until one exists or we give up.
+        if (galleryNudgeStillAvailable() && tries < 15) arm();
+      }, IDLE_MS);
     };
 
     arm();
-    window.addEventListener("scroll", arm, { passive: true, capture: true });
+    const onScroll = () => {
+      tries = 0;
+      arm();
+    };
+    window.addEventListener("scroll", onScroll, { passive: true, capture: true });
     return () => {
       if (idle != null) window.clearTimeout(idle);
-      window.removeEventListener("scroll", arm, true);
+      window.removeEventListener("scroll", onScroll, true);
     };
   }, []);
 

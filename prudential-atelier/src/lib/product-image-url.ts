@@ -1,6 +1,6 @@
 import { optimizeImageUrl } from "@/lib/utils";
 
-/** Thumbnail-friendly URLs for shop grid (reduces bandwidth vs full-size assets). */
+/** Thumbnail URLs for the shop grid. w_600 covers a 50vw 2-col card at 3x (~585 CSS-px). */
 export function optimizeProductCardImageUrl(url: string): string {
   return optimizeImageUrl(url, 600);
 }

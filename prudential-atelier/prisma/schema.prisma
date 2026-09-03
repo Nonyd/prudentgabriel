@@ -1537,17 +1537,19 @@ enum ErrorSeverity {
 }
 
 model ActivityLog {
-  id          String         @id @default(cuid())
-  userId      String?
-  userEmail   String?
-  userRole    String?
-  action      ActivityAction
-  module      String
-  description String
-  recordId    String?
-  recordType  String?
-  ipAddress   String?
-  createdAt   DateTime       @default(now())
+  id                 String         @id @default(cuid())
+  userId             String?
+  userEmail          String?
+  userRole           String?
+  impersonatedUserId String?
+  impersonatedEmail  String?
+  action             ActivityAction
+  module             String
+  description        String
+  recordId           String?
+  recordType         String?
+  ipAddress          String?
+  createdAt          DateTime       @default(now())
 
   @@index([createdAt])
   @@index([module])

@@ -12,10 +12,20 @@ import {
   developerEnvStatus,
   isDeveloperSettingKey,
 } from "@/lib/settings-developer";
+import {
+  MOVABLE_CREDENTIALS,
+  adoptEnvCredentialsIntoDatabase,
+  credentialDisplayValue,
+  describeCredentialSource,
+  ENV_SOURCE_LABEL,
+  firstEnvValue,
+  getDashboardSecret,
+} from "@/lib/credential-catalog";
 import type { SettingGroup } from "@prisma/client";
 
 const patchSchema = z.object({
-  updates: z.array(z.object({ key: z.string().min(1), value: z.string() })),
+  updates: z.array(z.object({ key: z.string().min(1), value: z.string() })).optional(),
+  adoptFromEnv: z.literal(true).optional(),
 });
 
 export async function GET() {
@@ -38,10 +48,28 @@ export async function GET() {
     },
   });
 
-  const items = rows.map((r) => ({
-    ...r,
-    value: r.type === "PASSWORD" && r.value.length > 0 ? SETTING_REDACTED : r.value,
-  }));
+  const envBySetting = new Map<string, string | null>();
+  for (const entry of MOVABLE_CREDENTIALS) {
+    envBySetting.set(entry.settingKey, firstEnvValue(entry.envKeys));
+  }
+
+  const items = await Promise.all(
+    rows.map(async (r) => {
+      const envVal = envBySetting.get(r.key) ?? null;
+      const dbVal = r.type === "PASSWORD" || envBySetting.has(r.key) ? await getDashboardSecret(r.key) : r.value;
+      const source = describeCredentialSource(dbVal, envVal);
+      const display =
+        r.type === "PASSWORD" || source === "environment"
+          ? credentialDisplayValue(source, dbVal, SETTING_REDACTED)
+          : r.value;
+      return {
+        ...r,
+        value: display,
+        source,
+        inEnvironment: Boolean(envVal),
+      };
+    }),
+  );
 
   const byGroup: Partial<Record<SettingGroup, typeof items>> = {};
   for (const r of items) {
@@ -69,10 +97,21 @@ export async function PATCH(req: NextRequest) {
   }
 
   const userId = gate.session.user!.id!;
+
+  if (parsed.data.adoptFromEnv) {
+    const { adopted } = await adoptEnvCredentialsIntoDatabase(userId);
+    await revalidateSettings();
+    return NextResponse.json({ success: true, adopted });
+  }
+
+  const updates = parsed.data.updates ?? [];
+  if (updates.length === 0) {
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  }
   let updated = 0;
   let paymentKeysTouched = false;
 
-  for (const { key, value } of parsed.data.updates) {
+  for (const { key, value } of updates) {
     if (!isDeveloperSettingKey(key)) {
       return NextResponse.json(
         { error: `Not a developer credential: ${key}` },
@@ -88,12 +127,11 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: `Unknown key: ${key}` }, { status: 400 });
     }
 
-    if (row.type === "PASSWORD") {
-      const trimmed = value.trim();
-      if (trimmed === "" || trimmed === SETTING_REDACTED) continue;
-    }
+    const trimmed = value.trim();
+    if (trimmed === SETTING_REDACTED || trimmed === ENV_SOURCE_LABEL) continue;
+    if (row.type === "PASSWORD" && trimmed === "") continue;
 
-    if (row.group === "PAYMENTS" && row.type === "PASSWORD" && value.trim() !== "" && value !== SETTING_REDACTED) {
+    if (row.group === "PAYMENTS" && row.type === "PASSWORD") {
       paymentKeysTouched = true;
     }
 

@@ -1,4 +1,4 @@
-import { getCarrier, injectedShippingCarriersForTest } from "@/lib/shipping/carriers";
+import { injectedShippingCarriersForTest } from "@/lib/shipping/carriers";
 import {
   SHIPPING_MODE_INTERNATIONAL_KEY,
   SHIPPING_MODE_NIGERIA_KEY,
@@ -48,16 +48,12 @@ export async function getShippingBandModes(): Promise<ShippingBandModes> {
 
 async function settingPresent(key: string): Promise<boolean> {
   try {
-    const { getSetting } = await import("@/lib/settings");
-    const v = await getSetting(key);
-    return Boolean(v?.trim());
+    const { getDashboardSecret } = await import("@/lib/credential-catalog");
+    const v = await getDashboardSecret(key);
+    return Boolean(v);
   } catch {
     return false;
   }
-}
-
-function envPresent(key: string): boolean {
-  return Boolean(process.env[key]?.trim());
 }
 
 function injectedConfigured(name: "gig" | "dhl"): boolean | null {
@@ -69,22 +65,19 @@ function injectedConfigured(name: "gig" | "dhl"): boolean | null {
 async function gigCredentialsPresent(): Promise<boolean> {
   const injected = injectedConfigured("gig");
   if (injected != null) return injected;
-  if (getCarrier("gig").isConfigured()) return true;
   const [key, wallet] = await Promise.all([settingPresent("gig_api_key"), settingPresent("gig_wallet_id")]);
-  return (envPresent("GIG_API_KEY") || key) && (envPresent("GIG_WALLET_ID") || wallet);
+  return Boolean(key && wallet);
 }
 
 async function dhlCredentialsPresent(): Promise<boolean> {
   const injected = injectedConfigured("dhl");
   if (injected != null) return injected;
-  if (getCarrier("dhl").isConfigured()) return true;
   const [site, password, account] = await Promise.all([
     settingPresent("dhl_site_id"),
     settingPresent("dhl_password"),
     settingPresent("dhl_account_number"),
   ]);
-  const envOk = envPresent("DHL_SITE_ID") && envPresent("DHL_PASSWORD") && envPresent("DHL_ACCOUNT_NUMBER");
-  return envOk || Boolean(site && password && account);
+  return Boolean(site && password && account);
 }
 
 export async function getShippingAdminStatus(): Promise<{

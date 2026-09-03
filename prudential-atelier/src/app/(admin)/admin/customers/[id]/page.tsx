@@ -27,8 +27,8 @@ export default async function AdminCustomerDetailPage({ params }: { params: Prom
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
-      <Link href="/admin/customers" className="text-sm text-[#A8A8A4] hover:text-gold">
-        ← Customers
+      <Link href="/admin/clients" className="text-sm text-[#A8A8A4] hover:text-gold">
+        ← Clients
       </Link>
       <div>
         <h1 className="font-display text-2xl text-charcoal">{user.name}</h1>

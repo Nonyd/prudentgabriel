@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import nodemailer from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import { resolveCustomerFromName } from "@/lib/customer-email";
+import { getDashboardSecret } from "@/lib/credential-catalog";
 import { EMAIL_FROM } from "@/lib/email-transport";
 import { getSetting } from "@/lib/settings";
 import {
@@ -15,13 +16,6 @@ import {
 } from "@/lib/email-outbox-types";
 
 export type { EmailProvider, OutboundEmail, EmailError, EmailAttachment };
-
-async function envOrSetting(envKey: string, settingKey: string): Promise<string | null> {
-  const fromEnv = process.env[envKey]?.trim();
-  if (fromEnv) return fromEnv;
-  const fromDb = (await getSetting(settingKey))?.trim();
-  return fromDb || null;
-}
 
 export async function resolveFromAddress(): Promise<string> {
   const name = resolveCustomerFromName(await getSetting("email_from_name"));
@@ -136,7 +130,7 @@ function normalizeAttachments(raw: unknown): EmailAttachment[] | undefined {
 }
 
 export function createResendProvider(opts?: { apiKey?: string | null }): EmailProvider {
-  const key = () => opts?.apiKey ?? process.env.RESEND_API_KEY?.trim() ?? "";
+  const key = () => opts?.apiKey?.trim() ?? "";
   return {
     name: "resend",
     isConfigured() {
@@ -176,8 +170,7 @@ export function createResendProvider(opts?: { apiKey?: string | null }): EmailPr
 }
 
 export function createBrevoProvider(opts?: { apiKey?: string | null }): EmailProvider {
-  const key = () =>
-    opts?.apiKey ?? process.env.BREVO_API_KEY?.trim() ?? process.env.SIB_API_KEY?.trim() ?? "";
+  const key = () => opts?.apiKey?.trim() ?? "";
   return {
     name: "brevo",
     isConfigured() {
@@ -242,7 +235,7 @@ export function createSmtpProvider(opts?: {
   user?: string;
   pass?: string;
 }): EmailProvider {
-  const pass = () => opts?.pass ?? process.env.SMTP_PASSWORD?.trim() ?? "";
+  const pass = () => opts?.pass?.trim() ?? "";
   return {
     name: "smtp",
     isConfigured() {
@@ -252,12 +245,14 @@ export function createSmtpProvider(opts?: {
       const password = pass();
       if (!password) return { error: { kind: "auth", message: "SMTP password not configured" } };
       try {
+        const host = opts?.host?.trim() || "mail.prudentgabriel.com";
+        const port = opts?.port ?? 465;
         const transport = nodemailer.createTransport({
-          host: opts?.host ?? process.env.SMTP_HOST ?? "mail.prudentgabriel.com",
-          port: opts?.port ?? Number(process.env.SMTP_PORT ?? 465),
-          secure: (opts?.port ?? Number(process.env.SMTP_PORT ?? 465)) === 465,
+          host,
+          port,
+          secure: port === 465,
           auth: {
-            user: opts?.user ?? process.env.SMTP_USER ?? "noreply@prudentgabriel.com",
+            user: opts?.user?.trim() || "noreply@prudentgabriel.com",
             pass: password,
           },
         } satisfies SMTPTransport.Options);
@@ -296,12 +291,12 @@ export function setEmailProvidersForTest(providers: EmailProvider[] | null): voi
 export async function listEmailProviders(): Promise<EmailProvider[]> {
   if (testProviders) return testProviders;
 
-  const resendKey = await envOrSetting("RESEND_API_KEY", "resend_api_key");
-  const brevoKey = await envOrSetting("BREVO_API_KEY", "brevo_api_key");
-  const smtpPass = await envOrSetting("SMTP_PASSWORD", "smtp_password");
-  const smtpUser = (await envOrSetting("SMTP_USER", "smtp_username")) ?? process.env.SMTP_USER;
-  const smtpHost = (await envOrSetting("SMTP_HOST", "smtp_host")) ?? process.env.SMTP_HOST;
-  const smtpPortRaw = await envOrSetting("SMTP_PORT", "smtp_port");
+  const resendKey = await getDashboardSecret("resend_api_key");
+  const brevoKey = await getDashboardSecret("brevo_api_key");
+  const smtpPass = await getDashboardSecret("smtp_password");
+  const smtpUser = await getDashboardSecret("smtp_username");
+  const smtpHost = await getDashboardSecret("smtp_host");
+  const smtpPortRaw = await getDashboardSecret("smtp_port");
 
   const catalog: Record<string, EmailProvider> = {
     resend: createResendProvider({ apiKey: resendKey }),

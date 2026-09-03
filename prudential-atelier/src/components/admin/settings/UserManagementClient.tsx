@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Role } from "@prisma/client";
-import { Loader2, Lock, Pencil, Shield, Trash2, UserMinus } from "lucide-react";
+import { Loader2, Lock, LogOut, Eye, KeyRound, Pencil, Shield, Trash2, UserMinus } from "lucide-react";
 import toast from "react-hot-toast";
+import { useSession } from "next-auth/react";
 import { BulkSelectTable, type BulkColumn } from "@/components/ui/BulkSelectTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -361,7 +362,14 @@ export function UserManagementClient({ embedded = false }: { embedded?: boolean 
   const [editUser, setEditUser] = useState<UserRow | null>(null);
   const [permUserId, setPermUserId] = useState<string | null>(null);
   const [deleteUser, setDeleteUser] = useState<UserRow | null>(null);
+  const [resetUser, setResetUser] = useState<UserRow | null>(null);
+  const [signOutUser, setSignOutUser] = useState<UserRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [viewingAs, setViewingAs] = useState<string | null>(null);
+  const { data: session } = useSession();
+  const selfId = session?.user?.id;
 
   const refresh = useCallback(async () => {
     const params = new URLSearchParams();
@@ -399,6 +407,60 @@ export function UserManagementClient({ embedded = false }: { embedded?: boolean 
     toast.success(`${user.name ?? user.email} deactivated`);
     await refresh();
   }, [refresh]);
+
+  const viewAsUser = useCallback(async (user: UserRow) => {
+    if (user.role === "SUPER_ADMIN" || user.id === selfId || !user.isActive) return;
+    setViewingAs(user.id);
+    try {
+      const res = await fetch("/api/admin/impersonate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        toast.error(typeof data.error === "string" ? data.error : "Could not view as this user");
+        return;
+      }
+      window.location.href = "/admin";
+    } finally {
+      setViewingAs(null);
+    }
+  }, [selfId]);
+
+  const confirmReset = async () => {
+    if (!resetUser || resetUser.isProtected) return;
+    setResetting(true);
+    try {
+      const res = await fetch(`/api/admin/users/${resetUser.id}/reset-password`, { method: "POST" });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        toast.error(typeof data.error === "string" ? data.error : "Could not send reset link");
+        return;
+      }
+      toast.success(`Reset link sent to ${resetUser.email}`);
+      setResetUser(null);
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const confirmForceSignOut = async () => {
+    if (!signOutUser || signOutUser.isProtected) return;
+    setSigningOut(true);
+    try {
+      const res = await fetch(`/api/admin/users/${signOutUser.id}/force-signout`, { method: "POST" });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        toast.error(typeof data.error === "string" ? data.error : "Could not sign them out");
+        return;
+      }
+      toast.success(`${signOutUser.name ?? signOutUser.email} signed out`);
+      setSignOutUser(null);
+    } finally {
+      setSigningOut(false);
+    }
+  };
 
   const confirmDelete = async () => {
     if (!deleteUser || deleteUser.isProtected) return;
@@ -506,11 +568,61 @@ export function UserManagementClient({ embedded = false }: { embedded?: boolean 
           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
+              disabled={row.role === "SUPER_ADMIN" || row.id === selfId || !row.isActive}
+              title={
+                row.role === "SUPER_ADMIN"
+                  ? "Cannot view as a Super Admin"
+                  : row.id === selfId
+                    ? "Already signed in as this user"
+                    : "View the dashboard as this person (read-only)"
+              }
+              className={cn(
+                "rounded p-1.5 text-text-mid hover:bg-bg/80 hover:text-nut",
+                (row.role === "SUPER_ADMIN" || row.id === selfId || !row.isActive) &&
+                  "cursor-not-allowed opacity-40",
+              )}
+              aria-label={`View as ${row.email}`}
+              onClick={() => void viewAsUser(row)}
+            >
+              {viewingAs === row.id ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
+              ) : (
+                <Eye className="h-3.5 w-3.5" strokeWidth={1.5} />
+              )}
+            </button>
+            <button
+              type="button"
               className="rounded p-1.5 text-text-mid hover:bg-bg/80 hover:text-nut"
               aria-label={`Permissions for ${row.email}`}
               onClick={() => setPermUserId(row.id)}
             >
               <Shield className="h-3.5 w-3.5" strokeWidth={1.5} />
+            </button>
+            <button
+              type="button"
+              disabled={row.isProtected || row.id === selfId}
+              title="Send a password reset link"
+              className={cn(
+                "rounded p-1.5 text-text-mid hover:bg-bg/80 hover:text-nut",
+                (row.isProtected || row.id === selfId) && "cursor-not-allowed opacity-40",
+              )}
+              aria-label={`Send password reset to ${row.email}`}
+              onClick={() => setResetUser(row)}
+            >
+              <KeyRound className="h-3.5 w-3.5" strokeWidth={1.5} />
+            </button>
+            <button
+              type="button"
+              disabled={row.isProtected || row.id === selfId}
+              title="Sign them out of every device"
+              className={cn(
+                "rounded p-1.5 text-text-mid hover:bg-bg/80 hover:text-nut",
+                (row.isProtected || row.id === selfId) && "cursor-not-allowed opacity-40",
+              )}
+              aria-label={`Force sign-out ${row.email}`}
+              onClick={() => setSignOutUser(row)}
+            >
+              <LogOut className="h-3.5 w-3.5" strokeWidth={1.5} />
             </button>
             <button
               type="button"
@@ -550,7 +662,7 @@ export function UserManagementClient({ embedded = false }: { embedded?: boolean 
         ),
       },
     ],
-    [deactivateUser],
+    [deactivateUser, selfId, viewingAs, viewAsUser],
   );
 
   return (
@@ -639,6 +751,46 @@ export function UserManagementClient({ embedded = false }: { embedded?: boolean 
         open={!!permUserId}
         onClose={() => setPermUserId(null)}
       />
+
+      <Modal
+        open={!!resetUser}
+        onClose={() => setResetUser(null)}
+        title="Send password reset?"
+        description={
+          resetUser
+            ? `A one-hour link will go to ${resetUser.email}. You will not know the new password. Their current sessions end now.`
+            : undefined
+        }
+      >
+        <div className="mt-6 flex justify-end gap-3">
+          <Button type="button" variant="ghost-light" onClick={() => setResetUser(null)}>
+            Cancel
+          </Button>
+          <Button type="button" loading={resetting} onClick={() => void confirmReset()}>
+            Send reset link
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={!!signOutUser}
+        onClose={() => setSignOutUser(null)}
+        title="Sign them out?"
+        description={
+          signOutUser
+            ? `${signOutUser.name ?? signOutUser.email} will need to sign in again. Their password does not change.`
+            : undefined
+        }
+      >
+        <div className="mt-6 flex justify-end gap-3">
+          <Button type="button" variant="ghost-light" onClick={() => setSignOutUser(null)}>
+            Cancel
+          </Button>
+          <Button type="button" loading={signingOut} onClick={() => void confirmForceSignOut()}>
+            Force sign-out
+          </Button>
+        </div>
+      </Modal>
 
       <Modal
         open={!!deleteUser}

@@ -86,3 +86,13 @@ export function cardIsMeaningfullyInViewport(
   const visible = Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
   return visible >= Math.min(rect.height * 0.4, 80);
 }
+
+/** First in-view card that actually pages. Single-image products do not consume the session hint. */
+export function firstEligibleNudgeCard(
+  cards: ReadonlyArray<{ inView: boolean; hasSwipe: boolean }>,
+): number | null {
+  for (let i = 0; i < cards.length; i++) {
+    if (cards[i]?.inView && cards[i]?.hasSwipe) return i;
+  }
+  return null;
+}

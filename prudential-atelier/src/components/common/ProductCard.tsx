@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -52,6 +52,15 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
 
   const qa = useProductQuickAdd(product, selectedColor);
   const isMd = useIsMdUp();
+  const [layout, setLayout] = useState<"ssr" | "mobile" | "desktop">("ssr");
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const sync = () => setLayout(mq.matches ? "desktop" : "mobile");
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   const saleOn = product.isOnSale && product.variants.some((v) => v.salePriceNGN != null);
   const lowestEffShopper = minAmountInCurrency(product.variants, product, currency, rates);
@@ -67,7 +76,7 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
   const swipeImages = primaryFromColor
     ? [{ url: primaryFromColor, alt: product.name }]
     : swipeableGallery(gallery);
-  const mobileSwipe = !isMd && swipeImages.length >= 2;
+  const mobileSwipe = layout === "mobile" && swipeImages.length >= 2;
 
   const lowestListShopper = minAmountInCurrency(
     product.variants,
@@ -150,6 +159,7 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
       className="product-gallery-card group"
       data-gallery-card=""
       data-gallery-open={qa.isOpen ? "true" : undefined}
+      aria-labelledby={nameId}
     >
       <div className="product-gallery-shot">
         {mobileSwipe ? (

@@ -10,6 +10,7 @@ import { fulfillBespokeOrderBalance } from "@/lib/bespoke-order-payment";
 import { parseBespokePaymentRef } from "@/lib/bespoke-order-access";
 import { sendPaymentConfirmedEmail } from "@/lib/email";
 import { logActivity } from "@/lib/logger";
+import { getStripeSecret } from "@/lib/payments/config";
 
 function redirectSuccess(appUrl: string, orderId: string, reference: string) {
   return NextResponse.redirect(
@@ -149,7 +150,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ orderId: st
 
     if (gateway === "STRIPE") {
       const paymentIntentId = searchParams.get("payment_intent") ?? stored.reference;
-      const key = process.env.STRIPE_SECRET_KEY;
+      const key = await getStripeSecret();
       if (!key || !paymentIntentId) return redirectFailed(appUrl, orderId, paymentIntentId ?? "");
 
       const stripe = new Stripe(key);

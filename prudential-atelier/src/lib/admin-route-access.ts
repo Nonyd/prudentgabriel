@@ -239,6 +239,73 @@ export function matrixAccess(role: string, path: string): "allow" | "deny" {
   return roleMayAccessAdminPath(role, path) ? "allow" : "deny";
 }
 
+/** Page → what it owns → where related work lives. Used by Slice U sweep tests. */
+export const ADMIN_PAGE_OWNERS: readonly {
+  path: string;
+  owns: string;
+  linksTo: string;
+}[] = [
+  { path: "/admin", owns: "Executive dashboard", linksTo: "Nav" },
+  { path: "/admin/orders", owns: "Ready-to-wear orders", linksTo: "Nav" },
+  { path: "/admin/checkouts", owns: "Abandoned checkouts", linksTo: "Nav" },
+  { path: "/admin/consultations", owns: "Consultation bookings", linksTo: "Nav" },
+  { path: "/admin/consultants", owns: "Consultant roster", linksTo: "Nav" },
+  { path: "/admin/bespoke", owns: "Atelier pipeline", linksTo: "Nav" },
+  { path: "/admin/quotations", owns: "Quotations", linksTo: "Nav" },
+  { path: "/admin/invoices", owns: "Invoices", linksTo: "Nav" },
+  { path: "/admin/alterations", owns: "Alteration tickets", linksTo: "Nav" },
+  { path: "/admin/payments", owns: "Payment ledger and transfer confirmation", linksTo: "Nav" },
+  { path: "/admin/settings/bank-accounts", owns: "House bank accounts (up to eight)", linksTo: "Nav + Settings hub" },
+  { path: "/admin/reports", owns: "Financial reports", linksTo: "Nav" },
+  { path: "/admin/clients", owns: "Client CRM", linksTo: "Nav" },
+  { path: "/admin/customers", owns: "Redirect to Clients", linksTo: "/admin/clients" },
+  { path: "/admin/referrals", owns: "Referral analytics", linksTo: "Nav" },
+  { path: "/admin/staff", owns: "Staff directory", linksTo: "Nav" },
+  { path: "/admin/attendance", owns: "Attendance", linksTo: "Nav" },
+  { path: "/admin/staff/performance", owns: "Staff performance", linksTo: "Nav" },
+  { path: "/admin/team", owns: "Redirect to Users & Roles", linksTo: "/admin/settings/users" },
+  { path: "/admin/products", owns: "Catalogue products", linksTo: "Nav" },
+  { path: "/admin/collections", owns: "Collections", linksTo: "Nav" },
+  { path: "/admin/content/media", owns: "Media library", linksTo: "Nav" },
+  { path: "/admin/shop/import", owns: "Catalogue import", linksTo: "Nav" },
+  { path: "/admin/products/guide", owns: "Upload guide", linksTo: "Nav" },
+  { path: "/admin/coupons", owns: "Coupons", linksTo: "Nav" },
+  { path: "/admin/shipping", owns: "Shipping modes and copy (not carrier keys)", linksTo: "Nav" },
+  { path: "/admin/sizing", owns: "Sizing", linksTo: "Nav" },
+  { path: "/admin/content", owns: "Content hub", linksTo: "Nav" },
+  { path: "/admin/content/blog", owns: "Journal", linksTo: "Nav" },
+  { path: "/admin/content/email-templates", owns: "Transactional email copy", linksTo: "Nav" },
+  { path: "/admin/content/send-email", owns: "One-off mail", linksTo: "Nav" },
+  { path: "/admin/content/unsubscribes", owns: "Unsubscribe list", linksTo: "Nav" },
+  { path: "/admin/content/messages", owns: "Contact messages", linksTo: "Nav" },
+  { path: "/admin/gallery", owns: "Portfolio gallery", linksTo: "Nav" },
+  { path: "/admin/reviews", owns: "Testimonials", linksTo: "Nav" },
+  { path: "/admin/careers", owns: "Careers", linksTo: "Nav" },
+  { path: "/admin/careers/applications", owns: "Career applications", linksTo: "Nav" },
+  { path: "/admin/notifications", owns: "Admin notification inbox", linksTo: "Top bar bell" },
+  { path: "/admin/bespoke/intake", owns: "Bespoke intake forms", linksTo: "Pipeline, not nav" },
+  { path: "/admin/customers/[id]", owns: "Shop account / points (kept; not the Clients list)", linksTo: "Clients + consultations" },
+  { path: "/admin/settings", owns: "Settings hub and general store fields", linksTo: "Nav" },
+  { path: "/admin/settings/payments", owns: "Gateway on/off, deposit, overlay FX, warranty days", linksTo: "Settings hub" },
+  { path: "/admin/settings/store", owns: "Store name, contact, currency, shipping thresholds", linksTo: "Settings hub" },
+  { path: "/admin/settings/loyalty", owns: "Points and referral rewards", linksTo: "Settings hub" },
+  { path: "/admin/settings/invoice", owns: "Business details, VAT, invoice numbering (not house banks)", linksTo: "Settings hub" },
+  { path: "/admin/settings/email", owns: "From-name, reply-to, SMS flags (not API keys)", linksTo: "Settings hub + Nav" },
+  { path: "/admin/settings/notifications", owns: "Notification flags", linksTo: "Nav" },
+  { path: "/admin/settings/developer", owns: "All credentials", linksTo: "Nav" },
+  { path: "/admin/settings/users", owns: "Users, roles, impersonation, password reset links", linksTo: "Nav" },
+  { path: "/admin/settings/roles", owns: "Job role templates", linksTo: "Nav" },
+  { path: "/admin/settings/appearance", owns: "Appearance", linksTo: "Nav" },
+  { path: "/admin/settings/seo", owns: "SEO", linksTo: "Nav" },
+  { path: "/admin/settings/social", owns: "Social links", linksTo: "Nav" },
+  { path: "/admin/content/pages", owns: "CMS pages", linksTo: "Nav" },
+  { path: "/admin/account-settings", owns: "Own password", linksTo: "Top bar" },
+  { path: "/admin/system/jobs", owns: "Cron jobs", linksTo: "Nav" },
+  { path: "/admin/system/emails", owns: "Email outbox", linksTo: "Nav" },
+  { path: "/admin/logs/activity", owns: "Activity log", linksTo: "Nav" },
+  { path: "/admin/logs/errors", owns: "Error log", linksTo: "Nav" },
+];
+
 export const ADMIN_NAV_STORAGE_KEY = "prudentgabriel.adminNav.v1";
 
 export type AdminNavItemDef = {
@@ -310,6 +377,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
       { href: "/admin/bespoke", label: "Pipeline", icon: "atelier", badgeKey: "bespoke" },
       { href: "/admin/quotations", label: "Quotations", icon: "quotations" },
       { href: "/admin/invoices", label: "Invoices", icon: "invoices" },
+      { href: "/admin/alterations", label: "Alterations", icon: "alterations" },
     ],
   },
   {
@@ -319,6 +387,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
     items: [
       { href: "/admin/payments", label: "Ledger", icon: "payments" },
       { href: "/admin/payments#transfers", label: "Transfers to confirm", icon: "transfers" },
+      { href: "/admin/settings/bank-accounts", label: "Bank accounts", icon: "bank" },
       { href: "/admin/reports", label: "Financial reports", icon: "reports" },
     ],
   },
@@ -328,6 +397,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
     defaultOpen: true,
     items: [
       { href: "/admin/clients", label: "Clients", icon: "clients" },
+      { href: "/admin/referrals", label: "Referrals", icon: "referrals" },
       { href: "/admin/staff", label: "Staff", icon: "staff" },
       { href: "/admin/attendance", label: "Attendance", icon: "attendance" },
       { href: "/admin/staff/performance", label: "Performance", icon: "performance" },
@@ -367,6 +437,9 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
       { href: "/admin/careers", label: "Careers", icon: "careers", alsoActive: ["/admin/careers/new"] },
       { href: "/admin/careers/applications", label: "Applications", icon: "applications" },
       { href: "/admin/content/messages", label: "Messages", icon: "messages", badgeKey: "messages" },
+      { href: "/admin/content/email-templates", label: "Email templates", icon: "templates" },
+      { href: "/admin/content/send-email", label: "Send email", icon: "send-email" },
+      { href: "/admin/content/unsubscribes", label: "Unsubscribes", icon: "unsubscribes" },
     ],
   },
   {

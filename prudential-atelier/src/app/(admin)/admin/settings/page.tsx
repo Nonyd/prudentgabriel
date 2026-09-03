@@ -131,7 +131,7 @@ const CARD_SECTIONS: CardSection[] = [
       {
         slug: "email",
         title: "Email & SMS",
-        description: "Email provider, SMS gateway, templates",
+        description: "From-name and reply-to. API keys are in Developer.",
         icon: Mail,
         countGroups: ["EMAIL", "SMS"],
         href: "/admin/settings/email",
@@ -147,7 +147,7 @@ const CARD_SECTIONS: CardSection[] = [
       {
         slug: "notifications",
         title: "Notifications",
-        description: "Admin alerts and Slack integration",
+        description: "Admin alerts. Slack webhook is in Developer.",
         icon: Bell,
         countGroups: ["NOTIFICATIONS"],
         href: "/admin/settings/notifications",

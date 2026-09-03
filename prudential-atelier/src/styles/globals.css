@@ -367,7 +367,7 @@ body {
   background: var(--ivory-dark);
 }
 
-/* Native paging on touch. Desktop keeps hover arrows — this strip is md-hidden via the React branch. */
+/* Native paging on touch. Desktop keeps hover arrows — this strip is only mounted below md. */
 .card-images {
   position: absolute;
   inset: 0;
@@ -377,6 +377,7 @@ body {
   overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
+  /* pan-x is required or Safari will not native-scroll the strip. pan-y lets the page scroll. */
   touch-action: pan-x pan-y pinch-zoom;
   scrollbar-width: none;
   -ms-overflow-style: none;

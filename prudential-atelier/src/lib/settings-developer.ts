@@ -1,5 +1,6 @@
 import { hasPermission, type AccessActor } from "@/lib/roles";
 import { EMAIL_TEMPLATE_FIELD_SUFFIXES } from "@/lib/admin-email-catalog";
+import { hostEnvStatus } from "@/lib/credential-catalog";
 
 /** UI placeholder for stored secrets. Name avoids secret-scanner assignment patterns. */
 export const SETTING_REDACTED = "••••••••";
@@ -44,6 +45,7 @@ export const DEVELOPER_SETTING_KEYS = new Set<string>([
   siteSettingKey("smtp", ["user", "name"].join("")),
   siteSettingKey("smtp", ["pass", "word"].join("")),
   siteSettingKey("dhl", ["pass", "word"].join("")),
+  "open_exchange_rates_app_id",
 ]);
 
 export const COMMERCIAL_PAYMENTS_KEYS = new Set<string>([
@@ -99,14 +101,13 @@ export function deniedDeveloperWriteKey(
 }
 
 export function redactSettingsForRole<T extends { key: string }>(
-  role: string | undefined | null,
+  _role: string | undefined | null,
   rows: T[],
-  actor?: AccessActor,
+  _actor?: AccessActor,
 ): T[] {
-  const seeSecrets = hasPermission(role, "settings.developer", actor);
   return rows.filter((r) => {
     if (isEmailTemplateSettingKey(r.key)) return false;
-    if (isDeveloperSettingKey(r.key) && !seeSecrets) return false;
+    if (isDeveloperSettingKey(r.key)) return false;
     return true;
   });
 }
@@ -205,20 +206,6 @@ export async function getGatewayAdminStatus(): Promise<GatewayAdminStatus[]> {
   ];
 }
 
-export function developerEnvStatus(): {
-  openExchangeRates: boolean;
-  cloudinary: boolean;
-  cronSecret: boolean;
-  settingsEncryption: boolean;
-} {
-  return {
-    openExchangeRates: Boolean(process.env.OPEN_EXCHANGE_RATES_APP_ID?.trim()),
-    cloudinary: Boolean(
-      process.env.CLOUDINARY_CLOUD_NAME?.trim() &&
-        process.env.CLOUDINARY_API_KEY?.trim() &&
-        process.env.CLOUDINARY_API_SECRET?.trim(),
-    ),
-    cronSecret: Boolean(process.env.CRON_SECRET?.trim()),
-    settingsEncryption: Boolean(process.env.SETTINGS_ENCRYPTION_KEY?.trim()),
-  };
+export function developerEnvStatus() {
+  return hostEnvStatus();
 }

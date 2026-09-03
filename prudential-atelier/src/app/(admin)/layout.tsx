@@ -33,7 +33,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/login?tab=admin");
   }
 
-  const { role, actor, previewRole } = await resolveSessionAccess(session);
+  const { role, actor, previewRole, impersonation } = await resolveSessionAccess(session);
   if (!hasAnyAdminPermission(role, actor) && !previewRole) {
     redirect("/login?tab=admin");
   }
@@ -84,6 +84,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       badges={badges}
       isMaintenanceOn={isMaintenanceOn}
       previewRole={previewRole}
+      impersonation={impersonation}
       accessRole={role}
       permissionGrants={actor.grants ?? []}
       permissionRevokes={actor.revokes ?? []}

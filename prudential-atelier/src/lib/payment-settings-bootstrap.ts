@@ -28,6 +28,14 @@ const PAYMENT_SETTING_DEFS: {
   { key: "alteration_warranty_days", value: "30", label: "Alteration warranty (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 26 },
   { key: "exchange_rate_usd", value: "0.00065", label: "USD Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 30 },
   { key: "exchange_rate_gbp", value: "0.00052", label: "GBP Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 31 },
+  {
+    key: "open_exchange_rates_app_id",
+    value: "",
+    label: "Open Exchange Rates app ID",
+    type: SettingType.PASSWORD,
+    isPublic: false,
+    sortOrder: 32,
+  },
 ];
 
 /** Idempotent — creates missing PAYMENTS SiteSetting rows (safe on every admin load). */

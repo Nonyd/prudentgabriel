@@ -9,7 +9,9 @@ import {
   type AdminPermission,
 } from "@/lib/roles";
 import { getAdminPreviewRole } from "@/lib/admin-preview";
+import { getAdminImpersonation, type ImpersonationPayload } from "@/lib/admin-impersonate";
 import { cachedRoleActorPatch, ensurePermissionCache } from "@/lib/permission-cache";
+import { prisma } from "@/lib/prisma";
 
 export { CMS_ADMIN_PERMISSIONS };
 
@@ -48,11 +50,43 @@ export async function resolveSessionAccess(session: Session): Promise<{
   role: string;
   actor: AccessActor;
   previewRole: string | null;
+  impersonation: ImpersonationPayload | null;
 }> {
   await ensurePermissionCache();
+  const impersonation = await getAdminImpersonation(session.user?.role, session.user?.email);
+  if (impersonation) {
+    const target = await prisma.user.findUnique({
+      where: { id: impersonation.targetId },
+      select: {
+        email: true,
+        role: true,
+        isActive: true,
+        userPermissions: { select: { permission: true, mode: true } },
+      },
+    });
+    if (target?.isActive && target.role !== "SUPER_ADMIN") {
+      const grants = target.userPermissions.filter((p) => p.mode === "GRANT").map((p) => p.permission);
+      const revokes = [
+        ...target.userPermissions.filter((p) => p.mode === "REVOKE").map((p) => p.permission),
+        "settings.developer",
+      ];
+      return {
+        role: target.role,
+        actor: {
+          email: target.email,
+          grants,
+          revokes,
+          ...cachedRoleActorPatch(target.role),
+        },
+        previewRole: null,
+        impersonation,
+      };
+    }
+  }
+
   const previewRole = await getAdminPreviewRole(session.user?.role, session.user?.email);
   const { role, actor } = sessionAccessActor(session, previewRole);
-  return { role, actor, previewRole };
+  return { role, actor, previewRole, impersonation: null };
 }
 
 type Gate = { ok: true; session: Session } | { ok: false; response: NextResponse };
@@ -102,12 +136,21 @@ export async function requireGeneralAdminApi(): Promise<Gate> {
   return gate;
 }
 
-/** Real Super Admin only — preview as another role cannot open this gate. */
-export async function requireSuperAdminApi(): Promise<Gate> {
+/** Real Super Admin only — preview/impersonation cannot open this gate unless opted in. */
+export async function requireSuperAdminApi(opts?: { allowImpersonation?: boolean }): Promise<Gate> {
   const gate = await sessionGate();
   if (!gate.ok) return gate;
   if (gate.session.user.role !== "SUPER_ADMIN") {
     return { ok: false, response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  }
+  if (!opts?.allowImpersonation) {
+    const impersonation = await getAdminImpersonation(gate.session.user.role, gate.session.user.email);
+    if (impersonation) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: "View as user is read-only." }, { status: 403 }),
+      };
+    }
   }
   return gate;
 }

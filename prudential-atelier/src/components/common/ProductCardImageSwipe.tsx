@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from "react";
+import { flushSync } from "react-dom";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -38,11 +39,16 @@ export function ProductCardImageSwipe({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const gesture = useRef({ x: 0, y: 0, scroll: 0 });
   const nudging = useRef(false);
+  const restLoaded = useRef(false);
   const [index, setIndex] = useState(0);
   const [loadRest, setLoadRest] = useState(false);
   const showDots = shouldShowGalleryDots(images.length);
 
-  const revealRest = useCallback(() => setLoadRest(true), []);
+  const revealRest = useCallback(() => {
+    if (restLoaded.current) return;
+    restLoaded.current = true;
+    flushSync(() => setLoadRest(true));
+  }, []);
 
   const playNudge = useCallback(() => {
     const el = scrollerRef.current;
@@ -51,9 +57,14 @@ export function ProductCardImageSwipe({
     const width = el.clientWidth;
     if (!width) return;
     nudging.current = true;
+    const previousSnap = el.style.scrollSnapType;
+    el.style.scrollSnapType = "none";
     const started = performance.now();
     const tick = (now: number) => {
-      if (!nudging.current) return;
+      if (!nudging.current) {
+        el.style.scrollSnapType = previousSnap;
+        return;
+      }
       const t = Math.min(1, (now - started) / GALLERY_NUDGE_MS);
       el.scrollLeft = galleryNudgeOffset(t, width);
       if (t < 1) {
@@ -61,6 +72,7 @@ export function ProductCardImageSwipe({
         return;
       }
       el.scrollLeft = 0;
+      el.style.scrollSnapType = previousSnap;
       nudging.current = false;
     };
     requestAnimationFrame(tick);
@@ -111,7 +123,10 @@ export function ProductCardImageSwipe({
     revealRest();
     if (nudging.current) {
       nudging.current = false;
-      if (scrollerRef.current) scrollerRef.current.scrollLeft = 0;
+      if (scrollerRef.current) {
+        scrollerRef.current.scrollLeft = 0;
+        scrollerRef.current.style.scrollSnapType = "";
+      }
     }
     gesture.current = {
       x: e.clientX,

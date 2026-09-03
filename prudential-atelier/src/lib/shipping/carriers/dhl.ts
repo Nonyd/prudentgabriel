@@ -1,15 +1,9 @@
 import type { RateError, RateRequest, RateResult, ShippingCarrier } from "@/lib/shipping/carriers/types";
-
-function env(key: string): string | null {
-  const v = process.env[key];
-  return v?.trim() ? v.trim() : null;
-}
+import { getDashboardSecret } from "@/lib/credential-catalog";
 
 async function setting(key: string): Promise<string | null> {
   try {
-    const { getSetting } = await import("@/lib/settings");
-    const v = await getSetting(key);
-    return v?.trim() ? v.trim() : null;
+    return await getDashboardSecret(key);
   } catch {
     return null;
   }
@@ -23,16 +17,14 @@ export function createDhlCarrier(opts?: {
   return {
     name: "dhl",
     isConfigured() {
-      const site = opts?.siteId ?? env("DHL_SITE_ID");
-      const password = opts?.password ?? env("DHL_PASSWORD");
-      const account = opts?.accountNumber ?? env("DHL_ACCOUNT_NUMBER");
-      return Boolean(site && password && account);
+      if (opts) return Boolean(opts.siteId?.trim() && opts.password?.trim() && opts.accountNumber?.trim());
+      return true;
     },
     async rate(req: RateRequest): Promise<RateResult | RateError> {
-      const siteId = opts?.siteId ?? env("DHL_SITE_ID") ?? (await setting("dhl_site_id"));
-      const password = opts?.password ?? env("DHL_PASSWORD") ?? (await setting("dhl_password"));
-      const account = opts?.accountNumber ?? env("DHL_ACCOUNT_NUMBER") ?? (await setting("dhl_account_number"));
-      const base = env("DHL_API_BASE") ?? "https://express.api.dhl.com/mydhlapi";
+      const siteId = opts?.siteId?.trim() || (await setting("dhl_site_id"));
+      const password = opts?.password?.trim() || (await setting("dhl_password"));
+      const account = opts?.accountNumber?.trim() || (await setting("dhl_account_number"));
+      const base = process.env.DHL_API_BASE?.trim() || "https://express.api.dhl.com/mydhlapi";
       if (!siteId || !password || !account) {
         return { ok: false, kind: "unconfigured", message: "DHL Express account is not configured" };
       }

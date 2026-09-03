@@ -5,10 +5,7 @@
  */
 import path from "node:path";
 import dotenv from "dotenv";
-import {
-  createBrevoProvider,
-  createResendProvider,
-} from "../src/lib/email-providers";
+import { listEmailProviders } from "../src/lib/email-providers";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -20,10 +17,10 @@ async function main() {
   const html = `<p>Smoke test from <code>scripts/send-test-email.ts</code>.</p><p>To: ${to}</p>`;
   const text = `Smoke test from scripts/send-test-email.ts. To: ${to}`;
 
-  const providers = [createResendProvider(), createBrevoProvider()].filter((p) => p.isConfigured());
+  const providers = await listEmailProviders();
 
   if (!providers.length) {
-    throw new Error("No email provider configured (RESEND_API_KEY / BREVO_API_KEY)");
+    throw new Error("No email provider configured in Developer Settings");
   }
 
   let failed = false;

@@ -1,15 +1,9 @@
 import type { RateError, RateRequest, RateResult, ShippingCarrier } from "@/lib/shipping/carriers/types";
-
-function env(key: string): string | null {
-  const v = process.env[key];
-  return v?.trim() ? v.trim() : null;
-}
+import { getDashboardSecret } from "@/lib/credential-catalog";
 
 async function setting(key: string): Promise<string | null> {
   try {
-    const { getSetting } = await import("@/lib/settings");
-    const v = await getSetting(key);
-    return v?.trim() ? v.trim() : null;
+    return await getDashboardSecret(key);
   } catch {
     return null;
   }
@@ -22,14 +16,13 @@ export function createGigCarrier(opts?: {
   return {
     name: "gig",
     isConfigured() {
-      const key = opts?.apiKey ?? env("GIG_API_KEY");
-      const wallet = opts?.walletId ?? env("GIG_WALLET_ID");
-      return Boolean(key && wallet);
+      if (opts) return Boolean(opts.apiKey?.trim() && opts.walletId?.trim());
+      return true;
     },
     async rate(req: RateRequest): Promise<RateResult | RateError> {
-      const apiKey = opts?.apiKey ?? env("GIG_API_KEY") ?? (await setting("gig_api_key"));
-      const wallet = opts?.walletId ?? env("GIG_WALLET_ID") ?? (await setting("gig_wallet_id"));
-      const base = env("GIG_API_BASE") ?? "https://gigl-api.giglogistics.com";
+      const apiKey = opts?.apiKey?.trim() || (await setting("gig_api_key"));
+      const wallet = opts?.walletId?.trim() || (await setting("gig_wallet_id"));
+      const base = process.env.GIG_API_BASE?.trim() || "https://gigl-api.giglogistics.com";
       if (!apiKey || !wallet) {
         return { ok: false, kind: "unconfigured", message: "GIG corporate wallet is not configured" };
       }

@@ -2,11 +2,13 @@
 
 import { Suspense, useState } from "react";
 import type { Session } from "next-auth";
+import { AdminImpersonateBanner } from "./AdminImpersonateBanner";
 import { AdminMaintenanceBanner } from "./AdminMaintenanceBanner";
 import { AdminPreviewBanner } from "./AdminPreviewBanner";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopbar } from "./AdminTopbar";
 import type { AccessActor } from "@/lib/roles";
+import type { ImpersonationPayload } from "@/lib/admin-impersonate";
 
 type AdminShellProps = {
   session: Session;
@@ -14,6 +16,7 @@ type AdminShellProps = {
   badges?: Record<string, number>;
   isMaintenanceOn?: boolean;
   previewRole?: string | null;
+  impersonation?: ImpersonationPayload | null;
   accessRole?: string;
   permissionGrants?: readonly string[];
   permissionRevokes?: readonly string[];
@@ -26,6 +29,7 @@ export function AdminShell({
   badges = {},
   isMaintenanceOn = false,
   previewRole = null,
+  impersonation = null,
   accessRole,
   permissionGrants = [],
   permissionRevokes = [],
@@ -63,6 +67,7 @@ export function AdminShell({
         </Suspense>
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden print:overflow-visible">
+        <AdminImpersonateBanner impersonation={impersonation} />
         <AdminPreviewBanner previewRole={previewRole} />
         <AdminMaintenanceBanner isMaintenanceOn={isMaintenanceOn} />
         <AdminTopbar onOpenNav={() => setMobileNav(true)} />

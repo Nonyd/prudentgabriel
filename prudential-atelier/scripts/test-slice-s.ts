@@ -3,6 +3,9 @@
  *
  *   pnpm test:slice-s
  */
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   GALLERY_GRID_IMAGE_TAKE,
   GALLERY_NUDGE_MS,
@@ -15,6 +18,7 @@ import {
   shouldShowGalleryDots,
   shouldSuppressCardNavigation,
   swipeableGallery,
+  firstEligibleNudgeCard,
 } from "../src/lib/product-gallery";
 import {
   consumeGalleryNudge,
@@ -26,6 +30,8 @@ import {
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
 }
+
+const srcRoot = join(dirname(fileURLToPath(import.meta.url)), "../src");
 
 function run() {
   assert(GALLERY_SWIPE_IMAGE_CAP <= 5, "grid swipe is a glance, not the PDP gallery");
@@ -62,6 +68,14 @@ function run() {
   assert(galleryNudgeOffset(0.75, 200) < mid, "ease-in on the way back");
   assert(cardIsMeaningfullyInViewport({ top: 0, bottom: 200, height: 200 }, 800), "full card in view");
   assert(!cardIsMeaningfullyInViewport({ top: 790, bottom: 990, height: 200 }, 800), "2px sliver is not in view");
+  assert(
+    firstEligibleNudgeCard([
+      { inView: true, hasSwipe: false },
+      { inView: true, hasSwipe: true },
+    ]) === 1,
+    "single-image first card does not take the nudge",
+  );
+  assert(firstEligibleNudgeCard([{ inView: true, hasSwipe: false }]) === null, "no swipe in view: wait, do not consume");
 
   resetGallerySwipeSessionForTests();
   assert(galleryNudgeStillAvailable(), "fresh session can nudge");
@@ -73,6 +87,22 @@ function run() {
   resetGallerySwipeSessionForTests();
   markGallerySwipeUsed();
   assert(consumeGalleryNudge() === false, "a real swipe cancels the hint");
+
+  const sessionSrc = readFileSync(join(srcRoot, "lib/gallery-swipe-session.ts"), "utf8");
+  assert(!sessionSrc.includes("localStorage"), "nudge is not persisted in localStorage");
+  assert(!sessionSrc.includes("sessionStorage"), "nudge is not persisted in sessionStorage");
+
+  const css = readFileSync(join(srcRoot, "styles/globals.css"), "utf8");
+  assert(css.includes("scroll-snap-type: x mandatory"), "native snap, not a JS carousel");
+  assert(css.includes("touch-action: pan-x pan-y pinch-zoom"), "vertical page scroll still allowed");
+
+  const swipeSrc = readFileSync(join(srcRoot, "components/common/ProductCardImageSwipe.tsx"), "utf8");
+  assert(swipeSrc.includes('scrollSnapType = "none"'), "nudge disables snap so a 15% peek is not eaten");
+  assert(swipeSrc.includes("flushSync"), "rest frames mount before the finger moves");
+
+  const cardSrc = readFileSync(join(srcRoot, "components/common/ProductCard.tsx"), "utf8");
+  assert(cardSrc.includes('layout === "mobile"'), "swipe mounts after a real matchMedia, not SSR-as-mobile");
+  assert(cardSrc.includes("ProductCardImageSwipe"), "one swipe component on the product card");
 
   console.log("slice-s: all checks passed");
 }

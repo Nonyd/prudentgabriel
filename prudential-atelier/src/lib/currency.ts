@@ -30,7 +30,8 @@ async function getSiteSettingRates(): Promise<ExchangeRatesNGN | null> {
 }
 
 async function fetchOpenExchangeRates(): Promise<ExchangeRatesNGN | null> {
-  const appId = process.env.OPEN_EXCHANGE_RATES_APP_ID;
+  const { getDashboardSecret } = await import("@/lib/credential-catalog");
+  const appId = await getDashboardSecret("open_exchange_rates_app_id");
   if (!appId) return null;
 
   try {

@@ -11,6 +11,7 @@ type ActivityRow = {
   createdAt: string;
   userEmail: string | null;
   userRole: string | null;
+  impersonatedEmail?: string | null;
   action: string;
   module: string;
   description: string;
@@ -48,12 +49,13 @@ export function ActivityLogClient() {
   }, [refresh]);
 
   function exportCsv() {
-    const header = ["Timestamp", "User", "Role", "Action", "Module", "Description"];
+    const header = ["Timestamp", "User", "Role", "Viewed as", "Action", "Module", "Description"];
     const rows = items.map((r) =>
       [
         r.createdAt,
         r.userEmail ?? "",
         r.userRole ?? "",
+        r.impersonatedEmail ?? "",
         r.action,
         r.module,
         r.description.replace(/"/g, '""'),
@@ -130,6 +132,7 @@ export function ActivityLogClient() {
                 <tr className="border-b border-sand bg-bg/50 font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-light">
                   <th className="px-4 py-3">Time</th>
                   <th className="px-4 py-3">User</th>
+                  <th className="px-4 py-3">Viewed as</th>
                   <th className="px-4 py-3">Action</th>
                   <th className="px-4 py-3">Module</th>
                   <th className="px-4 py-3">Description</th>
@@ -146,6 +149,9 @@ export function ActivityLogClient() {
                       {row.userRole ? (
                         <p className="font-sans text-[10px] uppercase text-text-light">{row.userRole}</p>
                       ) : null}
+                    </td>
+                    <td className="px-4 py-3 font-sans text-xs text-text-mid">
+                      {row.impersonatedEmail ?? "—"}
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant="grey" size="sm">

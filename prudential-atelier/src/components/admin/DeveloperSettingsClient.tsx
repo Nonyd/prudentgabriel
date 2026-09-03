@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import type { SettingGroup, SettingType } from "@prisma/client";
 import { Button } from "@/components/ui/Button";
 import { FieldInput } from "@/components/admin/AdminSettingsClient";
+import { ENV_SOURCE_LABEL } from "@/lib/credential-catalog";
 
 type SettingRow = {
   key: string;
@@ -14,13 +15,17 @@ type SettingRow = {
   type: SettingType;
   isPublic?: boolean;
   sortOrder?: number;
+  source?: "database" | "environment" | "unset";
 };
 
 type EnvStatus = {
-  openExchangeRates: boolean;
+  databaseUrl: boolean;
+  authSecret: boolean;
+  appUrl: boolean;
+  encryption: boolean;
   cloudinary: boolean;
   cronSecret: boolean;
-  settingsEncryption: boolean;
+  googleOauth: boolean;
 };
 
 const WEBHOOK_BASE = `${(process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "")}/api/payment`;
@@ -41,6 +46,7 @@ const GATEWAYS = [
     secretKey: "flutterwave_secret_key",
     publicLabel: "Public key",
     secretLabel: "Secret key",
+    extraKeys: [{ key: "flutterwave_secret_hash", label: "Webhook hash (verif-hash)" }],
   },
   {
     id: "stripe" as const,
@@ -100,12 +106,32 @@ function EnvPill({ ok, label }: { ok: boolean; label: string }) {
   );
 }
 
+function CredentialInput({
+  row,
+  onChange,
+}: {
+  row: SettingRow & { isPublic: boolean; sortOrder: number };
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      {row.source === "environment" ? (
+        <p className="mb-2 rounded-md border border-nut/40 bg-[#FFF8F0] px-3 py-2 font-sans text-xs text-text-dark">
+          {ENV_SOURCE_LABEL}. Mail and payments will not use it until it is saved here.
+        </p>
+      ) : null}
+      <FieldInput row={row} onChange={onChange} />
+    </div>
+  );
+}
+
 export function DeveloperSettingsClient() {
   const [items, setItems] = useState<SettingRow[]>([]);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [env, setEnv] = useState<EnvStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [adopting, setAdopting] = useState(false);
   const [testing, setTesting] = useState<string | null>(null);
   const [emailTesting, setEmailTesting] = useState(false);
 
@@ -142,17 +168,42 @@ export function DeveloperSettingsClient() {
   const rowFor = useCallback(
     (key: string): SettingRow & { isPublic: boolean; sortOrder: number } => {
       const base = items.find((r) => r.key === key);
+      const raw = draft[key] ?? "";
+      const source = base?.source;
       return {
         key,
         label: base?.label ?? key,
         type: base?.type ?? "TEXT",
-        value: draft[key] ?? "",
+        value: raw === ENV_SOURCE_LABEL ? "" : raw,
+        source,
         isPublic: base?.isPublic ?? false,
         sortOrder: base?.sortOrder ?? 0,
       };
     },
     [items, draft],
   );
+
+  const envOnlyCount = items.filter((r) => r.source === "environment").length;
+
+  const adoptFromEnv = async () => {
+    setAdopting(true);
+    try {
+      const res = await fetch("/api/admin/settings/developer", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adoptFromEnv: true }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { error?: string; adopted?: string[] };
+      if (!res.ok) throw new Error(j.error ?? "Could not copy environment keys");
+      const n = j.adopted?.length ?? 0;
+      toast.success(n ? `Saved ${n} key${n === 1 ? "" : "s"} from the server environment` : "Nothing to copy");
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not copy environment keys");
+    } finally {
+      setAdopting(false);
+    }
+  };
 
   const saveAll = async () => {
     setSaving(true);
@@ -233,7 +284,7 @@ export function DeveloperSettingsClient() {
 
   return (
     <div className="space-y-8">
-      <div>
+        <div>
         <p className="eyebrow">Super Admin</p>
         <h1 className="mt-2 font-serif text-2xl font-medium text-choc">Developer Settings</h1>
         <p className="mt-2 font-sans text-sm font-light text-text-mid">
@@ -241,9 +292,22 @@ export function DeveloperSettingsClient() {
           <a href="/admin/settings/payments" className="underline">
             Payments
           </a>
-          . Secret keys are AES-256-GCM encrypted at rest.
+          . Secret keys are AES-256-GCM encrypted at rest. The database is the source of truth —
+          an empty field here means the app does not have the key.
         </p>
       </div>
+
+      {envOnlyCount > 0 ? (
+        <div className="border border-nut/40 bg-[#FFF8F0] px-4 py-3">
+          <p className="font-sans text-sm text-text-dark">
+            {envOnlyCount} credential{envOnlyCount === 1 ? " is" : "s are"} set on the server and empty in the
+            dashboard. That used to send mail and take payments while this page looked blank.
+          </p>
+          <Button type="button" className="mt-3" variant="ghost-light" loading={adopting} onClick={() => void adoptFromEnv()}>
+            Save environment keys into the dashboard
+          </Button>
+        </div>
+      ) : null}
 
       <section className="card-surface p-6">
         <h2 className="font-serif text-lg font-medium text-choc">Payment gateways</h2>
@@ -254,16 +318,16 @@ export function DeveloperSettingsClient() {
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-1 block font-sans text-xs text-text-mid">{gw.publicLabel}</label>
-                  <FieldInput row={rowFor(gw.publicKey)} onChange={(v) => setValue(gw.publicKey, v)} />
+                  <CredentialInput row={rowFor(gw.publicKey)} onChange={(v) => setValue(gw.publicKey, v)} />
                 </div>
                 <div>
                   <label className="mb-1 block font-sans text-xs text-text-mid">{gw.secretLabel}</label>
-                  <FieldInput row={rowFor(gw.secretKey)} onChange={(v) => setValue(gw.secretKey, v)} />
+                  <CredentialInput row={rowFor(gw.secretKey)} onChange={(v) => setValue(gw.secretKey, v)} />
                 </div>
                 {gw.extraKeys?.map((extra) => (
                   <div key={extra.key} className="md:col-span-2 md:max-w-md">
                     <label className="mb-1 block font-sans text-xs text-text-mid">{extra.label}</label>
-                    <FieldInput row={rowFor(extra.key)} onChange={(v) => setValue(extra.key, v)} />
+                    <CredentialInput row={rowFor(extra.key)} onChange={(v) => setValue(extra.key, v)} />
                   </div>
                 ))}
               </div>
@@ -300,7 +364,7 @@ export function DeveloperSettingsClient() {
           {[...emailKeys, ...smsKeys, ...slackKeys].map((key) => (
             <div key={key} className={key === "smtp_password" || key === "slack_webhook_url" ? "md:col-span-2" : ""}>
               <label className="mb-1 block font-sans text-xs text-text-mid">{rowFor(key).label}</label>
-              <FieldInput row={rowFor(key)} onChange={(v) => setValue(key, v)} />
+              <CredentialInput row={rowFor(key)} onChange={(v) => setValue(key, v)} />
             </div>
           ))}
         </div>
@@ -319,30 +383,46 @@ export function DeveloperSettingsClient() {
           {shippingKeys.map((key) => (
             <div key={key}>
               <label className="mb-1 block font-sans text-xs text-text-mid">{rowFor(key).label}</label>
-              <FieldInput row={rowFor(key)} onChange={(v) => setValue(key, v)} />
+              <CredentialInput row={rowFor(key)} onChange={(v) => setValue(key, v)} />
             </div>
           ))}
         </div>
       </section>
 
       <section className="card-surface p-6">
-        <h2 className="font-serif text-lg font-medium text-choc">Host environment</h2>
+        <h2 className="font-serif text-lg font-medium text-choc">Live exchange rates</h2>
         <p className="mt-1 font-sans text-xs text-text-mid">
-          These live in the server env, not the database. Status only.
-        </p>
-        <ul className="mt-4 space-y-2">
-          <EnvPill ok={Boolean(env?.openExchangeRates)} label="Open Exchange Rates (live FX source)" />
-          <EnvPill ok={Boolean(env?.cloudinary)} label="Cloudinary" />
-          <EnvPill ok={Boolean(env?.cronSecret)} label="CRON_SECRET" />
-          <EnvPill ok={Boolean(env?.settingsEncryption)} label="Settings encryption key" />
-        </ul>
-        <p className="mt-4 font-sans text-xs text-text-mid">
-          Manual ₦ overlay rates are commercial — edit them on{" "}
+          Open Exchange Rates app ID. Manual ₦ overlay rates stay on{" "}
           <a href="/admin/settings/payments" className="underline">
             Payments
           </a>
           .
         </p>
+        <div className="mt-6 max-w-md">
+          <label className="mb-1 block font-sans text-xs text-text-mid">
+            {rowFor("open_exchange_rates_app_id").label}
+          </label>
+          <CredentialInput
+            row={rowFor("open_exchange_rates_app_id")}
+            onChange={(v) => setValue("open_exchange_rates_app_id", v)}
+          />
+        </div>
+      </section>
+
+      <section className="card-surface p-6">
+        <h2 className="font-serif text-lg font-medium text-choc">Host environment</h2>
+        <p className="mt-1 font-sans text-xs text-text-mid">
+          These cannot live in the database. Status only.
+        </p>
+        <ul className="mt-4 space-y-2">
+          <EnvPill ok={Boolean(env?.databaseUrl)} label="DATABASE_URL" />
+          <EnvPill ok={Boolean(env?.authSecret)} label="AUTH_SECRET / NEXTAUTH_SECRET" />
+          <EnvPill ok={Boolean(env?.appUrl)} label="NEXTAUTH_URL / APP_URL" />
+          <EnvPill ok={Boolean(env?.encryption)} label="Settings encryption key" />
+          <EnvPill ok={Boolean(env?.cloudinary)} label="Cloudinary" />
+          <EnvPill ok={Boolean(env?.cronSecret)} label="CRON_SECRET" />
+          <EnvPill ok={Boolean(env?.googleOauth)} label="Google OAuth" />
+        </ul>
       </section>
 
       <section className="card-surface p-6">

@@ -48,6 +48,36 @@ export default auth(async function middleware(request) {
   const session = request.auth;
   const pathname = request.nextUrl.pathname;
 
+  const impersonating = Boolean(request.cookies.get("pg_admin_impersonate")?.value);
+  const method = request.method.toUpperCase();
+  const isImpersonationExit = pathname === "/api/admin/impersonate" && method === "DELETE";
+
+  if (impersonating && !isImpersonationExit) {
+    if (pathname.startsWith("/admin/settings/developer")) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+    const isServerAction =
+      request.headers.has("next-action") || request.headers.has("Next-Action");
+    if (isServerAction) {
+      return NextResponse.json({ error: "View as user is read-only." }, { status: 403 });
+    }
+  }
+
+  if (pathname.startsWith("/api/admin")) {
+    if (impersonating) {
+      if (pathname.startsWith("/api/admin/settings/developer") && !isImpersonationExit) {
+        return NextResponse.json(
+          { error: "Developer credentials cannot be viewed while impersonating." },
+          { status: 403 },
+        );
+      }
+      if (method !== "GET" && method !== "HEAD" && method !== "OPTIONS" && !isImpersonationExit) {
+        return NextResponse.json({ error: "View as user is read-only." }, { status: 403 });
+      }
+    }
+    return NextResponse.next();
+  }
+
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/images") ||

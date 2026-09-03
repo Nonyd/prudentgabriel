@@ -80,6 +80,12 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 
   const body = await req.json().catch(() => null);
+  if (body && typeof body === "object" && "password" in body) {
+    return NextResponse.json(
+      { error: "A Super Admin cannot set another person's password. Send a reset link." },
+      { status: 400 },
+    );
+  }
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
