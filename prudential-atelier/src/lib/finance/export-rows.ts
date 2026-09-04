@@ -1,0 +1,53 @@
+import type { ClassifiedLine } from "@/lib/finance/classify";
+
+export const LEDGER_HEADERS = [
+  "Date",
+  "Amount (NGN)",
+  "Original amount",
+  "Currency",
+  "Locked rate",
+  "VAT (NGN)",
+  "Net of VAT (NGN)",
+  "Sales (NGN)",
+  "Cash (NGN)",
+  "Points (NGN)",
+  "Shipping collected (NGN)",
+  "Liability (NGN)",
+  "Method",
+  "Purpose",
+  "Business line",
+  "Resolution",
+  "Reference",
+  "Document",
+  "Customer",
+  "Confirmed by",
+  "Status",
+  "Bank bucket",
+];
+
+export function ledgerRow(line: ClassifiedLine): unknown[] {
+  return [
+    line.at.toISOString(),
+    line.amountNGN,
+    line.originalAmount ?? "",
+    line.currency,
+    line.fxRateLocked ?? "",
+    line.vatNGN,
+    line.netOfVatNGN,
+    line.salesNGN,
+    line.cashNGN,
+    line.pointsNGN,
+    line.shippingCollectedNGN,
+    line.liabilityNGN,
+    line.method,
+    line.purposeLabel,
+    line.businessLine,
+    line.resolution,
+    line.reference,
+    line.documentRef,
+    line.customer,
+    line.confirmedBy ?? "",
+    line.status,
+    line.bankBucket,
+  ];
+}

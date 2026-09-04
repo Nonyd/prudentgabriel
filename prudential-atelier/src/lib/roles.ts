@@ -83,7 +83,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
   BESPOKE_MANAGER: ["bespoke", "consultations", "clients.view"],
   RTW_MANAGER: ["shop.products", "shop.orders"],
   CONTENT_MANAGER: ["content.blog", "content.pages"],
-  FINANCE_MANAGER: ["invoices", "quotations", "finance", "payments"],
+  FINANCE_MANAGER: ["invoices", "quotations", "finance", "payments", "reports", "settings.bank-accounts"],
   HR_MANAGER: ["staff", "attendance"],
   CONSULTATION_MANAGER: ["consultations", "clients.view"],
   STAFF: [],

@@ -169,7 +169,7 @@ async function main() {
     STAFF_ADMIN: groups.filter((g) => g.name !== "reports" && g.name !== "settings (PAYMENTS)").map((g) => g.name),
     STAFF: [],
     CONTENT_MANAGER: ["cms"],
-    FINANCE_MANAGER: ["payments", "invoices", "quotations"],
+    FINANCE_MANAGER: ["payments", "invoices", "quotations", "reports"],
     RTW_MANAGER: ["shop.orders", "shop.products"],
     BESPOKE_MANAGER: ["bespoke", "consultations"],
     CONSULTATION_MANAGER: ["consultations"],
@@ -372,7 +372,9 @@ async function main() {
     );
   }
 
-  assert(!roleMayAccessAdminPath("FINANCE_MANAGER", "/admin/settings/bank-accounts"), "FINANCE_MANAGER does not get bank accounts via settings");
+  assert(roleMayAccessAdminPath("FINANCE_MANAGER", "/admin/settings/bank-accounts"), "FINANCE_MANAGER reaches bank accounts via the split permission");
+  assert(roleMayAccessAdminPath("FINANCE_MANAGER", "/admin/reports"), "FINANCE_MANAGER reaches reports");
+  assert(!roleMayAccessAdminPath("FINANCE_MANAGER", "/admin/settings/email"), "FINANCE_MANAGER does not get the rest of Settings");
   assert(
     roleMayAccessAdminPath("FINANCE_MANAGER", "/admin/settings/bank-accounts", null, {
       grants: ["settings.bank-accounts"],
