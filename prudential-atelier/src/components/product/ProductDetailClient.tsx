@@ -381,10 +381,10 @@ export function ProductDetailClient({
             <div id="product-sizes">
               <div className="mb-3 mt-1 flex min-w-0 items-baseline justify-between gap-3">
                 <p className="shrink-0 font-body text-sm font-medium uppercase tracking-[0.08em] text-charcoal">Size</p>
-                <SizeGuideModal>
+                <SizeGuideModal offeredSizes={standardSizes.map((v) => v.size)}>
                   <button
                     type="button"
-                    className="shrink-0 whitespace-nowrap font-body text-sm text-choc underline underline-offset-4"
+                    className="inline-flex min-h-[44px] shrink-0 items-center whitespace-nowrap font-body text-sm text-choc underline underline-offset-4"
                   >
                     Size Guide
                   </button>
@@ -517,7 +517,7 @@ export function ProductDetailClient({
             <span aria-hidden className="text-sand">
               ·
             </span>
-            <SizeGuideModal>
+            <SizeGuideModal offeredSizes={standardSizes.map((v) => v.size)}>
               <button type="button" className="uppercase tracking-[0.12em] text-charcoal-light underline-offset-4 hover:text-choc hover:underline">
                 Size guide
               </button>
@@ -547,9 +547,9 @@ export function ProductDetailClient({
                 </Accordion.Trigger>
               </Accordion.Header>
               <Accordion.Content className="space-y-3 pb-4 text-sm text-charcoal-mid">
-                <SizeGuideModal>
+                <SizeGuideModal offeredSizes={standardSizes.map((v) => v.size)}>
                   <button type="button" className="font-body text-[11px] font-medium uppercase tracking-wide text-choc underline">
-                    View Full Size Guide
+                    Size Guide
                   </button>
                 </SizeGuideModal>
                 <p className="copy-body">If between sizes, size up. Cut is fitted.</p>

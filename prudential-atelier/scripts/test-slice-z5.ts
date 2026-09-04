@@ -19,6 +19,7 @@ import {
   guestQtyCanIncrease,
   soldOutSizeAriaLabel,
 } from "../src/lib/bag-size";
+import { chartRowsForOfferedSizes } from "../src/lib/sizing";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -71,6 +72,19 @@ function runPure() {
   });
   assert(sized.id === guestLineId("var-12", null), "guest line id follows the new size");
   assert(sized.size === "12" && sized.quantity === 2, "changing size also caps qty to that size's stock");
+
+  const house = [{ label: "10" }, { label: "12" }, { label: "16" }, { label: "18" }];
+  const clipped = chartRowsForOfferedSizes(house, ["10", "12"]);
+  assert(
+    clipped.map((r) => r.label).join(",") === "10,12",
+    "the PDP chart must not show a house size this piece does not sell",
+  );
+  const ranged = chartRowsForOfferedSizes(house, ["6-12"]);
+  assert(
+    ranged.map((r) => r.label).join(",") === "10,12",
+    "a range SKU still only shows measurements for sizes inside that range",
+  );
+  assert(chartRowsForOfferedSizes(house, ["XS"]).length === 0, "no matching row stays empty, never the full house");
 }
 
 async function runDb() {

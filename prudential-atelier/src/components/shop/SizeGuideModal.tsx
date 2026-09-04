@@ -4,9 +4,16 @@ import { useEffect, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import Link from "next/link";
-import { displayChartRow, type SizeChartRowView } from "@/lib/sizing";
+import { chartRowsForOfferedSizes, displayChartRow, type SizeChartRowView } from "@/lib/sizing";
 
-export function SizeGuideModal({ children }: { children: React.ReactNode }) {
+export function SizeGuideModal({
+  children,
+  offeredSizes,
+}: {
+  children: React.ReactNode;
+  /** Standard sizes this piece is cut in. The house chart is clipped to these. */
+  offeredSizes: string[];
+}) {
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<SizeChartRowView[] | null>(null);
 
@@ -17,6 +24,8 @@ export function SizeGuideModal({ children }: { children: React.ReactNode }) {
       .then((j: { rows?: SizeChartRowView[] }) => setRows(j.rows ?? []))
       .catch(() => setRows([]));
   }, [open]);
+
+  const shown = rows ? chartRowsForOfferedSizes(rows, offeredSizes) : [];
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
@@ -29,12 +38,14 @@ export function SizeGuideModal({ children }: { children: React.ReactNode }) {
         >
           <div className="mb-4 flex items-center justify-between">
             <Dialog.Title className="font-display text-xl text-charcoal">Size Guide</Dialog.Title>
-            <Dialog.Close className="rounded-sm p-2 hover:bg-cream" aria-label="Close">
+            <Dialog.Close className="flex h-11 w-11 items-center justify-center rounded-sm hover:bg-cream" aria-label="Close">
               <X className="h-5 w-5" />
             </Dialog.Close>
           </div>
           {rows == null ? (
             <p className="text-sm text-charcoal-mid">Loading…</p>
+          ) : shown.length === 0 ? (
+            <p className="text-sm leading-6 text-charcoal">This piece is not on the house chart.</p>
           ) : (
             <table className="w-full border-collapse text-left text-sm">
               <thead>
@@ -47,7 +58,7 @@ export function SizeGuideModal({ children }: { children: React.ReactNode }) {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row) => {
+                {shown.map((row) => {
                   const d = displayChartRow(row);
                   return (
                     <tr key={row.label} className="border-b border-border/60">
@@ -63,9 +74,9 @@ export function SizeGuideModal({ children }: { children: React.ReactNode }) {
             </table>
           )}
           <div className="mt-4 space-y-2 border-t border-border pt-4 text-xs text-charcoal-light">
-            <p>Figures in centimetres and inches. Between sizes? Size up, or have it made to your measurements.</p>
+            <p>Only the sizes this piece is cut in. Figures in centimetres and inches.</p>
             <Link href="/size-guide" className="font-label text-choc underline">
-              Full size guide
+              Full house chart
             </Link>
           </div>
         </Dialog.Content>

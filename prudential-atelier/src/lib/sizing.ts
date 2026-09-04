@@ -36,6 +36,48 @@ export function isStandardSizeLabel(size: string): boolean {
   return n.length > 0 && n !== "custom";
 }
 
+export function normalizeSizeToken(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/^uk\s*/i, "")
+    .replace(/[–—]/g, "-")
+    .replace(/\s+/g, "");
+}
+
+function sizeTokenNumber(raw: string): number | null {
+  const n = Number(normalizeSizeToken(raw));
+  return Number.isFinite(n) ? n : null;
+}
+
+function parseSizeRange(raw: string): { min: number; max: number } | null {
+  const m = normalizeSizeToken(raw).match(/^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/);
+  if (!m) return null;
+  return { min: Number(m[1]), max: Number(m[2]) };
+}
+
+/** True when this house-chart row is a size the piece actually sells (including sold-out). */
+export function chartRowIsOffered(label: string, offeredSizes: string[]): boolean {
+  const lab = normalizeSizeToken(label);
+  if (!lab) return false;
+  const n = sizeTokenNumber(label);
+  for (const size of offeredSizes) {
+    const tok = normalizeSizeToken(size);
+    if (!tok) continue;
+    if (tok === lab) return true;
+    const range = parseSizeRange(size);
+    if (range && n != null && n >= range.min && n <= range.max) return true;
+  }
+  return false;
+}
+
+export function chartRowsForOfferedSizes<T extends { label: string }>(
+  rows: T[],
+  offeredSizes: string[],
+): T[] {
+  return rows.filter((row) => chartRowIsOffered(row.label, offeredSizes));
+}
+
 export type SizeChartRowView = {
   label: string;
   bustCm: number | null;
