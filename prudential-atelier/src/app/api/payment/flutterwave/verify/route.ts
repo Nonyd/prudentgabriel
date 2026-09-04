@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PaymentGateway, PaymentStatus } from "@prisma/client";
+import { PaymentGateway } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { verifyTransaction } from "@/lib/payments/flutterwave";
 import { fulfillPaidOrder } from "@/lib/order-payment";
 import { rtwChargeAmountForeign, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
+import { markRtwOrderPaymentFailed } from "@/lib/checkout-reservations";
 import type { ShopCurrency } from "@/lib/currency";
 import { lockedFxFromOrder } from "@/lib/fx";
 import {
@@ -67,10 +68,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    await prisma.order.updateMany({
-      where: { id: orderId, paymentStatus: PaymentStatus.PENDING },
-      data: { paymentStatus: PaymentStatus.FAILED },
-    });
+    await markRtwOrderPaymentFailed(orderId);
   } catch (e) {
     if (e instanceof PaymentBindError) {
       return NextResponse.redirect(`${appUrl}/checkout?error=payment-failed`);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PointsType, ShippingQuoteStatus } from "@prisma/client";
+import { PointsType, PaymentStatus, ShippingQuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import {
@@ -11,6 +11,7 @@ import {
 } from "@/lib/order-status";
 import { generateCollectionCode, normalizeCollectionCode } from "@/lib/shipping/collection";
 import { awardPurchasePoints, returnRedeemedPoints } from "@/lib/points";
+import { releaseUnpaidCheckoutReservations } from "@/lib/checkout-reservations";
 import { sendOrderShippedEmail, sendPickupReadyEmail, sendRtwOrderDeliveredEmail } from "@/lib/email";
 import { notifyOrderDelivered, notifyOrderShipped } from "@/lib/customer-notifications";
 import { deleteOrdersByIds } from "@/lib/order-delete";
@@ -93,12 +94,15 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     }
     const stamp = new Date().toISOString().slice(0, 10);
     const wantStock = Boolean(returnToStock) && full && !isOversellRefuse(order.adminNotes);
-    const line = `\n[${stamp}] Refund recorded: ₦${Math.round(amountNGN).toLocaleString("en-NG")}. Reason: ${reason}${
+    const actorId = gate.session.user.id;
+    const actorName =
+      [gate.session.user.name, gate.session.user.email].filter(Boolean).join(" · ") || actorId;
+    const refundAmount = full ? order.total : amountNGN;
+    const line = `\n[${stamp}] Refund recorded by ${actorName}: ₦${Math.round(refundAmount).toLocaleString("en-NG")}. Reason: ${reason}${
       wantStock ? ". Returned to stock." : returnToStock ? ". Not returned to stock (partial or oversell)." : ". Not returned to stock."
     }`;
     const adminNotes = [order.adminNotes?.trim() ?? "", line].filter(Boolean).join("\n");
     const nextStatus = full ? "REFUNDED" : "PROCESSING";
-    const actorId = gate.session.user.id;
     const items = wantStock
       ? await prisma.orderItem.findMany({
           where: { orderId: id },
@@ -112,6 +116,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           paymentStatus: "REFUNDED",
           status: nextStatus,
           adminNotes,
+          refundRecordedAt: new Date(),
+          refundRecordedById: actorId,
+          refundRecordedByName: actorName,
+          refundRecordedAmountNGN: refundAmount,
         },
       });
       if (full) {
@@ -232,7 +240,14 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       (parsed.data.status === "CANCELLED" || parsed.data.status === "REFUNDED") &&
       parsed.data.status !== order.status
     ) {
-      await returnRedeemedPoints(id, tx);
+      if (
+        order.paymentStatus === PaymentStatus.PENDING ||
+        order.paymentStatus === PaymentStatus.FAILED
+      ) {
+        await releaseUnpaidCheckoutReservations(id, tx);
+      } else {
+        await returnRedeemedPoints(id, tx);
+      }
     }
 
     if (wantCancelRestock) {

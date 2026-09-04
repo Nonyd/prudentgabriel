@@ -559,7 +559,6 @@ export function CheckoutClient() {
       }
 
       if (paidWithPoints || (typeof outstandingNGN === "number" && outstandingNGN <= 0.01)) {
-        useCartStore.getState().clearCart();
         const q = guestEmail ? `&email=${encodeURIComponent(guestEmail)}` : "";
         window.location.href = `/checkout/success?order=${encodeURIComponent(orderNumber)}${q}`;
         return;
@@ -582,7 +581,6 @@ export function CheckoutClient() {
         });
         const btj = await readJsonBody(bt);
         if (!bt.ok) throw new Error(jsonErrorMessage(btj.error, "Could not submit receipt"));
-        useCartStore.getState().clearCart();
         window.location.href = btj.redirectUrl as string;
         return;
       }
@@ -634,7 +632,6 @@ export function CheckoutClient() {
         if (!pr.ok) throw new Error(jsonErrorMessage(p.error, "Could not start payment"));
         setStripeClientSecret(p.clientSecret as string);
         setStripePk((p.publishableKey as string) ?? "");
-        useCartStore.getState().clearCart();
         setSubmitting(false);
         return;
       }
@@ -1285,7 +1282,6 @@ export function CheckoutClient() {
                         });
                         const btj = await readJsonBody(bt);
                         if (!bt.ok) throw new Error(jsonErrorMessage(btj.error, "Could not submit receipt"));
-                        useCartStore.getState().clearCart();
                         window.location.href = btj.redirectUrl as string;
                       } catch (e) {
                         toast.error(e instanceof Error ? e.message : "Could not submit receipt");

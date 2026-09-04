@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
+import { useCartStore } from "@/store/cartStore";
 
 function SuccessInner() {
   const searchParams = useSearchParams();
@@ -19,6 +20,7 @@ function SuccessInner() {
     guestEmail: string | null;
     total: number;
     paymentRef: string | null;
+    paymentStatus?: string;
     currency: string;
     fxRateLocked: number | null;
     collectionCode: string | null;
@@ -35,7 +37,13 @@ function SuccessInner() {
     const q = emailParam ? `?email=${encodeURIComponent(emailParam)}` : "";
     void fetch(`/api/orders/${encodeURIComponent(orderNumber)}${q}`)
       .then((r) => r.json())
-      .then((j) => setOrder(j.order))
+      .then((j) => {
+        const next = j.order as typeof order;
+        setOrder(next);
+        if (next?.paymentStatus === "PAID") {
+          useCartStore.getState().clearCart();
+        }
+      })
       .catch(() => setOrder(null));
   }, [orderNumber, emailParam, router]);
 

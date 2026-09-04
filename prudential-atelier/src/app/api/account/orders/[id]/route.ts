@@ -3,7 +3,7 @@ import { PaymentStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { deleteOrdersByIds } from "@/lib/order-delete";
-import { returnRedeemedPoints } from "@/lib/points";
+import { releaseUnpaidCheckoutReservations } from "@/lib/checkout-reservations";
 
 export async function GET(
   _req: NextRequest,
@@ -61,6 +61,9 @@ export async function DELETE(_req: NextRequest, context: { params: Promise<{ id:
   }
 
   try {
+    await prisma.$transaction(async (tx) => {
+      await releaseUnpaidCheckoutReservations(order.id, tx);
+    });
     const deleted = await deleteOrdersByIds([order.id]);
     if (deleted === 0) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -74,7 +77,7 @@ export async function DELETE(_req: NextRequest, context: { params: Promise<{ id:
           where: { id: order.id },
           data: { status: "CANCELLED" },
         });
-        await returnRedeemedPoints(order.id, tx);
+        await releaseUnpaidCheckoutReservations(order.id, tx);
       });
       return NextResponse.json({ ok: true, cancelled: true });
     }

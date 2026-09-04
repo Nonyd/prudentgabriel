@@ -49,6 +49,13 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     migrated: false,
   },
   {
+    name: "checkout-reservations",
+    schedule: "*/15 * * * *",
+    description: "Expire stale unpaid checkout holds (points, coupon). Bag was never cleared.",
+    migrated: true,
+    budgetMs: 50_000,
+  },
+  {
     name: "daily-report",
     schedule: "0 23 * * *",
     description: "Daily atelier operations report",

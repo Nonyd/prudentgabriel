@@ -100,12 +100,17 @@ export function rtwChargeAmountNGN(order: {
   total: number;
   balance?: number | null;
   amountPaid?: number | null;
+  pointsDiscountNGN?: number | null;
 }): number {
   if (order.paymentStatus === PaymentStatus.PAID && rtwHasOutstandingBalance(order)) {
     return outstandingNGN(order);
   }
   if ((order.amountPaid ?? 0) > 0.01) {
     return outstandingNGN(order);
+  }
+  const held = order.pointsDiscountNGN ?? 0;
+  if (held > 0.01) {
+    return Math.max(0, Math.round((order.total - held) * 100) / 100);
   }
   return order.total;
 }

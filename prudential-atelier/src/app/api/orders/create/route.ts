@@ -3,15 +3,14 @@ import { PaymentGateway, PaymentStatus, Prisma, ProductCategory, ShippingQuoteSt
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
-import { validateCoupon } from "@/lib/coupon";
+import { reserveCouponUsage, validateCoupon } from "@/lib/coupon";
 import { generateOrderNumber } from "@/lib/order-number";
 import {
   clampRedemption,
   getMinRedemptionPoints,
   getPointRateNGN,
   InsufficientPointsError,
-  pointsPaymentData,
-  redeemPoints,
+  reservePoints,
 } from "@/lib/points";
 import { generatePaymentReference } from "@/lib/payments/index";
 import { getSupportedGateways } from "@/lib/payments/config";
@@ -23,8 +22,6 @@ import { getLockedFx, lockForeignTotals, usdOverrideOrConvert, gbpOverrideOrConv
 import { effectiveUnitNGN, resolveCurrencyOverride } from "@/lib/pricing";
 import type { CartParcelLine } from "@/lib/shipping/options";
 import { fulfillPaidOrder } from "@/lib/order-payment";
-import { resolveClientId } from "@/lib/payments/ledger";
-import { recomputeRtwOrderTotals } from "@/lib/payments/rtw-totals";
 import {
   customLinesReturnable,
   fulfilmentKindForLines,
@@ -589,38 +586,16 @@ export async function POST(req: NextRequest) {
       }
 
       if (couponId) {
-        await tx.coupon.update({
-          where: { id: couponId },
-          data: { usedCount: { increment: 1 } },
-        });
-        await tx.couponUsage.create({
-          data: {
-            couponId,
-            userId,
-            email: emailForCoupon,
-            orderId: orderRow.id,
-          },
+        await reserveCouponUsage(tx, {
+          couponId,
+          userId,
+          email: emailForCoupon,
+          orderId: orderRow.id,
         });
       }
 
       if (pointsUsed > 0 && userId) {
-        await redeemPoints(userId, pointsUsed, orderRow.id, tx, pointRate);
-        const clientId = await resolveClientId({
-          userId,
-          email: session?.user?.email ?? data.guestEmail,
-        });
-        await tx.payment.create({
-          data: pointsPaymentData({
-            orderId: orderRow.id,
-            orderNumber: orderRow.orderNumber,
-            amountNGN: pointsDiscNGN,
-            clientId,
-          }),
-        });
-      }
-
-      if (userId) {
-        await tx.cartItem.deleteMany({ where: { userId } });
+        await reservePoints(userId, pointsUsed, orderRow.id, tx, pointRate);
       }
 
       return orderRow;
@@ -654,10 +629,6 @@ export async function POST(req: NextRequest) {
       void syncProfileFromSnapshots(userId, snaps).catch((e) =>
         console.warn("[orders/create] measurement profile", e),
       );
-    }
-
-    if (pointsUsed > 0 && outstandingNGN > 0.01) {
-      await recomputeRtwOrderTotals(order.id).catch((e) => console.warn("[orders/create] rtw totals", e));
     }
 
     const paidWithPoints = outstandingNGN <= 0.01;

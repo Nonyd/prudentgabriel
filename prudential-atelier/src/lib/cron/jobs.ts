@@ -11,6 +11,7 @@ import { run as runAbandonedCart } from "@/lib/cron/jobs/abandoned-cart";
 import { run as runAbandonedCheckout } from "@/lib/cron/jobs/abandoned-checkout";
 import { run as runUncollectedPickup } from "@/lib/cron/jobs/uncollected-pickup";
 import { run as runPrudentPoints } from "@/lib/cron/jobs/prudent-points";
+import { run as runCheckoutReservations } from "@/lib/cron/jobs/checkout-reservations";
 
 const HANDLERS: Record<string, CronJobHandler> = {
   "abandoned-cart": runAbandonedCart,
@@ -23,6 +24,7 @@ const HANDLERS: Record<string, CronJobHandler> = {
   "receipt-reminders": runReceiptReminders,
   "uncollected-pickup": runUncollectedPickup,
   "prudent-points": runPrudentPoints,
+  "checkout-reservations": runCheckoutReservations,
   "email-outbox": runEmailOutbox,
 };
 

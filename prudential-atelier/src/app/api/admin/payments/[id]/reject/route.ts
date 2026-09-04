@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { sendPaymentRejectedEmail } from "@/lib/email";
 import { logActivity } from "@/lib/logger";
 import { rejectPayment, toNumber } from "@/lib/payments/ledger";
+import { markRtwOrderPaymentFailed } from "@/lib/checkout-reservations";
 
 const bodySchema = z.object({
   reason: z.string().min(1).max(500),
@@ -70,10 +71,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     if (!order || order.paymentGateway !== PaymentGateway.BANK_TRANSFER) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    await prisma.order.update({
-      where: { id: order.id },
-      data: { paymentStatus: PaymentStatus.FAILED },
-    });
+    await markRtwOrderPaymentFailed(order.id);
     const email = order.guestEmail ?? (await prisma.user.findUnique({ where: { id: order.userId ?? "" }, select: { email: true } }))?.email;
     if (email) {
       void sendPaymentRejectedEmail({ to: email, ref: order.orderNumber, amountNGN: order.total, reason });

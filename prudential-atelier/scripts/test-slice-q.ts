@@ -115,6 +115,15 @@ function runPure() {
   });
   assert(firstUnpaid === 145_000, "unpaid order still binds against full total");
 
+  const heldNotLedgered = rtwChargeAmountNGN({
+    paymentStatus: PaymentStatus.PENDING,
+    total: 145_000,
+    amountPaid: 0,
+    balance: 145_000,
+    pointsDiscountNGN: 100_000,
+  });
+  assert(heldNotLedgered === 45_000, `PSP charge after a points hold is 45000, got ${heldNotLedgered}`);
+
   const fullyPoints = rtwChargeAmountNGN({
     paymentStatus: PaymentStatus.PENDING,
     total: 100_000,

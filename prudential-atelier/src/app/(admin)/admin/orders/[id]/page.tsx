@@ -62,6 +62,16 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             Guest custom order — call before cutting. No account, no measurement history.
           </p>
         ) : null}
+        {order.refundRecordedAt ? (
+          <p className="mt-3 border border-olive/30 bg-olive/5 px-3 py-2 text-sm text-olive">
+            Refund recorded {order.refundRecordedAt.toLocaleString("en-GB")}
+            {order.refundRecordedByName ? ` by ${order.refundRecordedByName}` : ""}
+            {order.refundRecordedAmountNGN != null
+              ? ` — ₦${Math.round(order.refundRecordedAmountNGN).toLocaleString("en-NG")}`
+              : ""}
+            . PSP refund is still issued in the gateway dashboard.
+          </p>
+        ) : null}
         <div className="mt-3 print:hidden">
           <PrintGuideButton />
         </div>

@@ -7,6 +7,7 @@ import { notifyPaymentFailed } from "@/lib/notifications";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
 import { fulfillPaidBespokeBalance } from "@/lib/bespoke-payment";
 import { rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
+import { markRtwOrderPaymentFailed } from "@/lib/checkout-reservations";
 import {
   assertPspChargeBinds,
   expectedAmountInPspUnits,
@@ -111,10 +112,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (event.event === "charge.failed" && orderId) {
-    await prisma.order.updateMany({
-      where: { id: orderId, paymentStatus: PaymentStatus.PENDING },
-      data: { paymentStatus: PaymentStatus.FAILED },
-    });
+    await markRtwOrderPaymentFailed(orderId);
     const failedOrder = await prisma.order.findUnique({
       where: { id: orderId },
       select: { id: true, orderNumber: true },

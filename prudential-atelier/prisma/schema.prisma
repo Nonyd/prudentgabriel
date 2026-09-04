@@ -659,6 +659,12 @@ model Order {
   customLeadTimeDays Int?
   customReturnable   Boolean             @default(true)
 
+  /// When an oversell (or other) refund was recorded in-app, and by whom. PSP refund is still manual.
+  refundRecordedAt         DateTime?
+  refundRecordedById       String?
+  refundRecordedByName     String?
+  refundRecordedAmountNGN  Float?
+
   payments Payment[]
   stockMovements StockMovement[]
 
@@ -843,16 +849,20 @@ model Coupon {
 }
 
 model CouponUsage {
-  id       String   @id @default(cuid())
-  couponId String
-  coupon   Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
-  userId   String?
-  email    String
-  orderId  String   @unique
-  order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  usedAt   DateTime @default(now())
+  id          String             @id @default(cuid())
+  couponId    String
+  coupon      Coupon             @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  userId      String?
+  email       String
+  orderId     String             @unique
+  order       Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  usedAt      DateTime           @default(now())
+  status      CouponUsageStatus  @default(COMMITTED)
+  committedAt DateTime?
+  releasedAt  DateTime?
 
   @@unique([couponId, orderId])
+  @@index([couponId, status])
 }
 
 model ShippingZone {
@@ -1528,9 +1538,17 @@ enum PointsType {
   EARNED_BIRTHDAY
   EARNED_PROFILE
   REDEEMED
+  /// Held against an unpaid checkout. Balance already reduced; commit on payment or RETURNED on fail.
+  RESERVED
   EXPIRED
   ADJUSTED_ADMIN
   RETURNED
+}
+
+enum CouponUsageStatus {
+  PENDING
+  COMMITTED
+  RELEASED
 }
 
 enum CouponType {

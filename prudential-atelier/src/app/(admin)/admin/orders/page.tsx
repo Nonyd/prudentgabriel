@@ -47,7 +47,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
       },
     }),
     prisma.order.count({
-      where: { status: OrderStatus.CANCELLED, paymentStatus: PaymentStatus.PAID },
+      where: { status: OrderStatus.CANCELLED, paymentStatus: PaymentStatus.PAID, refundRecordedAt: null },
     }),
     prisma.order.count({
       where: { shippingQuoteStatus: ShippingQuoteStatus.QUOTE_PENDING, status: OrderStatus.PROCESSING },

@@ -7,7 +7,7 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
-import { awardPurchasePoints, returnRedeemedPoints } from "@/lib/points";
+import { awardPurchasePoints, pointsPaymentData, returnRedeemedPoints } from "@/lib/points";
 import { autoOnboardClient } from "@/lib/client-onboarding";
 import { sendOrderConfirmationEmail, sendRtwFulfilmentRefusedEmails } from "@/lib/email";
 import { notifyOrderConfirmed, notifyPaymentConfirmed } from "@/lib/customer-notifications";
@@ -16,6 +16,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { appendPayment, gatewayToPaymentMethod, resolveClientId } from "@/lib/payments/ledger";
 import { markCheckoutSessionsRecovered } from "@/lib/checkout-session";
 import { recomputeRtwOrderTotals, rtwHasOutstandingBalance } from "@/lib/payments/rtw-totals";
+import { commitCouponUsage, releaseCouponUsage } from "@/lib/coupon";
 import { getShippingCopy } from "@/lib/shipping/copy";
 import { countryIsNigeria } from "@/lib/shipping/destination";
 import {
@@ -57,11 +58,12 @@ async function refuseFulfilmentForStock(params: {
   clientId: string;
   total: number;
   currency: string;
-  userId?: string | null;
+  pointsDiscountNGN?: number;
 }): Promise<boolean> {
   const recorded = await params.db.$transaction(async (tx) => {
     const already = await confirmedOnOrder(tx, params.orderId);
-    const remaining = Math.max(0, Math.round((params.total - already) * 100) / 100);
+    const pointsHold = already > 0.01 ? 0 : (params.pointsDiscountNGN ?? 0);
+    const remaining = Math.max(0, Math.round((params.total - already - pointsHold) * 100) / 100);
     const pointsOnly = remaining <= 0.01;
 
     const flipped = await tx.order.updateMany({
@@ -202,6 +204,34 @@ export async function fulfillPaidOrder(params: {
         );
       }
 
+      if (order.pointsUsed > 0 && order.pointsDiscountNGN > 0.01 && "payment" in tx) {
+        const payment = (
+          tx as unknown as {
+            payment?: {
+              findFirst?: (args: Record<string, unknown>) => Promise<{ id: string } | null>;
+              create?: (args: { data: Record<string, unknown> }) => Promise<unknown>;
+            };
+          }
+        ).payment;
+        const existing =
+          typeof payment?.findFirst === "function"
+            ? await payment.findFirst({
+                where: { orderId: order.id, purpose: PaymentPurpose.POINTS_REDEMPTION },
+                select: { id: true },
+              })
+            : null;
+        if (!existing && typeof payment?.create === "function") {
+          await payment.create({
+            data: pointsPaymentData({
+              orderId: order.id,
+              orderNumber: order.orderNumber,
+              amountNGN: order.pointsDiscountNGN,
+              clientId,
+            }),
+          });
+        }
+      }
+
       const already = await confirmedOnOrder(tx, order.id);
       const remaining = Math.max(0, Math.round((order.total - already) * 100) / 100);
       if (remaining > 0.01) {
@@ -240,7 +270,19 @@ export async function fulfillPaidOrder(params: {
       clientId,
       total: order.total,
       currency: String(order.currency),
+      pointsDiscountNGN: order.pointsDiscountNGN,
     });
+
+    if (recorded && !params.db) {
+      if (order.pointsDiscountNGN > 0.01 && order.pointsDiscountNGN >= order.total - 0.01) {
+        await releaseCouponUsage(prisma, order.id);
+      } else {
+        await commitCouponUsage(prisma, order.id);
+        if (order.userId) {
+          await prisma.cartItem.deleteMany({ where: { userId: order.userId } });
+        }
+      }
+    }
 
     if (recorded && params.notify !== false) {
       const clientEmail = order.guestEmail ?? order.user?.email;
@@ -276,6 +318,10 @@ export async function fulfillPaidOrder(params: {
   }
 
   if (!params.db) {
+    await commitCouponUsage(prisma, order.id);
+    if (order.userId) {
+      await prisma.cartItem.deleteMany({ where: { userId: order.userId } });
+    }
     await recomputeRtwOrderTotals(order.id).catch((e) => console.warn("[fulfillPaidOrder] rtw totals", e));
   }
 

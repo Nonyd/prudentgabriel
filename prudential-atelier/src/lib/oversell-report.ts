@@ -8,6 +8,7 @@ export async function listRefundRequiredOrders() {
       paymentStatus: PaymentStatus.PAID,
       status: OrderStatus.CANCELLED,
       adminNotes: { contains: FULFILMENT_STOCK_REFUSE_NOTE },
+      refundRecordedAt: null,
     },
     select: { id: true, orderNumber: true, total: true, updatedAt: true },
     orderBy: { updatedAt: "desc" },

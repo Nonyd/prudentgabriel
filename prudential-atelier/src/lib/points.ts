@@ -250,6 +250,75 @@ export async function expireOverduePoints(db: PointsDb = prisma, now = new Date(
   return expired;
 }
 
+async function debitPoints(params: {
+  userId: string;
+  pointsToRedeem: number;
+  orderId: string;
+  db: PointsDb;
+  rateNGN?: number;
+  type: PointsType;
+  description: string;
+}): Promise<void> {
+  if (params.pointsToRedeem <= 0) return;
+
+  const now = new Date();
+  await expireOverduePoints(params.db, now, params.userId);
+
+  const rate = params.rateNGN ?? (await getPointRateNGN());
+  const spent = await params.db.user.updateMany({
+    where: { id: params.userId, pointsBalance: { gte: params.pointsToRedeem } },
+    data: { pointsBalance: { decrement: params.pointsToRedeem } },
+  });
+  if (spent.count !== 1) {
+    throw new InsufficientPointsError();
+  }
+
+  await consumeUnexpiredRemaining(params.db, params.userId, params.pointsToRedeem, now);
+
+  const after = await params.db.user.findUnique({
+    where: { id: params.userId },
+    select: { pointsBalance: true },
+  });
+  const balanceAfter = after?.pointsBalance ?? 0;
+
+  await params.db.pointsTransaction.create({
+    data: {
+      userId: params.userId,
+      type: params.type,
+      amount: -params.pointsToRedeem,
+      remaining: 0,
+      balanceAfter,
+      description: params.description,
+      orderId: params.orderId,
+      rateNGN: rate,
+    },
+  });
+
+  await syncLoyaltyCaches(params.userId, balanceAfter, params.db);
+}
+
+/**
+ * Hold points for an unpaid checkout. Same atomic decrement as redeem, but the
+ * row is RESERVED until payment confirms (it stays) or fails (RETURNED).
+ */
+export async function reservePoints(
+  userId: string,
+  pointsToRedeem: number,
+  orderId: string,
+  db: PointsDb = prisma,
+  rateNGN?: number,
+): Promise<void> {
+  await debitPoints({
+    userId,
+    pointsToRedeem,
+    orderId,
+    db,
+    rateNGN,
+    type: PointsType.RESERVED,
+    description: "Prudent Points held for checkout",
+  });
+}
+
 /**
  * Atomic spend. Fails when the cached balance is insufficient — two tabs cannot
  * spend the same points twice (Slice G stock idiom: updateMany where balance >= n).
@@ -261,45 +330,18 @@ export async function redeemPoints(
   db: PointsDb = prisma,
   rateNGN?: number,
 ): Promise<void> {
-  if (pointsToRedeem <= 0) return;
-
-  const now = new Date();
-  await expireOverduePoints(db, now, userId);
-
-  const rate = rateNGN ?? (await getPointRateNGN());
-  const spent = await db.user.updateMany({
-    where: { id: userId, pointsBalance: { gte: pointsToRedeem } },
-    data: { pointsBalance: { decrement: pointsToRedeem } },
+  await debitPoints({
+    userId,
+    pointsToRedeem,
+    orderId,
+    db,
+    rateNGN,
+    type: PointsType.REDEEMED,
+    description: "Prudent Points redeemed at checkout",
   });
-  if (spent.count !== 1) {
-    throw new InsufficientPointsError();
-  }
-
-  await consumeUnexpiredRemaining(db, userId, pointsToRedeem, now);
-
-  const after = await db.user.findUnique({
-    where: { id: userId },
-    select: { pointsBalance: true },
-  });
-  const balanceAfter = after?.pointsBalance ?? 0;
-
-  await db.pointsTransaction.create({
-    data: {
-      userId,
-      type: PointsType.REDEEMED,
-      amount: -pointsToRedeem,
-      remaining: 0,
-      balanceAfter,
-      description: "Prudent Points redeemed at checkout",
-      orderId,
-      rateNGN: rate,
-    },
-  });
-
-  await syncLoyaltyCaches(userId, balanceAfter, db);
 }
 
-/** Append-only return. Never edits the original REDEEMED row. */
+/** Append-only return. Never edits the original REDEEMED / RESERVED row. */
 export async function returnRedeemedPoints(
   orderId: string,
   db: PointsDb = prisma,
@@ -311,7 +353,7 @@ export async function returnRedeemedPoints(
   if (existingReturn) return 0;
 
   const redeemed = await db.pointsTransaction.findMany({
-    where: { orderId, type: PointsType.REDEEMED },
+    where: { orderId, type: { in: [PointsType.REDEEMED, PointsType.RESERVED] } },
   });
   if (redeemed.length === 0) return 0;
 

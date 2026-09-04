@@ -18,6 +18,7 @@ CRON_TZ=UTC
 0 0 * * * root /opt/prudentgabriel/deploy/cron-fire.sh rotate-qr
 0 9 * * 1-6 root /opt/prudentgabriel/deploy/cron-fire.sh late-alert
 0 9 * * * root /opt/prudentgabriel/deploy/cron-fire.sh event-reminders
+*/15 * * * * root /opt/prudentgabriel/deploy/cron-fire.sh checkout-reservations
 0 23 * * * root /opt/prudentgabriel/deploy/cron-fire.sh daily-report
 0 7 * * 1 root /opt/prudentgabriel/deploy/cron-fire.sh weekly-report
 0 2 * * * root /opt/prudentgabriel/deploy/cron-fire.sh update-performance

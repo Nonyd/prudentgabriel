@@ -27,6 +27,7 @@ export function applyOrderAttention(
       ...where,
       status: OrderStatus.CANCELLED,
       paymentStatus: PaymentStatus.PAID,
+      refundRecordedAt: null,
     };
   }
   if (attention === QUOTE_PENDING_ATTENTION) {

@@ -75,6 +75,7 @@ function makeFulfillDb(order: {
     shippingAmount: 0,
     discount: 0,
     pointsDiscountNGN: 0,
+    pointsUsed: 0,
     addressSnapshot: null,
     user: { id: "user_1", email: "a@example.test", name: "A" },
     items: order.items.map((i) => ({ ...i, product: { name: "Dress" }, size: "M", color: "Black", price: order.total })),
@@ -172,6 +173,7 @@ function makeFulfillDb(order: {
         ledgerWrites += 1;
       },
       aggregate: async () => ({ _sum: { amount: 0 } }),
+      findFirst: async () => null,
     },
   };
 

@@ -1,4 +1,4 @@
-import { CouponType, ProductCategory } from "@prisma/client";
+import { CouponType, CouponUsageStatus, ProductCategory, type Prisma, type PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export interface CouponValidationResult {
@@ -20,6 +20,8 @@ export interface CartLineForCoupon {
   quantity: number;
   category?: ProductCategory;
 }
+
+type CouponDb = Prisma.TransactionClient | PrismaClient;
 
 function formatMinAmount(n: number): string {
   return new Intl.NumberFormat("en-NG", { maximumFractionDigits: 0 }).format(n);
@@ -59,7 +61,11 @@ export async function validateCoupon(
 
   const emailLower = email.trim().toLowerCase();
   const usageCount = await prisma.couponUsage.count({
-    where: { couponId: coupon.id, email: emailLower },
+    where: {
+      couponId: coupon.id,
+      email: emailLower,
+      status: { in: [CouponUsageStatus.PENDING, CouponUsageStatus.COMMITTED] },
+    },
   });
   if (usageCount >= coupon.maxUsesPerUser) {
     return { valid: false, discountNGN: 0, isFreeShipping: false, error: "You have already used this coupon" };
@@ -115,4 +121,47 @@ export async function validateCoupon(
     discountNGN,
     isFreeShipping,
   };
+}
+
+export async function reserveCouponUsage(
+  db: CouponDb,
+  params: { couponId: string; userId: string | null; email: string; orderId: string },
+): Promise<void> {
+  await db.coupon.update({
+    where: { id: params.couponId },
+    data: { usedCount: { increment: 1 } },
+  });
+  await db.couponUsage.create({
+    data: {
+      couponId: params.couponId,
+      userId: params.userId,
+      email: params.email,
+      orderId: params.orderId,
+      status: CouponUsageStatus.PENDING,
+    },
+  });
+}
+
+export async function commitCouponUsage(db: CouponDb, orderId: string): Promise<void> {
+  const usage = await db.couponUsage.findUnique({ where: { orderId } });
+  if (!usage || usage.status !== CouponUsageStatus.PENDING) return;
+  await db.couponUsage.update({
+    where: { id: usage.id },
+    data: { status: CouponUsageStatus.COMMITTED, committedAt: new Date() },
+  });
+}
+
+/** Only PENDING holds are released. A committed use (paid, then refunded) stays used. */
+export async function releaseCouponUsage(db: CouponDb, orderId: string): Promise<boolean> {
+  const usage = await db.couponUsage.findUnique({ where: { orderId } });
+  if (!usage || usage.status !== CouponUsageStatus.PENDING) return false;
+  await db.couponUsage.update({
+    where: { id: usage.id },
+    data: { status: CouponUsageStatus.RELEASED, releasedAt: new Date() },
+  });
+  await db.coupon.updateMany({
+    where: { id: usage.couponId, usedCount: { gt: 0 } },
+    data: { usedCount: { decrement: 1 } },
+  });
+  return true;
 }
