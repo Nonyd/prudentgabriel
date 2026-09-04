@@ -118,6 +118,11 @@ jobs:
             cd /opt/prudentgabriel/deploy
             mkdir -p /opt/prudentgabriel/media/public /opt/prudentgabriel/media/private
             sudo -n chown -R 1001:1001 /opt/prudentgabriel/media 2>/dev/null || chown -R 1001:1001 /opt/prudentgabriel/media || true
+            if [ -n "${GITHUB_TOKEN:-}" ]; then
+              curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.raw" \
+                "https://api.github.com/repos/Nonyd/prudentgabriel/contents/deploy/compose.production.yaml?ref=${DEPLOY_SHA}" \
+                -o /opt/prudentgabriel/deploy/compose.production.yaml
+            fi
             # Pull only the app image from GHCR. A full `compose pull` also hits Docker Hub
             # for postgres:18-alpine and fails when Hub resets IPv6 connections.
             for attempt in 1 2 3 4 5; do
