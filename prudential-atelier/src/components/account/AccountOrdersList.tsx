@@ -45,7 +45,7 @@ export function AccountOrdersList({ orders }: { orders: AccountOrderRow[] }) {
     return (
       <p className="text-charcoal-mid">
         No orders yet.{" "}
-        <Link href="/shop" className="text-wine underline">
+        <Link href="/rtw" className="text-wine underline">
           Browse collection
         </Link>
       </p>

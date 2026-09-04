@@ -64,7 +64,7 @@ export function AccountShell({
                   <ShoppingCart className="h-4 w-4" strokeWidth={1.75} />
                 </Link>
                 <Link
-                  href="/shop"
+                  href="/rtw"
                   className="inline-flex items-center gap-1.5 font-sans text-[12px] font-medium text-[#5c3422] transition-colors hover:text-[#442913]"
                 >
                   <ShoppingBag className="h-4 w-4" strokeWidth={1.75} />

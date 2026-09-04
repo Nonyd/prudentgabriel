@@ -131,7 +131,7 @@ export function BridalGalleryClient({
             Book bridal consultation
           </Link>
           <Link
-            href="/shop?category=BRIDAL"
+            href="/bridal"
             className="inline-block border px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.12em]"
             style={{ borderColor: "var(--bride-dark)", color: "var(--bride-dark)" }}
           >

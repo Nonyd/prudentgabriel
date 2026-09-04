@@ -73,7 +73,7 @@ export async function BestSellers() {
             </h2>
           </div>
           <Link
-            href="/shop"
+            href="/rtw"
             className="uppercase transition-opacity hover:opacity-80"
             style={{
               fontFamily: "var(--font-ui)",

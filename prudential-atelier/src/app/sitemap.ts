@@ -8,7 +8,6 @@ const STATIC_PATHS: {
   priority: number;
 }[] = [
   { path: "", changeFrequency: "weekly", priority: 1 },
-  { path: "/shop", changeFrequency: "daily", priority: 0.9 },
   { path: "/rtw", changeFrequency: "daily", priority: 0.9 },
   { path: "/collections", changeFrequency: "weekly", priority: 0.8 },
   { path: "/atelier", changeFrequency: "weekly", priority: 0.8 },

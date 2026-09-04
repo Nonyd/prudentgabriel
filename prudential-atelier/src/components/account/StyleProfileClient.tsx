@@ -98,7 +98,7 @@ export function StyleProfileClient({
             mobileColumns={1}
             className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
           />
-          <Link href="/shop" className="btn-primary mt-8 inline-flex">
+          <Link href="/rtw" className="btn-primary mt-8 inline-flex">
             Browse the full collection
           </Link>
         </section>

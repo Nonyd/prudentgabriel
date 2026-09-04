@@ -43,7 +43,7 @@ export default async function AccountTransactionsPage() {
               When you pay for consultations, commissions, or ready-to-wear orders, they will appear
               here.
             </p>
-            <Link href="/shop" className="btn-primary mt-6 inline-flex">
+            <Link href="/rtw" className="btn-primary mt-6 inline-flex">
               Browse the collection
             </Link>
           </div>

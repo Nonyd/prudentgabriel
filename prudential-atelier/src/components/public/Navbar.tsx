@@ -17,7 +17,6 @@ import { getSubBrand } from "@/lib/sub-brand";
 type CollectionNav = { name: string; slug: string };
 
 const PRIMARY_LINKS = [
-  { href: "/shop", label: "Shop" },
   { href: "/bridal", label: "Bridal" },
   { href: "/atelier", label: "Atelier" },
   { href: "/kids", label: "Kids" },
@@ -353,9 +352,8 @@ export function Navbar({
         <div className="hidden border-b border-sand/20 bg-sidebar-bg lg:block">
           <div className="mx-auto grid h-12 max-w-site grid-cols-[minmax(0,1fr)_auto] items-center gap-4 overflow-visible px-10">
             <nav className="flex min-w-0 items-center gap-4 overflow-visible xl:gap-6 2xl:gap-8" aria-label="Primary">
-              <NavLink href="/shop" label="Shop" />
               <RtwDropdown collections={collections} />
-              {primaryLinks.filter((l) => l.href !== "/shop").map((link) => (
+              {primaryLinks.map((link) => (
                 <NavLink key={link.href} href={link.href} label={link.label} />
               ))}
             </nav>
@@ -392,22 +390,8 @@ export function Navbar({
           </button>
         </div>
         <nav className="flex flex-1 flex-col gap-1 border-t border-sand/60 p-6" aria-label="Mobile">
-          <Link
-            href="/shop"
-            onClick={() => setOpen(false)}
-            className="border-b border-sand/60 py-3 uppercase"
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "11px",
-              fontWeight: 500,
-              letterSpacing: "0.14em",
-              color: "var(--text-mid)",
-            }}
-          >
-            Shop
-          </Link>
           <MobileRtwSection collections={collections} onClose={() => setOpen(false)} />
-          {primaryLinks.filter((l) => l.href !== "/shop").map((link) => (
+          {primaryLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}

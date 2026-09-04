@@ -21,7 +21,7 @@ function SuccessInner() {
 
   useEffect(() => {
     if (!orderNumber) {
-      router.replace("/shop");
+          router.replace("/rtw");
       return;
     }
     const q = emailParam ? `?email=${encodeURIComponent(emailParam)}` : "";
@@ -103,7 +103,7 @@ function SuccessInner() {
         </div>
       ) : null}
       <div className="mt-8 flex flex-wrap justify-center gap-4">
-        <Link href="/shop" className="rounded-sm bg-choc px-6 py-2 text-sm text-cream">
+        <Link href="/rtw" className="rounded-sm bg-choc px-6 py-2 text-sm text-cream">
           Continue shopping
         </Link>
       </div>

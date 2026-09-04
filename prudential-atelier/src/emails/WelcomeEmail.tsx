@@ -39,7 +39,7 @@ export default function WelcomeEmail({ firstName, pointsBalance, referralCode }:
           </Text>
         </Section>
       ) : null}
-      <EmailButton href={`${APP}/shop`}>Explore the collection</EmailButton>
+      <EmailButton href={`${APP}/rtw`}>Explore the collection</EmailButton>
       <Text style={{ marginTop: 32, fontSize: 13, color: "#555" }}>
         Your referral code: <strong>{referralCode}</strong>
         <br />

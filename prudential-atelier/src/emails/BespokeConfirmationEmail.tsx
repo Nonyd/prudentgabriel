@@ -44,7 +44,7 @@ export default function BespokeConfirmationEmail({
         Occasion: {occasion} · Timeline: {timeline}
       </Text>
       <Text style={{ marginTop: 16, fontSize: 14 }}>In the meantime, browse our ready-to-wear collection.</Text>
-      <EmailButton href={`${APP}/shop`}>Browse collection</EmailButton>
+      <EmailButton href={`${APP}/rtw`}>Browse collection</EmailButton>
       <Text style={{ marginTop: 24, fontSize: 13, color: "#555" }}>
         Reach us at hello@prudentgabriel.com or @prudent_gabriel on Instagram.
       </Text>

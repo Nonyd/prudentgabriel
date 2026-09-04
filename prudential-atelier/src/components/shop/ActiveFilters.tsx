@@ -19,14 +19,14 @@ function useQs() {
     const n = new URLSearchParams(sp.toString());
     for (const k of keys) n.delete(k);
     n.delete("page");
-    router.push(`/shop?${n.toString()}`);
+    router.push(`/rtw?${n.toString()}`);
   };
   const setOne = (key: string, value: string | null) => {
     const n = new URLSearchParams(sp.toString());
     if (value === null || value === "") n.delete(key);
     else n.set(key, value);
     n.delete("page");
-    router.push(`/shop?${n.toString()}`);
+    router.push(`/rtw?${n.toString()}`);
   };
   return { sp, router, remove, setOne };
 }
@@ -87,7 +87,7 @@ export function ActiveFilters({ className }: { className?: string }) {
         const n = new URLSearchParams(sp.toString());
         n.delete("sort");
         n.delete("page");
-        router.push(`/shop?${n.toString()}`);
+        router.push(`/rtw?${n.toString()}`);
       },
     });
   }
@@ -120,7 +120,7 @@ export function ActiveFilters({ className }: { className?: string }) {
       ))}
       {pills.length > 1 && (
         <Link
-          href="/shop"
+          href="/rtw"
           className="shrink-0 self-center font-body text-[11px] text-dark-grey underline-offset-2 hover:text-choc hover:underline"
         >
           Clear all

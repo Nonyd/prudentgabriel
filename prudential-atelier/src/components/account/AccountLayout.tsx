@@ -105,7 +105,7 @@ export function AccountLayout({
           })}
           <div className="my-2 border-t border-charcoal-mid" />
           <Link
-            href="/shop"
+            href="/rtw"
             className="flex items-center gap-3 rounded-sm px-4 py-2.5 text-sm text-ivory/60 hover:bg-charcoal-mid hover:text-ivory"
           >
             <ShoppingBag className="h-4 w-4" />

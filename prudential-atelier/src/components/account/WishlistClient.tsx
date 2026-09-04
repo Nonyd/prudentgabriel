@@ -64,7 +64,7 @@ export function WishlistClient({ items: initial }: { items: WishlistItemView[] }
     return (
       <div className="mt-16 text-center">
         <p className="font-sans text-sm text-text-mid">Your wishlist is empty — browse the collection.</p>
-        <Link href="/shop" className="btn-primary mt-6 inline-flex">
+        <Link href="/rtw" className="btn-primary mt-6 inline-flex">
           Browse collection
         </Link>
       </div>

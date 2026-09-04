@@ -18,7 +18,7 @@ export function NewArrivals({ products }: { products: ProductListItem[] }) {
             <SectionLabel>JUST IN</SectionLabel>
             <h2 className="mt-2 font-display text-4xl text-charcoal">New Arrivals</h2>
           </div>
-          <Link href="/shop?sort=newest" className="font-body text-sm text-gold hover:underline">
+          <Link href="/rtw?sort=newest" className="font-body text-sm text-gold hover:underline">
             View All →
           </Link>
         </div>

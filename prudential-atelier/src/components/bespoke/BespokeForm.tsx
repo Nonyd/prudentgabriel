@@ -91,7 +91,7 @@ export function BespokeForm() {
           <p className="font-display text-3xl text-choc">Request received!</p>
           <p className="mt-2 font-label text-gold">#{done}</p>
           <p className="mt-4 text-sm text-charcoal-mid">Our team will contact you within 24–48 hours.</p>
-          <Link href="/shop" className="mt-8 inline-block rounded-sm bg-choc px-6 py-2 text-cream">
+          <Link href="/rtw" className="mt-8 inline-block rounded-sm bg-choc px-6 py-2 text-cream">
             Back to shop
           </Link>
         </motion.div>

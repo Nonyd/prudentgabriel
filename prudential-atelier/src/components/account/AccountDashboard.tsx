@@ -583,7 +583,7 @@ export function AccountDashboard({
             >
               Begin your commission →
             </Link>
-            <Link href="/shop" className="btn-ghost-dark justify-center px-6 py-3">
+            <Link href="/rtw" className="btn-ghost-dark justify-center px-6 py-3">
               Browse the collection →
             </Link>
           </div>
@@ -664,7 +664,7 @@ export function AccountDashboard({
                 Begin a new commission →
               </Link>
               <Link
-                href="/shop"
+                href="/rtw"
                 className="btn-ghost-light justify-center border-sand text-choc dark:text-cream"
               >
                 Browse the collection →

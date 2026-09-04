@@ -24,6 +24,7 @@ import {
 } from "@/lib/quick-add";
 import { CUSTOM_LEAD_COPY, CUSTOM_RETURNS_COPY, customSurchargeNGN, standardVariants, validateCustomMeasurements } from "@/lib/custom-size";
 import { isCustomOfferedNow, PDP_INITIAL_FIT_MODE } from "@/lib/custom-availability";
+import { productAisle } from "@/lib/rtw-aisle";
 import type { MeasurementFieldDef } from "@/lib/custom-size";
 import { displayAmountInCurrency, effectiveUnitNGN, variantAmountInCurrency } from "@/lib/pricing";
 import { useCurrencyStore } from "@/store/currencyStore";
@@ -102,6 +103,7 @@ export function ProductDetailClient({
   );
   const standardSizes = useMemo(() => standardVariants(product.variants), [product.variants]);
   const sizesSoldOut = !hasPurchasableSize(standardSizes);
+  const aisle = productAisle(product);
   const customAvailable = isCustomOfferedNow({
     customOffered,
     customOfferedWhenSoldOut,
@@ -254,8 +256,8 @@ export function ProductDetailClient({
   return (
     <div className="mx-auto max-w-site overflow-x-clip px-4 pb-20 lg:px-10">
       <nav className="py-4 font-body text-[11px] font-medium uppercase tracking-[0.08em] text-dark-grey">
-        <Link href="/shop" className="hover:text-choc">
-          Shop
+        <Link href={aisle.href} className="hover:text-choc">
+          {aisle.label}
         </Link>
         <span className="mx-2">/</span>
         <span>{String(product.category).replace(/_/g, " ")}</span>

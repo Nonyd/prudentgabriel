@@ -11,6 +11,7 @@ import { cmsGet, cmsJson } from "@/lib/cms-helpers";
 import { instagramHandleToUrl } from "@/lib/sub-brand";
 import { useCookieConsentStore } from "@/store/cookieConsentStore";
 import { filterStorefrontLinks } from "@/lib/atelier-storefront";
+import { normalizeStorefrontListingHref } from "@/lib/rtw-aisle";
 
 type LinkItem = { label: string; url: string };
 
@@ -143,7 +144,7 @@ export function Footer({
 
   const houseLinks = filterStorefrontLinks(
     cmsJson<LinkItem[]>(cms, "footer_house_links", DEFAULT_HOUSE_LINKS).map((l) => ({
-      href: l.url,
+      href: normalizeStorefrontListingHref(l.url),
       label: l.label,
       external: l.url.startsWith("http"),
     })),
@@ -151,7 +152,7 @@ export function Footer({
 
   const clientLinks = filterStorefrontLinks(
     cmsJson<LinkItem[]>(cms, "footer_client_links", DEFAULT_CLIENT_LINKS).map((l) => ({
-      href: l.url,
+      href: normalizeStorefrontListingHref(l.url),
       label: l.label,
       external: l.url.startsWith("http"),
     })),

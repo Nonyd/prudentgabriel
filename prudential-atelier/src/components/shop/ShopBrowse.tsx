@@ -98,7 +98,7 @@ export function ShopBrowse({
     n.set("limit", sp.get("limit") ?? "20");
     const sort = sp.get("sort");
     if (sort) n.set("sort", sort);
-    router.push(`/shop?${n.toString()}`);
+    router.push(`/rtw?${n.toString()}`);
   }
 
   return (
@@ -155,7 +155,7 @@ export function ShopBrowse({
             <p className="font-serif text-lg text-choc">No pieces match your filters</p>
             <button
               type="button"
-              onClick={() => router.push("/shop")}
+              onClick={() => router.push("/rtw")}
               className="mt-6 font-sans text-[11px] font-medium uppercase tracking-wider text-nut underline"
             >
               View all pieces
@@ -200,7 +200,7 @@ function SortSelect() {
         const n = new URLSearchParams(sp.toString());
         n.set("sort", v);
         n.delete("page");
-        router.push(`/shop?${n.toString()}`);
+        router.push(`/rtw?${n.toString()}`);
       }}
     >
       <Select.Trigger className="inline-flex items-center gap-1.5 font-sans text-[11px] uppercase tracking-[0.1em] text-text-mid outline-none">

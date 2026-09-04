@@ -9,7 +9,7 @@ const SHOP_LINKS = [
   { label: "Bridal", href: "/bridal" },
   { label: "Kids", href: "/kids" },
   { label: "Bespoke", href: "/bespoke" },
-  { label: "Sale", href: "/shop?sale=true" },
+  { label: "Sale", href: "/rtw?sale=true" },
 ];
 
 const SOCIAL_HANDLES = [

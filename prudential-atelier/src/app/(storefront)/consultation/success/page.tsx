@@ -128,7 +128,7 @@ function Inner() {
           >
             View my bookings
           </Link>
-          <Link href="/shop" className="rounded-sm border border-border px-6 py-3 text-center text-sm text-charcoal">
+          <Link href="/rtw" className="rounded-sm border border-border px-6 py-3 text-center text-sm text-charcoal">
             Back to shop
           </Link>
         </div>

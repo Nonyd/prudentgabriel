@@ -73,7 +73,7 @@ export function KidsGalleryPage({
           {pageDescription ?? heroSubtext}
         </p>
         <Link
-          href="/shop?category=KIDDIES"
+          href="/rtw?category=KIDDIES"
           className="mt-8 inline-block px-8 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-[#2a1a0e] transition-opacity hover:opacity-90"
           style={{ backgroundColor: "var(--cta-bg)", borderRadius: "2px" }}
         >
@@ -189,7 +189,7 @@ export function KidsGalleryPage({
               Browse our ready-made children&apos;s collection for immediate purchase and delivery.
             </p>
             <Link
-              href="/shop?category=KIDDIES"
+              href="/rtw?category=KIDDIES"
               className="mt-4 inline-block px-6 py-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] text-[#2a1a0e]"
               style={{ backgroundColor: "var(--cta-bg)" }}
             >

@@ -106,7 +106,7 @@ export const CMS_PAGES: CmsPageDef[] = [
               "Atelier couture and ready-to-wear — each piece conceived in our Lagos atelier and finished by hand for weddings, galas, and everyday elegance.",
           },
           { key: "home_hero_button_1_label", label: "Button 1 label", type: "text", default: "SHOP COLLECTION" },
-          { key: "home_hero_button_1_link", label: "Button 1 link", type: "text", default: "/shop" },
+          { key: "home_hero_button_1_link", label: "Button 1 link", type: "text", default: "/rtw" },
           { key: "home_hero_button_2_label", label: "Button 2 label", type: "text", default: "BOOK CONSULTATION" },
           { key: "home_hero_button_2_link", label: "Button 2 link", type: "text", default: "/consultation" },
           { key: "home_hero_image", label: "Hero image (legacy fallback)", type: "image", default: "", uploadFolder: "prudent-gabriel/hero" },
@@ -660,7 +660,7 @@ export const CMS_PAGES: CmsPageDef[] = [
           { key: "about_cta_button_1_label", label: "Button 1 label", type: "text", default: "BOOK A CONSULTATION →" },
           { key: "about_cta_button_1_link", label: "Button 1 link", type: "text", default: "/consultation" },
           { key: "about_cta_button_2_label", label: "Button 2 label", type: "text", default: "BROWSE THE COLLECTION →" },
-          { key: "about_cta_button_2_link", label: "Button 2 link", type: "text", default: "/shop" },
+          { key: "about_cta_button_2_link", label: "Button 2 link", type: "text", default: "/rtw" },
         ],
       },
     ],
@@ -689,7 +689,7 @@ export const CMS_PAGES: CmsPageDef[] = [
   {
     id: "shop",
     label: "Shop",
-    previewPath: "/shop",
+    previewPath: "/rtw",
     sections: [
       {
         id: "main",

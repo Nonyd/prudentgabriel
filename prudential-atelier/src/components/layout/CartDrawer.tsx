@@ -100,7 +100,7 @@ export function CartDrawer() {
                     className="mt-8"
                     onClick={() => {
                       closeCart();
-                      router.push("/shop");
+                      router.push("/rtw");
                     }}
                   >
                     Shop ready-to-wear

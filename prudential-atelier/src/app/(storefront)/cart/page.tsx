@@ -29,7 +29,7 @@ export default function CartPage() {
       {items.length === 0 ? (
         <div className="mt-16 text-center">
           <p className="font-display text-lg italic text-charcoal">Your bag is empty</p>
-          <Button type="button" className="mt-8" onClick={() => router.push("/shop")}>
+          <Button type="button" className="mt-8" onClick={() => router.push("/rtw")}>
             Shop ready-to-wear
           </Button>
         </div>
@@ -93,7 +93,7 @@ export default function CartPage() {
               Checkout
             </Button>
             <Link
-              href="/shop"
+              href="/rtw"
               className="mt-4 block text-center font-body text-[11px] uppercase tracking-wider text-choc hover:underline"
             >
               Continue shopping

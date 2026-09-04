@@ -19,7 +19,7 @@ const COLLECTIONS = [
     bg: "#5C3422",
   },
   {
-    href: "/shop",
+    href: "/rtw",
     title: "Ready-to-Wear",
     subtitle: "House signatures, ready to ship.",
     cta: "Shop",

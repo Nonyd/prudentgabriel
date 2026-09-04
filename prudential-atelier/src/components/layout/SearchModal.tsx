@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import type { ProductListItem } from "@/types/product";
+import { groupSearchResults, RTW_AISLE, SEARCH_AISLE_LABEL } from "@/lib/rtw-aisle";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { minAmountInCurrency } from "@/lib/pricing";
 
@@ -59,7 +60,7 @@ export function SearchModal() {
   useEffect(() => {
     if (!isOpen) return;
     setRecent(loadRecent());
-    fetch("/api/products?featured=true&limit=4&isPublished=true")
+    fetch("/api/products?featured=true&limit=4&isPublished=true&type=RTW&excludeCategory=BRIDAL")
       .then((r) => r.json())
       .then((j) => setFeatured(j.products ?? []))
       .catch(() => setFeatured([]));
@@ -74,7 +75,7 @@ export function SearchModal() {
     let cancelled = false;
     setLoading(true);
     fetch(
-      `/api/products?search=${encodeURIComponent(debounced)}&limit=6&isPublished=true`,
+      `/api/products?search=${encodeURIComponent(debounced)}&limit=12&isPublished=true`,
     )
       .then((r) => r.json())
       .then((j) => {
@@ -102,6 +103,8 @@ export function SearchModal() {
   const showResults = q.trim().length >= 2;
 
   const lowest = (p: ProductListItem) => minAmountInCurrency(p.variants, p, currency, rates);
+  const grouped = groupSearchResults(results);
+  const mixedAisles = grouped.length > 1;
 
   const goProduct = (slug: string, query?: string) => {
     if (query) saveRecent(query);
@@ -231,34 +234,61 @@ export function SearchModal() {
                 ) : results.length === 0 ? (
                   <p className="italic text-dark-grey">No pieces found for &apos;{debounced}&apos;</p>
                 ) : (
-                  <ul className="space-y-3">
-                    {results.map((p) => (
-                      <li key={p.id}>
-                        <button
-                          type="button"
-                          onClick={() => goProduct(p.slug, debounced)}
-                          className="flex w-full gap-3 p-2 text-left transition-colors hover:bg-light-grey"
-                        >
-                          <div className="relative h-[60px] w-12 shrink-0 overflow-hidden bg-light-grey">
-                            {p.images[0] && (
-                              <Image
-                                src={p.images[0].url}
-                                alt=""
-                                fill
-                                className="object-cover object-top"
-                                sizes="48px"
-                              />
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-body text-sm text-charcoal line-clamp-1">{p.name}</p>
-                            <BadgeGold>{String(p.category).replace(/_/g, " ")}</BadgeGold>
-                          </div>
-                          <span className="shrink-0 text-sm text-choc">{fmt(lowest(p))}</span>
-                        </button>
-                      </li>
+                  <div className="space-y-8">
+                    {grouped.map(({ aisle, items }) => (
+                      <div key={aisle}>
+                        {mixedAisles ? (
+                          <p className="mb-3 font-body text-[11px] font-medium uppercase tracking-[0.2em] text-dark-grey">
+                            {SEARCH_AISLE_LABEL[aisle]}
+                          </p>
+                        ) : null}
+                        <ul className="space-y-3">
+                          {items.map((p) => (
+                            <li key={p.id}>
+                              <button
+                                type="button"
+                                onClick={() => goProduct(p.slug, debounced)}
+                                className="flex w-full gap-3 p-2 text-left transition-colors hover:bg-light-grey"
+                              >
+                                <div className="relative h-[60px] w-12 shrink-0 overflow-hidden bg-light-grey">
+                                  {p.images[0] && (
+                                    <Image
+                                      src={p.images[0].url}
+                                      alt=""
+                                      fill
+                                      className="object-cover object-top"
+                                      sizes="48px"
+                                    />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-body text-sm text-charcoal line-clamp-1">{p.name}</p>
+                                  <BadgeGold>
+                                    {mixedAisles
+                                      ? SEARCH_AISLE_LABEL[aisle]
+                                      : String(p.category).replace(/_/g, " ")}
+                                  </BadgeGold>
+                                </div>
+                                <span className="shrink-0 text-sm text-choc">{fmt(lowest(p))}</span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     ))}
-                  </ul>
+                    <button
+                      type="button"
+                      className="font-body text-[11px] font-medium uppercase tracking-wider text-choc underline"
+                      onClick={() => {
+                        saveRecent(debounced);
+                        closeSearch();
+                        setQ("");
+                        router.push(`${RTW_AISLE}?search=${encodeURIComponent(debounced)}`);
+                      }}
+                    >
+                      See all in Ready to Wear
+                    </button>
+                  </div>
                 )}
               </div>
             )}

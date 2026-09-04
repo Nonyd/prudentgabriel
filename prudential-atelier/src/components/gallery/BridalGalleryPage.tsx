@@ -125,7 +125,7 @@ export function BridalGalleryPage({
               BOOK BRIDAL CONSULTATION
             </Link>
             <Link
-              href="/shop?category=BRIDAL"
+              href="/bridal"
               className="border border-[#2A1F1A] px-8 py-3.5 font-body text-[11px] uppercase tracking-[0.14em] text-[#2A1F1A]"
             >
               EXPLORE BRIDAL COLLECTION

@@ -77,7 +77,7 @@ export function Hero({
           <p className="mt-4 max-w-xs font-body text-[15px] font-light leading-relaxed text-white/75">{displaySub}</p>
           <div className="mt-8 flex flex-wrap items-center gap-6">
             <Link
-              href="/shop"
+              href="/rtw"
               className="inline-flex border border-white px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white transition-colors duration-200 hover:bg-[#ffffff] hover:text-[#0a0a0a]"
             >
               {btn1}

@@ -59,7 +59,7 @@ export function PrudentialBride({
             <p className="mt-6 max-w-md font-body text-[15px] font-light leading-[1.8] text-charcoal">{displayBody}</p>
             <div className="mt-10 flex flex-col items-start gap-4">
               <Link
-                href="/shop?category=BRIDAL"
+                href="/bridal"
                 className="inline-flex bg-bride-dark px-10 py-4 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-bride-bg transition-opacity hover:opacity-90"
               >
                 {cta1Text}

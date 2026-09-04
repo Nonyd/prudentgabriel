@@ -38,7 +38,7 @@ export default async function WalletPage() {
           ≈ {formatPrice(usd, "USD")} · {formatPrice(gbp, "GBP")}
         </p>
         <Link
-          href="/shop"
+          href="/rtw"
           className="mt-6 inline-block rounded-sm border border-gold px-5 py-2 text-sm text-gold hover:bg-gold/10"
         >
           Shop & earn more

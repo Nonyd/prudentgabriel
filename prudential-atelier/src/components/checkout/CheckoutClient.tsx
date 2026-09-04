@@ -681,7 +681,7 @@ export function CheckoutClient() {
     return (
       <div className="py-20 text-center">
         <p className="text-charcoal-mid">Your bag is empty.</p>
-        <Link href="/shop" className="mt-4 inline-block text-choc underline">
+        <Link href="/rtw" className="mt-4 inline-block text-choc underline">
           Continue shopping
         </Link>
       </div>

@@ -173,7 +173,7 @@ export function AccountSidebar({
 
         <div className="space-y-1 border-t border-white/10 px-4 py-4">
           <Link
-            href="/shop"
+            href="/rtw"
             className="flex items-center gap-2 px-2 py-2 font-sans text-[12px] font-medium text-[#f0e6dc] transition-colors hover:text-white"
           >
             <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />

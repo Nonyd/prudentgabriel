@@ -140,7 +140,7 @@ export function AccountOrdersClient({
       ) : rtwOrders.length === 0 ? (
         <div className="mt-12 text-center">
           <p className="font-sans text-sm text-text-mid">No orders yet</p>
-          <Link href="/shop" className="btn-primary mt-4 inline-flex">
+          <Link href="/rtw" className="btn-primary mt-4 inline-flex">
             Shop now
           </Link>
         </div>
