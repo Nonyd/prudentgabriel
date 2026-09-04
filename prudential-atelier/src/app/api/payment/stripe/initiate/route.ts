@@ -7,6 +7,7 @@ import { canAcceptRtwPayment, rtwChargeAmountForeign } from "@/lib/payments/rtw-
 import { lockedFxFromOrder } from "@/lib/fx";
 import { getStripePublicKey } from "@/lib/payments/config";
 import { catchPaymentInit } from "@/lib/payments/catch-init";
+import { prepareRtwPaymentAttempt } from "@/lib/checkout-reservations";
 
 const bodySchema = z.object({
   orderId: z.string().min(1),
@@ -45,6 +46,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
     }
+
+    const prep = await prepareRtwPaymentAttempt(order.id);
+    if (prep.error) return NextResponse.json({ error: prep.error }, { status: 400 });
 
     const fx = lockedFxFromOrder(order);
     const converted = rtwChargeAmountForeign(order, currency, fx);

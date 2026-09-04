@@ -3,6 +3,7 @@ import { PaymentGateway } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verifyWebhookSignature, verifyTransaction } from "@/lib/payments/flutterwave";
 import { fulfillPaidOrder } from "@/lib/order-payment";
+import { markRtwOrderPaymentFailed } from "@/lib/checkout-reservations";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
 import { rtwChargeAmountForeign, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
 import { convertFromNGN, getExchangeRates, type ShopCurrency } from "@/lib/currency";
@@ -125,6 +126,14 @@ export async function POST(req: NextRequest) {
     } catch (e) {
       if (!(e instanceof PaymentBindError)) throw e;
     }
+  }
+
+  const failStatus = payload.data?.status?.toLowerCase();
+  if (
+    payload.data?.meta?.orderId &&
+    (failStatus === "failed" || failStatus === "cancelled")
+  ) {
+    await markRtwOrderPaymentFailed(payload.data.meta.orderId);
   }
 
   return NextResponse.json({ received: true });

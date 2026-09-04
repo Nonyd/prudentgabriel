@@ -8,6 +8,7 @@ import { initializeTransaction } from "@/lib/payments/monnify";
 import { canAcceptRtwPayment, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
 import { generatePaymentReference } from "@/lib/payments/index";
 import { catchPaymentInit } from "@/lib/payments/catch-init";
+import { prepareRtwPaymentAttempt } from "@/lib/checkout-reservations";
 
 const bodySchema = z.object({
   orderId: z.string().min(1),
@@ -45,6 +46,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
     }
+
+    const prep = await prepareRtwPaymentAttempt(order.id);
+    if (prep.error) return NextResponse.json({ error: prep.error }, { status: 400 });
 
     const appUrl = getPublicAppUrl();
     const redirectUrl = `${appUrl}/api/payment/monnify/verify?orderId=${encodeURIComponent(orderId)}`;

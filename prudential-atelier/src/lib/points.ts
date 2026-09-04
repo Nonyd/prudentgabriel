@@ -341,45 +341,55 @@ export async function redeemPoints(
   });
 }
 
+/** Outstanding debit on an order: RESERVED + REDEEMED minus RETURNED. Append-only net. */
+export async function netHeldPointsForOrder(
+  orderId: string,
+  db: PointsDb = prisma,
+): Promise<number> {
+  const rows = await db.pointsTransaction.findMany({
+    where: { orderId, type: { in: [PointsType.REDEEMED, PointsType.RESERVED, PointsType.RETURNED] } },
+    select: { type: true, amount: true },
+  });
+  let net = 0;
+  for (const row of rows) {
+    const pts = Math.abs(row.amount);
+    if (row.type === PointsType.RETURNED) net -= pts;
+    else net += pts;
+  }
+  return Math.max(0, net);
+}
+
 /** Append-only return. Never edits the original REDEEMED / RESERVED row. */
 export async function returnRedeemedPoints(
   orderId: string,
   db: PointsDb = prisma,
 ): Promise<number> {
-  const existingReturn = await db.pointsTransaction.findFirst({
-    where: { orderId, type: PointsType.RETURNED },
-    select: { id: true },
-  });
-  if (existingReturn) return 0;
+  const outstanding = await netHeldPointsForOrder(orderId, db);
+  if (outstanding <= 0) return 0;
 
-  const redeemed = await db.pointsTransaction.findMany({
+  const latestDebit = await db.pointsTransaction.findFirst({
     where: { orderId, type: { in: [PointsType.REDEEMED, PointsType.RESERVED] } },
+    orderBy: { createdAt: "desc" },
   });
-  if (redeemed.length === 0) return 0;
+  if (!latestDebit?.userId) return 0;
 
-  let returned = 0;
   const months = await getExpiryMonths();
   const now = new Date();
   const freshExpiry = addCalendarMonths(now, months);
-  for (const row of redeemed) {
-    const pts = Math.abs(row.amount);
-    if (pts <= 0 || !row.userId) continue;
-    const originalWindow = addCalendarMonths(row.createdAt, months);
-    const afterOriginalExpiry = originalWindow.getTime() <= now.getTime();
-    await creditPoints(db, {
-      userId: row.userId,
-      amount: pts,
-      type: PointsType.RETURNED,
-      description: afterOriginalExpiry
-        ? "Prudent Points returned after original expiry — new 24 months from today"
-        : "Prudent Points returned — order did not complete",
-      orderId,
-      rateNGN: row.rateNGN,
-      expiresAt: freshExpiry,
-    });
-    returned += pts;
-  }
-  return returned;
+  const originalWindow = addCalendarMonths(latestDebit.createdAt, months);
+  const afterOriginalExpiry = originalWindow.getTime() <= now.getTime();
+  await creditPoints(db, {
+    userId: latestDebit.userId,
+    amount: outstanding,
+    type: PointsType.RETURNED,
+    description: afterOriginalExpiry
+      ? "Prudent Points returned after original expiry — new 24 months from today"
+      : "Prudent Points returned — order did not complete",
+    orderId,
+    rateNGN: latestDebit.rateNGN,
+    expiresAt: freshExpiry,
+  });
+  return outstanding;
 }
 
 export async function adjustPointsAdmin(params: {

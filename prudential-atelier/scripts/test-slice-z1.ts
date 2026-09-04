@@ -22,8 +22,10 @@ import {
   PSP_RESERVATION_TTL_MS,
   commitPaidCheckoutReservations,
   expireStaleCheckoutReservations,
+  expireStaleCheckoutReservationsForActor,
   isCheckoutReservationStale,
   markRtwOrderPaymentFailed,
+  prepareRtwPaymentAttempt,
   releaseUnpaidCheckoutReservations,
 } from "../src/lib/checkout-reservations";
 import { applyOrderAttention, REFUND_REQUIRED_ATTENTION } from "../src/lib/admin-orders-filter";
@@ -332,12 +334,161 @@ async function runDb() {
     "recording who issued the refund removes it from the queue",
   );
 
-  await prisma.couponUsage.deleteMany({ where: { couponId: coupon.id } });
-  await prisma.pointsTransaction.deleteMany({
-    where: { orderId: { in: [order.id, order2.id, stale.id, oversell.id] } },
+  const staleActor = await prisma.order.create({
+    data: {
+      orderNumber: `Z1A-${stamp}`,
+      userId: user.id,
+      guestEmail: user.email,
+      subtotal: 80_000,
+      total: 80_000,
+      paymentStatus: PaymentStatus.PENDING,
+      paymentGateway: "PAYSTACK",
+      createdAt: new Date(Date.now() - PSP_RESERVATION_TTL_MS - 5_000),
+      items: {
+        create: {
+          productId: product.id,
+          variantId: variant.id,
+          quantity: 1,
+          size: "12",
+          price: 80_000,
+          lineTotal: 80_000,
+        },
+      },
+    },
   });
+  await prisma.$transaction(async (tx) => {
+    await reservePoints(user.id, 4_000, staleActor.id, tx, 1);
+  });
+  const beforeActor = await prisma.user.findUnique({ where: { id: user.id }, select: { pointsBalance: true } });
+  const actorReleased = await expireStaleCheckoutReservationsForActor(
+    { userId: user.id, email: user.email },
+    prisma,
+    new Date(),
+  );
+  assert(actorReleased >= 1, "redemption-time expiry releases this customer's stale hold");
+  const afterActor = await prisma.user.findUnique({ where: { id: user.id }, select: { pointsBalance: true } });
+  assert(
+    afterActor != null && beforeActor != null && afterActor.pointsBalance === beforeActor.pointsBalance + 4_000,
+    "stale hold returns at the next checkout, not only when cron runs",
+  );
+
+  const retryOrder = await prisma.order.create({
+    data: {
+      orderNumber: `Z1R-${stamp}`,
+      userId: user.id,
+      guestEmail: user.email,
+      subtotal: 80_000,
+      discount: 5_000,
+      pointsDiscountNGN: 8_000,
+      pointsUsed: 8_000,
+      total: 75_000,
+      couponId: coupon.id,
+      couponCode: coupon.code,
+      paymentStatus: PaymentStatus.PENDING,
+      items: {
+        create: {
+          productId: product.id,
+          variantId: variant.id,
+          quantity: 1,
+          size: "12",
+          price: 80_000,
+          lineTotal: 80_000,
+        },
+      },
+    },
+  });
+  await prisma.$transaction(async (tx) => {
+    await reserveCouponUsage(tx, {
+      couponId: coupon.id,
+      userId: user.id,
+      email: user.email!,
+      orderId: retryOrder.id,
+    });
+    await reservePoints(user.id, 8_000, retryOrder.id, tx, 1);
+  });
+  await markRtwOrderPaymentFailed(retryOrder.id);
+  const afterDecline = await prisma.user.findUnique({ where: { id: user.id }, select: { pointsBalance: true } });
+  const prep = await prepareRtwPaymentAttempt(retryOrder.id);
+  assert(!prep.error, `retry after decline re-holds, got ${prep.error ?? ""}`);
+  const retried = await prisma.order.findUnique({
+    where: { id: retryOrder.id },
+    select: { paymentStatus: true },
+  });
+  assert(retried?.paymentStatus === PaymentStatus.PENDING, "retry flips the failed order back to pending");
+  const afterPrep = await prisma.user.findUnique({ where: { id: user.id }, select: { pointsBalance: true } });
+  assert(
+    afterDecline != null && afterPrep != null && afterPrep.pointsBalance === afterDecline.pointsBalance - 8_000,
+    "retry does not let her keep the points while paying the discounted total",
+  );
+  const couponRetry = await prisma.couponUsage.findUnique({ where: { orderId: retryOrder.id } });
+  assert(couponRetry?.status === CouponUsageStatus.PENDING, "retry re-holds the coupon");
+  await markRtwOrderPaymentFailed(retryOrder.id);
+  const afterSecondFail = await prisma.user.findUnique({ where: { id: user.id }, select: { pointsBalance: true } });
+  assert(
+    afterDecline != null && afterSecondFail != null && afterSecondFail.pointsBalance === afterDecline.pointsBalance,
+    "a second decline still returns the re-held points (net, not a one-shot return)",
+  );
+
+  const clutter = await prisma.order.create({
+    data: {
+      orderNumber: `Z1C-${stamp}`,
+      userId: user.id,
+      subtotal: 1,
+      total: 1,
+      paymentStatus: PaymentStatus.FAILED,
+      createdAt: new Date(Date.now() - PSP_RESERVATION_TTL_MS * 3),
+    },
+  });
+  const heldStale = await prisma.order.create({
+    data: {
+      orderNumber: `Z1H-${stamp}`,
+      userId: user.id,
+      subtotal: 80_000,
+      total: 80_000,
+      paymentStatus: PaymentStatus.PENDING,
+      paymentGateway: "PAYSTACK",
+      createdAt: new Date(Date.now() - PSP_RESERVATION_TTL_MS - 5_000),
+      items: {
+        create: {
+          productId: product.id,
+          variantId: variant.id,
+          quantity: 1,
+          size: "12",
+          price: 80_000,
+          lineTotal: 80_000,
+        },
+      },
+    },
+  });
+  await prisma.$transaction(async (tx) => {
+    await reservePoints(user.id, 3_000, heldStale.id, tx, 1);
+  });
+  const beforeClutter = await prisma.user.findUnique({ where: { id: user.id }, select: { pointsBalance: true } });
+  await expireStaleCheckoutReservations(prisma, new Date(), 50);
+  const afterClutter = await prisma.user.findUnique({ where: { id: user.id }, select: { pointsBalance: true } });
+  assert(
+    afterClutter != null &&
+      beforeClutter != null &&
+      afterClutter.pointsBalance === beforeClutter.pointsBalance + 3_000,
+    "old failed orders without holds do not hide a stale points reservation from the sweep",
+  );
+
+  const orderIds = [
+    order.id,
+    order2.id,
+    stale.id,
+    oversell.id,
+    staleActor.id,
+    retryOrder.id,
+    clutter.id,
+    heldStale.id,
+  ];
+  await prisma.couponUsage.deleteMany({ where: { couponId: coupon.id } });
+  await prisma.pointsTransaction.deleteMany({ where: { orderId: { in: orderIds } } });
   await prisma.cartItem.deleteMany({ where: { userId: user.id } });
-  await prisma.order.deleteMany({ where: { id: { in: [order.id, stale.id, oversell.id] } } });
+  await prisma.order.deleteMany({
+    where: { id: { in: orderIds.filter((id) => id !== order2.id) } },
+  });
   await prisma.pointsTransaction.deleteMany({ where: { userId: user.id, orderId: null } });
 }
 

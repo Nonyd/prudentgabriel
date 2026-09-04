@@ -10,6 +10,7 @@ import {
 import { notifyBankTransferReceipt } from "@/lib/notifications";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { canAcceptRtwPayment } from "@/lib/payments/rtw-totals";
+import { prepareRtwPaymentAttempt } from "@/lib/checkout-reservations";
 
 const bodySchema = z.object({
   orderId: z.string().min(1),
@@ -49,6 +50,9 @@ export async function POST(req: NextRequest) {
   if (!canAcceptRtwPayment(order)) {
     return NextResponse.json({ error: "Order is not awaiting payment" }, { status: 400 });
   }
+
+  const prep = await prepareRtwPaymentAttempt(order.id);
+  if (prep.error) return NextResponse.json({ error: prep.error }, { status: 400 });
 
   if (order.userId) {
     if (session?.user?.id !== order.userId) {

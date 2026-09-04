@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { reserveCouponUsage, validateCoupon } from "@/lib/coupon";
+import { expireStaleCheckoutReservationsForActor } from "@/lib/checkout-reservations";
 import { generateOrderNumber } from "@/lib/order-number";
 import {
   clampRedemption,
@@ -311,6 +312,8 @@ export async function POST(req: NextRequest) {
   if (!emailForCoupon) {
     return NextResponse.json({ error: "Email required for checkout" }, { status: 400 });
   }
+
+  await expireStaleCheckoutReservationsForActor({ userId, email: emailForCoupon });
 
   const isPickupOption = shippingOptionId.startsWith("pickup:");
 

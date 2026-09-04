@@ -3,6 +3,7 @@ import { PaymentGateway } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verifyWebhookSignature, verifyTransaction } from "@/lib/payments/monnify";
 import { fulfillPaidOrder } from "@/lib/order-payment";
+import { markRtwOrderPaymentFailed } from "@/lib/checkout-reservations";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
 import { rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
 import {
@@ -81,6 +82,16 @@ export async function POST(req: NextRequest) {
           }
         }
       }
+    }
+
+    if (
+      (j.eventType === "FAILED_TRANSACTION" || j.eventType === "TRANSACTION_FAILED") &&
+      j.paymentReference
+    ) {
+      const order =
+        (await prisma.order.findUnique({ where: { orderNumber: j.paymentReference } })) ??
+        (await prisma.order.findFirst({ where: { paymentRef: j.paymentReference } }));
+      if (order) await markRtwOrderPaymentFailed(order.id);
     }
   } catch (e) {
     if (!(e instanceof PaymentBindError)) {

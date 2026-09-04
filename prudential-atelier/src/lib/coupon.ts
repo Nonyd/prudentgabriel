@@ -165,3 +165,35 @@ export async function releaseCouponUsage(db: CouponDb, orderId: string): Promise
   });
   return true;
 }
+
+/** Same order, new payment attempt: put a RELEASED hold back to PENDING. */
+export async function rereserveCouponUsage(
+  db: CouponDb,
+  params: { orderId: string; couponId: string; userId: string | null; email: string },
+): Promise<void> {
+  const usage = await db.couponUsage.findUnique({ where: { orderId: params.orderId } });
+  if (!usage) {
+    await reserveCouponUsage(db, params);
+    return;
+  }
+  if (usage.status === CouponUsageStatus.PENDING || usage.status === CouponUsageStatus.COMMITTED) {
+    return;
+  }
+
+  const coupon = await db.coupon.findUnique({ where: { id: params.couponId } });
+  if (!coupon) {
+    throw new Error("This coupon is no longer available");
+  }
+  if (coupon.maxUsesTotal != null && coupon.usedCount >= coupon.maxUsesTotal) {
+    throw new Error("This coupon has reached its usage limit");
+  }
+
+  await db.coupon.update({
+    where: { id: params.couponId },
+    data: { usedCount: { increment: 1 } },
+  });
+  await db.couponUsage.update({
+    where: { id: usage.id },
+    data: { status: CouponUsageStatus.PENDING, releasedAt: null },
+  });
+}
