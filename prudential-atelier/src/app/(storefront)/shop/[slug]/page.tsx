@@ -189,6 +189,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         freeLagosAboveNGN={lagosLoc?.freeAboveNGN ?? null}
         bespokeFromNGN={bespokeFrom}
         customOffered={customCtx?.policy.offered ?? product.customOffered}
+        customOfferedWhenSoldOut={product.customOfferedWhenSoldOut}
         customFields={customCtx?.fields ?? []}
         customLeadTimeDays={customCtx?.policy.leadTimeDays ?? 21}
         customReturnable={customCtx?.policy.returnable ?? false}

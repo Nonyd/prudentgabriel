@@ -2,6 +2,7 @@ import type { Prisma, PrismaClient, StockMovementReason } from "@prisma/client";
 import { getSetting } from "@/lib/settings";
 import { notifyLowStock } from "@/lib/notifications";
 import { revalidateProduct } from "@/lib/revalidate";
+import { processRestockAlerts } from "@/lib/stock-alerts";
 
 export const FULFILMENT_STOCK_REFUSE_NOTE =
   "Fulfilment refused: stock was insufficient after payment. Refund the customer — do not ship.";
@@ -295,6 +296,10 @@ export async function afterStockWrites(results: StockWriteResult[]): Promise<voi
   );
   for (const r of results) {
     await maybeNotifyLowStock(r);
+  }
+  const restocked = results.filter((r) => r.previousStock <= 0 && r.stock > 0).map((r) => r.variantId);
+  if (restocked.length) {
+    await processRestockAlerts(restocked).catch((e) => console.warn("[afterStockWrites] restock alerts", e));
   }
 }
 

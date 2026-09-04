@@ -52,9 +52,14 @@ export function quickAddCtaLabel(phase: QuickAddPhase, price: string): string {
 }
 
 export function stockGuardMessage(apiError?: string | null): string {
-  const e = (apiError ?? "").toLowerCase();
+  const trimmed = (apiError ?? "").trim();
+  const e = trimmed.toLowerCase();
+  // Remake refusal contains "sold out" — do not rewrite it as a size-stock miss.
+  if (e.includes("cannot be remade") || e.includes("not offered in custom")) {
+    return trimmed;
+  }
   if (e.includes("stock") || e.includes("sold")) return "That size just sold out.";
-  if (apiError?.trim()) return apiError.trim();
+  if (trimmed) return trimmed;
   return "Could not add to bag.";
 }
 
@@ -66,7 +71,7 @@ export function canSubmit(state: QuickAddState): boolean {
 export function reduceQuickAdd(state: QuickAddState, action: QuickAddAction): QuickAddState {
   switch (action.type) {
     case "open": {
-      if (!hasPurchasableSize(action.product.variants) && !action.product.customOffered) return state;
+      if (!hasPurchasableSize(action.product.variants)) return state;
       return {
         product: action.product,
         variantId: null,

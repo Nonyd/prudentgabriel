@@ -347,7 +347,13 @@ export function ProductUploadGuide() {
           </li>
           <li>
             <strong>Bespoke available</strong> — tick if customers can also commission a made-to-measure
-            version of this RTW piece.
+            version of this RTW piece. On ready-to-wear pages that offer is not shown next to the size picker;
+            they book through Atelier.
+          </li>
+          <li>
+            <strong>Offer custom</strong> — she can enter measurements while sizes are in stock.
+            <strong> Keep offering after sold out</strong> stays off unless the fabric can be sourced again.
+            If it is off, a sold-out piece shows Notify me, not a remake.
           </li>
         </ul>
       </Step>

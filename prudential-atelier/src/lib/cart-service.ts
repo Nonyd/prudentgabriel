@@ -11,6 +11,7 @@ import {
 } from "@/lib/custom-size";
 import { getCustomGlobals } from "@/lib/custom-settings";
 import { effectiveUnitNGN } from "@/lib/pricing";
+import { assertCustomLineAllowed } from "@/lib/custom-availability";
 
 function isMissingCartUserError(error: unknown): boolean {
   if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2003") {
@@ -150,8 +151,12 @@ async function addCustomLine(
       variants: { orderBy: { priceNGN: "asc" } },
     },
   });
-  if (!product?.customOffered) {
-    return { ok: false as const, status: 400, error: "This piece is not offered in custom measurements" };
+  const allowed = await assertCustomLineAllowed(input.productId);
+  if (!allowed.ok) {
+    return { ok: false as const, status: allowed.status, error: allowed.error };
+  }
+  if (!product) {
+    return { ok: false as const, status: 404, error: "Product not found" };
   }
   const fields = product.measurementFields.map((pm) => ({
     key: pm.field.key,

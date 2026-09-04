@@ -166,6 +166,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           isNewArrival: data.isNewArrival,
           isBespokeAvail: data.isBespokeAvail,
           customOffered: data.customOffered ?? false,
+          customOfferedWhenSoldOut: data.customOfferedWhenSoldOut ?? false,
           customSurchargeKind: data.customSurchargeKind ?? null,
           customSurchargeValue: data.customSurchargeValue ?? null,
           customLeadTimeDays: data.customLeadTimeDays ?? null,

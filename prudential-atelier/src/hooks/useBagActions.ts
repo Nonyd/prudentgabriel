@@ -28,6 +28,19 @@ export function useBagActions() {
     const toastOnError = opts?.toastOnError !== false;
     const openOnSuccess = opts?.openOnSuccess !== false;
     if (!authenticated) {
+      if (item.sizeMode === "CUSTOM") {
+        const gate = await fetch("/api/shop/custom-gate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productId: item.productId }),
+        });
+        const body = (await gate.json().catch(() => ({}))) as { error?: string };
+        if (!gate.ok) {
+          const message = stockGuardMessage(body.error);
+          if (toastOnError) toast.error(message);
+          return { ok: false, error: message };
+        }
+      }
       addItem(
         {
           ...item,

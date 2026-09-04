@@ -37,7 +37,7 @@ export function useProductQuickAdd(
 
   const isOpen = storeProductId === product.id && phase !== "idle";
   const sizesSoldOut = !hasPurchasableSize(standardVariants(product.variants));
-  const soldOut = sizesSoldOut && !product.customOffered;
+  const soldOut = sizesSoldOut;
   const activePhase: QuickAddPhase = isOpen ? phase : "idle";
   const activeVariantId = isOpen ? variantId : null;
   const activeError = isOpen ? error : null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import * as Accordion from "@radix-ui/react-accordion";
 import { Button } from "@/components/ui/Button";
@@ -23,6 +23,7 @@ import {
   stockGuardMessage,
 } from "@/lib/quick-add";
 import { CUSTOM_LEAD_COPY, CUSTOM_RETURNS_COPY, customSurchargeNGN, standardVariants, validateCustomMeasurements } from "@/lib/custom-size";
+import { isCustomOfferedNow, PDP_INITIAL_FIT_MODE } from "@/lib/custom-availability";
 import type { MeasurementFieldDef } from "@/lib/custom-size";
 import { displayAmountInCurrency, effectiveUnitNGN, variantAmountInCurrency } from "@/lib/pricing";
 import { useCurrencyStore } from "@/store/currencyStore";
@@ -59,6 +60,7 @@ interface ProductDetailClientProps {
   freeLagosAboveNGN?: number | null;
   bespokeFromNGN?: number | null;
   customOffered?: boolean;
+  customOfferedWhenSoldOut?: boolean;
   customFields?: MeasurementFieldDef[];
   customLeadTimeDays?: number;
   customReturnable?: boolean;
@@ -74,6 +76,7 @@ export function ProductDetailClient({
   freeLagosAboveNGN = null,
   bespokeFromNGN = null,
   customOffered = false,
+  customOfferedWhenSoldOut = false,
   customFields = [],
   customLeadTimeDays = 21,
   customReturnable = false,
@@ -86,7 +89,7 @@ export function ProductDetailClient({
   const [qty, setQty] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [bagError, setBagError] = useState<string | null>(null);
-  const [fitMode, setFitMode] = useState<"standard" | "custom">(customOffered ? "standard" : "standard");
+  const [fitMode, setFitMode] = useState<"standard" | "custom">(PDP_INITIAL_FIT_MODE);
   const [measureUnit, setMeasureUnit] = useState<TypedUnit>("cm");
   const [measureValues, setMeasureValues] = useState<Record<string, string>>({});
   const { addToBag } = useBagActions();
@@ -99,7 +102,12 @@ export function ProductDetailClient({
   );
   const standardSizes = useMemo(() => standardVariants(product.variants), [product.variants]);
   const sizesSoldOut = !hasPurchasableSize(standardSizes);
-  const soldOut = sizesSoldOut && !customOffered;
+  const customAvailable = isCustomOfferedNow({
+    customOffered,
+    customOfferedWhenSoldOut,
+    variants: product.variants,
+  });
+  const soldOut = sizesSoldOut && !customAvailable;
   const customSurcharge = customSurchargeNGN({
     unitNGN: product.basePriceNGN,
     kind: customSurchargeKind,
@@ -120,10 +128,6 @@ export function ProductDetailClient({
         ? `Select Size · ${priceLabel}`
         : `Add to bag · ${priceLabel}`;
   const color = product.colors.find((c) => c.id === colorId) ?? null;
-
-  useEffect(() => {
-    if (sizesSoldOut && customOffered) setFitMode("custom");
-  }, [sizesSoldOut, customOffered]);
 
   const productLike: ProductListItem = {
     id: product.id,
@@ -156,7 +160,7 @@ export function ProductDetailClient({
   const addToBagClick = async () => {
     if (soldOut || submitting) return;
     if (fitMode === "custom") {
-      if (!customOffered || !customFields.length) {
+      if (!customAvailable || !customFields.length) {
         setBagError("Custom measurements are not available for this piece.");
         return;
       }
@@ -321,7 +325,7 @@ export function ProductDetailClient({
             </div>
           )}
 
-          {customOffered ? (
+          {customAvailable ? (
             <div className="mb-6 min-w-0">
               <p className="mb-3 font-body text-base font-medium text-charcoal">How should this piece be made?</p>
               <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
@@ -337,7 +341,7 @@ export function ProductDetailClient({
                 >
                   <span className="block font-body text-lg font-semibold">Standard size</span>
                   <span className={`mt-1 block font-body text-sm leading-6 ${fitMode === "standard" ? "text-cream/85" : "text-charcoal-mid"}`}>
-                    Pick a UK size from stock.
+                    {sizesSoldOut ? "UK sizes from stock — currently sold out." : "Pick a UK size from stock."}
                   </span>
                 </button>
                 <button
@@ -356,7 +360,9 @@ export function ProductDetailClient({
                 >
                   <span className="block font-body text-lg font-semibold">Made to your measurements</span>
                   <span className={`mt-1 block font-body text-sm leading-6 ${fitMode === "custom" ? "text-cream/85" : "text-charcoal"}`}>
-                    We cut this piece to the figures you enter below.
+                    {sizesSoldOut
+                      ? "Sizes are gone. Tap here if you want this cut for you — it is not chosen until you do."
+                      : "We cut this piece to the figures you enter below."}
                   </span>
                 </button>
               </div>
@@ -388,7 +394,7 @@ export function ProductDetailClient({
               />
             </>
           ) : null}
-          {fitMode === "custom" && customOffered ? (
+          {fitMode === "custom" && customAvailable ? (
             <CustomMeasurementsForm
               fields={customFields}
               previousCm={previousCm}
@@ -405,17 +411,37 @@ export function ProductDetailClient({
               onChange={(key, value) => setMeasureValues((p) => ({ ...p, [key]: value }))}
             />
           ) : null}
-          {sizesSoldOut && customOffered && fitMode === "standard" ? (
-            <p className="mt-3 font-body text-base leading-6 text-choc">
-              Standard sizes are sold out. This piece can still be made to your measurements.
-            </p>
+          {sizesSoldOut && customAvailable && fitMode === "standard" ? (
+            <button
+              type="button"
+              onClick={() => {
+                setFitMode("custom");
+                setVariantId(null);
+                setBagError(null);
+              }}
+              className="mt-4 w-full border-2 border-choc bg-[#f7f2ec] px-4 py-4 text-left"
+            >
+              <span className="block font-body text-lg font-semibold text-choc">Sold out in standard sizes</span>
+              <span className="mt-1 block font-body text-base leading-6 text-charcoal">
+                We can still make this in your measurements. Tap to choose that — it is not selected for you.
+              </span>
+            </button>
+          ) : null}
+          {soldOut ? (
+            <div className="mt-4 border border-border bg-cream px-4 py-4">
+              <p className="font-body text-lg font-semibold text-choc">Sold out</p>
+              <p className="mt-1 font-body text-sm leading-6 text-charcoal-mid">
+                This piece is not being remade. Leave your email and we will tell you if it returns.
+              </p>
+              <StockAlertForm productId={product.id} />
+            </div>
           ) : null}
           {lowStock > 0 && (
             <p className="mt-2 font-body text-[10px] font-medium uppercase tracking-wide text-choc">Only {lowStock} left!</p>
           )}
-          {variant && variant.stock === 0 && (
+          {variant && variant.stock === 0 && !soldOut ? (
             <StockAlertForm productId={product.id} variantId={variant.id} />
-          )}
+          ) : null}
 
           {variant && variant.stock > 1 ? (
           <div className="mt-6">
@@ -452,7 +478,7 @@ export function ProductDetailClient({
               soldOut ||
               submitting ||
               (fitMode === "standard" && !variant) ||
-              (fitMode === "custom" && (!customOffered || !customFields.length))
+              (fitMode === "custom" && (!customAvailable || !customFields.length))
             }
             aria-busy={submitting}
             onClick={() => void addToBagClick()}
@@ -541,12 +567,12 @@ export function ProductDetailClient({
                 ) : (
                   <p>Ships worldwide.</p>
                 )}
-                {customOffered ? <p>{CUSTOM_LEAD_COPY(customLeadTimeDays)}</p> : null}
+                {customAvailable ? <p>{CUSTOM_LEAD_COPY(customLeadTimeDays)}</p> : null}
                 <p>Returns accepted within 14 days in original condition for standard sizes.</p>
-                {customOffered && !customReturnable ? <p>{CUSTOM_RETURNS_COPY}</p> : null}
+                {customAvailable && !customReturnable ? <p>{CUSTOM_RETURNS_COPY}</p> : null}
               </Accordion.Content>
             </Accordion.Item>
-            {product.isBespokeAvail && (
+            {product.isBespokeAvail && product.type !== "RTW" && (
               <Accordion.Item value="b" className="border-b border-border">
                 <Accordion.Header>
                   <Accordion.Trigger className="flex w-full py-3 font-label text-xs uppercase tracking-wider">

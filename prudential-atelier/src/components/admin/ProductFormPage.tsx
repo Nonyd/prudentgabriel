@@ -58,6 +58,7 @@ function mapProductToForm(p: FullProduct): ProductAdminInput {
     isNewArrival: p.isNewArrival,
     isBespokeAvail: p.isBespokeAvail,
     customOffered: p.customOffered,
+    customOfferedWhenSoldOut: p.customOfferedWhenSoldOut,
     customSurchargeKind: p.customSurchargeKind,
     customSurchargeValue: p.customSurchargeValue ?? undefined,
     customLeadTimeDays: p.customLeadTimeDays ?? undefined,
@@ -130,6 +131,7 @@ const defaultCreate = (custom?: {
   isNewArrival: false,
     isBespokeAvail: false,
     customOffered: custom?.offeredDefault ?? false,
+    customOfferedWhenSoldOut: false,
     customSurchargeKind: custom?.surchargeKind === "NONE" ? null : (custom?.surchargeKind ?? null),
     customSurchargeValue: custom?.surchargeKind && custom.surchargeKind !== "NONE" ? custom.surchargeValue : undefined,
     customLeadTimeDays: custom?.leadTimeDays,
@@ -865,7 +867,7 @@ export function ProductFormPage({
           <section className="rounded-sm border border-sand bg-canvas p-6">
             <h2 className="font-display text-lg text-gold">Custom measurements</h2>
             <p className="mt-1 text-xs text-[#A8A8A4]">
-              Made to order. Does not take stock. Stay available when sizes sell out.
+              Made to order. Does not take stock.
             </p>
             <Controller
               control={form.control}
@@ -879,6 +881,24 @@ export function ProductFormPage({
             />
             {customOfferedWatch ? (
               <div className="mt-4 space-y-3 text-sm text-charcoal">
+                <Controller
+                  control={form.control}
+                  name="customOfferedWhenSoldOut"
+                  render={({ field }) => (
+                    <label className="flex justify-between gap-2">
+                      Keep offering it after the sizes sell out
+                      <input
+                        type="checkbox"
+                        checked={Boolean(field.value)}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                    </label>
+                  )}
+                />
+                <p className="text-[11px] text-[#A8A8A4]">
+                  Off by default. Only tick this if the fabric can be sourced again. A sold-out one-off must not
+                  promise a remake.
+                </p>
                 <label className="block text-xs uppercase text-[#A8A8A4]">
                   Surcharge
                   <select

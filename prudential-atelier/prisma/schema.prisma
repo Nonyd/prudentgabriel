@@ -344,6 +344,8 @@ model Product {
 
   /// Offered on the product page as made-to-order. Does not consume size stock.
   customOffered          Boolean              @default(false)
+  /// When standard sizes are gone, still offer made-to-measure. Default off: a sold-out one-off must not promise a remake.
+  customOfferedWhenSoldOut Boolean            @default(false)
   /// Null inherits STORE custom_* settings.
   customSurchargeKind    CustomSurchargeKind?
   customSurchargeValue   Float?

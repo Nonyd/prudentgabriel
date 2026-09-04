@@ -14,6 +14,7 @@ import { effectiveUnitNGN, resolveCurrencyOverride } from "@/lib/pricing";
 import { gbpOverrideOrConvert, usdOverrideOrConvert, type LockedFx } from "@/lib/fx";
 import type { CartParcelLine } from "@/lib/shipping/options";
 import type { ProductCategory } from "@prisma/client";
+import { assertCustomLineAllowed } from "@/lib/custom-availability";
 
 export type CustomResolvedLine = {
   productId: string;
@@ -53,8 +54,12 @@ export async function resolveCustomCheckoutLine(params: {
       variants: { orderBy: { priceNGN: "asc" } },
     },
   });
-  if (!product?.customOffered) {
-    return { ok: false, status: 400, error: "This piece is not offered in custom measurements" };
+  if (!product) {
+    return { ok: false, status: 404, error: "Product not found" };
+  }
+  const allowed = await assertCustomLineAllowed(params.productId);
+  if (!allowed.ok) {
+    return { ok: false, status: allowed.status, error: allowed.error };
   }
   const fields = product.measurementFields.map((pm) => ({
     key: pm.field.key,

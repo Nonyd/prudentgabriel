@@ -156,6 +156,7 @@ export async function POST(req: NextRequest) {
           isNewArrival: data.isNewArrival,
           isBespokeAvail: data.isBespokeAvail,
           customOffered: data.customOffered ?? false,
+          customOfferedWhenSoldOut: data.customOfferedWhenSoldOut ?? false,
           customSurchargeKind: data.customSurchargeKind ?? null,
           customSurchargeValue: data.customSurchargeValue ?? null,
           customLeadTimeDays: data.customLeadTimeDays ?? null,

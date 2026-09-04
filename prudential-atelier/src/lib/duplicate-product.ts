@@ -50,6 +50,8 @@ export async function duplicateProduct(sourceId: string): Promise<{ id: string; 
         isOnSale: source.isOnSale,
         saleEndsAt: source.saleEndsAt,
         isBespokeAvail: source.isBespokeAvail,
+        customOffered: source.customOffered,
+        customOfferedWhenSoldOut: source.customOfferedWhenSoldOut,
         lowStockAt: source.lowStockAt,
         inStock: false,
         isPublished: false,

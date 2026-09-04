@@ -66,6 +66,7 @@ export const productAdminSchema = z.object({
   isNewArrival: z.boolean().default(false),
   isBespokeAvail: z.boolean().default(false),
   customOffered: z.boolean().optional(),
+  customOfferedWhenSoldOut: z.boolean().optional(),
   customSurchargeKind: z.enum(["NONE", "PERCENT", "FLAT"]).optional().nullable(),
   customSurchargeValue: optNonNegNumber(),
   customLeadTimeDays: z.preprocess((v) => {
