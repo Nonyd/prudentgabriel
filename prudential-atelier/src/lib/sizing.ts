@@ -45,30 +45,39 @@ export function normalizeSizeToken(raw: string): string {
     .replace(/\s+/g, "");
 }
 
-function sizeTokenNumber(raw: string): number | null {
-  const n = Number(normalizeSizeToken(raw));
+export type SizeChartRowView = {
+  label: string;
+  bustCm: number | null;
+  waistCm: number | null;
+  hipCm: number | null;
+  lengthCm: number | null;
+};
+
+function parseLeadingCm(raw: string): number | null {
+  const m = raw.trim().match(/^(\d+(?:\.\d+)?)/);
+  if (!m) return null;
+  const n = Number(m[1]);
   return Number.isFinite(n) ? n : null;
 }
 
-function parseSizeRange(raw: string): { min: number; max: number } | null {
-  const m = normalizeSizeToken(raw).match(/^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/);
-  if (!m) return null;
-  return { min: Number(m[1]), max: Number(m[2]) };
+/** CMS /size-guide women rows → centimetre fields the PDP modal already knows how to print. */
+export function womenCmsToChartRows(
+  rows: { size: string; bust: string; waist: string; hips: string; length: string }[],
+): SizeChartRowView[] {
+  return rows.map((row) => ({
+    label: row.size,
+    bustCm: parseLeadingCm(row.bust),
+    waistCm: parseLeadingCm(row.waist),
+    hipCm: parseLeadingCm(row.hips),
+    lengthCm: parseLeadingCm(row.length),
+  }));
 }
 
-/** True when this house-chart row is a size the piece actually sells (including sold-out). */
+/** True when this house-chart row is a size she can tap on this piece (including sold-out). */
 export function chartRowIsOffered(label: string, offeredSizes: string[]): boolean {
   const lab = normalizeSizeToken(label);
   if (!lab) return false;
-  const n = sizeTokenNumber(label);
-  for (const size of offeredSizes) {
-    const tok = normalizeSizeToken(size);
-    if (!tok) continue;
-    if (tok === lab) return true;
-    const range = parseSizeRange(size);
-    if (range && n != null && n >= range.min && n <= range.max) return true;
-  }
-  return false;
+  return offeredSizes.some((size) => normalizeSizeToken(size) === lab);
 }
 
 export function chartRowsForOfferedSizes<T extends { label: string }>(
@@ -77,14 +86,6 @@ export function chartRowsForOfferedSizes<T extends { label: string }>(
 ): T[] {
   return rows.filter((row) => chartRowIsOffered(row.label, offeredSizes));
 }
-
-export type SizeChartRowView = {
-  label: string;
-  bustCm: number | null;
-  waistCm: number | null;
-  hipCm: number | null;
-  lengthCm: number | null;
-};
 
 export function displayChartRow(row: SizeChartRowView): {
   label: string;

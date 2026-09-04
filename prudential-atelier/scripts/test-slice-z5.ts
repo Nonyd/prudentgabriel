@@ -19,7 +19,8 @@ import {
   guestQtyCanIncrease,
   soldOutSizeAriaLabel,
 } from "../src/lib/bag-size";
-import { chartRowsForOfferedSizes } from "../src/lib/sizing";
+import { chartRowsForOfferedSizes, womenCmsToChartRows } from "../src/lib/sizing";
+import { DEFAULT_WOMEN_SIZE_CHART } from "../src/lib/page-content-defaults";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -79,12 +80,18 @@ function runPure() {
     clipped.map((r) => r.label).join(",") === "10,12",
     "the PDP chart must not show a house size this piece does not sell",
   );
-  const ranged = chartRowsForOfferedSizes(house, ["6-12"]);
   assert(
-    ranged.map((r) => r.label).join(",") === "10,12",
-    "a range SKU still only shows measurements for sizes inside that range",
+    chartRowsForOfferedSizes(house, ["6-12", "14-22"]).length === 0,
+    "a range chip is not a licence to list UK 16 on the chart",
   );
   assert(chartRowsForOfferedSizes(house, ["XS"]).length === 0, "no matching row stays empty, never the full house");
+  const fromCms = womenCmsToChartRows(DEFAULT_WOMEN_SIZE_CHART);
+  assert(
+    chartRowsForOfferedSizes(fromCms, ["10", "12"])
+      .map((r) => r.label)
+      .join(",") === "10,12",
+    "when the database chart is empty, the CMS house still clips to chips she can tap",
+  );
 }
 
 async function runDb() {
