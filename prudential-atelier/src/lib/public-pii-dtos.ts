@@ -1,4 +1,5 @@
 import type { BespokeStage, ConsultationStatus, OrderStatus, PaymentStatus } from "@prisma/client";
+import { rtwPaidInChargedCurrency, type RtwPaidDisplay } from "@/lib/rtw-tracker";
 
 export function clientFirstName(fullName: string): string {
   const part = fullName.trim().split(/\s+/)[0];
@@ -62,26 +63,16 @@ export function toPublicConsultationDto(booking: {
   };
 }
 
+/** Public RTW tracker. Order number, items, size, what she paid, status — nothing else. */
 export type PublicRtwOrderDto = {
   orderNumber: string;
   status: string;
   paymentStatus: PaymentStatus;
-  subtotal: number;
-  shippingAmount: number;
-  discount: number;
-  pointsDiscountNGN: number;
-  total: number;
-  paymentRef: string | null;
-  currency: string;
-  fxRateLocked: number | null;
-  collectionCode: string | null;
-  shippingZone: { name: string; estimatedDays: string | null } | null;
+  paid: RtwPaidDisplay;
   items: {
     name: string;
-    size: string | null;
-    sizeMode?: string;
+    size: string;
     quantity: number;
-    lineTotal: number;
   }[];
 };
 
@@ -89,44 +80,28 @@ export function toPublicRtwOrderDto(order: {
   orderNumber: string;
   status: string;
   paymentStatus: PaymentStatus;
-  subtotal: number;
-  shippingAmount: number;
-  discount: number;
-  pointsDiscountNGN: number;
   total: number;
-  paymentRef?: string | null;
-  currency?: string;
+  currency?: string | null;
+  fxUsdAmountLocked?: number | null;
+  fxGbpAmountLocked?: number | null;
   fxRateLocked?: number | null;
-  collectionCode?: string | null;
-  shippingZone: { name: string; estimatedDays: string | null } | null;
+  fxGbpRateLocked?: number | null;
   items: {
     product: { name: string };
     size: string | null;
     sizeMode?: string | null;
     quantity: number;
-    lineTotal: number;
   }[];
 }): PublicRtwOrderDto {
   return {
     orderNumber: order.orderNumber,
     status: order.status,
     paymentStatus: order.paymentStatus,
-    subtotal: order.subtotal,
-    shippingAmount: order.shippingAmount,
-    discount: order.discount,
-    pointsDiscountNGN: order.pointsDiscountNGN,
-    total: order.total,
-    paymentRef: order.paymentRef ?? null,
-    currency: order.currency ?? "NGN",
-    fxRateLocked: order.fxRateLocked ?? null,
-    collectionCode: order.collectionCode ?? null,
-    shippingZone: order.shippingZone,
+    paid: rtwPaidInChargedCurrency(order),
     items: order.items.map((i) => ({
       name: i.product.name,
-      size: i.sizeMode === "CUSTOM" ? "Made to your measurements" : i.size,
-      sizeMode: i.sizeMode ?? "STANDARD",
+      size: i.sizeMode === "CUSTOM" ? "Made to your measurements" : (i.size ?? "—"),
       quantity: i.quantity,
-      lineTotal: i.lineTotal,
     })),
   };
 }

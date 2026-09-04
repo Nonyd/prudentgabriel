@@ -30,6 +30,7 @@
     "media:migrate": "tsx --tsconfig tsconfig.scripts.json scripts/migrate-cloudinary-media.ts",
     "test:slice-z1": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-z1.ts",
     "test:slice-z2": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-z2.ts",
+    "test:slice-z3": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-z3.ts",
     "test:slice-x": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-x.ts",
     "test:slice-w": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-w.ts",
     "test:slice-v": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-v.ts",

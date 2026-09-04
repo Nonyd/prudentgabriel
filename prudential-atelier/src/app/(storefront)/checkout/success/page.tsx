@@ -3,31 +3,21 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { useCartStore } from "@/store/cartStore";
+import { formatPrice } from "@/lib/utils";
+import { rtwTrackerStatusLabel } from "@/lib/rtw-tracker";
+import type { PublicRtwOrderDto } from "@/lib/public-pii-dtos";
 
 function SuccessInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { status } = useSession();
-  const trackHref = status === "authenticated" ? "/account/orders" : "/auth/login?callbackUrl=/account/orders";
   const orderNumber = searchParams.get("order");
   const emailParam = searchParams.get("email") ?? "";
 
-  const [order, setOrder] = useState<{
-    orderNumber: string;
-    guestEmail: string | null;
-    total: number;
-    paymentRef: string | null;
-    paymentStatus?: string;
-    currency: string;
-    fxRateLocked: number | null;
-    collectionCode: string | null;
-    items: { name: string; size: string | null; quantity: number; lineTotal: number }[];
-    shippingZone: { name: string } | null;
-    shippingAmount: number;
-  } | null>(null);
+  const [order, setOrder] = useState<PublicRtwOrderDto | null>(null);
+  const [lookupFailed, setLookupFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (!orderNumber) {
@@ -36,15 +26,27 @@ function SuccessInner() {
     }
     const q = emailParam ? `?email=${encodeURIComponent(emailParam)}` : "";
     void fetch(`/api/orders/${encodeURIComponent(orderNumber)}${q}`)
-      .then((r) => r.json())
-      .then((j) => {
-        const next = j.order as typeof order;
+      .then(async (r) => {
+        if (!r.ok) {
+          setLookupFailed(true);
+          setOrder(null);
+          setLoaded(true);
+          return;
+        }
+        const j = (await r.json()) as { order?: PublicRtwOrderDto | null };
+        const next = j.order ?? null;
         setOrder(next);
+        setLookupFailed(!next);
+        setLoaded(true);
         if (next?.paymentStatus === "PAID") {
           useCartStore.getState().clearCart();
         }
       })
-      .catch(() => setOrder(null));
+      .catch(() => {
+        setLookupFailed(true);
+        setOrder(null);
+        setLoaded(true);
+      });
   }, [orderNumber, emailParam, router]);
 
   useEffect(() => {
@@ -55,62 +57,56 @@ function SuccessInner() {
 
   if (!orderNumber) return null;
 
-  const email = order?.guestEmail ?? emailParam;
+  const paidLabel =
+    order?.paid != null
+      ? formatPrice(order.paid.amount, order.paid.currency)
+      : null;
 
   return (
     <div className="mx-auto max-w-lg px-5 py-20 text-center">
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border-2 border-choc text-4xl text-choc">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border-2 border-choc text-4xl text-choc"
+      >
         ✓
       </motion.div>
-      <h1 className="mt-6 font-display text-3xl text-choc">Order placed!</h1>
+      <h1 className="mt-6 font-display text-3xl text-choc">
+        {order ? rtwTrackerStatusLabel(order.status, order.paymentStatus) : "Your order"}
+      </h1>
       <p className="mt-2 font-label text-lg text-gold">#{orderNumber}</p>
-      {email && <p className="mt-4 text-sm text-charcoal-mid">Confirmation sent to {email}</p>}
-      <div className="mt-8 rounded-sm border border-border bg-cream p-6 text-left text-sm">
-        {(order?.items ?? []).map((it, i) => (
-          <div key={i} className="flex justify-between border-b border-border/60 py-2 last:border-0">
-            <span>
-              {it.name} · {it.size ?? "—"} ×{it.quantity}
-            </span>
-            <span>₦{Math.round(it.lineTotal).toLocaleString()}</span>
-          </div>
-        ))}
-        {order && (
-          <p className="mt-4 flex justify-between font-medium">
-            <span>Total</span>
-            <span>₦{Math.round(order.total).toLocaleString()}</span>
-          </p>
-        )}
-        {order?.paymentRef ? (
-          <p className="mt-3 text-xs text-charcoal-mid">
-            Payment reference: <span className="font-medium text-choc">{order.paymentRef}</span>
-          </p>
-        ) : null}
-        {order?.collectionCode ? (
-          <p className="mt-1 text-xs text-charcoal-mid">Collection code: {order.collectionCode}</p>
-        ) : null}
-        {order?.currency === "USD" && order.fxRateLocked != null ? (
-          <p className="mt-1 text-xs text-charcoal-mid">
-            ${(order.total * order.fxRateLocked).toFixed(2)} locked at ₦1 = ${order.fxRateLocked.toFixed(6)}
-          </p>
-        ) : null}
-      </div>
+      {emailParam ? (
+        <p className="mt-4 text-sm text-charcoal-mid">A confirmation is on its way to {emailParam}</p>
+      ) : null}
+
+      {lookupFailed && !order ? (
+        <p className="mt-8 font-body text-base text-charcoal" role="alert">
+          We could not open this order. Use the link in your email.
+        </p>
+      ) : null}
+
+      {loaded && order ? (
+        <div className="mt-8 rounded-sm border border-border bg-cream p-6 text-left text-sm">
+          {order.items.map((it, i) => (
+            <div key={i} className="flex justify-between gap-3 border-b border-border/60 py-2 last:border-0">
+              <span>
+                {it.name} · {it.size} ×{it.quantity}
+              </span>
+            </div>
+          ))}
+          {paidLabel ? (
+            <p className="mt-4 flex justify-between font-medium">
+              <span>Paid</span>
+              <span>{paidLabel}</span>
+            </p>
+          ) : null}
+        </div>
+      ) : null}
       <div className="mt-8 flex flex-wrap justify-center gap-4">
-        <Link href={trackHref} className="rounded-sm bg-choc px-6 py-2 text-sm text-cream">
-          Track my order
-        </Link>
-        <Link href="/shop" className="rounded-sm border border-choc px-6 py-2 text-sm text-choc">
+        <Link href="/shop" className="rounded-sm bg-choc px-6 py-2 text-sm text-cream">
           Continue shopping
         </Link>
       </div>
-      {status === "unauthenticated" && email && (
-        <div className="mt-10 rounded-sm border border-gold bg-ivory p-6 text-left text-sm">
-          <p className="font-medium text-choc">Save your order history</p>
-          <p className="mt-2 text-charcoal-mid">Create a free account with the same email to access your orders.</p>
-          <Link href={`/auth/register?email=${encodeURIComponent(email)}`} className="mt-4 inline-block rounded-sm bg-choc px-4 py-2 text-cream">
-            Create account
-          </Link>
-        </div>
-      )}
     </div>
   );
 }

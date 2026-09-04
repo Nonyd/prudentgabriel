@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { toPublicRtwOrderDto } from "@/lib/public-pii-dtos";
+import { canViewRtwTracker } from "@/lib/rtw-tracker";
 import { rateLimitOr429 } from "@/lib/rate-limit";
 
 export async function GET(
@@ -23,13 +24,27 @@ export async function GET(
 
   const order = await prisma.order.findUnique({
     where: { orderNumber },
-    include: {
+    select: {
+      userId: true,
+      guestEmail: true,
+      orderNumber: true,
+      status: true,
+      paymentStatus: true,
+      total: true,
+      currency: true,
+      fxUsdAmountLocked: true,
+      fxGbpAmountLocked: true,
+      fxRateLocked: true,
+      fxGbpRateLocked: true,
+      user: { select: { email: true } },
       items: {
-        include: {
+        select: {
+          size: true,
+          sizeMode: true,
+          quantity: true,
           product: { select: { name: true } },
         },
       },
-      shippingZone: { select: { name: true, estimatedDays: true } },
     },
   });
 
@@ -37,15 +52,19 @@ export async function GET(
     return NextResponse.json({ order: null });
   }
 
-  const uid = session?.user?.id;
-  const sessionEmail = session?.user?.email?.toLowerCase();
+  const allowed = canViewRtwTracker(
+    {
+      userId: order.userId,
+      guestEmail: order.guestEmail,
+      userEmail: order.user?.email ?? null,
+    },
+    {
+      userId: session?.user?.id,
+      email: emailParam || session?.user?.email,
+    },
+  );
 
-  const isUserOrder = order.userId && uid === order.userId;
-  const isGuestEmailMatch =
-    order.guestEmail &&
-    (sessionEmail === order.guestEmail.toLowerCase() || emailParam === order.guestEmail.toLowerCase());
-
-  if (!isUserOrder && !isGuestEmailMatch) {
+  if (!allowed) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

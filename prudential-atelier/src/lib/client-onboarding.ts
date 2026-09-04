@@ -87,7 +87,7 @@ export async function autoOnboardClient(params: {
     if (params.source === "RTW_ORDER") {
       await tx.order.update({
         where: { id: params.sourceId },
-        data: { userId: created.id, guestEmail: null, guestName: null, guestPhone: null },
+        data: { userId: created.id },
       });
     } else if (params.source === "CONSULTATION") {
       await tx.consultationBooking.update({

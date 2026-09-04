@@ -10,6 +10,7 @@ import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { formatDate, formatPrice } from "@/lib/utils";
 import { Modal } from "@/components/ui/Modal";
 import { formatSnapshotForDisplay, parseSnapshot } from "@/lib/custom-size";
+import { defaultAccountOrdersTab } from "@/lib/rtw-tracker";
 
 type RtwOrder = Order & {
   items: (OrderItem & {
@@ -29,7 +30,7 @@ export function AccountOrdersClient({
   bespokeOrders: Bespoke[];
   rtwOrders: RtwOrder[];
 }) {
-  const [tab, setTab] = useState<"bespoke" | "rtw">("bespoke");
+  const [tab, setTab] = useState<"bespoke" | "rtw">(() => defaultAccountOrdersTab(bespokeOrders.length));
   const [expanded, setExpanded] = useState<string | null>(null);
   const [rtwDetail, setRtwDetail] = useState<RtwOrder | null>(null);
 

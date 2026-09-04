@@ -485,16 +485,20 @@ async function main() {
     orderNumber: "PA-26-00001",
     status: "PENDING",
     paymentStatus: "PENDING" as never,
-    subtotal: 1,
-    shippingAmount: 0,
-    discount: 0,
-    pointsDiscountNGN: 0,
     total: 1,
-    shippingZone: { name: "Lagos", estimatedDays: "3-5" },
-    items: [{ product: { name: "Dress" }, size: "M", quantity: 1, lineTotal: 1 }],
+    currency: "NGN",
+    items: [{ product: { name: "Dress" }, size: "M", quantity: 1 }],
   });
   assert(!("guestEmail" in rtw), "RTW DTO must not include guestEmail");
   assert(!("addressSnapshot" in rtw), "RTW DTO must not include addressSnapshot");
+  assert(!("paymentRef" in rtw), "RTW tracker must not include paymentRef");
+  assert(!("collectionCode" in rtw), "RTW tracker must not include collectionCode");
+  const rtwJson = JSON.stringify(rtw);
+  for (const key of ["guestEmail", "guestPhone", "addressSnapshot", "paymentRef", "collectionCode"]) {
+    assert(!rtwJson.includes(key), `RTW tracker JSON must not mention ${key}`);
+  }
+  assert(rtw.paid.currency === "NGN", "NGN order is paid in naira");
+  assert(Array.isArray(rtw.items) && rtw.items[0]?.size === "M", "tracker carries size");
 
   // B3 — non-owner cannot confirm
   assert(
