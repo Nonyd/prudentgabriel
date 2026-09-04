@@ -144,6 +144,28 @@ async function run() {
     assert(classifyMediaUrl("https://res.cloudinary.com/x/image/upload/v1/a/b.jpg").action === "copy", "cloudinary is copy");
     assert(classifyMediaUrl("/media/public/a/b.jpg").action === "already-local", "local is skipped");
     assert(classifyMediaUrl("https://images.unsplash.com/photo-1").action === "skip-remote", "unsplash is not copied");
+    const { isStoredPublicMediaUrl } = await import("../src/lib/media/stored-url");
+    assert(isStoredPublicMediaUrl(publicFile.url) === true, "local product url is accepted");
+    assert(isStoredPublicMediaUrl("/media/private/prudential-atelier/receipts/x.pdf") === false, "private path rejected");
+    assert(isStoredPublicMediaUrl("https://res.cloudinary.com/x/image/upload/a.jpg") === true, "https still accepted");
+    assert(isStoredPublicMediaUrl("not-a-url") === false, "garbage rejected");
+    assert(
+      isStoredPublicMediaUrl("/media/public/prudential-atelier/collections/abc123.jpg") === true,
+      "collection cover path is accepted",
+    );
+    const { collectionAdminSchema } = await import("../src/validations/collection");
+    const coverOk = collectionAdminSchema.pick({ coverImage: true }).safeParse({
+      coverImage: "/media/public/prudential-atelier/collections/abc123.jpg",
+    });
+    assert(coverOk.success === true, "collection schema accepts /media/ cover");
+    const coverBad = collectionAdminSchema.pick({ coverImage: true }).safeParse({
+      coverImage: "not-a-url",
+    });
+    assert(coverBad.success === false, "collection schema still rejects garbage");
+    const imagesRoute = await readFile(join(process.cwd(), "src/app/api/admin/products/[id]/images/route.ts"), "utf8");
+    assert(imagesRoute.includes("storedPublicMediaUrlSchema"), "product image persist accepts /media/ paths");
+    const productVal = await readFile(join(process.cwd(), "src/validations/product.ts"), "utf8");
+    assert(productVal.includes("storedPublicMediaUrlSchema"), "product save accepts /media/ image urls");
     const loc = folderFromCloudinaryUrl(
       "https://res.cloudinary.com/dwgbr0oyn/image/upload/v1780766238/prudential-atelier/receipts/abc.png",
     );

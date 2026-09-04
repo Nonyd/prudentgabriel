@@ -9,7 +9,7 @@ import { X } from "lucide-react";
 import Image from "next/image";
 import { collectionAdminSchema } from "@/validations/collection";
 import type { z } from "zod";
-import { slugifyText } from "@/lib/utils";
+import { cn, slugifyText } from "@/lib/utils";
 import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
 import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 import type { AdminCollectionRow } from "@/components/admin/CollectionsClient";
@@ -17,7 +17,7 @@ import type { ProductListItem } from "@/types/product";
 import { AlertDialog as ConfirmDialog } from "@/components/ui/AlertDialog";
 import { formatUnpublishImpactMessage, type UnpublishImpact } from "@/lib/collection-unpublish-impact";
 
-type FormValues = z.infer<typeof collectionAdminSchema>;
+type FormValues = z.input<typeof collectionAdminSchema>;
 
 type ManualPreview = { id: string; name: string; thumb: string | null };
 
@@ -327,7 +327,7 @@ export function CollectionFormModal({
             </Dialog.Close>
           </div>
 
-          <form onSubmit={onSubmit} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <form noValidate onSubmit={onSubmit} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
               <div className="grid gap-0 pb-4 md:grid-cols-[3fr_2fr]">
             <div className="space-y-6 border-b border-sand p-6 md:border-b-0 md:border-r">
@@ -461,10 +461,20 @@ export function CollectionFormModal({
                   <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp,.jpg,.jpeg,.png,.webp" className="hidden" onChange={onPickFile} />
                 </label>
                 <input
+                  type="text"
+                  inputMode="url"
+                  autoComplete="off"
                   {...form.register("coverImage")}
-                  className="mt-2 w-full border border-sand px-2 py-1 font-mono text-[11px]"
+                  aria-invalid={form.formState.errors.coverImage ? true : undefined}
+                  className={cn(
+                    "mt-2 w-full border px-2 py-1 font-mono text-[11px]",
+                    form.formState.errors.coverImage ? "border-[var(--error)]" : "border-sand",
+                  )}
                   placeholder="Or paste image URL"
                 />
+                {form.formState.errors.coverImage ? (
+                  <p className="mt-1 text-[11px] text-red-700">{form.formState.errors.coverImage.message}</p>
+                ) : null}
                 <input {...form.register("coverImageAlt")} className="mt-2 w-full border border-sand px-2 py-1 text-[12px]" placeholder="Alt text" />
                 <p className="mt-1 text-[10px] text-[#8A8A86]">Portrait editorial (3:4) works best.</p>
                 <div className="mt-2 max-w-[220px]">

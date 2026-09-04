@@ -9,6 +9,11 @@ export {
   isValidMediaKey,
   keyFromMediaUrl,
 } from "@/lib/media/key-parse";
+export {
+  isStoredPublicMediaUrl,
+  optionalStoredPublicMediaUrlSchema,
+  storedPublicMediaUrlSchema,
+} from "@/lib/media/stored-url";
 
 let testStore: MediaStore | null = null;
 

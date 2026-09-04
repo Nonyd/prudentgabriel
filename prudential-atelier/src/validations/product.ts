@@ -1,5 +1,6 @@
 import { ProductCategory, ProductType } from "@prisma/client";
 import { z } from "zod";
+import { optionalStoredPublicMediaUrlSchema, storedPublicMediaUrlSchema } from "@/lib/media/stored-url";
 
 function optNonNegNumber() {
   return z.preprocess((v) => {
@@ -36,12 +37,12 @@ const colorSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1),
   hex: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-  imageUrl: z.string().url().optional().nullable(),
+  imageUrl: optionalStoredPublicMediaUrlSchema,
 });
 
 const imageSchema = z.object({
   id: z.string().optional(),
-  url: z.string().url(),
+  url: storedPublicMediaUrlSchema,
   alt: z.string().optional(),
   isPrimary: z.boolean().default(false),
   sortOrder: z.number().int().default(0),

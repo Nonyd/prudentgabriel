@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
+import { ensureCustomMeasurementFields } from "@/lib/measurement-catalog";
 
 const fieldSchema = z.object({
   key: z.string().min(1).max(40).regex(/^[a-z0-9_]+$/),
@@ -15,6 +16,7 @@ const fieldSchema = z.object({
 export async function GET() {
   const gate = await requireAdminApi("shop.products");
   if (!gate.ok) return gate.response;
+  await ensureCustomMeasurementFields();
   const items = await prisma.measurementField.findMany({ orderBy: { sortOrder: "asc" } });
   return NextResponse.json({ items });
 }

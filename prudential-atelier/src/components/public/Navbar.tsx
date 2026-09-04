@@ -77,7 +77,7 @@ function RtwDropdown({ collections }: { collections: CollectionNav[] }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-0 top-full z-50 min-w-[220px] pt-3"
+            className="absolute left-0 top-full z-[80] min-w-[220px] pt-3"
           >
             <div
               className="border-b py-3 shadow-sm"
@@ -163,7 +163,6 @@ function MobileRtwSection({
   onClose: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [collectionsOpen, setCollectionsOpen] = useState(false);
 
   const linkStyle = {
     fontFamily: "var(--font-ui)",
@@ -189,29 +188,20 @@ function MobileRtwSection({
           <Link href="/rtw" onClick={onClose} className="block py-2 text-[11px] text-text-mid">
             All Ready-to-Wear
           </Link>
-          <button
-            type="button"
-            onClick={() => setCollectionsOpen((v) => !v)}
-            className="flex w-full items-center justify-between py-2 text-left text-[10px] uppercase tracking-[0.16em] text-lightbr"
-          >
-            Collections
-            <ChevronDown className={cn("h-3 w-3 transition-transform", collectionsOpen && "rotate-180")} />
-          </button>
+          <p className="pt-2 text-[10px] uppercase tracking-[0.16em] text-lightbr">Collections</p>
           <Link href="/collections" onClick={onClose} className="block py-2 pl-3 text-[11px] text-text-mid">
             All Collections
           </Link>
-          {collectionsOpen
-            ? collections.map((c) => (
-                <Link
-                  key={c.slug}
-                  href={`/collections/${c.slug}`}
-                  onClick={onClose}
-                  className="block py-2 pl-3 text-[11px] text-text-mid"
-                >
-                  {c.name}
-                </Link>
-              ))
-            : null}
+          {collections.map((c) => (
+            <Link
+              key={c.slug}
+              href={`/collections/${c.slug}`}
+              onClick={onClose}
+              className="block py-2 pl-3 text-[11px] text-text-mid"
+            >
+              {c.name}
+            </Link>
+          ))}
           <Link href="/rtw?sort=newest" onClick={onClose} className="block py-2 text-[11px] text-text-mid">
             New Arrivals
           </Link>
@@ -361,8 +351,8 @@ export function Navbar({
         </div>
 
         <div className="hidden border-b border-sand/20 bg-sidebar-bg lg:block">
-          <div className="mx-auto grid h-12 max-w-site grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-10">
-            <nav className="flex min-w-0 items-center gap-4 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden xl:gap-6 2xl:gap-8" aria-label="Primary">
+          <div className="mx-auto grid h-12 max-w-site grid-cols-[minmax(0,1fr)_auto] items-center gap-4 overflow-visible px-10">
+            <nav className="flex min-w-0 items-center gap-4 overflow-visible xl:gap-6 2xl:gap-8" aria-label="Primary">
               <NavLink href="/shop" label="Shop" />
               <RtwDropdown collections={collections} />
               {primaryLinks.filter((l) => l.href !== "/shop").map((link) => (

@@ -83,7 +83,7 @@ export async function ensureCustomSettingKeys(): Promise<void> {
 
 /** WooCommerce “Custom” SKUs were flagged offered; they still need a field set. */
 async function ensureDefaultFieldsOnCustomProducts(): Promise<void> {
-  const keys = ["bust", "waist", "hip", "total_length"] as const;
+  const keys = ["bust", "waist", "hip", "dress_length"] as const;
   const fields = await prisma.measurementField.findMany({
     where: { key: { in: [...keys] } },
     orderBy: { sortOrder: "asc" },

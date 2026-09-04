@@ -3,9 +3,10 @@ import { z } from "zod";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { revalidateProduct } from "@/lib/revalidate";
+import { storedPublicMediaUrlSchema } from "@/lib/media/stored-url";
 
 const bodySchema = z.object({
-  url: z.string().url(),
+  url: storedPublicMediaUrlSchema,
   alt: z.string().optional(),
   isPrimary: z.boolean().optional(),
   sortOrder: z.number().int().optional(),

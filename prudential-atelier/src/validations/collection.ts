@@ -1,11 +1,12 @@
 import { z } from "zod";
+import { optionalStoredPublicMediaUrlSchema } from "@/lib/media/stored-url";
 
 export const collectionAdminSchema = z.object({
   name: z.string().min(2).max(100),
   slug: z.string().min(2).max(100).regex(/^[a-z0-9-]+$/).optional(),
   description: z.string().max(2000).optional(),
   excerpt: z.string().max(200).optional(),
-  coverImage: z.union([z.string().url(), z.literal(""), z.null()]).optional(),
+  coverImage: optionalStoredPublicMediaUrlSchema,
   coverImageAlt: z.string().max(200).optional(),
   autoTag: z.string().max(50).optional().nullable(),
   isFeatured: z.boolean().optional(),
