@@ -1,13 +1,15 @@
 /**
- * Slice Z4: one ready-to-wear aisle. /shop listing is not a second catalogue.
+ * Slice Z4: ready-to-wear aisle plus the whole-store /shop listing.
  *
  *   pnpm test:slice-z4
  */
 import {
   groupSearchResults,
-  normalizeStorefrontListingHref,
   productAisle,
-  shopListingRedirectPath,
+  readyToWearCtaHref,
+  shopHeroCopy,
+  SHOP_HERO_SUBTITLE,
+  SHOP_LISTING,
 } from "../src/lib/rtw-aisle";
 
 function assert(cond: unknown, message: string): asserts cond {
@@ -15,23 +17,25 @@ function assert(cond: unknown, message: string): asserts cond {
 }
 
 function main() {
-  assert(shopListingRedirectPath(new URLSearchParams()) === "/rtw", "bare /shop goes to the RTW aisle");
+  assert(SHOP_LISTING === "/shop", "the whole store lives at /shop");
   assert(
-    shopListingRedirectPath(new URLSearchParams("sort=newest")) === "/rtw?sort=newest",
-    "listing filters follow her to /rtw",
+    SHOP_HERO_SUBTITLE.includes("Everything the house sells"),
+    "shop hero says it is the whole house, not a second RTW aisle",
   );
-  assert(shopListingRedirectPath(new URLSearchParams("category=BRIDAL")) === "/bridal", "bridal keeps its own door");
-  assert(shopListingRedirectPath(new URLSearchParams("category=KIDDIES")) === "/kids", "kids keeps its own door");
-  assert(shopListingRedirectPath(new URLSearchParams("type=BESPOKE")) === "/atelier", "atelier keeps its own door");
   assert(
-    shopListingRedirectPath(new URLSearchParams("category=FORMAL")) === "/rtw?category=FORMAL",
-    "a dress category stays on the RTW aisle",
+    shopHeroCopy({ subtitle: "Ready-to-wear, bridal, and atelier couture." }).subtitle === SHOP_HERO_SUBTITLE,
+    "the previous house-description subtitle is replaced",
+  );
+  assert(
+    shopHeroCopy({ subtitle: "Custom line from CMS" }).subtitle === "Custom line from CMS",
+    "a deliberate CMS rewrite is kept",
   );
 
-  assert(normalizeStorefrontListingHref("/shop") === "/rtw", "CMS /shop listing is rewritten");
-  assert(normalizeStorefrontListingHref("/shop?sale=true") === "/rtw?sale=true", "sale CTA follows");
-  assert(normalizeStorefrontListingHref("/shop/avril-gown") === "/shop/avril-gown", "product URLs stay put");
-  assert(normalizeStorefrontListingHref("/atelier") === "/atelier", "other doors are untouched");
+  assert(readyToWearCtaHref("/shop") === "/rtw", "an RTW CTA leftover on /shop still goes to the RTW aisle");
+  assert(readyToWearCtaHref("/shop?sort=newest") === "/rtw", "listing leftovers on RTW CTAs do not stay mixed");
+  assert(readyToWearCtaHref("/shop/avril-gown") === "/shop/avril-gown", "product URLs stay put");
+  assert(readyToWearCtaHref("/rtw") === "/rtw", "an RTW CTA already on /rtw is untouched");
+  assert(readyToWearCtaHref("/atelier") === "/atelier", "other doors are untouched");
 
   assert(productAisle({ type: "RTW", category: "FORMAL" }).label === "Ready to Wear", "RTW breadcrumb");
   assert(productAisle({ type: "RTW", category: "FORMAL" }).href === "/rtw", "RTW breadcrumb href");

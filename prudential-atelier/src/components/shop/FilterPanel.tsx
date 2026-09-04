@@ -38,7 +38,7 @@ function useQs() {
       else n.set(k, v);
     }
     if (!("page" in updates)) n.delete("page");
-    router.push(`/rtw?${n.toString()}`);
+    router.push(`/shop?${n.toString()}`);
   };
   return { sp, set };
 }
@@ -81,7 +81,7 @@ export function FilterPanel({ className }: { className?: string }) {
       <div className="flex items-center justify-between">
         <h2 className="font-display text-xl text-charcoal">Refine</h2>
         {active && (
-          <Link href="/rtw" className="font-label text-[10px] uppercase tracking-wider text-choc hover:underline">
+          <Link href="/shop" className="font-label text-[10px] uppercase tracking-wider text-choc hover:underline">
             Clear All
           </Link>
         )}

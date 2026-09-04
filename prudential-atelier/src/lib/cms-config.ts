@@ -689,19 +689,19 @@ export const CMS_PAGES: CmsPageDef[] = [
   {
     id: "shop",
     label: "Shop",
-    previewPath: "/rtw",
+    previewPath: "/shop",
     sections: [
       {
         id: "main",
         label: "Page Header",
         fields: [
-          { key: "shop_page_eyebrow", label: "Page eyebrow", type: "text", default: "THE COLLECTION" },
-          { key: "shop_page_title", label: "Page title", type: "text", default: "Prudent Gabriel" },
+          { key: "shop_page_eyebrow", label: "Page eyebrow", type: "text", default: "THE HOUSE" },
+          { key: "shop_page_title", label: "Page title", type: "text", default: "Shop" },
           {
             key: "shop_page_subtitle",
             label: "Page subtitle",
             type: "text",
-            default: "Ready-to-wear, bridal, and atelier couture.",
+            default: "Everything the house sells — ready-to-wear, bridal, and kids. Tap a category to find a dress.",
           },
         ],
       },

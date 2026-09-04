@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { HeroCarousel } from "@/components/sections/HeroCarousel";
 import { cmsGet } from "@/lib/cms-helpers";
-import { normalizeStorefrontListingHref } from "@/lib/rtw-aisle";
+import { readyToWearCtaHref } from "@/lib/rtw-aisle";
 import type { HeroCarouselItem } from "@/lib/hero-carousel";
 
 export function HeroSectionClient({
@@ -24,7 +24,7 @@ export function HeroSectionClient({
     "Atelier couture and ready-to-wear — each piece conceived in our Lagos atelier and finished by hand for weddings, galas, and everyday elegance.",
   );
   const btn1Label = cmsGet(cms, "home_hero_button_1_label", "SHOP COLLECTION");
-  const btn1Link = normalizeStorefrontListingHref(cmsGet(cms, "home_hero_button_1_link", "/rtw"));
+  const btn1Link = readyToWearCtaHref(cmsGet(cms, "home_hero_button_1_link", "/rtw"));
   const btn2Label = cmsGet(cms, "home_hero_button_2_label", "BOOK CONSULTATION");
   const btn2Link = cmsGet(cms, "home_hero_button_2_link", "/consultation");
   const statNum = cmsGet(cms, "home_hero_stat_number", "15+");

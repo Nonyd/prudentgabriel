@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as Select from "@radix-ui/react-select";
 import { ChevronDown } from "lucide-react";
@@ -8,6 +9,7 @@ import { useInView } from "react-intersection-observer";
 import { cn } from "@/lib/utils";
 import { ProductCardGrid } from "@/components/common/ProductCardGrid";
 import type { ProductListItem } from "@/types/product";
+import { SHOP_HERO_EYEBROW, SHOP_HERO_SUBTITLE, SHOP_HERO_TITLE, SHOP_LISTING } from "@/lib/rtw-aisle";
 
 interface ShopBrowseProps {
   products: ProductListItem[];
@@ -35,13 +37,12 @@ export function ShopBrowse({
   total,
   page: initialPage,
   hasNext: initialHasNext,
-  heroEyebrow = "THE COLLECTION",
-  heroHeadline = "Prudent Gabriel",
-  heroSubtext = "Ready-to-wear, bridal, and atelier couture.",
+  heroEyebrow = SHOP_HERO_EYEBROW,
+  heroHeadline = SHOP_HERO_TITLE,
+  heroSubtext = SHOP_HERO_SUBTITLE,
   hideFilters = false,
 }: ShopBrowseProps) {
   const sp = useSearchParams();
-  const router = useRouter();
   const [items, setItems] = useState<ProductListItem[]>(initialProducts);
   const [page, setPage] = useState(initialPage);
   const [hasNext, setHasNext] = useState(initialHasNext);
@@ -91,14 +92,15 @@ export function ShopBrowse({
     if (inView) void loadMore();
   }, [inView, loadMore]);
 
-  function applyFilter(filterId: (typeof FILTERS)[number]["id"]) {
+  function filterHref(filterId: (typeof FILTERS)[number]["id"]) {
     const f = FILTERS.find((x) => x.id === filterId)!;
     const n = new URLSearchParams();
     for (const [k, v] of Object.entries(f.params)) n.set(k, v);
     n.set("limit", sp.get("limit") ?? "20");
     const sort = sp.get("sort");
     if (sort) n.set("sort", sort);
-    router.push(`/rtw?${n.toString()}`);
+    const q = n.toString();
+    return q ? `${SHOP_LISTING}?${q}` : SHOP_LISTING;
   }
 
   return (
@@ -113,22 +115,21 @@ export function ShopBrowse({
 
       {!hideFilters ? (
       <div className="border-y border-[0.5px] border-sand bg-ivory px-4 py-4 md:px-8 lg:px-10">
-        <div className="mx-auto flex max-w-site flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-2">
+        <div className="mx-auto flex max-w-site flex-col gap-4 md:flex-row md:flex-wrap md:items-center md:justify-between">
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0">
             {FILTERS.map((f) => (
-              <button
+              <Link
                 key={f.id}
-                type="button"
-                onClick={() => applyFilter(f.id)}
+                href={filterHref(f.id)}
                 className={cn(
-                  "rounded-full px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.12em] transition-colors",
+                  "inline-flex min-h-[44px] shrink-0 items-center rounded-full px-5 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors",
                   activeFilter === f.id
                     ? "bg-choc text-cream"
                     : "border border-[0.5px] border-sand text-text-mid hover:border-nut/50",
                 )}
               >
                 {f.label}
-              </button>
+              </Link>
             ))}
           </div>
           <div className="flex items-center gap-4">
@@ -153,13 +154,12 @@ export function ShopBrowse({
         {items.length === 0 ? (
           <div className="flex flex-col items-center text-center">
             <p className="font-serif text-lg text-choc">No pieces match your filters</p>
-            <button
-              type="button"
-              onClick={() => router.push("/rtw")}
+            <Link
+              href={SHOP_LISTING}
               className="mt-6 font-sans text-[11px] font-medium uppercase tracking-wider text-nut underline"
             >
               View all pieces
-            </button>
+            </Link>
           </div>
         ) : (
           <ProductCardGrid
@@ -200,7 +200,7 @@ function SortSelect() {
         const n = new URLSearchParams(sp.toString());
         n.set("sort", v);
         n.delete("page");
-        router.push(`/rtw?${n.toString()}`);
+        router.push(`${SHOP_LISTING}?${n.toString()}`);
       }}
     >
       <Select.Trigger className="inline-flex items-center gap-1.5 font-sans text-[11px] uppercase tracking-[0.1em] text-text-mid outline-none">

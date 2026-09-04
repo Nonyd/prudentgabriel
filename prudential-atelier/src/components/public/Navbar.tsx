@@ -17,6 +17,7 @@ import { getSubBrand } from "@/lib/sub-brand";
 type CollectionNav = { name: string; slug: string };
 
 const PRIMARY_LINKS = [
+  { href: "/shop", label: "Shop" },
   { href: "/bridal", label: "Bridal" },
   { href: "/atelier", label: "Atelier" },
   { href: "/kids", label: "Kids" },
@@ -310,7 +311,8 @@ export function Navbar({
     openLogin("/account");
   };
 
-  const primaryLinks = PRIMARY_LINKS;
+  const shopLink = PRIMARY_LINKS[0];
+  const afterRtwLinks = PRIMARY_LINKS.slice(1);
 
   return (
     <>
@@ -352,8 +354,9 @@ export function Navbar({
         <div className="hidden border-b border-sand/20 bg-sidebar-bg lg:block">
           <div className="mx-auto grid h-12 max-w-site grid-cols-[minmax(0,1fr)_auto] items-center gap-4 overflow-visible px-10">
             <nav className="flex min-w-0 items-center gap-4 overflow-visible xl:gap-6 2xl:gap-8" aria-label="Primary">
+              <NavLink href={shopLink.href} label={shopLink.label} />
               <RtwDropdown collections={collections} />
-              {primaryLinks.map((link) => (
+              {afterRtwLinks.map((link) => (
                 <NavLink key={link.href} href={link.href} label={link.label} />
               ))}
             </nav>
@@ -390,8 +393,22 @@ export function Navbar({
           </button>
         </div>
         <nav className="flex flex-1 flex-col gap-1 border-t border-sand/60 p-6" aria-label="Mobile">
+          <Link
+            href={shopLink.href}
+            onClick={() => setOpen(false)}
+            className="border-b border-sand/60 py-3 uppercase"
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: "11px",
+              fontWeight: 500,
+              letterSpacing: "0.14em",
+              color: "var(--text-mid)",
+            }}
+          >
+            {shopLink.label}
+          </Link>
           <MobileRtwSection collections={collections} onClose={() => setOpen(false)} />
-          {primaryLinks.map((link) => (
+          {afterRtwLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}

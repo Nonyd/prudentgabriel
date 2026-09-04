@@ -1,45 +1,32 @@
 export const RTW_AISLE = "/rtw";
+export const SHOP_LISTING = "/shop";
 
-const RTW_QUERY_KEYS = [
-  "sort",
-  "tags",
-  "tag",
-  "page",
-  "search",
-  "newArrival",
-  "isNewArrival",
-  "featured",
-  "sale",
-  "sizes",
-  "category",
-  "type",
-] as const;
+export const SHOP_HERO_EYEBROW = "THE HOUSE";
+export const SHOP_HERO_TITLE = "Shop";
+export const SHOP_HERO_SUBTITLE =
+  "Everything the house sells — ready-to-wear, bridal, and kids. Tap a category to find a dress.";
 
-/** Where the old mixed /shop listing should send her. Product pages stay /shop/[slug]. */
-export function shopListingRedirectPath(searchParams: URLSearchParams): string {
-  const category = searchParams.get("category")?.toUpperCase() ?? "";
-  const type = searchParams.get("type")?.toUpperCase() ?? "";
-  if (category === "BRIDAL") return "/bridal";
-  if (category === "KIDDIES") return "/kids";
-  if (type === "BESPOKE") return "/atelier";
+const PREVIOUS_SHOP_HERO_EYEBROW = "THE COLLECTION";
+const PREVIOUS_SHOP_HERO_TITLE = "Prudent Gabriel";
+const PREVIOUS_SHOP_HERO_SUBTITLE = "Ready-to-wear, bridal, and atelier couture.";
 
-  const keep = new URLSearchParams();
-  for (const key of RTW_QUERY_KEYS) {
-    const v = searchParams.get(key);
-    if (!v) continue;
-    if (key === "category" && (v.toUpperCase() === "BRIDAL" || v.toUpperCase() === "KIDDIES")) continue;
-    if (key === "type" && v.toUpperCase() === "BESPOKE") continue;
-    if (key === "tag") keep.set("tags", v);
-    else keep.set(key, v);
-  }
-  const q = keep.toString();
-  return q ? `${RTW_AISLE}?${q}` : RTW_AISLE;
+/** Use new house copy unless CMS was deliberately rewritten. */
+export function shopHeroCopy(stored: { eyebrow?: string; title?: string; subtitle?: string }) {
+  const pick = (value: string | undefined, previous: string, next: string) => {
+    const v = value?.trim();
+    if (!v || v === previous) return next;
+    return v;
+  };
+  return {
+    eyebrow: pick(stored.eyebrow, PREVIOUS_SHOP_HERO_EYEBROW, SHOP_HERO_EYEBROW),
+    title: pick(stored.title, PREVIOUS_SHOP_HERO_TITLE, SHOP_HERO_TITLE),
+    subtitle: pick(stored.subtitle, PREVIOUS_SHOP_HERO_SUBTITLE, SHOP_HERO_SUBTITLE),
+  };
 }
 
-/** CMS and leftover CTAs that still say /shop (the listing), not /shop/slug. */
-export function normalizeStorefrontListingHref(href: string): string {
+function listingPathAndQuery(href: string): { path: string; query: string; hash: string } | null {
   if (!href || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:")) {
-    return href;
+    return null;
   }
   const hashIndex = href.indexOf("#");
   const withoutHash = hashIndex >= 0 ? href.slice(0, hashIndex) : href;
@@ -47,8 +34,15 @@ export function normalizeStorefrontListingHref(href: string): string {
   const qIndex = withoutHash.indexOf("?");
   const path = (qIndex >= 0 ? withoutHash.slice(0, qIndex) : withoutHash).replace(/\/+$/, "") || "/";
   const query = qIndex >= 0 ? withoutHash.slice(qIndex + 1) : "";
-  if (path !== "/shop") return href;
-  return shopListingRedirectPath(new URLSearchParams(query)) + hash;
+  return { path, query, hash };
+}
+
+/** CMS leftover /shop on a ready-to-wear CTA should not dump her into the mixed catalogue. Product URLs stay. */
+export function readyToWearCtaHref(href: string): string {
+  const parts = listingPathAndQuery(href);
+  if (!parts) return href || RTW_AISLE;
+  if (parts.path === SHOP_LISTING) return RTW_AISLE;
+  return href;
 }
 
 export function productAisle(product: { type: string; category: string }): { href: string; label: string } {

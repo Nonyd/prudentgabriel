@@ -72,7 +72,7 @@ export function FilterDrawer({
             </Dialog.Close>
             <Dialog.Close asChild>
               <Link
-                href="/rtw"
+                href="/shop"
                 className="mt-3 block w-full text-left font-body text-[12px] text-dark-grey underline-offset-2 hover:text-choc hover:underline"
               >
                 Clear all

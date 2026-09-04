@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { PFACrosslinkBannerClient } from "@/components/public/PFACrosslinkBannerClient";
 import { cmsBool, cmsGet, cmsJson, getCMSContent } from "@/lib/cms";
-import { normalizeStorefrontListingHref } from "@/lib/rtw-aisle";
+import { readyToWearCtaHref } from "@/lib/rtw-aisle";
 import { DEFAULT_ABOUT_VALUES } from "@/lib/page-content-defaults";
 import { getImageSettings } from "@/lib/settings";
 
@@ -480,7 +480,7 @@ export default async function AboutPage() {
             {cmsGet(cms, "about_cta_button_1_label", "BOOK A CONSULTATION →")}
           </Link>
           <Link
-            href={normalizeStorefrontListingHref(cmsGet(cms, "about_cta_button_2_link", "/rtw"))}
+            href={readyToWearCtaHref(cmsGet(cms, "about_cta_button_2_link", "/rtw"))}
             className="inline-flex min-w-[220px] items-center justify-center rounded-[3px] border px-8 py-3 uppercase"
             style={{
               borderColor: "var(--sand)",
