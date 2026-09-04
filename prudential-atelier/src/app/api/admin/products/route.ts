@@ -3,7 +3,7 @@ import { Prisma, ProductCategory, ProductType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { productAdminSchema } from "@/validations/product";
-import { buildDefaultProductSku } from "@/lib/product-sku";
+import { loadTakenSkus, resolvePreferredSku, uniqueSkuFromTaken } from "@/lib/product-sku";
 import { revalidateProduct } from "@/lib/revalidate";
 import { derivedCatalogMinNGN } from "@/lib/pricing";
 import { applyOpening, afterStockWrites, syncProductInStock, type StockWriteResult } from "@/lib/stock-ledger";
@@ -170,13 +170,24 @@ export async function POST(req: NextRequest) {
       });
 
       const stockWrites: StockWriteResult[] = [];
+      const taken = await loadTakenSkus(tx);
       for (let i = 0; i < data.variants.length; i++) {
         const v = data.variants[i];
-        const sku = v.sku.trim() || buildDefaultProductSku(data.slug, v.size);
+        const preferred = resolvePreferredSku({
+          name: data.name,
+          size: v.size,
+          submittedSku: v.sku,
+          skuManual: v.skuManual,
+          existing: null,
+          oldName: data.name,
+          nameChanged: false,
+        });
+        const sku = uniqueSkuFromTaken(preferred.sku, taken);
         const created = await tx.productVariant.create({
           data: {
             productId: p.id,
             sku,
+            skuManual: preferred.skuManual,
             size: v.size,
             priceNGN: v.priceNGN,
             priceUSD: v.priceUSD ?? null,
@@ -255,6 +266,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ id: product.product.id, slug: product.product.slug });
   } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      return NextResponse.json({ error: "That stock code is already in use" }, { status: 409 });
+    }
     console.error("[admin/products POST]", e);
     return NextResponse.json({ error: "Could not create product" }, { status: 500 });
   }

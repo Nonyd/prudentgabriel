@@ -113,7 +113,8 @@ export function ProductUploadGuide() {
             <p className="text-xs font-semibold uppercase tracking-wide text-[#A8A8A4]">From scratch</p>
             <p className="mt-2 font-display text-lg text-charcoal">Start with a blank form</p>
             <p className="mt-2 text-[14px] leading-relaxed text-charcoal">
-              Use this when there is no similar product to copy. Follow steps 1–8 below.
+              Use this when there is no similar product to copy. The form has four stages: the piece,
+            sizes and prices, delivery and custom, then publishing.
             </p>
           </div>
         </div>
@@ -148,7 +149,7 @@ export function ProductUploadGuide() {
           <Must />
           <br />
           Type the name customers should see. Example: <em>The Avril Gown</em>.
-          Click outside the box when you are done. The <strong>Slug</strong> fills itself. Leave the slug
+          Click outside the box when you are done. The <strong>Web address</strong> fills itself. Leave it
           alone.
         </p>
         <p>
@@ -164,10 +165,6 @@ export function ProductUploadGuide() {
           Write the product story here. Include fabric, lining, and care instructions in this same box
           (for example: “Dry clean only. Lined. Concealed back zip.”). This text appears on the product
           page under “Product Details”.
-        </p>
-        <p className="text-[14px] text-[#6B6B68]">
-          If you also see a box called “Materials &amp; care”, you can leave it. It currently shares the
-          same text as Full description.
         </p>
       </Step>
 
@@ -237,11 +234,11 @@ export function ProductUploadGuide() {
             Tick the sizes you sell (XS, S, M, L, XL, XXL). Un-tick sizes you do not have.
           </li>
           <li>
-            Click <strong>Generate size rows</strong>. This creates one row per size.
+            Click <strong>Add these sizes</strong>. This creates one row per size (6 through 22).
           </li>
           <li>
-            Click <strong>Copy ₦… onto every size</strong> if every size is the same price. Then change
-            any size that costs more or less.
+            If every size is the same price, use <strong>Copy this price onto every size</strong> — you
+            will be asked to confirm, because it replaces prices you already typed.
           </li>
           <li>
             In each row, fill <strong>Stock</strong> with how many pieces you have of that size. Use 0 if
@@ -249,14 +246,15 @@ export function ProductUploadGuide() {
           </li>
         </ol>
         <p>
-          <strong>SKU</strong> fills itself (it looks like PA-AVRIL-M). Leave it.
+          The stock code fills itself when you save (it looks like PA-AVRIL-10). You do not need to type
+          one. Open <strong>Advanced</strong> only if a warehouse already has a different code.
         </p>
         <p>
           <strong>Low at</strong> is usually 3. That means you get a low-stock warning when 3 are left.
           You can leave it.
         </p>
         <p>
-          Need a size that is not in the list (for example 8, 10, 12, or One Size)? Click{" "}
+          Need a size that is not in the list (for example One Size)? Click{" "}
           <strong>+ Add size</strong> and type the size name in the Size box.
         </p>
         <div className="rounded-sm bg-amber-50 px-4 py-3 text-[14px] leading-relaxed text-amber-950">
@@ -267,10 +265,10 @@ export function ProductUploadGuide() {
       <Step n={5} title="Sale prices (only if it is on sale)">
         <p>Skip this whole step if the product is not on sale.</p>
         <ol className="list-decimal space-y-2 pl-5">
-          <li>Tick <strong>Product is on sale</strong>.</li>
+          <li>Tick <strong>On sale</strong>.</li>
           <li>
-            On each size row, type the sale naira price in the <strong>Sale ₦</strong> column. This must
-            be lower than the regular ₦ price.
+            On each size row, type the sale naira price in the <strong>Sale price</strong> column. This must
+            be lower than the regular price.
           </li>
         </ol>
         <p>
@@ -437,9 +435,9 @@ export function ProductUploadGuide() {
         <h2 className="font-display text-xl text-gold">If something goes wrong</h2>
         <dl className="mt-4 space-y-4 text-[15px] leading-relaxed text-charcoal">
           <div>
-            <dt className="font-medium">The page says the name or slug is too short / invalid</dt>
+            <dt className="font-medium">The page says the name or web address is too short / invalid</dt>
             <dd className="mt-1 text-[#6B6B68]">
-              Name needs at least 2 characters. Slug should be lowercase letters, numbers, and hyphens
+              Name needs at least 2 characters. The web address should be lowercase letters, numbers, and hyphens
               only — click outside the name box and let it fill itself.
             </dd>
           </div>
@@ -453,7 +451,7 @@ export function ProductUploadGuide() {
             <dt className="font-medium">I cannot click Publish / I see a red note about variants</dt>
             <dd className="mt-1 text-[#6B6B68]">
               Every size row needs a size name, a price of at least 1, and a stock number (0 is allowed).
-              Starting ₦ cannot be 0.
+              The naira price cannot be 0.
             </dd>
           </div>
           <div>
@@ -496,15 +494,15 @@ export function ProductUploadGuide() {
         <ul className="mt-4 space-y-2 text-[15px] text-charcoal">
           {[
             "Name is spelled correctly",
-            "Slug was left alone (filled itself)",
+            "Web address was left alone (filled itself)",
             "Full description includes fabric and care",
             "At least 2 photos uploaded",
             "The front shot is marked ★ Primary",
-            "Starting ₦ is the real price, not 1000",
+            "Price in naira is the real price, not 0",
             "Every size you sell has a row",
             "Every size has the correct stock number",
-            "Category and RTW / Bespoke are correct",
-            "If on sale: tick is on AND Sale ₦ is filled",
+            "Category and Ready to wear / Bespoke are correct",
+            "If on sale: tick is on AND sale price is filled",
             "I clicked Save draft first and checked the page",
             "After Publish, I opened the shop and looked at it",
             "If it belongs in a collection, I added it there",

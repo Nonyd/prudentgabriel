@@ -423,7 +423,10 @@ model ProductImage {
 
 model ProductVariant {
   id           String      @id @default(cuid())
-  sku          String?
+  /// Warehouse stock code. Generated from name + size unless skuManual.
+  sku          String?     @unique
+  /// True when someone typed a code by hand. Rename must not overwrite it.
+  skuManual    Boolean     @default(false)
   size         String
   priceNGN     Float
   priceUSD     Float?

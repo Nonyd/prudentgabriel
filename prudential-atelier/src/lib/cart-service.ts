@@ -249,6 +249,75 @@ export async function updateCartLineQty(userId: string, itemId: string, quantity
   return { ok: true as const, cartItem };
 }
 
+export async function changeCartLineSize(userId: string, itemId: string, variantId: string) {
+  const item = await prisma.cartItem.findFirst({
+    where: { id: itemId, userId },
+    include: { variant: true },
+  });
+  if (!item) return { ok: false as const, status: 404, error: "Not found" };
+  if (isCustomLine(item.sizeMode)) {
+    return { ok: false as const, status: 400, error: "Made-to-measure pieces keep their measurements" };
+  }
+
+  const variant = await prisma.productVariant.findUnique({
+    where: { id: variantId },
+    select: { id: true, stock: true, productId: true, size: true },
+  });
+  if (!variant || variant.productId !== item.productId) {
+    return { ok: false as const, status: 400, error: "Invalid size" };
+  }
+  if (variant.size.trim().toLowerCase() === "custom") {
+    return { ok: false as const, status: 400, error: "Use made-to-measure on the product page" };
+  }
+  if (variant.stock < 1) {
+    return { ok: false as const, status: 400, error: "That size just sold out." };
+  }
+
+  const nextQty = Math.min(item.quantity, variant.stock);
+  const lineKey = cartLineKey({
+    sizeMode: "STANDARD",
+    productId: item.productId,
+    variantId: variant.id,
+    colorId: item.colorId,
+  });
+
+  const existing = await prisma.cartItem.findFirst({
+    where: { userId, lineKey, NOT: { id: item.id } },
+  });
+
+  try {
+    if (existing) {
+      const mergedQty = Math.min(existing.quantity + nextQty, variant.stock);
+      await prisma.$transaction([
+        prisma.cartItem.update({
+          where: { id: existing.id },
+          data: { quantity: mergedQty, variantId: variant.id, sizeMode: "STANDARD" },
+        }),
+        prisma.cartItem.delete({ where: { id: item.id } }),
+      ]);
+      const cartItem = await prisma.cartItem.findFirst({
+        where: { id: existing.id, userId },
+        include: cartInclude,
+      });
+      if (!cartItem) return { ok: false as const, status: 404, error: "Not found" };
+      return { ok: true as const, cartItem };
+    }
+
+    const cartItem = await prisma.cartItem.update({
+      where: { id: item.id },
+      data: { variantId: variant.id, lineKey, quantity: nextQty, sizeMode: "STANDARD" },
+      include: cartInclude,
+    });
+    return { ok: true as const, cartItem };
+  } catch (error) {
+    if (isMissingCartUserError(error)) {
+      return { ok: false as const, status: 401, error: "Please sign in again." };
+    }
+    console.error("[cart] changeCartLineSize failed", error);
+    return { ok: false as const, status: 400, error: "Could not change size." };
+  }
+}
+
 export async function removeCartLine(userId: string, itemId: string) {
   const item = await prisma.cartItem.findFirst({
     where: { id: itemId, userId },

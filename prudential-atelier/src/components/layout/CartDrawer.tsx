@@ -8,6 +8,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useCartStore } from "@/store/cartStore";
 import { useBagActions } from "@/hooks/useBagActions";
+import { BagQtyButtons, BagSizeSelect, useBagProductSizes } from "@/components/cart/BagLineControls";
 import { formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
@@ -20,11 +21,17 @@ export function CartDrawer() {
   const items = useCartStore((s) => s.items);
   const totalItems = useCartStore((s) => s.totalItems);
   const totalNGN = useCartStore((s) => s.totalNGN);
-  const { changeQty, removeFromBag } = useBagActions();
+  const { changeQty, removeFromBag, refreshGuestStock } = useBagActions();
   const currency = useCurrencyStore((s) => s.currency);
   const rates = useCurrencyStore((s) => s.rates);
   const panelRef = useRef<HTMLElement>(null);
   useFocusTrap(isOpen, panelRef);
+  const sizeMap = useBagProductSizes(items.map((i) => i.productId));
+
+  useEffect(() => {
+    if (!isOpen) return;
+    void refreshGuestStock();
+  }, [isOpen, refreshGuestStock]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -125,31 +132,16 @@ export function CartDrawer() {
                       </div>
                       <div className="min-w-0 flex-1 pr-6">
                         <p className="font-display text-sm text-charcoal">{item.productName}</p>
-                        <p className="mt-1 font-body text-[11px] font-medium uppercase tracking-wider text-dark-grey">
-                          {item.sizeMode === "CUSTOM" ? "Made to measure" : item.size}
-                        </p>
+                        <BagSizeSelect item={item} product={sizeMap[item.productId]} />
                         {item.color && (
                           <p className="mt-0.5 text-xs text-charcoal-light">{item.color}</p>
                         )}
-                        <div className="mt-2 flex items-center gap-2">
-                          <button
-                            type="button"
-                            disabled={item.quantity <= 1}
-                            className="flex h-7 w-7 items-center justify-center rounded-sm border border-border text-sm disabled:opacity-40"
-                            aria-label={`Decrease quantity of ${item.productName}`}
-                            onClick={() => void changeQty(item.id, item.quantity - 1)}
-                          >
-                            −
-                          </button>
-                          <span className="w-6 text-center text-sm">{item.quantity}</span>
-                          <button
-                            type="button"
-                            className="flex h-7 w-7 items-center justify-center rounded-sm border border-border text-sm"
-                            aria-label={`Increase quantity of ${item.productName}`}
-                            onClick={() => void changeQty(item.id, item.quantity + 1)}
-                          >
-                            +
-                          </button>
+                        <div className="mt-2">
+                          <BagQtyButtons
+                            item={item}
+                            onDecrease={() => void changeQty(item.id, item.quantity - 1)}
+                            onIncrease={() => void changeQty(item.id, item.quantity + 1)}
+                          />
                         </div>
                       </div>
                       <div className="shrink-0 text-right font-medium text-charcoal">

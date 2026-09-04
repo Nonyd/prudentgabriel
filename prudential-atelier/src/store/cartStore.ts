@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { capGuestQuantity } from "@/lib/bag-size";
 
 export interface CartItem {
   id: string;
@@ -75,10 +76,18 @@ export const useCartStore = create<CartStore>()(
           const nextQty =
             existing.sizeMode === "CUSTOM"
               ? item.quantity
-              : existing.quantity + item.quantity;
-          newItems = items.map((i) => (i.id === item.id ? { ...i, ...item, quantity: nextQty } : i));
+              : capGuestQuantity(existing.quantity + item.quantity, item.stock, item.sizeMode);
+          newItems = items.map((i) =>
+            i.id === item.id ? { ...i, ...item, quantity: nextQty, stock: item.stock } : i,
+          );
         } else {
-          newItems = [...items, item];
+          newItems = [
+            ...items,
+            {
+              ...item,
+              quantity: capGuestQuantity(item.quantity, item.stock, item.sizeMode),
+            },
+          ];
         }
 
         set({
@@ -103,7 +112,9 @@ export const useCartStore = create<CartStore>()(
           get().removeItem(id);
           return;
         }
-        const newItems = get().items.map((i) => (i.id === id ? { ...i, quantity: qty } : i));
+        const newItems = get().items.map((i) =>
+          i.id === id ? { ...i, quantity: capGuestQuantity(qty, i.stock, i.sizeMode) } : i,
+        );
         set({
           items: newItems,
           totalItems: newItems.reduce((sum, i) => sum + i.quantity, 0),

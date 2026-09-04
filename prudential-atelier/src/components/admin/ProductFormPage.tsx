@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,7 +13,7 @@ import type { ProductListItem } from "@/types/product";
 import { ProductCategory as PC, ProductType as PT } from "@prisma/client";
 import { productAdminSchema, type ProductAdminInput } from "@/validations/product";
 import { VariantManager } from "./VariantManager";
-import { buildDefaultProductSku } from "@/lib/product-sku";
+import { buildDefaultProductSku, isGeneratedProductSku } from "@/lib/product-sku";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { cn } from "@/lib/utils";
 import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
@@ -38,8 +38,22 @@ const CATEGORY_OPTIONS: ProductCategory[] = [
   PC.ACCESSORIES,
 ];
 
+const STEPS = [
+  { id: "piece", label: "The piece" },
+  { id: "sizes", label: "Sizes and prices" },
+  { id: "delivery", label: "Delivery and custom" },
+  { id: "publish", label: "Publishing" },
+] as const;
+
+function Req() {
+  return <span className="ml-1 font-normal normal-case tracking-normal text-wine">Required</span>;
+}
+
+function Opt() {
+  return <span className="ml-1 font-normal normal-case tracking-normal text-[#A8A8A4]">Optional</span>;
+}
+
 function mapProductToForm(p: FullProduct): ProductAdminInput {
-  const slug = p.slug;
   return {
     name: p.name,
     slug: p.slug,
@@ -77,7 +91,8 @@ function mapProductToForm(p: FullProduct): ProductAdminInput {
     variants: p.variants.map((v, i) => ({
       id: v.id,
       size: v.size,
-      sku: (v.sku ?? buildDefaultProductSku(slug, v.size)).trim() || buildDefaultProductSku(slug, v.size),
+      sku: v.sku ?? "",
+      skuManual: v.skuManual,
       priceNGN: v.priceNGN,
       priceUSD: v.priceUSD ?? undefined,
       priceGBP: v.priceGBP ?? undefined,
@@ -104,6 +119,7 @@ function mapProductToForm(p: FullProduct): ProductAdminInput {
       sortOrder: im.sortOrder ?? i,
     })),
     bundleProductIds: p.bundleItems.map((b) => b.targetProductId),
+    regenerateSkus: false,
   };
 }
 
@@ -121,7 +137,7 @@ const defaultCreate = (custom?: {
   category: PC.BRIDAL,
   type: PT.RTW,
   tags: [],
-  basePriceNGN: 1000,
+  basePriceNGN: 0,
   basePriceUSD: undefined,
   basePriceGBP: undefined,
   isOnSale: false,
@@ -129,34 +145,29 @@ const defaultCreate = (custom?: {
   isPublished: false,
   isFeatured: false,
   isNewArrival: false,
-    isBespokeAvail: false,
-    customOffered: custom?.offeredDefault ?? false,
-    customOfferedWhenSoldOut: false,
-    customSurchargeKind: custom?.surchargeKind === "NONE" ? null : (custom?.surchargeKind ?? null),
-    customSurchargeValue: custom?.surchargeKind && custom.surchargeKind !== "NONE" ? custom.surchargeValue : undefined,
-    customLeadTimeDays: custom?.leadTimeDays,
-    customReturnable: custom?.returnable ?? false,
-    measurementFieldIds: [],
+  isBespokeAvail: false,
+  customOffered: custom?.offeredDefault ?? false,
+  customOfferedWhenSoldOut: false,
+  customSurchargeKind: custom?.surchargeKind === "NONE" ? null : (custom?.surchargeKind ?? null),
+  customSurchargeValue: custom?.surchargeKind && custom.surchargeKind !== "NONE" ? custom.surchargeValue : undefined,
+  customLeadTimeDays: undefined,
+  customReturnable: custom?.returnable ?? false,
+  measurementFieldIds: [],
   defaultWeightKg: undefined,
   defaultLengthCm: undefined,
   defaultWidthCm: undefined,
   defaultHeightCm: undefined,
   metaTitle: undefined,
   metaDescription: undefined,
-  variants: [
-    {
-      size: "S",
-      sku: "PA-ITEM-S",
-      priceNGN: 1000,
-      stock: 0,
-      lowStockAt: 3,
-      sortOrder: 0,
-    },
-  ],
+  variants: [],
   colors: [],
   images: [],
   bundleProductIds: [],
+  regenerateSkus: false,
 });
+
+const fieldClass = "mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal";
+const labelClass = "mt-4 block text-xs uppercase tracking-wide text-[#A8A8A4]";
 
 export function ProductFormPage({
   product,
@@ -188,10 +199,12 @@ export function ProductFormPage({
     name: "colors",
   });
 
+  const [step, setStep] = useState(0);
   const [libraryFields, setLibraryFields] = useState<{ id: string; key: string; label: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [reuploadingId, setReuploadingId] = useState<string | null>(null);
+  const [colorUploading, setColorUploading] = useState<number | null>(null);
   const [bundleSearch, setBundleSearch] = useState("");
   const [bundleResults, setBundleResults] = useState<ProductListItem[]>([]);
   const [bundleSearching, setBundleSearching] = useState(false);
@@ -203,6 +216,8 @@ export function ProductFormPage({
   const bundleIds = form.watch("bundleProductIds");
   const customOfferedWatch = form.watch("customOffered");
   const measurementIds = form.watch("measurementFieldIds") ?? [];
+  const typeWatch = form.watch("type");
+  const lastName = useRef(defaults.name);
 
   useEffect(() => {
     void fetch("/api/admin/measurement-fields")
@@ -210,6 +225,22 @@ export function ProductFormPage({
       .then((j: { items?: { id: string; key: string; label: string }[] }) => setLibraryFields(j.items ?? []))
       .catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    if (nameWatch === lastName.current) return;
+    const previous = lastName.current;
+    lastName.current = nameWatch;
+    const rows = form.getValues("variants");
+    form.setValue(
+      "variants",
+      rows.map((v) => {
+        if (v.skuManual) return v;
+        if (v.id && previous && !isGeneratedProductSku(v.sku || "", previous, v.size)) return v;
+        return { ...v, sku: buildDefaultProductSku(nameWatch, v.size || "SIZE") };
+      }),
+      { shouldDirty: false },
+    );
+  }, [nameWatch, form]);
 
   useEffect(() => {
     if (bundleSearch.trim().length < 2) {
@@ -316,6 +347,20 @@ export function ProductFormPage({
     }
   };
 
+  const uploadColorFile = async (index: number, file: File | undefined) => {
+    if (!file) return;
+    setColorUploading(index);
+    try {
+      const url = await uploadAdminAsset(file, "prudential-atelier/products");
+      form.setValue(`colors.${index}.imageUrl`, url);
+      toast.success("Colour photo uploaded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setColorUploading(null);
+    }
+  };
+
   const setPrimary = (index: number) => {
     const imgs = form.getValues("images").map((im, i) => ({ ...im, isPrimary: i === index }));
     form.setValue("images", imgs);
@@ -380,12 +425,16 @@ export function ProductFormPage({
   };
 
   const onSubmit: SubmitHandler<ProductAdminInput> = async (values) => {
+    const payload = {
+      ...values,
+      isBespokeAvail: values.type === PT.BESPOKE,
+    };
     try {
       if (mode === "create") {
         const res = await fetch("/api/admin/products", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
+          body: JSON.stringify(payload),
         });
         const data = (await res.json()) as { id?: string; error?: unknown };
         if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Could not create");
@@ -397,18 +446,33 @@ export function ProductFormPage({
       const res = await fetch(`/api/admin/products/${product!.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
       const data = (await res.json()) as { error?: unknown };
       if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Could not save");
       toast.success("Changes saved ✓");
+      form.setValue("regenerateSkus", false);
       router.refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Error");
     }
   };
 
-  const submit = form.handleSubmit(onSubmit);
+  const submit = form.handleSubmit(onSubmit, (errors) => {
+    if (errors.images) {
+      setStep(0);
+      toast.error("Add at least one photo before publishing");
+      return;
+    }
+    if (errors.name || errors.slug) {
+      setStep(0);
+      return;
+    }
+    if (errors.variants || errors.basePriceNGN) {
+      setStep(1);
+      return;
+    }
+  });
 
   const saveDraft = () => {
     form.setValue("isPublished", false);
@@ -420,10 +484,28 @@ export function ProductFormPage({
     queueMicrotask(() => void submit());
   };
 
+  const setKind = (type: typeof PT.RTW | typeof PT.BESPOKE) => {
+    form.setValue("type", type);
+    form.setValue("isBespokeAvail", type === PT.BESPOKE);
+  };
+
+  const regenerateSkus = () => {
+    const name = form.getValues("name");
+    form.setValue(
+      "variants",
+      form.getValues("variants").map((v) =>
+        v.skuManual ? v : { ...v, sku: buildDefaultProductSku(name, v.size || "SIZE"), skuManual: false },
+      ),
+    );
+    form.setValue("regenerateSkus", true);
+    toast.success("Codes will update when you save. Typed codes are left alone.");
+  };
+
   const images = form.watch("images");
+  const storeDefaultLead = customDefaults?.leadTimeDays ?? 21;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
+    <div className="mx-auto max-w-4xl space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Link href="/admin/products" className="text-sm text-[#A8A8A4] hover:text-gold">
@@ -472,220 +554,225 @@ export function ProductFormPage({
         </div>
       </div>
 
-      <form onSubmit={submit} className="grid gap-8 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          <section className="rounded-sm border border-sand bg-canvas p-6">
-            <h2 className="font-display text-lg text-gold">Basic information</h2>
-            <label className="mt-4 block text-xs uppercase tracking-wide text-[#A8A8A4]">
-              Product name
-              <input
-                {...form.register("name", { onBlur: onBlurName })}
-                className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-              />
-            </label>
-            {form.formState.errors.name && (
-              <p className="mt-1 text-xs text-red-400">{form.formState.errors.name.message}</p>
+      <nav className="flex flex-wrap gap-2" aria-label="Form stages">
+        {STEPS.map((s, i) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => setStep(i)}
+            className={cn(
+              "rounded-sm border px-3 py-1.5 text-xs",
+              step === i ? "border-wine bg-wine text-gold" : "border-sand text-gold hover:bg-gold/10",
             )}
-            <label className="mt-4 block text-xs uppercase tracking-wide text-[#A8A8A4]">
-              Slug
-              <input
-                {...form.register("slug")}
-                className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 font-mono text-sm text-charcoal"
-              />
-            </label>
-            <p className="mt-1 text-xs text-gold/80">
-              {getPublicAppUrl().replace(/^https?:\/\//, "")}/shop/{slugWatch || "[slug]"}
-            </p>
-            <label className="mt-4 block text-xs uppercase tracking-wide text-[#A8A8A4]">
-              Short description (max 200)
-              <textarea
-                {...form.register("description")}
-                maxLength={200}
-                rows={3}
-                className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-              />
-            </label>
-            <label className="mt-4 block text-xs uppercase tracking-wide text-[#A8A8A4]">
-              Full description
-              <textarea
-                {...form.register("details")}
-                rows={8}
-                className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-              />
-            </label>
-            <label className="mt-4 block text-xs uppercase tracking-wide text-[#A8A8A4]">
-              Materials &amp; care
-              <textarea
-                {...form.register("details")}
-                rows={6}
-                className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-              />
-            </label>
-          </section>
+          >
+            {i + 1}. {s.label}
+          </button>
+        ))}
+      </nav>
 
-          <section className="rounded-sm border border-sand bg-canvas p-6">
-            <h2 className="font-display text-lg text-gold">Media</h2>
-            <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-sand px-6 py-10 text-sm text-[#A8A8A4] hover:border-[#F5F5F3]0">
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                disabled={uploading}
-                onChange={(e) => void uploadFiles(e.target.files)}
-              />
-              {uploading ? "Uploading…" : "Drop images here or click to upload"}
-            </label>
-            <div className="mt-2 max-w-md">
-              <UploadProgressBar value={uploadProgress} />
-            </div>
-            <div className="mt-4 grid grid-cols-3 gap-3">
-              {images.map((im, idx) => (
-                <div key={im.id ?? `${im.url}-${idx}`} className="relative rounded-sm border border-sand p-1">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={im.url} alt="" className="h-28 w-full rounded-sm object-cover" />
-                  {isLegacyWordPressImageUrl(im.url) && (
-                    <div className="mt-1 space-y-1">
-                      <p className="text-[10px] text-amber-600">⚠ Hosted on old server</p>
-                      {mode === "edit" && im.id && (
-                        <button
-                          type="button"
-                          disabled={reuploadingId === im.id}
-                          onClick={() => void reuploadLegacyImage(idx)}
-                          className="text-[10px] text-gold hover:underline disabled:opacity-50"
-                        >
-                          {reuploadingId === im.id ? "Migrating…" : "Re-upload to Cloudinary →"}
-                        </button>
-                      )}
+      <form onSubmit={submit} className="space-y-6">
+        {step === 0 ? (
+          <>
+            <section className="rounded-sm border border-sand bg-canvas p-6">
+              <h2 className="font-display text-lg text-gold">The piece</h2>
+              <label className={labelClass}>
+                Product name
+                <Req />
+                <input {...form.register("name", { onBlur: onBlurName })} className={fieldClass} />
+              </label>
+              {form.formState.errors.name && (
+                <p className="mt-1 text-xs text-red-400">{form.formState.errors.name.message}</p>
+              )}
+              <label className={labelClass}>
+                Web address
+                <Opt />
+                <input
+                  {...form.register("slug")}
+                  className={`${fieldClass} font-mono text-sm`}
+                />
+              </label>
+              <p className="mt-1 text-xs text-gold/80">
+                {getPublicAppUrl().replace(/^https?:\/\//, "")}/shop/{slugWatch || "[name]"}
+              </p>
+              <label className={labelClass}>
+                Short description
+                <Opt />
+                <textarea {...form.register("description")} maxLength={200} rows={3} className={fieldClass} />
+              </label>
+              <p className="mt-1 text-xs text-[#A8A8A4]">One or two sentences. Max 200 characters.</p>
+              <label className={labelClass}>
+                Full description
+                <Opt />
+                <textarea {...form.register("details")} rows={8} className={fieldClass} />
+              </label>
+            </section>
+
+            <section className="rounded-sm border border-sand bg-canvas p-6">
+              <h2 className="font-display text-lg text-gold">
+                Photos
+                <Req />
+              </h2>
+              <p className="mt-1 text-xs text-[#A8A8A4]">At least one photo before you publish. Drafts can wait.</p>
+              <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-sand px-6 py-10 text-sm text-[#A8A8A4] hover:border-[#F5F5F3]">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={(e) => void uploadFiles(e.target.files)}
+                />
+                {uploading ? "Uploading…" : "Drop images here or click to upload"}
+              </label>
+              <div className="mt-2 max-w-md">
+                <UploadProgressBar value={uploadProgress} />
+              </div>
+              {form.formState.errors.images && (
+                <p className="mt-2 text-xs text-red-400">{String(form.formState.errors.images.message ?? "")}</p>
+              )}
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                {images.map((im, idx) => (
+                  <div key={im.id ?? `${im.url}-${idx}`} className="relative rounded-sm border border-sand p-1">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={im.url} alt="" className="h-28 w-full rounded-sm object-cover" />
+                    {isLegacyWordPressImageUrl(im.url) && (
+                      <div className="mt-1 space-y-1">
+                        <p className="text-[10px] text-amber-600">⚠ Hosted on old server</p>
+                        {mode === "edit" && im.id && (
+                          <button
+                            type="button"
+                            disabled={reuploadingId === im.id}
+                            onClick={() => void reuploadLegacyImage(idx)}
+                            className="text-[10px] text-gold hover:underline disabled:opacity-50"
+                          >
+                            {reuploadingId === im.id ? "Migrating…" : "Re-upload to Cloudinary →"}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    <div className="mt-1 flex justify-between gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setPrimary(idx)}
+                        className={cn("text-xs", im.isPrimary ? "text-gold" : "text-[#A8A8A4]")}
+                      >
+                        {im.isPrimary ? "★ Primary" : "☆ Set primary"}
+                      </button>
+                      <button type="button" className="text-xs text-red-400" onClick={() => void removeImage(idx)}>
+                        Remove
+                      </button>
                     </div>
-                  )}
-                  <div className="mt-1 flex justify-between gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setPrimary(idx)}
-                      className={cn(
-                        "text-xs",
-                        im.isPrimary ? "text-gold" : "text-[#A8A8A4]",
-                      )}
-                    >
-                      {im.isPrimary ? "★ Primary" : "☆ Set primary"}
-                    </button>
-                    <button
-                      type="button"
-                      className="text-xs text-red-400"
-                      onClick={() => void removeImage(idx)}
-                    >
-                      Remove
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-sm border border-sand bg-canvas p-6">
+              <h2 className="font-display text-lg text-gold">
+                Colours
+                <Opt />
+              </h2>
+              <button
+                type="button"
+                className="mt-3 rounded-sm border border-sand px-3 py-1 text-xs text-gold"
+                onClick={() => appendColor({ name: "New", hex: "#000000", imageUrl: null })}
+              >
+                + Add colour
+              </button>
+              <div className="mt-4 space-y-3">
+                {colorFields.map((field, i) => (
+                  <div key={field.id} className="flex flex-wrap items-end gap-2">
+                    <input
+                      {...form.register(`colors.${i}.name`)}
+                      className="min-w-[100px] flex-1 rounded-sm border border-sand bg-canvas px-2 py-1 text-sm text-charcoal"
+                      placeholder="Name"
+                    />
+                    <input type="color" {...form.register(`colors.${i}.hex`)} className="h-9 w-12 cursor-pointer bg-transparent" />
+                    <label className="cursor-pointer rounded-sm border border-sand px-2 py-1 text-xs text-gold">
+                      {colorUploading === i ? "Uploading…" : form.watch(`colors.${i}.imageUrl`) ? "Replace photo" : "Upload photo"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={colorUploading === i}
+                        onChange={(e) => void uploadColorFile(i, e.target.files?.[0])}
+                      />
+                    </label>
+                    <button type="button" className="text-red-400" onClick={() => removeColor(i)}>
+                      ×
                     </button>
                   </div>
-                </div>
-              ))}
-            </div>
-          </section>
+                ))}
+              </div>
+            </section>
+          </>
+        ) : null}
 
+        {step === 1 ? (
           <section className="rounded-sm border border-sand bg-canvas p-6">
-            <h2 className="font-display text-lg text-gold">Variants &amp; pricing</h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            <h2 className="font-display text-lg text-gold">Sizes and prices</h2>
+            <label className={labelClass}>
+              Price in naira
+              <Req />
+              <input
+                type="number"
+                {...form.register("basePriceNGN", { valueAsNumber: true })}
+                className={fieldClass}
+              />
+            </label>
+            <p className="mt-1 text-xs text-[#A8A8A4]">Copied onto each new size. Then change a size if it costs more.</p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <label className="text-xs uppercase text-[#A8A8A4]">
-                Starting ₦ for new sizes
-                <input
-                  type="number"
-                  {...form.register("basePriceNGN", { valueAsNumber: true })}
-                  className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-                />
+                Price in dollars
+                <Opt />
+                <input type="number" step="any" {...form.register("basePriceUSD")} className={fieldClass} />
               </label>
               <label className="text-xs uppercase text-[#A8A8A4]">
-                Base $
-                <input
-                  type="number"
-                  step="any"
-                  {...form.register("basePriceUSD")}
-                  className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-                />
-              </label>
-              <label className="text-xs uppercase text-[#A8A8A4]">
-                Base £
-                <input
-                  type="number"
-                  step="any"
-                  {...form.register("basePriceGBP")}
-                  className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-                />
+                Price in pounds
+                <Opt />
+                <input type="number" step="any" {...form.register("basePriceGBP")} className={fieldClass} />
               </label>
             </div>
-            <p className="mt-2 text-xs text-[#A8A8A4]">
-              Shop filter, cards, and emails use the cheapest size. Starting ₦ only seeds new rows and “copy onto every size”. Leave USD/GBP blank to convert from ₦; a figure here is the selling price in that currency and ignores the feed. Per-size $ / £ on the rows below win over this product figure.
-            </p>
-            <div className="mt-4 grid gap-4 sm:grid-cols-4">
-              <label className="text-xs uppercase text-[#A8A8A4]">
-                Default kg
-                <input
-                  type="number"
-                  step="0.01"
-                  {...form.register("defaultWeightKg")}
-                  className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-                />
-              </label>
-              <label className="text-xs uppercase text-[#A8A8A4]">
-                L cm
-                <input
-                  type="number"
-                  step="0.1"
-                  {...form.register("defaultLengthCm")}
-                  className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-                />
-              </label>
-              <label className="text-xs uppercase text-[#A8A8A4]">
-                W cm
-                <input
-                  type="number"
-                  step="0.1"
-                  {...form.register("defaultWidthCm")}
-                  className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-                />
-              </label>
-              <label className="text-xs uppercase text-[#A8A8A4]">
-                H cm
-                <input
-                  type="number"
-                  step="0.1"
-                  {...form.register("defaultHeightCm")}
-                  className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-                />
-              </label>
-            </div>
-            <p className="mt-2 text-xs text-[#A8A8A4]">Used when a size has no parcel of its own. Carriers bill the greater of actual and volumetric weight.</p>
-            <div className="mt-4 flex items-center gap-3">
+            <div className="mt-4">
               <Controller
                 control={form.control}
                 name="isOnSale"
                 render={({ field }) => (
                   <label className="flex items-center gap-2 text-sm text-charcoal">
                     <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
-                    Product is on sale
+                    On sale
                   </label>
                 )}
               />
             </div>
             {saleFigureIsDormant(Boolean(isOnSaleWatch), variantsWatch ?? []) ? (
               <p className="mt-3 text-xs text-amber-800">
-                A sale ₦ is filled on at least one size, but “Product is on sale” is off. Shoppers see and pay the regular ₦ until you tick the flag (or clear the sale ₦).
+                A sale price is filled, but “On sale” is off. Shoppers pay the regular price until you tick it.
               </p>
             ) : null}
+            <p className="mt-4 text-xs uppercase tracking-wide text-[#A8A8A4]">
+              Sizes
+              <Req />
+            </p>
             <Controller
               control={form.control}
               name="variants"
               render={({ field }) => (
                 <VariantManager
-                  slug={slugWatch || "item"}
+                  productName={nameWatch || "item"}
                   variants={field.value}
                   onChange={field.onChange}
                   basePriceNGN={basePriceWatch}
+                  isOnSale={Boolean(isOnSaleWatch)}
+                  onRegenerate={mode === "edit" ? regenerateSkus : undefined}
                 />
               )}
             />
             {form.formState.errors.variants && (
-              <p className="mt-2 text-xs text-red-400">Check variant rows (size, price, stock).</p>
+              <p className="mt-2 text-xs text-red-400">Add at least one size with a price.</p>
+            )}
+            {form.formState.errors.basePriceNGN && (
+              <p className="mt-2 text-xs text-red-400">Enter a naira price.</p>
             )}
             {product?.id ? (
               <p className="mt-4 font-body text-[13px]">
@@ -696,345 +783,350 @@ export function ProductFormPage({
               </p>
             ) : null}
           </section>
+        ) : null}
 
-          <section className="rounded-sm border border-sand bg-canvas p-6">
-            <h2 className="font-display text-lg text-gold">Colours</h2>
-            <button
-              type="button"
-              className="mt-3 rounded-sm border border-sand px-3 py-1 text-xs text-gold"
-              onClick={() => appendColor({ name: "New", hex: "#000000", imageUrl: null })}
-            >
-              + Add colour
-            </button>
-            <div className="mt-4 space-y-3">
-              {colorFields.map((field, i) => (
-                <div key={field.id} className="flex flex-wrap items-end gap-2">
-                  <input
-                    {...form.register(`colors.${i}.name`)}
-                    className="min-w-[100px] flex-1 rounded-sm border border-sand bg-canvas px-2 py-1 text-sm text-charcoal"
-                    placeholder="Name"
-                  />
-                  <input type="color" {...form.register(`colors.${i}.hex`)} className="h-9 w-12 cursor-pointer bg-transparent" />
-                  <input
-                    {...form.register(`colors.${i}.imageUrl`)}
-                    className="min-w-[160px] flex-1 rounded-sm border border-sand bg-canvas px-2 py-1 text-xs text-charcoal"
-                    placeholder="Image URL (optional)"
-                  />
-                  <button type="button" className="text-red-400" onClick={() => removeColor(i)}>
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-sm border border-sand bg-canvas p-6">
-            <h2 className="font-display text-lg text-gold">Complete the Look</h2>
-            <p className="mt-2 text-xs text-[#A8A8A4]">Link up to 4 published pieces shoppers may add alongside this product.</p>
-            <div className="relative mt-4">
-              <input
-                value={bundleSearch}
-                onChange={(e) => setBundleSearch(e.target.value)}
-                disabled={bundleIds.length >= 4}
-                placeholder={bundleIds.length >= 4 ? "Maximum 4 products" : "Search published products…"}
-                className="w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-sm text-charcoal placeholder:text-[#A8A8A4] disabled:opacity-50"
+        {step === 2 ? (
+          <>
+            <section className="rounded-sm border border-sand bg-canvas p-6">
+              <h2 className="font-display text-lg text-gold">Custom measurements</h2>
+              <p className="mt-1 text-xs text-[#A8A8A4]">Made to order. Does not take stock.</p>
+              <Controller
+                control={form.control}
+                name="customOffered"
+                render={({ field }) => (
+                  <label className="mt-3 flex justify-between gap-2 text-sm text-charcoal">
+                    Offer custom on this piece
+                    <input type="checkbox" checked={Boolean(field.value)} onChange={(e) => field.onChange(e.target.checked)} />
+                  </label>
+                )}
               />
-              {bundleSearch.trim().length >= 2 && bundleIds.length < 4 ? (
-                <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-sm border border-[#E8E8E4] bg-[#FAFAFA] py-1 shadow-lg">
-                  {bundleSearching ? (
-                    <p className="px-3 py-2 text-xs text-[#A8A8A4]">Searching…</p>
-                  ) : bundleResults.length === 0 ? (
-                    <p className="px-3 py-2 text-xs text-[#A8A8A4]">No matches</p>
-                  ) : (
-                    bundleResults.map((p) => {
-                      const img = p.images.find((i) => i.isPrimary) ?? p.images[0];
+              {customOfferedWatch ? (
+                <div className="mt-4 space-y-3 text-sm text-charcoal">
+                  <Controller
+                    control={form.control}
+                    name="customOfferedWhenSoldOut"
+                    render={({ field }) => (
+                      <label className="flex justify-between gap-2">
+                        Keep offering it after the sizes sell out
+                        <input
+                          type="checkbox"
+                          checked={Boolean(field.value)}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                        />
+                      </label>
+                    )}
+                  />
+                  <p className="text-[11px] text-[#A8A8A4]">
+                    Off by default. Only tick this if the fabric can be sourced again. A sold-out one-off must not
+                    promise a remake.
+                  </p>
+                  <label className="block text-xs uppercase text-[#A8A8A4]">
+                    Surcharge
+                    <select {...form.register("customSurchargeKind")} className={fieldClass}>
+                      <option value="">Use store default</option>
+                      <option value="NONE">None</option>
+                      <option value="PERCENT">Percent</option>
+                      <option value="FLAT">Flat ₦</option>
+                    </select>
+                  </label>
+                  <label className="block text-xs uppercase text-[#A8A8A4]">
+                    Surcharge value
+                    <input type="number" step="0.01" {...form.register("customSurchargeValue")} className={fieldClass} />
+                  </label>
+                  <label className="block text-xs uppercase text-[#A8A8A4]">
+                    Lead time (days)
+                    <input
+                      type="number"
+                      {...form.register("customLeadTimeDays")}
+                      className={fieldClass}
+                      placeholder={`Store default (${storeDefaultLead})`}
+                    />
+                  </label>
+                  <p className="text-xs text-[#A8A8A4]">Leave blank to use the store default of {storeDefaultLead} days.</p>
+                  <Controller
+                    control={form.control}
+                    name="customReturnable"
+                    render={({ field }) => (
+                      <label className="flex justify-between gap-2">
+                        Returnable
+                        <input
+                          type="checkbox"
+                          checked={Boolean(field.value)}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                        />
+                      </label>
+                    )}
+                  />
+                  <p className="text-[11px] text-[#A8A8A4]">Leave returnable off. A custom garment cannot be worn by anyone else.</p>
+                  <p className="text-xs uppercase text-[#A8A8A4]">Fields for this piece</p>
+                  <ul className="space-y-2">
+                    {libraryFields.map((f) => {
+                      const selected = measurementIds.find((m) => m.fieldId === f.id);
                       return (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => addBundle(p)}
-                          disabled={bundleIds.includes(p.id)}
-                          className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:border border-sand bg-canvas disabled:opacity-40"
-                        >
-                          <div className="relative h-12 w-9 shrink-0 overflow-hidden rounded-sm border border-sand bg-canvas">
-                            {img?.url ? <Image src={img.url} alt="" fill className="object-cover" sizes="36px" /> : null}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="truncate text-charcoal">{p.name}</div>
-                            <div className="text-[11px] text-gold/80">{p.category.replace(/_/g, " ")}</div>
-                          </div>
-                        </button>
+                        <li key={f.id} className="flex items-center justify-between gap-2">
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(selected)}
+                              onChange={(e) => {
+                                const cur = form.getValues("measurementFieldIds") ?? [];
+                                if (e.target.checked) {
+                                  form.setValue("measurementFieldIds", [
+                                    ...cur,
+                                    { fieldId: f.id, required: true, sortOrder: cur.length },
+                                  ]);
+                                } else {
+                                  form.setValue(
+                                    "measurementFieldIds",
+                                    cur.filter((m) => m.fieldId !== f.id),
+                                  );
+                                }
+                              }}
+                            />
+                            {f.label}
+                          </label>
+                          {selected ? (
+                            <label className="flex items-center gap-1 text-xs">
+                              Required
+                              <input
+                                type="checkbox"
+                                checked={selected.required}
+                                onChange={(e) => {
+                                  const cur = form.getValues("measurementFieldIds") ?? [];
+                                  form.setValue(
+                                    "measurementFieldIds",
+                                    cur.map((m) => (m.fieldId === f.id ? { ...m, required: e.target.checked } : m)),
+                                  );
+                                }}
+                              />
+                            </label>
+                          ) : null}
+                        </li>
                       );
-                    })
-                  )}
+                    })}
+                  </ul>
                 </div>
               ) : null}
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {bundleIds.map((bid) => {
-                const meta = bundleMeta(bid);
-                return (
-                  <span
-                    key={bid}
-                    className="inline-flex items-center gap-2 rounded-full border border-[#E8E8E4] border border-sand bg-canvas py-1 pl-1 pr-2 text-xs text-charcoal"
-                  >
-                    {meta.thumb ? (
-                      <span className="relative h-8 w-6 shrink-0 overflow-hidden rounded-sm">
-                        <Image src={meta.thumb} alt="" fill className="object-cover" sizes="24px" />
-                      </span>
-                    ) : null}
-                    <span className="max-w-[140px] truncate">{meta.name}</span>
-                    <button type="button" className="text-red-400 hover:underline" onClick={() => removeBundle(bid)} aria-label={`Remove ${meta.name}`}>
-                      ×
-                    </button>
-                  </span>
-                );
-              })}
-            </div>
-          </section>
+            </section>
 
-          <section className="rounded-sm border border-sand bg-canvas p-6">
-            <h2 className="font-display text-lg text-gold">SEO</h2>
-            <label className="mt-3 block text-xs uppercase text-[#A8A8A4]">
-              Meta title
-              <input {...form.register("metaTitle")} maxLength={60} className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal" />
-            </label>
-            <label className="mt-3 block text-xs uppercase text-[#A8A8A4]">
-              Meta description
-              <textarea
-                {...form.register("metaDescription")}
-                maxLength={160}
-                rows={3}
-                className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-              />
-            </label>
-          </section>
-        </div>
-
-        <div className="space-y-6">
-          <section className="sticky top-6 rounded-sm border border-sand bg-canvas p-6">
-            <h2 className="font-display text-lg text-gold">Status</h2>
-            <div className="mt-4 space-y-3 text-sm text-charcoal">
-              <Controller
-                control={form.control}
-                name="isPublished"
-                render={({ field }) => (
-                  <label className="flex justify-between gap-2">
-                    Published
-                    <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
-                  </label>
-                )}
-              />
-              <p className="text-[11px] text-[#A8A8A4]">Off until you click Publish. Saves as a draft.</p>
-              <Controller
-                control={form.control}
-                name="isFeatured"
-                render={({ field }) => (
-                  <label className="flex justify-between gap-2">
-                    Featured
-                    <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
-                  </label>
-                )}
-              />
-              <Controller
-                control={form.control}
-                name="isNewArrival"
-                render={({ field }) => (
-                  <label className="flex justify-between gap-2">
-                    New arrival
-                    <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
-                  </label>
-                )}
-              />
-              <Controller
-                control={form.control}
-                name="isBespokeAvail"
-                render={({ field }) => (
-                  <label className="flex justify-between gap-2">
-                    Bespoke available
-                    <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
-                  </label>
-                )}
-              />
-            </div>
-            {product && (
-              <p className="mt-4 text-xs text-[#A8A8A4]">
-                Updated {new Date(product.updatedAt).toLocaleString()}
-              </p>
-            )}
-          </section>
-
-          <section className="rounded-sm border border-sand bg-canvas p-6">
-            <h2 className="font-display text-lg text-gold">Custom measurements</h2>
-            <p className="mt-1 text-xs text-[#A8A8A4]">
-              Made to order. Does not take stock.
-            </p>
-            <Controller
-              control={form.control}
-              name="customOffered"
-              render={({ field }) => (
-                <label className="mt-3 flex justify-between gap-2 text-sm text-charcoal">
-                  Offer custom on this piece
-                  <input type="checkbox" checked={Boolean(field.value)} onChange={(e) => field.onChange(e.target.checked)} />
+            <details className="rounded-sm border border-sand bg-canvas p-6">
+              <summary className="cursor-pointer font-display text-lg text-gold">Delivery details</summary>
+              <p className="mt-2 text-xs text-[#A8A8A4]">Most pieces use the store default box. Fill this only if this garment packs differently.</p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-4">
+                <label className="text-xs uppercase text-[#A8A8A4]">
+                  Weight kg
+                  <input type="number" step="0.01" {...form.register("defaultWeightKg")} className={fieldClass} />
                 </label>
-              )}
-            />
-            {customOfferedWatch ? (
+                <label className="text-xs uppercase text-[#A8A8A4]">
+                  Box size when packed — length
+                  <input type="number" step="0.1" {...form.register("defaultLengthCm")} className={fieldClass} />
+                </label>
+                <label className="text-xs uppercase text-[#A8A8A4]">
+                  Width
+                  <input type="number" step="0.1" {...form.register("defaultWidthCm")} className={fieldClass} />
+                </label>
+                <label className="text-xs uppercase text-[#A8A8A4]">
+                  Height
+                  <input type="number" step="0.1" {...form.register("defaultHeightCm")} className={fieldClass} />
+                </label>
+              </div>
+            </details>
+          </>
+        ) : null}
+
+        {step === 3 ? (
+          <>
+            <section className="rounded-sm border border-sand bg-canvas p-6">
+              <h2 className="font-display text-lg text-gold">Publishing</h2>
+              <p className="mt-1 text-xs text-[#A8A8A4]">Use Save draft or Publish at the top. Drafts stay off the shop.</p>
+              <label className={labelClass}>
+                Category
+                <select {...form.register("category")} className={fieldClass}>
+                  {CATEGORY_OPTIONS.map((c) => (
+                    <option key={c} value={c}>
+                      {c.replace(/_/g, " ")}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <fieldset className="mt-4 text-sm text-charcoal">
+                <legend className="text-xs uppercase text-[#A8A8A4]">Ready to wear or bespoke</legend>
+                <label className="mr-4 mt-2 inline-flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={typeWatch === PT.RTW}
+                    onChange={() => setKind(PT.RTW)}
+                  />
+                  Ready to wear
+                </label>
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={typeWatch === PT.BESPOKE}
+                    onChange={() => setKind(PT.BESPOKE)}
+                  />
+                  Bespoke
+                </label>
+                <p className="mt-1 text-xs text-[#A8A8A4]">
+                  Ready to wear sells from stock. Bespoke shows an atelier consultation on the product page.
+                </p>
+              </fieldset>
               <div className="mt-4 space-y-3 text-sm text-charcoal">
                 <Controller
                   control={form.control}
-                  name="customOfferedWhenSoldOut"
+                  name="isFeatured"
                   render={({ field }) => (
                     <label className="flex justify-between gap-2">
-                      Keep offering it after the sizes sell out
-                      <input
-                        type="checkbox"
-                        checked={Boolean(field.value)}
-                        onChange={(e) => field.onChange(e.target.checked)}
-                      />
+                      <span>
+                        Show on the homepage
+                        <span className="block text-[11px] text-[#A8A8A4]">You choose this. It is not updated from sales.</span>
+                      </span>
+                      <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
                     </label>
                   )}
                 />
-                <p className="text-[11px] text-[#A8A8A4]">
-                  Off by default. Only tick this if the fabric can be sourced again. A sold-out one-off must not
-                  promise a remake.
-                </p>
-                <label className="block text-xs uppercase text-[#A8A8A4]">
-                  Surcharge
-                  <select
-                    {...form.register("customSurchargeKind")}
-                    className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-                  >
-                    <option value="">Use store default</option>
-                    <option value="NONE">None</option>
-                    <option value="PERCENT">Percent</option>
-                    <option value="FLAT">Flat ₦</option>
-                  </select>
-                </label>
-                <label className="block text-xs uppercase text-[#A8A8A4]">
-                  Surcharge value
-                  <input
-                    type="number"
-                    step="0.01"
-                    {...form.register("customSurchargeValue")}
-                    className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-                  />
-                </label>
-                <label className="block text-xs uppercase text-[#A8A8A4]">
-                  Lead time (days)
-                  <input
-                    type="number"
-                    {...form.register("customLeadTimeDays")}
-                    className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-                    placeholder="Store default"
-                  />
-                </label>
                 <Controller
                   control={form.control}
-                  name="customReturnable"
+                  name="isNewArrival"
                   render={({ field }) => (
                     <label className="flex justify-between gap-2">
-                      Returnable
-                      <input
-                        type="checkbox"
-                        checked={Boolean(field.value)}
-                        onChange={(e) => field.onChange(e.target.checked)}
-                      />
+                      New arrival
+                      <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
                     </label>
                   )}
                 />
-                <p className="text-[11px] text-[#A8A8A4]">Leave returnable off. A custom garment cannot be worn by anyone else.</p>
-                <p className="text-xs uppercase text-[#A8A8A4]">Fields for this piece</p>
-                <ul className="space-y-2">
-                  {libraryFields.map((f) => {
-                    const selected = measurementIds.find((m) => m.fieldId === f.id);
-                    return (
-                      <li key={f.id} className="flex items-center justify-between gap-2">
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(selected)}
-                            onChange={(e) => {
-                              const cur = form.getValues("measurementFieldIds") ?? [];
-                              if (e.target.checked) {
-                                form.setValue("measurementFieldIds", [
-                                  ...cur,
-                                  { fieldId: f.id, required: true, sortOrder: cur.length },
-                                ]);
-                              } else {
-                                form.setValue(
-                                  "measurementFieldIds",
-                                  cur.filter((m) => m.fieldId !== f.id),
-                                );
-                              }
-                            }}
-                          />
-                          {f.label}
-                        </label>
-                        {selected ? (
-                          <label className="flex items-center gap-1 text-xs">
-                            Required
-                            <input
-                              type="checkbox"
-                              checked={selected.required}
-                              onChange={(e) => {
-                                const cur = form.getValues("measurementFieldIds") ?? [];
-                                form.setValue(
-                                  "measurementFieldIds",
-                                  cur.map((m) => (m.fieldId === f.id ? { ...m, required: e.target.checked } : m)),
-                                );
-                              }}
-                            />
-                          </label>
-                        ) : null}
-                      </li>
-                    );
-                  })}
-                </ul>
               </div>
-            ) : null}
-          </section>
+              <label className={labelClass}>
+                Tags
+                <Opt />
+                <input
+                  className={fieldClass}
+                  defaultValue={defaults.tags.join(", ")}
+                  onBlur={(e) =>
+                    form.setValue(
+                      "tags",
+                      e.target.value
+                        .split(",")
+                        .map((t) => t.trim())
+                        .filter(Boolean),
+                    )
+                  }
+                />
+              </label>
+              {product && (
+                <p className="mt-4 text-xs text-[#A8A8A4]">Updated {new Date(product.updatedAt).toLocaleString()}</p>
+              )}
+            </section>
 
-          <section className="rounded-sm border border-sand bg-canvas p-6">
-            <h2 className="font-display text-lg text-gold">Organisation</h2>
-            <label className="mt-3 block text-xs uppercase text-[#A8A8A4]">
-              Category
-              <select {...form.register("category")} className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal">
-                {CATEGORY_OPTIONS.map((c) => (
-                  <option key={c} value={c}>
-                    {c.replace(/_/g, " ")}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <fieldset className="mt-4 text-sm text-charcoal">
-              <legend className="text-xs uppercase text-[#A8A8A4]">Product type</legend>
-              <label className="mr-4 mt-2 inline-flex items-center gap-2">
-                <input type="radio" value={PT.RTW} {...form.register("type")} />
-                RTW
+            <section className="rounded-sm border border-sand bg-canvas p-6">
+              <h2 className="font-display text-lg text-gold">
+                Complete the Look
+                <Opt />
+              </h2>
+              <p className="mt-2 text-xs text-[#A8A8A4]">Link up to 4 published pieces shoppers may add alongside this product.</p>
+              <div className="relative mt-4">
+                <input
+                  value={bundleSearch}
+                  onChange={(e) => setBundleSearch(e.target.value)}
+                  disabled={bundleIds.length >= 4}
+                  placeholder={bundleIds.length >= 4 ? "Maximum 4 products" : "Search published products…"}
+                  className="w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-sm text-charcoal placeholder:text-[#A8A8A4] disabled:opacity-50"
+                />
+                {bundleSearch.trim().length >= 2 && bundleIds.length < 4 ? (
+                  <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-sm border border-[#E8E8E4] bg-[#FAFAFA] py-1 shadow-lg">
+                    {bundleSearching ? (
+                      <p className="px-3 py-2 text-xs text-[#A8A8A4]">Searching…</p>
+                    ) : bundleResults.length === 0 ? (
+                      <p className="px-3 py-2 text-xs text-[#A8A8A4]">No matches</p>
+                    ) : (
+                      bundleResults.map((p) => {
+                        const img = p.images.find((i) => i.isPrimary) ?? p.images[0];
+                        return (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => addBundle(p)}
+                            disabled={bundleIds.includes(p.id)}
+                            className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-canvas disabled:opacity-40"
+                          >
+                            <div className="relative h-12 w-9 shrink-0 overflow-hidden rounded-sm border border-sand bg-canvas">
+                              {img?.url ? <Image src={img.url} alt="" fill className="object-cover" sizes="36px" /> : null}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="truncate text-charcoal">{p.name}</div>
+                              <div className="text-[11px] text-gold/80">{p.category.replace(/_/g, " ")}</div>
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                ) : null}
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {bundleIds.map((bid) => {
+                  const meta = bundleMeta(bid);
+                  return (
+                    <span
+                      key={bid}
+                      className="inline-flex items-center gap-2 rounded-full border border-sand bg-canvas py-1 pl-1 pr-2 text-xs text-charcoal"
+                    >
+                      {meta.thumb ? (
+                        <span className="relative h-8 w-6 shrink-0 overflow-hidden rounded-sm">
+                          <Image src={meta.thumb} alt="" fill className="object-cover" sizes="24px" />
+                        </span>
+                      ) : null}
+                      <span className="max-w-[140px] truncate">{meta.name}</span>
+                      <button type="button" className="text-red-400 hover:underline" onClick={() => removeBundle(bid)} aria-label={`Remove ${meta.name}`}>
+                        ×
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            </section>
+
+            <details className="rounded-sm border border-sand bg-canvas p-6">
+              <summary className="cursor-pointer font-display text-lg text-gold">How this looks on Google</summary>
+              <p className="mt-2 text-xs text-[#A8A8A4]">Leave blank to use the product name and short description.</p>
+              <label className="mt-3 block text-xs uppercase text-[#A8A8A4]">
+                Title
+                <input {...form.register("metaTitle")} maxLength={60} className={fieldClass} />
               </label>
-              <label className="inline-flex items-center gap-2">
-                <input type="radio" value={PT.BESPOKE} {...form.register("type")} />
-                Bespoke
+              <label className="mt-3 block text-xs uppercase text-[#A8A8A4]">
+                Description
+                <textarea {...form.register("metaDescription")} maxLength={160} rows={3} className={fieldClass} />
               </label>
-            </fieldset>
-            <label className="mt-4 block text-xs uppercase text-[#A8A8A4]">
-              Tags (comma-separated)
-              <input
-                className="mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal"
-                defaultValue={defaults.tags.join(", ")}
-                onBlur={(e) =>
-                  form.setValue(
-                    "tags",
-                    e.target.value
-                      .split(",")
-                      .map((t) => t.trim())
-                      .filter(Boolean),
-                  )
-                }
-              />
-            </label>
-          </section>
+            </details>
+          </>
+        ) : null}
+
+        <div className="flex justify-between">
+          <button
+            type="button"
+            disabled={step === 0}
+            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            className="rounded-sm border border-sand px-4 py-2 text-sm text-gold disabled:opacity-30"
+          >
+            Back
+          </button>
+          {step < STEPS.length - 1 ? (
+            <button
+              type="button"
+              onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
+              className="rounded-sm bg-wine px-4 py-2 text-sm text-gold hover:bg-wine-hover"
+            >
+              Next
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void saveDraft()}
+              className="rounded-sm border border-sand px-4 py-2 text-sm text-gold hover:bg-gold/10"
+            >
+              Save draft
+            </button>
+          )}
         </div>
       </form>
     </div>

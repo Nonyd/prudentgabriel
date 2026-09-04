@@ -1,10 +1,19 @@
 "use client";
 
+import { useCallback } from "react";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { deleteCartLine, patchCartLine, postCartLine } from "@/lib/cart-client";
+import {
+  applyGuestSizeChange,
+  applyLiveStockToGuestLine,
+  capGuestQuantity,
+  type BagSizeOption,
+} from "@/lib/bag-size";
 import { stockGuardMessage } from "@/lib/quick-add";
+import { effectiveUnitNGN, variantAmountInCurrency } from "@/lib/pricing";
 import { useCartStore, type CartItem } from "@/store/cartStore";
+import { useCurrencyStore } from "@/store/currencyStore";
 
 export type AddToBagResult = { ok: true } | { ok: false; error: string };
 
@@ -18,8 +27,10 @@ export function useBagActions() {
   const addItem = useCartStore((s) => s.addItem);
   const removeItem = useCartStore((s) => s.removeItem);
   const updateQty = useCartStore((s) => s.updateQty);
+  const replaceItems = useCartStore((s) => s.replaceItems);
   const openCart = useCartStore((s) => s.openCart);
   const authenticated = status === "authenticated";
+  const rates = useCurrencyStore((s) => s.rates);
 
   const addToBag = async (
     item: Omit<CartItem, "id"> & { id?: string },
@@ -78,19 +89,79 @@ export function useBagActions() {
 
   const changeQty = async (id: string, qty: number) => {
     if (!authenticated) {
+      const line = useCartStore.getState().items.find((i) => i.id === id);
+      if (line && line.sizeMode !== "CUSTOM" && line.stock > 0 && qty > line.stock) {
+        updateQty(id, line.stock);
+        return true;
+      }
       updateQty(id, qty);
       return true;
     }
     if (qty < 1) {
       return removeFromBag(id);
     }
-    const result = await patchCartLine(id, qty);
+    const result = await patchCartLine(id, { quantity: qty });
     if (!result.ok) {
       toast.error(result.error ?? "Could not update quantity");
+    }
+    return result.ok;
+  };
+
+  const changeSize = async (id: string, option: BagSizeOption, isOnSale = false): Promise<boolean> => {
+    if (option.stock < 1) {
+      toast.error("That size just sold out.");
+      return false;
+    }
+    if (!authenticated) {
+      const items = useCartStore.getState().items;
+      const line = items.find((i) => i.id === id);
+      if (!line || line.sizeMode === "CUSTOM") return false;
+      const priced = applyGuestSizeChange(line, option);
+      const product = { isOnSale, priceUSD: option.priceUSD, priceGBP: option.priceGBP };
+      const withPrices: CartItem = {
+        ...priced,
+        priceNGN: effectiveUnitNGN(option, isOnSale),
+        priceUSD: variantAmountInCurrency(option, product, "USD", rates),
+        priceGBP: variantAmountInCurrency(option, product, "GBP", rates),
+      };
+      const rest = items.filter((i) => i.id !== id);
+      const clash = rest.find((i) => i.id === withPrices.id);
+      if (clash) {
+        const merged = capGuestQuantity(clash.quantity + withPrices.quantity, option.stock, line.sizeMode);
+        replaceItems(
+          rest
+            .filter((i) => i.id !== clash.id)
+            .concat({ ...clash, ...withPrices, quantity: merged, stock: option.stock }),
+        );
+      } else {
+        replaceItems(rest.concat(withPrices));
+      }
+      return true;
+    }
+    const result = await patchCartLine(id, { variantId: option.id });
+    if (!result.ok) {
+      toast.error(stockGuardMessage(result.error));
       return false;
     }
     return true;
   };
+
+  const refreshGuestStock = useCallback(async () => {
+    if (status !== "unauthenticated") return;
+    const items = useCartStore.getState().items;
+    const ids = Array.from(new Set(items.filter((i) => i.sizeMode !== "CUSTOM").map((i) => i.productId)));
+    if (!ids.length) return;
+    const res = await fetch(`/api/shop/sizes?productIds=${encodeURIComponent(ids.join(","))}`);
+    if (!res.ok) return;
+    const json = (await res.json()) as {
+      products?: Record<string, { variants: BagSizeOption[] }>;
+    };
+    const next = items.map((line) => {
+      const live = json.products?.[line.productId]?.variants ?? [];
+      return applyLiveStockToGuestLine(line, live);
+    });
+    replaceItems(next);
+  }, [status, replaceItems]);
 
   const removeFromBag = async (id: string) => {
     if (!authenticated) {
@@ -105,5 +176,5 @@ export function useBagActions() {
     return true;
   };
 
-  return { addToBag, changeQty, removeFromBag, authenticated };
+  return { addToBag, changeQty, changeSize, refreshGuestStock, removeFromBag, authenticated };
 }

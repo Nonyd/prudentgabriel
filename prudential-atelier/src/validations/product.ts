@@ -14,7 +14,8 @@ function optNonNegNumber() {
 const variantSchema = z.object({
   id: z.string().optional(),
   size: z.string().min(1),
-  sku: z.string().min(1),
+  sku: z.string().optional().default(""),
+  skuManual: z.boolean().optional().default(false),
   priceNGN: z.coerce.number().min(0),
   priceUSD: optNonNegNumber(),
   priceGBP: optNonNegNumber(),
@@ -96,6 +97,15 @@ export const productAdminSchema = z.object({
   colors: z.array(colorSchema).default([]),
   images: z.array(imageSchema).default([]),
   bundleProductIds: z.array(z.string()).max(4).default([]),
+  regenerateSkus: z.boolean().optional(),
+}).superRefine((data, ctx) => {
+  if (data.isPublished && data.images.length < 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["images"],
+      message: "Add at least one photo before publishing",
+    });
+  }
 });
 
 export const productToggleSchema = z.object({

@@ -103,6 +103,9 @@ export function reduceQuickAdd(state: QuickAddState, action: QuickAddAction): Qu
       if (state.phase !== "submitting") return state;
       return { ...state, phase: "done", error: null };
     case "fail":
+      if (state.phase === "sizes") {
+        return { ...state, error: action.message || "Please choose your size" };
+      }
       if (state.phase !== "submitting" && state.phase !== "selected") return state;
       return {
         ...state,

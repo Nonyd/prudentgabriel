@@ -19,7 +19,7 @@ export function QuickAddCta({
 }) {
   const busy = phase === "submitting";
   const done = phase === "done";
-  const locked = disabled || busy || done || phase === "sizes" || phase === "idle";
+  const locked = disabled || busy || done || phase === "idle";
 
   return (
     <button

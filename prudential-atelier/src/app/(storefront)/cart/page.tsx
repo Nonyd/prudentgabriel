@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useCartStore } from "@/store/cartStore";
 import { useBagActions } from "@/hooks/useBagActions";
+import { BagQtyButtons, BagSizeSelect, useBagProductSizes } from "@/components/cart/BagLineControls";
 import { formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import { cartLineAmountInCurrency } from "@/lib/pricing";
@@ -14,9 +16,14 @@ export default function CartPage() {
   const router = useRouter();
   const items = useCartStore((s) => s.items);
   const totalItems = useCartStore((s) => s.totalItems);
-  const { changeQty, removeFromBag } = useBagActions();
+  const { changeQty, removeFromBag, refreshGuestStock } = useBagActions();
   const currency = useCurrencyStore((s) => s.currency);
   const rates = useCurrencyStore((s) => s.rates);
+  const sizeMap = useBagProductSizes(items.map((i) => i.productId));
+
+  useEffect(() => {
+    void refreshGuestStock();
+  }, [refreshGuestStock]);
 
   const fmtLine = (item: (typeof items)[number]) =>
     formatPrice(cartLineAmountInCurrency(item, currency, rates), currency);
@@ -45,29 +52,16 @@ export default function CartPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-display text-base text-charcoal">{item.productName}</p>
-                  <p className="mt-1 font-body text-[11px] uppercase tracking-wider text-dark-grey">
-                    {item.sizeMode === "CUSTOM" ? "Made to measure" : item.size}
-                    {item.color ? ` · ${item.color}` : ""}
-                  </p>
+                  <BagSizeSelect item={item} product={sizeMap[item.productId]} />
+                  {item.color ? (
+                    <p className="mt-0.5 text-xs text-charcoal-light">{item.color}</p>
+                  ) : null}
                   <div className="mt-3 flex items-center gap-2">
-                    <button
-                      type="button"
-                      disabled={item.quantity <= 1}
-                      className="flex h-8 w-8 items-center justify-center border border-border text-sm disabled:opacity-40"
-                      aria-label={`Decrease quantity of ${item.productName}`}
-                      onClick={() => void changeQty(item.id, item.quantity - 1)}
-                    >
-                      −
-                    </button>
-                    <span className="w-8 text-center text-sm">{item.quantity}</span>
-                    <button
-                      type="button"
-                      className="flex h-8 w-8 items-center justify-center border border-border text-sm"
-                      aria-label={`Increase quantity of ${item.productName}`}
-                      onClick={() => void changeQty(item.id, item.quantity + 1)}
-                    >
-                      +
-                    </button>
+                    <BagQtyButtons
+                      item={item}
+                      onDecrease={() => void changeQty(item.id, item.quantity - 1)}
+                      onIncrease={() => void changeQty(item.id, item.quantity + 1)}
+                    />
                     <button
                       type="button"
                       className="ml-4 font-body text-[11px] uppercase text-dark-grey underline"

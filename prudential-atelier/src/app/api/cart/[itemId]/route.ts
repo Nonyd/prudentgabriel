@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
-import { removeCartLine, updateCartLineQty } from "@/lib/cart-service";
+import { removeCartLine, updateCartLineQty, changeCartLineSize } from "@/lib/cart-service";
 
 const patchSchema = z.object({
-  quantity: z.number().int().min(1),
+  quantity: z.number().int().min(1).optional(),
+  variantId: z.string().min(1).optional(),
 });
 
 export async function PATCH(
@@ -18,11 +19,26 @@ export async function PATCH(
 
   const json = await req.json().catch(() => null);
   const parsed = patchSchema.safeParse(json);
-  if (!parsed.success) {
+  if (!parsed.success || (!parsed.data.quantity && !parsed.data.variantId)) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  const result = await updateCartLineQty(session.user.id, params.itemId, parsed.data.quantity);
+  if (parsed.data.variantId) {
+    const sized = await changeCartLineSize(session.user.id, params.itemId, parsed.data.variantId);
+    if (!sized.ok) {
+      return NextResponse.json({ error: sized.error }, { status: sized.status });
+    }
+    if (parsed.data.quantity && parsed.data.quantity !== sized.cartItem.quantity) {
+      const qty = await updateCartLineQty(session.user.id, sized.cartItem.id, parsed.data.quantity);
+      if (!qty.ok) {
+        return NextResponse.json({ error: qty.error }, { status: qty.status });
+      }
+      return NextResponse.json(qty.cartItem);
+    }
+    return NextResponse.json(sized.cartItem);
+  }
+
+  const result = await updateCartLineQty(session.user.id, params.itemId, parsed.data.quantity!);
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }

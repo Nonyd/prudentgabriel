@@ -46,8 +46,8 @@ export const CUSTOM_MEASUREMENT_FIELDS: CustomMeasurementDef[] = [
   },
   {
     key: "shoulder_to_waist",
-    label: "Shoulder to waist",
-    helpText: "From the shoulder seam, straight down to the natural waist.",
+    label: "Back neck to waist",
+    helpText: "From the bone at the base of the neck down to the natural waist.",
     minCm: 30,
     maxCm: 60,
     aliases: ["nape_to_waist", "neck_to_waist"],

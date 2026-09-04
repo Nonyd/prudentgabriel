@@ -132,14 +132,17 @@ export async function postCartLine(line: {
   return replaced ? { ok: true } : { ok: false, error: "Could not refresh bag" };
 }
 
-export async function patchCartLine(itemId: string, quantity: number): Promise<{ ok: boolean; error?: string }> {
+export async function patchCartLine(
+  itemId: string,
+  body: { quantity?: number; variantId?: string },
+): Promise<{ ok: boolean; error?: string }> {
   const res = await fetch(`/api/cart/${encodeURIComponent(itemId)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ quantity }),
+    body: JSON.stringify(body),
   });
   const data = (await res.json().catch(() => ({}))) as { error?: string };
-  if (!res.ok) return { ok: false, error: data.error ?? "Could not update quantity" };
+  if (!res.ok) return { ok: false, error: data.error ?? "Could not update bag" };
   const replaced = await replaceCartFromServer();
   return replaced ? { ok: true } : { ok: false, error: "Could not refresh bag" };
 }
@@ -174,7 +177,7 @@ export async function mergeGuestLinesIntoServer(local: CartItem[]): Promise<bool
     if (!result.ok) return false;
   }
   for (const row of plan.setQty) {
-    const result = await patchCartLine(row.id, row.quantity);
+    const result = await patchCartLine(row.id, { quantity: row.quantity });
     if (!result.ok) return false;
   }
   if (plan.create.length || plan.setQty.length) {

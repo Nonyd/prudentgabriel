@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import { CHOOSE_SIZE_MESSAGE } from "@/lib/bag-size";
 import { formatPrice } from "@/lib/currency";
 import {
   hasPurchasableSize,
@@ -93,7 +94,10 @@ export function useProductQuickAdd(
   const add = useCallback(async () => {
     if (soldOut || inFlight.current) return;
     const variant = pickVariantForAdd(product.variants, activeVariantId);
-    if (!variant) return;
+    if (!variant) {
+      markFail(CHOOSE_SIZE_MESSAGE);
+      return;
+    }
     if (variant.stock < 1) {
       markFail("That size just sold out.");
       return;

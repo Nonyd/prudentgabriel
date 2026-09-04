@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { productAdminSchema, productToggleSchema } from "@/validations/product";
-import { buildDefaultProductSku } from "@/lib/product-sku";
+import { loadTakenSkus, resolvePreferredSku, uniqueSkuFromTaken } from "@/lib/product-sku";
 import { revalidateProduct } from "@/lib/revalidate";
 import { canInlineEditPrice, derivedCatalogMinNGN } from "@/lib/pricing";
 import { processRestockAlerts } from "@/lib/stock-alerts";
@@ -134,9 +134,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const oldVariants = await prisma.productVariant.findMany({
     where: { productId: id },
-    select: { id: true, stock: true },
+    select: { id: true, stock: true, sku: true, skuManual: true, size: true },
   });
   const oldStockMap = new Map(oldVariants.map((v) => [v.id, v.stock]));
+  const oldVariantMap = new Map(oldVariants.map((v) => [v.id, v]));
+  const oldName = (await prisma.product.findUnique({ where: { id }, select: { name: true } }))?.name ?? data.name;
 
   const actorId = gate.session.user.id!;
   const stockWrites: StockWriteResult[] = [];
@@ -194,14 +196,29 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         await tx.productVariant.delete({ where: { id: o.id } });
       }
 
+      const taken = await loadTakenSkus(tx, keepVariantIds);
       for (let i = 0; i < data.variants.length; i++) {
         const v = data.variants[i];
-        const sku = v.sku.trim() || buildDefaultProductSku(data.slug, v.size);
+        const existing = v.id ? oldVariantMap.get(v.id) : undefined;
+        const preferred = resolvePreferredSku({
+          name: data.name,
+          size: v.size,
+          submittedSku: v.sku,
+          skuManual: v.skuManual,
+          existing: existing
+            ? { sku: existing.sku, skuManual: existing.skuManual, size: existing.size }
+            : null,
+          oldName,
+          nameChanged: oldName !== data.name,
+          regenerate: Boolean(data.regenerateSkus) && !v.skuManual && !existing?.skuManual,
+        });
+        const sku = uniqueSkuFromTaken(preferred.sku, taken);
         if (v.id) {
           await tx.productVariant.update({
             where: { id: v.id },
             data: {
               sku,
+              skuManual: preferred.skuManual,
               size: v.size,
               priceNGN: v.priceNGN,
               priceUSD: v.priceUSD ?? null,
@@ -226,6 +243,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
             data: {
               productId: id,
               sku,
+              skuManual: preferred.skuManual,
               size: v.size,
               priceNGN: v.priceNGN,
               priceUSD: v.priceUSD ?? null,
@@ -315,6 +333,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         { error: "Cannot remove a variant that appears on past orders" },
         { status: 409 },
       );
+    }
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      return NextResponse.json({ error: "That stock code is already in use" }, { status: 409 });
     }
     console.error("[admin/products PATCH]", e);
     return NextResponse.json({ error: "Could not update product" }, { status: 500 });

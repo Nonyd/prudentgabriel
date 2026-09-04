@@ -25,6 +25,7 @@ import {
 import { CUSTOM_LEAD_COPY, CUSTOM_RETURNS_COPY, customSurchargeNGN, standardVariants, validateCustomMeasurements } from "@/lib/custom-size";
 import { isCustomOfferedNow, PDP_INITIAL_FIT_MODE } from "@/lib/custom-availability";
 import { productAisle } from "@/lib/rtw-aisle";
+import { CHOOSE_SIZE_MESSAGE } from "@/lib/bag-size";
 import type { MeasurementFieldDef } from "@/lib/custom-size";
 import { displayAmountInCurrency, effectiveUnitNGN, variantAmountInCurrency } from "@/lib/pricing";
 import { useCurrencyStore } from "@/store/currencyStore";
@@ -211,7 +212,8 @@ export function ProductDetailClient({
       return;
     }
     if (!variant) {
-      setBagError("Select a size.");
+      setBagError(CHOOSE_SIZE_MESSAGE);
+      document.getElementById("product-sizes")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     if (variant.stock < 1) {
@@ -315,13 +317,17 @@ export function ProductDetailClient({
                     onClick={() => setColorId(c.id)}
                     aria-label={c.name}
                     aria-pressed={colorId === c.id}
-                    className="h-5 w-5 rounded-full ring-1 ring-offset-2 ring-offset-white transition-shadow"
-                    style={{
-                      backgroundColor: c.hex,
-                      boxShadow: colorId === c.id ? "0 0 0 1px var(--charcoal)" : undefined,
-                    }}
+                    className="flex h-11 w-11 items-center justify-center rounded-full"
                     title={c.name}
-                  />
+                  >
+                    <span
+                      className="h-5 w-5 rounded-full ring-1 ring-offset-2 ring-offset-white"
+                      style={{
+                        backgroundColor: c.hex,
+                        boxShadow: colorId === c.id ? "0 0 0 1px var(--charcoal)" : undefined,
+                      }}
+                    />
+                  </button>
                 ))}
               </div>
             </div>
@@ -372,7 +378,7 @@ export function ProductDetailClient({
           ) : null}
 
           {fitMode === "standard" && standardSizes.length > 0 ? (
-            <>
+            <div id="product-sizes">
               <div className="mb-3 mt-1 flex min-w-0 items-baseline justify-between gap-3">
                 <p className="shrink-0 font-body text-sm font-medium uppercase tracking-[0.08em] text-charcoal">Size</p>
                 <SizeGuideModal>
@@ -394,7 +400,7 @@ export function ProductDetailClient({
                 }}
                 compact
               />
-            </>
+            </div>
           ) : null}
           {fitMode === "custom" && customAvailable ? (
             <CustomMeasurementsForm
@@ -452,7 +458,7 @@ export function ProductDetailClient({
               <button
                 type="button"
                 aria-label="Decrease quantity"
-                className="flex h-9 w-9 items-center justify-center rounded-sm border border-border hover:border-choc"
+                className="flex h-11 w-11 items-center justify-center rounded-sm border border-border hover:border-choc"
                 disabled={qty <= 1}
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
               >
@@ -462,7 +468,7 @@ export function ProductDetailClient({
               <button
                 type="button"
                 aria-label="Increase quantity"
-                className="flex h-9 w-9 items-center justify-center rounded-sm border border-border hover:border-choc"
+                className="flex h-11 w-11 items-center justify-center rounded-sm border border-border hover:border-choc"
                 disabled={!variant || qty >= variant.stock}
                 onClick={() => setQty((q) => (variant ? Math.min(variant.stock, q + 1) : q))}
               >
@@ -476,12 +482,7 @@ export function ProductDetailClient({
             type="button"
             className="mt-8 h-[52px] w-full bg-choc font-body text-[11px] font-semibold uppercase tracking-[0.18em] text-cream hover:bg-nut disabled:opacity-40"
             size="lg"
-            disabled={
-              soldOut ||
-              submitting ||
-              (fitMode === "standard" && !variant) ||
-              (fitMode === "custom" && (!customAvailable || !customFields.length))
-            }
+            disabled={soldOut || submitting}
             aria-busy={submitting}
             onClick={() => void addToBagClick()}
           >

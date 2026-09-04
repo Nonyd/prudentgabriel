@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import type { ProductListVariant } from "@/types/product";
+import { SOLD_OUT_WORD, soldOutSizeAriaLabel } from "@/lib/bag-size";
 
 export function QuickAddSizeRow({
   variants,
@@ -48,9 +49,8 @@ export function QuickAddSizeRow({
             role="radio"
             aria-checked={selected}
             aria-disabled={oos}
-            aria-label={oos ? `${v.size}, unavailable` : v.size}
+            aria-label={oos ? soldOutSizeAriaLabel(v.size) : v.size}
             tabIndex={oos ? -1 : selected || (!selectedId && isFirstEnabled) ? 0 : -1}
-            disabled={oos}
             onClick={() => {
               if (!oos) onSelect(v.id);
             }}
@@ -82,18 +82,17 @@ export function QuickAddSizeRow({
             }}
             data-size-id={v.id}
             className={cn(
-              "quick-add-motion border font-sans uppercase tracking-[0.08em] transition-colors duration-200",
-              compact
-                ? "box-border h-11 w-11 shrink-0 scroll-mb-28 p-0 text-[11px]"
-                : "min-h-8 min-w-8 shrink-0 px-2.5 py-1 text-[10px]",
+              "quick-add-motion inline-flex min-h-[44px] min-w-[44px] flex-col items-center justify-center border px-2 font-sans uppercase tracking-[0.08em] transition-colors duration-200",
+              compact ? "shrink-0 scroll-mb-28 text-[11px]" : "shrink-0 text-[10px]",
               selected
                 ? "border-choc bg-choc text-cream"
                 : "border-sand bg-bg-card text-choc",
-              oos && "cursor-not-allowed border-sand/70 bg-transparent text-text-light line-through",
+              oos && "cursor-not-allowed border-sand bg-transparent text-text-mid",
               !oos && !selected && "hover:border-choc",
             )}
           >
-            {v.size}
+            <span className={cn(oos && "line-through")}>{v.size}</span>
+            {oos ? <span className="mt-0.5 text-[9px] font-semibold normal-case tracking-normal">{SOLD_OUT_WORD}</span> : null}
           </button>
         );
       })}

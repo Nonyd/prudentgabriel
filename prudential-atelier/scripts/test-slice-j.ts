@@ -84,6 +84,10 @@ function run() {
   assert(state.phase === "sizes", "submit in sizes without a pick is a no-op");
   assert(state.variantId === null, "still no silent default on submit");
 
+  state = reduceQuickAdd(state, { type: "fail", message: "Please choose your size" });
+  assert(state.phase === "sizes", "add without a size still shows the chips");
+  assert(state.error === "Please choose your size", "the tap teaches her to choose");
+
   state = reduceQuickAdd(state, { type: "select", variantId: "s" });
   assert(state.variantId === null, "sold-out size is not selectable");
   assert(state.phase === "sizes", "still sizes after refused sold-out pick");

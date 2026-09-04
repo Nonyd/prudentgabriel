@@ -1,38 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import type { ProductAdminInput } from "@/validations/product";
-import { buildDefaultProductSku } from "@/lib/product-sku";
+import { AlertDialog } from "@/components/ui/AlertDialog";
+import { buildDefaultProductSku, variantTableColumns } from "@/lib/product-sku";
 
 type VariantRow = ProductAdminInput["variants"][number];
 
 type VariantManagerProps = {
-  slug: string;
+  productName: string;
   variants: VariantRow[];
   onChange: (next: VariantRow[]) => void;
   basePriceNGN: number;
+  isOnSale: boolean;
+  onRegenerate?: () => void;
 };
 
-export const STANDARD_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
+/** UK numeric sizes this house actually stocks. */
+export const STANDARD_SIZES = ["6", "8", "10", "12", "14", "16", "18", "20", "22"] as const;
 
-export function VariantManager({ slug, variants, onChange, basePriceNGN }: VariantManagerProps) {
+function emptyRow(productName: string, size: string, priceNGN: number, sortOrder: number): VariantRow {
+  return {
+    size,
+    sku: productName ? buildDefaultProductSku(productName, size || "SIZE") : "",
+    skuManual: false,
+    priceNGN,
+    stock: 0,
+    lowStockAt: 3,
+    sortOrder,
+  };
+}
+
+export function VariantManager({
+  productName,
+  variants,
+  onChange,
+  basePriceNGN,
+  isOnSale,
+  onRegenerate,
+}: VariantManagerProps) {
+  const [advanced, setAdvanced] = useState(false);
+  const [copyOpen, setCopyOpen] = useState(false);
+  const cols = variantTableColumns({ onSale: isOnSale, advanced });
+
   const update = (index: number, patch: Partial<VariantRow>) => {
     const next = variants.map((v, i) => (i === index ? { ...v, ...patch } : v));
     onChange(next);
   };
 
   const addRow = () => {
-    onChange([
-      ...variants,
-      {
-        size: "",
-        sku: slug ? buildDefaultProductSku(slug, "NEW") : "PA-ITEM-NEW",
-        priceNGN: basePriceNGN || 0,
-        stock: 0,
-        lowStockAt: 3,
-        sortOrder: variants.length,
-      },
-    ]);
+    onChange([...variants, emptyRow(productName, "", basePriceNGN || 0, variants.length)]);
   };
 
   const removeRow = (index: number) => {
@@ -42,25 +59,19 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
 
   const applyBaseToAll = () => {
     onChange(variants.map((v) => ({ ...v, priceNGN: basePriceNGN })));
+    setCopyOpen(false);
   };
 
   const [sizePick, setSizePick] = useState<Set<string>>(() => new Set(STANDARD_SIZES));
 
   const generateSizes = () => {
-    const have = new Set(variants.map((v) => v.size.trim().toUpperCase()).filter(Boolean));
+    const have = new Set(variants.map((v) => v.size.trim()).filter(Boolean));
     const extra: VariantRow[] = [];
     let order = variants.length;
     for (const size of STANDARD_SIZES) {
       if (!sizePick.has(size)) continue;
       if (have.has(size)) continue;
-      extra.push({
-        size,
-        sku: slug ? buildDefaultProductSku(slug, size) : `PA-ITEM-${size}`,
-        priceNGN: basePriceNGN || 0,
-        stock: 0,
-        lowStockAt: 3,
-        sortOrder: order,
-      });
+      extra.push(emptyRow(productName, size, basePriceNGN || 0, order));
       order += 1;
     }
     if (extra.length === 0) return;
@@ -69,19 +80,11 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
     onChange([...(dropPlaceholder ? [] : variants), ...extra]);
   };
 
+  const cell = "w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal";
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={applyBaseToAll}
-          className="rounded-sm border border-sand px-3 py-1.5 text-xs text-gold hover:bg-gold/10"
-        >
-          Copy ₦{Math.round(basePriceNGN).toLocaleString()} onto every size
-        </button>
-        <p className="w-full text-[11px] text-[#A8A8A4]">
-          This replaces per-size ₦ prices. Use it to start from one figure, then change individual sizes.
-        </p>
         <button
           type="button"
           onClick={addRow}
@@ -89,7 +92,36 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
         >
           + Add size
         </button>
+        <button
+          type="button"
+          onClick={() => setAdvanced((v) => !v)}
+          className="rounded-sm border border-sand px-3 py-1.5 text-xs text-gold hover:bg-gold/10"
+        >
+          {advanced ? "Hide advanced" : "Advanced"}
+        </button>
+        {onRegenerate ? (
+          <button
+            type="button"
+            onClick={onRegenerate}
+            className="rounded-sm border border-sand px-3 py-1.5 text-xs text-gold hover:bg-gold/10"
+          >
+            Regenerate stock codes
+          </button>
+        ) : null}
       </div>
+
+      <div className="rounded-sm border border-sand bg-[#FAFAFA] p-3">
+        <p className="text-xs uppercase tracking-wide text-[#A8A8A4]">Copy this price onto every size</p>
+        <p className="mt-1 text-[11px] text-[#6B6B68]">Replaces each size’s naira price. There is no undo.</p>
+        <button
+          type="button"
+          onClick={() => setCopyOpen(true)}
+          className="mt-2 rounded-sm border border-sand bg-canvas px-3 py-1.5 text-xs text-gold hover:bg-gold/10"
+        >
+          Copy ₦{Number.isFinite(basePriceNGN) ? Math.round(basePriceNGN).toLocaleString() : "0"} onto every size
+        </button>
+      </div>
+
       <div className="flex flex-wrap items-center gap-3">
         {STANDARD_SIZES.map((sz) => (
           <label key={sz} className="flex items-center gap-1 text-xs text-charcoal">
@@ -113,166 +145,216 @@ export function VariantManager({ slug, variants, onChange, basePriceNGN }: Varia
           onClick={generateSizes}
           className="rounded-sm border border-sand px-3 py-1.5 text-xs text-gold hover:bg-gold/10"
         >
-          Generate size rows
+          Add these sizes
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-sand">
-        <table className="w-full min-w-[980px] text-left text-xs text-charcoal">
+      <div className="rounded-sm border border-sand">
+        <table className="w-full text-left text-xs text-charcoal">
           <thead className="border-b border-sand bg-[#FAFAFA] font-label uppercase tracking-wide text-[#A8A8A4]">
             <tr>
               <th className="p-2">Size</th>
-              <th className="p-2">SKU</th>
-              <th className="p-2">₦ Price</th>
-              <th className="p-2">$</th>
-              <th className="p-2">£</th>
-              <th className="p-2">Sale ₦</th>
+              <th className="p-2">Price in naira</th>
+              {cols.sale ? <th className="p-2">Sale price</th> : null}
               <th className="p-2">Stock</th>
-              <th className="p-2">Low at</th>
-              <th className="p-2">kg</th>
-              <th className="p-2">L</th>
-              <th className="p-2">W</th>
-              <th className="p-2">H</th>
-              <th className="p-2" />
+              <th className="w-8 p-2" />
             </tr>
           </thead>
           <tbody>
-            {variants.map((v, i) => (
-              <tr key={i} className="border-b border-[#F5F5F3]">
-                <td className="p-1">
-                  <input
-                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
-                    value={v.size}
-                    onChange={(e) => update(i, { size: e.target.value })}
-                  />
-                </td>
-                <td className="p-1">
-                  <input
-                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 font-mono text-[11px] text-charcoal"
-                    value={v.sku}
-                    onChange={(e) => update(i, { sku: e.target.value })}
-                    placeholder={slug ? buildDefaultProductSku(slug, v.size || "SIZE") : ""}
-                  />
-                </td>
-                <td className="p-1">
-                  <input
-                    type="number"
-                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
-                    value={v.priceNGN}
-                    onChange={(e) => update(i, { priceNGN: Number(e.target.value) || 0 })}
-                  />
-                </td>
-                <td className="p-1">
-                  <input
-                    type="number"
-                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
-                    value={v.priceUSD ?? ""}
-                    onChange={(e) =>
-                      update(i, {
-                        priceUSD: e.target.value === "" ? undefined : Number(e.target.value),
-                      })
-                    }
-                  />
-                </td>
-                <td className="p-1">
-                  <input
-                    type="number"
-                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
-                    value={v.priceGBP ?? ""}
-                    onChange={(e) =>
-                      update(i, {
-                        priceGBP: e.target.value === "" ? undefined : Number(e.target.value),
-                      })
-                    }
-                  />
-                </td>
-                <td className="p-1">
-                  <input
-                    type="number"
-                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
-                    value={v.salePriceNGN ?? ""}
-                    onChange={(e) =>
-                      update(i, {
-                        salePriceNGN: e.target.value === "" ? null : Number(e.target.value),
-                      })
-                    }
-                  />
-                </td>
-                <td className="p-1">
-                  <input
-                    type="number"
-                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
-                    value={v.stock}
-                    onChange={(e) => update(i, { stock: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
-                  />
-                </td>
-                <td className="p-1">
-                  <input
-                    type="number"
-                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
-                    value={v.lowStockAt}
-                    onChange={(e) => update(i, { lowStockAt: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
-                  />
-                </td>
-                <td className="p-1">
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
-                    value={v.weightKg ?? ""}
-                    onChange={(e) =>
-                      update(i, { weightKg: e.target.value === "" ? undefined : Number(e.target.value) })
-                    }
-                  />
-                </td>
-                <td className="p-1">
-                  <input
-                    type="number"
-                    step="0.1"
-                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
-                    value={v.lengthCm ?? ""}
-                    onChange={(e) =>
-                      update(i, { lengthCm: e.target.value === "" ? undefined : Number(e.target.value) })
-                    }
-                  />
-                </td>
-                <td className="p-1">
-                  <input
-                    type="number"
-                    step="0.1"
-                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
-                    value={v.widthCm ?? ""}
-                    onChange={(e) =>
-                      update(i, { widthCm: e.target.value === "" ? undefined : Number(e.target.value) })
-                    }
-                  />
-                </td>
-                <td className="p-1">
-                  <input
-                    type="number"
-                    step="0.1"
-                    className="w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal"
-                    value={v.heightCm ?? ""}
-                    onChange={(e) =>
-                      update(i, { heightCm: e.target.value === "" ? undefined : Number(e.target.value) })
-                    }
-                  />
-                </td>
-                <td className="p-1 text-center">
-                  <button
-                    type="button"
-                    disabled={variants.length <= 1}
-                    onClick={() => removeRow(i)}
-                    className="text-red-400 disabled:opacity-30"
-                  >
-                    ×
-                  </button>
+            {variants.length === 0 ? (
+              <tr>
+                <td colSpan={cols.sale ? 5 : 4} className="p-3 text-[#A8A8A4]">
+                  Add at least one size. Tick 6–22 and click “Add these sizes”.
                 </td>
               </tr>
-            ))}
+            ) : (
+              variants.map((v, i) => (
+                <Fragment key={v.id ?? `new-${i}`}>
+                  <tr className="border-b border-[#F5F5F3]">
+                    <td className="p-1">
+                      <input
+                        className={cell}
+                        value={v.size}
+                        onChange={(e) => {
+                          const size = e.target.value;
+                          const patch: Partial<VariantRow> = { size };
+                          if (!v.skuManual) patch.sku = buildDefaultProductSku(productName, size || "SIZE");
+                          update(i, patch);
+                        }}
+                      />
+                    </td>
+                    <td className="p-1">
+                      <input
+                        type="number"
+                        className={cell}
+                        value={v.priceNGN || ""}
+                        onChange={(e) => update(i, { priceNGN: Number(e.target.value) || 0 })}
+                      />
+                    </td>
+                    {cols.sale ? (
+                      <td className="p-1">
+                        <input
+                          type="number"
+                          className={cell}
+                          value={v.salePriceNGN ?? ""}
+                          onChange={(e) =>
+                            update(i, {
+                              salePriceNGN: e.target.value === "" ? null : Number(e.target.value),
+                            })
+                          }
+                        />
+                      </td>
+                    ) : null}
+                    <td className="p-1">
+                      <input
+                        type="number"
+                        className={cell}
+                        value={v.stock}
+                        onChange={(e) =>
+                          update(i, { stock: Math.max(0, Math.floor(Number(e.target.value) || 0)) })
+                        }
+                      />
+                    </td>
+                    <td className="p-1 text-center">
+                      <button
+                        type="button"
+                        disabled={variants.length <= 1}
+                        onClick={() => removeRow(i)}
+                        className="text-red-400 disabled:opacity-30"
+                        aria-label="Remove size"
+                      >
+                        ×
+                      </button>
+                    </td>
+                  </tr>
+                  {advanced ? (
+                    <tr className="border-b border-[#F5F5F3] bg-[#FAFAFA]">
+                      <td colSpan={cols.sale ? 5 : 4} className="p-2">
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <label className="text-[11px] uppercase text-[#A8A8A4]">
+                            Stock code
+                            <input
+                              className={`${cell} mt-0.5 font-mono text-[11px]`}
+                              value={v.sku}
+                              onChange={(e) => update(i, { sku: e.target.value, skuManual: true })}
+                              placeholder={
+                                productName ? buildDefaultProductSku(productName, v.size || "SIZE") : ""
+                              }
+                            />
+                          </label>
+                          <label className="text-[11px] uppercase text-[#A8A8A4]">
+                            Price in dollars
+                            <input
+                              type="number"
+                              className={`${cell} mt-0.5`}
+                              value={v.priceUSD ?? ""}
+                              onChange={(e) =>
+                                update(i, {
+                                  priceUSD: e.target.value === "" ? undefined : Number(e.target.value),
+                                })
+                              }
+                            />
+                          </label>
+                          <label className="text-[11px] uppercase text-[#A8A8A4]">
+                            Price in pounds
+                            <input
+                              type="number"
+                              className={`${cell} mt-0.5`}
+                              value={v.priceGBP ?? ""}
+                              onChange={(e) =>
+                                update(i, {
+                                  priceGBP: e.target.value === "" ? undefined : Number(e.target.value),
+                                })
+                              }
+                            />
+                          </label>
+                          <label className="text-[11px] uppercase text-[#A8A8A4]">
+                            Low stock at
+                            <input
+                              type="number"
+                              className={`${cell} mt-0.5`}
+                              value={v.lowStockAt}
+                              onChange={(e) =>
+                                update(i, { lowStockAt: Math.max(0, Math.floor(Number(e.target.value) || 0)) })
+                              }
+                            />
+                          </label>
+                          <label className="text-[11px] uppercase text-[#A8A8A4]">
+                            Packed weight kg
+                            <input
+                              type="number"
+                              step="0.01"
+                              className={`${cell} mt-0.5`}
+                              value={v.weightKg ?? ""}
+                              onChange={(e) =>
+                                update(i, { weightKg: e.target.value === "" ? undefined : Number(e.target.value) })
+                              }
+                            />
+                          </label>
+                          <div className="grid grid-cols-3 gap-1">
+                            <label className="text-[11px] uppercase text-[#A8A8A4]">
+                              Box L
+                              <input
+                                type="number"
+                                step="0.1"
+                                className={`${cell} mt-0.5`}
+                                value={v.lengthCm ?? ""}
+                                onChange={(e) =>
+                                  update(i, {
+                                    lengthCm: e.target.value === "" ? undefined : Number(e.target.value),
+                                  })
+                                }
+                              />
+                            </label>
+                            <label className="text-[11px] uppercase text-[#A8A8A4]">
+                              Box W
+                              <input
+                                type="number"
+                                step="0.1"
+                                className={`${cell} mt-0.5`}
+                                value={v.widthCm ?? ""}
+                                onChange={(e) =>
+                                  update(i, {
+                                    widthCm: e.target.value === "" ? undefined : Number(e.target.value),
+                                  })
+                                }
+                              />
+                            </label>
+                            <label className="text-[11px] uppercase text-[#A8A8A4]">
+                              Box H
+                              <input
+                                type="number"
+                                step="0.1"
+                                className={`${cell} mt-0.5`}
+                                value={v.heightCm ?? ""}
+                                onChange={(e) =>
+                                  update(i, {
+                                    heightCm: e.target.value === "" ? undefined : Number(e.target.value),
+                                  })
+                                }
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : null}
+                </Fragment>
+              ))
+            )}
           </tbody>
         </table>
       </div>
+
+      <AlertDialog
+        open={copyOpen}
+        onOpenChange={setCopyOpen}
+        variant="warning"
+        title="Replace every size’s price?"
+        description={`This sets every size to ₦${Number.isFinite(basePriceNGN) ? Math.round(basePriceNGN).toLocaleString() : "0"}. Per-size prices you already typed will be lost.`}
+        confirmLabel="Copy onto every size"
+        onConfirm={applyBaseToAll}
+      />
     </div>
   );
 }

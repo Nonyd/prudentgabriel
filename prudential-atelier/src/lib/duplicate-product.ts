@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { buildDefaultProductSku } from "@/lib/product-sku";
+import { buildDefaultProductSku, loadTakenSkus, uniqueSkuFromTaken } from "@/lib/product-sku";
 import { revalidateProduct } from "@/lib/revalidate";
 
 async function uniqueCopySlug(base: string): Promise<string> {
@@ -62,12 +62,15 @@ export async function duplicateProduct(sourceId: string): Promise<{ id: string; 
       },
     });
 
+    const taken = await loadTakenSkus(tx);
     for (const v of source.variants) {
+      const sku = uniqueSkuFromTaken(buildDefaultProductSku(name, v.size), taken);
       await tx.productVariant.create({
         data: {
           productId: product.id,
           size: v.size,
-          sku: buildDefaultProductSku(slug, v.size),
+          sku,
+          skuManual: false,
           priceNGN: v.priceNGN,
           priceUSD: v.priceUSD,
           priceGBP: v.priceGBP,
