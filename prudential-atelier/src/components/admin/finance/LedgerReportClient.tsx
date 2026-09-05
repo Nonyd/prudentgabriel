@@ -146,7 +146,7 @@ export function LedgerReportClient() {
               {data.deletions!.paymentCount} {data.deletions!.paymentCount === 1 ? "record was" : "records were"} deleted from this
               period.{" "}
               <Link
-                href={`/admin/logs/activity?module=shop.products&action=DELETE&recordType=product-cascade-delete`}
+                href="/admin/logs/activity?action=DELETE&recordType=cascade"
                 className="underline"
               >
                 Open the log entries

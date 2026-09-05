@@ -33,6 +33,7 @@
 
 import { ActivityAction, PaymentMethod, PaymentStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { CONSULTATION_CASCADE_RECORD_TYPE } from "@/lib/consultation-cascade-copy";
 import {
   cascadeDialogCopy,
   formatReceivedNGN,
@@ -43,6 +44,7 @@ import {
   type CascadeOrderSnap,
   type CascadePaymentSnap,
   type CascadeProductSnap,
+  type CascadeSiblingPiece,
   type ProductCascadePreview,
   type ProductCascadeSnapshot,
 } from "@/lib/product-cascade-copy";
@@ -82,7 +84,7 @@ export const PRODUCT_CASCADE_DEPENDENCIES = [
   "Product",
 ] as const;
 
-export type ProductCascadeErrorCode = "FORBIDDEN" | "CONFIRM" | "NOT_FOUND" | "EMPTY" | "TOO_MANY" | "FAILED";
+export type ProductCascadeErrorCode = "FORBIDDEN" | "CONFIRM" | "NOT_FOUND" | "EMPTY" | "TOO_MANY" | "FAILED" | "BLOCKED";
 
 export class ProductCascadeError extends Error {
   constructor(
@@ -130,6 +132,19 @@ function cashReceived(payments: { amount: Prisma.Decimal | number; status: Payme
       .filter((p) => isConfirmedMoney(p.status) && p.method !== PaymentMethod.POINTS)
       .reduce((s, p) => s + Number(p.amount), 0),
   );
+}
+
+async function loadSiblingPieces(orderIds: string[], deletingIds: string[]): Promise<CascadeSiblingPiece[]> {
+  if (orderIds.length === 0) return [];
+  const items = await prisma.orderItem.findMany({
+    where: { orderId: { in: orderIds }, productId: { notIn: deletingIds } },
+    select: { productId: true, product: { select: { name: true } } },
+  });
+  const map = new Map<string, string>();
+  for (const it of items) {
+    if (!map.has(it.productId)) map.set(it.productId, it.product.name);
+  }
+  return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
 }
 
 export async function previewProductCascade(productIds: string[]): Promise<ProductCascadePreview> {
@@ -213,6 +228,7 @@ export async function loadPlan(productIds: string[]): Promise<ProductCascadePlan
   const customerEmails = Array.from(
     new Set(orderSnaps.map((o) => o.customerEmail).filter((e): e is string => Boolean(e))),
   );
+  const siblingPieces = await loadSiblingPieces(orderIds, foundIds);
   const receivedNGN = money(orderSnaps.reduce((s, o) => s + o.receivedNGN, 0));
   const loud = orderIds.length > 0 || paymentRows.length > 0;
 
@@ -247,6 +263,7 @@ export async function loadPlan(productIds: string[]): Promise<ProductCascadePlan
       orderNumber,
     })),
     customerEmails,
+    siblingPieces,
     receivedNGN,
     mediaUrls,
     productIds: foundIds,
@@ -337,6 +354,7 @@ export async function writeCascadeLog(
     products: plan.products,
     orders: plan.orders,
     payments: plan.payments,
+    siblingPieces: plan.siblingPieces,
     customerEmails: plan.customerEmails,
     receivedNGN: plan.receivedNGN,
     actor: { userId: actor.userId, email: actor.email, role: actor.role, ip: actor.ip },
@@ -420,7 +438,7 @@ export async function cascadeDeletionsInPeriod(
 ): Promise<{ paymentCount: number; logIds: string[] }> {
   const logs = await prisma.activityLog.findMany({
     where: {
-      recordType: PRODUCT_CASCADE_RECORD_TYPE,
+      recordType: { in: [PRODUCT_CASCADE_RECORD_TYPE, CONSULTATION_CASCADE_RECORD_TYPE] },
       createdAt: { gte: from },
     },
     select: { id: true, snapshot: true },
@@ -428,8 +446,8 @@ export async function cascadeDeletionsInPeriod(
   const logIds: string[] = [];
   let paymentCount = 0;
   for (const log of logs) {
-    const snap = log.snapshot as ProductCascadeSnapshot | null;
-    if (!snap || snap.kind !== PRODUCT_CASCADE_RECORD_TYPE || !Array.isArray(snap.payments)) continue;
+    const snap = log.snapshot as { kind?: string; payments?: CascadePaymentSnap[] } | null;
+    if (!snap || !Array.isArray(snap.payments)) continue;
     const hits = snap.payments.filter((p) => paymentAtInRange(p.at, from, to));
     if (hits.length === 0) continue;
     paymentCount += hits.length;

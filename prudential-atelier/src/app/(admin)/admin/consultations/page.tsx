@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { ConsultationStatus, QuoteStatus } from "@prisma/client";
+import { ConsultationDeleteControl } from "@/components/admin/ConsultationDeleteControl";
 import {
   getOfferingTypeIcon,
   getOfferingTypeLabel,
@@ -184,6 +185,8 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
                     <Link href={`/admin/consultations/${b.id}`} className="text-olive underline">
                       View
                     </Link>
+                    <span className="mx-2 text-sand">·</span>
+                    <ConsultationDeleteControl id={b.id} bookingNumber={b.bookingNumber} />
                   </td>
                 </tr>
               );

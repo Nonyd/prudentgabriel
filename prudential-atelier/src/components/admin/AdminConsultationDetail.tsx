@@ -15,6 +15,7 @@ import {
 } from "@/lib/consultation-types";
 import { isVirtualDelivery } from "@/lib/consultation";
 import { ClientMeasurementsPanel } from "@/components/admin/ClientMeasurementsPanel";
+import { ConsultationDeleteControl } from "@/components/admin/ConsultationDeleteControl";
 import type { MeasurementData } from "@/lib/measurements";
 
 type LinkedQuotation = {
@@ -300,17 +301,24 @@ export function AdminConsultationDetail({
           <p className="font-label text-xs uppercase tracking-widest text-gold">Consultation</p>
           <h2 className="font-display text-xl text-ink">{booking.bookingNumber}</h2>
         </div>
-        <select
-          value={status}
-          onChange={(e) => handleStatusChange(e.target.value as ConsultationStatus)}
-          className="rounded-sm border border-sand bg-white px-3 py-2 text-sm text-ink"
-        >
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {s.replace(/_/g, " ")}
-            </option>
-          ))}
-        </select>
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            value={status}
+            onChange={(e) => handleStatusChange(e.target.value as ConsultationStatus)}
+            className="rounded-sm border border-sand bg-white px-3 py-2 text-sm text-ink"
+          >
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                {s.replace(/_/g, " ")}
+              </option>
+            ))}
+          </select>
+          <ConsultationDeleteControl
+            id={booking.id}
+            bookingNumber={booking.bookingNumber}
+            afterDeleteHref="/admin/consultations"
+          />
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

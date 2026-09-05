@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ConsultationStatus } from "@prisma/client";
 import { z } from "zod";
-import { requireAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi, requireSuperAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import {
   getDeliveryModeLabel,
@@ -14,6 +14,9 @@ import {
   sendConsultationRescheduleEmail,
 } from "@/lib/email";
 import { notifyConsultationConfirmed } from "@/lib/customer-notifications";
+import { destroyStoredMedia } from "@/lib/media/destroy";
+import { executeConsultationCascade, previewConsultationCascade } from "@/lib/consultation-cascade-delete";
+import { ProductCascadeError } from "@/lib/product-cascade-delete";
 
 const patchSchema = z.object({
   status: z.nativeEnum(ConsultationStatus).optional(),
@@ -199,4 +202,53 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   return NextResponse.json({ booking: refreshed });
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const gate = await requireAdminApi("consultations");
+  if (!gate.ok) return gate.response;
+  const { id } = await params;
+
+  let confirmation: string | undefined;
+  try {
+    const json = (await req.json()) as { confirmation?: unknown };
+    if (typeof json.confirmation === "string") confirmation = json.confirmation;
+  } catch {
+    confirmation = undefined;
+  }
+
+  try {
+    const preview = await previewConsultationCascade([id]);
+    if (preview.loud) {
+      const superGate = await requireSuperAdminApi();
+      if (!superGate.ok) return superGate.response;
+    }
+    if (preview.blocked) {
+      return NextResponse.json(
+        { error: preview.blockReason ?? "This consultation cannot be deleted from here" },
+        { status: 409 },
+      );
+    }
+
+    const result = await executeConsultationCascade({
+      ids: [id],
+      confirmation,
+      actor: {
+        userId: gate.session.user.id!,
+        email: gate.session.user.email ?? null,
+        role: gate.session.user.role ?? "",
+        ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || null,
+      },
+    });
+    await Promise.all(
+      result.mediaUrls.map((url) => destroyStoredMedia(url).catch((err) => console.error("[consultation-cascade media]", url, err))),
+    );
+    return NextResponse.json({ ok: true, logId: result.logId, deleted: result.deletedIds.length });
+  } catch (e) {
+    if (e instanceof ProductCascadeError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
+    console.error("[admin/consultations DELETE]", e);
+    return NextResponse.json({ error: "Delete failed; nothing was removed" }, { status: 500 });
+  }
 }

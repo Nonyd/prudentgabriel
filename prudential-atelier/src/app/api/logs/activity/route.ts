@@ -26,7 +26,11 @@ export async function GET(req: NextRequest) {
     if (action && action !== "all" && ACTIONS.has(action)) {
       where.action = action as ActivityAction;
     }
-    if (recordType) where.recordType = recordType;
+    if (recordType === "cascade") {
+      where.recordType = { in: ["product-cascade-delete", "consultation-cascade-delete"] };
+    } else if (recordType) {
+      where.recordType = recordType;
+    }
     if (search) {
       where.OR = [
         { description: { contains: search, mode: "insensitive" } },

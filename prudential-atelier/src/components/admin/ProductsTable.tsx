@@ -8,7 +8,7 @@ import type { ProductCategory, ProductType } from "@prisma/client";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { ProductCascadeDialog } from "@/components/admin/ProductCascadeDialog";
-import type { ProductCascadePreview } from "@/lib/product-cascade-copy";
+import { cascadeDialogCopy, type ProductCascadePreview } from "@/lib/product-cascade-copy";
 import { Toggle } from "@/components/ui/Toggle";
 
 export type ProductRow = {
@@ -258,7 +258,7 @@ export function ProductsTable({
     <div className="space-y-4">
       <ProductCascadeDialog
         open={deleteState !== null}
-        preview={deletePreview}
+        copy={deletePreview ? cascadeDialogCopy(deletePreview) : null}
         loadingPreview={previewLoading}
         submitting={isDeleting}
         error={deleteError}
