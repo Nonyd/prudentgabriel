@@ -31,13 +31,17 @@ export type PublishSnapshot = {
   category?: ProductCategory;
 };
 
+/** Categories that skip UK sizes. Empty until ACCESSORIES (scarves, jewellery) is sold that way. */
+const CATEGORIES_WITHOUT_SIZES = new Set<ProductCategory>([]);
+
 /**
  * Scarves and jewellery will not use UK sizes. Keep every publish-size check behind this
  * so ACCESSORIES can drop the size requirement in one place later.
  * Do not special-case ACCESSORIES until that category is actually sold.
  */
-export function categoryNeedsSizes(_category?: ProductCategory): boolean {
-  return true;
+export function categoryNeedsSizes(category?: ProductCategory): boolean {
+  if (!category) return true;
+  return !CATEGORIES_WITHOUT_SIZES.has(category);
 }
 
 export function draftNeedsName(data: PublishSnapshot): boolean {
