@@ -9,6 +9,7 @@ import {
 } from "@/lib/email";
 import { notifyBankTransferReceipt } from "@/lib/notifications";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { receiptMediaUrlSchema } from "@/lib/media/stored-url";
 import {
   encodeBespokePaymentRef,
   getBespokeOrderForUser,
@@ -27,7 +28,7 @@ import { PaymentMethod, PaymentPurpose } from "@prisma/client";
 
 const bodySchema = z.object({
   amount: z.number().positive(),
-  receiptUrl: z.string().url(),
+  receiptUrl: receiptMediaUrlSchema,
   currency: z.enum(["NGN", "USD", "GBP"]).optional(),
 });
 

@@ -19,6 +19,7 @@ const nextConfig = {
   output: process.env.SKIP_STANDALONE === "1" && !process.env.CI ? undefined : "standalone",
   experimental: {
     instrumentationHook: true,
+    serverComponentsExternalPackages: ["heic-convert", "libheif-js"],
   },
 };
 

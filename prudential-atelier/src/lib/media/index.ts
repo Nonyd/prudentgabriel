@@ -11,8 +11,16 @@ export {
 } from "@/lib/media/key-parse";
 export {
   isStoredPublicMediaUrl,
+  isStoredPrivateMediaUrl,
+  isStoredReceiptMediaUrl,
+  isStoredMediaUrl,
   optionalStoredPublicMediaUrlSchema,
+  optionalStoredPrivateMediaUrlSchema,
+  emptyableStoredPublicMediaUrlSchema,
   storedPublicMediaUrlSchema,
+  storedPrivateMediaUrlSchema,
+  storedMediaUrlSchema,
+  receiptMediaUrlSchema,
 } from "@/lib/media/stored-url";
 
 let testStore: MediaStore | null = null;

@@ -4,6 +4,7 @@ import {
   ConsultationDeliveryMode,
   Currency,
 } from "@prisma/client";
+import { storedPrivateMediaUrlSchema, optionalStoredPublicMediaUrlSchema } from "@/lib/media/stored-url";
 
 export const OFFERING_TYPE_VALUES = [
   "PHYSICAL_PRUDENT_TEAM",
@@ -29,7 +30,7 @@ export const consultationBookingSchema = z.object({
 
   occasion: z.string().min(1),
   description: z.string().min(20).max(2000),
-  referenceImages: z.array(z.string().url()).max(5).default([]),
+  referenceImages: z.array(storedPrivateMediaUrlSchema).max(5).default([]),
 
   confirmedDate: z.coerce.date().optional(),
   confirmedTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
@@ -45,7 +46,7 @@ export const consultantAdminSchema = z.object({
   name: z.string().min(2),
   title: z.string().min(2),
   bio: z.string().min(10),
-  image: z.string().url().optional(),
+  image: optionalStoredPublicMediaUrlSchema,
   isActive: z.boolean().default(true),
   isFlagship: z.boolean().default(false),
   displayOrder: z.number().int().min(0).default(0),

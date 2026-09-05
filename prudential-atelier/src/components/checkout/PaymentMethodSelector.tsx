@@ -184,7 +184,7 @@ export function PaymentMethodSelector({
                     <input
                       ref={fileRef}
                       type="file"
-                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"
                       className="hidden"
                       onChange={(e) => {
                         const f = e.target.files?.[0];
@@ -196,12 +196,14 @@ export function PaymentMethodSelector({
                       type="button"
                       disabled={uploading}
                       onClick={() => fileRef.current?.click()}
-                      className="mt-4 inline-flex items-center gap-2 rounded-sm border border-choc bg-bg-card px-4 py-2 font-sans text-[10px] uppercase tracking-wider text-choc"
+                      className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-sm border border-choc bg-bg-card px-4 py-2 font-sans text-[10px] uppercase tracking-wider text-choc"
                     >
                       <Upload className="h-3.5 w-3.5" />
                       {uploading ? "Uploading…" : receiptUrl ? "Replace receipt" : "Upload payment receipt"}
                     </button>
-                    <p className="mt-2 font-sans text-[10px] text-text-light">Accepted: JPG, PNG, PDF · Max 5MB</p>
+                    <p className="mt-2 font-sans text-[10px] text-text-light">
+                      A photo from your phone is fine, including iPhone photos. PDF also works. Max 5MB.
+                    </p>
                     {receiptUrl ? (
                       <p className="mt-2 font-sans text-xs text-nut">Receipt attached ✓</p>
                     ) : null}

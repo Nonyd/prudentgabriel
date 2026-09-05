@@ -3,13 +3,14 @@ import { AlterationReason } from "@prisma/client";
 import { auth } from "@/auth";
 import { createAlterationRequest } from "@/lib/alterations/service";
 import { z } from "zod";
+import { storedMediaUrlSchema } from "@/lib/media/stored-url";
 
 type Params = { params: Promise<{ orderId: string }> };
 
 const bodySchema = z.object({
   description: z.string().min(10).max(4000),
   reason: z.nativeEnum(AlterationReason),
-  media: z.array(z.string().url()).max(8).optional(),
+  media: z.array(storedMediaUrlSchema).max(8).optional(),
 });
 
 export async function POST(req: NextRequest, { params }: Params) {

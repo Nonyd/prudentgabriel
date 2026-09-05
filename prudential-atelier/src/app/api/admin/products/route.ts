@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { productAdminSchema } from "@/validations/product";
 import { loadTakenSkus, resolvePreferredSku, uniqueSkuFromTaken } from "@/lib/product-sku";
+import { allocateProductSlug } from "@/lib/product-slug-unique";
 import { revalidateProduct } from "@/lib/revalidate";
 import { derivedCatalogMinNGN } from "@/lib/pricing";
 import { applyOpening, afterStockWrites, syncProductInStock, type StockWriteResult } from "@/lib/stock-ledger";
@@ -125,11 +126,7 @@ export async function POST(req: NextRequest) {
   }
 
   const data = parsed.data;
-  const slugTaken = await prisma.product.findUnique({ where: { slug: data.slug }, select: { id: true } });
-  if (slugTaken) {
-    return NextResponse.json({ error: "Slug already in use" }, { status: 409 });
-  }
-
+  const slug = await allocateProductSlug(prisma, { name: data.name, requested: data.slug });
   const minPrice = derivedCatalogMinNGN(data.variants, data.isOnSale);
 
   try {
@@ -137,7 +134,7 @@ export async function POST(req: NextRequest) {
       const p = await tx.product.create({
         data: {
           name: data.name,
-          slug: data.slug,
+          slug,
           description: data.description ?? "",
           details: data.details ?? null,
           metaTitle: data.metaTitle ?? null,
@@ -264,7 +261,7 @@ export async function POST(req: NextRequest) {
     await revalidateProduct(product.product.slug);
     if (product.stockWrites.length) await afterStockWrites(product.stockWrites);
 
-    return NextResponse.json({ id: product.product.id, slug: product.product.slug });
+    return NextResponse.json({ id: product.product.id, slug });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       return NextResponse.json({ error: "That stock code is already in use" }, { status: 409 });

@@ -3,12 +3,13 @@ import { PaymentGateway } from "@prisma/client";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { emptyableStoredPublicMediaUrlSchema } from "@/lib/media/stored-url";
 
 const patchSchema = z.object({
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
   phone: z.string().optional(),
-  image: z.string().url().optional().or(z.literal("")),
+  image: emptyableStoredPublicMediaUrlSchema,
   preferredGateway: z.nativeEnum(PaymentGateway).nullable().optional(),
 });
 

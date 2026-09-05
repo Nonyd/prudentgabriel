@@ -4,11 +4,12 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { canSubmitTestimonial } from "@/lib/testimonial-eligibility";
 import { notifyTestimonialSubmitted } from "@/lib/notifications";
+import { optionalStoredPublicMediaUrlSchema } from "@/lib/media/stored-url";
 
 const bodySchema = z.object({
   rating: z.number().int().min(1).max(5),
   body: z.string().min(30).max(600),
-  clientImage: z.string().url().optional().nullable(),
+  clientImage: optionalStoredPublicMediaUrlSchema,
 });
 
 export async function POST(req: NextRequest) {

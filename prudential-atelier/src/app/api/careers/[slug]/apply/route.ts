@@ -9,6 +9,7 @@ import {
   sendJobApplicationConfirmationEmail,
 } from "@/lib/email";
 import { notifyJobApplication } from "@/lib/notifications";
+import { storedPrivateMediaUrlSchema, optionalStoredPrivateMediaUrlSchema } from "@/lib/media/stored-url";
 
 const applySchema = z.object({
   fullName: z.string().min(2).max(120),
@@ -16,8 +17,8 @@ const applySchema = z.object({
   phone: z.string().min(7).max(30),
   yearsOfExp: z.number().int().min(0).max(50).optional().nullable(),
   coverLetter: z.string().max(1000).optional().nullable(),
-  cvUrl: z.string().url(),
-  portfolioUrl: z.string().url().optional().nullable(),
+  cvUrl: storedPrivateMediaUrlSchema,
+  portfolioUrl: optionalStoredPrivateMediaUrlSchema,
   heardFrom: z.string().max(120).optional().nullable(),
   pfaRegNumber: z.string().optional().nullable(),
   pfaVerified: z.boolean().optional(),
@@ -30,8 +31,8 @@ const applySchema = z.object({
   supervisorPhone: z.string().optional().nullable(),
   itDuration: z.string().optional().nullable(),
   itStartDate: z.string().optional().nullable(),
-  schoolItLetter: z.string().url().optional().nullable(),
-  schoolIdCard: z.string().url().optional().nullable(),
+  schoolItLetter: optionalStoredPrivateMediaUrlSchema,
+  schoolIdCard: optionalStoredPrivateMediaUrlSchema,
   customResponses: z
     .record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.array(z.string())]))
     .optional(),

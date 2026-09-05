@@ -75,9 +75,44 @@ export function resolveVideoMimeType(reportedType: string, fileName: string | un
   return (allowed as readonly string[]).includes(t) ? t : null;
 }
 
+/** ISO-BMFF brands used by iPhone stills (High Efficiency camera photos). Not screenshots — those are PNG. */
+const HEIF_BRANDS = new Set([
+  "heic",
+  "heix",
+  "heif",
+  "hevc",
+  "hevx",
+  "heim",
+  "heis",
+  "hevm",
+  "hevs",
+  "mif1",
+  "msf1",
+]);
+
+/** True when the file is HEIC/HEIF. MP4 (`isom` / `mp41`) is not. */
+export function isHeifMagic(buf: Uint8Array): boolean {
+  if (buf.length < 12) return false;
+  let ftyp = -1;
+  const limit = Math.min(buf.length - 7, 64);
+  for (let i = 0; i <= limit; i++) {
+    if (buf[i] === 0x66 && buf[i + 1] === 0x74 && buf[i + 2] === 0x79 && buf[i + 3] === 0x70) {
+      ftyp = i;
+      break;
+    }
+  }
+  if (ftyp < 0) return false;
+  const end = Math.min(buf.length, ftyp + 64);
+  for (let i = ftyp + 4; i + 4 <= end; i += 4) {
+    const brand = String.fromCharCode(buf[i], buf[i + 1], buf[i + 2], buf[i + 3]);
+    if (HEIF_BRANDS.has(brand)) return true;
+  }
+  return false;
+}
+
 export function mimeFromMagicBytes(
   buf: Uint8Array,
-  opts: { allowPdf?: boolean; allowGif?: boolean } = {},
+  opts: { allowPdf?: boolean; allowGif?: boolean; allowHeic?: boolean } = {},
 ): string | null {
   if (buf.length < 12) return null;
   if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
@@ -98,6 +133,7 @@ export function mimeFromMagicBytes(
   if (opts.allowPdf && buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46) {
     return "application/pdf";
   }
+  if (opts.allowHeic && isHeifMagic(buf)) return "image/heic";
   return null;
 }
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { optionalStoredPublicMediaUrlSchema } from "@/lib/media/stored-url";
 
 export const adminTestimonialBodySchema = z
   .object({
@@ -7,7 +8,7 @@ export const adminTestimonialBodySchema = z
     location: z.string().max(120).optional().nullable(),
     body: z.string().min(30).max(600),
     rating: z.number().int().min(1).max(5),
-    adminImage: z.string().url().optional().nullable(),
+    adminImage: optionalStoredPublicMediaUrlSchema,
     productContext: z.string().max(200).optional().nullable(),
     orderContext: z.string().max(200).optional().nullable(),
     isApproved: z.boolean(),

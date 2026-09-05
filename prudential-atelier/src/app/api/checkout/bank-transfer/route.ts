@@ -11,10 +11,11 @@ import { notifyBankTransferReceipt } from "@/lib/notifications";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { canAcceptRtwPayment } from "@/lib/payments/rtw-totals";
 import { prepareRtwPaymentAttempt } from "@/lib/checkout-reservations";
+import { receiptMediaUrlSchema } from "@/lib/media/stored-url";
 
 const bodySchema = z.object({
   orderId: z.string().min(1),
-  receiptUrl: z.string().url(),
+  receiptUrl: receiptMediaUrlSchema,
   guestEmail: z.string().email().optional(),
 });
 

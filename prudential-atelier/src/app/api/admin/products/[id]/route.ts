@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { productAdminSchema, productToggleSchema } from "@/validations/product";
 import { loadTakenSkus, resolvePreferredSku, uniqueSkuFromTaken } from "@/lib/product-sku";
+import { allocateProductSlug } from "@/lib/product-slug-unique";
+import { missingPublishNeeds, joinNeedLabels } from "@/lib/product-wizard";
 import { revalidateProduct } from "@/lib/revalidate";
 import { canInlineEditPrice, derivedCatalogMinNGN } from "@/lib/pricing";
 import { processRestockAlerts } from "@/lib/stock-alerts";
@@ -102,6 +104,22 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         toggle.data.isFeatured !== undefined ||
         toggle.data.isNewArrival !== undefined)
     ) {
+      if (toggle.data.isPublished === true) {
+        const current = await prisma.product.findUnique({
+          where: { id },
+          include: { images: { select: { url: true } }, variants: { select: { size: true, priceNGN: true } } },
+        });
+        if (!current) return NextResponse.json({ error: "Not found" }, { status: 404 });
+        const missing = missingPublishNeeds(current);
+        if (missing.length) {
+          return NextResponse.json(
+            {
+              error: `To publish this piece it still needs ${joinNeedLabels(missing.map((m) => m.label))}.`,
+            },
+            { status: 400 },
+          );
+        }
+      }
       const updated = await prisma.product.update({
         where: { id },
         data: {
@@ -122,12 +140,17 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 
   const data = parsed.data;
-  const slugConflict = await prisma.product.findFirst({
-    where: { slug: data.slug, NOT: { id } },
-    select: { id: true },
-  });
-  if (slugConflict) {
-    return NextResponse.json({ error: "Slug already in use" }, { status: 409 });
+  const slug = data.slug?.trim()
+    ? data.slug.trim()
+    : await allocateProductSlug(prisma, { name: data.name, excludeId: id });
+  if (data.slug?.trim()) {
+    const slugConflict = await prisma.product.findFirst({
+      where: { slug, NOT: { id } },
+      select: { id: true },
+    });
+    if (slugConflict) {
+      return NextResponse.json({ error: "That web address is already in use" }, { status: 409 });
+    }
   }
 
   const minPrice = derivedCatalogMinNGN(data.variants, data.isOnSale);
@@ -149,7 +172,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         where: { id },
         data: {
           name: data.name,
-          slug: data.slug,
+          slug,
           description: data.description ?? "",
           details: data.details ?? null,
           metaTitle: data.metaTitle ?? null,
@@ -316,7 +339,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       await syncProductInStock(tx, id);
     });
 
-    await revalidateProduct(data.slug);
+    await revalidateProduct(slug);
     if (stockWrites.length) await afterStockWrites(stockWrites);
 
     const restockedIds = data.variants

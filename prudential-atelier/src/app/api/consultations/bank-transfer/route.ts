@@ -8,10 +8,11 @@ import {
   sendBankTransferReceiptReceivedEmail,
 } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { receiptMediaUrlSchema } from "@/lib/media/stored-url";
 
 const bodySchema = z.object({
   bookingId: z.string().min(1),
-  receiptUrl: z.string().url(),
+  receiptUrl: receiptMediaUrlSchema,
   guestEmail: z.string().email().optional(),
 });
 

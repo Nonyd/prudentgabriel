@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/api-auth";
 import { getOrCreateClientProfile } from "@/lib/account-helpers";
 import { prisma } from "@/lib/prisma";
 import { logActivity, logError } from "@/lib/logger";
+import { storedPublicMediaUrlSchema } from "@/lib/media/stored-url";
 
 export async function GET() {
   const gate = await requireSession();
@@ -36,7 +37,7 @@ export async function GET() {
 const createSchema = z.object({
   title: z.string().min(1),
   notes: z.string().optional(),
-  images: z.array(z.string().url()).max(12),
+  images: z.array(storedPublicMediaUrlSchema).max(12),
   bespokeOrderId: z.string().optional().nullable(),
 });
 

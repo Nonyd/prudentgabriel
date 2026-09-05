@@ -53,7 +53,7 @@ export function VariantManager({
   };
 
   const removeRow = (index: number) => {
-    if (variants.length <= 1) return;
+    if (variants.length === 0) return;
     onChange(variants.filter((_, i) => i !== index));
   };
 

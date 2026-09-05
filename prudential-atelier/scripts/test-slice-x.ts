@@ -12,7 +12,7 @@ import { streamMediaKey } from "../src/lib/media/stream";
 import { folderFromMediaKey, isValidMediaKey, keyFromMediaUrl } from "../src/lib/media/keys";
 import { signMediaKey, verifyMediaSignature } from "../src/lib/media/signed";
 import { adminReceiptSrc } from "../src/lib/media/receipt-src";
-import { mimeFromMagicBytes, mimeFromVideoMagicBytes } from "../src/lib/image-upload-mime";
+import { mimeFromMagicBytes, mimeFromVideoMagicBytes, isHeifMagic } from "../src/lib/image-upload-mime";
 import { permissionForUploadFolder, UI_UPLOAD_FOLDERS, folderIsPrivate } from "../src/lib/admin-upload-folder";
 import { classifyMediaUrl, folderFromCloudinaryUrl } from "../src/lib/media/migrate-plan";
 
@@ -68,7 +68,44 @@ async function run() {
     assert(mimeFromMagicBytes(pngBytes()) === "image/png", "png magic");
     assert(mimeFromMagicBytes(pdfBytes(), { allowPdf: true }) === "application/pdf", "pdf magic");
     assert(mimeFromMagicBytes(Buffer.from("not-an-image!!!!")) === null, "declared MIME is ignored");
+    const heic = Buffer.alloc(32, 0);
+    heic.write("ftypheic", 4, "ascii");
+    assert(mimeFromMagicBytes(heic) === null, "heic is refused unless opted in");
+    assert(mimeFromMagicBytes(heic, { allowHeic: true }) === "image/heic", "receipts can opt into heic");
     assert(mimeFromVideoMagicBytes(mp4Bytes()) === "video/mp4", "mp4 ftyp");
+    const { isHeifMagic } = await import("../src/lib/image-upload-mime");
+    assert(!isHeifMagic(mp4Bytes()), "mp4 isom is not heif");
+    assert(isHeifMagic(heic), "ftyp heic is heif");
+    const { isStoredReceiptMediaUrl, isStoredPrivateMediaUrl, receiptMediaUrlSchema, storedPrivateMediaUrlSchema, emptyableStoredPublicMediaUrlSchema } = await import("../src/lib/media/stored-url");
+    const privateReceipt = "/media/private/prudential-atelier/receipts/d20f6ffd523b78a86cd2f916fa34af5d.jpg";
+    assert(isStoredReceiptMediaUrl(privateReceipt), "guest upload path is a valid receipt URL");
+    assert(receiptMediaUrlSchema.safeParse(privateReceipt).success, "receipt schema accepts local private path");
+    assert(!receiptMediaUrlSchema.safeParse("/media/public/prudential-atelier/products/x.jpg").success, "public media is not a receipt");
+    const cvPath = "/media/private/prudential-atelier/careers/abc123def456abc123def456abc123de.pdf";
+    assert(isStoredPrivateMediaUrl(cvPath), "career uploads are private local paths");
+    assert(storedPrivateMediaUrlSchema.safeParse(cvPath).success, "CV persist accepts /media/private/");
+    const avatar = "/media/public/prudential-atelier/avatars/customer/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg";
+    assert(emptyableStoredPublicMediaUrlSchema.safeParse(avatar).success, "avatar persist accepts /media/public/");
+    assert(emptyableStoredPublicMediaUrlSchema.safeParse("").success, "clearing an avatar with empty string still works");
+    const persistFiles = [
+      "src/app/api/account/moodboards/route.ts",
+      "src/app/api/account/profile/route.ts",
+      "src/app/api/account/profile/merged/route.ts",
+      "src/app/api/account/testimonials/route.ts",
+      "src/app/api/admin/account/route.ts",
+      "src/app/api/careers/[slug]/apply/route.ts",
+      "src/app/api/admin/consultations/[id]/session/route.ts",
+      "src/app/api/bespoke/[orderId]/alterations/route.ts",
+      "src/validations/consultation.ts",
+      "src/validations/bespoke.ts",
+      "src/lib/admin-testimonial-schema.ts",
+    ];
+    for (const rel of persistFiles) {
+      const src = await readFile(join(process.cwd(), rel), "utf8");
+      assert(!src.includes("z.string().url()"), `${rel} must not use z.string().url() for stored media`);
+    }
+    const meeting = await readFile(join(process.cwd(), "src/app/api/admin/consultations/[id]/send-link/route.ts"), "utf8");
+    assert(meeting.includes("z.string().url()"), "Zoom/Meet links stay absolute URLs");
     assert(mimeFromVideoMagicBytes(jpegBytes()) === null, "jpeg is not a video");
 
     const publicFile = await store.put(jpegBytes(), {

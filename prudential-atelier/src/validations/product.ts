@@ -1,6 +1,7 @@
 import { ProductCategory, ProductType } from "@prisma/client";
 import { z } from "zod";
 import { optionalStoredPublicMediaUrlSchema, storedPublicMediaUrlSchema } from "@/lib/media/stored-url";
+import { missingPublishNeeds } from "@/lib/product-wizard";
 
 function optNonNegNumber() {
   return z.preprocess((v) => {
@@ -50,14 +51,23 @@ const imageSchema = z.object({
 });
 
 export const productAdminSchema = z.object({
-  name: z.string().min(2).max(200),
-  slug: z.string().min(2).max(200).regex(/^[a-z0-9-]+$/),
+  name: z.string().trim().min(1).max(200),
+  slug: z
+    .string()
+    .max(200)
+    .regex(/^[a-z0-9-]*$/)
+    .optional()
+    .default(""),
   description: z.string().optional(),
   details: z.string().optional(),
   category: z.nativeEnum(ProductCategory),
   type: z.nativeEnum(ProductType),
   tags: z.array(z.string()).default([]),
-  basePriceNGN: z.coerce.number().positive(),
+  basePriceNGN: z.preprocess((v) => {
+    if (v === "" || v === null || v === undefined) return 0;
+    const n = typeof v === "number" ? v : Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }, z.number().min(0)),
   basePriceUSD: optNonNegNumber(),
   basePriceGBP: optNonNegNumber(),
   isOnSale: z.boolean().default(false),
@@ -93,17 +103,25 @@ export const productAdminSchema = z.object({
   defaultHeightCm: optNonNegNumber(),
   metaTitle: z.string().max(60).optional(),
   metaDescription: z.string().max(160).optional(),
-  variants: z.array(variantSchema).min(1),
+  variants: z.array(variantSchema).default([]),
   colors: z.array(colorSchema).default([]),
   images: z.array(imageSchema).default([]),
   bundleProductIds: z.array(z.string()).max(4).default([]),
   regenerateSkus: z.boolean().optional(),
 }).superRefine((data, ctx) => {
-  if (data.isPublished && data.images.length < 1) {
+  if (!data.name.trim()) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      path: ["images"],
-      message: "Add at least one photo before publishing",
+      path: ["name"],
+      message: "Give this piece a name to save a draft.",
+    });
+  }
+  if (!data.isPublished) return;
+  for (const need of missingPublishNeeds(data)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: [need.path],
+      message: `To publish this piece it still needs ${need.label}.`,
     });
   }
 });

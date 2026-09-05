@@ -376,6 +376,11 @@ export function ProductsTable({
                   <Link href={`/admin/products/${p.id}/edit`} className="block font-medium text-charcoal hover:text-olive">
                     {p.name}
                   </Link>
+                  {!p.isPublished ? (
+                    <span className="mt-1 inline-block rounded-sm bg-sand px-2 py-0.5 font-sans text-[10px] uppercase tracking-wide text-choc">
+                      Draft
+                    </span>
+                  ) : null}
                   {!p.isPublished && p.basePriceNGN === 0 ? (
                     <span className="mt-1 inline-block rounded-sm bg-amber-100 px-2 py-0.5 text-[10px] text-amber-900">
                       ⚠ Price needed
@@ -449,6 +454,14 @@ export function ProductsTable({
                   <Link href={`/admin/products/${p.id}/edit`} className="text-olive hover:underline">
                     Edit
                   </Link>
+                  {!p.isPublished ? (
+                    <Link
+                      href={`/admin/products/${p.id}/edit?wizard=1`}
+                      className="ml-3 text-olive hover:underline"
+                    >
+                      Continue
+                    </Link>
+                  ) : null}
                   <button
                     type="button"
                     className="ml-3 text-olive hover:underline"

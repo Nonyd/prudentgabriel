@@ -20,6 +20,19 @@ import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
 import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 import { saleFigureIsDormant } from "@/lib/pricing";
 import { isLegacyWordPressImageUrl } from "@/lib/product-image-url";
+import { ProductWizardRail } from "./ProductWizardRail";
+import {
+  PRODUCT_WIZARD_STEPS,
+  categoryNeedsSizes,
+  clearWizardDraft,
+  draftBlockedMessage,
+  productFormLayout,
+  publishBlockedMessage,
+  readWizardDraft,
+  rekeyWizardDraft,
+  writeWizardDraft,
+  type ProductFormLayout,
+} from "@/lib/product-wizard";
 
 type FullProduct = Product & {
   images: ProductImage[];
@@ -38,12 +51,7 @@ const CATEGORY_OPTIONS: ProductCategory[] = [
   PC.ACCESSORIES,
 ];
 
-const STEPS = [
-  { id: "piece", label: "The piece" },
-  { id: "sizes", label: "Sizes and prices" },
-  { id: "delivery", label: "Delivery and custom" },
-  { id: "publish", label: "Publishing" },
-] as const;
+const STEPS = PRODUCT_WIZARD_STEPS;
 
 function Req() {
   return <span className="ml-1 font-normal normal-case tracking-normal text-wine">Required</span>;
@@ -166,12 +174,20 @@ const defaultCreate = (custom?: {
   regenerateSkus: false,
 });
 
-const fieldClass = "mt-1 w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-charcoal";
-const labelClass = "mt-4 block text-xs uppercase tracking-wide text-[#A8A8A4]";
+const fieldClass =
+  "mt-2 w-full min-h-[44px] rounded-sm border border-sand bg-cream px-4 py-3 font-body text-base text-choc";
+const labelClass = "mt-6 block font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-choc/70";
+const sectionClass = "rounded-sm border border-sand bg-cream p-8";
+const btnPrimary =
+  "inline-flex min-h-[44px] items-center justify-center rounded-sm bg-choc px-5 font-sans text-xs uppercase tracking-[0.14em] text-cream hover:bg-choc/90 disabled:opacity-30";
+const btnGhost =
+  "inline-flex min-h-[44px] items-center justify-center rounded-sm border border-sand px-5 font-sans text-xs uppercase tracking-[0.14em] text-choc hover:border-choc disabled:opacity-30";
 
 export function ProductFormPage({
   product,
   customDefaults,
+  layout: layoutProp,
+  initialStep,
 }: {
   product?: FullProduct;
   customDefaults?: {
@@ -181,9 +197,13 @@ export function ProductFormPage({
     surchargeValue: number;
     returnable: boolean;
   };
+  layout?: ProductFormLayout;
+  initialStep?: number;
 }) {
   const router = useRouter();
   const mode = product ? "edit" : "create";
+  const layout = layoutProp ?? productFormLayout({ mode, wizardQuery: null });
+  const wizard = layout === "wizard";
   const defaults = useMemo(
     () => (product ? mapProductToForm(product) : defaultCreate(customDefaults)),
     [product, customDefaults],
@@ -199,7 +219,14 @@ export function ProductFormPage({
     name: "colors",
   });
 
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(() => {
+    const n = initialStep ?? 0;
+    return Number.isFinite(n) ? Math.min(Math.max(0, Math.floor(n)), STEPS.length - 1) : 0;
+  });
+  const [savedId, setSavedId] = useState<string | undefined>(product?.id);
+  const [draftStatus, setDraftStatus] = useState<string | null>(null);
+  const persistLock = useRef(false);
+  const restored = useRef(false);
   const [libraryFields, setLibraryFields] = useState<{ id: string; key: string; label: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -218,6 +245,44 @@ export function ProductFormPage({
   const measurementIds = form.watch("measurementFieldIds") ?? [];
   const typeWatch = form.watch("type");
   const lastName = useRef(defaults.name);
+  const storageId = savedId ?? (mode === "create" ? "new" : product?.id ?? "new");
+
+  useEffect(() => {
+    if (restored.current) return;
+    restored.current = true;
+    if (!wizard) return;
+    const stored = readWizardDraft(mode === "create" && !product ? "new" : storageId);
+    if (!stored) return;
+    const fromCreate = mode === "create" && !product;
+    const localNewer =
+      product?.updatedAt && stored.savedAt > new Date(product.updatedAt).getTime() + 500;
+    if (fromCreate || localNewer) {
+      if (typeof stored.values === "object" && stored.values) {
+        form.reset({ ...defaults, ...(stored.values as ProductAdminInput) });
+      }
+    }
+    if (Number.isFinite(stored.step) && (fromCreate || initialStep == null)) {
+      setStep(Math.min(Math.max(0, stored.step), STEPS.length - 1));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- restore once on mount
+  }, []);
+
+  const snapshot = {
+    name: nameWatch,
+    images: form.watch("images"),
+    variants: variantsWatch,
+    basePriceNGN: basePriceWatch,
+    category: form.watch("category"),
+  };
+
+  useEffect(() => {
+    if (!wizard) return;
+    writeWizardDraft(storageId, {
+      step,
+      values: form.getValues(),
+      savedAt: Date.now(),
+    });
+  }, [wizard, storageId, step, nameWatch, basePriceWatch, variantsWatch, snapshot.images, form]);
 
   useEffect(() => {
     void fetch("/api/admin/measurement-fields")
@@ -297,10 +362,11 @@ export function ProductFormPage({
   };
 
   const persistImage = async (url: string, isPrimary: boolean, sortOrder: number) => {
-    if (mode !== "edit" || !product?.id) {
+    const id = savedId ?? product?.id;
+    if (!id) {
       return { url, alt: "", isPrimary, sortOrder };
     }
-    const res = await fetch(`/api/admin/products/${product.id}/images`, {
+    const res = await fetch(`/api/admin/products/${id}/images`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -377,9 +443,9 @@ export function ProductFormPage({
     }
     form.setValue("images", next);
 
-    if (mode === "edit" && product?.id && target.id) {
+    if ((savedId ?? product?.id) && target.id) {
       try {
-        const res = await fetch(`/api/admin/products/${product.id}/images/${target.id}`, {
+        const res = await fetch(`/api/admin/products/${savedId ?? product?.id}/images/${target.id}`, {
           method: "DELETE",
           credentials: "include",
         });
@@ -424,65 +490,142 @@ export function ProductFormPage({
     }
   };
 
-  const onSubmit: SubmitHandler<ProductAdminInput> = async (values) => {
+  const persistDraft = async (opts: { publish?: boolean; leave?: boolean; silent?: boolean } = {}) => {
+    const values = form.getValues();
+    const asPublish = Boolean(opts.publish);
+    const draftMsg = draftBlockedMessage(values);
+    if (draftMsg) {
+      if (!opts.silent) toast.error(draftMsg);
+      if (wizard) setStep(0);
+      return false;
+    }
+    if (asPublish) {
+      const blocked = publishBlockedMessage(values);
+      if (blocked) {
+        toast.error(blocked);
+        if (wizard) {
+          if (!values.name?.trim() || !(values.images ?? []).length) setStep(0);
+          else setStep(1);
+        }
+        return false;
+      }
+    }
+
+    if (!values.slug && values.name) {
+      form.setValue("slug", slugify(values.name, { lower: true, strict: true }));
+    }
+
     const payload = {
-      ...values,
-      isBespokeAvail: values.type === PT.BESPOKE,
+      ...form.getValues(),
+      isPublished: asPublish,
+      isBespokeAvail: form.getValues("type") === PT.BESPOKE,
     };
+
+    if (persistLock.current) return false;
+    persistLock.current = true;
     try {
-      if (mode === "create") {
+      const id = savedId ?? product?.id;
+      if (!id) {
         const res = await fetch("/api/admin/products", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
         const data = (await res.json()) as { id?: string; error?: unknown };
-        if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Could not create");
-        toast.success("Product created ✓");
-        router.push(`/admin/products/${data.id}/edit`);
-        router.refresh();
-        return;
+        if (!res.ok || !data.id) {
+          throw new Error(typeof data.error === "string" ? data.error : "Could not save");
+        }
+        setSavedId(data.id);
+        rekeyWizardDraft("new", data.id);
+        writeWizardDraft(data.id, { step, values: form.getValues(), savedAt: Date.now() });
+        if (opts.leave) {
+          clearWizardDraft(data.id);
+          toast.success("Draft saved. Come back when you can.");
+          router.push("/admin/products");
+          return true;
+        }
+        if (!opts.silent) {
+          toast.success(asPublish ? "Published ✓" : "Draft saved");
+        } else {
+          setDraftStatus("Draft saved");
+        }
+        router.replace(`/admin/products/${data.id}/edit?wizard=1&step=${step}`);
+        return true;
       }
-      const res = await fetch(`/api/admin/products/${product!.id}`, {
+
+      const res = await fetch(`/api/admin/products/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const data = (await res.json()) as { error?: unknown };
       if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Could not save");
-      toast.success("Changes saved ✓");
       form.setValue("regenerateSkus", false);
-      router.refresh();
+      writeWizardDraft(id, { step, values: form.getValues(), savedAt: Date.now() });
+      if (opts.leave) {
+        toast.success("Draft saved. Come back when you can.");
+        router.push("/admin/products");
+        return true;
+      }
+      if (!opts.silent) {
+        toast.success(asPublish ? "Published ✓" : "Changes saved ✓");
+      } else {
+        setDraftStatus("Draft saved");
+      }
+      if (asPublish) clearWizardDraft(id);
+      if (!opts.silent) router.refresh();
+      return true;
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error");
+      toast.error(e instanceof Error ? e.message : "Could not save");
+      return false;
+    } finally {
+      persistLock.current = false;
     }
   };
 
+  const onSubmit: SubmitHandler<ProductAdminInput> = async (values) => {
+    await persistDraft({ publish: Boolean(values.isPublished) });
+  };
+
   const submit = form.handleSubmit(onSubmit, (errors) => {
-    if (errors.images) {
-      setStep(0);
-      toast.error("Add at least one photo before publishing");
-      return;
-    }
-    if (errors.name || errors.slug) {
+    const values = form.getValues();
+    const blocked = values.isPublished ? publishBlockedMessage(values) : draftBlockedMessage(values);
+    if (blocked) toast.error(blocked);
+    if (errors.images || errors.name || errors.slug) {
       setStep(0);
       return;
     }
     if (errors.variants || errors.basePriceNGN) {
       setStep(1);
-      return;
     }
   });
 
   const saveDraft = () => {
     form.setValue("isPublished", false);
-    queueMicrotask(() => void submit());
+    void persistDraft({ silent: false });
+  };
+
+  const saveAndFinishLater = () => {
+    form.setValue("isPublished", false);
+    void persistDraft({ leave: true });
   };
 
   const publish = () => {
     form.setValue("isPublished", true);
-    queueMicrotask(() => void submit());
+    void persistDraft({ publish: true });
   };
+
+  const goToStep = (next: number) => {
+    const clamped = Math.min(Math.max(0, next), STEPS.length - 1);
+    if (wizard && draftNeedsNameSafe()) {
+      void persistDraft({ silent: true });
+    }
+    setStep(clamped);
+  };
+
+  function draftNeedsNameSafe() {
+    return (form.getValues("name") ?? "").trim().length > 0;
+  }
 
   const setKind = (type: typeof PT.RTW | typeof PT.BESPOKE) => {
     form.setValue("type", type);
@@ -503,27 +646,56 @@ export function ProductFormPage({
 
   const images = form.watch("images");
   const storeDefaultLead = customDefaults?.leadTimeDays ?? 21;
+  const show = (i: number) => !wizard || step === i;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
+    <div className="mx-auto max-w-4xl space-y-10">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link href="/admin/products" className="text-sm text-[#A8A8A4] hover:text-gold">
+          <Link href="/admin/products" className="font-body text-sm text-choc/60 hover:text-choc">
             ← Products
           </Link>
-          <h1 className="mt-2 font-display text-2xl text-charcoal">
-            {mode === "create" ? "Add new product" : `Edit: ${product?.name}`}
+          <h1 className="mt-3 font-display text-3xl text-choc">
+            {mode === "create" ? "Add a piece" : product?.name}
           </h1>
-          <Link href="/admin/products/guide" className="mt-1 inline-block text-xs text-gold hover:underline">
-            How to fill this page
-          </Link>
+          {wizard ? (
+            <p className="mt-2 max-w-xl font-body text-base text-choc/70">
+              Jump to any step. A draft only needs a name. Photos first — that is the piece.
+            </p>
+          ) : (
+            <p className="mt-2 font-body text-sm text-choc/60">Change one thing and save. No walkthrough.</p>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-4">
+            <Link href="/admin/products/guide" className="font-sans text-xs uppercase tracking-wide text-gold hover:underline">
+              How to fill this page
+            </Link>
+            {wizard && (savedId ?? product?.id) ? (
+              <Link
+                href={`/admin/products/${savedId ?? product?.id}/edit`}
+                className="font-sans text-xs uppercase tracking-wide text-choc/70 hover:text-choc"
+              >
+                Open the full form
+              </Link>
+            ) : null}
+            {!wizard && product?.id ? (
+              <Link
+                href={`/admin/products/${product.id}/edit?wizard=1`}
+                className="font-sans text-xs uppercase tracking-wide text-choc/70 hover:text-choc"
+              >
+                Use the guided view
+              </Link>
+            ) : null}
+            {draftStatus ? <span className="font-body text-xs text-choc/50">{draftStatus}</span> : null}
+          </div>
         </div>
-        <div className="flex gap-2">
-          {mode === "edit" && product?.id ? (
+        <div className="flex flex-wrap gap-2">
+          {(savedId ?? product?.id) ? (
             <button
               type="button"
               onClick={() => {
-                void fetch(`/api/admin/products/${product.id}/duplicate`, { method: "POST" })
+                const id = savedId ?? product?.id;
+                if (!id) return;
+                void fetch(`/api/admin/products/${id}/duplicate`, { method: "POST" })
                   .then(async (r) => {
                     const j = (await r.json()) as { id?: string; error?: string };
                     if (!r.ok || !j.id) throw new Error(j.error ?? "Duplicate failed");
@@ -532,88 +704,42 @@ export function ProductFormPage({
                   })
                   .catch((e: unknown) => toast.error(e instanceof Error ? e.message : "Duplicate failed"));
               }}
-              className="rounded-sm border border-sand px-4 py-2 text-sm text-gold hover:bg-gold/10"
+              className={btnGhost}
             >
               Duplicate
             </button>
           ) : null}
-          <button
-            type="button"
-            onClick={() => void saveDraft()}
-            className="rounded-sm border border-sand px-4 py-2 text-sm text-gold hover:bg-gold/10"
-          >
-            Save draft
-          </button>
-          <button
-            type="button"
-            onClick={() => void publish()}
-            className="rounded-sm bg-wine px-4 py-2 text-sm text-gold hover:bg-wine-hover"
-          >
+          {wizard ? (
+            <button type="button" onClick={() => void saveAndFinishLater()} className={btnGhost}>
+              Save and finish later
+            </button>
+          ) : (
+            <button type="button" onClick={() => void saveDraft()} className={btnGhost}>
+              Save draft
+            </button>
+          )}
+          <button type="button" onClick={() => void publish()} className={btnPrimary}>
             Publish
           </button>
         </div>
       </div>
 
-      <nav className="flex flex-wrap gap-2" aria-label="Form stages">
-        {STEPS.map((s, i) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setStep(i)}
-            className={cn(
-              "rounded-sm border px-3 py-1.5 text-xs",
-              step === i ? "border-wine bg-wine text-gold" : "border-sand text-gold hover:bg-gold/10",
-            )}
-          >
-            {i + 1}. {s.label}
-          </button>
-        ))}
-      </nav>
+      {wizard ? (
+        <ProductWizardRail step={step} onStep={goToStep} snapshot={snapshot} />
+      ) : null}
 
-      <form onSubmit={submit} className="space-y-6">
-        {step === 0 ? (
+      <form onSubmit={submit} className="space-y-8">
+        {show(0) ? (
           <>
-            <section className="rounded-sm border border-sand bg-canvas p-6">
-              <h2 className="font-display text-lg text-gold">The piece</h2>
-              <label className={labelClass}>
-                Product name
-                <Req />
-                <input {...form.register("name", { onBlur: onBlurName })} className={fieldClass} />
-              </label>
-              {form.formState.errors.name && (
-                <p className="mt-1 text-xs text-red-400">{form.formState.errors.name.message}</p>
-              )}
-              <label className={labelClass}>
-                Web address
-                <Opt />
-                <input
-                  {...form.register("slug")}
-                  className={`${fieldClass} font-mono text-sm`}
-                />
-              </label>
-              <p className="mt-1 text-xs text-gold/80">
-                {getPublicAppUrl().replace(/^https?:\/\//, "")}/shop/{slugWatch || "[name]"}
-              </p>
-              <label className={labelClass}>
-                Short description
-                <Opt />
-                <textarea {...form.register("description")} maxLength={200} rows={3} className={fieldClass} />
-              </label>
-              <p className="mt-1 text-xs text-[#A8A8A4]">One or two sentences. Max 200 characters.</p>
-              <label className={labelClass}>
-                Full description
-                <Opt />
-                <textarea {...form.register("details")} rows={8} className={fieldClass} />
-              </label>
-            </section>
-
-            <section className="rounded-sm border border-sand bg-canvas p-6">
-              <h2 className="font-display text-lg text-gold">
+            <section className={sectionClass}>
+              <h2 className="font-display text-2xl text-choc">
                 Photos
                 <Req />
               </h2>
-              <p className="mt-1 text-xs text-[#A8A8A4]">At least one photo before you publish. Drafts can wait.</p>
-              <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-sand px-6 py-10 text-sm text-[#A8A8A4] hover:border-[#F5F5F3]">
+              <p className="mt-2 font-body text-sm text-choc/60">
+                This is the piece. At least one photo before you publish. A draft can wait.
+              </p>
+              <label className="mt-6 flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-sm border border-dashed border-sand px-6 py-12 font-body text-base text-choc/60 hover:border-choc/40">
                 <input
                   type="file"
                   accept="image/*"
@@ -622,43 +748,47 @@ export function ProductFormPage({
                   disabled={uploading}
                   onChange={(e) => void uploadFiles(e.target.files)}
                 />
-                {uploading ? "Uploading…" : "Drop images here or click to upload"}
+                {uploading ? "Uploading…" : "Drop photographs here, or tap to choose"}
               </label>
               <div className="mt-2 max-w-md">
                 <UploadProgressBar value={uploadProgress} />
               </div>
               {form.formState.errors.images && (
-                <p className="mt-2 text-xs text-red-400">{String(form.formState.errors.images.message ?? "")}</p>
+                <p className="mt-2 font-body text-sm text-wine">{String(form.formState.errors.images.message ?? "")}</p>
               )}
-              <div className="mt-4 grid grid-cols-3 gap-3">
+              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {images.map((im, idx) => (
                   <div key={im.id ?? `${im.url}-${idx}`} className="relative rounded-sm border border-sand p-1">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={im.url} alt="" className="h-28 w-full rounded-sm object-cover" />
+                    <img src={im.url} alt="" className="h-36 w-full rounded-sm object-cover" />
                     {isLegacyWordPressImageUrl(im.url) && (
                       <div className="mt-1 space-y-1">
-                        <p className="text-[10px] text-amber-600">⚠ Hosted on old server</p>
-                        {mode === "edit" && im.id && (
+                        <p className="text-[10px] text-amber-700">Hosted on the old server</p>
+                        {(savedId ?? product?.id) && im.id && (
                           <button
                             type="button"
                             disabled={reuploadingId === im.id}
                             onClick={() => void reuploadLegacyImage(idx)}
-                            className="text-[10px] text-gold hover:underline disabled:opacity-50"
+                            className="min-h-[44px] text-xs text-gold hover:underline disabled:opacity-50"
                           >
                             {reuploadingId === im.id ? "Migrating…" : "Re-upload to Cloudinary →"}
                           </button>
                         )}
                       </div>
                     )}
-                    <div className="mt-1 flex justify-between gap-1">
+                    <div className="mt-2 flex min-h-[44px] items-center justify-between gap-1">
                       <button
                         type="button"
                         onClick={() => setPrimary(idx)}
-                        className={cn("text-xs", im.isPrimary ? "text-gold" : "text-[#A8A8A4]")}
+                        className={cn("min-h-[44px] text-sm", im.isPrimary ? "text-gold" : "text-choc/50")}
                       >
-                        {im.isPrimary ? "★ Primary" : "☆ Set primary"}
+                        {im.isPrimary ? "Primary" : "Set as primary"}
                       </button>
-                      <button type="button" className="text-xs text-red-400" onClick={() => void removeImage(idx)}>
+                      <button
+                        type="button"
+                        className="min-h-[44px] text-sm text-wine"
+                        onClick={() => void removeImage(idx)}
+                      >
                         Remove
                       </button>
                     </div>
@@ -667,28 +797,62 @@ export function ProductFormPage({
               </div>
             </section>
 
-            <section className="rounded-sm border border-sand bg-canvas p-6">
-              <h2 className="font-display text-lg text-gold">
+            <section className={sectionClass}>
+              <h2 className="font-display text-2xl text-choc">The piece</h2>
+              <label className={labelClass}>
+                Name
+                <Req />
+                <input {...form.register("name", { onBlur: onBlurName })} className={fieldClass} />
+              </label>
+              {form.formState.errors.name && (
+                <p className="mt-1 font-body text-sm text-wine">{form.formState.errors.name.message}</p>
+              )}
+              <label className={labelClass}>
+                Short description
+                <Opt />
+                <textarea {...form.register("description")} maxLength={200} rows={3} className={fieldClass} />
+              </label>
+              <p className="mt-1 font-body text-xs text-choc/50">One or two sentences. Max 200 characters.</p>
+              <label className={labelClass}>
+                Full description
+                <Opt />
+                <textarea {...form.register("details")} rows={8} className={fieldClass} />
+              </label>
+              <details className="mt-8 border-t border-sand pt-6">
+                <summary className="cursor-pointer font-display text-xl text-choc">Advanced</summary>
+                <label className={labelClass}>
+                  Web address
+                  <Opt />
+                  <input {...form.register("slug")} className={`${fieldClass} font-mono text-sm`} />
+                </label>
+                <p className="mt-1 font-body text-xs text-choc/50">
+                  {getPublicAppUrl().replace(/^https?:\/\//, "")}/shop/{slugWatch || "from-the-name"}
+                </p>
+              </details>
+            </section>
+
+            <section className={sectionClass}>
+              <h2 className="font-display text-2xl text-choc">
                 Colours
                 <Opt />
               </h2>
               <button
                 type="button"
-                className="mt-3 rounded-sm border border-sand px-3 py-1 text-xs text-gold"
+                className={`${btnGhost} mt-4`}
                 onClick={() => appendColor({ name: "New", hex: "#000000", imageUrl: null })}
               >
-                + Add colour
+                Add colour
               </button>
               <div className="mt-4 space-y-3">
                 {colorFields.map((field, i) => (
                   <div key={field.id} className="flex flex-wrap items-end gap-2">
                     <input
                       {...form.register(`colors.${i}.name`)}
-                      className="min-w-[100px] flex-1 rounded-sm border border-sand bg-canvas px-2 py-1 text-sm text-charcoal"
+                      className="min-h-[44px] min-w-[100px] flex-1 rounded-sm border border-sand bg-cream px-3 py-2 font-body text-sm text-choc"
                       placeholder="Name"
                     />
-                    <input type="color" {...form.register(`colors.${i}.hex`)} className="h-9 w-12 cursor-pointer bg-transparent" />
-                    <label className="cursor-pointer rounded-sm border border-sand px-2 py-1 text-xs text-gold">
+                    <input type="color" {...form.register(`colors.${i}.hex`)} className="h-11 w-12 cursor-pointer bg-transparent" />
+                    <label className={`${btnGhost} cursor-pointer`}>
                       {colorUploading === i ? "Uploading…" : form.watch(`colors.${i}.imageUrl`) ? "Replace photo" : "Upload photo"}
                       <input
                         type="file"
@@ -698,7 +862,7 @@ export function ProductFormPage({
                         onChange={(e) => void uploadColorFile(i, e.target.files?.[0])}
                       />
                     </label>
-                    <button type="button" className="text-red-400" onClick={() => removeColor(i)}>
+                    <button type="button" className="min-h-[44px] min-w-[44px] text-wine" onClick={() => removeColor(i)}>
                       ×
                     </button>
                   </div>
@@ -708,9 +872,9 @@ export function ProductFormPage({
           </>
         ) : null}
 
-        {step === 1 ? (
-          <section className="rounded-sm border border-sand bg-canvas p-6">
-            <h2 className="font-display text-lg text-gold">Sizes and prices</h2>
+        {show(1) ? (
+          <section className={sectionClass}>
+            <h2 className="font-display text-2xl text-choc">Sizes and prices</h2>
             <label className={labelClass}>
               Price in naira
               <Req />
@@ -752,7 +916,7 @@ export function ProductFormPage({
             ) : null}
             <p className="mt-4 text-xs uppercase tracking-wide text-[#A8A8A4]">
               Sizes
-              <Req />
+              {categoryNeedsSizes(form.watch("category")) ? <Req /> : <Opt />}
             </p>
             <Controller
               control={form.control}
@@ -764,12 +928,16 @@ export function ProductFormPage({
                   onChange={field.onChange}
                   basePriceNGN={basePriceWatch}
                   isOnSale={Boolean(isOnSaleWatch)}
-                  onRegenerate={mode === "edit" ? regenerateSkus : undefined}
+                  onRegenerate={(savedId ?? product?.id) ? regenerateSkus : undefined}
                 />
               )}
             />
             {form.formState.errors.variants && (
-              <p className="mt-2 text-xs text-red-400">Add at least one size with a price.</p>
+              <p className="mt-2 text-xs text-red-400">
+                {categoryNeedsSizes(form.getValues("category"))
+                  ? "Add at least one size with a price."
+                  : "Enter a price before publishing."}
+              </p>
             )}
             {form.formState.errors.basePriceNGN && (
               <p className="mt-2 text-xs text-red-400">Enter a naira price.</p>
@@ -785,10 +953,10 @@ export function ProductFormPage({
           </section>
         ) : null}
 
-        {step === 2 ? (
+        {show(2) ? (
           <>
-            <section className="rounded-sm border border-sand bg-canvas p-6">
-              <h2 className="font-display text-lg text-gold">Custom measurements</h2>
+            <details className={sectionClass}>
+              <summary className="cursor-pointer font-display text-2xl text-choc">Custom measurements</summary>
               <p className="mt-1 text-xs text-[#A8A8A4]">Made to order. Does not take stock.</p>
               <Controller
                 control={form.control}
@@ -907,11 +1075,11 @@ export function ProductFormPage({
                   </ul>
                 </div>
               ) : null}
-            </section>
+            </details>
 
-            <details className="rounded-sm border border-sand bg-canvas p-6">
-              <summary className="cursor-pointer font-display text-lg text-gold">Delivery details</summary>
-              <p className="mt-2 text-xs text-[#A8A8A4]">Most pieces use the store default box. Fill this only if this garment packs differently.</p>
+            <details className={sectionClass}>
+              <summary className="cursor-pointer font-display text-2xl text-choc">Delivery details</summary>
+              <p className="mt-2 font-body text-sm text-choc/60">Most pieces use the store default box. Fill this only if this garment packs differently.</p>
               <div className="mt-4 grid gap-4 sm:grid-cols-4">
                 <label className="text-xs uppercase text-[#A8A8A4]">
                   Weight kg
@@ -934,11 +1102,13 @@ export function ProductFormPage({
           </>
         ) : null}
 
-        {step === 3 ? (
+        {show(3) ? (
           <>
-            <section className="rounded-sm border border-sand bg-canvas p-6">
-              <h2 className="font-display text-lg text-gold">Publishing</h2>
-              <p className="mt-1 text-xs text-[#A8A8A4]">Use Save draft or Publish at the top. Drafts stay off the shop.</p>
+            <section className={sectionClass}>
+              <h2 className="font-display text-2xl text-choc">Publishing</h2>
+              <p className="mt-2 font-body text-sm text-choc/60">
+                Drafts stay off the shop. Collections are chosen on the collection page.
+              </p>
               <label className={labelClass}>
                 Category
                 <select {...form.register("category")} className={fieldClass}>
@@ -1018,8 +1188,8 @@ export function ProductFormPage({
               )}
             </section>
 
-            <section className="rounded-sm border border-sand bg-canvas p-6">
-              <h2 className="font-display text-lg text-gold">
+            <section className={sectionClass}>
+              <h2 className="font-display text-2xl text-choc">
                 Complete the Look
                 <Opt />
               </h2>
@@ -1086,8 +1256,8 @@ export function ProductFormPage({
               </div>
             </section>
 
-            <details className="rounded-sm border border-sand bg-canvas p-6">
-              <summary className="cursor-pointer font-display text-lg text-gold">How this looks on Google</summary>
+            <details className={sectionClass}>
+              <summary className="cursor-pointer font-display text-2xl text-choc">How this looks on Google</summary>
               <p className="mt-2 text-xs text-[#A8A8A4]">Leave blank to use the product name and short description.</p>
               <label className="mt-3 block text-xs uppercase text-[#A8A8A4]">
                 Title
@@ -1101,33 +1271,36 @@ export function ProductFormPage({
           </>
         ) : null}
 
-        <div className="flex justify-between">
+        {wizard ? (
+        <div className="flex justify-between gap-3">
           <button
             type="button"
             disabled={step === 0}
-            onClick={() => setStep((s) => Math.max(0, s - 1))}
-            className="rounded-sm border border-sand px-4 py-2 text-sm text-gold disabled:opacity-30"
+            onClick={() => goToStep(step - 1)}
+            className={btnGhost}
           >
             Back
           </button>
           {step < STEPS.length - 1 ? (
-            <button
-              type="button"
-              onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
-              className="rounded-sm bg-wine px-4 py-2 text-sm text-gold hover:bg-wine-hover"
-            >
+            <button type="button" onClick={() => goToStep(step + 1)} className={btnPrimary}>
               Next
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={() => void saveDraft()}
-              className="rounded-sm border border-sand px-4 py-2 text-sm text-gold hover:bg-gold/10"
-            >
-              Save draft
+            <button type="button" onClick={() => void saveAndFinishLater()} className={btnGhost}>
+              Save and finish later
             </button>
           )}
         </div>
+        ) : (
+        <div className="flex justify-end gap-3">
+          <button type="button" onClick={() => void saveDraft()} className={btnGhost}>
+            Save draft
+          </button>
+          <button type="button" onClick={() => void publish()} className={btnPrimary}>
+            Publish
+          </button>
+        </div>
+        )}
       </form>
     </div>
   );

@@ -65,7 +65,7 @@ export function ConsultantFormPage({ consultantId }: { consultantId: string }) {
         name: c.name,
         title: c.title,
         bio: c.bio,
-        image: c.image ?? undefined,
+        image: c.image,
         isActive: c.isActive,
         isFlagship: c.isFlagship,
         displayOrder: c.displayOrder,
@@ -155,7 +155,7 @@ export function ConsultantFormPage({ consultantId }: { consultantId: string }) {
           <input
             className="mt-1 w-full rounded-sm border border-[#444] bg-[#1e1e1e] px-2 py-2 text-sm"
             value={form.image ?? ""}
-            onChange={(e) => setForm({ ...form, image: e.target.value || undefined })}
+            onChange={(e) => setForm({ ...form, image: e.target.value || null })}
           />
         </label>
         <label className="flex items-center gap-2 text-sm">

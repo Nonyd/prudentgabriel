@@ -13,12 +13,13 @@ import { awardStyleProfilePoints } from "@/lib/points";
 import { getTierThresholds, tierFromPoints, pointsToNextTier, nextTier, TIER_LABELS } from "@/lib/loyalty";
 import { prisma } from "@/lib/prisma";
 import { logActivity, logError } from "@/lib/logger";
+import { emptyableStoredPublicMediaUrlSchema } from "@/lib/media/stored-url";
 
 const patchSchema = z.object({
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
   phone: z.string().optional(),
-  image: z.string().url().optional().or(z.literal("")),
+  image: emptyableStoredPublicMediaUrlSchema,
   preferredSilhouettes: z.array(z.string()).optional(),
   preferredColors: z.array(z.string()).optional(),
   occasions: z.array(z.string()).optional(),

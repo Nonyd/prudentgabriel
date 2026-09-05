@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { storedMediaUrlSchema } from "@/lib/media/stored-url";
 
 export const bespokeRequestSchema = z.object({
   name: z.string().min(2),
@@ -10,7 +11,7 @@ export const bespokeRequestSchema = z.object({
   description: z.string().min(20),
   budgetRange: z.string().min(1),
   timeline: z.string().min(1),
-  referenceImages: z.array(z.string().url()).max(5).optional().default([]),
+  referenceImages: z.array(storedMediaUrlSchema).max(5).optional().default([]),
   measurements: z
     .object({
       bust: z.string().optional(),

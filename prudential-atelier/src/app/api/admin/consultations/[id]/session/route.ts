@@ -7,10 +7,11 @@ import { createNotification } from "@/lib/notifications";
 import { sendConsultationSessionSummaryEmail } from "@/lib/email";
 import { notifyMoodboardReady } from "@/lib/customer-notifications";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { storedPrivateMediaUrlSchema } from "@/lib/media/stored-url";
 
 const bodySchema = z.object({
   sessionNotes: z.string().max(20000).optional(),
-  moodboardImages: z.array(z.string().url()).max(20).optional(),
+  moodboardImages: z.array(storedPrivateMediaUrlSchema).max(20).optional(),
   moodboardNotes: z.string().max(5000).optional(),
   status: z.nativeEnum(ConsultationStatus).optional(),
 });

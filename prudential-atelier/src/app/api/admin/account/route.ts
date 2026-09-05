@@ -4,10 +4,11 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { requireAdminPortalApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { emptyableStoredPublicMediaUrlSchema } from "@/lib/media/stored-url";
 
 const patchSchema = z.object({
   name: z.string().min(1).max(120).optional(),
-  image: z.string().url().optional().or(z.literal("")),
+  image: emptyableStoredPublicMediaUrlSchema,
   email: z.string().email().optional(),
   currentPassword: z.string().min(1).optional(),
 });
