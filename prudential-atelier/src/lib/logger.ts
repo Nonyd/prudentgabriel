@@ -15,6 +15,7 @@ export async function logActivity(params: {
   recordId?: string;
   recordType?: string;
   ipAddress?: string;
+  snapshot?: unknown;
 }): Promise<void> {
   try {
     let impersonatedUserId = params.impersonatedUserId;
@@ -47,6 +48,7 @@ export async function logActivity(params: {
         recordId: params.recordId,
         recordType: params.recordType,
         ipAddress: params.ipAddress,
+        snapshot: params.snapshot === undefined ? undefined : (params.snapshot as object),
       },
     });
   } catch (error) {

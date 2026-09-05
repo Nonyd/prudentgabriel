@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { cascadeDeletionsInPeriod } from "@/lib/product-cascade-delete";
 import {
   classifyPayments,
   combinedTotals,
@@ -141,6 +142,11 @@ export function linesInRange(lines: ClassifiedLine[], from: Date, to: Date): Cla
   return lines.filter((l) => inRange(l.at, from, to));
 }
 
+export type FinanceDeletionsNote = {
+  paymentCount: number;
+  logIds: string[];
+};
+
 export type FinanceReport = {
   from: string;
   to: string;
@@ -154,12 +160,14 @@ export type FinanceReport = {
   pointsOutstanding: number;
   pointsRateNGN: number;
   asOf: string;
+  deletions: FinanceDeletionsNote;
 };
 
 export function reportFromLines(lines: ClassifiedLine[], from: Date, to: Date, extra?: {
   pointsOutstanding?: number;
   pointsRateNGN?: number;
   asOf?: Date;
+  deletions?: FinanceDeletionsNote;
 }): FinanceReport {
   const rtw = totalsFor(lines, "RTW");
   const atelier = totalsFor(lines, "ATELIER");
@@ -186,6 +194,7 @@ export function reportFromLines(lines: ClassifiedLine[], from: Date, to: Date, e
     pointsOutstanding,
     pointsRateNGN,
     asOf: asOf.toISOString(),
+    deletions: extra?.deletions ?? { paymentCount: 0, logIds: [] },
   };
 }
 
@@ -195,8 +204,12 @@ export async function buildFinanceReport(from: Date, to: Date, line?: FinanceLin
   if (line === "RTW" || line === "ATELIER") {
     classified = classified.filter((r) => r.businessLine === line);
   }
-  const [pointsOutstanding, pointsRateNGN] = await Promise.all([outstandingPointsTotal(), getPointRateNGN()]);
-  return reportFromLines(classified, from, to, { pointsOutstanding, pointsRateNGN, asOf: new Date() });
+  const [pointsOutstanding, pointsRateNGN, deletions] = await Promise.all([
+    outstandingPointsTotal(),
+    getPointRateNGN(),
+    cascadeDeletionsInPeriod(from, to),
+  ]);
+  return reportFromLines(classified, from, to, { pointsOutstanding, pointsRateNGN, asOf: new Date(), deletions });
 }
 
 export async function bestSellingPieces(from: Date, to: Date, take = 8): Promise<{ name: string; quantity: number; salesNGN: number }[]> {

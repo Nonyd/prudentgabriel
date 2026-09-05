@@ -1625,6 +1625,8 @@ model ActivityLog {
   description        String
   recordId           String?
   recordType         String?
+  /// Structured payload for irreversible deletes (product cascade). Not a sentence.
+  snapshot           Json?
   ipAddress          String?
   createdAt          DateTime       @default(now())
 

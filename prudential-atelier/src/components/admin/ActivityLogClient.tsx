@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -16,22 +17,26 @@ type ActivityRow = {
   module: string;
   description: string;
   recordId: string | null;
+  snapshot?: unknown;
 };
 
 export function ActivityLogClient() {
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<ActivityRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [module, setModule] = useState("all");
-  const [action, setAction] = useState("all");
+  const [module, setModule] = useState(searchParams.get("module") || "all");
+  const [action, setAction] = useState(searchParams.get("action") || "all");
+  const recordType = searchParams.get("recordType")?.trim() || "";
 
   const refresh = useCallback(async () => {
     const params = new URLSearchParams({ page: String(page), limit: "50" });
     if (search) params.set("search", search);
     if (module !== "all") params.set("module", module);
     if (action !== "all") params.set("action", action);
+    if (recordType) params.set("recordType", recordType);
     const res = await fetch(`/api/logs/activity?${params}`);
     if (!res.ok) {
       toast.error("Failed to load activity logs");
@@ -41,7 +46,7 @@ export function ActivityLogClient() {
     setItems(data.items);
     setTotal(data.total);
     setLoading(false);
-  }, [page, search, module, action]);
+  }, [page, search, module, action, recordType]);
 
   useEffect(() => {
     const t = setTimeout(() => void refresh(), 300);
@@ -159,7 +164,17 @@ export function ActivityLogClient() {
                       </Badge>
                     </td>
                     <td className="px-4 py-3 font-sans text-xs">{row.module}</td>
-                    <td className="px-4 py-3 font-sans text-sm text-text-mid">{row.description}</td>
+                    <td className="px-4 py-3 font-sans text-sm text-text-mid">
+                      <p>{row.description}</p>
+                      {row.snapshot ? (
+                        <details className="mt-1">
+                          <summary className="cursor-pointer text-xs text-olive">Snapshot</summary>
+                          <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap font-mono text-[10px] text-text-mid">
+                            {JSON.stringify(row.snapshot, null, 2)}
+                          </pre>
+                        </details>
+                      ) : null}
+                    </td>
                   </tr>
                 ))}
               </tbody>

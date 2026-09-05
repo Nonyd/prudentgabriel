@@ -7,7 +7,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ProductCategory, ProductType } from "@prisma/client";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
-import { AlertDialog } from "@/components/ui/AlertDialog";
+import { ProductCascadeDialog } from "@/components/admin/ProductCascadeDialog";
+import type { ProductCascadePreview } from "@/lib/product-cascade-copy";
 import { Toggle } from "@/components/ui/Toggle";
 
 export type ProductRow = {
@@ -69,6 +70,9 @@ export function ProductsTable({
   const [search, setSearch] = useState(initialSearch);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleteState, setDeleteState] = useState<DeleteState>(null);
+  const [deletePreview, setDeletePreview] = useState<ProductCascadePreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingPrice, setEditingPrice] = useState<Record<string, string>>({});
 
@@ -147,33 +151,65 @@ export function ProductsTable({
     router.refresh();
   };
 
-  const runDelete = async () => {
+  const openDelete = async (next: NonNullable<DeleteState>) => {
+    setDeleteState(next);
+    setDeletePreview(null);
+    setDeleteError(null);
+    setPreviewLoading(true);
+    try {
+      const ids = next.mode === "single" ? [next.id] : next.ids;
+      const res = await fetch("/api/admin/products/cascade/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ ids }),
+      });
+      const data = (await res.json()) as ProductCascadePreview & { error?: string };
+      if (!res.ok) {
+        setDeleteError(data.error ?? "Could not check what is attached");
+        return;
+      }
+      setDeletePreview(data);
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : "Could not check what is attached");
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const runDelete = async (confirmation?: string) => {
     if (!deleteState) return;
     setIsDeleting(true);
+    setDeleteError(null);
     try {
       const ids = deleteState.mode === "single" ? [deleteState.id] : deleteState.ids;
-      for (const id of Array.from(ids)) {
-        const res = await fetch(`/api/admin/products/${id}`, {
-          method: "DELETE",
-          credentials: "include",
-        });
-        let data: { error?: string } = {};
-        try {
-          data = (await res.json()) as { error?: string };
-        } catch {
-          data = {};
-        }
-        if (!res.ok) {
-          toast.error(data.error ?? "Delete failed");
-          return;
-        }
+      const res = await fetch("/api/admin/products/cascade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ ids, confirmation }),
+      });
+      let data: { error?: string; deleted?: number } = {};
+      try {
+        data = (await res.json()) as { error?: string; deleted?: number };
+      } catch {
+        data = {};
       }
-      toast.success(deleteState.mode === "single" ? "Product deleted" : `${ids.length} products deleted`);
+      if (!res.ok) {
+        setDeleteError(data.error ?? "Delete failed");
+        return;
+      }
+      toast.success(
+        deleteState.mode === "single"
+          ? "Product deleted"
+          : `${data.deleted ?? ids.length} products deleted`,
+      );
       setSelected(new Set());
       setDeleteState(null);
+      setDeletePreview(null);
       router.refresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Delete failed");
+      setDeleteError(e instanceof Error ? e.message : "Delete failed");
     } finally {
       setIsDeleting(false);
     }
@@ -218,24 +254,22 @@ export function ProductsTable({
     router.refresh();
   };
 
-  const deleteDescription =
-    deleteState?.mode === "single"
-      ? `Are you sure you want to delete "${deleteState.name}"? This cannot be undone.`
-      : deleteState?.mode === "bulk"
-        ? `Delete ${deleteState.ids.length} products? This cannot be undone.`
-        : "";
-
   return (
     <div className="space-y-4">
-      <AlertDialog
+      <ProductCascadeDialog
         open={deleteState !== null}
-        onOpenChange={(o) => !o && setDeleteState(null)}
-        title={deleteState?.mode === "bulk" ? "Delete products" : "Delete Product"}
-        description={deleteDescription}
-        variant="danger"
-        confirmLabel={deleteState?.mode === "bulk" ? "Delete selected" : "Delete Product"}
-        onConfirm={runDelete}
-        loading={isDeleting}
+        preview={deletePreview}
+        loadingPreview={previewLoading}
+        submitting={isDeleting}
+        error={deleteError}
+        onOpenChange={(o) => {
+          if (!o) {
+            setDeleteState(null);
+            setDeletePreview(null);
+            setDeleteError(null);
+          }
+        }}
+        onConfirm={(confirmation) => void runDelete(confirmation)}
       />
 
       <div className="flex flex-wrap items-center gap-3 rounded-sm border border-sand bg-canvas p-4">
@@ -326,7 +360,7 @@ export function ProductsTable({
           <button
             type="button"
             className="rounded-sm border border-red-300/60 bg-red-900/30 px-3 py-1 text-xs font-medium text-white hover:bg-red-900/50"
-            onClick={() => setDeleteState({ mode: "bulk", ids: Array.from(selected) })}
+            onClick={() => void openDelete({ mode: "bulk", ids: Array.from(selected) })}
           >
             Delete selected
           </button>
@@ -483,7 +517,7 @@ export function ProductsTable({
                   <button
                     type="button"
                     className="ml-3 text-red-400 hover:underline"
-                    onClick={() => setDeleteState({ mode: "single", id: p.id, name: p.name })}
+                    onClick={() => void openDelete({ mode: "single", id: p.id, name: p.name })}
                   >
                     Delete
                   </button>

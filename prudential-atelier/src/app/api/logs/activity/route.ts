@@ -20,11 +20,13 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, Number.parseInt(searchParams.get("page") ?? "1", 10) || 1);
     const limit = Math.min(100, Math.max(1, Number.parseInt(searchParams.get("limit") ?? "50", 10) || 50));
 
+    const recordType = searchParams.get("recordType")?.trim();
     const where: Prisma.ActivityLogWhereInput = {};
     if (moduleFilter && moduleFilter !== "all") where.module = moduleFilter;
     if (action && action !== "all" && ACTIONS.has(action)) {
       where.action = action as ActivityAction;
     }
+    if (recordType) where.recordType = recordType;
     if (search) {
       where.OR = [
         { description: { contains: search, mode: "insensitive" } },

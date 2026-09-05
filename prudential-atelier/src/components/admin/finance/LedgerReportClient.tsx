@@ -18,6 +18,7 @@ type Report = {
   pointsOutstanding: number;
   pointsRateNGN: number;
   asOf: string;
+  deletions?: { paymentCount: number; logIds: string[] };
 };
 
 function naira(n: number) {
@@ -138,6 +139,18 @@ export function LedgerReportClient() {
             <p className="border border-red-200 bg-red-50 px-3 py-2 font-sans text-sm text-red-800">
               {data.unassigned.length} row{data.unassigned.length === 1 ? "" : "s"} resolve to neither line or to both. They are listed
               and kept out of Ready-to-wear + Atelier.
+            </p>
+          ) : null}
+          {(data.deletions?.paymentCount ?? 0) > 0 ? (
+            <p className="border border-amber-200 bg-amber-50 px-3 py-2 font-sans text-sm text-amber-950">
+              {data.deletions!.paymentCount} {data.deletions!.paymentCount === 1 ? "record was" : "records were"} deleted from this
+              period.{" "}
+              <Link
+                href={`/admin/logs/activity?module=shop.products&action=DELETE&recordType=product-cascade-delete`}
+                className="underline"
+              >
+                Open the log entries
+              </Link>
             </p>
           ) : null}
           <div className="overflow-x-auto border border-sand">
