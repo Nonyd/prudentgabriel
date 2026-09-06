@@ -60,15 +60,9 @@ export function HeroSectionClient({
           </div>
         </motion.div>
 
-        <motion.div
-          className="relative order-1 min-h-[420px] w-full min-w-0 overflow-visible md:min-h-[600px] lg:order-none"
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          viewport={{ once: true, margin: "-80px" }}
-        >
+        <div className="relative order-1 min-h-[420px] w-full min-w-0 overflow-visible md:min-h-[600px] lg:order-none">
           <HeroCarousel items={carouselItems} />
-        </motion.div>
+        </div>
       </div>
     </section>
   );

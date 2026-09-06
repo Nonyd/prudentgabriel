@@ -46,6 +46,12 @@ function run() {
   assert(glass.includes("hero-copy-scrim"), "hero copy has a scrim under the glass panel");
   assert(hero.includes("glass-1"), "hero copy sits on glass-1");
   assert(hero.includes("hero-copy-scrim"), "hero mounts the scrim");
+  assert(hero.includes("<HeroCarousel items={carouselItems} />"), "hero mounts the carousel");
+  assert(!hero.includes("initial={{ y: 28 }}"), "hero carousel is not translated on mount (iOS blocks that autoplay)");
+  const carousel = src("src/components/sections/HeroCarousel.tsx");
+  assert(carousel.includes("webkit-playsinline"), "hero video sets webkit-playsinline for iPhone");
+  assert(carousel.includes("Play video"), "hero offers tap-to-play when autoplay is blocked");
+  assert(carousel.includes("if (!isCenter)"), "only the center slide mounts a <video>");
   assert(!hero.includes("className=\"eyebrow"), "hero dropped the tracked eyebrow");
   assert(!hero.includes("bg-hero-bg"), "hero is not a choc slab");
 

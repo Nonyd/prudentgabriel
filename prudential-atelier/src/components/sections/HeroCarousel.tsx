@@ -69,6 +69,15 @@ function heroPlaybackUrl(url: string): string {
   return url.replace("/video/upload/", "/video/upload/f_mp4,q_auto,vc_h264/");
 }
 
+function armInlineMuted(video: HTMLVideoElement) {
+  video.muted = true;
+  video.defaultMuted = true;
+  video.playsInline = true;
+  video.setAttribute("playsinline", "true");
+  video.setAttribute("webkit-playsinline", "true");
+  video.setAttribute("muted", "");
+}
+
 function CarouselMedia({
   item,
   isCenter,
@@ -83,106 +92,119 @@ function CarouselMedia({
   onVideoEnded: () => void;
 }) {
   const localRef = useRef<HTMLVideoElement>(null);
+  const endedRef = useRef(onVideoEnded);
+  const mutedRef = useRef(isMuted);
+  const [needsTap, setNeedsTap] = useState(false);
+  endedRef.current = onVideoEnded;
+  mutedRef.current = isMuted;
 
   useEffect(() => {
+    if (item.type !== "video" || !isCenter) return;
     const video = localRef.current;
-    if (item.type !== "video" || !video) return;
+    if (!video) return;
 
-    video.playsInline = true;
-    video.defaultMuted = true;
-    video.setAttribute("playsinline", "true");
-    video.setAttribute("webkit-playsinline", "true");
-    video.setAttribute("muted", "");
-
-    if (isCenter && videoRef) {
+    armInlineMuted(video);
+    if (videoRef) {
       (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = video;
-    }
-
-    if (!isCenter) {
-      video.pause();
-      try {
-        video.currentTime = 0;
-      } catch {
-        /* not loaded yet */
-      }
-      return;
     }
 
     let cancelled = false;
     let started = false;
-    let attempts = 0;
-    const retryIds: number[] = [];
 
     const playNow = () => {
-      if (cancelled || attempts > 12) return;
-      video.muted = true;
-      video.defaultMuted = true;
+      if (cancelled) return;
+      armInlineMuted(video);
       const attempt = video.play();
-      if (attempt) {
-        void attempt
-          .then(() => {
-            started = true;
-            video.muted = isMuted;
-          })
-          .catch(() => {
-            attempts += 1;
-            if (!cancelled && attempts <= 12) retryIds.push(window.setTimeout(playNow, 280));
-          });
-      }
+      if (!attempt) return;
+      void attempt
+        .then(() => {
+          if (cancelled) return;
+          started = true;
+          setNeedsTap(false);
+          video.muted = mutedRef.current;
+        })
+        .catch((err: unknown) => {
+          if (cancelled) return;
+          const name = err instanceof Error ? err.name : "";
+          if (name === "AbortError") return;
+          setNeedsTap(true);
+        });
     };
 
-    const onReady = () => playNow();
-    const onPlaying = () => {
-      started = true;
-    };
     const onEnded = () => {
-      if (started && !cancelled) onVideoEnded();
+      if (started && !cancelled) endedRef.current();
     };
 
-    video.addEventListener("canplay", onReady);
-    video.addEventListener("loadeddata", onReady);
-    video.addEventListener("playing", onPlaying);
     video.addEventListener("ended", onEnded);
-    playNow();
-    retryIds.push(window.setTimeout(playNow, 120));
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) playNow();
-      },
-      { threshold: 0.2 },
-    );
-    io.observe(video);
-
+    const raf = window.requestAnimationFrame(playNow);
     const safetyTimer = window.setTimeout(() => {
-      if (!cancelled) onVideoEnded();
+      if (!cancelled) endedRef.current();
     }, VIDEO_MAX_MS);
 
     return () => {
       cancelled = true;
-      io.disconnect();
-      retryIds.forEach((id) => window.clearTimeout(id));
-      video.removeEventListener("canplay", onReady);
-      video.removeEventListener("loadeddata", onReady);
-      video.removeEventListener("playing", onPlaying);
+      window.cancelAnimationFrame(raf);
       video.removeEventListener("ended", onEnded);
       window.clearTimeout(safetyTimer);
       video.pause();
     };
-  }, [isCenter, isMuted, item.type, item.url, onVideoEnded, videoRef]);
+  }, [isCenter, item.type, item.url, videoRef]);
+
+  useEffect(() => {
+    const video = localRef.current;
+    if (video) video.muted = isMuted;
+  }, [isMuted]);
+
+  const unlock = () => {
+    const video = localRef.current;
+    if (!video) return;
+    armInlineMuted(video);
+    void video.play().then(() => {
+      setNeedsTap(false);
+      video.muted = mutedRef.current;
+    });
+  };
 
   if (item.type === "video") {
+    if (!isCenter) {
+      return <div className="absolute inset-0 bg-choc" aria-hidden />;
+    }
     return (
-      <video
-        ref={localRef}
-        src={heroPlaybackUrl(item.url)}
-        muted
-        playsInline
-        autoPlay={isCenter}
-        preload={isCenter ? "auto" : "metadata"}
-        disablePictureInPicture
-        className="absolute inset-0 h-full w-full object-cover"
-      />
+      <>
+        <video
+          ref={localRef}
+          src={heroPlaybackUrl(item.url)}
+          muted
+          playsInline
+          autoPlay
+          preload="auto"
+          disablePictureInPicture
+          controls={false}
+          className="absolute inset-0 h-full w-full object-cover"
+          {...{ "webkit-playsinline": "true" }}
+        />
+        {needsTap ? (
+          <button
+            type="button"
+            onClick={unlock}
+            aria-label="Play video"
+            className="absolute inset-0 z-[15] flex items-center justify-center"
+          >
+            <span
+              className="flex h-14 w-14 items-center justify-center rounded-full"
+              style={{
+                background: "rgba(0,0,0,0.5)",
+                border: "0.5px solid rgba(226,209,194,0.2)",
+                color: "#E2D1C2",
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" aria-hidden>
+                <path d="M4 2.5v13l11-6.5L4 2.5z" />
+              </svg>
+            </span>
+          </button>
+        ) : null}
+      </>
     );
   }
 
