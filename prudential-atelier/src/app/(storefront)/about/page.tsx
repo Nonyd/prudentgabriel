@@ -65,10 +65,6 @@ const HERO_STRIP_IMAGES = [
   "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80",
 ];
 
-function Eyebrow() {
-  return null;
-}
-
 export default async function AboutPage() {
   let cms: Record<string, string> = {};
   let storyHero = "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1400&q=80";
@@ -157,7 +153,6 @@ export default async function AboutPage() {
           <Image src={storyImage} alt="Prudential Atelier" fill className="object-cover object-top" sizes="(max-width:1024px) 100vw, 50vw" />
         </div>
         <div>
-          <Eyebrow>{cmsGet(cms, "about_story_eyebrow", "OUR STORY")}</Eyebrow>
           <h2
             className="mt-3"
             style={{
@@ -288,9 +283,8 @@ export default async function AboutPage() {
       </section>
 
       {/* Values */}
-      <section className="bg-cream px-6 py-20 lg:px-10">
+      <section className="px-6 py-20 lg:px-10">
         <div className="mx-auto max-w-site text-center">
-          <Eyebrow>{cmsGet(cms, "about_values_eyebrow", "WHAT WE STAND FOR")}</Eyebrow>
           <h2
             className="mt-3"
             style={{
@@ -337,7 +331,6 @@ export default async function AboutPage() {
       {/* Locations */}
       <section className="px-6 py-20 lg:px-10">
         <div className="mx-auto max-w-site text-center">
-          <Eyebrow>{cmsGet(cms, "about_locations_eyebrow", "OUR ATELIERS")}</Eyebrow>
           <h2
             className="mt-3"
             style={{
