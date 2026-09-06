@@ -1,5 +1,4 @@
 import { unstable_cache } from "next/cache";
-import { prisma } from "@/lib/prisma";
 import { getCMSContent } from "@/lib/cms";
 import { isMaintenanceEnabled } from "@/lib/maintenance";
 
@@ -27,11 +26,9 @@ export const getNavCollections = unstable_cache(
   async () => {
     if (process.env.SKIP_DB_BUILD === "1") return [] as { name: string; slug: string }[];
     try {
-      return prisma.collection.findMany({
-        where: { isPublished: true },
-        orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
-        select: { name: true, slug: true },
-      });
+      const { listLivePublishedCollections } = await import("@/lib/live-collections");
+      const live = await listLivePublishedCollections();
+      return live.map(({ collection }) => ({ name: collection.name, slug: collection.slug }));
     } catch {
       return [];
     }

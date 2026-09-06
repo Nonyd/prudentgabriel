@@ -14,6 +14,7 @@ const ANNOUNCEMENT_KEYS = ["announcement_bar_enabled", "announcement_bar_message
 const FOOTER_KEYS = [
   "footer_tagline",
   "footer_house_links",
+  "footer_shop_links",
   "footer_client_links",
   "footer_newsletter_headline",
   "footer_newsletter_placeholder",

@@ -8,7 +8,7 @@ export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Shop | Prudent Gabriel",
-  description: "Everything the house sells — ready-to-wear, bridal, and kids.",
+  description: "Everything the house sells — ready-to-wear, bridal, kids, and accessories.",
 };
 
 function flattenSearchParams(sp: Record<string, string | string[] | undefined>) {

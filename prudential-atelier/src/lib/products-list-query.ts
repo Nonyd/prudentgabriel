@@ -3,9 +3,18 @@ import { prisma } from "@/lib/prisma";
 import type { ProductListItem } from "@/types/product";
 import { derivedCatalogMinNGN } from "@/lib/pricing";
 import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
+import { publishedProductIdsForCollection } from "@/lib/collection-products";
 
 const CATEGORIES = new Set(Object.values(ProductCategory));
 const TYPES = new Set(["RTW", "BESPOKE"] as const);
+
+function parseCategoryList(raw: string | null): ProductCategory[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s): s is ProductCategory => CATEGORIES.has(s as ProductCategory));
+}
 
 export function parseIntParam(v: string | null, def: number, max?: number): number {
   const n = v ? parseInt(v, 10) : def;
@@ -27,9 +36,10 @@ export async function queryProductList(
   hasPrev: boolean;
 }> {
   const categoryParam = searchParams.get("category");
-  const excludeCategoryParam = searchParams.get("excludeCategory");
+  const excludeCategories = parseCategoryList(searchParams.get("excludeCategory"));
   const typeParam = searchParams.get("type");
   const tagsParam = searchParams.get("tags") ?? searchParams.get("tag");
+  const collectionSlug = searchParams.get("collection")?.trim();
   const sortParam = searchParams.get("sort") ?? "newest";
   const page = parseIntParam(searchParams.get("page"), 1);
   const limit = parseIntParam(searchParams.get("limit"), 24, 48);
@@ -52,11 +62,10 @@ export async function queryProductList(
 
   if (categoryParam && CATEGORIES.has(categoryParam as ProductCategory)) {
     where.category = categoryParam as ProductCategory;
-  } else if (
-    excludeCategoryParam &&
-    CATEGORIES.has(excludeCategoryParam as ProductCategory)
-  ) {
-    where.category = { not: excludeCategoryParam as ProductCategory };
+  } else if (excludeCategories.length === 1) {
+    where.category = { not: excludeCategories[0] };
+  } else if (excludeCategories.length > 1) {
+    where.category = { notIn: excludeCategories };
   }
 
   if (typeParam && TYPES.has(typeParam as "RTW" | "BESPOKE")) {
@@ -95,6 +104,23 @@ export async function queryProductList(
     }
   }
 
+  if (collectionSlug) {
+    const collection = await prisma.collection.findFirst({
+      where: { slug: collectionSlug, isPublished: true },
+      select: { id: true, autoTag: true },
+    });
+    const collectionIds = collection
+      ? await publishedProductIdsForCollection(collection.id, collection.autoTag)
+      : [];
+    const existingIn = where.id && typeof where.id === "object" && "in" in where.id && Array.isArray(where.id.in)
+      ? (where.id.in as string[])
+      : null;
+    const nextIds = existingIn
+      ? existingIn.filter((id) => collectionIds.includes(id))
+      : collectionIds;
+    where.id = { in: nextIds };
+  }
+
   if (search && search.length >= 1) {
     where.OR = [
       { name: { contains: search, mode: "insensitive" } },
@@ -130,6 +156,9 @@ export async function queryProductList(
       break;
     case "price-desc":
       orderBy = { priceNGN: "desc" };
+      break;
+    case "bestsellers":
+      orderBy = [{ isBestSeller: "desc" }, { orderCount: "desc" }, { createdAt: "desc" }];
       break;
     case "featured":
       orderBy = [{ isFeatured: "desc" }, { createdAt: "desc" }];

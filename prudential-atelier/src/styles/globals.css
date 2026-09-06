@@ -520,16 +520,40 @@ body {
   outline-offset: 2px;
 }
 
-/* Buttons on storefront and dashboard share the pill radius. Inputs stay squared. */
-button:not(.rounded-none),
+/* Buttons and CTA links share the pill radius. Inputs stay squared.
+   Nav links must stay rectangular — pill radius + a right border was
+   drawing a white crescent off the admin sidebar. */
+button:not(.rounded-none):not(.admin-nav-item):not(.admin-nav-section-label),
 input[type="button"]:not(.rounded-none),
 input[type="submit"]:not(.rounded-none),
 input[type="reset"]:not(.rounded-none),
-a.rounded-sm,
+a.rounded-sm:not(.admin-nav-item),
 a.btn-primary,
 a.btn-ghost-dark,
-a.btn-ghost-light {
+a.btn-ghost-light,
+a.admin-cta {
   border-radius: var(--glass-radius-pill);
+}
+
+.admin-nav-item,
+.admin-nav-section-label,
+.account-rail-link {
+  border-radius: 0 !important;
+}
+
+.admin-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0.5rem 1.25rem;
+  background: var(--choc-deep);
+  color: var(--ivory-deep);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -660,6 +684,79 @@ a.btn-ghost-light {
 .admin-area input[type="checkbox"],
 .admin-area input[type="radio"] {
   accent-color: var(--choc);
+}
+
+/*
+ * Dark mode: brand chocolate stays chocolate on fills (never invert a button
+ * into cream-on-cream). Hardcoded light-theme hexes follow the tokens.
+ * --ivory/--choc invert for text; as backgrounds they need the deep values.
+ */
+[data-theme="dark"] .bg-choc {
+  background-color: var(--choc-deep);
+}
+
+[data-theme="dark"] .text-ivory {
+  color: var(--ivory-deep);
+}
+
+[data-theme="dark"] .text-olive {
+  color: #d4d6c4;
+}
+
+[data-theme="dark"] .bg-olive,
+[data-theme="dark"] .bg-\[\#37392d\] {
+  background-color: var(--choc-deep);
+}
+
+[data-theme="dark"] .bg-white {
+  background-color: var(--bg-card);
+}
+
+[data-theme="dark"] .text-\[\#6B6B68\],
+[data-theme="dark"] .text-\[\#8A8A86\],
+[data-theme="dark"] .text-\[\#A8A8A4\],
+[data-theme="dark"] .text-\[\#37392d\] {
+  color: var(--text-mid);
+}
+
+[data-theme="dark"] .placeholder\:text-\[\#A8A8A4\]::placeholder,
+[data-theme="dark"] .placeholder\:text-\[\#6B6B68\]::placeholder {
+  color: var(--text-light);
+}
+
+[data-theme="dark"] .bg-\[\#fafafa\],
+[data-theme="dark"] .bg-\[\#FAFAFA\],
+[data-theme="dark"] .bg-\[\#FAF7F2\],
+[data-theme="dark"] .bg-\[\#F2F2F0\],
+[data-theme="dark"] .bg-\[\#F5F5F3\],
+[data-theme="dark"] .bg-\[\#FFF8F0\],
+[data-theme="dark"] .bg-\[\#EEE\],
+[data-theme="dark"] .bg-\[\#EBEBEA\] {
+  background-color: var(--bg-card);
+}
+
+[data-theme="dark"] .border-\[\#37392d\] {
+  border-color: var(--glass-edge);
+}
+
+[data-theme="dark"] .hover\:bg-\[\#F2F2F0\]:hover {
+  background-color: color-mix(in srgb, var(--sand) 25%, transparent);
+}
+
+[data-theme="dark"] .text-\[\#442913\],
+[data-theme="dark"] .hover\:text-\[\#442913\]:hover {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .bg-\[\#442913\],
+[data-theme="dark"] .hover\:bg-\[\#5C3422\]:hover {
+  background-color: var(--choc-deep);
+}
+
+[data-theme="dark"] .text-red-800,
+[data-theme="dark"] .text-red-700,
+[data-theme="dark"] .text-red-600 {
+  color: var(--error);
 }
 
 @media (prefers-reduced-motion: reduce) {

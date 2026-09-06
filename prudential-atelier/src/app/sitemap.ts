@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getPublicAppUrl } from "@/lib/app-url";
-import { prisma } from "@/lib/prisma";
+import { listLivePublishedCollections } from "@/lib/live-collections";
 
 const STATIC_PATHS: {
   path: string;
@@ -37,11 +37,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let collectionEntries: MetadataRoute.Sitemap = [];
   try {
-    const collections = await prisma.collection.findMany({
-      where: { isPublished: true },
-      select: { slug: true, updatedAt: true },
-    });
-    collectionEntries = collections.map((c) => ({
+    const live = await listLivePublishedCollections();
+    collectionEntries = live.map(({ collection: c }) => ({
       url: `${base}/collections/${c.slug}`,
       lastModified: c.updatedAt,
       changeFrequency: "weekly" as const,

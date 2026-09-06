@@ -10,6 +10,7 @@ export function sanitizeUploadFolder(raw: unknown, fallback: string): string {
 export const UI_UPLOAD_FOLDERS = [
   "prudential-atelier/products",
   "prudential-atelier/collections",
+  "prudential-atelier/collection-reels",
   "prudential-atelier/receipts",
   "prudential-atelier/careers",
   "prudential-atelier/consultations",
@@ -41,7 +42,7 @@ export type UploadFolderGate = AdminPermission | readonly AdminPermission[] | "p
  */
 export function permissionForUploadFolder(folder: string): UploadFolderGate | null {
   const f = folder.toLowerCase();
-  if (f.includes("/products") || f.includes("/collections") || f.endsWith("/products")) {
+  if (f.includes("/products") || f.includes("/collections") || f.includes("collection-reels") || f.endsWith("/products")) {
     return "shop.products";
   }
   if (f.includes("/receipts") || f.includes("/payments")) return "payments";

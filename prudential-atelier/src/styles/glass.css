@@ -166,6 +166,20 @@
   padding: 0.35rem 1.1rem;
 }
 
+/* List and detail titles that never got the class still pick up the same chrome. */
+.admin-shell h1.font-display:not(.admin-heading-pill) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.35rem 1.1rem;
+  border-radius: var(--glass-radius-pill);
+  border: 1px solid var(--glass-edge);
+  background: var(--glass-1-fill);
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
+  backdrop-filter: blur(var(--glass-1-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-1-blur)) saturate(var(--glass-saturate));
+}
+
 .admin-chip {
   display: inline-flex;
   align-items: center;
@@ -192,6 +206,13 @@ html[data-admin-opaque-chrome] .admin-topbar {
   background: var(--glass-1-solid);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+
+/* Straight rail. Glass panel radius on a full-height sidebar reads as an arc. */
+.admin-sidebar.glass-1 {
+  border-radius: 0;
+  border-width: 0 1px 0 0;
+  box-shadow: var(--glass-highlight);
 }
 
 @keyframes field-drift {

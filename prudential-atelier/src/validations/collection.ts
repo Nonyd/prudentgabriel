@@ -12,7 +12,7 @@ export const collectionAdminSchema = z.object({
   isFeatured: z.boolean().optional(),
   isPublished: z.boolean().optional(),
   displayOrder: z.number().int().min(0).optional(),
-  season: z.string().max(10).optional().nullable(),
+  season: z.string().max(40).optional().nullable(),
   year: z.number().int().min(2000).max(2100).optional().nullable(),
   metaTitle: z.string().max(60).optional(),
   metaDescription: z.string().max(160).optional(),

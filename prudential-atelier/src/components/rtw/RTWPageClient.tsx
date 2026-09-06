@@ -7,61 +7,36 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProductCardGrid } from "@/components/common/ProductCardGrid";
 import type { ProductListItem } from "@/types/product";
+import { RTW_EXCLUDE_CATEGORY_QUERY } from "@/lib/rtw-aisle";
 
-type ChipId = "ALL" | "DRESSES" | "JUMPSUITS" | "SETS" | "SUITS" | "KIDDIES" | "ACCESSORIES";
+type ChipId = "ALL" | "GOWNS" | "PANTS" | "DRESSES" | "JUMPSUITS" | "SETS" | "SUITS";
 
-const CHIPS: { id: ChipId; label: string }[] = [
+const CHIPS: { id: ChipId; label: string; tag?: string }[] = [
   { id: "ALL", label: "ALL" },
-  { id: "DRESSES", label: "DRESSES" },
-  { id: "JUMPSUITS", label: "JUMPSUITS" },
-  { id: "SETS", label: "SETS" },
-  { id: "SUITS", label: "SUITS" },
-  { id: "KIDDIES", label: "KIDDIES" },
-  { id: "ACCESSORIES", label: "ACCESSORIES" },
+  { id: "GOWNS", label: "GOWNS", tag: "gown" },
+  { id: "PANTS", label: "PANTS", tag: "pants" },
+  { id: "DRESSES", label: "DRESSES", tag: "dress" },
+  { id: "JUMPSUITS", label: "JUMPSUITS", tag: "jumpsuit" },
+  { id: "SETS", label: "SETS", tag: "set" },
+  { id: "SUITS", label: "SUITS", tag: "suit" },
 ];
 
 function activeChipFromSearchParams(sp: URLSearchParams): ChipId {
-  const c = sp.get("category");
-  if (c === "KIDDIES") return "KIDDIES";
-  if (c === "ACCESSORIES") return "ACCESSORIES";
   const raw = sp.get("tags") ?? sp.get("tag");
   if (!raw) return "ALL";
   const first = raw.split(",")[0]?.trim();
-  if (first === "dress") return "DRESSES";
-  if (first === "jumpsuit") return "JUMPSUITS";
-  if (first === "set") return "SETS";
-  if (first === "suit") return "SUITS";
-  return "ALL";
+  const match = CHIPS.find((c) => c.tag === first);
+  return match?.id ?? "ALL";
 }
 
-function chipHref(sp: URLSearchParams, chip: ChipId): string {
-  const sort = sp.get("sort") ?? "featured";
+function rtwHref(sp: URLSearchParams, updates: Record<string, string | null>): string {
   const n = new URLSearchParams();
+  const sort = updates.sort !== undefined ? updates.sort : sp.get("sort");
+  const collection = updates.collection !== undefined ? updates.collection : sp.get("collection");
+  const tags = updates.tags !== undefined ? updates.tags : (sp.get("tags") ?? sp.get("tag"));
   if (sort && sort !== "featured") n.set("sort", sort);
-  switch (chip) {
-    case "ALL":
-      break;
-    case "DRESSES":
-      n.set("tags", "dress");
-      break;
-    case "JUMPSUITS":
-      n.set("tags", "jumpsuit");
-      break;
-    case "SETS":
-      n.set("tags", "set");
-      break;
-    case "SUITS":
-      n.set("tags", "suit");
-      break;
-    case "KIDDIES":
-      n.set("category", "KIDDIES");
-      break;
-    case "ACCESSORIES":
-      n.set("category", "ACCESSORIES");
-      break;
-    default:
-      break;
-  }
+  if (collection) n.set("collection", collection);
+  if (tags) n.set("tags", tags);
   const q = n.toString();
   return q ? `/rtw?${q}` : "/rtw";
 }
@@ -69,9 +44,10 @@ function chipHref(sp: URLSearchParams, chip: ChipId): string {
 function augmentProductQuery(sp: URLSearchParams): URLSearchParams {
   const u = new URLSearchParams(sp.toString());
   u.set("type", "RTW");
-  u.set("excludeCategory", "BRIDAL");
+  u.set("excludeCategory", RTW_EXCLUDE_CATEGORY_QUERY);
   if (!u.get("sort")) u.set("sort", "featured");
   if (!u.get("limit")) u.set("limit", "40");
+  u.delete("category");
   return u;
 }
 
@@ -92,6 +68,7 @@ export interface RTWPageClientProps {
   total: number;
   page: number;
   hasNext: boolean;
+  collections: { name: string; slug: string }[];
   heroLabel: string;
   heroTitle: string;
   heroSubtitle?: string;
@@ -102,6 +79,7 @@ export function RTWPageClient({
   total,
   page: initialPage,
   hasNext: initialHasNext,
+  collections,
   heroLabel,
   heroTitle,
   heroSubtitle,
@@ -123,6 +101,7 @@ export function RTWPageClient({
   }, [initialProducts, initialPage, initialHasNext, queryKey]);
 
   const activeChip = useMemo(() => activeChipFromSearchParams(sp), [sp]);
+  const collectionValue = sp.get("collection") || "all";
 
   const loadMore = useCallback(async () => {
     if (!hasMore || loadingMore || isPending) return;
@@ -155,8 +134,12 @@ export function RTWPageClient({
       : sortValue === "price-desc"
         ? "PRICE: HIGH–LOW"
         : sortValue === "newest"
-          ? "NEWEST"
-          : "FEATURED";
+          ? "RECENT"
+          : sortValue === "bestsellers"
+            ? "BEST SELLING"
+            : "FEATURED";
+
+  const go = (href: string) => startTransition(() => router.push(href, { scroll: false }));
 
   return (
     <div className="min-h-screen bg-bg-card pb-20">
@@ -171,21 +154,16 @@ export function RTWPageClient({
       </header>
 
       <div className="sticky top-0 z-30 border-b border-mid-grey bg-bg-card">
-        <div className="mx-auto flex h-12 max-w-site items-center gap-4 px-4 lg:px-10">
+        <div className="mx-auto flex min-h-12 max-w-site flex-col gap-2 px-4 py-2 lg:flex-row lg:items-center lg:gap-4 lg:px-10">
           <div className="scrollbar-hide flex min-w-0 flex-1 items-center gap-0 overflow-x-auto">
             {CHIPS.map((chip) => {
               const selected = activeChip === chip.id;
-              const href = chipHref(sp, chip.id);
               return (
                 <button
                   key={chip.id}
                   type="button"
                   aria-current={selected ? "true" : undefined}
-                  onClick={() =>
-                    startTransition(() => {
-                      router.push(href, { scroll: false });
-                    })
-                  }
+                  onClick={() => go(rtwHref(sp, { tags: chip.tag ?? null }))}
                   className={cn(
                     "shrink-0 border border-transparent px-4 py-1.5 font-body text-[10px] font-medium uppercase tracking-[0.1em] transition-colors duration-150 ease-out",
                     selected
@@ -198,24 +176,52 @@ export function RTWPageClient({
               );
             })}
           </div>
-          <div className="ml-auto flex shrink-0 items-center gap-4">
+          <div className="flex shrink-0 items-center gap-4">
+            {collections.length > 0 ? (
+              <Select.Root
+                value={collectionValue}
+                onValueChange={(v) => go(rtwHref(sp, { collection: v === "all" ? null : v }))}
+              >
+                <Select.Trigger className="inline-flex items-center gap-1 border-0 bg-transparent font-body text-[10px] font-medium uppercase tracking-[0.1em] text-olive outline-none">
+                  <Select.Value>
+                    {collectionValue === "all"
+                      ? "ALL COLLECTIONS"
+                      : collections.find((c) => c.slug === collectionValue)?.name ?? "ALL COLLECTIONS"}
+                  </Select.Value>
+                  <ChevronDown className="h-3 w-3 shrink-0 opacity-60" strokeWidth={1.5} aria-hidden />
+                </Select.Trigger>
+                <Select.Portal>
+                  <Select.Content
+                    position="popper"
+                    className="z-50 min-w-[11rem] border-x border-b border-mid-grey bg-bg-card shadow-md"
+                  >
+                    <Select.Viewport className="p-0">
+                      <Select.Item
+                        value="all"
+                        className="cursor-pointer px-5 py-2.5 font-body text-[12px] text-charcoal outline-none hover:bg-[#FAFAFA] hover:text-olive"
+                      >
+                        All collections
+                      </Select.Item>
+                      {collections.map((c) => (
+                        <Select.Item
+                          key={c.slug}
+                          value={c.slug}
+                          className="cursor-pointer px-5 py-2.5 font-body text-[12px] text-charcoal outline-none hover:bg-[#FAFAFA] hover:text-olive"
+                        >
+                          {c.name}
+                        </Select.Item>
+                      ))}
+                    </Select.Viewport>
+                  </Select.Content>
+                </Select.Portal>
+              </Select.Root>
+            ) : null}
             <p className="whitespace-nowrap font-body text-[10px] text-dark-grey">{total} pieces</p>
             <Select.Root
               value={sortValue}
-              onValueChange={(v) => {
-                const n = augmentProductQuery(new URLSearchParams(sp.toString()));
-                n.set("sort", v);
-                n.delete("page");
-                startTransition(() => {
-                  router.push(`/rtw?${n.toString()}`, { scroll: false });
-                });
-              }}
+              onValueChange={(v) => go(rtwHref(sp, { sort: v }))}
             >
-              <Select.Trigger
-                className={cn(
-                  "inline-flex items-center gap-1 border-0 bg-transparent font-body text-[10px] font-medium uppercase tracking-[0.1em] text-olive outline-none transition-colors",
-                )}
-              >
+              <Select.Trigger className="inline-flex items-center gap-1 border-0 bg-transparent font-body text-[10px] font-medium uppercase tracking-[0.1em] text-olive outline-none transition-colors">
                 <Select.Value>{sortTriggerLabel}</Select.Value>
                 <ChevronDown className="h-3 w-3 shrink-0 opacity-60" strokeWidth={1.5} aria-hidden />
               </Select.Trigger>
@@ -228,7 +234,8 @@ export function RTWPageClient({
                     {(
                       [
                         ["featured", "Featured"],
-                        ["newest", "Newest"],
+                        ["newest", "Recent"],
+                        ["bestsellers", "Best selling"],
                         ["price-asc", "Price: Low–High"],
                         ["price-desc", "Price: High–Low"],
                       ] as const

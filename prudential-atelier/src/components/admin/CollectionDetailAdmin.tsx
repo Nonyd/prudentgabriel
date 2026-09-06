@@ -9,6 +9,7 @@ import { optimizeImageUrl } from "@/lib/utils";
 import type { CollectionProductWithMeta } from "@/lib/collection-products";
 import { derivedCatalogMinNGN } from "@/lib/pricing";
 import { CollectionFormModal } from "@/components/admin/CollectionFormModal";
+import { CollectionReelsAdmin } from "@/components/admin/CollectionReelsAdmin";
 import type { AdminCollectionRow } from "@/components/admin/CollectionsClient";
 
 type ManualRow = {
@@ -247,6 +248,11 @@ export function CollectionDetailAdmin({
           <p className="text-[11px] text-[#6B6B68]">Updated {new Date(collection.updatedAt).toLocaleDateString()}</p>
         </aside>
       </div>
+
+      <CollectionReelsAdmin
+        collectionId={collection.id}
+        products={allProducts.map((p) => ({ id: p.id, name: p.name }))}
+      />
 
       <CollectionFormModal open={modalOpen} onOpenChange={setModalOpen} editing={editingRow} onSaved={() => router.refresh()} />
     </div>

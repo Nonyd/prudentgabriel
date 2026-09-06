@@ -373,7 +373,7 @@ export function CollectionFormModal({
               <div className="flex flex-wrap gap-4">
                 <div className="min-w-[100px] flex-1">
                   <label className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">Season</label>
-                  <input {...form.register("season")} maxLength={10} className="mt-1 w-full border border-sand px-3 py-2 text-[13px]" />
+                  <input {...form.register("season")} maxLength={40} className="mt-1 w-full border border-sand px-3 py-2 text-[13px]" />
                 </div>
                 <div className="w-28">
                   <label className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">Year</label>

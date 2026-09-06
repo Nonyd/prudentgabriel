@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { prisma } from "@/lib/prisma";
-import { uniqueProductCountsForCollections } from "@/lib/collection-products";
+import { listLivePublishedCollections } from "@/lib/live-collections";
 import { CollectionsPage } from "@/components/collections/CollectionsPage";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
 
@@ -9,23 +8,16 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "Ready-to-Wear Collections | Prudent Gabriel",
   description:
-    "Explore curated ready-to-wear collections from Prudent Gabriel — Rich & Regal, Church Girl, La Femme, and more.",
+    "Explore curated ready-to-wear collections from Prudential Atelier — house edits with their own mood, silhouette, and story.",
 };
 
 export default async function CollectionsListingPage() {
   if (isSkipDbBuild()) {
     return <CollectionsPage collections={[]} />;
   }
-  const rows = await prisma.collection.findMany({
-    where: { isPublished: true },
-    orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
-  });
+  const live = await listLivePublishedCollections();
 
-  const counts = await uniqueProductCountsForCollections(
-    rows.map((c) => ({ id: c.id, autoTag: c.autoTag })),
-  );
-
-  const collections = rows.map((c, i) => ({
+  const collections = live.map(({ collection: c, productCount }) => ({
     id: c.id,
     name: c.name,
     slug: c.slug,
@@ -34,7 +26,7 @@ export default async function CollectionsListingPage() {
     coverImageAlt: c.coverImageAlt,
     season: c.season,
     year: c.year,
-    productCount: counts[i] ?? 0,
+    productCount,
   }));
 
   return <CollectionsPage collections={collections} />;

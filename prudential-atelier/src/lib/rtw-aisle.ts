@@ -1,14 +1,22 @@
 export const RTW_AISLE = "/rtw";
 export const SHOP_LISTING = "/shop";
+export const SHOP_ACCESSORIES = "/shop?category=ACCESSORIES";
+
+/** Categories that are not ready-to-wear garments. Shop still lists them. */
+export const RTW_EXCLUDED_CATEGORIES = ["BRIDAL", "KIDDIES", "ACCESSORIES"] as const;
+export const RTW_EXCLUDE_CATEGORY_QUERY = RTW_EXCLUDED_CATEGORIES.join(",");
 
 export const SHOP_HERO_EYEBROW = "THE HOUSE";
 export const SHOP_HERO_TITLE = "Shop";
 export const SHOP_HERO_SUBTITLE =
-  "Everything the house sells — ready-to-wear, bridal, and kids. Tap a category to find a dress.";
+  "Everything the house sells — ready-to-wear, bridal, kids, and accessories.";
 
 const PREVIOUS_SHOP_HERO_EYEBROW = "THE COLLECTION";
 const PREVIOUS_SHOP_HERO_TITLE = "Prudent Gabriel";
-const PREVIOUS_SHOP_HERO_SUBTITLE = "Ready-to-wear, bridal, and atelier couture.";
+const PREVIOUS_SHOP_HERO_SUBTITLES = [
+  "Ready-to-wear, bridal, and atelier couture.",
+  "Everything the house sells — ready-to-wear, bridal, and kids. Tap a category to find a dress.",
+];
 
 /** Use new house copy unless CMS was deliberately rewritten. */
 export function shopHeroCopy(stored: { eyebrow?: string; title?: string; subtitle?: string }) {
@@ -17,10 +25,14 @@ export function shopHeroCopy(stored: { eyebrow?: string; title?: string; subtitl
     if (!v || v === previous) return next;
     return v;
   };
+  const storedSubtitle = stored.subtitle?.trim();
   return {
     eyebrow: pick(stored.eyebrow, PREVIOUS_SHOP_HERO_EYEBROW, SHOP_HERO_EYEBROW),
     title: pick(stored.title, PREVIOUS_SHOP_HERO_TITLE, SHOP_HERO_TITLE),
-    subtitle: pick(stored.subtitle, PREVIOUS_SHOP_HERO_SUBTITLE, SHOP_HERO_SUBTITLE),
+    subtitle:
+      !storedSubtitle || PREVIOUS_SHOP_HERO_SUBTITLES.includes(storedSubtitle)
+        ? SHOP_HERO_SUBTITLE
+        : storedSubtitle,
   };
 }
 
@@ -49,19 +61,22 @@ export function productAisle(product: { type: string; category: string }): { hre
   if (product.category === "BRIDAL") return { href: "/bridal", label: "Bridal" };
   if (product.type === "BESPOKE") return { href: "/atelier", label: "Atelier" };
   if (product.category === "KIDDIES") return { href: "/kids", label: "Kids" };
+  if (product.category === "ACCESSORIES") return { href: SHOP_ACCESSORIES, label: "Accessories" };
   return { href: RTW_AISLE, label: "Ready to Wear" };
 }
 
-export type SearchAisle = "rtw" | "bridal" | "atelier";
+export type SearchAisle = "rtw" | "bridal" | "atelier" | "accessories";
 
 export const SEARCH_AISLE_LABEL: Record<SearchAisle, string> = {
   rtw: "Ready to Wear",
   bridal: "Bridal",
   atelier: "Atelier",
+  accessories: "Accessories",
 };
 
 export function searchAisleOf(product: { type: string; category: string }): SearchAisle {
   if (product.category === "BRIDAL") return "bridal";
+  if (product.category === "ACCESSORIES") return "accessories";
   if (product.type === "BESPOKE") return "atelier";
   return "rtw";
 }
@@ -69,11 +84,11 @@ export function searchAisleOf(product: { type: string; category: string }): Sear
 export function groupSearchResults<T extends { type: string; category: string }>(
   items: T[],
 ): { aisle: SearchAisle; items: T[] }[] {
-  const buckets: Record<SearchAisle, T[]> = { rtw: [], bridal: [], atelier: [] };
+  const buckets: Record<SearchAisle, T[]> = { rtw: [], bridal: [], atelier: [], accessories: [] };
   for (const item of items) {
     buckets[searchAisleOf(item)].push(item);
   }
-  return (["rtw", "bridal", "atelier"] as const)
+  return (["rtw", "bridal", "atelier", "accessories"] as const)
     .filter((aisle) => buckets[aisle].length > 0)
     .map((aisle) => ({ aisle, items: buckets[aisle] }));
 }

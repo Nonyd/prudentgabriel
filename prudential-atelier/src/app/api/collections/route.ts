@@ -1,21 +1,13 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { uniqueProductCountsForCollections } from "@/lib/collection-products";
+import { listLivePublishedCollections } from "@/lib/live-collections";
 
 const CACHE = "public, s-maxage=300, stale-while-revalidate=600";
 
 export async function GET() {
   try {
-    const rows = await prisma.collection.findMany({
-      where: { isPublished: true },
-      orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
-    });
+    const live = await listLivePublishedCollections();
 
-    const counts = await uniqueProductCountsForCollections(
-      rows.map((c) => ({ id: c.id, autoTag: c.autoTag })),
-    );
-
-    const collections = rows.map((c, i) => ({
+    const collections = live.map(({ collection: c, productCount }) => ({
       id: c.id,
       name: c.name,
       slug: c.slug,
@@ -28,7 +20,7 @@ export async function GET() {
       season: c.season,
       year: c.year,
       displayOrder: c.displayOrder,
-      productCount: counts[i] ?? 0,
+      productCount,
     }));
 
     return NextResponse.json({ collections }, { headers: { "Cache-Control": CACHE } });

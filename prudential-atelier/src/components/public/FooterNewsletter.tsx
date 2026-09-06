@@ -10,8 +10,8 @@ const schema = z.object({ email: z.string().email() });
 type Form = z.infer<typeof schema>;
 
 const labelStyle = {
-  fontFamily: "var(--font-ui)",
-  fontSize: "13px",
+  fontFamily: "var(--font-display)",
+  fontSize: "18px",
   fontWeight: 400,
   color: "var(--text-primary)",
 } as const;
@@ -41,7 +41,7 @@ export function FooterNewsletter({
   return (
     <div className="min-w-0">
       <p className="mb-4" style={labelStyle}>
-        The Newsletter
+        Stay close
       </p>
       <p
         className="mb-5 max-w-xs whitespace-pre-line"

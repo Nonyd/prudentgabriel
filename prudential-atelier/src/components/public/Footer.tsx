@@ -15,19 +15,26 @@ import { filterStorefrontLinks } from "@/lib/atelier-storefront";
 type LinkItem = { label: string; url: string };
 
 const DEFAULT_HOUSE_LINKS: LinkItem[] = [
-  { label: "The Atelier", url: "/atelier" },
-  { label: "Ready-to-Wear", url: "/rtw" },
+  { label: "The atelier", url: "/atelier" },
   { label: "Bridal", url: "/bridal" },
-  { label: "Kids", url: "/kids" },
-  { label: "Careers", url: "/careers" },
   { label: "Fashion Academy", url: "/about#academy" },
   { label: "Journal", url: "/journal" },
+  { label: "About", url: "/about" },
+  { label: "Careers", url: "/careers" },
+];
+
+const DEFAULT_SHOP_LINKS: LinkItem[] = [
+  { label: "Ready to wear", url: "/rtw" },
+  { label: "New arrivals", url: "/rtw?sort=newest" },
+  { label: "Collections", url: "/collections" },
+  { label: "Accessories", url: "/shop?category=ACCESSORIES" },
+  { label: "Kids", url: "/kids" },
 ];
 
 const DEFAULT_CLIENT_LINKS: LinkItem[] = [
-  { label: "Size Guide", url: "/size-guide" },
-  { label: "Shipping & Returns", url: "/returns-policy" },
-  { label: "Book Consultation", url: "/consultation" },
+  { label: "Size guide", url: "/size-guide" },
+  { label: "Shipping and returns", url: "/returns-policy" },
+  { label: "Book a consultation", url: "/consultation" },
   { label: "Contact", url: "/contact" },
 ];
 
@@ -39,12 +46,9 @@ const LEGAL_LINKS = [
   { href: "/shipping-policy", label: "Shipping Policy" },
 ] as const;
 
-const HOUSE_TAGLINE =
-  "International luxury couture. Bespoke, ready-to-wear and bridal, made with love in Lagos for the world.";
-
-const labelStyle = {
-  fontFamily: "var(--font-ui)",
-  fontSize: "13px",
+const headingStyle = {
+  fontFamily: "var(--font-display)",
+  fontSize: "18px",
   fontWeight: 400,
   color: "var(--text-primary)",
 } as const;
@@ -126,6 +130,16 @@ function FooterLinks({
   );
 }
 
+function mapCmsLinks(items: LinkItem[]) {
+  return filterStorefrontLinks(
+    items.map((l) => ({
+      href: l.url,
+      label: l.label,
+      external: l.url.startsWith("http"),
+    })),
+  );
+}
+
 export function Footer({
   cms = {},
 }: {
@@ -134,27 +148,15 @@ export function Footer({
   const settings = usePublicSettings();
   const openCookieModal = useCookieConsentStore((s) => s.openModal);
 
-  const instagramHandle = getSettingFromPublic(settings, "social_instagram", "@prudent_gabriel");
+  const instagramHandle = getSettingFromPublic(settings, "social_instagram", "@the_prudentgabriel");
   const instagramUrl = instagramHandleToUrl(instagramHandle);
   const tiktokUrl = tiktokHandleToUrl(getSettingFromPublic(settings, "social_tiktok", "@prudentgabriel"));
   const facebookUrl = facebookHandleToUrl(getSettingFromPublic(settings, "social_facebook", "prudentgabriel"));
   const whatsappUrl = whatsappNumberToUrl(getSettingFromPublic(settings, "social_whatsapp", ""));
 
-  const houseLinks = filterStorefrontLinks(
-    cmsJson<LinkItem[]>(cms, "footer_house_links", DEFAULT_HOUSE_LINKS).map((l) => ({
-      href: l.url,
-      label: l.label,
-      external: l.url.startsWith("http"),
-    })),
-  );
-
-  const clientLinks = filterStorefrontLinks(
-    cmsJson<LinkItem[]>(cms, "footer_client_links", DEFAULT_CLIENT_LINKS).map((l) => ({
-      href: l.url,
-      label: l.label,
-      external: l.url.startsWith("http"),
-    })),
-  );
+  const houseLinks = mapCmsLinks(cmsJson<LinkItem[]>(cms, "footer_house_links", DEFAULT_HOUSE_LINKS));
+  const shopLinks = mapCmsLinks(cmsJson<LinkItem[]>(cms, "footer_shop_links", DEFAULT_SHOP_LINKS));
+  const clientLinks = mapCmsLinks(cmsJson<LinkItem[]>(cms, "footer_client_links", DEFAULT_CLIENT_LINKS));
 
   const copyright = cmsGet(
     cms,
@@ -171,118 +173,113 @@ export function Footer({
 
   return (
     <footer className="px-3 pb-3">
-      <div className="glass-1 glass-panel mx-auto max-w-site overflow-hidden">
-      <div className="px-6 pt-14 pb-12 text-center lg:px-10">
-        <Logo variant="dark" size="lg" themeAdaptive={false} className="mx-auto inline-block" />
+      <div className="mx-auto max-w-site px-6 pb-6 pt-8 lg:px-10">
+        <Logo variant="dark" size="lg" themeAdaptive={false} />
       </div>
 
-      <div className="grid gap-12 px-6 pb-16 md:grid-cols-3 lg:px-10 lg:gap-16">
-        <div className="min-w-0">
-          <p className="mb-4" style={labelStyle}>
-            The House
-          </p>
-          <p
-            className="mb-5 max-w-[220px]"
-            style={{
-              fontFamily: "var(--font-body)",
-              fontSize: "12px",
-              fontWeight: 400,
-              color: "var(--text-mid)",
-            }}
-          >
-            {HOUSE_TAGLINE}
-          </p>
-
-          <div className="-ml-2 mb-6 flex items-center">
-            <SocialIconLink href={instagramUrl} label="Instagram">
-              <InstagramIcon size={16} />
-            </SocialIconLink>
-            <SocialIconLink href={tiktokUrl} label="TikTok">
-              <TikTokIcon size={16} />
-            </SocialIconLink>
-            <SocialIconLink href={facebookUrl} label="Facebook">
-              <FacebookIcon size={16} />
-            </SocialIconLink>
-            <SocialIconLink href={whatsappUrl || "/contact"} label="WhatsApp">
-              <WhatsAppIcon size={16} />
-            </SocialIconLink>
+      <div className="glass-1 glass-panel mx-auto max-w-site overflow-hidden">
+        <div
+          data-footer-columns=""
+          className="grid grid-cols-2 gap-x-8 gap-y-12 px-6 pb-12 pt-12 lg:grid-cols-4 lg:gap-12 lg:px-10"
+        >
+          <div className="min-w-0">
+            <p className="mb-4" style={headingStyle}>
+              The house
+            </p>
+            <FooterLinks links={houseLinks} />
           </div>
 
-          <FooterLinks links={houseLinks} />
+          <div className="min-w-0">
+            <p className="mb-4" style={headingStyle}>
+              Shop
+            </p>
+            <FooterLinks links={shopLinks} />
+          </div>
+
+          <div className="min-w-0">
+            <p className="mb-4" style={headingStyle}>
+              Client care
+            </p>
+            <FooterLinks links={clientLinks} />
+          </div>
+
+          <div className="col-span-2 min-w-0 lg:col-span-1" data-footer-stay-close="">
+            <FooterNewsletter headline={newsletterHeadline} placeholder={newsletterPlaceholder} />
+            <div className="-ml-2 mt-4 flex flex-wrap items-center">
+              <SocialIconLink href={instagramUrl} label="Instagram">
+                <InstagramIcon size={16} />
+              </SocialIconLink>
+              <SocialIconLink href={tiktokUrl} label="TikTok">
+                <TikTokIcon size={16} />
+              </SocialIconLink>
+              <SocialIconLink href={facebookUrl} label="Facebook">
+                <FacebookIcon size={16} />
+              </SocialIconLink>
+              <SocialIconLink href={whatsappUrl || "/contact"} label="WhatsApp">
+                <WhatsAppIcon size={16} />
+              </SocialIconLink>
+            </div>
+          </div>
         </div>
 
-        <div className="min-w-0">
-          <p className="mb-4" style={labelStyle}>
-            Client Care
-          </p>
-          <FooterLinks links={clientLinks} />
-        </div>
+        <div className="border-t border-[var(--glass-edge)] py-5">
+          <div className="flex flex-col gap-3 px-6 lg:px-10">
+            <div
+              data-footer-legal=""
+              className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-6"
+            >
+              <p
+                style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "11px",
+                  color: "var(--text-light)",
+                }}
+              >
+                {copyright}
+                {" "}
+                <span>
+                  Developed with love by SonsHub Media Ltd
+                </span>
+              </p>
+              <PaymentMarks className="flex items-center gap-1.5 text-text-mid" />
+              <a
+                href={instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-colors hover:text-choc"
+                style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "11px",
+                  color: "var(--text-mid)",
+                }}
+              >
+                {instagramHandle}
+              </a>
+            </div>
 
-        <FooterNewsletter headline={newsletterHeadline} placeholder={newsletterPlaceholder} />
-      </div>
-
-      <div className="border-t border-[var(--glass-edge)] py-5">
-        <div className="flex flex-col gap-4 px-6 lg:px-10">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row sm:gap-6">
             <p
+              className="text-left"
               style={{
                 fontFamily: "var(--font-ui)",
-                fontSize: "11px",
+                fontSize: "12px",
                 color: "var(--text-light)",
               }}
             >
-              {copyright}
+              {LEGAL_LINKS.map((link, i) => (
+                <span key={link.href}>
+                  {i > 0 ? " · " : null}
+                  <Link href={link.href} className="transition-colors hover:text-choc">
+                    {link.label}
+                  </Link>
+                </span>
+              ))}
+              {" · "}
+              <button type="button" onClick={openCookieModal} className="transition-colors hover:text-choc">
+                Cookie Settings
+              </button>
             </p>
-            <PaymentMarks className="flex items-center gap-1.5 text-text-mid" />
-            <a
-              href={instagramUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="transition-colors hover:text-choc"
-              style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: "11px",
-                color: "var(--text-mid)",
-              }}
-            >
-              {instagramHandle}
-            </a>
           </div>
-
-          <p
-            className="text-center"
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "12px",
-              color: "var(--text-light)",
-            }}
-          >
-            {LEGAL_LINKS.map((link, i) => (
-              <span key={link.href}>
-                {i > 0 ? " · " : null}
-                <Link href={link.href} className="transition-colors hover:text-choc">
-                  {link.label}
-                </Link>
-              </span>
-            ))}
-            {" · "}
-            <button type="button" onClick={openCookieModal} className="transition-colors hover:text-choc">
-              Cookie Settings
-            </button>
-          </p>
-
-          <p
-            className="text-center italic"
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "10px",
-              color: "var(--text-light)",
-            }}
-          >
-            Developed with love by SonsHub Media Ltd
-          </p>
         </div>
-      </div>
       </div>
     </footer>
   );

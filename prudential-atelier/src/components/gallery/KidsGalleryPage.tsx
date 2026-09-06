@@ -59,7 +59,7 @@ export function KidsGalleryPage({
         >
           {pageDescription ?? heroSubtext}
         </p>
-        <Link href="/rtw?category=KIDDIES" className="btn-primary mt-8 inline-block">
+        <Link href="/shop?category=KIDDIES" className="btn-primary mt-8 inline-block">
           {heroCtaLabel}
         </Link>
         </div>
@@ -173,7 +173,7 @@ export function KidsGalleryPage({
               Browse our ready-made children&apos;s collection for immediate purchase and delivery.
             </p>
             <Link
-              href="/rtw?category=KIDDIES"
+              href="/shop?category=KIDDIES"
               className="mt-4 inline-block px-6 py-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] text-[#2a1a0e]"
               style={{ backgroundColor: "var(--cta-bg)" }}
             >

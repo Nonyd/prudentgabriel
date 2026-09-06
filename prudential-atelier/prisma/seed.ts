@@ -23,6 +23,7 @@ import {
 } from "@prisma/client";
 import { seedBootstrapAdmin } from "./bootstrap-admin";
 import { seedRolePermissionsFromBaseline } from "../src/lib/permission-seed";
+import { ensureLaFemmeLookbook } from "./seed-la-femme-lookbook";
 
 const prisma = new PrismaClient();
 
@@ -713,7 +714,7 @@ async function upsertCollections() {
       autoTag: "rich-regal",
       coverImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200",
       isFeatured: true,
-      isPublished: true,
+      isPublished: false,
       displayOrder: 0,
     },
     {
@@ -725,7 +726,7 @@ async function upsertCollections() {
       autoTag: "church-girl",
       coverImage: "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=1200",
       isFeatured: true,
-      isPublished: true,
+      isPublished: false,
       displayOrder: 1,
     },
     {
@@ -737,7 +738,7 @@ async function upsertCollections() {
       autoTag: "la-femme",
       coverImage: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1200",
       isFeatured: false,
-      isPublished: true,
+      isPublished: false,
       displayOrder: 2,
     },
   ];
@@ -803,6 +804,8 @@ async function main() {
     await upsertGalleryPlaceholders();
     await upsertCollections();
   }
+  const lookbook = await ensureLaFemmeLookbook(prisma);
+  console.log(`  La Femme lookbook: ${lookbook.productCount} pieces`);
 
   const [settings, consultants, products, orders, invoices, bookings] = await Promise.all([
     prisma.siteSetting.count(),

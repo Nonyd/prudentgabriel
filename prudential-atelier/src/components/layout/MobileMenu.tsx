@@ -23,9 +23,6 @@ const NAV_LINKS = [
 
 const COLLECTIONS_SUBLINKS = [
   { label: "All collections", href: "/collections" },
-  { label: "Rich & Regal", href: "/collections/rich-regal" },
-  { label: "Church Girl", href: "/collections/church-girl" },
-  { label: "La Femme", href: "/collections/la-femme" },
 ];
 
 const RTW_SUBLINKS = [

@@ -116,36 +116,38 @@ export function CartDrawer() {
               ) : (
                 <ul className="space-y-6">
                   {items.map((item) => (
-                    <li key={item.id} className="relative flex gap-3 border-b border-border pb-6">
-                      <button
-                        type="button"
-                        onClick={() => void removeFromBag(item.id)}
-                        className="absolute right-0 top-0 text-dark-grey hover:text-choc"
-                        aria-label="Remove"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
+                    <li key={item.id} className="flex gap-3 border-b border-border pb-6">
                       <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-sm bg-ivory-dark">
                         {item.imageUrl && (
                           <Image src={item.imageUrl} alt={item.productName} fill className="object-cover" sizes="64px" />
                         )}
                       </div>
-                      <div className="min-w-0 flex-1 pr-6">
-                        <p className="font-display text-sm text-charcoal">{item.productName}</p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start gap-2">
+                          <p className="min-w-0 flex-1 font-display text-sm text-charcoal">{item.productName}</p>
+                          <button
+                            type="button"
+                            onClick={() => void removeFromBag(item.id)}
+                            className="flex h-11 w-11 shrink-0 items-center justify-center text-dark-grey hover:text-choc"
+                            aria-label={`Remove ${item.productName} from bag`}
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                         <BagSizeSelect item={item} product={sizeMap[item.productId]} />
                         {item.color && (
                           <p className="mt-0.5 text-xs text-charcoal-light">{item.color}</p>
                         )}
-                        <div className="mt-2">
+                        <div className="mt-2 flex items-end justify-between gap-3">
                           <BagQtyButtons
                             item={item}
                             onDecrease={() => void changeQty(item.id, item.quantity - 1)}
                             onIncrease={() => void changeQty(item.id, item.quantity + 1)}
                           />
+                          <p className="shrink-0 pb-2 text-right font-medium tabular-nums text-charcoal">
+                            {fmtLine(item)}
+                          </p>
                         </div>
-                      </div>
-                      <div className="shrink-0 text-right font-medium text-charcoal">
-                        {fmtLine(item)}
                       </div>
                     </li>
                   ))}

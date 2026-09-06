@@ -57,7 +57,7 @@ function LoginField({
           aria-invalid={error ? true : undefined}
           className={cn(
             "w-full rounded-[3px] border-[0.5px] border-[var(--sand)] bg-[var(--glass-1-solid)] px-4 py-3 font-sans text-[13px] text-text-dark outline-none transition-colors",
-            "focus:border-[#442913]",
+            "focus:border-[var(--choc-deep)]",
             error && "border-[#8B2020]",
             isPassword && "pr-11",
           )}
@@ -208,7 +208,7 @@ export function PortalLoginClient() {
       <div className="admin-field" aria-hidden="true" />
       <div className="glass-2 glass-panel relative z-[1] w-[420px] max-w-full px-10 py-12">
         <div className="flex flex-col items-center text-center">
-          <Logo variant="dark" size="xl" themeAdaptive={false} href={undefined} />
+          <Logo variant="dark" size="xl" href={undefined} />
           <div className="mx-auto my-4 h-px w-10 bg-[#C9A84C]" aria-hidden />
           <p className="mb-6 font-sans text-[9px] font-semibold uppercase tracking-[0.24em] text-[var(--lightbr)]">
             {copy.badge}
@@ -216,7 +216,7 @@ export function PortalLoginClient() {
         </div>
 
         <div
-          className="mb-8 flex rounded-[3px] border-[0.5px] border-[var(--sand)] bg-bg-card p-1"
+          className="mb-8 flex glass-1 glass-pill p-1"
           role="tablist"
           aria-label="Sign in as"
         >
@@ -230,10 +230,10 @@ export function PortalLoginClient() {
                 aria-selected={active}
                 onClick={() => setTab(value)}
                 className={cn(
-                  "flex-1 rounded-[2px] py-2.5 font-sans text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors",
+                  "flex-1 py-2.5 font-sans text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors",
                   active
-                    ? "bg-[#442913] text-[#E2D1C2]"
-                    : "text-[var(--text-mid)] hover:text-[#442913]",
+                    ? "bg-[var(--choc-deep)] text-[var(--ivory-deep)]"
+                    : "text-text-mid hover:text-text-primary",
                 )}
               >
                 {value === "admin" ? "Admin" : "Staff"}
@@ -242,10 +242,10 @@ export function PortalLoginClient() {
           })}
         </div>
 
-        <h1 className="mb-1 text-center font-serif text-[32px] font-normal leading-tight text-[#442913]">
+        <h1 className="mb-1 text-center font-serif text-[32px] font-normal leading-tight text-choc">
           {copy.title}
         </h1>
-        <p className="mb-8 text-center font-sans text-xs font-light text-[var(--text-light)]">
+        <p className="mb-8 text-center font-sans text-xs font-normal text-text-mid">
           {copy.subtitle}
         </p>
 
@@ -289,7 +289,7 @@ export function PortalLoginClient() {
           <p className="text-right">
             <Link
               href={`/auth/forgot-password?from=${tab}`}
-              className="font-sans text-[11px] font-light text-[var(--text-mid)] transition-colors hover:text-[#442913]"
+              className="font-sans text-[11px] font-normal text-text-mid transition-colors hover:text-choc"
             >
               Forgot password?
             </Link>
@@ -298,7 +298,7 @@ export function PortalLoginClient() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-[3px] bg-[#442913] px-4 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-[#E2D1C2] transition-colors hover:bg-[#5C3422] disabled:cursor-not-allowed disabled:opacity-70"
+            className="admin-cta mt-2 w-full py-4 tracking-[0.2em]"
           >
             {isSubmitting ? (
               <>
@@ -314,7 +314,7 @@ export function PortalLoginClient() {
         <p className="mt-8 text-center">
           <Link
             href="/"
-            className="font-sans text-[11px] font-light text-[var(--text-light)] transition-colors hover:text-[var(--text-mid)]"
+            className="font-sans text-[11px] font-normal text-text-mid transition-colors hover:text-choc"
           >
             ← Back to website
           </Link>

@@ -26,9 +26,6 @@ const RTW_SUBLINKS: { label: string; href: string }[] = [
 
 const COLLECTIONS_SUBLINKS: { label: string; href: string }[] = [
   { label: "All collections", href: "/collections" },
-  { label: "Rich & Regal", href: "/collections/rich-regal" },
-  { label: "Church Girl", href: "/collections/church-girl" },
-  { label: "La Femme", href: "/collections/la-femme" },
 ];
 
 function NavLink({ href, label, active }: { href: string; label: string; active: boolean }) {

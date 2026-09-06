@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import {
   mergePublishedCollectionProducts,
   sortCollectionProducts,
 } from "@/lib/collection-products";
+import { findLivePublishedCollection } from "@/lib/live-collections";
 
 const CACHE = "public, s-maxage=60, stale-while-revalidate=120";
 
@@ -19,9 +19,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ slug: strin
     const { slug } = await ctx.params;
     const { page, limit, sort } = parsePage(req.nextUrl.searchParams);
 
-    const collection = await prisma.collection.findFirst({
-      where: { slug, isPublished: true },
-    });
+    const collection = await findLivePublishedCollection(slug);
 
     if (!collection) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });

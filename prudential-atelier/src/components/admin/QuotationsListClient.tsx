@@ -185,7 +185,9 @@ export function QuotationsListClient() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="eyebrow">Finance</p>
-          <h1 className="font-display text-2xl text-ink">Quotations &amp; Invoices</h1>
+          <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">
+            Quotations &amp; Invoices
+          </h1>
           <p className="mt-1 font-sans text-sm text-text-mid">
             Create and send client quotations for bespoke work
           </p>

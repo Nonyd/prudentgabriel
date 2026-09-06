@@ -10,6 +10,7 @@ import {
   shopHeroCopy,
   SHOP_HERO_SUBTITLE,
   SHOP_LISTING,
+  RTW_EXCLUDE_CATEGORY_QUERY,
 } from "../src/lib/rtw-aisle";
 
 function assert(cond: unknown, message: string): asserts cond {
@@ -18,13 +19,23 @@ function assert(cond: unknown, message: string): asserts cond {
 
 function main() {
   assert(SHOP_LISTING === "/shop", "the whole store lives at /shop");
+  assert(RTW_EXCLUDE_CATEGORY_QUERY.includes("ACCESSORIES"), "RTW listing excludes accessories");
+  assert(RTW_EXCLUDE_CATEGORY_QUERY.includes("KIDDIES"), "RTW listing excludes kids");
+  assert(RTW_EXCLUDE_CATEGORY_QUERY.includes("BRIDAL"), "RTW listing excludes bridal");
   assert(
     SHOP_HERO_SUBTITLE.includes("Everything the house sells"),
     "shop hero says it is the whole house, not a second RTW aisle",
   );
+  assert(SHOP_HERO_SUBTITLE.includes("accessories"), "shop copy names accessories with the rest of the house");
   assert(
     shopHeroCopy({ subtitle: "Ready-to-wear, bridal, and atelier couture." }).subtitle === SHOP_HERO_SUBTITLE,
     "the previous house-description subtitle is replaced",
+  );
+  assert(
+    shopHeroCopy({
+      subtitle: "Everything the house sells — ready-to-wear, bridal, and kids. Tap a category to find a dress.",
+    }).subtitle === SHOP_HERO_SUBTITLE,
+    "the previous kids-only subtitle is replaced",
   );
   assert(
     shopHeroCopy({ subtitle: "Custom line from CMS" }).subtitle === "Custom line from CMS",
@@ -40,7 +51,8 @@ function main() {
   assert(productAisle({ type: "RTW", category: "FORMAL" }).label === "Ready to Wear", "RTW breadcrumb");
   assert(productAisle({ type: "RTW", category: "FORMAL" }).href === "/rtw", "RTW breadcrumb href");
   assert(productAisle({ type: "RTW", category: "BRIDAL" }).href === "/bridal", "bridal breadcrumb");
-  assert(productAisle({ type: "BESPOKE", category: "FORMAL" }).href === "/atelier", "atelier breadcrumb");
+  assert(productAisle({ type: "RTW", category: "ACCESSORIES" }).href === "/shop?category=ACCESSORIES", "accessories breadcrumb is shop");
+  assert(productAisle({ type: "RTW", category: "ACCESSORIES" }).label === "Accessories", "accessories aisle label");
 
   const grouped = groupSearchResults([
     { type: "RTW", category: "FORMAL", name: "Dress" },
@@ -52,8 +64,12 @@ function main() {
   assert(grouped[1]?.aisle === "bridal", "bridal labeled");
   assert(grouped[2]?.aisle === "atelier", "atelier labeled");
 
-  const rtwOnly = groupSearchResults([{ type: "RTW", category: "CASUAL", name: "Set" }]);
-  assert(rtwOnly.length === 1 && rtwOnly[0]?.aisle === "rtw", "a dress-only search needs no extra aisle labels");
+  const withBag = groupSearchResults([
+    { type: "RTW", category: "FORMAL", name: "Dress" },
+    { type: "RTW", category: "ACCESSORIES", name: "Bag" },
+  ]);
+  assert(withBag.some((g) => g.aisle === "accessories"), "accessories are not grouped under ready-to-wear");
+  assert(withBag.find((g) => g.aisle === "rtw")?.items.every((i) => i.name !== "Bag"), "bags stay out of the RTW search group");
 
   console.log("test-slice-z4: ok");
 }

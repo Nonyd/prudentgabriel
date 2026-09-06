@@ -8,7 +8,7 @@
  *
  * Direct, Cascade (Product delete covers these; listed so none are forgotten):
  *   ProductImage, ProductVariant, ProductColor, ProductMeasurement,
- *   CollectionProduct, BundleItem (source and target)
+ *   CollectionProduct, CollectionReel (SetNull on product), BundleItem (source and target)
  *
  * Via ProductVariant (Cascade from variant, except OrderItem which is Restrict):
  *   StockMovement (append-only trigger — same app.ledger_bypass as Payment)
@@ -79,6 +79,7 @@ export const PRODUCT_CASCADE_DEPENDENCIES = [
   "ProductColor",
   "ProductMeasurement",
   "CollectionProduct",
+  "CollectionReel",
   "BundleItem",
   "ProductVariant",
   "Product",

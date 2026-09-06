@@ -65,7 +65,7 @@ export async function uniqueProductCountsForCollections(
 
   const collectionIds = rows.map((r) => r.id);
   const manuals = await prisma.collectionProduct.findMany({
-    where: { collectionId: { in: collectionIds } },
+    where: { collectionId: { in: collectionIds }, product: { isPublished: true } },
     select: { collectionId: true, productId: true },
   });
 
@@ -105,6 +105,27 @@ export async function uniqueProductCountForCollection(
     { id: collectionId, autoTag: autoTag ?? null },
   ]);
   return count ?? 0;
+}
+
+/** Published product ids on a collection (manual rows plus auto-tag matches). */
+export async function publishedProductIdsForCollection(
+  collectionId: string,
+  autoTag: string | null | undefined,
+): Promise<string[]> {
+  const manuals = await prisma.collectionProduct.findMany({
+    where: { collectionId, product: { isPublished: true } },
+    select: { productId: true },
+  });
+  const ids = new Set(manuals.map((m) => m.productId));
+  const tag = autoTag?.trim();
+  if (tag) {
+    const tagged = await prisma.product.findMany({
+      where: { isPublished: true, tags: { has: tag } },
+      select: { id: true },
+    });
+    for (const p of tagged) ids.add(p.id);
+  }
+  return Array.from(ids);
 }
 
 export async function mergePublishedCollectionProducts(

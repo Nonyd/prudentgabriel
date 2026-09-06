@@ -50,7 +50,9 @@ function run() {
   assert(glass.includes("admin-field"), "admin field");
   assert(glass.includes("@keyframes field-drift"), "storefront field drifts");
   assert(glass.includes("prefers-reduced-motion: reduce"), "field stops under reduced motion");
-  assert(!/storefront-field::before[\s\S]*?filter:\s*blur/.test(glass), "field must not use a live filter:blur");
+  const fieldBefore = glass.match(/\.storefront-field::before,\s*\.admin-field::before\s*\{[^}]+\}/);
+  assert(fieldBefore, "field ::before rule exists");
+  assert(!/filter:\s*blur/.test(fieldBefore[0]), "field must not use a live filter:blur");
   assert(glass.includes("photography-only"), "gallery grid stays full-bleed, not glass tiles");
   assert(glass.includes("translateY(-1px)"), "panel hover is a 1px lift");
   const liftHover = glass.match(/\.glass-lift:hover\s*\{[^}]+\}/);

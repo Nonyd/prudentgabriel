@@ -278,7 +278,7 @@ export function AdminSidebar({
                 aria-expanded={expanded}
                 aria-controls={panelId}
                 onClick={() => toggleSection(section.id)}
-                className="admin-nav-section-label mb-1 flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-left font-sans font-semibold uppercase text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc"
+                className="admin-nav-section-label mb-1 flex w-full items-center justify-between gap-2 rounded-none px-2 py-1.5 text-left font-sans font-semibold uppercase text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc"
               >
                 <span>{section.label}</span>
                 <ChevronDown
@@ -301,10 +301,10 @@ export function AdminSidebar({
                           onClick={() => onNavigate?.()}
                           aria-current={active ? "page" : undefined}
                           className={cn(
-                            "admin-nav-item flex items-center gap-2.5 rounded-sm px-2 py-2 font-sans text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc",
+                            "admin-nav-item flex items-center gap-2.5 rounded-none px-2 py-2 font-sans text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc",
                             active
-                              ? "border-r-2 border-choc bg-transparent text-text-primary"
-                              : "text-text-mid hover:text-text-primary",
+                              ? "border-l-2 border-[var(--choc-deep)] bg-sand/25 text-text-primary"
+                              : "border-l-2 border-transparent text-text-mid hover:bg-sand/15 hover:text-text-primary",
                           )}
                         >
                           <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
@@ -346,10 +346,10 @@ export function AdminSidebar({
           href="/admin/account-settings"
           onClick={() => onNavigate?.()}
           className={cn(
-            "admin-nav-item mt-1 flex items-center gap-2 rounded-sm px-2 py-2 font-sans text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc",
+            "admin-nav-item mt-1 flex items-center gap-2 rounded-none px-2 py-2 font-sans text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc",
             pathname.startsWith("/admin/account-settings")
-              ? "border-r-2 border-choc bg-transparent text-text-primary"
-              : "text-text-mid hover:text-text-primary",
+              ? "border-l-2 border-[var(--choc-deep)] bg-sand/25 text-text-primary"
+              : "border-l-2 border-transparent text-text-mid hover:bg-sand/15 hover:text-text-primary",
           )}
         >
           <UserRoundCog className="h-4 w-4 shrink-0" strokeWidth={1.5} />
@@ -358,7 +358,7 @@ export function AdminSidebar({
         <button
           type="button"
           onClick={() => void signOut({ callbackUrl: "/login?tab=admin" })}
-          className="admin-nav-item mt-2 flex w-full items-center gap-2 rounded-sm px-2 py-2 font-sans text-[13px] text-text-mid transition-colors hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc"
+          className="admin-nav-item mt-2 flex w-full items-center gap-2 rounded-none px-2 py-2 font-sans text-[13px] text-text-mid transition-colors hover:bg-sand/15 hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc"
         >
           <LogOut className="h-4 w-4" strokeWidth={1.5} />
           Sign out

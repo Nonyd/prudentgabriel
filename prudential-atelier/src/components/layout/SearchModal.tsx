@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import type { ProductListItem } from "@/types/product";
-import { groupSearchResults, RTW_AISLE, SEARCH_AISLE_LABEL } from "@/lib/rtw-aisle";
+import { groupSearchResults, RTW_AISLE, RTW_EXCLUDE_CATEGORY_QUERY, SEARCH_AISLE_LABEL } from "@/lib/rtw-aisle";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { minAmountInCurrency } from "@/lib/pricing";
 
@@ -60,7 +60,7 @@ export function SearchModal() {
   useEffect(() => {
     if (!isOpen) return;
     setRecent(loadRecent());
-    fetch("/api/products?featured=true&limit=4&isPublished=true&type=RTW&excludeCategory=BRIDAL")
+    fetch(`/api/products?featured=true&limit=4&isPublished=true&type=RTW&excludeCategory=${RTW_EXCLUDE_CATEGORY_QUERY}`)
       .then((r) => r.json())
       .then((j) => setFeatured(j.products ?? []))
       .catch(() => setFeatured([]));

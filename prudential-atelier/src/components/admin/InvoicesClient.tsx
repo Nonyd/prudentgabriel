@@ -113,14 +113,13 @@ export function InvoicesClient() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl text-ink">Quotations &amp; Invoices</h1>
-          <p className="mt-1 font-body text-[13px] text-[#6B6B68]">Prudential Atelier</p>
+          <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">
+            Quotations &amp; Invoices
+          </h1>
+          <p className="mt-1 font-body text-[13px] text-text-mid">Prudential Atelier</p>
           <InvoicesQuotationsNav />
         </div>
-        <Link
-          href="/admin/invoices/new"
-          className="inline-flex h-10 items-center bg-[#37392d] px-5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white"
-        >
+        <Link href="/admin/invoices/new" className="admin-cta">
           + Create invoice
         </Link>
       </div>
@@ -133,8 +132,8 @@ export function InvoicesClient() {
             { label: "Overdue", value: String(stats.overdue) },
             { label: "Paid this month", value: String(stats.paidThisMonth) },
           ].map((c) => (
-            <div key={c.label} className="border border-sand bg-canvas p-4">
-              <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-[#A8A8A4]">{c.label}</p>
+            <div key={c.label} className="card-surface p-4">
+              <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-text-light">{c.label}</p>
               <p className="mt-2 font-body text-lg text-ink">{c.value}</p>
             </div>
           ))}
@@ -150,8 +149,10 @@ export function InvoicesClient() {
               setTab(t.id);
               setPage(1);
             }}
-            className={`rounded-sm px-3 py-1.5 font-body text-xs ${
-              tab === t.id ? "bg-[#37392d] text-white" : "text-charcoal hover:bg-[#F2F2F0]"
+            className={`px-3 py-1.5 font-body text-xs ${
+              tab === t.id
+                ? "bg-[var(--choc-deep)] text-[var(--ivory-deep)]"
+                : "text-text-mid hover:bg-sand/30"
             }`}
           >
             {t.label}
@@ -183,7 +184,7 @@ export function InvoicesClient() {
         </select>
         <button
           type="button"
-          className="border border-sand px-4 py-2 font-body text-xs uppercase text-olive"
+          className="border border-sand px-4 py-2 font-body text-xs uppercase text-text-primary"
           onClick={() => void load()}
         >
           Search
@@ -193,7 +194,7 @@ export function InvoicesClient() {
       <div className="mt-6 overflow-x-auto border border-sand">
         <table className="w-full min-w-[900px] border-collapse font-body text-xs">
           <thead>
-            <tr className="bg-[#37392d] text-left text-[10px] font-medium uppercase tracking-[0.1em] text-white">
+            <tr className="bg-[var(--choc-deep)] text-left text-[10px] font-medium uppercase tracking-[0.1em] text-[var(--ivory-deep)]">
               <th className="px-3 py-2">Invoice #</th>
               <th className="px-3 py-2">Client</th>
               <th className="px-3 py-2">Order</th>
@@ -208,13 +209,13 @@ export function InvoicesClient() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-[#6B6B68]">
+                <td colSpan={9} className="px-3 py-8 text-center text-text-mid">
                   Loading…
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-[#6B6B68]">
+                <td colSpan={9} className="px-3 py-8 text-center text-text-mid">
                   No invoices yet.
                 </td>
               </tr>
@@ -227,7 +228,7 @@ export function InvoicesClient() {
                     <td className="px-3 py-2 font-mono text-[11px] text-olive">{r.invoiceNumber}</td>
                     <td className="px-3 py-2">
                       <div className="font-medium">{r.clientName}</div>
-                      <div className="text-[#6B6B68]">{r.clientEmail}</div>
+                      <div className="text-text-mid">{r.clientEmail}</div>
                     </td>
                     <td className="px-3 py-2">
                       {r.bespokeOrder ? (
@@ -248,11 +249,11 @@ export function InvoicesClient() {
                     <td className="px-3 py-2">
                       {r.currency} {formatInvoiceCurrency(r.total, cur)}
                     </td>
-                    <td className={`px-3 py-2 ${r.balanceDue > 0 ? "text-red-800" : "text-ink"}`}>
+                    <td className={`px-3 py-2 ${r.balanceDue > 0 ? "text-danger" : "text-ink"}`}>
                       {formatInvoiceCurrency(r.balanceDue, cur)}
                     </td>
                     <td className="px-3 py-2">{r.status.replace(/_/g, " ")}</td>
-                    <td className={`px-3 py-2 ${overdue ? "text-red-800 font-medium" : ""}`}>
+                    <td className={`px-3 py-2 ${overdue ? "font-medium text-danger" : ""}`}>
                       {r.dueDate ? new Date(r.dueDate).toLocaleDateString("en-GB") : "—"}
                     </td>
                     <td className="px-3 py-2">{r.sentAt ? "✓" : "—"}</td>
@@ -261,14 +262,14 @@ export function InvoicesClient() {
                         <Link href={`/admin/invoices/${r.id}`} className="text-olive underline">
                           View
                         </Link>
-                        <button type="button" className="text-olive underline" onClick={() => void send(r.id)}>
+                        <button type="button" className="rounded-none text-olive underline" onClick={() => void send(r.id)}>
                           Send
                         </button>
                         <a className="text-olive underline" href={`/api/admin/invoices/${r.id}/pdf`} target="_blank" rel="noreferrer">
                           PDF
                         </a>
                         {r.status === "DRAFT" ? (
-                          <button type="button" className="text-red-700 underline" onClick={() => void del(r.id)}>
+                          <button type="button" className="rounded-none text-red-700 underline" onClick={() => void del(r.id)}>
                             Delete
                           </button>
                         ) : null}
@@ -283,7 +284,7 @@ export function InvoicesClient() {
       </div>
 
       {totalPages > 1 ? (
-        <div className="mt-4 flex items-center justify-between font-body text-xs text-[#6B6B68]">
+        <div className="mt-4 flex items-center justify-between font-body text-xs text-text-mid">
           <span>
             Page {page} of {totalPages} ({total} total)
           </span>

@@ -14,11 +14,11 @@ import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { CurrencySwitcher } from "@/components/common/CurrencySwitcher";
 import { getSubBrand } from "@/lib/sub-brand";
+import { SHOP_ACCESSORIES, SHOP_LISTING } from "@/lib/rtw-aisle";
 
 type CollectionNav = { name: string; slug: string };
 
 const PRIMARY_LINKS = [
-  { href: "/shop", label: "Shop" },
   { href: "/bridal", label: "Bridal" },
   { href: "/atelier", label: "Atelier" },
   { href: "/kids", label: "Kids" },
@@ -31,6 +31,47 @@ function NavLink({ href, label }: { href: string; label: string }) {
     <Link href={href} className="storefront-nav-link">
       {label}
     </Link>
+  );
+}
+
+function ShopDropdown() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <Link href={SHOP_LISTING} className="storefront-nav-link inline-flex items-center gap-1">
+        Shop
+        <ChevronDown
+          className={cn("h-3 w-3 transition-transform duration-150", open && "rotate-180")}
+          strokeWidth={2}
+        />
+      </Link>
+
+      <AnimatePresence>
+        {open ? (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
+            className="absolute left-0 top-full z-[80] min-w-[200px] pt-3"
+          >
+            <div className="glass-2 glass-panel py-3">
+              <Link href={SHOP_LISTING} className="block px-5 py-2 text-[13px] font-normal text-[var(--text-primary)] hover:opacity-70">
+                Everything
+              </Link>
+              <Link href={SHOP_ACCESSORIES} className="block px-5 py-2 text-[13px] font-normal text-[var(--text-primary)] hover:opacity-70">
+                Accessories
+              </Link>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -93,6 +134,33 @@ function RtwDropdown({ collections }: { collections: CollectionNav[] }) {
           </motion.div>
         ) : null}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function MobileShopSection({ onClose }: { onClose: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="border-b border-[var(--glass-edge)]">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center justify-between py-3 text-left text-[14px] font-normal text-[var(--text-primary)]"
+      >
+        Shop
+        <ChevronDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} />
+      </button>
+      {expanded ? (
+        <div className="pb-3 pl-4">
+          <Link href={SHOP_LISTING} onClick={onClose} className="block py-2 text-[13px] text-text-mid">
+            Everything
+          </Link>
+          <Link href={SHOP_ACCESSORIES} onClick={onClose} className="block py-2 text-[13px] text-text-mid">
+            Accessories
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -215,8 +283,7 @@ export function Navbar({
     openLogin("/account");
   };
 
-  const shopLink = PRIMARY_LINKS[0];
-  const afterRtwLinks = PRIMARY_LINKS.slice(1);
+  const afterRtwLinks = PRIMARY_LINKS;
 
   return (
     <>
@@ -252,7 +319,7 @@ export function Navbar({
               className="hidden min-w-0 items-center gap-4 overflow-visible lg:flex xl:gap-6 2xl:gap-8"
               aria-label="Primary"
             >
-              <NavLink href={shopLink.href} label={shopLink.label} />
+              <ShopDropdown />
               <RtwDropdown collections={collections} />
               {afterRtwLinks.map((link) => (
                 <NavLink key={link.href} href={link.href} label={link.label} />
@@ -292,13 +359,7 @@ export function Navbar({
           </button>
         </div>
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto border-t border-[var(--glass-edge)] p-6" aria-label="Mobile">
-          <Link
-            href={shopLink.href}
-            onClick={() => setOpen(false)}
-            className="border-b border-[var(--glass-edge)] py-3 text-[14px] font-normal text-[var(--text-primary)]"
-          >
-            {shopLink.label}
-          </Link>
+          <MobileShopSection onClose={() => setOpen(false)} />
           <MobileRtwSection collections={collections} onClose={() => setOpen(false)} />
           {afterRtwLinks.map((link) => (
             <Link

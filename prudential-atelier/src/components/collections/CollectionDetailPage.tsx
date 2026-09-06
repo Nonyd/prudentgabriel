@@ -4,11 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import * as Select from "@radix-ui/react-select";
-import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { cn, optimizeImageUrl } from "@/lib/utils";
+import { optimizeImageUrl } from "@/lib/utils";
 import { PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/product-image-url";
-import { ProductCardGrid } from "@/components/common/ProductCardGrid";
+import { CollectionGalleryGrid } from "@/components/collections/CollectionGalleryGrid";
+import { CollectionReelCell } from "@/components/collections/CollectionReelCell";
+import { splitHeroAndGridReels, type CollectionReelRecord } from "@/lib/collection-gallery";
 import type { CollectionProductWithMeta } from "@/lib/collection-products";
 
 export type CollectionHero = {
@@ -34,6 +35,12 @@ export type OtherCollectionCard = {
 
 const PAGE_LIMIT = 24;
 
+function heroMetaLine(collection: CollectionHero, total: number) {
+  const season = [collection.season, collection.year].filter(Boolean).join(" ");
+  const pieces = `${total} ${total === 1 ? "piece" : "pieces"}`;
+  return season ? `${season} — ${pieces}` : pieces;
+}
+
 export function CollectionDetailPage({
   collection,
   initialProducts,
@@ -41,6 +48,8 @@ export function CollectionDetailPage({
   initialPage,
   initialHasNext,
   otherCollections,
+  reels = [],
+  adminPreview = false,
 }: {
   collection: CollectionHero;
   initialProducts: CollectionProductWithMeta[];
@@ -48,6 +57,8 @@ export function CollectionDetailPage({
   initialPage: number;
   initialHasNext: boolean;
   otherCollections: OtherCollectionCard[];
+  reels?: CollectionReelRecord[];
+  adminPreview?: boolean;
 }) {
   const [sort, setSort] = useState("");
   const [items, setItems] = useState(initialProducts);
@@ -57,6 +68,8 @@ export function CollectionDetailPage({
   const [loadingMore, setLoadingMore] = useState(false);
   const [sortBusy, setSortBusy] = useState(false);
 
+  const { hero: heroReel, grid: gridReels } = useMemo(() => splitHeroAndGridReels(reels), [reels]);
+
   useEffect(() => {
     setItems(initialProducts);
     setTotal(initialTotal);
@@ -64,29 +77,32 @@ export function CollectionDetailPage({
     setHasNext(initialHasNext);
   }, [collection.slug, initialProducts, initialTotal, initialPage, initialHasNext]);
 
-  const refetchFirstPage = useCallback(async (nextSort: string) => {
-    setSortBusy(true);
-    try {
-      const u = new URLSearchParams();
-      u.set("page", "1");
-      u.set("limit", String(PAGE_LIMIT));
-      if (nextSort) u.set("sort", nextSort);
-      const res = await fetch(`/api/collections/${collection.slug}?${u.toString()}`);
-      if (!res.ok) return;
-      const data = (await res.json()) as {
-        products: CollectionProductWithMeta[];
-        total: number;
-        page: number;
-        hasNext: boolean;
-      };
-      setItems(data.products);
-      setTotal(data.total);
-      setPage(data.page);
-      setHasNext(data.hasNext);
-    } finally {
-      setSortBusy(false);
-    }
-  }, [collection.slug]);
+  const refetchFirstPage = useCallback(
+    async (nextSort: string) => {
+      setSortBusy(true);
+      try {
+        const u = new URLSearchParams();
+        u.set("page", "1");
+        u.set("limit", String(PAGE_LIMIT));
+        if (nextSort) u.set("sort", nextSort);
+        const res = await fetch(`/api/collections/${collection.slug}?${u.toString()}`);
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          products: CollectionProductWithMeta[];
+          total: number;
+          page: number;
+          hasNext: boolean;
+        };
+        setItems(data.products);
+        setTotal(data.total);
+        setPage(data.page);
+        setHasNext(data.hasNext);
+      } finally {
+        setSortBusy(false);
+      }
+    },
+    [collection.slug],
+  );
 
   const onSortChange = (value: string) => {
     const v = value === "curated" ? "" : value;
@@ -133,10 +149,16 @@ export function CollectionDetailPage({
     document.getElementById("collection-products")?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const liveOthers = otherCollections.filter((o) => o.productCount > 0);
+
   return (
-    <div className="min-h-screen bg-bg-card">
-      <section className="relative h-[100svh] min-h-[480px] w-full overflow-hidden bg-charcoal">
-        {heroImg ? (
+    <div className="min-h-screen">
+      <section className="relative h-[100svh] min-h-[480px] w-full overflow-hidden bg-choc">
+        {heroReel ? (
+          <div className="absolute inset-0">
+            <CollectionReelCell reel={heroReel} className="absolute inset-0 h-full w-full" />
+          </div>
+        ) : heroImg ? (
           <Image
             src={heroImg}
             alt={collection.coverImageAlt || collection.name}
@@ -153,100 +175,44 @@ export function CollectionDetailPage({
           </div>
         )}
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(10,10,10,0.85)] via-transparent to-transparent"
-          style={{ backgroundSize: "100% 100%" }}
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgb(68_41_19_/_0.72)] via-transparent to-transparent"
+          aria-hidden
         />
-        <div className="pointer-events-none absolute bottom-8 right-6 hidden flex-col items-center gap-2 text-white/40 md:flex">
-          <span className="font-body text-[9px] font-medium uppercase tracking-[0.2em] [writing-mode:vertical-rl]">
-            Scroll
-          </span>
-          <span className="h-12 w-px bg-bg-card/30" />
-        </div>
 
-        <div className="absolute bottom-8 left-6 right-6 md:bottom-16 md:left-16 md:right-auto">
-          <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}>
-            <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}>
-              {collection.season ? (
-                <p className="mb-3 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/50">
-                  {collection.season} collection
-                </p>
-              ) : null}
-            </motion.div>
-            <motion.h1
-              variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
-              className="max-w-[14ch] font-display text-[40px] font-normal italic leading-[0.9] text-white md:text-[72px]"
-            >
+        <div className="absolute bottom-8 left-4 right-4 md:bottom-12 md:left-10 md:right-auto md:max-w-md">
+          <div className="glass-1 glass-panel px-6 py-6 md:px-8 md:py-8">
+            <h1 className="max-w-[14ch] font-display text-[40px] font-normal leading-[0.95] text-choc md:text-[56px]">
               {collection.name}
-            </motion.h1>
-            {collection.excerpt ? (
-              <motion.p
-                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
-                className="mt-4 max-w-lg font-body text-[16px] font-light text-white/70"
-              >
-                {collection.excerpt}
-              </motion.p>
-            ) : null}
-            <motion.div
-              variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
-              className="mt-6 flex flex-wrap gap-8 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white/60"
-            >
-              <span>
-                {total} {total === 1 ? "piece" : "pieces"}
-              </span>
-              {collection.season || collection.year ? (
-                <span>
-                  Season {collection.season ?? "—"}
-                  {collection.year ? ` ${collection.year}` : ""}
-                </span>
-              ) : null}
-            </motion.div>
-            <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }} className="mt-8">
-              <button
-                type="button"
-                onClick={scrollToGrid}
-                className="border border-white px-10 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white transition-colors hover:bg-bg-card hover:text-black"
-              >
-                Shop the collection
-              </button>
-            </motion.div>
-          </motion.div>
+            </h1>
+            <p className="mt-3 font-sans text-[13px] font-normal text-text-mid">{heroMetaLine(collection, total)}</p>
+            <button type="button" onClick={scrollToGrid} className="btn-primary mt-6">
+              Shop the collection
+            </button>
+          </div>
         </div>
       </section>
 
       {collection.description ? (
-        <section className="bg-bg-card py-16 md:py-20">
-          <div className="mx-auto max-w-2xl px-6 text-center">
-            <p className="font-body text-[12px] tracking-[0.3em] text-gold/40">—— ◆ ——</p>
-            <p className="mt-6 font-display text-[20px] font-normal italic leading-[1.7] text-charcoal md:text-[22px]">
-              {collection.description}
-            </p>
-          </div>
+        <section className="mx-auto max-w-site px-6 py-16 md:py-20 lg:px-10">
+          <p className="max-w-[42rem] text-left font-display text-[20px] font-normal italic leading-[1.7] text-choc md:text-[22px]">
+            {collection.description}
+          </p>
         </section>
       ) : null}
 
-      <section
-        id="collection-products"
-        className={cn("py-12 md:py-16", collection.description ? "bg-bg-page" : "bg-bg-card")}
-      >
-        <div className="mx-auto mb-8 flex max-w-[1400px] flex-col gap-4 px-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="font-body text-[11px] font-medium uppercase tracking-[0.12em] text-dark-grey/50">
-            {total} {total === 1 ? "piece" : "pieces"} in this collection
+      <section id="collection-products" className="pb-16 md:pb-20">
+        <div className="mx-auto mb-6 flex max-w-[1400px] flex-wrap items-center gap-2 px-4 md:px-6">
+          <p className="glass-1 glass-pill px-4 py-2 font-sans text-[13px] font-normal text-text-primary">
+            {total} {total === 1 ? "piece" : "pieces"}
           </p>
           <Select.Root value={sort || "curated"} onValueChange={onSortChange}>
-            <Select.Trigger
-              className={cn(
-                "inline-flex items-center gap-1 border-0 bg-transparent font-body text-[10px] font-medium uppercase tracking-[0.1em] text-olive outline-none",
-              )}
-            >
+            <Select.Trigger className="glass-1 glass-pill inline-flex items-center gap-1 px-4 py-2 font-sans text-[13px] font-normal text-text-primary outline-none">
               <Select.Value>{sortLabel}</Select.Value>
               <ChevronDown className="h-3 w-3 opacity-60" strokeWidth={1.5} aria-hidden />
             </Select.Trigger>
             <Select.Portal>
-              <Select.Content
-                position="popper"
-                className="z-50 min-w-[11rem] border-x border-b border-mid-grey bg-bg-card shadow-md"
-              >
-                <Select.Viewport className="p-0">
+              <Select.Content position="popper" className="glass-2 glass-panel z-50 min-w-[11rem] shadow-md">
+                <Select.Viewport className="p-1">
                   {(
                     [
                       ["curated", "Curated order"],
@@ -258,7 +224,7 @@ export function CollectionDetailPage({
                     <Select.Item
                       key={value}
                       value={value}
-                      className="cursor-pointer px-5 py-2.5 font-body text-[12px] text-charcoal outline-none hover:bg-[#FAFAFA] hover:text-olive"
+                      className="cursor-pointer rounded-[999px] px-4 py-2 font-sans text-[13px] font-normal text-charcoal outline-none hover:bg-[var(--ivory-deep)]"
                     >
                       {label}
                     </Select.Item>
@@ -278,54 +244,51 @@ export function CollectionDetailPage({
             ))}
           </div>
         ) : items.length === 0 ? (
-          <p className="py-16 text-center font-body text-[14px] text-dark-grey">No products in this collection yet.</p>
+          <p
+            className="px-6 py-16 text-left font-sans text-[14px] font-normal text-text-mid"
+            data-collection-empty={adminPreview ? "preview" : undefined}
+          >
+            No pieces yet — add pieces on the collection page in admin.
+          </p>
         ) : (
-          <ProductCardGrid
-            products={items}
-            priorityCount={8}
-            className="grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
-          />
+          <CollectionGalleryGrid products={items} reels={gridReels} priorityCount={8} />
         )}
 
-        <div className="mx-auto mt-12 flex max-w-[1400px] flex-col items-center gap-2 px-6">
+        <div className="mx-auto mt-12 flex max-w-[1400px] flex-col items-start gap-2 px-6">
           {hasNext && !sortBusy && !loadingMore && (
             <button
               type="button"
               onClick={() => void loadMore()}
-              className="border-0 bg-transparent p-0 font-body text-[11px] font-medium uppercase tracking-wide text-dark-grey underline-offset-2 hover:underline"
+              className="border-0 bg-transparent p-0 font-sans text-[13px] font-normal text-text-mid underline-offset-4 hover:underline"
             >
-              Load more — Showing {items.length} of {total}
+              Load more — showing {items.length} of {total}
             </button>
           )}
-          {loadingMore && (
-            <p className="font-body text-[11px] font-medium uppercase tracking-wide text-dark-grey">Loading…</p>
-          )}
+          {loadingMore && <p className="font-sans text-[13px] font-normal text-text-mid">Loading…</p>}
         </div>
       </section>
 
-      {otherCollections.length > 0 ? (
-        <section className="bg-[#F5F5F3] py-16 md:py-20">
-          <h2 className="text-center font-display text-[28px] font-normal italic text-charcoal md:text-[36px]">
-            More collections
-          </h2>
-          <div className="mx-auto mt-10 grid max-w-[1400px] gap-8 px-6 md:grid-cols-3">
-            {otherCollections.map((o) => {
+      {liveOthers.length > 0 ? (
+        <section className="px-6 pb-20 lg:px-10">
+          <h2 className="font-display text-[28px] font-normal text-choc md:text-[36px]">More collections</h2>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {liveOthers.map((o) => {
               const cover = o.coverImage ? optimizeImageUrl(o.coverImage, 800) : PRODUCT_IMAGE_PLACEHOLDER;
               return (
-                <Link key={o.slug} href={`/collections/${o.slug}`} className="group block">
-                  <div className="img-portrait relative overflow-hidden bg-[#EAEAE8]">
-                    <Image
-                      src={cover}
-                      alt={o.name}
-                      fill
-                      className="object-cover transition-transform duration-[600ms] ease-out group-hover:scale-[1.03]"
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                    />
+                <Link
+                  key={o.slug}
+                  href={`/collections/${o.slug}`}
+                  className="glass-2 glass-panel glass-lift group block overflow-hidden"
+                >
+                  <div className="relative aspect-[3/4] overflow-hidden bg-ivory-dark">
+                    <Image src={cover} alt={o.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
                   </div>
-                  <h3 className="mt-3 font-display text-[20px] font-normal italic text-charcoal">{o.name}</h3>
-                  <p className="mt-1 font-body text-[11px] text-dark-grey">
-                    {o.productCount} {o.productCount === 1 ? "piece" : "pieces"}
-                  </p>
+                  <div className="px-4 py-4">
+                    <h3 className="font-display text-[20px] font-normal text-choc">{o.name}</h3>
+                    <p className="mt-1 font-sans text-[13px] font-normal text-text-mid">
+                      {o.productCount} {o.productCount === 1 ? "piece" : "pieces"}
+                    </p>
+                  </div>
                 </Link>
               );
             })}

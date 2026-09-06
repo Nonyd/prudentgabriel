@@ -521,7 +521,7 @@ export function AdminConsultationDetail({
           {status === ConsultationStatus.COMPLETED && !quotation ? (
             <Link
               href={`/admin/invoices/quotations/new?consultationId=${booking.id}`}
-              className="inline-flex items-center rounded-sm bg-choc px-4 py-2 font-sans text-[11px] font-semibold uppercase tracking-wide text-cream"
+              className="admin-cta"
             >
               + Create Quotation
             </Link>

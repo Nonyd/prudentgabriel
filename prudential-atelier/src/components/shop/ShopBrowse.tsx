@@ -9,7 +9,7 @@ import { useInView } from "react-intersection-observer";
 import { cn } from "@/lib/utils";
 import { ProductCardGrid } from "@/components/common/ProductCardGrid";
 import type { ProductListItem } from "@/types/product";
-import { SHOP_HERO_SUBTITLE, SHOP_HERO_TITLE, SHOP_LISTING } from "@/lib/rtw-aisle";
+import { SHOP_HERO_SUBTITLE, SHOP_HERO_TITLE, SHOP_LISTING, RTW_EXCLUDE_CATEGORY_QUERY } from "@/lib/rtw-aisle";
 
 interface ShopBrowseProps {
   products: ProductListItem[];
@@ -25,11 +25,12 @@ interface ShopBrowseProps {
 }
 
 const FILTERS = [
-  { id: "all", label: "ALL", params: {} },
-  { id: "rtw", label: "READY-TO-WEAR", params: { type: "RTW" } },
+  { id: "all", label: "ALL", params: {} as Record<string, string> },
+  { id: "rtw", label: "READY-TO-WEAR", params: { type: "RTW", excludeCategory: RTW_EXCLUDE_CATEGORY_QUERY } },
   { id: "bridal", label: "BRIDAL", params: { category: "BRIDAL" } },
   { id: "atelier", label: "ATELIER", params: { type: "BESPOKE" } },
   { id: "kids", label: "KIDS", params: { category: "KIDDIES" } },
+  { id: "accessories", label: "ACCESSORIES", params: { category: "ACCESSORIES" } },
 ] as const;
 
 export function ShopBrowse({
@@ -60,6 +61,7 @@ export function ShopBrowse({
     const type = sp.get("type");
     if (cat === "BRIDAL") return "bridal";
     if (cat === "KIDDIES") return "kids";
+    if (cat === "ACCESSORIES") return "accessories";
     if (type === "RTW") return "rtw";
     if (type === "BESPOKE") return "atelier";
     return "all";

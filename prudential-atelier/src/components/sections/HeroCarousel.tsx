@@ -63,6 +63,12 @@ function CarouselArrowRight() {
   );
 }
 
+/** iOS plays MP4/H.264. Inject a Cloudinary fetch format when the CMS stored a MOV/WebM. */
+function heroPlaybackUrl(url: string): string {
+  if (!url.includes("/video/upload/") || /\/upload\/[^/]*f_(mp4|auto)/.test(url)) return url;
+  return url.replace("/video/upload/", "/video/upload/f_mp4,q_auto,vc_h264/");
+}
+
 function CarouselMedia({
   item,
   isCenter,
@@ -73,49 +79,109 @@ function CarouselMedia({
   item: HeroCarouselItem;
   isCenter: boolean;
   isMuted: boolean;
-  videoRef?: React.RefObject<HTMLVideoElement>;
+  videoRef?: React.RefObject<HTMLVideoElement | null>;
   onVideoEnded: () => void;
 }) {
-  const fallbackRef = useRef<HTMLVideoElement>(null);
-  const activeRef = videoRef ?? fallbackRef;
+  const localRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    const video = activeRef.current;
+    const video = localRef.current;
     if (item.type !== "video" || !video) return;
 
-    if (isCenter) {
-      video.muted = isMuted;
-      void video.play().catch(() => {});
+    video.playsInline = true;
+    video.defaultMuted = true;
+    video.setAttribute("playsinline", "true");
+    video.setAttribute("webkit-playsinline", "true");
+    video.setAttribute("muted", "");
 
-      const handleEnded = () => onVideoEnded();
-      video.addEventListener("ended", handleEnded);
-
-      const safetyTimer = window.setTimeout(() => {
-        onVideoEnded();
-      }, VIDEO_MAX_MS);
-
-      return () => {
-        video.removeEventListener("ended", handleEnded);
-        window.clearTimeout(safetyTimer);
-      };
+    if (isCenter && videoRef) {
+      (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = video;
     }
 
-    video.muted = true;
-    video.pause();
-    video.currentTime = 0;
-    return undefined;
-  }, [activeRef, isCenter, isMuted, item.type, onVideoEnded]);
+    if (!isCenter) {
+      video.pause();
+      try {
+        video.currentTime = 0;
+      } catch {
+        /* not loaded yet */
+      }
+      return;
+    }
+
+    let cancelled = false;
+    let started = false;
+    let attempts = 0;
+    const retryIds: number[] = [];
+
+    const playNow = () => {
+      if (cancelled || attempts > 12) return;
+      video.muted = true;
+      video.defaultMuted = true;
+      const attempt = video.play();
+      if (attempt) {
+        void attempt
+          .then(() => {
+            started = true;
+            video.muted = isMuted;
+          })
+          .catch(() => {
+            attempts += 1;
+            if (!cancelled && attempts <= 12) retryIds.push(window.setTimeout(playNow, 280));
+          });
+      }
+    };
+
+    const onReady = () => playNow();
+    const onPlaying = () => {
+      started = true;
+    };
+    const onEnded = () => {
+      if (started && !cancelled) onVideoEnded();
+    };
+
+    video.addEventListener("canplay", onReady);
+    video.addEventListener("loadeddata", onReady);
+    video.addEventListener("playing", onPlaying);
+    video.addEventListener("ended", onEnded);
+    playNow();
+    retryIds.push(window.setTimeout(playNow, 120));
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) playNow();
+      },
+      { threshold: 0.2 },
+    );
+    io.observe(video);
+
+    const safetyTimer = window.setTimeout(() => {
+      if (!cancelled) onVideoEnded();
+    }, VIDEO_MAX_MS);
+
+    return () => {
+      cancelled = true;
+      io.disconnect();
+      retryIds.forEach((id) => window.clearTimeout(id));
+      video.removeEventListener("canplay", onReady);
+      video.removeEventListener("loadeddata", onReady);
+      video.removeEventListener("playing", onPlaying);
+      video.removeEventListener("ended", onEnded);
+      window.clearTimeout(safetyTimer);
+      video.pause();
+    };
+  }, [isCenter, isMuted, item.type, item.url, onVideoEnded, videoRef]);
 
   if (item.type === "video") {
     return (
       <video
-        ref={activeRef}
-        src={item.url}
+        ref={localRef}
+        src={heroPlaybackUrl(item.url)}
         muted
         playsInline
-        preload={isCenter ? "metadata" : "none"}
-        className="h-full w-full object-cover"
-        style={{ objectFit: "cover", width: "100%", height: "100%" }}
+        autoPlay={isCenter}
+        preload={isCenter ? "auto" : "metadata"}
+        disablePictureInPicture
+        className="absolute inset-0 h-full w-full object-cover"
       />
     );
   }
@@ -226,8 +292,8 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
       onTouchEnd={handleTouchEnd}
     >
       <div className="relative flex flex-1 items-center justify-center overflow-visible px-0 md:overflow-hidden">
-        <div className="relative h-full w-full" style={{ perspective: "1200px" }}>
-          <div className="relative mx-auto flex min-h-[520px] w-full items-center justify-center md:min-h-[600px]">
+        <div className="relative h-full w-full" style={{ perspective: isMobile ? "none" : "1200px" }}>
+          <div className="relative mx-auto flex min-h-[420px] w-full items-center justify-center md:min-h-[600px]">
             {visibleItems.map(({ item, index }) => {
               let pos = index - currentIndex;
               pos = (pos + total) % total;
@@ -235,24 +301,28 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
 
               const isCenter = pos === 0;
               const isAdjacent = Math.abs(pos) === 1;
+              const slideTransform = isCenter
+                ? "none"
+                : `translate(-50%, -50%) translateX(${pos * slideOffset}%) scale(${isAdjacent ? adjacentScale : 0.65}) rotateY(${isMobile ? 0 : pos * -8}deg)`;
 
               return (
                 <div
                   key={`${item.url}-${index}`}
                   className="absolute max-h-[520px] w-[min(300px,72vw)] overflow-hidden md:w-[340px]"
                   style={{
-                    left: "50%",
-                    top: "50%",
+                    ...(isCenter
+                      ? { left: 0, right: 0, top: 0, bottom: 0, margin: "auto" }
+                      : { left: "50%", top: "50%" }),
                     aspectRatio: "3 / 4",
-                    transform: `translate(-50%, -50%) translateX(${pos * slideOffset}%) scale(${isCenter ? 1 : isAdjacent ? adjacentScale : 0.65}) rotateY(${isMobile ? 0 : pos * -8}deg)`,
+                    transform: slideTransform,
                     zIndex: isCenter ? 10 : isAdjacent ? 5 : 1,
                     opacity: isCenter ? 1 : isAdjacent ? (isMobile ? 0.55 : 0.45) : 0,
-                    filter: isCenter ? "blur(0px)" : isMobile ? "blur(4px) brightness(0.7)" : "blur(3px)",
                     visibility: Math.abs(pos) > 1 ? "hidden" : "visible",
-                    transition: "all 0.5s ease-in-out",
+                    transition: "transform 0.5s ease-in-out, opacity 0.5s ease-in-out, box-shadow 0.5s ease-in-out",
                     borderRadius: isMobile ? "12px" : "8px",
                     border: "0.5px solid rgba(226,209,194,0.12)",
                     boxShadow: isCenter ? "0 24px 64px rgba(0,0,0,0.4)" : "none",
+                    ...(isCenter || isMobile ? {} : { filter: "blur(3px)" }),
                   }}
                 >
                   <CarouselMedia

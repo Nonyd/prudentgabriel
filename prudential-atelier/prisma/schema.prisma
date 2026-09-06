@@ -362,6 +362,7 @@ model Product {
   inBundles           BundleItem[]           @relation("BundleTarget")
   cartItems           CartItem[]
   collections         CollectionProduct[]
+  collectionReels     CollectionReel[]
   measurementFields   ProductMeasurement[]
 
   createdAt DateTime @default(now())
@@ -391,6 +392,7 @@ model Collection {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   products        CollectionProduct[]
+  reels           CollectionReel[]
 
   @@index([slug])
   @@index([isPublished, isFeatured])
@@ -407,6 +409,25 @@ model CollectionProduct {
 
   @@unique([collectionId, productId])
   @@index([collectionId])
+}
+
+/// Vertical 9:16 lookbook clip inside a collection. position 0 is the hero; otherwise after the Nth piece.
+model CollectionReel {
+  id           String     @id @default(cuid())
+  collectionId String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  videoKey     String
+  posterKey    String
+  position     Int        @default(3)
+  productId    String?
+  product      Product?   @relation(fields: [productId], references: [id], onDelete: SetNull)
+  sortOrder    Int        @default(0)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([collectionId, isActive])
+  @@index([collectionId, sortOrder])
 }
 
 model ProductImage {
