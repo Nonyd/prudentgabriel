@@ -1,6 +1,8 @@
 export const RTW_AISLE = "/rtw";
 export const SHOP_LISTING = "/shop";
 export const SHOP_ACCESSORIES = "/shop?category=ACCESSORIES";
+/** Four rows of four on desktop — then the listing paginates. */
+export const CATALOG_PAGE_SIZE = 16;
 
 /** Categories that are not ready-to-wear garments. Shop still lists them. */
 export const RTW_EXCLUDED_CATEGORIES = ["BRIDAL", "KIDDIES", "ACCESSORIES"] as const;

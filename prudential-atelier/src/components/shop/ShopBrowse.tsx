@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as Select from "@radix-ui/react-select";
 import { ChevronDown } from "lucide-react";
-import { useInView } from "react-intersection-observer";
 import { cn } from "@/lib/utils";
 import { ProductCardGrid } from "@/components/common/ProductCardGrid";
+import { CatalogPagination } from "@/components/shop/CatalogPagination";
 import type { ProductListItem } from "@/types/product";
 import { SHOP_HERO_SUBTITLE, SHOP_HERO_TITLE, SHOP_LISTING, RTW_EXCLUDE_CATEGORY_QUERY } from "@/lib/rtw-aisle";
 
@@ -33,11 +33,20 @@ const FILTERS = [
   { id: "accessories", label: "ACCESSORIES", params: { category: "ACCESSORIES" } },
 ] as const;
 
+function shopPageHref(sp: URLSearchParams, page: number) {
+  const n = new URLSearchParams(sp.toString());
+  n.delete("limit");
+  if (page <= 1) n.delete("page");
+  else n.set("page", String(page));
+  const q = n.toString();
+  return q ? `${SHOP_LISTING}?${q}` : SHOP_LISTING;
+}
+
 export function ShopBrowse({
   products: initialProducts,
   total,
   page: initialPage,
-  hasNext: initialHasNext,
+  totalPages,
   heroHeadline = SHOP_HERO_TITLE,
   heroSubtext = SHOP_HERO_SUBTITLE,
   hideFilters = false,
@@ -45,16 +54,13 @@ export function ShopBrowse({
   const sp = useSearchParams();
   const [items, setItems] = useState<ProductListItem[]>(initialProducts);
   const [page, setPage] = useState(initialPage);
-  const [hasNext, setHasNext] = useState(initialHasNext);
-  const [loadingMore, setLoadingMore] = useState(false);
 
   const queryKey = useMemo(() => sp.toString(), [sp]);
 
   useEffect(() => {
     setItems(initialProducts);
     setPage(initialPage);
-    setHasNext(initialHasNext);
-  }, [initialProducts, initialPage, initialHasNext, queryKey]);
+  }, [initialProducts, initialPage, queryKey]);
 
   const activeFilter = useMemo(() => {
     const cat = sp.get("category");
@@ -67,37 +73,10 @@ export function ShopBrowse({
     return "all";
   }, [sp]);
 
-  const loadMore = useCallback(async () => {
-    if (!hasNext || loadingMore) return;
-    setLoadingMore(true);
-    try {
-      const next = page + 1;
-      const u = new URLSearchParams(sp.toString());
-      u.set("page", String(next));
-      const res = await fetch(`/api/products?${u.toString()}`);
-      if (!res.ok) throw new Error("fetch failed");
-      const data = (await res.json()) as { products: ProductListItem[]; hasNext: boolean; page: number };
-      setItems((prev) => [...prev, ...data.products]);
-      setPage(data.page);
-      setHasNext(data.hasNext);
-    } catch {
-      /* ignore */
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [hasNext, loadingMore, page, sp]);
-
-  const { ref: sentinelRef, inView } = useInView({ rootMargin: "240px" });
-
-  useEffect(() => {
-    if (inView) void loadMore();
-  }, [inView, loadMore]);
-
   function filterHref(filterId: (typeof FILTERS)[number]["id"]) {
     const f = FILTERS.find((x) => x.id === filterId)!;
     const n = new URLSearchParams();
     for (const [k, v] of Object.entries(f.params)) n.set(k, v);
-    n.set("limit", sp.get("limit") ?? "20");
     const sort = sp.get("sort");
     if (sort) n.set("sort", sort);
     const q = n.toString();
@@ -164,19 +143,16 @@ export function ShopBrowse({
         ) : (
           <ProductCardGrid
             products={items}
-            className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+            variant="teaser"
+            className="grid-cols-2 md:grid-cols-4"
           />
         )}
 
-        {hasNext && (
-          <div ref={sentinelRef} className="flex justify-center py-10">
-            {loadingMore ? (
-              <p className="font-sans text-[11px] text-text-light">Loading more…</p>
-            ) : (
-              <span className="h-8 w-8" aria-hidden />
-            )}
-          </div>
-        )}
+        <CatalogPagination
+          page={page}
+          totalPages={totalPages}
+          hrefForPage={(p) => shopPageHref(sp, p)}
+        />
       </div>
     </div>
   );
@@ -200,6 +176,7 @@ function SortSelect() {
         const n = new URLSearchParams(sp.toString());
         n.set("sort", v);
         n.delete("page");
+        n.delete("limit");
         router.push(`${SHOP_LISTING}?${n.toString()}`);
       }}
     >

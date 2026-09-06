@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { queryProductList } from "@/lib/products-list-query";
 import { ShopBrowse } from "@/components/shop/ShopBrowse";
 import { cmsGet, getCMSContent } from "@/lib/cms";
-import { shopHeroCopy } from "@/lib/rtw-aisle";
+import { CATALOG_PAGE_SIZE, shopHeroCopy } from "@/lib/rtw-aisle";
 
 export const revalidate = 300;
 
@@ -26,7 +26,7 @@ export default async function ShopPage({
   searchParams: Record<string, string | string[] | undefined>;
 }) {
   const u = flattenSearchParams(searchParams);
-  if (!u.get("limit")) u.set("limit", "20");
+  u.set("limit", String(CATALOG_PAGE_SIZE));
 
   const { products, total, page, totalPages, hasNext, hasPrev } = await queryProductList(u, {
     isAdmin: false,

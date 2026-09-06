@@ -21,7 +21,7 @@ export function ProductCardGrid({
   priorityCount?: number;
   mobileColumns?: 1 | 2;
   merchBadge?: string;
-  /** Homepage teasers sit in glass frames. Shop/RTW galleries stay photography-only. */
+  /** Teaser: rounded glass-2 frames (homepage, shop, RTW). Gallery: photography-only seams (collection lookbook). */
   variant?: "gallery" | "teaser";
 }) {
   const activeId = useQuickAddStore((s) => s.product?.id ?? null);

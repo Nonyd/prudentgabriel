@@ -49,9 +49,9 @@ function run() {
   assert(!hero.includes("className=\"eyebrow"), "hero dropped the tracked eyebrow");
   assert(!hero.includes("bg-hero-bg"), "hero is not a choc slab");
 
-  assert(bestsellers.includes('variant="teaser"'), "homepage tiles are the teaser, not the shop gallery");
+  assert(bestsellers.includes('variant="teaser"'), "homepage tiles are the teaser");
   assert(grid.includes('variant?: "gallery" | "teaser"'), "gallery vs teaser is explicit");
-  assert(grid.includes("photography-only") || glass.includes("photography-only"), "shop gallery stays photography-only");
+  assert(grid.includes("photography-only") || glass.includes("photography-only"), "collection lookbook stays photography-only");
 
   assert(doors.includes("glass-2"), "three-doors cards are glass-2");
   assert(!doors.includes("The house"), "three-doors dropped the tracked kicker");
@@ -75,8 +75,9 @@ function run() {
   assert(nav.includes("CurrencySwitcher"), "currency switcher is on the storefront nav");
   assert(toaster.includes("glass-toast") || toaster.includes("glass-1-fill"), "toasts use glass-1");
 
-  assert(shop.includes("<ProductCardGrid"), "shop still mounts the gallery grid");
-  assert(!shop.includes('variant="teaser"'), "shop gallery is not the homepage teaser");
+  assert(shop.includes("<ProductCardGrid"), "shop still mounts the product grid");
+  assert(shop.includes('variant="teaser"'), "shop cards match the homepage teaser frames");
+  assert(shop.includes("CatalogPagination"), "shop paginates instead of infinite scroll");
 
   assert(pdp.includes("glass-2"), "PDP info column is glass-2");
   assert(checkout.includes("glass-opaque"), "checkout steps stay readable (opaque family)");
