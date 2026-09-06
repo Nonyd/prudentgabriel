@@ -441,10 +441,8 @@ body {
   padding: 0;
   border: 1px solid var(--glass-edge);
   border-radius: 999px;
-  background: var(--glass-1-fill);
+  background: var(--glass-1-solid);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   cursor: pointer;
 }
 

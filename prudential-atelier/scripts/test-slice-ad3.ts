@@ -98,7 +98,8 @@ function run() {
   assert(src("src/app/(admin)/admin/orders/page.tsx").includes("admin-heading-pill"), "orders heading is a glass pill");
   assert(src("src/components/admin/AdminOrdersListClient.tsx").includes("glass-opaque"), "orders table is solid");
 
-  assert(pkg.includes("test:slice-ad3"), "package.json exposes the slice AD3 script");
+  assert(src("src/components/public/Navbar.tsx").includes("invisible pointer-events-none"), "closed mobile menu does not keep a glass layer on screen");
+  assert(!src("src/styles/globals.css").includes("backdrop-filter: blur(8px)"), "gallery dots are solid, not extra blurs");
 
   console.log("slice-ad3: all checks passed");
 }

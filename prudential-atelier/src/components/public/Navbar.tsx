@@ -280,8 +280,8 @@ export function Navbar({
       />
       <aside
         className={cn(
-          "storefront-drawer glass-1 glass-panel fixed bottom-3 right-3 top-3 flex w-[min(320px,88vw)] flex-col transition-transform duration-300 lg:hidden",
-          open ? "translate-x-0" : "translate-x-[calc(100%+0.75rem)]",
+          "storefront-drawer fixed bottom-3 right-3 top-3 flex w-[min(320px,88vw)] flex-col transition-transform duration-300 lg:hidden",
+          open ? "glass-1 glass-panel translate-x-0" : "invisible pointer-events-none translate-x-[calc(100%+0.75rem)]",
         )}
         aria-hidden={!open}
       >
