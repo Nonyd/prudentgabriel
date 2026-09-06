@@ -44,41 +44,25 @@ export function KidsGalleryPage({
   }, [page]);
 
   return (
-    <div className="bg-[var(--accent-soft)]">
-      <section
-        className="px-6 pb-20 pt-24 text-center"
-        style={{ backgroundColor: "var(--hero-bg)" }}
-      >
-        <p
-          className="uppercase"
-          style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: "10px",
-            letterSpacing: "0.2em",
-            color: "var(--lightbr)",
-          }}
-        >
-          PRUDENTIAL KIDS
-        </p>
+    <div>
+      <section className="px-6 pb-20 pt-24 text-center">
+        <div className="glass-1 glass-panel mx-auto max-w-xl px-8 py-10">
         <h1
-          className="mt-4 font-display leading-[1.05] text-cream"
+          className="font-display leading-[1.05] text-choc"
           style={{ fontSize: "clamp(40px, 6vw, 52px)" }}
         >
           {heroHeadline}
         </h1>
         <p
-          className="mx-auto mt-4 max-w-md font-body leading-[1.8]"
-          style={{ fontSize: "15px", color: "rgba(226, 209, 194, 0.85)" }}
+          className="mx-auto mt-4 max-w-md font-body leading-[1.8] text-text-mid"
+          style={{ fontSize: "15px" }}
         >
           {pageDescription ?? heroSubtext}
         </p>
-        <Link
-          href="/rtw?category=KIDDIES"
-          className="mt-8 inline-block px-8 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-[#2a1a0e] transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "var(--cta-bg)", borderRadius: "2px" }}
-        >
+        <Link href="/rtw?category=KIDDIES" className="btn-primary mt-8 inline-block">
           {heroCtaLabel}
         </Link>
+        </div>
       </section>
 
       <section className="mx-auto flex max-w-[1400px] items-center justify-between px-6 pb-4 pt-10">

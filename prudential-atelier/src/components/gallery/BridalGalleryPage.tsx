@@ -13,7 +13,7 @@ export function BridalGalleryPage({
   heroHeadline = "Bridal.",
   heroSubtext = "Every bride is a masterpiece. Every gown, a legacy.",
   pageDescription,
-  galleryLabel = "PRUDENTIAL BRIDE",
+  galleryLabel: _galleryLabel = "PRUDENTIAL BRIDE",
 }: {
   initialImages: GalleryImage[];
   initialTotal: number;
@@ -44,10 +44,9 @@ export function BridalGalleryPage({
   }, [page]);
 
   return (
-    <div className="bg-[#FAF7F4]">
+    <div>
       <section className="px-6 pb-16 pt-20 text-center">
-        <p className="font-body text-[9px] uppercase tracking-[0.3em] text-[#C8A97A]">{galleryLabel}</p>
-        <h1 className="mt-3 font-display text-[44px] italic leading-[0.9] text-[#2A1F1A] md:text-[80px]">{heroHeadline}</h1>
+        <h1 className="font-display text-[44px] italic leading-[0.9] text-[#2A1F1A] md:text-[80px]">{heroHeadline}</h1>
         <p className="mx-auto mt-4 max-w-sm font-body text-[14px] font-light text-charcoal/60">
           {pageDescription ?? heroSubtext}
         </p>

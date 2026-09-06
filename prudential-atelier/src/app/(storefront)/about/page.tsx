@@ -65,21 +65,8 @@ const HERO_STRIP_IMAGES = [
   "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80",
 ];
 
-function Eyebrow({ children }: { children: React.ReactNode }) {
-  return (
-    <p
-      className="uppercase"
-      style={{
-        fontFamily: "var(--font-ui)",
-        fontSize: "10px",
-        fontWeight: 600,
-        letterSpacing: "0.2em",
-        color: "var(--lightbr)",
-      }}
-    >
-      {children}
-    </p>
-  );
+function Eyebrow({ children: _children }: { children: React.ReactNode }) {
+  return null;
 }
 
 export default async function AboutPage() {
@@ -131,16 +118,14 @@ export default async function AboutPage() {
   return (
     <div>
       {/* Hero */}
-      <section
-        className="relative flex min-h-[70vh] flex-col items-center justify-center px-6 py-24 text-center lg:px-10"
-        style={{ backgroundColor: "#442913" }}
-      >
+      <section className="relative flex min-h-[70vh] flex-col items-center justify-center px-6 py-24 text-center lg:px-10">
+        <div className="glass-1 glass-panel max-w-3xl px-8 py-12">
         <h1
           style={{
             fontFamily: "var(--font-display)",
             fontSize: "clamp(2.5rem, 6vw, 64px)",
             fontWeight: 400,
-            color: "var(--cream)",
+            color: "var(--choc)",
             lineHeight: 1.1,
           }}
         >
@@ -151,11 +136,12 @@ export default async function AboutPage() {
           style={{
             fontFamily: "var(--font-body)",
             fontSize: "18px",
-            color: "var(--sand)",
+            color: "var(--text-mid)",
           }}
         >
           {cmsGet(cms, "about_hero_subtext", "Founded in Lagos. Worn around the world.")}
         </p>
+        </div>
         <div className="mx-auto mt-14 grid w-full max-w-site grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
           {HERO_STRIP_IMAGES.map((src, i) => (
             <div key={src} className="relative aspect-[4/5] overflow-hidden rounded-sm">
@@ -166,7 +152,7 @@ export default async function AboutPage() {
       </section>
 
       {/* Brand story */}
-      <section className="mx-auto grid max-w-site items-center gap-12 bg-ivory px-6 py-20 lg:grid-cols-2 lg:px-10">
+      <section className="mx-auto grid max-w-site items-center gap-12 px-6 py-20 lg:grid-cols-2 lg:px-10">
         <div className="relative aspect-[3/4] overflow-hidden bg-sand/20">
           <Image src={storyImage} alt="Prudential Atelier" fill className="object-cover object-top" sizes="(max-width:1024px) 100vw, 50vw" />
         </div>
@@ -270,7 +256,7 @@ export default async function AboutPage() {
       </section>
 
       {/* Stats */}
-      <section className="bg-ivory px-6 py-20 lg:px-10">
+      <section className="px-6 py-20 lg:px-10">
         <div className="mx-auto grid max-w-site grid-cols-2 gap-10 lg:grid-cols-4">
           {stats.map((stat) => (
             <div key={stat.label} className="text-center">
@@ -320,7 +306,7 @@ export default async function AboutPage() {
           {values.map((value) => (
             <div
               key={value.name}
-              className="rounded-sm border border-sand bg-ivory p-7"
+              className="glass-2 glass-panel p-7"
               style={{ borderWidth: "0.5px" }}
             >
               <h3
@@ -349,7 +335,7 @@ export default async function AboutPage() {
       </section>
 
       {/* Locations */}
-      <section className="bg-ivory px-6 py-20 lg:px-10">
+      <section className="px-6 py-20 lg:px-10">
         <div className="mx-auto max-w-site text-center">
           <Eyebrow>{cmsGet(cms, "about_locations_eyebrow", "OUR ATELIERS")}</Eyebrow>
           <h2
@@ -444,12 +430,13 @@ export default async function AboutPage() {
       ) : null}
 
       {/* CTA */}
-      <section className="px-6 py-24 text-center lg:px-10" style={{ backgroundColor: "#442913" }}>
+      <section className="px-6 py-24 text-center lg:px-10">
+        <div className="glass-2 glass-panel mx-auto max-w-2xl px-8 py-12">
         <h2
           style={{
             fontFamily: "var(--font-display)",
             fontSize: "clamp(1.75rem, 4vw, 40px)",
-            color: "var(--cream)",
+            color: "var(--choc)",
           }}
         >
           {cmsGet(cms, "about_cta_headline", "Ready to begin your commission?")}
@@ -459,7 +446,7 @@ export default async function AboutPage() {
           style={{
             fontFamily: "var(--font-body)",
             fontSize: "16px",
-            color: "var(--sand)",
+            color: "var(--text-mid)",
           }}
         >
           &ldquo;{cmsGet(cms, "about_cta_quote", "Every great piece begins with a conversation.")}&rdquo;
@@ -494,12 +481,13 @@ export default async function AboutPage() {
             {cmsGet(cms, "about_cta_button_2_label", "BROWSE THE COLLECTION →")}
           </Link>
         </div>
-        <p className="mt-6 font-body text-sm" style={{ color: "var(--sand)" }}>
+        <p className="mt-6 font-body text-sm text-text-mid">
           Interested in joining our team?{" "}
-          <Link href="/careers" className="underline underline-offset-2 hover:text-cream">
+          <Link href="/careers" className="underline underline-offset-2 hover:text-choc">
             View open positions
           </Link>
         </p>
+        </div>
       </section>
     </div>
   );

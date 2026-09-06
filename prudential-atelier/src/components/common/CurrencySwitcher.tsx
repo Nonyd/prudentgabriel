@@ -46,7 +46,7 @@ export function CurrencySwitcher({
           <SelectPrimitive.Content
             position="popper"
             sideOffset={4}
-            className="z-[100] min-w-[5.5rem] overflow-hidden rounded-sm border border-mid-grey bg-[var(--white)] shadow-md"
+            className="z-[100] glass-2 glass-panel min-w-[5.5rem] overflow-hidden"
           >
             <SelectPrimitive.Viewport className="p-1">
               {CURRENCIES.map((c) => (

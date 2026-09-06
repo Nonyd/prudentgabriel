@@ -46,7 +46,7 @@ function Inner() {
 
   if (booking === undefined) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center bg-ivory">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <p className="text-charcoal-mid">Loading…</p>
       </div>
     );
@@ -54,7 +54,7 @@ function Inner() {
 
   if (!booking) {
     return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 bg-ivory px-4">
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 px-4">
         <p className="text-charcoal">We could not find this booking.</p>
         <Link href="/consultation" className="text-choc underline">
           Back to consultation
@@ -67,7 +67,7 @@ function Inner() {
   const pending = booking.status === ConsultationStatus.PENDING_CONFIRMATION;
 
   return (
-    <div className="min-h-screen bg-ivory px-4 py-16">
+    <div className="min-h-screen px-4 py-16">
       <div className="mx-auto max-w-lg text-center">
         <p className="font-label text-gold">#{booking.bookingNumber}</p>
         {confirmed ? (
@@ -150,7 +150,7 @@ export default function ConsultationSuccessPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[50vh] items-center justify-center bg-ivory">
+        <div className="flex min-h-[50vh] items-center justify-center">
           <p className="text-charcoal-mid">Loading…</p>
         </div>
       }

@@ -9,44 +9,29 @@ const COLLECTIONS = [
     title: "The Atelier",
     subtitle: "Commissions designed around you.",
     cta: "Commission",
-    bg: "#442913",
   },
   {
     href: "/bridal",
     title: "Bridal & Ceremony",
     subtitle: "Gowns for the day itself.",
     cta: "Bridal",
-    bg: "#5C3422",
   },
   {
     href: "/rtw",
     title: "Ready-to-Wear",
     subtitle: "House signatures, ready to ship.",
     cta: "Shop",
-    bg: "#3a1f0c",
   },
 ];
 
 export function CategoryGrid() {
   const cards = COLLECTIONS;
   return (
-    <section className="bg-bg-page px-6 py-20 lg:px-10">
+    <section className="px-6 py-20 lg:px-10">
       <div className="mx-auto max-w-site">
         <div className="text-center">
-          <p
-            className="uppercase"
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "10px",
-              fontWeight: 500,
-              letterSpacing: "0.2em",
-              color: "var(--lightbr)",
-            }}
-          >
-            The house
-          </p>
           <h2
-            className="mt-3 leading-tight"
+            className="leading-tight"
             style={{
               fontFamily: "var(--font-display)",
               fontSize: "42px",
@@ -68,8 +53,7 @@ export function CategoryGrid() {
             >
               <Link
                 href={card.href}
-                className="group flex h-[280px] flex-col text-center"
-                style={{ backgroundColor: card.bg }}
+                className="glass-2 glass-panel glass-lift group flex h-[280px] flex-col text-center"
               >
                 <div className="flex flex-1 flex-col items-center justify-center px-8">
                   <h3
@@ -77,7 +61,7 @@ export function CategoryGrid() {
                     style={{
                       fontFamily: "var(--font-display)",
                       fontSize: "28px",
-                      color: "var(--cream)",
+                      color: "var(--choc)",
                     }}
                   >
                     {card.title}
@@ -87,21 +71,14 @@ export function CategoryGrid() {
                     style={{
                       fontFamily: "var(--font-body)",
                       fontSize: "12px",
-                      color: "var(--sand)",
+                      color: "var(--text-mid)",
                     }}
                   >
                     {card.subtitle}
                   </p>
                 </div>
                 <span
-                  className="pb-8 uppercase underline decoration-[var(--lightbr)] underline-offset-[6px] transition-opacity group-hover:opacity-80"
-                  style={{
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "10px",
-                    fontWeight: 600,
-                    letterSpacing: "0.16em",
-                    color: "var(--cream)",
-                  }}
+                  className="pb-8 font-sans text-[13px] font-normal text-choc underline underline-offset-[6px] transition-opacity group-hover:opacity-80"
                 >
                   {card.cta}
                 </span>

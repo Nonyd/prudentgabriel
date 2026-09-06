@@ -16,7 +16,7 @@ export default async function BespokePayPage({ params }: { params: Promise<{ ord
   const depositPercent = await getBespokeDepositPercent();
 
   return (
-    <div className="min-h-screen bg-ivory">
+    <div>
       <BespokePayClient order={order} depositPercent={depositPercent} />
     </div>
   );

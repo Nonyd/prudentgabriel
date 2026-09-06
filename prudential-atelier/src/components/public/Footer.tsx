@@ -44,10 +44,9 @@ const HOUSE_TAGLINE =
 
 const labelStyle = {
   fontFamily: "var(--font-ui)",
-  fontSize: "10px",
-  fontWeight: 500,
-  letterSpacing: "0.18em",
-  color: "var(--lightbr)",
+  fontSize: "13px",
+  fontWeight: 400,
+  color: "var(--text-primary)",
 } as const;
 
 const linkStyle = {
@@ -55,7 +54,7 @@ const linkStyle = {
   fontSize: "13px",
   fontWeight: 300,
   lineHeight: 2.2,
-  color: "var(--sand)",
+  color: "var(--text-mid)",
 } as const;
 
 function tiktokHandleToUrl(handle: string): string {
@@ -90,7 +89,7 @@ function SocialIconLink({
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      className="flex h-11 w-11 items-center justify-center text-sand transition-colors duration-200 hover:text-cream"
+      className="flex h-11 w-11 items-center justify-center text-text-mid transition-colors duration-200 hover:text-choc"
     >
       {children}
     </a>
@@ -111,13 +110,13 @@ function FooterLinks({
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="transition-colors hover:text-cream"
+              className="transition-colors hover:text-choc"
               style={linkStyle}
             >
               {link.label}
             </a>
           ) : (
-            <Link href={link.href} className="transition-colors hover:text-cream" style={linkStyle}>
+            <Link href={link.href} className="transition-colors hover:text-choc" style={linkStyle}>
               {link.label}
             </Link>
           )}
@@ -171,14 +170,15 @@ export function Footer({
   const newsletterPlaceholder = cmsGet(cms, "footer_newsletter_placeholder", "Your email");
 
   return (
-    <footer style={{ backgroundColor: "#1A0F08" }}>
-      <div className="mx-auto max-w-site px-6 pt-14 pb-12 text-center lg:px-10">
-        <Logo variant="white" size="lg" themeAdaptive={false} className="mx-auto inline-block" />
+    <footer className="px-3 pb-3">
+      <div className="glass-1 glass-panel mx-auto max-w-site overflow-hidden">
+      <div className="px-6 pt-14 pb-12 text-center lg:px-10">
+        <Logo variant="dark" size="lg" themeAdaptive={false} className="mx-auto inline-block" />
       </div>
 
-      <div className="mx-auto grid max-w-site gap-12 px-6 pb-16 md:grid-cols-3 lg:px-10 lg:gap-16">
+      <div className="grid gap-12 px-6 pb-16 md:grid-cols-3 lg:px-10 lg:gap-16">
         <div className="min-w-0">
-          <p className="mb-4 uppercase" style={labelStyle}>
+          <p className="mb-4" style={labelStyle}>
             The House
           </p>
           <p
@@ -187,7 +187,7 @@ export function Footer({
               fontFamily: "var(--font-body)",
               fontSize: "12px",
               fontWeight: 400,
-              color: "var(--sand)",
+              color: "var(--text-mid)",
             }}
           >
             {HOUSE_TAGLINE}
@@ -212,7 +212,7 @@ export function Footer({
         </div>
 
         <div className="min-w-0">
-          <p className="mb-4 uppercase" style={labelStyle}>
+          <p className="mb-4" style={labelStyle}>
             Client Care
           </p>
           <FooterLinks links={clientLinks} />
@@ -221,8 +221,8 @@ export function Footer({
         <FooterNewsletter headline={newsletterHeadline} placeholder={newsletterPlaceholder} />
       </div>
 
-      <div style={{ backgroundColor: "rgba(0, 0, 0, 0.2)", padding: "20px 0" }}>
-        <div className="mx-auto flex max-w-site flex-col gap-4 px-6 lg:px-10">
+      <div className="border-t border-[var(--glass-edge)] py-5">
+        <div className="flex flex-col gap-4 px-6 lg:px-10">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row sm:gap-6">
             <p
               style={{
@@ -233,16 +233,16 @@ export function Footer({
             >
               {copyright}
             </p>
-            <PaymentMarks className="flex items-center gap-1.5 text-sand" />
+            <PaymentMarks className="flex items-center gap-1.5 text-text-mid" />
             <a
               href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="transition-colors hover:text-cream"
+              className="transition-colors hover:text-choc"
               style={{
                 fontFamily: "var(--font-ui)",
                 fontSize: "11px",
-                color: "var(--lightbr)",
+                color: "var(--text-mid)",
               }}
             >
               {instagramHandle}
@@ -253,20 +253,20 @@ export function Footer({
             className="text-center"
             style={{
               fontFamily: "var(--font-ui)",
-              fontSize: "10px",
+              fontSize: "12px",
               color: "var(--text-light)",
             }}
           >
             {LEGAL_LINKS.map((link, i) => (
               <span key={link.href}>
                 {i > 0 ? " · " : null}
-                <Link href={link.href} className="transition-colors hover:text-cream">
+                <Link href={link.href} className="transition-colors hover:text-choc">
                   {link.label}
                 </Link>
               </span>
             ))}
             {" · "}
-            <button type="button" onClick={openCookieModal} className="transition-colors hover:text-cream">
+            <button type="button" onClick={openCookieModal} className="transition-colors hover:text-choc">
               Cookie Settings
             </button>
           </p>
@@ -276,12 +276,13 @@ export function Footer({
             style={{
               fontFamily: "var(--font-ui)",
               fontSize: "10px",
-              color: "rgba(152, 117, 91, 0.5)",
+              color: "var(--text-light)",
             }}
           >
             Developed with love by SonsHub Media Ltd
           </p>
         </div>
+      </div>
       </div>
     </footer>
   );

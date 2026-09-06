@@ -121,7 +121,7 @@ export function SearchModal() {
           role="dialog"
           aria-modal="true"
           aria-label="Search"
-          className="fixed inset-0 z-[60] bg-[var(--white)]/98 backdrop-blur-md"
+          className="fixed inset-0 z-[60] bg-[var(--choc-deep)]/35 backdrop-blur-md"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -134,7 +134,7 @@ export function SearchModal() {
             onClick={closeSearch}
           />
           <div
-            className="relative mx-auto max-h-[85vh] max-w-2xl overflow-y-auto overscroll-contain px-4 pb-8 pt-20"
+            className="relative mx-auto max-h-[85vh] max-w-2xl overflow-y-auto overscroll-contain glass-3 glass-panel px-4 pb-8 pt-20"
             data-lenis-prevent
           >
             <button

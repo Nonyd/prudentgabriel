@@ -19,6 +19,7 @@ export function PaymentFailedClient() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-20 text-center">
+      <div className="glass-2 glass-panel px-6 py-10">
       <XCircle className="mx-auto h-16 w-16 text-[var(--error)]" strokeWidth={1.25} />
       <h1 className="mt-6 font-display text-3xl text-[var(--chocolate)]">Payment not completed</h1>
       <p className="mt-3 font-body text-sm text-[var(--text-mid)]">
@@ -38,6 +39,7 @@ export function PaymentFailedClient() {
         >
           Pay by bank transfer
         </Link>
+      </div>
       </div>
     </div>
   );

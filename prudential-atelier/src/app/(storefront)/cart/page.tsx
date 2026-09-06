@@ -77,7 +77,7 @@ export default function CartPage() {
             ))}
           </ul>
 
-          <aside className="h-fit min-w-0 border border-border bg-off-white p-6">
+          <aside className="glass-2 glass-panel h-fit min-w-0 p-6">
             <div className="flex items-baseline justify-between">
               <span className="font-label text-xs uppercase text-charcoal-mid">Subtotal</span>
               <span className="font-display text-xl text-charcoal">{formatPrice(subtotalShopper, currency)}</span>

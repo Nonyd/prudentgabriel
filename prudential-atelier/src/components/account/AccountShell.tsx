@@ -28,8 +28,9 @@ export function AccountShell({
   const name = session.user?.name ?? "Member";
 
   return (
-    <div className="min-h-screen bg-bg-page">
-      <div className="flex min-h-screen">
+    <div className="relative min-h-screen">
+      <div className="storefront-field" aria-hidden="true" />
+      <div className="relative z-[1] flex min-h-screen">
         <AccountSidebar
           name={name}
           tier={tier}
@@ -38,7 +39,7 @@ export function AccountShell({
           wishlistCount={wishlistCount}
         />
         <div className="flex min-w-0 flex-1 flex-col pb-[60px] lg:pb-0">
-          <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-[#d4bbac] bg-[#f7f2ec] px-4 sm:px-6 lg:static lg:h-12 lg:justify-end lg:px-6">
+          <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 glass-1 px-4 sm:px-6 lg:static lg:h-12 lg:justify-end lg:px-6">
             <Link href="/account" className="shrink-0 lg:hidden" aria-label="Account home">
               <Logo variant="dark" size="sm" themeAdaptive={false} />
             </Link>
@@ -73,7 +74,9 @@ export function AccountShell({
               </div>
             </div>
           </header>
-          <main className="flex-1 bg-bg px-4 py-6 sm:px-6 lg:px-10 lg:py-8">{children}</main>
+          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+            <div className="glass-opaque px-4 py-5 sm:px-6">{children}</div>
+          </main>
         </div>
       </div>
     </div>

@@ -26,7 +26,7 @@ function run() {
 
   assert(globals.includes('@import "./glass.css"'), "globals imports the glass sheet");
 
-  assert(tokens.includes("--glass-1-fill: rgb(255 255 255 / 0.74)"), "glass-1 light fill");
+  assert(tokens.includes("--glass-1-fill: rgb(255 255 255 / 0.58)"), "glass-1 light fill, tuned over the hero video");
   assert(tokens.includes("--glass-2-fill: rgb(255 255 255 / 0.62)"), "glass-2 light fill");
   assert(tokens.includes("--glass-3-fill: rgb(255 255 255 / 0.86)"), "glass-3 light fill");
   assert(tokens.includes("--glass-1-blur: 28px"), "glass-1 blur");

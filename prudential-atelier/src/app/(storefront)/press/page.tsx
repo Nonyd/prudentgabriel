@@ -59,21 +59,19 @@ const PRESS_ITEMS = [
 export default function PressPage() {
   return (
     <div>
-      <section className="flex h-[240px] items-center justify-center bg-charcoal text-center">
-        <div>
-          <SectionLabel className="text-gold">IN THE NEWS</SectionLabel>
-          <h1 className="mt-4 font-display text-4xl italic text-ivory md:text-5xl">As Seen In</h1>
+      <section className="flex h-[240px] items-center justify-center text-center">
+        <div className="glass-1 glass-panel px-10 py-8">
+          <h1 className="font-display text-4xl italic text-choc md:text-5xl">As Seen In</h1>
         </div>
       </section>
 
-      <section className="bg-ivory py-16 md:py-20">
+      <section className="py-16 md:py-20">
         <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 px-4 md:grid-cols-2 md:gap-8">
           {PRESS_ITEMS.map((item) => (
             <article
               key={item.headline}
               className={cn(
-                "rounded-sm border border-border bg-cream p-6 transition-all duration-200",
-                "hover:-translate-y-0.5 hover:shadow-md",
+                "glass-2 glass-panel glass-lift p-6",
               )}
             >
               <p className="font-label text-[11px] uppercase tracking-wider text-gold">{item.publication}</p>
@@ -92,7 +90,7 @@ export default function PressPage() {
         </div>
       </section>
 
-      <section className="bg-ivory-dark py-14 md:py-16">
+      <section className="py-14 md:py-16">
         <div className="mx-auto max-w-lg px-4 text-center">
           <SectionLabel>PRESS ENQUIRIES</SectionLabel>
           <h2 className="mt-4 font-display text-3xl text-charcoal">Media &amp; Press Contact</h2>

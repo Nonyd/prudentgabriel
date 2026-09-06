@@ -62,12 +62,7 @@ function ModalShell({
     >
       <div
         ref={panelRef}
-        className="relative max-h-[90vh] w-full max-w-[420px] overflow-y-auto"
-        style={{
-          background: "var(--bg-card)",
-          borderRadius: "4px",
-          padding: "48px 40px",
-        }}
+        className="relative max-h-[90vh] w-full max-w-[420px] overflow-y-auto glass-3 glass-panel px-10 py-12"
         role="dialog"
         aria-modal="true"
         aria-labelledby="auth-modal-title"

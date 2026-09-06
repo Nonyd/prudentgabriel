@@ -25,10 +25,9 @@ export function TrackSearchForm({
   }
 
   return (
-    <div className="bg-ivory px-4 py-16 md:py-20">
+    <div className="px-4 py-16 md:py-20">
       <div className="mx-auto max-w-lg text-center">
-        <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">{eyebrow}</p>
-        <h1 className="mt-3 font-serif text-[40px] font-normal leading-tight text-choc md:text-[52px]">{title}</h1>
+        <h1 className="font-serif text-[40px] font-normal leading-tight text-choc md:text-[52px]">{title}</h1>
         <p className="mt-3 font-body text-[14px] text-text-light">{subtitle}</p>
 
         <form onSubmit={handleSubmit} className="mx-auto mt-10 flex max-w-[480px] overflow-hidden rounded border border-[0.5px] border-sand">

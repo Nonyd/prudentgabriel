@@ -37,7 +37,7 @@ export function PaymentPendingClient() {
       </div>
 
       {bank ? (
-        <div className="mt-8 border border-[var(--border)] bg-bg-card p-5">
+        <div className="mt-8 glass-opaque p-5">
           <p className="text-[11px] uppercase tracking-wide text-[var(--text-light)]">Bank details</p>
           <div className="mt-2">
             <BankTransferDetails bank={bank} paymentReference={reference || null} />

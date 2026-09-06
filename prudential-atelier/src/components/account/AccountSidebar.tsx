@@ -138,19 +138,19 @@ export function AccountSidebar({
   return (
     <>
       <aside className="account-rail hidden h-screen w-[248px] shrink-0 flex-col lg:flex">
-        <div className="border-b border-white/10 px-6 py-5">
-          <Logo variant="white" size="sm" themeAdaptive={false} />
-          <p className="mt-2 font-sans text-[10px] font-semibold uppercase tracking-[0.28em] text-[#c9a84c]">
-            / ATELIER
+        <div className="border-b border-[var(--glass-edge)] px-6 py-5">
+          <Logo variant="dark" size="sm" themeAdaptive={false} />
+          <p className="mt-2 font-sans text-[13px] font-normal text-text-mid">
+            Atelier
           </p>
         </div>
 
-        <div className="border-b border-white/10 px-6 py-6">
+        <div className="border-b border-[var(--glass-edge)] px-6 py-6">
           <div className="flex flex-col items-center text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#c9a84c] font-display text-xl text-[#442913]">
               {initials}
             </div>
-            <p className="mt-3 truncate font-display text-lg text-[#f7f2ec]">{name}</p>
+            <p className="mt-3 truncate font-display text-lg text-choc">{name}</p>
             <span
               className={clsx(
                 "mt-2 inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-[0.12em]",
@@ -159,7 +159,7 @@ export function AccountSidebar({
             >
               ✦ {TIER_LABELS[tier]} Member
             </span>
-            <p className="mt-2 font-sans text-xs font-medium tracking-wide text-[#c9a84c]">
+            <p className="mt-2 font-sans text-xs font-medium text-text-mid">
               {points.toLocaleString()} points
             </p>
           </div>
@@ -171,10 +171,10 @@ export function AccountSidebar({
           <NavSection title="My Profile" items={MY_PROFILE} pathname={pathname} />
         </nav>
 
-        <div className="space-y-1 border-t border-white/10 px-4 py-4">
+        <div className="space-y-1 border-t border-[var(--glass-edge)] px-4 py-4">
           <Link
             href="/rtw"
-            className="flex items-center gap-2 px-2 py-2 font-sans text-[12px] font-medium text-[#f0e6dc] transition-colors hover:text-white"
+            className="flex items-center gap-2 px-2 py-2 font-sans text-[12px] font-medium text-text-mid transition-colors hover:text-choc"
           >
             <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
             Back to shop
@@ -182,7 +182,7 @@ export function AccountSidebar({
           <button
             type="button"
             onClick={() => void signOut({ callbackUrl: "/" })}
-            className="flex w-full items-center gap-2 px-2 py-2 font-sans text-[12px] font-medium text-[#f0e6dc] transition-colors hover:text-[#e8b4a8]"
+            className="flex w-full items-center gap-2 px-2 py-2 font-sans text-[12px] font-medium text-text-mid transition-colors hover:text-choc"
           >
             <LogOut className="h-3.5 w-3.5" strokeWidth={1.75} />
             Logout
@@ -190,7 +190,7 @@ export function AccountSidebar({
         </div>
       </aside>
 
-      <nav className="account-rail fixed bottom-0 left-0 right-0 z-40 flex h-[60px] border-t border-white/10 lg:hidden">
+      <nav className="account-rail fixed bottom-0 left-0 right-0 z-40 flex h-[60px] border-t border-[var(--glass-edge)] lg:hidden">
         {MOBILE_TABS.map(({ href, label, icon: Icon }) => {
           const active =
             pathname === href || (href !== "/account" && pathname.startsWith(href));
@@ -200,7 +200,7 @@ export function AccountSidebar({
               href={href}
               className={clsx(
                 "flex flex-1 flex-col items-center justify-center gap-1 font-sans text-[10px] font-medium",
-                active ? "text-[#c9a84c]" : "text-[#f0e6dc]",
+                active ? "text-choc" : "text-text-mid",
               )}
             >
               <Icon className="h-5 w-5" strokeWidth={1.75} />

@@ -96,7 +96,7 @@ function QuickAddMobilePanelInner({ product }: { product: ProductListItem }) {
   return (
     <div
       data-quick-add="panel"
-      className="scroll-mb-28 border border-sand/70 bg-bg-card px-4 py-4 pb-6 md:hidden"
+      className="scroll-mb-28 glass-1 glass-panel px-4 py-4 pb-6 md:hidden"
     >
       <p className="font-serif text-[16px] leading-snug text-choc">{product.name}</p>
       <p className="mt-2 font-body text-[13px] font-medium text-choc">{qa.priceLabel}</p>
@@ -140,7 +140,7 @@ function QuickAddStickyBarInner({ product }: { product: ProductListItem }) {
   return (
     <div
       data-quick-add="sticky"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-sand bg-bg-card px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 md:hidden"
+      className="fixed inset-x-3 bottom-3 z-40 glass-1 glass-panel px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 md:hidden"
     >
       <QuickAddCta
         phase={qa.phase}

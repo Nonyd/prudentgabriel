@@ -17,7 +17,6 @@ type BlogPost = {
 };
 
 export function JournalListClient({
-  eyebrow = "The Journal",
   title = "Style & Stories",
   subtitle = "Stories from the atelier, styling notes, and behind-the-scenes craft.",
 }: {
@@ -57,8 +56,7 @@ export function JournalListClient({
 
   return (
     <div className="mx-auto max-w-site px-6 py-20 lg:px-10">
-      <p className="eyebrow">{eyebrow}</p>
-      <h1 className="mt-3 font-serif text-[clamp(2rem,4vw,3rem)] font-medium text-choc">{title}</h1>
+      <h1 className="font-serif text-[clamp(2rem,4vw,3rem)] font-medium text-choc">{title}</h1>
       <p className="mt-4 max-w-xl copy-body text-sm font-light leading-relaxed text-text-mid">{subtitle}</p>
 
       {categories.length > 0 ? (
@@ -69,8 +67,8 @@ export function JournalListClient({
               setPage(1);
               setCategory("all");
             }}
-            className={`rounded-full px-4 py-1.5 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] ${
-              category === "all" ? "bg-choc text-cream" : "border border-sand text-text-mid"
+            className={`rounded-full px-4 py-1.5 font-sans text-[13px] font-normal ${
+              category === "all" ? "bg-choc text-cream" : "glass-1 glass-pill text-text-mid"
             }`}
           >
             All
@@ -102,7 +100,7 @@ export function JournalListClient({
           {featured ? (
             <Link
               href={`/journal/${featured.slug}`}
-              className="group mt-12 grid grid-cols-1 gap-0 overflow-hidden rounded-lg border border-sand bg-ivory/40 md:grid-cols-2"
+              className="group mt-12 grid grid-cols-1 gap-0 overflow-hidden glass-2 glass-panel md:grid-cols-2"
             >
               {featured.featuredImage ? (
                 <div className="relative min-h-[280px] overflow-hidden bg-sand/20 md:min-h-0 md:aspect-auto md:h-full">
@@ -141,7 +139,7 @@ export function JournalListClient({
               <Link
                 key={post.id}
                 href={`/journal/${post.slug}`}
-                className="group overflow-hidden rounded-lg border border-sand bg-ivory/30"
+                className="group overflow-hidden glass-2 glass-panel"
               >
                 {post.featuredImage ? (
                   <div className="img-portrait relative overflow-hidden bg-sand/20">

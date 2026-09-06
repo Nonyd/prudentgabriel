@@ -14,30 +14,46 @@ export function ProductCardGrid({
   priorityCount = 4,
   mobileColumns = 2,
   merchBadge,
+  variant = "gallery",
 }: {
   products: ProductListItem[];
   className?: string;
   priorityCount?: number;
   mobileColumns?: 1 | 2;
   merchBadge?: string;
+  /** Homepage teasers sit in glass frames. Shop/RTW galleries stay photography-only. */
+  variant?: "gallery" | "teaser";
 }) {
   const activeId = useQuickAddStore((s) => s.product?.id ?? null);
   const isOpen = useQuickAddStore((s) => s.phase !== "idle");
   const activeIndex = activeId ? products.findIndex((p) => p.id === activeId) : -1;
   const cols = mobileColumns;
   const activeRow = activeIndex >= 0 ? Math.floor(activeIndex / cols) : -1;
+  const teaser = variant === "teaser";
 
   return (
     <GallerySwipeNudgeHost>
-      <div className={cn("grid min-w-0 gap-px bg-white [&>*]:min-w-0", className, isOpen && activeIndex >= 0 && "max-md:pb-28")}>
+      <div
+        className={cn(
+          "grid min-w-0 [&>*]:min-w-0",
+          teaser ? "gap-4 bg-transparent px-4 lg:px-6" : "gap-px bg-white",
+          className,
+          isOpen && activeIndex >= 0 && "max-md:pb-28",
+        )}
+      >
         {products.map((p, i) => {
           const row = Math.floor(i / cols);
           const dimmed = activeRow >= 0 && row === activeRow && p.id !== activeId;
           const endOfRow = i % cols === cols - 1 || i === products.length - 1;
           const showPanel = endOfRow && activeRow === row && isOpen;
+          const card = <ProductCard product={p} priority={i < priorityCount} dimmed={dimmed} merchBadge={merchBadge} />;
           return (
             <Fragment key={p.id}>
-              <ProductCard product={p} priority={i < priorityCount} dimmed={dimmed} merchBadge={merchBadge} />
+              {teaser ? (
+                <div className="glass-2 glass-panel glass-lift overflow-hidden">{card}</div>
+              ) : (
+                card
+              )}
               {showPanel ? (
                 <div className={cols === 1 ? "md:hidden" : "col-span-2 md:hidden"}>
                   <QuickAddMobilePanel />

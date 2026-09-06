@@ -45,45 +45,30 @@ export async function BestSellers() {
   if (products.length === 0) return null;
 
   return (
-    <section className="bg-bg-page py-20">
+    <section className="py-20">
       <div className="mx-auto mb-12 max-w-site px-6 lg:px-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p
-              className="uppercase"
-              style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: "10px",
-                fontWeight: 500,
-                letterSpacing: "0.2em",
-                color: "var(--lightbr)",
-              }}
-            >
-              Most Desired
-            </p>
-            <h2
-              className="mt-3 leading-tight"
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: "42px",
-                color: "var(--choc)",
-              }}
-            >
-              Best sellers
-            </h2>
-          </div>
+          <h2
+            className="leading-tight"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "42px",
+              color: "var(--choc)",
+            }}
+          >
+            Best sellers
+          </h2>
           <Link
             href="/rtw"
-            className="uppercase transition-opacity hover:opacity-80"
+            className="transition-opacity hover:opacity-80"
             style={{
               fontFamily: "var(--font-ui)",
-              fontSize: "10px",
-              fontWeight: 600,
-              letterSpacing: "0.16em",
+              fontSize: "13px",
+              fontWeight: 400,
               color: "var(--nut)",
             }}
           >
-            Shop All →
+            Shop all →
           </Link>
         </div>
       </div>
@@ -91,6 +76,7 @@ export async function BestSellers() {
       <ProductCardGrid
         products={products}
         merchBadge="Best seller"
+        variant="teaser"
         className="grid-cols-2 md:grid-cols-4"
       />
     </section>

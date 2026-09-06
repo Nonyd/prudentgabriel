@@ -34,7 +34,7 @@ export function SizeGuideModal({
         <Dialog.Overlay className="fixed inset-0 z-[80] bg-charcoal/50" />
         <Dialog.Content
           data-lenis-prevent
-          className="fixed left-1/2 top-1/2 z-[81] max-h-[85vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain rounded-sm bg-[var(--white)] p-6 shadow-xl"
+          className="fixed left-1/2 top-1/2 z-[81] max-h-[85vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain glass-3 glass-panel p-6"
         >
           <div className="mb-4 flex items-center justify-between">
             <Dialog.Title className="font-display text-xl text-charcoal">Size Guide</Dialog.Title>
@@ -47,7 +47,7 @@ export function SizeGuideModal({
           ) : shown.length === 0 ? (
             <p className="text-sm leading-6 text-charcoal">This piece is not on the house chart.</p>
           ) : (
-            <table className="w-full border-collapse text-left text-sm">
+            <table className="glass-opaque w-full border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-border">
                   <th className="py-2 pr-2 font-label text-[10px] uppercase">Size</th>

@@ -273,10 +273,8 @@ export function ProductDetailClient({
         </div>
 
         <div className="min-w-0 lg:sticky lg:top-32 lg:self-start">
-          <p className="mb-1 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">
-            Prudent Gabriel
-          </p>
-          <p className="mb-4 font-body text-[10px] font-medium uppercase tracking-[0.14em] text-text-light">
+          <div className="glass-2 glass-panel px-6 py-7 lg:px-8">
+          <p className="mb-4 font-sans text-[13px] font-normal text-text-mid">
             {String(product.category).replace(/_/g, " ")}
           </p>
           <h1 className="font-display text-[36px] font-normal leading-[1.1] text-choc md:text-[42px]">
@@ -595,6 +593,7 @@ export function ProductDetailClient({
               </Accordion.Item>
             )}
           </Accordion.Root>
+          </div>
         </div>
       </div>
     </div>

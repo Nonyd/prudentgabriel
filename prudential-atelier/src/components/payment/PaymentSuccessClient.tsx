@@ -32,6 +32,7 @@ export function PaymentSuccessClient() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-20 text-center">
+      <div className="glass-2 glass-panel px-6 py-10">
       <CheckCircle2 className="mx-auto h-16 w-16 text-[var(--success)]" strokeWidth={1.25} />
       <h1 className="mt-6 font-display text-3xl text-[var(--chocolate)]">Payment successful</h1>
       <p className="mt-3 font-body text-sm text-[var(--text-mid)]">
@@ -43,6 +44,7 @@ export function PaymentSuccessClient() {
       <Link href={target} className="mt-4 inline-block font-body text-sm text-[var(--choc)] underline">
         Continue now
       </Link>
+      </div>
     </div>
   );
 }

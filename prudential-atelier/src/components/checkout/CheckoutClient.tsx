@@ -690,7 +690,7 @@ export function CheckoutClient() {
 
   return (
     <div className="mx-auto flex max-w-site flex-col gap-10 px-4 py-10 lg:flex-row lg:items-start lg:px-10">
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 glass-opaque px-5 py-6 lg:px-8">
         <ol className="mb-8 flex min-w-0 items-center justify-between gap-2">
           {STEPS.map((s, idx) => (
             <li key={s.n} className="flex min-w-0 flex-1 items-center gap-2">

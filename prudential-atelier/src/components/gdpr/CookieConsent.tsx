@@ -86,19 +86,18 @@ export function CookieConsent() {
     <>
       {showBanner && !isModalOpen ? (
         <div
-          className="fixed inset-x-0 bottom-0 z-[100] border-t border-cream/10 px-4 py-4 sm:px-6"
-          style={{ backgroundColor: "var(--choc)" }}
+          className="fixed inset-x-3 bottom-3 z-[100] glass-1 glass-panel px-4 py-4 sm:px-6"
         >
           <div className="mx-auto flex min-w-0 max-w-site flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <p
               className="max-w-2xl leading-relaxed"
-              style={{ fontFamily: "var(--font-lora)", fontSize: "13px", color: "var(--cream)" }}
+              style={{ fontFamily: "var(--font-lora)", fontSize: "13px", color: "var(--text-primary)" }}
             >
               <span aria-hidden className="mr-1.5">
                 🍪
               </span>
               We use cookies to enhance your experience.{" "}
-              <Link href="/cookie-policy" className="underline hover:text-sand">
+              <Link href="/cookie-policy" className="underline hover:text-choc">
                 Read our Cookie Policy
               </Link>{" "}
               to learn more.
@@ -107,43 +106,21 @@ export function CookieConsent() {
               <button
                 type="button"
                 onClick={openModal}
-                className="rounded-sm border border-cream/40 px-4 py-2 uppercase transition-colors hover:border-cream"
-                style={{
-                  fontFamily: "var(--font-jost)",
-                  fontSize: "10px",
-                  fontWeight: 600,
-                  letterSpacing: "0.12em",
-                  color: "var(--cream)",
-                }}
+                className="rounded-sm border border-choc/30 px-4 py-2 font-sans text-[13px] font-normal text-choc transition-colors hover:border-choc"
               >
                 Cookie Settings
               </button>
               <button
                 type="button"
                 onClick={handleReject}
-                className="rounded-sm border border-cream/40 px-4 py-2 uppercase transition-colors hover:border-cream"
-                style={{
-                  fontFamily: "var(--font-jost)",
-                  fontSize: "10px",
-                  fontWeight: 600,
-                  letterSpacing: "0.12em",
-                  color: "var(--cream)",
-                }}
+                className="rounded-sm border border-choc/30 px-4 py-2 font-sans text-[13px] font-normal text-choc transition-colors hover:border-choc"
               >
                 Reject Non-Essential
               </button>
               <button
                 type="button"
                 onClick={handleAcceptAll}
-                className="rounded-sm px-4 py-2 uppercase transition-opacity hover:opacity-90"
-                style={{
-                  fontFamily: "var(--font-jost)",
-                  fontSize: "10px",
-                  fontWeight: 600,
-                  letterSpacing: "0.12em",
-                  backgroundColor: "var(--lightbr)",
-                  color: "var(--choc)",
-                }}
+                className="rounded-sm bg-choc px-4 py-2 font-sans text-[13px] font-normal text-cream transition-opacity hover:opacity-90"
               >
                 Accept All
               </button>
@@ -155,7 +132,7 @@ export function CookieConsent() {
       <Dialog.Root open={isModalOpen} onOpenChange={(open) => (open ? openModal() : closeModal())}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[110] bg-choc/60 backdrop-blur-sm" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-[120] w-[min(480px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-cream p-6 shadow-xl">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-[120] w-[min(480px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 glass-3 glass-panel p-6">
             <div className="mb-5 flex items-start justify-between gap-4">
               <Dialog.Title className="font-display text-xl text-choc">Cookie Preferences</Dialog.Title>
               <Dialog.Close asChild>

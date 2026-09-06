@@ -123,8 +123,8 @@ function TestimonialCard({ item, mobile }: { item: HomepageTestimonial; mobile?:
     <article
       className={
         mobile
-          ? "flex w-full min-w-full shrink-0 flex-col overflow-hidden rounded-lg border-[0.5px] border-sand bg-bg-card"
-          : "flex shrink-0 flex-row overflow-hidden rounded-lg border-[0.5px] border-sand bg-bg-card"
+          ? "glass-2 glass-panel flex w-full min-w-full shrink-0 flex-col overflow-hidden"
+          : "glass-2 glass-panel flex shrink-0 flex-row overflow-hidden"
       }
       style={mobile ? undefined : { width: CARD_WIDTH, height: CARD_HEIGHT }}
     >
@@ -214,11 +214,10 @@ export function HomeTestimonialsCarousel({ items, heading, subtitle }: HomeTesti
   const showArrows = total > cardsPerView;
 
   return (
-    <section className="bg-ivory py-20">
+    <section className="py-20">
       <div className="mx-auto max-w-site px-4 lg:px-10">
         <div className="mb-12">
-          <p className="text-center font-label text-[10px] uppercase tracking-[0.2em] text-lightbr">Client Words</p>
-          <h2 className="mt-3 text-center font-display text-[42px] leading-tight text-choc">{heading}</h2>
+          <h2 className="text-center font-display text-[42px] leading-tight text-choc">{heading}</h2>
           {subtitle ? (
             <p className="mx-auto mt-3 max-w-xl text-center font-body text-sm text-text-light">{subtitle}</p>
           ) : null}

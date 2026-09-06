@@ -40,7 +40,7 @@ function CollectionCard({ item, index }: { item: CollectionListItem; index: numb
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/55 via-charcoal/5 to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-100 motion-reduce:transition-none" />
         <div className="absolute inset-x-0 bottom-0 p-4 md:p-5">
           {item.season ? (
-            <p className="font-body text-[9px] font-medium uppercase tracking-[0.2em] text-white/60">{item.season}</p>
+            <p className="font-body text-[12px] font-normal text-white/70">{item.season}</p>
           ) : null}
           <h2 className="mt-1 font-display text-[22px] font-normal italic leading-tight text-white md:text-[26px]">
             {item.name}
@@ -139,13 +139,12 @@ export function CollectionsPage({ collections }: { collections: CollectionListIt
         <section className="mx-auto mt-16 max-w-[1400px] px-4 md:px-6">
           <div
             className={cn(
-              "flex flex-col items-center justify-between gap-6 border border-mid-grey bg-bg-page px-6 py-10 text-center md:flex-row md:px-10 md:text-left",
+              "flex flex-col items-center justify-between gap-6 glass-2 glass-panel px-6 py-10 text-center md:flex-row md:px-10 md:text-left",
               !reduceMotion && "transition-colors duration-200 hover:border-olive/30",
             )}
           >
             <div>
-              <p className="font-body text-[9px] font-medium uppercase tracking-[0.2em] text-olive">The full range</p>
-              <h2 className="mt-2 font-display text-[28px] font-normal italic text-charcoal md:text-[36px]">
+              <h2 className="font-display text-[28px] font-normal italic text-charcoal md:text-[36px]">
                 Browse every piece
               </h2>
               <p className="mt-2 max-w-md font-body text-[14px] font-light text-dark-grey">

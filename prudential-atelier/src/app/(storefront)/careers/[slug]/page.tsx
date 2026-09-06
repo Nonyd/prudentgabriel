@@ -23,7 +23,7 @@ export default async function CareerJobPage({
   if (!job) notFound();
 
   return (
-    <div className="bg-ivory pb-24 pt-16">
+    <div className="pb-24 pt-16">
       <div className="mx-auto grid max-w-site gap-10 px-4 lg:grid-cols-[1.5fr_1fr] lg:gap-14 lg:px-6">
         <div>
           <div className="flex flex-wrap gap-2">

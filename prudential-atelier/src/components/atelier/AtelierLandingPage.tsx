@@ -42,20 +42,22 @@ export function AtelierLandingPage({
     "atelier_process_subtext",
     "From consultation to delivery — every step documented and shared with you.",
   );
-  const galleryLabel = cmsGet(cms, "atelier_gallery_label", "Past Work");
+  const _galleryLabel = cmsGet(cms, "atelier_gallery_label", "Past Work");
+  void _galleryLabel;
   const galleryHeadline = cmsGet(cms, "atelier_gallery_headline", "From our atelier");
   const ctaHeadline = cmsGet(cms, "atelier_cta_headline", "Ready to begin?");
   const ctaButton = cmsGet(cms, "atelier_cta_button_label", "Book your consultation");
 
   return (
     <div>
-      <section className="bg-choc px-6 py-24 text-center lg:px-10 lg:py-32">
+      <section className="px-6 py-24 text-center lg:px-10 lg:py-32">
+        <div className="glass-1 glass-panel mx-auto max-w-2xl px-8 py-12">
         <h1
           className="leading-tight"
           style={{
             fontFamily: "var(--font-display)",
             fontSize: "clamp(2.5rem, 6vw, 64px)",
-            color: "var(--cream)",
+            color: "var(--choc)",
             fontWeight: 400,
           }}
         >
@@ -66,7 +68,7 @@ export function AtelierLandingPage({
           style={{
             fontFamily: "var(--font-body)",
             fontSize: "16px",
-            color: "var(--sand)",
+            color: "var(--text-mid)",
             lineHeight: 1.7,
           }}
         >
@@ -74,35 +76,17 @@ export function AtelierLandingPage({
         </p>
         <Link
           href="/consultation"
-          className="mt-10 inline-block px-10 py-4 uppercase transition-opacity hover:opacity-90"
-          style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: "11px",
-            fontWeight: 600,
-            letterSpacing: "0.18em",
-            backgroundColor: "var(--cream)",
-            color: "var(--choc)",
-          }}
+          className="btn-primary mt-10 inline-block"
         >
           {heroCta}
         </Link>
+        </div>
       </section>
 
-      <section className="bg-ivory px-6 py-20 lg:px-10">
+      <section className="px-6 py-20 lg:px-10">
         <div className="mx-auto max-w-site">
-          <p
-            className="text-center uppercase"
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "10px",
-              letterSpacing: "0.2em",
-              color: "var(--lightbr)",
-            }}
-          >
-            The Process
-          </p>
           <h2
-            className="mt-3 text-center"
+            className="text-center"
             style={{
               fontFamily: "var(--font-display)",
               fontSize: "36px",
@@ -123,7 +107,7 @@ export function AtelierLandingPage({
             {stages.map((label) => (
               <div
                 key={label}
-                className="border border-sand/60 bg-cream/30 px-5 py-4"
+                className="glass-2 glass-panel px-5 py-4"
                 style={{ fontFamily: "var(--font-body)", fontSize: "13px", color: "var(--text-mid)" }}
               >
                 {label}
@@ -134,21 +118,10 @@ export function AtelierLandingPage({
       </section>
 
       {galleryImages.length > 0 ? (
-        <section className="bg-cream px-6 py-20 lg:px-10">
+        <section className="px-6 py-20 lg:px-10">
           <div className="mx-auto max-w-site">
-            <p
-              className="uppercase"
-              style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: "10px",
-                letterSpacing: "0.2em",
-                color: "var(--lightbr)",
-              }}
-            >
-              {galleryLabel}
-            </p>
             <h2
-              className="mt-3"
+              className="mt-0"
               style={{
                 fontFamily: "var(--font-display)",
                 fontSize: "32px",
@@ -175,7 +148,7 @@ export function AtelierLandingPage({
       ) : null}
 
       {reviews.length > 0 ? (
-        <section className="bg-ivory px-6 py-20 lg:px-10">
+        <section className="px-6 py-20 lg:px-10">
           <div className="mx-auto max-w-site">
             <h2
               className="text-center"
@@ -191,7 +164,7 @@ export function AtelierLandingPage({
               {reviews.slice(0, 3).map((r) => (
                 <blockquote
                   key={r.id}
-                  className="border border-sand/60 bg-cream/20 p-6"
+                  className="glass-2 glass-panel p-6"
                   style={{ fontFamily: "var(--font-body)", fontSize: "14px", color: "var(--text-mid)" }}
                 >
                   <p className="italic">&ldquo;{r.body}&rdquo;</p>
@@ -206,29 +179,24 @@ export function AtelierLandingPage({
         </section>
       ) : null}
 
-      <section className="bg-choc px-6 py-16 text-center lg:px-10">
+      <section className="px-6 py-16 text-center lg:px-10">
+        <div className="glass-2 glass-panel mx-auto max-w-xl px-8 py-10">
         <p
           style={{
             fontFamily: "var(--font-display)",
             fontSize: "28px",
-            color: "var(--cream)",
+            color: "var(--choc)",
           }}
         >
           {ctaHeadline}
         </p>
         <Link
           href="/consultation"
-          className="mt-6 inline-block border border-cream/40 px-8 py-3 uppercase transition-colors hover:bg-cream/10"
-          style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: "11px",
-            fontWeight: 600,
-            letterSpacing: "0.16em",
-            color: "var(--cream)",
-          }}
+          className="btn-ghost-light mt-6 inline-block"
         >
           {ctaButton}
         </Link>
+        </div>
       </section>
     </div>
   );

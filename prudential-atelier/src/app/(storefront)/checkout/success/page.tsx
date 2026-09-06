@@ -86,7 +86,7 @@ function SuccessInner() {
       ) : null}
 
       {loaded && order ? (
-        <div className="mt-8 rounded-sm border border-border bg-cream p-6 text-left text-sm">
+        <div className="mt-8 glass-2 glass-panel p-6 text-left text-sm">
           {order.items.map((it, i) => (
             <div key={i} className="flex justify-between gap-3 border-b border-border/60 py-2 last:border-0">
               <span>

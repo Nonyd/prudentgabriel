@@ -79,11 +79,11 @@
   --glass-radius-pill: 999px;
   --glass-edge: rgb(255 255 255 / 0.55);
   --glass-edge-bright: rgb(255 255 255 / 0.82);
-  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.7);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.88), inset 0 -1px 0 rgb(255 255 255 / 0.14);
   --glass-shadow: 0 24px 60px -30px rgb(68 41 19 / 0.35);
   --glass-saturate: 1.5;
 
-  --glass-1-fill: rgb(255 255 255 / 0.74);
+  --glass-1-fill: rgb(255 255 255 / 0.58);
   --glass-1-blur: 28px;
   --glass-1-solid: var(--ivory-deep);
 
@@ -163,7 +163,7 @@
 
   --glass-edge: rgb(255 255 255 / 0.14);
   --glass-edge-bright: rgb(255 255 255 / 0.32);
-  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.7);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.38), inset 0 -1px 0 rgb(255 255 255 / 0.08);
   --glass-shadow: 0 24px 60px -30px rgb(0 0 0 / 0.55);
 
   --glass-1-fill: rgb(68 41 19 / 0.66);

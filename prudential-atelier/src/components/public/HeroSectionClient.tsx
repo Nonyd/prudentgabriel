@@ -14,7 +14,6 @@ export function HeroSectionClient({
   cms?: Record<string, string>;
   carouselItems: HeroCarouselItem[];
 }) {
-  const eyebrow = cmsGet(cms, "home_hero_eyebrow", "PRUDENTIAL ATELIER · LAGOS");
   const line1 = cmsGet(cms, "home_hero_headline_1", "Crafted for the");
   const line2 = cmsGet(cms, "home_hero_headline_2", "Woman Who");
   const line3 = cmsGet(cms, "home_hero_headline_3", "Commands the Room");
@@ -31,32 +30,33 @@ export function HeroSectionClient({
   const statLabel = cmsGet(cms, "home_hero_stat_label", "YEARS OF COUTURE");
 
   return (
-    <section className="hero-under-chrome bg-hero-bg text-cream">
+    <section className="hero-under-chrome">
       <div className="mx-auto grid min-w-0 max-w-site gap-10 px-6 py-16 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-10 lg:py-24">
         <motion.div
+          className="relative"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           viewport={{ once: true, margin: "-80px" }}
         >
-          <p className="eyebrow text-lightbr">{eyebrow}</p>
-          <h1 className="mt-4 font-serif text-[clamp(2.5rem,5vw,4.5rem)] font-medium leading-[1.05] text-cream">
-            {line1} {line2} {line3}
-          </h1>
-          <p className="mt-6 max-w-md copy-body text-sm font-light leading-[1.8] text-cream/85">{subtext}</p>
-          <div className="mt-10 flex flex-wrap gap-4">
-            <Link href={btn1Link} className="btn-primary">
-              {btn1Label}
-            </Link>
-            <Link href={btn2Link} className="btn-ghost-dark">
-              {btn2Label}
-            </Link>
-          </div>
-          <div className="hero-stat mt-8">
-            <span className="stat-number block font-serif text-[36px] text-cream">{statNum}</span>
-            <span className="stat-label mt-1 block font-sans text-[9px] font-medium uppercase tracking-[0.2em] text-lightbr">
-              {statLabel}
-            </span>
+          <div className="hero-copy-scrim" aria-hidden="true" />
+          <div className="glass-1 glass-panel hero-copy-panel px-7 py-8 lg:px-10 lg:py-10">
+            <h1 className="font-serif text-[clamp(2.5rem,5vw,4.5rem)] font-medium leading-[1.05] text-choc">
+              {line1} {line2} {line3}
+            </h1>
+            <p className="mt-6 max-w-md font-sans text-sm font-light leading-[1.8] text-text-mid">{subtext}</p>
+            <div className="mt-10 flex flex-wrap gap-4">
+              <Link href={btn1Link} className="btn-primary">
+                {btn1Label}
+              </Link>
+              <Link href={btn2Link} className="btn-ghost-light">
+                {btn2Label}
+              </Link>
+            </div>
+            <div className="hero-stat mt-8">
+              <span className="stat-number block font-serif text-[36px] text-choc">{statNum}</span>
+              <span className="stat-label mt-1 block font-sans text-[13px] font-normal text-text-mid">{statLabel}</span>
+            </div>
           </div>
         </motion.div>
 

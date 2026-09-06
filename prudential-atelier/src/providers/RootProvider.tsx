@@ -50,24 +50,28 @@ export function RootProvider({ children, session, logos }: RootProviderProps) {
               position="bottom-right"
               toastOptions={{
                 duration: 4000,
+                className: "glass-toast",
                 style: {
-                  background: "var(--choc)",
-                  color: "var(--cream)",
+                  background: "var(--glass-1-fill)",
+                  color: "var(--text-primary)",
                   fontFamily: "var(--font-ui)",
                   fontSize: "13px",
-                  borderRadius: "var(--radius-md)",
-                  border: "var(--border)",
+                  fontWeight: 400,
+                  borderRadius: "var(--glass-radius-panel)",
+                  border: "1px solid var(--glass-edge)",
+                  boxShadow: "var(--glass-highlight), var(--glass-shadow)",
+                  backdropFilter: "blur(var(--glass-1-blur)) saturate(var(--glass-saturate))",
                 },
                 success: {
                   iconTheme: {
-                    primary: "var(--lightbr)",
-                    secondary: "var(--cream)",
+                    primary: "var(--choc-deep)",
+                    secondary: "var(--ivory-deep)",
                   },
                 },
                 error: {
                   iconTheme: {
                     primary: "var(--danger)",
-                    secondary: "var(--cream)",
+                    secondary: "var(--ivory-deep)",
                   },
                 },
               }}

@@ -12,6 +12,7 @@ import { useAuthModalStore } from "@/store/authModalStore";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { CurrencySwitcher } from "@/components/common/CurrencySwitcher";
 import { getSubBrand } from "@/lib/sub-brand";
 
 type CollectionNav = { name: string; slug: string };
@@ -168,6 +169,7 @@ function HeaderUtilityIcons({
       <button type="button" onClick={onAccountClick} className={iconBtn} aria-label="Account">
         <User className={iconClassName} strokeWidth={1.5} />
       </button>
+      <CurrencySwitcher variant="dropdown" className="hidden sm:flex" />
       <ThemeToggle
         color="var(--text-primary)"
         className="relative flex h-7 w-7 items-center justify-center transition-opacity duration-200 hover:opacity-70 sm:h-8 sm:w-8"
@@ -305,9 +307,12 @@ export function Navbar({
               onClick={() => setOpen(false)}
               className="border-b border-[var(--glass-edge)] py-3 text-[14px] font-normal text-[var(--text-primary)]"
             >
-              {link.label}
-            </Link>
+            {link.label}
+          </Link>
           ))}
+          <div className="pt-4">
+            <CurrencySwitcher variant="dropdown" />
+          </div>
         </nav>
       </aside>
     </>

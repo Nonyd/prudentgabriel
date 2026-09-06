@@ -31,7 +31,7 @@ export function QuickAddDesktopChrome({
           onPrev();
         }}
         className={cn(
-          "product-gallery-hover-only quick-add-motion absolute left-1 top-1/2 z-10 hidden h-10 w-8 -translate-y-1/2 items-center justify-center bg-choc/40 text-cream md:flex",
+          "product-gallery-hover-only quick-add-motion absolute left-1 top-1/2 z-10 hidden h-10 w-8 -translate-y-1/2 items-center justify-center glass-1 text-choc md:flex",
         )}
       >
         <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
@@ -46,7 +46,7 @@ export function QuickAddDesktopChrome({
           onNext();
         }}
         className={cn(
-          "product-gallery-hover-only quick-add-motion absolute right-1 top-1/2 z-10 hidden h-10 w-8 -translate-y-1/2 items-center justify-center bg-choc/40 text-cream md:flex",
+          "product-gallery-hover-only quick-add-motion absolute right-1 top-1/2 z-10 hidden h-10 w-8 -translate-y-1/2 items-center justify-center glass-1 text-choc md:flex",
         )}
       >
         <ChevronRight className="h-5 w-5" strokeWidth={1.5} />

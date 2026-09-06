@@ -11,10 +11,9 @@ type Form = z.infer<typeof schema>;
 
 const labelStyle = {
   fontFamily: "var(--font-ui)",
-  fontSize: "10px",
-  fontWeight: 500,
-  letterSpacing: "0.18em",
-  color: "var(--lightbr)",
+  fontSize: "13px",
+  fontWeight: 400,
+  color: "var(--text-primary)",
 } as const;
 
 export function FooterNewsletter({
@@ -41,7 +40,7 @@ export function FooterNewsletter({
 
   return (
     <div className="min-w-0">
-      <p className="mb-4 uppercase" style={labelStyle}>
+      <p className="mb-4" style={labelStyle}>
         The Newsletter
       </p>
       <p
@@ -50,7 +49,7 @@ export function FooterNewsletter({
           fontFamily: "var(--font-body)",
           fontSize: "14px",
           fontWeight: 400,
-          color: "var(--sand)",
+          color: "var(--text-mid)",
         }}
       >
         {headline}
@@ -60,7 +59,7 @@ export function FooterNewsletter({
           style={{
             fontFamily: "var(--font-ui)",
             fontSize: "13px",
-            color: "var(--cream)",
+            color: "var(--choc)",
           }}
         >
           You&apos;re on the list. Thank you.
@@ -70,12 +69,11 @@ export function FooterNewsletter({
           <input
             type="email"
             placeholder={placeholder}
-            className="min-w-0 flex-1 border-0 border-b bg-transparent py-2.5 placeholder:text-text-light focus-visible:border-cream"
+            className="min-w-0 flex-1 rounded-sm border border-sand bg-white px-3 py-2.5 placeholder:text-text-light focus-visible:border-choc"
             style={{
               fontFamily: "var(--font-ui)",
               fontSize: "12px",
-              color: "var(--sand)",
-              borderBottom: "0.5px solid rgba(226, 209, 194, 0.3)",
+              color: "var(--text-primary)",
             }}
             {...register("email")}
           />
@@ -83,7 +81,7 @@ export function FooterNewsletter({
             type="submit"
             disabled={formState.isSubmitting}
             className="flex shrink-0 items-center justify-center transition-opacity hover:opacity-80 disabled:opacity-60"
-            style={{ color: "var(--lightbr)" }}
+            style={{ color: "var(--choc)" }}
             aria-label="Subscribe"
           >
             <ArrowRight className="h-4 w-4" strokeWidth={1.5} />

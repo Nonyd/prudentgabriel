@@ -37,7 +37,7 @@ export function ShopBrowse({
   total,
   page: initialPage,
   hasNext: initialHasNext,
-  heroEyebrow = SHOP_HERO_EYEBROW,
+  heroEyebrow: _heroEyebrow = SHOP_HERO_EYEBROW,
   heroHeadline = SHOP_HERO_TITLE,
   heroSubtext = SHOP_HERO_SUBTITLE,
   hideFilters = false,
@@ -104,17 +104,16 @@ export function ShopBrowse({
   }
 
   return (
-    <div className="bg-ivory">
+    <div>
       <header className="px-4 py-14 text-center md:py-16">
-        <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">{heroEyebrow}</p>
-        <h1 className="mt-3 font-serif text-[40px] font-normal text-choc md:text-[64px]">{heroHeadline}</h1>
+        <h1 className="font-serif text-[40px] font-normal text-choc md:text-[64px]">{heroHeadline}</h1>
         {heroSubtext ? (
           <p className="mx-auto mt-4 max-w-lg font-serif text-sm font-light text-text-mid">{heroSubtext}</p>
         ) : null}
       </header>
 
       {!hideFilters ? (
-      <div className="border-y border-[0.5px] border-sand bg-ivory px-4 py-4 md:px-8 lg:px-10">
+      <div className="border-y border-[0.5px] border-sand px-4 py-4 md:px-8 lg:px-10">
         <div className="mx-auto flex max-w-site flex-col gap-4 md:flex-row md:flex-wrap md:items-center md:justify-between">
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0">
             {FILTERS.map((f) => (
@@ -122,10 +121,10 @@ export function ShopBrowse({
                 key={f.id}
                 href={filterHref(f.id)}
                 className={cn(
-                  "inline-flex min-h-[44px] shrink-0 items-center rounded-full px-5 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors",
+                  "inline-flex min-h-[44px] shrink-0 items-center rounded-full px-5 font-sans text-[13px] font-normal transition-colors",
                   activeFilter === f.id
                     ? "bg-choc text-cream"
-                    : "border border-[0.5px] border-sand text-text-mid hover:border-nut/50",
+                    : "glass-1 glass-pill text-text-mid hover:opacity-80",
                 )}
               >
                 {f.label}
@@ -133,18 +132,18 @@ export function ShopBrowse({
             ))}
           </div>
           <div className="flex items-center gap-4">
-            <span className="font-sans text-[11px] uppercase tracking-[0.1em] text-text-light">
-              {total} {total === 1 ? "PIECE" : "PIECES"}
+            <span className="font-sans text-[13px] font-normal text-text-light">
+              {total} {total === 1 ? "piece" : "pieces"}
             </span>
             <SortSelect />
           </div>
         </div>
       </div>
       ) : (
-        <div className="border-y border-[0.5px] border-sand bg-ivory px-4 py-4 md:px-8 lg:px-10">
+        <div className="border-y border-[0.5px] border-sand px-4 py-4 md:px-8 lg:px-10">
           <div className="mx-auto flex max-w-site justify-end">
-            <span className="font-sans text-[11px] uppercase tracking-[0.1em] text-text-light">
-              {total} {total === 1 ? "PIECE" : "PIECES"}
+            <span className="font-sans text-[13px] font-normal text-text-light">
+              {total} {total === 1 ? "piece" : "pieces"}
             </span>
           </div>
         </div>

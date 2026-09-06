@@ -400,13 +400,10 @@ export function ConsultationBookingFlow({
   }
 
   return (
-    <div className="bg-ivory px-4 py-12 md:py-16">
+    <div className="px-4 py-12 md:py-16">
       <div className="mx-auto max-w-5xl">
         <header className="mb-10 text-center">
-          <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">
-            {cmsGet(cms, "consultation_page_eyebrow", "BOOK A CONSULTATION")}
-          </p>
-          <h1 className="mt-3 font-serif text-[40px] font-normal leading-tight text-choc md:text-[56px]">
+          <h1 className="font-serif text-[40px] font-normal leading-tight text-choc md:text-[56px]">
             {cmsGet(cms, "consultation_page_title", "Sit with us")}
           </h1>
           <p className="mx-auto mt-4 max-w-[480px] font-body text-[15px] leading-relaxed text-text-mid">
@@ -419,7 +416,7 @@ export function ConsultationBookingFlow({
         </header>
 
         {!bookingsEnabled ? (
-          <div className="mb-10 rounded-lg border border-sand bg-bg-card px-6 py-6 text-center">
+          <div className="mb-10 glass-2 glass-panel px-6 py-6 text-center">
             <p className="font-body text-[15px] leading-relaxed text-text-mid">{ATELIER_BOOKINGS_CLOSED_COPY}</p>
             <Link
               href={ATELIER_ENQUIRE_HREF}
@@ -469,7 +466,7 @@ export function ConsultationBookingFlow({
                   </>
                 );
                 const cardClass = clsx(
-                  "relative rounded-lg border bg-bg-card p-8 text-left",
+                  "relative glass-2 glass-panel p-8 text-left",
                   bookingsEnabled
                     ? selected
                       ? "border-[1.5px] border-choc shadow-[0_4px_24px_rgba(68,41,19,0.08)] transition-shadow"
@@ -492,7 +489,7 @@ export function ConsultationBookingFlow({
             </div>
 
             {bookingsEnabled && showVirtualPlatform ? (
-              <div className="mx-auto mt-8 max-w-xl rounded-lg border border-sand bg-bg-card p-6">
+              <div className="mx-auto mt-8 max-w-xl glass-2 glass-panel p-6">
                 <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Choose your platform</p>
                 <div className="mt-4 space-y-3">
                   {VIRTUAL_PLATFORMS.map((p) => (
@@ -558,7 +555,7 @@ export function ConsultationBookingFlow({
 
             {manualFlow ? (
               <div className="mt-8 space-y-4">
-                <div className="rounded-lg border border-sand bg-bg-card p-4 font-body text-sm text-text-mid">
+                <div className="rounded-lg glass-opaque p-4 font-body text-sm text-text-mid">
                   As Mrs. Prudent personally conducts these sessions, scheduling is coordinated with her team. Submit
                   up to three preferred dates; we will confirm within 24–48 hours.
                 </div>
@@ -663,7 +660,7 @@ export function ConsultationBookingFlow({
 
         {bookingsEnabled && step === 3 && consultant && offering && selectedType && typeConfig && (
           <div className="mx-auto max-w-2xl space-y-8">
-            <div className="rounded-lg border border-sand bg-bg-card p-6">
+            <div className="glass-opaque p-6">
               <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Booking summary</p>
               <h3 className="mt-2 font-serif text-xl text-choc">
                 {typeConfig.isVirtual ? "💻" : "🏛"} {typeConfig.title}
@@ -688,7 +685,7 @@ export function ConsultationBookingFlow({
               <p className="mt-4 font-serif text-[28px] text-choc">{displayPrice(currency)}</p>
             </div>
 
-            <div className="space-y-4 rounded-lg border border-sand bg-bg-card p-6">
+            <div className="space-y-4 glass-opaque p-6">
               <h3 className="font-serif text-xl text-choc">Your details</h3>
               <input
                 placeholder="Full name"
@@ -745,7 +742,7 @@ export function ConsultationBookingFlow({
               </div>
             </div>
 
-            <div className="rounded-lg border border-sand bg-bg-card p-6">
+            <div className="glass-opaque p-6">
               <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Currency</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {(["NGN", "USD", "GBP"] as ShopCur[]).map((c) => (

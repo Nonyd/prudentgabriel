@@ -32,11 +32,9 @@ function DetailBlock({ label, children }: { label: string; children: React.React
       <p
         style={{
           fontFamily: "var(--font-ui)",
-          fontSize: "10px",
-          fontWeight: 600,
-          letterSpacing: "0.16em",
-          color: "var(--lightbr)",
-          textTransform: "uppercase",
+          fontSize: "13px",
+          fontWeight: 400,
+          color: "var(--text-mid)",
         }}
       >
         {label}
@@ -90,22 +88,10 @@ export default async function ContactPage({
   const autoReply = cmsGet(cms, "contact_auto_reply_message", "We'll be in touch within 24 hours.");
 
   return (
-    <div className="bg-ivory">
+    <div>
       <header className="border-b border-sand/60 px-6 py-16 text-center lg:px-10 lg:py-20">
-        <p
-          className="uppercase"
-          style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: "10px",
-            fontWeight: 600,
-            letterSpacing: "0.2em",
-            color: "var(--lightbr)",
-          }}
-        >
-          Contact
-        </p>
         <h1
-          className="mt-3"
+          className="mt-0"
           style={{
             fontFamily: "var(--font-display)",
             fontSize: "clamp(2.5rem, 5vw, 56px)",
@@ -128,9 +114,11 @@ export default async function ContactPage({
       </header>
 
       <div className="mx-auto grid max-w-site gap-12 px-6 py-16 lg:grid-cols-[55fr_45fr] lg:gap-16 lg:px-10 lg:py-20">
+        <div className="glass-opaque p-6 lg:p-8">
         <ContactForm autoReplyHint={autoReply} initialSubject={subjectFromSearch(searchParams)} />
+        </div>
 
-        <aside className="space-y-8 lg:pt-2">
+        <aside className="glass-2 glass-panel space-y-8 p-6 lg:p-8">
           <div>
             <h2
               style={{

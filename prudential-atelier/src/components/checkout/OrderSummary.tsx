@@ -65,7 +65,7 @@ export function OrderSummary({
   const fmtExtra = (n: number) => formatPrice(extrasAmountInCurrency(n, currency, rates), currency);
 
   return (
-    <div className="rounded-sm border border-border bg-cream p-5">
+    <div className="glass-2 glass-panel p-5">
       <h3 className="font-display text-lg text-choc">Order summary</h3>
       <ul className="mt-4 max-h-64 space-y-3 overflow-y-auto">
         {step > 1 ? (

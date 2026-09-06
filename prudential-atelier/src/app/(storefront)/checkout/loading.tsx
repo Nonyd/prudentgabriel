@@ -1,6 +1,6 @@
 export default function CheckoutLoading() {
   return (
-    <div className="min-h-screen bg-ivory px-4 py-16">
+    <div className="min-h-screen px-4 py-16">
       <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1fr_360px]">
         <div className="space-y-4">
           <div className="h-8 w-40 animate-pulse rounded-sm bg-sand/80" />

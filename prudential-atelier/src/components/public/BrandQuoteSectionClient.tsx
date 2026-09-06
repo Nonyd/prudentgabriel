@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { cmsGet } from "@/lib/cms-helpers";
 
 export function BrandQuoteSectionClient({ cms = {} }: { cms?: Record<string, string> }) {
-  const label = cmsGet(cms, "home_quote_label", "SINCE THE FIRST STITCH");
   const quote = cmsGet(
     cms,
     "home_quote_text",
@@ -17,28 +16,16 @@ export function BrandQuoteSectionClient({ cms = {} }: { cms?: Record<string, str
   );
 
   return (
-    <section className="px-6 py-[100px] lg:px-10" style={{ backgroundColor: "var(--ivory)" }}>
+    <section className="px-6 py-[100px] lg:px-10">
       <motion.div
-        className="mx-auto max-w-[760px] text-center"
+        className="glass-2 glass-panel mx-auto max-w-[760px] px-8 py-12 text-center lg:px-14 lg:py-16"
         initial={{ opacity: 0, y: 32 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         viewport={{ once: true, margin: "-80px" }}
       >
-        <p
-          className="uppercase"
-          style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: "10px",
-            fontWeight: 500,
-            letterSpacing: "0.2em",
-            color: "var(--lightbr)",
-          }}
-        >
-          {label}
-        </p>
         <blockquote
-          className="mt-8 italic leading-[1.4]"
+          className="italic leading-[1.4]"
           style={{
             fontFamily: "var(--font-display)",
             fontSize: "34px",
@@ -48,12 +35,12 @@ export function BrandQuoteSectionClient({ cms = {} }: { cms?: Record<string, str
           {quote}
         </blockquote>
         <p
-          className="mt-10 uppercase"
+          className="mt-10"
           style={{
             fontFamily: "var(--font-ui)",
-            fontSize: "10px",
-            letterSpacing: "0.2em",
-            color: "var(--lightbr)",
+            fontSize: "13px",
+            fontWeight: 400,
+            color: "var(--text-mid)",
           }}
         >
           {attribution}

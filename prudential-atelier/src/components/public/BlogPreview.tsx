@@ -40,22 +40,17 @@ export async function BlogPreview() {
   if (posts.length === 0) return null;
 
   return (
-    <section className="bg-bg-page px-6 py-20 lg:px-10">
+    <section className="px-6 py-20 lg:px-10">
       <div className="mx-auto max-w-site">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-lightbr">
-              Latest from the Journal
-            </p>
-            <h2 className="mt-3 font-serif text-[42px] font-medium leading-tight text-choc">
-              Stories from the atelier
-            </h2>
-          </div>
+          <h2 className="font-serif text-[42px] font-medium leading-tight text-choc">
+            Stories from the atelier
+          </h2>
           <Link
             href="/journal"
-            className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-nut transition-colors hover:text-choc"
+            className="font-sans text-[13px] font-normal text-nut transition-colors hover:text-choc"
           >
-            Read All →
+            Read all →
           </Link>
         </div>
 
@@ -64,7 +59,7 @@ export async function BlogPreview() {
             <Link
               key={post.id}
               href={`/journal/${post.slug}`}
-              className="group block"
+              className="glass-2 glass-panel glass-lift group block overflow-hidden"
             >
               <div className="img-portrait relative overflow-hidden bg-bg">
                 <BlogPreviewImage
@@ -73,9 +68,9 @@ export async function BlogPreview() {
                   sizes="(max-width: 768px) 100vw, 33vw"
                 />
               </div>
-              <div className="mt-4">
+              <div className="px-5 py-4">
                 {post.category ? (
-                  <p className="font-sans text-[10px] font-medium uppercase tracking-[0.16em] text-lightbr">
+                  <p className="font-sans text-[13px] font-normal text-text-mid">
                     {post.category}
                   </p>
                 ) : null}

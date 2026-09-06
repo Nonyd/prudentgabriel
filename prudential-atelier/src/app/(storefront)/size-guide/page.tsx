@@ -56,22 +56,10 @@ export default async function SizeGuidePage() {
   const measureSteps = cmsJson(cms, "size_guide_measure_steps", DEFAULT_MEASURE_STEPS);
 
   return (
-    <div className="bg-ivory">
+    <div>
       <header className="border-b border-sand/60 px-6 py-16 text-center lg:px-10 lg:py-20">
-        <p
-          className="uppercase"
-          style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: "10px",
-            fontWeight: 600,
-            letterSpacing: "0.2em",
-            color: "var(--lightbr)",
-          }}
-        >
-          Size Guide
-        </p>
         <h1
-          className="mt-3"
+          className="mt-0"
           style={{
             fontFamily: "var(--font-display)",
             fontSize: "clamp(2.25rem, 4.5vw, 52px)",
@@ -94,6 +82,7 @@ export default async function SizeGuidePage() {
       </header>
 
       <div className="mx-auto max-w-site px-6 py-16 lg:px-10 lg:py-20">
+        <div className="glass-opaque p-4 sm:p-6">
         <SizeGuideTabs
           women={women}
           kids={kids}
@@ -102,6 +91,7 @@ export default async function SizeGuidePage() {
           sizeTip={sizeTip}
           measureSteps={measureSteps}
         />
+        </div>
       </div>
     </div>
   );

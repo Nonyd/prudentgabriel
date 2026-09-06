@@ -5,7 +5,6 @@ import Link from "next/link";
 import { cmsGet } from "@/lib/cms-helpers";
 
 export function PFACrosslinkBannerClient({ cms = {} }: { cms?: Record<string, string> }) {
-  const eyebrow = cmsGet(cms, "home_pfa_eyebrow", "PRUDENTIAL FASHION ACADEMY");
   const headline = cmsGet(cms, "home_pfa_headline", "Learn the craft from the house");
   const body = cmsGet(
     cms,
@@ -16,34 +15,25 @@ export function PFACrosslinkBannerClient({ cms = {} }: { cms?: Record<string, st
   const btnLink = cmsGet(cms, "home_pfa_button_link", "/about#academy");
   const external = btnLink.startsWith("http");
 
+  const ctaClass =
+    "inline-flex shrink-0 items-center justify-center border border-choc px-7 py-[14px] font-sans text-[13px] font-normal text-choc transition-opacity hover:opacity-80";
+
   return (
-    <section className="px-6 py-14 lg:px-10 lg:py-14" style={{ backgroundColor: "#6B1C2A" }}>
+    <section className="px-6 py-14 lg:px-10">
       <motion.div
-        className="mx-auto flex max-w-site min-w-0 flex-col items-start justify-between gap-8 lg:flex-row lg:items-center"
+        className="glass-2 glass-panel mx-auto flex max-w-site min-w-0 flex-col items-start justify-between gap-8 px-8 py-10 lg:flex-row lg:items-center lg:px-12"
         initial={{ opacity: 0, y: 32 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         viewport={{ once: true, margin: "-80px" }}
       >
         <div className="min-w-0 max-w-xl">
-          <p
-            className="uppercase"
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "10px",
-              fontWeight: 500,
-              letterSpacing: "0.2em",
-              color: "var(--sand)",
-            }}
-          >
-            {eyebrow}
-          </p>
           <h2
-            className="mt-3 leading-tight"
+            className="leading-tight"
             style={{
               fontFamily: "var(--font-display)",
               fontSize: "36px",
-              color: "var(--cream)",
+              color: "var(--choc)",
             }}
           >
             {headline}
@@ -54,44 +44,18 @@ export function PFACrosslinkBannerClient({ cms = {} }: { cms?: Record<string, st
               fontFamily: "var(--font-body)",
               fontSize: "13px",
               fontWeight: 300,
-              color: "var(--sand)",
+              color: "var(--text-mid)",
             }}
           >
             {body}
           </p>
         </div>
         {external ? (
-          <a
-            href={btnLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex shrink-0 items-center justify-center px-7 py-[14px] uppercase transition-colors hover:bg-[#C9A84C]/10"
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "10px",
-              fontWeight: 600,
-              letterSpacing: "0.16em",
-              border: "1px solid #C9A84C",
-              color: "#C9A84C",
-              borderRadius: "2px",
-            }}
-          >
+          <a href={btnLink} target="_blank" rel="noopener noreferrer" className={ctaClass}>
             {btnLabel}
           </a>
         ) : (
-          <Link
-            href={btnLink}
-            className="inline-flex shrink-0 items-center justify-center px-7 py-[14px] uppercase transition-colors hover:bg-[#C9A84C]/10"
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "10px",
-              fontWeight: 600,
-              letterSpacing: "0.16em",
-              border: "1px solid #C9A84C",
-              color: "#C9A84C",
-              borderRadius: "2px",
-            }}
-          >
+          <Link href={btnLink} className={ctaClass}>
             {btnLabel}
           </Link>
         )}
