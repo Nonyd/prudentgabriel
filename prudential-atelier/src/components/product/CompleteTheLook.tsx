@@ -1,17 +1,15 @@
 "use client";
 
-import { SectionLabel } from "@/components/ui/SectionLabel";
 import { ProductCardRail } from "@/components/common/ProductCardGrid";
 import type { ProductListItem } from "@/types/product";
 
 export function CompleteTheLook({ products }: { products: ProductListItem[] }) {
   if (!products.length) return null;
   return (
-    <section className="border-t border-border py-16">
-      <SectionLabel>COMPLETE THE LOOK</SectionLabel>
-      <h2 className="mt-4 font-display text-3xl text-charcoal">Style It With</h2>
+    <section className="border-t border-charcoal/10 py-16">
+      <h2 className="font-display text-3xl text-charcoal">Complete the look</h2>
       <div className="mt-8">
-        <ProductCardRail products={products} />
+        <ProductCardRail products={products} variant="teaser" />
       </div>
     </section>
   );

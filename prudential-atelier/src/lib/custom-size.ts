@@ -1,5 +1,5 @@
 import type { CustomSurchargeKind, OrderFulfilmentKind, SizeMode } from "@prisma/client";
-import { isStandardSizeLabel, isTypedUnit, toCanonicalCm, type TypedUnit } from "@/lib/sizing";
+import { isStandardSizeLabel, isTypedUnit, sortBySize, toCanonicalCm, type TypedUnit } from "@/lib/sizing";
 
 export const CUSTOM_CART_SIZE = "Custom";
 
@@ -192,7 +192,10 @@ export function customLinesReturnable(
 }
 
 export function standardVariants<T extends { size: string }>(variants: T[]): T[] {
-  return variants.filter((v) => isStandardSizeLabel(v.size));
+  return sortBySize(
+    variants.filter((v) => isStandardSizeLabel(v.size)),
+    (v) => v.size,
+  );
 }
 
 export const PROFILE_COLUMN_BY_KEY: Record<string, string> = {

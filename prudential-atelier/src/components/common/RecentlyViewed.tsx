@@ -1,35 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SectionLabel } from "@/components/ui/SectionLabel";
 import { ProductCardRail } from "@/components/common/ProductCardGrid";
 import { useRecentlyViewedStore } from "@/store/recentlyViewedStore";
 import type { ProductListItem } from "@/types/product";
 
-export function RecentlyViewed() {
+export function RecentlyViewed({ excludeProductId }: { excludeProductId?: string }) {
   const ids = useRecentlyViewedStore((s) => s.ids);
   const [products, setProducts] = useState<ProductListItem[]>([]);
 
   useEffect(() => {
-    if (!ids.length) {
+    const otherIds = ids.filter((id) => id !== excludeProductId);
+    if (!otherIds.length) {
       setProducts([]);
       return;
     }
-    const q = ids.join(",");
+    const q = otherIds.join(",");
     fetch(`/api/products?ids=${encodeURIComponent(q)}&limit=8&inStock=false`)
       .then((r) => r.json())
-      .then((j) => setProducts(j.products ?? []))
+      .then((j) => {
+        const rows = (j.products ?? []) as ProductListItem[];
+        setProducts(rows.filter((p) => p.id !== excludeProductId));
+      })
       .catch(() => setProducts([]));
-  }, [ids]);
+  }, [ids, excludeProductId]);
 
-  if (!ids.length || !products.length) return null;
+  const visible = products.filter((p) => p.id !== excludeProductId);
+  if (!visible.length) return null;
 
   return (
-    <section className="border-t border-border py-16">
-      <SectionLabel>RECENTLY VIEWED</SectionLabel>
-      <h2 className="mt-4 font-display text-3xl text-charcoal">Picked Up Where You Left Off</h2>
+    <section className="border-t border-charcoal/10 py-16">
+      <h2 className="font-display text-3xl text-charcoal">Recently viewed</h2>
       <div className="mt-8">
-        <ProductCardRail products={products} />
+        <ProductCardRail products={visible} variant="teaser" />
       </div>
     </section>
   );

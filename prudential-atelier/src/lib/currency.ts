@@ -133,3 +133,15 @@ export function formatPrice(amount: number, currency: ShopCurrency): string {
     maximumFractionDigits: 2,
   }).format(rounded);
 }
+
+/** Alternate-currency line on the PDP: "Also $130 or £104" — no cents on round figures. */
+export function formatAlsoAmount(amount: number, currency: "USD" | "GBP"): string {
+  const rounded = Math.round(amount * 100) / 100;
+  const whole = Math.abs(rounded - Math.round(rounded)) < 0.005;
+  return new Intl.NumberFormat(currency === "USD" ? "en-US" : "en-GB", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
+  }).format(rounded);
+}

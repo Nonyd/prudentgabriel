@@ -2,25 +2,22 @@ import nextDynamic from "next/dynamic";
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { PaymentStatus } from "@prisma/client";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ProductDetailClient } from "@/components/product/ProductDetailClient";
 import { CompleteTheLook } from "@/components/product/CompleteTheLook";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { ProductCardSkeleton } from "@/components/common/ProductCardSkeleton";
 import { RecentlyViewed } from "@/components/common/RecentlyViewed";
 import { ViewTracker } from "@/components/product/ViewTracker";
+import { ReviewsSection, type ReviewItem } from "@/components/product/ReviewsSection";
 import type { ProductListItem } from "@/types/product";
-import type { ReviewItem } from "@/components/product/ReviewsSection";
 import { mapListVariant, mapProductToListItem } from "@/lib/map-product-list-item";
 import { getSetting } from "@/lib/settings";
 import { bespokeFromNGN, derivedCatalogMinNGN } from "@/lib/pricing";
 import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
 import { getProductCustomContext } from "@/lib/custom-context";
 
-
-const ReviewsSection = nextDynamic(() => import("@/components/product/ReviewsSection").then((m) => ({ default: m.ReviewsSection })), {
-  loading: () => <Skeleton className="h-64 w-full rounded-sm" />,
-});
 
 const RelatedProducts = nextDynamic(() => import("@/components/product/RelatedProducts").then((m) => ({ default: m.RelatedProducts })), {
   loading: () => (
@@ -158,6 +155,25 @@ export default async function ProductPage({ params }: { params: { slug: string }
     : null;
   const customCtx = await getProductCustomContext(product.id);
 
+  const session = await auth();
+  let canWriteReview = false;
+  if (session?.user?.id) {
+    const [paidItem, existingReview] = await Promise.all([
+      prisma.orderItem.findFirst({
+        where: {
+          productId: product.id,
+          order: { userId: session.user.id, paymentStatus: PaymentStatus.PAID },
+        },
+        select: { id: true },
+      }),
+      prisma.review.findFirst({
+        where: { userId: session.user.id, productId: product.id },
+        select: { id: true },
+      }),
+    ]);
+    canWriteReview = Boolean(paidItem) && !existingReview;
+  }
+
   return (
     <>
       <ViewTracker productId={product.id} />
@@ -204,10 +220,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
           reviewCount={reviewCount}
           productId={product.id}
           productSlug={product.slug}
+          canWriteReview={canWriteReview}
         />
         <CompleteTheLook products={bundleProducts} />
         <RelatedProducts products={relatedProducts} />
-        <RecentlyViewed />
+        <RecentlyViewed excludeProductId={product.id} />
       </div>
     </>
   );

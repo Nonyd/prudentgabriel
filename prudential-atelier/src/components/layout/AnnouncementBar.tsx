@@ -2,6 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+function readableAnnouncement(line: string): string {
+  const t = line.trim();
+  if (!t) return t;
+  const letters = t.replace(/[^A-Za-z]/g, "");
+  if (letters.length > 0 && letters === letters.toUpperCase()) {
+    const lower = t.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+  }
+  return t;
+}
+
 export function AnnouncementBar({
   messages,
   intervalMs = 3000,
@@ -26,19 +37,11 @@ export function AnnouncementBar({
 
   if (list.length === 0) return null;
 
-  const line = list[index % list.length] ?? "";
+  const line = readableAnnouncement(list[index % list.length] ?? "");
 
   return (
     <div className="px-4 py-1.5 text-center">
-      <p
-        className="font-sans text-[10px] font-normal"
-        style={{
-          color: "var(--ivory-deep)",
-          textShadow: "0 1px 12px rgb(68 41 19 / 0.9)",
-        }}
-      >
-        {line}
-      </p>
+      <p className="font-body text-[11px] font-normal text-charcoal">{line}</p>
     </div>
   );
 }

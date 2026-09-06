@@ -71,6 +71,12 @@ interface ProductDetailClientProps {
   previousCm?: Record<string, number>;
 }
 
+function sentenceCase(value: string): string {
+  const t = value.replace(/_/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
+  if (!t) return t;
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 export function ProductDetailClient({
   product,
   averageRating,
@@ -128,7 +134,7 @@ export function ProductDetailClient({
     : fitMode === "custom"
       ? `Add to bag · ${priceLabel}`
       : !variant
-        ? `Select Size · ${priceLabel}`
+        ? `Choose your size`
         : `Add to bag · ${priceLabel}`;
   const color = product.colors.find((c) => c.id === colorId) ?? null;
 
@@ -257,14 +263,14 @@ export function ProductDetailClient({
 
   return (
     <div className="mx-auto max-w-site overflow-x-clip px-4 pb-20 lg:px-10">
-      <nav className="py-4 font-body text-[11px] font-medium uppercase tracking-[0.08em] text-dark-grey">
+      <nav className="mb-6 inline-flex max-w-full flex-wrap items-center gap-x-1.5 glass-1 glass-pill px-4 py-2 font-body text-[12px] font-normal text-charcoal">
         <Link href={aisle.href} className="hover:text-choc">
-          {aisle.label}
+          {sentenceCase(aisle.label)}
         </Link>
-        <span className="mx-2">/</span>
-        <span>{String(product.category).replace(/_/g, " ")}</span>
-        <span className="mx-2">/</span>
-        <span className="text-charcoal">{product.name}</span>
+        <span className="text-charcoal-mid">/</span>
+        <span>{sentenceCase(String(product.category))}</span>
+        <span className="text-charcoal-mid">/</span>
+        <span>{product.name}</span>
       </nav>
 
       <div className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-12">
@@ -274,23 +280,25 @@ export function ProductDetailClient({
 
         <div className="min-w-0 lg:sticky lg:top-32 lg:self-start">
           <div className="glass-2 glass-panel px-6 py-7 lg:px-8">
-          <p className="mb-4 font-sans text-[13px] font-normal text-text-mid">
-            {String(product.category).replace(/_/g, " ")}
+          <p className="mb-4 font-body text-[13px] font-normal text-text-mid">
+            {sentenceCase(String(product.category))}
           </p>
           <h1 className="font-display text-[36px] font-normal leading-[1.1] text-choc md:text-[42px]">
             {product.name}
           </h1>
 
-          <button
-            type="button"
-            className="mt-4 flex items-center gap-2 text-left"
-            onClick={() => document.getElementById("reviews")?.scrollIntoView({ behavior: "smooth" })}
-          >
-            <StarRating rating={averageRating} size="sm" />
-            <span className="text-sm text-charcoal-mid">
-              {averageRating.toFixed(1)} ({reviewCount} reviews)
-            </span>
-          </button>
+          {reviewCount > 0 ? (
+            <button
+              type="button"
+              className="mt-4 flex items-center gap-2 text-left"
+              onClick={() => document.getElementById("reviews")?.scrollIntoView({ behavior: "smooth" })}
+            >
+              <StarRating rating={averageRating} size="sm" />
+              <span className="font-body text-sm font-normal text-charcoal-mid">
+                {averageRating.toFixed(1)} ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
+              </span>
+            </button>
+          ) : null}
 
           <Divider className="my-6" />
 
@@ -304,8 +312,8 @@ export function ProductDetailClient({
 
           {product.colors.length > 0 && (
             <div className="mb-6">
-              <p className="font-label text-xs uppercase text-charcoal-mid">
-                Colour: {color?.name ?? "—"}
+              <p className="font-body text-sm font-normal text-charcoal-mid">
+                Colour: {color ? sentenceCase(color.name) : "—"}
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {product.colors.map((c) => (
@@ -378,13 +386,13 @@ export function ProductDetailClient({
           {fitMode === "standard" && standardSizes.length > 0 ? (
             <div id="product-sizes">
               <div className="mb-3 mt-1 flex min-w-0 items-baseline justify-between gap-3">
-                <p className="shrink-0 font-body text-sm font-medium uppercase tracking-[0.08em] text-charcoal">Size</p>
+                <p className="shrink-0 font-body text-sm font-normal text-charcoal">Size</p>
                 <SizeGuideModal offeredSizes={standardSizes.map((v) => v.size)}>
                   <button
                     type="button"
                     className="inline-flex min-h-[44px] shrink-0 items-center whitespace-nowrap font-body text-sm text-choc underline underline-offset-4"
                   >
-                    Size Guide
+                    Size guide
                   </button>
                 </SizeGuideModal>
               </div>
@@ -478,7 +486,7 @@ export function ProductDetailClient({
 
           <Button
             type="button"
-            className="mt-8 h-[52px] w-full bg-choc font-body text-[11px] font-semibold uppercase tracking-[0.18em] text-cream hover:bg-nut disabled:opacity-40"
+            className="mt-8 h-[52px] w-full bg-choc font-body text-[15px] font-normal normal-case tracking-normal text-cream hover:bg-nut disabled:opacity-40"
             size="lg"
             disabled={soldOut || submitting}
             aria-busy={submitting}
@@ -490,7 +498,14 @@ export function ProductDetailClient({
                 aria-hidden
               />
             ) : null}
-            {ctaLabel}
+            {!soldOut && fitMode === "standard" && !variant ? (
+              <span className="flex w-full items-center justify-center gap-3">
+                <span>Choose your size</span>
+                <span>{priceLabel}</span>
+              </span>
+            ) : (
+              ctaLabel
+            )}
           </Button>
           <p className="sr-only" aria-live="polite">
             {bagError ?? (submitting ? "Adding to bag" : "")}
@@ -503,31 +518,15 @@ export function ProductDetailClient({
 
           <div className="mt-4 flex w-full items-center justify-center gap-2 border border-charcoal py-3">
             <WishlistButton productId={product.id} />
-            <span className="font-body text-[11px] font-medium uppercase tracking-wider text-charcoal">Add to Wishlist</span>
+            <span className="font-body text-sm font-normal text-charcoal">Add to wishlist</span>
           </div>
 
-          <div className="mt-6 flex min-w-0 w-full flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center font-sans text-[10px] uppercase tracking-[0.12em] text-charcoal-light">
-            <span>Secure checkout</span>
-            <span aria-hidden className="text-sand">
-              ·
-            </span>
-            <span>Ships worldwide</span>
-            <span aria-hidden className="text-sand">
-              ·
-            </span>
-            <SizeGuideModal offeredSizes={standardSizes.map((v) => v.size)}>
-              <button type="button" className="uppercase tracking-[0.12em] text-charcoal-light underline-offset-4 hover:text-choc hover:underline">
-                Size guide
-              </button>
-            </SizeGuideModal>
-          </div>
-
-          <Accordion.Root type="multiple" className="mt-10 space-y-2 border-t border-border pt-6">
+          <Accordion.Root type="multiple" className="mt-10 space-y-0 border-t border-charcoal/10 pt-4">
             {product.details && (
-              <Accordion.Item value="d" className="border-b border-border">
+              <Accordion.Item value="d" className="border-b border-charcoal/10">
                 <Accordion.Header>
-                  <Accordion.Trigger className="flex w-full py-3 font-label text-xs uppercase tracking-wider">
-                    Product Details
+                  <Accordion.Trigger className="flex w-full py-3 font-body text-sm font-normal text-charcoal">
+                    Product details
                   </Accordion.Trigger>
                 </Accordion.Header>
                 <Accordion.Content className="pb-4">
@@ -538,25 +537,25 @@ export function ProductDetailClient({
                 </Accordion.Content>
               </Accordion.Item>
             )}
-            <Accordion.Item value="s" className="border-b border-border">
+            <Accordion.Item value="s" className="border-b border-charcoal/10">
               <Accordion.Header>
-                <Accordion.Trigger className="flex w-full py-3 font-label text-xs uppercase tracking-wider">
-                  Size &amp; Fit
+                <Accordion.Trigger className="flex w-full py-3 font-body text-sm font-normal text-charcoal">
+                  Size &amp; fit
                 </Accordion.Trigger>
               </Accordion.Header>
               <Accordion.Content className="space-y-3 pb-4 text-sm text-charcoal-mid">
                 <SizeGuideModal offeredSizes={standardSizes.map((v) => v.size)}>
-                  <button type="button" className="font-body text-[11px] font-medium uppercase tracking-wide text-choc underline">
-                    Size Guide
+                  <button type="button" className="font-body text-sm font-normal text-choc underline">
+                    Size guide
                   </button>
                 </SizeGuideModal>
                 <p className="copy-body">If between sizes, size up. Cut is fitted.</p>
               </Accordion.Content>
             </Accordion.Item>
-            <Accordion.Item value="del" className="border-b border-border">
+            <Accordion.Item value="del" className="border-b border-charcoal/10">
               <Accordion.Header>
-                <Accordion.Trigger className="flex w-full py-3 font-label text-xs uppercase tracking-wider">
-                  Delivery &amp; Returns
+                <Accordion.Trigger className="flex w-full py-3 font-body text-sm font-normal text-charcoal">
+                  Delivery &amp; returns
                 </Accordion.Trigger>
               </Accordion.Header>
               <Accordion.Content className="space-y-2 pb-4 text-sm text-charcoal-mid">
@@ -574,10 +573,10 @@ export function ProductDetailClient({
               </Accordion.Content>
             </Accordion.Item>
             {product.isBespokeAvail && product.type !== "RTW" && (
-              <Accordion.Item value="b" className="border-b border-border">
+              <Accordion.Item value="b" className="border-b border-charcoal/10">
                 <Accordion.Header>
-                  <Accordion.Trigger className="flex w-full py-3 font-label text-xs uppercase tracking-wider">
-                    Atelier Version
+                  <Accordion.Trigger className="flex w-full py-3 font-body text-sm font-normal text-charcoal">
+                    Atelier version
                   </Accordion.Trigger>
                 </Accordion.Header>
                 <Accordion.Content className="space-y-3 pb-4 text-sm text-charcoal-mid">
@@ -586,8 +585,8 @@ export function ProductDetailClient({
                     Lead time: 3–6 weeks. Starts from ₦
                     {Math.round(bespokeFromNGN ?? product.basePriceNGN).toLocaleString()}
                   </p>
-                  <Link href="/atelier" className="font-body text-[11px] font-medium uppercase tracking-wide text-choc underline">
-                    Book Atelier Consultation
+                  <Link href="/atelier" className="font-body text-sm font-normal text-choc underline">
+                    Book atelier consultation
                   </Link>
                 </Accordion.Content>
               </Accordion.Item>

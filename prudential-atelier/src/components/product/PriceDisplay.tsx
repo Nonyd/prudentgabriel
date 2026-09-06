@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/Badge";
-import { formatPrice } from "@/lib/currency";
+import { formatAlsoAmount, formatPrice } from "@/lib/currency";
 import { effectiveUnitNGN, minAmountInCurrency, variantAmountInCurrency } from "@/lib/pricing";
 import { useCurrencyStore } from "@/store/currencyStore";
 import type { ProductListItem, ProductListVariant } from "@/types/product";
@@ -26,7 +26,7 @@ export function PriceDisplay({ product, selectedVariant, className }: PriceDispl
         <p className="text-2xl font-semibold text-charcoal">From {fmt(lowest)}</p>
         {currency === "NGN" ? (
           <p className="mt-1 text-sm text-charcoal-light">
-            Also: {formatPrice(alsoUsd, "USD")} · {formatPrice(alsoGbp, "GBP")}
+            Also {formatAlsoAmount(alsoUsd, "USD")} or {formatAlsoAmount(alsoGbp, "GBP")}
           </p>
         ) : null}
       </div>
@@ -59,8 +59,8 @@ export function PriceDisplay({ product, selectedVariant, className }: PriceDispl
       )}
       {currency === "NGN" ? (
         <p className="mt-1 text-sm text-charcoal-light">
-          Also: {formatPrice(variantAmountInCurrency(selectedVariant, product, "USD", rates), "USD")} ·{" "}
-          {formatPrice(variantAmountInCurrency(selectedVariant, product, "GBP", rates), "GBP")}
+          Also {formatAlsoAmount(variantAmountInCurrency(selectedVariant, product, "USD", rates), "USD")} or{" "}
+          {formatAlsoAmount(variantAmountInCurrency(selectedVariant, product, "GBP", rates), "GBP")}
         </p>
       ) : null}
     </div>

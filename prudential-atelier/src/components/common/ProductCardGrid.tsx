@@ -70,20 +70,29 @@ export function ProductCardGrid({
 export function ProductCardRail({
   products,
   itemClassName = "w-[220px] shrink-0",
+  variant = "gallery",
 }: {
   products: ProductListItem[];
   itemClassName?: string;
+  variant?: "gallery" | "teaser";
 }) {
   const activeId = useQuickAddStore((s) => s.product?.id ?? null);
   const inRail = Boolean(activeId && products.some((p) => p.id === activeId));
+  const teaser = variant === "teaser";
 
   return (
     <GallerySwipeNudgeHost>
       <div className={inRail ? "max-md:pb-28" : undefined}>
-        <div className="flex gap-px overflow-x-auto bg-white pb-0">
+        <div className={cn("flex overflow-x-auto pb-0", teaser ? "gap-4 bg-transparent" : "gap-px bg-white")}>
           {products.map((p) => (
             <div key={p.id} className={itemClassName}>
-              <ProductCard product={p} />
+              {teaser ? (
+                <div className="glass-2 glass-panel glass-lift overflow-hidden">
+                  <ProductCard product={p} />
+                </div>
+              ) : (
+                <ProductCard product={p} />
+              )}
             </div>
           ))}
         </div>

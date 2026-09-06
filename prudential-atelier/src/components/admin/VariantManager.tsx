@@ -4,6 +4,7 @@ import { Fragment, useState } from "react";
 import type { ProductAdminInput } from "@/validations/product";
 import { AlertDialog } from "@/components/ui/AlertDialog";
 import { buildDefaultProductSku, variantTableColumns } from "@/lib/product-sku";
+import { compareSizeLabels, sortBySize } from "@/lib/sizing";
 
 type VariantRow = ProductAdminInput["variants"][number];
 
@@ -77,7 +78,8 @@ export function VariantManager({
     if (extra.length === 0) return;
     const first = variants[0];
     const dropPlaceholder = variants.length === 1 && first && first.size.trim() === "";
-    onChange([...(dropPlaceholder ? [] : variants), ...extra]);
+    const merged = [...(dropPlaceholder ? [] : variants), ...extra];
+    onChange(sortBySize(merged, (row) => row.size).map((row, order) => ({ ...row, sortOrder: order })));
   };
 
   const cell = "w-full rounded-sm border border-sand bg-canvas px-2 py-1 text-charcoal";
@@ -168,7 +170,10 @@ export function VariantManager({
                 </td>
               </tr>
             ) : (
-              variants.map((v, i) => (
+              variants
+                .map((v, i) => ({ v, i }))
+                .sort((a, b) => compareSizeLabels(a.v.size, b.v.size))
+                .map(({ v, i }) => (
                 <Fragment key={v.id ?? `new-${i}`}>
                   <tr className="border-b border-[#F5F5F3]">
                     <td className="p-1">

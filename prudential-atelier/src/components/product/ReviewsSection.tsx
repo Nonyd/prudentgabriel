@@ -1,9 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
 import { format } from "date-fns";
-import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import { StarRating } from "@/components/ui/StarRating";
 import { ReviewForm } from "@/components/product/ReviewForm";
@@ -35,6 +33,7 @@ interface ReviewsSectionProps {
   reviewCount: number;
   productId: string;
   productSlug: string;
+  canWriteReview: boolean;
 }
 
 export function ReviewsSection({
@@ -43,9 +42,8 @@ export function ReviewsSection({
   reviewCount,
   productId,
   productSlug,
+  canWriteReview,
 }: ReviewsSectionProps) {
-  const { status } = useSession();
-  const isLoggedIn = status === "authenticated";
   const [expanded, setExpanded] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [sort, setSort] = useState<"newest" | "helpful">("newest");
@@ -82,20 +80,22 @@ export function ReviewsSection({
     }
   }
 
+  if (reviews.length === 0 && !canWriteReview) return null;
+
   const writeReviewButtonClass =
-    "border border-choc px-5 py-2.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-choc transition-colors hover:bg-choc hover:text-cream";
+    "border border-choc px-5 py-2.5 font-body text-sm font-normal text-choc transition-colors hover:bg-choc hover:text-cream";
 
   return (
-    <Dialog.Root open={openForm} onOpenChange={setOpenForm}>
-      <section id="reviews" className="scroll-mt-28 border-t border-mid-grey py-16">
+    <section id="reviews" className="scroll-mt-28 py-16">
+      <div className="glass-2 glass-panel px-6 py-7 lg:px-8">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <h2 className="font-display text-3xl text-charcoal">Client Reviews</h2>
-          <span className="border border-mid-grey px-3 py-1 font-body text-[10px] font-medium uppercase tracking-[0.12em] text-dark-grey">
-            {reviewCount} reviews
-          </span>
+          {reviewCount > 0 ? (
+            <span className="font-body text-sm font-normal text-charcoal-mid">{reviewCount} reviews</span>
+          ) : null}
         </div>
 
-        {reviews.length > 0 && (
+        {reviews.length > 0 ? (
           <div className="mb-10 grid gap-8 md:grid-cols-2">
             <div>
               <p className="font-display text-[48px] font-normal italic leading-none text-choc md:text-[52px]">
@@ -116,116 +116,97 @@ export function ReviewsSection({
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
-        {reviews.length > 0 &&
-          (isLoggedIn ? (
+        {canWriteReview ? (
+          <Dialog.Root open={openForm} onOpenChange={setOpenForm}>
             <Dialog.Trigger asChild>
               <button type="button" className={`mb-8 ${writeReviewButtonClass}`}>
                 Write a review
               </button>
             </Dialog.Trigger>
-          ) : (
-            <Link href="/auth/login" className={`mb-8 inline-block ${writeReviewButtonClass}`}>
-              Log in to write a review
-            </Link>
-          ))}
-
-      {reviews.length > 0 ? (
-        <>
-          <div className="mb-6 flex items-center gap-4 border-b border-sand pb-3">
-            <span className="font-body text-[11px] uppercase tracking-[0.12em] text-text-light">Sort</span>
-            <button
-              type="button"
-              className={`font-body text-[12px] ${sort === "newest" ? "text-choc" : "text-charcoal-mid"}`}
-              onClick={() => setSort("newest")}
-            >
-              Newest
-            </button>
-            <span className="text-sand">|</span>
-            <button
-              type="button"
-              className={`font-body text-[12px] ${sort === "helpful" ? "text-choc" : "text-charcoal-mid"}`}
-              onClick={() => setSort("helpful")}
-            >
-              Most helpful
-            </button>
-          </div>
-
-          <ul>
-            {show.map((r) => (
-              <li key={r.id} className="border-b border-sand py-5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StarRating rating={r.rating} size="sm" variant="gold" />
-                    {r.isVerified && (
-                      <span className="rounded-full bg-[#E8F5E9] px-2 py-0.5 font-body text-[10px] text-[#1B5E20]">
-                        Verified purchase
-                      </span>
-                    )}
-                  </div>
-                  <span className="font-body text-[11px] text-text-light">
-                    {format(new Date(r.createdAt), "MMM d, yyyy")}
-                  </span>
+            <Dialog.Portal>
+              <Dialog.Overlay className="fixed inset-0 z-[80] bg-charcoal/50" />
+              <Dialog.Content
+                data-lenis-prevent
+                className="fixed left-1/2 top-1/2 z-[81] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain glass-3 glass-panel p-6"
+              >
+                <Dialog.Title className="font-display text-xl text-charcoal">Write your review</Dialog.Title>
+                <div className="mt-4">
+                  <ReviewForm productId={productId} productSlug={productSlug} onDone={() => setOpenForm(false)} />
                 </div>
-                <p className="mt-2 font-label text-[13px] font-medium text-choc">{displayName(r.user.name)}</p>
-                {r.title && <p className="mt-2 font-label text-sm font-semibold text-choc">{r.title}</p>}
-                {r.body && (
-                  <p className="mt-2 font-body text-sm leading-[1.8] text-text-mid">{r.body}</p>
-                )}
-                <div className="mt-3">
-                  <button
-                    type="button"
-                    className="font-body text-[11px] text-text-light transition-colors hover:text-choc"
-                    onClick={() => void markHelpful(r.id)}
-                  >
-                    Helpful? 👍 {counts[r.id] ?? r.helpfulCount}
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+              </Dialog.Content>
+            </Dialog.Portal>
+          </Dialog.Root>
+        ) : null}
 
-          {sorted.length > 5 && !expanded && (
-            <button
-              type="button"
-              className="mt-6 font-body text-[11px] font-medium uppercase tracking-wider text-choc underline"
-              onClick={() => setExpanded(true)}
-            >
-              Load more
-            </button>
-          )}
-        </>
-      ) : (
-        <div className="py-8 text-center">
-          <p className="font-body text-sm italic text-text-light">Be the first to review this piece</p>
-          {isLoggedIn ? (
-            <Dialog.Trigger asChild>
-              <button type="button" className={`mt-4 ${writeReviewButtonClass}`}>
-                Write a Review
+        {reviews.length > 0 ? (
+          <>
+            <div className="mb-6 flex items-center gap-4 border-b border-charcoal/10 pb-3">
+              <span className="font-body text-sm font-normal text-text-light">Sort</span>
+              <button
+                type="button"
+                className={`font-body text-sm ${sort === "newest" ? "text-choc" : "text-charcoal-mid"}`}
+                onClick={() => setSort("newest")}
+              >
+                Newest
               </button>
-            </Dialog.Trigger>
-          ) : (
-            <Link href="/auth/login" className={`mt-4 inline-block ${writeReviewButtonClass}`}>
-              Log in to write a review
-            </Link>
-          )}
-        </div>
-      )}
-      </section>
+              <span className="text-sand">|</span>
+              <button
+                type="button"
+                className={`font-body text-sm ${sort === "helpful" ? "text-choc" : "text-charcoal-mid"}`}
+                onClick={() => setSort("helpful")}
+              >
+                Most helpful
+              </button>
+            </div>
 
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[80] bg-charcoal/50" />
-        <Dialog.Content
-          data-lenis-prevent
-          className="fixed left-1/2 top-1/2 z-[81] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain border border-mid-grey bg-canvas p-6 shadow-xl"
-        >
-          <Dialog.Title className="font-display text-xl text-charcoal">Write your review</Dialog.Title>
-          <div className="mt-4">
-            <ReviewForm productId={productId} productSlug={productSlug} onDone={() => setOpenForm(false)} />
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+            <ul>
+              {show.map((r) => (
+                <li key={r.id} className="border-b border-charcoal/10 py-5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StarRating rating={r.rating} size="sm" variant="gold" />
+                      {r.isVerified && (
+                        <span className="rounded-full bg-[#E8F5E9] px-2 py-0.5 font-body text-[10px] text-[#1B5E20]">
+                          Verified purchase
+                        </span>
+                      )}
+                    </div>
+                    <span className="font-body text-[11px] text-text-light">
+                      {format(new Date(r.createdAt), "MMM d, yyyy")}
+                    </span>
+                  </div>
+                  <p className="mt-2 font-label text-[13px] font-medium text-choc">{displayName(r.user.name)}</p>
+                  {r.title && <p className="mt-2 font-label text-sm font-semibold text-choc">{r.title}</p>}
+                  {r.body && (
+                    <p className="mt-2 font-body text-sm leading-[1.8] text-text-mid">{r.body}</p>
+                  )}
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      className="font-body text-[11px] text-text-light transition-colors hover:text-choc"
+                      onClick={() => void markHelpful(r.id)}
+                    >
+                      Helpful? 👍 {counts[r.id] ?? r.helpfulCount}
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {sorted.length > 5 && !expanded && (
+              <button
+                type="button"
+                className="mt-6 font-body text-sm font-normal text-choc underline"
+                onClick={() => setExpanded(true)}
+              >
+                Load more
+              </button>
+            )}
+          </>
+        ) : null}
+      </div>
+    </section>
   );
 }

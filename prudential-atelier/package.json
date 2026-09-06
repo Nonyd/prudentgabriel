@@ -36,6 +36,7 @@
     "test:slice-z5": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-z5.ts",
     "test:slice-ad": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-ad.ts",
     "test:slice-ad2": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-ad2.ts",
+    "test:slice-ad2b": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-ad2b.ts",
     "test:slice-ac": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-ac.ts",
     "test:slice-ab": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-ab.ts",
     "test:slice-x": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-x.ts",

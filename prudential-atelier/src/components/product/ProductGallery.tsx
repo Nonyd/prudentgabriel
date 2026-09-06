@@ -1,14 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { FreeMode } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/free-mode";
 import { cn } from "@/lib/utils";
 import { PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/product-image-url";
+import { shouldShowGalleryDots } from "@/lib/product-gallery";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 
 export interface GalleryImage {
@@ -55,74 +52,108 @@ export function ProductGallery({ images }: { images: GalleryImage[] }) {
       ? images
       : [{ id: "placeholder", url: PRODUCT_IMAGE_PLACEHOLDER, alt: "Prudent Gabriel" }];
   const [idx, setIdx] = useState(0);
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const main = display[idx] ?? display[0];
+  const showDots = shouldShowGalleryDots(display.length);
+
+  const scrollTo = (i: number) => {
+    const el = scrollerRef.current;
+    setIdx(i);
+    if (!el) return;
+    const width = el.clientWidth;
+    if (!width) return;
+    el.scrollTo({ left: i * width, behavior: "smooth" });
+  };
 
   return (
     <div>
-      <div className="img-portrait relative overflow-hidden bg-ivory-dark">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={main.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="absolute inset-0 group"
+      <div className="md:hidden">
+        <div className="relative">
+          <div
+            ref={scrollerRef}
+            className="flex snap-x snap-mandatory overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              const width = el.clientWidth;
+              if (!width) return;
+              const next = Math.round(el.scrollLeft / width);
+              if (next !== idx) setIdx(Math.max(0, Math.min(display.length - 1, next)));
+            }}
           >
-            {main && (
-              <GalleryImageTile
-                src={main.url}
-                alt={main.alt ?? ""}
-                className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.08]"
-                sizes="(max-width: 1024px) 100vw, 55vw"
-                priority={idx === 0}
-              />
-            )}
-          </motion.div>
-        </AnimatePresence>
-        <div className="absolute bottom-3 right-3 rounded-sm bg-charcoal/70 px-2 py-1 font-label text-[10px] text-ivory">
-          {idx + 1} / {display.length}
+            {display.map((im, i) => (
+              <div key={im.id} className="img-portrait relative w-full shrink-0 snap-center overflow-hidden bg-ivory-dark">
+                <GalleryImageTile
+                  src={im.url}
+                  alt={im.alt ?? ""}
+                  className="object-cover object-top"
+                  sizes="100vw"
+                  priority={i === 0}
+                />
+              </div>
+            ))}
+          </div>
+          {showDots ? (
+            <div className="card-image-dots" role="group" aria-label="Image position">
+              {display.map((im, i) => (
+                <button
+                  key={im.id}
+                  type="button"
+                  aria-label={`Image ${i + 1} of ${display.length}`}
+                  aria-current={i === idx}
+                  className={cn("card-image-dot", i === idx && "card-image-dot-active")}
+                  onClick={() => scrollTo(i)}
+                />
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
 
-      {display.length > 1 ? (
-        <>
-          <div className="mt-1 hidden gap-px md:grid md:grid-cols-4">
-            {display.map((im, i) => (
-              <button
-                key={im.id}
-                type="button"
-                onClick={() => setIdx(i)}
-                className={cn(
-                  "relative aspect-square overflow-hidden bg-ivory-dark",
-                  i === idx ? "ring-1 ring-choc ring-offset-1 ring-offset-cream" : "opacity-80 hover:opacity-100",
-                )}
-              >
-                <GalleryImageTile src={im.url} alt="" className="object-cover object-top" sizes="96px" />
-              </button>
-            ))}
-          </div>
+      <div className="hidden md:block">
+        <div className="img-portrait relative overflow-hidden bg-ivory-dark">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={main.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="absolute inset-0 group"
+            >
+              {main && (
+                <GalleryImageTile
+                  src={main.url}
+                  alt={main.alt ?? ""}
+                  className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.08]"
+                  sizes="(max-width: 1024px) 100vw, 55vw"
+                  priority={idx === 0}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
-          <div className="mt-1 md:hidden">
-            <Swiper modules={[FreeMode]} spaceBetween={4} slidesPerView="auto" freeMode>
+        {display.length > 1 ? (
+          <div className="mt-3 glass-1 glass-panel p-2">
+            <div className="flex gap-2">
               {display.map((im, i) => (
-                <SwiperSlide key={im.id} style={{ width: 72 }}>
-                  <button
-                    type="button"
-                    onClick={() => setIdx(i)}
-                    className={cn(
-                      "relative block h-[72px] w-[72px] overflow-hidden bg-ivory-dark",
-                      i === idx ? "ring-1 ring-choc ring-offset-1 ring-offset-cream" : "opacity-80",
-                    )}
-                  >
-                    <GalleryImageTile src={im.url} alt="" className="object-cover object-top" sizes="72px" />
-                  </button>
-                </SwiperSlide>
+                <button
+                  key={im.id}
+                  type="button"
+                  onClick={() => setIdx(i)}
+                  aria-current={i === idx}
+                  className={cn(
+                    "relative aspect-square w-[72px] shrink-0 overflow-hidden bg-ivory-dark",
+                    i === idx ? "border-2 border-choc" : "border border-transparent opacity-80 hover:opacity-100",
+                  )}
+                >
+                  <GalleryImageTile src={im.url} alt="" className="object-cover object-top" sizes="72px" />
+                </button>
               ))}
-            </Swiper>
+            </div>
           </div>
-        </>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }

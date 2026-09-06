@@ -45,6 +45,38 @@ export function normalizeSizeToken(raw: string): string {
     .replace(/\s+/g, "");
 }
 
+const LETTER_SIZE_RANK: Record<string, number> = {
+  xxs: 0,
+  xs: 1,
+  s: 2,
+  m: 3,
+  l: 4,
+  xl: 5,
+  xxl: 6,
+  xxxl: 7,
+};
+
+/** Numeric UK sizes first (6 before 10), then letter sizes, then the rest. Custom last. */
+export function sizeSortValue(size: string): number {
+  const t = normalizeSizeToken(size);
+  if (!t || t === "custom") return Number.POSITIVE_INFINITY;
+  const n = Number.parseFloat(t);
+  if (Number.isFinite(n)) return n;
+  if (t in LETTER_SIZE_RANK) return 1000 + LETTER_SIZE_RANK[t];
+  return 2000;
+}
+
+export function compareSizeLabels(a: string, b: string): number {
+  const da = sizeSortValue(a);
+  const db = sizeSortValue(b);
+  if (da !== db) return da - db;
+  return normalizeSizeToken(a).localeCompare(normalizeSizeToken(b));
+}
+
+export function sortBySize<T>(items: T[], sizeOf: (item: T) => string): T[] {
+  return [...items].sort((x, y) => compareSizeLabels(sizeOf(x), sizeOf(y)));
+}
+
 export type SizeChartRowView = {
   label: string;
   bustCm: number | null;
@@ -84,7 +116,10 @@ export function chartRowsForOfferedSizes<T extends { label: string }>(
   rows: T[],
   offeredSizes: string[],
 ): T[] {
-  return rows.filter((row) => chartRowIsOffered(row.label, offeredSizes));
+  return sortBySize(
+    rows.filter((row) => chartRowIsOffered(row.label, offeredSizes)),
+    (row) => row.label,
+  );
 }
 
 export function displayChartRow(row: SizeChartRowView): {
