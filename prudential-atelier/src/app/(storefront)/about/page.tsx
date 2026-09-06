@@ -416,7 +416,7 @@ export default async function AboutPage() {
               home_pfa_headline: cmsGet(cms, "about_academy_headline", "Learn the craft from the house"),
               home_pfa_body: cmsGet(cms, "about_academy_body", "Over 5,000 designers trained. The school behind the brand."),
               home_pfa_button_label: cmsGet(cms, "about_academy_cta_label", "Explore PFA →"),
-              home_pfa_button_link: cmsGet(cms, "about_academy_cta_link", "/about#academy"),
+              home_pfa_button_link: cmsGet(cms, "about_academy_cta_link", "https://pfacademy.ng"),
             }}
           />
         </section>

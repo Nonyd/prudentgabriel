@@ -58,6 +58,8 @@ function run() {
   assert(journey.includes("glass-2"), "atelier journey panel is glass-2");
   assert(quote.includes("glass-2"), "quote sits on glass-2");
   assert(pfa.includes("glass-2"), "academy banner is glass-2 not a wine drench");
+  assert(pfa.includes("rounded-full"), "academy CTA is a pill");
+  assert(pfa.includes("https://pfacademy.ng"), "academy CTA opens the PFA site");
   assert(blog.includes("glass-2"), "journal teasers are glass-2 frames");
   assert(footer.includes("glass-1"), "footer is glass-1 chrome");
   assert(!footer.includes("#1A0F08"), "footer is not a solid choc slab");

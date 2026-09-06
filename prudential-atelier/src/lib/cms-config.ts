@@ -154,7 +154,7 @@ export const CMS_PAGES: CmsPageDef[] = [
             default: "Pattern-cutting, beading and bridal couture — taught in the Lagos atelier.",
           },
           { key: "home_pfa_button_label", label: "Button label", type: "text", default: "DISCOVER PFA →" },
-          { key: "home_pfa_button_link", label: "Button link", type: "text", default: "/about#academy" },
+          { key: "home_pfa_button_link", label: "Button link", type: "text", default: "https://pfacademy.ng" },
         ],
       },
       {
@@ -643,7 +643,7 @@ export const CMS_PAGES: CmsPageDef[] = [
             default: "Over 5,000 designers trained. The school behind the brand.",
           },
           { key: "about_academy_cta_label", label: "CTA label", type: "text", default: "Explore PFA →" },
-          { key: "about_academy_cta_link", label: "CTA link", type: "text", default: "/about#academy" },
+          { key: "about_academy_cta_link", label: "CTA link", type: "text", default: "https://pfacademy.ng" },
         ],
       },
       {

@@ -129,7 +129,7 @@ export function ShopBrowse({
         </div>
       )}
 
-      <div className={items.length === 0 ? "px-4 py-20 md:px-8 lg:px-10" : undefined}>
+      <div className={items.length === 0 ? "px-4 py-20 md:px-8 lg:px-10" : "pt-10 md:pt-14"}>
         {items.length === 0 ? (
           <div className="flex flex-col items-center text-center">
             <p className="font-serif text-lg text-choc">No pieces match your filters</p>

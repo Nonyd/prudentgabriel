@@ -12,11 +12,15 @@ export function PFACrosslinkBannerClient({ cms = {} }: { cms?: Record<string, st
     "Pattern-cutting, beading and bridal couture — taught in the Lagos atelier.",
   );
   const btnLabel = cmsGet(cms, "home_pfa_button_label", "DISCOVER PFA →");
-  const btnLink = cmsGet(cms, "home_pfa_button_link", "/about#academy");
+  const rawLink = cmsGet(cms, "home_pfa_button_link", "https://pfacademy.ng");
+  const btnLink =
+    !rawLink || rawLink === "/about#academy" || rawLink === "#academy"
+      ? "https://pfacademy.ng"
+      : rawLink;
   const external = btnLink.startsWith("http");
 
   const ctaClass =
-    "inline-flex shrink-0 items-center justify-center border border-choc px-7 py-[14px] font-sans text-[13px] font-normal text-choc transition-opacity hover:opacity-80";
+    "inline-flex shrink-0 items-center justify-center rounded-full border border-choc px-7 py-[14px] font-sans text-[13px] font-normal text-choc transition-opacity hover:opacity-80";
 
   return (
     <section className="px-6 py-14 lg:px-10">

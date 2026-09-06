@@ -223,7 +223,7 @@ export function RTWPageClient({
         </div>
       </div>
 
-      <div className="pt-8">
+      <div className="pt-10 md:pt-14">
         {isPending ? (
           <RTWGridSkeleton />
         ) : items.length === 0 ? (
