@@ -58,3 +58,27 @@ export async function waitForClientSession(options?: WaitOptions): Promise<Sessi
 export function hardNavigate(url: string): void {
   window.location.assign(url);
 }
+
+/** Sign-in screen to open after a password reset (cookie is no longer valid). */
+export function loginPathAfterPasswordReset(session: Session | null | undefined): string {
+  const role = session?.user?.role ?? "";
+  if (session?.user?.isStaff === true || role === "STAFF") return "/login?tab=staff";
+  if (hasAnyAdminPermission(role)) return "/login?tab=admin";
+  return "/auth/login";
+}
+
+/** API `{ error }` may be a string or Zod fieldErrors — never pass an object to React. */
+export function authApiErrorMessage(data: unknown, fallback = "Something went wrong"): string {
+  if (!data || typeof data !== "object") return fallback;
+  const error = (data as { error?: unknown }).error;
+  if (typeof error === "string" && error.trim()) return error;
+  if (error && typeof error === "object") {
+    const fields = error as Record<string, unknown>;
+    for (const key of ["confirmPassword", "password", "token", "email"]) {
+      const value = fields[key];
+      if (Array.isArray(value) && typeof value[0] === "string") return value[0];
+      if (typeof value === "string" && value.trim()) return value;
+    }
+  }
+  return fallback;
+}

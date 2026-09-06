@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { authOrNull } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateClientProfile, SessionUserMissingError } from "@/lib/account-helpers";
 import { AccountShell } from "@/components/account/AccountShell";
 import { enforcePublicMaintenance } from "@/lib/maintenance";
 
 export default async function AccountGroupLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
+  const session = await authOrNull();
   await enforcePublicMaintenance(session?.user?.role);
 
   if (!session?.user) {

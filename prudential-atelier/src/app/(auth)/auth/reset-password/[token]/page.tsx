@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect } from "react";
+import { signOut } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema, type ResetPasswordInput } from "@/validations/auth";
+import { authApiErrorMessage, hardNavigate } from "@/lib/client-auth";
 import { Button } from "@/components/ui/Button";
 
 export default function ResetPasswordPage() {
-  const router = useRouter();
   const params = useParams();
   const token = typeof params.token === "string" ? params.token : "";
 
@@ -29,17 +30,22 @@ export default function ResetPasswordPage() {
   }, [token, reset]);
 
   const onSubmit = async (data: ResetPasswordInput) => {
-    const res = await fetch("/api/auth/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setError("root", { message: (json as { error?: string }).error ?? "Reset failed" });
-      return;
+    try {
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError("root", { message: authApiErrorMessage(json, "Reset failed") });
+        return;
+      }
+      await signOut({ redirect: false }).catch(() => undefined);
+      hardNavigate("/auth/login");
+    } catch {
+      setError("root", { message: "Reset failed" });
     }
-    router.push("/auth/login");
   };
 
   return (

@@ -46,7 +46,7 @@ import {
   lastSuperAdminCannotBeRemoved,
 } from "../src/lib/permission-policy";
 import { KEMI_EMAIL } from "../src/lib/permission-catalog";
-import { canAccessStaffPortal } from "../src/lib/client-auth";
+import { canAccessStaffPortal, authApiErrorMessage, loginPathAfterPasswordReset } from "../src/lib/client-auth";
 import type { Session } from "next-auth";
 import {
   actorOwnsBespokeOrder,
@@ -592,6 +592,27 @@ async function main() {
   );
   assert(passwordPolicySchema.safeParse("password").success === false, "policy rejects no upper/digit");
   assert(passwordPolicySchema.safeParse("Password1").success === true, "policy accepts upper+digit");
+
+  const resetPage = routeSource("app/(auth)/auth/reset-password/[token]/page.tsx");
+  assert(resetPage.includes("hardNavigate"), "email reset uses a full page load after success");
+  assert(!resetPage.includes("router.push"), "email reset must not soft-navigate after success");
+  assert(resetPage.includes("signOut"), "email reset clears a stale session cookie");
+  const forcedReset = routeSource("components/auth/ResetPasswordClient.tsx");
+  assert(forcedReset.includes("hardNavigate"), "forced reset uses a full page load after success");
+  assert(!forcedReset.includes("await update()"), "forced reset must not refresh a revoked JWT");
+  assert(forcedReset.includes("loginPathAfterPasswordReset"), "forced reset sends the user to sign-in");
+  const adminLayout = routeSource("app/(admin)/layout.tsx");
+  assert(adminLayout.includes("authOrNull"), "admin layout must not throw on a stale session");
+  const accountLayout = routeSource("app/(account)/layout.tsx");
+  assert(accountLayout.includes("authOrNull"), "account layout must not throw on a stale session");
+  assert(
+    authApiErrorMessage({ error: { password: ["Password must contain at least one number"] } }).includes(
+      "number",
+    ),
+    "fieldErrors become a string",
+  );
+  assert(loginPathAfterPasswordReset({ user: { role: "ADMIN" } } as Session) === "/login?tab=admin", "admin reset lands on admin login");
+  assert(loginPathAfterPasswordReset(null) === "/auth/login", "unknown session lands on customer login");
 
   // B6 — register responses are identical
   const existingBody = { success: true };

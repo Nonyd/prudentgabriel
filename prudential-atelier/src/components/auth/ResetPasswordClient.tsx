@@ -1,17 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { Logo } from "@/components/ui/Logo";
-import { hasAnyAdminPermission } from "@/lib/roles";
+import { authApiErrorMessage, hardNavigate, loginPathAfterPasswordReset } from "@/lib/client-auth";
 
 export function ResetPasswordClient() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const required = searchParams.get("required") === "true";
-  const { data: session, update } = useSession();
+  const { data: session } = useSession();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -34,21 +33,14 @@ export function ResetPasswordClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password, confirmPassword }),
       });
-      const data = (await res.json()) as { error?: Record<string, string[]> | string };
+      const data: unknown = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const msg =
-          typeof data.error === "string"
-            ? data.error
-            : data.error?.confirmPassword?.[0] ?? data.error?.password?.[0] ?? "Could not update password";
-        throw new Error(msg);
+        throw new Error(authApiErrorMessage(data, "Could not update password"));
       }
-      await update();
-      toast.success("Password updated");
-      const role = session?.user?.role ?? "";
-      const isStaffUser = session?.user?.isStaff === true || role === "STAFF";
-      const destination = isStaffUser ? "/staff" : hasAnyAdminPermission(role) ? "/admin" : "/account";
-      router.push(destination);
-      router.refresh();
+      const nextLogin = loginPathAfterPasswordReset(session);
+      await signOut({ redirect: false }).catch(() => undefined);
+      toast.success("Password updated. Sign in with your new password.");
+      hardNavigate(nextLogin);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not update password");
     } finally {

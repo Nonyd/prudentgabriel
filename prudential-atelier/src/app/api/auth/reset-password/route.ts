@@ -37,30 +37,35 @@ export async function POST(req: NextRequest) {
   const hashed = await bcrypt.hash(parsed.data.password, 12);
   const token = parsed.data.token?.trim();
 
-  if (token) {
-    const tokenHash = hashResetToken(token);
-    const row = await prisma.passwordResetToken.findUnique({ where: { token: tokenHash } });
-    if (!row || row.expiresAt < new Date()) {
-      return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
+  try {
+    if (token) {
+      const tokenHash = hashResetToken(token);
+      const row = await prisma.passwordResetToken.findUnique({ where: { token: tokenHash } });
+      if (!row || row.expiresAt < new Date()) {
+        return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
+      }
+      const consumed = await prisma.passwordResetToken.deleteMany({
+        where: { id: row.id, expiresAt: { gt: new Date() } },
+      });
+      if (consumed.count !== 1) {
+        return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
+      }
+      await applyPasswordHash(row.userId, hashed);
+      return NextResponse.json({ success: true });
     }
-    const consumed = await prisma.passwordResetToken.deleteMany({
-      where: { id: row.id, expiresAt: { gt: new Date() } },
-    });
-    if (consumed.count !== 1) {
-      return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    await applyPasswordHash(row.userId, hashed);
+    if (!session.user.mustResetPassword) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await applyPasswordHash(session.user.id, hashed);
     return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("[reset-password]", err);
+    return NextResponse.json({ error: "Could not update password" }, { status: 500 });
   }
-
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (!session.user.mustResetPassword) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  await applyPasswordHash(session.user.id, hashed);
-  return NextResponse.json({ success: true });
 }

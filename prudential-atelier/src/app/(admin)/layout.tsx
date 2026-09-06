@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { authOrNull } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { BespokeStage, ConsultationStatus, OrderStatus, PaymentStatus } from "@prisma/client";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -23,7 +23,7 @@ const adminRoles = [
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
+  const session = await authOrNull();
 
   if (!session?.user) {
     redirect("/login?tab=admin");
