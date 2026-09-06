@@ -189,7 +189,7 @@ export function NotificationBell() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.15 }}
-            className="glass-1 glass-panel absolute right-0 top-full z-50 mt-2 flex w-[380px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden"
+            className="glass-opaque absolute right-0 top-full z-[80] mt-2 flex w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden"
           >
             <div className="flex items-center justify-between border-b border-sand px-4 py-3">
               <h3 className="font-sans text-sm font-semibold text-choc">Notifications</h3>
@@ -202,7 +202,7 @@ export function NotificationBell() {
               </button>
             </div>
 
-            <ul className="max-h-[480px] overflow-y-auto" data-lenis-prevent>
+            <ul className="max-h-[min(24rem,70vh)] divide-y divide-sand overflow-y-auto" data-lenis-prevent>
               {loading ? (
                 <li className="p-4 font-sans text-sm text-text-mid">Loading…</li>
               ) : notifications.length === 0 ? (
@@ -212,7 +212,7 @@ export function NotificationBell() {
                   <li key={n.id}>
                     <button
                       type="button"
-                      className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[rgba(152,117,91,0.06)] ${
+                      className={`flex w-full items-start gap-3 rounded-none px-4 py-3 text-left transition-colors hover:bg-[rgba(152,117,91,0.06)] ${
                         !n.isRead ? "border-l-[3px] border-l-nut bg-[rgba(92,52,34,0.04)]" : ""
                       }`}
                       onClick={() => void openNotification(n)}

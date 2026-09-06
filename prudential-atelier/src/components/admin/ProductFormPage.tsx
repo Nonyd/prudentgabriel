@@ -175,9 +175,9 @@ const defaultCreate = (custom?: {
 });
 
 const fieldClass =
-  "mt-2 w-full min-h-[44px] rounded-sm border border-sand bg-cream px-4 py-3 font-body text-base text-choc";
-const labelClass = "mt-6 block font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-choc/70";
-const sectionClass = "glass-opaque p-8";
+  "mt-2 w-full min-h-[44px] rounded-xl border border-sand bg-cream px-4 py-3 font-body text-base text-choc";
+const labelClass = "mt-5 block font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-choc/70";
+const sectionClass = "glass-opaque p-5 md:p-6";
 const btnPrimary =
   "inline-flex min-h-[44px] items-center justify-center rounded-full bg-choc px-5 font-sans text-xs uppercase tracking-[0.14em] text-cream hover:bg-choc/90 disabled:opacity-30";
 const btnGhost =
@@ -649,21 +649,21 @@ export function ProductFormPage({
   const show = (i: number) => !wizard || step === i;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-10">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="mx-auto max-w-4xl space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link href="/admin/products" className="font-body text-sm text-choc/60 hover:text-choc">
             ← Products
           </Link>
-          <h1 className="mt-3 font-display text-3xl text-choc">
+          <h1 className="mt-2 font-display text-3xl text-choc">
             {mode === "create" ? "Add a piece" : product?.name}
           </h1>
           {wizard ? (
-            <p className="mt-2 max-w-xl font-body text-base text-choc/70">
-              Jump to any step. A draft only needs a name. Photos first — that is the piece.
+            <p className="mt-1 max-w-xl font-body text-sm text-choc/70">
+              Photos first. A draft only needs a name.
             </p>
           ) : (
-            <p className="mt-2 font-body text-sm text-choc/60">Change one thing and save. No walkthrough.</p>
+            <p className="mt-1 font-body text-sm text-choc/60">Change one thing and save. No walkthrough.</p>
           )}
           <div className="mt-3 flex flex-wrap items-center gap-4">
             <Link href="/admin/products/guide" className="font-sans text-xs uppercase tracking-wide text-gold hover:underline">
@@ -728,7 +728,7 @@ export function ProductFormPage({
         <ProductWizardRail step={step} onStep={goToStep} snapshot={snapshot} />
       ) : null}
 
-      <form onSubmit={submit} className="space-y-8">
+      <form onSubmit={submit} className="space-y-5">
         {show(0) ? (
           <>
             <section className={sectionClass}>
@@ -739,7 +739,7 @@ export function ProductFormPage({
               <p className="mt-2 font-body text-sm text-choc/60">
                 This is the piece. At least one photo before you publish. A draft can wait.
               </p>
-              <label className="mt-6 flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-[26px] border border-dashed border-[var(--glass-edge)] bg-[var(--glass-1-solid)] px-6 py-12 font-body text-base text-choc/60 hover:border-choc/40">
+              <label className="mt-4 flex min-h-[120px] cursor-pointer flex-col items-center justify-center rounded-[26px] border border-dashed border-[var(--glass-edge)] bg-[var(--glass-1-solid)] px-6 py-8 font-body text-base text-choc/60 hover:border-choc/40">
                 <input
                   type="file"
                   accept="image/*"

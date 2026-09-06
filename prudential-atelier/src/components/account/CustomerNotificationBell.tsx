@@ -195,7 +195,7 @@ export function CustomerNotificationBell() {
                   <li key={n.id}>
                     <button
                       type="button"
-                      className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[rgba(152,117,91,0.06)] ${
+                      className={`flex w-full items-start gap-3 rounded-none px-4 py-3 text-left transition-colors hover:bg-[rgba(152,117,91,0.06)] ${
                         !n.isRead ? "border-l-[3px] border-l-nut bg-[rgba(92,52,34,0.04)]" : ""
                       }`}
                       onClick={() => void openNotification(n)}

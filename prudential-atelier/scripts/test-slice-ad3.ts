@@ -61,14 +61,15 @@ function run() {
   assert(topbar.includes("glass-1"), "topbar is glass-1");
   assert(topbar.includes("input-field"), "search stays a solid field");
   assert(topbar.includes("ThemeToggle"), "admin dark toggle is on the topbar");
-  assert(src("src/components/admin/NotificationBell.tsx").includes("glass-1"), "bell tray is glass-1");
+  assert(src("src/components/admin/NotificationBell.tsx").includes("glass-opaque"), "bell tray is solid so page text does not show through");
+  assert(src("src/components/admin/NotificationBell.tsx").includes("rounded-none"), "notification rows are a list, not pills");
 
   assert(kpi.includes("glass-1"), "dashboard summary cards are glass-1");
   assert(src("src/components/admin/ExecutiveRevenueChart.tsx").includes("card-surface"), "charts stay solid panels");
   assert(src("src/components/admin/OutOfStockPanel.tsx").includes("card-surface"), "out-of-stock widget stays solid");
 
-  assert(rail.includes("glass-1"), "wizard step rail is glass-1");
-  assert(form.includes('const sectionClass = "glass-opaque p-8"'), "wizard step content is a solid panel");
+  assert(rail.includes("glass-opaque"), "wizard step rail is a solid panel");
+  assert(form.includes('const sectionClass = "glass-opaque p-5 md:p-6"'), "wizard step content is a solid panel");
   assert(form.includes("bg-[var(--glass-1-solid)]"), "photo drop zone is solid");
 
   assert(alert.includes("glass-3"), "confirm dialogs are glass-3");
