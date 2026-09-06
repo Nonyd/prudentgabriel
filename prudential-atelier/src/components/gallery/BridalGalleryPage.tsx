@@ -13,7 +13,6 @@ export function BridalGalleryPage({
   heroHeadline = "Bridal.",
   heroSubtext = "Every bride is a masterpiece. Every gown, a legacy.",
   pageDescription,
-  galleryLabel: _galleryLabel = "PRUDENTIAL BRIDE",
 }: {
   initialImages: GalleryImage[];
   initialTotal: number;

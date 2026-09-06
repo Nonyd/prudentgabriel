@@ -5,7 +5,6 @@ import { useState } from "react";
 
 export function TrackSearchForm({
   notFound,
-  eyebrow = "ORDER TRACKING",
   title = "Follow your commission",
   subtitle = "No login required — just your order reference.",
 }: {

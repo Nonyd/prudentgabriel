@@ -65,7 +65,7 @@ const HERO_STRIP_IMAGES = [
   "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80",
 ];
 
-function Eyebrow({ children: _children }: { children: React.ReactNode }) {
+function Eyebrow(_props: { children: React.ReactNode }) {
   return null;
 }
 

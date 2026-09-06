@@ -9,7 +9,7 @@ import { useInView } from "react-intersection-observer";
 import { cn } from "@/lib/utils";
 import { ProductCardGrid } from "@/components/common/ProductCardGrid";
 import type { ProductListItem } from "@/types/product";
-import { SHOP_HERO_EYEBROW, SHOP_HERO_SUBTITLE, SHOP_HERO_TITLE, SHOP_LISTING } from "@/lib/rtw-aisle";
+import { SHOP_HERO_SUBTITLE, SHOP_HERO_TITLE, SHOP_LISTING } from "@/lib/rtw-aisle";
 
 interface ShopBrowseProps {
   products: ProductListItem[];
@@ -37,7 +37,6 @@ export function ShopBrowse({
   total,
   page: initialPage,
   hasNext: initialHasNext,
-  heroEyebrow: _heroEyebrow = SHOP_HERO_EYEBROW,
   heroHeadline = SHOP_HERO_TITLE,
   heroSubtext = SHOP_HERO_SUBTITLE,
   hideFilters = false,

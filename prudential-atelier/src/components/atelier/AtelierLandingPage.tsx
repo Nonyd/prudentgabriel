@@ -42,8 +42,6 @@ export function AtelierLandingPage({
     "atelier_process_subtext",
     "From consultation to delivery — every step documented and shared with you.",
   );
-  const _galleryLabel = cmsGet(cms, "atelier_gallery_label", "Past Work");
-  void _galleryLabel;
   const galleryHeadline = cmsGet(cms, "atelier_gallery_headline", "From our atelier");
   const ctaHeadline = cmsGet(cms, "atelier_cta_headline", "Ready to begin?");
   const ctaButton = cmsGet(cms, "atelier_cta_button_label", "Book your consultation");
