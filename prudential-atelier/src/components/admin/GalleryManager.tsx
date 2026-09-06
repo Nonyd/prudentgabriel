@@ -314,7 +314,7 @@ export function GalleryManager() {
               </AlertDialog.Trigger>
               <AlertDialog.Portal>
                 <AlertDialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
-                <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 border border-sand bg-canvas p-6 shadow-lg">
+                <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 glass-3 glass-panel p-6">
                   <AlertDialog.Title className="font-body text-sm font-medium">
                     Delete {selectedIds.length} image{selectedIds.length === 1 ? "" : "s"}?
                   </AlertDialog.Title>
@@ -442,7 +442,7 @@ export function GalleryManager() {
                     </AlertDialog.Trigger>
                     <AlertDialog.Portal>
                       <AlertDialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
-                      <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 border border-sand bg-canvas p-6 shadow-lg">
+                      <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 glass-3 glass-panel p-6">
                         <AlertDialog.Title className="font-body text-sm font-medium">Delete image?</AlertDialog.Title>
                         <div className="mt-6 flex justify-end gap-2">
                           <AlertDialog.Cancel asChild>
@@ -499,7 +499,7 @@ export function GalleryManager() {
       >
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] max-h-[min(90vh,640px)] w-[min(90vw,520px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-sand bg-canvas p-6 shadow-lg">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] max-h-[min(90vh,640px)] w-[min(90vw,520px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto glass-3 glass-panel p-6">
             <Dialog.Title className="font-display text-xl text-ink">Upload images</Dialog.Title>
             <p className="mt-2 font-body text-xs text-[#6B6B68]">
               Uploading to: {tab === "ATELIER" ? "Atelier" : tab === "BRIDAL" ? "Bridal" : "Kids"}
@@ -582,7 +582,7 @@ export function GalleryManager() {
       <Dialog.Root open={Boolean(editing)} onOpenChange={(o) => !o && setEditing(null)}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
-          <Dialog.Content className="fixed right-0 top-0 z-[101] flex h-full w-[min(100vw,380px)] flex-col border-l border-sand bg-canvas p-6 shadow-lg">
+          <Dialog.Content className="fixed right-0 top-0 z-[101] flex h-full w-[min(100vw,380px)] flex-col border-l border-[var(--glass-edge)] glass-3 p-6">
             <Dialog.Title className="font-display text-lg">Edit image</Dialog.Title>
             <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Alt</label>
             <input

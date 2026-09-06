@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import type { Session } from "next-auth";
 import { AdminImpersonateBanner } from "./AdminImpersonateBanner";
 import { AdminMaintenanceBanner } from "./AdminMaintenanceBanner";
@@ -38,8 +38,13 @@ export function AdminShell({
   const [mobileNav, setMobileNav] = useState(false);
   const navRole = accessRole ?? session.user?.role ?? "ADMIN";
 
+  useEffect(() => {
+    document.documentElement.setAttribute("data-admin-chrome", "");
+    return () => document.documentElement.removeAttribute("data-admin-chrome");
+  }, []);
+
   return (
-    <div className="admin-area relative flex h-screen overflow-hidden bg-bg-page print:h-auto print:overflow-visible">
+    <div className="admin-area relative flex h-screen overflow-hidden bg-transparent print:h-auto print:overflow-visible">
       <div className="admin-field" aria-hidden="true" />
       {mobileNav ? (
         <button
@@ -72,7 +77,7 @@ export function AdminShell({
         <AdminPreviewBanner previewRole={previewRole} />
         <AdminMaintenanceBanner isMaintenanceOn={isMaintenanceOn} />
         <AdminTopbar onOpenNav={() => setMobileNav(true)} />
-        <main className="admin-shell min-h-0 flex-1 overflow-y-auto bg-bg-page p-4 print:overflow-visible print:p-0 md:p-8">{children}</main>
+        <main className="admin-shell min-h-0 flex-1 overflow-y-auto bg-transparent p-4 print:overflow-visible print:p-0 md:p-8">{children}</main>
       </div>
     </div>
   );

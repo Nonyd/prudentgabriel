@@ -357,7 +357,7 @@ export function BespokeOrderDetailClient({
         ← Orders pipeline
       </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4 glass-1 glass-panel px-5 py-4">
         <div>
           <h1 className="font-display text-2xl text-ink">{order.orderRef}</h1>
           <p className="mt-1 font-sans text-sm text-text-mid">{order.clientName}</p>

@@ -14,7 +14,7 @@ export function AccessManagementClient() {
     <div className="space-y-6">
       <div>
         <p className="eyebrow">Super Admin</p>
-        <h1 className="mt-2 font-serif text-2xl font-medium text-choc">Users &amp; Roles</h1>
+        <h1 className="admin-heading-pill glass-1 glass-pill mt-2 font-serif text-2xl font-medium text-choc">Users &amp; Roles</h1>
         <p className="mt-2 font-sans text-sm font-light text-text-mid">
           Role permissions are the default. User overrides are the exception.
         </p>

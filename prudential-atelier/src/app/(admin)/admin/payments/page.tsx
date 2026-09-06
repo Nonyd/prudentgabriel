@@ -195,7 +195,7 @@ export default async function AdminPaymentsPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-ink">Payments</h1>
+      <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">Payments</h1>
       <p className="mt-2 max-w-2xl font-body text-sm text-[#6B6B68]">
         Recent checkout and fee activity. Bank transfer receipts can be approved here or on the order
         itself — open the order number to see the proof.
@@ -206,25 +206,25 @@ export default async function AdminPaymentsPage() {
       <AdminOutstandingBalances />
 
       <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-4">
-        <div className="border border-sand bg-bg-card p-4">
+        <div className="glass-opaque p-4">
           <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Total Revenue</p>
           <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(totalRevenue).toLocaleString("en-NG")}</p>
         </div>
-        <div className="border border-sand bg-bg-card p-4">
+        <div className="glass-opaque p-4">
           <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Revenue This Month</p>
           <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(monthRevenue).toLocaleString("en-NG")}</p>
         </div>
-        <div className="border border-sand bg-bg-card p-4">
+        <div className="glass-opaque p-4">
           <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Avg Order Value</p>
           <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(avgOrderValue).toLocaleString("en-NG")}</p>
         </div>
-        <div className="border border-sand bg-bg-card p-4">
+        <div className="glass-opaque p-4">
           <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Refunds Issued</p>
           <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(refundsIssued).toLocaleString("en-NG")}</p>
         </div>
       </div>
 
-      <div className="mt-5 border border-sand bg-bg-card p-4">
+      <div className="mt-5 glass-opaque p-4">
         <p className="mb-3 font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Gateway Breakdown</p>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
           {gatewaySummary.map((item) => (

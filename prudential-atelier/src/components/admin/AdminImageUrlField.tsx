@@ -100,7 +100,7 @@ export function AdminImageUrlField({
                 </Dialog.Trigger>
                 <Dialog.Portal>
                   <Dialog.Overlay className="fixed inset-0 z-[90] bg-black/50" />
-                  <Dialog.Content className="fixed left-1/2 top-1/2 z-[91] max-h-[90vh] w-[min(92vw,720px)] -translate-x-1/2 -translate-y-1/2 overflow-auto border border-sand bg-canvas p-5 shadow-lg">
+                  <Dialog.Content className="fixed left-1/2 top-1/2 z-[91] max-h-[90vh] w-[min(92vw,720px)] -translate-x-1/2 -translate-y-1/2 overflow-auto glass-3 glass-panel p-5">
                     <Dialog.Title className="font-body text-sm font-medium text-charcoal">Preview</Dialog.Title>
                     <div className="relative mx-auto mt-4 flex min-h-[200px] max-h-[70vh] w-full items-center justify-center bg-[#F5F5F3] p-2">
                       {canPreview && !broken ? (

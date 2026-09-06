@@ -17,7 +17,7 @@ type Props = {
 
 export function ProductWizardRail({ step, onStep, snapshot }: Props) {
   return (
-    <nav aria-label="Product steps" className="border-b border-sand pb-6">
+    <nav aria-label="Product steps" className="glass-1 glass-panel p-4">
       <ol className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {PRODUCT_WIZARD_STEPS.map((s, i) => {
           const done = wizardStepComplete(i, snapshot);

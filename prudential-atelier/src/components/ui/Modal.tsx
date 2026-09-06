@@ -36,7 +36,7 @@ export function Modal({ open, onClose, title, description, children, className }
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className={cn("relative z-10 w-full max-w-md rounded-lg border border-sand bg-ivory p-6 shadow-xl", className)}
+        className={cn("relative z-10 w-full max-w-md glass-3 glass-panel p-6", className)}
       >
         <h2 id="modal-title" className="font-serif text-xl font-medium text-choc">
           {title}

@@ -177,7 +177,7 @@ const defaultCreate = (custom?: {
 const fieldClass =
   "mt-2 w-full min-h-[44px] rounded-sm border border-sand bg-cream px-4 py-3 font-body text-base text-choc";
 const labelClass = "mt-6 block font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-choc/70";
-const sectionClass = "rounded-sm border border-sand bg-cream p-8";
+const sectionClass = "glass-opaque p-8";
 const btnPrimary =
   "inline-flex min-h-[44px] items-center justify-center rounded-sm bg-choc px-5 font-sans text-xs uppercase tracking-[0.14em] text-cream hover:bg-choc/90 disabled:opacity-30";
 const btnGhost =
@@ -739,7 +739,7 @@ export function ProductFormPage({
               <p className="mt-2 font-body text-sm text-choc/60">
                 This is the piece. At least one photo before you publish. A draft can wait.
               </p>
-              <label className="mt-6 flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-sm border border-dashed border-sand px-6 py-12 font-body text-base text-choc/60 hover:border-choc/40">
+              <label className="mt-6 flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-[26px] border border-dashed border-[var(--glass-edge)] bg-[var(--glass-1-solid)] px-6 py-12 font-body text-base text-choc/60 hover:border-choc/40">
                 <input
                   type="file"
                   accept="image/*"

@@ -177,7 +177,7 @@ function SettingCardLink({
   return (
     <Link
       href={card.href}
-      className="group flex rounded-lg border border-sand bg-ivory p-6 transition-colors hover:bg-bg/60"
+        className="group flex rounded-[26px] glass-1 glass-panel p-6 transition-colors hover:border-[var(--glass-edge-bright)]"
     >
       <div className="flex min-w-0 flex-1 gap-4">
         <Icon className="h-8 w-8 shrink-0 text-[#37392d]" strokeWidth={1.25} aria-hidden />

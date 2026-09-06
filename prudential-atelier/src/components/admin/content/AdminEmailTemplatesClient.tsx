@@ -135,7 +135,7 @@ export function AdminEmailTemplatesClient({ templates, adminEmail }: Props) {
         })}
       </aside>
 
-      <div className="min-w-0 flex-1 rounded-sm border border-sand bg-[#FAFAFA] p-6">
+      <div className="min-w-0 flex-1 glass-opaque p-6">
         {selected ? (
           <>
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sand pb-4">

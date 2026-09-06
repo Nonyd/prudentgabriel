@@ -35,14 +35,14 @@ export function AdminImpersonateBanner({ impersonation }: { impersonation?: Impe
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 bg-[#7A1F2B] px-4 py-3 text-white print:hidden md:px-8">
+    <div className="glass-3 glass-pill mx-4 mt-2 flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-text-primary print:hidden md:mx-8">
       <p className="font-sans text-sm font-medium">
         Viewing as {impersonation.targetName}. Read-only. {remainingLabel(impersonation.exp, now)}.
       </p>
       <button
         type="button"
         onClick={() => void exitView()}
-        className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] underline underline-offset-2 hover:text-white/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] underline underline-offset-2 hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc"
       >
         Exit
       </button>

@@ -55,7 +55,7 @@ export function LedgerReportClient() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl text-choc">Accounts</h1>
+        <h1 className="admin-heading-pill glass-1 glass-pill font-display text-3xl text-choc">Accounts</h1>
         <p className="mt-1 font-sans text-sm text-[#6B6B68]">
           Every confirmed ledger row.{" "}
           <Link href="/admin/reports" className="text-choc underline">
@@ -116,15 +116,15 @@ export function LedgerReportClient() {
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="border border-sand p-4">
+            <div className="glass-opaque p-4">
               <p className="font-sans text-[10px] uppercase tracking-wider text-[#6B6B68]">Ready-to-wear cash</p>
               <p className="mt-1 font-display text-xl">{naira(data.rtw.cashNGN)}</p>
             </div>
-            <div className="border border-sand p-4">
+            <div className="glass-opaque p-4">
               <p className="font-sans text-[10px] uppercase tracking-wider text-[#6B6B68]">Atelier cash</p>
               <p className="mt-1 font-display text-xl">{naira(data.atelier.cashNGN)}</p>
             </div>
-            <div className="border border-sand p-4">
+            <div className="glass-opaque p-4">
               <p className="font-sans text-[10px] uppercase tracking-wider text-[#6B6B68]">Together</p>
               <p className="mt-1 font-display text-xl">{naira(data.combined.cashNGN)}</p>
             </div>
@@ -153,7 +153,7 @@ export function LedgerReportClient() {
               </Link>
             </p>
           ) : null}
-          <div className="overflow-x-auto border border-sand">
+          <div className="overflow-x-auto glass-opaque">
             <table className="min-w-[1100px] w-full text-left text-sm">
               <thead className="bg-ivory font-sans text-[10px] uppercase tracking-wider text-[#6B6B68]">
                 <tr>

@@ -250,7 +250,7 @@ export function AdminPendingBankTransfers() {
           role="dialog"
           aria-modal
         >
-          <div className="relative max-h-[90vh] max-w-4xl" onClick={(e) => e.stopPropagation()}>
+          <div className="relative max-h-[90vh] max-w-4xl glass-opaque p-3" onClick={(e) => e.stopPropagation()}>
             <Image
               src={lightbox}
               alt="Payment receipt"
@@ -272,7 +272,7 @@ export function AdminPendingBankTransfers() {
 
       {rejectId ? (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md bg-bg-card p-6">
+          <div className="w-full max-w-md glass-3 glass-panel p-6">
             <p className="font-display text-lg text-ink">Reject payment</p>
             <textarea
               value={rejectReason}

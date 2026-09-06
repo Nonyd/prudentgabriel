@@ -198,7 +198,7 @@ export function AdminBankTransferProof({
           role="dialog"
           aria-modal
         >
-          <div className="relative max-h-[90vh] max-w-4xl" onClick={(e) => e.stopPropagation()}>
+          <div className="relative max-h-[90vh] max-w-4xl glass-opaque p-3" onClick={(e) => e.stopPropagation()}>
             <Image
               src={proofSrc}
               alt="Payment receipt"

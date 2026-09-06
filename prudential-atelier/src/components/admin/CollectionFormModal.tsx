@@ -317,7 +317,7 @@ export function CollectionFormModal({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/50" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] flex max-h-[92vh] w-[700px] max-w-[96vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden border border-sand bg-bg-card shadow-xl">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] flex max-h-[92vh] w-[700px] max-w-[96vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden glass-3 glass-panel">
           <div className="flex shrink-0 items-center justify-between border-b border-sand px-6 py-4">
             <Dialog.Title className="font-display text-xl text-ink">
               {isEdit ? `Edit: ${editing?.name ?? ""}` : "Create collection"}

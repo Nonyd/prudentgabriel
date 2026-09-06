@@ -21,7 +21,7 @@ export function ExecutiveKPICard({
   className,
 }: ExecutiveKPICardProps) {
   return (
-    <div className={cn("card-surface min-h-[120px] p-6", className)}>
+    <div className={cn("glass-1 glass-panel min-h-[120px] p-6", className)}>
       <div className="flex items-start justify-between gap-3">
         <p className="kpi-label font-sans font-semibold uppercase text-text-light">{label}</p>
         <div className={cn("flex h-8 w-8 items-center justify-center rounded-sm", iconBg)}>

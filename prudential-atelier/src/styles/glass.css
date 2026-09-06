@@ -146,7 +146,52 @@
 }
 
 .admin-field::before {
-  opacity: 0.42;
+  /* Quieter than the storefront field. No drift. */
+  opacity: 0.22;
+}
+
+[data-theme="dark"] .admin-field::before {
+  opacity: 0.26;
+  background:
+    radial-gradient(ellipse 55% 45% at 18% 28%, rgb(68 41 19 / 0.55), transparent 62%),
+    radial-gradient(ellipse 48% 52% at 82% 18%, rgb(201 168 76 / 0.12), transparent 58%),
+    radial-gradient(ellipse 58% 42% at 68% 82%, rgb(26 15 8 / 0.55), transparent 60%),
+    radial-gradient(ellipse 40% 38% at 8% 78%, rgb(68 41 19 / 0.4), transparent 55%);
+}
+
+.admin-heading-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.35rem 1.1rem;
+}
+
+.admin-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.3rem 0.95rem;
+}
+
+.admin-area .card-surface {
+  background: var(--glass-1-solid);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--glass-radius-panel);
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
+}
+
+.admin-area .overflow-x-auto.border {
+  background: var(--glass-1-solid);
+  border-color: var(--glass-edge);
+  border-radius: var(--glass-radius-panel);
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
+}
+
+html[data-admin-opaque-chrome] .admin-sidebar,
+html[data-admin-opaque-chrome] .admin-topbar {
+  background: var(--glass-1-solid);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 @keyframes field-drift {

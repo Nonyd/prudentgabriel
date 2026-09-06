@@ -11,7 +11,7 @@ export function AdminPreviewBanner({ previewRole }: { previewRole?: string | nul
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-nut/30 bg-[#FFF8F0] px-4 py-2.5 print:hidden md:px-8">
+    <div className="glass-3 glass-pill mx-4 mt-2 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 print:hidden md:mx-8">
       <p className="font-sans text-sm text-text-dark">
         Viewing the dashboard as <span className="font-medium">{roleLabel(previewRole)}</span>.
         Saves are still yours.

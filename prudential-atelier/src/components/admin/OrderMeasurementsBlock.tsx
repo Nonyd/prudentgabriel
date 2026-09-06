@@ -8,7 +8,7 @@ export function OrderMeasurementsBlock({
   const custom = items.filter((i) => i.sizeMode === "CUSTOM");
   if (!custom.length) return null;
   return (
-    <section className="rounded-sm border-2 border-choc bg-ivory p-6 print:break-inside-avoid">
+    <section className="glass-opaque p-6 print:break-inside-avoid">
       <h2 className="font-display text-xl text-choc">Workroom measurements</h2>
       <p className="mt-1 text-sm text-charcoal-mid">Cut from these figures. Canonical unit is centimetres.</p>
       <ul className="mt-4 space-y-4">

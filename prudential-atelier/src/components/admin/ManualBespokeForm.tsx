@@ -167,7 +167,7 @@ export function ManualBespokeForm() {
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[120] bg-black/40" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-[121] max-h-[92vh] w-[min(96vw,640px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-sand bg-canvas p-6 shadow-lg">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-[121] max-h-[92vh] w-[min(96vw,640px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto glass-3 glass-panel p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <Dialog.Title className="font-display text-[22px] text-ink">Add manual bespoke request</Dialog.Title>

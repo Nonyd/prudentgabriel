@@ -50,7 +50,7 @@ function Three({
     </div>
   );
   return (
-    <div className="border border-sand bg-white p-5">
+    <div className="glass-opaque p-5">
       <h2 className="font-display text-lg text-choc">{title}</h2>
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
         {cell("Sales value", now.salesNGN, prev?.salesNGN ?? null)}
@@ -88,7 +88,7 @@ export function HowWeAreDoingClient() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl text-choc">How we are doing</h1>
+        <h1 className="admin-heading-pill glass-1 glass-pill font-display text-3xl text-choc">How we are doing</h1>
         <p className="mt-1 font-sans text-sm text-[#6B6B68]">
           Ready-to-wear and Atelier, side by side. Detail lives in{" "}
           <Link href="/admin/reports/ledger" className="text-choc underline">
@@ -104,8 +104,8 @@ export function HowWeAreDoingClient() {
             key={k.id}
             type="button"
             onClick={() => setKind(k.id)}
-            className={`min-h-[44px] px-4 font-sans text-xs uppercase tracking-wider ${
-              kind === k.id ? "bg-nut text-cream" : "border border-sand text-[#6B6B68]"
+            className={`admin-chip glass-1 glass-pill min-h-[44px] font-sans text-xs uppercase tracking-wider ${
+              kind === k.id ? "border-[var(--glass-edge-bright)] text-choc" : "text-[#6B6B68]"
             }`}
           >
             {k.label}
@@ -127,7 +127,7 @@ export function HowWeAreDoingClient() {
             <Three title="Ready-to-wear" now={data.current.rtw} prev={data.previous?.rtw ?? null} />
             <Three title="Atelier" now={data.current.atelier} prev={data.previous?.atelier ?? null} />
           </div>
-          <div className="border border-sand bg-white p-5">
+          <div className="glass-opaque p-5">
             <h2 className="font-display text-lg text-choc">Best-selling pieces</h2>
             {data.bestsellers.length === 0 ? (
               <p className="mt-3 font-sans text-sm text-[#6B6B68]">Nothing sold in this stretch.</p>

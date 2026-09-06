@@ -25,7 +25,7 @@ export default async function AdminCollectionsPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-ink">Collections</h1>
+      <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">Collections</h1>
       <CollectionsClient collections={collections} />
     </div>
   );

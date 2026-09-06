@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Download, ExternalLink, Menu, Search } from "lucide-react";
 import Link from "next/link";
 import { NotificationBell } from "@/components/admin/NotificationBell";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 function formatExecutiveDate(d: Date): string {
   return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
@@ -15,7 +16,7 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
   const now = new Date();
 
   return (
-    <header className="flex h-auto min-h-14 shrink-0 items-center justify-between border-b border-sand bg-ivory px-4 py-3 print:hidden md:px-8">
+    <header className="admin-topbar glass-1 flex h-auto min-h-14 shrink-0 items-center justify-between px-4 py-3 print:hidden md:px-8">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
@@ -50,6 +51,7 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
           />
         </label>
         <NotificationBell />
+        <ThemeToggle className="p-2 transition-colors hover:text-choc" />
         <a
           href="/"
           target="_blank"

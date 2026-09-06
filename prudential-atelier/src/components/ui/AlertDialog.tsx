@@ -34,7 +34,7 @@ export function AlertDialog({
         <AlertDialogPrimitive.Content
           data-lenis-prevent
           className={cn(
-            "fixed left-1/2 top-1/2 z-[101] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain rounded-sm border border-border bg-[var(--white)] p-6 shadow-xl",
+            "fixed left-1/2 top-1/2 z-[101] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain glass-3 glass-panel p-6",
           )}
         >
           <AlertDialogPrimitive.Title

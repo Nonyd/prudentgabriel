@@ -322,7 +322,7 @@ export function AdminConsultationDetail({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-4 rounded-sm border border-sand bg-[#FAFAFA] p-5">
+        <div className="space-y-4 glass-opaque p-5">
           <h3 className="font-label text-gold">Client</h3>
           <p className="font-medium text-ink">{booking.clientName}</p>
           <a href={`mailto:${booking.clientEmail}`} className="text-sm text-olive underline">
@@ -341,7 +341,7 @@ export function AdminConsultationDetail({
           </div>
         </div>
 
-        <div className="space-y-4 rounded-sm border border-sand bg-[#FAFAFA] p-5">
+        <div className="space-y-4 glass-opaque p-5">
           <h3 className="font-label text-gold">Session details</h3>
           <p className="text-sm text-ink">
             {typeIcon} {typeLabel}
@@ -387,7 +387,7 @@ export function AdminConsultationDetail({
       </div>
 
       {isVirtual ? (
-        <div className="rounded-sm border border-sand bg-[#FAFAFA] p-5">
+        <div className="glass-opaque p-5">
           <h3 className="font-label text-gold">Virtual meeting link</h3>
           {booking.meetingLinkSentAt ? (
             <div className="mt-3 space-y-2">
@@ -420,7 +420,7 @@ export function AdminConsultationDetail({
         </div>
       ) : null}
 
-      <div className="rounded-sm border border-sand bg-[#FAFAFA] p-5">
+      <div className="glass-opaque p-5">
         <h3 className="font-label text-gold">Session notes & moodboard</h3>
         {!canEditSession ? (
           <p className="mt-3 text-sm text-[#6B6B68]">Complete after the consultation session.</p>
@@ -496,7 +496,7 @@ export function AdminConsultationDetail({
         )}
       </div>
 
-      <div className="rounded-sm border border-sand bg-[#FAFAFA] p-5">
+      <div className="glass-opaque p-5">
         <h3 className="font-label text-gold">Internal notes (admin only)</h3>
         <textarea
           value={adminNotes}
@@ -515,7 +515,7 @@ export function AdminConsultationDetail({
 
       <ClientMeasurementsPanel clientId={clientId} clientName={booking.clientName} initial={measurements} />
 
-      <div className="rounded-sm border border-sand bg-[#FAFAFA] p-5">
+      <div className="glass-opaque p-5">
         <h3 className="font-label text-gold">Actions</h3>
         <div className="mt-4">
           {status === ConsultationStatus.COMPLETED && !quotation ? (
@@ -547,7 +547,7 @@ export function AdminConsultationDetail({
       {confirmOpen ? (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 p-4">
           <div
-            className="w-full max-w-md rounded-sm border border-sand bg-white p-6 shadow-xl"
+            className="w-full max-w-md glass-3 glass-panel p-6"
             role="dialog"
             aria-labelledby="confirm-consultation-title"
           >

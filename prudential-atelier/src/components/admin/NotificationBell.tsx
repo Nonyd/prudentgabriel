@@ -160,7 +160,7 @@ export function NotificationBell() {
     <div className="relative" ref={panelRef}>
       <button
         type="button"
-        className="relative p-1.5 text-text-mid transition-colors hover:text-choc"
+        className="relative min-h-11 min-w-11 p-1.5 text-text-mid transition-colors hover:text-choc"
         aria-label="Notifications"
         aria-expanded={isOpen}
         onClick={() => void toggleOpen()}
@@ -189,7 +189,7 @@ export function NotificationBell() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full z-50 mt-2 flex w-[380px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-lg border border-sand bg-ivory shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+            className="glass-1 glass-panel absolute right-0 top-full z-50 mt-2 flex w-[380px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden"
           >
             <div className="flex items-center justify-between border-b border-sand px-4 py-3">
               <h3 className="font-sans text-sm font-semibold text-choc">Notifications</h3>

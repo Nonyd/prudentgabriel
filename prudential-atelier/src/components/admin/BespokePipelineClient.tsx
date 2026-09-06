@@ -222,7 +222,7 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl text-ink">Atelier Orders Pipeline</h1>
+          <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">Atelier Orders Pipeline</h1>
           <p className="mt-1 font-sans text-sm text-text-mid">
             13-stage production tracking for couture orders
           </p>

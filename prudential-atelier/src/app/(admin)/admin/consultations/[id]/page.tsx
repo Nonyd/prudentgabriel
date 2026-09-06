@@ -109,7 +109,9 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
       <Link href="/admin/consultations" className="text-sm text-gold underline">
         ← Consultations
       </Link>
-      <h1 className="mt-4 font-display text-2xl text-gold">{booking.bookingNumber}</h1>
+      <div className="glass-1 glass-panel mt-4 px-5 py-4">
+        <h1 className="font-display text-2xl text-gold">{booking.bookingNumber}</h1>
+      </div>
       <AdminConsultationDetail
         key={payload.updatedAt}
         booking={payload}

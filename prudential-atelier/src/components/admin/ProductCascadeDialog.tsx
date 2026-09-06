@@ -45,7 +45,7 @@ export function CascadeConfirmDialog({
         <AlertDialogPrimitive.Overlay className="fixed inset-0 z-[100] bg-charcoal/60 backdrop-blur-sm" />
         <AlertDialogPrimitive.Content
           data-lenis-prevent
-          className="fixed left-1/2 top-1/2 z-[101] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain rounded-sm border border-border bg-[var(--white)] p-6 shadow-xl"
+          className="fixed left-1/2 top-1/2 z-[101] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain glass-3 glass-panel p-6"
         >
           <AlertDialogPrimitive.Title className="font-display text-[22px] text-[var(--error)]">
             {copy?.title ?? "Delete"}
@@ -69,7 +69,7 @@ export function CascadeConfirmDialog({
                 value={typed}
                 onChange={(e) => setTyped(e.target.value)}
                 autoComplete="off"
-                className="mt-1 w-full rounded-sm border border-sand px-3 py-2 font-mono text-sm tracking-wide"
+                className="mt-1 w-full rounded-sm border border-sand bg-[var(--glass-1-solid)] px-3 py-2 font-mono text-sm tracking-wide"
               />
             </label>
           ) : null}

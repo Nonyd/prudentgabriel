@@ -56,7 +56,7 @@ function LoginField({
           autoComplete={autoComplete}
           aria-invalid={error ? true : undefined}
           className={cn(
-            "w-full rounded-[3px] border-[0.5px] border-[var(--sand)] bg-input-bg px-4 py-3 font-sans text-[13px] text-text-dark outline-none transition-colors",
+            "w-full rounded-[3px] border-[0.5px] border-[var(--sand)] bg-[var(--glass-1-solid)] px-4 py-3 font-sans text-[13px] text-text-dark outline-none transition-colors",
             "focus:border-[#442913]",
             error && "border-[#8B2020]",
             isPassword && "pr-11",
@@ -204,8 +204,9 @@ export function PortalLoginClient() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-6 py-12">
-      <div className="w-[420px] max-w-full rounded-xl border-[0.5px] border-[var(--sand)] bg-[#F7F2EC] px-10 py-12 shadow-none">
+    <div className="relative flex min-h-screen items-center justify-center px-6 py-12">
+      <div className="admin-field" aria-hidden="true" />
+      <div className="glass-2 glass-panel relative z-[1] w-[420px] max-w-full px-10 py-12">
         <div className="flex flex-col items-center text-center">
           <Logo variant="dark" size="xl" themeAdaptive={false} href={undefined} />
           <div className="mx-auto my-4 h-px w-10 bg-[#C9A84C]" aria-hidden />

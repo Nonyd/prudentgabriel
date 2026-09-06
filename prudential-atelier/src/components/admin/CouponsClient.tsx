@@ -278,7 +278,7 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
                       </AlertDialog.Trigger>
                       <AlertDialog.Portal>
                         <AlertDialog.Overlay className="fixed inset-0 z-[130] bg-black/40" />
-                        <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[131] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 border border-sand bg-canvas p-6 shadow-lg">
+                        <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[131] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 glass-3 glass-panel p-6">
                           <AlertDialog.Title className="font-body text-sm">Delete coupon?</AlertDialog.Title>
                           <div className="mt-6 flex justify-end gap-2">
                             <AlertDialog.Cancel asChild>

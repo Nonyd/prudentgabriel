@@ -552,64 +552,18 @@ body {
   }
 }
 
-/* Admin stays a daylight workbench. Storefront `data-theme="dark"` inverts
-   --choc/--cream/--ink, so typed text in cream/white fields disappears. */
+/* Admin follows html[data-theme]. Dark glass is AD0 choc-deep + .14 edge,
+   not an invert of the light fills. Inputs stay solid so naira stays readable. */
 .admin-area {
   color-scheme: light;
-  --bg-page: #f7f2ec;
-  --bg-surface: #f0e8dd;
-  --bg-card: #ffffff;
-  --choc: #442913;
-  --chocolate: #442913;
-  --nut: #5c3422;
-  --lightbr: #7a5a42;
-  --cream: #e2d1c2;
-  --sand: #d4bbac;
-  --ivory: #f7f2ec;
-  --text-primary: #2a1a0e;
-  --text-mid: #5c3d28;
-  --text-light: #6b4c35;
-  --border-color: rgba(212, 187, 172, 0.75);
-  --input-bg: #ffffff;
-  --input-border: #c4a994;
-  --hero-bg: #442913;
-  --sidebar-bg: #442913;
-  --ivory-dark: #ebe3d8;
-  --olive: #37392d;
-  --olive-hover: #2c2e24;
-  --olive-mid: #5a5d4a;
-  --charcoal: #2a1a0e;
-  --charcoal-mid: #4f463f;
-  --charcoal-light: #5c534c;
-  --canvas: #ffffff;
-  --ink: #2a1a0e;
-  --white: #ffffff;
-  --off-white: #f7f2ec;
-  --light-grey: #f2f2f0;
-  --mid-grey: #e8e8e4;
-  --dark-grey: #5c5c56;
-  --wine: #6b1c2a;
-  --wine-hover: #2c2e24;
-  --gold: #c9a84c;
-  --gold-hover: #b8923f;
-  --error: #7a2418;
-  --success: #2f5e3d;
-  --warning: #8a5220;
-
-  /* Admin stays a daylight workbench until AD3 builds dark glass properly. */
-  --glass-edge: rgb(255 255 255 / 0.55);
-  --glass-edge-bright: rgb(255 255 255 / 0.82);
-  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.88), inset 0 -1px 0 rgb(255 255 255 / 0.14);
-  --glass-shadow: 0 24px 60px -30px rgb(68 41 19 / 0.35);
-  --glass-1-fill: rgb(255 255 255 / 0.58);
-  --glass-1-solid: #f7f2ec;
-  --glass-2-fill: rgb(255 255 255 / 0.62);
-  --glass-2-solid: #f7f2ec;
-  --glass-3-fill: rgb(255 255 255 / 0.86);
-  --glass-3-solid: #f7f2ec;
+  background: transparent;
 }
 
-.admin-shell [class*="text-gold"]:not([class~="bg-wine"]):not([class*="bg-wine/"]) {
+[data-theme="dark"] .admin-area {
+  color-scheme: dark;
+}
+
+[data-theme="light"] .admin-shell [class*="text-gold"]:not([class~="bg-wine"]):not([class*="bg-wine/"]) {
   color: #5c3422;
 }
 
@@ -622,34 +576,50 @@ body {
 .admin-area textarea,
 .admin-area select,
 .admin-area .ProseMirror {
-  color: #2a1a0e;
+  color: var(--text-primary);
   background-color: #ffffff;
-  caret-color: #2a1a0e;
+  caret-color: var(--text-primary);
+}
+
+[data-theme="dark"] .admin-area input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]),
+[data-theme="dark"] .admin-area textarea,
+[data-theme="dark"] .admin-area select,
+[data-theme="dark"] .admin-area .ProseMirror {
+  color: #f7f2ec;
+  background-color: #221408;
+  caret-color: #f7f2ec;
 }
 
 .admin-area input::placeholder,
 .admin-area textarea::placeholder {
-  color: #5c3d28;
+  color: var(--text-mid);
   opacity: 1;
 }
 
 .admin-area input:-webkit-autofill,
 .admin-area textarea:-webkit-autofill {
-  -webkit-text-fill-color: #2a1a0e;
+  -webkit-text-fill-color: var(--text-primary);
   box-shadow: 0 0 0 1000px #ffffff inset;
-  caret-color: #2a1a0e;
+  caret-color: var(--text-primary);
+}
+
+[data-theme="dark"] .admin-area input:-webkit-autofill,
+[data-theme="dark"] .admin-area textarea:-webkit-autofill {
+  -webkit-text-fill-color: #f7f2ec;
+  box-shadow: 0 0 0 1000px #221408 inset;
+  caret-color: #f7f2ec;
 }
 
 .admin-area input:focus-visible,
 .admin-area textarea:focus-visible,
 .admin-area select:focus-visible {
-  outline: 2px solid #442913;
+  outline: 2px solid var(--choc);
   outline-offset: 1px;
 }
 
 .admin-area input[type="checkbox"],
 .admin-area input[type="radio"] {
-  accent-color: #442913;
+  accent-color: var(--choc);
 }
 
 @media (prefers-reduced-motion: reduce) {

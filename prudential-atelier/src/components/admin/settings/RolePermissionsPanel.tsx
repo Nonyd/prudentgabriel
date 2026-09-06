@@ -132,8 +132,8 @@ export function RolePermissionsPanel() {
             <button
               type="button"
               onClick={() => setSelected(row.role)}
-              className={`flex w-full items-center justify-between rounded-[3px] px-3 py-2 text-left font-sans text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc ${
-                selected === row.role ? "bg-choc/10 text-choc" : "text-text-dark hover:bg-sand/40"
+              className={`flex min-h-11 w-full items-center justify-between glass-1 glass-panel px-3 py-2 text-left font-sans text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc ${
+                selected === row.role ? "border-[var(--glass-edge-bright)] text-choc" : "text-text-dark"
               }`}
             >
               <span>{row.label}</span>
@@ -203,7 +203,7 @@ export function RolePermissionsPanel() {
                 ))}
 
               {groups.map((group) => (
-                <div key={group.name}>
+                <div key={group.name} className="glass-opaque p-4">
                   <p className="mb-2 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
                     {group.name}
                   </p>

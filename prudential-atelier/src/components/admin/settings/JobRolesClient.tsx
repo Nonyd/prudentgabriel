@@ -153,7 +153,7 @@ function RoleFormModal({
           {PERMISSION_GROUPS.map((group) => (
             <div key={group.label}>
               <p className="mb-2 font-sans text-xs font-semibold text-ink">{group.label}</p>
-              <div className="space-y-2">
+            <div className="glass-opaque mt-4 space-y-2 p-4">
                 {group.items.map((item) => (
                   <label key={item.key} className="flex cursor-pointer items-start gap-2">
                     <input
@@ -263,7 +263,7 @@ export function JobRolesClient() {
           {sorted.map((role) => (
             <div
               key={role.id}
-              className="rounded-lg border border-sand bg-bg-card p-5 shadow-sm"
+              className="glass-1 glass-panel p-5"
             >
               <div className="flex items-start justify-between gap-2">
                 <h2 className="font-display text-xl text-ink">{role.name}</h2>

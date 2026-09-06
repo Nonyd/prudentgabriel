@@ -51,7 +51,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       <Link href="/admin/orders" className="text-sm text-[#A8A8A4] hover:text-gold">
         ← Orders
       </Link>
-      <div>
+      <div className="glass-1 glass-panel px-5 py-4">
         <h1 className="font-display text-3xl text-wine">{order.orderNumber}</h1>
         <p className="mt-1 text-sm text-[#A8A8A4]">
           {order.paymentStatus} · {order.status} · {order.paymentGateway ?? "—"}
@@ -127,7 +127,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
       <OrderMeasurementsBlock items={order.items} />
 
-      <div className="overflow-x-auto rounded-sm border border-sand bg-canvas p-6">
+      <div className="overflow-x-auto glass-opaque p-6">
         <table className="w-full text-left text-sm">
           <thead className="text-[#A8A8A4]">
             <tr>

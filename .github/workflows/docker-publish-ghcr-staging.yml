@@ -154,4 +154,11 @@ jobs:
               echo "App image pull attempt $attempt failed; retrying in 30s..." >&2
               sleep 30
             done
+            if [ -n "${GITHUB_TOKEN:-}" ]; then
+              curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.raw" \
+                "https://api.github.com/repos/Nonyd/prudentgabriel/contents/deploy/republish-storefront-photos.sql?ref=${GITHUB_SHA}" \
+                -o /tmp/pg-republish-storefront.sql
+              docker cp /tmp/pg-republish-storefront.sql prudentgabriel-staging-postgres:/tmp/republish.sql
+              docker exec prudentgabriel-staging-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -f /tmp/republish.sql'
+            fi
             docker compose --env-file .env.staging -f compose.staging.yaml up -d --force-recreate app

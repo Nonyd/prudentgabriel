@@ -203,7 +203,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[120] bg-black/40" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[121] max-h-[90vh] w-[min(96vw,560px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[3px] border border-sand bg-canvas p-6 shadow-lg">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-[121] max-h-[90vh] w-[min(96vw,560px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto glass-3 glass-panel p-6">
           <div className="flex items-start justify-between gap-4">
             <Dialog.Title className="font-display text-[22px] text-ink">
               {isEdit ? "Update Testimonial" : "Add Testimonial"}

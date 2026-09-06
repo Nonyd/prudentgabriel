@@ -253,13 +253,13 @@ export function AdminSidebar({
 
   return (
     <aside
-      className="flex h-screen w-[228px] shrink-0 flex-col overflow-hidden bg-sidebar-bg text-cream"
+      className="admin-sidebar glass-1 flex h-screen w-[228px] shrink-0 flex-col overflow-hidden text-text-primary"
       style={{ overscrollBehavior: "contain" }}
       aria-label="Admin navigation"
     >
-      <div className="border-b border-lightbr/20 px-5 py-6">
-        <Logo variant="white" size="sm" themeAdaptive={false} href="/admin" />
-        <p className="mt-2 font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-[rgba(152,117,91,0.5)]">
+      <div className="border-b border-[var(--glass-edge)] px-5 py-6">
+        <Logo size="sm" href="/admin" />
+        <p className="mt-2 font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-text-light">
           Atelier · Operations
         </p>
       </div>
@@ -278,7 +278,7 @@ export function AdminSidebar({
                 aria-expanded={expanded}
                 aria-controls={panelId}
                 onClick={() => toggleSection(section.id)}
-                className="admin-nav-section-label mb-1 flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-left font-sans font-semibold uppercase text-[rgba(152,117,91,0.5)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lightbr"
+                className="admin-nav-section-label mb-1 flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-left font-sans font-semibold uppercase text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc"
               >
                 <span>{section.label}</span>
                 <ChevronDown
@@ -301,16 +301,16 @@ export function AdminSidebar({
                           onClick={() => onNavigate?.()}
                           aria-current={active ? "page" : undefined}
                           className={cn(
-                            "admin-nav-item flex items-center gap-2.5 rounded-sm px-2 py-2 font-sans text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lightbr",
+                            "admin-nav-item flex items-center gap-2.5 rounded-sm px-2 py-2 font-sans text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc",
                             active
-                              ? "border-r-2 border-lightbr bg-[rgba(152,117,91,0.18)] text-cream"
-                              : "text-[rgba(226,209,194,0.65)] hover:bg-lightbr/10 hover:text-cream",
+                              ? "border-r-2 border-choc bg-transparent text-text-primary"
+                              : "text-text-mid hover:text-text-primary",
                           )}
                         >
                           <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
                           <span className="flex-1 truncate">{item.label}</span>
                           {badge ? (
-                            <span className="rounded-full bg-nut px-1.5 py-0.5 font-sans text-[9px] font-semibold text-cream">
+                            <span className="rounded-full border border-[var(--glass-edge)] px-1.5 py-0.5 font-sans text-[9px] font-semibold text-text-primary">
                               {badge}
                             </span>
                           ) : null}
@@ -325,9 +325,9 @@ export function AdminSidebar({
         })}
       </nav>
 
-      <div className="border-t border-lightbr/20 p-4">
+      <div className="border-t border-[var(--glass-edge)] p-4">
         <div className="flex items-center gap-3 px-2 py-2">
-          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-lightbr/20 font-sans text-[11px] font-medium text-cream">
+          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sand/40 font-sans text-[11px] font-medium text-text-primary">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
@@ -336,8 +336,8 @@ export function AdminSidebar({
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-sans text-[13px] text-cream">{displayName}</p>
-            <p className="mt-0.5 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-lightbr/70">
+            <p className="truncate font-sans text-[13px] text-text-primary">{displayName}</p>
+            <p className="mt-0.5 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
               {previewRole ? `As ${roleLabel(role)}` : roleLabel(realRole)}
             </p>
           </div>
@@ -346,10 +346,10 @@ export function AdminSidebar({
           href="/admin/account-settings"
           onClick={() => onNavigate?.()}
           className={cn(
-            "admin-nav-item mt-1 flex items-center gap-2 rounded-sm px-2 py-2 font-sans text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lightbr",
+            "admin-nav-item mt-1 flex items-center gap-2 rounded-sm px-2 py-2 font-sans text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc",
             pathname.startsWith("/admin/account-settings")
-              ? "border-r-2 border-lightbr bg-[rgba(152,117,91,0.18)] text-cream"
-              : "text-[rgba(226,209,194,0.65)] hover:bg-lightbr/10 hover:text-cream",
+              ? "border-r-2 border-choc bg-transparent text-text-primary"
+              : "text-text-mid hover:text-text-primary",
           )}
         >
           <UserRoundCog className="h-4 w-4 shrink-0" strokeWidth={1.5} />
@@ -358,7 +358,7 @@ export function AdminSidebar({
         <button
           type="button"
           onClick={() => void signOut({ callbackUrl: "/login?tab=admin" })}
-          className="admin-nav-item mt-2 flex w-full items-center gap-2 rounded-sm px-2 py-2 font-sans text-[13px] text-[rgba(226,209,194,0.65)] transition-colors hover:text-cream focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lightbr"
+          className="admin-nav-item mt-2 flex w-full items-center gap-2 rounded-sm px-2 py-2 font-sans text-[13px] text-text-mid transition-colors hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc"
         >
           <LogOut className="h-4 w-4" strokeWidth={1.5} />
           Sign out

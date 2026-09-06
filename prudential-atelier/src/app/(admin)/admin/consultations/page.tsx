@@ -90,26 +90,26 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-ink">Consultations</h1>
+      <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">Consultations</h1>
       <p className="mt-1 font-body text-[13px] text-[#6B6B68]">Prudential Atelier</p>
 
       <div className="mt-4 flex flex-wrap gap-2 font-body text-[11px]">
         <Link
           href="/admin/consultations"
-          className={`rounded-sm border px-3 py-1.5 uppercase tracking-[0.08em] ${
+          className={`admin-chip glass-1 glass-pill uppercase tracking-[0.08em] ${
             !awaitingQuote
-              ? "border-olive bg-olive text-white"
-              : "border-sand text-ink hover:border-olive"
+              ? "border-[var(--glass-edge-bright)] text-choc"
+              : "text-ink hover:border-[var(--glass-edge-bright)]"
           }`}
         >
           All
         </Link>
         <Link
           href="/admin/consultations?awaitingQuote=1"
-          className={`rounded-sm border px-3 py-1.5 uppercase tracking-[0.08em] ${
+          className={`admin-chip glass-1 glass-pill uppercase tracking-[0.08em] ${
             awaitingQuote
-              ? "border-olive bg-olive text-white"
-              : "border-sand text-ink hover:border-olive"
+              ? "border-[var(--glass-edge-bright)] text-choc"
+              : "text-ink hover:border-[var(--glass-edge-bright)]"
           }`}
         >
           Awaiting quote{awaitingQuoteCount > 0 ? ` (${awaitingQuoteCount})` : ""}

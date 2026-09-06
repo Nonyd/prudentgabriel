@@ -63,7 +63,7 @@ export function ShippingQuotePanel({
     preferredContact === "WHATSAPP" ? "WhatsApp" : preferredContact === "CALL" ? "Phone call" : preferredContact === "EMAIL" ? "Email" : null;
 
   return (
-    <div className="rounded-sm border border-sand bg-canvas p-6">
+    <div className="glass-opaque p-6">
       <p className="font-label text-xs uppercase text-[#A8A8A4]">Shipping quote</p>
       {packed ? (
         <p className="mt-1 font-body text-sm text-ink">

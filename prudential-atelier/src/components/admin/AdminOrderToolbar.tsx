@@ -181,13 +181,13 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
   const outstanding = (order.balance ?? 0) > 0.01;
 
   return (
-    <div className="rounded-sm border border-sand bg-canvas p-6">
+    <div className="glass-opaque p-6">
       <Dialog.Root open={refundOpen} onOpenChange={setRefundOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm" />
           <Dialog.Content
             data-lenis-prevent
-            className="fixed left-1/2 top-1/2 z-[101] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain rounded-sm border border-sand bg-canvas p-6 text-charcoal shadow-xl"
+            className="fixed left-1/2 top-1/2 z-[101] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain glass-3 glass-panel p-6 text-charcoal"
           >
             <div className="flex items-start justify-between gap-4">
               <Dialog.Title className="font-display text-xl text-ink">Issue Refund — #{order.orderNumber}</Dialog.Title>
@@ -275,7 +275,7 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm" />
           <Dialog.Content
             data-lenis-prevent
-            className="fixed left-1/2 top-1/2 z-[101] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain rounded-sm border border-sand bg-canvas p-6 text-charcoal shadow-xl"
+            className="fixed left-1/2 top-1/2 z-[101] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain glass-3 glass-panel p-6 text-charcoal"
           >
             <div className="flex items-start justify-between gap-4">
               <Dialog.Title className="font-display text-xl text-ink">Cancel #{order.orderNumber}?</Dialog.Title>

@@ -89,7 +89,7 @@ export function ShippingZoneModal({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/20" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[560px] max-w-[95vw] -translate-x-1/2 -translate-y-1/2 border border-sand bg-bg-card p-0">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[560px] max-w-[95vw] -translate-x-1/2 -translate-y-1/2 glass-3 glass-panel p-0">
           <div className="border-b border-sand px-5 py-4">
             <Dialog.Title className="font-display text-xl text-ink">{zone ? "Edit Shipping Zone" : "Add Shipping Zone"}</Dialog.Title>
           </div>

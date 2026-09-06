@@ -116,7 +116,7 @@ export function ClientsListClient() {
     <div className="space-y-6">
       <div>
         <p className="eyebrow">CRM</p>
-        <h1 className="font-display text-2xl text-ink">Clients</h1>
+        <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">Clients</h1>
         <p className="mt-1 font-sans text-sm text-text-mid">
           Client profiles, measurements, and order history
         </p>
@@ -133,10 +133,10 @@ export function ClientsListClient() {
             key={f.id}
             type="button"
             onClick={() => setQuickFilter(f.id)}
-            className={`rounded border px-3 py-1.5 font-sans text-xs transition-colors ${
+            className={`admin-chip glass-1 glass-pill font-sans text-xs transition-colors ${
               quickFilter === f.id
-                ? "border-choc bg-choc text-cream"
-                : "border-sand bg-bg-card text-text-mid hover:border-choc/40"
+                ? "border-[var(--glass-edge-bright)] text-choc"
+                : "text-text-mid"
             }`}
           >
             {f.label}

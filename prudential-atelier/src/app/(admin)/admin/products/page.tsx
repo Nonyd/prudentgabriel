@@ -87,7 +87,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   return (
     <div>
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-2xl text-ink">Products</h1>
+        <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">Products</h1>
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/admin/products/guide"
