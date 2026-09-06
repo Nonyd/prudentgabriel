@@ -54,7 +54,7 @@ export function CartDrawer() {
           <motion.button
             type="button"
             aria-label="Close cart overlay"
-            className="fixed inset-0 z-50 bg-black/40"
+            className="storefront-drawer-backdrop fixed inset-0 bg-[var(--choc-deep)]/40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -65,15 +65,15 @@ export function CartDrawer() {
             role="dialog"
             aria-modal="true"
             aria-label="Your bag"
-            className="fixed bottom-0 right-0 top-0 z-50 flex h-full min-h-0 w-full max-w-[420px] flex-col border-l border-[var(--border)] bg-[var(--white)] shadow-xl"
-            initial={{ x: "100%" }}
+            className="storefront-drawer glass-1 glass-panel fixed bottom-3 right-3 top-3 flex min-h-0 w-[calc(100%-1.5rem)] max-w-[420px] flex-col"
+            initial={{ x: "110%" }}
             animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
+            exit={{ x: "110%" }}
+            transition={{ duration: 0.38, ease: [0.32, 0.72, 0, 1] }}
           >
-            <header className="flex shrink-0 items-center justify-between border-b border-[var(--border)] px-5 py-4">
-              <h2 className="font-body text-[12px] font-medium uppercase tracking-[0.12em] text-charcoal">
-                Your Bag ({totalItems})
+            <header className="flex shrink-0 items-center justify-between border-b border-[var(--glass-edge)] px-5 py-4">
+              <h2 className="font-sans text-[15px] font-normal text-[var(--text-primary)]">
+                Your bag ({totalItems})
               </h2>
               <button
                 type="button"
@@ -154,14 +154,14 @@ export function CartDrawer() {
             </div>
 
             {items.length > 0 && (
-              <footer className="shrink-0 border-t border-[var(--border)] bg-[var(--off-white)] px-5 py-5">
+              <footer className="shrink-0 border-t border-[var(--glass-edge)] px-5 py-5">
                 {points > 0 && (
-                  <div className="mb-3 inline-flex bg-cream px-3 py-1 font-body text-[10px] font-medium uppercase tracking-wide text-charcoal">
+                  <div className="mb-3 inline-flex rounded-full bg-[var(--ivory-deep)] px-3 py-1 font-sans text-[12px] font-normal text-[var(--choc-deep)]">
                     You&apos;ll earn {points} points on this order
                   </div>
                 )}
                 <div className="flex items-baseline justify-between">
-                  <span className="font-label text-xs uppercase text-charcoal-mid">Subtotal</span>
+                  <span className="font-sans text-xs text-text-mid">Subtotal</span>
                   <span className="font-display text-lg text-charcoal">{formatPrice(subtotalShopper, currency)}</span>
                 </div>
                 <p className="mt-1 text-xs text-charcoal-light">Shipping calculated at checkout</p>
@@ -180,7 +180,7 @@ export function CartDrawer() {
                   <button
                     type="button"
                     onClick={closeCart}
-                    className="font-body text-[11px] font-medium uppercase tracking-wider text-choc underline-offset-4 hover:underline"
+                    className="font-sans text-[13px] font-normal text-[var(--text-primary)] underline-offset-4 hover:underline"
                   >
                     Continue Shopping
                   </button>

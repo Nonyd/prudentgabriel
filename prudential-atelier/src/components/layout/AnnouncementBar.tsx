@@ -29,13 +29,12 @@ export function AnnouncementBar({
   const line = list[index % list.length] ?? "";
 
   return (
-    <div className="bg-hero-bg py-2.5 text-center">
+    <div className="px-4 py-1.5 text-center">
       <p
-        className="uppercase"
+        className="font-sans text-[10px] font-normal"
         style={{
-          fontFamily: "var(--font-ui)",
-          fontSize: "10px",
-          color: "var(--cream)",
+          color: "var(--ivory-deep)",
+          textShadow: "0 1px 12px rgb(68 41 19 / 0.9)",
         }}
       >
         {line}

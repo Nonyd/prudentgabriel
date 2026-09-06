@@ -31,7 +31,7 @@ export function HeroSectionClient({
   const statLabel = cmsGet(cms, "home_hero_stat_label", "YEARS OF COUTURE");
 
   return (
-    <section className="bg-hero-bg text-cream">
+    <section className="hero-under-chrome bg-hero-bg text-cream">
       <div className="mx-auto grid min-w-0 max-w-site gap-10 px-6 py-16 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-10 lg:py-24">
         <motion.div
           initial={{ opacity: 0, y: 40 }}

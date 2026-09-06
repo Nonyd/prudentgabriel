@@ -39,7 +39,8 @@ export function AdminShell({
   const navRole = accessRole ?? session.user?.role ?? "ADMIN";
 
   return (
-    <div className="admin-area flex h-screen overflow-hidden bg-bg-page print:h-auto print:overflow-visible">
+    <div className="admin-area relative flex h-screen overflow-hidden bg-bg-page print:h-auto print:overflow-visible">
+      <div className="admin-field" aria-hidden="true" />
       {mobileNav ? (
         <button
           type="button"
@@ -49,7 +50,7 @@ export function AdminShell({
         />
       ) : null}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-[228px] shrink-0 transition-transform duration-200 print:hidden md:static md:z-0 md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-[228px] shrink-0 transition-transform duration-200 print:hidden md:static md:z-[1] md:translate-x-0 ${
           mobileNav ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
@@ -66,7 +67,7 @@ export function AdminShell({
           />
         </Suspense>
       </div>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden print:overflow-visible">
+      <div className="relative z-[1] flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden print:overflow-visible">
         <AdminImpersonateBanner impersonation={impersonation} />
         <AdminPreviewBanner previewRole={previewRole} />
         <AdminMaintenanceBanner isMaintenanceOn={isMaintenanceOn} />

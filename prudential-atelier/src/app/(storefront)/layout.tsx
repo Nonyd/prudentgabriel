@@ -36,7 +36,8 @@ export default async function StorefrontLayout({ children }: { children: React.R
   const intervalMs = ANNOUNCEMENT_SPEED_MS[speedKey] ?? 3000;
 
   return (
-    <>
+    <div className="storefront-shell" data-announcement={showAnnouncement ? "on" : "off"}>
+      <div className="storefront-field" aria-hidden="true" />
       <a href="#main-content" className="skip-link">
         Skip to content
       </a>
@@ -46,12 +47,14 @@ export default async function StorefrontLayout({ children }: { children: React.R
         announcementMessages={messages}
         announcementIntervalMs={intervalMs}
       />
-      <main id="main-content" tabIndex={-1} className="min-h-screen">
+      <main id="main-content" tabIndex={-1} className="storefront-main min-h-screen">
         {children}
       </main>
-      <Footer cms={footerCms} />
+      <div className="relative z-[1]">
+        <Footer cms={footerCms} />
+      </div>
       <CartDrawer />
       <SearchModal />
-    </>
+    </div>
   );
 }

@@ -67,6 +67,47 @@
   --font-ui: var(--font-jost), "Jost", sans-serif;
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-glass: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Physical brand (never invert). Glass dark fills and badges use these. */
+  --choc-deep: #442913;
+  --ivory-deep: #f7f2ec;
+
+  /* Slice AD — three named glass tiers. Tune here, not in components. */
+  --glass-radius-panel: 26px;
+  --glass-radius-pill: 999px;
+  --glass-edge: rgb(255 255 255 / 0.55);
+  --glass-edge-bright: rgb(255 255 255 / 0.82);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.7);
+  --glass-shadow: 0 24px 60px -30px rgb(68 41 19 / 0.35);
+  --glass-saturate: 1.5;
+
+  --glass-1-fill: rgb(255 255 255 / 0.74);
+  --glass-1-blur: 28px;
+  --glass-1-solid: var(--ivory-deep);
+
+  --glass-2-fill: rgb(255 255 255 / 0.62);
+  --glass-2-blur: 24px;
+  --glass-2-solid: var(--ivory-deep);
+
+  --glass-3-fill: rgb(255 255 255 / 0.86);
+  --glass-3-blur: 32px;
+  --glass-3-solid: var(--ivory-deep);
+
+  --z-field: 0;
+  --z-content: 1;
+  --z-nav: 50;
+  --z-drawer-backdrop: 60;
+  --z-drawer: 70;
+  --z-modal: 80;
+  --z-toast: 90;
+
+  --storefront-chrome-offset: 4.25rem;
+}
+
+[data-announcement="on"] {
+  --storefront-chrome-offset: 5.5rem;
 }
 
 [data-theme="dark"] {
@@ -119,4 +160,27 @@
   --wine-hover: var(--olive-hover);
   --gold: #d4b85c;
   --gold-hover: #c9a84c;
+
+  --glass-edge: rgb(255 255 255 / 0.14);
+  --glass-edge-bright: rgb(255 255 255 / 0.32);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.7);
+  --glass-shadow: 0 24px 60px -30px rgb(0 0 0 / 0.55);
+
+  --glass-1-fill: rgb(68 41 19 / 0.66);
+  --glass-1-solid: #221408;
+
+  --glass-2-fill: rgb(68 41 19 / 0.58);
+  --glass-2-solid: #221408;
+
+  --glass-3-fill: rgb(68 41 19 / 0.82);
+  --glass-3-solid: #1a0f08;
+}
+
+@media (max-width: 767px) {
+  :root,
+  [data-theme="dark"] {
+    --glass-1-blur: 16px;
+    --glass-2-blur: 14px;
+    --glass-3-blur: 18px;
+  }
 }

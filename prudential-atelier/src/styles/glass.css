@@ -1,0 +1,246 @@
+/*
+ * Slice AD — web frosted-glass approximation.
+ * backdrop-filter + edge + top highlight. Not Apple Liquid Glass
+ * (that material exists only on Apple platforms).
+ *
+ * Tiers: .glass-1 chrome, .glass-2 cards over imagery, .glass-3 modals.
+ * Data tables, forms, product photos, emails: do not use these classes.
+ * The gallery grid from Slices M and S stays photography-only with
+ * hairline seams. Glass goes over it (quick-add, sticky bar, dots), not as it.
+ */
+
+.glass-1,
+.glass-2,
+.glass-3 {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
+}
+
+.glass-1 {
+  background: var(--glass-1-fill);
+  backdrop-filter: blur(var(--glass-1-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-1-blur)) saturate(var(--glass-saturate));
+}
+
+.glass-2 {
+  background: var(--glass-2-fill);
+  backdrop-filter: blur(var(--glass-2-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-2-blur)) saturate(var(--glass-saturate));
+}
+
+.glass-3 {
+  background: var(--glass-3-fill);
+  backdrop-filter: blur(var(--glass-3-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-3-blur)) saturate(var(--glass-saturate));
+}
+
+.glass-pill {
+  border-radius: var(--glass-radius-pill);
+}
+
+.glass-panel {
+  border-radius: var(--glass-radius-panel);
+}
+
+/* Same family as glass, no blur — naira tables and forms stay readable. */
+.glass-opaque {
+  isolation: isolate;
+  background: var(--glass-1-solid);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--glass-radius-panel);
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .glass-lift {
+    transition:
+      transform 200ms var(--ease-glass),
+      border-color 200ms var(--ease-glass),
+      box-shadow 200ms var(--ease-glass);
+  }
+
+  .glass-lift:hover {
+    transform: translateY(-1px);
+    border-color: var(--glass-edge-bright);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-1,
+  .glass-2,
+  .glass-3 {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .glass-1 {
+    background: var(--glass-1-solid);
+  }
+
+  .glass-2 {
+    background: var(--glass-2-solid);
+  }
+
+  .glass-3 {
+    background: var(--glass-3-solid);
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-1 {
+    background: var(--glass-1-solid);
+  }
+
+  .glass-2 {
+    background: var(--glass-2-solid);
+  }
+
+  .glass-3 {
+    background: var(--glass-3-solid);
+  }
+}
+
+/*
+ * The field. Glass is invisible on a flat page, so this sits behind
+ * storefront content. Soft gradients, not a live filter:blur — that
+ * would cost a mid-range Android a full extra GPU pass.
+ * Hero video is the field on the homepage; this layer sits behind it.
+ */
+.storefront-field,
+.admin-field {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-field);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.storefront-field::before,
+.admin-field::before {
+  content: "";
+  position: absolute;
+  inset: -18%;
+  background:
+    radial-gradient(ellipse 55% 45% at 18% 28%, rgb(212 187 172 / 0.55), transparent 62%),
+    radial-gradient(ellipse 48% 52% at 82% 18%, rgb(201 168 76 / 0.28), transparent 58%),
+    radial-gradient(ellipse 58% 42% at 68% 82%, rgb(68 41 19 / 0.2), transparent 60%),
+    radial-gradient(ellipse 40% 38% at 8% 78%, rgb(226 209 194 / 0.42), transparent 55%);
+}
+
+.storefront-field::before {
+  animation: field-drift 52s var(--ease-in-out, ease-in-out) infinite;
+}
+
+.admin-field::before {
+  opacity: 0.42;
+}
+
+@keyframes field-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  40% {
+    transform: translate3d(3.5%, -2.5%, 0) scale(1.04);
+  }
+  70% {
+    transform: translate3d(-2.5%, 3%, 0) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .storefront-field::before {
+    animation: none;
+  }
+}
+
+.storefront-shell {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+}
+
+body:has(.storefront-shell) {
+  background-color: transparent;
+}
+
+.storefront-main {
+  position: relative;
+  z-index: var(--z-content);
+  padding-top: var(--storefront-chrome-offset);
+}
+
+.storefront-main:has(.hero-under-chrome) {
+  padding-top: 0;
+}
+
+.hero-under-chrome {
+  padding-top: var(--storefront-chrome-offset);
+}
+
+.storefront-nav {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: var(--z-nav);
+  pointer-events: none;
+}
+
+.storefront-nav > * {
+  pointer-events: auto;
+}
+
+.storefront-nav-inner {
+  margin-inline: auto;
+  max-width: 1400px;
+  padding: 0.35rem 1rem 0;
+}
+
+@media (min-width: 1024px) {
+  .storefront-nav-inner {
+    padding: 0.45rem 1.75rem 0;
+  }
+}
+
+.storefront-nav-pill {
+  display: flex;
+  min-height: 3.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-inline: 0.85rem;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-weight: 400;
+}
+
+@media (min-width: 1024px) {
+  .storefront-nav-pill {
+    min-height: 3.75rem;
+    padding-inline: 1.1rem;
+  }
+}
+
+.storefront-nav-link {
+  flex-shrink: 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+  transition: opacity 200ms var(--ease-glass);
+}
+
+.storefront-nav-link:hover {
+  opacity: 0.72;
+}
+
+.storefront-drawer {
+  z-index: var(--z-drawer);
+}
+
+.storefront-drawer-backdrop {
+  z-index: var(--z-drawer-backdrop);
+}

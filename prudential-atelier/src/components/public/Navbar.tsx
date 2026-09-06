@@ -27,17 +27,7 @@ const PRIMARY_LINKS = [
 
 function NavLink({ href, label }: { href: string; label: string }) {
   return (
-    <Link
-      href={href}
-      className="shrink-0 uppercase transition-colors hover:opacity-80"
-      style={{
-        fontFamily: "var(--font-ui)",
-        fontSize: "11px",
-        fontWeight: 500,
-        letterSpacing: "0.14em",
-        color: "var(--cream)",
-      }}
-    >
+    <Link href={href} className="storefront-nav-link">
       {label}
     </Link>
   );
@@ -52,17 +42,7 @@ function RtwDropdown({ collections }: { collections: CollectionNav[] }) {
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-      <Link
-        href="/rtw"
-        className="inline-flex shrink-0 items-center gap-1 uppercase transition-colors hover:opacity-80"
-        style={{
-          fontFamily: "var(--font-ui)",
-          fontSize: "11px",
-          fontWeight: 500,
-          letterSpacing: "0.14em",
-          color: "var(--cream)",
-        }}
-      >
+      <Link href="/rtw" className="storefront-nav-link inline-flex items-center gap-1">
         Ready to Wear
         <ChevronDown
           className={cn("h-3 w-3 transition-transform duration-150", open && "rotate-180")}
@@ -76,74 +56,35 @@ function RtwDropdown({ collections }: { collections: CollectionNav[] }) {
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
-            transition={{ duration: 0.15 }}
+            transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
             className="absolute left-0 top-full z-[80] min-w-[220px] pt-3"
           >
-            <div
-              className="border-b py-3 shadow-sm"
-              style={{
-                backgroundColor: "var(--bg-card)",
-                borderColor: "var(--sand)",
-              }}
-            >
-              <Link
-                href="/rtw"
-                className="block px-5 py-2 transition-colors hover:opacity-80"
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "11px",
-                  color: "var(--text-mid)",
-                }}
-              >
+            <div className="glass-2 glass-panel py-3">
+              <Link href="/rtw" className="block px-5 py-2 text-[13px] font-normal text-[var(--text-primary)] hover:opacity-70">
                 All Ready-to-Wear
               </Link>
-              <div className="my-2 border-t" style={{ borderColor: "var(--sand)" }} />
+              <div className="my-2 border-t border-[var(--glass-edge)]" />
               <Link
                 href="/collections"
-                className="block px-5 py-2 transition-colors hover:text-choc"
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "11px",
-                  color: "var(--text-mid)",
-                }}
+                className="block px-5 py-2 text-[13px] font-normal text-[var(--text-primary)] hover:opacity-70"
               >
                 All Collections
               </Link>
-              <div className="my-2 border-t" style={{ borderColor: "var(--sand)" }} />
-              <p
-                className="px-5 py-1 uppercase"
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "9px",
-                  letterSpacing: "0.18em",
-                  color: "var(--lightbr)",
-                }}
-              >
-                By edit
-              </p>
+              <div className="my-2 border-t border-[var(--glass-edge)]" />
+              <p className="px-5 py-1 text-[12px] font-normal text-text-mid">By edit</p>
               {collections.map((c) => (
                 <Link
                   key={c.slug}
                   href={`/collections/${c.slug}`}
-                  className="block px-5 py-2 transition-colors hover:text-choc"
-                  style={{
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "11px",
-                    color: "var(--text-mid)",
-                  }}
+                  className="block px-5 py-2 text-[13px] font-normal text-[var(--text-primary)] hover:opacity-70"
                 >
                   {c.name}
                 </Link>
               ))}
-              <div className="my-2 border-t" style={{ borderColor: "var(--sand)" }} />
+              <div className="my-2 border-t border-[var(--glass-edge)]" />
               <Link
                 href="/rtw?sort=newest"
-                className="block px-5 py-2 transition-colors hover:opacity-80"
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "11px",
-                  color: "var(--text-mid)",
-                }}
+                className="block px-5 py-2 text-[13px] font-normal text-[var(--text-primary)] hover:opacity-70"
               >
                 New Arrivals
               </Link>
@@ -164,32 +105,23 @@ function MobileRtwSection({
 }) {
   const [expanded, setExpanded] = useState(false);
 
-  const linkStyle = {
-    fontFamily: "var(--font-ui)",
-    fontSize: "11px",
-    fontWeight: 500,
-    letterSpacing: "0.14em",
-    color: "var(--text-mid)",
-  } as const;
-
   return (
-    <div className="border-b border-sand/60">
+    <div className="border-b border-[var(--glass-edge)]">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center justify-between py-3 uppercase"
-        style={linkStyle}
+        className="flex w-full items-center justify-between py-3 text-left text-[14px] font-normal text-[var(--text-primary)]"
       >
         Ready to Wear
         <ChevronDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} />
       </button>
       {expanded ? (
         <div className="pb-3 pl-4">
-          <Link href="/rtw" onClick={onClose} className="block py-2 text-[11px] text-text-mid">
+          <Link href="/rtw" onClick={onClose} className="block py-2 text-[13px] text-text-mid">
             All Ready-to-Wear
           </Link>
-          <p className="pt-2 text-[10px] uppercase tracking-[0.16em] text-lightbr">Collections</p>
-          <Link href="/collections" onClick={onClose} className="block py-2 pl-3 text-[11px] text-text-mid">
+          <p className="pt-2 text-[12px] text-text-mid">Collections</p>
+          <Link href="/collections" onClick={onClose} className="block py-2 pl-3 text-[13px] text-text-mid">
             All Collections
           </Link>
           {collections.map((c) => (
@@ -197,12 +129,12 @@ function MobileRtwSection({
               key={c.slug}
               href={`/collections/${c.slug}`}
               onClick={onClose}
-              className="block py-2 pl-3 text-[11px] text-text-mid"
+              className="block py-2 pl-3 text-[13px] text-text-mid"
             >
               {c.name}
             </Link>
           ))}
-          <Link href="/rtw?sort=newest" onClick={onClose} className="block py-2 text-[11px] text-text-mid">
+          <Link href="/rtw?sort=newest" onClick={onClose} className="block py-2 text-[13px] text-text-mid">
             New Arrivals
           </Link>
         </div>
@@ -213,69 +145,39 @@ function MobileRtwSection({
 
 function HeaderUtilityIcons({
   className,
-  iconColor,
-  cartBadgeBg,
-  cartBadgeFg,
   iconClassName = "h-[18px] w-[18px]",
   gapClassName = "gap-4",
   onAccountClick,
 }: {
   className?: string;
-  iconColor: string;
-  cartBadgeBg: string;
-  cartBadgeFg: string;
   iconClassName?: string;
   gapClassName?: string;
   onAccountClick: () => void;
 }) {
   const { totalItems, openCart, openSearch } = useCartStore();
-
-  const iconBtn = "transition-colors hover:opacity-80";
+  const iconBtn = "text-[var(--text-primary)] transition-opacity hover:opacity-70";
 
   return (
     <div className={cn("flex shrink-0 items-center", gapClassName, className)}>
-      <button
-        type="button"
-        onClick={openSearch}
-        className={iconBtn}
-        style={{ color: iconColor }}
-        aria-label="Search"
-      >
+      <button type="button" onClick={openSearch} className={iconBtn} aria-label="Search">
         <Search className={iconClassName} strokeWidth={1.5} />
       </button>
-      <Link
-        href="/account/wishlist"
-        className={iconBtn}
-        style={{ color: iconColor }}
-        aria-label="Wishlist"
-      >
+      <Link href="/account/wishlist" className={iconBtn} aria-label="Wishlist">
         <Heart className={iconClassName} strokeWidth={1.5} />
       </Link>
-      <button
-        type="button"
-        onClick={onAccountClick}
-        className={iconBtn}
-        style={{ color: iconColor }}
-        aria-label="Account"
-      >
+      <button type="button" onClick={onAccountClick} className={iconBtn} aria-label="Account">
         <User className={iconClassName} strokeWidth={1.5} />
       </button>
       <ThemeToggle
-        color={iconColor}
-        className="relative flex h-7 w-7 items-center justify-center transition-colors duration-200 hover:opacity-80 sm:h-8 sm:w-8"
+        color="var(--text-primary)"
+        className="relative flex h-7 w-7 items-center justify-center transition-opacity duration-200 hover:opacity-70 sm:h-8 sm:w-8"
       />
-      <button
-        type="button"
-        onClick={openCart}
-        className={cn("relative", iconBtn)}
-        style={{ color: iconColor }}
-        aria-label="Cart"
-      >
+      <button type="button" onClick={openCart} className={cn("relative", iconBtn)} aria-label="Cart">
         <ShoppingBag className={iconClassName} strokeWidth={1.5} />
         {totalItems > 0 ? (
           <span
-            className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center px-1 font-sans text-[9px] font-semibold"
-            style={{ backgroundColor: cartBadgeBg, color: cartBadgeFg }}
+            className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center px-1 font-sans text-[9px] font-medium"
+            style={{ backgroundColor: "var(--choc-deep)", color: "var(--ivory-deep)" }}
           >
             {totalItems > 9 ? "9+" : totalItems}
           </span>
@@ -316,44 +218,38 @@ export function Navbar({
 
   return (
     <>
-      {showAnnouncement ? (
-        <AnnouncementBar messages={announcementMessages} intervalMs={announcementIntervalMs} />
-      ) : null}
+      <header className="storefront-nav">
+        {showAnnouncement ? (
+          <AnnouncementBar messages={announcementMessages} intervalMs={announcementIntervalMs} />
+        ) : null}
 
-      <header className="sticky top-0 z-50">
-        <div className="overflow-hidden border-b border-sand/40 bg-ivory">
-          <div className="mx-auto flex h-14 min-w-0 max-w-site items-center justify-between gap-2 px-4 lg:h-[72px] lg:justify-center lg:px-10">
+        <div className="storefront-nav-inner">
+          <div className="glass-1 glass-pill storefront-nav-pill">
             <div className="flex min-w-0 items-center gap-2 lg:hidden">
               <button
                 type="button"
-                className="shrink-0 text-choc"
+                className="shrink-0 text-[var(--text-primary)]"
                 onClick={() => setOpen(true)}
                 aria-label="Open menu"
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <Logo variant="dark" size="sm" subBrand={subBrand} className="min-w-0 max-w-[120px] shrink sm:max-w-[140px]" />
+              <Logo
+                variant="dark"
+                size="sm"
+                subBrand={subBrand}
+                className="min-w-0 max-w-[120px] shrink sm:max-w-[140px]"
+              />
             </div>
 
             <div className="hidden min-w-0 lg:flex lg:flex-none">
-              <Logo variant="dark" size="md" subBrand={subBrand} className="shrink-0" />
+              <Logo variant="dark" size="sm" subBrand={subBrand} className="shrink-0" />
             </div>
 
-            <HeaderUtilityIcons
-              className="lg:hidden"
-              iconColor="var(--choc)"
-              cartBadgeBg="var(--choc)"
-              cartBadgeFg="var(--cream)"
-              iconClassName="h-[16px] w-[16px] sm:h-[17px] sm:w-[17px]"
-              gapClassName="gap-2 sm:gap-2.5"
-              onAccountClick={handleAccountClick}
-            />
-          </div>
-        </div>
-
-        <div className="hidden border-b border-sand/20 bg-sidebar-bg lg:block">
-          <div className="mx-auto grid h-12 max-w-site grid-cols-[minmax(0,1fr)_auto] items-center gap-4 overflow-visible px-10">
-            <nav className="flex min-w-0 items-center gap-4 overflow-visible xl:gap-6 2xl:gap-8" aria-label="Primary">
+            <nav
+              className="hidden min-w-0 items-center gap-4 overflow-visible lg:flex xl:gap-6 2xl:gap-8"
+              aria-label="Primary"
+            >
               <NavLink href={shopLink.href} label={shopLink.label} />
               <RtwDropdown collections={collections} />
               {afterRtwLinks.map((link) => (
@@ -362,18 +258,19 @@ export function Navbar({
             </nav>
 
             <HeaderUtilityIcons
-              iconColor="var(--cream)"
-              cartBadgeBg="var(--cream)"
-              cartBadgeFg="var(--sidebar-bg)"
+              className="lg:hidden"
+              iconClassName="h-[16px] w-[16px] sm:h-[17px] sm:w-[17px]"
+              gapClassName="gap-2 sm:gap-2.5"
               onAccountClick={handleAccountClick}
             />
+            <HeaderUtilityIcons className="hidden lg:flex" onAccountClick={handleAccountClick} />
           </div>
         </div>
       </header>
 
       <div
         className={cn(
-          "fixed inset-0 z-[60] bg-choc/40 transition-opacity lg:hidden",
+          "storefront-drawer-backdrop fixed inset-0 bg-[var(--choc-deep)]/40 transition-opacity lg:hidden",
           open ? "opacity-100" : "pointer-events-none opacity-0",
         )}
         onClick={() => setOpen(false)}
@@ -381,29 +278,22 @@ export function Navbar({
       />
       <aside
         className={cn(
-          "fixed right-0 top-0 z-[70] flex h-full w-[min(320px,88vw)] flex-col bg-ivory shadow-xl transition-transform duration-300 lg:hidden",
-          open ? "translate-x-0" : "translate-x-full",
+          "storefront-drawer glass-1 glass-panel fixed bottom-3 right-3 top-3 flex w-[min(320px,88vw)] flex-col transition-transform duration-300 lg:hidden",
+          open ? "translate-x-0" : "translate-x-[calc(100%+0.75rem)]",
         )}
         aria-hidden={!open}
       >
         <div className="flex items-center justify-between px-6 py-4">
           <Logo variant="dark" size="sm" subBrand={subBrand} />
           <button type="button" onClick={() => setOpen(false)} aria-label="Close menu">
-            <X className="h-5 w-5 text-choc" />
+            <X className="h-5 w-5 text-[var(--text-primary)]" />
           </button>
         </div>
-        <nav className="flex flex-1 flex-col gap-1 border-t border-sand/60 p-6" aria-label="Mobile">
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto border-t border-[var(--glass-edge)] p-6" aria-label="Mobile">
           <Link
             href={shopLink.href}
             onClick={() => setOpen(false)}
-            className="border-b border-sand/60 py-3 uppercase"
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "11px",
-              fontWeight: 500,
-              letterSpacing: "0.14em",
-              color: "var(--text-mid)",
-            }}
+            className="border-b border-[var(--glass-edge)] py-3 text-[14px] font-normal text-[var(--text-primary)]"
           >
             {shopLink.label}
           </Link>
@@ -413,14 +303,7 @@ export function Navbar({
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
-              className="border-b border-sand/60 py-3 uppercase"
-              style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: "11px",
-                fontWeight: 500,
-                letterSpacing: "0.14em",
-                color: "var(--text-mid)",
-              }}
+              className="border-b border-[var(--glass-edge)] py-3 text-[14px] font-normal text-[var(--text-primary)]"
             >
               {link.label}
             </Link>
