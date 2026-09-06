@@ -45,7 +45,7 @@ export function Testimonials() {
       <div className="relative mx-auto mt-12 max-w-3xl px-4">
         <button
           type="button"
-          className="absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 border border-olive p-2 text-olive md:block"
+          className="absolute left-0 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-olive text-olive md:flex"
           aria-label="Previous"
           onClick={() => swiperRef.current?.slidePrev()}
         >
@@ -53,7 +53,7 @@ export function Testimonials() {
         </button>
         <button
           type="button"
-          className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 border border-olive p-2 text-olive md:block"
+          className="absolute right-0 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-olive text-olive md:flex"
           aria-label="Next"
           onClick={() => swiperRef.current?.slideNext()}
         >

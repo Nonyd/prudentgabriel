@@ -28,6 +28,19 @@ function run() {
     "merch badge must stay visible at rest, not hover-only",
   );
 
+  const css = readFileSync(join(root, "src/styles/globals.css"), "utf8");
+  assert(css.includes(".product-gallery-nav"), "gallery arrows are a shared circular control");
+  assert(
+    /product-gallery-merch-badge[\s\S]*border-radius:\s*var\(--glass-radius-pill\)/.test(css),
+    "merch badge uses the pill radius",
+  );
+
+  const chrome = readFileSync(join(root, "src/components/common/quick-add/QuickAddDesktop.tsx"), "utf8");
+  assert(chrome.includes("product-gallery-nav"), "desktop arrows use the circular nav class");
+  assert(chrome.includes("glass-pill"), "desktop arrows use the pill radius from the glass system");
+  assert(!chrome.includes("h-10 w-8"), "desktop arrows are no longer a tall rectangle");
+  assert(card.includes("product.isFeatured"), "featured pieces carry Best seller on every grid, not only the homepage section");
+
   console.log("slice-n: all checks passed");
 }
 

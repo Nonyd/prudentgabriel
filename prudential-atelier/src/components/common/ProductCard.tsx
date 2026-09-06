@@ -22,7 +22,7 @@ import { useProductQuickAdd } from "@/hooks/useQuickAdd";
 import { useIsMdUp } from "@/hooks/useMediaQuery";
 import { ProductCardImageSwipe } from "@/components/common/ProductCardImageSwipe";
 import { optimizeProductCardImageUrl } from "@/lib/product-image-url";
-import { canGalleryHoverSwap, swipeableGallery } from "@/lib/product-gallery";
+import { swipeableGallery } from "@/lib/product-gallery";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import type { ProductListItem } from "@/types/product";
 import { minAmountInCurrency } from "@/lib/pricing";
@@ -42,7 +42,6 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
   const rates = useCurrencyStore((s) => s.rates);
   const [colorId, setColorId] = useState<string | null>(product.colors[0]?.id ?? null);
   const [imgError, setImgError] = useState(false);
-  const [secondaryError, setSecondaryError] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
 
   const selectedColor = useMemo(
@@ -68,14 +67,14 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
 
   const gallery = product.images.filter((im) => im.url?.trim());
   const primaryFromColor = selectedColor?.imageUrl?.trim();
-  const primary = primaryFromColor
-    ? { url: primaryFromColor, alt: product.name }
+  const showColorShot = Boolean(primaryFromColor) && galleryIndex === 0;
+  const primary = showColorShot
+    ? { url: primaryFromColor!, alt: product.name }
     : gallery[galleryIndex] ?? gallery[0];
-  const canSwap = canGalleryHoverSwap(gallery.length) && !primaryFromColor && galleryIndex === 0;
-  const secondary = canSwap && gallery[1]?.url ? gallery[1] : undefined;
   const swipeImages = primaryFromColor
     ? [{ url: primaryFromColor, alt: product.name }]
     : swipeableGallery(gallery);
+  const merchLabel = merchBadge ?? (product.isFeatured ? "Best seller" : undefined);
   const mobileSwipe = layout === "mobile" && swipeImages.length >= 2;
 
   const lowestListShopper = minAmountInCurrency(
@@ -92,7 +91,6 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
 
   const hasImage = Boolean(primary?.url?.trim()) && !imgError;
   const imgPrimary = primary?.url?.trim() ? optimizeProductCardImageUrl(primary.url) : "";
-  const imgSecondary = secondary ? optimizeProductCardImageUrl(secondary.url) : null;
   const garmentAlt = primary?.alt?.trim() || product.name;
 
   const goToProduct = () => router.push(`/shop/${product.slug}`);
@@ -183,45 +181,32 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
                 alt={garmentAlt}
                 fill
                 sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                className={cn(
-                  "object-cover object-top",
-                  secondary ? "product-gallery-crossfade [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-focus-within:opacity-0" : null,
-                )}
+                className="object-cover object-top"
                 priority={priority}
                 onError={() => setImgError(true)}
               />
             ) : (
               <ImagePlaceholder className="absolute inset-0 h-full w-full" />
             )}
-            {secondary && !secondaryError ? (
-              <Image
-                src={imgSecondary!}
-                alt=""
-                fill
-                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                className="product-gallery-crossfade absolute inset-0 object-cover object-top opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:group-focus-within:opacity-100"
-                onError={() => setSecondaryError(true)}
-              />
-            ) : null}
           </Link>
         )}
 
         <div className="product-gallery-scrim" aria-hidden />
 
         <div className="pointer-events-none absolute left-3 top-3 z-[2] flex flex-col items-start gap-1">
-          {merchBadge ? (
-            <span className="product-gallery-merch-badge px-2 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-[0.14em]">
-              {merchBadge}
+          {merchLabel ? (
+            <span className="product-gallery-merch-badge px-2.5 py-1 font-sans text-[9px] font-semibold uppercase tracking-[0.14em]">
+              {merchLabel}
             </span>
           ) : null}
           <div className="product-gallery-hover-only flex flex-col gap-1">
             {showSaleBadge ? (
-              <span className="bg-choc px-2 py-0.5 font-body text-[9px] font-medium uppercase tracking-wide text-cream">
+              <span className="product-gallery-status-badge px-2 py-0.5 font-body text-[9px] font-medium uppercase tracking-wide">
                 Sale
               </span>
             ) : null}
             {showNewBadge ? (
-              <span className="bg-choc px-2 py-0.5 font-body text-[9px] font-medium uppercase tracking-wide text-cream">
+              <span className="product-gallery-status-badge px-2 py-0.5 font-body text-[9px] font-medium uppercase tracking-wide">
                 New
               </span>
             ) : null}
@@ -323,6 +308,7 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
                   e.preventDefault();
                   e.stopPropagation();
                   setColorId(c.id);
+                  setGalleryIndex(0);
                 }}
                 className={cn(
                   "h-3.5 w-3.5 rounded-full ring-1 ring-mid-grey transition-[box-shadow,transform] duration-150 hover:scale-110 hover:ring-charcoal md:h-4 md:w-4",
