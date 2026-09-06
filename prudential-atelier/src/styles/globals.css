@@ -181,9 +181,11 @@ body {
   }
 
   .input-field {
-    @apply w-full border px-3 py-2.5 font-sans text-xs text-text-dark placeholder:text-text-light;
+    @apply w-full border px-3 py-2.5 font-sans text-xs text-text-dark placeholder:text-text-mid;
     background-color: var(--input-bg);
     border-color: var(--input-border);
+    color: var(--text-primary);
+    caret-color: var(--text-primary);
     border-radius: 3px;
   }
 
@@ -246,6 +248,8 @@ body {
 
   .admin-shell {
     font-size: 13px;
+    font-weight: 400;
+    color: var(--text-primary);
   }
 
   .staff-scroll {
@@ -531,6 +535,94 @@ body {
       --tw-ring-offset-color: transparent;
     }
   }
+}
+
+/* Admin stays a daylight workbench. Storefront `data-theme="dark"` inverts
+   --choc/--cream/--ink, so typed text in cream/white fields disappears. */
+.admin-area {
+  color-scheme: light;
+  --bg-page: #f7f2ec;
+  --bg-surface: #f0e8dd;
+  --bg-card: #ffffff;
+  --choc: #442913;
+  --chocolate: #442913;
+  --nut: #5c3422;
+  --lightbr: #7a5a42;
+  --cream: #e2d1c2;
+  --sand: #d4bbac;
+  --ivory: #f7f2ec;
+  --text-primary: #2a1a0e;
+  --text-mid: #5c3d28;
+  --text-light: #6b4c35;
+  --border-color: rgba(212, 187, 172, 0.75);
+  --input-bg: #ffffff;
+  --input-border: #c4a994;
+  --hero-bg: #442913;
+  --sidebar-bg: #442913;
+  --ivory-dark: #ebe3d8;
+  --olive: #37392d;
+  --olive-hover: #2c2e24;
+  --olive-mid: #5a5d4a;
+  --charcoal: #2a1a0e;
+  --charcoal-mid: #4f463f;
+  --charcoal-light: #5c534c;
+  --canvas: #ffffff;
+  --ink: #2a1a0e;
+  --white: #ffffff;
+  --off-white: #f7f2ec;
+  --light-grey: #f2f2f0;
+  --mid-grey: #e8e8e4;
+  --dark-grey: #5c5c56;
+  --wine: #6b1c2a;
+  --wine-hover: #2c2e24;
+  --gold: #c9a84c;
+  --gold-hover: #b8923f;
+  --error: #7a2418;
+  --success: #2f5e3d;
+  --warning: #8a5220;
+}
+
+.admin-shell [class*="text-gold"]:not([class~="bg-wine"]):not([class*="bg-wine/"]) {
+  color: #5c3422;
+}
+
+.admin-shell [class~="bg-wine"],
+.admin-shell [class*="bg-wine/"] {
+  color: #f7f2ec;
+}
+
+.admin-area input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]),
+.admin-area textarea,
+.admin-area select,
+.admin-area .ProseMirror {
+  color: #2a1a0e;
+  background-color: #ffffff;
+  caret-color: #2a1a0e;
+}
+
+.admin-area input::placeholder,
+.admin-area textarea::placeholder {
+  color: #5c3d28;
+  opacity: 1;
+}
+
+.admin-area input:-webkit-autofill,
+.admin-area textarea:-webkit-autofill {
+  -webkit-text-fill-color: #2a1a0e;
+  box-shadow: 0 0 0 1000px #ffffff inset;
+  caret-color: #2a1a0e;
+}
+
+.admin-area input:focus-visible,
+.admin-area textarea:focus-visible,
+.admin-area select:focus-visible {
+  outline: 2px solid #442913;
+  outline-offset: 1px;
+}
+
+.admin-area input[type="checkbox"],
+.admin-area input[type="radio"] {
+  accent-color: #442913;
 }
 
 @media (prefers-reduced-motion: reduce) {

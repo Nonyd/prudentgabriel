@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import { Download, ExternalLink, Menu, Search } from "lucide-react";
 import Link from "next/link";
 import { NotificationBell } from "@/components/admin/NotificationBell";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 function formatExecutiveDate(d: Date): string {
   return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
@@ -29,7 +28,7 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
         {isExecutive ? (
           <div>
             <h1 className="admin-topbar-title font-serif font-medium text-choc">Executive Dashboard</h1>
-            <p className="admin-topbar-subtitle font-sans text-text-light">
+            <p className="admin-topbar-subtitle font-sans text-text-mid">
               Your private overview · {formatExecutiveDate(now)}
             </p>
           </div>
@@ -50,7 +49,6 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
             aria-label="Search admin"
           />
         </label>
-        <ThemeToggle className="p-2 transition-colors hover:text-choc" />
         <NotificationBell />
         <a
           href="/"
