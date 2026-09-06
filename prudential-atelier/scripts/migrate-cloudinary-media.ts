@@ -13,12 +13,13 @@ import "./preload-test-env";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { PrismaClient } from "@prisma/client";
-import { getMediaStore } from "../src/lib/media";
+import { createLocalDiskMediaStore } from "../src/lib/media/local-disk";
 import { mimeFromMagicBytes, mimeFromVideoMagicBytes } from "../src/lib/image-upload-mime";
 import { classifyMediaUrl, folderFromCloudinaryUrl } from "../src/lib/media/migrate-plan";
 
 const APPLY = process.argv.includes("--apply");
 const prisma = new PrismaClient();
+const mediaStore = createLocalDiskMediaStore();
 
 type Row = {
   source: string;
@@ -162,9 +163,8 @@ function mimeOf(buf: Buffer): string {
 
 async function verifyReadable(url: string): Promise<boolean> {
   if (url.startsWith("/media/")) {
-    const store = getMediaStore();
     const key = url.replace(/^\/media\//, "");
-    const abs = store.absolutePath(key);
+    const abs = mediaStore.absolutePath(key);
     if (!abs) return false;
     try {
       const { stat } = await import("node:fs/promises");
@@ -314,7 +314,7 @@ async function copyOne(url: string): Promise<{ newUrl: string; bytes: number }> 
   if (!loc) throw new Error("could not parse Cloudinary folder");
   const buf = await download(url);
   const mime = mimeOf(buf);
-  const stored = await getMediaStore().put(buf, {
+  const stored = await mediaStore.put(buf, {
     folder: loc.folder,
     mime,
     private: loc.private,
