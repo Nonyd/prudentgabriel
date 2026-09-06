@@ -42,7 +42,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           "active:scale-[0.97]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lightbr focus-visible:ring-offset-2",
           "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100",
-          "rounded-sm",
+          "rounded-full",
           variantClasses[variant],
           sizeClasses[size],
           className,

@@ -92,6 +92,9 @@ function run() {
 
   assert(layout.includes("SmoothScroll"), "root dynamic import is SmoothScroll only");
   assert(pdp.includes("RelatedProducts"), "PDP dynamic import is RelatedProducts only");
+  assert(src("src/components/product/RelatedProducts.tsx").includes('variant="teaser"'), "You may also like uses the same rounded teaser frames as Best sellers");
+  assert(globals.includes("button:not(.rounded-none)"), "storefront and dashboard buttons share the pill radius");
+  assert(src("src/components/ui/Button.tsx").includes("rounded-full"), "shared Button is a pill, not a sharp rectangle");
   assert(!reviews.includes("next/dynamic"), "reviews are not loaded through next/dynamic");
   assert(reviews.includes("Dialog.Root"), "write-review dialog stays around the form only");
 

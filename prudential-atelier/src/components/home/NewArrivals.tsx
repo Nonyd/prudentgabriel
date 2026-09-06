@@ -28,7 +28,7 @@ export function NewArrivals({ products }: { products: ProductListItem[] }) {
         animate={inView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.5 }}
       >
-        <ProductCardGrid products={products} className="grid-cols-2 md:grid-cols-4" />
+        <ProductCardGrid products={products} variant="teaser" className="grid-cols-2 md:grid-cols-4" />
       </motion.div>
     </section>
   );

@@ -179,9 +179,9 @@ const fieldClass =
 const labelClass = "mt-6 block font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-choc/70";
 const sectionClass = "glass-opaque p-8";
 const btnPrimary =
-  "inline-flex min-h-[44px] items-center justify-center rounded-sm bg-choc px-5 font-sans text-xs uppercase tracking-[0.14em] text-cream hover:bg-choc/90 disabled:opacity-30";
+  "inline-flex min-h-[44px] items-center justify-center rounded-full bg-choc px-5 font-sans text-xs uppercase tracking-[0.14em] text-cream hover:bg-choc/90 disabled:opacity-30";
 const btnGhost =
-  "inline-flex min-h-[44px] items-center justify-center rounded-sm border border-sand px-5 font-sans text-xs uppercase tracking-[0.14em] text-choc hover:border-choc disabled:opacity-30";
+  "inline-flex min-h-[44px] items-center justify-center rounded-full border border-sand px-5 font-sans text-xs uppercase tracking-[0.14em] text-choc hover:border-choc disabled:opacity-30";
 
 export function ProductFormPage({
   product,

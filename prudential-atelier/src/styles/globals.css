@@ -133,7 +133,7 @@ body {
 @layer components {
   .btn-primary {
     @apply inline-flex items-center justify-center bg-choc px-7 py-[13px] font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-cream;
-    border-radius: var(--radius-sm);
+    border-radius: var(--glass-radius-pill);
     transition:
       background-color 0.2s ease,
       transform 0.15s ease;
@@ -141,7 +141,7 @@ body {
 
   .btn-ghost-dark {
     @apply inline-flex items-center justify-center border border-lightbr bg-transparent px-7 py-[13px] font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-cream;
-    border-radius: var(--radius-sm);
+    border-radius: var(--glass-radius-pill);
     transition:
       background-color 0.2s ease,
       transform 0.15s ease;
@@ -149,7 +149,7 @@ body {
 
   .btn-ghost-light {
     @apply inline-flex items-center justify-center border border-nut bg-transparent px-7 py-[13px] font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-nut;
-    border-radius: var(--radius-sm);
+    border-radius: var(--glass-radius-pill);
     transition:
       background-color 0.2s ease,
       color 0.2s ease,
@@ -518,6 +518,18 @@ body {
 .product-gallery-nav:focus-visible {
   outline: 2px solid var(--cream);
   outline-offset: 2px;
+}
+
+/* Buttons on storefront and dashboard share the pill radius. Inputs stay squared. */
+button:not(.rounded-none),
+input[type="button"]:not(.rounded-none),
+input[type="submit"]:not(.rounded-none),
+input[type="reset"]:not(.rounded-none),
+a.rounded-sm,
+a.btn-primary,
+a.btn-ghost-dark,
+a.btn-ghost-light {
+  border-radius: var(--glass-radius-pill);
 }
 
 @media (hover: hover) and (pointer: fine) {

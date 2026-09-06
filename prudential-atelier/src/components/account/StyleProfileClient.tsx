@@ -96,7 +96,8 @@ export function StyleProfileClient({
           <ProductCardGrid
             products={picks}
             mobileColumns={1}
-            className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+            variant="teaser"
+            className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 px-0"
           />
           <Link href="/rtw" className="btn-primary mt-8 inline-flex">
             Browse the full collection
