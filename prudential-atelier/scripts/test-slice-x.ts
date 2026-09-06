@@ -126,6 +126,45 @@ async function run() {
     const pub = await streamMediaKey(publicFile.key, { allowPrivate: false, cache: "public" });
     assert(pub.status === 200, "public file is served");
     assert(pub.headers.get("Cache-Control")?.includes("immutable"), "long cache");
+    assert(pub.headers.get("Accept-Ranges") === "bytes", "Safari needs Accept-Ranges");
+
+    const ranged = await streamMediaKey(publicFile.key, {
+      allowPrivate: false,
+      cache: "public",
+      range: "bytes=0-1",
+    });
+    assert(ranged.status === 206, "Range request is 206 Partial Content");
+    assert(ranged.headers.get("Content-Length") === "2", "range length is the slice");
+    assert(ranged.headers.get("Content-Range") === `bytes 0-1/${jpegBytes().length}`, "Content-Range is inclusive");
+    const slice = Buffer.from(await ranged.arrayBuffer());
+    assert(slice.equals(jpegBytes().subarray(0, 2)), "206 body is the requested bytes");
+
+    const openEnd = await streamMediaKey(publicFile.key, {
+      allowPrivate: false,
+      cache: "public",
+      range: "bytes=0-",
+    });
+    assert(openEnd.status === 206, "open-ended range is 206");
+    assert(openEnd.headers.get("Content-Length") === String(jpegBytes().length), "open-ended range is the rest of the file");
+
+    const pastEnd = await streamMediaKey(publicFile.key, {
+      allowPrivate: false,
+      cache: "public",
+      range: `bytes=${jpegBytes().length}-`,
+    });
+    assert(pastEnd.status === 416, "range past EOF is 416");
+
+    const head = await streamMediaKey(publicFile.key, {
+      allowPrivate: false,
+      cache: "public",
+      head: true,
+    });
+    assert(head.status === 200, "HEAD is 200");
+    assert(head.headers.get("Accept-Ranges") === "bytes", "HEAD advertises ranges");
+
+    const mediaRoute = await readFile(join(process.cwd(), "src/app/media/[...key]/route.ts"), "utf8");
+    assert(mediaRoute.includes("req.headers.get(\"range\")"), "public media passes the Range header");
+    assert(mediaRoute.includes("export async function HEAD"), "public media answers HEAD");
 
     const receipt = await store.put(pngBytes(), {
       folder: "prudential-atelier/receipts",
