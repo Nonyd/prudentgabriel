@@ -28,6 +28,7 @@ import {
   createResendProvider,
 } from "../src/lib/email-providers";
 import { jwtIssuedBeforePasswordChange } from "../src/lib/password-reset";
+import { parseOptionalPhone } from "../src/lib/admin-users";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -96,6 +97,19 @@ function main() {
 
   const usersPatch = routeSource("app/api/admin/users/[id]/route.ts");
   assert(usersPatch.includes("cannot set another person's password"), "users PATCH refuses a password field");
+  assert(usersPatch.includes("forceSignOutUser"), "email change signs the user out");
+  assert(usersPatch.includes("parseOptionalPhone"), "users PATCH accepts a phone number");
+  const usersPost = routeSource("app/api/admin/users/route.ts");
+  assert(usersPost.includes("parseOptionalPhone"), "invite stores an optional phone number");
+  const usersUi = routeSource("components/admin/settings/UserManagementClient.tsx");
+  assert(usersUi.includes("Phone number"), "invite and edit have a phone field");
+  assert(usersUi.includes('type="tel"'), "phone fields use tel input");
+  assert(!usersUi.includes("cursor-not-allowed rounded-[3px] border border-sand bg-bg/60"), "email is editable");
+  const emptyPhone = parseOptionalPhone("");
+  assert(emptyPhone.ok && emptyPhone.phone === null, "empty phone clears the number");
+  assert(!parseOptionalPhone("123").ok, "short phone is rejected");
+  const ngPhone = parseOptionalPhone("+234 801 234 5678");
+  assert(ngPhone.ok && ngPhone.phone === "+234 801 234 5678", "formatted NG phone is accepted");
   const resetRoute = routeSource("app/api/admin/users/[id]/reset-password/route.ts");
   assert(resetRoute.includes("sendAdminPasswordReset"), "admin reset sends a link");
   assert(!resetRoute.toLowerCase().includes("bcrypt"), "admin reset does not hash a chosen password");

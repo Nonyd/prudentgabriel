@@ -65,3 +65,14 @@ export function displayRoleLabel(role: string): string {
   if (role === "SUPER_ADMIN") return "Super Admin";
   return INVITE_ROLE_LABELS[role] ?? role.replace(/_/g, " ");
 }
+
+/** Empty string clears the number. Digits-only length must be at least 10 when set. */
+export function parseOptionalPhone(raw: string | undefined | null): { ok: true; phone: string | null } | { ok: false } {
+  if (raw == null) return { ok: true, phone: null };
+  const trimmed = raw.trim();
+  if (!trimmed) return { ok: true, phone: null };
+  if (trimmed.length > 24) return { ok: false };
+  const digits = trimmed.replace(/\D/g, "");
+  if (digits.length < 10) return { ok: false };
+  return { ok: true, phone: trimmed };
+}

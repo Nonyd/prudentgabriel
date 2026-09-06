@@ -23,6 +23,7 @@ type UserRow = {
   id: string;
   name: string | null;
   email: string;
+  phone: string | null;
   role: Role;
   isActive: boolean;
   lastLogin: string | null;
@@ -50,6 +51,7 @@ function InviteUserModal({
 }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [userType, setUserType] = useState<"admin" | "staff">("admin");
   const [jobRoleId, setJobRoleId] = useState("");
   const [jobTitle, setJobTitle] = useState("");
@@ -73,6 +75,7 @@ function InviteUserModal({
   const reset = () => {
     setName("");
     setEmail("");
+    setPhone("");
     setUserType("admin");
     setJobRoleId("");
     setJobTitle("");
@@ -92,6 +95,7 @@ function InviteUserModal({
         body: JSON.stringify({
           name: name.trim(),
           email: email.trim(),
+          phone: phone.trim() || undefined,
           userType,
           jobRoleId,
           jobTitle: jobTitle.trim() || undefined,
@@ -204,6 +208,19 @@ function InviteUserModal({
             placeholder="email@example.com"
           />
         </div>
+        <div>
+          <label className="mb-1 block font-sans text-xs font-semibold uppercase tracking-[0.12em] text-text-mid">
+            Phone number
+          </label>
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="w-full rounded-[3px] border border-sand bg-bg-card px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
+            placeholder="+234 801 234 5678"
+          />
+          <p className="mt-1 font-sans text-xs text-text-light">Optional. Include the country code when you can.</p>
+        </div>
       </div>
       <div className="mt-8 flex justify-end gap-3">
         <Button type="button" variant="ghost-light" onClick={onClose}>
@@ -229,6 +246,8 @@ function EditUserModal({
   onSaved: () => void;
 }) {
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [role, setRole] = useState<Role>("ADMIN");
   const [isActive, setIsActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -236,6 +255,8 @@ function EditUserModal({
   useEffect(() => {
     if (!user) return;
     setName(user.name ?? "");
+    setEmail(user.email);
+    setPhone(user.phone ?? "");
     setRole(user.role);
     setIsActive(user.isActive);
   }, [user]);
@@ -244,6 +265,10 @@ function EditUserModal({
 
   const submit = async () => {
     if (user.isProtected) return;
+    if (!email.trim()) {
+      toast.error("Email is required");
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch(`/api/admin/users/${user.id}`, {
@@ -251,6 +276,8 @@ function EditUserModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
           ...(user.role !== "SUPER_ADMIN" ? { role } : {}),
           isActive,
         }),
@@ -260,7 +287,12 @@ function EditUserModal({
         toast.error(typeof data.error === "string" ? data.error : "Failed to update user");
         return;
       }
-      toast.success("User updated");
+      const emailChanged = email.trim().toLowerCase() !== user.email.toLowerCase();
+      toast.success(
+        emailChanged
+          ? "User updated. They'll need to sign in with the new email."
+          : "User updated",
+      );
       onClose();
       onSaved();
     } finally {
@@ -297,9 +329,25 @@ function EditUserModal({
               Email
             </label>
             <input
-              value={user.email}
-              disabled
-              className="w-full cursor-not-allowed rounded-[3px] border border-sand bg-bg/60 px-4 py-3 font-sans text-sm text-text-mid"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-[3px] border border-sand bg-bg-card px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
+            />
+            <p className="mt-1 font-sans text-xs text-text-light">
+              Changing their email signs them out of every device.
+            </p>
+          </div>
+          <div>
+            <label className="mb-1 block font-sans text-xs font-semibold uppercase tracking-[0.12em] text-text-mid">
+              Phone number
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full rounded-[3px] border border-sand bg-bg-card px-4 py-3 font-sans text-sm text-text-dark outline-none focus:border-nut"
+              placeholder="+234 801 234 5678"
             />
           </div>
           {user.role !== "SUPER_ADMIN" ? (
@@ -525,7 +573,14 @@ export function UserManagementClient({ embedded = false }: { embedded?: boolean 
       {
         key: "email",
         header: "Email",
-        cell: (row) => <span className="font-sans text-xs text-text-mid">{row.email}</span>,
+        cell: (row) => (
+          <div>
+            <span className="block font-sans text-xs text-text-mid">{row.email}</span>
+            {row.phone ? (
+              <span className="mt-0.5 block font-sans text-[11px] text-text-light">{row.phone}</span>
+            ) : null}
+          </div>
+        ),
       },
       {
         key: "role",
@@ -693,7 +748,7 @@ export function UserManagementClient({ embedded = false }: { embedded?: boolean 
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search name or email…"
+          placeholder="Search name, email, or phone…"
           className="min-w-[220px] flex-1 rounded-[3px] border border-sand bg-bg-card px-4 py-2.5 font-sans text-sm text-text-dark outline-none focus:border-nut"
         />
         <select

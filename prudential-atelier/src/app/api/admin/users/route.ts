@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { Role, StaffDepartment } from "@prisma/client";
 import { z } from "zod";
 import { requireSuperAdminApi } from "@/lib/admin-auth";
-import { MANAGED_STAFF_ROLES } from "@/lib/admin-users";
+import { MANAGED_STAFF_ROLES, parseOptionalPhone } from "@/lib/admin-users";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { sendEmail } from "@/lib/email";
 import { logActivity } from "@/lib/logger";
@@ -15,6 +15,7 @@ import { generateTempPassword } from "@/lib/temp-password";
 const createSchema = z.object({
   name: z.string().min(2, "Name is required"),
   email: z.string().email(),
+  phone: z.string().max(24).optional(),
   userType: z.enum(["admin", "staff"]),
   jobRoleId: z.string().min(1),
   jobTitle: z.string().optional(),
@@ -25,6 +26,7 @@ function serializeUser(user: {
   id: string;
   name: string | null;
   email: string;
+  phone: string | null;
   role: Role;
   isActive: boolean;
   lastLogin: Date | null;
@@ -34,6 +36,7 @@ function serializeUser(user: {
     id: user.id,
     name: user.name,
     email: user.email,
+    phone: user.phone,
     role: user.role,
     isActive: user.isActive,
     lastLogin: user.lastLogin?.toISOString() ?? null,
@@ -56,7 +59,11 @@ export async function GET(req: NextRequest) {
   const where: {
     role: { in: Role[] } | Role;
     isActive?: boolean;
-    OR?: Array<{ name?: { contains: string; mode: "insensitive" }; email?: { contains: string; mode: "insensitive" } }>;
+    OR?: Array<{
+      name?: { contains: string; mode: "insensitive" };
+      email?: { contains: string; mode: "insensitive" };
+      phone?: { contains: string; mode: "insensitive" };
+    }>;
   } = {
     role:
       role && role !== "all" && MANAGED_STAFF_ROLES.includes(role as Role)
@@ -71,6 +78,7 @@ export async function GET(req: NextRequest) {
     where.OR = [
       { name: { contains: search, mode: "insensitive" } },
       { email: { contains: search, mode: "insensitive" } },
+      { phone: { contains: search, mode: "insensitive" } },
     ];
   }
 
@@ -85,6 +93,7 @@ export async function GET(req: NextRequest) {
         id: true,
         name: true,
         email: true,
+        phone: true,
         role: true,
         isActive: true,
         lastLogin: true,
@@ -117,6 +126,13 @@ export async function POST(req: NextRequest) {
   }
 
   const email = parsed.data.email.trim().toLowerCase();
+  const phoneParsed = parseOptionalPhone(parsed.data.phone);
+  if (!phoneParsed.ok) {
+    return NextResponse.json({ error: "Please enter a valid phone number" }, { status: 400 });
+  }
+  if (isProtectedAccount(email)) {
+    return NextResponse.json({ error: "That email is reserved" }, { status: 400 });
+  }
   const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
   if (existing) {
     return NextResponse.json({ error: "A user with this email already exists" }, { status: 409 });
@@ -139,6 +155,7 @@ export async function POST(req: NextRequest) {
       data: {
         name: parsed.data.name.trim(),
         email,
+        phone: phoneParsed.phone,
         password: passwordHash,
         role: systemRole,
         jobRoleId: jobRole.id,
@@ -152,6 +169,7 @@ export async function POST(req: NextRequest) {
         id: true,
         name: true,
         email: true,
+        phone: true,
         role: true,
         isActive: true,
         lastLogin: true,

@@ -2,15 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { z } from "zod";
 import { requireSuperAdminApi } from "@/lib/admin-auth";
-import { INVITE_ROLES, MANAGED_STAFF_ROLES } from "@/lib/admin-users";
+import { INVITE_ROLES, MANAGED_STAFF_ROLES, parseOptionalPhone } from "@/lib/admin-users";
 import { logActivity } from "@/lib/logger";
+import { forceSignOutUser } from "@/lib/password-reset";
 import { prisma } from "@/lib/prisma";
 import { isProtectedAccount } from "@/lib/roles";
 
 const PROTECTED_MSG = "This account is protected and cannot be modified.";
 
+const USER_SELECT = {
+  id: true,
+  name: true,
+  email: true,
+  phone: true,
+  role: true,
+  isActive: true,
+  lastLogin: true,
+  createdAt: true,
+} as const;
+
 const patchSchema = z.object({
   name: z.string().min(2).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().max(24).optional(),
   role: z
     .enum([
       "ADMIN",
@@ -31,6 +45,7 @@ function serializeUser(user: {
   id: string;
   name: string | null;
   email: string;
+  phone: string | null;
   role: Role;
   isActive: boolean;
   lastLogin: Date | null;
@@ -40,6 +55,7 @@ function serializeUser(user: {
     id: user.id,
     name: user.name,
     email: user.email,
+    phone: user.phone,
     role: user.role,
     isActive: user.isActive,
     lastLogin: user.lastLogin?.toISOString() ?? null,
@@ -51,15 +67,7 @@ function serializeUser(user: {
 async function getTarget(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      isActive: true,
-      lastLogin: true,
-      createdAt: true,
-    },
+    select: USER_SELECT,
   });
 }
 
@@ -91,7 +99,13 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  if (parsed.data.role === undefined && parsed.data.name === undefined && parsed.data.isActive === undefined) {
+  if (
+    parsed.data.role === undefined &&
+    parsed.data.name === undefined &&
+    parsed.data.isActive === undefined &&
+    parsed.data.email === undefined &&
+    parsed.data.phone === undefined
+  ) {
     return NextResponse.json({ error: "No changes provided" }, { status: 400 });
   }
 
@@ -103,23 +117,42 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     return NextResponse.json({ error: "Invalid role" }, { status: 400 });
   }
 
+  let nextPhone: string | null | undefined;
+  if (parsed.data.phone !== undefined) {
+    const phoneParsed = parseOptionalPhone(parsed.data.phone);
+    if (!phoneParsed.ok) {
+      return NextResponse.json({ error: "Please enter a valid phone number" }, { status: 400 });
+    }
+    nextPhone = phoneParsed.phone;
+  }
+
+  const nextEmail = parsed.data.email?.trim().toLowerCase();
+  const emailChanged = Boolean(nextEmail && nextEmail !== target.email.toLowerCase());
+  if (emailChanged && nextEmail) {
+    if (isProtectedAccount(nextEmail)) {
+      return NextResponse.json({ error: "That email is reserved" }, { status: 400 });
+    }
+    const taken = await prisma.user.findUnique({ where: { email: nextEmail }, select: { id: true } });
+    if (taken && taken.id !== id) {
+      return NextResponse.json({ error: "A user with this email already exists" }, { status: 409 });
+    }
+  }
+
   const updated = await prisma.user.update({
     where: { id },
     data: {
       ...(parsed.data.name !== undefined ? { name: parsed.data.name.trim() } : {}),
       ...(parsed.data.role !== undefined ? { role: parsed.data.role as Role } : {}),
       ...(parsed.data.isActive !== undefined ? { isActive: parsed.data.isActive } : {}),
+      ...(emailChanged && nextEmail ? { email: nextEmail } : {}),
+      ...(nextPhone !== undefined ? { phone: nextPhone } : {}),
     },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      isActive: true,
-      lastLogin: true,
-      createdAt: true,
-    },
+    select: USER_SELECT,
   });
+
+  if (emailChanged) {
+    await forceSignOutUser(id);
+  }
 
   await logActivity({
     userId: gate.session.user.id,
@@ -127,7 +160,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     userRole: gate.session.user.role,
     action: "UPDATE",
     module: "users",
-    description: `Updated user ${updated.email}`,
+    description: emailChanged
+      ? `Changed email ${target.email} → ${updated.email}`
+      : `Updated user ${updated.email}`,
     recordId: updated.id,
     recordType: "User",
   });
@@ -168,15 +203,7 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
     const updated = await prisma.user.update({
       where: { id },
       data: { isActive: false },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isActive: true,
-        lastLogin: true,
-        createdAt: true,
-      },
+      select: USER_SELECT,
     });
 
     await logActivity({
