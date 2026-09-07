@@ -52,6 +52,8 @@ function run() {
   assert(carousel.includes("webkit-playsinline"), "hero video sets webkit-playsinline for iPhone");
   assert(carousel.includes("Play video"), "hero offers tap-to-play when autoplay is blocked");
   assert(carousel.includes("if (!isCenter)"), "only the center slide mounts a <video>");
+  assert(carousel.includes("isIosDevice"), "iPhone does not script play() on mount");
+  assert(carousel.includes("const [isMobile, setIsMobile] = useState(true)"), "carousel first paint is mobile so iPhone never gets CSS 3D");
   assert(!hero.includes("className=\"eyebrow"), "hero dropped the tracked eyebrow");
   assert(!hero.includes("bg-hero-bg"), "hero is not a choc slab");
 

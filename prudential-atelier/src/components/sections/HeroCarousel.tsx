@@ -65,8 +65,21 @@ function CarouselArrowRight() {
 
 /** iOS plays MP4/H.264. Inject a Cloudinary fetch format when the CMS stored a MOV/WebM. */
 function heroPlaybackUrl(url: string): string {
-  if (!url.includes("/video/upload/") || /\/upload\/[^/]*f_(mp4|auto)/.test(url)) return url;
-  return url.replace("/video/upload/", "/video/upload/f_mp4,q_auto,vc_h264/");
+  let out = url;
+  if (out.includes("/video/upload/") && !/\/upload\/[^/]*f_(mp4|auto)/.test(out)) {
+    out = out.replace("/video/upload/", "/video/upload/f_mp4,q_auto,vc_h264/");
+  }
+  // Safari often will not paint a frame until currentTime is set; the fragment does that
+  // without a play() call, so a blocked autoplay is not a blank white card.
+  if (!out.includes("#t=")) out = `${out}#t=0.1`;
+  return out;
+}
+
+function isIosDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  if (/iPad|iPhone|iPod/i.test(ua)) return true;
+  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
 }
 
 function armInlineMuted(video: HTMLVideoElement) {
@@ -98,64 +111,81 @@ function CarouselMedia({
   endedRef.current = onVideoEnded;
   mutedRef.current = isMuted;
 
+  const bindVideo = useCallback(
+    (el: HTMLVideoElement | null) => {
+      localRef.current = el;
+      if (!el) return;
+      armInlineMuted(el);
+      if (videoRef) {
+        (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = el;
+      }
+    },
+    [videoRef],
+  );
+
   useEffect(() => {
     if (item.type !== "video" || !isCenter) return;
     const video = localRef.current;
     if (!video) return;
 
     armInlineMuted(video);
-    if (videoRef) {
-      (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = video;
-    }
 
     let cancelled = false;
     let started = false;
 
-    const playNow = () => {
+    const markPlaying = () => {
       if (cancelled) return;
-      armInlineMuted(video);
-      const attempt = video.play();
-      if (!attempt) return;
-      void attempt
-        .then(() => {
-          if (cancelled) return;
-          started = true;
-          setNeedsTap(false);
-          video.muted = mutedRef.current;
-        })
-        .catch((err: unknown) => {
-          if (cancelled) return;
-          const name = err instanceof Error ? err.name : "";
-          if (name === "AbortError") return;
-          setNeedsTap(true);
-        });
+      started = true;
+      setNeedsTap(false);
+      video.muted = mutedRef.current;
     };
 
     const onEnded = () => {
       if (started && !cancelled) endedRef.current();
     };
 
+    video.addEventListener("playing", markPlaying);
     video.addEventListener("ended", onEnded);
-    const raf = window.requestAnimationFrame(playNow);
+
+    // iPhone Safari treats a scripted play() as a failed user-gesture, then will not
+    // autoplay that same element. Leave muted autoplay to the attributes; only tap calls play().
+    const ios = isIosDevice();
+    if (!ios) {
+      const attempt = video.play();
+      if (attempt) {
+        void attempt.then(markPlaying).catch((err: unknown) => {
+          if (cancelled) return;
+          const name = err instanceof Error ? err.name : "";
+          if (name === "AbortError") return;
+          setNeedsTap(true);
+        });
+      }
+    }
+
+    const tapTimer = window.setTimeout(() => {
+      if (!cancelled && video.paused) setNeedsTap(true);
+    }, ios ? 1200 : 500);
+
     const safetyTimer = window.setTimeout(() => {
       if (!cancelled) endedRef.current();
     }, VIDEO_MAX_MS);
 
     return () => {
       cancelled = true;
-      window.cancelAnimationFrame(raf);
+      video.removeEventListener("playing", markPlaying);
       video.removeEventListener("ended", onEnded);
+      window.clearTimeout(tapTimer);
       window.clearTimeout(safetyTimer);
-      video.pause();
     };
-  }, [isCenter, item.type, item.url, videoRef]);
+  }, [isCenter, item.type, item.url]);
 
   useEffect(() => {
     const video = localRef.current;
     if (video) video.muted = isMuted;
   }, [isMuted]);
 
-  const unlock = () => {
+  const unlock = (event: React.SyntheticEvent) => {
+    event.stopPropagation();
     const video = localRef.current;
     if (!video) return;
     armInlineMuted(video);
@@ -172,7 +202,7 @@ function CarouselMedia({
     return (
       <>
         <video
-          ref={localRef}
+          ref={bindVideo}
           src={heroPlaybackUrl(item.url)}
           muted
           playsInline
@@ -187,6 +217,7 @@ function CarouselMedia({
           <button
             type="button"
             onClick={unlock}
+            onTouchEnd={unlock}
             aria-label="Play video"
             className="absolute inset-0 z-[15] flex items-center justify-center"
           >
@@ -223,7 +254,9 @@ function CarouselMedia({
 export function HeroCarousel({ items }: HeroCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
+  // Assume a phone until matchMedia runs. iPhone's first paint must not get CSS 3D
+  // perspective — Safari refuses muted autoplay inside a 3D containing block.
+  const [isMobile, setIsMobile] = useState(true);
   const centerVideoRef = useRef<HTMLVideoElement>(null);
   const isPaused = useRef(false);
   const touchStartX = useRef(0);
