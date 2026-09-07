@@ -10,7 +10,7 @@ import { CatalogPagination } from "@/components/shop/CatalogPagination";
 import { RTWLandingHero } from "@/components/rtw/RTWLandingHero";
 import type { HeroCarouselItem } from "@/lib/hero-carousel";
 import { CATALOG_PAGE_SIZE } from "@/lib/rtw-aisle";
-import { RTW_GRID_ID } from "@/lib/rtw-hero";
+import { RTW_GRID_ID, rtwHeroLooks } from "@/lib/rtw-hero";
 import type { ProductListItem } from "@/types/product";
 
 type ChipId = "ALL" | "DRESSES" | "JUMPSUITS" | "SETS" | "SUITS";
@@ -88,6 +88,7 @@ export function RTWPageClient({
   const [isPending, startTransition] = useTransition();
   const [items, setItems] = useState(initialProducts);
   const [page, setPage] = useState(initialPage);
+  const [looks] = useState(() => rtwHeroLooks(initialProducts));
 
   const queryKey = sp.toString();
 
@@ -115,7 +116,13 @@ export function RTWPageClient({
 
   return (
     <div className="min-h-screen bg-bg-card pb-20">
-      <RTWLandingHero items={heroItems} headline={heroHeadline} subline={heroSubline} ctaLabel={heroCta} />
+      <RTWLandingHero
+        items={heroItems}
+        looks={looks}
+        headline={heroHeadline}
+        subline={heroSubline}
+        ctaLabel={heroCta}
+      />
 
       <div className="border-b border-mid-grey px-4 py-4 lg:px-10">
         <div className="mx-auto flex max-w-site gap-2 overflow-x-auto pb-1 lg:flex-wrap lg:overflow-visible lg:pb-0">

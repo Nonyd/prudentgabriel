@@ -4,8 +4,8 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { HeroCarouselItem } from "@/lib/hero-carousel";
 import { shouldAutoplayReel, shouldPrefetchReelVideo } from "@/lib/collection-reel-playback";
-import { RTW_GRID_ID, rtwHeroPlaybackUrl } from "@/lib/rtw-hero";
-import { optimizeImageUrl } from "@/lib/utils";
+import { RTW_GRID_ID, rtwHeroPlaybackUrl, type RTWHeroLook } from "@/lib/rtw-hero";
+import { cn, optimizeImageUrl } from "@/lib/utils";
 
 const IMAGE_ADVANCE_MS = 4500;
 
@@ -131,20 +131,87 @@ function HeroSlide({
   );
 }
 
+function LookFrame({
+  look,
+  priority,
+  className,
+}: {
+  look: RTWHeroLook;
+  priority?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={cn("relative overflow-hidden rounded-[26px]", className)}>
+      <Image
+        src={optimizeImageUrl(look.url, 1200)}
+        alt={look.alt}
+        fill
+        priority={priority}
+        sizes="(min-width: 1024px) 32vw, 100vw"
+        className="object-cover object-top"
+      />
+    </div>
+  );
+}
+
+function LookCell({ look, priority }: { look: RTWHeroLook; priority?: boolean }) {
+  return (
+    <div className="relative min-h-0">
+      <LookFrame look={look} priority={priority} className="absolute inset-0" />
+    </div>
+  );
+}
+
+function LookWall({ looks }: { looks: RTWHeroLook[] }) {
+  const a = looks[0];
+  const b = looks[1];
+  const c = looks[2];
+  if (!a) return null;
+
+  return (
+    <>
+      <div className="absolute inset-0 lg:hidden">
+        <LookFrame look={a} priority className="absolute inset-0 rounded-none" />
+      </div>
+
+      <div
+        className={cn(
+          "absolute inset-0 hidden min-h-0 p-7 pr-9 lg:left-[40%] lg:grid lg:gap-4",
+          c
+            ? "lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.85fr)] lg:grid-rows-2"
+            : b
+              ? "lg:grid-cols-2"
+              : "lg:grid-cols-1",
+        )}
+      >
+        <div className={cn("relative min-h-0", c && "row-span-2")}>
+          <LookFrame look={a} priority className="absolute inset-0" />
+        </div>
+        {b ? <LookCell look={b} /> : null}
+        {c ? <LookCell look={c} /> : null}
+      </div>
+    </>
+  );
+}
+
 export function RTWLandingHero({
   items,
+  looks = [],
   headline,
   subline,
   ctaLabel,
 }: {
   items: HeroCarouselItem[];
+  looks?: RTWHeroLook[];
   headline: string;
   subline: string;
   ctaLabel: string;
 }) {
   const [index, setIndex] = useState(0);
   const count = items.length;
-  const active = count > 0 ? items[Math.min(index, count - 1)]! : null;
+  const hasCampaign = count > 0;
+  const hasLooks = !hasCampaign && looks.length > 0;
+  const active = hasCampaign ? items[Math.min(index, count - 1)]! : null;
 
   const go = useCallback(
     (next: number) => {
@@ -164,36 +231,63 @@ export function RTWLandingHero({
 
   return (
     <section className="hero-under-chrome relative h-[100dvh] max-h-[100dvh] overflow-hidden bg-choc">
-      {items.map((item, i) => (
-        <div
-          key={`${item.type}-${item.url}-${i}`}
-          className="absolute inset-0 transition-opacity duration-500 ease-out"
-          style={{ opacity: i === index ? 1 : 0 }}
-          aria-hidden={i !== index}
-        >
-          <HeroSlide item={item} active={i === index} priority={i === 0} />
-        </div>
-      ))}
+      {hasCampaign
+        ? items.map((item, i) => (
+            <div
+              key={`${item.type}-${item.url}-${i}`}
+              className="absolute inset-0 transition-opacity duration-500 ease-out"
+              style={{ opacity: i === index ? 1 : 0 }}
+              aria-hidden={i !== index}
+            >
+              <HeroSlide item={item} active={i === index} priority={i === 0} />
+            </div>
+          ))
+        : null}
+
+      {hasLooks ? <LookWall looks={looks} /> : null}
 
       <div
-        className="pointer-events-none absolute inset-0 z-[1]"
+        className={cn(
+          "pointer-events-none absolute inset-0 z-[1]",
+          hasLooks && "lg:hidden",
+        )}
         style={{
-          background:
-            "linear-gradient(to top, rgb(26 15 8 / 0.52) 0%, rgb(26 15 8 / 0.12) 42%, transparent 68%)",
+          background: hasCampaign
+            ? "linear-gradient(90deg, rgb(26 15 8 / 0.55) 0%, rgb(26 15 8 / 0.18) 42%, transparent 68%)"
+            : hasLooks
+              ? "linear-gradient(to top, rgb(26 15 8 / 0.62) 0%, rgb(26 15 8 / 0.18) 46%, transparent 72%)"
+              : "none",
         }}
         aria-hidden
       />
 
-      <div className="absolute inset-x-0 bottom-0 z-[2] px-5 pb-10 md:px-10 md:pb-14">
-        <div className="relative mx-auto w-full max-w-site">
-          <div className="relative max-w-xl">
+      <div
+        className={cn(
+          "absolute z-[2] flex",
+          hasLooks
+            ? "inset-x-0 bottom-0 items-end px-5 pb-10 md:px-10 md:pb-14 lg:inset-y-0 lg:right-auto lg:w-[40%] lg:items-center lg:px-10 lg:pb-0"
+            : "inset-x-0 bottom-0 items-end px-5 pb-10 md:px-10 md:pb-14 lg:inset-y-0 lg:items-center lg:pb-0",
+        )}
+      >
+        <div className={cn("relative w-full", hasLooks ? "max-w-md lg:max-w-none" : "mx-auto max-w-site")}>
+          <div className={cn("relative", hasLooks ? "lg:max-w-[26rem]" : "max-w-xl")}>
             <div className="hero-copy-scrim" aria-hidden />
-            <div className="glass-1 glass-panel hero-copy-panel px-6 py-7 md:px-8 md:py-8">
-              <h1 className="font-display text-[clamp(2rem,6vw,3.5rem)] font-normal italic leading-[1.1] text-choc">
+            <div className="glass-1 glass-panel hero-copy-panel px-6 py-8 md:px-8 md:py-10">
+              <h1 className="text-balance font-display text-[clamp(2.15rem,4.2vw,3.75rem)] font-normal italic leading-[1.08] text-choc">
                 {headline}
               </h1>
-              <p className="mt-4 max-w-md font-body text-sm font-light leading-relaxed text-text-mid">{subline}</p>
-              <a href={`#${RTW_GRID_ID}`} className="btn-primary mt-7 inline-flex active:scale-[0.97]">
+              <p className="mt-5 max-w-sm font-body text-sm font-light leading-relaxed text-text-mid">{subline}</p>
+              <a
+                href={`#${RTW_GRID_ID}`}
+                className="btn-primary mt-8 inline-flex active:scale-[0.97]"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const lenisOn = document.documentElement.classList.contains("lenis");
+                  document
+                    .getElementById(RTW_GRID_ID)
+                    ?.scrollIntoView({ behavior: lenisOn ? "auto" : "smooth", block: "start" });
+                }}
+              >
                 {ctaLabel}
               </a>
             </div>

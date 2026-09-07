@@ -6,7 +6,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { rtwHeroCopy, RTW_GRID_ID, RTW_HERO_HEADLINE, RTW_HERO_SUBLINE } from "../src/lib/rtw-hero";
+import { rtwHeroCopy, rtwHeroLooks, RTW_GRID_ID, RTW_HERO_HEADLINE, RTW_HERO_SUBLINE } from "../src/lib/rtw-hero";
 import { HOMEPAGE_BESTSELLERS_ADMIN_NOTE } from "../src/lib/homepage-bestsellers";
 import { parseHeroCarouselItems } from "../src/lib/hero-carousel";
 
@@ -31,6 +31,17 @@ function runCopy() {
 
   const custom = rtwHeroCopy({ headline: "This season, from the house" });
   assert(custom.headline === "This season, from the house", "Glory can replace the headline");
+}
+
+function runLooks() {
+  const looks = rtwHeroLooks([
+    { name: "Avril", images: [{ url: "/media/a.jpg", alt: "Avril look", isPrimary: true }] },
+    { name: "Avril dup", images: [{ url: "/media/a.jpg", alt: "dup", isPrimary: true }] },
+    { name: "Dalia", images: [{ url: "", alt: null }, { url: "/media/d.jpg", alt: null }] },
+  ]);
+  assert(looks.length === 2, "duplicate urls and empty urls are skipped");
+  assert(looks[0]?.url === "/media/a.jpg", "primary image wins");
+  assert(looks[1]?.alt === "Dalia", "missing alt falls back to the piece name");
 }
 
 function runCarouselParse() {
@@ -75,9 +86,12 @@ function runSource() {
 
   assert(hero.includes("glass-1"), "RTW hero copy sits on glass-1");
   assert(hero.includes("hero-copy-scrim"), "RTW hero has a scrim under the glass");
+  assert(hero.includes("LookWall"), "empty CMS stages catalogue photography, not a chocolate void");
   assert(hero.includes("preload=\"metadata\""), "RTW hero video is poster-first, not preload auto");
   assert(hero.includes(`#${RTW_GRID_ID}`) || hero.includes("RTW_GRID_ID"), "CTA scrolls to the grid");
   assert(hero.includes("shouldPrefetchReelVideo"), "portrait video follows AE prefetch");
+  assert(client.includes("rtwHeroLooks"), "look wall is built from the catalogue");
+  assert(!hero.includes("unsplash"), "RTW hero does not fall back to Unsplash");
 
   assert(client.includes('label: "Dresses"'), "chips are sentence case");
   assert(client.includes("glass-1 glass-pill"), "chips are glass-1 pills");
@@ -110,6 +124,7 @@ function runSource() {
 
 function run() {
   runCopy();
+  runLooks();
   runCarouselParse();
   runSource();
   console.log("slice-ah: all checks passed");

@@ -33,6 +33,31 @@ export function rtwHeroCopy(stored: {
   };
 }
 
+export type RTWHeroLook = { url: string; alt: string };
+
+/** Catalogue stills for the hero when Glory has not set campaign slides. Never Unsplash. */
+export function rtwHeroLooks(
+  products: Array<{
+    name: string;
+    images: Array<{ url: string; alt: string | null; isPrimary?: boolean }>;
+  }>,
+  limit = 4,
+): RTWHeroLook[] {
+  const out: RTWHeroLook[] = [];
+  const seen = new Set<string>();
+  for (const product of products) {
+    const img =
+      product.images.find((i) => i.isPrimary && i.url?.trim()) ??
+      product.images.find((i) => i.url?.trim());
+    const url = img?.url?.trim();
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    out.push({ url, alt: img?.alt?.trim() || product.name });
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
 /** iOS plays MP4/H.264. Same rewrite the homepage carousel uses. */
 export function rtwHeroPlaybackUrl(url: string): string {
   let out = url;
