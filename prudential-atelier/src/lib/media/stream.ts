@@ -1,6 +1,4 @@
-import { createReadStream } from "node:fs";
-import { stat } from "node:fs/promises";
-import { Readable } from "node:stream";
+import { open, stat } from "node:fs/promises";
 import { NextResponse } from "next/server";
 import { getMediaStore } from "@/lib/media";
 import { isPrivateMediaKey, isValidMediaKey, mimeForExt } from "@/lib/media/keys";
@@ -11,6 +9,10 @@ export type MediaByteRange = { start: number; end: number };
 /**
  * Safari (iPhone) will not play MP4 unless the server honours `Range` with 206.
  * Android Chrome often downloads the whole file and still plays.
+ *
+ * Do not return a Web ReadableStream here. Next.js pipes that as a stalled
+ * chunked body — a 5MB hero clip timed out on iPhone after ~3.5MB, so the
+ * <video> never decoded a frame.
  */
 export function parseMediaByteRange(
   header: string | null | undefined,
@@ -46,6 +48,23 @@ function cacheControl(cache: "public" | "private" | "none"): string {
   if (cache === "public") return "public, max-age=31536000, immutable";
   if (cache === "private") return "private, no-store";
   return "no-store";
+}
+
+async function readByteRange(abs: string, start: number, length: number): Promise<Buffer> {
+  if (length <= 0) return Buffer.alloc(0);
+  const fh = await open(abs, "r");
+  try {
+    const buf = Buffer.alloc(length);
+    let filled = 0;
+    while (filled < length) {
+      const { bytesRead } = await fh.read(buf, filled, length - filled, start + filled);
+      if (bytesRead === 0) break;
+      filled += bytesRead;
+    }
+    return filled === length ? buf : buf.subarray(0, filled);
+  } finally {
+    await fh.close();
+  }
 }
 
 export async function streamMediaKey(
@@ -84,6 +103,7 @@ export async function streamMediaKey(
   headers.set("Accept-Ranges", "bytes");
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("Cache-Control", cacheControl(opts.cache));
+  headers.set("Content-Disposition", "inline");
 
   const parsed = parseMediaByteRange(opts.range, size);
   if (parsed === "unsatisfiable") {
@@ -106,7 +126,7 @@ export async function streamMediaKey(
     return new NextResponse(null, { status, headers });
   }
 
-  const nodeStream = createReadStream(abs, { start, end });
-  const web = Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>;
-  return new NextResponse(web, { status, headers });
+  const body = await readByteRange(abs, start, length);
+  headers.set("Content-Length", String(body.length));
+  return new NextResponse(new Uint8Array(body), { status, headers });
 }

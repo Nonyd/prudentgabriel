@@ -65,14 +65,8 @@ function CarouselArrowRight() {
 
 /** iOS plays MP4/H.264. Inject a Cloudinary fetch format when the CMS stored a MOV/WebM. */
 function heroPlaybackUrl(url: string): string {
-  let out = url;
-  if (out.includes("/video/upload/") && !/\/upload\/[^/]*f_(mp4|auto)/.test(out)) {
-    out = out.replace("/video/upload/", "/video/upload/f_mp4,q_auto,vc_h264/");
-  }
-  // Safari often will not paint a frame until currentTime is set; the fragment does that
-  // without a play() call, so a blocked autoplay is not a blank white card.
-  if (!out.includes("#t=")) out = `${out}#t=0.1`;
-  return out;
+  if (!url.includes("/video/upload/") || /\/upload\/[^/]*f_(mp4|auto)/.test(url)) return url;
+  return url.replace("/video/upload/", "/video/upload/f_mp4,q_auto,vc_h264/");
 }
 
 function isIosDevice(): boolean {

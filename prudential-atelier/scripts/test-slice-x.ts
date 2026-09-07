@@ -162,6 +162,21 @@ async function run() {
     assert(head.status === 200, "HEAD is 200");
     assert(head.headers.get("Accept-Ranges") === "bytes", "HEAD advertises ranges");
 
+    const bulky = Buffer.alloc(256 * 1024, 7);
+    const bulkyFile = await store.put(bulky, {
+      folder: "prudential-atelier/products",
+      originalName: "clip.bin",
+      mime: "image/jpeg",
+      private: false,
+    });
+    const bulkyRes = await streamMediaKey(bulkyFile.key, { allowPrivate: false, cache: "public" });
+    assert(bulkyRes.status === 200, "larger file is 200");
+    const bulkyBytes = Buffer.from(await bulkyRes.arrayBuffer());
+    assert(bulkyBytes.equals(bulky), "larger file is fully buffered, not a stalled stream");
+
+    const streamSrc = await readFile(join(process.cwd(), "src/lib/media/stream.ts"), "utf8");
+    assert(!streamSrc.includes("toWeb"), "media bytes are not piped through Readable.toWeb");
+
     const mediaRoute = await readFile(join(process.cwd(), "src/app/media/[...key]/route.ts"), "utf8");
     assert(mediaRoute.includes("req.headers.get(\"range\")"), "public media passes the Range header");
     assert(mediaRoute.includes("export async function HEAD"), "public media answers HEAD");

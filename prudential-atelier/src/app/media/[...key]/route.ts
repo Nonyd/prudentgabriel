@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { streamMediaKey } from "@/lib/media/stream";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 async function serve(req: NextRequest, ctx: { params: Promise<{ key: string[] }> }, head: boolean) {
   const { key: parts } = await ctx.params;
