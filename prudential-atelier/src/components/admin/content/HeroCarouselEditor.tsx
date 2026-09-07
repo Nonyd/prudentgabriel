@@ -173,6 +173,19 @@ export function HeroCarouselEditor({
                 />
               )}
 
+              {item.type === "video" ? (
+                <AdminImageUrlField
+                  label="Poster still (shown before the video plays)"
+                  value={item.poster ?? ""}
+                  onChange={(poster) => {
+                    const next = [...items];
+                    next[index] = { ...next[index], poster };
+                    commitItems(next);
+                  }}
+                  folder="prudent-gabriel/hero"
+                />
+              ) : null}
+
               <div>
                 <label className="mb-1.5 block font-sans text-xs font-medium text-text-mid">
                   Alt text (optional)

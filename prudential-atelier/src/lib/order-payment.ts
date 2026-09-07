@@ -204,6 +204,17 @@ export async function fulfillPaidOrder(params: {
         );
       }
 
+      const orderCountByProduct = new Map<string, number>();
+      for (const item of order.items) {
+        orderCountByProduct.set(item.productId, (orderCountByProduct.get(item.productId) ?? 0) + item.quantity);
+      }
+      for (const [productId, qty] of Array.from(orderCountByProduct.entries())) {
+        await tx.product.update({
+          where: { id: productId },
+          data: { orderCount: { increment: qty } },
+        });
+      }
+
       if (order.pointsUsed > 0 && order.pointsDiscountNGN > 0.01 && "payment" in tx) {
         const payment = (
           tx as unknown as {

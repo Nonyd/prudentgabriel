@@ -19,7 +19,7 @@ const COLLECTIONS = [
   {
     href: "/rtw",
     title: "Ready-to-Wear",
-    subtitle: "House signatures, ready to ship.",
+    subtitle: "House signatures, cut when you order.",
     cta: "Shop",
   },
 ];

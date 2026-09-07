@@ -4,6 +4,7 @@ import type { ProductListItem } from "@/types/product";
 import { derivedCatalogMinNGN } from "@/lib/pricing";
 import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
 import { publishedProductIdsForCollection } from "@/lib/collection-products";
+import { unitsSoldByProductId } from "@/lib/finance/whats-selling";
 
 const CATEGORIES = new Set(Object.values(ProductCategory));
 const TYPES = new Set(["RTW", "BESPOKE"] as const);
@@ -158,7 +159,7 @@ export async function queryProductList(
       orderBy = { priceNGN: "desc" };
       break;
     case "bestsellers":
-      orderBy = [{ isBestSeller: "desc" }, { orderCount: "desc" }, { createdAt: "desc" }];
+      orderBy = { createdAt: "desc" };
       break;
     case "featured":
       orderBy = [{ isFeatured: "desc" }, { createdAt: "desc" }];
@@ -170,50 +171,77 @@ export async function queryProductList(
 
   const skip = (page - 1) * limit;
 
-  const [rows, total] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      orderBy,
-      skip,
-      take: limit,
+  const listSelect = {
+    id: true,
+    name: true,
+    slug: true,
+    category: true,
+    type: true,
+    basePriceNGN: true,
+    priceUSD: true,
+    priceGBP: true,
+    isOnSale: true,
+    isNewArrival: true,
+    isBespokeAvail: true,
+    customOffered: true,
+    isFeatured: true,
+    tags: true,
+    images: {
+      orderBy: { sortOrder: "asc" as const },
+      take: GALLERY_GRID_IMAGE_TAKE,
+      select: { url: true, alt: true, isPrimary: true },
+    },
+    variants: {
+      orderBy: { priceNGN: "asc" as const },
       select: {
         id: true,
-        name: true,
-        slug: true,
-        category: true,
-        type: true,
-        basePriceNGN: true,
+        size: true,
+        priceNGN: true,
+        salePriceNGN: true,
         priceUSD: true,
         priceGBP: true,
-        isOnSale: true,
-        isNewArrival: true,
-        isBespokeAvail: true,
-        customOffered: true,
-        isFeatured: true,
-        tags: true,
-        images: {
-          orderBy: { sortOrder: "asc" },
-          take: GALLERY_GRID_IMAGE_TAKE,
-          select: { url: true, alt: true, isPrimary: true },
-        },
-        variants: {
-          orderBy: { priceNGN: "asc" },
-          select: {
-            id: true,
-            size: true,
-            priceNGN: true,
-            salePriceNGN: true,
-            priceUSD: true,
-            priceGBP: true,
-            stock: true,
-          },
-        },
-        colors: { select: { id: true, name: true, hex: true, imageUrl: true } },
-        _count: { select: { reviews: true } },
+        stock: true,
       },
-    }),
-    prisma.product.count({ where }),
-  ]);
+    },
+    colors: { select: { id: true, name: true, hex: true, imageUrl: true } },
+    _count: { select: { reviews: true } },
+  } satisfies Prisma.ProductSelect;
+
+  let rows: Prisma.ProductGetPayload<{ select: typeof listSelect }>[];
+  let total: number;
+
+  if (sortParam === "bestsellers") {
+    const [idRows, units] = await Promise.all([
+      prisma.product.findMany({ where, select: { id: true, createdAt: true } }),
+      unitsSoldByProductId(),
+    ]);
+    idRows.sort((a, b) => {
+      const ua = units.get(a.id) ?? 0;
+      const ub = units.get(b.id) ?? 0;
+      if (ub !== ua) return ub - ua;
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    });
+    total = idRows.length;
+    const pageIds = idRows.slice(skip, skip + limit).map((r) => r.id);
+    const fetched = pageIds.length
+      ? await prisma.product.findMany({ where: { id: { in: pageIds } }, select: listSelect })
+      : [];
+    const order = new Map(pageIds.map((id, i) => [id, i]));
+    rows = fetched.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+  } else {
+    const [found, count] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+        select: listSelect,
+      }),
+      prisma.product.count({ where }),
+    ]);
+    rows = found;
+    total = count;
+  }
 
   const products: ProductListItem[] = rows.map((p) => ({
     id: p.id,

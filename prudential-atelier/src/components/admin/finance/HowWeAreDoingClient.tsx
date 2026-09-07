@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { FinanceAa0Note } from "@/components/admin/finance/FinanceAa0Note";
+import { WhatsSellingPanel } from "@/components/admin/finance/WhatsSellingPanel";
 import type { LineTotals } from "@/lib/finance/classify";
 import type { FinancePeriodKind } from "@/lib/finance/period";
+import type { WhatsSellingReport } from "@/lib/finance/whats-selling-view";
 
 type Payload = {
   range: { kind: string; label: string; prevLabel: string };
@@ -17,7 +19,7 @@ type Payload = {
     rateNGN: number;
     asOf: string;
   };
-  bestsellers: { name: string; quantity: number; salesNGN: number }[];
+  whatsSelling: WhatsSellingReport;
 };
 
 const KINDS: { id: FinancePeriodKind; label: string }[] = [
@@ -127,23 +129,7 @@ export function HowWeAreDoingClient() {
             <Three title="Ready-to-wear" now={data.current.rtw} prev={data.previous?.rtw ?? null} />
             <Three title="Atelier" now={data.current.atelier} prev={data.previous?.atelier ?? null} />
           </div>
-          <div className="glass-opaque p-5">
-            <h2 className="font-display text-lg text-choc">Best-selling pieces</h2>
-            {data.bestsellers.length === 0 ? (
-              <p className="mt-3 font-sans text-sm text-[#6B6B68]">Nothing sold in this stretch.</p>
-            ) : (
-              <ul className="mt-3 divide-y divide-sand">
-                {data.bestsellers.map((b) => (
-                  <li key={b.name} className="flex justify-between py-2 font-sans text-sm">
-                    <span>{b.name}</span>
-                    <span className="text-[#6B6B68]">
-                      {b.quantity} · {naira(b.salesNGN)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          {data.whatsSelling ? <WhatsSellingPanel data={data.whatsSelling} /> : null}
           <p className="font-sans text-xs text-[#6B6B68]">
             Points still owing: {naira(data.outstanding.pointsNGN)} ({data.outstanding.points.toLocaleString()} points ×{" "}
             {naira(data.outstanding.rateNGN)} each) as of {new Date(data.outstanding.asOf).toLocaleString("en-GB")}.

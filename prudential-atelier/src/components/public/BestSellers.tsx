@@ -1,42 +1,60 @@
 import Link from "next/link";
+import { ProductType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
 import { ProductCardGrid } from "@/components/common/ProductCardGrid";
 import { collectionListProductInclude, type CollectionListProduct } from "@/lib/collection-products";
+import { rankedProductIdsByUnitsSold } from "@/lib/finance/whats-selling";
+import { HOMEPAGE_BESTSELLERS_TAKE } from "@/lib/homepage-bestsellers";
 import { mapProductToListItem } from "@/lib/map-product-list-item";
+import { RTW_EXCLUDED_CATEGORIES } from "@/lib/rtw-aisle";
 import type { ProductListItem } from "@/types/product";
 
-const TAKE = 4;
+const TAKE = HOMEPAGE_BESTSELLERS_TAKE;
 
 function toListItem(p: CollectionListProduct): ProductListItem {
   return mapProductToListItem(p);
 }
 
+async function featuredFallback(): Promise<ProductListItem[]> {
+  const rows = await prisma.product.findMany({
+    where: {
+      isPublished: true,
+      isFeatured: true,
+      type: ProductType.RTW,
+      category: { notIn: [...RTW_EXCLUDED_CATEGORIES] },
+    },
+    include: collectionListProductInclude,
+    orderBy: { updatedAt: "desc" },
+    take: TAKE,
+  });
+  return rows.map(toListItem);
+}
+
 export async function BestSellers() {
   let products: ProductListItem[] = [];
+  let source: "sales" | "featured" = "sales";
 
   try {
     if (!isSkipDbBuild()) {
-      const featured = await prisma.product.findMany({
-        where: { isPublished: true, isFeatured: true },
-        take: TAKE,
-        orderBy: { orderCount: "desc" },
-        include: collectionListProductInclude,
-      });
-
-      let list: CollectionListProduct[] = [...featured];
-      if (list.length < TAKE) {
-        const existingIds = list.map((p) => p.id);
-        const filler = await prisma.product.findMany({
-          where: { isPublished: true, id: { notIn: existingIds } },
-          take: TAKE - list.length,
-          orderBy: { orderCount: "desc" },
+      const ranked = await rankedProductIdsByUnitsSold();
+      const takeIds = ranked.slice(0, 24);
+      if (takeIds.length > 0) {
+        const rows = await prisma.product.findMany({
+          where: { isPublished: true, id: { in: takeIds } },
           include: collectionListProductInclude,
         });
-        list = [...list, ...filler];
+        const order = new Map(takeIds.map((id, i) => [id, i]));
+        const list = rows
+          .slice()
+          .sort((a, b) => (order.get(a.id) ?? 99) - (order.get(b.id) ?? 99))
+          .slice(0, TAKE);
+        products = list.map(toListItem);
       }
-
-      products = list.slice(0, TAKE).map(toListItem);
+      if (products.length === 0) {
+        products = await featuredFallback();
+        source = "featured";
+      }
     }
   } catch {
     products = [];
@@ -45,7 +63,7 @@ export async function BestSellers() {
   if (products.length === 0) return null;
 
   return (
-    <section className="py-20">
+    <section className="py-20" data-bestsellers-source={source}>
       <div className="mx-auto mb-12 max-w-site px-6 lg:px-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <h2

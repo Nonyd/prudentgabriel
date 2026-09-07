@@ -2,6 +2,8 @@ export interface HeroCarouselItem {
   type: "image" | "video";
   url: string;
   alt?: string;
+  /** Poster still for video slides. RTW landing shows this before the file plays. */
+  poster?: string;
 }
 
 export const FALLBACK_CAROUSEL_ITEMS: HeroCarouselItem[] = [
@@ -42,7 +44,13 @@ function mapCarouselEntry(
   const url = typeof item.url === "string" ? item.url.trim() : "";
   if (!type || (requireUrl && !url)) return null;
   const alt = typeof item.alt === "string" ? item.alt : undefined;
-  return { type, url, ...(alt !== undefined ? { alt } : {}) };
+  const poster = typeof item.poster === "string" ? item.poster.trim() : "";
+  return {
+    type,
+    url,
+    ...(alt !== undefined ? { alt } : {}),
+    ...(poster ? { poster } : {}),
+  };
 }
 
 /** Public/runtime parse — drops items without a URL. */

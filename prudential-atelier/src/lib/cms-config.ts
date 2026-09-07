@@ -158,6 +158,21 @@ export const CMS_PAGES: CmsPageDef[] = [
         ],
       },
       {
+        id: "bridal",
+        label: "Bridal band",
+        fields: [
+          { key: "home_bridal_enabled", label: "Enabled", type: "toggle", default: "true" },
+          { key: "home_bridal_headline", label: "Headline", type: "text", default: "Bridal" },
+          {
+            key: "home_bridal_subtext",
+            label: "Subtext",
+            type: "textarea",
+            default: "Gowns for the day itself.",
+          },
+          { key: "home_bridal_cta_label", label: "CTA label", type: "text", default: "See bridal" },
+        ],
+      },
+      {
         id: "journey",
         label: "Bespoke Journey Section",
         fields: [
@@ -714,11 +729,33 @@ export const CMS_PAGES: CmsPageDef[] = [
     sections: [
       {
         id: "main",
-        label: "Page Header",
+        label: "Landing hero",
         fields: [
-          { key: "rtw_page_eyebrow", label: "Page eyebrow", type: "text", default: "THE COLLECTION" },
-          { key: "rtw_page_title", label: "Page title", type: "text", default: "Ready-to-Wear" },
-          { key: "rtw_page_subtitle", label: "Page subtitle", type: "text", default: "" },
+          {
+            key: "rtw_hero_carousel",
+            label: "Hero media (one image, or two to three slides)",
+            type: "carousel",
+            default: "[]",
+          },
+          {
+            key: "rtw_hero_headline",
+            label: "Headline",
+            type: "text",
+            default: "Cut in Lagos when you order",
+          },
+          {
+            key: "rtw_hero_subline",
+            label: "Subline",
+            type: "textarea",
+            default: "Made in Lagos. Ready in 7-12 days.",
+          },
+          { key: "rtw_hero_cta_label", label: "CTA label", type: "text", default: "See the collection" },
+          {
+            key: "rtw_promise_band",
+            label: "Bottom promise band",
+            type: "textarea",
+            default: "Every piece is made for you in 7-12 days.",
+          },
         ],
       },
     ],

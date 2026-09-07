@@ -3,8 +3,12 @@ import { redirect } from "next/navigation";
 import { queryProductList } from "@/lib/products-list-query";
 import { RTWPageClient } from "@/components/rtw/RTWPageClient";
 import { cmsGet, getCMSContent } from "@/lib/cms";
+import { resolveHeroCarouselItems } from "@/lib/hero-carousel";
 import { listLivePublishedCollections } from "@/lib/live-collections";
+import { prisma } from "@/lib/prisma";
 import { CATALOG_PAGE_SIZE, RTW_EXCLUDE_CATEGORY_QUERY, SHOP_ACCESSORIES, SHOP_LISTING } from "@/lib/rtw-aisle";
+import { rtwHeroCopy } from "@/lib/rtw-hero";
+import { isSkipDbBuild } from "@/lib/skip-db-build";
 
 export const revalidate = 300;
 
@@ -23,6 +27,16 @@ function flattenSearchParams(sp: Record<string, string | string[] | undefined>) 
   return u;
 }
 
+const RTW_CMS_KEYS = [
+  "rtw_hero_carousel",
+  "rtw_hero_headline",
+  "rtw_hero_subline",
+  "rtw_hero_cta_label",
+  "rtw_promise_band",
+  "rtw_page_title",
+  "rtw_page_subtitle",
+] as const;
+
 export default async function RTWPage({
   searchParams,
 }: {
@@ -39,11 +53,56 @@ export default async function RTWPage({
   u.set("limit", String(CATALOG_PAGE_SIZE));
   if (!u.get("sort")) u.set("sort", "featured");
 
-  const [{ products, total, page, totalPages, hasNext }, cms, live] = await Promise.all([
-    queryProductList(u, { isAdmin: false }),
-    getCMSContent(["rtw_page_eyebrow", "rtw_page_title", "rtw_page_subtitle"]),
-    listLivePublishedCollections(),
-  ]);
+  let products: Awaited<ReturnType<typeof queryProductList>>["products"] = [];
+  let total = 0;
+  let page = 1;
+  let totalPages = 1;
+  let hasNext = false;
+  let cms: Record<string, string> = {};
+  let collections: { name: string; slug: string }[] = [];
+  let carouselRaw: string | undefined;
+
+  try {
+    const listed = await queryProductList(u, { isAdmin: false });
+    products = listed.products;
+    total = listed.total;
+    page = listed.page;
+    totalPages = listed.totalPages;
+    hasNext = listed.hasNext;
+  } catch {
+    /* catalogue empty; hero still renders */
+  }
+
+  try {
+    cms = await getCMSContent([...RTW_CMS_KEYS]);
+  } catch {
+    cms = {};
+  }
+
+  try {
+    const live = await listLivePublishedCollections();
+    collections = live.map(({ collection }) => ({ name: collection.name, slug: collection.slug }));
+  } catch {
+    collections = [];
+  }
+
+  if (!isSkipDbBuild()) {
+    try {
+      const row = await prisma.siteSetting.findUnique({ where: { key: "rtw_hero_carousel" } });
+      carouselRaw = row?.value ?? cms.rtw_hero_carousel;
+    } catch {
+      carouselRaw = cms.rtw_hero_carousel;
+    }
+  }
+
+  const copy = rtwHeroCopy({
+    headline: cmsGet(cms, "rtw_hero_headline", ""),
+    legacyTitle: cmsGet(cms, "rtw_page_title", ""),
+    subline: cmsGet(cms, "rtw_hero_subline", ""),
+    legacySubtitle: cmsGet(cms, "rtw_page_subtitle", ""),
+    cta: cmsGet(cms, "rtw_hero_cta_label", ""),
+    promise: cmsGet(cms, "rtw_promise_band", ""),
+  });
 
   return (
     <RTWPageClient
@@ -52,10 +111,12 @@ export default async function RTWPage({
       page={page}
       totalPages={totalPages}
       hasNext={hasNext}
-      collections={live.map(({ collection }) => ({ name: collection.name, slug: collection.slug }))}
-      heroLabel={cmsGet(cms, "rtw_page_eyebrow", "THE COLLECTION")}
-      heroTitle={cmsGet(cms, "rtw_page_title", "Ready-to-Wear")}
-      heroSubtitle={cmsGet(cms, "rtw_page_subtitle", "")}
+      collections={collections}
+      heroItems={resolveHeroCarouselItems(carouselRaw)}
+      heroHeadline={copy.headline}
+      heroSubline={copy.subline}
+      heroCta={copy.cta}
+      promiseBand={copy.promise}
     />
   );
 }

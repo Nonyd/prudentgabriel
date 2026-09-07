@@ -3,7 +3,8 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { logError } from "@/lib/logger";
 import { AA0_LINES } from "@/lib/finance/aa0";
 import { customRange, financeRange, type FinancePeriodKind } from "@/lib/finance/period";
-import { bestSellingPieces, buildFinanceReport } from "@/lib/finance/query";
+import { buildFinanceReport } from "@/lib/finance/query";
+import { buildWhatsSelling } from "@/lib/finance/whats-selling";
 import type { FinanceLine } from "@/lib/finance/classify";
 
 function parseKind(raw: string | null): FinancePeriodKind {
@@ -31,10 +32,10 @@ export async function GET(req: NextRequest) {
         ? { ...customRange(fromParam, toParam), kind, label: `${fromParam} – ${toParam}`, prevFrom: new Date(0), prevTo: new Date(0), prevLabel: "" }
         : financeRange(kind, new Date());
 
-    const [current, previous, bestsellers] = await Promise.all([
+    const [current, previous, whatsSelling] = await Promise.all([
       buildFinanceReport(range.from, range.to, line),
       range.prevTo.getTime() > 0 ? buildFinanceReport(range.prevFrom, range.prevTo, line) : Promise.resolve(null),
-      bestSellingPieces(range.from, range.to),
+      buildWhatsSelling(range.from, range.to, range.prevFrom, range.prevTo),
     ]);
 
     return NextResponse.json({
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest) {
         rateNGN: current.pointsRateNGN,
         asOf: current.asOf,
       },
-      bestsellers,
+      whatsSelling,
       unassignedCount: current.unassigned.length,
     });
   } catch (e) {

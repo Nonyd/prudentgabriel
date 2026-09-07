@@ -17,6 +17,7 @@ import { getSetting } from "@/lib/settings";
 import { bespokeFromNGN, derivedCatalogMinNGN } from "@/lib/pricing";
 import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
 import { getProductCustomContext } from "@/lib/custom-context";
+import { unitsSoldByProductId } from "@/lib/finance/whats-selling";
 
 
 const RelatedProducts = nextDynamic(() => import("@/components/product/RelatedProducts").then((m) => ({ default: m.RelatedProducts })), {
@@ -107,21 +108,28 @@ export default async function ProductPage({ params }: { params: { slug: string }
     user: r.user,
   }));
 
-  const relatedRaw = await prisma.product.findMany({
-    where: {
-      category: product.category,
-      id: { not: product.id },
-      isPublished: true,
-    },
-    take: 4,
-    orderBy: { orderCount: "desc" },
-    include: {
-      images: { orderBy: { sortOrder: "asc" }, take: GALLERY_GRID_IMAGE_TAKE },
-      variants: { orderBy: { priceNGN: "asc" } },
-      colors: { take: 6 },
-      _count: { select: { reviews: true } },
-    },
-  });
+  const [relatedPool, units] = await Promise.all([
+    prisma.product.findMany({
+      where: {
+        category: product.category,
+        id: { not: product.id },
+        isPublished: true,
+      },
+      take: 24,
+      orderBy: { createdAt: "desc" },
+      include: {
+        images: { orderBy: { sortOrder: "asc" }, take: GALLERY_GRID_IMAGE_TAKE },
+        variants: { orderBy: { priceNGN: "asc" } },
+        colors: { take: 6 },
+        _count: { select: { reviews: true } },
+      },
+    }),
+    unitsSoldByProductId(),
+  ]);
+  const relatedRaw = relatedPool
+    .slice()
+    .sort((a, b) => (units.get(b.id) ?? 0) - (units.get(a.id) ?? 0) || b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, 4);
 
   const bundleProducts: ProductListItem[] = product.bundleItems.map((b) =>
     mapProductToListItem({
