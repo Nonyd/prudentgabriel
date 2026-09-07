@@ -101,10 +101,10 @@ function CarouselMedia({
   item: HeroCarouselItem;
   isCenter: boolean;
   isMuted: boolean;
-  videoRef?: React.RefObject<HTMLVideoElement | null>;
+  videoRef?: React.MutableRefObject<HTMLVideoElement | null>;
   onVideoEnded: () => void;
 }) {
-  const localRef = useRef<HTMLVideoElement>(null);
+  const localRef = useRef<HTMLVideoElement | null>(null);
   const endedRef = useRef(onVideoEnded);
   const mutedRef = useRef(isMuted);
   const [needsTap, setNeedsTap] = useState(false);
@@ -117,7 +117,7 @@ function CarouselMedia({
       if (!el) return;
       armInlineMuted(el);
       if (videoRef) {
-        (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = el;
+        videoRef.current = el;
       }
     },
     [videoRef],
@@ -257,7 +257,7 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
   // Assume a phone until matchMedia runs. iPhone's first paint must not get CSS 3D
   // perspective — Safari refuses muted autoplay inside a 3D containing block.
   const [isMobile, setIsMobile] = useState(true);
-  const centerVideoRef = useRef<HTMLVideoElement>(null);
+  const centerVideoRef = useRef<HTMLVideoElement | null>(null);
   const isPaused = useRef(false);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
