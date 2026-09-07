@@ -5,6 +5,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { sendStageApprovalReminderEmail } from "@/lib/email";
 import { createClientNotification, resolveUserIdByEmail } from "@/lib/customer-notifications";
+import { logServerError } from "@/lib/logger";
 
 const SEVENTY_TWO_HOURS_MS = 72 * 60 * 60 * 1000;
 
@@ -80,7 +81,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
       processed += 1;
     } catch (e) {
       failed += 1;
-      console.error("[stage-approval-reminders]", row.id, e);
+      await logServerError({ errorType: "CRON_STAGE_APPROVAL_REMINDER", error: e });
     }
   }
 

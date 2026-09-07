@@ -6,6 +6,7 @@ import { slugifyText } from "@/lib/utils";
 import { uniqueProductCountForCollection } from "@/lib/collection-products";
 import { revalidateCollection } from "@/lib/revalidate";
 import { revalidatePath } from "next/cache";
+import { logServerError } from "@/lib/logger";
 
 export async function GET() {
   const gate = await requireAdminApi("shop.products");
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
     if (code === "P2002") {
       return NextResponse.json({ error: "Slug already exists" }, { status: 409 });
     }
-    console.error(e);
+    await logServerError({ errorType: "ADMIN_COLLECTION_CREATE", error: e });
     return NextResponse.json({ error: "Create failed" }, { status: 500 });
   }
 }

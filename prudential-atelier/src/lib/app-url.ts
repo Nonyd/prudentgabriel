@@ -9,10 +9,34 @@ function stripTrailingSlashes(s: string): string {
  * valid for `new URL()` — prefix `https://` so metadata and links never throw.
  */
 function toAbsoluteHttpOrigin(raw: string): string {
-  const trimmed = stripTrailingSlashes(raw.trim());
+  const trimmed = raw.trim();
   if (!trimmed) return DEFAULT_DEV_APP_URL;
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `https://${trimmed}`;
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${stripTrailingSlashes(trimmed)}`;
+  try {
+    const parsed = new URL(candidate);
+    if (!parsed.hostname) return DEFAULT_DEV_APP_URL;
+    return stripTrailingSlashes(parsed.origin);
+  } catch {
+    return DEFAULT_DEV_APP_URL;
+  }
+}
+
+/** Join a stored path (`/admin/orders/x`) onto the public origin. Already-absolute http(s) is left as-is. */
+export function absolutePublicUrl(pathOrUrl: string): string {
+  const origin = getPublicAppUrl();
+  const raw = pathOrUrl.trim();
+  if (!raw) return origin;
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      const parsed = new URL(raw);
+      if (!parsed.hostname) return `${origin}${raw.startsWith("/") ? raw : `/${raw}`}`;
+      return raw;
+    } catch {
+      return `${origin}${raw.startsWith("/") ? raw : `/${raw}`}`;
+    }
+  }
+  const path = raw.startsWith("/") ? raw : `/${raw}`;
+  return `${origin}${path}`;
 }
 
 /**

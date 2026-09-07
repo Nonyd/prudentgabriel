@@ -7,7 +7,7 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
-import { logActivity } from "@/lib/logger";
+import { logActivity, logServerError } from "@/lib/logger";
 import { getNextStage, STAGE_ORDER, STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { buildStageEmailData, sendBespokeStageEmail } from "@/lib/bespoke-email";
 import { notifyStageAdvanced, createNotification } from "@/lib/notifications";
@@ -242,7 +242,7 @@ export async function completeOrderStage(params: {
         data: { emailSent: true, emailSentAt: new Date() },
       });
     } catch (emailErr) {
-      console.error("[bespoke-delivery-email]", emailErr);
+      await logServerError({ errorType: "BESPOKE_DELIVERY_EMAIL", error: emailErr });
     }
   } else {
     const emailData = buildStageEmailData({
@@ -267,7 +267,7 @@ export async function completeOrderStage(params: {
         });
       }
     } catch (emailErr) {
-      console.error("[bespoke-stage-email]", emailErr);
+      await logServerError({ errorType: "BESPOKE_STAGE_EMAIL", error: emailErr });
     }
   }
 
@@ -493,7 +493,9 @@ export async function requestStageApproval(params: {
     notes: gate.snapshot.notes,
     imageUrls: media.map((m) => m.url),
     approveUrl,
-  }).catch((e) => console.error("[stage-approval-email]", e));
+  }).catch((e) => {
+    void logServerError({ errorType: "STAGE_APPROVAL_EMAIL", error: e });
+  });
 
   const userId =
     (order.clientProfileId

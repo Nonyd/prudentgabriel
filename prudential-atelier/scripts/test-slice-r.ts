@@ -26,8 +26,11 @@ import {
 } from "../src/lib/custom-size";
 import { inchesToCm, isStandardSizeLabel, toCanonicalCm } from "../src/lib/sizing";
 import { canTransitionOrder } from "../src/lib/order-status";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { render } from "@react-email/render";
 import OrderConfirmationEmail from "../src/emails/OrderConfirmationEmail";
+import OrderProductionStartedEmail from "../src/emails/OrderProductionStartedEmail";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -100,13 +103,20 @@ function runPure() {
 
   assert(
     canTransitionOrder("CONFIRMED", "CUTTING", { fulfilmentKind: "MADE_TO_ORDER" }),
-    "MTO confirmed goes to cutting",
+    "MTO confirmed goes to production (CUTTING)",
   );
   assert(
     !canTransitionOrder("CONFIRMED", "PROCESSING", { fulfilmentKind: "MADE_TO_ORDER" }),
     "MTO skips pick-and-pack processing",
   );
   assert(canTransitionOrder("CONFIRMED", "PROCESSING", {}), "stock orders still process");
+
+  const ordersRoute = readFileSync(join(process.cwd(), "src/app/api/admin/orders/[id]/route.ts"), "utf8");
+  assert(ordersRoute.includes('"CUTTING"'), "admin order PATCH accepts CUTTING");
+  assert(ordersRoute.includes("sendOrderProductionStartedEmail"), "starting production emails the customer");
+  const toolbar = readFileSync(join(process.cwd(), "src/components/admin/AdminOrderToolbar.tsx"), "utf8");
+  assert(toolbar.includes('label: "Start production"'), "toolbar says Start production");
+  assert(!toolbar.includes("Start cutting"), "old Start cutting label is gone");
 }
 
 const stamp = `slice-r-${Date.now()}`;
@@ -270,6 +280,13 @@ async function runDb() {
   assert(html.includes("Bust"), "confirmation email carries bust");
   assert(html.includes("Waist"), "confirmation email carries waist");
   assert(html.includes("Made to your measurements"), "confirmation email labels custom");
+
+  const productionHtml = await render(
+    OrderProductionStartedEmail({ firstName: "Ada", orderNumber: customOrder.orderNumber }),
+  );
+  assert(productionHtml.includes("started making your piece"), "production email names making");
+  assert(productionHtml.includes(customOrder.orderNumber), "production email carries the order number");
+  assert(!productionHtml.toLowerCase().includes("start cutting"), "production email dropped cutting copy");
 }
 
 async function cleanup() {

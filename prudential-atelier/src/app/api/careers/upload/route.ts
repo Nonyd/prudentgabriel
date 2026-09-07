@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMediaStore } from "@/lib/media";
 import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
 import { rateLimitOr429 } from "@/lib/rate-limit";
+import { logServerError } from "@/lib/logger";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const FOLDER = "prudential-atelier/careers";
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ url: stored.url, publicId: stored.key });
   } catch (e) {
-    console.error("[careers/upload]", e);
+    await logServerError({ errorType: "CAREERS_UPLOAD", error: e });
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

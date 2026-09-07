@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { deleteOrdersByIds } from "@/lib/order-delete";
 import { releaseUnpaidCheckoutReservations } from "@/lib/checkout-reservations";
+import { logServerError } from "@/lib/logger";
 
 export async function GET(
   _req: NextRequest,
@@ -81,7 +82,7 @@ export async function DELETE(_req: NextRequest, context: { params: Promise<{ id:
       });
       return NextResponse.json({ ok: true, cancelled: true });
     }
-    console.error("[account/orders DELETE]", e);
+    await logServerError({ errorType: "ACCOUNT_ORDER_DELETE", error: e });
     return NextResponse.json({ error: "Delete failed" }, { status: 500 });
   }
 }

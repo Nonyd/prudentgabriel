@@ -4,6 +4,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { revalidateProduct } from "@/lib/revalidate";
 import { storedPublicMediaUrlSchema } from "@/lib/media/stored-url";
+import { logServerError } from "@/lib/logger";
 
 const bodySchema = z.object({
   url: storedPublicMediaUrlSchema,
@@ -23,6 +24,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
+  try {
   const product = await prisma.product.findUnique({
     where: { id: productId },
     select: { id: true, slug: true },
@@ -55,4 +57,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   await revalidateProduct(product.slug);
   return NextResponse.json(image);
+  } catch (e) {
+    await logServerError({ errorType: "ADMIN_PRODUCT_IMAGE", error: e });
+    return NextResponse.json({ error: "Could not save image" }, { status: 500 });
+  }
 }

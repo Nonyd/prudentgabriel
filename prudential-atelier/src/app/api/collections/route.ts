@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { listLivePublishedCollections } from "@/lib/live-collections";
+import { logServerError } from "@/lib/logger";
 
 const CACHE = "public, s-maxage=300, stale-while-revalidate=600";
 
@@ -25,7 +26,7 @@ export async function GET() {
 
     return NextResponse.json({ collections }, { headers: { "Cache-Control": CACHE } });
   } catch (e) {
-    console.error(e);
+    await logServerError({ errorType: "COLLECTIONS_LIST", error: e });
     return NextResponse.json({ error: "Failed to load collections" }, { status: 500 });
   }
 }

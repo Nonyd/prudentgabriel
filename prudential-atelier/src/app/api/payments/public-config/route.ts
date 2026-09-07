@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPublicPaymentConfig } from "@/lib/payments/config";
 import { parseBusinessLine } from "@/lib/payments/bank-account";
+import { logServerError } from "@/lib/logger";
 
 export const revalidate = 0;
 
@@ -12,7 +13,7 @@ export async function GET(req: NextRequest) {
       headers: { "Cache-Control": "private, no-store" },
     });
   } catch (e) {
-    console.error("[payments/public-config]", e);
+    await logServerError({ errorType: "PUBLIC_PAYMENT_CONFIG", error: e });
     return NextResponse.json({ error: "Failed to load payment config" }, { status: 500 });
   }
 }

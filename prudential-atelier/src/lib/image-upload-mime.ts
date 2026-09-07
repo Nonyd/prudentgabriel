@@ -75,6 +75,24 @@ export function resolveVideoMimeType(reportedType: string, fileName: string | un
   return (allowed as readonly string[]).includes(t) ? t : null;
 }
 
+export const CATALOGUE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+
+export const HEIC_CATALOGUE_MESSAGE =
+  "iPhone HEIC photos are not supported. Save as JPEG or PNG and try again.";
+
+/** Client-side guard before POST /api/admin/upload. Magic bytes are still checked on the server. */
+export function rejectedCatalogueImageFile(file: { name?: string; type?: string; size: number }): string | null {
+  const name = (file.name ?? "").toLowerCase();
+  const type = (file.type ?? "").toLowerCase();
+  if (name.endsWith(".heic") || name.endsWith(".heif") || type === "image/heic" || type === "image/heif") {
+    return HEIC_CATALOGUE_MESSAGE;
+  }
+  if (file.size > CATALOGUE_IMAGE_MAX_BYTES) {
+    return "Image must be 5MB or smaller. Compress the photo or export JPEG.";
+  }
+  return null;
+}
+
 /** ISO-BMFF brands used by iPhone stills (High Efficiency camera photos). Not screenshots — those are PNG. */
 const HEIF_BRANDS = new Set([
   "heic",

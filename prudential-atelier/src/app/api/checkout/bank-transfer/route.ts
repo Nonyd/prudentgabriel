@@ -86,6 +86,7 @@ export async function POST(req: NextRequest) {
     clientName,
     amountNGN: order.total,
     receiptUrl,
+    adminPath: `/admin/orders/${order.id}`,
   });
   notifyBankTransferReceipt({
     ref: order.orderNumber,

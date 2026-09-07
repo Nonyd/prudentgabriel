@@ -33,6 +33,7 @@ import {
   type TypedMeasurement,
 } from "@/lib/custom-size";
 import { resolveCustomCheckoutLine, syncProfileFromSnapshots } from "@/lib/custom-order-line";
+import { logServerError } from "@/lib/logger";
 
 function snapshotFromAddress(a: AddressInput) {
   return {
@@ -660,7 +661,7 @@ export async function POST(req: NextRequest) {
     if (e instanceof InsufficientPointsError) {
       return NextResponse.json({ error: "Insufficient points" }, { status: 400 });
     }
-    console.error("[orders/create]", e);
+    await logServerError({ errorType: "ORDER_CREATE", error: e });
     return NextResponse.json({ error: "Could not create order" }, { status: 500 });
   }
 }

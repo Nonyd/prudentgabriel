@@ -3,6 +3,7 @@ import { Prisma, ProductCategory, ProductType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { productAdminSchema } from "@/validations/product";
+import { logServerError } from "@/lib/logger";
 import { loadTakenSkus, resolvePreferredSku, uniqueSkuFromTaken } from "@/lib/product-sku";
 import { allocateProductSlug } from "@/lib/product-slug-unique";
 import { revalidateProduct } from "@/lib/revalidate";
@@ -122,7 +123,10 @@ export async function POST(req: NextRequest) {
 
   const parsed = productAdminSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Invalid request" },
+      { status: 400 },
+    );
   }
 
   const data = parsed.data;
@@ -266,7 +270,7 @@ export async function POST(req: NextRequest) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       return NextResponse.json({ error: "That stock code is already in use" }, { status: 409 });
     }
-    console.error("[admin/products POST]", e);
+    await logServerError({ errorType: "ADMIN_PRODUCT_CREATE", error: e });
     return NextResponse.json({ error: "Could not create product" }, { status: 500 });
   }
 }

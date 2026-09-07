@@ -11,6 +11,7 @@ import { bindSessionUser } from "@/lib/session-user";
 import { cachedRoleActorPatch, ensurePermissionCache } from "@/lib/permission-cache";
 import { resolveEffectivePermissionSet } from "@/lib/roles";
 import { serializePermissionSet } from "@/lib/permission-resolve";
+import { logServerError } from "@/lib/logger";
 import type { JWT } from "next-auth/jwt";
 
 const jwtUserSelect = {
@@ -208,7 +209,7 @@ const nextAuth = NextAuth({
 
         return token;
       } catch (err) {
-        console.error("[auth] jwt callback failed", err);
+        void logServerError({ errorType: "AUTH_JWT", error: err });
         return null;
       }
     },

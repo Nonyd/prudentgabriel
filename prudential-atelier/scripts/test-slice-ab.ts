@@ -4,9 +4,12 @@
  *   pnpm test:slice-ab
  */
 import "./preload-test-env";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { ProductCategory } from "@prisma/client";
 import { z } from "zod";
-import { mimeFromMagicBytes, isHeifMagic } from "../src/lib/image-upload-mime";
+import { mimeFromMagicBytes, isHeifMagic, rejectedCatalogueImageFile, HEIC_CATALOGUE_MESSAGE } from "../src/lib/image-upload-mime";
+import { mediaPutFailureMessage } from "../src/lib/media/put-error";
 import { isStoredReceiptMediaUrl, receiptMediaUrlSchema, storedPrivateMediaUrlSchema, emptyableStoredPublicMediaUrlSchema } from "../src/lib/media/stored-url";
 import { productAdminSchema } from "../src/validations/product";
 import { slugStemFromName } from "../src/lib/product-slug-unique";
@@ -73,6 +76,15 @@ async function run() {
   assert(mimeFromMagicBytes(heic) === null, "catalogue uploads still refuse HEIC");
   assert(mimeFromMagicBytes(heic, { allowHeic: true }) === "image/heic", "receipt route can recognise HEIC");
   assert(isHeifMagic(heic), "iPhone camera stills are HEIF");
+  assert(
+    rejectedCatalogueImageFile({ name: "IMG_0001.HEIC", type: "image/heic", size: 200_000 }) === HEIC_CATALOGUE_MESSAGE,
+    "product picker names HEIC before upload",
+  );
+  assert(rejectedCatalogueImageFile({ name: "gown.jpg", type: "image/jpeg", size: 200_000 }) === null, "jpeg is allowed");
+  assert(
+    mediaPutFailureMessage({ code: "EACCES" }).includes("permissions"),
+    "staging disk permission errors are named",
+  );
 
   const relative = "/media/private/prudential-atelier/receipts/d20f6ffd523b78a86cd2f916fa34af5d.jpg";
   assert(z.string().url().safeParse(relative).success === false, "z.string().url rejects the X5 path");
@@ -160,6 +172,16 @@ async function run() {
   setWizardKv(null);
 
   assert(slugStemFromName("The Avril Gown") === "the-avril-gown", "web address still comes from the name");
+
+  const loggerSrc = readFileSync(join(process.cwd(), "src/lib/logger.ts"), "utf8");
+  assert(loggerSrc.includes("export async function logServerError"), "server failures go to the Error Log");
+  const errorUi = readFileSync(join(process.cwd(), "src/components/admin/ErrorLogClient.tsx"), "utf8");
+  assert(errorUi.includes("row.stack"), "error log UI reads the stack column");
+  assert(!errorUi.includes("stackTrace"), "error log UI no longer looks for stackTrace");
+  const uploadSrc = readFileSync(join(process.cwd(), "src/app/api/admin/upload/route.ts"), "utf8");
+  assert(uploadSrc.includes("logServerError"), "product photo failures are written to the Error Log");
+  const clientRoute = readFileSync(join(process.cwd(), "src/app/api/logs/client/route.ts"), "utf8");
+  assert(clientRoute.includes("CLIENT_RENDER"), "browser crashes post into the Error Log");
 
   console.log("test:slice-ab passed");
 }

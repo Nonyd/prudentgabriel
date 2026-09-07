@@ -82,4 +82,27 @@ export async function logError(params: {
   }
 }
 
+/** Persist a thrown server failure to the admin Error Log. Always console.errors as well. */
+export async function logServerError(params: {
+  errorType: string;
+  error: unknown;
+  userId?: string;
+  orderId?: string;
+  url?: string;
+  severity?: ErrorSeverity;
+}): Promise<void> {
+  const message = params.error instanceof Error ? params.error.message : String(params.error);
+  const stack = params.error instanceof Error ? params.error.stack : undefined;
+  console.error(`[${params.errorType}]`, params.error);
+  await logError({
+    severity: params.severity ?? "WARNING",
+    errorType: params.errorType,
+    message: message.slice(0, 4000),
+    stack,
+    userId: params.userId,
+    orderId: params.orderId,
+    url: params.url,
+  });
+}
+
 export type { ActivityAction, ErrorSeverity };

@@ -17,6 +17,7 @@ import { notifyConsultationConfirmed } from "@/lib/customer-notifications";
 import { destroyStoredMedia } from "@/lib/media/destroy";
 import { executeConsultationCascade, previewConsultationCascade } from "@/lib/consultation-cascade-delete";
 import { ProductCascadeError } from "@/lib/product-cascade-delete";
+import { logServerError } from "@/lib/logger";
 
 const patchSchema = z.object({
   status: z.nativeEnum(ConsultationStatus).optional(),
@@ -241,14 +242,18 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       },
     });
     await Promise.all(
-      result.mediaUrls.map((url) => destroyStoredMedia(url).catch((err) => console.error("[consultation-cascade media]", url, err))),
+      result.mediaUrls.map((url) =>
+        destroyStoredMedia(url).catch((err) => {
+          void logServerError({ errorType: "CONSULTATION_CASCADE_MEDIA", error: err, url });
+        }),
+      ),
     );
     return NextResponse.json({ ok: true, logId: result.logId, deleted: result.deletedIds.length });
   } catch (e) {
     if (e instanceof ProductCascadeError) {
       return NextResponse.json({ error: e.message }, { status: e.status });
     }
-    console.error("[admin/consultations DELETE]", e);
+    await logServerError({ errorType: "ADMIN_CONSULTATION_DELETE", error: e });
     return NextResponse.json({ error: "Delete failed; nothing was removed" }, { status: 500 });
   }
 }

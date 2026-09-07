@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
     clientName: booking.clientName,
     amountNGN: booking.feeNGN,
     receiptUrl,
+    adminPath: `/admin/consultations/${booking.id}`,
   });
 
   return NextResponse.json({

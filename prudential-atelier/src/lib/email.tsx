@@ -6,6 +6,7 @@ import WelcomeCredentialsEmail, {
 import OrderConfirmationEmail from "@/emails/OrderConfirmationEmail";
 import type { OrderItemLine } from "@/emails/OrderConfirmationEmail";
 import OrderShippedEmail from "@/emails/OrderShippedEmail";
+import OrderProductionStartedEmail from "@/emails/OrderProductionStartedEmail";
 import BespokeConfirmationEmail from "@/emails/BespokeConfirmationEmail";
 import PasswordResetEmail from "@/emails/PasswordResetEmail";
 import AccountExistsEmail from "@/emails/AccountExistsEmail";
@@ -29,11 +30,13 @@ import ShippingQuoteEmail from "@/emails/ShippingQuoteEmail";
 import BespokeDeliveredEmail, { subjectBespokeDelivered } from "@/emails/BespokeDeliveredEmail";
 import ReceiptReminderEmail, { subjectReceiptReminder } from "@/emails/ReceiptReminderEmail";
 import type { LoyaltyTier } from "@prisma/client";
-import { getPublicAppUrl } from "@/lib/app-url";
+import { getPublicAppUrl, absolutePublicUrl } from "@/lib/app-url";
+import { emailSafeReceiptUrl } from "@/lib/media/receipt-src";
 import { CUSTOMER_HOUSE_NAME, EMAIL_LOGO_PX, customerLoginUrl } from "@/lib/customer-email";
 import { primeEmailBranding, emailLogoWhiteUrl } from "@/lib/email-branding";
 import { prisma } from "@/lib/prisma";
 import { queueEmail } from "@/lib/email-outbox";
+import { logError } from "@/lib/logger";
 import { getSetting } from "@/lib/settings";
 import { resolveAdminAlertEmail, resolveHrAlertEmail } from "@/lib/admin-alert-email";
 import { UNSUBSCRIBE_URL_PLACEHOLDER, EMAIL_PRIORITY_MARKETING } from "@/lib/email-priority";
@@ -65,7 +68,16 @@ export async function sendEmail(params: {
   headers?: Record<string, string>;
   defer?: boolean;
 }): Promise<void> {
-  await queueEmail(params);
+  try {
+    await queueEmail(params);
+  } catch (error) {
+    await logError({
+      severity: "WARNING",
+      errorType: "EMAIL_QUEUE",
+      message: `${params.template}: ${error instanceof Error ? error.message : "queue failed"}`,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+  }
 }
 
 export async function sendWelcomeEmail(
@@ -139,12 +151,18 @@ export async function sendBankTransferAdminNotification(params: {
   clientName: string;
   amountNGN: number;
   receiptUrl: string;
+  adminPath?: string;
 }): Promise<void> {
   const adminEmail = await resolveAdminAlertEmail(getSetting);
   if (!adminEmail) {
     console.log("[EMAIL bank-transfer-admin] no operational mailbox configured");
     return;
   }
+  const receiptHref = emailSafeReceiptUrl(params.receiptUrl);
+  const adminHref = params.adminPath ? absolutePublicUrl(params.adminPath) : "";
+  const adminLink = adminHref
+    ? ` · <a href="${escapeHtml(adminHref)}">Open in admin</a>`
+    : "";
   await sendEmail({
     to: adminEmail,
     subject: `[Bank transfer pending] ${params.ref}`,
@@ -154,7 +172,7 @@ export async function sendBankTransferAdminNotification(params: {
        <p><strong>Ref:</strong> ${escapeHtml(params.ref)}<br/>
        <strong>Client:</strong> ${escapeHtml(params.clientName)}<br/>
        <strong>Amount:</strong> ₦${params.amountNGN.toLocaleString("en-NG")}</p>
-       <p><a href="${escapeHtml(params.receiptUrl)}">View receipt</a></p>`,
+       <p><a href="${escapeHtml(receiptHref)}">View receipt</a>${adminLink}</p>`,
     ),
     template: "bank-transfer-admin",
     idempotencyKey: `bank-receipt-admin:${params.ref}`,
@@ -418,6 +436,25 @@ export async function sendReferralSuccessEmail(
     html,
     template: "referral-success",
     idempotencyKey: `referral-success:${to}:${friendFirstName}:${pointsEarned}`,
+  });
+}
+
+export async function sendOrderProductionStartedEmail(params: {
+  to: string;
+  firstName: string;
+  orderNumber: string;
+}): Promise<void> {
+  const html = await renderBrandedEmail(
+    <OrderProductionStartedEmail firstName={params.firstName} orderNumber={params.orderNumber} />,
+  );
+  await sendEmail({
+    to: params.to,
+    subject: `We've started making your piece — #${params.orderNumber}`,
+    html,
+    template: "order-production-started",
+    idempotencyKey: `order-production-started:${params.orderNumber}`,
+    relatedType: "Order",
+    relatedId: params.orderNumber,
   });
 }
 

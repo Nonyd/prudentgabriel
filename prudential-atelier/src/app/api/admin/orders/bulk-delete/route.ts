@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { deleteOrdersByIds } from "@/lib/order-delete";
+import { logServerError } from "@/lib/logger";
 
 const bodySchema = z.object({
   ids: z.array(z.string().min(1)).min(1),
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
     if (msg.includes("payment records")) {
       return NextResponse.json({ error: msg }, { status: 409 });
     }
-    console.error("[admin/orders/bulk-delete]", e);
+    await logServerError({ errorType: "ADMIN_ORDERS_BULK_DELETE", error: e });
     return NextResponse.json(
       { error: msg },
       { status: msg.includes("Maximum") ? 400 : 500 },

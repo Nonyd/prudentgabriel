@@ -5,6 +5,7 @@ import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
 import { rateLimitOr429 } from "@/lib/rate-limit";
 import { receiptRasterToJpeg } from "@/lib/receipt-raster";
 import { verifyReceiptUploadTicket } from "@/lib/receipt-upload-ticket";
+import { logServerError } from "@/lib/logger";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const FOLDER = "prudential-atelier/receipts";
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
       storedMime = "image/jpeg";
       storedName = fileName?.replace(/\.(heic|heif)$/i, ".jpg") ?? "receipt.jpg";
     } catch (e) {
-      console.error("[upload/receipt] heic", e);
+      await logServerError({ errorType: "RECEIPT_HEIC", error: e });
       return NextResponse.json(
         { error: "Could not read this iPhone photo. Try saving it as a JPG, or take the photo again." },
         { status: 400 },
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ url: stored.url, publicId: stored.key });
   } catch (e) {
-    console.error("[upload/receipt]", e);
+    await logServerError({ errorType: "RECEIPT_UPLOAD", error: e });
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { confirmBespokeReceipt, ReceiptConfirmError } from "@/lib/bespoke-receipt";
 import { prisma } from "@/lib/prisma";
 import { createClientNotification } from "@/lib/customer-notifications";
+import { logServerError } from "@/lib/logger";
 
 type Params = { params: Promise<{ token: string }> };
 
@@ -40,7 +41,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
     if (e instanceof ReceiptConfirmError) {
       return NextResponse.json({ error: e.message }, { status: e.status });
     }
-    console.error("[receipt/confirm]", e);
+    await logServerError({ errorType: "RECEIPT_CONFIRM", error: e });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

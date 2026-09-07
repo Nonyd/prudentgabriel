@@ -15,7 +15,7 @@ const PICKUP_STATUSES: OrderStatus[] = [
   "COLLECTED",
 ];
 
-const MTO_DELIVERY_LABELS = ["Placed", "Confirmed", "Cutting", "Making", "Shipped", "Delivered"] as const;
+const MTO_DELIVERY_LABELS = ["Placed", "Confirmed", "Production", "Making", "Shipped", "Delivered"] as const;
 const MTO_DELIVERY_STATUSES: OrderStatus[] = [
   "PENDING",
   "CONFIRMED",
@@ -25,7 +25,7 @@ const MTO_DELIVERY_STATUSES: OrderStatus[] = [
   "DELIVERED",
 ];
 
-const MTO_PICKUP_LABELS = ["Placed", "Confirmed", "Cutting", "Making", "Ready", "Collected"] as const;
+const MTO_PICKUP_LABELS = ["Placed", "Confirmed", "Production", "Making", "Ready", "Collected"] as const;
 const MTO_PICKUP_STATUSES: OrderStatus[] = [
   "PENDING",
   "CONFIRMED",

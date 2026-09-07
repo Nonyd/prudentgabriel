@@ -8,6 +8,7 @@ import {
   previewProductCascade,
   ProductCascadeError,
 } from "@/lib/product-cascade-delete";
+import { logServerError } from "@/lib/logger";
 
 const bodySchema = z.object({
   ids: z.array(z.string().min(1)).min(1).max(100),
@@ -20,7 +21,11 @@ function clientIp(req: NextRequest): string | null {
 
 async function afterCascade(mediaUrls: string[], slugs: string[]) {
   await Promise.all(
-    mediaUrls.map((url) => destroyStoredMedia(url).catch((err) => console.error("[product-cascade media]", url, err))),
+    mediaUrls.map((url) =>
+      destroyStoredMedia(url).catch((err) => {
+        void logServerError({ errorType: "PRODUCT_CASCADE_MEDIA", error: err, url });
+      }),
+    ),
   );
   await Promise.all(slugs.map((slug) => revalidateProduct(slug).catch(() => undefined)));
 }
@@ -70,7 +75,7 @@ export async function POST(req: NextRequest) {
     if (e instanceof ProductCascadeError) {
       return NextResponse.json({ error: e.message }, { status: e.status });
     }
-    console.error("[admin/products/cascade]", e);
+    await logServerError({ errorType: "ADMIN_PRODUCT_CASCADE", error: e });
     return NextResponse.json({ error: "Delete failed; nothing was removed" }, { status: 500 });
   }
 }

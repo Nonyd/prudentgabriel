@@ -14,7 +14,7 @@ type ErrorRow = {
   severity: ErrorSeverity;
   errorType: string;
   message: string;
-  stackTrace: string | null;
+  stack: string | null;
   resolved: boolean;
   userId: string | null;
   orderId: string | null;
@@ -159,6 +159,8 @@ export function ErrorLogClient() {
       <div className="card-surface overflow-hidden">
         {loading ? (
           <p className="p-6 font-sans text-sm text-text-mid">Loading…</p>
+        ) : items.length === 0 ? (
+          <p className="p-6 font-sans text-sm text-text-mid">No errors recorded.</p>
         ) : (
           <div className="divide-y divide-sand/60">
             {items.map((row) => (
@@ -188,9 +190,9 @@ export function ErrorLogClient() {
                     </Button>
                   )}
                 </div>
-                {expanded === row.id && row.stackTrace ? (
+                {expanded === row.id && row.stack ? (
                   <pre className="overflow-x-auto bg-choc/5 px-4 py-3 font-mono text-[11px] text-text-mid">
-                    {row.stackTrace}
+                    {row.stack}
                   </pre>
                 ) : null}
               </div>

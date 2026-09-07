@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { createAdminNotification } from "@/lib/notify";
 import { createStaffNotification } from "@/lib/staff-notifications";
 import { sendAdminNotificationEmail, sendEmail } from "@/lib/email";
+import { logServerError } from "@/lib/logger";
 import { getPublicAppUrl } from "@/lib/app-url";
 
 const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
@@ -125,7 +126,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
       processed += 1;
     } catch (e) {
       failed += 1;
-      console.error("[unsent-quote-alerts]", booking.id, e);
+      await logServerError({ errorType: "CRON_UNSENT_QUOTE", error: e });
     }
   }
 

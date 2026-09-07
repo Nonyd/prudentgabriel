@@ -123,6 +123,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ orderId: s
     clientName: order.clientName,
     amountNGN: payAmountNGN,
     receiptUrl: parsed.data.receiptUrl,
+    adminPath: `/admin/bespoke/${order.id}`,
   });
   notifyBankTransferReceipt({
     ref: order.orderRef,

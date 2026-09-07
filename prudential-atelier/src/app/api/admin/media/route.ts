@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getMediaStore } from "@/lib/media";
 import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
 import { sanitizeUploadFolder } from "@/lib/admin-upload-folder";
+import { logServerError } from "@/lib/logger";
 
 const PAGE_SIZE = 20;
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(item);
   } catch (e) {
-    console.error("[admin/media POST]", e);
+    await logServerError({ errorType: "ADMIN_MEDIA_UPLOAD", error: e });
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

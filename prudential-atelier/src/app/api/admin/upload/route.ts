@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMediaStore } from "@/lib/media";
 import { folderIsPrivate, sanitizeUploadFolder } from "@/lib/admin-upload-folder";
 import { gateUploadFolder } from "@/lib/media/gate-upload";
-import { mimeFromMagicBytes, mimeFromVideoMagicBytes } from "@/lib/image-upload-mime";
+import { HEIC_CATALOGUE_MESSAGE, isHeifMagic, mimeFromMagicBytes, mimeFromVideoMagicBytes } from "@/lib/image-upload-mime";
+import { mediaPutFailureMessage } from "@/lib/media/put-error";
 import { COLLECTION_REEL_FOLDER, MAX_COLLECTION_REEL_BYTES } from "@/lib/collection-reel-limits";
+import { logServerError } from "@/lib/logger";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
@@ -37,7 +39,13 @@ export async function POST(req: NextRequest) {
   const maxBytes = reelUpload ? MAX_COLLECTION_REEL_BYTES : allowVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
   if (raw.size > maxBytes) {
     return NextResponse.json(
-      { error: reelUpload ? "Reel must be under 10MB" : "File is too large" },
+      {
+        error: reelUpload
+          ? "Reel must be under 10MB"
+          : allowVideo
+            ? "File is too large"
+            : "Image must be 5MB or smaller. Compress the photo or export JPEG.",
+      },
       { status: 400 },
     );
   }
@@ -54,6 +62,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Reels must be H.264 MP4" }, { status: 400 });
     }
   } else if (!magic) {
+    if (isHeifMagic(buffer)) {
+      return NextResponse.json({ error: HEIC_CATALOGUE_MESSAGE }, { status: 400 });
+    }
     return NextResponse.json(
       { error: allowPdf ? "Only JPEG, PNG, WebP, or PDF files are allowed" : "Only JPEG, PNG, or WebP images are allowed" },
       { status: 400 },
@@ -77,7 +88,12 @@ export async function POST(req: NextRequest) {
       originalName: stored.originalName,
     });
   } catch (e) {
-    console.error("[admin/upload]", e);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    const code = typeof e === "object" && e !== null && "code" in e ? String((e as { code?: unknown }).code) : "";
+    await logServerError({
+      errorType: "ADMIN_UPLOAD",
+      error: e,
+      severity: code === "EACCES" || code === "EPERM" || code === "EROFS" || code === "ENOSPC" ? "CRITICAL" : "WARNING",
+    });
+    return NextResponse.json({ error: mediaPutFailureMessage(e) }, { status: 500 });
   }
 }

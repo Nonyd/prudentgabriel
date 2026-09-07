@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidateProduct } from "@/lib/revalidate";
 import { isLegacyWordPressImageUrl } from "@/lib/product-image-url";
 import { uploadProductImageFromUrl } from "@/lib/product-image-migrate";
+import { logServerError } from "@/lib/logger";
 
 const bodySchema = z.object({
   sourceUrl: z.string().url(),
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
     return NextResponse.json({ url: updated.url });
   } catch (e) {
-    console.error("[admin/products reupload]", e);
+    await logServerError({ errorType: "ADMIN_PRODUCT_REUPLOAD", error: e });
     return NextResponse.json({ error: "Could not migrate image — source may be unreachable" }, { status: 502 });
   }
 }

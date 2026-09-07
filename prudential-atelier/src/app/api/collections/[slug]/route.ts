@@ -4,6 +4,7 @@ import {
   sortCollectionProducts,
 } from "@/lib/collection-products";
 import { findLivePublishedCollection } from "@/lib/live-collections";
+import { logServerError } from "@/lib/logger";
 
 const CACHE = "public, s-maxage=60, stale-while-revalidate=120";
 
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ slug: strin
 
     return NextResponse.json(payload, { headers: { "Cache-Control": CACHE } });
   } catch (e) {
-    console.error(e);
+    await logServerError({ errorType: "COLLECTION_DETAIL", error: e });
     return NextResponse.json({ error: "Failed to load collection" }, { status: 500 });
   }
 }

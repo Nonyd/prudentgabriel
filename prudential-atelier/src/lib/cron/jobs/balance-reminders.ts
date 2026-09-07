@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { notifyBalanceReminder } from "@/lib/customer-notifications";
+import { logServerError } from "@/lib/logger";
 
 const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 const REMINDER_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
@@ -101,7 +102,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
       processed += 1;
     } catch (e) {
       failed += 1;
-      console.error("[balance-reminders]", order.id, e);
+      await logServerError({ errorType: "CRON_BALANCE_REMINDER", error: e, orderId: order.id });
     }
   }
 

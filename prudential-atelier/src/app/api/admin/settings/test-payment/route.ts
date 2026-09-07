@@ -10,6 +10,7 @@ import {
   getPaystackSecret,
   getStripeSecret,
 } from "@/lib/payments/config";
+import { logServerError } from "@/lib/logger";
 
 const bodySchema = z.object({
   gateway: z.enum(["paystack", "flutterwave", "stripe", "monnify"]),
@@ -103,7 +104,7 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ ok: true, message: "Monnify credentials accepted" });
   } catch (e) {
-    console.error("[test-payment]", e);
+    await logServerError({ errorType: "ADMIN_TEST_PAYMENT", error: e });
     return NextResponse.json({ ok: false, message: "Connection test failed" }, { status: 500 });
   }
 }

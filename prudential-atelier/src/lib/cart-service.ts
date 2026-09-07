@@ -12,6 +12,7 @@ import {
 import { getCustomGlobals } from "@/lib/custom-settings";
 import { effectiveUnitNGN } from "@/lib/pricing";
 import { assertCustomLineAllowed } from "@/lib/custom-availability";
+import { logServerError } from "@/lib/logger";
 
 function isMissingCartUserError(error: unknown): boolean {
   if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2003") {
@@ -133,7 +134,7 @@ export async function addCartLine(userId: string, input: CartLineInput) {
     if (isMissingCartUserError(error)) {
       return { ok: false as const, status: 401, error: "Please sign in again." };
     }
-    console.error("[cart] addCartLine failed", error);
+    await logServerError({ errorType: "CART_ADD_LINE", error });
     return { ok: false as const, status: 400, error: "Could not add to bag." };
   }
 }
@@ -227,7 +228,7 @@ async function addCustomLine(
     if (isMissingCartUserError(error)) {
       return { ok: false as const, status: 401, error: "Please sign in again." };
     }
-    console.error("[cart] addCustomLine failed", error);
+    await logServerError({ errorType: "CART_ADD_CUSTOM", error });
     return { ok: false as const, status: 400, error: "Could not add to bag." };
   }
 }
@@ -313,7 +314,7 @@ export async function changeCartLineSize(userId: string, itemId: string, variant
     if (isMissingCartUserError(error)) {
       return { ok: false as const, status: 401, error: "Please sign in again." };
     }
-    console.error("[cart] changeCartLineSize failed", error);
+    await logServerError({ errorType: "CART_CHANGE_SIZE", error });
     return { ok: false as const, status: 400, error: "Could not change size." };
   }
 }

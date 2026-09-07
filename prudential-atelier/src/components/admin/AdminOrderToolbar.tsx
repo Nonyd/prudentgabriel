@@ -27,7 +27,7 @@ const NEXT_OPTIONS: Partial<Record<OrderStatus, { value: OrderStatus; label: str
   PENDING: [{ value: "CONFIRMED", label: "Confirm" }],
   CONFIRMED: [
     { value: "PROCESSING", label: "Mark processing" },
-    { value: "CUTTING", label: "Start cutting" },
+    { value: "CUTTING", label: "Start production" },
   ],
   CUTTING: [{ value: "MAKING", label: "Start making" }],
   MAKING: [
@@ -348,7 +348,7 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
       <p className="font-label text-xs uppercase text-[#A8A8A4]">Admin</p>
       {unpaid ? (
         <p className="mt-2 font-body text-sm text-[#C45E0A]">
-          Payment is not approved yet. Use Proof of payment above before cutting or shipping.
+          Payment is not approved yet. Use Proof of payment above before production or shipping.
         </p>
       ) : null}
       {outstanding ? (

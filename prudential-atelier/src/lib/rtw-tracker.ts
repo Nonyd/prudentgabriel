@@ -60,7 +60,7 @@ const STATUS_COPY: Record<OrderStatus, string> = {
   PENDING: "Waiting for payment",
   CONFIRMED: "Paid — we are preparing it",
   PROCESSING: "Being packed",
-  CUTTING: "Being cut",
+  CUTTING: "In production",
   MAKING: "Being sewn",
   SHIPPED: "On its way",
   DELIVERED: "Delivered",

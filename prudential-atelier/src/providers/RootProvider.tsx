@@ -4,6 +4,7 @@ import { SessionProvider } from "next-auth/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import { useState } from "react";
+import { ClientErrorReporter } from "@/components/common/ClientErrorReporter";
 import type { Session } from "next-auth";
 import { CurrencyProvider } from "@/providers/CurrencyProvider";
 import { CartSyncProvider } from "@/providers/CartSyncProvider";
@@ -40,6 +41,7 @@ export function RootProvider({ children, session, logos }: RootProviderProps) {
           <QueryClientProvider client={queryClient}>
             <CurrencyProvider>
               <CartSyncProvider>
+                <ClientErrorReporter />
                 <AuthLinkInterceptor />
                 {children}
                 <AuthModal />

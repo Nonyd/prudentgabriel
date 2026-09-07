@@ -12,7 +12,8 @@ import {
 import { generateCollectionCode, normalizeCollectionCode } from "@/lib/shipping/collection";
 import { awardPurchasePoints, returnRedeemedPoints } from "@/lib/points";
 import { releaseUnpaidCheckoutReservations } from "@/lib/checkout-reservations";
-import { sendOrderShippedEmail, sendPickupReadyEmail, sendRtwOrderDeliveredEmail } from "@/lib/email";
+import { sendOrderProductionStartedEmail, sendOrderShippedEmail, sendPickupReadyEmail, sendRtwOrderDeliveredEmail } from "@/lib/email";
+import { logServerError } from "@/lib/logger";
 import { notifyOrderDelivered, notifyOrderShipped } from "@/lib/customer-notifications";
 import { deleteOrdersByIds } from "@/lib/order-delete";
 import { rtwHasOutstandingBalance } from "@/lib/payments/rtw-totals";
@@ -27,6 +28,8 @@ const patchSchema = z.object({
       "PENDING",
       "CONFIRMED",
       "PROCESSING",
+      "CUTTING",
+      "MAKING",
       "SHIPPED",
       "DELIVERED",
       "READY_FOR_COLLECTION",
@@ -81,6 +84,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  try {
   const refundTry = recordRefundSchema.safeParse(body);
   if (refundTry.success) {
     const order = await prisma.order.findUnique({ where: { id } });
@@ -145,7 +149,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Invalid request" },
+      { status: 400 },
+    );
   }
 
   const order = await prisma.order.findUnique({ where: { id } });
@@ -284,6 +291,14 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   if (cancelWrites.length) await afterStockWrites(cancelWrites);
 
+  if (parsed.data.status === "CUTTING" && email) {
+    void sendOrderProductionStartedEmail({
+      to: email,
+      firstName,
+      orderNumber: order.orderNumber,
+    });
+  }
+
   if (parsed.data.status === "READY_FOR_COLLECTION" && email) {
     const pickup = order.pickupLocationId
       ? await prisma.pickupLocation.findUnique({ where: { id: order.pickupLocationId } })
@@ -334,6 +349,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 
   return NextResponse.json(updated);
+  } catch (e) {
+    await logServerError({ errorType: "ADMIN_ORDER_PATCH", error: e, orderId: id });
+    return NextResponse.json({ error: "Could not update order" }, { status: 500 });
+  }
 }
 
 export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -352,7 +371,7 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
     if (msg.includes("payment records")) {
       return NextResponse.json({ error: msg }, { status: 409 });
     }
-    console.error("[admin/orders DELETE]", e);
+    await logServerError({ errorType: "ADMIN_ORDER_DELETE", error: e, orderId: id });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

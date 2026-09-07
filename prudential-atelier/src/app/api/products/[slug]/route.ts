@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
+import { logServerError } from "@/lib/logger";
 
 export const revalidate = 60;
 
@@ -73,7 +74,7 @@ export async function GET(
       { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" } },
     );
   } catch (e) {
-    console.error(e);
+    await logServerError({ errorType: "PRODUCT_DETAIL", error: e });
     return NextResponse.json({ error: "Failed to load product" }, { status: 500 });
   }
 }

@@ -11,7 +11,8 @@ import { createLocalDiskMediaStore, setMediaStoreForTest } from "../src/lib/medi
 import { streamMediaKey } from "../src/lib/media/stream";
 import { folderFromMediaKey, isValidMediaKey, keyFromMediaUrl } from "../src/lib/media/keys";
 import { signMediaKey, verifyMediaSignature } from "../src/lib/media/signed";
-import { adminReceiptSrc } from "../src/lib/media/receipt-src";
+import { adminReceiptSrc, emailSafeReceiptUrl } from "../src/lib/media/receipt-src";
+import { absolutePublicUrl, getPublicAppUrl } from "../src/lib/app-url";
 import { mimeFromMagicBytes, mimeFromVideoMagicBytes, isHeifMagic } from "../src/lib/image-upload-mime";
 import { permissionForUploadFolder, UI_UPLOAD_FOLDERS, folderIsPrivate } from "../src/lib/admin-upload-folder";
 import { classifyMediaUrl, folderFromCloudinaryUrl } from "../src/lib/media/migrate-plan";
@@ -196,6 +197,21 @@ async function run() {
     const allowed = await streamMediaKey(receipt.key, { allowPrivate: true, cache: "private" });
     assert(allowed.status === 200, "private file streams when allowed");
     assert(adminReceiptSrc(receipt.url).startsWith("/api/admin/media/file/"), "admin lightbox path");
+    const prevApp = process.env.NEXT_PUBLIC_APP_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "https://staging.prudentgabriel.com";
+    process.env.AUTH_SECRET ??= "test-slice-x-auth-secret";
+    const mailHref = emailSafeReceiptUrl(receipt.url);
+    assert(mailHref.startsWith("https://staging.prudentgabriel.com/api/media/signed?"), "email receipt is an absolute signed URL");
+    assert(!mailHref.startsWith("http:///"), "email receipt is not a host-less http:/// link");
+    assert(
+      absolutePublicUrl("/admin/orders/abc").startsWith("https://staging.prudentgabriel.com/admin/orders/"),
+      "admin path is absolutized for email",
+    );
+    process.env.NEXT_PUBLIC_APP_URL = "http://";
+    assert(getPublicAppUrl() === "http://localhost:3000", "empty APP_URL host is not used in links");
+    process.env.NEXT_PUBLIC_APP_URL = prevApp;
+    const emailSrc = await readFile(join(process.cwd(), "src/lib/email.tsx"), "utf8");
+    assert(emailSrc.includes("emailSafeReceiptUrl"), "bank-transfer admin email uses a signed absolute receipt link");
 
     const exp = Math.floor(Date.now() / 1000) + 60;
     const sig = signMediaKey(receipt.key, exp);
@@ -234,6 +250,10 @@ async function run() {
       assert(src.includes("mimeFromMagicBytes"), `${rel} must validate magic bytes`);
       assert(src.includes("getMediaStore"), `${rel} must go through MediaStore`);
     }
+
+    const adminUpload = await readFile(join(process.cwd(), "src/app/api/admin/upload/route.ts"), "utf8");
+    assert(adminUpload.includes("isHeifMagic"), "admin upload names HEIC");
+    assert(adminUpload.includes("mediaPutFailureMessage"), "admin upload maps disk errors");
 
     assert(classifyMediaUrl("https://res.cloudinary.com/x/image/upload/v1/a/b.jpg").action === "copy", "cloudinary is copy");
     assert(classifyMediaUrl("/media/public/a/b.jpg").action === "already-local", "local is skipped");

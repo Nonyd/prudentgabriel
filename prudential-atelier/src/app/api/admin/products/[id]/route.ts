@@ -12,6 +12,7 @@ import { processRestockAlerts } from "@/lib/stock-alerts";
 import { destroyStoredMedia } from "@/lib/media/destroy";
 import { executeProductCascade, previewProductCascade, ProductCascadeError } from "@/lib/product-cascade-delete";
 import { applyCountCorrection, applyOpening, afterStockWrites, syncProductInStock, type StockWriteResult } from "@/lib/stock-ledger";
+import { logServerError } from "@/lib/logger";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi("shop.products");
@@ -137,7 +138,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const parsed = productAdminSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Invalid request" },
+      { status: 400 },
+    );
   }
 
   const data = parsed.data;
@@ -361,7 +365,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       return NextResponse.json({ error: "That stock code is already in use" }, { status: 409 });
     }
-    console.error("[admin/products PATCH]", e);
+    await logServerError({ errorType: "ADMIN_PRODUCT_UPDATE", error: e });
     return NextResponse.json({ error: "Could not update product" }, { status: 500 });
   }
 }
@@ -398,7 +402,11 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
     });
 
     await Promise.all(
-      result.mediaUrls.map((url) => destroyStoredMedia(url).catch((err) => console.error("[product-cascade media]", url, err))),
+      result.mediaUrls.map((url) =>
+        destroyStoredMedia(url).catch((err) => {
+          void logServerError({ errorType: "PRODUCT_CASCADE_MEDIA", error: err, url });
+        }),
+      ),
     );
     await Promise.all(result.slugs.map((slug) => revalidateProduct(slug).catch(() => undefined)));
     return NextResponse.json({ ok: true, logId: result.logId, deleted: result.deletedProductIds.length });
@@ -406,7 +414,7 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
     if (e instanceof ProductCascadeError) {
       return NextResponse.json({ error: e.message }, { status: e.status });
     }
-    console.error("[admin/products DELETE]", e);
+    await logServerError({ errorType: "ADMIN_PRODUCT_DELETE", error: e });
     return NextResponse.json({ error: "Delete failed; nothing was removed" }, { status: 500 });
   }
 }

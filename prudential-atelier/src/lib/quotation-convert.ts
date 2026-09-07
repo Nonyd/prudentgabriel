@@ -9,6 +9,7 @@ import {
   getBespokeDepositPercent,
 } from "@/lib/payments/ledger";
 import type { InvoiceLineItem } from "@/types/invoice";
+import { logServerError } from "@/lib/logger";
 
 type QuotationRecord = {
   id: string;
@@ -200,6 +201,6 @@ export async function maybeAutoConvertApprovedQuote(quoteId: string): Promise<vo
     await convertQuotationToOrder(quote);
   } catch (e) {
     if (e instanceof Error && e.message === "ALREADY_CONVERTED") return;
-    console.error("[auto-convert-quote]", e);
+    await logServerError({ errorType: "QUOTE_AUTO_CONVERT", error: e });
   }
 }

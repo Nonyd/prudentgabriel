@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getMediaStore } from "@/lib/media";
 import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
 import { revalidateGallery } from "@/lib/revalidate";
+import { logServerError } from "@/lib/logger";
 
 const PAGE_DEFAULT = 30;
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -112,7 +113,7 @@ export async function POST(req: NextRequest) {
     await revalidateGallery(category);
     return NextResponse.json(row);
   } catch (e) {
-    console.error("[admin/gallery POST]", e);
+    await logServerError({ errorType: "ADMIN_GALLERY_UPLOAD", error: e });
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

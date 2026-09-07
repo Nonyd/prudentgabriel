@@ -17,6 +17,7 @@ import { buildDefaultProductSku, isGeneratedProductSku } from "@/lib/product-sku
 import { getPublicAppUrl } from "@/lib/app-url";
 import { cn } from "@/lib/utils";
 import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
+import { rejectedCatalogueImageFile } from "@/lib/image-upload-mime";
 import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 import { saleFigureIsDormant } from "@/lib/pricing";
 import { isLegacyWordPressImageUrl } from "@/lib/product-image-url";
@@ -391,6 +392,10 @@ export function ProductFormPage({
     setUploadProgress(0);
     try {
       const list = Array.from(files);
+      for (const file of list) {
+        const blocked = rejectedCatalogueImageFile(file);
+        if (blocked) throw new Error(blocked);
+      }
       let done = 0;
       for (const file of list) {
         const url = await uploadAdminAsset(file, "prudential-atelier/products", (p) => {
@@ -415,6 +420,11 @@ export function ProductFormPage({
 
   const uploadColorFile = async (index: number, file: File | undefined) => {
     if (!file) return;
+    const blocked = rejectedCatalogueImageFile(file);
+    if (blocked) {
+      toast.error(blocked);
+      return;
+    }
     setColorUploading(index);
     try {
       const url = await uploadAdminAsset(file, "prudential-atelier/products");
@@ -737,7 +747,8 @@ export function ProductFormPage({
                 <Req />
               </h2>
               <p className="mt-2 font-body text-sm text-choc/60">
-                This is the piece. At least one photo before you publish. A draft can wait.
+                This is the piece. At least one photo before you publish. A draft can wait. JPEG, PNG, or
+                WebP only, under 5MB — iPhone HEIC photos will be refused.
               </p>
               <label className="mt-4 flex min-h-[120px] cursor-pointer flex-col items-center justify-center rounded-[26px] border border-dashed border-[var(--glass-edge)] bg-[var(--glass-1-solid)] px-6 py-8 font-body text-base text-choc/60 hover:border-choc/40">
                 <input

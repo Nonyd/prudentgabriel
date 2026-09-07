@@ -4,6 +4,7 @@ import { requireAdminApi, requireSuperAdminApi } from "@/lib/admin-auth";
 import { destroyStoredMedia } from "@/lib/media/destroy";
 import { executeConsultationCascade, previewConsultationCascade } from "@/lib/consultation-cascade-delete";
 import { ProductCascadeError } from "@/lib/product-cascade-delete";
+import { logServerError } from "@/lib/logger";
 
 const bodySchema = z.object({
   ids: z.array(z.string().min(1)).min(1).max(50),
@@ -51,7 +52,11 @@ export async function POST(req: NextRequest) {
     });
 
     await Promise.all(
-      result.mediaUrls.map((url) => destroyStoredMedia(url).catch((err) => console.error("[consultation-cascade media]", url, err))),
+      result.mediaUrls.map((url) =>
+        destroyStoredMedia(url).catch((err) => {
+          void logServerError({ errorType: "CONSULTATION_CASCADE_MEDIA", error: err, url });
+        }),
+      ),
     );
 
     return NextResponse.json({
@@ -64,7 +69,7 @@ export async function POST(req: NextRequest) {
     if (e instanceof ProductCascadeError) {
       return NextResponse.json({ error: e.message }, { status: e.status });
     }
-    console.error("[admin/consultations/cascade]", e);
+    await logServerError({ errorType: "ADMIN_CONSULTATION_CASCADE", error: e });
     return NextResponse.json({ error: "Delete failed; nothing was removed" }, { status: 500 });
   }
 }

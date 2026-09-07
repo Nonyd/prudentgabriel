@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { passwordPolicySchema } from "@/lib/password-policy";
 import { applyPasswordHash, hashResetToken } from "@/lib/password-reset";
 import { rateLimitOr429 } from "@/lib/rate-limit";
+import { logServerError } from "@/lib/logger";
 
 const bodySchema = z
   .object({
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
     await applyPasswordHash(session.user.id, hashed);
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("[reset-password]", err);
+    await logServerError({ errorType: "RESET_PASSWORD", error: err });
     return NextResponse.json({ error: "Could not update password" }, { status: 500 });
   }
 }

@@ -8,6 +8,7 @@ import { collectionListProductInclude, mapProductToListItemWithMeta } from "@/li
 import { revalidateCollection } from "@/lib/revalidate";
 import { revalidatePath } from "next/cache";
 import { previewUnpublishImpact, unpublishCollectionProducts } from "@/lib/collection-publish";
+import { logServerError } from "@/lib/logger";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi("shop.products");
@@ -120,7 +121,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     if (code === "P2002") {
       return NextResponse.json({ error: "Slug already exists" }, { status: 409 });
     }
-    console.error(e);
+    await logServerError({ errorType: "ADMIN_COLLECTION_UPDATE", error: e });
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
 }
