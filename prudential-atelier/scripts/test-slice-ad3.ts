@@ -6,6 +6,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { ADMIN_NAV_SECTIONS, adminNavItemMatchesQuery } from "../src/lib/admin-route-access";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -56,6 +57,7 @@ function run() {
   assert(sidebar.includes("border-r-2 border-choc"), "active section is a solid edge");
   assert(!sidebar.includes("bg-[rgba(152,117,91,0.18)]"), "active section is not a fill");
   assert(sidebar.includes("visibleAdminNavSections"), "Slice T nav map is unchanged");
+  assert(sidebar.includes('aria-label="Search menu"'), "sidebar can filter menu items");
   assert(nav.includes("export const ADMIN_NAV_SECTIONS"), "Slice T section list still lives in admin-route-access");
 
   assert(topbar.includes("glass-1"), "topbar is glass-1");
@@ -104,6 +106,21 @@ function run() {
 
   assert(src("src/components/public/Navbar.tsx").includes("invisible pointer-events-none"), "closed mobile menu does not keep a glass layer on screen");
   assert(!src("src/styles/globals.css").includes("backdrop-filter: blur(8px)"), "gallery dots are solid, not extra blurs");
+
+  const pipelineHits = ADMIN_NAV_SECTIONS.flatMap((section) =>
+    section.items.filter((item) => adminNavItemMatchesQuery("pipeline", section.label, item)),
+  );
+  assert(pipelineHits.some((item) => item.label === "Pipeline"), "pipeline query finds Atelier Pipeline");
+  const emailHits = ADMIN_NAV_SECTIONS.flatMap((section) =>
+    section.items.filter((item) => adminNavItemMatchesQuery("email", section.label, item)),
+  );
+  assert(emailHits.some((item) => item.label === "Email templates"), "email query finds Email templates");
+  assert(
+    !ADMIN_NAV_SECTIONS.some((section) =>
+      section.items.some((item) => adminNavItemMatchesQuery("zzzz", section.label, item)),
+    ),
+    "nonsense query matches nothing",
+  );
 
   console.log("slice-ad3: all checks passed");
 }

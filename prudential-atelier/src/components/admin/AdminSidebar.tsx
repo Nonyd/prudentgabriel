@@ -36,9 +36,9 @@ import {
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "next-auth";
 import { cn, getInitials } from "@/lib/utils";
 import {
@@ -54,6 +54,7 @@ import {
   accessRuleForAdminPath,
   adminNavAccessPath,
   adminNavItemIsActive,
+  adminNavItemMatchesQuery,
   adminNavSectionIdForPath,
   defaultAdminNavOpenState,
   visibleAdminNavSections,
@@ -168,6 +169,7 @@ export function AdminSidebar({
   previewRole?: string | null;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { data: liveSession } = useSession();
   const user = liveSession?.user ?? session.user;
@@ -188,6 +190,8 @@ export function AdminSidebar({
   const search = searchParams.toString();
   const [hash, setHash] = useState("");
   const [open, setOpen] = useState<Record<string, boolean>>(defaultAdminNavOpenState);
+  const [menuQuery, setMenuQuery] = useState("");
+  const menuSearchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const stored = readStoredOpen();
@@ -239,6 +243,45 @@ export function AdminSidebar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, email, jobPermsKey, grantsKey, revokesKey, rolePermsKey]);
 
+  const filteredSections = useMemo(() => {
+    const q = menuQuery.trim();
+    if (!q) return sections;
+    return sections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => adminNavItemMatchesQuery(q, section.label, item)),
+      }))
+      .filter((section) => section.items.length > 0);
+  }, [sections, menuQuery]);
+
+  const filtering = menuQuery.trim().length > 0;
+  const accountItem: AdminNavItemDef = {
+    href: "/admin/account-settings",
+    label: "Account Settings",
+    icon: "users",
+  };
+  const accountMatches = adminNavItemMatchesQuery(menuQuery, "Account", accountItem);
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target;
+      if (target instanceof HTMLElement) {
+        const tag = target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) return;
+      }
+      event.preventDefault();
+      menuSearchRef.current?.focus();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  function goToItem() {
+    setMenuQuery("");
+    onNavigate?.();
+  }
+
   function toggleSection(id: string) {
     setOpen((prev) => {
       const next = { ...prev, [id]: !prev[id] };
@@ -264,9 +307,47 @@ export function AdminSidebar({
         </p>
       </div>
 
+      <div className="border-b border-[var(--glass-edge)] px-3 py-2">
+        <label className="relative block">
+          <Search
+            className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-light"
+            strokeWidth={1.5}
+            aria-hidden
+          />
+          <input
+            ref={menuSearchRef}
+            type="search"
+            value={menuQuery}
+            onChange={(e) => setMenuQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setMenuQuery("");
+                menuSearchRef.current?.blur();
+                return;
+              }
+              if (e.key === "Enter") {
+                const first = filteredSections[0]?.items[0];
+                const dest = first?.href ?? (filtering && accountMatches ? accountItem.href : null);
+                if (!dest) return;
+                e.preventDefault();
+                goToItem();
+                router.push(dest);
+              }
+            }}
+            placeholder="Search menu"
+            aria-label="Search menu"
+            autoComplete="off"
+            className="input-field w-full py-1.5 pl-8 pr-2 font-sans text-[12px] [&::-webkit-search-cancel-button]:hidden"
+          />
+        </label>
+      </div>
+
       <nav className="admin-sidebar-nav min-h-0 flex-1 px-3 py-4">
-        {sections.map((section) => {
-          const expanded = open[section.id] !== false;
+        {filtering && filteredSections.length === 0 && !accountMatches ? (
+          <p className="px-2 py-3 font-sans text-[12px] text-text-light">No menu items match.</p>
+        ) : null}
+        {filteredSections.map((section) => {
+          const expanded = filtering || open[section.id] !== false;
           const panelId = `admin-nav-${section.id}`;
           const headingId = `${panelId}-label`;
 
@@ -277,15 +358,20 @@ export function AdminSidebar({
                 id={headingId}
                 aria-expanded={expanded}
                 aria-controls={panelId}
-                onClick={() => toggleSection(section.id)}
+                onClick={() => {
+                  if (filtering) return;
+                  toggleSection(section.id);
+                }}
                 className="admin-nav-section-label mb-1 flex w-full items-center justify-between gap-2 rounded-none px-2 py-1.5 text-left font-sans font-semibold uppercase text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc"
               >
                 <span>{section.label}</span>
-                <ChevronDown
-                  className={cn("h-3.5 w-3.5 shrink-0 transition-transform", expanded ? "rotate-0" : "-rotate-90")}
-                  strokeWidth={1.5}
-                  aria-hidden
-                />
+                {filtering ? null : (
+                  <ChevronDown
+                    className={cn("h-3.5 w-3.5 shrink-0 transition-transform", expanded ? "rotate-0" : "-rotate-90")}
+                    strokeWidth={1.5}
+                    aria-hidden
+                  />
+                )}
               </button>
               {expanded ? (
                 <ul id={panelId} role="list" aria-labelledby={headingId} className="space-y-0.5">
@@ -298,13 +384,13 @@ export function AdminSidebar({
                       <li key={item.href}>
                         <Link
                           href={item.href}
-                          onClick={() => onNavigate?.()}
+                          onClick={() => goToItem()}
                           aria-current={active ? "page" : undefined}
                           className={cn(
                             "admin-nav-item flex items-center gap-2.5 rounded-none px-2 py-2 font-sans text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc",
                             active
-                              ? "border-l-2 border-[var(--choc-deep)] bg-sand/25 text-text-primary"
-                              : "border-l-2 border-transparent text-text-mid hover:bg-sand/15 hover:text-text-primary",
+                              ? "border-r-2 border-choc bg-sand/25 text-text-primary"
+                              : "border-r-2 border-transparent text-text-mid hover:bg-sand/15 hover:text-text-primary",
                           )}
                         >
                           <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
@@ -342,19 +428,21 @@ export function AdminSidebar({
             </p>
           </div>
         </div>
-        <Link
-          href="/admin/account-settings"
-          onClick={() => onNavigate?.()}
-          className={cn(
-            "admin-nav-item mt-1 flex items-center gap-2 rounded-none px-2 py-2 font-sans text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc",
-            pathname.startsWith("/admin/account-settings")
-              ? "border-l-2 border-[var(--choc-deep)] bg-sand/25 text-text-primary"
-              : "border-l-2 border-transparent text-text-mid hover:bg-sand/15 hover:text-text-primary",
-          )}
-        >
-          <UserRoundCog className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-          Account Settings
-        </Link>
+        {accountMatches ? (
+          <Link
+            href="/admin/account-settings"
+            onClick={() => goToItem()}
+            className={cn(
+              "admin-nav-item mt-1 flex items-center gap-2 rounded-none px-2 py-2 font-sans text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc",
+              pathname.startsWith("/admin/account-settings")
+                ? "border-l-2 border-[var(--choc-deep)] bg-sand/25 text-text-primary"
+                : "border-l-2 border-transparent text-text-mid hover:bg-sand/15 hover:text-text-primary",
+            )}
+          >
+            <UserRoundCog className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+            Account Settings
+          </Link>
+        ) : null}
         <button
           type="button"
           onClick={() => void signOut({ callbackUrl: "/login?tab=admin" })}

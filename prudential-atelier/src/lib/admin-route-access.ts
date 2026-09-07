@@ -324,6 +324,19 @@ export type AdminNavSectionDef = {
   items: AdminNavItemDef[];
 };
 
+/** Match a sidebar row against a free-text query (label, section, or path slug). */
+export function adminNavItemMatchesQuery(
+  query: string,
+  sectionLabel: string,
+  item: AdminNavItemDef,
+): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  const slug = item.href.replace(/^\/admin\/?/, "").replace(/[/?#=_-]+/g, " ");
+  const haystack = `${item.label} ${sectionLabel} ${slug}`.toLowerCase();
+  return q.split(/\s+/).every((token) => haystack.includes(token));
+}
+
 /** Path used for Step 2 access (query and hash stripped). */
 export function adminNavAccessPath(href: string): string {
   const path = href.split("?")[0]?.split("#")[0] ?? href;
