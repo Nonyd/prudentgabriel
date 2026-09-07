@@ -10,6 +10,9 @@ import {
   COLLECTION_REEL_GUIDE,
   collectionReelDimensionsOk,
   collectionReelTooLarge,
+  collectionReelTooLong,
+  COLLECTION_REEL_TOO_LARGE_MESSAGE,
+  COLLECTION_REEL_TOO_LONG_MESSAGE,
   MAX_COLLECTION_REEL_BYTES,
 } from "@/lib/collection-reel-limits";
 import { optimizeImageUrl } from "@/lib/utils";
@@ -36,6 +39,11 @@ function extractPosterBlob(file: File): Promise<Blob> {
     video.src = url;
     const cleanup = () => URL.revokeObjectURL(url);
     video.onloadeddata = () => {
+      if (collectionReelTooLong(video.duration)) {
+        cleanup();
+        reject(new Error(COLLECTION_REEL_TOO_LONG_MESSAGE));
+        return;
+      }
       try {
         video.currentTime = Math.min(0.12, (video.duration || 1) * 0.02);
       } catch {
@@ -124,7 +132,7 @@ export function CollectionReelsAdmin({
     e.target.value = "";
     if (!file) return;
     if (collectionReelTooLarge(file.size)) {
-      toast.error("Reel must be under 10MB");
+      toast.error(COLLECTION_REEL_TOO_LARGE_MESSAGE);
       return;
     }
     if (file.type && file.type !== "video/mp4") {
@@ -181,8 +189,8 @@ export function CollectionReelsAdmin({
       <h2 className="font-display text-xl text-ink">Reels</h2>
       <p className="mt-1 font-body text-[12px] text-[#6B6B68]">{COLLECTION_REEL_GUIDE}</p>
       <p className="mt-1 font-body text-[12px] text-[#6B6B68]">
-        Cap {MAX_COLLECTION_REEL_BYTES / (1024 * 1024)}MB, 1080×1920, H.264 MP4. A poster is taken from the first frame if
-        you do not upload one.
+        Cap {MAX_COLLECTION_REEL_BYTES / (1024 * 1024)}MB, 1080×1920, up to 1 minute, H.264 MP4. A poster is taken from
+        the first frame if you do not upload one.
       </p>
 
       <div className="admin-solid-panel mt-4 space-y-4 border border-sand bg-bg-card p-4">

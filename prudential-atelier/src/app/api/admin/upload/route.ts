@@ -4,7 +4,11 @@ import { folderIsPrivate, sanitizeUploadFolder } from "@/lib/admin-upload-folder
 import { gateUploadFolder } from "@/lib/media/gate-upload";
 import { HEIC_CATALOGUE_MESSAGE, isHeifMagic, mimeFromMagicBytes, mimeFromVideoMagicBytes } from "@/lib/image-upload-mime";
 import { mediaPutFailureMessage } from "@/lib/media/put-error";
-import { COLLECTION_REEL_FOLDER, MAX_COLLECTION_REEL_BYTES } from "@/lib/collection-reel-limits";
+import {
+  COLLECTION_REEL_FOLDER,
+  COLLECTION_REEL_TOO_LARGE_MESSAGE,
+  MAX_COLLECTION_REEL_BYTES,
+} from "@/lib/collection-reel-limits";
 import { logServerError } from "@/lib/logger";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -41,7 +45,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: reelUpload
-          ? "Reel must be under 10MB"
+          ? COLLECTION_REEL_TOO_LARGE_MESSAGE
           : allowVideo
             ? "File is too large"
             : "Image must be 5MB or smaller. Compress the photo or export JPEG.",

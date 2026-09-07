@@ -19,7 +19,12 @@ import {
 } from "../src/lib/collection-reel-playback";
 import {
   collectionReelTooLarge,
+  collectionReelTooLong,
+  COLLECTION_REEL_TOO_LARGE_MESSAGE,
+  COLLECTION_REEL_TOO_LONG_MESSAGE,
   MAX_COLLECTION_REEL_BYTES,
+  MAX_COLLECTION_REEL_MB,
+  MAX_COLLECTION_REEL_SECONDS,
 } from "../src/lib/collection-reel-limits";
 
 function assert(cond: unknown, message: string): asserts cond {
@@ -130,8 +135,14 @@ function testSourceContracts() {
   assert(!/controls/.test(reelCell) || reelCell.includes("disablePictureInPicture"), "no native controls chrome");
 
   const upload = src("src/app/api/admin/upload/route.ts");
-  assert(upload.includes("Reel must be under 10MB"), "upload refuses a reel over 10MB");
-  assert(upload.includes("MAX_COLLECTION_REEL_BYTES"), "reel cap is the shared 10MB constant");
+  assert(upload.includes("COLLECTION_REEL_TOO_LARGE_MESSAGE"), "upload refuses a reel over the shared cap");
+  assert(upload.includes("MAX_COLLECTION_REEL_BYTES"), "reel cap is the shared byte constant");
+  assert(COLLECTION_REEL_TOO_LARGE_MESSAGE === `Reel must be under ${MAX_COLLECTION_REEL_MB}MB`, "reel size copy names the cap");
+  assert(MAX_COLLECTION_REEL_MB === 20, "reels accept up to 20MB");
+  assert(MAX_COLLECTION_REEL_SECONDS === 60, "reels accept up to 1 minute");
+  assert(COLLECTION_REEL_TOO_LONG_MESSAGE === "Reel must be 1 minute or shorter", "reel length copy is 1 minute");
+  const reelsAdmin = src("src/components/admin/CollectionReelsAdmin.tsx");
+  assert(reelsAdmin.includes("collectionReelTooLong"), "admin refuses a reel over 1 minute");
 
   const footer = src("src/components/public/Footer.tsx");
   assert(footer.includes("lg:grid-cols-4"), "footer is four columns at 1440");
@@ -144,8 +155,10 @@ function testSourceContracts() {
 }
 
 async function run() {
-  assert(collectionReelTooLarge(MAX_COLLECTION_REEL_BYTES + 1) === true, "10MB + 1 is refused");
-  assert(collectionReelTooLarge(MAX_COLLECTION_REEL_BYTES) === false, "exactly 10MB is allowed");
+  assert(collectionReelTooLarge(MAX_COLLECTION_REEL_BYTES + 1) === true, "20MB + 1 is refused");
+  assert(collectionReelTooLarge(MAX_COLLECTION_REEL_BYTES) === false, "exactly 20MB is allowed");
+  assert(collectionReelTooLong(MAX_COLLECTION_REEL_SECONDS) === false, "exactly 1 minute is allowed");
+  assert(collectionReelTooLong(MAX_COLLECTION_REEL_SECONDS + 0.01) === true, "just over 1 minute is refused");
   testReelPlaybackRules();
   testGalleryInterleave();
   testSourceContracts();
