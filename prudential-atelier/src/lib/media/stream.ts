@@ -44,10 +44,15 @@ export function parseMediaByteRange(
   return { start, end: Math.min(end, size - 1) };
 }
 
-function cacheControl(cache: "public" | "private" | "none"): string {
-  if (cache === "public") return "public, max-age=31536000, immutable";
+function cacheControl(cache: "public" | "private" | "none", mime?: string): string {
   if (cache === "private") return "private, no-store";
-  return "no-store";
+  if (cache === "none") return "no-store";
+  if (mime?.startsWith("video/") || mime?.startsWith("audio/")) {
+    // no-transform stops proxies gziping Range bodies. Short max-age so iPhones
+    // drop a poisoned immutable 206 they cached before Traefik excluded MP4.
+    return "public, max-age=3600, no-transform";
+  }
+  return "public, max-age=31536000, immutable";
 }
 
 async function readByteRange(abs: string, start: number, length: number): Promise<Buffer> {
@@ -102,7 +107,7 @@ export async function streamMediaKey(
   headers.set("Content-Type", mime);
   headers.set("Accept-Ranges", "bytes");
   headers.set("X-Content-Type-Options", "nosniff");
-  headers.set("Cache-Control", cacheControl(opts.cache));
+  headers.set("Cache-Control", cacheControl(opts.cache, mime));
   headers.set("Content-Disposition", "inline");
 
   const parsed = parseMediaByteRange(opts.range, size);

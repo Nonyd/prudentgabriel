@@ -15,9 +15,17 @@ http:
       compress:
         # Next.js App Router RSC payloads break if Traefik gzipes them.
         # Sidebar Link clicks then do nothing (open-in-new-tab still works).
+        # Safari will not play MP4s if compress sits on Range/206 responses
+        # (Coolify #5222, Traefik #10683). Keep video off this middleware.
         excludedContentTypes:
           - text/event-stream
           - text/x-component
+          - video/mp4
+          - video/webm
+          - video/quicktime
+          - audio/mpeg
+          - audio/mp4
+          - application/octet-stream
     pg-www-to-apex:
       redirectRegex:
         regex: "^https://www\\.prudentgabriel\\.com(.*)"
@@ -44,6 +52,15 @@ http:
       tls:
         certResolver: letsencrypt
       priority: 2000
+
+    pg-production-media-https:
+      entryPoints:
+        - https
+      rule: Host(`prudentgabriel.com`) && PathPrefix(`/media/`)
+      service: pg-production-svc
+      tls:
+        certResolver: letsencrypt
+      priority: 3000
 
     pg-production-www-https:
       entryPoints:
@@ -75,6 +92,15 @@ http:
       tls:
         certResolver: letsencrypt
       priority: 2000
+
+    pg-staging-media-https:
+      entryPoints:
+        - https
+      rule: Host(`staging.prudentgabriel.com`) && PathPrefix(`/media/`)
+      service: pg-staging-svc
+      tls:
+        certResolver: letsencrypt
+      priority: 3000
 
   services:
     pg-noop:

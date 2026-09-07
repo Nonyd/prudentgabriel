@@ -65,8 +65,15 @@ function CarouselArrowRight() {
 
 /** iOS plays MP4/H.264. Inject a Cloudinary fetch format when the CMS stored a MOV/WebM. */
 function heroPlaybackUrl(url: string): string {
-  if (!url.includes("/video/upload/") || /\/upload\/[^/]*f_(mp4|auto)/.test(url)) return url;
-  return url.replace("/video/upload/", "/video/upload/f_mp4,q_auto,vc_h264/");
+  let out = url;
+  if (out.includes("/video/upload/") && !/\/upload\/[^/]*f_(mp4|auto)/.test(out)) {
+    out = out.replace("/video/upload/", "/video/upload/f_mp4,q_auto,vc_h264/");
+  }
+  // Bust the year-long immutable cache of broken 206 bodies on iPhone.
+  if (out.startsWith("/media/") && !out.includes("pgv=")) {
+    out += out.includes("?") ? "&pgv=3" : "?pgv=3";
+  }
+  return out;
 }
 
 function isIosDevice(): boolean {
@@ -138,8 +145,20 @@ function CarouselMedia({
       if (started && !cancelled) endedRef.current();
     };
 
+    const onError = () => {
+      if (!cancelled) setNeedsTap(true);
+    };
+    let canPlayTimer = 0;
+    const onCanPlay = () => {
+      canPlayTimer = window.setTimeout(() => {
+        if (!cancelled && video.paused) setNeedsTap(true);
+      }, 500);
+    };
+
     video.addEventListener("playing", markPlaying);
     video.addEventListener("ended", onEnded);
+    video.addEventListener("error", onError);
+    video.addEventListener("canplay", onCanPlay);
 
     // iPhone Safari treats a scripted play() as a failed user-gesture, then will not
     // autoplay that same element. Leave muted autoplay to the attributes; only tap calls play().
@@ -156,10 +175,6 @@ function CarouselMedia({
       }
     }
 
-    const tapTimer = window.setTimeout(() => {
-      if (!cancelled && video.paused) setNeedsTap(true);
-    }, ios ? 1200 : 500);
-
     const safetyTimer = window.setTimeout(() => {
       if (!cancelled) endedRef.current();
     }, VIDEO_MAX_MS);
@@ -168,7 +183,9 @@ function CarouselMedia({
       cancelled = true;
       video.removeEventListener("playing", markPlaying);
       video.removeEventListener("ended", onEnded);
-      window.clearTimeout(tapTimer);
+      video.removeEventListener("error", onError);
+      video.removeEventListener("canplay", onCanPlay);
+      window.clearTimeout(canPlayTimer);
       window.clearTimeout(safetyTimer);
     };
   }, [isCenter, item.type, item.url]);

@@ -122,6 +122,15 @@ jobs:
               curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.raw" \
                 "https://api.github.com/repos/Nonyd/prudentgabriel/contents/deploy/compose.production.yaml?ref=${DEPLOY_SHA}" \
                 -o /opt/prudentgabriel/deploy/compose.production.yaml
+              curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.raw" \
+                "https://api.github.com/repos/Nonyd/prudentgabriel/contents/deploy/traefik/pg-compose-stacks.yaml?ref=${DEPLOY_SHA}" \
+                -o /tmp/pg-compose-stacks.yaml
+              mkdir -p /opt/prudentgabriel/deploy/traefik
+              cp /tmp/pg-compose-stacks.yaml /opt/prudentgabriel/deploy/traefik/pg-compose-stacks.yaml
+              if [ -d /data/coolify/proxy/dynamic ]; then
+                sudo -n cp /tmp/pg-compose-stacks.yaml /data/coolify/proxy/dynamic/pg-compose-stacks.yaml \
+                  || cp /tmp/pg-compose-stacks.yaml /data/coolify/proxy/dynamic/pg-compose-stacks.yaml
+              fi
             fi
             # Pull only the app image from GHCR. A full `compose pull` also hits Docker Hub
             # for postgres:18-alpine and fails when Hub resets IPv6 connections.

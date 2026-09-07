@@ -176,6 +176,9 @@ async function run() {
 
     const streamSrc = await readFile(join(process.cwd(), "src/lib/media/stream.ts"), "utf8");
     assert(!streamSrc.includes("toWeb"), "media bytes are not piped through Readable.toWeb");
+    const traf = await readFile(join(process.cwd(), "../deploy/traefik/pg-compose-stacks.yaml"), "utf8");
+    assert(traf.includes("video/mp4"), "Traefik does not gzip MP4 (Safari Range/206)");
+    assert(traf.includes("PathPrefix(`/media/`)"), "media is routed without the gzip middleware");
 
     const mediaRoute = await readFile(join(process.cwd(), "src/app/media/[...key]/route.ts"), "utf8");
     assert(mediaRoute.includes("req.headers.get(\"range\")"), "public media passes the Range header");
