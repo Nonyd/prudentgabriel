@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { adminReceiptSrc } from "@/lib/media/receipt-src";
+import { adminReceiptSrc } from "@/lib/media/admin-receipt-src";
 
 function isPdfUrl(url: string) {
   return /\.pdf(\?|#|$)/i.test(url);

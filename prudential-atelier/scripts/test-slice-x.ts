@@ -212,6 +212,16 @@ async function run() {
     process.env.NEXT_PUBLIC_APP_URL = prevApp;
     const emailSrc = await readFile(join(process.cwd(), "src/lib/email.tsx"), "utf8");
     assert(emailSrc.includes("emailSafeReceiptUrl"), "bank-transfer admin email uses a signed absolute receipt link");
+    const proofSrc = await readFile(join(process.cwd(), "src/components/admin/AdminBankTransferProof.tsx"), "utf8");
+    assert(
+      !proofSrc.includes("@/lib/media/receipt-src"),
+      "admin proof lightbox must not import the Node media store",
+    );
+    const pendingSrc = await readFile(join(process.cwd(), "src/components/admin/AdminPendingBankTransfers.tsx"), "utf8");
+    assert(
+      !pendingSrc.includes("@/lib/media/receipt-src"),
+      "pending transfers list must not import the Node media store",
+    );
 
     const exp = Math.floor(Date.now() / 1000) + 60;
     const sig = signMediaKey(receipt.key, exp);

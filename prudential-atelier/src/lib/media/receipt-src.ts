@@ -2,15 +2,7 @@ import { keyFromMediaUrl } from "@/lib/media/key-parse";
 import { getMediaStore } from "@/lib/media";
 import { absolutePublicUrl } from "@/lib/app-url";
 
-/** Admin lightbox / iframe src. Local private files go through the cookie-authenticated route. */
-export function adminReceiptSrc(url: string | null | undefined): string {
-  if (!url) return "";
-  const key = keyFromMediaUrl(url);
-  if (key && key.startsWith("private/")) {
-    return `/api/admin/media/file/${key}`;
-  }
-  return url;
-}
+export { adminReceiptSrc } from "@/lib/media/admin-receipt-src";
 
 const RECEIPT_EMAIL_TTL_SEC = 7 * 24 * 60 * 60;
 

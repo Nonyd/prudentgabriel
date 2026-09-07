@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import toast from "react-hot-toast";
-import { adminReceiptSrc } from "@/lib/media/receipt-src";
+import { adminReceiptSrc } from "@/lib/media/admin-receipt-src";
 
 type PendingItem = {
   id: string;
