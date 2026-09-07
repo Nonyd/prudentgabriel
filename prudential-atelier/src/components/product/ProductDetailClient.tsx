@@ -29,6 +29,7 @@ import { CHOOSE_SIZE_MESSAGE } from "@/lib/bag-size";
 import type { MeasurementFieldDef } from "@/lib/custom-size";
 import { displayAmountInCurrency, effectiveUnitNGN, variantAmountInCurrency } from "@/lib/pricing";
 import { useCurrencyStore } from "@/store/currencyStore";
+import { cn } from "@/lib/utils";
 import type { ProductType } from "@prisma/client";
 import type { ProductListItem, ProductListVariant } from "@/types/product";
 import type { TypedUnit } from "@/lib/sizing";
@@ -341,25 +342,34 @@ export function ProductDetailClient({
 
           {customAvailable ? (
             <div className="mb-6 min-w-0">
-              <p className="mb-3 font-body text-base font-medium text-charcoal">How should this piece be made?</p>
-              <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <p id="fit-mode-label" className="mb-3 font-body text-base font-medium text-charcoal">
+                How should this piece be made?
+              </p>
+              <div
+                role="radiogroup"
+                aria-labelledby="fit-mode-label"
+                className="flex overflow-hidden rounded-full border-2 border-choc"
+              >
                 <button
                   type="button"
+                  role="radio"
+                  aria-checked={fitMode === "standard"}
                   onClick={() => {
                     setFitMode("standard");
                     setBagError(null);
                   }}
-                  className={`min-h-[6.25rem] min-w-0 border-2 px-4 py-4 text-left ${
-                    fitMode === "standard" ? "border-choc bg-choc text-cream" : "border-choc/30 bg-white text-charcoal"
-                  }`}
+                  className={cn(
+                    "rounded-none min-h-12 flex-1 px-3 py-3 text-center font-sans text-[13px] font-semibold leading-snug sm:px-4 sm:text-[14px]",
+                    fitMode === "standard" ? "bg-choc text-cream" : "bg-white text-charcoal",
+                  )}
                 >
-                  <span className="block font-body text-lg font-semibold">Standard size</span>
-                  <span className={`mt-1 block font-body text-sm leading-6 ${fitMode === "standard" ? "text-cream/85" : "text-charcoal-mid"}`}>
-                    {sizesSoldOut ? "UK sizes from stock — currently sold out." : "Pick a UK size from stock."}
-                  </span>
+                  Standard size
                 </button>
                 <button
                   type="button"
+                  role="radio"
+                  aria-checked={fitMode === "custom"}
+                  aria-label="Made to your measurements"
                   onClick={() => {
                     setFitMode("custom");
                     setVariantId(null);
@@ -368,18 +378,23 @@ export function ProductDetailClient({
                       document.getElementById("custom-measurements")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
                     });
                   }}
-                  className={`min-h-[6.25rem] min-w-0 border-2 px-4 py-4 text-left ${
-                    fitMode === "custom" ? "border-choc bg-choc text-cream" : "border-choc bg-[#f7f2ec] text-charcoal"
-                  }`}
+                  className={cn(
+                    "rounded-none min-h-12 flex-1 px-3 py-3 text-center font-sans text-[13px] font-semibold leading-snug sm:px-4 sm:text-[14px]",
+                    fitMode === "custom" ? "bg-choc text-cream" : "bg-[#f7f2ec] text-charcoal",
+                  )}
                 >
-                  <span className="block font-body text-lg font-semibold">Made to your measurements</span>
-                  <span className={`mt-1 block font-body text-sm leading-6 ${fitMode === "custom" ? "text-cream/85" : "text-charcoal"}`}>
-                    {sizesSoldOut
-                      ? "Sizes are gone. Tap here if you want this cut for you — it is not chosen until you do."
-                      : "We cut this piece to the figures you enter below."}
-                  </span>
+                  Made to measure
                 </button>
               </div>
+              <p className="mt-2.5 font-body text-sm leading-6 text-charcoal-mid">
+                {fitMode === "standard"
+                  ? sizesSoldOut
+                    ? "UK sizes from stock — currently sold out."
+                    : "Pick a UK size from stock."
+                  : sizesSoldOut
+                    ? "Sizes are gone. Tap Made to measure if you want this cut for you — it is not chosen until you do."
+                    : "We cut this piece to the figures you enter below."}
+              </p>
             </div>
           ) : null}
 
@@ -433,7 +448,7 @@ export function ProductDetailClient({
                 setVariantId(null);
                 setBagError(null);
               }}
-              className="mt-4 w-full border-2 border-choc bg-[#f7f2ec] px-4 py-4 text-left"
+              className="mt-4 w-full rounded-none border-2 border-choc bg-[#f7f2ec] px-4 py-4 text-left"
             >
               <span className="block font-body text-lg font-semibold text-choc">Sold out in standard sizes</span>
               <span className="mt-1 block font-body text-base leading-6 text-charcoal">
