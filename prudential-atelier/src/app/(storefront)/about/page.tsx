@@ -4,6 +4,13 @@ import { PFACrosslinkBannerClient } from "@/components/public/PFACrosslinkBanner
 import { cmsBool, cmsGet, cmsJson, getCMSContent } from "@/lib/cms";
 import { readyToWearCtaHref } from "@/lib/rtw-aisle";
 import { DEFAULT_ABOUT_VALUES } from "@/lib/page-content-defaults";
+import {
+  HOUSE_ADDRESS_LINE_1,
+  HOUSE_ADDRESS_LINE_2,
+  HOUSE_MAPS_LINK,
+  resolveHouseAddressBlock,
+  resolveHouseMapsLink,
+} from "@/lib/house-address";
 import { getImageSettings } from "@/lib/settings";
 
 export const revalidate = 300;
@@ -99,9 +106,9 @@ export default async function AboutPage() {
   const locations = [
     {
       name: cmsGet(cms, "about_lagos_name", "LAGOS"),
-      address: cmsGet(cms, "about_lagos_address", "14 Bode Thomas Street\nSurulere, Lagos"),
+      address: resolveHouseAddressBlock(cmsGet(cms, "about_lagos_address", `${HOUSE_ADDRESS_LINE_1}\n${HOUSE_ADDRESS_LINE_2}`)),
       hours: cmsGet(cms, "about_lagos_hours", "Mon–Fri: 9am–6pm · Sat: 10am–4pm"),
-      maps: cmsGet(cms, "about_lagos_maps_link", "https://maps.google.com/?q=Surulere,Lagos,Nigeria"),
+      maps: resolveHouseMapsLink(cmsGet(cms, "about_lagos_maps_link", HOUSE_MAPS_LINK)),
     },
     {
       name: cmsGet(cms, "about_abuja_name", "ABUJA"),

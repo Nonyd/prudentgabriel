@@ -6,7 +6,6 @@ import * as Accordion from "@radix-ui/react-accordion";
 import toast from "react-hot-toast";
 import type { SettingGroup, SettingType } from "@prisma/client";
 import { AppearanceSettingsCard } from "@/components/admin/settings/AppearanceSettingsCard";
-import { EmailTemplatesEditor } from "@/components/admin/settings/EmailTemplatesEditor";
 import { MediaLibraryTab } from "@/components/admin/settings/MediaLibraryTab";
 import { LoyaltySettingsClient } from "@/components/admin/settings/LoyaltySettingsClient";
 
@@ -259,7 +258,21 @@ export function AdminSettingsClient() {
         <div className="space-y-6">
           <SettingsGroupCard title="Email" group="EMAIL" rows={emailConfig} onSaved={load} />
           <SettingsGroupCard title="SMS" group="SMS" rows={rowsFor("SMS")} onSaved={load} />
-          <EmailTemplatesEditor emailRows={rowsFor("EMAIL")} onSaved={load} />
+          <div className="rounded-sm border border-sand bg-canvas p-6">
+            <p className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+              Email templates
+            </p>
+            <p className="mt-2 text-sm text-ink">
+              Customer RTW, made-to-order, consultation, and account mail is edited in Content → Email templates.
+              Changes there are what actually goes out.
+            </p>
+            <a
+              href="/admin/content/email-templates"
+              className="mt-3 inline-block text-sm text-olive underline"
+            >
+              Open email templates
+            </a>
+          </div>
           <div className="rounded-sm border border-sand bg-canvas p-6">
             <button
               type="button"

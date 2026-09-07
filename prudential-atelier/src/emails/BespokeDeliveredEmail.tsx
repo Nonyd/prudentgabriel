@@ -1,13 +1,17 @@
-import { Heading, Text } from "@react-email/components";
+import { Text } from "@react-email/components";
 import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import EmailButton from "./components/EmailButton";
 import EmailLayout from "./components/EmailLayout";
+import { CatalogHeading } from "./components/CatalogHeading";
 
 export type BespokeDeliveredEmailProps = {
   firstName: string;
   orderRef: string;
   confirmUrl: string;
   accountUrl: string;
+  catalogHeading?: string;
+  catalogBody?: string;
+  catalogCtaLabel?: string;
 };
 
 export default function BespokeDeliveredEmail({
@@ -15,22 +19,20 @@ export default function BespokeDeliveredEmail({
   orderRef,
   confirmUrl,
   accountUrl,
+  catalogHeading,
+  catalogBody,
+  catalogCtaLabel,
 }: BespokeDeliveredEmailProps) {
   return (
     <EmailLayout family="relationship" previewText={`Your commission ${orderRef} has been delivered`}>
-      <Heading as="h1" style={{ fontSize: 28, fontWeight: 400, color: "#442913", margin: "0 0 12px" }}>
-        Your commission is with you, {firstName}.
-      </Heading>
-      <Text style={{ fontSize: 16, color: "#333", lineHeight: 1.6 }}>
-        Order <strong>{orderRef}</strong> has been marked delivered. We hope every detail feels exactly as you
-        imagined.
-      </Text>
-      <Text style={{ fontSize: 15, color: "#444", lineHeight: 1.6, marginTop: 16 }}>
-        Please confirm you have received your garment — it only takes a moment and helps us close your commission
-        properly.
-      </Text>
+      <CatalogHeading
+        heading={catalogHeading}
+        body={catalogBody}
+        fallbackHeading={`Your commission is with you, ${firstName}.`}
+        fallbackBody={`Order ${orderRef} has been marked delivered. We hope every detail feels exactly as you imagined.`}
+      />
       <div style={{ marginTop: 28, textAlign: "center" as const }}>
-        <EmailButton href={confirmUrl}>Confirm receipt</EmailButton>
+        <EmailButton href={confirmUrl}>{catalogCtaLabel || "Confirm receipt"}</EmailButton>
       </div>
       <Text style={{ marginTop: 20, fontSize: 13, color: "#666", textAlign: "center" as const }}>
         Or view your order in your account:{" "}

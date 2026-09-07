@@ -1,6 +1,14 @@
 import { FacebookIcon, InstagramIcon, TikTokIcon } from "@/components/icons/SocialIcons";
 import { ContactForm } from "@/components/contact/ContactForm";
 import { cmsGet, getCMSContent } from "@/lib/cms";
+import {
+  HOUSE_ADDRESS_LINE_1,
+  HOUSE_ADDRESS_LINE_2,
+  HOUSE_MAPS_EMBED,
+  resolveHouseAddressLine1,
+  resolveHouseAddressLine2,
+  resolveHouseMapsEmbed,
+} from "@/lib/house-address";
 import { CONTACT_SUBJECTS } from "@/validations/contact";
 
 export const revalidate = 300;
@@ -73,8 +81,8 @@ export default async function ContactPage({
     /* defaults */
   }
 
-  const lagos1 = cmsGet(cms, "contact_lagos_address_1", "14 Bode Thomas Street");
-  const lagos2 = cmsGet(cms, "contact_lagos_address_2", "Surulere, Lagos, Nigeria");
+  const lagos1 = resolveHouseAddressLine1(cmsGet(cms, "contact_lagos_address_1", HOUSE_ADDRESS_LINE_1));
+  const lagos2 = resolveHouseAddressLine2(cmsGet(cms, "contact_lagos_address_2", HOUSE_ADDRESS_LINE_2));
   const abuja1 = cmsGet(cms, "contact_abuja_address_1", "Plot 1234, Wuse Zone 5");
   const abuja2 = cmsGet(cms, "contact_abuja_address_2", "Abuja, FCT, Nigeria");
   const whatsapp = cmsGet(cms, "contact_whatsapp", "+2348012345678");
@@ -233,7 +241,7 @@ export default async function ContactPage({
       <div className="mx-auto max-w-site px-6 pb-20 lg:px-10">
         <iframe
           title="Lagos Atelier location"
-          src="https://maps.google.com/maps?q=Surulere,Lagos,Nigeria&output=embed"
+          src={resolveHouseMapsEmbed(HOUSE_MAPS_EMBED)}
           width="100%"
           height={400}
           loading="lazy"

@@ -1,5 +1,6 @@
 import type { BespokeStage } from "@prisma/client";
 import { CUSTOMER_HOUSE_NAME, EMAIL_LOGO_PX } from "@/lib/customer-email";
+import { HOUSE_ADDRESS_ONE_LINE } from "@/lib/house-address";
 import { STAGE_LABELS, STAGE_SHORT_LABELS, getStageProgress } from "@/lib/bespoke-stages";
 
 export interface StageEmailData {
@@ -81,7 +82,7 @@ function emailWrapper(content: string, logoUrl?: string): string {
         <tr><td style="padding:8px 40px 32px;">${content}</td></tr>
         <tr><td style="padding:24px 40px;background:#F7F2EC;border-top:1px solid #D4BBAC;text-align:center;">
           <p style="margin:0;font-size:11px;color:#98755B;line-height:1.6;">
-            ${CUSTOMER_HOUSE_NAME} · prudentgabriel.com
+            ${CUSTOMER_HOUSE_NAME} · ${HOUSE_ADDRESS_ONE_LINE}
           </p>
         </td></tr>
       </table>
@@ -117,8 +118,16 @@ export function getBespokeStageEmailSubject(stage: BespokeStage, orderRef: strin
   return STAGE_SUBJECTS[stage].replace("{orderRef}", orderRef);
 }
 
-export function getBespokeStageEmail(stage: BespokeStage, data: StageEmailData, logoUrl?: string): string {
-  const intro = STAGE_INTROS[stage];
+export function getBespokeStageEmail(
+  stage: BespokeStage,
+  data: StageEmailData,
+  logoUrl?: string,
+  catalog?: { heading: string; intro: string; ctaLabel: string; ctaLink: string },
+): string {
+  const intro = catalog?.intro || STAGE_INTROS[stage];
+  const heading = catalog?.heading || `Dear ${data.clientName},`;
+  const ctaLabel = catalog?.ctaLabel || "Track Your Order";
+  const ctaLink = catalog?.ctaLink || data.trackingUrl;
   const stageLabel = STAGE_LABELS[stage];
   const deliveryLine = data.deliveryDate
     ? `<p style="margin:12px 0 0;font-size:14px;color:#5C3422;"><strong>Expected delivery:</strong> ${data.deliveryDate}</p>`
@@ -126,7 +135,7 @@ export function getBespokeStageEmail(stage: BespokeStage, data: StageEmailData, 
 
   const content = `
     <p style="margin:0 0 8px;font-size:14px;color:#98755B;text-transform:uppercase;letter-spacing:0.1em;">Order ${data.orderRef}</p>
-    <h1 style="margin:0 0 16px;font-size:24px;font-weight:normal;color:#442913;">Dear ${data.clientName},</h1>
+    <h1 style="margin:0 0 16px;font-size:24px;font-weight:normal;color:#442913;">${heading}</h1>
     <p style="margin:0 0 16px;font-size:15px;line-height:1.7;color:#442913;">${intro}</p>
     <p style="margin:0 0 8px;font-size:13px;color:#98755B;font-weight:bold;">${stageLabel}</p>
     <div style="margin:16px 0;padding:16px;background:#F7F2EC;border-left:3px solid #98755B;">
@@ -136,7 +145,7 @@ export function getBespokeStageEmail(stage: BespokeStage, data: StageEmailData, 
     ${buildVideoNote(data.videos)}
     ${deliveryLine}
     <p style="margin:28px 0 0;text-align:center;">
-      <a href="${data.trackingUrl}" style="display:inline-block;padding:14px 32px;background:#5C3422;color:#E2D1C2;text-decoration:none;font-size:13px;letter-spacing:0.08em;">Track Your Order</a>
+      <a href="${ctaLink}" style="display:inline-block;padding:14px 32px;background:#5C3422;color:#E2D1C2;text-decoration:none;font-size:13px;letter-spacing:0.08em;">${ctaLabel}</a>
     </p>
   `;
 

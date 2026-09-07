@@ -16,6 +16,14 @@ const GROUPS = [
   { id: "staff", label: "STAFF EMAILS" },
 ] as const;
 
+const CLIENT_LANES = [
+  { id: "rtw", label: "READY TO WEAR" },
+  { id: "mto", label: "MADE TO ORDER" },
+  { id: "consult", label: "CONSULTATION" },
+  { id: "account", label: "ACCOUNT & LOYALTY" },
+  { id: "marketing", label: "MARKETING" },
+] as const;
+
 export function AdminEmailTemplatesClient({ templates, adminEmail }: Props) {
   const keys = useMemo(
     () => Object.values(templates).sort((a, b) => a.label.localeCompare(b.label)),
@@ -101,10 +109,47 @@ export function AdminEmailTemplatesClient({ templates, adminEmail }: Props) {
 
   return (
     <div className="mt-8 flex gap-6">
-      <aside className="w-[240px] shrink-0 space-y-6">
+      <aside className="w-[260px] shrink-0 space-y-6">
         {GROUPS.map((group) => {
           const items = keys.filter((k) => k.group === group.id);
           if (!items.length) return null;
+          if (group.id === "client") {
+            return (
+              <div key={group.id} className="space-y-5">
+                {CLIENT_LANES.map((lane) => {
+                  const laneItems = items.filter((k) => k.lane === lane.id);
+                  if (!laneItems.length) return null;
+                  return (
+                    <div key={lane.id}>
+                      <p className="font-label text-[10px] uppercase tracking-widest text-gold">{lane.label}</p>
+                      <ul className="mt-2 space-y-0.5">
+                        {laneItems.map((item) => (
+                          <li key={item.key}>
+                            <button
+                              type="button"
+                              title={
+                                item.lastEdited
+                                  ? `Last edited ${new Date(item.lastEdited).toLocaleDateString("en-GB")}`
+                                  : undefined
+                              }
+                              onClick={() => loadTemplate(item.key)}
+                              className={`w-full border-l-2 px-3 py-2 text-left font-body text-xs ${
+                                selectedKey === item.key
+                                  ? "border-choc bg-[rgba(68,41,19,0.08)] text-choc"
+                                  : "border-transparent text-[#6B6B68] hover:bg-sand/40"
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          }
           return (
             <div key={group.id}>
               <p className="font-label text-[10px] uppercase tracking-widest text-gold">{group.label}</p>
@@ -139,7 +184,13 @@ export function AdminEmailTemplatesClient({ templates, adminEmail }: Props) {
         {selected ? (
           <>
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sand pb-4">
-              <h2 className="font-display text-lg text-ink">{selected.label}</h2>
+              <div>
+                <h2 className="font-display text-lg text-ink">{selected.label}</h2>
+                <p className="mt-1 text-xs text-[#6B6B68]">
+                  Copy saved here is what customers actually receive. Structured details (order lines, tracking,
+                  bank details) stay in the layout.
+                </p>
+              </div>
               {selected.lastEdited ? (
                 <p className="text-xs text-[#6B6B68]">
                   Last edited: {new Date(selected.lastEdited).toLocaleDateString("en-GB")}
@@ -150,7 +201,7 @@ export function AdminEmailTemplatesClient({ templates, adminEmail }: Props) {
             <div className="mt-6 space-y-4">
               <Field label="Subject line" value={subject} onChange={setSubject} />
               <p className="text-xs text-[#6B6B68]">
-                Variables: {"{{firstName}} {{lastName}} {{email}} {{orderRef}} {{outfitName}} {{amount}} {{date}} {{link}}"}
+                Variables: {"{{firstName}} {{lastName}} {{email}} {{orderRef}} {{outfitName}} {{amount}} {{date}} {{link}} {{stageName}} {{collectionCode}} {{pickupName}} {{pickupAddress}} {{pickupHours}} {{size}} {{notes}}"}
               </p>
               <Field label="Heading" value={heading} onChange={setHeading} />
               <TextArea label="Body paragraph 1" value={body1} onChange={setBody1} />

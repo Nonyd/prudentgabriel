@@ -1,6 +1,7 @@
-import { Column, Heading, Hr, Row, Section, Text } from "@react-email/components";
+import { Column, Hr, Row, Section, Text } from "@react-email/components";
 import EmailLayout from "./components/EmailLayout";
 import EmailButton from "./components/EmailButton";
+import { CatalogHeading } from "./components/CatalogHeading";
 
 import { getPublicAppUrl } from "@/lib/app-url";
 
@@ -35,6 +36,10 @@ type OrderConfirmationEmailProps = {
   quotePendingText?: string;
   customLeadDays?: number | null;
   customReturnNote?: string | null;
+  catalogHeading?: string;
+  catalogBody?: string;
+  catalogCtaLabel?: string;
+  catalogCtaHref?: string;
 };
 
 export default function OrderConfirmationEmail({
@@ -54,6 +59,10 @@ export default function OrderConfirmationEmail({
   quotePendingText,
   customLeadDays,
   customReturnNote,
+  catalogHeading,
+  catalogBody,
+  catalogCtaLabel,
+  catalogCtaHref,
 }: OrderConfirmationEmailProps) {
   const addr = addressSnapshot ?? {};
   const line = (i: OrderItemLine) => {
@@ -70,10 +79,12 @@ export default function OrderConfirmationEmail({
 
   return (
     <EmailLayout family="transactional" previewText={`Order #${orderNumber} confirmed`}>
-      <Heading as="h1" style={{ fontSize: 32, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
-        Thank you, {firstName}.
-      </Heading>
-      <Text style={{ fontSize: 16, color: "#2d2d2d" }}>Your order is confirmed.</Text>
+      <CatalogHeading
+        heading={catalogHeading}
+        body={catalogBody}
+        fallbackHeading={`Thank you, ${firstName}.`}
+        fallbackBody="Your order is confirmed."
+      />
       <Section
         style={{
           marginTop: 20,
@@ -170,7 +181,9 @@ export default function OrderConfirmationEmail({
       {dduDisclosure ? (
         <Text style={{ marginTop: 16, fontSize: 13, color: "#555", lineHeight: 1.5 }}>{dduDisclosure}</Text>
       ) : null}
-      <EmailButton href={`${APP}/account/orders`}>Track your order</EmailButton>
+      <EmailButton href={catalogCtaHref || `${APP}/account/orders`}>
+        {catalogCtaLabel || "Track your order"}
+      </EmailButton>
       <Text style={{ marginTop: 24, fontSize: 13, color: "#555" }}>
         Questions? Reply to this email or contact hello@prudentgabriel.com
       </Text>

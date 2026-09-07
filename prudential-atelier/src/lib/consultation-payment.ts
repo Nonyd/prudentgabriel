@@ -26,7 +26,7 @@ import {
 import { autoOnboardClient } from "@/lib/client-onboarding";
 import { notifyConsultationConfirmed } from "@/lib/customer-notifications";
 
-const ATELIER_ADDRESS = "14 Bode Thomas Street, Surulere, Lagos";
+import { HOUSE_ADDRESS_ONE_LINE } from "@/lib/house-address";
 
 export async function fulfillPaidConsultationBooking(params: {
   bookingId: string;
@@ -70,7 +70,7 @@ export async function fulfillPaidConsultationBooking(params: {
     deliveryMode &&
     (deliveryMode === ConsultationDeliveryMode.INPERSON_ATELIER ||
       deliveryMode === ConsultationDeliveryMode.INPERSON_ATELIER_PRUDENT)
-      ? ATELIER_ADDRESS
+      ? HOUSE_ADDRESS_ONE_LINE
       : null;
 
   const updateData: Prisma.ConsultationBookingUpdateInput = {

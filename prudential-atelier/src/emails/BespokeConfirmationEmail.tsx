@@ -1,7 +1,8 @@
-import { Heading, Section, Text } from "@react-email/components";
+import { Section, Text } from "@react-email/components";
 import EmailButton from "./components/EmailButton";
 import { getPublicAppUrl } from "@/lib/app-url";
 import EmailLayout from "./components/EmailLayout";
+import { CatalogHeading } from "./components/CatalogHeading";
 
 const APP = getPublicAppUrl();
 
@@ -10,6 +11,10 @@ type BespokeConfirmationEmailProps = {
   requestNumber: string;
   occasion: string;
   timeline: string;
+  catalogHeading?: string;
+  catalogBody?: string;
+  catalogCtaLabel?: string;
+  catalogCtaHref?: string;
 };
 
 export default function BespokeConfirmationEmail({
@@ -17,13 +22,19 @@ export default function BespokeConfirmationEmail({
   requestNumber,
   occasion,
   timeline,
+  catalogHeading,
+  catalogBody,
+  catalogCtaLabel,
+  catalogCtaHref,
 }: BespokeConfirmationEmailProps) {
   return (
     <EmailLayout family="relationship" previewText={`Atelier request ${requestNumber}`}>
-      <Heading as="h1" style={{ fontSize: 28, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
-        Your atelier request
-      </Heading>
-      <Text style={{ fontSize: 16, color: "#2d2d2d" }}>Thank you, {name}. We&apos;ve received your request.</Text>
+      <CatalogHeading
+        heading={catalogHeading}
+        body={catalogBody}
+        fallbackHeading="Your atelier request"
+        fallbackBody={`Thank you, ${name}. We've received your request.`}
+      />
       <Section
         style={{
           marginTop: 20,
@@ -44,7 +55,7 @@ export default function BespokeConfirmationEmail({
         Occasion: {occasion} · Timeline: {timeline}
       </Text>
       <Text style={{ marginTop: 16, fontSize: 14 }}>In the meantime, browse our ready-to-wear collection.</Text>
-      <EmailButton href={`${APP}/rtw`}>Browse collection</EmailButton>
+      <EmailButton href={catalogCtaHref || `${APP}/rtw`}>{catalogCtaLabel || "Browse collection"}</EmailButton>
       <Text style={{ marginTop: 24, fontSize: 13, color: "#555" }}>
         Reach us at hello@prudentgabriel.com or @prudent_gabriel on Instagram.
       </Text>

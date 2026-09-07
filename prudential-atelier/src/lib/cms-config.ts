@@ -400,8 +400,8 @@ export const CMS_PAGES: CmsPageDef[] = [
         id: "details",
         label: "Contact Details",
         fields: [
-          { key: "contact_lagos_address_1", label: "Lagos address (line 1)", type: "text", default: "14 Bode Thomas Street" },
-          { key: "contact_lagos_address_2", label: "Lagos address (line 2)", type: "text", default: "Surulere, Lagos, Nigeria" },
+          { key: "contact_lagos_address_1", label: "Lagos address (line 1)", type: "text", default: "No. 4 Akinwale Shitu Divine Homes, Thomas Estates" },
+          { key: "contact_lagos_address_2", label: "Lagos address (line 2)", type: "text", default: "Ajah, Lagos, Nigeria" },
           { key: "contact_abuja_address_1", label: "Abuja address (line 1)", type: "text", default: "Plot 1234, Wuse Zone 5" },
           { key: "contact_abuja_address_2", label: "Abuja address (line 2)", type: "text", default: "Abuja, FCT, Nigeria" },
           { key: "contact_whatsapp", label: "WhatsApp number", type: "text", default: "+2348012345678" },
@@ -620,14 +620,14 @@ export const CMS_PAGES: CmsPageDef[] = [
             key: "about_lagos_address",
             label: "Lagos address",
             type: "textarea",
-            default: "14 Bode Thomas Street\nSurulere, Lagos",
+            default: "No. 4 Akinwale Shitu Divine Homes, Thomas Estates\nAjah, Lagos",
           },
           { key: "about_lagos_hours", label: "Lagos hours", type: "text", default: "Mon–Fri: 9am–6pm · Sat: 10am–4pm" },
           {
             key: "about_lagos_maps_link",
             label: "Lagos maps link",
             type: "text",
-            default: "https://maps.google.com/?q=Surulere,Lagos,Nigeria",
+            default: "https://maps.google.com/?q=Akinwale+Shitu+Divine+Homes+Thomas+Estates+Ajah+Lagos",
           },
           { key: "about_abuja_name", label: "Abuja name", type: "text", default: "ABUJA" },
           {

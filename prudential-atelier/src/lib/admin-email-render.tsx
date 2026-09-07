@@ -15,6 +15,7 @@ import { optimizeImageUrl } from "@/lib/utils";
 export async function renderTemplateEmailHtml(
   template: EmailTemplateFields,
   vars: Record<string, string> = demoTemplateVariables(),
+  extraHtml?: string,
 ): Promise<{ subject: string; html: string }> {
   await primeEmailBranding();
 
@@ -34,6 +35,7 @@ export async function renderTemplateEmailHtml(
       ctaLabel={ctaLabel || undefined}
       ctaLink={ctaLink || undefined}
       footerNote={footerNote || undefined}
+      extraHtml={extraHtml}
     />,
   );
 

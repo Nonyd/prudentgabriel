@@ -9,6 +9,7 @@ type ComposableTemplateEmailProps = {
   ctaLabel?: string;
   ctaLink?: string;
   footerNote?: string;
+  extraHtml?: string;
 };
 
 function paragraphLines(text: string) {
@@ -22,6 +23,7 @@ export default function ComposableTemplateEmail({
   ctaLabel,
   ctaLink,
   footerNote,
+  extraHtml,
 }: ComposableTemplateEmailProps) {
   return (
     <EmailLayout family="relationship" previewText={heading}>
@@ -67,6 +69,12 @@ export default function ComposableTemplateEmail({
             </Text>
           ))
         : null}
+      {extraHtml ? (
+        <div
+          style={{ margin: "8px 0 16px" }}
+          dangerouslySetInnerHTML={{ __html: extraHtml }}
+        />
+      ) : null}
       {ctaLabel && ctaLink ? <EmailButton href={ctaLink}>{ctaLabel}</EmailButton> : null}
       {footerNote ? (
         <Text

@@ -1,5 +1,7 @@
 import { Link, Text } from "@react-email/components";
 import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
+import { emailHouseAddress } from "@/lib/email-branding";
+import { HOUSE_ADDRESS_ONE_LINE } from "@/lib/house-address";
 import { UNSUBSCRIBE_URL_PLACEHOLDER } from "@/lib/email-priority";
 import {
   EMAIL_FOOTER_BG,
@@ -73,7 +75,7 @@ export default function EmailFooter({ family, unsubscribeUrl }: EmailFooterProps
                 lineHeight: "18px",
               }}
             >
-              14 Bode Thomas Street, Surulere, Lagos, Nigeria
+              {emailHouseAddress || HOUSE_ADDRESS_ONE_LINE}
             </Text>
             <Text style={{ margin: "0 0 16px", fontFamily: FONT_UI, fontSize: 11, color: quiet }}>
               <Link href="mailto:hello@prudentgabriel.com" style={{ color: EMAIL_SAND, textDecoration: "none" }}>

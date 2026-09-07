@@ -9,7 +9,7 @@ const FIELDS = [
   { key: "site_name", label: "Site name", defaultValue: "Prudential Atelier" },
   { key: "contact_email", label: "Contact email", defaultValue: "hello@prudentgabriel.com" },
   { key: "contact_phone", label: "Phone", defaultValue: "+234" },
-  { key: "address", label: "Address", defaultValue: "Lagos, Nigeria" },
+  { key: "address", label: "Address", defaultValue: "No. 4 Akinwale Shitu Divine Homes, Thomas Estates, Ajah, Lagos, Nigeria" },
   { key: "consult_virtual", label: "Virtual consultation (NGN)", defaultValue: "25000" },
   { key: "consult_prudent", label: "In-person with Mrs. Prudent (NGN)", defaultValue: "75000" },
   { key: "consult_team", label: "In-person with team (NGN)", defaultValue: "45000" },

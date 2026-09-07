@@ -159,12 +159,15 @@ async function upsertShippingMethods() {
 
   await prisma.pickupLocation.upsert({
     where: { id: "pickup-surulere" },
-    update: {},
+    update: {
+      name: "Ajah factory",
+      address: "No. 4 Akinwale Shitu Divine Homes, Thomas Estates, Ajah, Lagos, Nigeria",
+    },
     create: {
       id: "pickup-surulere",
       shippingMethodId: "ship-pickup",
-      name: "Surulere atelier",
-      address: "14 Bode Thomas Street, Surulere, Lagos, Nigeria",
+      name: "Ajah factory",
+      address: "No. 4 Akinwale Shitu Divine Homes, Thomas Estates, Ajah, Lagos, Nigeria",
       hours: "Monday–Friday 9:00–18:00, Saturday 10:00–16:00",
       instructions: "Bring your collection code and a matching ID. We hold pieces for 14 days.",
       isActive: true,

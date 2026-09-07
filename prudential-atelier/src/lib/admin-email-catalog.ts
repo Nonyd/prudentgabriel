@@ -3,32 +3,73 @@ import { getPublicAppUrl } from "@/lib/app-url";
 
 export const EMAIL_TEMPLATE_KEYS = {
   COLLECTION_CAMPAIGN: "collection_campaign",
+  WELCOME: "welcome",
   WELCOME_CREDENTIALS: "welcome_credentials",
+  ACCOUNT_EXISTS: "account_exists",
+  CONSULTATION_PENDING: "consultation_pending",
   CONSULTATION_CONFIRMED: "consultation_confirmed",
+  CONSULTATION_CANCELLED: "consultation_cancelled",
+  CONSULTATION_RESCHEDULE: "consultation_reschedule",
   MEETING_LINK: "meeting_link",
   SESSION_SUMMARY: "session_summary",
   ATELIER_STAGE_UPDATE: "atelier_stage_update",
+  ATELIER_STAGE_CONSULTATION_BOOKING: "atelier_stage_consultation_booking",
+  ATELIER_STAGE_CONSULTATION_SESSION: "atelier_stage_consultation_session",
+  ATELIER_STAGE_INVOICE: "atelier_stage_invoice",
+  ATELIER_STAGE_PAYMENT: "atelier_stage_payment",
+  ATELIER_STAGE_SKETCHING: "atelier_stage_sketching",
+  ATELIER_STAGE_FABRIC: "atelier_stage_fabric",
+  ATELIER_STAGE_DESIGN_APPROVAL: "atelier_stage_design_approval",
+  ATELIER_STAGE_TAILORING: "atelier_stage_tailoring",
+  ATELIER_STAGE_FIRST_FITTING: "atelier_stage_first_fitting",
+  ATELIER_STAGE_ALTERATIONS: "atelier_stage_alterations",
+  ATELIER_STAGE_BEADING: "atelier_stage_beading",
+  ATELIER_STAGE_FINAL_FITTING: "atelier_stage_final_fitting",
+  ATELIER_STAGE_DELIVERY: "atelier_stage_delivery",
+  STAGE_APPROVAL_REQUEST: "stage_approval_request",
+  STAGE_APPROVAL_REMINDER: "stage_approval_reminder",
+  STAGE_CHANGES_REQUESTED: "stage_changes_requested",
+  BESPOKE_CONFIRMATION: "bespoke_confirmation",
+  BESPOKE_BALANCE_LINK: "bespoke_balance_link",
+  BESPOKE_DELIVERED: "bespoke_delivered",
+  BESPOKE_REVIEW_REQUEST: "bespoke_review_request",
+  RECEIPT_REMINDER: "receipt_reminder",
   INVOICE_ISSUED: "invoice_issued",
   QUOTE_APPROVAL: "quote_approval",
   PAYMENT_CONFIRMED: "payment_confirmed",
+  PAYMENT_REJECTED: "payment_rejected",
   BANK_TRANSFER_RECEIVED: "bank_transfer_received",
   BANK_TRANSFER_CONFIRMED: "bank_transfer_confirmed",
+  BANK_TRANSFER_ADMIN: "bank_transfer_admin",
   RTW_ORDER_CONFIRMED: "rtw_order_confirmed",
+  RTW_PRODUCTION_STARTED: "rtw_production_started",
   RTW_ORDER_SHIPPED: "rtw_order_shipped",
   RTW_ORDER_DELIVERED: "rtw_order_delivered",
+  RTW_FULFILMENT_REFUSED: "rtw_fulfilment_refused",
+  RTW_FULFILMENT_REFUSED_ADMIN: "rtw_fulfilment_refused_admin",
+  PICKUP_READY: "pickup_ready",
+  UNCOLLECTED_PICKUP: "uncollected_pickup",
+  SHIPPING_QUOTE: "shipping_quote",
+  ABANDONED_CART: "abandoned_cart",
+  BACK_IN_STOCK: "back_in_stock",
   PRODUCT_REVIEW_REQUEST: "product_review_request",
   CONSULTATION_REVIEW_REQUEST: "consultation_review_request",
   PASSWORD_RESET: "password_reset",
   LOYALTY_TIER_UPGRADE: "loyalty_tier_upgrade",
+  POINTS_EXPIRY: "points_expiry",
   EVENT_REMINDER: "event_reminder",
+  REFERRAL_SUCCESS: "referral_success",
   REFERRAL_REWARD: "referral_reward",
   BALANCE_REMINDER: "balance_reminder",
+  JOB_APPLICATION_CONFIRMATION: "job_application_confirmation",
+  JOB_APPLICATION_STATUS: "job_application_status",
   DAILY_REPORT: "daily_report",
   WEEKLY_REPORT: "weekly_report",
   CONTACT_FORM: "contact_form",
   LOW_STOCK: "low_stock",
   LATE_STAFF: "late_staff",
   JOB_APPLICATION: "job_application",
+  ADMIN_CONSULTATION: "admin_consultation",
   STAFF_INVITATION: "staff_invitation",
   STAGE_ASSIGNMENT: "stage_assignment",
 } as const;
@@ -45,13 +86,55 @@ export type EmailTemplateFields = {
   footer_note: string;
 };
 
+export type EmailLane = "rtw" | "mto" | "consult" | "account" | "marketing" | "ops";
+
 export type EmailTemplateMeta = {
   key: EmailTemplateKey;
   label: string;
   group: "client" | "admin" | "staff";
+  lane?: EmailLane;
   sortOrder: number;
   defaults: EmailTemplateFields;
 };
+
+export function resolveEmailLane(meta: Pick<EmailTemplateMeta, "key" | "group" | "lane">): EmailLane {
+  if (meta.lane) return meta.lane;
+  if (meta.group !== "client") return "ops";
+  const k = meta.key;
+  if (
+    k.startsWith("rtw_") ||
+    k === "product_review_request" ||
+    k === "pickup_ready" ||
+    k === "uncollected_pickup" ||
+    k === "abandoned_cart" ||
+    k === "shipping_quote" ||
+    k === "back_in_stock"
+  ) {
+    return "rtw";
+  }
+  if (
+    k.startsWith("atelier_") ||
+    k.startsWith("bespoke_") ||
+    k.startsWith("stage_") ||
+    k === "invoice_issued" ||
+    k === "quote_approval" ||
+    k === "balance_reminder" ||
+    k === "receipt_reminder"
+  ) {
+    return "mto";
+  }
+  if (
+    k.startsWith("consultation_") ||
+    k === "meeting_link" ||
+    k === "session_summary" ||
+    k === "event_reminder" ||
+    k === "admin_consultation"
+  ) {
+    return "consult";
+  }
+  if (k === "collection_campaign") return "marketing";
+  return "account";
+}
 
 const APP = () => getPublicAppUrl();
 
@@ -371,6 +454,561 @@ const CLIENT_TEMPLATES: EmailTemplateMeta[] = [
       footer_note: "",
     },
   },
+  {
+    key: EMAIL_TEMPLATE_KEYS.WELCOME,
+    label: "Welcome",
+    group: "client",
+    sortOrder: 21,
+    defaults: {
+      subject: `Welcome to ${CUSTOMER_HOUSE_NAME}, {{firstName}}`,
+      heading: "Welcome to the house",
+      body_1: "Dear {{firstName}},\n\nThank you for joining us. Your account is ready, and we are honoured to dress your story.",
+      body_2: "",
+      cta_label: "Visit your account",
+      cta_link: `${APP()}/account`,
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ACCOUNT_EXISTS,
+    label: "Account already exists",
+    group: "client",
+    sortOrder: 22,
+    defaults: {
+      subject: `You already have a ${CUSTOMER_HOUSE_NAME} account`,
+      heading: "You already have an account",
+      body_1: "Dear {{firstName}},\n\nAn account with this email is already registered. Sign in to continue.",
+      body_2: "",
+      cta_label: "Sign in",
+      cta_link: "{{link}}",
+      footer_note: "If you did not try to register, you can ignore this message.",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.CONSULTATION_PENDING,
+    label: "Consultation request received",
+    group: "client",
+    sortOrder: 23,
+    defaults: {
+      subject: "Consultation request received — {{orderRef}}",
+      heading: "We have your consultation request",
+      body_1: "Dear {{firstName}},\n\nThank you for requesting a consultation. Our team will confirm your time shortly.",
+      body_2: "You can review the booking in your account at any time.",
+      cta_label: "View booking",
+      cta_link: `${APP()}/account/consultations`,
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.CONSULTATION_CANCELLED,
+    label: "Consultation cancelled",
+    group: "client",
+    sortOrder: 24,
+    defaults: {
+      subject: "Consultation cancelled — {{orderRef}}",
+      heading: "Your consultation was cancelled",
+      body_1: "Dear {{firstName}},\n\nYour consultation {{orderRef}} has been cancelled.",
+      body_2: "You are welcome to book again whenever you are ready.",
+      cta_label: "Book again",
+      cta_link: `${APP()}/consultation`,
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.CONSULTATION_RESCHEDULE,
+    label: "Consultation reschedule",
+    group: "client",
+    sortOrder: 25,
+    defaults: {
+      subject: "New date proposed — {{orderRef}}",
+      heading: "We proposed a new time",
+      body_1: "Dear {{firstName}},\n\nPlease review the new date proposed for consultation {{orderRef}}.",
+      body_2: "",
+      cta_label: "View booking",
+      cta_link: `${APP()}/account/consultations`,
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_CONSULTATION_BOOKING,
+    label: "MTO — Consultation booked",
+    group: "client",
+    sortOrder: 30,
+    defaults: {
+      subject: `Your consultation is confirmed — ${CUSTOMER_HOUSE_NAME}`,
+      heading: "Consultation confirmed",
+      body_1: "Your consultation has been confirmed. We look forward to understanding your vision and crafting something extraordinary for you.",
+      body_2: "Track every stage of your garment in your account.",
+      cta_label: "Track my order",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_CONSULTATION_SESSION,
+    label: "MTO — Consultation summary",
+    group: "client",
+    sortOrder: 31,
+    defaults: {
+      subject: "Your consultation summary — {{orderRef}}",
+      heading: "Thank you for your session",
+      body_1: "Thank you for your consultation session. Here is a summary of what we discussed and the direction for your atelier commission.",
+      body_2: "Track every stage of your garment in your account.",
+      cta_label: "Track my order",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_INVOICE,
+    label: "MTO — Quote ready",
+    group: "client",
+    sortOrder: 32,
+    defaults: {
+      subject: "Your quote is ready for review — {{orderRef}}",
+      heading: "Your quote is ready",
+      body_1: "Your personalised quote is ready for review. Please take a moment to review the details and approve when you are ready to proceed.",
+      body_2: "Track every stage of your garment in your account.",
+      cta_label: "Review quote",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_PAYMENT,
+    label: "MTO — Payment received, production begins",
+    group: "client",
+    sortOrder: 33,
+    defaults: {
+      subject: "Payment received — your order begins now",
+      heading: "Your order is in production",
+      body_1: "We have received your payment. Your atelier order is now officially in production — our atelier team has begun work on your piece.",
+      body_2: "Track every stage of your garment in your account.",
+      cta_label: "Track my order",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_SKETCHING,
+    label: "MTO — Design concept",
+    group: "client",
+    sortOrder: 34,
+    defaults: {
+      subject: "Your design concept is ready — {{orderRef}}",
+      heading: "Your design concept",
+      body_1: "Our design team has prepared initial concepts for your outfit. We hope these capture the vision we discussed together.",
+      body_2: "Track every stage of your garment in your account.",
+      cta_label: "View concepts",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_FABRIC,
+    label: "MTO — Fabrics sourced",
+    group: "client",
+    sortOrder: 35,
+    defaults: {
+      subject: "Your fabrics have been sourced — {{orderRef}}",
+      heading: "Fabrics sourced",
+      body_1: "We have sourced the fabrics for your order. Each material has been carefully selected to match your design and quality expectations.",
+      body_2: "Track every stage of your garment in your account.",
+      cta_label: "Track my order",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_DESIGN_APPROVAL,
+    label: "MTO — Design approval",
+    group: "client",
+    sortOrder: 36,
+    defaults: {
+      subject: "Please review your final design — {{orderRef}}",
+      heading: "Please review your design",
+      body_1: "Your final design plan is ready for your review. Please confirm that everything meets your expectations before we proceed to construction.",
+      body_2: "Track every stage of your garment in your account.",
+      cta_label: "Review & approve",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_TAILORING,
+    label: "MTO — Tailoring",
+    group: "client",
+    sortOrder: 37,
+    defaults: {
+      subject: "Your outfit is being crafted — {{orderRef}}",
+      heading: "In the atelier",
+      body_1: "Your outfit is now being crafted in our atelier. Our tailors are bringing your design to life with meticulous attention to detail.",
+      body_2: "Track every stage of your garment in your account.",
+      cta_label: "Track my order",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_FIRST_FITTING,
+    label: "MTO — First fitting",
+    group: "client",
+    sortOrder: 38,
+    defaults: {
+      subject: "Your first fitting summary — {{orderRef}}",
+      heading: "First fitting complete",
+      body_1: "Your first fitting has been completed. Below are the notes from your fitting session and any adjustments we will be making.",
+      body_2: "Track every stage of your garment in your account.",
+      cta_label: "Track my order",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_ALTERATIONS,
+    label: "MTO — Alterations",
+    group: "client",
+    sortOrder: 39,
+    defaults: {
+      subject: "Alterations complete — {{orderRef}}",
+      heading: "Alterations complete",
+      body_1: "All requested alterations have been completed. Your garment has been refined to ensure the perfect fit and finish.",
+      body_2: "Track every stage of your garment in your account.",
+      cta_label: "Track my order",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_BEADING,
+    label: "MTO — Beading & finishing",
+    group: "client",
+    sortOrder: 40,
+    defaults: {
+      subject: "The finishing touches are underway — {{orderRef}}",
+      heading: "Finishing touches",
+      body_1: "Our embellishment team is applying the finishing touches — beading, embroidery, and final details that make your piece truly yours.",
+      body_2: "Track every stage of your garment in your account.",
+      cta_label: "Track my order",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_FINAL_FITTING,
+    label: "MTO — Final fitting",
+    group: "client",
+    sortOrder: 41,
+    defaults: {
+      subject: "Final fitting approved — {{orderRef}}",
+      heading: "Final fitting approved",
+      body_1: "Your final fitting has been approved. Your outfit meets our standards and yours — we are preparing it for delivery.",
+      body_2: "Track every stage of your garment in your account.",
+      cta_label: "Track my order",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_DELIVERY,
+    label: "MTO — Ready for delivery",
+    group: "client",
+    sortOrder: 42,
+    defaults: {
+      subject: "Your outfit is ready — {{orderRef}}",
+      heading: "Your outfit is ready",
+      body_1: "Your atelier outfit is ready. We cannot wait for you to experience the finished piece. Details for collection or delivery are below.",
+      body_2: "Track every stage of your garment in your account.",
+      cta_label: "Track my order",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.STAGE_APPROVAL_REQUEST,
+    label: "MTO — Please approve this stage",
+    group: "client",
+    sortOrder: 43,
+    defaults: {
+      subject: "Please review {{stageName}} — {{orderRef}}",
+      heading: "Ready for your review",
+      body_1: "Dear {{firstName}},\n\n{{stageName}} on order {{orderRef}} is ready for your review.",
+      body_2: "",
+      cta_label: "Review & approve",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.STAGE_APPROVAL_REMINDER,
+    label: "MTO — Approval reminder",
+    group: "client",
+    sortOrder: 44,
+    defaults: {
+      subject: "Reminder: review {{stageName}} — {{orderRef}}",
+      heading: "Still waiting for your approval",
+      body_1: "Dear {{firstName}},\n\nA reminder: {{stageName}} on order {{orderRef}} is still waiting for your approval.",
+      body_2: "",
+      cta_label: "Review now",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.BESPOKE_CONFIRMATION,
+    label: "MTO — Request received",
+    group: "client",
+    sortOrder: 45,
+    defaults: {
+      subject: "Atelier request received — {{orderRef}}",
+      heading: "Your atelier request",
+      body_1: "Dear {{firstName}},\n\nWe have received your atelier request {{orderRef}}. Our team will review it within 24–48 hours.",
+      body_2: "Occasion: {{outfitName}}",
+      cta_label: "Browse ready-to-wear",
+      cta_link: `${APP()}/rtw`,
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.BESPOKE_BALANCE_LINK,
+    label: "MTO — Pay outstanding balance",
+    group: "client",
+    sortOrder: 46,
+    defaults: {
+      subject: "Complete payment — {{orderRef}}",
+      heading: "Your balance is ready",
+      body_1: "Dear {{firstName}},\n\nYour atelier order {{orderRef}} is ready for payment. Please complete checkout for the outstanding balance of {{amount}}.",
+      body_2: "",
+      cta_label: "Pay now",
+      cta_link: "{{link}}",
+      footer_note: "If the button does not work, copy the link from this email into your browser.",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.BESPOKE_DELIVERED,
+    label: "MTO — Commission delivered",
+    group: "client",
+    sortOrder: 47,
+    defaults: {
+      subject: "Your commission {{orderRef}} has been delivered",
+      heading: "Your commission is with you",
+      body_1: "Dear {{firstName}},\n\nOrder {{orderRef}} has been marked delivered. We hope every detail feels exactly as you imagined.",
+      body_2: "Please confirm you have received your garment — it only takes a moment.",
+      cta_label: "Confirm receipt",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.BESPOKE_REVIEW_REQUEST,
+    label: "MTO — Review request",
+    group: "client",
+    sortOrder: 48,
+    defaults: {
+      subject: "How was your commission {{orderRef}}?",
+      heading: "We would love your feedback",
+      body_1: "Dear {{firstName}},\n\nYour bespoke piece {{orderRef}} is with you — we hope you love every detail. We would be honoured to hear about your experience.",
+      body_2: "",
+      cta_label: "Share your thoughts",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.RECEIPT_REMINDER,
+    label: "MTO — Confirm receipt reminder",
+    group: "client",
+    sortOrder: 49,
+    defaults: {
+      subject: "Reminder: confirm receipt of {{orderRef}}",
+      heading: "Have you received your garment?",
+      body_1: "Dear {{firstName}},\n\nYour commission {{orderRef}} was marked delivered a week ago. If it has arrived safely, please confirm receipt so we can close your file.",
+      body_2: "",
+      cta_label: "Confirm receipt",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.PAYMENT_REJECTED,
+    label: "Payment not confirmed",
+    group: "client",
+    sortOrder: 50,
+    defaults: {
+      subject: "Payment not confirmed — action needed",
+      heading: "We could not confirm your payment",
+      body_1: "Dear {{firstName}},\n\nUnfortunately we could not confirm your payment of {{amount}} for {{orderRef}}.",
+      body_2: "Please contact us or try again.",
+      cta_label: "Contact us",
+      cta_link: `${APP()}/contact`,
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.RTW_PRODUCTION_STARTED,
+    label: "RTW — Production started",
+    group: "client",
+    sortOrder: 51,
+    defaults: {
+      subject: "We have started making your piece — #{{orderRef}}",
+      heading: "Production has begun",
+      body_1: "Dear {{firstName}},\n\nThe atelier has begun production on order {{orderRef}}. Your piece is now being made.",
+      body_2: "We will write again when it is on its way, or when it is ready to collect.",
+      cta_label: "View your order",
+      cta_link: `${APP()}/account/orders`,
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.RTW_FULFILMENT_REFUSED,
+    label: "RTW — Could not fulfil (sold out)",
+    group: "client",
+    sortOrder: 52,
+    defaults: {
+      subject: "We could not fulfil order #{{orderRef}} — refund underway",
+      heading: "We could not fulfil this order",
+      body_1: "Dear {{firstName}},\n\nThank you for your order {{orderRef}}. Your payment of {{amount}} was received, but the piece sold out before we could reserve it.",
+      body_2: "We will not ship a substitute. A refund of the full amount will be issued. If you have not seen it within a few working days, write to us.",
+      cta_label: "Contact us",
+      cta_link: `${APP()}/contact`,
+      footer_note: "We are sorry — this should not happen, and we are treating it as such.",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.PICKUP_READY,
+    label: "RTW — Ready for collection",
+    group: "client",
+    sortOrder: 53,
+    defaults: {
+      subject: "Your piece is ready — #{{orderRef}}",
+      heading: "Your piece is ready",
+      body_1: "Dear {{firstName}},\n\nOrder {{orderRef}} is waiting for you. Your collection code is {{collectionCode}}.",
+      body_2: "{{pickupName}}\n{{pickupAddress}}\n{{pickupHours}}",
+      cta_label: "View order",
+      cta_link: `${APP()}/account/orders`,
+      footer_note: "Bring the code and a matching ID.",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.UNCOLLECTED_PICKUP,
+    label: "RTW — Uncollected pickup reminder",
+    group: "client",
+    sortOrder: 54,
+    defaults: {
+      subject: "Still waiting for you — #{{orderRef}}",
+      heading: "Your piece is still waiting",
+      body_1: "Dear {{firstName}},\n\nOrder {{orderRef}} has been ready for collection. Your collection code is {{collectionCode}}.",
+      body_2: "Please collect it soon, or write to us if you need a little more time.",
+      cta_label: "Contact us",
+      cta_link: `${APP()}/contact`,
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.SHIPPING_QUOTE,
+    label: "RTW — Shipping quote",
+    group: "client",
+    sortOrder: 55,
+    defaults: {
+      subject: "Shipping for order #{{orderRef}}",
+      heading: "Your shipping quote is ready",
+      body_1: "Dear {{firstName}},\n\nShipping for order {{orderRef}} is {{amount}}. Please complete payment to dispatch.",
+      body_2: "",
+      cta_label: "Pay shipping",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ABANDONED_CART,
+    label: "RTW — Abandoned bag",
+    group: "client",
+    sortOrder: 56,
+    defaults: {
+      subject: `Your bag is waiting | ${CUSTOMER_HOUSE_NAME}`,
+      heading: "Your bag is waiting",
+      body_1: "Dear {{firstName}},\n\nYou left a few pieces in your bag. They are still waiting for you.",
+      body_2: "",
+      cta_label: "Return to checkout",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.BACK_IN_STOCK,
+    label: "RTW — Back in stock",
+    group: "client",
+    sortOrder: 57,
+    defaults: {
+      subject: "{{outfitName}} is back in stock",
+      heading: "Back in stock",
+      body_1: "{{outfitName}} in size {{size}} is available again.",
+      body_2: "",
+      cta_label: "Shop now",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.POINTS_EXPIRY,
+    label: "Points expiring soon",
+    group: "client",
+    sortOrder: 58,
+    defaults: {
+      subject: `Prudent Points expiring soon — ${CUSTOMER_HOUSE_NAME}`,
+      heading: "Your points will expire soon",
+      body_1: "Dear {{firstName}},\n\nSome of your Prudent Points will expire on {{date}}.",
+      body_2: "Use them on your next order.",
+      cta_label: "Shop now",
+      cta_link: `${APP()}/rtw`,
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.REFERRAL_SUCCESS,
+    label: "Referral success",
+    group: "client",
+    sortOrder: 59,
+    defaults: {
+      subject: "You just earned points for a referral",
+      heading: "Your referral landed",
+      body_1: "Dear {{firstName}},\n\nA friend you referred has joined the house. Prudent Points have been added to your account.",
+      body_2: "",
+      cta_label: "View points",
+      cta_link: `${APP()}/account`,
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.JOB_APPLICATION_CONFIRMATION,
+    label: "Job application received (applicant)",
+    group: "client",
+    sortOrder: 60,
+    defaults: {
+      subject: "Application received — {{outfitName}}",
+      heading: "We have your application",
+      body_1: "Dear {{firstName}},\n\nThank you for applying for {{outfitName}}. Our team will review your application and be in touch.",
+      body_2: "",
+      cta_label: "",
+      cta_link: "",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.JOB_APPLICATION_STATUS,
+    label: "Job application status (applicant)",
+    group: "client",
+    sortOrder: 61,
+    defaults: {
+      subject: "Update on your application — {{outfitName}}",
+      heading: "An update on your application",
+      body_1: "Dear {{firstName}},\n\nThere is an update on your application for {{outfitName}}.",
+      body_2: "",
+      cta_label: "",
+      cta_link: "",
+      footer_note: "",
+    },
+  },
 ];
 
 const ADMIN_TEMPLATES: EmailTemplateMeta[] = [
@@ -464,6 +1102,51 @@ const ADMIN_TEMPLATES: EmailTemplateMeta[] = [
       footer_note: "",
     },
   },
+  {
+    key: EMAIL_TEMPLATE_KEYS.BANK_TRANSFER_ADMIN,
+    label: "Bank transfer pending (admin)",
+    group: "admin",
+    sortOrder: 106,
+    defaults: {
+      subject: "[Bank transfer pending] {{orderRef}}",
+      heading: "New bank transfer receipt",
+      body_1: "{{firstName}} submitted a transfer receipt for {{orderRef}} — {{amount}}.",
+      body_2: "Verify the receipt and confirm the payment in admin.",
+      cta_label: "Open admin",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.RTW_FULFILMENT_REFUSED_ADMIN,
+    label: "RTW oversell refund (admin)",
+    group: "admin",
+    sortOrder: 107,
+    defaults: {
+      subject: "Refund required — RTW oversell #{{orderRef}}",
+      heading: "Paid order could not be fulfilled",
+      body_1: "Order {{orderRef}} was paid ({{amount}}) but stock was insufficient at fulfilment. The order is cancelled.",
+      body_2: "Refund the client in the payment provider, then record the ledger correction.",
+      cta_label: "Open the order",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.ADMIN_CONSULTATION,
+    label: "New consultation booking (admin)",
+    group: "admin",
+    sortOrder: 108,
+    defaults: {
+      subject: "New consultation booking — {{orderRef}}",
+      heading: "New consultation booking",
+      body_1: "{{firstName}} ({{email}}) booked a consultation {{orderRef}}.",
+      body_2: "",
+      cta_label: "Open consultations",
+      cta_link: `${APP()}/admin/consultations`,
+      footer_note: "",
+    },
+  },
 ];
 
 const STAFF_TEMPLATES: EmailTemplateMeta[] = [
@@ -497,6 +1180,21 @@ const STAFF_TEMPLATES: EmailTemplateMeta[] = [
       footer_note: "",
     },
   },
+  {
+    key: EMAIL_TEMPLATE_KEYS.STAGE_CHANGES_REQUESTED,
+    label: "Client requested stage changes",
+    group: "staff",
+    sortOrder: 202,
+    defaults: {
+      subject: "Changes requested — {{orderRef}} / {{stageName}}",
+      heading: "The client requested changes",
+      body_1: "The client requested changes on {{orderRef}} ({{stageName}}).",
+      body_2: "{{notes}}",
+      cta_label: "Open order",
+      cta_link: "{{link}}",
+      footer_note: "",
+    },
+  },
 ];
 
 export const EMAIL_TEMPLATE_CATALOG: EmailTemplateMeta[] = [
@@ -525,6 +1223,23 @@ export function emailSettingKey(templateKey: EmailTemplateKey, field: EmailTempl
   return `email_${templateKey}_${field}`;
 }
 
+/** Maps Prisma `BespokeStage` names to admin-editable templates. */
+export const BESPOKE_STAGE_EMAIL_KEYS = {
+  CONSULTATION_BOOKING: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_CONSULTATION_BOOKING,
+  CONSULTATION_SESSION: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_CONSULTATION_SESSION,
+  INVOICE_ISSUANCE: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_INVOICE,
+  PAYMENT_CONFIRMATION: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_PAYMENT,
+  SKETCHING_CONCEPT: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_SKETCHING,
+  FABRIC_SOURCING: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_FABRIC,
+  DESIGN_APPROVAL: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_DESIGN_APPROVAL,
+  TAILORING: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_TAILORING,
+  FIRST_FITTING: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_FIRST_FITTING,
+  ALTERATIONS: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_ALTERATIONS,
+  BEADING_FINISHING: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_BEADING,
+  FINAL_FITTING: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_FINAL_FITTING,
+  DELIVERY: EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_DELIVERY,
+} as const;
+
 export function interpolateTemplateText(
   text: string,
   vars: Record<string, string>,
@@ -552,5 +1267,12 @@ export function demoTemplateVariables(): Record<string, string> {
     link: getPublicAppUrl(),
     collectionName: "Rich & Regal",
     collectionUrl: `${getPublicAppUrl()}/collections/rich-regal`,
+    stageName: "Design approval",
+    collectionCode: "PG-4821",
+    pickupName: "Ajah factory",
+    pickupAddress: "No. 4 Akinwale Shitu Divine Homes, Thomas Estates, Ajah, Lagos, Nigeria",
+    pickupHours: "Monday–Friday 9:00–18:00, Saturday 10:00–16:00",
+    size: "M",
+    notes: "Please raise the hem by 2cm and soften the neckline.",
   };
 }

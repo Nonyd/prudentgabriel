@@ -6,6 +6,8 @@ import {
   EMAIL_TEMPLATE_CATALOG,
   EMAIL_TEMPLATE_FIELD_SUFFIXES,
   emailSettingKey,
+  resolveEmailLane,
+  type EmailLane,
   type EmailTemplateFields,
   type EmailTemplateKey,
 } from "@/lib/admin-email-catalog";
@@ -14,6 +16,7 @@ export type StoredEmailTemplate = EmailTemplateFields & {
   key: EmailTemplateKey;
   label: string;
   group: "client" | "admin" | "staff";
+  lane: EmailLane;
   lastEdited: string | null;
 };
 
@@ -78,6 +81,7 @@ export async function getAllEmailTemplates(): Promise<Record<EmailTemplateKey, S
       key: meta.key,
       label: meta.label,
       group: meta.group,
+      lane: resolveEmailLane(meta),
       lastEdited: lastEdited?.toISOString() ?? null,
       ...fields,
     };

@@ -175,6 +175,19 @@ export function Footer({
     <footer className="px-3 pb-3">
       <div className="mx-auto max-w-site px-6 pb-6 pt-8 lg:px-10">
         <Logo variant="dark" size="lg" themeAdaptive={false} />
+        <p
+          className="mt-3 max-w-sm"
+          style={{
+            fontFamily: "var(--font-ui)",
+            fontSize: "12px",
+            lineHeight: 1.6,
+            color: "var(--text-light)",
+          }}
+        >
+          No. 4 Akinwale Shitu Divine Homes, Thomas Estates
+          <br />
+          Ajah, Lagos, Nigeria
+        </p>
       </div>
 
       <div className="glass-1 glass-panel mx-auto max-w-site overflow-hidden">

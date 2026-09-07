@@ -1,5 +1,6 @@
-import { Heading, Text } from "@react-email/components";
+import { Text } from "@react-email/components";
 import EmailLayout from "./components/EmailLayout";
+import { CatalogHeading } from "./components/CatalogHeading";
 
 type Props = {
   firstName: string;
@@ -9,6 +10,8 @@ type Props = {
   address: string;
   hours: string;
   instructions?: string | null;
+  catalogHeading?: string;
+  catalogBody?: string;
 };
 
 export default function PickupReadyEmail({
@@ -19,16 +22,17 @@ export default function PickupReadyEmail({
   address,
   hours,
   instructions,
+  catalogHeading,
+  catalogBody,
 }: Props) {
   return (
     <EmailLayout family="relationship" previewText={`Your piece is ready — collection code ${collectionCode}`}>
-      <Heading as="h1" style={{ fontSize: 28, fontWeight: 400, color: "#442913", margin: "0 0 12px" }}>
-        Your piece is ready.
-      </Heading>
-      <Text style={{ fontSize: 16, color: "#2d2d2d" }}>Hi {firstName},</Text>
-      <Text style={{ fontSize: 15, color: "#444", lineHeight: 1.6 }}>
-        Order #{orderNumber} is waiting for you at {pickupName}.
-      </Text>
+      <CatalogHeading
+        heading={catalogHeading}
+        body={catalogBody}
+        fallbackHeading="Your piece is ready."
+        fallbackBody={`Hi ${firstName},\n\nOrder #${orderNumber} is waiting for you at ${pickupName}.`}
+      />
       <Text style={{ fontSize: 22, letterSpacing: 3, color: "#442913", margin: "20px 0" }}>{collectionCode}</Text>
       <Text style={{ fontSize: 14, color: "#444", lineHeight: 1.6 }}>
         {address}
