@@ -733,9 +733,23 @@ export const CMS_PAGES: CmsPageDef[] = [
         fields: [
           {
             key: "rtw_hero_carousel",
-            label: "Tall centre media (image or video). Catalogue looks fill the tiles beside it.",
+            label: "Tall centre media (image or video)",
             type: "carousel",
             default: "[]",
+          },
+          {
+            key: "rtw_hero_look_top",
+            label: "Upper look (right column)",
+            type: "image",
+            default: "",
+            uploadFolder: "prudent-gabriel/hero",
+          },
+          {
+            key: "rtw_hero_look_bottom",
+            label: "Lower look (right column)",
+            type: "image",
+            default: "",
+            uploadFolder: "prudent-gabriel/hero",
           },
           {
             key: "rtw_hero_headline",

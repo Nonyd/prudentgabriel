@@ -6,7 +6,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { rtwHeroCopy, rtwHeroLooks, RTW_GRID_ID, RTW_HERO_HEADLINE, RTW_HERO_SUBLINE } from "../src/lib/rtw-hero";
+import { rtwHeroCopy, rtwHeroLooks, rtwHeroSideLooks, RTW_GRID_ID, RTW_HERO_HEADLINE, RTW_HERO_SUBLINE } from "../src/lib/rtw-hero";
 import { HOMEPAGE_BESTSELLERS_ADMIN_NOTE } from "../src/lib/homepage-bestsellers";
 import { parseHeroCarouselItems } from "../src/lib/hero-carousel";
 
@@ -42,6 +42,18 @@ function runLooks() {
   assert(looks.length === 2, "duplicate urls and empty urls are skipped");
   assert(looks[0]?.url === "/media/a.jpg", "primary image wins");
   assert(looks[1]?.alt === "Dalia", "missing alt falls back to the piece name");
+
+  const cmsSides = rtwHeroSideLooks({
+    top: "/media/cms-top.jpg",
+    bottom: "/media/cms-bottom.jpg",
+    fallback: looks,
+  });
+  assert(cmsSides[0]?.url === "/media/cms-top.jpg", "upper look is the CMS image");
+  assert(cmsSides[1]?.url === "/media/cms-bottom.jpg", "lower look is the CMS image");
+
+  const mixed = rtwHeroSideLooks({ top: "/media/cms-top.jpg", fallback: looks });
+  assert(mixed[0]?.url === "/media/cms-top.jpg", "set CMS image wins its slot");
+  assert(mixed[1]?.url === "/media/d.jpg", "empty CMS slot still uses the catalogue");
 }
 
 function runCarouselParse() {
@@ -80,6 +92,8 @@ function runSource() {
   assert(journeyIdx > bridalIdx, "atelier journey stays after bridal");
 
   assert(cms.includes("rtw_hero_carousel"), "RTW hero media is a CMS carousel");
+  assert(cms.includes("rtw_hero_look_top"), "upper look is CMS-managed");
+  assert(cms.includes("rtw_hero_look_bottom"), "lower look is CMS-managed");
   assert(cms.includes("rtw_hero_headline"), "RTW headline is CMS-managed");
   assert(cms.includes("rtw_hero_cta_label"), "RTW CTA is CMS-managed");
   assert(cms.includes("home_bridal_headline"), "bridal band copy is CMS-managed");
@@ -89,11 +103,13 @@ function runSource() {
   assert(hero.includes("LookWall"), "empty CMS stages catalogue photography, not a chocolate void");
   assert(hero.includes("min-h-0 flex-1"), "hero media sits in the space below the nav");
   assert(hero.includes("featuredItems"), "CMS image or video stitches into the tall centre cell");
+  assert(hero.includes("sideLooks"), "right-column tiles take CMS looks");
   assert(!hero.includes("!hasCampaign && looks"), "campaign media does not replace the look wall");
   assert(hero.includes("preload=\"metadata\""), "RTW hero video is poster-first, not preload auto");
   assert(hero.includes(`#${RTW_GRID_ID}`) || hero.includes("RTW_GRID_ID"), "CTA scrolls to the grid");
   assert(hero.includes("shouldPrefetchReelVideo"), "portrait video follows AE prefetch");
-  assert(client.includes("rtwHeroLooks"), "look wall is built from the catalogue");
+  assert(client.includes("heroSideLooks"), "look wall sides come from the page");
+  assert(!client.includes("rtwHeroLooks"), "client does not pick catalogue looks itself");
   assert(!hero.includes("unsplash"), "RTW hero does not fall back to Unsplash");
 
   assert(client.includes('label: "Dresses"'), "chips are sentence case");
@@ -104,6 +120,7 @@ function runSource() {
   assert(client.includes("promiseBand"), "promise band renders on the landing page");
 
   assert(rtwPage.includes("rtwHeroCopy"), "page uses the copy helper so Ready-to-Wear cannot leak");
+  assert(rtwPage.includes("rtwHeroSideLooks"), "page builds side looks from CMS");
   assert(rtwPage.includes("queryProductList"), "grid still loads the catalogue");
 
   assert(bestsellers.includes("rankedProductIdsByUnitsSold"), "Best sellers still rank on purchase volume");

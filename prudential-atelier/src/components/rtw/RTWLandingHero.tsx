@@ -219,18 +219,24 @@ function FeaturedFrame({
 
 function LookWall({
   looks,
+  sideLooks,
   featuredItems,
   featuredIndex,
   onFeaturedIndex,
 }: {
   looks: RTWHeroLook[];
+  sideLooks: RTWHeroLook[];
   featuredItems: HeroCarouselItem[];
   featuredIndex: number;
   onFeaturedIndex: (n: number) => void;
 }) {
   const campaign = featuredItems.length > 0;
   const featuredLook = looks[0];
-  const sides = campaign ? looks.slice(0, 2) : looks.slice(1, 3);
+  const sides = sideLooks.length
+    ? sideLooks.slice(0, 2)
+    : campaign
+      ? looks.slice(0, 2)
+      : looks.slice(1, 3);
   const b = sides[0];
   const c = sides[1];
   const hasFeatured = campaign || Boolean(featuredLook);
@@ -272,12 +278,14 @@ function LookWall({
 export function RTWLandingHero({
   items,
   looks = [],
+  sideLooks = [],
   headline,
   subline,
   ctaLabel,
 }: {
   items: HeroCarouselItem[];
   looks?: RTWHeroLook[];
+  sideLooks?: RTWHeroLook[];
   headline: string;
   subline: string;
   ctaLabel: string;
@@ -285,7 +293,7 @@ export function RTWLandingHero({
   const [index, setIndex] = useState(0);
   const count = items.length;
   const hasCampaign = count > 0;
-  const hasStage = hasCampaign || looks.length > 0;
+  const hasStage = hasCampaign || looks.length > 0 || sideLooks.length > 0;
   const active = hasCampaign ? items[Math.min(index, count - 1)]! : null;
 
   const go = useCallback(
@@ -310,6 +318,7 @@ export function RTWLandingHero({
         {hasStage ? (
           <LookWall
             looks={looks}
+            sideLooks={sideLooks}
             featuredItems={items}
             featuredIndex={index}
             onFeaturedIndex={setIndex}

@@ -7,7 +7,7 @@ import { resolveHeroCarouselItems } from "@/lib/hero-carousel";
 import { listLivePublishedCollections } from "@/lib/live-collections";
 import { prisma } from "@/lib/prisma";
 import { CATALOG_PAGE_SIZE, RTW_EXCLUDE_CATEGORY_QUERY, SHOP_ACCESSORIES, SHOP_LISTING } from "@/lib/rtw-aisle";
-import { rtwHeroCopy } from "@/lib/rtw-hero";
+import { rtwHeroCopy, rtwHeroLooks, rtwHeroSideLooks } from "@/lib/rtw-hero";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
 
 export const revalidate = 300;
@@ -29,6 +29,8 @@ function flattenSearchParams(sp: Record<string, string | string[] | undefined>) 
 
 const RTW_CMS_KEYS = [
   "rtw_hero_carousel",
+  "rtw_hero_look_top",
+  "rtw_hero_look_bottom",
   "rtw_hero_headline",
   "rtw_hero_subline",
   "rtw_hero_cta_label",
@@ -103,6 +105,12 @@ export default async function RTWPage({
     cta: cmsGet(cms, "rtw_hero_cta_label", ""),
     promise: cmsGet(cms, "rtw_promise_band", ""),
   });
+  const heroLooks = rtwHeroLooks(products);
+  const heroSideLooks = rtwHeroSideLooks({
+    top: cmsGet(cms, "rtw_hero_look_top", ""),
+    bottom: cmsGet(cms, "rtw_hero_look_bottom", ""),
+    fallback: heroLooks,
+  });
 
   return (
     <RTWPageClient
@@ -113,6 +121,8 @@ export default async function RTWPage({
       hasNext={hasNext}
       collections={collections}
       heroItems={resolveHeroCarouselItems(carouselRaw)}
+      heroLooks={heroLooks}
+      heroSideLooks={heroSideLooks}
       heroHeadline={copy.headline}
       heroSubline={copy.subline}
       heroCta={copy.cta}

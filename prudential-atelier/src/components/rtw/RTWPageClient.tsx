@@ -10,7 +10,7 @@ import { CatalogPagination } from "@/components/shop/CatalogPagination";
 import { RTWLandingHero } from "@/components/rtw/RTWLandingHero";
 import type { HeroCarouselItem } from "@/lib/hero-carousel";
 import { CATALOG_PAGE_SIZE } from "@/lib/rtw-aisle";
-import { RTW_GRID_ID, rtwHeroLooks } from "@/lib/rtw-hero";
+import { RTW_GRID_ID, type RTWHeroLook } from "@/lib/rtw-hero";
 import type { ProductListItem } from "@/types/product";
 
 type ChipId = "ALL" | "DRESSES" | "JUMPSUITS" | "SETS" | "SUITS";
@@ -65,6 +65,8 @@ export interface RTWPageClientProps {
   hasNext: boolean;
   collections: { name: string; slug: string }[];
   heroItems: HeroCarouselItem[];
+  heroLooks?: RTWHeroLook[];
+  heroSideLooks?: RTWHeroLook[];
   heroHeadline: string;
   heroSubline: string;
   heroCta: string;
@@ -78,6 +80,8 @@ export function RTWPageClient({
   totalPages,
   collections,
   heroItems,
+  heroLooks = [],
+  heroSideLooks = [],
   heroHeadline,
   heroSubline,
   heroCta,
@@ -88,7 +92,6 @@ export function RTWPageClient({
   const [isPending, startTransition] = useTransition();
   const [items, setItems] = useState(initialProducts);
   const [page, setPage] = useState(initialPage);
-  const [looks] = useState(() => rtwHeroLooks(initialProducts));
 
   const queryKey = sp.toString();
 
@@ -118,7 +121,8 @@ export function RTWPageClient({
     <div className="min-h-screen bg-bg-card pb-20">
       <RTWLandingHero
         items={heroItems}
-        looks={looks}
+        looks={heroLooks}
+        sideLooks={heroSideLooks}
         headline={heroHeadline}
         subline={heroSubline}
         ctaLabel={heroCta}

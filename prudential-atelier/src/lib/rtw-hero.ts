@@ -58,6 +58,22 @@ export function rtwHeroLooks(
   return out;
 }
 
+/** Right-column tiles. CMS images win; empty slots still fill from the catalogue. */
+export function rtwHeroSideLooks(opts: {
+  top?: string;
+  bottom?: string;
+  fallback?: RTWHeroLook[];
+}): RTWHeroLook[] {
+  const fallback = opts.fallback ?? [];
+  const fromCms = (raw: string | undefined, alt: string): RTWHeroLook | undefined => {
+    const url = raw?.trim();
+    return url ? { url, alt } : undefined;
+  };
+  const top = fromCms(opts.top, "Look") ?? fallback[0];
+  const bottom = fromCms(opts.bottom, "Look") ?? fallback[1];
+  return [top, bottom].filter((look): look is RTWHeroLook => Boolean(look));
+}
+
 /** iOS plays MP4/H.264. Same rewrite the homepage carousel uses. */
 export function rtwHeroPlaybackUrl(url: string): string {
   let out = url;
