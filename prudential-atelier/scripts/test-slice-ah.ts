@@ -87,6 +87,9 @@ function runSource() {
   assert(hero.includes("glass-1"), "RTW hero copy sits on glass-1");
   assert(hero.includes("hero-copy-scrim"), "RTW hero has a scrim under the glass");
   assert(hero.includes("LookWall"), "empty CMS stages catalogue photography, not a chocolate void");
+  assert(hero.includes("min-h-0 flex-1"), "hero media sits in the space below the nav");
+  assert(hero.includes("featuredItems"), "CMS image or video stitches into the tall centre cell");
+  assert(!hero.includes("!hasCampaign && looks"), "campaign media does not replace the look wall");
   assert(hero.includes("preload=\"metadata\""), "RTW hero video is poster-first, not preload auto");
   assert(hero.includes(`#${RTW_GRID_ID}`) || hero.includes("RTW_GRID_ID"), "CTA scrolls to the grid");
   assert(hero.includes("shouldPrefetchReelVideo"), "portrait video follows AE prefetch");

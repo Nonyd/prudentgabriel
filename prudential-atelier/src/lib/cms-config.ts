@@ -733,7 +733,7 @@ export const CMS_PAGES: CmsPageDef[] = [
         fields: [
           {
             key: "rtw_hero_carousel",
-            label: "Hero media (one image, or two to three slides)",
+            label: "Tall centre media (image or video). Catalogue looks fill the tiles beside it.",
             type: "carousel",
             default: "[]",
           },
