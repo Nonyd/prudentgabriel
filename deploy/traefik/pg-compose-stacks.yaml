@@ -102,6 +102,13 @@ http:
         certResolver: letsencrypt
       priority: 3000
 
+  serversTransports:
+    pg-staging-upload:
+      forwardingTimeouts:
+        dialTimeout: 30s
+        responseHeaderTimeout: 180s
+        idleConnTimeout: 180s
+
   services:
     pg-noop:
       loadBalancer:
@@ -112,5 +119,6 @@ http:
           - url: http://prudentgabriel-main:3000
     pg-staging-svc:
       loadBalancer:
+        serversTransport: pg-staging-upload
         servers:
           - url: http://prudentgabriel-staging:3000

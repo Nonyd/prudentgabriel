@@ -144,6 +144,12 @@ function testSourceContracts() {
   const upload = src("src/app/api/admin/upload/route.ts");
   assert(upload.includes("COLLECTION_REEL_TOO_LARGE_MESSAGE"), "upload refuses a reel over the shared cap");
   assert(upload.includes("MAX_COLLECTION_REEL_BYTES"), "reel cap is the shared byte constant");
+  assert(upload.includes("maxDuration"), "upload is allowed two minutes");
+  assert(upload.includes("View as user is read-only."), "upload stays read-only while impersonating");
+  const mw = src("src/middleware.ts");
+  assert(mw.includes("api/admin/upload"), "middleware matcher skips the upload route");
+  const xhr = src("src/lib/admin-upload-xhr.ts");
+  assert(xhr.includes("The server dropped this upload"), "proxy HTML is not shown as the toast");
   assert(COLLECTION_REEL_TOO_LARGE_MESSAGE === `Reel must be under ${MAX_COLLECTION_REEL_MB}MB`, "reel size copy names the cap");
   assert(MAX_COLLECTION_REEL_MB === 20, "stored reels stay under 20MB");
   assert(MAX_COLLECTION_REEL_SOURCE_MB === 500, "source clips may be up to 500MB");

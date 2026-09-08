@@ -169,6 +169,8 @@ function main() {
   const mw = routeSource("middleware.ts");
   assert(mw.includes("View as user is read-only"), "middleware blocks writes while impersonating");
   assert(mw.includes("settings/developer"), "middleware blocks developer credentials while impersonating");
+  const adminUpload = routeSource("app/api/admin/upload/route.ts");
+  assert(adminUpload.includes("View as user is read-only."), "upload route blocks impersonation without middleware");
 
   const navHrefs = ADMIN_NAV_SECTIONS.flatMap((s) => s.items.map((i) => i.href.split("?")[0]));
   assert(navHrefs.includes("/admin/settings/bank-accounts"), "bank accounts is in the nav");

@@ -1,4 +1,6 @@
+import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { ADMIN_IMPERSONATE_COOKIE } from "@/lib/admin-impersonate";
 import { sanitizeUploadFolder } from "@/lib/admin-upload-folder";
 import { gateUploadFolder } from "@/lib/media/gate-upload";
 
@@ -7,6 +9,11 @@ import { gateUploadFolder } from "@/lib/media/gate-upload";
  * with allowVideo=true (VPS has no Vercel body cap).
  */
 export async function POST(req: NextRequest) {
+  const impersonating = Boolean((await cookies()).get(ADMIN_IMPERSONATE_COOKIE)?.value);
+  if (impersonating) {
+    return NextResponse.json({ error: "View as user is read-only." }, { status: 403 });
+  }
+
   let body: { folder?: string } = {};
   try {
     body = (await req.json()) as { folder?: string };

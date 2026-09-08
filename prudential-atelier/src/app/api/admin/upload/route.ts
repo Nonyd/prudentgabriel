@@ -1,4 +1,6 @@
+import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { ADMIN_IMPERSONATE_COOKIE } from "@/lib/admin-impersonate";
 import { getMediaStore } from "@/lib/media";
 import { folderIsPrivate, sanitizeUploadFolder } from "@/lib/admin-upload-folder";
 import { gateUploadFolder } from "@/lib/media/gate-upload";
@@ -11,6 +13,9 @@ import {
 } from "@/lib/collection-reel-limits";
 import { logServerError } from "@/lib/logger";
 
+export const runtime = "nodejs";
+export const maxDuration = 120;
+
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 
@@ -19,6 +24,11 @@ function isFileLike(v: unknown): v is Blob & { name?: string } {
 }
 
 export async function POST(req: NextRequest) {
+  const impersonating = Boolean((await cookies()).get(ADMIN_IMPERSONATE_COOKIE)?.value);
+  if (impersonating) {
+    return NextResponse.json({ error: "View as user is read-only." }, { status: 403 });
+  }
+
   let form: FormData;
   try {
     form = await req.formData();

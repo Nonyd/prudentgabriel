@@ -3,6 +3,17 @@ export type UploadProgressHandler = (percent0to100: number) => void;
 /** Admin video upload cap (same as POST /api/admin/upload). */
 export const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 
+function uploadGatewayMessage(status: number, responseText: string): string {
+  if (status === 413) return "This file is too large for the server.";
+  if (status === 502 || status === 503 || status === 504) {
+    return "The server dropped this upload before it finished saving. Try again.";
+  }
+  const snippet = responseText.slice(0, 120).replace(/\s+/g, " ").trim();
+  return snippet
+    ? `Invalid server response (${status}): ${snippet}`
+    : `Invalid server response (${status})`;
+}
+
 /**
  * POST multipart FormData with upload progress (same-origin cookies).
  * Response body must be JSON with at least `{ url: string }` on success.
@@ -16,6 +27,7 @@ export function xhrPostFormData(
     const xhr = new XMLHttpRequest();
     xhr.open("POST", path);
     xhr.withCredentials = opts.credentials ?? true;
+    xhr.timeout = 180_000;
     xhr.upload.onprogress = (ev) => {
       if (!opts.onProgress || !ev.lengthComputable) return;
       opts.onProgress(Math.min(100, Math.round((100 * ev.loaded) / ev.total)));
@@ -25,14 +37,7 @@ export function xhrPostFormData(
       try {
         body = JSON.parse(xhr.responseText || "{}") as Record<string, unknown>;
       } catch {
-        const snippet = xhr.responseText.slice(0, 120).replace(/\s+/g, " ");
-        reject(
-          new Error(
-            snippet
-              ? `Invalid server response (${xhr.status}): ${snippet}`
-              : `Invalid server response (${xhr.status})`,
-          ),
-        );
+        reject(new Error(uploadGatewayMessage(xhr.status, xhr.responseText)));
         return;
       }
       if (xhr.status < 200 || xhr.status >= 300) {
@@ -43,6 +48,7 @@ export function xhrPostFormData(
       resolve(body);
     };
     xhr.onerror = () => reject(new Error("Network error"));
+    xhr.ontimeout = () => reject(new Error("Upload timed out. Check your connection and try again."));
     xhr.send(formData);
   });
 }

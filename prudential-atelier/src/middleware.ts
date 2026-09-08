@@ -239,6 +239,7 @@ export default auth(async function middleware(request) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|_next/data|favicon.ico|robots.txt|sitemap.xml|images/|icons/|.*\\..*).*)",
+    // Multipart uploads skip Edge — a ~20MB reel 502s if middleware buffers the body.
+    "/((?!_next/static|_next/image|_next/data|favicon.ico|robots.txt|sitemap.xml|images/|icons/|api/admin/upload|api/account/upload|api/consultations/upload|api/careers/upload|api/upload/|.*\\..*).*)",
   ],
 };
