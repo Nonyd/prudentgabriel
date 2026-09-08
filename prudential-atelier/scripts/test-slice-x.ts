@@ -180,8 +180,9 @@ async function run() {
     const traf = await readFile(join(process.cwd(), "../deploy/traefik/pg-compose-stacks.yaml"), "utf8");
     assert(traf.includes("video/mp4"), "Traefik does not gzip MP4 (Safari Range/206)");
     assert(traf.includes("PathPrefix(`/media/`)"), "media is routed without the gzip middleware");
-    assert(traf.includes("responseHeaderTimeout: 180s"), "Traefik waits for a long staging upload");
+    assert(traf.includes("responseHeaderTimeout: 600s"), "Traefik waits for a long staging upload");
     assert(traf.includes("serversTransport: pg-staging-upload"), "staging uses the long-upload transport");
+    assert(traf.includes("PathPrefix(`/api/admin/upload`)"), "staging upload skips the gzip router");
 
     const mediaRoute = await readFile(join(process.cwd(), "src/app/media/[...key]/route.ts"), "utf8");
     assert(mediaRoute.includes("req.headers.get(\"range\")"), "public media passes the Range header");

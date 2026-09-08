@@ -93,6 +93,15 @@ http:
         certResolver: letsencrypt
       priority: 2000
 
+    pg-staging-admin-upload-https:
+      entryPoints:
+        - https
+      rule: Host(`staging.prudentgabriel.com`) && PathPrefix(`/api/admin/upload`)
+      service: pg-staging-svc
+      tls:
+        certResolver: letsencrypt
+      priority: 4000
+
     pg-staging-media-https:
       entryPoints:
         - https
@@ -106,8 +115,8 @@ http:
     pg-staging-upload:
       forwardingTimeouts:
         dialTimeout: 30s
-        responseHeaderTimeout: 180s
-        idleConnTimeout: 180s
+        responseHeaderTimeout: 600s
+        idleConnTimeout: 600s
 
   services:
     pg-noop:
