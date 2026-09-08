@@ -147,17 +147,17 @@ function testSourceContracts() {
   assert(COLLECTION_REEL_TOO_LARGE_MESSAGE === `Reel must be under ${MAX_COLLECTION_REEL_MB}MB`, "reel size copy names the cap");
   assert(MAX_COLLECTION_REEL_MB === 20, "stored reels stay under 20MB");
   assert(MAX_COLLECTION_REEL_SOURCE_MB === 500, "source clips may be up to 500MB");
-  assert(MAX_COLLECTION_REEL_SECONDS === 60, "reels accept up to 1 minute");
-  assert(COLLECTION_REEL_TOO_LONG_MESSAGE === "Reel must be 1 minute or shorter", "reel length copy is 1 minute");
+  assert(MAX_COLLECTION_REEL_SECONDS === 90, "reels accept up to 1 minute 30 seconds");
+  assert(COLLECTION_REEL_TOO_LONG_MESSAGE === "Reel must be 1 minute 30 seconds or shorter", "reel length copy is 1 minute 30 seconds");
   const reelsAdmin = src("src/components/admin/CollectionReelsAdmin.tsx");
-  assert(reelsAdmin.includes("collectionReelTooLong"), "admin refuses a reel over 1 minute");
+  assert(reelsAdmin.includes("collectionReelTooLong"), "admin refuses a reel over 1 minute 30 seconds");
   assert(reelsAdmin.includes("collectionReelSourceTooLarge"), "admin refuses a source over 500MB");
   assert(reelsAdmin.includes("compress-collection-reel"), "admin compresses before upload");
   assert(reelsAdmin.includes("COLLECTION_REEL_SOURCE_ACCEPT"), "admin accepts phone MOV and WebM clips");
   assert(src("src/lib/collection-reel-limits.ts").includes(".mov"), "source accept list includes MOV");
   const compress = src("src/lib/compress-collection-reel.ts");
   assert(compress.includes("mediabunny"), "reels compress in the browser with Mediabunny");
-  assert(compress.includes("COLLECTION_REEL_TOO_LONG_MESSAGE"), "compress still refuses over 1 minute");
+  assert(compress.includes("COLLECTION_REEL_TOO_LONG_MESSAGE"), "compress still refuses over 1 minute 30 seconds");
   assert(!src("package.json").includes("@ffmpeg/"), "reels do not use ffmpeg.wasm");
 
   const footer = src("src/components/public/Footer.tsx");
@@ -175,8 +175,9 @@ async function run() {
   assert(collectionReelTooLarge(MAX_COLLECTION_REEL_BYTES) === false, "exactly 20MB is allowed");
   assert(collectionReelSourceTooLarge(MAX_COLLECTION_REEL_SOURCE_BYTES + 1) === true, "500MB + 1 is refused");
   assert(collectionReelSourceTooLarge(MAX_COLLECTION_REEL_SOURCE_BYTES) === false, "exactly 500MB is allowed");
-  assert(collectionReelTooLong(MAX_COLLECTION_REEL_SECONDS) === false, "exactly 1 minute is allowed");
-  assert(collectionReelTooLong(MAX_COLLECTION_REEL_SECONDS + 0.01) === true, "just over 1 minute is refused");
+  assert(collectionReelTooLong(60) === false, "1 minute is allowed");
+  assert(collectionReelTooLong(MAX_COLLECTION_REEL_SECONDS) === false, "exactly 1 minute 30 seconds is allowed");
+  assert(collectionReelTooLong(MAX_COLLECTION_REEL_SECONDS + 0.01) === true, "just over 1 minute 30 seconds is refused");
   assert(collectionReelNeedsCompress({ sizeBytes: MAX_COLLECTION_REEL_BYTES, mime: "video/mp4", width: 1080, height: 1920 }) === false, "a 20MB 1080p MP4 is stored as-is");
   assert(collectionReelNeedsCompress({ sizeBytes: MAX_COLLECTION_REEL_BYTES + 1, mime: "video/mp4", width: 1080, height: 1920 }) === true, "over 20MB is compressed");
   assert(collectionReelNeedsCompress({ sizeBytes: 1_000_000, mime: "video/quicktime", width: 1080, height: 1920 }) === true, "MOV is remuxed to MP4");
@@ -185,8 +186,12 @@ async function run() {
   assert(collectionReelSourceTypeOk("image/jpeg", "clip.jpg") === false, "photos are not reels");
   assert(collectionReelOutputSize(2160, 3840).width === 1080 && collectionReelOutputSize(2160, 3840).height === 1920, "4K portrait scales to 1080×1920");
   assert(collectionReelOutputSize(720, 1280).width === 720 && collectionReelOutputSize(720, 1280).height === 1280, "smaller clips are not upscaled");
-  assert(collectionReelTargetVideoBitrate(60) >= 700_000, "1-minute bitrate stays usable");
-  assert(collectionReelTargetVideoBitrate(60) * 60 + 96_000 * 60 < MAX_COLLECTION_REEL_BYTES * 8, "1-minute target fits under 20MB");
+  assert(collectionReelTargetVideoBitrate(MAX_COLLECTION_REEL_SECONDS) >= 700_000, "1 minute 30 second bitrate stays usable");
+  assert(
+    collectionReelTargetVideoBitrate(MAX_COLLECTION_REEL_SECONDS) * MAX_COLLECTION_REEL_SECONDS + 96_000 * MAX_COLLECTION_REEL_SECONDS <
+      MAX_COLLECTION_REEL_BYTES * 8,
+    "1 minute 30 second target fits under 20MB",
+  );
   testReelPlaybackRules();
   testGalleryInterleave();
   testSourceContracts();

@@ -2,20 +2,20 @@ export const MAX_COLLECTION_REEL_MB = 20;
 export const MAX_COLLECTION_REEL_BYTES = MAX_COLLECTION_REEL_MB * 1024 * 1024;
 export const MAX_COLLECTION_REEL_SOURCE_MB = 500;
 export const MAX_COLLECTION_REEL_SOURCE_BYTES = MAX_COLLECTION_REEL_SOURCE_MB * 1024 * 1024;
-export const MAX_COLLECTION_REEL_SECONDS = 60;
+export const MAX_COLLECTION_REEL_SECONDS = 90;
 export const COLLECTION_REEL_MAX_WIDTH = 1080;
 export const COLLECTION_REEL_MAX_HEIGHT = 1920;
 export const COLLECTION_REEL_FOLDER = "prudential-atelier/collection-reels";
 export const COLLECTION_REEL_TOO_LARGE_MESSAGE = `Reel must be under ${MAX_COLLECTION_REEL_MB}MB`;
 export const COLLECTION_REEL_SOURCE_TOO_LARGE_MESSAGE = `Reel must be under ${MAX_COLLECTION_REEL_SOURCE_MB}MB`;
-export const COLLECTION_REEL_TOO_LONG_MESSAGE = "Reel must be 1 minute or shorter";
+export const COLLECTION_REEL_TOO_LONG_MESSAGE = "Reel must be 1 minute 30 seconds or shorter";
 export const COLLECTION_REEL_PORTRAIT_MESSAGE = "Reel must be portrait";
 export const COLLECTION_REEL_SOURCE_TYPE_MESSAGE = "Use MP4, MOV, or WebM";
 export const COLLECTION_REEL_UNSUPPORTED_BROWSER_MESSAGE =
   "This browser cannot compress reels. Use Chrome or Edge, or export an H.264 MP4 under 20MB.";
 export const COLLECTION_REEL_SOURCE_ACCEPT = "video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm";
 export const COLLECTION_REEL_GUIDE =
-  `Portrait, up to 1 minute. Phone clips up to ${MAX_COLLECTION_REEL_SOURCE_MB}MB are compressed here to under ${MAX_COLLECTION_REEL_MB}MB.`;
+  `Portrait, up to 1 minute 30 seconds. Phone clips up to ${MAX_COLLECTION_REEL_SOURCE_MB}MB are compressed here to under ${MAX_COLLECTION_REEL_MB}MB.`;
 
 export function collectionReelTooLarge(sizeBytes: number): boolean {
   return sizeBytes > MAX_COLLECTION_REEL_BYTES;
@@ -54,7 +54,7 @@ export function collectionReelNeedsCompress(params: {
   return false;
 }
 
-/** Video bitrate that should land a 1-minute clip under the stored 20MB cap with AAC audio. */
+/** Video bitrate that should land a 1 minute 30 second clip under the stored 20MB cap with AAC audio. */
 export function collectionReelTargetVideoBitrate(durationSeconds: number): number {
   const dur = Math.max(1, Math.min(durationSeconds, MAX_COLLECTION_REEL_SECONDS));
   const bits = MAX_COLLECTION_REEL_BYTES * 0.9 * 8;
