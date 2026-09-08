@@ -1,6 +1,6 @@
 "use client";
 
-export function UploadProgressBar({ value }: { value: number | null }) {
+export function UploadProgressBar({ value, label }: { value: number | null; label?: string }) {
   if (value === null) return null;
   return (
     <div className="w-full space-y-1">
@@ -10,7 +10,9 @@ export function UploadProgressBar({ value }: { value: number | null }) {
           style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
         />
       </div>
-      <p className="font-body text-[10px] text-[#6B6B68]">{value}%</p>
+      <p className="font-body text-[10px] text-[#6B6B68]">
+        {label ? `${label} · ${value}%` : `${value}%`}
+      </p>
     </div>
   );
 }

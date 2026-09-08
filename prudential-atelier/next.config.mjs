@@ -15,6 +15,7 @@ const nextConfig = {
     minimumCacheTTL: 31536000,
   },
   compress: true,
+  transpilePackages: ["mediabunny"],
   // SKIP_STANDALONE is local Windows only. CI/Docker must always emit standalone.
   output: process.env.SKIP_STANDALONE === "1" && !process.env.CI ? undefined : "standalone",
   experimental: {

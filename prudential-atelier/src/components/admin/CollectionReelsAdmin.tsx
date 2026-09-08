@@ -8,12 +8,15 @@ import { uploadAdminAsset, uploadAdminVideo } from "@/lib/admin-upload-xhr";
 import {
   COLLECTION_REEL_FOLDER,
   COLLECTION_REEL_GUIDE,
-  collectionReelDimensionsOk,
-  collectionReelTooLarge,
-  collectionReelTooLong,
-  COLLECTION_REEL_TOO_LARGE_MESSAGE,
+  COLLECTION_REEL_SOURCE_ACCEPT,
+  COLLECTION_REEL_SOURCE_TOO_LARGE_MESSAGE,
+  COLLECTION_REEL_SOURCE_TYPE_MESSAGE,
   COLLECTION_REEL_TOO_LONG_MESSAGE,
-  MAX_COLLECTION_REEL_BYTES,
+  collectionReelDimensionsOk,
+  collectionReelSourceTooLarge,
+  collectionReelSourceTypeOk,
+  collectionReelTooLong,
+  MAX_COLLECTION_REEL_MB,
 } from "@/lib/collection-reel-limits";
 import { optimizeImageUrl } from "@/lib/utils";
 import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
@@ -94,6 +97,7 @@ export function CollectionReelsAdmin({
   const inputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<ReelRow[]>([]);
   const [progress, setProgress] = useState<number | null>(null);
+  const [progressLabel, setProgressLabel] = useState("Uploading");
   const [asHero, setAsHero] = useState(false);
   const [productId, setProductId] = useState("");
   const [dragId, setDragId] = useState<string | null>(null);
@@ -131,21 +135,32 @@ export function CollectionReelsAdmin({
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (collectionReelTooLarge(file.size)) {
-      toast.error(COLLECTION_REEL_TOO_LARGE_MESSAGE);
+    if (collectionReelSourceTooLarge(file.size)) {
+      toast.error(COLLECTION_REEL_SOURCE_TOO_LARGE_MESSAGE);
       return;
     }
-    if (file.type && file.type !== "video/mp4") {
-      toast.error("Reels must be H.264 MP4");
+    if (!collectionReelSourceTypeOk(file.type, file.name)) {
+      toast.error(COLLECTION_REEL_SOURCE_TYPE_MESSAGE);
       return;
     }
     setProgress(0);
+    setProgressLabel("Reading clip");
     try {
-      const posterBlob = await extractPosterBlob(file);
+      const { compressCollectionReel } = await import("@/lib/compress-collection-reel");
+      const compressed = await compressCollectionReel(file, (percent, label) => {
+        setProgressLabel(label);
+        setProgress(Math.min(60, Math.round(percent * 0.6)));
+      });
+      setProgressLabel("Poster");
+      setProgress(65);
+      const posterBlob = await extractPosterBlob(compressed);
       const posterFile = new File([posterBlob], "poster.jpg", { type: "image/jpeg" });
-      const videoUrl = await uploadAdminVideo(file, COLLECTION_REEL_FOLDER, (p) => setProgress(Math.min(70, p * 0.7)));
+      setProgressLabel("Uploading");
+      const videoUrl = await uploadAdminVideo(compressed, COLLECTION_REEL_FOLDER, (p) =>
+        setProgress(70 + Math.round(p * 0.22)),
+      );
       const posterUrl = await uploadAdminAsset(posterFile, COLLECTION_REEL_FOLDER, (p) =>
-        setProgress(70 + Math.round(p * 0.3)),
+        setProgress(92 + Math.round(p * 0.08)),
       );
       const res = await fetch(`/api/admin/collections/${collectionId}/reels`, {
         method: "POST",
@@ -189,8 +204,7 @@ export function CollectionReelsAdmin({
       <h2 className="font-display text-xl text-ink">Reels</h2>
       <p className="mt-1 font-body text-[12px] text-[#6B6B68]">{COLLECTION_REEL_GUIDE}</p>
       <p className="mt-1 font-body text-[12px] text-[#6B6B68]">
-        Cap {MAX_COLLECTION_REEL_BYTES / (1024 * 1024)}MB, 1080×1920, up to 1 minute, H.264 MP4. A poster is taken from
-        the first frame if you do not upload one.
+        Stored as H.264 MP4 under {MAX_COLLECTION_REEL_MB}MB, at most 1080×1920. A poster is taken from the first frame.
       </p>
 
       <div className="admin-solid-panel mt-4 space-y-4 border border-sand bg-bg-card p-4">
@@ -213,20 +227,21 @@ export function CollectionReelsAdmin({
           </select>
           <button
             type="button"
+            disabled={progress != null}
             onClick={() => inputRef.current?.click()}
-            className="admin-cta font-body text-[11px]"
+            className="admin-cta font-body text-[11px] disabled:opacity-50"
           >
             Upload reel
           </button>
           <input
             ref={inputRef}
             type="file"
-            accept="video/mp4,.mp4"
+            accept={COLLECTION_REEL_SOURCE_ACCEPT}
             className="hidden"
             onChange={(e) => void onFile(e)}
           />
         </div>
-        {progress != null ? <UploadProgressBar value={progress} /> : null}
+        {progress != null ? <UploadProgressBar value={progress} label={progressLabel} /> : null}
 
         <ul className="divide-y divide-[#EBEBEA] border border-sand">
           {items.length === 0 ? (
