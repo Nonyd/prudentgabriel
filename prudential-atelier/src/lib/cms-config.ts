@@ -121,6 +121,33 @@ export const CMS_PAGES: CmsPageDef[] = [
         ],
       },
       {
+        id: "doors",
+        label: "House doors",
+        fields: [
+          {
+            key: "home_doors_atelier_image",
+            label: "Atelier card image",
+            type: "image",
+            default: "",
+            uploadFolder: "prudent-gabriel/home",
+          },
+          {
+            key: "home_doors_bridal_image",
+            label: "Bridal card image",
+            type: "image",
+            default: "",
+            uploadFolder: "prudent-gabriel/home",
+          },
+          {
+            key: "home_doors_rtw_image",
+            label: "Ready-to-wear card image",
+            type: "image",
+            default: "",
+            uploadFolder: "prudent-gabriel/home",
+          },
+        ],
+      },
+      {
         id: "quote",
         label: "Brand Quote",
         fields: [

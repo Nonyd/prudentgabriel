@@ -20,7 +20,7 @@ function run() {
   const hero = src("src/components/public/HeroSectionClient.tsx");
   const bestsellers = src("src/components/public/BestSellers.tsx");
   const grid = src("src/components/common/ProductCardGrid.tsx");
-  const doors = src("src/components/public/CategoryGrid.tsx");
+  const doors = src("src/components/public/CategoryGridClient.tsx");
   const journey = src("src/components/public/BespokeJourneySection.tsx");
   const quote = src("src/components/public/BrandQuoteSectionClient.tsx");
   const pfa = src("src/components/public/PFACrosslinkBannerClient.tsx");
@@ -62,6 +62,7 @@ function run() {
   assert(grid.includes("photography-only") || glass.includes("photography-only"), "collection lookbook stays photography-only");
 
   assert(doors.includes("glass-2"), "three-doors cards are glass-2");
+  assert(doors.includes("img-portrait"), "three-doors cards carry photography");
   assert(!doors.includes("The house"), "three-doors dropped the tracked kicker");
   assert(journey.includes("glass-2"), "atelier journey panel is glass-2");
   assert(quote.includes("glass-2"), "quote sits on glass-2");
