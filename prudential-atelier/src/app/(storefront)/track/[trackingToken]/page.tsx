@@ -4,7 +4,11 @@ import { formatDate } from "@/lib/utils";
 import { BespokeStageTracker } from "@/components/bespoke/BespokeStageTracker";
 import { TrackOrderActions } from "@/components/track/TrackOrderActions";
 import { TrackSearchForm } from "@/components/track/TrackSearchForm";
-import { getStageProgress } from "@/lib/bespoke-stages";
+import {
+  countLiveCompletions,
+  liveCompletionStages,
+  stageHistoryForLiveCompletions,
+} from "@/lib/atelier/live-stages";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +37,11 @@ export default async function TrackOrderPage({ params }: Props) {
       deliveryDate: true,
       outfitDescription: true,
       currentStage: true,
-      stageHistory: { orderBy: { completedAt: "asc" }, select: { stage: true, completedAt: true } },
+      stageHistory: {
+        orderBy: { completedAt: "asc" },
+        select: { stage: true, completedAt: true, notes: true, images: true },
+      },
+      stageCompletions: { select: { stage: true, revertedAt: true } },
     },
   });
 
@@ -53,9 +61,11 @@ export default async function TrackOrderPage({ params }: Props) {
     );
   }
 
+  const live = liveCompletionStages(order.stageCompletions);
+  const stagesComplete = countLiveCompletions(live);
+  const stageHistory = stageHistoryForLiveCompletions(order.stageHistory, live);
   const firstName = order.clientName.split(" ")[0] ?? order.clientName;
   const outfitName = order.outfitDescription?.split("\n")[0]?.slice(0, 80) || "Atelier commission";
-  const stagesComplete = getStageProgress(order.currentStage);
 
   return (
     <div className="min-h-screen">
@@ -93,10 +103,10 @@ export default async function TrackOrderPage({ params }: Props) {
           </div>
         </div>
 
-        <BespokeStageTracker currentStage={order.currentStage} stageHistory={order.stageHistory} />
+        <BespokeStageTracker currentStage={order.currentStage} stageHistory={stageHistory} />
 
         <p className="mt-8 text-center font-body text-[12px] text-text-light">
-          Crafted by our atelier team with care at every stage.
+          Photographs from each completed stage appear above as the house documents your commission.
         </p>
 
         <TrackOrderActions />

@@ -294,8 +294,8 @@ export function notifyBalanceReminder(params: {
   clientEmail: string;
   orderId: string;
   orderRef: string;
-  trackingToken: string;
-  balanceNGN: number;
+  payPath: string;
+  balanceLabel: string;
 }): void {
   void (async () => {
     const userId = await resolveUserIdForBespoke(params.clientProfileId, params.clientEmail);
@@ -304,8 +304,8 @@ export function notifyBalanceReminder(params: {
       userId,
       type: "BALANCE_REMINDER",
       title: "Outstanding balance reminder",
-      message: `${params.orderRef} — ₦${Math.round(params.balanceNGN).toLocaleString("en-NG")} outstanding before delivery.`,
-      link: `/track/${params.trackingToken}`,
+      message: `${params.orderRef} — ${params.balanceLabel} outstanding before delivery.`,
+      link: params.payPath,
       entityId: params.orderId,
     });
   })().catch(() => {});

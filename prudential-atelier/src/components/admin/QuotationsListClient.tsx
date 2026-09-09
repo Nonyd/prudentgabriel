@@ -7,7 +7,8 @@ import type { QuoteStatus } from "@prisma/client";
 import { BulkSelectTable, type BulkColumn } from "@/components/ui/BulkSelectTable";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { formatDate, formatPrice } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
+import { asInvoiceCurrency, formatInvoiceCurrency } from "@/lib/invoice";
 import { InvoicesQuotationsNav } from "@/components/admin/InvoicesQuotationsNav";
 
 type QuoteRow = {
@@ -16,6 +17,7 @@ type QuoteRow = {
   clientName: string;
   clientEmail: string;
   total: number;
+  currency?: string;
   status: QuoteStatus;
   version?: number;
   createdAt: string;
@@ -127,7 +129,9 @@ export function QuotationsListClient() {
         key: "total",
         header: "Total",
         cell: (row) => (
-          <span className="font-sans text-sm">{formatPrice(row.total, "NGN")}</span>
+          <span className="font-sans text-sm">
+            {formatInvoiceCurrency(row.total, asInvoiceCurrency(row.currency ?? "NGN"))}
+          </span>
         ),
       },
       {

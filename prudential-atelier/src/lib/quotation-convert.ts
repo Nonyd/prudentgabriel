@@ -1,4 +1,4 @@
-import { InvoiceStatus, Prisma, QuoteStatus } from "@prisma/client";
+import { BespokeStage, InvoiceStatus, Prisma, QuoteStatus } from "@prisma/client";
 import { nanoid } from "nanoid";
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
@@ -10,6 +10,14 @@ import {
 } from "@/lib/payments/ledger";
 import type { InvoiceLineItem } from "@/types/invoice";
 import { logServerError } from "@/lib/logger";
+import { getLockedFx, persistableFxFields, type LockedFx } from "@/lib/fx";
+import {
+  documentAmountToNGN,
+  invoiceExchangeRateFromLocked,
+  lockedDocumentTotal,
+  lockedFxFromAtelier,
+} from "@/lib/atelier-fx";
+import { INTAKE_STAGES, intakeStageNotes } from "@/lib/atelier/intake-stages";
 
 type QuotationRecord = {
   id: string;
@@ -26,6 +34,14 @@ type QuotationRecord = {
   status: QuoteStatus;
   consultationId?: string | null;
   currency: string;
+  createdBy?: string | null;
+  fxRateLocked?: number | null;
+  fxGbpRateLocked?: number | null;
+  fxRateSource?: string | null;
+  fxRateFetchedAt?: Date | null;
+  fxRateStale?: boolean | null;
+  fxUsdAmountLocked?: number | null;
+  fxGbpAmountLocked?: number | null;
 };
 
 async function uniqueOrderRef(): Promise<string> {
@@ -62,6 +78,29 @@ function mapLineItems(raw: unknown): InvoiceLineItem[] {
   );
 }
 
+async function resolveIntakeActorId(createdBy?: string | null): Promise<string> {
+  if (createdBy) {
+    const user = await prisma.user.findUnique({ where: { id: createdBy }, select: { id: true } });
+    if (user) return user.id;
+  }
+  const admin = await prisma.user.findFirst({
+    where: { role: { in: ["SUPER_ADMIN", "ADMIN"] } },
+    select: { id: true },
+    orderBy: { createdAt: "asc" },
+  });
+  if (!admin) throw new Error("NO_ACTOR");
+  return admin.id;
+}
+
+function fxFieldsForPersist(fx: LockedFx, currency: string, documentTotal: number) {
+  const locked = lockedDocumentTotal(currency, documentTotal);
+  return {
+    ...persistableFxFields(fx),
+    fxUsdAmountLocked: locked.fxUsdAmountLocked,
+    fxGbpAmountLocked: locked.fxGbpAmountLocked,
+  };
+}
+
 export async function convertQuotationToOrder(
   quote: QuotationRecord,
   createdBy?: string | null,
@@ -82,6 +121,7 @@ export async function convertQuotationToOrder(
   });
 
   const depositPercent = await getBespokeDepositPercent();
+  const actorId = await resolveIntakeActorId(createdBy ?? quote.createdBy);
 
   const items = mapLineItems(quote.lineItems);
   const lineItemsPayload = items.length
@@ -105,10 +145,11 @@ export async function convertQuotationToOrder(
     depositPaid: 0,
   });
 
+  const currency = quote.currency || "NGN";
   const paymentTerms = buildDepositPaymentTerms({
     total: totals.total || quote.total,
     depositPercent,
-    currency: quote.currency || "NGN",
+    currency,
   });
 
   const orderRef = await uniqueOrderRef();
@@ -118,6 +159,14 @@ export async function convertQuotationToOrder(
         where: { id: quote.consultationId },
       })
     : null;
+
+  let fx = lockedFxFromAtelier(quote);
+  if (!quote.fxRateLocked && (currency === "USD" || currency === "GBP")) {
+    fx = await getLockedFx();
+  }
+  const fxPersist = fxFieldsForPersist(fx, currency, quote.total);
+  const exchangeRate = invoiceExchangeRateFromLocked(currency, fx);
+  const totalNGN = documentAmountToNGN(quote.total, currency, fx);
 
   const result = await prisma.$transaction(async (tx) => {
     const invoiceNumber = await generateInvoiceNumber(tx);
@@ -129,8 +178,8 @@ export async function convertQuotationToOrder(
         clientName: quote.clientName,
         clientEmail: quote.clientEmail,
         clientPhone: quote.clientPhone,
-        currency: quote.currency || "NGN",
-        exchangeRate: 1,
+        currency,
+        exchangeRate,
         status: InvoiceStatus.DRAFT,
         lineItems: lineItemsPayload as unknown as Prisma.InputJsonValue,
         subtotal: totals.subtotal || quote.subtotal,
@@ -166,15 +215,51 @@ export async function convertQuotationToOrder(
         moodboardImages: consultation?.moodboardImages ?? [],
         occasionDetails: consultation?.occasion ?? null,
         outfitBrief: consultation?.sessionNotes ?? null,
-        totalAmount: quote.total,
-        balance: quote.total,
+        currency,
+        ...fxPersist,
+        totalAmount: totalNGN,
+        balance: totalNGN,
         notes: quote.notes,
+        currentStage: BespokeStage.SKETCHING_CONCEPT,
       },
     });
 
+    const notes = intakeStageNotes({
+      bookingNumber: consultation?.bookingNumber ?? null,
+      quoteRef: quote.quoteRef,
+      invoiceNumber: invoice.invoiceNumber,
+      consultationPaid: Boolean(consultation?.paidAt || consultation?.paymentRef),
+      consultationPaymentRef: consultation?.paymentRef ?? null,
+    });
+
+    for (const stage of INTAKE_STAGES) {
+      await tx.stageUpdate.create({
+        data: {
+          orderId: order.id,
+          stage,
+          notes: notes[stage],
+          images: [],
+          videos: [],
+          completedBy: actorId,
+          completedByName: "System",
+        },
+      });
+      await tx.orderStageCompletion.create({
+        data: {
+          orderId: order.id,
+          stage,
+          completedById: actorId,
+          notes: notes[stage],
+        },
+      });
+    }
+
     await tx.quotation.update({
       where: { id: quote.id },
-      data: { status: QuoteStatus.CONVERTED },
+      data: {
+        status: QuoteStatus.CONVERTED,
+        ...(quote.fxRateLocked ? {} : fxPersist),
+      },
     });
 
     return { order, invoice };

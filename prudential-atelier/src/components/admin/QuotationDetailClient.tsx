@@ -7,7 +7,8 @@ import toast from "react-hot-toast";
 import type { QuoteStatus } from "@prisma/client";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { formatDate, formatPrice } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
+import { asInvoiceCurrency, formatInvoiceCurrency } from "@/lib/invoice";
 
 type VersionRow = {
   id: string;
@@ -33,6 +34,7 @@ type QuoteDetail = {
   subtotal: number;
   discount: number;
   tax: number;
+  currency?: string;
   status: QuoteStatus;
   notes: string | null;
   sentAt: string | null;
@@ -133,7 +135,9 @@ export function QuotationDetailClient() {
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Badge variant="gold">{item.status}</Badge>
             <span className="font-body text-xs text-[#6B6B68]">v{item.version}</span>
-            <span className="font-body text-sm text-ink">{formatPrice(item.total, "NGN")}</span>
+            <span className="font-body text-sm text-ink">
+              {formatInvoiceCurrency(item.total, asInvoiceCurrency(item.currency ?? "NGN"))}
+            </span>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -186,11 +190,13 @@ export function QuotationDetailClient() {
                     </Link>
                   </td>
                   <td className="px-3 py-2">{h.status}</td>
-                  <td className="px-3 py-2">{formatPrice(h.total, "NGN")}</td>
+                  <td className="px-3 py-2">
+                    {formatInvoiceCurrency(h.total, asInvoiceCurrency(item.currency ?? "NGN"))}
+                  </td>
                   <td className="px-3 py-2">
                     {h.version === 1
                       ? "—"
-                      : `${h.totalDelta >= 0 ? "+" : ""}${formatPrice(h.totalDelta, "NGN")}`}
+                      : `${h.totalDelta >= 0 ? "+" : "−"}${formatInvoiceCurrency(Math.abs(h.totalDelta), asInvoiceCurrency(item.currency ?? "NGN"))}`}
                   </td>
                   <td className="px-3 py-2">{actorLabel(h)}</td>
                   <td className="px-3 py-2">{formatDate(h.createdAt)}</td>

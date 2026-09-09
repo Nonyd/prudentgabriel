@@ -14,6 +14,7 @@ export default async function AdminInvoiceDetailPage({ params }: { params: Promi
   if (!inv) notFound();
 
   const bespokeOrder = await getBespokeOrderForInvoice({
+    quotationId: inv.quotationId,
     bespokeRequestId: inv.bespokeRequestId,
     clientEmail: inv.clientEmail,
   });

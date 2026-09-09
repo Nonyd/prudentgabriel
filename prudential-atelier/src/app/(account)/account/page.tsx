@@ -12,6 +12,8 @@ import { mapProductToListItem } from "@/lib/map-product-list-item";
 import { AccountDashboard } from "@/components/account/AccountDashboard";
 import type { DashboardState } from "@/components/account/AccountDashboard";
 import { canSubmitTestimonial } from "@/lib/testimonial-eligibility";
+import { formatBespokeBook } from "@/lib/atelier-fx";
+import { liveCompletionStages, stageHistoryForLiveCompletions } from "@/lib/atelier/live-stages";
 
 const BUDGET_RANGES: Record<string, [number, number]> = {
   "₦50k–₦150k": [50000, 150000],
@@ -99,6 +101,7 @@ export default async function AccountDashboardPage() {
         take: 3,
         include: {
           stageHistory: { orderBy: { completedAt: "desc" }, take: 1 },
+          stageCompletions: { select: { stage: true, revertedAt: true } },
           consultation: { select: { bookingNumber: true } },
         },
       }),
@@ -135,16 +138,40 @@ export default async function AccountDashboardPage() {
     }),
   ]);
 
-  const activeBespoke = bespokeOrders.find((o) => o.currentStage !== "DELIVERY");
-  const outstandingBalance = await prisma.bespokeOrder.aggregate({
+  const activeBespokeRaw = bespokeOrders.find((o) => o.currentStage !== "DELIVERY");
+  const activeBespoke = activeBespokeRaw
+    ? {
+        ...activeBespokeRaw,
+        stageHistory: stageHistoryForLiveCompletions(
+          activeBespokeRaw.stageHistory,
+          liveCompletionStages(activeBespokeRaw.stageCompletions),
+        ),
+      }
+    : undefined;
+  const outstandingOrders = await prisma.bespokeOrder.findMany({
     where: {
       clientProfileId: profile.id,
       currentStage: { not: "DELIVERY" },
       balance: { gt: 0 },
     },
-    _sum: { balance: true },
+    select: {
+      balance: true,
+      currency: true,
+      fxRateLocked: true,
+      fxGbpRateLocked: true,
+      fxRateSource: true,
+      fxRateFetchedAt: true,
+      fxRateStale: true,
+    },
+    take: 8,
   });
-  const balanceDue = outstandingBalance._sum.balance ?? 0;
+  const balanceDue = outstandingOrders.reduce((sum, o) => sum + o.balance, 0);
+  const balanceDueLabel =
+    outstandingOrders.length === 0
+      ? null
+      : outstandingOrders.length === 1
+        ? formatBespokeBook(outstandingOrders[0]!.balance, outstandingOrders[0]!)
+        : `${outstandingOrders.length} commissions`;
 
   const now = new Date();
   const upcomingConsultation = consultations.find((c) => {
@@ -226,6 +253,7 @@ export default async function AccountDashboardPage() {
       rtwActiveCount={rtwActiveCount}
       bespokeActiveCount={bespokeActiveCount}
       balanceDue={balanceDue}
+      balanceDueLabel={balanceDueLabel}
       memberSince={memberSince}
       dashboardState={dashboardState}
       styleProfileComplete={styleProfileComplete(profile)}

@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { InvoicesQuotationsNav } from "@/components/admin/InvoicesQuotationsNav";
 import { formatInvoiceCurrency } from "@/lib/invoice";
+import { adminReceiptSrc } from "@/lib/media/admin-receipt-src";
 import type { InvoiceCurrency } from "@/types/invoice";
 
 type LineItem = {
@@ -399,7 +400,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
                   key={url}
                   className="relative h-20 w-20 overflow-hidden rounded border border-sand"
                 >
-                  <Image src={url} alt="" fill className="object-cover" sizes="80px" unoptimized />
+                  <Image src={adminReceiptSrc(url)} alt="" fill className="object-cover" sizes="80px" unoptimized />
                 </div>
               ))}
             </div>

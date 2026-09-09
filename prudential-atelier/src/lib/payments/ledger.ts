@@ -117,10 +117,11 @@ async function resolveOrderDepositRequired(
     const invoice = await prisma.invoice.findFirst({
       where: { quotationId: order.quotationId },
       orderBy: { createdAt: "desc" },
-      select: { depositRequired: true },
+      select: { depositRequired: true, exchangeRate: true },
     });
     if (invoice && invoice.depositRequired > 0) {
-      return dec(invoice.depositRequired);
+      const rate = invoice.exchangeRate > 0 ? invoice.exchangeRate : 1;
+      return dec(invoice.depositRequired).mul(rate).toDecimalPlaces(2);
     }
   }
   const pct = await getBespokeDepositPercent();
@@ -169,14 +170,15 @@ export async function getOrderPaymentSummary(bespokeOrderId: string): Promise<Pa
 export async function getInvoicePaymentSummary(invoiceId: string): Promise<PaymentSummary> {
   const invoice = await prisma.invoice.findUnique({
     where: { id: invoiceId },
-    select: { id: true, total: true, depositRequired: true },
+    select: { id: true, total: true, depositRequired: true, exchangeRate: true },
   });
   if (!invoice) {
     throw new Error(`Invoice not found: ${invoiceId}`);
   }
 
-  const total = dec(invoice.total);
-  const depositRequired = dec(invoice.depositRequired);
+  const rate = invoice.exchangeRate > 0 ? invoice.exchangeRate : 1;
+  const total = dec(invoice.total).mul(rate);
+  const depositRequired = dec(invoice.depositRequired).mul(rate);
 
   const [confirmedRows, pendingRows] = await Promise.all([
     prisma.payment.findMany({
@@ -294,6 +296,11 @@ export async function recomputeOrderTotals(bespokeOrderId: string): Promise<Paym
  */
 export async function recomputeInvoiceTotals(invoiceId: string): Promise<PaymentSummary> {
   const summary = await getInvoicePaymentSummary(invoiceId);
+  const invoice = await prisma.invoice.findUnique({
+    where: { id: invoiceId },
+    select: { exchangeRate: true },
+  });
+  const rate = invoice && invoice.exchangeRate > 0 ? invoice.exchangeRate : 1;
   const confirmed = toNumber(summary.confirmed);
   const balanceDue = toNumber(summary.balance);
 
@@ -307,8 +314,8 @@ export async function recomputeInvoiceTotals(invoiceId: string): Promise<Payment
   await prisma.invoice.update({
     where: { id: invoiceId },
     data: {
-      depositPaid: confirmed,
-      balanceDue,
+      depositPaid: confirmed / rate,
+      balanceDue: balanceDue / rate,
       ...(status
         ? {
             status,

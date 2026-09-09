@@ -8,6 +8,7 @@ import { BespokeStageTracker } from "@/components/bespoke/BespokeStageTracker";
 import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPanel";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { formatDate, formatPrice } from "@/lib/utils";
+import { formatBespokeBook } from "@/lib/atelier-fx";
 import { Modal } from "@/components/ui/Modal";
 import { formatSnapshotForDisplay, parseSnapshot } from "@/lib/custom-size";
 import { defaultAccountOrdersTab } from "@/lib/rtw-tracker";
@@ -88,10 +89,10 @@ export function AccountOrdersClient({
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-4 font-sans text-xs text-text-mid">
-                    <span>Total: {formatPrice(o.totalAmount, "NGN")}</span>
-                    <span>Paid: {formatPrice(o.amountPaid, "NGN")}</span>
+                    <span>Total: {formatBespokeBook(o.totalAmount, o)}</span>
+                    <span>Paid: {formatBespokeBook(o.amountPaid, o)}</span>
                     {o.balance > 0 ? (
-                      <span className="text-nut">Balance: {formatPrice(o.balance, "NGN")}</span>
+                      <span className="text-nut">Balance: {formatBespokeBook(o.balance, o)}</span>
                     ) : null}
                   </div>
                   <div className="mt-3 flex flex-wrap gap-3">

@@ -21,6 +21,7 @@ type Props = {
   guestEmail?: string | null;
   paymentReference?: string | null;
   amountNGN?: number | null;
+  receiptUploadUrl?: string | null;
 };
 
 const GATEWAY_META: Record<
@@ -59,6 +60,7 @@ export function PaymentMethodSelector({
   guestEmail,
   paymentReference,
   amountNGN,
+  receiptUploadUrl,
 }: Props) {
   const { status } = useSession();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -99,6 +101,14 @@ export function PaymentMethodSelector({
     try {
       const fd = new FormData();
       fd.set("file", file);
+      if (receiptUploadUrl) {
+        const res = await fetch(receiptUploadUrl, { method: "POST", body: fd });
+        const j = (await res.json()) as { url?: string; error?: string };
+        if (!res.ok || !j.url) throw new Error(j.error ?? "Upload failed");
+        onReceiptUploaded(j.url);
+        toast.success("Receipt uploaded");
+        return;
+      }
       if (status !== "authenticated") {
         const email = guestEmail?.trim();
         if (!email) throw new Error("Enter your email before uploading a receipt");

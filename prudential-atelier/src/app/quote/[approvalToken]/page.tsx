@@ -65,6 +65,7 @@ export default async function QuoteApprovalPage({ params }: Props) {
     status: quote.status,
     expiresAt: quote.expiresAt?.toISOString() ?? null,
     approvalToken: quote.approvalToken,
+    currency: quote.currency || "NGN",
   };
 
   return (

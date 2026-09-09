@@ -14,7 +14,8 @@ import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPane
 import { ProductCard } from "@/components/common/ProductCard";
 import { ShareYourStoryCard } from "@/components/account/ShareYourStoryCard";
 import { TIER_BENEFITS, TIER_LABELS } from "@/lib/loyalty";
-import { formatDate, formatPrice } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
+import { formatBespokeBook } from "@/lib/atelier-fx";
 import { cn } from "@/lib/utils";
 import type { ProductListItem } from "@/types/product";
 
@@ -46,6 +47,12 @@ type BespokeOrder = {
   currentStage: BespokeStage;
   trackingToken: string;
   balance: number;
+  currency?: string | null;
+  fxRateLocked?: number | null;
+  fxGbpRateLocked?: number | null;
+  fxRateSource?: string | null;
+  fxRateFetchedAt?: Date | null;
+  fxRateStale?: boolean | null;
   stageHistory: StageUpdate[];
   consultationId?: string | null;
   occasionDetails?: string | null;
@@ -101,6 +108,7 @@ export type AccountDashboardProps = {
   rtwActiveCount: number;
   bespokeActiveCount: number;
   balanceDue: number;
+  balanceDueLabel: string | null;
   memberSince: Date;
   dashboardState: DashboardState;
   styleProfileComplete: boolean;
@@ -489,6 +497,7 @@ export function AccountDashboard({
   progressPct,
   bespokeActiveCount,
   balanceDue,
+  balanceDueLabel,
   memberSince,
   dashboardState,
   styleProfileComplete,
@@ -553,7 +562,7 @@ export function AccountDashboard({
         />
         <StatCard
           label="Outstanding balance"
-          value={balanceDue > 0 ? formatPrice(balanceDue, "NGN") : "—"}
+          value={balanceDue > 0 ? (balanceDueLabel ?? "Due") : "—"}
           sub={balanceDue > 0 ? undefined : "No outstanding balance"}
           href={balanceDue > 0 ? "/account/orders" : undefined}
           hrefLabel={balanceDue > 0 ? "Pay now →" : undefined}
@@ -781,7 +790,7 @@ export function AccountDashboard({
                   />
                   {activeBespoke.balance > 0 ? (
                     <div className="rounded-sm border border-sand/60 bg-[rgba(212,187,172,0.25)] px-4 py-3 font-sans text-sm text-nut dark:text-cream">
-                      {formatPrice(activeBespoke.balance, "NGN")} remaining balance ·{" "}
+                      {formatBespokeBook(activeBespoke.balance, activeBespoke)} remaining balance ·{" "}
                       <Link href="/account/orders" className="font-medium underline-offset-2 hover:underline">
                         Pay now →
                       </Link>

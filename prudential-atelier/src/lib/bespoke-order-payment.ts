@@ -38,6 +38,7 @@ export async function fulfillBespokeOrderBalance(params: {
       clientPhone: true,
       clientProfileId: true,
       paymentReceiptUrl: true,
+      quotationId: true,
     },
   });
 
@@ -76,6 +77,13 @@ export async function fulfillBespokeOrderBalance(params: {
       });
 
     const clientId = await resolveClientId({ email: order.clientEmail });
+    const invoice = order.quotationId
+      ? await prisma.invoice.findFirst({
+          where: { quotationId: order.quotationId },
+          orderBy: { createdAt: "desc" },
+          select: { id: true },
+        })
+      : null;
 
     await appendPayment({
       reference: params.paymentRef,
@@ -85,6 +93,7 @@ export async function fulfillBespokeOrderBalance(params: {
       purpose,
       receiptUrl: params.receiptUrl ?? order.paymentReceiptUrl,
       bespokeOrderId: order.id,
+      invoiceId: invoice?.id ?? null,
       clientId,
       confirmedById: params.confirmedById ?? null,
       confirmedAt: new Date(),

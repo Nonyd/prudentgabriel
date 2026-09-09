@@ -8,7 +8,8 @@ import { BespokeApprovalClient } from "@/components/account/BespokeApprovalClien
 import { BespokePostDeliveryClient } from "@/components/account/BespokePostDeliveryClient";
 import { BespokeStageTracker } from "@/components/bespoke/BespokeStageTracker";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
-import { formatPrice } from "@/lib/utils";
+import { formatBespokeBook } from "@/lib/atelier-fx";
+import { liveCompletionStages, stageHistoryForLiveCompletions } from "@/lib/atelier/live-stages";
 
 export default async function AccountBespokeOrderPage({
   params,
@@ -30,6 +31,7 @@ export default async function AccountBespokeOrderPage({
       stageDrafts: true,
       stageMedia: { orderBy: { createdAt: "asc" } },
       stageApprovals: { orderBy: { requestedAt: "desc" } },
+      stageCompletions: { select: { stage: true, revertedAt: true } },
     },
   });
 
@@ -50,7 +52,7 @@ export default async function AccountBespokeOrderPage({
       </Link>
       <h1 className="mt-4 font-display text-3xl text-choc">{order.orderRef}</h1>
       <p className="mt-1 font-sans text-sm text-text-mid">
-        {STAGE_SHORT_LABELS[order.currentStage]} · {formatPrice(order.totalAmount, "NGN")}
+        {STAGE_SHORT_LABELS[order.currentStage]} · {formatBespokeBook(order.totalAmount, order)}
         {order.status === OrderStatus.ARCHIVED ? " · Archived" : null}
       </p>
 
@@ -71,7 +73,13 @@ export default async function AccountBespokeOrderPage({
       />
 
       <div className="mt-10">
-        <BespokeStageTracker currentStage={order.currentStage} stageHistory={order.stageHistory} />
+        <BespokeStageTracker
+          currentStage={order.currentStage}
+          stageHistory={stageHistoryForLiveCompletions(
+            order.stageHistory,
+            liveCompletionStages(order.stageCompletions),
+          )}
+        />
       </div>
     </div>
   );

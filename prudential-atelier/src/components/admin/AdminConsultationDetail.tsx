@@ -16,6 +16,7 @@ import {
 import { isVirtualDelivery } from "@/lib/consultation";
 import { ClientMeasurementsPanel } from "@/components/admin/ClientMeasurementsPanel";
 import { ConsultationDeleteControl } from "@/components/admin/ConsultationDeleteControl";
+import { adminReceiptSrc } from "@/lib/media/admin-receipt-src";
 import type { MeasurementData } from "@/lib/measurements";
 
 type LinkedQuotation = {
@@ -201,7 +202,7 @@ export function AdminConsultationDetail({
     try {
       const fd = new FormData();
       fd.set("file", file);
-      const res = await fetch("/api/consultations/upload", { method: "POST", body: fd });
+      const res = await fetch("/api/admin/consultations/upload", { method: "POST", body: fd });
       const j = (await res.json()) as { url?: string; error?: string };
       if (!res.ok) throw new Error(j.error ?? "Upload failed");
       if (j.url) setMoodboardImages((prev) => [...prev, j.url!]);
@@ -452,7 +453,7 @@ export function AdminConsultationDetail({
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   {moodboardImages.map((url) => (
                     <div key={url} className="relative aspect-square overflow-hidden rounded-sm border border-sand">
-                      <Image src={url} alt="" fill className="object-cover" sizes="120px" />
+                      <Image src={adminReceiptSrc(url)} alt="" fill className="object-cover" sizes="120px" unoptimized />
                       <button
                         type="button"
                         onClick={() => setMoodboardImages((prev) => prev.filter((u) => u !== url))}

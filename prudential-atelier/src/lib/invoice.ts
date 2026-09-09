@@ -174,6 +174,8 @@ export function calculateInvoiceTotals(params: {
   return { subtotal, discountAmount, vatAmount, total, depositRequired, balanceDue };
 }
 
+export type { InvoiceCurrency } from "@/types/invoice";
+
 export function asInvoiceCurrency(c: string): InvoiceCurrency {
   if (c === "USD" || c === "GBP" || c === "EUR") return c;
   return "NGN";

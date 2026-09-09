@@ -4,7 +4,9 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { formatInvoiceCurrency, resolveAssetUrl } from "@/lib/invoice";
-import type { InvoiceCurrency, PublicInvoicePayload } from "@/types/invoice";
+import type { InvoiceCurrency } from "@/types/invoice";
+import type { PublicInvoiceViewPayload } from "@/lib/public-invoice-payload";
+import { PublicInvoicePayClient } from "@/components/invoice/PublicInvoicePayClient";
 
 function asCurrency(c: string): InvoiceCurrency {
   if (c === "USD" || c === "GBP" || c === "EUR") return c;
@@ -30,7 +32,7 @@ function statusBanner(status: string): { bg: string; text: string; label: string
 }
 
 export function PublicInvoiceView({ token }: { token: string }) {
-  const [data, setData] = useState<PublicInvoicePayload | null>(null);
+  const [data, setData] = useState<PublicInvoiceViewPayload | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -39,7 +41,7 @@ export function PublicInvoiceView({ token }: { token: string }) {
       setErr("notfound");
       return;
     }
-    setData((await res.json()) as PublicInvoicePayload);
+    setData((await res.json()) as PublicInvoiceViewPayload);
     setErr(null);
   }, [token]);
 
@@ -131,13 +133,8 @@ export function PublicInvoiceView({ token }: { token: string }) {
           </div>
           <div>
             <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-[#6B6B68]">Bill to</p>
-            <p className="mt-2 font-body text-sm font-medium text-ink">{data.clientName}</p>
-            <p className="font-body text-xs text-[#6B6B68]">{data.clientEmail}</p>
-            {data.clientPhone ? <p className="font-body text-xs text-[#6B6B68]">{data.clientPhone}</p> : null}
-            {data.clientAddress ? <p className="font-body text-xs text-[#6B6B68]">{data.clientAddress}</p> : null}
-            <p className="font-body text-xs text-[#6B6B68]">
-              {[data.clientCity, data.clientCountry].filter(Boolean).join(", ")}
-            </p>
+            <p className="mt-2 font-body text-sm font-medium text-ink">{data.addresseeName}</p>
+            <p className="mt-2 font-body text-sm text-ink">{data.pieceLabel}</p>
           </div>
         </div>
 
@@ -236,6 +233,9 @@ export function PublicInvoiceView({ token }: { token: string }) {
         </div>
 
         {data.clientNote ? <p className="mt-6 font-body text-sm italic text-[#6B6B68]">{data.clientNote}</p> : null}
+
+        <PublicInvoicePayClient token={token} pay={data.pay} currency={data.currency} />
+
         {b.footerNote ? (
           <p className="mt-10 text-center font-display text-lg italic text-[#6B6B68]">{b.footerNote}</p>
         ) : null}

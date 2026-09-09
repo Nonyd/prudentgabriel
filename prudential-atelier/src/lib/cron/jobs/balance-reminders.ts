@@ -4,6 +4,7 @@ import { sendEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { notifyBalanceReminder } from "@/lib/customer-notifications";
 import { logServerError } from "@/lib/logger";
+import { formatBespokeBook } from "@/lib/atelier-fx";
 
 const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 const REMINDER_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
@@ -12,7 +13,7 @@ function balanceReminderHtml(params: {
   firstName: string;
   outfitName: string;
   orderRef: string;
-  balanceNGN: number;
+  balanceLabel: string;
   deliveryDate: string;
   payUrl: string;
 }): string {
@@ -20,10 +21,10 @@ function balanceReminderHtml(params: {
     <div style="font-family:Georgia,serif;background:#F7F2EC;padding:24px;color:#442913">
       <h1 style="color:#442913;margin:0 0 8px">A reminder about your outstanding balance</h1>
       <p>Hi ${params.firstName},</p>
-      <p>You have an outstanding balance of <strong>₦${params.balanceNGN.toLocaleString("en-NG")}</strong> on your commission.</p>
+      <p>You have an outstanding balance of <strong>${params.balanceLabel}</strong> on your commission.</p>
       <p><strong>Commission:</strong> ${params.outfitName}<br/>
       <strong>Order:</strong> ${params.orderRef}<br/>
-      <strong>Outstanding:</strong> ₦${params.balanceNGN.toLocaleString("en-NG")}<br/>
+      <strong>Outstanding:</strong> ${params.balanceLabel}<br/>
       <strong>Delivery:</strong> ${params.deliveryDate}</p>
       <p><a href="${params.payUrl}" style="display:inline-block;background:#442913;color:#E2D1C2;padding:12px 24px;text-decoration:none">Pay outstanding balance</a></p>
       <p style="margin-top:32px;font-size:12px;color:#98755B">Prudential Atelier · prudentgabriel.com</p>
@@ -65,8 +66,19 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
         month: "long",
         year: "numeric",
       });
-      const payUrl = `${appUrl}/track/${encodeURIComponent(order.trackingToken)}`;
+      const invoice = order.quotationId
+        ? await prisma.invoice.findFirst({
+            where: { quotationId: order.quotationId },
+            orderBy: { createdAt: "desc" },
+            select: { publicToken: true },
+          })
+        : null;
+      const payPath = invoice?.publicToken
+        ? `/invoice/${invoice.publicToken}`
+        : `/account/orders/bespoke/${order.id}/pay`;
+      const payUrl = `${appUrl}${payPath}`;
       const outfitName = order.outfitDescription?.slice(0, 80) ?? "Your commission";
+      const balanceLabel = formatBespokeBook(order.balance, order);
 
       await sendEmail({
         to: order.clientEmail,
@@ -75,7 +87,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
           firstName,
           outfitName,
           orderRef: order.orderRef,
-          balanceNGN: order.balance,
+          balanceLabel,
           deliveryDate,
           payUrl,
         }),
@@ -90,8 +102,8 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
         clientEmail: order.clientEmail,
         orderId: order.id,
         orderRef: order.orderRef,
-        trackingToken: order.trackingToken,
-        balanceNGN: order.balance,
+        payPath,
+        balanceLabel,
       });
 
       await prisma.bespokeOrder.update({

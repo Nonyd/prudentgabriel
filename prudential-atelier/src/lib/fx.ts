@@ -136,6 +136,16 @@ export function lockedFxFromOrder(order: {
   };
 }
 
+export function persistableFxFields(fx: LockedFx) {
+  return {
+    fxRateLocked: fx.rate,
+    fxGbpRateLocked: fx.gbpRate,
+    fxRateSource: fx.source,
+    fxRateFetchedAt: fx.fetchedAt,
+    fxRateStale: fx.stale,
+  };
+}
+
 export function usdOverrideOrConvert(amountNGN: number, overrideUSD: number | null | undefined, fx: LockedFx): number {
   return overrideOrConvert(amountNGN, "USD", overrideUSD, ratesFromLockedFx(fx));
 }

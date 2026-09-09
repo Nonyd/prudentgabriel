@@ -6,7 +6,8 @@ import type { QuoteStatus } from "@prisma/client";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
-import { formatDate, formatPrice } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
+import { asInvoiceCurrency, formatInvoiceCurrency } from "@/lib/invoice";
 
 type QuoteLineItem = {
   description: string;
@@ -29,6 +30,7 @@ export type QuoteApprovalData = {
   status: QuoteStatus;
   expiresAt: string | null;
   approvalToken: string;
+  currency: string;
 };
 
 export function QuoteApprovalClient({ quote }: { quote: QuoteApprovalData }) {
@@ -37,6 +39,7 @@ export function QuoteApprovalClient({ quote }: { quote: QuoteApprovalData }) {
   const [changesOpen, setChangesOpen] = useState(false);
   const [changeMessage, setChangeMessage] = useState("");
 
+  const money = (n: number) => formatInvoiceCurrency(n, asInvoiceCurrency(quote.currency));
   const expired = quote.expiresAt ? new Date(quote.expiresAt) < new Date() : false;
   const canApprove =
     !expired && status !== "APPROVED" && status !== "CONVERTED" && status !== "REJECTED";
@@ -127,10 +130,10 @@ export function QuoteApprovalClient({ quote }: { quote: QuoteApprovalData }) {
                   <td className="px-6 py-3 font-sans text-sm">{item.description}</td>
                   <td className="px-4 py-3 text-center font-sans text-sm">{item.quantity}</td>
                   <td className="px-4 py-3 text-right font-sans text-sm">
-                    {formatPrice(item.unitPrice, "NGN")}
+                    {money(item.unitPrice)}
                   </td>
                   <td className="px-6 py-3 text-right font-sans text-sm">
-                    {formatPrice(item.total, "NGN")}
+                    {money(item.total)}
                   </td>
                 </tr>
               ))}
@@ -139,12 +142,12 @@ export function QuoteApprovalClient({ quote }: { quote: QuoteApprovalData }) {
         </div>
 
         <div className="space-y-1 border-t border-sand px-6 py-4 text-right font-sans text-sm">
-          <p className="text-text-mid">Subtotal {formatPrice(quote.subtotal, "NGN")}</p>
-          {quote.tax > 0 ? <p className="text-text-mid">Tax {formatPrice(quote.tax, "NGN")}</p> : null}
+          <p className="text-text-mid">Subtotal {money(quote.subtotal)}</p>
+          {quote.tax > 0 ? <p className="text-text-mid">Tax {money(quote.tax)}</p> : null}
           {quote.discount > 0 ? (
-            <p className="text-text-mid">Discount −{formatPrice(quote.discount, "NGN")}</p>
+            <p className="text-text-mid">Discount −{money(quote.discount)}</p>
           ) : null}
-          <p className="font-serif text-xl text-choc">Total {formatPrice(quote.total, "NGN")}</p>
+          <p className="font-serif text-xl text-choc">Total {money(quote.total)}</p>
         </div>
 
         {quote.notes ? (

@@ -3,17 +3,16 @@ import { Role } from "@prisma/client";
 import { z } from "zod";
 import { requireSuperAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { bumpPermissionCache, peekRolePermissions } from "@/lib/permission-cache";
 import {
   ADMIN_PERMISSION_CATALOG,
   EDITABLE_ADMIN_ROLES,
   ROLE_PERMISSION_PROPOSALS,
 } from "@/lib/permission-catalog";
-import { filterEditablePermissions, isRolePermissionsEditable } from "@/lib/permission-policy";
-import { logPermissionChange } from "@/lib/permission-log";
+import { isRolePermissionsEditable } from "@/lib/permission-policy";
 import { ROLE_PERMISSIONS, seedRolePermissionSet } from "@/lib/roles";
 import { serializePermissionSet } from "@/lib/permission-resolve";
 import { displayRoleLabel } from "@/lib/admin-users";
+import { commitRolePermissions } from "@/lib/permission-commit";
 
 export async function GET() {
   const gate = await requireSuperAdminApi();
@@ -78,59 +77,15 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  const role = parsed.data.role;
-  if (!isRolePermissionsEditable(role)) {
-    return NextResponse.json({ error: "This role cannot be edited." }, { status: 400 });
-  }
-
-  const next = new Set<string>(filterEditablePermissions(parsed.data.permissions));
-  const existing = await prisma.rolePermission.findMany({
-    where: { role: role as Role },
-    select: { permission: true },
-  });
-  const prev = new Set(existing.map((r) => r.permission));
-  if (prev.size === 0) {
-    const seed = seedRolePermissionSet(role);
-    if (seed !== "*") Array.from(seed).forEach((p) => prev.add(p));
-  }
-
-  const added = Array.from(next).filter((p) => !prev.has(p));
-  const removed = Array.from(prev).filter((p) => !next.has(p));
-
-  await prisma.$transaction(async (tx) => {
-    await tx.rolePermission.deleteMany({ where: { role: role as Role } });
-    if (next.size > 0) {
-      await tx.rolePermission.createMany({
-        data: Array.from(next).map((permission) => ({ role: role as Role, permission })),
-      });
-    }
-  });
-
-  await bumpPermissionCache();
-
-  const memberCount = await prisma.user.count({ where: { role: role as Role } });
-  for (const permission of added) {
-    await logPermissionChange({
+  try {
+    const result = await commitRolePermissions({
       session: gate.session,
-      recordId: role,
-      recordType: "Role",
-      description: `Granted ${permission} to role ${role} (was off). ${memberCount} account(s) on this role.`,
+      role: parsed.data.role,
+      permissions: parsed.data.permissions,
     });
+    return NextResponse.json(result);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Could not save";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
-  for (const permission of removed) {
-    await logPermissionChange({
-      session: gate.session,
-      recordId: role,
-      recordType: "Role",
-      description: `Removed ${permission} from role ${role} (was on). ${memberCount} account(s) on this role.`,
-    });
-  }
-
-  return NextResponse.json({
-    role,
-    permissions: peekRolePermissions(role) ?? Array.from(next),
-    added,
-    removed,
-    memberCount,
-  });
 }

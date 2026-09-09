@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateClientProfile } from "@/lib/account-helpers";
 import { AccountOrdersClient } from "@/components/account/AccountOrdersClient";
+import { liveCompletionStages, stageHistoryForLiveCompletions } from "@/lib/atelier/live-stages";
 
 export default async function AccountOrdersPage() {
   const session = await auth();
@@ -14,6 +15,7 @@ export default async function AccountOrdersPage() {
       orderBy: { createdAt: "desc" },
       include: {
         stageHistory: { orderBy: { completedAt: "asc" } },
+        stageCompletions: { select: { stage: true, revertedAt: true } },
         consultation: { select: { bookingNumber: true } },
       },
     }),
@@ -32,7 +34,13 @@ export default async function AccountOrdersPage() {
 
   return (
     <AccountOrdersClient
-      bespokeOrders={bespokeOrders}
+      bespokeOrders={bespokeOrders.map((o) => ({
+        ...o,
+        stageHistory: stageHistoryForLiveCompletions(
+          o.stageHistory,
+          liveCompletionStages(o.stageCompletions),
+        ),
+      }))}
       rtwOrders={rtwOrders}
     />
   );

@@ -29,9 +29,9 @@ export function BespokeStageTracker({ currentStage, stageHistory, compact }: Pro
     >
         {STAGE_ORDER.map((stage, idx) => {
           const history = completedMap.get(stage);
-          const isDone = Boolean(history) || idx < currentIdx;
+          const isDone = Boolean(history);
           const isActive = idx === currentIdx && !isDone;
-          const isPending = idx > currentIdx && !isDone;
+          const isPending = !isDone && !isActive;
           const stageNum = String(idx + 1).padStart(2, "0");
 
           return (

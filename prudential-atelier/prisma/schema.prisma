@@ -1904,6 +1904,16 @@ model BespokeOrder {
 
   quotationId String?
   quotation   Quotation? @relation(fields: [quotationId], references: [id])
+  /// Document currency copied from the quotation. Ledger totals stay NGN.
+  currency    String     @default("NGN")
+  /// USD per ₦1, copied from the quotation lock at convert.
+  fxRateLocked        Float?
+  fxGbpRateLocked     Float?
+  fxRateSource        String?
+  fxRateFetchedAt     DateTime?
+  fxRateStale         Boolean @default(false)
+  fxUsdAmountLocked   Float?
+  fxGbpAmountLocked   Float?
   /// Cached denormalised total of CONFIRMED Payment rows — only write via recomputeOrderTotals().
   amountPaid  Float      @default(0)
   totalAmount Float      @default(0)
@@ -2294,6 +2304,17 @@ model Quotation {
   total     Float
   /// Document currency. EUR is valid here (manual atelier quotes); not a storefront switcher.
   currency  String @default("NGN")
+  /// USD per ₦1, locked when the quotation is sent. Same shape as Order / lockedFxFromOrder.
+  fxRateLocked        Float?
+  /// GBP per ₦1, locked at send with the USD rate.
+  fxGbpRateLocked     Float?
+  fxRateSource        String?
+  fxRateFetchedAt     DateTime?
+  fxRateStale         Boolean @default(false)
+  /// Document USD total at lock (when currency is USD).
+  fxUsdAmountLocked   Float?
+  /// Document GBP total at lock (when currency is GBP).
+  fxGbpAmountLocked   Float?
 
   notes  String?     @db.Text
   status QuoteStatus @default(DRAFT)

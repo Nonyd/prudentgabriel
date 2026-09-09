@@ -59,9 +59,19 @@ export async function getBespokeOrderForRequest(
 }
 
 export async function getBespokeOrderForInvoice(params: {
+  quotationId?: string | null;
   bespokeRequestId?: string | null;
   clientEmail: string;
 }): Promise<BespokeOrderLink | null> {
+  if (params.quotationId) {
+    const byQuote = await prisma.bespokeOrder.findFirst({
+      where: { quotationId: params.quotationId },
+      select: { id: true, orderRef: true },
+      orderBy: { createdAt: "desc" },
+    });
+    if (byQuote) return byQuote;
+  }
+
   const byRequest = await getBespokeOrderForRequest(params.bespokeRequestId);
   if (byRequest) return byRequest;
 
