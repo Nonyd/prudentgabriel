@@ -20,7 +20,6 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
 
   const now = new Date();
   const nextViewedAt = inv.viewedAt ?? now;
-  const nextViewCount = inv.viewCount + 1;
 
   const data: Prisma.InvoiceUpdateInput = {
     viewCount: { increment: 1 },
