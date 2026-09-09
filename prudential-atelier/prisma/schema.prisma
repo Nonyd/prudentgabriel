@@ -1958,6 +1958,11 @@ model BespokeOrder {
 
   status OrderStatus @default(PENDING)
 
+  /// Set when status became ARCHIVED. Confirming receipt does not write this.
+  archivedAt DateTime?
+  /// Why it was archived, e.g. alteration window ended with no open requests.
+  archivedReason String?
+
   payments Payment[]
   alterationRequests AlterationRequest[]
 

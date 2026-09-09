@@ -104,6 +104,12 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     migrated: true,
   },
   {
+    name: "archive-expired-warranty",
+    schedule: "0 12 * * *",
+    description: "Archive delivered commissions after the alteration window has elapsed",
+    migrated: true,
+  },
+  {
     name: "uncollected-pickup",
     schedule: "0 10 * * *",
     description: "Remind customers of uncollected store pickup after N days",

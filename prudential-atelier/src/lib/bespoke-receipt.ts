@@ -1,8 +1,11 @@
 import { OrderStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { maybeArchiveBespokeOrder } from "@/lib/bespoke-archive";
 import { maybeSendBespokeReviewRequest } from "@/lib/bespoke-review";
 import { actorOwnsBespokeOrder } from "@/lib/public-pii-dtos";
+import {
+  alterationWindowClosesAt,
+  getAlterationWarrantyDays,
+} from "@/lib/alterations/policy";
 
 export class ReceiptConfirmError extends Error {
   constructor(
@@ -19,15 +22,23 @@ function isStaffRole(role: Role | string | null | undefined): boolean {
   return role !== Role.CUSTOMER;
 }
 
+export type ReceiptConfirmResult = {
+  orderId: string;
+  orderRef: string;
+  warrantyEndsAt: string;
+};
+
 /**
- * Client-only receipt confirmation. Staff cannot confirm on the client's behalf.
+ * Confirm receipt. The public token path needs no session. The account path
+ * still requires the client. Confirming does not archive — it opens the
+ * alteration window.
  */
 export async function confirmBespokeReceipt(params: {
   orderId?: string;
   token?: string;
-  actor: { id: string; role: Role | string; email?: string | null };
-}): Promise<{ orderId: string; orderRef: string }> {
-  if (isStaffRole(params.actor.role)) {
+  actor?: { id: string; role: Role | string; email?: string | null } | null;
+}): Promise<ReceiptConfirmResult> {
+  if (!params.token && params.actor && isStaffRole(params.actor.role)) {
     throw new ReceiptConfirmError("Only the client can confirm receipt", 403);
   }
 
@@ -47,42 +58,56 @@ export async function confirmBespokeReceipt(params: {
     throw new ReceiptConfirmError("Receipt can only be confirmed after delivery", 400);
   }
 
+  const warrantyDays = await getAlterationWarrantyDays();
+
   if (order.receiptConfirmedAt) {
-    return { orderId: order.id, orderRef: order.orderRef };
+    return {
+      orderId: order.id,
+      orderRef: order.orderRef,
+      warrantyEndsAt: alterationWindowClosesAt(order.receiptConfirmedAt, warrantyDays).toISOString(),
+    };
   }
 
-  // Ownership: client email match or clientProfile.userId
-  const profile = order.clientProfileId
-    ? await prisma.clientProfile.findUnique({
-        where: { id: order.clientProfileId },
-        select: { userId: true },
-      })
-    : null;
-  const owns = actorOwnsBespokeOrder({
-    actorId: params.actor.id,
-    actorEmail: params.actor.email,
-    clientEmail: order.clientEmail,
-    profileUserId: profile?.userId,
-  });
-
-  if (!owns) {
-    throw new ReceiptConfirmError("Unable to confirm receipt", 403);
+  if (!params.token) {
+    if (!params.actor?.id) {
+      throw new ReceiptConfirmError("Please sign in to confirm receipt", 401);
+    }
+    const profile = order.clientProfileId
+      ? await prisma.clientProfile.findUnique({
+          where: { id: order.clientProfileId },
+          select: { userId: true },
+        })
+      : null;
+    const owns = actorOwnsBespokeOrder({
+      actorId: params.actor.id,
+      actorEmail: params.actor.email,
+      clientEmail: order.clientEmail,
+      profileUserId: profile?.userId,
+    });
+    if (!owns) {
+      throw new ReceiptConfirmError("Unable to confirm receipt", 403);
+    }
   }
+
+  const confirmedAt = new Date();
+  const actorId =
+    params.actor && !isStaffRole(params.actor.role) ? params.actor.id : null;
 
   await prisma.bespokeOrder.update({
     where: { id: order.id },
     data: {
-      receiptConfirmedAt: new Date(),
-      receiptConfirmedById: params.actor.id,
+      receiptConfirmedAt: confirmedAt,
+      receiptConfirmedById: actorId,
     },
   });
 
   void maybeSendBespokeReviewRequest(order.id).catch((e) =>
     console.warn("[confirmBespokeReceipt] review", e),
   );
-  void maybeArchiveBespokeOrder(order.id).catch((e) =>
-    console.warn("[confirmBespokeReceipt] archive", e),
-  );
 
-  return { orderId: order.id, orderRef: order.orderRef };
+  return {
+    orderId: order.id,
+    orderRef: order.orderRef,
+    warrantyEndsAt: alterationWindowClosesAt(confirmedAt, warrantyDays).toISOString(),
+  };
 }

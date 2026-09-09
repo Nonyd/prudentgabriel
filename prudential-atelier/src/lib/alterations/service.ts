@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import {
   getAlterationWarrantyDays,
+  isAlterationWindowOpen,
   suggestAlterationPricing,
 } from "@/lib/alterations/policy";
 import { allocateQuotationBaseRef, formatQuotationRef } from "@/lib/document-numbers";
@@ -27,6 +28,17 @@ export async function createAlterationRequest(params: {
   if (order.status === OrderStatus.ARCHIVED) throw new Error("ARCHIVED");
   if (order.status !== OrderStatus.DELIVERED && !order.deliveredAt) {
     throw new Error("NOT_DELIVERED");
+  }
+  if (!order.receiptConfirmedAt) throw new Error("RECEIPT_REQUIRED");
+
+  const warrantyDays = await getAlterationWarrantyDays();
+  if (
+    !isAlterationWindowOpen({
+      receiptConfirmedAt: order.receiptConfirmedAt,
+      warrantyDays,
+    })
+  ) {
+    throw new Error("WINDOW_CLOSED");
   }
 
   const profile = await prisma.clientProfile.findUnique({
@@ -52,6 +64,32 @@ export async function createAlterationRequest(params: {
   });
 }
 
+export async function createAlterationRequestByReceiptToken(params: {
+  token: string;
+  description: string;
+  reason: AlterationReason;
+  media?: string[];
+}) {
+  const order = await prisma.bespokeOrder.findUnique({
+    where: { receiptConfirmToken: params.token },
+    select: { id: true, clientProfileId: true },
+  });
+  if (!order) throw new Error("NOT_FOUND");
+  if (!order.clientProfileId) throw new Error("NO_PROFILE");
+  const profile = await prisma.clientProfile.findUnique({
+    where: { id: order.clientProfileId },
+    select: { userId: true },
+  });
+  if (!profile) throw new Error("NO_PROFILE");
+  return createAlterationRequest({
+    orderId: order.id,
+    clientUserId: profile.userId,
+    description: params.description,
+    reason: params.reason,
+    media: params.media,
+  });
+}
+
 export async function triageAlterationRequest(params: {
   alterationId: string;
   action: "ACCEPT" | "DECLINE";
@@ -73,6 +111,7 @@ export async function triageAlterationRequest(params: {
   const pricingDefault = suggestAlterationPricing({
     reason: row.reason,
     deliveredAt: row.order.deliveredAt,
+    receiptConfirmedAt: row.order.receiptConfirmedAt,
     warrantyDays,
   });
 

@@ -1,38 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AlterationReason } from "@prisma/client";
-import { auth } from "@/auth";
-import { createAlterationRequest } from "@/lib/alterations/service";
+import { createAlterationRequestByReceiptToken } from "@/lib/alterations/service";
 import { z } from "zod";
-import { storedMediaUrlSchema } from "@/lib/media/stored-url";
 
-type Params = { params: Promise<{ orderId: string }> };
+type Params = { params: Promise<{ token: string }> };
 
 const bodySchema = z.object({
   description: z.string().min(10).max(4000),
   reason: z.nativeEnum(AlterationReason),
-  media: z.array(storedMediaUrlSchema).max(8).optional(),
 });
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (session.user.role && session.user.role !== "CUSTOMER") {
-    return NextResponse.json({ error: "Only clients can raise alterations" }, { status: 403 });
-  }
-
-  const { orderId } = await params;
+  const { token } = await params;
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
-
   try {
-    const item = await createAlterationRequest({
-      orderId,
-      clientUserId: session.user.id,
+    const item = await createAlterationRequestByReceiptToken({
+      token,
       description: parsed.data.description,
       reason: parsed.data.reason,
-      media: parsed.data.media,
     });
     return NextResponse.json({ item }, { status: 201 });
   } catch (e) {

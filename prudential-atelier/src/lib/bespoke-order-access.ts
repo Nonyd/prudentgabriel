@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import { roundToKobo } from "@/lib/money";
 
 export function encodeBespokePaymentRef(reference: string, amountNGN: number): string {
-  return `${reference}|${Math.round(amountNGN)}`;
+  return `${reference}|${roundToKobo(amountNGN).toFixed(2)}`;
 }
 
 export function parseBespokePaymentRef(paymentRef: string | null | undefined): {

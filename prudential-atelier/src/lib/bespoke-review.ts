@@ -32,10 +32,11 @@ export async function maybeSendBespokeReviewRequest(orderId: string): Promise<bo
     reviewUrl,
   });
 
-  await prisma.bespokeOrder.update({
+  const marked = await prisma.bespokeOrder.updateMany({
     where: { id: order.id },
     data: { reviewRequestSent: true },
   });
+  if (marked.count === 0) return false;
 
   let userId: string | null = null;
   if (order.clientProfileId) {

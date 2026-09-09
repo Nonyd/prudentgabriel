@@ -5,7 +5,7 @@ import {
   type Prisma,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { formatNGN } from "@/lib/utils";
+import { formatNgnKobo, balanceIsCleared } from "@/lib/money";
 import { getPreviousStage, STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { getOrderPaymentSummary, toNumber } from "@/lib/payments/ledger";
 import { getStageRequirement, stageIndex, type StageRequirement } from "@/lib/atelier/stage-requirements";
@@ -53,7 +53,6 @@ export type StageGateSnapshot = {
   requirement: StageRequirement;
 };
 
-const ZERO_EPS = 0.01;
 
 function roleOf(actor: StageGateActor): string {
   return String(actor.role ?? "");
@@ -144,10 +143,10 @@ export function evaluateStageGate(params: {
     }
   }
 
-  if (mode === "complete" && req.requiresZeroBalance && snapshot.balance > ZERO_EPS) {
+  if (mode === "complete" && req.requiresZeroBalance && !balanceIsCleared(snapshot.balance)) {
     failures.push({
       code: "OUTSTANDING_BALANCE",
-      message: `Outstanding balance of ${formatNGN(snapshot.balance)} must be cleared before delivery.`,
+      message: `Outstanding balance of ${formatNgnKobo(snapshot.balance)} must be cleared before delivery.`,
     });
   }
 

@@ -1,5 +1,6 @@
 import { BespokeStage, Role } from "@prisma/client";
 import { STAGE_ORDER } from "@/lib/bespoke-stages";
+import { balanceIsCleared } from "@/lib/money";
 
 export type StageRequirement = {
   requiresNotes: boolean;
@@ -97,8 +98,6 @@ export function isProductionStage(stage: BespokeStage): boolean {
   return stageIndex(stage) >= stageIndex(PRODUCTION_START_STAGE);
 }
 
-const ZERO_EPS = 0.01;
-
 export type PipelineBlock = "CLIENT_APPROVAL" | "OUTSTANDING_BALANCE" | null;
 
 export function pipelineBlockFor(params: {
@@ -108,6 +107,6 @@ export function pipelineBlockFor(params: {
 }): PipelineBlock {
   const req = getStageRequirement(params.currentStage);
   if (req.requiresClientApproval && params.pendingApproval) return "CLIENT_APPROVAL";
-  if (req.requiresZeroBalance && params.balance > ZERO_EPS) return "OUTSTANDING_BALANCE";
+  if (req.requiresZeroBalance && !balanceIsCleared(params.balance)) return "OUTSTANDING_BALANCE";
   return null;
 }

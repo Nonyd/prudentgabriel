@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { BespokeOrderDetailClient } from "@/components/admin/BespokeOrderDetailClient";
 import { stageGateInclude } from "@/lib/atelier/can-complete-stage";
+import { maybeArchiveBespokeOrder } from "@/lib/bespoke-archive";
 
 export default async function AdminBespokeOrderPage({
   params,
@@ -10,6 +11,7 @@ export default async function AdminBespokeOrderPage({
   params: Promise<{ orderId: string }>;
 }) {
   const { orderId } = await params;
+  await maybeArchiveBespokeOrder(orderId);
 
   const order = await prisma.bespokeOrder.findUnique({
     where: { id: orderId },

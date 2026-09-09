@@ -67,6 +67,9 @@ function DeliveryDate({ date }: { date: Date | string | null }) {
 }
 
 function TrackStatusPill({ order }: { order: OrderRow }) {
+  if (order.status === "ARCHIVED") {
+    return <Badge variant="grey">Archived</Badge>;
+  }
   if (order.currentStage === "DELIVERY") {
     return <Badge variant="success">DELIVERED</Badge>;
   }

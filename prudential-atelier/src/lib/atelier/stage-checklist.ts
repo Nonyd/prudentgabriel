@@ -1,9 +1,7 @@
 import { BespokeStage, StageApprovalStatus } from "@prisma/client";
 import { getPreviousStage, STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { getStageRequirement } from "@/lib/atelier/stage-requirements";
-import { formatNGN } from "@/lib/utils";
-
-const ZERO_EPS = 0.01;
+import { balanceIsCleared, formatNgnKobo } from "@/lib/money";
 
 export type StageMediaLike = {
   id: string;
@@ -83,7 +81,7 @@ export function buildStageChecklistFacts(params: {
     ? params.mediaCount >= req.minMediaCount
     : params.mediaCount >= 1;
   const depositMet = Boolean(params.productionUnlockedAt);
-  const balanceMet = params.balance <= ZERO_EPS;
+  const balanceMet = balanceIsCleared(params.balance);
 
   return [
     {
@@ -131,7 +129,7 @@ export function buildStageChecklistFacts(params: {
       key: "balance",
       label: balanceMet
         ? "Balance cleared"
-        : `Balance outstanding (${formatNGN(params.balance)})`,
+        : `Balance outstanding (${formatNgnKobo(params.balance)})`,
       required: req.requiresZeroBalance,
       met: balanceMet,
     },

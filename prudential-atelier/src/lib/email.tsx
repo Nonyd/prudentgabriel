@@ -27,6 +27,7 @@ import PickupReadyEmail from "@/emails/PickupReadyEmail";
 import ShippingQuoteEmail from "@/emails/ShippingQuoteEmail";
 import BespokeDeliveredEmail from "@/emails/BespokeDeliveredEmail";
 import ReceiptReminderEmail from "@/emails/ReceiptReminderEmail";
+import { getAlterationWarrantyDays } from "@/lib/alterations/policy";
 import type { LoyaltyTier } from "@prisma/client";
 import { getPublicAppUrl, absolutePublicUrl } from "@/lib/app-url";
 import { emailSafeReceiptUrl } from "@/lib/media/receipt-src";
@@ -693,10 +694,12 @@ export async function sendBespokeDeliveredEmail(params: {
   confirmUrl: string;
   accountUrl: string;
 }): Promise<void> {
+  const warrantyDays = String(await getAlterationWarrantyDays());
   const copy = await catalogCopy(EMAIL_TEMPLATE_KEYS.BESPOKE_DELIVERED, {
     firstName: params.firstName,
     orderRef: params.orderRef,
     link: params.confirmUrl,
+    warrantyDays,
   });
   const html = await renderBrandedEmail(
     <BespokeDeliveredEmail
@@ -726,10 +729,12 @@ export async function sendReceiptReminderEmail(params: {
   orderRef: string;
   confirmUrl: string;
 }): Promise<void> {
+  const warrantyDays = String(await getAlterationWarrantyDays());
   const copy = await catalogCopy(EMAIL_TEMPLATE_KEYS.RECEIPT_REMINDER, {
     firstName: params.firstName,
     orderRef: params.orderRef,
     link: params.confirmUrl,
+    warrantyDays,
   });
   const html = await renderBrandedEmail(
     <ReceiptReminderEmail

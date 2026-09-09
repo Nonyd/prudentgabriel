@@ -85,7 +85,9 @@ export function AccountOrdersClient({
                       ) : null}
                     </div>
                     <span className="rounded-sm bg-nut/10 px-2 py-1 font-sans text-[10px] uppercase text-nut">
-                      {STAGE_SHORT_LABELS[o.currentStage as BespokeStage]}
+                      {o.status === "ARCHIVED"
+                        ? "Archived"
+                        : STAGE_SHORT_LABELS[o.currentStage as BespokeStage]}
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-4 font-sans text-xs text-text-mid">

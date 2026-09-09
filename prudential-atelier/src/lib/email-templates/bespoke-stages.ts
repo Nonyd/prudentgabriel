@@ -26,8 +26,8 @@ const STAGE_SUBJECTS: Record<BespokeStage, string> = {
   TAILORING: "Your outfit is being crafted — {orderRef}",
   FIRST_FITTING: "Your first fitting summary — {orderRef}",
   ALTERATIONS: "Alterations complete — {orderRef}",
-  BEADING_FINISHING: "The finishing touches are underway — {orderRef}",
-  FINAL_FITTING: "Final fitting approved — {orderRef}",
+  BEADING_FINISHING: "The finishing touches are complete — {orderRef}",
+  FINAL_FITTING: "Final fitting complete — {orderRef}",
   DELIVERY: "Your outfit is ready — {orderRef}",
 };
 
@@ -53,9 +53,9 @@ const STAGE_INTROS: Record<BespokeStage, string> = {
   ALTERATIONS:
     "All requested alterations have been completed. Your garment has been refined to ensure the perfect fit and finish.",
   BEADING_FINISHING:
-    "Our embellishment team is applying the finishing touches — beading, embroidery, and final details that make your piece truly yours.",
+    "Beading, embroidery, and the last details are finished. Your piece is ready for the final fitting.",
   FINAL_FITTING:
-    "Your final fitting has been approved. Your outfit meets our standards and yours — we are preparing it for delivery.",
+    "Your final fitting is complete. We are preparing the piece for delivery.",
   DELIVERY:
     "Your atelier outfit is ready! We cannot wait for you to experience the finished piece. Details for collection or delivery are below.",
 };

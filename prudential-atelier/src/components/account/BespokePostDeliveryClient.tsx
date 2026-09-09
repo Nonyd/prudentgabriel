@@ -18,11 +18,15 @@ export function BespokePostDeliveryClient({
   canConfirmReceipt,
   receiptConfirmedAt,
   isArchived,
+  windowOpen,
+  warrantyEndsAt,
 }: {
   orderId: string;
   canConfirmReceipt: boolean;
   receiptConfirmedAt: string | null;
   isArchived: boolean;
+  windowOpen: boolean;
+  warrantyEndsAt: string | null;
 }) {
   const [confirming, setConfirming] = useState(false);
   const [reason, setReason] = useState<AlterationReason>("FIT");
@@ -35,7 +39,7 @@ export function BespokePostDeliveryClient({
       const res = await fetch(`/api/bespoke/${orderId}/confirm-receipt`, { method: "POST" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Could not confirm");
-      toast.success("Receipt confirmed — thank you");
+      toast.success("Receipt confirmed — your alteration window is open");
       window.location.reload();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
@@ -73,13 +77,22 @@ export function BespokePostDeliveryClient({
     );
   }
 
+  const endsLabel = warrantyEndsAt
+    ? new Date(warrantyEndsAt).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
+
   return (
     <div className="mt-10 space-y-8">
       {canConfirmReceipt ? (
         <section className="rounded border border-nut/20 bg-ivory px-5 py-4">
           <h2 className="font-display text-xl text-choc">Confirm receipt</h2>
           <p className="mt-1 font-sans text-sm text-text-mid">
-            Let us know your garment has arrived safely.
+            Let us know your garment has arrived safely. Confirming opens a window to request a
+            fit or workmanship alteration — it does not close your file.
           </p>
           <Button className="mt-4" onClick={confirmReceipt} disabled={confirming}>
             {confirming ? "Confirming…" : "I have received my garment"}
@@ -88,14 +101,16 @@ export function BespokePostDeliveryClient({
       ) : receiptConfirmedAt ? (
         <p className="font-sans text-sm text-nut">
           Receipt confirmed {new Date(receiptConfirmedAt).toLocaleDateString("en-GB")}.
+          {endsLabel ? ` Alteration window open until ${endsLabel}.` : null}
         </p>
       ) : null}
 
-      {(canConfirmReceipt || receiptConfirmedAt) && (
+      {windowOpen ? (
         <section className="rounded border border-sand/60 px-5 py-4">
           <h2 className="font-display text-xl text-choc">Request an alteration</h2>
           <p className="mt-1 font-sans text-sm text-text-mid">
             Post-delivery changes are handled separately from your original commission pipeline.
+            {endsLabel ? ` You have until ${endsLabel}.` : null}
           </p>
           <form onSubmit={submitAlteration} className="mt-4 space-y-3">
             <label className="block font-sans text-xs uppercase tracking-wide text-nut">
@@ -128,7 +143,7 @@ export function BespokePostDeliveryClient({
             </Button>
           </form>
         </section>
-      )}
+      ) : null}
     </div>
   );
 }

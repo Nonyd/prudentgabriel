@@ -134,6 +134,8 @@ export function BespokeOrderDetailClient({
     Boolean(draftNotes) &&
     (!req.requiresMedia || stageMedia.length >= req.minMediaCount);
   const isAdminActor = actorRole === "SUPER_ADMIN" || actorRole === "ADMIN";
+  const isArchived = order.status === "ARCHIVED";
+  const deliveryComplete = Boolean(order.deliveredAt);
 
   const seedNotesFromOrder = (next: OrderWithRelations) => {
     const seeded = notesDraftForStage(next.stageDrafts, next.currentStage);
@@ -403,7 +405,18 @@ export function BespokeOrderDetailClient({
             Public tracking link
           </a>
         </div>
-        <BadgeStage stage={order.currentStage} />
+        <div className="flex flex-col items-end gap-2">
+          {isArchived ? (
+            <span className="rounded-full bg-sand px-3 py-1 font-sans text-[10px] font-semibold uppercase tracking-wide text-text-mid">
+              Archived
+            </span>
+          ) : deliveryComplete ? (
+            <span className="rounded-full bg-lightbr/15 px-3 py-1 font-sans text-[10px] font-semibold uppercase tracking-wide text-nut">
+              Delivered
+            </span>
+          ) : null}
+          <BadgeStage stage={order.currentStage} />
+        </div>
       </div>
 
       {order.consultationId ? (
@@ -496,6 +509,35 @@ export function BespokeOrderDetailClient({
           ) : null}
 
           <section className="card-surface p-6">
+            {isArchived ? (
+              <>
+                <h2 className="font-sans text-xs font-semibold uppercase tracking-wider text-text-light">
+                  Archived
+                </h2>
+                <p className="mt-3 font-sans text-sm text-text-mid">
+                  This commission is archived and read-only. Complete and revert are closed.
+                </p>
+                {order.archivedReason ? (
+                  <p className="mt-2 font-sans text-sm text-text-light">{order.archivedReason}</p>
+                ) : null}
+              </>
+            ) : deliveryComplete ? (
+              <>
+                <h2 className="font-sans text-xs font-semibold uppercase tracking-wider text-text-light">
+                  Delivery complete
+                </h2>
+                <p className="mt-3 font-sans text-sm text-text-mid">
+                  Marked delivered {order.deliveredAt ? formatDate(order.deliveredAt) : ""}. Waiting
+                  for the client to confirm receipt, then the alteration window.
+                </p>
+                {order.receiptConfirmedAt ? (
+                  <p className="mt-2 font-sans text-sm text-nut">
+                    Receipt confirmed {formatDate(order.receiptConfirmedAt)}.
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <>
             <h2 className="font-sans text-xs font-semibold uppercase tracking-wider text-text-light">
               Complete current stage — {STAGE_LABELS[order.currentStage]}
             </h2>
@@ -656,6 +698,8 @@ export function BespokeOrderDetailClient({
                 Complete the checklist above. The server will still refuse if anything is missing.
               </p>
             ) : null}
+              </>
+            )}
           </section>
         </div>
 

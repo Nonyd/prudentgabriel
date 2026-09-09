@@ -10,6 +10,12 @@ import { BespokeStageTracker } from "@/components/bespoke/BespokeStageTracker";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { formatBespokeBook } from "@/lib/atelier-fx";
 import { liveCompletionStages, stageHistoryForLiveCompletions } from "@/lib/atelier/live-stages";
+import { maybeArchiveBespokeOrder } from "@/lib/bespoke-archive";
+import {
+  alterationWindowClosesAt,
+  getAlterationWarrantyDays,
+  isAlterationWindowOpen,
+} from "@/lib/alterations/policy";
 
 export default async function AccountBespokeOrderPage({
   params,
@@ -37,13 +43,28 @@ export default async function AccountBespokeOrderPage({
 
   if (!order) notFound();
 
+  await maybeArchiveBespokeOrder(order.id);
+  const fresh = await prisma.bespokeOrder.findUnique({
+    where: { id: order.id },
+    select: { status: true, archivedReason: true },
+  });
+  const status = fresh?.status ?? order.status;
+
   const draft = order.stageDrafts.find((d) => d.stage === order.currentStage);
   const media = order.stageMedia.filter((m) => m.stage === order.currentStage);
   const delivered =
-    order.status === OrderStatus.DELIVERED ||
-    order.status === OrderStatus.ARCHIVED ||
+    status === OrderStatus.DELIVERED ||
+    status === OrderStatus.ARCHIVED ||
     !!order.deliveredAt;
-  const canConfirm = delivered && !order.receiptConfirmedAt && order.status !== OrderStatus.ARCHIVED;
+  const canConfirm = delivered && !order.receiptConfirmedAt && status !== OrderStatus.ARCHIVED;
+  const warrantyDays = await getAlterationWarrantyDays();
+  const windowOpen = isAlterationWindowOpen({
+    receiptConfirmedAt: order.receiptConfirmedAt,
+    warrantyDays,
+  });
+  const warrantyEndsAt = order.receiptConfirmedAt
+    ? alterationWindowClosesAt(order.receiptConfirmedAt, warrantyDays).toISOString()
+    : null;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -53,7 +74,7 @@ export default async function AccountBespokeOrderPage({
       <h1 className="mt-4 font-display text-3xl text-choc">{order.orderRef}</h1>
       <p className="mt-1 font-sans text-sm text-text-mid">
         {STAGE_SHORT_LABELS[order.currentStage]} · {formatBespokeBook(order.totalAmount, order)}
-        {order.status === OrderStatus.ARCHIVED ? " · Archived" : null}
+        {status === OrderStatus.ARCHIVED ? " · Archived" : null}
       </p>
 
       <BespokeApprovalClient
@@ -69,7 +90,9 @@ export default async function AccountBespokeOrderPage({
         orderId={order.id}
         canConfirmReceipt={canConfirm}
         receiptConfirmedAt={order.receiptConfirmedAt?.toISOString() ?? null}
-        isArchived={order.status === OrderStatus.ARCHIVED}
+        isArchived={status === OrderStatus.ARCHIVED}
+        windowOpen={windowOpen}
+        warrantyEndsAt={warrantyEndsAt}
       />
 
       <div className="mt-10">

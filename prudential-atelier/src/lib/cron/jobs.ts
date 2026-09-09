@@ -5,6 +5,7 @@ import { run as runStageApprovalReminders } from "@/lib/cron/jobs/stage-approval
 import { run as runUnsentQuoteAlerts } from "@/lib/cron/jobs/unsent-quote-alerts";
 import { run as runReviewRequests } from "@/lib/cron/jobs/review-requests";
 import { run as runReceiptReminders } from "@/lib/cron/jobs/receipt-reminders";
+import { run as runArchiveExpiredWarranty } from "@/lib/cron/jobs/archive-expired-warranty";
 import { run as runUpdatePerformance } from "@/lib/cron/jobs/update-performance";
 import { run as runEmailOutbox } from "@/lib/cron/jobs/email-outbox";
 import { run as runAbandonedCart } from "@/lib/cron/jobs/abandoned-cart";
@@ -23,6 +24,7 @@ const HANDLERS: Record<string, CronJobHandler> = {
   "stage-approval-reminders": runStageApprovalReminders,
   "unsent-quote-alerts": runUnsentQuoteAlerts,
   "receipt-reminders": runReceiptReminders,
+  "archive-expired-warranty": runArchiveExpiredWarranty,
   "uncollected-pickup": runUncollectedPickup,
   "prudent-points": runPrudentPoints,
   "checkout-reservations": runCheckoutReservations,

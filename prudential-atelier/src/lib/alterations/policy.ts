@@ -20,16 +20,36 @@ export async function getAlterationWarrantyDays(): Promise<number> {
   return Math.floor(n);
 }
 
+export function alterationWindowClosesAt(
+  receiptConfirmedAt: Date,
+  warrantyDays: number,
+): Date {
+  return new Date(receiptConfirmedAt.getTime() + warrantyDays * 86_400_000);
+}
+
+/** The window opens when she confirms receipt — not when the house marks delivered. */
+export function isAlterationWindowOpen(params: {
+  receiptConfirmedAt: Date | null;
+  warrantyDays: number;
+  now?: Date;
+}): boolean {
+  if (!params.receiptConfirmedAt) return false;
+  const now = params.now ?? new Date();
+  return now.getTime() < alterationWindowClosesAt(params.receiptConfirmedAt, params.warrantyDays).getTime();
+}
+
 export function suggestAlterationPricing(params: {
   reason: AlterationReason;
   deliveredAt: Date | null;
+  receiptConfirmedAt?: Date | null;
   warrantyDays: number;
   now?: Date;
 }): AlterationPricing {
   const now = params.now ?? new Date();
+  const windowStart = params.receiptConfirmedAt ?? params.deliveredAt;
   const withinWarranty =
-    !!params.deliveredAt &&
-    now.getTime() - params.deliveredAt.getTime() <= params.warrantyDays * 86_400_000;
+    !!windowStart &&
+    now.getTime() - windowStart.getTime() <= params.warrantyDays * 86_400_000;
 
   if (
     withinWarranty &&

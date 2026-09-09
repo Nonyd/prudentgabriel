@@ -14,6 +14,8 @@ import type { DashboardState } from "@/components/account/AccountDashboard";
 import { canSubmitTestimonial } from "@/lib/testimonial-eligibility";
 import { formatBespokeBook } from "@/lib/atelier-fx";
 import { liveCompletionStages, stageHistoryForLiveCompletions } from "@/lib/atelier/live-stages";
+import { isBespokeCommissionActive } from "@/lib/bespoke-archive";
+import { getAlterationWarrantyDays } from "@/lib/alterations/policy";
 
 const BUDGET_RANGES: Record<string, [number, number]> = {
   "₦50k–₦150k": [50000, 150000],
@@ -98,7 +100,7 @@ export default async function AccountDashboardPage() {
       prisma.bespokeOrder.findMany({
         where: { clientProfileId: profile.id },
         orderBy: { createdAt: "desc" },
-        take: 3,
+        take: 20,
         include: {
           stageHistory: { orderBy: { completedAt: "desc" }, take: 1 },
           stageCompletions: { select: { stage: true, revertedAt: true } },
@@ -129,16 +131,21 @@ export default async function AccountDashboardPage() {
   const firstName = (user?.name ?? "there").split(/\s+/)[0] ?? "there";
   const memberSince = user?.createdAt ?? new Date();
 
-  const [rtwActiveCount, bespokeActiveCount] = await Promise.all([
-    prisma.order.count({
-      where: { userId, status: { not: "DELIVERED" }, isBespoke: false },
+  const warrantyDays = await getAlterationWarrantyDays();
+  const activeBespokeList = bespokeOrders.filter((o) =>
+    isBespokeCommissionActive({
+      status: o.status,
+      receiptConfirmedAt: o.receiptConfirmedAt,
+      warrantyDays,
     }),
-    prisma.bespokeOrder.count({
-      where: { clientProfileId: profile.id, currentStage: { not: "DELIVERY" } },
-    }),
-  ]);
+  );
+  const bespokeActiveCount = activeBespokeList.length;
 
-  const activeBespokeRaw = bespokeOrders.find((o) => o.currentStage !== "DELIVERY");
+  const rtwActiveCount = await prisma.order.count({
+    where: { userId, status: { not: "DELIVERED" }, isBespoke: false },
+  });
+
+  const activeBespokeRaw = activeBespokeList[0];
   const activeBespoke = activeBespokeRaw
     ? {
         ...activeBespokeRaw,

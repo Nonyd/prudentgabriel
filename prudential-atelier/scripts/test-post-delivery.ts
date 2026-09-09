@@ -110,6 +110,28 @@ async function main() {
       "CHANGE_REQUESTED → CHARGEABLE",
     );
 
+    let tooEarly = false;
+    try {
+      await createAlterationRequest({
+        orderId: order.id,
+        clientUserId: user.id,
+        description: "Hem needs a small adjustment after delivery.",
+        reason: AlterationReason.FIT,
+      });
+    } catch (e) {
+      tooEarly = e instanceof Error && e.message === "RECEIPT_REQUIRED";
+    }
+    assert(tooEarly, "alteration before receipt confirm is refused");
+
+    await confirmBespokeReceipt({
+      orderId: order.id,
+      actor: { id: user.id, role: Role.CUSTOMER, email },
+    });
+    const after = await prisma.bespokeOrder.findUnique({ where: { id: order.id } });
+    assert(after?.receiptConfirmedAt, "receiptConfirmedAt set");
+    assert(after?.receiptConfirmedById === user.id, "receiptConfirmedById is client");
+    assert(after?.status !== OrderStatus.ARCHIVED, "confirming receipt does not archive");
+
     const alt = await createAlterationRequest({
       orderId: order.id,
       clientUserId: user.id,
@@ -139,15 +161,6 @@ async function main() {
       actorId: staff.id,
     });
 
-    await confirmBespokeReceipt({
-      orderId: order.id,
-      actor: { id: user.id, role: Role.CUSTOMER, email },
-    });
-    const after = await prisma.bespokeOrder.findUnique({ where: { id: order.id } });
-    assert(after?.receiptConfirmedAt, "receiptConfirmedAt set");
-    assert(after?.receiptConfirmedById === user.id, "receiptConfirmedById is client");
-    assert(after?.status !== OrderStatus.ARCHIVED, "open alteration blocks archive");
-
     const sent1 = await maybeSendBespokeReviewRequest(order.id);
     assert(sent1, "review send once");
     const sent2 = await maybeSendBespokeReviewRequest(order.id);
@@ -165,8 +178,18 @@ async function main() {
     });
     const { maybeArchiveBespokeOrder } = await import("../src/lib/bespoke-archive");
     await maybeArchiveBespokeOrder(order.id);
+    const stillOpen = await prisma.bespokeOrder.findUnique({ where: { id: order.id } });
+    assert(stillOpen?.status !== OrderStatus.ARCHIVED, "window still open — must not archive yet");
+
+    const past = new Date(Date.now() - 31 * 86_400_000);
+    await prisma.bespokeOrder.update({
+      where: { id: order.id },
+      data: { receiptConfirmedAt: past, deliveredAt: past },
+    });
+    await maybeArchiveBespokeOrder(order.id, new Date());
     const archived = await prisma.bespokeOrder.findUnique({ where: { id: order.id } });
-    assert(archived?.status === OrderStatus.ARCHIVED, "order archived");
+    assert(archived?.status === OrderStatus.ARCHIVED, "order archived after window elapsed");
+    assert(archived?.archivedReason, "archive records why");
 
     const stageRes = await completeOrderStage({
       orderId: order.id,

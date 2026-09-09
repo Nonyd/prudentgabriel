@@ -483,10 +483,12 @@ export function inferBespokePurpose(params: {
   confirmedBefore: number;
 }): PaymentPurpose {
   if (params.amount >= params.balanceBefore - 0.01) return PaymentPurpose.FULL;
+  if (depositIsSatisfied(params.confirmedBefore, params.depositRequired)) {
+    return PaymentPurpose.BALANCE;
+  }
   if (params.confirmedBefore + params.amount + 0.01 >= params.depositRequired && params.confirmedBefore < params.depositRequired) {
     return PaymentPurpose.DEPOSIT;
   }
-  if (params.confirmedBefore >= params.depositRequired) return PaymentPurpose.BALANCE;
   return PaymentPurpose.DEPOSIT;
 }
 
