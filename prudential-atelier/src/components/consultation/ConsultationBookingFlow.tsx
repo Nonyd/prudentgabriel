@@ -512,7 +512,7 @@ export function ConsultationBookingFlow({
                   ))}
                 </div>
                 <p className="mt-4 font-body text-xs text-text-light">
-                  A link will be sent to you 1 hour before your session.
+                  We email the meeting link when it is set, and again about an hour before you join.
                 </p>
               </div>
             ) : null}

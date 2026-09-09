@@ -6,6 +6,7 @@ import { createPaymentIntent } from "@/lib/payments/stripe";
 import { canAcceptRtwPayment, rtwChargeAmountForeign } from "@/lib/payments/rtw-totals";
 import { lockedFxFromOrder } from "@/lib/fx";
 import { getStripePublicKey } from "@/lib/payments/config";
+import { rtwGatewayEmail } from "@/lib/payments/payer-email";
 import { catchPaymentInit } from "@/lib/payments/catch-init";
 import { prepareRtwPaymentAttempt } from "@/lib/checkout-reservations";
 
@@ -31,7 +32,10 @@ export async function POST(req: NextRequest) {
 
   const { orderId, currency, guestEmail } = parsed.data;
   return catchPaymentInit(orderId, async () => {
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { user: { select: { email: true } } },
+    });
     if (!order || !canAcceptRtwPayment(order)) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
@@ -57,7 +61,7 @@ export async function POST(req: NextRequest) {
     }
     const amountCents = Math.max(50, Math.round(converted * 100));
 
-    const email = session?.user?.email ?? order.guestEmail ?? guestEmail ?? "";
+    const email = rtwGatewayEmail(order) ?? "";
 
     const { clientSecret, paymentIntentId } = await createPaymentIntent({
       amountCents,

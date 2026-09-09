@@ -4,6 +4,7 @@ import { PaymentStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { consultationGatewayEmail } from "@/lib/payments/payer-email";
 import { getExchangeRates, convertFromNGN } from "@/lib/currency";
 import { initializeTransaction } from "@/lib/payments/flutterwave";
 
@@ -52,8 +53,8 @@ export async function POST(req: NextRequest) {
     amount = Math.round(convertFromNGN(booking.feeNGN, "GBP", rates) * 100) / 100;
   }
 
-  const email = session?.user?.email ?? booking.clientEmail;
-  const name = session?.user?.name ?? booking.clientName;
+  const email = consultationGatewayEmail(booking);
+  const name = booking.clientName;
 
   const appUrl = getPublicAppUrl();
   const redirectUrl = `${appUrl}/api/consultations/payment/flutterwave/verify?bookingId=${encodeURIComponent(bookingId)}`;

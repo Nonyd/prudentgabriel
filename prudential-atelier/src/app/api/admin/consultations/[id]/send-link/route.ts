@@ -4,7 +4,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { getVirtualPlatformLabel, isOfferingTypeVirtual } from "@/lib/consultation-types";
 import { isVirtualDelivery } from "@/lib/consultation";
-import { sendConsultationMeetingLinkEmail } from "@/lib/email";
+import { queueConsultationMeetingLink } from "@/lib/consultation-meeting-link";
 import { notifyMeetingLinkSent } from "@/lib/customer-notifications";
 
 const bodySchema = z.object({
@@ -59,11 +59,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     },
   });
 
-  await sendConsultationMeetingLinkEmail({
+  await queueConsultationMeetingLink({
     to: booking.clientEmail,
     clientName: booking.clientName,
+    bookingNumber: booking.bookingNumber,
     platformLabel,
-    confirmedDate: booking.confirmedDate.toISOString(),
+    confirmedDate: booking.confirmedDate,
     confirmedTime: booking.confirmedTime,
     meetingLink: parsed.data.meetingLink,
     isWhatsApp: booking.virtualPlatform === "whatsapp_video",

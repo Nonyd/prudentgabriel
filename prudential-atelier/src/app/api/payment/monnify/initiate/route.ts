@@ -8,6 +8,7 @@ import { initializeTransaction } from "@/lib/payments/monnify";
 import { canAcceptRtwPayment, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
 import { generatePaymentReference } from "@/lib/payments/index";
 import { catchPaymentInit } from "@/lib/payments/catch-init";
+import { rtwGatewayEmail, rtwGatewayName } from "@/lib/payments/payer-email";
 import { prepareRtwPaymentAttempt } from "@/lib/checkout-reservations";
 
 const bodySchema = z.object({
@@ -31,7 +32,10 @@ export async function POST(req: NextRequest) {
 
   const { orderId, guestEmail } = parsed.data;
   return catchPaymentInit(orderId, async () => {
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { user: { select: { email: true, name: true } } },
+    });
     if (!order || !canAcceptRtwPayment(order)) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
@@ -53,9 +57,8 @@ export async function POST(req: NextRequest) {
     const appUrl = getPublicAppUrl();
     const redirectUrl = `${appUrl}/api/payment/monnify/verify?orderId=${encodeURIComponent(orderId)}`;
 
-    const customerEmail = session?.user?.email ?? order.guestEmail ?? guestEmail ?? "";
-    const customerName =
-      session?.user?.name ?? order.guestName ?? customerEmail.split("@")[0] ?? "Customer";
+    const customerEmail = rtwGatewayEmail(order) ?? "";
+    const customerName = rtwGatewayName(order);
 
     const chargeNGN = rtwChargeAmountNGN(order);
     if (chargeNGN < 1) {

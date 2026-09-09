@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getExchangeRates, convertFromNGN } from "@/lib/currency";
 import { createConsultationPaymentIntent } from "@/lib/payments/stripe";
 import { getStripePublicKey } from "@/lib/payments/config";
+import { consultationGatewayEmail } from "@/lib/payments/payer-email";
 
 const bodySchema = z.object({
   bookingId: z.string().min(1),
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
   const converted = convertFromNGN(booking.feeNGN, currency, rates);
   const amountCents = Math.max(50, Math.round(converted * 100));
 
-  const email = session?.user?.email ?? booking.clientEmail;
+  const email = consultationGatewayEmail(booking);
 
   const { clientSecret, paymentIntentId } = await createConsultationPaymentIntent({
     amountCents,

@@ -78,7 +78,10 @@ export default function ConsultationConfirmedEmail({
               <EmailButton href={meetingLink}>Join meeting</EmailButton>
             </Section>
           ) : (
-            <Text style={{ marginTop: 8, fontSize: 14 }}>Your meeting link will be sent separately.</Text>
+            <Text style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6 }}>
+              This message does not include a meeting link. We will email the link when the house
+              sets it, and again about an hour before you join.
+            </Text>
           )}
           <Text style={{ marginTop: 12, fontSize: 13, color: "#555" }}>
             Please join 2–3 minutes before your scheduled time.

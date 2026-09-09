@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { initializeTransaction } from "@/lib/payments/paystack";
+import { consultationGatewayEmail } from "@/lib/payments/payer-email";
 
 const bodySchema = z.object({
   bookingId: z.string().min(1),
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const email = session?.user?.email ?? booking.clientEmail;
+  const email = consultationGatewayEmail(booking);
   const appUrl = getPublicAppUrl();
   const callbackUrl = `${appUrl}/api/consultations/payment/paystack/verify?bookingId=${encodeURIComponent(bookingId)}`;
 

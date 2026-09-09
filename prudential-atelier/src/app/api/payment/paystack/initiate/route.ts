@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { initializeTransaction } from "@/lib/payments/paystack";
+import { rtwGatewayEmail } from "@/lib/payments/payer-email";
 import { canAcceptRtwPayment, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
 import { generatePaymentReference } from "@/lib/payments/index";
 import { catchPaymentInit } from "@/lib/payments/catch-init";
@@ -31,7 +32,10 @@ export async function POST(req: NextRequest) {
 
   const { orderId, guestEmail } = parsed.data;
   return catchPaymentInit(orderId, async () => {
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { user: { select: { email: true } } },
+    });
     if (!order || !canAcceptRtwPayment(order)) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
@@ -50,7 +54,7 @@ export async function POST(req: NextRequest) {
     const prep = await prepareRtwPaymentAttempt(order.id);
     if (prep.error) return NextResponse.json({ error: prep.error }, { status: 400 });
 
-    const email = session?.user?.email ?? order.guestEmail ?? guestEmail;
+    const email = rtwGatewayEmail(order);
     if (!email) {
       return NextResponse.json({ error: "Missing email" }, { status: 400 });
     }

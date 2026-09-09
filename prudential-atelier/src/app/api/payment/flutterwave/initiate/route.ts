@@ -9,6 +9,7 @@ import { generatePaymentReference } from "@/lib/payments/index";
 import { canAcceptRtwPayment, rtwChargeAmountNGN, rtwChargeAmountForeign } from "@/lib/payments/rtw-totals";
 import { lockedFxFromOrder } from "@/lib/fx";
 import { catchPaymentInit } from "@/lib/payments/catch-init";
+import { rtwGatewayEmail, rtwGatewayName } from "@/lib/payments/payer-email";
 import { prepareRtwPaymentAttempt } from "@/lib/checkout-reservations";
 
 const bodySchema = z.object({
@@ -33,7 +34,10 @@ export async function POST(req: NextRequest) {
 
   const { orderId, currency, guestEmail } = parsed.data;
   return catchPaymentInit(orderId, async () => {
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { user: { select: { email: true, name: true } } },
+    });
     if (!order || !canAcceptRtwPayment(order)) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
@@ -62,11 +66,8 @@ export async function POST(req: NextRequest) {
       amount = rtwChargeAmountForeign(order, currency, fx);
     }
 
-    const email = session?.user?.email ?? order.guestEmail ?? guestEmail ?? "";
-    const name =
-      session?.user?.name ??
-      order.guestName ??
-      (email ? email.split("@")[0] : "Customer");
+    const email = rtwGatewayEmail(order) ?? "";
+    const name = rtwGatewayName(order);
 
     const appUrl = getPublicAppUrl();
     const redirectUrl = `${appUrl}/api/payment/flutterwave/verify?orderId=${encodeURIComponent(orderId)}`;

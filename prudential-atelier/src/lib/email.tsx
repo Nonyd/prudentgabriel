@@ -1277,11 +1277,13 @@ export async function sendConsultationSessionSummaryEmail(params: {
 export async function sendConsultationMeetingLinkEmail(params: {
   to: string;
   clientName: string;
+  bookingNumber: string;
   platformLabel: string;
   confirmedDate: string;
   confirmedTime: string;
   meetingLink: string;
   isWhatsApp: boolean;
+  kind?: "link" | "reminder";
 }): Promise<void> {
   const firstName = params.clientName.split(/\s+/)[0] ?? params.clientName;
   const copy = await catalogCopy(EMAIL_TEMPLATE_KEYS.MEETING_LINK, {
@@ -1298,12 +1300,19 @@ export async function sendConsultationMeetingLinkEmail(params: {
       isWhatsApp={params.isWhatsApp}
     />,
   );
+  const kind = params.kind ?? "link";
+  const idempotencyKey =
+    kind === "reminder"
+      ? `consultation-meeting-reminder:${params.bookingNumber}`
+      : `consultation-meeting-link:${params.bookingNumber}:${params.meetingLink.trim()}`;
   await sendEmail({
     to: params.to,
     subject: copy.subject,
     html,
-    template: "consultation-meeting-link",
-    idempotencyKey: `consultation-meeting-link:${params.to}:${params.meetingLink}`,
+    template: kind === "reminder" ? "consultation-meeting-reminder" : "consultation-meeting-link",
+    idempotencyKey,
+    relatedType: "ConsultationBooking",
+    relatedId: params.bookingNumber,
   });
 }
 

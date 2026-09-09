@@ -4,6 +4,7 @@ import { PaymentStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { consultationGatewayEmail } from "@/lib/payments/payer-email";
 import { initializeTransaction } from "@/lib/payments/monnify";
 
 const bodySchema = z.object({
@@ -45,8 +46,8 @@ export async function POST(req: NextRequest) {
   const appUrl = getPublicAppUrl();
   const redirectUrl = `${appUrl}/api/consultations/payment/monnify/verify?bookingId=${encodeURIComponent(bookingId)}`;
 
-  const customerEmail = session?.user?.email ?? booking.clientEmail;
-  const customerName = session?.user?.name ?? booking.clientName;
+  const customerEmail = consultationGatewayEmail(booking);
+  const customerName = booking.clientName;
 
   const init = await initializeTransaction({
     amountNGN: Math.round(booking.feeNGN),

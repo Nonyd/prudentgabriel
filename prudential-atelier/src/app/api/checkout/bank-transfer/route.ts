@@ -12,6 +12,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { canAcceptRtwPayment } from "@/lib/payments/rtw-totals";
 import { prepareRtwPaymentAttempt } from "@/lib/checkout-reservations";
 import { receiptMediaUrlSchema } from "@/lib/media/stored-url";
+import { rtwGatewayEmail, rtwGatewayName } from "@/lib/payments/payer-email";
 
 const bodySchema = z.object({
   orderId: z.string().min(1),
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
     where: {
       OR: [{ id: orderId }, { paymentRef: orderId }, { orderNumber: orderId }],
     },
+    include: { user: { select: { email: true, name: true } } },
   });
   if (!order) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
@@ -71,8 +73,8 @@ export async function POST(req: NextRequest) {
     data: { paymentReceiptUrl: receiptUrl },
   });
 
-  const clientName = order.guestName ?? session?.user?.name ?? "Client";
-  const clientEmail = order.guestEmail ?? session?.user?.email ?? guestEmail;
+  const clientName = rtwGatewayName(order);
+  const clientEmail = rtwGatewayEmail(order);
   if (clientEmail) {
     void sendBankTransferReceiptReceivedEmail({
       to: clientEmail,

@@ -116,6 +116,13 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     migrated: true,
   },
   {
+    name: "meeting-link-reminders",
+    schedule: "*/15 * * * *",
+    description: "Email the Zoom link about an hour before a virtual consultation",
+    migrated: true,
+    budgetMs: 50_000,
+  },
+  {
     name: "email-outbox",
     schedule: "* * * * *",
     description:

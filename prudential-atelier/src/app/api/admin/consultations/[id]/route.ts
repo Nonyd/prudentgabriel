@@ -13,7 +13,13 @@ import {
   sendConsultationConfirmedEmail,
   sendConsultationRescheduleEmail,
 } from "@/lib/email";
-import { notifyConsultationConfirmed } from "@/lib/customer-notifications";
+import { notifyConsultationConfirmed, notifyMeetingLinkSent } from "@/lib/customer-notifications";
+import {
+  bookingIsVirtual,
+  queueConsultationMeetingLink,
+  shouldQueueMeetingLinkOnSave,
+} from "@/lib/consultation-meeting-link";
+import { getVirtualPlatformLabel } from "@/lib/consultation-types";
 import { destroyStoredMedia } from "@/lib/media/destroy";
 import { executeConsultationCascade, previewConsultationCascade } from "@/lib/consultation-cascade-delete";
 import { ProductCascadeError } from "@/lib/product-cascade-delete";
@@ -31,6 +37,64 @@ const patchSchema = z.object({
   proposedDates: z.array(z.string()).optional(),
   adminMessage: z.string().max(2000).optional(),
 });
+
+async function queueSavedMeetingLink(params: {
+  previousLink: string | null;
+  confirmEmailAlreadyCarriesLink: boolean;
+  row: {
+    id: string;
+    bookingNumber: string;
+    clientEmail: string;
+    clientName: string;
+    status: ConsultationStatus;
+    confirmedDate: Date | null;
+    confirmedTime: string | null;
+    meetingLink: string | null;
+    meetingPlatform: string | null;
+    virtualPlatform: string | null;
+    offeringType: string | null;
+    userId: string | null;
+    offering: { deliveryMode: import("@prisma/client").ConsultationDeliveryMode };
+  };
+}) {
+  const nextLink = params.row.meetingLink;
+  if (
+    !shouldQueueMeetingLinkOnSave({
+      previousLink: params.previousLink,
+      nextLink,
+      status: params.row.status,
+      confirmedDate: params.row.confirmedDate,
+      confirmedTime: params.row.confirmedTime,
+      isVirtual: bookingIsVirtual(params.row),
+      confirmEmailAlreadyCarriesLink: params.confirmEmailAlreadyCarriesLink,
+    })
+  ) {
+    return;
+  }
+  if (!nextLink || !params.row.confirmedDate || !params.row.confirmedTime) return;
+  const platformLabel =
+    getVirtualPlatformLabel(params.row.virtualPlatform) || params.row.meetingPlatform || "Video call";
+  await queueConsultationMeetingLink({
+    to: params.row.clientEmail,
+    clientName: params.row.clientName,
+    bookingNumber: params.row.bookingNumber,
+    platformLabel,
+    confirmedDate: params.row.confirmedDate,
+    confirmedTime: params.row.confirmedTime,
+    meetingLink: nextLink,
+    isWhatsApp: params.row.virtualPlatform === "whatsapp_video",
+  });
+  await prisma.consultationBooking.update({
+    where: { id: params.row.id },
+    data: { meetingLinkSentAt: new Date() },
+  });
+  notifyMeetingLinkSent({
+    userId: params.row.userId,
+    clientEmail: params.row.clientEmail,
+    bookingId: params.row.id,
+    bookingNumber: params.row.bookingNumber,
+  });
+}
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi("consultations");
@@ -87,6 +151,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       where: { id },
       include: { consultant: true, offering: true },
     });
+    if (updated) {
+      await queueSavedMeetingLink({
+        previousLink: booking.meetingLink,
+        confirmEmailAlreadyCarriesLink: false,
+        row: updated,
+      });
+    }
     return NextResponse.json({ booking: updated });
   }
 
@@ -180,6 +251,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       bookingNumber: refreshed.bookingNumber,
     });
   }
+
+  await queueSavedMeetingLink({
+    previousLink: booking.meetingLink,
+    confirmEmailAlreadyCarriesLink:
+      nextStatus === ConsultationStatus.CONFIRMED && Boolean(refreshed.meetingLink),
+    row: refreshed,
+  });
 
   if (nextStatus === ConsultationStatus.RESCHEDULED) {
     await sendConsultationRescheduleEmail({
