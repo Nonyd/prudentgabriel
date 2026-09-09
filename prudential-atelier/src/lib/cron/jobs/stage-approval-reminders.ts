@@ -43,7 +43,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
       break;
     }
     try {
-      const approveUrl = `${appUrl}/account/orders/bespoke/${row.order.id}`;
+      const approveUrl = `${appUrl}/approve/${row.publicToken}`;
       await sendStageApprovalReminderEmail({
         to: row.order.clientEmail,
         clientName: row.order.clientName,

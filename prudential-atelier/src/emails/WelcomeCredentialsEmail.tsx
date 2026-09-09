@@ -31,7 +31,9 @@ export default function WelcomeCredentialsEmail({
         Welcome, {firstName}.
       </Heading>
       <Text style={{ fontFamily: FONT_BODY, fontSize: 15, lineHeight: "24px", color: EMAIL_INK }}>
-        Your account has been created so you can follow your {sourceLabel} with us.
+        Your account has been created so you can follow your {sourceLabel} with us — track the
+        commission, open invoices, and confirm receipt after delivery. Design approval arrives as
+        its own link in a separate email; you do not need this password to approve a sketch.
       </Text>
       <table
         width="100%"

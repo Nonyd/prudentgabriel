@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { BESPOKE_STAFF_ROLES, requireRoles } from "@/lib/api-auth";
 import { actorFromSession, completeOrderStage } from "@/lib/atelier/stage-actions";
-import { stageGateInclude } from "@/lib/atelier/can-complete-stage";
+import { bespokeAdminDetailInclude } from "@/lib/atelier/can-complete-stage";
 
 type Params = { params: Promise<{ orderId: string }> };
 
@@ -38,20 +38,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const updated = await prisma.bespokeOrder.findUnique({
     where: { id: orderId },
-    include: {
-      stageHistory: { orderBy: { completedAt: "desc" } },
-      assignments: {
-        include: { staffProfile: { include: { user: { select: { id: true, name: true, email: true } } } } },
-      },
-      materials: { orderBy: { createdAt: "asc" } },
-      clientProfile: { include: { measurements: true, moodboards: true } },
-      quotation: true,
-      payments: {
-        orderBy: { createdAt: "desc" },
-        include: { confirmedBy: { select: { id: true, name: true, email: true } } },
-      },
-      ...stageGateInclude(),
-    },
+    include: bespokeAdminDetailInclude(),
   });
 
   return NextResponse.json({ item: updated });

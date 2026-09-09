@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BespokeStage } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { BESPOKE_ADMIN_ROLES, requireRoles } from "@/lib/api-auth";
 import { actorFromSession, revertOrderStage } from "@/lib/atelier/stage-actions";
+import { bespokeAdminDetailInclude } from "@/lib/atelier/can-complete-stage";
 
 type Params = { params: Promise<{ orderId: string }> };
 
@@ -38,5 +40,10 @@ export async function POST(req: NextRequest, { params }: Params) {
     );
   }
 
-  return NextResponse.json({ ok: true });
+  const item = await prisma.bespokeOrder.findUnique({
+    where: { id: orderId },
+    include: bespokeAdminDetailInclude(),
+  });
+
+  return NextResponse.json({ ok: true, item });
 }

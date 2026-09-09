@@ -9,6 +9,7 @@ import { formatNGN } from "@/lib/utils";
 import { getPreviousStage, STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { getOrderPaymentSummary, toNumber } from "@/lib/payments/ledger";
 import { getStageRequirement, stageIndex, type StageRequirement } from "@/lib/atelier/stage-requirements";
+import { buildStageChecklistFacts, presentStageChecklist } from "@/lib/atelier/stage-checklist";
 
 export type StageGateFailureCode =
   | "NOTES_REQUIRED"
@@ -256,52 +257,18 @@ export async function canCompleteStage(params: {
 export async function getStageChecklist(orderId: string, stage: BespokeStage) {
   const snapshot = await loadSnapshot(orderId, stage);
   if (!snapshot) return null;
-  const req = snapshot.requirement;
-  const approval = snapshot.latestApprovalStatus;
+  const facts = buildStageChecklistFacts({
+    currentStage: stage,
+    completedStages: snapshot.completedStages,
+    draftNotes: snapshot.notes ?? "",
+    mediaCount: snapshot.mediaCount,
+    latestApprovalStatus: snapshot.latestApprovalStatus,
+    productionUnlockedAt: snapshot.productionUnlockedAt,
+    balance: snapshot.balance,
+  });
   return {
     snapshot,
-    items: [
-      {
-        key: "notes",
-        label: "Notes added",
-        required: req.requiresNotes,
-        met: Boolean(snapshot.notes?.trim()),
-      },
-      {
-        key: "media",
-        label:
-          stage === BespokeStage.DELIVERY
-            ? `${snapshot.mediaCount}/${req.minMediaCount || 1} delivery photo(s) uploaded`
-            : `${snapshot.mediaCount}/${req.minMediaCount || 1} photo(s) uploaded`,
-        required: req.requiresMedia,
-        met: !req.requiresMedia || snapshot.mediaCount >= req.minMediaCount,
-      },
-      {
-        key: "approval",
-        label:
-          approval === StageApprovalStatus.APPROVED
-            ? "Client approval received"
-            : approval === StageApprovalStatus.PENDING
-              ? "Waiting for client approval"
-              : approval === StageApprovalStatus.CHANGES_REQUESTED
-                ? "Client requested changes"
-                : "Client approval received",
-        required: req.requiresClientApproval,
-        met: !req.requiresClientApproval || approval === StageApprovalStatus.APPROVED,
-      },
-      {
-        key: "deposit",
-        label: "Deposit satisfied",
-        required: req.requiresDepositSatisfied,
-        met: !req.requiresDepositSatisfied || Boolean(snapshot.productionUnlockedAt),
-      },
-      {
-        key: "balance",
-        label: snapshot.balance > ZERO_EPS ? `Balance cleared (${formatNGN(snapshot.balance)} outstanding)` : "Balance cleared",
-        required: req.requiresZeroBalance,
-        met: !req.requiresZeroBalance || snapshot.balance <= ZERO_EPS,
-      },
-    ],
+    items: presentStageChecklist(facts),
   };
 }
 
@@ -317,6 +284,23 @@ export function stageGateInclude() {
     stageMedia: { orderBy: { createdAt: "asc" as const } },
     stageDrafts: true,
     stageApprovals: { orderBy: { requestedAt: "desc" as const } },
+  } satisfies Prisma.BespokeOrderInclude;
+}
+
+export function bespokeAdminDetailInclude() {
+  return {
+    stageHistory: { orderBy: { completedAt: "desc" as const } },
+    assignments: {
+      include: { staffProfile: { include: { user: { select: { id: true, name: true, email: true } } } } },
+    },
+    materials: { orderBy: { createdAt: "asc" as const } },
+    clientProfile: { include: { measurements: true, moodboards: true } },
+    quotation: true,
+    payments: {
+      orderBy: { createdAt: "desc" as const },
+      include: { confirmedBy: { select: { id: true, name: true, email: true } } },
+    },
+    ...stageGateInclude(),
   } satisfies Prisma.BespokeOrderInclude;
 }
 

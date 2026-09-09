@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -32,9 +32,15 @@ import type {
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPanel";
-import { STAGE_LABELS, STAGE_ORDER, STAGE_SHORT_LABELS, getPreviousStage, getStageProgress } from "@/lib/bespoke-stages";
+import { STAGE_LABELS, STAGE_ORDER, STAGE_SHORT_LABELS, getStageProgress } from "@/lib/bespoke-stages";
 import { getStageRequirement } from "@/lib/atelier/stage-requirements";
-import { cn, formatDate, formatNGN } from "@/lib/utils";
+import {
+  buildStageChecklistFacts,
+  mergeStageMedia,
+  notesDraftForStage,
+  presentStageChecklist,
+} from "@/lib/atelier/stage-checklist";
+import { cn, formatDate } from "@/lib/utils";
 import { uploadAdminAsset, uploadAdminVideo } from "@/lib/admin-upload-xhr";
 
 type LedgerPayment = Payment & {
@@ -81,7 +87,8 @@ export function BespokeOrderDetailClient({
 }) {
   const router = useRouter();
   const [order, setOrder] = useState(initial);
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(() => notesDraftForStage(initial.stageDrafts, initial.currentStage));
+  const savedNotesRef = useRef(notes);
   const [images, setImages] = useState<string[]>([]);
   const [videos, setVideos] = useState<string[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -103,62 +110,21 @@ export function BespokeOrderDetailClient({
   );
   const req = getStageRequirement(order.currentStage);
   const stageMedia = (order.stageMedia ?? []).filter((m) => m.stage === order.currentStage);
-  const draftNotes =
-    notes.trim() ||
-    (order.stageDrafts ?? []).find((d) => d.stage === order.currentStage)?.notes?.trim() ||
-    "";
+  const draftNotes = notes.trim() || notesDraftForStage(order.stageDrafts, order.currentStage).trim();
   const latestApproval = (order.stageApprovals ?? [])
     .filter((a) => a.stage === order.currentStage && a.status !== "SUPERSEDED")
     .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime())[0];
-  const prevStage = getPreviousStage(order.currentStage);
-  const checklist = [
-    {
-      key: "prev",
-      label: prevStage
-        ? `${STAGE_SHORT_LABELS[prevStage]} complete`
-        : "First stage — no predecessor",
-      required: Boolean(prevStage),
-      met: !prevStage || completedStages.has(prevStage),
-    },
-    { key: "notes", label: "Notes added", required: req.requiresNotes, met: Boolean(draftNotes) },
-    {
-      key: "media",
-      label:
-        order.currentStage === "DELIVERY"
-          ? `${stageMedia.length}/${req.minMediaCount || 1} delivery photo(s) uploaded`
-          : `${stageMedia.length}/${Math.max(req.minMediaCount, 1)} photo(s) uploaded`,
-      required: req.requiresMedia,
-      met: !req.requiresMedia || stageMedia.length >= req.minMediaCount,
-    },
-    {
-      key: "approval",
-      label:
-        latestApproval?.status === "APPROVED"
-          ? "Client approval received"
-          : latestApproval?.status === "PENDING"
-            ? "Waiting for client approval"
-            : latestApproval?.status === "CHANGES_REQUESTED"
-              ? "Client requested changes"
-              : "Client approval received",
-      required: req.requiresClientApproval,
-      met: !req.requiresClientApproval || latestApproval?.status === "APPROVED",
-    },
-    {
-      key: "deposit",
-      label: "Deposit satisfied",
-      required: req.requiresDepositSatisfied,
-      met: !req.requiresDepositSatisfied || Boolean(order.productionUnlockedAt),
-    },
-    {
-      key: "balance",
-      label:
-        order.balance > 0.01
-          ? `Balance cleared (${formatNGN(order.balance)} outstanding)`
-          : "Balance cleared",
-      required: req.requiresZeroBalance,
-      met: !req.requiresZeroBalance || order.balance <= 0.01,
-    },
-  ];
+  const checklist = presentStageChecklist(
+    buildStageChecklistFacts({
+      currentStage: order.currentStage,
+      completedStages,
+      draftNotes,
+      mediaCount: stageMedia.length,
+      latestApprovalStatus: latestApproval?.status,
+      productionUnlockedAt: order.productionUnlockedAt,
+      balance: order.balance,
+    }),
+  );
   const unmet = checklist.filter((c) => c.required && !c.met);
   const canComplete = unmet.length === 0;
   const canRequestApproval =
@@ -168,6 +134,60 @@ export function BespokeOrderDetailClient({
     Boolean(draftNotes) &&
     (!req.requiresMedia || stageMedia.length >= req.minMediaCount);
   const isAdminActor = actorRole === "SUPER_ADMIN" || actorRole === "ADMIN";
+
+  const seedNotesFromOrder = (next: OrderWithRelations) => {
+    const seeded = notesDraftForStage(next.stageDrafts, next.currentStage);
+    setNotes(seeded);
+    savedNotesRef.current = seeded;
+  };
+
+  const persistNotes = useCallback(async (value: string) => {
+    if (value === savedNotesRef.current) return;
+    const res = await fetch(`/api/bespoke/${order.id}/stage-draft`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes: value }),
+    });
+    if (!res.ok) return;
+    savedNotesRef.current = value;
+    setOrder((o) => ({
+      ...o,
+      stageDrafts: [
+        ...(o.stageDrafts ?? []).filter((d) => d.stage !== o.currentStage),
+        ...(value.trim()
+          ? [
+              {
+                id: `draft-${o.currentStage}`,
+                orderId: o.id,
+                stage: o.currentStage,
+                notes: value,
+                updatedById: null,
+                updatedAt: new Date(),
+              } satisfies OrderStageDraft,
+            ]
+          : []),
+      ],
+    }));
+  }, [order.id]);
+
+  useEffect(() => {
+    if (notes === savedNotesRef.current) return;
+    const t = window.setTimeout(() => {
+      void persistNotes(notes);
+    }, 800);
+    return () => window.clearTimeout(t);
+  }, [notes, persistNotes]);
+
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (notes !== savedNotesRef.current) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [notes]);
 
   const handleUpload = async (files: FileList | null, type: "images" | "videos") => {
     if (!files?.length) return;
@@ -182,14 +202,17 @@ export function BespokeOrderDetailClient({
             : await uploadAdminAsset(file, folder),
         );
       }
-      await fetch(`/api/bespoke/${order.id}/stage-media`, {
+      const mediaRes = await fetch(`/api/bespoke/${order.id}/stage-media`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ urls, kind: type === "videos" ? "VIDEO" : "IMAGE" }),
       });
+      if (!mediaRes.ok) throw new Error("Stage media save failed");
+      const mediaData = (await mediaRes.json()) as { items?: OrderStageMedia[] };
+      const persisted = mediaData.items ?? [];
+      setOrder((o) => mergeStageMedia(o, persisted));
       if (type === "images") setImages((prev) => [...prev, ...urls]);
       else setVideos((prev) => [...prev, ...urls]);
-      router.refresh();
     } catch {
       toast.error("Upload failed");
     } finally {
@@ -214,12 +237,11 @@ export function BespokeOrderDetailClient({
       }
       const data = (await res.json()) as { item: OrderWithRelations };
       setOrder((o) => ({ ...o, ...data.item }));
-      setNotes("");
+      seedNotesFromOrder(data.item);
       setImages([]);
       setVideos([]);
       setConfirmOpen(false);
       toast.success("Stage completed — client emailed");
-      router.refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not complete stage");
     } finally {
@@ -239,8 +261,14 @@ export function BespokeOrderDetailClient({
         const err = (await res.json()) as { error?: string; failures?: { message: string }[] };
         throw new Error(err.failures?.map((f) => f.message).join(" · ") || err.error || "Failed");
       }
+      const data = (await res.json()) as { approval?: StageApproval };
+      if (data.approval) {
+        setOrder((o) => ({
+          ...o,
+          stageApprovals: [data.approval!, ...(o.stageApprovals ?? []).filter((a) => a.id !== data.approval!.id)],
+        }));
+      }
       toast.success("Client approval requested");
-      router.refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not request approval");
     } finally {
@@ -261,11 +289,15 @@ export function BespokeOrderDetailClient({
         const err = (await res.json()) as { error?: string; failures?: { message: string }[] };
         throw new Error(err.failures?.map((f) => f.message).join(" · ") || err.error || "Failed");
       }
+      const data = (await res.json()) as { item?: OrderWithRelations };
+      if (data.item) {
+        setOrder((o) => ({ ...o, ...data.item! }));
+        seedNotesFromOrder(data.item);
+      }
       toast.success("Stage reverted");
       setRevertOpen(false);
       setRevertReason("");
       setRevertTarget("");
-      router.refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not revert");
     } finally {
@@ -531,20 +563,22 @@ export function BespokeOrderDetailClient({
                   key={item.key}
                   className={cn(
                     "flex items-start gap-2 font-sans text-xs",
-                    !item.required ? "text-text-light" : item.met ? "text-ink" : "text-[#C45E0A]",
+                    item.tone === "not_required"
+                      ? "text-text-light"
+                      : item.tone === "done"
+                        ? "text-ink"
+                        : "text-[#C45E0A]",
                   )}
                 >
-                  <span aria-hidden>{item.met ? "✓" : item.required ? "○" : "–"}</span>
-                  <span>
-                    {item.label}
-                    {!item.required ? " (optional)" : null}
-                  </span>
+                  <span aria-hidden>{item.mark === "tick" ? "✓" : item.mark === "open" ? "○" : "–"}</span>
+                  <span>{item.displayLabel}</span>
                 </li>
               ))}
             </ul>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              onBlur={() => void persistNotes(notes)}
               placeholder="Stage notes for the client (required)…"
               rows={4}
               className="mt-4 w-full rounded border border-sand px-3 py-2 font-sans text-sm"

@@ -2123,6 +2123,7 @@ model StageApproval {
   respondedAt   DateTime?
   clientComment String?             @db.Text
   reminderSentAt DateTime?
+  publicToken   String              @unique @default(cuid())
 
   @@index([orderId, stage])
   @@index([status, requestedAt])

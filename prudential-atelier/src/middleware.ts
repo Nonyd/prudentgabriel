@@ -121,6 +121,9 @@ export default auth(async function middleware(request) {
     pathname.startsWith("/reset-password") ||
     pathname.startsWith("/track") ||
     pathname.startsWith("/quote") ||
+    pathname.startsWith("/approve") ||
+    pathname.startsWith("/invoice") ||
+    pathname.startsWith("/receipt") ||
     pathname.startsWith("/unsubscribe") ||
     pathname.startsWith("/shop") ||
     pathname.startsWith("/consultation") ||

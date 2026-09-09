@@ -33,5 +33,5 @@ export async function POST(req: NextRequest, { params }: Params) {
     );
   }
 
-  return NextResponse.json({ approvalId: result.approvalId });
+  return NextResponse.json({ approvalId: result.approvalId, approval: result.approval });
 }

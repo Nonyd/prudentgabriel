@@ -305,7 +305,9 @@ export async function revertOrderStage(params: {
   targetStage: BespokeStage;
   reason: string;
   actor: StageActionActor;
-}): Promise<{ ok: true } | { ok: false; status: number; failures: StageGateResult["failures"] }> {
+}): Promise<
+  { ok: true; currentStage: BespokeStage } | { ok: false; status: number; failures: StageGateResult["failures"] }
+> {
   const order = await prisma.bespokeOrder.findUnique({
     where: { id: params.orderId },
     select: { id: true, orderRef: true, currentStage: true, status: true },
@@ -381,7 +383,11 @@ export async function revertOrderStage(params: {
     recordType: "BespokeOrder",
   });
 
-  return { ok: true };
+  return { ok: true, currentStage: params.targetStage };
+}
+
+export function stageApprovalPublicUrl(publicToken: string): string {
+  return `${getPublicAppUrl()}/approve/${publicToken}`;
 }
 
 export async function requestStageApproval(params: {
@@ -390,7 +396,10 @@ export async function requestStageApproval(params: {
   notes?: string | null;
   images?: string[];
   videos?: string[];
-}): Promise<{ ok: true; approvalId: string } | { ok: false; status: number; failures: StageGateResult["failures"] }> {
+}): Promise<
+  | { ok: true; approvalId: string; approval: { id: string; stage: BespokeStage; status: StageApprovalStatus; requestedAt: Date; publicToken: string } }
+  | { ok: false; status: number; failures: StageGateResult["failures"] }
+> {
   const order = await prisma.bespokeOrder.findUnique({
     where: { id: params.orderId },
     select: {
@@ -466,7 +475,7 @@ export async function requestStageApproval(params: {
     where: { orderId: order.id, stage: order.currentStage, status: StageApprovalStatus.PENDING },
   });
   if (existingPending) {
-    return { ok: true, approvalId: existingPending.id };
+    return { ok: true, approvalId: existingPending.id, approval: existingPending };
   }
 
   const approval = await prisma.stageApproval.create({
@@ -478,7 +487,7 @@ export async function requestStageApproval(params: {
     },
   });
 
-  const approveUrl = `${getPublicAppUrl()}/account/orders/bespoke/${order.id}`;
+  const approveUrl = stageApprovalPublicUrl(approval.publicToken);
   const media = await prisma.orderStageMedia.findMany({
     where: { orderId: order.id, stage: order.currentStage },
     orderBy: { createdAt: "asc" },
@@ -527,50 +536,33 @@ export async function requestStageApproval(params: {
     recordType: "BespokeOrder",
   });
 
-  return { ok: true, approvalId: approval.id };
+  return { ok: true, approvalId: approval.id, approval };
 }
 
-export async function respondToStageApproval(params: {
-  orderId: string;
-  approvalId: string;
-  clientUserId: string;
-  clientEmail: string;
+async function applyStageApprovalDecision(params: {
+  approval: {
+    id: string;
+    stage: BespokeStage;
+    status: StageApprovalStatus;
+    order: {
+      id: string;
+      orderRef: string;
+      clientEmail: string;
+      clientProfileId: string | null;
+      currentStage: BespokeStage;
+      assignments: {
+        staffProfile: {
+          userId: string;
+          user: { email: string | null; name: string | null };
+        };
+      }[];
+    };
+  };
   decision: "APPROVED" | "CHANGES_REQUESTED";
   comment?: string | null;
 }): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
-  const approval = await prisma.stageApproval.findFirst({
-    where: { id: params.approvalId, orderId: params.orderId },
-    include: {
-      order: {
-        select: {
-          id: true,
-          orderRef: true,
-          clientEmail: true,
-          clientProfileId: true,
-          currentStage: true,
-          assignments: {
-            where: { completedAt: null },
-            include: { staffProfile: { select: { userId: true, user: { select: { email: true, name: true } } } } },
-          },
-        },
-      },
-    },
-  });
-  if (!approval) return { ok: false, status: 404, error: "Approval not found." };
-  if (approval.status !== StageApprovalStatus.PENDING) {
+  if (params.approval.status !== StageApprovalStatus.PENDING) {
     return { ok: false, status: 409, error: "This approval has already been responded to." };
-  }
-
-  const emailMatch =
-    approval.order.clientEmail.trim().toLowerCase() === params.clientEmail.trim().toLowerCase();
-  const profile = approval.order.clientProfileId
-    ? await prisma.clientProfile.findUnique({
-        where: { id: approval.order.clientProfileId },
-        select: { userId: true },
-      })
-    : null;
-  if (!emailMatch && profile?.userId !== params.clientUserId) {
-    return { ok: false, status: 403, error: "Forbidden." };
   }
 
   const comment = params.comment?.trim() || null;
@@ -579,7 +571,7 @@ export async function respondToStageApproval(params: {
   }
 
   await prisma.stageApproval.update({
-    where: { id: approval.id },
+    where: { id: params.approval.id },
     data: {
       status:
         params.decision === "APPROVED"
@@ -590,6 +582,7 @@ export async function respondToStageApproval(params: {
     },
   });
 
+  const approval = params.approval;
   const stageLabel = STAGE_SHORT_LABELS[approval.stage];
 
   if (params.decision === "CHANGES_REQUESTED") {
@@ -637,6 +630,69 @@ export async function respondToStageApproval(params: {
   }
 
   return { ok: true };
+}
+
+const STAGE_APPROVAL_ORDER_SELECT = {
+  id: true,
+  orderRef: true,
+  clientEmail: true,
+  clientProfileId: true,
+  currentStage: true,
+  assignments: {
+    where: { completedAt: null },
+    include: { staffProfile: { select: { userId: true, user: { select: { email: true, name: true } } } } },
+  },
+} as const;
+
+export async function respondToStageApproval(params: {
+  orderId: string;
+  approvalId: string;
+  clientUserId: string;
+  clientEmail: string;
+  decision: "APPROVED" | "CHANGES_REQUESTED";
+  comment?: string | null;
+}): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  const approval = await prisma.stageApproval.findFirst({
+    where: { id: params.approvalId, orderId: params.orderId },
+    include: { order: { select: STAGE_APPROVAL_ORDER_SELECT } },
+  });
+  if (!approval) return { ok: false, status: 404, error: "Approval not found." };
+
+  const emailMatch =
+    approval.order.clientEmail.trim().toLowerCase() === params.clientEmail.trim().toLowerCase();
+  const profile = approval.order.clientProfileId
+    ? await prisma.clientProfile.findUnique({
+        where: { id: approval.order.clientProfileId },
+        select: { userId: true },
+      })
+    : null;
+  if (!emailMatch && profile?.userId !== params.clientUserId) {
+    return { ok: false, status: 403, error: "Forbidden." };
+  }
+
+  return applyStageApprovalDecision({
+    approval,
+    decision: params.decision,
+    comment: params.comment,
+  });
+}
+
+export async function respondToStageApprovalByToken(params: {
+  publicToken: string;
+  decision: "APPROVED" | "CHANGES_REQUESTED";
+  comment?: string | null;
+}): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  const approval = await prisma.stageApproval.findUnique({
+    where: { publicToken: params.publicToken },
+    include: { order: { select: STAGE_APPROVAL_ORDER_SELECT } },
+  });
+  if (!approval) return { ok: false, status: 404, error: "Approval not found." };
+
+  return applyStageApprovalDecision({
+    approval,
+    decision: params.decision,
+    comment: params.comment,
+  });
 }
 
 export function actorFromSession(session: {

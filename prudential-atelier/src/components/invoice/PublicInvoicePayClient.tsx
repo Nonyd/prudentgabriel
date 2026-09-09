@@ -141,8 +141,9 @@ export function PublicInvoicePayClient({
       ) : null}
       {pay.createsAccount ? (
         <p className="mt-2 font-body text-sm text-[#6B6B68]">
-          Paying creates a client account so you can approve sketches later. We email a temporary password to this
-          invoice address.
+          Paying creates a client account so you can track this commission and confirm receipt later.
+          Design approval is sent as its own email link — no login required. We email a temporary
+          password to this invoice address.
         </p>
       ) : null}
 
