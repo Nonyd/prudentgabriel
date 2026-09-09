@@ -26,5 +26,6 @@ export function pickAboutLooks(candidates: AboutLook[], limit = 3): AboutLook[] 
 }
 
 export function houseCtaLabel(raw: string): string {
-  return raw.replace(/\s*→\s*$/u, "").trim();
+  const trimmed = raw.trim();
+  return trimmed.endsWith("→") ? trimmed.slice(0, -1).trimEnd() : trimmed;
 }
