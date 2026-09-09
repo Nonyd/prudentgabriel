@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { HeroCarouselItem } from "@/lib/hero-carousel";
+import { heroPlaybackUrl, isIosDevice } from "@/lib/hero-playback";
 import { optimizeImageUrl } from "@/lib/utils";
 
 interface HeroCarouselProps {
@@ -61,26 +62,6 @@ function CarouselArrowRight() {
       />
     </svg>
   );
-}
-
-/** iOS plays MP4/H.264. Inject a Cloudinary fetch format when the CMS stored a MOV/WebM. */
-function heroPlaybackUrl(url: string): string {
-  let out = url;
-  if (out.includes("/video/upload/") && !/\/upload\/[^/]*f_(mp4|auto)/.test(out)) {
-    out = out.replace("/video/upload/", "/video/upload/f_mp4,q_auto,vc_h264/");
-  }
-  // Bust the year-long immutable cache of broken 206 bodies on iPhone.
-  if (out.startsWith("/media/") && !out.includes("pgv=")) {
-    out += out.includes("?") ? "&pgv=3" : "?pgv=3";
-  }
-  return out;
-}
-
-function isIosDevice(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent;
-  if (/iPad|iPhone|iPod/i.test(ua)) return true;
-  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
 }
 
 function armInlineMuted(video: HTMLVideoElement) {

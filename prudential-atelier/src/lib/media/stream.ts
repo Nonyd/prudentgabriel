@@ -91,18 +91,48 @@ export async function streamMediaKey(
   if (!abs) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  let size: number;
+
+  let serveAbs = abs;
+  let mime = mimeForExt(extname(key));
+  let st: Awaited<ReturnType<typeof stat>> | null = null;
   try {
-    const st = await stat(abs);
-    if (!st.isFile()) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-    size = st.size;
+    st = await stat(abs);
+    if (!st.isFile()) st = null;
   } catch {
+    st = null;
+  }
+  if (!st && key.toLowerCase().endsWith(".mp4")) {
+    const webmAbs = getMediaStore().absolutePath(`${key.slice(0, -4)}.webm`);
+    if (webmAbs) {
+      const { ensureMp4FromWebm } = await import("@/lib/transcode-webm-mp4");
+      const made = await ensureMp4FromWebm(webmAbs, abs);
+      if (made) {
+        try {
+          st = await stat(abs);
+          if (!st.isFile()) st = null;
+        } catch {
+          st = null;
+        }
+      }
+      if (!st) {
+        try {
+          const webmSt = await stat(webmAbs);
+          if (webmSt.isFile()) {
+            serveAbs = webmAbs;
+            mime = "video/webm";
+            st = webmSt;
+          }
+        } catch {
+          st = null;
+        }
+      }
+    }
+  }
+  if (!st) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+  const size = st.size;
 
-  const mime = mimeForExt(extname(key));
   const headers = new Headers();
   headers.set("Content-Type", mime);
   headers.set("Accept-Ranges", "bytes");
@@ -131,7 +161,7 @@ export async function streamMediaKey(
     return new NextResponse(null, { status, headers });
   }
 
-  const body = await readByteRange(abs, start, length);
+  const body = await readByteRange(serveAbs, start, length);
   headers.set("Content-Length", String(body.length));
   return new NextResponse(new Uint8Array(body), { status, headers });
 }

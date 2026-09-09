@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { CATALOG_PAGE_SIZE, RTW_EXCLUDE_CATEGORY_QUERY, SHOP_ACCESSORIES, SHOP_LISTING } from "@/lib/rtw-aisle";
 import { rtwHeroCopy, rtwHeroLooks, rtwHeroSideLooks } from "@/lib/rtw-hero";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
+import { warmHeroWebmMp4 } from "@/lib/transcode-webm-mp4";
 
 export const revalidate = 300;
 
@@ -112,6 +113,11 @@ export default async function RTWPage({
     fallback: heroLooks,
   });
 
+  const heroItems = resolveHeroCarouselItems(carouselRaw);
+  for (const item of heroItems) {
+    if (item.type === "video") warmHeroWebmMp4(item.url);
+  }
+
   return (
     <RTWPageClient
       initialProducts={products}
@@ -120,7 +126,7 @@ export default async function RTWPage({
       totalPages={totalPages}
       hasNext={hasNext}
       collections={collections}
-      heroItems={resolveHeroCarouselItems(carouselRaw)}
+      heroItems={heroItems}
       heroLooks={heroLooks}
       heroSideLooks={heroSideLooks}
       heroHeadline={copy.headline}

@@ -4,6 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { Film } from "lucide-react";
 import toast from "react-hot-toast";
 import { uploadAdminVideo } from "@/lib/admin-upload-xhr";
+import {
+  HERO_VIDEO_SOURCE_TOO_LARGE_MESSAGE,
+  HERO_VIDEO_SOURCE_TYPE_MESSAGE,
+  heroVideoSourceTooLarge,
+  heroVideoSourceTypeOk,
+} from "@/lib/hero-video-limits";
 import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 
 type AdminVideoUrlFieldProps = {
@@ -13,9 +19,14 @@ type AdminVideoUrlFieldProps = {
   folder: string;
 };
 
+function isRawWebmUrl(url: string): boolean {
+  return /\.webm(\?|#|$)/i.test(url);
+}
+
 export function AdminVideoUrlField({ label, value, onChange, folder }: AdminVideoUrlFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [progress, setProgress] = useState<number | null>(null);
+  const [progressLabel, setProgressLabel] = useState("Uploading");
   const [broken, setBroken] = useState(false);
   const url = value.trim();
   const canPreview = url.length > 0;
@@ -30,10 +41,27 @@ export function AdminVideoUrlField({ label, value, onChange, folder }: AdminVide
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+    if (heroVideoSourceTooLarge(file.size)) {
+      toast.error(HERO_VIDEO_SOURCE_TOO_LARGE_MESSAGE);
+      return;
+    }
+    if (!heroVideoSourceTypeOk(file.type, file.name)) {
+      toast.error(HERO_VIDEO_SOURCE_TYPE_MESSAGE);
+      return;
+    }
     setProgress(0);
+    setProgressLabel("Reading clip");
     setBroken(false);
     try {
-      const uploaded = await uploadAdminVideo(file, folder, (p) => setProgress(p));
+      const { compressHeroVideo } = await import("@/lib/compress-hero-video");
+      const compressed = await compressHeroVideo(file, (percent, nextLabel) => {
+        setProgressLabel(nextLabel);
+        setProgress(Math.min(60, Math.round(percent * 0.6)));
+      });
+      setProgressLabel("Uploading");
+      const uploaded = await uploadAdminVideo(compressed, folder, (p) => {
+        setProgress(60 + Math.round(p * 0.4));
+      });
       onChange(uploaded);
       toast.success("Video uploaded — URL filled in");
     } catch (err) {
@@ -88,13 +116,19 @@ export function AdminVideoUrlField({ label, value, onChange, folder }: AdminVide
               onClick={pickFile}
               className="shrink-0 border border-[#37392d] bg-[#37392d] px-3 py-2 font-body text-[11px] font-medium uppercase tracking-wide text-white disabled:opacity-50"
             >
-              {progress !== null ? "Uploading…" : "Upload"}
+              {progress !== null ? "Working…" : "Upload"}
             </button>
           </div>
-          <UploadProgressBar value={progress} />
-          <p className="font-body text-[10px] text-[#A8A8A4]">
-            MP4, WebM, or MOV · max 100MB · uploads directly to Cloudinary
-          </p>
+          <UploadProgressBar value={progress} label={progressLabel} />
+          {isRawWebmUrl(url) ? (
+            <p className="font-body text-[10px] text-[#8A5A32]">
+              This WebM plays as uploaded and can stutter. Re-upload it so it compresses to H.264 MP4.
+            </p>
+          ) : (
+            <p className="font-body text-[10px] text-[#A8A8A4]">
+              MP4, WebM, or MOV · up to 200MB · compressed here to a muted H.264 MP4 so the hero stays smooth
+            </p>
+          )}
         </div>
       </div>
     </div>

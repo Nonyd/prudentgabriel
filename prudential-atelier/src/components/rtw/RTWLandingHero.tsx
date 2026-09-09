@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { HeroCarouselItem } from "@/lib/hero-carousel";
 import { shouldAutoplayReel, shouldPrefetchReelVideo } from "@/lib/collection-reel-playback";
 import { RTW_GRID_ID, rtwHeroPlaybackUrl, type RTWHeroLook } from "@/lib/rtw-hero";
+import { isIosDevice } from "@/lib/hero-playback";
 import { cn, optimizeImageUrl } from "@/lib/utils";
 
 const IMAGE_ADVANCE_MS = 4500;
@@ -29,11 +30,17 @@ function armInlineMuted(video: HTMLVideoElement) {
 function HeroSlide({
   item,
   active,
+  inView,
+  nearView,
+  pageVisible,
   priority,
   sizes,
 }: {
   item: HeroCarouselItem;
   active: boolean;
+  inView: boolean;
+  nearView: boolean;
+  pageVisible: boolean;
   priority: boolean;
   sizes: string;
 }) {
@@ -42,14 +49,16 @@ function HeroSlide({
   const [saveData, setSaveData] = useState(false);
   const [tappedToPlay, setTappedToPlay] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const [needsTap, setNeedsTap] = useState(false);
+  const ios = isIosDevice();
 
   const prefetch = shouldPrefetchReelVideo({
-    withinOneViewport: active,
+    withinOneViewport: active && nearView,
     saveData,
     reducedMotion,
   });
   const wantAutoplay = shouldAutoplayReel({
-    inView: active,
+    inView: active && inView && pageVisible,
     saveData,
     reducedMotion,
     tappedToPlay,
@@ -69,14 +78,17 @@ function HeroSlide({
     if (!video || item.type !== "video") return;
     armInlineMuted(video);
     if (!prefetch || !wantAutoplay) {
-      video.pause();
+      if (!ios) video.pause();
       return;
     }
-    void video.play().catch(() => undefined);
+    // iPhone Safari treats a scripted play() as a failed user-gesture, then will
+    // not autoplay that same element. Leave muted autoplay to the attributes.
+    if (ios) return;
+    void video.play().catch(() => setNeedsTap(true));
     return () => {
-      video.pause();
+      if (!ios) video.pause();
     };
-  }, [prefetch, wantAutoplay, item.type, item.url]);
+  }, [prefetch, wantAutoplay, item.type, item.url, ios]);
 
   const poster = item.poster?.trim() || undefined;
 
@@ -103,18 +115,32 @@ function HeroSlide({
             muted
             playsInline
             loop
+            autoPlay={wantAutoplay}
             preload="metadata"
+            disableRemotePlayback
             disablePictureInPicture
-            onPlaying={() => setVideoReady(true)}
-            className="absolute inset-0 h-full w-full object-cover"
-            style={{ opacity: videoReady ? 1 : 0 }}
+            onPlaying={() => {
+              setVideoReady(true);
+              setNeedsTap(false);
+            }}
+            onError={() => setNeedsTap(true)}
+            className="absolute inset-0 h-full w-full object-cover transform-gpu"
+            style={{ opacity: videoReady || !poster ? 1 : 0 }}
             {...{ "webkit-playsinline": "true" }}
           />
         ) : null}
-        {(reducedMotion || saveData) && !tappedToPlay ? (
+        {(needsTap || ((reducedMotion || saveData) && !tappedToPlay)) ? (
           <button
             type="button"
-            onClick={() => setTappedToPlay(true)}
+            onClick={() => {
+              setTappedToPlay(true);
+              setNeedsTap(false);
+              const video = videoRef.current;
+              if (video) {
+                armInlineMuted(video);
+                void video.play().catch(() => setNeedsTap(true));
+              }
+            }}
             aria-label="Play video"
             className="absolute inset-0 z-[1]"
           />
@@ -171,11 +197,42 @@ function FeaturedFrame({
   index: number;
   onIndex: (n: number) => void;
 }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(true);
+  const [nearView, setNearView] = useState(true);
+  const [pageVisible, setPageVisible] = useState(true);
   const featuredLook = looks[0];
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const near = new IntersectionObserver(
+      (entries) => setNearView(entries.some((e) => e.isIntersecting)),
+      { rootMargin: "50% 0px", threshold: 0 },
+    );
+    const view = new IntersectionObserver(
+      (entries) => setInView(entries.some((e) => e.isIntersecting && e.intersectionRatio >= 0.2)),
+      { threshold: [0, 0.2, 0.5] },
+    );
+    near.observe(el);
+    view.observe(el);
+    return () => {
+      near.disconnect();
+      view.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    const sync = () => setPageVisible(document.visibilityState === "visible");
+    sync();
+    document.addEventListener("visibilitychange", sync);
+    return () => document.removeEventListener("visibilitychange", sync);
+  }, []);
+
   if (items.length === 0 && !featuredLook) return null;
 
   return (
-    <div className="absolute inset-0 overflow-hidden rounded-none lg:rounded-[26px]">
+    <div ref={rootRef} className="absolute inset-0 overflow-hidden rounded-none lg:rounded-[26px]">
       {items.length > 0
         ? items.map((item, i) => (
             <div
@@ -184,7 +241,15 @@ function FeaturedFrame({
               style={{ opacity: i === index ? 1 : 0 }}
               aria-hidden={i !== index}
             >
-              <HeroSlide item={item} active={i === index} priority={i === 0} sizes={FEATURED_SIZES} />
+              <HeroSlide
+                item={item}
+                active={i === index}
+                inView={inView}
+                nearView={nearView}
+                pageVisible={pageVisible}
+                priority={i === 0}
+                sizes={FEATURED_SIZES}
+              />
             </div>
           ))
         : featuredLook

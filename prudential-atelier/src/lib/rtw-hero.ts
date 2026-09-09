@@ -74,14 +74,4 @@ export function rtwHeroSideLooks(opts: {
   return [top, bottom].filter((look): look is RTWHeroLook => Boolean(look));
 }
 
-/** iOS plays MP4/H.264. Same rewrite the homepage carousel uses. */
-export function rtwHeroPlaybackUrl(url: string): string {
-  let out = url;
-  if (out.includes("/video/upload/") && !/\/upload\/[^/]*f_(mp4|auto)/.test(out)) {
-    out = out.replace("/video/upload/", "/video/upload/f_mp4,q_auto,vc_h264/");
-  }
-  if (out.startsWith("/media/") && !out.includes("pgv=")) {
-    out += out.includes("?") ? "&pgv=3" : "?pgv=3";
-  }
-  return out;
-}
+export { heroPlaybackUrl as rtwHeroPlaybackUrl } from "@/lib/hero-playback";

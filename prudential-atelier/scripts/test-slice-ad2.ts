@@ -49,10 +49,14 @@ function run() {
   assert(hero.includes("<HeroCarousel items={carouselItems} />"), "hero mounts the carousel");
   assert(!hero.includes("initial={{ y: 28 }}"), "hero carousel is not translated on mount (iOS blocks that autoplay)");
   const carousel = src("src/components/sections/HeroCarousel.tsx");
+  const playback = src("src/lib/hero-playback.ts");
   assert(carousel.includes("webkit-playsinline"), "hero video sets webkit-playsinline for iPhone");
   assert(carousel.includes("Play video"), "hero offers tap-to-play when autoplay is blocked");
   assert(carousel.includes("if (!isCenter)"), "only the center slide mounts a <video>");
-  assert(carousel.includes("pgv="), "hero local MP4s cache-bust the poisoned iPhone 206");
+  assert(carousel.includes("heroPlaybackUrl"), "homepage carousel uses the shared hero playback rewrite");
+  assert(playback.includes("pgv="), "hero local MP4s cache-bust the poisoned iPhone 206");
+  assert(playback.includes("w_1080,c_limit"), "Cloudinary hero video is width-capped");
+  assert(playback.includes(".webm") && playback.includes(".mp4"), "local WebM is rewritten to MP4 for iPhone");
   assert(carousel.includes("const [isMobile, setIsMobile] = useState(true)"), "carousel first paint is mobile so iPhone never gets CSS 3D");
   assert(!hero.includes("className=\"eyebrow"), "hero dropped the tracked eyebrow");
   assert(!hero.includes("bg-hero-bg"), "hero is not a choc slab");

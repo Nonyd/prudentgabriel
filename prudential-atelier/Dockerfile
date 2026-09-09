@@ -6,7 +6,7 @@
 # Runtime secrets (DATABASE_URL, AUTH_SECRET, payment private keys) stay in compose env files.
 
 FROM node:20-bookworm-slim AS base
-RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates gosu \
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates gosu ffmpeg \
   && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@10.0.0 --activate
 WORKDIR /app

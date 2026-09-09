@@ -104,6 +104,9 @@ function run() {
 
   const announce = src("src/components/layout/AnnouncementBar.tsx");
   assert(announce.includes("text-charcoal"), "announcement is readable on the field");
+  assert(announce.includes("glass-1"), "announcement sits in the chrome family");
+  assert(announce.includes("glass-1-solid"), "announcement has a solid cream ground over dark heroes");
+  assert(announce.includes("glass-pill"), "announcement uses the same pill as the nav");
   assert(!announce.includes("--ivory-deep"), "faint ivory-on-field announcement is gone");
 
   const pkg = src("package.json");

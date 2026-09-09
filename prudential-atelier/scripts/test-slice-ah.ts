@@ -6,7 +6,14 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { rtwHeroCopy, rtwHeroLooks, rtwHeroSideLooks, RTW_GRID_ID, RTW_HERO_HEADLINE, RTW_HERO_SUBLINE } from "../src/lib/rtw-hero";
+import { rtwHeroCopy, rtwHeroLooks, rtwHeroSideLooks, rtwHeroPlaybackUrl, RTW_GRID_ID, RTW_HERO_HEADLINE, RTW_HERO_SUBLINE } from "../src/lib/rtw-hero";
+import {
+  heroVideoNeedsCompress,
+  heroVideoOutputSize,
+  heroVideoTargetBitrate,
+  MAX_HERO_VIDEO_BYTES,
+  MAX_HERO_VIDEO_SECONDS,
+} from "../src/lib/hero-video-limits";
 import { HOMEPAGE_BESTSELLERS_ADMIN_NOTE } from "../src/lib/homepage-bestsellers";
 import { parseHeroCarouselItems } from "../src/lib/hero-carousel";
 
@@ -54,6 +61,43 @@ function runLooks() {
   const mixed = rtwHeroSideLooks({ top: "/media/cms-top.jpg", fallback: looks });
   assert(mixed[0]?.url === "/media/cms-top.jpg", "set CMS image wins its slot");
   assert(mixed[1]?.url === "/media/d.jpg", "empty CMS slot still uses the catalogue");
+}
+
+function runPlaybackUrl() {
+  const raw = rtwHeroPlaybackUrl("https://res.cloudinary.com/demo/video/upload/v1/clip.webm");
+  assert(raw.includes("w_1080,c_limit,f_mp4,q_auto:eco,vc_h264"), "bare Cloudinary video is capped and remuxed to H.264");
+
+  const already = rtwHeroPlaybackUrl(
+    "https://res.cloudinary.com/demo/video/upload/f_mp4,q_auto,vc_h264/v1/clip.mp4",
+  );
+  assert(already.includes("w_1080,c_limit,f_mp4,q_auto,vc_h264"), "existing H.264 transform still gets a width cap");
+  assert(!already.includes("w_1080,c_limit,w_1080"), "width cap is not doubled");
+
+  const sized = rtwHeroPlaybackUrl("https://res.cloudinary.com/demo/video/upload/w_720,f_mp4/v1/clip.mp4");
+  assert(sized.includes("/upload/w_720,f_mp4/"), "an explicit width is left alone");
+
+  const local = rtwHeroPlaybackUrl("/media/public/hero.webm");
+  assert(local.includes("/media/public/hero.mp4"), "iPhone cannot play local WebM; playback is H.264");
+  assert(local.includes("pgv=4"), "local media still cache-busts");
+}
+
+function runHeroVideoLimits() {
+  assert(heroVideoNeedsCompress({ sizeBytes: 1_000_000, mime: "video/webm", width: 1080, height: 1920 }), "WebM is always remuxed");
+  assert(
+    heroVideoNeedsCompress({ sizeBytes: MAX_HERO_VIDEO_BYTES + 1, mime: "video/mp4", width: 1080, height: 1920 }),
+    "an oversized MP4 is compressed",
+  );
+  assert(
+    !heroVideoNeedsCompress({ sizeBytes: 4_000_000, mime: "video/mp4", width: 1080, height: 1080 }),
+    "a small 1080p MP4 is stored as-is",
+  );
+  assert(heroVideoOutputSize(2160, 3840).width === 1080 && heroVideoOutputSize(2160, 3840).height === 1920, "4K portrait scales to 1080 on the long edge");
+  assert(heroVideoOutputSize(1920, 1080).width === 1080 && heroVideoOutputSize(1920, 1080).height === 608, "4K landscape scales without upscaling");
+  assert(heroVideoOutputSize(720, 1280).width === 720 && heroVideoOutputSize(720, 1280).height === 1280, "smaller clips are not upscaled");
+  assert(
+    heroVideoTargetBitrate(MAX_HERO_VIDEO_SECONDS) * MAX_HERO_VIDEO_SECONDS < MAX_HERO_VIDEO_BYTES * 8,
+    "90-second muted target fits under the stored cap",
+  );
 }
 
 function runCarouselParse() {
@@ -106,8 +150,14 @@ function runSource() {
   assert(hero.includes("sideLooks"), "right-column tiles take CMS looks");
   assert(!hero.includes("!hasCampaign && looks"), "campaign media does not replace the look wall");
   assert(hero.includes("preload=\"metadata\""), "RTW hero video is poster-first, not preload auto");
+  assert(hero.includes("autoPlay"), "iPhone muted autoplay is an attribute, not a scripted play()");
+  assert(hero.includes("isIosDevice"), "RTW hero does not script play() on iPhone");
+  assert(hero.includes("IntersectionObserver"), "hero video pauses when the centre cell leaves the viewport");
+  assert(hero.includes("visibilitychange"), "hero video pauses when the tab is hidden");
   assert(hero.includes(`#${RTW_GRID_ID}`) || hero.includes("RTW_GRID_ID"), "CTA scrolls to the grid");
   assert(hero.includes("shouldPrefetchReelVideo"), "portrait video follows AE prefetch");
+  assert(src("src/lib/media/stream.ts").includes("ensureMp4FromWebm"), "local WebM is transcoded to MP4 when iPhone asks for the sibling");
+  assert(src("src/components/admin/AdminVideoUrlField.tsx").includes("compressHeroVideo"), "CMS hero uploads are compressed to H.264");
   assert(client.includes("heroSideLooks"), "look wall sides come from the page");
   assert(!client.includes("rtwHeroLooks"), "client does not pick catalogue looks itself");
   assert(!hero.includes("unsplash"), "RTW hero does not fall back to Unsplash");
@@ -145,6 +195,8 @@ function runSource() {
 function run() {
   runCopy();
   runLooks();
+  runPlaybackUrl();
+  runHeroVideoLimits();
   runCarouselParse();
   runSource();
   console.log("slice-ah: all checks passed");

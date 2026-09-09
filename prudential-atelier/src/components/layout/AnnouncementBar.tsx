@@ -40,7 +40,7 @@ export function AnnouncementBar({
   const line = readableAnnouncement(list[index % list.length] ?? "");
 
   return (
-    <div className="px-4 py-1.5 text-center">
+    <div className="glass-1 glass-pill mb-1.5 !bg-[var(--glass-1-solid)] px-4 py-1.5 text-center">
       <p className="font-body text-[11px] font-normal text-charcoal">{line}</p>
     </div>
   );

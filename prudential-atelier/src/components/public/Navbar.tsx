@@ -288,11 +288,11 @@ export function Navbar({
   return (
     <>
       <header className="storefront-nav">
-        {showAnnouncement ? (
-          <AnnouncementBar messages={announcementMessages} intervalMs={announcementIntervalMs} />
-        ) : null}
-
         <div className="storefront-nav-inner">
+          {showAnnouncement ? (
+            <AnnouncementBar messages={announcementMessages} intervalMs={announcementIntervalMs} />
+          ) : null}
+
           <div className="glass-1 glass-pill storefront-nav-pill">
             <div className="flex min-w-0 items-center gap-2 lg:hidden">
               <button

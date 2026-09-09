@@ -107,7 +107,7 @@
 }
 
 [data-announcement="on"] {
-  --storefront-chrome-offset: 5.5rem;
+  --storefront-chrome-offset: 7rem;
 }
 
 [data-theme="dark"] {
