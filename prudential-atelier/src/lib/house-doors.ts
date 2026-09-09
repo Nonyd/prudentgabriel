@@ -100,7 +100,8 @@ async function firstProductShot(where: {
       },
     },
   });
-  const image = row?.images[0];
+  if (!row) return null;
+  const image = row.images[0];
   if (!image?.url?.trim()) return null;
   return { url: image.url, alt: image.alt?.trim() || row.name };
 }
