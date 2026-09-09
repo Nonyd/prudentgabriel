@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { galleryPlaybackUrl, isGalleryVideoUrl } from "@/lib/gallery-media";
 
 interface LightboxImage {
   id: string;
@@ -110,16 +111,34 @@ export function GalleryLightbox({ images, initialIndex, isOpen, onClose }: Light
           </button>
 
           <AnimatePresence mode="wait" initial={false}>
-            <motion.img
-              key={current.id}
-              src={current.url}
-              alt={current.alt ?? "Gallery image"}
-              className="max-h-[85vh] max-w-[85vw] object-contain"
-              initial={{ opacity: 0, x: direction > 0 ? 30 : -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: direction > 0 ? -30 : 30 }}
-              transition={{ duration: 0.25, ease: "easeInOut" }}
-            />
+            {isGalleryVideoUrl(current.url) ? (
+              <motion.video
+                key={current.id}
+                src={galleryPlaybackUrl(current.url)}
+                muted
+                loop
+                playsInline
+                autoPlay
+                controls
+                className="max-h-[85vh] max-w-[85vw] object-contain"
+                initial={{ opacity: 0, x: direction > 0 ? 30 : -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: direction > 0 ? -30 : 30 }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+                {...{ "webkit-playsinline": "true" }}
+              />
+            ) : (
+              <motion.img
+                key={current.id}
+                src={current.url}
+                alt={current.alt ?? "Gallery image"}
+                className="max-h-[85vh] max-w-[85vw] object-contain"
+                initial={{ opacity: 0, x: direction > 0 ? 30 : -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: direction > 0 ? -30 : 30 }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+              />
+            )}
           </AnimatePresence>
 
           <button
@@ -150,7 +169,18 @@ export function GalleryLightbox({ images, initialIndex, isOpen, onClose }: Light
                 }}
                 aria-label={`View image ${thumbIndex + 1}`}
               >
-                <img src={img.url} alt={img.alt ?? `Thumbnail ${thumbIndex + 1}`} className="h-full w-full object-cover" />
+                {isGalleryVideoUrl(img.url) ? (
+                  <video
+                    src={galleryPlaybackUrl(img.url)}
+                    muted
+                    playsInline
+                    preload="metadata"
+                    className="h-full w-full object-cover"
+                    aria-hidden
+                  />
+                ) : (
+                  <img src={img.url} alt={img.alt ?? `Thumbnail ${thumbIndex + 1}`} className="h-full w-full object-cover" />
+                )}
               </button>
             ))}
           </div>

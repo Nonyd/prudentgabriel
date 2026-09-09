@@ -3,12 +3,13 @@ import { GalleryCategory } from "@prisma/client";
 import { requireAdminApi, CMS_ADMIN_PERMISSIONS } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { getMediaStore } from "@/lib/media";
-import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
+import { mimeFromMagicBytes, mimeFromVideoMagicBytes } from "@/lib/image-upload-mime";
+import { MAX_COLLECTION_REEL_BYTES } from "@/lib/collection-reel-limits";
 import { revalidateGallery } from "@/lib/revalidate";
 import { logServerError } from "@/lib/logger";
 
 const PAGE_DEFAULT = 30;
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 function parseCategory(v: string | null): GalleryCategory | null {
   const u = v?.toUpperCase();
@@ -70,14 +71,29 @@ export async function POST(req: NextRequest) {
   const alt = typeof form.get("alt") === "string" ? (form.get("alt") as string).trim() || null : null;
   const caption = typeof form.get("caption") === "string" ? (form.get("caption") as string).trim() || null : null;
 
-  if (file.size > MAX_BYTES) {
+  if (file.size > MAX_COLLECTION_REEL_BYTES) {
     return NextResponse.json({ error: "File is too large" }, { status: 400 });
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const mime = mimeFromMagicBytes(buffer, { allowGif: false });
-  if (!mime || mime === "application/pdf") {
-    return NextResponse.json({ error: "Only JPEG, PNG, or WebP" }, { status: 400 });
+  const imageMime = mimeFromMagicBytes(buffer, { allowGif: false });
+  const videoMime = mimeFromVideoMagicBytes(buffer);
+  const mime =
+    videoMime && videoMime !== "video/quicktime"
+      ? videoMime
+      : imageMime && imageMime !== "application/pdf"
+        ? imageMime
+        : null;
+  if (!mime) {
+    return NextResponse.json({ error: "Use JPEG, PNG, WebP, MP4, or WebM" }, { status: 400 });
+  }
+
+  const maxBytes = mime.startsWith("video/") ? MAX_COLLECTION_REEL_BYTES : MAX_IMAGE_BYTES;
+  if (file.size > maxBytes) {
+    return NextResponse.json(
+      { error: mime.startsWith("video/") ? "Video must be under 20MB" : "File is too large" },
+      { status: 400 },
+    );
   }
 
   const folder = `prudent-gabriel/gallery/${category.toLowerCase()}`;

@@ -527,6 +527,27 @@ export const CMS_PAGES: CmsPageDef[] = [
             type: "text",
             default: "Founded in Lagos. Worn around the world.",
           },
+          {
+            key: "about_hero_media_1",
+            label: "Hero look 1 (image or MP4/WebM URL)",
+            type: "image",
+            default: "",
+            uploadFolder: "prudent-gabriel/about",
+          },
+          {
+            key: "about_hero_media_2",
+            label: "Hero look 2 (image or MP4/WebM URL)",
+            type: "image",
+            default: "",
+            uploadFolder: "prudent-gabriel/about",
+          },
+          {
+            key: "about_hero_media_3",
+            label: "Hero look 3 (image or MP4/WebM URL)",
+            type: "image",
+            default: "",
+            uploadFolder: "prudent-gabriel/about",
+          },
         ],
       },
       {
@@ -618,8 +639,8 @@ export const CMS_PAGES: CmsPageDef[] = [
           { key: "about_stat_2_label", label: "Stat 2 label", type: "text", default: "Commissions Delivered" },
           { key: "about_stat_3_number", label: "Stat 3 number", type: "text", default: "10,000+" },
           { key: "about_stat_3_label", label: "Stat 3 label", type: "text", default: "Happy Clients" },
-          { key: "about_stat_4_number", label: "Stat 4 number", type: "text", default: "4" },
-          { key: "about_stat_4_label", label: "Stat 4 label", type: "text", default: "Atelier Locations" },
+          { key: "about_stat_4_number", label: "Stat 4 number", type: "text", default: "1" },
+          { key: "about_stat_4_label", label: "Stat 4 label", type: "text", default: "Lagos atelier" },
         ],
       },
       {
@@ -640,9 +661,9 @@ export const CMS_PAGES: CmsPageDef[] = [
         id: "locations",
         label: "Locations",
         fields: [
-          { key: "about_locations_eyebrow", label: "Eyebrow", type: "text", default: "OUR ATELIERS" },
-          { key: "about_locations_headline", label: "Headline", type: "text", default: "Where to find us" },
-          { key: "about_lagos_name", label: "Lagos name", type: "text", default: "LAGOS" },
+          { key: "about_locations_eyebrow", label: "Eyebrow (unused)", type: "text", default: "THE LAGOS ATELIER" },
+          { key: "about_locations_headline", label: "Headline", type: "text", default: "The Lagos atelier" },
+          { key: "about_lagos_name", label: "Atelier name", type: "text", default: "Lagos" },
           {
             key: "about_lagos_address",
             label: "Lagos address",
@@ -656,7 +677,7 @@ export const CMS_PAGES: CmsPageDef[] = [
             type: "text",
             default: "https://maps.google.com/?q=Akinwale+Shitu+Divine+Homes+Thomas+Estates+Ajah+Lagos",
           },
-          { key: "about_abuja_name", label: "Abuja name", type: "text", default: "ABUJA" },
+          { key: "about_abuja_name", label: "Abuja name (not shown on site)", type: "text", default: "ABUJA" },
           {
             key: "about_abuja_address",
             label: "Abuja address",

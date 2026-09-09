@@ -3,8 +3,8 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import type { GalleryImage } from "@prisma/client";
-import { optimizeImageUrl } from "@/lib/utils";
 import { GalleryLightbox } from "@/components/gallery/GalleryLightbox";
+import { GalleryFrame } from "@/components/gallery/GalleryFrame";
 
 export function BridalGalleryPage({
   initialImages,
@@ -75,15 +75,10 @@ export function BridalGalleryPage({
               key={img.id}
               type="button"
               onClick={() => setLightboxIndex(index)}
-              className="group relative mb-3 block w-full cursor-pointer overflow-hidden text-left"
+              className="group relative mb-3 block w-full cursor-pointer overflow-hidden rounded-[26px] bg-ivory-dark text-left"
               style={{ breakInside: "avoid" }}
             >
-              <img
-                src={optimizeImageUrl(img.url, 800)}
-                alt={img.alt || "Prudential Bride"}
-                className="block w-full transition-opacity duration-200 group-hover:opacity-90"
-                loading="lazy"
-              />
+              <GalleryFrame url={img.url} alt={img.alt || "Prudential Bride"} />
               {img.caption ? (
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent px-4 pb-3 pt-5 opacity-0 transition-opacity duration-250 group-hover:opacity-100">
                   <p className="font-body text-[12px] font-light italic text-white">{img.caption}</p>
@@ -99,9 +94,9 @@ export function BridalGalleryPage({
               type="button"
               disabled={loading}
               onClick={() => void loadMore()}
-              className="border border-[#2A1F1A]/30 px-12 py-3 font-body text-[11px] uppercase tracking-[0.14em] text-[#2A1F1A] transition-colors hover:border-[#2A1F1A] hover:bg-[#2A1F1A] hover:text-[#FAF7F4] disabled:opacity-50"
+              className="btn-ghost-light disabled:opacity-50"
             >
-              {loading ? "LOADING..." : "LOAD MORE"}
+              {loading ? "Loading…" : "View more"}
             </button>
           ) : (
             <p className="font-body text-[10px] text-charcoal/30">— {images.length} works —</p>
@@ -116,17 +111,11 @@ export function BridalGalleryPage({
             Each Prudential Bride gown is created exclusively for you, in our Lagos atelier.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Link
-              href="/consultation"
-              className="bg-[#2A1F1A] px-8 py-3.5 font-body text-[11px] uppercase tracking-[0.14em] text-[#FAF7F4]"
-            >
-              BOOK BRIDAL CONSULTATION
+            <Link href="/consultation" className="btn-primary">
+              Book consultation
             </Link>
-            <Link
-              href="/bridal"
-              className="border border-[#2A1F1A] px-8 py-3.5 font-body text-[11px] uppercase tracking-[0.14em] text-[#2A1F1A]"
-            >
-              EXPLORE BRIDAL COLLECTION
+            <Link href="/collections" className="btn-ghost-light">
+              All collections
             </Link>
           </div>
         </div>

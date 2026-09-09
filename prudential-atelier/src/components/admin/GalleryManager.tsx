@@ -7,6 +7,7 @@ import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import type { GalleryCategory, GalleryImage } from "@prisma/client";
 import toast from "react-hot-toast";
 import { Eye, EyeOff, Trash2, Pencil, ChevronUp, ChevronDown, Loader2 } from "lucide-react";
+import { isGalleryVideoUrl, galleryPlaybackUrl } from "@/lib/gallery-media";
 
 type UploadJob = {
   id: string;
@@ -344,7 +345,7 @@ export function GalleryManager() {
             onClick={() => setUploadOpen(true)}
             className="bg-[#37392d] px-4 py-2 font-body text-[11px] font-medium uppercase tracking-wide text-white"
           >
-            + Upload images
+            + Upload
           </button>
         </div>
       </div>
@@ -353,14 +354,24 @@ export function GalleryManager() {
         {images.map((img, idx) => (
           <div key={img.id} className="group relative border border-sand bg-[#fafafa]">
             <div className="relative aspect-[3/4] w-full overflow-hidden">
-              <Image
-                src={img.url}
-                alt=""
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 16vw"
-                unoptimized
-              />
+              {isGalleryVideoUrl(img.url) ? (
+                <video
+                  src={galleryPlaybackUrl(img.url)}
+                  muted
+                  playsInline
+                  preload="metadata"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <Image
+                  src={img.url}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 16vw"
+                  unoptimized
+                />
+              )}
               {selectMode && !reorder ? (
                 <>
                   <button
@@ -500,9 +511,10 @@ export function GalleryManager() {
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
           <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] max-h-[min(90vh,640px)] w-[min(90vw,520px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto glass-3 glass-panel p-6">
-            <Dialog.Title className="font-display text-xl text-ink">Upload images</Dialog.Title>
+            <Dialog.Title className="font-display text-xl text-ink">Upload images or video</Dialog.Title>
             <p className="mt-2 font-body text-xs text-[#6B6B68]">
-              Uploading to: {tab === "ATELIER" ? "Atelier" : tab === "BRIDAL" ? "Bridal" : "Kids"}
+              Uploading to: {tab === "ATELIER" ? "Atelier" : tab === "BRIDAL" ? "Bridal" : "Kids"}. Photos up to 5MB;
+              MP4 or WebM up to 20MB.
             </p>
             <label
               className="mt-6 flex cursor-pointer flex-col items-center justify-center border border-dashed border-sand bg-[#fafafa] px-6 py-12 transition-colors hover:border-[#37392d]/40"
@@ -520,7 +532,7 @@ export function GalleryManager() {
             >
               <input
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,.mp4,.webm"
                 multiple
                 disabled={uploadInFlight}
                 className="hidden"

@@ -3,8 +3,8 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import type { GalleryImage } from "@prisma/client";
-import { optimizeImageUrl } from "@/lib/utils";
 import { GalleryLightbox } from "@/components/gallery/GalleryLightbox";
+import { GalleryFrame } from "@/components/gallery/GalleryFrame";
 
 export function KidsGalleryPage({
   initialImages,
@@ -103,12 +103,7 @@ export function KidsGalleryPage({
               className="group relative mb-4 block w-full overflow-hidden text-left"
               style={{ breakInside: "avoid" }}
             >
-              <img
-                src={optimizeImageUrl(img.url, 700)}
-                alt={img.alt || "Prudential Kids"}
-                className="block w-full transition-transform duration-400 ease-in-out group-hover:scale-[1.02]"
-                loading="lazy"
-              />
+              <GalleryFrame url={img.url} alt={img.alt || "Prudential Kids"} width={700} />
               {img.caption ? (
                 <div
                   className="absolute inset-x-0 bottom-0 translate-y-full px-3 py-2 transition-transform duration-300 group-hover:translate-y-0"

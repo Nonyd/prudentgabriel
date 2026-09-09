@@ -132,6 +132,10 @@ function testSourceContracts() {
   const page = src("src/components/collections/CollectionDetailPage.tsx");
   assert(!page.includes("—— ◆ ——") && !page.includes("SCROLL"), "collection page dropped the diamond and SCROLL");
   assert(page.includes("glass-1"), "hero panel is glass-1");
+  assert(page.includes("hero-under-chrome"), "collection hero sits under the storefront chrome");
+  assert(page.includes("hero-bleed-chrome"), "on mobile the cover sits under the nav");
+  assert(page.includes("hero-copy-scrim"), "collection hero copy matches the RTW glass panel");
+  assert(page.includes("stillsFromProducts"), "desktop look wall uses pieces from the collection");
   assert(page.includes("Shop the collection"), "one shop CTA");
   assert(page.includes("No pieces yet — add pieces on the collection page in admin."), "admin empty copy");
 

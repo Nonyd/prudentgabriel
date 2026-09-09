@@ -263,6 +263,35 @@ async function run() {
       assert(src.includes("mimeFromMagicBytes"), `${rel} must validate magic bytes`);
       assert(src.includes("getMediaStore"), `${rel} must go through MediaStore`);
     }
+    const galleryRoute = await readFile(join(process.cwd(), "src/app/api/admin/gallery/route.ts"), "utf8");
+    assert(galleryRoute.includes("mimeFromVideoMagicBytes"), "gallery upload accepts MP4 and WebM");
+    const bridal = await readFile(join(process.cwd(), "src/components/gallery/BridalGalleryPage.tsx"), "utf8");
+    assert(bridal.includes("GalleryFrame"), "bridal looks can be stills or film");
+    assert(bridal.includes("btn-primary"), "bridal consultation uses the house button");
+    assert(bridal.includes("btn-ghost-light"), "bridal secondary actions use the house ghost button");
+
+    const { filterAboutStats, isInflatedLocationStat, pickAboutLooks, houseCtaLabel } = await import(
+      "../src/lib/about-house"
+    );
+    assert(isInflatedLocationStat("International Stores", "4") === true, "four stores is not shown");
+    assert(isInflatedLocationStat("Lagos atelier", "1") === false, "one atelier is allowed");
+    assert(
+      filterAboutStats([
+        { number: "15+", label: "Years of couture" },
+        { number: "4", label: "International Stores" },
+      ]).length === 1,
+      "inflated store counts are dropped",
+    );
+    assert(pickAboutLooks([{ url: "a.mp4", alt: "film" }, { url: "a.mp4", alt: "dup" }]).length === 1, "duplicate looks collapse");
+    assert(houseCtaLabel("BOOK A CONSULTATION →") === "BOOK A CONSULTATION", "cta arrows are stripped");
+    const aboutPage = await readFile(join(process.cwd(), "src/app/(storefront)/about/page.tsx"), "utf8");
+    const aboutHouse = await readFile(join(process.cwd(), "src/components/about/AboutHousePage.tsx"), "utf8");
+    assert(aboutPage.includes("filterAboutStats"), "about page filters fake location counts");
+    assert(!aboutPage.includes("about_abuja"), "about page does not render a second city");
+    assert(aboutHouse.includes("data-about-atelier"), "about page has one atelier block");
+    assert(aboutHouse.includes("GalleryFrame"), "about hero looks can be stills or film");
+    assert(aboutHouse.includes("btn-primary"), "about consultation uses the house button");
+    assert(aboutHouse.includes("hero-under-chrome"), "about hero sits under the storefront chrome");
 
     const adminUpload = await readFile(join(process.cwd(), "src/app/api/admin/upload/route.ts"), "utf8");
     assert(adminUpload.includes("isHeifMagic"), "admin upload names HEIC");
