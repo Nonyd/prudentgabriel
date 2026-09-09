@@ -23,6 +23,7 @@
     "backfill:payments": "tsx --tsconfig tsconfig.scripts.json scripts/backfill-payments.ts",
     "purge:demo": "tsx --tsconfig tsconfig.scripts.json scripts/purge-demo-data.ts",
     "test:slice-ai": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-ai.ts",
+    "test:slice-al": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-al.ts",
     "test:slice-aj": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-aj.ts",
     "test:stage-gate": "tsx --tsconfig tsconfig.scripts.json scripts/test-stage-gate.ts",
     "test:stage-walk": "tsx --tsconfig tsconfig.scripts.json scripts/test-stage-walk.ts",

@@ -30,6 +30,7 @@ import {
 } from "@prisma/client";
 import { STAGE_ORDER } from "../src/lib/bespoke-stages";
 import { ensureAllOpeningMovements } from "../src/lib/stock-ledger";
+import { measurementPlausibilityError } from "../src/lib/measurements";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -587,6 +588,9 @@ async function seedClients(clientPasswordHash: string) {
     });
 
     if (c.measurements) {
+      const unit = "inches" as const;
+      const bad = measurementPlausibilityError({ ...c.measurements, unit });
+      if (bad) throw new Error(`seed-demo measurements for ${c.email}: ${bad}`);
       await prisma.measurement.upsert({
         where: { clientId: profile.id },
         update: { ...c.measurements, unit: "inches" },

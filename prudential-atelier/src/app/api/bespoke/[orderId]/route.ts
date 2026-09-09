@@ -44,6 +44,27 @@ export async function GET(_req: NextRequest, { params }: Params) {
       },
     });
     if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const summary = await getOrderPaymentSummary(order.id);
+    const totalDrift = Math.abs(order.totalAmount - toNumber(summary.total)) > 0.005;
+    const unlockDrift = Boolean(order.productionUnlockedAt) !== summary.depositSatisfied;
+    if (totalDrift || unlockDrift) {
+      await recomputeOrderTotals(order.id);
+      const refreshed = await prisma.bespokeOrder.findUnique({
+        where: { id: orderId },
+        include: {
+          stageHistory: { orderBy: { completedAt: "desc" } },
+          assignments: {
+            include: { staffProfile: { include: { user: { select: { id: true, name: true, email: true } } } } },
+          },
+          materials: { orderBy: { createdAt: "asc" } },
+          clientProfile: { include: { measurements: true, moodboards: true } },
+          quotation: true,
+          ...paymentInclude,
+          ...stageGateInclude(),
+        },
+      });
+      if (refreshed) return NextResponse.json({ item: refreshed });
+    }
     return NextResponse.json({ item: order });
   } catch (e) {
     await logError({

@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { InvoiceStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getBankDetails, getInvoiceSettings, parseInvoiceLineItems } from "@/lib/invoice";
-import { remainingDepositNGN } from "@/lib/atelier-fx";
+import { remainingDepositNGN, ngnToDocument, lockedFxFromAtelier } from "@/lib/atelier-fx";
 import { getOrderPaymentSummary, toNumber } from "@/lib/payments/ledger";
 import {
   asPublicInvoiceCurrency,
   pieceLabelFromLineItems,
   type PublicInvoiceViewPayload,
 } from "@/lib/public-invoice-payload";
+import { getPublicPaymentConfig } from "@/lib/payments/config";
+import { currenciesWithMethods, defaultPayCurrency } from "@/lib/invoice-pay-options";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: string }> }) {
   const { token } = await ctx.params;
@@ -49,9 +51,10 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
   });
 
   const cur = asPublicInvoiceCurrency(inv.currency);
-  const [businessDetails, bankDetails] = await Promise.all([
+  const [businessDetails, bankDetails, payConfig] = await Promise.all([
     getInvoiceSettings(),
     getBankDetails(cur),
+    getPublicPaymentConfig("ATELIER"),
   ]);
 
   const order = inv.quotationId
@@ -84,6 +87,15 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
     InvoiceStatus.OVERDUE,
   ];
   const pieceLabel = pieceLabelFromLineItems(inv.lineItems);
+  const remainingDeposit = remainingDepositNGN({ depositRequiredNGN, confirmedNGN });
+  const availableCurrencies = currenciesWithMethods(payConfig.gateways);
+  const payDefault = defaultPayCurrency(inv.currency, availableCurrencies);
+  const fx = lockedFxFromAtelier({
+    fxRateLocked: order?.fxRateLocked,
+    fxGbpRateLocked: order?.fxGbpRateLocked,
+  });
+  const remainingBalanceDocument = ngnToDocument(remainingBalanceNGN, inv.currency, fx);
+  const remainingDepositDocument = ngnToDocument(remainingDeposit, inv.currency, fx);
   const payload: PublicInvoiceViewPayload = {
     invoiceNumber: inv.invoiceNumber,
     currency: inv.currency,
@@ -110,8 +122,10 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
     bankDetails,
     pay: {
       canPay: Boolean(order && remainingBalanceNGN > 0 && payableStatuses.includes(status)),
-      remainingDepositNGN: remainingDepositNGN({ depositRequiredNGN, confirmedNGN }),
+      remainingDepositNGN: remainingDeposit,
       remainingBalanceNGN,
+      remainingDepositDocument,
+      remainingBalanceDocument,
       depositRequiredNGN,
       confirmedNGN,
       orderId: order?.id ?? null,
@@ -119,6 +133,9 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
       pieceLabel,
       fxRateLocked: order?.fxRateLocked ?? null,
       fxGbpRateLocked: order?.fxGbpRateLocked ?? null,
+      availableCurrencies,
+      defaultCurrency: payDefault,
+      createsAccount: true,
     },
   };
 

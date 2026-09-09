@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { initializeBespokeGatewayPayment } from "@/lib/atelier-payment";
 import { remainingDepositNGN } from "@/lib/atelier-fx";
 import { getOrderPaymentSummary, toNumber } from "@/lib/payments/ledger";
+import { roundToKobo } from "@/lib/money";
 
 const bodySchema = z.object({
   amount: z.union([z.literal("deposit"), z.literal("full"), z.number().positive()]),
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ token: str
       : parsed.data.amount === "full"
         ? remainingBalance
         : parsed.data.amount;
-  amountNGN = Math.min(Math.round(amountNGN), Math.round(remainingBalance));
+  amountNGN = Math.min(roundToKobo(amountNGN), roundToKobo(remainingBalance));
 
   const result = await initializeBespokeGatewayPayment({
     order,

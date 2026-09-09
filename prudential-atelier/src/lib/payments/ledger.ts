@@ -11,6 +11,8 @@ import { prisma } from "@/lib/prisma";
 import { createNotification } from "@/lib/notifications";
 import { logActivity } from "@/lib/logger";
 import { getSetting } from "@/lib/settings";
+import { depositIsSatisfied, roundToKobo } from "@/lib/money";
+import { syncIntakeStageNotes } from "@/lib/atelier/intake-notes-sync";
 
 export type PaymentSummary = {
   total: Prisma.Decimal;
@@ -90,16 +92,19 @@ function buildSummary(params: {
   pending: Prisma.Decimal;
   depositRequired: Prisma.Decimal;
 }): PaymentSummary {
-  const balance = Prisma.Decimal.max(ZERO, params.total.minus(params.confirmed));
-  const depositSatisfied =
-    params.depositRequired.lte(ZERO) || params.confirmed.gte(params.depositRequired);
-  const isFullyPaid = params.confirmed.gte(params.total) && params.total.gt(ZERO);
+  const total = params.total.toDecimalPlaces(2);
+  const confirmed = params.confirmed.toDecimalPlaces(2);
+  const pending = params.pending.toDecimalPlaces(2);
+  const depositRequired = params.depositRequired.toDecimalPlaces(2);
+  const balance = Prisma.Decimal.max(ZERO, total.minus(confirmed));
+  const depositSatisfied = depositIsSatisfied(toNumber(confirmed), toNumber(depositRequired));
+  const isFullyPaid = confirmed.gte(total) && total.gt(ZERO);
   return {
-    total: params.total,
-    confirmed: params.confirmed,
-    pending: params.pending,
+    total,
+    confirmed,
+    pending,
     balance,
-    depositRequired: params.depositRequired,
+    depositRequired,
     depositSatisfied,
     isFullyPaid,
   };
@@ -141,7 +146,7 @@ export async function getOrderPaymentSummary(bespokeOrderId: string): Promise<Pa
     throw new Error(`BespokeOrder not found: ${bespokeOrderId}`);
   }
 
-  const total = dec(order.totalAmount);
+  const total = dec(order.totalAmount).toDecimalPlaces(2);
   const depositRequired = await resolveOrderDepositRequired(bespokeOrderId, total);
 
   const [confirmedRows, pendingRows] = await Promise.all([
@@ -177,8 +182,8 @@ export async function getInvoicePaymentSummary(invoiceId: string): Promise<Payme
   }
 
   const rate = invoice.exchangeRate > 0 ? invoice.exchangeRate : 1;
-  const total = dec(invoice.total).mul(rate);
-  const depositRequired = dec(invoice.depositRequired).mul(rate);
+  const total = dec(invoice.total).mul(rate).toDecimalPlaces(2);
+  const depositRequired = dec(invoice.depositRequired).mul(rate).toDecimalPlaces(2);
 
   const [confirmedRows, pendingRows] = await Promise.all([
     prisma.payment.findMany({
@@ -276,14 +281,17 @@ async function syncProductionUnlock(
  */
 export async function recomputeOrderTotals(bespokeOrderId: string): Promise<PaymentSummary> {
   const summary = await getOrderPaymentSummary(bespokeOrderId);
+  const totalKobo = roundToKobo(toNumber(summary.total));
   await prisma.bespokeOrder.update({
     where: { id: bespokeOrderId },
     data: {
+      totalAmount: totalKobo,
       amountPaid: toNumber(summary.confirmed),
       balance: toNumber(summary.balance),
     },
   });
   await syncProductionUnlock(bespokeOrderId, summary);
+  await syncIntakeStageNotes(bespokeOrderId, summary.depositSatisfied).catch(() => undefined);
   if (summary.isFullyPaid || toNumber(summary.balance) <= 0.01) {
     const { maybeArchiveBespokeOrder } = await import("@/lib/bespoke-archive");
     await maybeArchiveBespokeOrder(bespokeOrderId).catch(() => undefined);

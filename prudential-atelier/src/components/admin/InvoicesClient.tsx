@@ -127,8 +127,8 @@ export function InvoicesClient() {
       {stats ? (
         <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: "Total invoiced", value: `₦${stats.totalInvoiced.toLocaleString("en-NG")}` },
-            { label: "Outstanding", value: String(stats.outstanding) },
+            { label: "Total invoiced", value: formatInvoiceCurrency(stats.totalInvoiced, "NGN") },
+            { label: "Outstanding", value: formatInvoiceCurrency(stats.outstanding, "NGN") },
             { label: "Overdue", value: String(stats.overdue) },
             { label: "Paid this month", value: String(stats.paidThisMonth) },
           ].map((c) => (

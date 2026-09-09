@@ -6,6 +6,8 @@ import { sendInvoiceEmail } from "@/lib/email";
 import { notifyInvoiceIssued } from "@/lib/customer-notifications";
 import { formatInvoiceCurrency, getInvoiceSettings } from "@/lib/invoice";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { syncIntakeStageNotes } from "@/lib/atelier/intake-notes-sync";
+import { getOrderPaymentSummary } from "@/lib/payments/ledger";
 import type { InvoiceCurrency } from "@/types/invoice";
 
 function asCurrency(c: string): InvoiceCurrency {
@@ -55,6 +57,17 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     invoiceNumber: inv.invoiceNumber,
     publicToken: inv.publicToken,
   });
+
+  if (inv.quotationId) {
+    const order = await prisma.bespokeOrder.findFirst({
+      where: { quotationId: inv.quotationId },
+      select: { id: true },
+    });
+    if (order) {
+      const summary = await getOrderPaymentSummary(order.id);
+      await syncIntakeStageNotes(order.id, summary.depositSatisfied);
+    }
+  }
 
   return NextResponse.json({ success: true });
 }

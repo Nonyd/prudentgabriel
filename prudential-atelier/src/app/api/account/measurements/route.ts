@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/api-auth";
 import { getOrCreateClientProfile } from "@/lib/account-helpers";
 import { prisma } from "@/lib/prisma";
 import { logActivity, logError } from "@/lib/logger";
+import { measurementPlausibilityError } from "@/lib/measurements";
 
 const measurementSchema = z.object({
   bust: z.number().positive().optional().nullable(),
@@ -57,6 +58,10 @@ export async function PATCH(req: NextRequest) {
   try {
     const profile = await getOrCreateClientProfile(gate.session.user.id!);
     const data = parsed.data;
+    const plausibility = measurementPlausibilityError(data);
+    if (plausibility) {
+      return NextResponse.json({ error: plausibility }, { status: 400 });
+    }
 
     const item = await prisma.measurement.upsert({
       where: { clientId: profile.id },

@@ -41,7 +41,7 @@ export default function ConsultationMeetingLinkEmail({
       </Heading>
       <Text style={{ fontSize: 16, color: "#333" }}>Hi {clientName},</Text>
       <Text style={{ fontSize: 16, color: "#333", lineHeight: 1.6 }}>
-        Your {platformLabel} consultation is coming up soon.
+        Your {platformLabel} consultation is on {fmtDate(confirmedDate)} at {confirmedTime} WAT.
       </Text>
       <Section style={{ marginTop: 20, padding: 16, backgroundColor: "rgba(201,168,76,0.08)" }}>
         <Text style={{ margin: 0, fontSize: 15 }}>DATE: {fmtDate(confirmedDate)}</Text>

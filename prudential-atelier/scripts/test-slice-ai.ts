@@ -120,6 +120,8 @@ function run() {
   assert(INTAKE_STAGES.length === 4, "convert records stages 1–4");
   assert(notes.CONSULTATION_BOOKING.includes("CB-1001"), "stage 1 names the booking");
   assert(notes.INVOICE_ISSUANCE.includes("INV-2026-0001"), "stage 3 names the invoice");
+  assert(notes.INVOICE_ISSUANCE.toLowerCase().includes("draft"), "stage 3 at convert is a draft, not sent");
+  assert(!notes.INVOICE_ISSUANCE.toLowerCase().includes("issued"), "stage 3 must not say issued while the invoice is drafted");
   assert(notes.PAYMENT_CONFIRMATION.includes("PSK_abc"), "stage 4 names the consultation payment");
   assert(notes.PAYMENT_CONFIRMATION.toLowerCase().includes("deposit is still due"), "stage 4 is not the commission deposit");
 

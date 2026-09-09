@@ -7,6 +7,7 @@ import {
   type LockedFx,
 } from "@/lib/fx";
 import { convertToNGN, type ShopCurrency } from "@/lib/currency";
+import { depositIsSatisfied, roundToKobo } from "@/lib/money";
 import { asInvoiceCurrency, formatInvoiceCurrency } from "@/lib/invoice";
 import type { InvoiceCurrency } from "@/types/invoice";
 
@@ -45,19 +46,19 @@ export function invoiceExchangeRateFromLocked(currency: string, fx: LockedFx): n
 }
 
 export function documentAmountToNGN(amount: number, currency: string, fx: LockedFx): number {
-  if (currency === "NGN" || currency === "EUR" || !currency) return amount;
+  if (currency === "NGN" || currency === "EUR" || !currency) return roundToKobo(amount);
   if (currency === "USD" || currency === "GBP") {
     return convertToNGN(amount, currency, ratesFromLockedFx(fx));
   }
-  return amount;
+  return roundToKobo(amount);
 }
 
 export function ngnToDocument(amountNGN: number, currency: string, fx: LockedFx): number {
-  if (currency === "NGN" || currency === "EUR" || !currency) return amountNGN;
+  if (currency === "NGN" || currency === "EUR" || !currency) return roundToKobo(amountNGN);
   if (currency === "USD" || currency === "GBP") {
-    return convertAtLockedRate(amountNGN, currency, fx);
+    return roundMoney(convertAtLockedRate(amountNGN, currency, fx));
   }
-  return amountNGN;
+  return roundToKobo(amountNGN);
 }
 
 export function lockedDocumentTotal(currency: string, documentTotal: number): {
@@ -95,7 +96,8 @@ export function remainingDepositNGN(params: {
   depositRequiredNGN: number;
   confirmedNGN: number;
 }): number {
-  return Math.max(0, Math.round((params.depositRequiredNGN - params.confirmedNGN) * 100) / 100);
+  if (depositIsSatisfied(params.confirmedNGN, params.depositRequiredNGN)) return 0;
+  return Math.max(0, roundToKobo(params.depositRequiredNGN - params.confirmedNGN));
 }
 
 export function formatBespokeBook(

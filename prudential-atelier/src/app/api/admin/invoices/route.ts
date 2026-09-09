@@ -12,6 +12,7 @@ import {
 } from "@/lib/invoice";
 import { getSetting } from "@/lib/settings";
 import { mapBespokeOrdersByRequestId, mapBespokeOrdersByClientEmail } from "@/lib/invoice-bespoke-order";
+import { roundToKobo } from "@/lib/money";
 import type { InvoiceLineItem } from "@/types/invoice";
 
 const lineItemInput = z.object({
@@ -116,13 +117,9 @@ export async function GET(req: NextRequest) {
 
   const statsParam = searchParams.get("stats");
   if (statsParam === "1") {
-    const [totalInvoiced, outstanding, overdue, paidThisMonth] = await Promise.all([
-      prisma.invoice.aggregate({ _sum: { total: true } }),
-      prisma.invoice.count({
-        where: {
-          status: { in: [InvoiceStatus.SENT, InvoiceStatus.VIEWED, InvoiceStatus.PARTIALLY_PAID] },
-          balanceDue: { gt: 0 },
-        },
+    const [invoiceRows, overdue, paidThisMonth] = await Promise.all([
+      prisma.invoice.findMany({
+        select: { total: true, balanceDue: true, exchangeRate: true, status: true },
       }),
       prisma.invoice.count({ where: { status: InvoiceStatus.OVERDUE } }),
       prisma.invoice.count({
@@ -134,14 +131,29 @@ export async function GET(req: NextRequest) {
         },
       }),
     ]);
+    let totalInvoiced = 0;
+    let outstanding = 0;
+    const open: InvoiceStatus[] = [
+      InvoiceStatus.SENT,
+      InvoiceStatus.VIEWED,
+      InvoiceStatus.PARTIALLY_PAID,
+      InvoiceStatus.OVERDUE,
+    ];
+    for (const row of invoiceRows) {
+      const rate = row.exchangeRate > 0 ? row.exchangeRate : 1;
+      totalInvoiced += roundToKobo(row.total * rate);
+      if (open.includes(row.status) && row.balanceDue > 0) {
+        outstanding += roundToKobo(row.balanceDue * rate);
+      }
+    }
     return NextResponse.json({
       invoices: invoicesWithOrders,
       total,
       page,
       totalPages,
       stats: {
-        totalInvoiced: totalInvoiced._sum.total ?? 0,
-        outstanding,
+        totalInvoiced: roundToKobo(totalInvoiced),
+        outstanding: roundToKobo(outstanding),
         overdue,
         paidThisMonth,
       },

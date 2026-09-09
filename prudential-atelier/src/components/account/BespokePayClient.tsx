@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
@@ -10,6 +10,8 @@ import { convertAtLockedRate } from "@/lib/fx";
 import { asShopPayCurrency, formatBespokeBook, lockedFxFromAtelier } from "@/lib/atelier-fx";
 import { formatInvoiceCurrency } from "@/lib/invoice";
 import type { InvoiceCurrency } from "@/types/invoice";
+import { roundToKobo } from "@/lib/money";
+import { currenciesWithMethods, defaultPayCurrency } from "@/lib/invoice-pay-options";
 
 const MIN_PARTIAL = 10_000;
 
@@ -46,7 +48,8 @@ export function BespokePayClient({ order }: { order: BespokePayView }) {
 
   const remainingDeposit = order.remainingDepositNGN;
   const showDeposit = remainingDeposit > 0.01;
-  const fullAmount = Math.round(order.balance);
+  const fullAmount = roundToKobo(order.balance);
+  const [availableCurrencies, setAvailableCurrencies] = useState<PaymentCurrency[] | null>(null);
 
   const [payOption, setPayOption] = useState<PayOption>(showDeposit ? "deposit" : "full");
   const [customAmountNGN, setCustomAmountNGN] = useState(
@@ -61,6 +64,25 @@ export function BespokePayClient({ order }: { order: BespokePayView }) {
   );
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
   const [stripePk, setStripePk] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/payments/public-config?line=ATELIER")
+      .then((r) => r.json())
+      .then((data: { gateways?: Record<PaymentCurrency, PaymentGatewayType[]> }) => {
+        if (cancelled) return;
+        const available = currenciesWithMethods(data.gateways ?? { NGN: [], USD: [], GBP: [] });
+        setAvailableCurrencies(available);
+        const next = defaultPayCurrency(order.currency, available);
+        if (next) setPayCurrency(next);
+      })
+      .catch(() => {
+        if (!cancelled) setAvailableCurrencies(["NGN"]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [order.currency]);
 
   const amountNGN = useMemo(() => {
     if (payOption === "deposit" && showDeposit) return remainingDeposit;
@@ -267,7 +289,7 @@ export function BespokePayClient({ order }: { order: BespokePayView }) {
         </div>
 
         <div className="mt-4 flex gap-2">
-          {(["NGN", "USD", "GBP"] as PaymentCurrency[]).map((c) => (
+          {(availableCurrencies ?? [payCurrency]).map((c) => (
             <button
               key={c}
               type="button"
@@ -288,6 +310,7 @@ export function BespokePayClient({ order }: { order: BespokePayView }) {
           currency={payCurrency}
           businessLine="ATELIER"
           amount={displayAmount}
+          amountNGN={amountNGN}
           paymentReference={paymentRef}
           selected={gateway}
           onSelect={setGateway}

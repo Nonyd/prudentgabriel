@@ -20,6 +20,7 @@ import {
   toNumber,
 } from "@/lib/payments/ledger";
 import { remainingDepositNGN } from "@/lib/atelier-fx";
+import { roundToKobo } from "@/lib/money";
 
 const bodySchema = z.object({
   amount: z.union([z.literal("deposit"), z.literal("full"), z.number().positive()]),
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ token: str
       : parsed.data.amount === "full"
         ? remainingBalance
         : parsed.data.amount;
-  payAmountNGN = Math.min(Math.round(payAmountNGN), Math.round(remainingBalance));
+  payAmountNGN = Math.min(roundToKobo(payAmountNGN), roundToKobo(remainingBalance));
   if (payAmountNGN <= 0) {
     return NextResponse.json({ error: "Nothing to pay" }, { status: 400 });
   }

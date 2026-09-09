@@ -10,6 +10,7 @@ import { formatPrice } from "@/lib/currency";
 import type { BusinessLineCode, PublicBankAccount } from "@/lib/payments/bank-account";
 import { BankTransferDetails } from "@/components/payment/BankTransferDetails";
 import { GatewayPaymentMarks } from "@/components/icons/PaymentMarks";
+import { paystackFeeCopy } from "@/lib/payments/paystack-fee";
 type Props = {
   currency: PaymentCurrency;
   businessLine: BusinessLineCode;
@@ -141,7 +142,8 @@ export function PaymentMethodSelector({
       <div className="mt-4 space-y-2">
         {loaded && gateways.length === 0 ? (
           <p className="font-body text-sm text-text-mid">
-            No payment methods are available right now. Please try again later or contact the atelier.
+            No payment methods are available for this currency. Choose another currency if one is offered, or
+            contact the atelier.
           </p>
         ) : null}
         {!loaded ? (
@@ -274,6 +276,11 @@ export function PaymentMethodSelector({
           );
         })}
       </div>
+      {currency === "NGN" && gateways.includes("PAYSTACK") ? (
+        <p className="mt-3 font-body text-xs leading-relaxed text-text-light">
+          {paystackFeeCopy(amountNGN ?? amount).sentence}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import {
   type MeasurementData,
 } from "@/components/admin/ClientMeasurementsPanel";
 import { measurementFromRecord } from "@/lib/measurements";
+import { formatNgnKobo } from "@/lib/money";
 import type {
   BespokeOrder,
   BespokeStage,
@@ -674,15 +675,15 @@ export function BespokeOrderDetailClient({
             <dl className="mt-3 space-y-1 font-sans text-sm">
               <div className="flex justify-between">
                 <dt>Total</dt>
-                <dd>₦{order.totalAmount.toLocaleString("en-NG")}</dd>
+                <dd>{formatNgnKobo(order.totalAmount)}</dd>
               </div>
               <div className="flex justify-between">
                 <dt>Paid</dt>
-                <dd>₦{order.amountPaid.toLocaleString("en-NG")}</dd>
+                <dd>{formatNgnKobo(order.amountPaid)}</dd>
               </div>
               <div className="flex justify-between font-medium text-nut">
                 <dt>Balance</dt>
-                <dd>₦{order.balance.toLocaleString("en-NG")}</dd>
+                <dd>{formatNgnKobo(order.balance)}</dd>
               </div>
               {order.productionUnlockedAt ? (
                 <div className="flex justify-between text-xs text-text-light">
@@ -719,7 +720,7 @@ export function BespokeOrderDetailClient({
                           {formatDate(p.confirmedAt ?? p.createdAt)}
                         </td>
                         <td className="py-2 pr-2 text-right tabular-nums">
-                          ₦{ledgerAmount(p).toLocaleString("en-NG")}
+                          {formatNgnKobo(ledgerAmount(p))}
                         </td>
                         <td className="py-2 pr-2">{p.method.replace(/_/g, " ")}</td>
                         <td className="py-2 pr-2">{p.purpose.replace(/_/g, " ")}</td>

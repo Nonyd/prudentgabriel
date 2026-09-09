@@ -9,6 +9,8 @@ import { convertAtLockedRate } from "@/lib/fx";
 import { formatInvoiceCurrency } from "@/lib/invoice";
 import type { InvoiceCurrency } from "@/types/invoice";
 import { asShopPayCurrency, lockedFxFromAtelier } from "@/lib/atelier-fx";
+import { invoicePayFigures } from "@/lib/invoice-pay-options";
+import { roundToKobo } from "@/lib/money";
 import type { PublicInvoicePayState } from "@/lib/public-invoice-payload";
 
 type PayOption = "deposit" | "full";
@@ -27,24 +29,32 @@ export function PublicInvoicePayClient({
   pay: PublicInvoicePayState;
   currency: string;
 }) {
-  const remainingDeposit = pay.remainingDepositNGN;
-  const showDeposit = remainingDeposit > 0.01;
-  const [payOption, setPayOption] = useState<PayOption>(showDeposit ? "deposit" : "full");
+  const figures = invoicePayFigures({
+    remainingDepositNGN: pay.remainingDepositNGN,
+    remainingBalanceNGN: pay.remainingBalanceNGN,
+  });
+  const available = pay.availableCurrencies ?? [];
+  const initial = (pay.defaultCurrency ?? available[0] ?? null) as PaymentCurrency | null;
+  const [payOption, setPayOption] = useState<PayOption>(figures.showDeposit ? "deposit" : "full");
   const [gateway, setGateway] = useState<PaymentGatewayType | null>(null);
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
   const [stripePk, setStripePk] = useState("");
-  const shopCurrency = asShopPayCurrency(currency) as PaymentCurrency;
-  const [payCurrency, setPayCurrency] = useState<PaymentCurrency>(shopCurrency);
+  const [payCurrency, setPayCurrency] = useState<PaymentCurrency>(initial ?? "NGN");
   const fx = lockedFxFromAtelier({
     fxRateLocked: pay.fxRateLocked,
     fxGbpRateLocked: pay.fxGbpRateLocked,
   });
+  const invoiceCurrency = asShopPayCurrency(currency);
 
-  const amountNGN = payOption === "deposit" && showDeposit ? remainingDeposit : pay.remainingBalanceNGN;
-  const displayAmount =
-    payCurrency === "NGN" ? amountNGN : convertAtLockedRate(amountNGN, payCurrency, fx);
+  const depositNGN = figures.depositNGN;
+  const balanceNGN = figures.balanceNGN;
+  const selectedNGN = payOption === "deposit" && figures.showDeposit ? depositNGN : balanceNGN;
+
+  function display(ngn: number, cur: PaymentCurrency): number {
+    return cur === "NGN" ? roundToKobo(ngn) : convertAtLockedRate(ngn, cur, fx);
+  }
 
   const paymentRef = useMemo(
     () => `PA-INV-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
@@ -70,7 +80,7 @@ export function PublicInvoicePayClient({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            amount: payOption === "deposit" && showDeposit ? "deposit" : "full",
+            amount: payOption === "deposit" && figures.showDeposit ? "deposit" : "full",
             receiptUrl,
             currency: payCurrency,
           }),
@@ -85,7 +95,7 @@ export function PublicInvoicePayClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: payOption === "deposit" && showDeposit ? "deposit" : "full",
+          amount: payOption === "deposit" && figures.showDeposit ? "deposit" : "full",
           currency: payCurrency,
           gateway,
         }),
@@ -123,8 +133,21 @@ export function PublicInvoicePayClient({
         {pay.pieceLabel}
         {pay.orderRef ? ` · ${pay.orderRef}` : ""}
       </p>
+      {invoiceCurrency !== "NGN" && payCurrency === "NGN" ? (
+        <p className="mt-2 font-body text-sm text-[#6B6B68]">
+          Agreed amount is in {invoiceCurrency}. Card payment is collected in naira at the rate locked on this
+          commission.
+        </p>
+      ) : null}
+      {pay.createsAccount ? (
+        <p className="mt-2 font-body text-sm text-[#6B6B68]">
+          Paying creates a client account so you can approve sketches later. We email a temporary password to this
+          invoice address.
+        </p>
+      ) : null}
+
       <div className="mt-4 space-y-2">
-        {showDeposit ? (
+        {figures.showDeposit ? (
           <label className="flex cursor-pointer items-start gap-3 rounded-sm border border-[#EBEBEA] bg-white p-3">
             <input
               type="radio"
@@ -136,13 +159,14 @@ export function PublicInvoicePayClient({
             <span>
               <span className="block font-body text-sm font-medium">Pay remaining deposit</span>
               <span className="font-display text-xl text-ink">
-                {formatInvoiceCurrency(
-                  payCurrency === "NGN"
-                    ? remainingDeposit
-                    : convertAtLockedRate(remainingDeposit, payCurrency, fx),
-                  asFormatCur(payCurrency),
-                )}
+                {formatInvoiceCurrency(display(depositNGN, payCurrency), asFormatCur(payCurrency))}
               </span>
+              {payCurrency === "NGN" && invoiceCurrency !== "NGN" ? (
+                <span className="mt-1 block font-body text-xs text-[#6B6B68]">
+                  Agreed {formatInvoiceCurrency(pay.remainingDepositDocument, invoiceCurrency as InvoiceCurrency)}{" "}
+                  at the locked rate
+                </span>
+              ) : null}
             </span>
           </label>
         ) : null}
@@ -157,40 +181,57 @@ export function PublicInvoicePayClient({
           <span>
             <span className="block font-body text-sm font-medium">Pay outstanding balance</span>
             <span className="font-display text-xl text-ink">
-              {formatInvoiceCurrency(displayAmount, asFormatCur(payCurrency))}
+              {formatInvoiceCurrency(display(balanceNGN, payCurrency), asFormatCur(payCurrency))}
             </span>
+            {payCurrency === "NGN" && invoiceCurrency !== "NGN" ? (
+              <span className="mt-1 block font-body text-xs text-[#6B6B68]">
+                Agreed {formatInvoiceCurrency(pay.remainingBalanceDocument, invoiceCurrency as InvoiceCurrency)} at
+                the locked rate
+              </span>
+            ) : null}
           </span>
         </label>
       </div>
 
-      <div className="mt-4 flex gap-2">
-        {(["NGN", "USD", "GBP"] as PaymentCurrency[]).map((c) => (
-          <button
-            key={c}
-            type="button"
-            onClick={() => setPayCurrency(c)}
-            className={`px-3 py-1 font-body text-[10px] uppercase tracking-wide ${
-              payCurrency === c ? "bg-[#37392d] text-white" : "border border-[#EBEBEA]"
-            }`}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
+      {available.length > 1 ? (
+        <div className="mt-4 flex gap-2">
+          {available.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setPayCurrency(c)}
+              className={`px-3 py-1 font-body text-[10px] uppercase tracking-wide ${
+                payCurrency === c ? "bg-[#37392d] text-white" : "border border-[#EBEBEA]"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      ) : available.length === 1 ? (
+        <p className="mt-4 font-body text-xs uppercase tracking-wide text-[#6B6B68]">Paying in {available[0]}</p>
+      ) : (
+        <p className="mt-4 font-body text-sm text-ink">
+          No payment method is configured for this invoice. Please contact the atelier.
+        </p>
+      )}
 
-      <div className="mt-4">
-        <PaymentMethodSelector
-          currency={payCurrency}
-          businessLine="ATELIER"
-          amount={displayAmount}
-          paymentReference={paymentRef}
-          selected={gateway}
-          onSelect={setGateway}
-          receiptUrl={receiptUrl}
-          onReceiptUploaded={setReceiptUrl}
-          receiptUploadUrl={`/api/invoice/${token}/receipt`}
-        />
-      </div>
+      {available.length > 0 ? (
+        <div className="mt-4">
+          <PaymentMethodSelector
+            currency={payCurrency}
+            businessLine="ATELIER"
+            amount={display(selectedNGN, payCurrency)}
+            amountNGN={selectedNGN}
+            paymentReference={paymentRef}
+            selected={gateway}
+            onSelect={setGateway}
+            receiptUrl={receiptUrl}
+            onReceiptUploaded={setReceiptUrl}
+            receiptUploadUrl={`/api/invoice/${token}/receipt`}
+          />
+        </div>
+      ) : null}
 
       {stripeClientSecret && stripePk && pay.orderId ? (
         <StripePayBlock
@@ -205,7 +246,7 @@ export function PublicInvoicePayClient({
       ) : (
         <button
           type="button"
-          disabled={busy || !gateway}
+          disabled={busy || !gateway || available.length === 0}
           onClick={() => void submit()}
           className="mt-4 w-full bg-[#37392d] py-3 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
         >

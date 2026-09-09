@@ -134,7 +134,6 @@ export function PublicInvoiceView({ token }: { token: string }) {
           <div>
             <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-[#6B6B68]">Bill to</p>
             <p className="mt-2 font-body text-sm font-medium text-ink">{data.addresseeName}</p>
-            <p className="mt-2 font-body text-sm text-ink">{data.pieceLabel}</p>
           </div>
         </div>
 
@@ -208,6 +207,7 @@ export function PublicInvoiceView({ token }: { token: string }) {
           </div>
         ) : null}
 
+        {bank.accountNumber ? (
         <div className="mt-6 font-body text-sm">
           <p className="text-[10px] font-medium uppercase text-[#6B6B68]">Payment details ({bank.currency})</p>
           <p className="mt-2 text-[#6B6B68]">{bank.bankName}</p>
@@ -231,6 +231,7 @@ export function PublicInvoiceView({ token }: { token: string }) {
             <p className="mt-2 whitespace-pre-wrap text-xs text-[#6B6B68]">{bank.instructions}</p>
           ) : null}
         </div>
+        ) : null}
 
         {data.clientNote ? <p className="mt-6 font-body text-sm italic text-[#6B6B68]">{data.clientNote}</p> : null}
 

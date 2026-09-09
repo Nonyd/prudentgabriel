@@ -1,4 +1,5 @@
 import { Currency } from "@prisma/client";
+import { roundToKobo } from "@/lib/money";
 
 export type ShopCurrency = "NGN" | "USD" | "GBP";
 
@@ -71,9 +72,9 @@ export function convertFromNGN(amountNGN: number, toCurrency: ShopCurrency, rate
 }
 
 export function convertToNGN(amount: number, from: ShopCurrency, rates: ExchangeRatesNGN): number {
-  if (from === "NGN") return amount;
-  if (from === "USD") return amount / rates.USD;
-  return amount / rates.GBP;
+  if (from === "NGN") return roundToKobo(amount);
+  if (from === "USD") return roundToKobo(amount / rates.USD);
+  return roundToKobo(amount / rates.GBP);
 }
 
 /** @deprecated Use getExchangeRates + convertToNGN for new code — returns per-NGN rates (USD/GBP per ₦1). */

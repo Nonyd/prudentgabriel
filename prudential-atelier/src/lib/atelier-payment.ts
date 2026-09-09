@@ -10,6 +10,7 @@ import { createBespokePaymentIntent } from "@/lib/payments/stripe";
 import { getStripePublicKey, getSupportedGateways } from "@/lib/payments/config";
 import { encodeBespokePaymentRef } from "@/lib/bespoke-order-access";
 import { atelierChargeAmountForeign, asShopPayCurrency, lockedFxFromAtelier } from "@/lib/atelier-fx";
+import { roundToKobo } from "@/lib/money";
 
 export const MIN_PARTIAL_NGN = 10_000;
 
@@ -52,7 +53,7 @@ export async function initializeBespokeGatewayPayment(params: {
     return { ok: false, status: 400, error: "That payment method is not available for this currency" };
   }
 
-  const payAmountNGN = Math.min(Math.round(params.amountNGN), Math.round(order.balance));
+  const payAmountNGN = Math.min(roundToKobo(params.amountNGN), roundToKobo(order.balance));
   if (payAmountNGN <= 0) {
     return { ok: false, status: 400, error: "Nothing to pay" };
   }

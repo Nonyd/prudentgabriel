@@ -1,3 +1,4 @@
+import type { PaymentCurrency } from "@/lib/payments/index";
 import { parseInvoiceLineItems } from "@/lib/invoice";
 import type { InvoiceBankDetails, InvoiceBusinessDetails, InvoiceCurrency, InvoiceLineItem } from "@/types/invoice";
 
@@ -5,6 +6,8 @@ export type PublicInvoicePayState = {
   canPay: boolean;
   remainingDepositNGN: number;
   remainingBalanceNGN: number;
+  remainingDepositDocument: number;
+  remainingBalanceDocument: number;
   depositRequiredNGN: number;
   confirmedNGN: number;
   orderId: string | null;
@@ -12,6 +15,9 @@ export type PublicInvoicePayState = {
   pieceLabel: string;
   fxRateLocked: number | null;
   fxGbpRateLocked: number | null;
+  availableCurrencies: PaymentCurrency[];
+  defaultCurrency: PaymentCurrency | null;
+  createsAccount: boolean;
 };
 
 /** Public invoice DTO — amount, piece, reference. No client record. */

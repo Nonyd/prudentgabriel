@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
 import { logActivity, logError } from "@/lib/logger";
+import { measurementPlausibilityError } from "@/lib/measurements";
 
 type Params = { params: Promise<{ clientId: string }> };
 
@@ -62,6 +63,16 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const cleaned = Object.fromEntries(
       Object.entries(data).filter(([, v]) => v !== undefined),
     );
+
+    const plausibility = measurementPlausibilityError({
+      bust: typeof cleaned.bust === "number" ? cleaned.bust : null,
+      waist: typeof cleaned.waist === "number" ? cleaned.waist : null,
+      hips: typeof cleaned.hips === "number" ? cleaned.hips : null,
+      unit: typeof cleaned.unit === "string" ? cleaned.unit : "inches",
+    });
+    if (plausibility) {
+      return NextResponse.json({ error: plausibility }, { status: 400 });
+    }
 
     const item = await prisma.measurement.upsert({
       where: { clientId },
