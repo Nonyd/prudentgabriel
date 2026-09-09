@@ -241,19 +241,6 @@ export function Footer({
               data-footer-legal=""
               className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-6"
             >
-              <p
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "11px",
-                  color: "var(--text-light)",
-                }}
-              >
-                {copyright}
-                {" "}
-                <span>
-                  Developed with love by SonsHub Media Ltd
-                </span>
-              </p>
               <PaymentMarks className="flex items-center gap-1.5 text-text-mid" />
               <a
                 href={instagramUrl}
@@ -290,6 +277,20 @@ export function Footer({
               <button type="button" onClick={openCookieModal} className="transition-colors hover:text-choc">
                 Cookie Settings
               </button>
+            </p>
+
+            <p
+              data-footer-copyright=""
+              className="text-left"
+              style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: "11px",
+                color: "var(--text-light)",
+              }}
+            >
+              {copyright}
+              {" "}
+              <span>Developed with love by SonsHub Media Ltd</span>
             </p>
           </div>
         </div>

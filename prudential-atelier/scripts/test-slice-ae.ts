@@ -179,6 +179,11 @@ function testSourceContracts() {
   assert(footer.includes("data-footer-stay-close"), "newsletter is the stay-close column");
   assert(footer.includes("col-span-2"), "newsletter goes full width on mobile");
   assert(footer.includes("Developed with love by SonsHub Media Ltd"), "credit lives in the legal row");
+  assert(footer.includes("data-footer-copyright"), "copyright is its own last line");
+  const privacyIdx = footer.indexOf('href: "/privacy-policy"');
+  const cookieSettingsIdx = footer.indexOf("Cookie Settings");
+  const copyrightIdx = footer.indexOf("data-footer-copyright");
+  assert(privacyIdx >= 0 && cookieSettingsIdx >= 0 && copyrightIdx > cookieSettingsIdx, "copyright follows the privacy policy line");
   assert(!footer.includes("International luxury couture"), "house tagline left the footer");
 }
 
