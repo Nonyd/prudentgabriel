@@ -258,7 +258,7 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfModel }) {
           <View style={[styles.termsBox, { backgroundColor: "#FDECEA" }]}>
             <Text style={styles.blockTitle}>Validity</Text>
             <Text style={styles.termsText}>
-              This invoice's quoted price expired on{" "}
+              The quoted price on this invoice expired on{" "}
               {data.expiresAt ? data.expiresAt.toLocaleDateString("en-GB") : "the stated date"}. Payment is still
               accepted; the house may honour or revise the figure.
             </Text>
