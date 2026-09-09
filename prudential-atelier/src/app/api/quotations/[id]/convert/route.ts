@@ -4,6 +4,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { logActivity, logError } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { convertQuotationToOrder } from "@/lib/quotation-convert";
+import { EUR_QUOTE_UNSUPPORTED } from "@/lib/atelier-quote-currency";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -68,6 +69,9 @@ export async function POST(_req: NextRequest, { params }: Params) {
         { error: "Superseded quotations cannot be converted" },
         { status: 400 },
       );
+    }
+    if (e instanceof Error && e.message === "EUR_UNSUPPORTED") {
+      return NextResponse.json({ error: EUR_QUOTE_UNSUPPORTED }, { status: 400 });
     }
     await logError({
       severity: "WARNING",

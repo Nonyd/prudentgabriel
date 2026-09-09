@@ -20,6 +20,7 @@ import {
 import { publicInvoiceOmitsClientRecord } from "../src/lib/public-invoice-payload";
 import { asInvoiceCurrency, formatInvoiceCurrency } from "../src/lib/invoice";
 import { adminReceiptSrc } from "../src/lib/media/admin-receipt-src";
+import { EUR_QUOTE_UNSUPPORTED, quotationCurrencySendable } from "../src/lib/atelier-quote-currency";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -150,6 +151,15 @@ function run() {
   assert(convertSrc.includes("currentStage: BespokeStage.SKETCHING_CONCEPT"), "convert starts production at sketching");
   assert(convertSrc.includes("INTAKE_STAGES"), "convert writes stages 1–4");
   assert(convertSrc.includes("orderStageCompletion.create"), "convert writes live completions, not only StageUpdate");
+
+  const eur = quotationCurrencySendable("EUR");
+  assert(!eur.ok && eur.error === EUR_QUOTE_UNSUPPORTED, "EUR send is refused with the admin sentence");
+  assert(quotationCurrencySendable("GBP").ok, "GBP quotations remain sendable");
+  assert(quotationCurrencySendable("USD").ok, "USD quotations remain sendable");
+  assert(quotationCurrencySendable("NGN").ok, "naira quotations remain sendable");
+  const sendSrc = readFileSync(resolve("src/app/api/quotations/[id]/send/route.ts"), "utf8");
+  assert(sendSrc.includes("quotationCurrencySendable"), "send route refuses EUR before the email goes out");
+  assert(convertSrc.includes("quotationCurrencySendable"), "convert refuses EUR so staff cannot skip send");
 
   console.log("slice-ai: ok");
 }

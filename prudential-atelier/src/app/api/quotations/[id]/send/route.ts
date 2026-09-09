@@ -9,6 +9,7 @@ import { notifyQuoteReady } from "@/lib/customer-notifications";
 import { getLockedFx, persistableFxFields } from "@/lib/fx";
 import { lockedDocumentTotal } from "@/lib/atelier-fx";
 import { buildQuoteEmailHtml } from "@/lib/quote-email";
+import { quotationCurrencySendable } from "@/lib/atelier-quote-currency";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -46,6 +47,11 @@ export async function POST(_req: NextRequest, { params }: Params) {
     }
     if (quote.status === QuoteStatus.CONVERTED) {
       return NextResponse.json({ error: "Converted quotations cannot be sent" }, { status: 400 });
+    }
+
+    const currencyGate = quotationCurrencySendable(quote.currency);
+    if (!currencyGate.ok) {
+      return NextResponse.json({ error: currencyGate.error }, { status: 400 });
     }
 
     const base = getPublicAppUrl().replace(/\/+$/, "");

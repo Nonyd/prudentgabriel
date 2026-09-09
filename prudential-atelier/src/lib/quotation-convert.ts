@@ -18,6 +18,7 @@ import {
   lockedFxFromAtelier,
 } from "@/lib/atelier-fx";
 import { INTAKE_STAGES, intakeStageNotes } from "@/lib/atelier/intake-stages";
+import { quotationCurrencySendable } from "@/lib/atelier-quote-currency";
 
 type QuotationRecord = {
   id: string;
@@ -107,6 +108,11 @@ export async function convertQuotationToOrder(
 ): Promise<{ orderId: string; orderRef: string; invoiceId: string; invoiceNumber: string }> {
   if (quote.status === QuoteStatus.SUPERSEDED) {
     throw new Error("SUPERSEDED");
+  }
+
+  const currencyGate = quotationCurrencySendable(quote.currency);
+  if (!currencyGate.ok) {
+    throw new Error("EUR_UNSUPPORTED");
   }
 
   const existingOrder = await prisma.bespokeOrder.findFirst({

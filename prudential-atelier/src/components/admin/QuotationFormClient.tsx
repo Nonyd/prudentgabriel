@@ -241,8 +241,9 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
       toast.success("Quotation saved as draft");
       if (sendAfter && data.item?.id) {
         const sendRes = await fetch(`/api/quotations/${data.item.id}/send`, { method: "POST" });
+        const sendData = (await sendRes.json()) as { error?: string };
         if (!sendRes.ok) {
-          toast.error("Saved but failed to send");
+          toast.error(sendData.error ?? "Saved but failed to send");
         } else {
           toast.success("Quotation sent to client");
         }
@@ -384,7 +385,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
           </div>
           {currency === "EUR" ? (
             <p className="mt-2 font-body text-xs text-[#6B6B68]">
-              Euro is for this quotation and the invoice it becomes — not a storefront checkout currency.
+              Euro quotations aren&apos;t supported yet; use GBP, USD or naira. There is no locked euro rate, so a euro figure would be booked as naira.
             </p>
           ) : null}
         </section>
