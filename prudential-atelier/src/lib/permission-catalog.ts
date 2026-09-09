@@ -237,6 +237,15 @@ export const ROLE_PERMISSION_PROPOSALS: readonly RolePermissionProposal[] = [
       "This is a regression, not a gap. An older role list allowed them on the quotations route; Step 2 tightened the gate to the quotations permission, which this role never had. Restoring it is a fix.",
   },
   {
+    id: "t3-invoices-bespoke",
+    role: "BESPOKE_MANAGER",
+    add: ["invoices"],
+    kind: "gap",
+    title: "Let Bespoke Manager open invoices",
+    reason:
+      "They can already quote once quotations are restored. Invoices is the next desk: convert, send the deposit invoice, and collect. Without it a manager who can quote still stops one step short of the money.",
+  },
+  {
     id: "t3-hr-performance",
     role: "HR_MANAGER",
     add: ["reports.staff"],

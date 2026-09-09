@@ -1,6 +1,7 @@
 /**
- * Apply t3-quotations-bespoke and t3-clients-bespoke through the Slice T commit path.
- * Does not edit ROLE_PERMISSIONS seed. Logs via logPermissionChange.
+ * Apply t3-quotations-bespoke, t3-clients-bespoke and t3-invoices-bespoke
+ * through the Slice T commit path. Does not edit ROLE_PERMISSIONS seed.
+ * Logs via logPermissionChange.
  *
  *   pnpm tsx --tsconfig tsconfig.scripts.json scripts/apply-t3-bespoke-manager.ts
  */
@@ -37,9 +38,9 @@ async function run() {
     expires: new Date(Date.now() + 60_000).toISOString(),
   } as Session;
 
-  const ids = ["t3-quotations-bespoke", "t3-clients-bespoke"] as const;
+  const ids = ["t3-quotations-bespoke", "t3-clients-bespoke", "t3-invoices-bespoke"] as const;
   const proposals = ROLE_PERMISSION_PROPOSALS.filter((p) => ids.includes(p.id as (typeof ids)[number]));
-  if (proposals.length !== 2) throw new Error("Expected both t3 proposals in the catalog");
+  if (proposals.length !== 3) throw new Error("Expected all three t3-bespoke-manager proposals in the catalog");
 
   let permissions = await currentPermissions("BESPOKE_MANAGER");
   const next = new Set(permissions);

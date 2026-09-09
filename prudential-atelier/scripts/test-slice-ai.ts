@@ -21,6 +21,8 @@ import { publicInvoiceOmitsClientRecord } from "../src/lib/public-invoice-payloa
 import { asInvoiceCurrency, formatInvoiceCurrency } from "../src/lib/invoice";
 import { adminReceiptSrc } from "../src/lib/media/admin-receipt-src";
 import { EUR_QUOTE_UNSUPPORTED, quotationCurrencySendable } from "../src/lib/atelier-quote-currency";
+import { ROLE_PERMISSION_PROPOSALS } from "../src/lib/permission-catalog";
+import { ROLE_PERMISSIONS } from "../src/lib/roles";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -160,6 +162,23 @@ function run() {
   const sendSrc = readFileSync(resolve("src/app/api/quotations/[id]/send/route.ts"), "utf8");
   assert(sendSrc.includes("quotationCurrencySendable"), "send route refuses EUR before the email goes out");
   assert(convertSrc.includes("quotationCurrencySendable"), "convert refuses EUR so staff cannot skip send");
+
+  const bespokeIds = ["t3-quotations-bespoke", "t3-clients-bespoke", "t3-invoices-bespoke"];
+  for (const id of bespokeIds) {
+    const p = ROLE_PERMISSION_PROPOSALS.find((row) => row.id === id);
+    assert(p?.role === "BESPOKE_MANAGER", `${id} targets Bespoke Manager`);
+  }
+  assert(
+    ROLE_PERMISSION_PROPOSALS.find((p) => p.id === "t3-invoices-bespoke")?.add.includes("invoices"),
+    "t3-invoices-bespoke grants invoices",
+  );
+  const seed = ROLE_PERMISSIONS.BESPOKE_MANAGER as readonly string[];
+  assert(!seed.includes("invoices"), "invoices is not seeded onto Bespoke Manager");
+  assert(!seed.includes("quotations"), "quotations is not seeded onto Bespoke Manager");
+  const applySrc = readFileSync(resolve("scripts/apply-t3-bespoke-manager.ts"), "utf8");
+  assert(applySrc.includes("t3-invoices-bespoke"), "apply script includes invoices proposal");
+  assert(applySrc.includes("commitRolePermissions"), "apply script uses Slice T commit, not a seed edit");
+  assert(applySrc.includes("proposals.length !== 3"), "apply script requires all three proposals");
 
   console.log("slice-ai: ok");
 }
