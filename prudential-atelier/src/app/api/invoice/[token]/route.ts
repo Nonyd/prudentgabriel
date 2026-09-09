@@ -11,6 +11,9 @@ import {
 } from "@/lib/public-invoice-payload";
 import { getPublicPaymentConfig } from "@/lib/payments/config";
 import { currenciesWithMethods, defaultPayCurrency } from "@/lib/invoice-pay-options";
+import { getHouseDocumentTerms } from "@/lib/invoice-terms";
+import { assembleInvoiceDocumentRender } from "@/lib/invoice-document";
+import { expiredInvoiceBlocksPayment, isDocumentExpired } from "@/lib/document-validity";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: string }> }) {
   const { token } = await ctx.params;
@@ -51,10 +54,11 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
   });
 
   const cur = asPublicInvoiceCurrency(inv.currency);
-  const [businessDetails, bankDetails, payConfig] = await Promise.all([
+  const [businessDetails, bankDetails, payConfig, houseTerms] = await Promise.all([
     getInvoiceSettings(),
     getBankDetails(cur),
     getPublicPaymentConfig("ATELIER"),
+    getHouseDocumentTerms(),
   ]);
 
   const order = inv.quotationId
@@ -96,6 +100,23 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
   });
   const remainingBalanceDocument = ngnToDocument(remainingBalanceNGN, inv.currency, fx);
   const remainingDepositDocument = ngnToDocument(remainingDeposit, inv.currency, fx);
+  const render = assembleInvoiceDocumentRender({
+    currency: cur,
+    expiresAt: inv.expiresAt,
+    houseTerms,
+    bank: bankDetails,
+    depositPercent: inv.depositPercent,
+    depositRequired: inv.depositRequired,
+    depositPaid: inv.depositPaid,
+    balanceDue: inv.balanceDue,
+  });
+  const expired = isDocumentExpired(inv.expiresAt);
+  const canPay = Boolean(
+    order &&
+      remainingBalanceNGN > 0 &&
+      payableStatuses.includes(status) &&
+      (!expired || !expiredInvoiceBlocksPayment()),
+  );
   const payload: PublicInvoiceViewPayload = {
     invoiceNumber: inv.invoiceNumber,
     currency: inv.currency,
@@ -110,8 +131,14 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
     depositRequired: inv.depositRequired,
     depositPaid: inv.depositPaid,
     balanceDue: inv.balanceDue,
+    depositPercent: inv.depositPercent,
+    depositLabel: render.depositLabel,
     paymentTerms: inv.paymentTerms,
     dueDate: inv.dueDate?.toISOString() ?? null,
+    expiresAt: inv.expiresAt?.toISOString() ?? null,
+    expired,
+    payInstruction: render.payInstruction,
+    houseTerms: render.houseTerms,
     paidAt: inv.paidAt?.toISOString() ?? null,
     clientNote: inv.clientNote,
     showVat: inv.showVat,
@@ -121,7 +148,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
     businessDetails,
     bankDetails,
     pay: {
-      canPay: Boolean(order && remainingBalanceNGN > 0 && payableStatuses.includes(status)),
+      canPay,
       remainingDepositNGN: remainingDeposit,
       remainingBalanceNGN,
       remainingDepositDocument,

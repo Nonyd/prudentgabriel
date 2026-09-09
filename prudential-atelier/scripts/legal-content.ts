@@ -195,9 +195,9 @@ At Prudential Atelier, every piece is crafted with exceptional care. We want you
 
 ## Atelier & Custom Commissions
 
-Custom and atelier garments are made exclusively for you and cannot be returned or exchanged once production has begun (after Stage 4: Payment Confirmation).
+Custom and atelier garments are made exclusively for you. Payments are refundable only where the house fails to meet the agreement and cannot offer a reasonable solution. Change of mind after production has begun (after Stage 4: Payment Confirmation) is not a ground for refund.
 
-If there is a fault with the garment due to our craftsmanship, we will make the necessary alterations or repairs at no cost to you.
+If there is a fault with the garment due to our craftsmanship, that is a failure of the agreement: we will make the necessary alterations or repairs, or refund where we cannot offer a reasonable solution.
 
 ## Bridal Wear
 
@@ -205,7 +205,7 @@ Bridal garments are custom-made and follow the same policy as atelier commission
 
 ## Faulty Items
 
-If you receive a faulty or damaged item, please contact us within 48 hours of delivery with photographs. We will arrange a replacement or refund at our discretion.
+If you receive a faulty or damaged item, please contact us within 48 hours of delivery with photographs. That window is how we meet the agreement when the piece is not in good and useable condition. We will arrange a replacement, repair, or refund where we cannot offer a reasonable solution.
 
 ## Contact
 

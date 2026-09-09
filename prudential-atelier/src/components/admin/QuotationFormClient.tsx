@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { InvoicesQuotationsNav } from "@/components/admin/InvoicesQuotationsNav";
 import { formatInvoiceCurrency } from "@/lib/invoice";
+import { formatDepositLabel, depositAmountFromPercent, clampDepositPercent } from "@/lib/invoice-deposit";
 import { adminReceiptSrc } from "@/lib/media/admin-receipt-src";
 import type { InvoiceCurrency } from "@/types/invoice";
 
@@ -80,6 +81,8 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
   const [tax, setTax] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [expiresAt, setExpiresAt] = useState("");
+  const [depositPercent, setDepositPercent] = useState(70);
+  const [defaultDepositPercent, setDefaultDepositPercent] = useState(70);
   const [currency, setCurrency] = useState<InvoiceCurrency>("NGN");
   const [lineItems, setLineItems] = useState<LineItem[]>([
     { description: "", quantity: 1, unitPrice: 0, total: 0 },
@@ -145,6 +148,24 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
       void loadConsultation(initialConsultationId);
     }
   }, [initialConsultationId, loadConsultation]);
+
+  useEffect(() => {
+    void (async () => {
+      const res = await fetch("/api/admin/settings");
+      if (!res.ok) return;
+      const j = (await res.json()) as { settings: Record<string, { key: string; value: string }[]> };
+      const pick = (rows: { key: string; value: string }[] | undefined, k: string) =>
+        rows?.find((r) => r.key === k)?.value ?? "";
+      const cmsPct = Number(pick(j.settings.PAYMENTS, "bespoke_deposit_percent"));
+      const pct = clampDepositPercent(Number.isFinite(cmsPct) ? cmsPct : 70);
+      setDefaultDepositPercent(pct);
+      setDepositPercent(pct);
+      const validityDays = Number(pick(j.settings.INVOICE, "invoice_default_validity_days")) || 14;
+      const v = new Date();
+      v.setDate(v.getDate() + validityDays);
+      setExpiresAt(v.toISOString().slice(0, 10));
+    })();
+  }, []);
 
   function updateLine(index: number, patch: Partial<LineItem>) {
     setLineItems((rows) =>
@@ -228,6 +249,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
           discount,
           notes: notes || undefined,
           expiresAt: expiresAt || undefined,
+          depositPercent,
           currency,
           consultationId: consultationId ?? undefined,
         }),
@@ -496,6 +518,24 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
               className="w-full rounded border border-sand px-3 py-2 font-sans text-sm"
             />
           </label>
+          <label className="block">
+            <span className="mb-1 block font-sans text-xs font-medium text-text-mid">Deposit %</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={depositPercent}
+              onChange={(e) => setDepositPercent(clampDepositPercent(Number(e.target.value)))}
+              className="w-full rounded border border-sand px-3 py-2 font-sans text-sm"
+            />
+            <span className="mt-1 block font-sans text-xs text-olive">
+              {formatDepositLabel(
+                depositPercent,
+                formatInvoiceCurrency(depositAmountFromPercent(total, depositPercent), currency),
+              )}
+              {` · default ${defaultDepositPercent}%`}
+            </span>
+          </label>
         </section>
 
         <label className="block">
@@ -512,6 +552,13 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
           <div className="font-sans text-sm text-text-mid">
             Subtotal {formatInvoiceCurrency(subtotal, currency)} · Total{" "}
             <span className="font-semibold text-choc">{formatInvoiceCurrency(total, currency)}</span>
+            <span className="block text-xs">
+              Deposit{" "}
+              {formatDepositLabel(
+                depositPercent,
+                formatInvoiceCurrency(depositAmountFromPercent(total, depositPercent), currency),
+              )}
+            </span>
           </div>
           <div className="flex gap-2">
             <Button variant="ghost" loading={saving} onClick={() => void handleSubmit(false)}>

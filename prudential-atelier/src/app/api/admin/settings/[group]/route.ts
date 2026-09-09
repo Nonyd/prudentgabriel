@@ -4,6 +4,7 @@ import { permissionForSettingsGroup, requireAdminApi, resolveSessionAccess } fro
 import { prisma } from "@/lib/prisma";
 import { setSetting } from "@/lib/settings";
 import { ensurePaymentSettingKeys } from "@/lib/payment-settings-bootstrap";
+import { ensureInvoiceSettingKeys } from "@/lib/invoice-settings-bootstrap";
 import { ensureShippingSettingKeys } from "@/lib/shipping-settings-bootstrap";
 import { ensureAppearanceLogoSettingKeys } from "@/lib/appearance-settings-bootstrap";
 import { ensureStoreSettingKeys } from "@/lib/store-settings-bootstrap";
@@ -64,6 +65,10 @@ export async function GET(
     await ensurePaymentSettingKeys();
   }
 
+  if (group === "INVOICE") {
+    await ensureInvoiceSettingKeys();
+  }
+
   if (group === "SHIPPING") {
     await ensureShippingSettingKeys();
   }
@@ -119,6 +124,10 @@ export async function PATCH(
 
   if (group === "PAYMENTS") {
     await ensurePaymentSettingKeys();
+  }
+
+  if (group === "INVOICE") {
+    await ensureInvoiceSettingKeys();
   }
 
   if (group === "SHIPPING") {

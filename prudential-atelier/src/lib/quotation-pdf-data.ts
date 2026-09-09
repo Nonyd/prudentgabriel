@@ -1,8 +1,9 @@
 import type { Quotation } from "@prisma/client";
 import { nanoid } from "nanoid";
 import type { QuotationPdfModel, QuotationPdfLineItem } from "@/components/quotation/QuotationPDF";
-import { getBankDetails, getInvoiceSettings } from "@/lib/invoice";
-import { getBespokeDepositPercent } from "@/lib/payments/ledger";
+import { formatInvoiceCurrency, getBankDetails, getInvoiceSettings } from "@/lib/invoice";
+import { getHouseDocumentTerms } from "@/lib/invoice-terms";
+import { clampDepositPercent, depositAmountFromPercent, formatDepositLabel } from "@/lib/invoice-deposit";
 
 function parseQuoteLines(raw: unknown): QuotationPdfLineItem[] {
   if (!Array.isArray(raw)) return [];
@@ -30,12 +31,13 @@ export async function buildQuotationPdfModel(quote: Quotation): Promise<Quotatio
   const currency = (["NGN", "USD", "GBP", "EUR"].includes(quote.currency)
     ? quote.currency
     : "NGN") as "NGN" | "USD" | "GBP" | "EUR";
-  const [business, bank, depositPercent] = await Promise.all([
+  const [business, bank, houseTerms] = await Promise.all([
     getInvoiceSettings(),
     getBankDetails(currency),
-    getBespokeDepositPercent(),
+    getHouseDocumentTerms(),
   ]);
-  const depositRequired = Math.round(quote.total * (depositPercent / 100) * 100) / 100;
+  const depositPercent = clampDepositPercent(quote.depositPercent);
+  const depositRequired = depositAmountFromPercent(quote.total, depositPercent);
   const expiresLabel = quote.expiresAt
     ? quote.expiresAt.toLocaleDateString("en-GB", {
         day: "numeric",
@@ -43,6 +45,7 @@ export async function buildQuotationPdfModel(quote: Quotation): Promise<Quotatio
         year: "numeric",
       })
     : null;
+  const depositLabel = formatDepositLabel(depositPercent, formatInvoiceCurrency(depositRequired, currency));
 
   return {
     quoteRef: quote.quoteRef,
@@ -61,9 +64,11 @@ export async function buildQuotationPdfModel(quote: Quotation): Promise<Quotatio
     total: quote.total,
     depositPercent,
     depositRequired,
+    depositLabel,
+    houseTerms,
     validityStatement: expiresLabel
       ? `This quotation is valid until ${expiresLabel}. Prices and availability may change after that date.`
-      : "This quotation is valid for 14 days from the issue date unless otherwise stated.",
+      : "This quotation is valid for the period shown unless otherwise stated.",
     notes: quote.notes,
     business,
     bank,

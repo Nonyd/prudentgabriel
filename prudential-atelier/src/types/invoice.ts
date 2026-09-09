@@ -22,6 +22,7 @@ export interface InvoiceBusinessDetails {
   showRc: boolean;
   logoUrl: string;
   footerNote: string;
+  footerHandle: string;
 }
 
 export interface InvoiceBankDetails {

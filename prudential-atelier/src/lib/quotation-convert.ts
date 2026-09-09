@@ -3,11 +3,13 @@ import { nanoid } from "nanoid";
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { generateBespokeOrderRef } from "@/lib/bespoke-stages";
-import { generateInvoiceNumber, calculateInvoiceTotals, syncLineItemAmounts } from "@/lib/invoice";
+import { generateInvoiceNumber, calculateInvoiceTotals, syncLineItemAmounts, getInvoiceDefaultValidityDays } from "@/lib/invoice";
 import {
   buildDepositPaymentTerms,
   getBespokeDepositPercent,
 } from "@/lib/payments/ledger";
+import { clampDepositPercent } from "@/lib/invoice-deposit";
+import { defaultExpiresAt } from "@/lib/document-validity";
 import type { InvoiceLineItem } from "@/types/invoice";
 import { logServerError } from "@/lib/logger";
 import { getLockedFx, persistableFxFields, type LockedFx } from "@/lib/fx";
@@ -43,6 +45,8 @@ type QuotationRecord = {
   fxRateStale?: boolean | null;
   fxUsdAmountLocked?: number | null;
   fxGbpAmountLocked?: number | null;
+  depositPercent?: number | null;
+  expiresAt?: Date | null;
 };
 
 async function uniqueOrderRef(): Promise<string> {
@@ -126,7 +130,9 @@ export async function convertQuotationToOrder(
     where: { user: { email: quote.clientEmail } },
   });
 
-  const depositPercent = await getBespokeDepositPercent();
+  const depositPercent = clampDepositPercent(
+    quote.depositPercent != null ? quote.depositPercent : await getBespokeDepositPercent(),
+  );
   const actorId = await resolveIntakeActorId(createdBy ?? quote.createdBy);
 
   const items = mapLineItems(quote.lineItems);
@@ -174,6 +180,9 @@ export async function convertQuotationToOrder(
   const exchangeRate = invoiceExchangeRateFromLocked(currency, fx);
   const totalNGN = documentAmountToNGN(quote.total, currency, fx);
 
+  const validityDays = await getInvoiceDefaultValidityDays();
+  const expiresAt = quote.expiresAt ?? defaultExpiresAt(new Date(), validityDays);
+
   const result = await prisma.$transaction(async (tx) => {
     const invoiceNumber = await generateInvoiceNumber(tx);
     const invoice = await tx.invoice.create({
@@ -199,7 +208,9 @@ export async function convertQuotationToOrder(
         depositRequired: totals.depositRequired,
         depositPaid: 0,
         balanceDue: totals.balanceDue,
+        depositPercent,
         paymentTerms,
+        expiresAt,
         notes: quote.notes,
         paymentHistory: [],
         createdBy: createdBy ?? null,

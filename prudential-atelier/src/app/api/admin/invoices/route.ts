@@ -8,8 +8,11 @@ import {
   calculateInvoiceTotals,
   generateInvoiceNumber,
   getInvoiceDefaultPaymentTerms,
+  getInvoiceDefaultValidityDays,
   syncLineItemAmounts,
 } from "@/lib/invoice";
+import { clampDepositPercent } from "@/lib/invoice-deposit";
+import { defaultExpiresAt, parseDateInput } from "@/lib/document-validity";
 import { getSetting } from "@/lib/settings";
 import { mapBespokeOrdersByRequestId, mapBespokeOrdersByClientEmail } from "@/lib/invoice-bespoke-order";
 import { roundToKobo } from "@/lib/money";
@@ -42,6 +45,7 @@ const postSchema = z.object({
   vatPercent: z.number().nonnegative().optional(),
   paymentTerms: z.string().optional().nullable(),
   dueDate: z.string().optional().nullable(),
+  expiresAt: z.string().optional().nullable(),
   clientNote: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   showVat: z.boolean().optional(),
@@ -288,8 +292,8 @@ export async function POST(req: NextRequest) {
   );
 
   const { getBespokeDepositPercent } = await import("@/lib/payments/ledger");
-  const defaultBespokeDeposit = bespoke ? await getBespokeDepositPercent() : 0;
-  const depositPct = d.depositPercent ?? defaultBespokeDeposit;
+  const cmsDefault = await getBespokeDepositPercent();
+  const depositPct = clampDepositPercent(d.depositPercent ?? (bespoke ? cmsDefault : 0));
   const discountType = d.discountType ?? null;
   const discountValue = d.discountValue ?? 0;
   const vatEnabled = d.vatEnabled ?? false;
@@ -312,6 +316,8 @@ export async function POST(req: NextRequest) {
     const dt = new Date(d.dueDate);
     if (!Number.isNaN(dt.getTime())) dueDate = dt;
   }
+  const validityDays = await getInvoiceDefaultValidityDays();
+  const expiresAt = d.expiresAt ? parseDateInput(d.expiresAt) : defaultExpiresAt(new Date(), validityDays);
 
   const created = await prisma.$transaction(async (tx) => {
     const number = await generateInvoiceNumber(tx);
@@ -342,8 +348,10 @@ export async function POST(req: NextRequest) {
         depositRequired: totals.depositRequired,
         depositPaid: 0,
         balanceDue: totals.balanceDue,
+        depositPercent: depositPct,
         paymentTerms,
         dueDate,
+        expiresAt,
         clientNote: d.clientNote ?? null,
         notes: d.notes ?? null,
         showVat: d.showVat ?? false,

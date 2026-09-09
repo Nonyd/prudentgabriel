@@ -5,6 +5,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { calculateInvoiceTotals, parseInvoiceLineItems, syncLineItemAmounts } from "@/lib/invoice";
+import { clampDepositPercent } from "@/lib/invoice-deposit";
+import { parseDateInput } from "@/lib/document-validity";
 import type { InvoiceLineItem } from "@/types/invoice";
 
 const lineItemInput = z.object({
@@ -33,6 +35,7 @@ const patchSchema = z.object({
   vatPercent: z.number().nonnegative().optional(),
   paymentTerms: z.string().optional().nullable(),
   dueDate: z.string().optional().nullable(),
+  expiresAt: z.string().optional().nullable(),
   clientNote: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   showVat: z.boolean().optional(),
@@ -123,6 +126,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     }
   }
 
+  if (p.expiresAt !== undefined) {
+    data.expiresAt = p.expiresAt ? parseDateInput(p.expiresAt) : null;
+  }
+
   if (p.discountType !== undefined) data.discountType = p.discountType;
   if (p.discountValue !== undefined) data.discountValue = p.discountValue;
   if (p.vatEnabled !== undefined) data.vatEnabled = p.vatEnabled;
@@ -160,8 +167,12 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     const items = p.lineItems ? synced : parseInvoiceLineItems(prev.lineItems);
     const finalItems = syncLineItemAmounts(items);
     let depositPct =
-      prev.total > 0 && prev.depositRequired > 0 ? (prev.depositRequired / prev.total) * 100 : 0;
-    if (p.depositPercent !== undefined) depositPct = p.depositPercent;
+      prev.depositPercent > 0 || prev.depositRequired === 0
+        ? prev.depositPercent
+        : prev.total > 0 && prev.depositRequired > 0
+          ? (prev.depositRequired / prev.total) * 100
+          : 0;
+    if (p.depositPercent !== undefined) depositPct = clampDepositPercent(p.depositPercent);
     const totals = calculateInvoiceTotals({
       lineItems: finalItems,
       discountType: (mergedDiscountType as "PERCENTAGE" | "FIXED" | undefined) ?? undefined,
@@ -177,6 +188,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     data.vatAmount = totals.vatAmount;
     data.total = totals.total;
     data.depositRequired = totals.depositRequired;
+    data.depositPercent = depositPct;
     data.balanceDue = totals.balanceDue;
   }
 

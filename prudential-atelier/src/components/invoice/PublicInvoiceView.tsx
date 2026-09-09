@@ -86,6 +86,13 @@ export function PublicInvoiceView({ token }: { token: string }) {
       <div className="px-6 py-3 font-body text-sm" style={{ backgroundColor: banner.bg, color: banner.text }}>
         {banner.label}
       </div>
+      {data.expired ? (
+        <div className="px-6 py-3 font-body text-sm" style={{ backgroundColor: "#FDECEA", color: "#8B1A1A" }}>
+          This quoted price expired
+          {data.expiresAt ? ` on ${new Date(data.expiresAt).toLocaleDateString("en-GB")}` : ""}. You can still pay;
+          the house may honour or revise the figure.
+        </div>
+      ) : null}
 
       <main className="mx-auto max-w-3xl px-6 py-10">
         <div className="flex flex-wrap items-start justify-between gap-6">
@@ -108,6 +115,12 @@ export function PublicInvoiceView({ token }: { token: string }) {
           <div>
             <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-[#6B6B68]">Date issued</p>
             <p className="mt-1 font-body text-sm text-ink">{new Date(data.createdAt).toLocaleDateString("en-GB")}</p>
+          </div>
+          <div>
+            <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-[#6B6B68]">Valid until</p>
+            <p className="mt-1 font-body text-sm font-medium text-ink">
+              {data.expiresAt ? new Date(data.expiresAt).toLocaleDateString("en-GB") : "—"}
+            </p>
           </div>
           <div>
             <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-[#6B6B68]">Due date</p>
@@ -188,7 +201,7 @@ export function PublicInvoiceView({ token }: { token: string }) {
             <>
               <div className="flex justify-end gap-8 text-olive">
                 <span>Deposit required</span>
-                <span>{formatInvoiceCurrency(data.depositRequired, cur)}</span>
+                <span>{data.depositLabel}</span>
               </div>
               <div className="flex justify-end gap-8">
                 <span>Balance due</span>
@@ -199,6 +212,13 @@ export function PublicInvoiceView({ token }: { token: string }) {
             </>
           ) : null}
         </div>
+
+        {data.payInstruction ? (
+          <div className="mt-8 border border-[#EBEBEA] bg-[#FAFAF8] p-5">
+            <p className="font-body text-[10px] font-medium uppercase text-[#6B6B68]">Kindly pay</p>
+            <p className="mt-2 font-body text-sm text-ink">{data.payInstruction}</p>
+          </div>
+        ) : null}
 
         {data.paymentTerms ? (
           <div className="mt-8 border border-[#EBEBEA] bg-[#FAFAF8] p-5">
@@ -233,12 +253,29 @@ export function PublicInvoiceView({ token }: { token: string }) {
         </div>
         ) : null}
 
+        {data.houseTerms?.length ? (
+          <div className="mt-8 border border-[#EBEBEA] bg-[#FAFAF8] p-5">
+            <p className="font-body text-[10px] font-medium uppercase text-[#6B6B68]">Terms</p>
+            <ul className="mt-3 space-y-3">
+              {data.houseTerms.map((term) => (
+                <li key={term.key}>
+                  <p className="font-body text-sm font-medium text-ink">{term.title}</p>
+                  <p className="mt-1 font-body text-sm text-[#6B6B68]">{term.body}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
         {data.clientNote ? <p className="mt-6 font-body text-sm italic text-[#6B6B68]">{data.clientNote}</p> : null}
 
         <PublicInvoicePayClient token={token} pay={data.pay} currency={data.currency} />
 
         {b.footerNote ? (
           <p className="mt-10 text-center font-display text-lg italic text-[#6B6B68]">{b.footerNote}</p>
+        ) : null}
+        {b.footerHandle ? (
+          <p className="mt-2 text-center font-body text-xs tracking-[0.12em] text-[#6B6B68]">{b.footerHandle}</p>
         ) : null}
       </main>
 

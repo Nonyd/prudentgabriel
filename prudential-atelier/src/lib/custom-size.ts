@@ -4,7 +4,7 @@ import { isStandardSizeLabel, isTypedUnit, sortBySize, toCanonicalCm, type Typed
 export const CUSTOM_CART_SIZE = "Custom";
 
 export const CUSTOM_RETURNS_COPY =
-  "This piece is cut to the measurements you entered. It cannot be returned or exchanged.";
+  "This piece is cut to the measurements you entered. It cannot be returned for a change of mind. Payments are refundable only where the house fails to meet the agreement and cannot offer a reasonable solution.";
 
 export const CUSTOM_LEAD_COPY = (days: number) =>
   `Made to your measurements. Allow about ${days} day${days === 1 ? "" : "s"} before dispatch.`;

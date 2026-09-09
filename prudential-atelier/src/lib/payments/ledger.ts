@@ -53,7 +53,7 @@ export function gatewayToPaymentMethod(gateway: PaymentGateway | null | undefine
   }
 }
 
-/** CMS-managed atelier deposit % (default 70). RTW is unaffected. */
+/** CMS-managed default atelier deposit %. Per-quotation / per-invoice values override this. RTW is unaffected. */
 export async function getBespokeDepositPercent(): Promise<number> {
   const raw = await getSetting("bespoke_deposit_percent");
   const n = raw != null ? Number.parseFloat(raw) : 70;
@@ -68,8 +68,8 @@ export function buildDepositPaymentTerms(params: {
 }): string {
   const pct = params.depositPercent;
   const total = params.total;
-  const deposit = Math.round(total * (pct / 100) * 100) / 100;
-  const balance = Math.round((total - deposit) * 100) / 100;
+  const deposit = roundToKobo(total * (pct / 100));
+  const balance = roundToKobo(total - deposit);
   const fmt = (n: number) =>
     params.currency === "USD"
       ? `$${n.toLocaleString("en-US")}`
@@ -124,7 +124,7 @@ async function resolveOrderDepositRequired(
       orderBy: { createdAt: "desc" },
       select: { depositRequired: true, exchangeRate: true },
     });
-    if (invoice && invoice.depositRequired > 0) {
+    if (invoice) {
       const rate = invoice.exchangeRate > 0 ? invoice.exchangeRate : 1;
       return dec(invoice.depositRequired).mul(rate).toDecimalPlaces(2);
     }

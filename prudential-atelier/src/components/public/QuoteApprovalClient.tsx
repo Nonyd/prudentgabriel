@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { formatDate } from "@/lib/utils";
 import { asInvoiceCurrency, formatInvoiceCurrency } from "@/lib/invoice";
+import { formatDepositLabel, depositAmountFromPercent, clampDepositPercent } from "@/lib/invoice-deposit";
+import type { HouseDocumentTerm } from "@/lib/invoice-terms";
 
 type QuoteLineItem = {
   description: string;
@@ -31,6 +33,8 @@ export type QuoteApprovalData = {
   expiresAt: string | null;
   approvalToken: string;
   currency: string;
+  depositPercent: number;
+  houseTerms: HouseDocumentTerm[];
 };
 
 export function QuoteApprovalClient({ quote }: { quote: QuoteApprovalData }) {
@@ -148,6 +152,13 @@ export function QuoteApprovalClient({ quote }: { quote: QuoteApprovalData }) {
             <p className="text-text-mid">Discount −{money(quote.discount)}</p>
           ) : null}
           <p className="font-serif text-xl text-choc">Total {money(quote.total)}</p>
+          <p className="text-text-mid">
+            Deposit{" "}
+            {formatDepositLabel(
+              clampDepositPercent(quote.depositPercent),
+              money(depositAmountFromPercent(quote.total, quote.depositPercent)),
+            )}
+          </p>
         </div>
 
         {quote.notes ? (
@@ -156,6 +167,22 @@ export function QuoteApprovalClient({ quote }: { quote: QuoteApprovalData }) {
               Notes
             </p>
             <p className="mt-2 font-sans text-sm text-text-mid whitespace-pre-wrap">{quote.notes}</p>
+          </div>
+        ) : null}
+
+          {quote.houseTerms?.length ? (
+          <div className="border-t border-sand px-6 py-4">
+            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
+              Terms
+            </p>
+            <ul className="mt-3 space-y-3">
+              {(quote.houseTerms ?? []).map((term) => (
+                <li key={term.key}>
+                  <p className="font-sans text-sm font-medium text-choc">{term.title}</p>
+                  <p className="mt-1 font-sans text-sm text-text-mid">{term.body}</p>
+                </li>
+              ))}
+            </ul>
           </div>
         ) : null}
 

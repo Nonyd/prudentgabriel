@@ -7,6 +7,9 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { allocateInvoiceNumber } from "@/lib/document-numbers";
 import { getLogoSettings } from "@/lib/logos";
 import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
+import { roundToKobo } from "@/lib/money";
+import { depositAmountFromPercent } from "@/lib/invoice-deposit";
+import { DEFAULT_INVOICE_FOOTER_HANDLE } from "@/lib/invoice-terms";
 import type {
   InvoiceBankDetails,
   InvoiceBusinessDetails,
@@ -72,6 +75,7 @@ export async function getInvoiceSettings(): Promise<InvoiceBusinessDetails> {
     showRc: boolFromSetting(s.invoice_show_rc),
     logoUrl: resolveAssetUrl(pdfLogo),
     footerNote: s.invoice_footer_note ?? "",
+    footerHandle: (s.invoice_footer_handle ?? DEFAULT_INVOICE_FOOTER_HANDLE).trim() || DEFAULT_INVOICE_FOOTER_HANDLE,
   };
 }
 
@@ -120,6 +124,12 @@ export async function getInvoiceDefaultDueDays(): Promise<number> {
   return Number.isFinite(n) && n >= 0 ? n : 7;
 }
 
+export async function getInvoiceDefaultValidityDays(): Promise<number> {
+  const v = await getSetting("invoice_default_validity_days");
+  const n = v != null ? Number.parseInt(v, 10) : 14;
+  return Number.isFinite(n) && n >= 0 ? n : 14;
+}
+
 export async function getInvoiceDefaultVatPercent(): Promise<number> {
   const v = await getSetting("invoice_default_vat");
   const n = v != null ? Number.parseFloat(v) : 0;
@@ -143,33 +153,31 @@ export function calculateInvoiceTotals(params: {
   balanceDue: number;
 } {
   const lineItems = params.lineItems;
-  const subtotal = lineItems.reduce((sum, li) => sum + li.quantity * li.unitPrice, 0);
+  const subtotal = roundToKobo(lineItems.reduce((sum, li) => sum + li.quantity * li.unitPrice, 0));
 
   let discountAmount = 0;
   const dtype = params.discountType;
   const dval = params.discountValue ?? 0;
   if (dtype === "PERCENTAGE" && dval > 0) {
-    discountAmount = Math.round(subtotal * (dval / 100) * 100) / 100;
+    discountAmount = roundToKobo(subtotal * (dval / 100));
   } else if (dtype === "FIXED" && dval > 0) {
-    discountAmount = Math.min(dval, subtotal);
+    discountAmount = roundToKobo(Math.min(dval, subtotal));
   }
 
-  const afterDiscount = Math.max(0, subtotal - discountAmount);
+  const afterDiscount = Math.max(0, roundToKobo(subtotal - discountAmount));
 
   let vatAmount = 0;
   if (params.vatEnabled && (params.vatPercent ?? 0) > 0) {
     const pct = params.vatPercent ?? 0;
-    vatAmount = Math.round(afterDiscount * (pct / 100) * 100) / 100;
+    vatAmount = roundToKobo(afterDiscount * (pct / 100));
   }
 
-  const total = Math.round((afterDiscount + vatAmount) * 100) / 100;
+  const total = roundToKobo(afterDiscount + vatAmount);
 
-  const depPct = params.depositPercent ?? 0;
-  const depositRequired =
-    depPct > 0 ? Math.round(total * (depPct / 100) * 100) / 100 : 0;
+  const depositRequired = depositAmountFromPercent(total, params.depositPercent ?? 0);
 
   const paid = params.depositPaid ?? 0;
-  const balanceDue = Math.round(Math.max(0, total - paid) * 100) / 100;
+  const balanceDue = roundToKobo(Math.max(0, total - paid));
 
   return { subtotal, discountAmount, vatAmount, total, depositRequired, balanceDue };
 }
@@ -199,6 +207,6 @@ export function formatInvoiceCurrency(amount: number, currency: InvoiceCurrency)
 export function syncLineItemAmounts(items: InvoiceLineItem[]): InvoiceLineItem[] {
   return items.map((li) => ({
     ...li,
-    amount: Math.round(li.quantity * li.unitPrice * 100) / 100,
+    amount: roundToKobo(li.quantity * li.unitPrice),
   }));
 }

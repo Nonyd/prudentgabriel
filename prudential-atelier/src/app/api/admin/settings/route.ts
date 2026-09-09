@@ -3,6 +3,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { isDeveloperSettingKey, isEmailTemplateSettingKey, redactSettingsForRole } from "@/lib/settings-developer";
 import { ensurePaymentSettingKeys } from "@/lib/payment-settings-bootstrap";
+import { ensureInvoiceSettingKeys } from "@/lib/invoice-settings-bootstrap";
 import type { SettingGroup } from "@prisma/client";
 
 const PASSWORD_MASK = "••••••••";
@@ -11,7 +12,7 @@ export async function GET() {
   const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
 
-  await ensurePaymentSettingKeys();
+  await Promise.all([ensurePaymentSettingKeys(), ensureInvoiceSettingKeys()]);
 
   const rows = await prisma.siteSetting.findMany({
     orderBy: [{ group: "asc" }, { sortOrder: "asc" }],

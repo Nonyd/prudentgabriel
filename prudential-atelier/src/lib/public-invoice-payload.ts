@@ -1,6 +1,7 @@
 import type { PaymentCurrency } from "@/lib/payments/index";
 import { parseInvoiceLineItems } from "@/lib/invoice";
 import type { InvoiceBankDetails, InvoiceBusinessDetails, InvoiceCurrency, InvoiceLineItem } from "@/types/invoice";
+import type { HouseDocumentTerm } from "@/lib/invoice-terms";
 
 export type PublicInvoicePayState = {
   canPay: boolean;
@@ -35,8 +36,14 @@ export type PublicInvoiceViewPayload = {
   depositRequired: number;
   depositPaid: number;
   balanceDue: number;
+  depositPercent: number;
+  depositLabel: string;
   paymentTerms: string | null;
   dueDate: string | null;
+  expiresAt: string | null;
+  expired: boolean;
+  payInstruction: string;
+  houseTerms: HouseDocumentTerm[];
   paidAt: string | null;
   clientNote: string | null;
   showVat: boolean;

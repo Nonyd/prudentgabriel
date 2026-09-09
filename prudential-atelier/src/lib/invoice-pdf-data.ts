@@ -5,6 +5,8 @@ import {
   getInvoiceSettings,
   parseInvoiceLineItems,
 } from "@/lib/invoice";
+import { getHouseDocumentTerms } from "@/lib/invoice-terms";
+import { assembleInvoiceDocumentRender } from "@/lib/invoice-document";
 import type { InvoiceCurrency } from "@/types/invoice";
 
 function asCurrency(c: string): InvoiceCurrency {
@@ -14,13 +16,28 @@ function asCurrency(c: string): InvoiceCurrency {
 
 export async function buildInvoicePdfModel(invoice: Invoice): Promise<InvoicePdfModel> {
   const cur = asCurrency(invoice.currency);
-  const [business, bank] = await Promise.all([getInvoiceSettings(), getBankDetails(cur)]);
+  const [business, bank, houseTerms] = await Promise.all([
+    getInvoiceSettings(),
+    getBankDetails(cur),
+    getHouseDocumentTerms(),
+  ]);
+  const render = assembleInvoiceDocumentRender({
+    currency: cur,
+    expiresAt: invoice.expiresAt,
+    houseTerms,
+    bank,
+    depositPercent: invoice.depositPercent,
+    depositRequired: invoice.depositRequired,
+    depositPaid: invoice.depositPaid,
+    balanceDue: invoice.balanceDue,
+  });
   return {
     invoiceNumber: invoice.invoiceNumber,
     status: invoice.status,
     currency: cur,
     createdAt: invoice.createdAt,
     dueDate: invoice.dueDate,
+    expiresAt: invoice.expiresAt,
     clientName: invoice.clientName,
     clientEmail: invoice.clientEmail,
     clientPhone: invoice.clientPhone,
@@ -39,6 +56,11 @@ export async function buildInvoicePdfModel(invoice: Invoice): Promise<InvoicePdf
     depositRequired: invoice.depositRequired,
     depositPaid: invoice.depositPaid,
     balanceDue: invoice.balanceDue,
+    depositPercent: invoice.depositPercent,
+    depositLabel: render.depositLabel,
+    payInstruction: render.payInstruction,
+    houseTerms: render.houseTerms,
+    expired: render.expired,
     paymentTerms: invoice.paymentTerms,
     clientNote: invoice.clientNote,
     showVat: invoice.showVat,

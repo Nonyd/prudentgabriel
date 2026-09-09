@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { allocateQuotationBaseRef, formatQuotationRef } from "@/lib/document-numbers";
 import { logActivity, logError } from "@/lib/logger";
+import { clampDepositPercent } from "@/lib/invoice-deposit";
+import { defaultExpiresAt, parseDateInput } from "@/lib/document-validity";
+import { getInvoiceDefaultValidityDays } from "@/lib/invoice";
+import { getBespokeDepositPercent } from "@/lib/payments/ledger";
 
 export type QuoteLineItem = {
   description: string;
@@ -131,6 +135,19 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const validityDays = await getInvoiceDefaultValidityDays();
+    const defaultPercent = await getBespokeDepositPercent();
+    const depositPercent = clampDepositPercent(
+      typeof body.depositPercent === "number"
+        ? body.depositPercent
+        : body.depositPercent != null && String(body.depositPercent).trim() !== ""
+          ? Number(body.depositPercent)
+          : defaultPercent,
+    );
+    const expiresAt = body.expiresAt
+      ? parseDateInput(String(body.expiresAt))
+      : defaultExpiresAt(new Date(), validityDays);
+
     const item = await prisma.$transaction(async (tx) => {
       const baseQuoteRef = await allocateQuotationBaseRef(tx);
       const quoteRef = formatQuotationRef(baseQuoteRef, 1);
@@ -148,7 +165,8 @@ export async function POST(req: NextRequest) {
           discount,
           total,
           notes: typeof body.notes === "string" ? body.notes : null,
-          expiresAt: body.expiresAt ? new Date(String(body.expiresAt)) : null,
+          expiresAt,
+          depositPercent,
           consultationId,
           createdBy: gate.session.user.id,
           currency:

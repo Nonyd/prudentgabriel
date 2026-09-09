@@ -2,6 +2,7 @@ import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/render
 import type { QuoteStatus } from "@prisma/client";
 import type { InvoiceBankDetails, InvoiceBusinessDetails, InvoiceCurrency } from "@/types/invoice";
 import { formatInvoiceCurrency } from "@/lib/invoice";
+import type { HouseDocumentTerm } from "@/lib/invoice-terms";
 
 const styles = StyleSheet.create({
   page: { padding: 48, fontFamily: "Helvetica", fontSize: 10, color: "#0A0A0A" },
@@ -101,6 +102,8 @@ export type QuotationPdfModel = {
   total: number;
   depositPercent: number;
   depositRequired: number;
+  depositLabel: string;
+  houseTerms: HouseDocumentTerm[];
   validityStatement: string;
   notes: string | null;
   business: InvoiceBusinessDetails;
@@ -219,8 +222,8 @@ export function QuotationPdfDocument({ data }: { data: QuotationPdfModel }) {
           </View>
           {data.depositPercent > 0 ? (
             <View style={[styles.totalLine, { marginTop: 6 }]}>
-              <Text style={{ color: "#37392d" }}>Deposit ({data.depositPercent}%)</Text>
-              <Text>{formatInvoiceCurrency(data.depositRequired, cur)}</Text>
+              <Text style={{ color: "#37392d" }}>Deposit</Text>
+              <Text>{data.depositLabel}</Text>
             </View>
           ) : null}
         </View>
@@ -228,8 +231,7 @@ export function QuotationPdfDocument({ data }: { data: QuotationPdfModel }) {
         <View style={styles.termsBox}>
           <Text style={styles.blockTitle}>Deposit terms</Text>
           <Text style={styles.termsText}>
-            A deposit of {data.depositPercent}% ({formatInvoiceCurrency(data.depositRequired, cur)}) is
-            required to commence production. Balance is due before delivery.
+            A deposit of {data.depositLabel} is required to commence production. Balance is due before delivery.
           </Text>
           <Text style={[styles.blockTitle, { marginTop: 10 }]}>Validity</Text>
           <Text style={styles.termsText}>{data.validityStatement}</Text>
@@ -258,6 +260,18 @@ export function QuotationPdfDocument({ data }: { data: QuotationPdfModel }) {
           {data.bank.instructions ? <Text style={styles.lineMuted}>{data.bank.instructions}</Text> : null}
         </View>
 
+        {data.houseTerms.length > 0 ? (
+          <View style={styles.termsBox}>
+            <Text style={styles.blockTitle}>Terms</Text>
+            {data.houseTerms.map((term) => (
+              <View key={term.key} wrap={false}>
+                <Text style={[styles.termsText, { fontFamily: "Helvetica-Bold", marginTop: 6 }]}>{term.title}</Text>
+                <Text style={styles.termsText}>{term.body}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         {data.notes ? (
           <View style={{ marginTop: 16 }}>
             <Text style={styles.blockTitle}>Note</Text>
@@ -267,7 +281,7 @@ export function QuotationPdfDocument({ data }: { data: QuotationPdfModel }) {
 
         <View style={styles.footer} fixed>
           <Text style={styles.footerNote}>{data.business.footerNote}</Text>
-          <Text style={styles.footerCenter}>{data.business.website}</Text>
+          <Text style={styles.footerCenter}>{data.business.footerHandle || data.business.website}</Text>
           <Text style={styles.footerPage}>Page 1 of 1</Text>
         </View>
       </Page>

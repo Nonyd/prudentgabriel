@@ -11,6 +11,8 @@ import {
   formatInvoiceCurrency,
   syncLineItemAmounts,
 } from "@/lib/invoice";
+import { formatDepositLabel } from "@/lib/invoice-deposit";
+import { roundToKobo } from "@/lib/money";
 import { getPublicAppUrl } from "@/lib/app-url";
 import type { InvoiceCurrency, InvoiceLineItem } from "@/types/invoice";
 
@@ -26,8 +28,8 @@ function buildPaymentTermsText(
   if (preset === "full") {
     return `PAYMENT TERMS\n\nOption B: Full Payment\nPay ${formatInvoiceCurrency(total, cur)} in full.`;
   }
-  const deposit = Math.round(total * (depositPercent / 100));
-  const balance = total - deposit;
+  const deposit = roundToKobo(total * (depositPercent / 100));
+  const balance = roundToKobo(total - deposit);
   return `PAYMENT TERMS\n\nOption A: ${depositPercent}% Deposit\nPay ${formatInvoiceCurrency(deposit, cur)} now to begin production.\nRemaining ${formatInvoiceCurrency(balance, cur)} due before delivery.\n\nOption B: Full Payment\nPay ${formatInvoiceCurrency(total, cur)} in full.`;
 }
 
@@ -62,6 +64,7 @@ export function InvoiceFormPage({
   const [clientInstagram, setClientInstagram] = useState("");
   const [currency, setCurrency] = useState<InvoiceCurrency>("NGN");
   const [dueDate, setDueDate] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("");
   const [termsPreset, setTermsPreset] = useState<TermsPreset>("70_30");
   const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([
@@ -97,10 +100,8 @@ export function InvoiceFormPage({
 
   useEffect(() => {
     if (termsPreset === "custom") return;
-    setPaymentTerms(buildPaymentTermsText(termsPreset, totals.total, cur, cmsDepositPct));
-    if (termsPreset === "70_30") setDepositPct(cmsDepositPct);
-    if (termsPreset === "full") setDepositPct(100);
-  }, [termsPreset, totals.total, cur, cmsDepositPct]);
+    setPaymentTerms(buildPaymentTermsText(termsPreset, totals.total, cur, termsPreset === "full" ? 100 : depositPct));
+  }, [termsPreset, totals.total, cur, depositPct]);
 
   useEffect(() => {
     if (!initialConsultationId || mode !== "create") return;
@@ -162,7 +163,11 @@ export function InvoiceFormPage({
       const days = Number(pick(inv, "invoice_default_due_days")) || 7;
       const d = new Date();
       d.setDate(d.getDate() + days);
-      setDueDate(d.toISOString().slice(0, 10));
+      if (mode === "create") setDueDate(d.toISOString().slice(0, 10));
+      const validityDays = Number(pick(inv, "invoice_default_validity_days")) || 14;
+      const v = new Date();
+      v.setDate(v.getDate() + validityDays);
+      if (mode === "create") setExpiresAt(v.toISOString().slice(0, 10));
     })();
   }, [mode]);
 
@@ -193,6 +198,14 @@ export function InvoiceFormPage({
             })()
           : "",
       );
+      setExpiresAt(
+        inv.expiresAt
+          ? (() => {
+              const d = new Date(inv.expiresAt as Date | string);
+              return Number.isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
+            })()
+          : "",
+      );
       setPaymentTerms(inv.paymentTerms ?? "");
       setTermsPreset("custom");
       const items = Array.isArray(inv.lineItems)
@@ -204,7 +217,13 @@ export function InvoiceFormPage({
       setDiscountValue(inv.discountValue);
       setVatOn(inv.vatEnabled);
       setVatPercent(inv.vatPercent);
-      setDepositPct(inv.total > 0 ? Math.round((inv.depositRequired / inv.total) * 100) : 0);
+      setDepositPct(
+        typeof inv.depositPercent === "number"
+          ? inv.depositPercent
+          : inv.total > 0
+            ? Math.round((inv.depositRequired / inv.total) * 100)
+            : 0,
+      );
       setClientNote(inv.clientNote ?? "");
       setNotes(inv.notes ?? "");
       setShowVat(inv.showVat);
@@ -291,6 +310,7 @@ export function InvoiceFormPage({
       vatPercent: vatOn ? vatPercent : 0,
       paymentTerms: paymentTerms || null,
       dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+      expiresAt: expiresAt || null,
       clientNote: clientNote || null,
       notes: notes || null,
       showVat,
@@ -472,11 +492,15 @@ export function InvoiceFormPage({
               Due date
               <input type="date" className="mt-1 border border-sand px-3 py-2 text-sm" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </label>
+            <label className="mt-4 block font-body text-xs">
+              Valid until
+              <input type="date" className="mt-1 border border-sand px-3 py-2 text-sm" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
+            </label>
             <div className="mt-4 space-y-2">
               <p className="font-body text-xs font-medium text-[#6B6B68]">Payment terms</p>
               {(
                 [
-                  { id: "70_30" as const, label: `${cmsDepositPct}/${100 - cmsDepositPct} Split (${cmsDepositPct}% deposit, ${100 - cmsDepositPct}% on delivery)` },
+                  { id: "70_30" as const, label: `Deposit / balance split (${depositPct}% now)` },
                   { id: "full" as const, label: "Full payment required" },
                   { id: "custom" as const, label: "Custom (free text)" },
                 ] as const
@@ -486,7 +510,11 @@ export function InvoiceFormPage({
                     type="radio"
                     name="terms-preset"
                     checked={termsPreset === option.id}
-                    onChange={() => setTermsPreset(option.id)}
+                    onChange={() => {
+                      setTermsPreset(option.id);
+                      if (option.id === "70_30") setDepositPct(cmsDepositPct);
+                      if (option.id === "full") setDepositPct(100);
+                    }}
                   />
                   {option.label}
                 </label>
@@ -636,8 +664,15 @@ export function InvoiceFormPage({
                 min={0}
                 max={100}
                 value={depositPct}
-                onChange={(e) => setDepositPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                onChange={(e) => {
+                  setDepositPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)));
+                  if (termsPreset === "full") setTermsPreset("70_30");
+                }}
               />
+              <p className="mt-1 font-body text-xs text-olive">
+                {formatDepositLabel(depositPct, formatInvoiceCurrency(totals.depositRequired, cur))}
+                {mode === "create" ? ` · default ${cmsDepositPct}%` : ""}
+              </p>
             </div>
             <label className="flex items-center gap-2 font-body text-xs">
               <input type="checkbox" checked={showVat} onChange={(e) => setShowVat(e.target.checked)} className="accent-olive" />
@@ -707,7 +742,7 @@ export function InvoiceFormPage({
                 <>
                   <div className="flex justify-between text-olive">
                     <span>Deposit</span>
-                    <span>{formatInvoiceCurrency(totals.depositRequired, cur)}</span>
+                    <span>{formatDepositLabel(depositPct, formatInvoiceCurrency(totals.depositRequired, cur))}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Balance due</span>
@@ -717,6 +752,7 @@ export function InvoiceFormPage({
               ) : null}
             </div>
             <p className="mt-3 font-body text-[11px] text-[#6B6B68]">Due: {dueDate || "—"}</p>
+            <p className="font-body text-[11px] text-[#6B6B68]">Valid until: {expiresAt || "—"}</p>
             <p className="mt-2 font-body text-[11px]">Status: {status}</p>
           </div>
         </aside>

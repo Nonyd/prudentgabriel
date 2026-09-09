@@ -7,6 +7,7 @@ import {
   type QuoteApprovalData,
 } from "@/components/public/QuoteApprovalClient";
 import { findLatestQuotationVersion } from "@/lib/quotation-versioning";
+import { getHouseDocumentTerms } from "@/lib/invoice-terms";
 
 type Props = { params: Promise<{ approvalToken: string }> };
 
@@ -51,6 +52,8 @@ export default async function QuoteApprovalPage({ params }: Props) {
     ? (quote.lineItems as QuoteApprovalData["lineItems"])
     : [];
 
+  const houseTerms = await getHouseDocumentTerms();
+
   const data: QuoteApprovalData = {
     id: quote.id,
     quoteRef: quote.quoteRef,
@@ -66,6 +69,8 @@ export default async function QuoteApprovalPage({ params }: Props) {
     expiresAt: quote.expiresAt?.toISOString() ?? null,
     approvalToken: quote.approvalToken,
     currency: quote.currency || "NGN",
+    depositPercent: quote.depositPercent,
+    houseTerms,
   };
 
   return (

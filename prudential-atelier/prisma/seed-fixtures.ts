@@ -1089,12 +1089,18 @@ async function main() {
     { key: "invoice_show_rc", value: "false", group: SettingGroup.INVOICE, label: "Show RC Number on Invoice", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 10 },
     { key: "invoice_default_vat", value: "0", group: SettingGroup.INVOICE, label: "Default VAT % (0 = no VAT)", type: SettingType.NUMBER, isPublic: false, sortOrder: 40 },
     { key: "invoice_default_due_days", value: "7", group: SettingGroup.INVOICE, label: "Default Payment Due (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 41 },
+    { key: "invoice_default_validity_days", value: "14", group: SettingGroup.INVOICE, label: "Default quote / invoice validity (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 47 },
     { key: "invoice_default_currency", value: "NGN", group: SettingGroup.INVOICE, label: "Default Invoice Currency", type: SettingType.SELECT, isPublic: false, sortOrder: 42 },
     { key: "invoice_footer_note", value: "Thank you for choosing Prudential Atelier. We look forward to creating something extraordinary for you.", group: SettingGroup.INVOICE, label: "Invoice Footer Note", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 43 },
+    { key: "invoice_footer_handle", value: "prudentialfashionhouse", group: SettingGroup.INVOICE, label: "Invoice footer handle", type: SettingType.TEXT, isPublic: false, sortOrder: 48 },
     { key: "invoice_deposit_terms", value: "70% deposit required to commence. Balance due before delivery.", group: SettingGroup.INVOICE, label: "Default Payment Terms", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 44 },
-    { key: "bespoke_deposit_percent", value: "70", group: SettingGroup.PAYMENTS, label: "Bespoke Deposit %", type: SettingType.NUMBER, isPublic: false, sortOrder: 25 },
+    { key: "bespoke_deposit_percent", value: "70", group: SettingGroup.PAYMENTS, label: "Default bespoke deposit %", type: SettingType.NUMBER, isPublic: false, sortOrder: 25 },
     { key: "invoice_logo_url", value: "/images/atelier-logo.png", group: SettingGroup.INVOICE, label: "Invoice Logo URL", type: SettingType.IMAGE, isPublic: false, sortOrder: 45 },
     { key: "invoice_prefix", value: "PA-INV", group: SettingGroup.INVOICE, label: "Invoice Number Prefix", type: SettingType.TEXT, isPublic: false, sortOrder: 46 },
+    { key: "invoice_term_delivery", value: "The house is responsible for producing and delivering the agreed design, in good and useable condition, by the agreed date.", group: SettingGroup.INVOICE, label: "Term 1 — Delivery", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 50 },
+    { key: "invoice_term_changes", value: "Modifications to the agreed design may be refused, or accepted at a fee, at the designer's discretion.", group: SettingGroup.INVOICE, label: "Term 2 — Changes", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 51 },
+    { key: "invoice_term_shipping", value: "Delivery and DHL charges are paid separately once ascertained, just before shipping, and shipping proceeds only on payment confirmation.", group: SettingGroup.INVOICE, label: "Term 3 — Shipping", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 52 },
+    { key: "invoice_term_refunds", value: "Payments are refundable only where the house fails to meet the agreement and cannot offer a reasonable solution.", group: SettingGroup.INVOICE, label: "Term 4 — Refunds", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 53 },
   ];
   for (const s of invoiceSettings) {
     await prisma.siteSetting.upsert({

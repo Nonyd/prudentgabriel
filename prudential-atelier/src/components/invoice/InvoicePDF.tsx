@@ -2,6 +2,8 @@ import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/render
 import type { InvoiceStatus } from "@prisma/client";
 import type { InvoiceBankDetails, InvoiceBusinessDetails, InvoiceCurrency, InvoiceLineItem } from "@/types/invoice";
 import { formatInvoiceCurrency } from "@/lib/invoice";
+import { billToDisplayLines } from "@/lib/bill-to-lines";
+import type { HouseDocumentTerm } from "@/lib/invoice-terms";
 
 const styles = StyleSheet.create({
   page: { padding: 48, fontFamily: "Helvetica", fontSize: 10, color: "#0A0A0A" },
@@ -61,6 +63,7 @@ export type InvoicePdfModel = {
   currency: InvoiceCurrency;
   createdAt: Date;
   dueDate: Date | null;
+  expiresAt: Date | null;
   clientName: string;
   clientEmail: string;
   clientPhone: string | null;
@@ -79,6 +82,11 @@ export type InvoicePdfModel = {
   depositRequired: number;
   depositPaid: number;
   balanceDue: number;
+  depositPercent: number;
+  depositLabel: string;
+  payInstruction: string;
+  houseTerms: HouseDocumentTerm[];
+  expired: boolean;
   paymentTerms: string | null;
   clientNote: string | null;
   showVat: boolean;
@@ -92,6 +100,13 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfModel }) {
   const badge = statusBadgeStyle(data.status);
   const overdue =
     data.dueDate != null && data.status !== "PAID" && data.status !== "CANCELLED" && new Date(data.dueDate) < new Date();
+  const billTo = billToDisplayLines({
+    name: data.clientName,
+    address: data.clientAddress,
+    city: data.clientCity,
+    country: data.clientCountry,
+    phone: data.clientPhone,
+  });
 
   return (
     <Document>
@@ -126,6 +141,12 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfModel }) {
             <Text style={styles.valSm}>{data.createdAt.toLocaleDateString("en-GB")}</Text>
           </View>
           <View>
+            <Text style={styles.labelSm}>Valid until</Text>
+            <Text style={[styles.valSm, data.expired ? { fontFamily: "Helvetica-Bold", color: "#8B1A1A" } : {}]}>
+              {data.expiresAt ? data.expiresAt.toLocaleDateString("en-GB") : "—"}
+            </Text>
+          </View>
+          <View>
             <Text style={styles.labelSm}>Due date</Text>
             <Text style={[styles.valSm, overdue ? { fontFamily: "Helvetica-Bold" } : {}]}>
               {data.dueDate ? data.dueDate.toLocaleDateString("en-GB") : "—"}
@@ -153,13 +174,11 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfModel }) {
           </View>
           <View style={styles.col}>
             <Text style={styles.blockTitle}>Bill to</Text>
-            <Text style={styles.lineBold}>{data.clientName}</Text>
-            <Text style={styles.lineMuted}>{data.clientEmail}</Text>
-            {data.clientPhone ? <Text style={styles.lineMuted}>{data.clientPhone}</Text> : null}
-            {data.clientAddress ? <Text style={styles.lineMuted}>{data.clientAddress}</Text> : null}
-            <Text style={styles.lineMuted}>
-              {[data.clientCity, data.clientCountry].filter(Boolean).join(", ")}
-            </Text>
+            {billTo.map((line, i) => (
+              <Text key={`${line}-${i}`} style={i === 0 ? styles.lineBold : styles.lineMuted}>
+                {line}
+              </Text>
+            ))}
           </View>
         </View>
 
@@ -215,7 +234,7 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfModel }) {
               <View style={[styles.divider, { width: 200, marginTop: 8, marginBottom: 4 }]} />
               <View style={styles.totalLine}>
                 <Text style={{ color: "#37392d" }}>Deposit required</Text>
-                <Text>{formatInvoiceCurrency(data.depositRequired, cur)}</Text>
+                <Text>{data.depositLabel}</Text>
               </View>
               <View style={styles.totalLine}>
                 <Text>Deposit paid</Text>
@@ -234,6 +253,24 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfModel }) {
             </>
           ) : null}
         </View>
+
+        {data.expired ? (
+          <View style={[styles.termsBox, { backgroundColor: "#FDECEA" }]}>
+            <Text style={styles.blockTitle}>Validity</Text>
+            <Text style={styles.termsText}>
+              This invoice's quoted price expired on{" "}
+              {data.expiresAt ? data.expiresAt.toLocaleDateString("en-GB") : "the stated date"}. Payment is still
+              accepted; the house may honour or revise the figure.
+            </Text>
+          </View>
+        ) : null}
+
+        {data.payInstruction ? (
+          <View style={styles.termsBox}>
+            <Text style={styles.blockTitle}>Kindly pay</Text>
+            <Text style={styles.termsText}>{data.payInstruction}</Text>
+          </View>
+        ) : null}
 
         {data.paymentTerms ? (
           <View style={styles.termsBox}>
@@ -265,6 +302,18 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfModel }) {
           {data.bank.instructions ? <Text style={styles.lineMuted}>{data.bank.instructions}</Text> : null}
         </View>
 
+        {data.houseTerms.length > 0 ? (
+          <View style={styles.termsBox}>
+            <Text style={styles.blockTitle}>Terms</Text>
+            {data.houseTerms.map((term) => (
+              <View key={term.key} wrap={false}>
+                <Text style={[styles.termsText, { fontFamily: "Helvetica-Bold", marginTop: 6 }]}>{term.title}</Text>
+                <Text style={styles.termsText}>{term.body}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         {data.clientNote ? (
           <View style={{ marginTop: 16 }}>
             <Text style={styles.blockTitle}>Note</Text>
@@ -274,7 +323,7 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfModel }) {
 
         <View style={styles.footer} fixed>
           <Text style={styles.footerNote}>{data.business.footerNote}</Text>
-          <Text style={styles.footerCenter}>{data.business.website}</Text>
+          <Text style={styles.footerCenter}>{data.business.footerHandle || data.business.website}</Text>
           <Text style={styles.footerPage}>Page 1 of 1</Text>
         </View>
       </Page>

@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { isQuotationEditable } from "@/lib/quotation-versioning";
 import { logActivity, logError } from "@/lib/logger";
+import { clampDepositPercent } from "@/lib/invoice-deposit";
+import { parseDateInput } from "@/lib/document-validity";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -139,7 +141,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       data.currency = body.currency;
     }
     if (body.expiresAt !== undefined) {
-      data.expiresAt = body.expiresAt ? new Date(String(body.expiresAt)) : null;
+      data.expiresAt = body.expiresAt ? parseDateInput(String(body.expiresAt)) : null;
+    }
+    if (body.depositPercent !== undefined) {
+      const n = typeof body.depositPercent === "number" ? body.depositPercent : Number(body.depositPercent);
+      data.depositPercent = clampDepositPercent(n);
     }
 
     let subtotal = existing.subtotal;

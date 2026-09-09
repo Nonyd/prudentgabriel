@@ -35,10 +35,19 @@ const BUSINESS_KEYS = [
 const DEFAULT_KEYS = [
   "invoice_default_vat",
   "invoice_default_due_days",
+  "invoice_default_validity_days",
   "invoice_default_currency",
   "invoice_footer_note",
+  "invoice_footer_handle",
   "invoice_deposit_terms",
   "invoice_prefix",
+];
+
+const TERM_KEYS = [
+  "invoice_term_delivery",
+  "invoice_term_changes",
+  "invoice_term_shipping",
+  "invoice_term_refunds",
 ];
 
 export function InvoiceSettingsPageClient() {
@@ -76,6 +85,7 @@ export function InvoiceSettingsPageClient() {
           </a>
         </div>
         <SettingsGroupCard title="Invoice defaults" group="INVOICE" rows={filterKeys(rows, DEFAULT_KEYS)} onSaved={load} />
+        <SettingsGroupCard title="House terms (quotation and invoice)" group="INVOICE" rows={filterKeys(rows, TERM_KEYS)} onSaved={load} />
       </div>
       <aside className="h-fit border border-sand bg-[#FAFAF8] p-5 font-body text-xs text-[#6B6B68]">
         <p className="font-medium uppercase tracking-[0.1em] text-[#37392d]">Preview</p>

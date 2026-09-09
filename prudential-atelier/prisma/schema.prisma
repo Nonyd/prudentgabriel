@@ -802,9 +802,13 @@ model Invoice {
   depositRequired Float @default(0)
   depositPaid     Float @default(0)
   balanceDue      Float @default(0)
+  /// Percent agreed on the quotation and carried onto this invoice. Default is CMS `bespoke_deposit_percent` (70). Production gate reads `depositRequired`, never the CMS default.
+  depositPercent  Float @default(70)
 
   paymentTerms    String?   @db.Text
   dueDate         DateTime?
+  /// Price validity. Distinct from `dueDate` (when payment is expected). Null on historic invoices — do not invent a date.
+  expiresAt       DateTime?
   paidAt          DateTime?
   paymentMethod   String?
   paymentRef      String?
@@ -2318,6 +2322,8 @@ model Quotation {
 
   notes  String?     @db.Text
   status QuoteStatus @default(DRAFT)
+  /// Deposit % the client agrees on this quotation. Defaults from CMS `bespoke_deposit_percent`. Carries through to the invoice.
+  depositPercent Float @default(70)
 
   approvalToken String    @unique @default(cuid())
   approvedAt    DateTime?
