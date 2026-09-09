@@ -32,7 +32,7 @@ import type {
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPanel";
-import { STAGE_LABELS, STAGE_ORDER, STAGE_SHORT_LABELS, getStageProgress } from "@/lib/bespoke-stages";
+import { STAGE_LABELS, STAGE_ORDER, getStageProgress } from "@/lib/bespoke-stages";
 import { getStageRequirement } from "@/lib/atelier/stage-requirements";
 import {
   buildStageChecklistFacts,
