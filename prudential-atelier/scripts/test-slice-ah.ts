@@ -149,8 +149,13 @@ function runSource() {
   assert(hero.includes("featuredItems"), "CMS image or video stitches into the tall centre cell");
   assert(hero.includes("sideLooks"), "right-column tiles take CMS looks");
   assert(!hero.includes("!hasCampaign && looks"), "campaign media does not replace the look wall");
-  assert(hero.includes("preload=\"metadata\""), "RTW hero video is poster-first, not preload auto");
+  assert(hero.includes("hero-bleed-chrome"), "on mobile the film sits under the nav, not below it");
+  assert(hero.includes("max-lg:absolute max-lg:inset-0"), "mobile media is viewport-bleed under the chrome");
+  assert(hero.includes("preload=\"auto\""), "RTW hero video preloads so iPhone can autoplay on load");
+  assert(!hero.includes("preload=\"metadata\""), "iPhone muted autoplay does not wait on metadata-only");
   assert(hero.includes("autoPlay"), "iPhone muted autoplay is an attribute, not a scripted play()");
+  assert(!hero.includes("autoPlay={wantAutoplay}"), "toggling autoPlay off poisons iPhone playback");
+  assert(!hero.includes("videoReady"), "hiding the film until playing keeps iPhone at a poster");
   assert(hero.includes("isIosDevice"), "RTW hero does not script play() on iPhone");
   assert(hero.includes("IntersectionObserver"), "hero video pauses when the centre cell leaves the viewport");
   assert(hero.includes("visibilitychange"), "hero video pauses when the tab is hidden");

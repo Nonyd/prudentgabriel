@@ -48,7 +48,6 @@ function HeroSlide({
   const [reducedMotion, setReducedMotion] = useState(false);
   const [saveData, setSaveData] = useState(false);
   const [tappedToPlay, setTappedToPlay] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
   const [needsTap, setNeedsTap] = useState(false);
   const ios = isIosDevice();
 
@@ -63,6 +62,13 @@ function HeroSlide({
     reducedMotion,
     tappedToPlay,
   });
+  const showVideo = active || prefetch;
+
+  const bindVideo = useCallback((el: HTMLVideoElement | null) => {
+    videoRef.current = el;
+    if (!el) return;
+    armInlineMuted(el);
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -77,18 +83,32 @@ function HeroSlide({
     const video = videoRef.current;
     if (!video || item.type !== "video") return;
     armInlineMuted(video);
-    if (!prefetch || !wantAutoplay) {
-      if (!ios) video.pause();
+
+    // iPhone Safari treats a scripted play() as a failed gesture and then will
+    // not autoplay that same element. Leave muted autoplay to the attributes.
+    if (ios) {
+      let canPlayTimer = 0;
+      const onCanPlay = () => {
+        canPlayTimer = window.setTimeout(() => {
+          if (video.paused) setNeedsTap(true);
+        }, 800);
+      };
+      video.addEventListener("canplay", onCanPlay);
+      return () => {
+        video.removeEventListener("canplay", onCanPlay);
+        window.clearTimeout(canPlayTimer);
+      };
+    }
+
+    if (!showVideo || !wantAutoplay) {
+      video.pause();
       return;
     }
-    // iPhone Safari treats a scripted play() as a failed user-gesture, then will
-    // not autoplay that same element. Leave muted autoplay to the attributes.
-    if (ios) return;
     void video.play().catch(() => setNeedsTap(true));
     return () => {
-      if (!ios) video.pause();
+      video.pause();
     };
-  }, [prefetch, wantAutoplay, item.type, item.url, ios]);
+  }, [showVideo, wantAutoplay, item.type, item.url, ios]);
 
   const poster = item.poster?.trim() || undefined;
 
@@ -107,25 +127,22 @@ function HeroSlide({
         ) : (
           <div className="absolute inset-0 bg-choc" aria-hidden />
         )}
-        {prefetch ? (
+        {showVideo ? (
           <video
-            ref={videoRef}
+            ref={bindVideo}
             src={rtwHeroPlaybackUrl(item.url)}
             poster={poster}
             muted
             playsInline
             loop
-            autoPlay={wantAutoplay}
-            preload="metadata"
+            autoPlay
+            preload="auto"
             disableRemotePlayback
             disablePictureInPicture
-            onPlaying={() => {
-              setVideoReady(true);
-              setNeedsTap(false);
-            }}
+            controls={false}
+            onPlaying={() => setNeedsTap(false)}
             onError={() => setNeedsTap(true)}
-            className="absolute inset-0 h-full w-full object-cover transform-gpu"
-            style={{ opacity: videoReady || !poster ? 1 : 0 }}
+            className="absolute inset-0 h-full w-full object-cover"
             {...{ "webkit-playsinline": "true" }}
           />
         ) : null}
@@ -133,6 +150,16 @@ function HeroSlide({
           <button
             type="button"
             onClick={() => {
+              setTappedToPlay(true);
+              setNeedsTap(false);
+              const video = videoRef.current;
+              if (video) {
+                armInlineMuted(video);
+                void video.play().catch(() => setNeedsTap(true));
+              }
+            }}
+            onTouchEnd={(event) => {
+              event.stopPropagation();
               setTappedToPlay(true);
               setNeedsTap(false);
               const video = videoRef.current;
@@ -378,8 +405,8 @@ export function RTWLandingHero({
   }, [count, go, index, items]);
 
   return (
-    <section className="hero-under-chrome relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-choc">
-      <div className="relative min-h-0 flex-1 pt-3">
+    <section className="hero-under-chrome hero-bleed-chrome relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-choc">
+      <div className="relative min-h-0 flex-1 pt-3 max-lg:absolute max-lg:inset-0 max-lg:pt-0">
         {hasStage ? (
           <LookWall
             looks={looks}

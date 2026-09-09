@@ -258,6 +258,12 @@ body:has(.storefront-shell) {
   padding-top: var(--storefront-chrome-offset);
 }
 
+@media (max-width: 1023px) {
+  .hero-under-chrome.hero-bleed-chrome {
+    padding-top: 0;
+  }
+}
+
 .storefront-nav {
   position: fixed;
   inset-inline: 0;
