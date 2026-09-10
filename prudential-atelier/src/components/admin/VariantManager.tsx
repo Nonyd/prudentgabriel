@@ -17,7 +17,7 @@ type VariantManagerProps = {
   onRegenerate?: () => void;
 };
 
-/** UK numeric sizes this house actually stocks. */
+/** UK numeric sizes this house offers. */
 export const STANDARD_SIZES = ["6", "8", "10", "12", "14", "16", "18", "20", "22"] as const;
 
 function emptyRow(productName: string, size: string, priceNGN: number, sortOrder: number): VariantRow {
@@ -26,8 +26,6 @@ function emptyRow(productName: string, size: string, priceNGN: number, sortOrder
     sku: productName ? buildDefaultProductSku(productName, size || "SIZE") : "",
     skuManual: false,
     priceNGN,
-    stock: 0,
-    lowStockAt: 3,
     sortOrder,
   };
 }
@@ -158,14 +156,13 @@ export function VariantManager({
               <th className="p-2">Size</th>
               <th className="p-2">Price in naira</th>
               {cols.sale ? <th className="p-2">Sale price</th> : null}
-              <th className="p-2">Stock</th>
               <th className="w-8 p-2" />
             </tr>
           </thead>
           <tbody>
             {variants.length === 0 ? (
               <tr>
-                <td colSpan={cols.sale ? 5 : 4} className="p-3 text-[#A8A8A4]">
+                <td colSpan={cols.sale ? 4 : 3} className="p-3 text-[#A8A8A4]">
                   Add at least one size. Tick 6–22 and click “Add these sizes”.
                 </td>
               </tr>
@@ -210,16 +207,6 @@ export function VariantManager({
                         />
                       </td>
                     ) : null}
-                    <td className="p-1">
-                      <input
-                        type="number"
-                        className={cell}
-                        value={v.stock}
-                        onChange={(e) =>
-                          update(i, { stock: Math.max(0, Math.floor(Number(e.target.value) || 0)) })
-                        }
-                      />
-                    </td>
                     <td className="p-1 text-center">
                       <button
                         type="button"
@@ -234,7 +221,7 @@ export function VariantManager({
                   </tr>
                   {advanced ? (
                     <tr className="border-b border-[#F5F5F3] bg-[#FAFAFA]">
-                      <td colSpan={cols.sale ? 5 : 4} className="p-2">
+                      <td colSpan={cols.sale ? 4 : 3} className="p-2">
                         <div className="grid gap-2 sm:grid-cols-2">
                           <label className="text-[11px] uppercase text-[#A8A8A4]">
                             Stock code
@@ -270,17 +257,6 @@ export function VariantManager({
                                 update(i, {
                                   priceGBP: e.target.value === "" ? undefined : Number(e.target.value),
                                 })
-                              }
-                            />
-                          </label>
-                          <label className="text-[11px] uppercase text-[#A8A8A4]">
-                            Low stock at
-                            <input
-                              type="number"
-                              className={`${cell} mt-0.5`}
-                              value={v.lowStockAt}
-                              onChange={(e) =>
-                                update(i, { lowStockAt: Math.max(0, Math.floor(Number(e.target.value) || 0)) })
                               }
                             />
                           </label>

@@ -1,5 +1,5 @@
 /**
- * RTW launch blockers: logged-in cart → checkout, stock floor, atelier bookings gate.
+ * RTW launch blockers: logged-in cart → checkout, made-to-order fulfil, atelier bookings gate.
  *
  *   pnpm test:rtw-launch
  *
@@ -106,7 +106,7 @@ async function testLoggedInCartSurvivesToCheckout() {
       type: ProductType.RTW,
       priceNGN: 50_000,
       basePriceNGN: 50_000,
-      variants: { create: { size: "M", priceNGN: 50_000, stock: 4 } },
+      variants: { create: { size: "M", priceNGN: 50_000 } },
     },
     include: { variants: true },
   });
@@ -131,21 +131,21 @@ async function testLoggedInCartSurvivesToCheckout() {
   }
 }
 
-async function testStockCannotGoNegative() {
+async function testConcurrentFulfilDoesNotCancel() {
   const stamp = `rtw-g3-${Date.now()}`;
   const user = await prisma.user.create({
-    data: { email: `${stamp}@example.test`, name: "Stock Test", role: Role.CUSTOMER },
+    data: { email: `${stamp}@example.test`, name: "Fulfil Test", role: Role.CUSTOMER },
   });
   const product = await prisma.product.create({
     data: {
-      name: "Stock Launch Test",
+      name: "Fulfil Launch Test",
       slug: stamp,
       description: "test",
       category: ProductCategory.FORMAL,
       type: ProductType.RTW,
       priceNGN: 80_000,
       basePriceNGN: 80_000,
-      variants: { create: { size: "S", priceNGN: 80_000, stock: 1 } },
+      variants: { create: { size: "S", priceNGN: 80_000 } },
     },
     include: { variants: true },
   });
@@ -157,7 +157,7 @@ async function testStockCannotGoNegative() {
         orderNumber: `${stamp}-${suffix}`,
         userId: user.id,
         guestEmail: `${stamp}@example.test`,
-        guestName: "Stock Test",
+        guestName: "Fulfil Test",
         subtotal: 80_000,
         total: 80_000,
         currency: Currency.NGN,
@@ -196,23 +196,16 @@ async function testStockCannotGoNegative() {
       }),
     ]);
 
-    const stock = await prisma.productVariant.findUnique({
-      where: { id: variant.id },
-      select: { stock: true },
-    });
-    assert(stock != null, "variant must still exist");
-    assert(stock.stock >= 0, `stock went negative: ${stock.stock}`);
-    assert(stock.stock === 0, `expected remaining stock 0, got ${stock.stock}`);
+    const still = await prisma.productVariant.findUnique({ where: { id: variant.id }, select: { id: true } });
+    assert(still != null, "variant must still exist");
 
     const [a, b] = await Promise.all([
       prisma.order.findUnique({ where: { id: orderA.id } }),
       prisma.order.findUnique({ where: { id: orderB.id } }),
     ]);
-    const statuses = [a?.status, b?.status];
-    assert(
-      statuses.includes(OrderStatus.CONFIRMED) && statuses.includes(OrderStatus.CANCELLED),
-      `expected one CONFIRMED and one CANCELLED, got ${statuses.join(",")}`,
-    );
+    assert(a?.paymentStatus === PaymentStatus.PAID, "first concurrent fulfil is paid");
+    assert(b?.paymentStatus === PaymentStatus.PAID, "second concurrent fulfil is paid");
+    assert(a?.status !== OrderStatus.CANCELLED && b?.status !== OrderStatus.CANCELLED, "fulfil never cancels for stock");
   } finally {
     // Payment rows are append-only; stamped PA-TEST orders stay as ledger evidence.
   }
@@ -280,7 +273,7 @@ async function main() {
   testCartMergeAndAlertEmail();
   await testAdminAlertSkipsBounceMailbox();
   await testLoggedInCartSurvivesToCheckout();
-  await testStockCannotGoNegative();
+  await testConcurrentFulfilDoesNotCancel();
   console.log("test-rtw-launch: all assertions passed");
 }
 

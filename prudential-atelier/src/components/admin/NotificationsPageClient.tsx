@@ -23,11 +23,10 @@ type FilterType =
   | "UNREAD"
   | "ACKNOWLEDGED"
   | "ORDERS"
-  | "OVERSELL"
+  | "FABRIC"
   | "BESPOKE"
   | "CONSULTATIONS"
   | "REVIEWS"
-  | "STOCK"
   | "SYSTEM";
 
 function iconFor(type: AdminNotificationType) {
@@ -51,12 +50,10 @@ function iconFor(type: AdminNotificationType) {
     case "REVIEW_PENDING":
     case "TESTIMONIAL_SUBMITTED":
       return <Star size={16} className="text-warning" />;
-    case "LOW_STOCK":
+    case "FABRIC_UNAVAILABLE":
       return <AlertTriangle size={16} className="text-danger" />;
     case "PAYMENT_FAILED":
       return <CreditCard size={16} className="text-danger" />;
-    case "RTW_OVERSELL":
-      return <Banknote size={16} className="text-danger" />;
     case "NEW_CUSTOMER":
       return <User size={16} className="text-success" />;
     default:
@@ -69,7 +66,7 @@ function matchesFilter(row: AdminNotificationRow, filter: FilterType): boolean {
   if (filter === "UNREAD") return !row.isRead && !row.acknowledgedAt;
   if (filter === "ACKNOWLEDGED") return Boolean(row.acknowledgedAt);
   if (filter === "ORDERS") return row.type === "NEW_ORDER" || row.type === "PAYMENT_FAILED" || row.type === "BANK_TRANSFER_RECEIPT";
-  if (filter === "OVERSELL") return row.type === "RTW_OVERSELL";
+  if (filter === "FABRIC") return row.type === "FABRIC_UNAVAILABLE";
   if (filter === "BESPOKE")
     return (
       row.type === "NEW_BESPOKE" ||
@@ -87,7 +84,6 @@ function matchesFilter(row: AdminNotificationRow, filter: FilterType): boolean {
       row.type === "QUOTE_AWAITING"
     );
   if (filter === "REVIEWS") return row.type === "REVIEW_PENDING" || row.type === "TESTIMONIAL_SUBMITTED";
-  if (filter === "STOCK") return row.type === "LOW_STOCK";
   return (
     row.type === "NEW_CUSTOMER" ||
     row.type === "CONTACT_FORM" ||
@@ -159,11 +155,10 @@ export function NotificationsPageClient({
     { id: "UNREAD", label: "Unread" },
     { id: "ACKNOWLEDGED", label: "Picked up" },
     { id: "ORDERS", label: "Orders" },
-    { id: "OVERSELL", label: "Refund required" },
+    { id: "FABRIC", label: "Fabric" },
     { id: "BESPOKE", label: "Bespoke" },
     { id: "CONSULTATIONS", label: "Consultations" },
     { id: "REVIEWS", label: "Reviews" },
-    { id: "STOCK", label: "Stock" },
     { id: "SYSTEM", label: "System" },
   ];
 

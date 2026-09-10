@@ -7,7 +7,7 @@ import {
   hasPurchasableSize,
   pickVariantForAdd,
   quickAddCtaLabel,
-  stockGuardMessage,
+  bagErrorMessage,
 } from "@/lib/quick-add";
 import { standardVariants } from "@/lib/custom-size";
 import { displayAmountInCurrency, effectiveUnitNGN, variantAmountInCurrency } from "@/lib/pricing";
@@ -37,8 +37,7 @@ export function useProductQuickAdd(
   const markFail = useQuickAddStore((s) => s.fail);
 
   const isOpen = storeProductId === product.id && phase !== "idle";
-  const sizesSoldOut = !hasPurchasableSize(standardVariants(product.variants));
-  const soldOut = sizesSoldOut;
+  const noSizes = !hasPurchasableSize(standardVariants(product.variants));
   const activePhase: QuickAddPhase = isOpen ? phase : "idle";
   const activeVariantId = isOpen ? variantId : null;
   const activeError = isOpen ? error : null;
@@ -78,11 +77,11 @@ export function useProductQuickAdd(
   }, [phase]);
 
   const open = useCallback(() => {
-    if (soldOut) return;
+    if (noSizes) return;
     openStore(product);
-  }, [openStore, product, soldOut]);
+  }, [openStore, product, noSizes]);
 
-    const close = useCallback(() => {
+  const close = useCallback(() => {
     inFlight.current = false;
     if (doneTimer.current) {
       window.clearTimeout(doneTimer.current);
@@ -92,14 +91,10 @@ export function useProductQuickAdd(
   }, [closeStore]);
 
   const add = useCallback(async () => {
-    if (soldOut || inFlight.current) return;
+    if (noSizes || inFlight.current) return;
     const variant = pickVariantForAdd(product.variants, activeVariantId);
     if (!variant) {
       markFail(CHOOSE_SIZE_MESSAGE);
-      return;
-    }
-    if (variant.stock < 1) {
-      markFail("That size just sold out.");
       return;
     }
     inFlight.current = true;
@@ -122,14 +117,13 @@ export function useProductQuickAdd(
         priceUSD: variantAmountInCurrency(variant, product, "USD", rates),
         priceGBP: variantAmountInCurrency(variant, product, "GBP", rates),
         quantity: 1,
-        stock: variant.stock,
         category: product.category,
       },
       { toastOnError: false, openOnSuccess: false },
     );
     if (!result.ok) {
       inFlight.current = false;
-      markFail(stockGuardMessage(result.error));
+      markFail(bagErrorMessage(result.error));
       return;
     }
     markSuccess();
@@ -144,7 +138,7 @@ export function useProductQuickAdd(
       doneTimer.current = null;
     }, wait);
   }, [
-    soldOut,
+    noSizes,
     product,
     selectedColor,
     activeVariantId,
@@ -160,7 +154,6 @@ export function useProductQuickAdd(
 
   return {
     isOpen,
-    soldOut,
     phase: activePhase,
     variantId: activeVariantId,
     error: activeError,

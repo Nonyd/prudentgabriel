@@ -18,6 +18,7 @@ import { bespokeFromNGN, derivedCatalogMinNGN } from "@/lib/pricing";
 import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
 import { getProductCustomContext } from "@/lib/custom-context";
 import { unitsSoldByProductId } from "@/lib/finance/whats-selling";
+import { getProductionCopy } from "@/lib/production-time";
 
 
 const RelatedProducts = nextDynamic(() => import("@/components/product/RelatedProducts").then((m) => ({ default: m.RelatedProducts })), {
@@ -161,7 +162,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
         await getSetting("bespoke_from_markup"),
       )
     : null;
-  const customCtx = await getProductCustomContext(product.id);
+  const [customCtx, productionCopy] = await Promise.all([
+    getProductCustomContext(product.id),
+    getProductionCopy(),
+  ]);
 
   const session = await auth();
   let canWriteReview = false;
@@ -197,7 +201,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
           isOnSale: product.isOnSale,
           saleEndsAt: product.saleEndsAt?.toISOString() ?? null,
           isBespokeAvail: product.isBespokeAvail,
-          lowStockAt: product.lowStockAt,
           basePriceNGN: product.basePriceNGN,
           priceUSD: product.priceUSD,
           priceGBP: product.priceGBP,
@@ -213,9 +216,9 @@ export default async function ProductPage({ params }: { params: { slug: string }
         freeLagosAboveNGN={lagosLoc?.freeAboveNGN ?? null}
         bespokeFromNGN={bespokeFrom}
         customOffered={customCtx?.policy.offered ?? product.customOffered}
-        customOfferedWhenSoldOut={product.customOfferedWhenSoldOut}
         customFields={customCtx?.fields ?? []}
-        customLeadTimeDays={customCtx?.policy.leadTimeDays ?? 21}
+        customLeadTimeDays={customCtx?.policy.leadTimeDays ?? 12}
+        productionCopy={productionCopy}
         customReturnable={customCtx?.policy.returnable ?? false}
         customSurchargeKind={customCtx?.policy.surchargeKind ?? "NONE"}
         customSurchargeValue={customCtx?.policy.surchargeValue ?? 0}

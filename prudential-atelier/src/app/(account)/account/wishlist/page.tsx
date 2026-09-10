@@ -20,8 +20,7 @@ export default async function WishlistPage() {
 
   const view: WishlistItemView[] = items.map((w) => {
     const variants = w.product.variants;
-    const inStock = variants.some((v) => v.stock > 0);
-    const defaultVariant = variants.find((v) => v.stock > 0) ?? variants[0] ?? null;
+    const defaultVariant = variants[0] ?? null;
     return {
       id: w.id,
       productId: w.productId,
@@ -29,7 +28,6 @@ export default async function WishlistPage() {
       slug: w.product.slug,
       price: variants.length ? derivedCatalogMinNGN(variants, w.product.isOnSale) : w.product.priceNGN,
       imageUrl: w.product.images[0]?.url ?? null,
-      inStock,
       defaultVariantId: defaultVariant?.id ?? null,
       defaultSize: defaultVariant?.size ?? null,
     };

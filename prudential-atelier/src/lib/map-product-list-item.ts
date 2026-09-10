@@ -8,8 +8,6 @@ export function mapListVariant(v: {
   salePriceNGN: number | null;
   priceUSD?: number | null;
   priceGBP?: number | null;
-  stock: number;
-  lowStockAt?: number;
 }): ProductListVariant {
   return {
     id: v.id,
@@ -18,8 +16,6 @@ export function mapListVariant(v: {
     salePriceNGN: v.salePriceNGN,
     priceUSD: v.priceUSD ?? null,
     priceGBP: v.priceGBP ?? null,
-    stock: v.stock,
-    lowStockAt: v.lowStockAt,
   };
 }
 
@@ -46,7 +42,6 @@ export function mapProductToListItem(p: {
     salePriceNGN: number | null;
     priceUSD?: number | null;
     priceGBP?: number | null;
-    stock: number;
   }[];
   colors: { id: string; name: string; hex: string; imageUrl?: string | null }[];
   _count: { reviews: number };

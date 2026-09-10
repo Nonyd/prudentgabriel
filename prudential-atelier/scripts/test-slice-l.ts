@@ -39,7 +39,6 @@ function run() {
     salePriceNGN: 150_000,
     priceUSD: null as number | null,
     priceGBP: null as number | null,
-    stock: 2,
   };
 
   // L2: display and charge share effectiveUnitNGN. Flag off ignores sale ₦.
@@ -149,9 +148,9 @@ function run() {
 
   // L4: catalog min (filter/sort field) matches the card's cheapest effective ₦.
   const sizes = [
-    { priceNGN: 250_000, salePriceNGN: null, stock: 1 },
-    { priceNGN: 180_000, salePriceNGN: null, stock: 1 },
-    { priceNGN: 220_000, salePriceNGN: 100_000, stock: 1 },
+    { priceNGN: 250_000, salePriceNGN: null },
+    { priceNGN: 180_000, salePriceNGN: null },
+    { priceNGN: 220_000, salePriceNGN: 100_000 },
   ];
   const cardMinOff = minEffectiveNGN(sizes, false);
   const catalogMinOff = derivedCatalogMinNGN(sizes, false);

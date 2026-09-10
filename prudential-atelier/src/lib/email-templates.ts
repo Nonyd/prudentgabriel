@@ -24,10 +24,6 @@ export const EMAIL_TEMPLATE_DEFAULTS: Record<string, { subject: string; body: st
     subject: "Your referral reward",
     body: "Hi {{firstName}},\n\nThanks for spreading the word — Prudent Points have been added to your account.\n\n— Prudent Gabriel",
   },
-  email_tpl_back_in_stock: {
-    subject: "{{productName}} is back in stock",
-    body: "Hi {{firstName}},\n\nAn item you wanted is available again.\n\n— Prudent Gabriel",
-  },
   email_tpl_consultation_pending: {
     subject: "Consultation request received",
     body: "Hi {{firstName}},\n\nWe've received your consultation booking request and will confirm shortly.\n\n— Prudent Gabriel",
@@ -54,7 +50,6 @@ export const EMAIL_TEMPLATE_META: Record<
   email_tpl_bespoke_confirmation: { label: "Atelier Confirmation", sortOrder: 103 },
   email_tpl_password_reset: { label: "Password Reset", sortOrder: 104 },
   email_tpl_referral_success: { label: "Referral Success", sortOrder: 105 },
-  email_tpl_back_in_stock: { label: "Back In Stock", sortOrder: 106 },
   email_tpl_consultation_pending: { label: "Consultation Pending", sortOrder: 107 },
   email_tpl_consultation_confirmed: { label: "Consultation Confirmed", sortOrder: 108 },
   email_tpl_consultation_cancelled: { label: "Consultation Cancelled", sortOrder: 109 },

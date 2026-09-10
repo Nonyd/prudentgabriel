@@ -515,7 +515,7 @@ async function upsertSiteSettings() {
     { key: "notify_new_order", value: "true", group: SettingGroup.NOTIFICATIONS, label: "Email on new order", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 1 },
     { key: "notify_new_bespoke", value: "true", group: SettingGroup.NOTIFICATIONS, label: "Email on new bespoke request", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 2 },
     { key: "notify_new_consultation", value: "true", group: SettingGroup.NOTIFICATIONS, label: "Email on new consultation booking", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 3 },
-    { key: "notify_low_stock", value: "true", group: SettingGroup.NOTIFICATIONS, label: "Email when variant stock ≤ lowStockAt", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 4 },
+    { key: "rtw_production_copy", value: "7-12 days", group: SettingGroup.STORE, label: "Ready-to-wear production time (shown on the product page, bag, checkout, and confirmation email)", type: SettingType.TEXT, isPublic: true, sortOrder: 25 },
     { key: "slack_webhook_url", value: "", group: SettingGroup.NOTIFICATIONS, label: "Slack Webhook URL (for alerts)", type: SettingType.PASSWORD, isPublic: false, sortOrder: 5 },
   ];
 
@@ -778,7 +778,6 @@ async function main() {
     { key: "email_tpl_bespoke_confirmation", label: "Bespoke Confirmation", sortOrder: 103 },
     { key: "email_tpl_password_reset", label: "Password Reset", sortOrder: 104 },
     { key: "email_tpl_referral_success", label: "Referral Success", sortOrder: 105 },
-    { key: "email_tpl_back_in_stock", label: "Back In Stock", sortOrder: 106 },
     { key: "email_tpl_consultation_pending", label: "Consultation Pending", sortOrder: 107 },
     { key: "email_tpl_consultation_confirmed", label: "Consultation Confirmed", sortOrder: 108 },
     { key: "email_tpl_consultation_cancelled", label: "Consultation Cancelled", sortOrder: 109 },

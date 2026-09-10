@@ -7,9 +7,10 @@ import { optimizeImageUrl } from "@/lib/utils";
 import {
   COLLECTION_DOUBLE_COUNT_COPY,
   compareSelling,
+  DEMAND_COPY,
   NO_COLLECTION_ASSIGNMENTS_COPY,
+  NO_ORDERS_COPY,
   NO_SALES_COPY,
-  SELL_THROUGH_COPY,
   whatsSellingCsv,
   type SellingCollection,
   type SellingPiece,
@@ -19,7 +20,6 @@ import {
 import { HOMEPAGE_BESTSELLERS_ADMIN_NOTE } from "@/lib/homepage-bestsellers";
 
 const SORTS: { id: SellingSort; label: string }[] = [
-  { id: "sellThrough", label: "Sell-through" },
   { id: "units", label: "Units" },
   { id: "revenue", label: "Revenue" },
 ];
@@ -28,44 +28,25 @@ function naira(n: number) {
   return `₦${Math.round(n).toLocaleString("en-NG")}`;
 }
 
-function pct(ratio: number | null): string {
-  if (ratio == null) return "n/a";
-  return `${Math.round(ratio * 1000) / 10}%`;
-}
-
-function changeText(now: number, prev: number, kind: "units" | "money" | "ratio"): string {
+function changeText(now: number, prev: number, kind: "units" | "money"): string {
   if (prev === 0 && now === 0) return "same as previous";
   if (prev === 0) return "new";
-  if (kind === "ratio") {
-    const points = Math.round((now - prev) * 1000) / 10;
-    if (points === 0) return "same as previous";
-    return `${points > 0 ? "+" : ""}${points} pts vs previous`;
-  }
   const d = now - prev;
   if (d === 0) return "same as previous";
   if (kind === "money") return `${d > 0 ? "+" : ""}${naira(d)} vs previous`;
   return `${d > 0 ? "+" : ""}${d} vs previous`;
 }
 
-function metricKind(sort: SellingSort): "units" | "money" | "ratio" {
-  if (sort === "revenue") return "money";
-  if (sort === "sellThrough") return "ratio";
-  return "units";
+function metricKind(sort: SellingSort): "units" | "money" {
+  return sort === "revenue" ? "money" : "units";
 }
 
-function metricNow(sort: SellingSort, row: { unitsSold: number; revenueNGN: number; sellThrough: number | null }): number {
-  if (sort === "units") return row.unitsSold;
-  if (sort === "revenue") return row.revenueNGN;
-  return row.sellThrough ?? 0;
+function metricNow(sort: SellingSort, row: { unitsSold: number; revenueNGN: number }): number {
+  return sort === "revenue" ? row.revenueNGN : row.unitsSold;
 }
 
-function metricPrev(
-  sort: SellingSort,
-  row: { unitsPrev: number; revenuePrev: number; sellThroughPrev: number | null },
-): number {
-  if (sort === "units") return row.unitsPrev;
-  if (sort === "revenue") return row.revenuePrev;
-  return row.sellThroughPrev ?? 0;
+function metricPrev(sort: SellingSort, row: { unitsPrev: number; revenuePrev: number }): number {
+  return sort === "revenue" ? row.revenuePrev : row.unitsPrev;
 }
 
 function Thumb({ url }: { url: string | null; name?: string }) {
@@ -86,21 +67,16 @@ type Ranked = {
   thumbnailUrl?: string | null;
   unitsSold: number;
   revenueNGN: number;
-  sellThrough: number | null;
   orderedToMeasure: number;
   unitsPrev: number;
   revenuePrev: number;
-  sellThroughPrev: number | null;
 };
 
 function RankedBars({ rows, sort }: { rows: Ranked[]; sort: SellingSort }) {
   if (rows.length === 0) {
     return <p className="mt-3 font-sans text-sm text-[#6B6B68]">{NO_SALES_COPY}</p>;
   }
-  const max = Math.max(
-    ...rows.map((r) => metricNow(sort, r)),
-    0,
-  );
+  const max = Math.max(...rows.map((r) => metricNow(sort, r)), 0);
   return (
     <ol className="mt-4 space-y-3">
       {rows.map((row) => {
@@ -112,7 +88,7 @@ function RankedBars({ rows, sort }: { rows: Ranked[]; sort: SellingSort }) {
             <div className="min-w-0 flex-1">
               <p className="truncate font-sans text-sm text-choc">{row.name}</p>
               <p className="mt-0.5 font-sans text-xs text-[#6B6B68]">
-                {row.unitsSold} sold · {naira(row.revenueNGN)} · {pct(row.sellThrough)} sell-through
+                {row.unitsSold} sold · {naira(row.revenueNGN)}
                 {row.orderedToMeasure > 0 ? ` · ${row.orderedToMeasure} to measure` : ""}
                 {" · "}
                 {changeText(metricNow(sort, row), metricPrev(sort, row), metricKind(sort))}
@@ -146,11 +122,9 @@ function toPieceRow(p: SellingPiece): Ranked {
     thumbnailUrl: p.thumbnailUrl,
     unitsSold: p.unitsSold,
     revenueNGN: p.revenueNGN,
-    sellThrough: p.sellThrough,
     orderedToMeasure: p.orderedToMeasure,
     unitsPrev: p.unitsPrev,
     revenuePrev: p.revenuePrev,
-    sellThroughPrev: p.sellThroughPrev,
   };
 }
 
@@ -161,16 +135,14 @@ function toCollectionRow(c: SellingCollection): Ranked {
     href: `/admin/collections/${c.collectionId}`,
     unitsSold: c.unitsSold,
     revenueNGN: c.revenueNGN,
-    sellThrough: c.sellThrough,
     orderedToMeasure: c.orderedToMeasure,
     unitsPrev: c.unitsPrev,
     revenuePrev: c.revenuePrev,
-    sellThroughPrev: c.sellThroughPrev,
   };
 }
 
 export function WhatsSellingPanel({ data }: { data: WhatsSellingReport }) {
-  const [sort, setSort] = useState<SellingSort>("sellThrough");
+  const [sort, setSort] = useState<SellingSort>("units");
 
   const pieces = useMemo(
     () => data.pieces.slice().sort((a, b) => compareSelling(sort, a, b)).slice(0, 10),
@@ -214,7 +186,7 @@ export function WhatsSellingPanel({ data }: { data: WhatsSellingReport }) {
           </button>
         ) : null}
       </div>
-      <p className="font-sans text-sm text-[#6B6B68]">{SELL_THROUGH_COPY}</p>
+      <p className="font-sans text-sm text-[#6B6B68]">{DEMAND_COPY}</p>
       <p className="font-sans text-sm text-[#6B6B68]">{HOMEPAGE_BESTSELLERS_ADMIN_NOTE}</p>
 
       <section className="card-surface p-5">
@@ -236,53 +208,51 @@ export function WhatsSellingPanel({ data }: { data: WhatsSellingReport }) {
 
       <section className="card-surface p-5">
         <h2 className="font-display text-lg text-choc">By size</h2>
-        <p className="mt-1 font-sans text-xs text-[#6B6B68]">Units sold this period against stock still held.</p>
+        <p className="mt-1 font-sans text-xs text-[#6B6B68]">
+          Standard sizes ordered this period. Made-to-measure sits on the piece row, not here.
+        </p>
         {sizePieces.length === 0 ? (
           <p className="mt-3 font-sans text-sm text-[#6B6B68]">{NO_SALES_COPY}</p>
         ) : (
           <div className="mt-4 space-y-5">
-            {sizePieces.map((p) => (
-              <div key={p.productId}>
-                <p className="font-sans text-sm text-choc">{p.name}</p>
-                <ul className="mt-2 space-y-1.5">
-                  {p.sizes.map((s) => {
-                    const heldMax = Math.max(s.sold, s.stockHeld, 1);
-                    return (
+            {sizePieces.map((p) => {
+              const maxSold = Math.max(...p.sizes.map((s) => s.sold), 1);
+              return (
+                <div key={p.productId}>
+                  <p className="font-sans text-sm text-choc">{p.name}</p>
+                  <ul className="mt-2 space-y-1.5">
+                    {p.sizes.map((s) => (
                       <li key={s.size} className="grid grid-cols-[3rem_1fr_auto] items-center gap-2 font-sans text-xs">
                         <span className="text-[#6B6B68]">{s.size}</span>
                         <div className="flex h-2 overflow-hidden bg-sand/70">
-                          <span className="h-2 bg-[var(--choc-deep)]" style={{ width: `${(s.sold / heldMax) * 100}%` }} />
-                          <span className="h-2 bg-nut/70" style={{ width: `${(s.stockHeld / heldMax) * 100}%` }} />
+                          <span className="h-2 bg-[var(--choc-deep)]" style={{ width: `${(s.sold / maxSold) * 100}%` }} />
                         </div>
-                        <span className="text-[#6B6B68]">
-                          {s.sold} sold · {s.stockHeld} held
-                        </span>
+                        <span className="text-[#6B6B68]">{s.sold} ordered</span>
                       </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>
 
       <section className="card-surface p-5">
-        <h2 className="font-display text-lg text-choc">Not selling</h2>
-        <p className="mt-1 font-sans text-xs text-[#6B6B68]">Published pieces with stock and no sales this period.</p>
+        <h2 className="font-display text-lg text-choc">No orders this period</h2>
+        <p className="mt-1 font-sans text-xs text-[#6B6B68]">{NO_ORDERS_COPY}</p>
         {data.notSelling.length === 0 ? (
           <p className="mt-3 font-sans text-sm text-[#6B6B68]">
-            {data.pieces.length === 0 ? NO_SALES_COPY : "Nothing in stock is sitting unsold this period."}
+            {data.pieces.length === 0 ? NO_SALES_COPY : "Every published piece had an order this period."}
           </p>
         ) : (
           <ul className="mt-3 divide-y divide-sand">
-            {data.notSelling.map((p) => (
+            {data.notSelling.slice(0, 20).map((p) => (
               <li key={p.productId} className="flex items-center gap-3 py-2">
                 <Thumb url={p.thumbnailUrl} name={p.name} />
                 <Link href={`/admin/products/${p.productId}/edit`} className="min-w-0 flex-1 font-sans text-sm text-choc hover:underline">
                   {p.name}
                 </Link>
-                <span className="font-sans text-xs text-[#6B6B68]">{p.stockHeld} in stock</span>
               </li>
             ))}
           </ul>

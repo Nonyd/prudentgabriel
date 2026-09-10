@@ -25,7 +25,6 @@ export type ProductRow = {
   primaryImage: string | null;
   variantCount: number;
   minPriceNGN: number;
-  totalStock: number;
   orderItemsCount: number;
 };
 
@@ -39,7 +38,6 @@ type ProductsTableProps = {
   type: string;
   published: string;
   needsPrice: string;
-  stock: string;
 };
 
 type DeleteState =
@@ -61,7 +59,6 @@ export function ProductsTable({
   type,
   published,
   needsPrice,
-  stock,
 }: ProductsTableProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -316,15 +313,6 @@ export function ProductsTable({
           <option value="false">Draft</option>
           <option value="needs-price">Needs Price</option>
         </select>
-        <select
-          value={stock}
-          onChange={(e) => pushFilters({ stock: e.target.value })}
-          className="rounded-sm border border-sand bg-canvas px-2 py-2 text-sm text-charcoal"
-        >
-          <option value="">All stock</option>
-          <option value="in">In stock</option>
-          <option value="out">Out of stock</option>
-        </select>
       </div>
 
       {published === "false" ? (
@@ -380,7 +368,6 @@ export function ProductsTable({
               <th className="hidden p-3 md:table-cell">Type</th>
               <th className="hidden p-3 lg:table-cell">Variants</th>
               <th className="p-3">Price</th>
-              <th className="p-3">Stock</th>
               <th className="hidden p-3 sm:table-cell">Featured</th>
               <th className="p-3">Published</th>
               <th className="hidden p-3 md:table-cell">New</th>
@@ -449,16 +436,6 @@ export function ProductsTable({
                   ) : (
                     <span>{formatNGN(p.minPriceNGN)}</span>
                   )}
-                </td>
-                <td
-                  className={cn(
-                    "p-2 text-xs font-medium",
-                    p.totalStock === 0 ? "text-red-400" : p.totalStock < 10 ? "text-amber-300" : "text-emerald-300",
-                  )}
-                >
-                  <Link href={`/admin/products/${p.id}/stock`} className="hover:underline">
-                    {p.totalStock}
-                  </Link>
                 </td>
                 <td className="hidden p-2 sm:table-cell">
                   <Toggle

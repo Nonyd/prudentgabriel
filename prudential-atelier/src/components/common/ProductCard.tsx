@@ -166,7 +166,7 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
             productName={product.name}
             images={swipeImages}
             priority={priority}
-            enableQuickAddHit={!qa.soldOut && !qa.isOpen}
+            enableQuickAddHit={!qa.isOpen}
             onQuickAdd={qa.open}
           />
         ) : (
@@ -239,7 +239,6 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
         <QuickAddMobileTrigger
           productName={product.name}
           productId={product.id}
-          soldOut={qa.soldOut}
           isOpen={qa.isOpen}
           onOpen={qa.open}
           passThroughSwipe={mobileSwipe}
@@ -250,7 +249,7 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
       </div>
 
       <div className="product-gallery-meta" onClick={goToProduct}>
-        {!qa.soldOut && !qa.isOpen ? (
+        {!qa.isOpen ? (
           <div className="mb-3 hidden justify-center md:flex">
             <QuickAddDesktopTrigger product={product} isOpen={qa.isOpen} onOpen={qa.open} />
           </div>
@@ -262,15 +261,7 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
           {product.name}
         </h3>
 
-        {qa.soldOut ? (
-          <>
-            <div className="mt-2.5">{priceBlock}</div>
-            <p className="mt-1 hidden font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-light md:block">
-              Sold out
-            </p>
-          </>
-        ) : (
-          <>
+        <>
             <div className="mt-2.5 md:hidden">{priceBlock}</div>
             <QuickAddDesktopSizes
               product={product}
@@ -289,8 +280,7 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
             >
               {priceBlock}
             </QuickAddDesktopPriceSwap>
-          </>
-        )}
+        </>
 
         {product.colors.length > 0 ? (
           <div

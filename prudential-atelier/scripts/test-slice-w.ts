@@ -1,5 +1,5 @@
 /**
- * Slice W: per-user admin reads, oversell type, permission targeting, dead enums.
+ * Slice W: per-user admin reads, fabric-unavailable targeting, refund-required report, dead enums.
  *
  *   pnpm test:slice-w
  */
@@ -16,7 +16,7 @@ import {
   adminNotificationUnreadWhere,
   targetsForAdminNotificationType,
 } from "../src/lib/admin-notification-access";
-import { listTodayOversellNotifications, oversellReportHtml } from "../src/lib/oversell-report";
+import { oversellReportHtml } from "../src/lib/oversell-report";
 import { resolveAdminAlertEmail } from "../src/lib/admin-alert-email";
 
 function assert(cond: unknown, message: string): asserts cond {
@@ -78,31 +78,29 @@ async function testMarkAllReadIsPerUser() {
   assert(unreadB === 1, `user B must still see unread after A marked read, got ${unreadB}`);
 }
 
-async function testOversellTypeAndDailyReport() {
+async function testFabricUnavailableAndRefundReport() {
   await createNotification({
-    type: "RTW_OVERSELL",
-    title: "RTW oversell — refund required",
-    message: `${stamp} paid but stock was gone`,
-    entityId: `${stamp}-oversell`,
+    type: "FABRIC_UNAVAILABLE",
+    title: "Fabric unavailable",
+    message: `${stamp} fabric cannot be made as ordered`,
+    entityId: `${stamp}-fabric`,
   });
   const row = await prisma.adminNotification.findFirstOrThrow({
-    where: { entityId: `${stamp}-oversell` },
+    where: { entityId: `${stamp}-fabric` },
   });
   ids.notificationIds.push(row.id);
 
-  assert(row.type === "RTW_OVERSELL", `oversell type should be RTW_OVERSELL, got ${row.type}`);
-  const targets = targetsForAdminNotificationType("RTW_OVERSELL");
-  assert(targets.includes("payments") && targets.includes("shop.orders"), "oversell targets payments and shop.orders");
+  assert(row.type === "FABRIC_UNAVAILABLE", `fabric type should be FABRIC_UNAVAILABLE, got ${row.type}`);
+  const targets = targetsForAdminNotificationType("FABRIC_UNAVAILABLE");
+  assert(targets.includes("shop.orders"), "fabric unavailable targets the RTW desk");
+  assert(!targets.includes("payments"), "fabric unavailable does not inherit oversell routing to Finance");
 
-  const from = new Date(Date.now() - 60_000);
-  const to = new Date(Date.now() + 60_000);
-  const notices = await listTodayOversellNotifications(from, to);
-  assert(
-    notices.some((n) => n.id === row.id),
-    "oversell notice must appear in today's oversell report query",
-  );
-  const html = oversellReportHtml([], notices.filter((n) => n.id === row.id));
-  assert(html.includes("RTW oversell"), `daily report html should include oversell, got ${html}`);
+  const empty = oversellReportHtml([]);
+  assert(empty.includes("No refund-required"), `refund-required empty copy, got ${empty}`);
+  const html = oversellReportHtml([
+    { id: "ord-1", orderNumber: "PG-TEST-1", total: 50_000, updatedAt: new Date() },
+  ]);
+  assert(html.includes("PG-TEST-1"), `daily report html should list the refund-required order, got ${html}`);
 }
 
 async function testPaymentsTargeting() {
@@ -186,7 +184,7 @@ async function testHelloIsNotAFallback() {
 async function main() {
   try {
     await testMarkAllReadIsPerUser();
-    await testOversellTypeAndDailyReport();
+    await testFabricUnavailableAndRefundReport();
     await testPaymentsTargeting();
     await testRemovedEnumHasNoUiBranch();
     await testHelloIsNotAFallback();

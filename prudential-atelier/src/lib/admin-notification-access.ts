@@ -14,14 +14,13 @@ export const ADMIN_NOTIFICATION_EVERYONE = "*";
 /**
  * W1.1 event → permission targets.
  * A user sees a row if they hold any listed key (including per-user GRANT/REVOKE),
- * or if the list is `["*"]`. Oversell needs both Finance (`payments`) and the RTW
- * desk (`shop.orders`); one key cannot express that OR, so the field is an array.
+ * or if the list is `["*"]`. Fabric unavailable is the RTW desk (`shop.orders`).
  */
 export const ADMIN_NOTIFICATION_TARGETS: Record<AdminNotificationType, readonly string[]> = {
   NEW_ORDER: ["shop.orders"],
   BANK_TRANSFER_RECEIPT: ["payments"],
   PAYMENT_FAILED: ["shop.orders"],
-  RTW_OVERSELL: ["payments", "shop.orders"],
+  FABRIC_UNAVAILABLE: ["shop.orders"],
   NEW_BESPOKE: ["bespoke"],
   QUOTE_APPROVED: ["quotations"],
   STAGE_COMPLETED: ["bespoke"],
@@ -34,7 +33,6 @@ export const ADMIN_NOTIFICATION_TARGETS: Record<AdminNotificationType, readonly 
   QUOTE_AWAITING: ["quotations"],
   REVIEW_PENDING: CMS_ADMIN_PERMISSIONS,
   TESTIMONIAL_SUBMITTED: CMS_ADMIN_PERMISSIONS,
-  LOW_STOCK: ["shop.products"],
   NEW_CUSTOMER: ["clients", "clients.view"],
   CONTACT_FORM: CMS_ADMIN_PERMISSIONS,
   JOB_APPLICATION: ["staff"],

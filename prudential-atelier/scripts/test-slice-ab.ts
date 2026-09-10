@@ -122,7 +122,7 @@ async function run() {
       isPublished: true,
       basePriceNGN: 85000,
       images: [{ url: "https://res.cloudinary.com/demo/image/upload/x.jpg", alt: "", isPrimary: true, sortOrder: 0 }],
-      variants: [{ size: "10", priceNGN: 85000, stock: 1, lowStockAt: 3, sortOrder: 0 }],
+      variants: [{ size: "10", priceNGN: 85000, sortOrder: 0 }],
     }),
   );
   assert(ready.success, "publish succeeds with name, price, photo, and size");

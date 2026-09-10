@@ -7,6 +7,13 @@ import toast from "react-hot-toast";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { AlertDialog } from "@/components/ui/AlertDialog";
+import {
+  FABRIC_CHOICE_LABEL,
+  FABRIC_PROMISE_HOURS,
+  fabricQueueOverdue,
+  hoursOnFabricQueue,
+} from "@/lib/fabric-unavailable";
+import type { FabricUnavailableChoice } from "@prisma/client";
 
 type ToolbarOrder = {
   id: string;
@@ -21,6 +28,10 @@ type ToolbarOrder = {
   carrier?: string | null;
   balance?: number;
   collectionCode?: string | null;
+  fabricUnavailableAt?: string | Date | null;
+  fabricUnavailableChoice?: FabricUnavailableChoice | null;
+  fabricUnavailableByName?: string | null;
+  fabricUnavailableNote?: string | null;
 };
 
 const NEXT_OPTIONS: Partial<Record<OrderStatus, { value: OrderStatus; label: string }[]>> = {
@@ -58,9 +69,10 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
   const [refundFull, setRefundFull] = useState(true);
   const [refundAmount, setRefundAmount] = useState(String(Math.round(order.totalNGN)));
   const [refundReason, setRefundReason] = useState("");
-  const [refundReturnToStock, setRefundReturnToStock] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [cancelReturnToStock, setCancelReturnToStock] = useState(false);
+  const [fabricOpen, setFabricOpen] = useState(false);
+  const [fabricChoice, setFabricChoice] = useState<FabricUnavailableChoice>("ALTERNATIVE_OFFERED");
+  const [fabricNote, setFabricNote] = useState("");
 
   useEffect(() => {
     setNotes(order.adminNotes ?? "");
@@ -75,7 +87,6 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
       setRefundFull(true);
       setRefundAmount(String(Math.round(order.totalNGN)));
       setRefundReason("");
-      setRefundReturnToStock(false);
     }
   }, [refundOpen, order.totalNGN]);
 
@@ -128,7 +139,6 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
             full: refundFull,
             amountNGN: refundFull ? order.totalNGN : amt,
             reason,
-            returnToStock: refundFull ? refundReturnToStock : false,
           },
         }),
       });
@@ -164,10 +174,9 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
   const isPickup = order.shippingMethodKind === "PICKUP";
   const isMto = order.fulfilmentKind === "MADE_TO_ORDER" || order.fulfilmentKind === "MIXED";
   const unpaid = order.paymentStatus !== "PAID";
-  const oversell = (order.adminNotes ?? "").includes("Fulfilment refused");
-  const shippedLike =
-    order.status === "SHIPPED" || order.status === "DELIVERED" || order.status === "COLLECTED";
-  const canOfferRestock = order.paymentStatus === "PAID" && !oversell;
+  const fabricAt = order.fabricUnavailableAt ? new Date(order.fabricUnavailableAt) : null;
+  const fabricHours = fabricAt ? hoursOnFabricQueue(fabricAt) : 0;
+  const fabricOverdue = fabricAt ? fabricQueueOverdue(fabricAt) : false;
   const options = (NEXT_OPTIONS[order.status] ?? []).filter((o) => {
     if (unpaid && o.value !== "CANCELLED") return false;
     if (isPickup && o.value === "SHIPPED") return false;
@@ -225,27 +234,6 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
                   className="mt-1 w-full border border-sand bg-canvas px-3 py-2 text-sm text-charcoal"
                 />
               </label>
-              {canOfferRestock && refundFull ? (
-                <label className="flex cursor-pointer items-start gap-2 text-sm text-charcoal">
-                  <input
-                    type="checkbox"
-                    className="mt-0.5"
-                    checked={refundReturnToStock}
-                    onChange={(e) => setRefundReturnToStock(e.target.checked)}
-                  />
-                  <span>
-                    Return this piece to stock?
-                    <span className="mt-0.5 block text-xs text-[#6B6B68]">
-                      Off by default. Leave unchecked if the garment is damaged or has not come back.
-                    </span>
-                  </span>
-                </label>
-              ) : null}
-              {oversell ? (
-                <p className="text-xs text-[#92660A]">
-                  This order never took stock (oversell). It will not be returned to the rail.
-                </p>
-              ) : null}
             </div>
             <div className="mt-4 border border-[#FFF8E7] bg-[#FFF8E7] p-3 text-xs text-[#92660A]">
               This records the refund in Prudential Atelier. You must also issue the refund in your {gatewayLabel(order.paymentGateway)}{" "}
@@ -285,29 +273,9 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
             </div>
             <Dialog.Description className="mt-2 text-sm text-[#6B6B68]">
               {unpaid
-                ? "This order was never paid, so stock is unchanged."
-                : oversell
-                  ? "Stock was never taken (oversell). Cancelling will not return a piece to the rail."
-                  : "A paid garment stays sold until you choose to return it to stock."}
+                ? "This order was never paid."
+                : "Cancelling a paid order puts it on the refund-required queue until you record the refund."}
             </Dialog.Description>
-            {canOfferRestock ? (
-              <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm text-charcoal">
-                <input
-                  type="checkbox"
-                  className="mt-0.5"
-                  checked={cancelReturnToStock}
-                  onChange={(e) => setCancelReturnToStock(e.target.checked)}
-                />
-                <span>
-                  Return this piece to stock?
-                  <span className="mt-0.5 block text-xs text-[#6B6B68]">
-                    {shippedLike
-                      ? "Off by default — the piece may already have left the house."
-                      : "On by default for an unshipped paid order."}
-                  </span>
-                </span>
-              </label>
-            ) : null}
             <div className="mt-6 flex justify-end gap-2">
               <Dialog.Close asChild>
                 <button type="button" className="border border-sand px-4 py-2 text-xs text-olive">
@@ -320,7 +288,6 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
                 onClick={() => {
                   void patch({
                     status: "CANCELLED",
-                    returnToStock: canOfferRestock ? cancelReturnToStock : false,
                   }).then((ok) => {
                     if (ok) setCancelOpen(false);
                   });
@@ -328,6 +295,74 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
                 className="bg-wine px-4 py-2 text-xs text-white hover:bg-wine-hover disabled:opacity-50"
               >
                 Cancel order
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <Dialog.Root open={fabricOpen} onOpenChange={setFabricOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm" />
+          <Dialog.Content
+            data-lenis-prevent
+            className="fixed left-1/2 top-1/2 z-[101] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain glass-3 glass-panel p-6 text-charcoal"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <Dialog.Title className="font-display text-xl text-ink">Fabric unavailable — #{order.orderNumber}</Dialog.Title>
+              <Dialog.Close className="rounded-sm p-1 text-[#A8A8A4] hover:text-charcoal" aria-label="Close fabric dialog">
+                <X className="h-5 w-5" />
+              </Dialog.Close>
+            </div>
+            <Dialog.Description className="mt-2 text-sm text-[#6B6B68]">
+              Offer an alternative or a refund within {FABRIC_PROMISE_HOURS} hours. This does not block the sale.
+            </Dialog.Description>
+            <div className="mt-4 space-y-3 text-sm">
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  checked={fabricChoice === "ALTERNATIVE_OFFERED"}
+                  onChange={() => setFabricChoice("ALTERNATIVE_OFFERED")}
+                />
+                {FABRIC_CHOICE_LABEL.ALTERNATIVE_OFFERED}
+              </label>
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  checked={fabricChoice === "REFUNDED"}
+                  onChange={() => setFabricChoice("REFUNDED")}
+                />
+                {FABRIC_CHOICE_LABEL.REFUNDED}
+              </label>
+              <label className="block text-xs uppercase text-[#A8A8A4]">
+                Note
+                <textarea
+                  value={fabricNote}
+                  onChange={(e) => setFabricNote(e.target.value)}
+                  rows={3}
+                  className="mt-1 w-full border border-sand bg-canvas px-3 py-2 text-sm text-charcoal"
+                />
+              </label>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <Dialog.Close asChild>
+                <button type="button" className="border border-sand px-4 py-2 text-xs text-olive">
+                  Cancel
+                </button>
+              </Dialog.Close>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  void patch({
+                    fabricUnavailable: { choice: fabricChoice, note: fabricNote || undefined },
+                  }).then((ok) => {
+                    if (ok) setFabricOpen(false);
+                  });
+                }}
+                className="bg-olive px-4 py-2 text-xs text-white hover:bg-olive-hover disabled:opacity-50"
+              >
+                Record choice
               </button>
             </div>
           </Dialog.Content>
@@ -349,6 +384,16 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
       {unpaid ? (
         <p className="mt-2 font-body text-sm text-[#C45E0A]">
           Payment is not approved yet. Use Proof of payment above before production or shipping.
+        </p>
+      ) : null}
+      {fabricAt ? (
+        <p className={`mt-2 font-body text-sm ${fabricOverdue ? "text-wine" : "text-[#92660A]"}`}>
+          Fabric unavailable · {Math.floor(fabricHours)}h of {FABRIC_PROMISE_HOURS}h
+          {order.fabricUnavailableChoice
+            ? ` · ${FABRIC_CHOICE_LABEL[order.fabricUnavailableChoice]}`
+            : ""}
+          {order.fabricUnavailableByName ? ` · ${order.fabricUnavailableByName}` : ""}
+          {fabricOverdue ? " · overdue" : ""}
         </p>
       ) : null}
       {outstanding ? (
@@ -414,7 +459,6 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
           disabled={busy}
           className="rounded-sm border border-red-500/40 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10"
           onClick={() => {
-            setCancelReturnToStock(canOfferRestock && !shippedLike);
             setCancelOpen(true);
           }}
         >
@@ -430,6 +474,18 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
             Issue Refund
           </button>
         ) : null}
+        <button
+          type="button"
+          disabled={busy}
+          className="border border-sand px-3 py-2 text-xs text-olive hover:bg-[#FAFAFA]"
+          onClick={() => {
+            setFabricChoice(order.fabricUnavailableChoice ?? "ALTERNATIVE_OFFERED");
+            setFabricNote(order.fabricUnavailableNote ?? "");
+            setFabricOpen(true);
+          }}
+        >
+          Fabric unavailable
+        </button>
       </div>
       <label className="mt-4 block text-xs text-[#6B6B68]">
         Internal notes

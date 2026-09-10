@@ -16,7 +16,6 @@ export const collectionListProductInclude = {
       salePriceNGN: true,
       priceUSD: true,
       priceGBP: true,
-      stock: true,
     },
   },
   colors: { select: { id: true, name: true, hex: true, imageUrl: true } },

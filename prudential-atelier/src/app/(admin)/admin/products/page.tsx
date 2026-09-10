@@ -23,7 +23,6 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
         ? sp.published[0]
         : sp.published;
   const needsPrice = Array.isArray(sp.needsPrice) ? sp.needsPrice[0] : sp.needsPrice;
-  const stock = Array.isArray(sp.stock) ? sp.stock[0] : sp.stock;
 
   const where: Prisma.ProductWhereInput = {};
   if (search) {
@@ -40,9 +39,6 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
     where.isPublished = false;
     where.basePriceNGN = 0;
   }
-  if (stock === "out") where.variants = { some: { stock: 0 } };
-  if (stock === "in") where.NOT = { variants: { some: { stock: 0 } } };
-
   const [total, rows, legacyImageCount] = await Promise.all([
     prisma.product.count({ where }),
     prisma.product.findMany({
@@ -52,7 +48,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       take: PAGE_SIZE,
       include: {
         images: { where: { isPrimary: true }, take: 1 },
-        variants: { select: { id: true, priceNGN: true, salePriceNGN: true, stock: true }, orderBy: { sortOrder: "asc" } },
+        variants: { select: { id: true, priceNGN: true, salePriceNGN: true }, orderBy: { sortOrder: "asc" } },
         _count: { select: { orderItems: true } },
       },
     }),
@@ -64,7 +60,6 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   const items: ProductRow[] = rows.map((p) => {
     const prices = p.variants.map((v) => effectiveUnitNGN(v, p.isOnSale));
     const minPrice = prices.length ? Math.min(...prices) : p.basePriceNGN;
-    const totalStock = p.variants.reduce((s, v) => s + v.stock, 0);
     return {
       id: p.id,
       name: p.name,
@@ -79,7 +74,6 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       minPriceNGN: minPrice,
       basePriceNGN: p.basePriceNGN,
       defaultVariantId: p.variants[0]?.id ?? null,
-      totalStock,
       orderItemsCount: p._count.orderItems,
     };
   });
@@ -114,7 +108,6 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
         type={type ?? ""}
         published={published ?? ""}
         needsPrice={needsPrice ?? ""}
-        stock={stock ?? ""}
       />
     </div>
   );

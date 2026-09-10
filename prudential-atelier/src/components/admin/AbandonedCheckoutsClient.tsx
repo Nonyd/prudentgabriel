@@ -30,9 +30,7 @@ export function AbandonedCheckoutsClient({ rows }: { rows: Row[] }) {
             ? "Two automatic reminders already went out. That is the ceiling."
             : json.error === "unsubscribed"
               ? "This address is unsubscribed or bounced."
-              : json.error === "out_of_stock"
-                ? "Every item in the snapshot is out of stock."
-                : json.error === "recovered"
+              : json.error === "recovered"
                   ? "This checkout was already recovered."
                   : "Could not send reminder",
         );

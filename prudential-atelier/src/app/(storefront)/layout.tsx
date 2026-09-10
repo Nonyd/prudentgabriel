@@ -1,8 +1,10 @@
 import { Navbar } from "@/components/public/Navbar";
 import { Footer } from "@/components/public/Footer";
 import { CartDrawer } from "@/components/layout/CartDrawer";
+import { ProductionTimeProvider } from "@/components/layout/ProductionTimeContext";
 import { SearchModal } from "@/components/layout/SearchModal";
 import { ANNOUNCEMENT_SPEED_MS, cmsBool, cmsGet, cmsJson } from "@/lib/cms";
+import { getProductionCopy } from "@/lib/production-time";
 import {
   STOREFRONT_CACHE_TAGS,
   getCachedCMSContent,
@@ -22,10 +24,11 @@ const FOOTER_KEYS = [
 ] as const;
 
 export default async function StorefrontLayout({ children }: { children: React.ReactNode }) {
-  const [announcementCms, footerCms, collections] = await Promise.all([
+  const [announcementCms, footerCms, collections, productionCopy] = await Promise.all([
     getCachedCMSContent([...ANNOUNCEMENT_KEYS], STOREFRONT_CACHE_TAGS.cmsChrome),
     getCachedCMSContent([...FOOTER_KEYS], STOREFRONT_CACHE_TAGS.cmsChrome),
     getNavCollections(),
+    getProductionCopy(),
   ]);
 
   const showAnnouncement = cmsBool(announcementCms, "announcement_bar_enabled", true);
@@ -37,25 +40,27 @@ export default async function StorefrontLayout({ children }: { children: React.R
   const intervalMs = ANNOUNCEMENT_SPEED_MS[speedKey] ?? 3000;
 
   return (
-    <div className="storefront-shell" data-announcement={showAnnouncement ? "on" : "off"}>
-      <div className="storefront-field" aria-hidden="true" />
-      <a href="#main-content" className="skip-link">
-        Skip to content
-      </a>
-      <Navbar
-        collections={collections}
-        showAnnouncement={showAnnouncement}
-        announcementMessages={messages}
-        announcementIntervalMs={intervalMs}
-      />
-      <main id="main-content" tabIndex={-1} className="storefront-main min-h-screen">
-        {children}
-      </main>
-      <div className="relative z-[1]">
-        <Footer cms={footerCms} />
+    <ProductionTimeProvider copy={productionCopy}>
+      <div className="storefront-shell" data-announcement={showAnnouncement ? "on" : "off"}>
+        <div className="storefront-field" aria-hidden="true" />
+        <a href="#main-content" className="skip-link">
+          Skip to content
+        </a>
+        <Navbar
+          collections={collections}
+          showAnnouncement={showAnnouncement}
+          announcementMessages={messages}
+          announcementIntervalMs={intervalMs}
+        />
+        <main id="main-content" tabIndex={-1} className="storefront-main min-h-screen">
+          {children}
+        </main>
+        <div className="relative z-[1]">
+          <Footer cms={footerCms} />
+        </div>
+        <CartDrawer />
+        <SearchModal />
       </div>
-      <CartDrawer />
-      <SearchModal />
-    </div>
+    </ProductionTimeProvider>
   );
 }

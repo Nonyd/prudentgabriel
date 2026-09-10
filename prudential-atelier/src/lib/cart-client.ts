@@ -1,7 +1,7 @@
 "use client";
 
 import { planGuestServerMerge } from "@/lib/cart-merge";
-import { stockGuardMessage } from "@/lib/quick-add";
+import { bagErrorMessage } from "@/lib/quick-add";
 import { useCartStore, type CartItem } from "@/store/cartStore";
 import { effectiveUnitNGN, variantAmountInCurrency } from "@/lib/pricing";
 
@@ -41,7 +41,6 @@ type ServerCartRow = {
     salePriceNGN: number | null;
     priceUSD: number | null;
     priceGBP: number | null;
-    stock: number;
   } | null;
   color: { name: string; hex: string } | null;
 };
@@ -73,7 +72,6 @@ function serverRowToCartItem(
     priceUSD: priceSource ? variantAmountInCurrency(priceSource, priced, "USD", rates) + (row.surchargeNGN ?? 0) * rates.USD : unit * rates.USD,
     priceGBP: priceSource ? variantAmountInCurrency(priceSource, priced, "GBP", rates) + (row.surchargeNGN ?? 0) * rates.GBP : unit * rates.GBP,
     quantity: row.quantity,
-    stock: sizeMode === "CUSTOM" ? 999 : (row.variant?.stock ?? 0),
     category: row.product.category,
     sizeMode,
     measurements: row.measurements,
@@ -126,7 +124,7 @@ export async function postCartLine(line: {
   });
   const data = (await res.json().catch(() => ({}))) as { error?: string };
   if (!res.ok) {
-    return { ok: false, error: stockGuardMessage(data.error) };
+    return { ok: false, error: bagErrorMessage(data.error) };
   }
   const replaced = await replaceCartFromServer();
   return replaced ? { ok: true } : { ok: false, error: "Could not refresh bag" };

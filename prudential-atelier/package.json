@@ -53,7 +53,7 @@
     "test:slice-w": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-w.ts",
     "test:slice-v": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-v.ts",
     "test:slice-u": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-u.ts",
-    "reconcile:stock": "tsx --tsconfig tsconfig.scripts.json scripts/reconcile-stock-ledger.ts",
+    "test:slice-ag": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-ag.ts",
     "test:slice-s": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-s.ts",
     "test:slice-r": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-r.ts",
     "test:slice-q": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-q.ts",

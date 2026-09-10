@@ -104,9 +104,9 @@ async function main() {
   const manual = await sendAbandonedCheckoutReminder({ sessionId: capped.id, kind: "manual" });
   assert(!manual.queued && manual.reason === "automatic_cap", "manual send after two automatics blocked");
 
-  const oos = await makeSession({ variantId: `ghost-variant-${stamp}` });
-  const oosSend = await sendAbandonedCheckoutReminder({ sessionId: oos.id, kind: 1 });
-  assert(!oosSend.queued && oosSend.reason === "out_of_stock", "all items out of stock skipped");
+  const ghost = await makeSession({ variantId: `ghost-variant-${stamp}` });
+  const ghostSend = await sendAbandonedCheckoutReminder({ sessionId: ghost.id, kind: 1 });
+  assert(ghostSend.queued, "a listed size still gets a reminder — nothing is refused for stock");
 
   const txHtml = await render(
     React.createElement(PasswordResetEmail, { resetUrl: "https://example.test/reset" }),

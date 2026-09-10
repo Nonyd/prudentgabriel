@@ -88,7 +88,7 @@ export async function addCartLine(userId: string, input: CartLineInput) {
 
   const variant = await prisma.productVariant.findUnique({
     where: { id: variantId },
-    select: { id: true, stock: true, productId: true, size: true },
+    select: { id: true, productId: true, size: true },
   });
 
   if (!variant || variant.productId !== input.productId) {
@@ -96,9 +96,6 @@ export async function addCartLine(userId: string, input: CartLineInput) {
   }
   if (variant.size.trim().toLowerCase() === "custom") {
     return { ok: false as const, status: 400, error: "Use made-to-measure on the product page" };
-  }
-  if (variant.stock < 1) {
-    return { ok: false as const, status: 400, error: "Out of stock" };
   }
 
   const lineKey = cartLineKey({ sizeMode: "STANDARD", productId: input.productId, variantId, colorId: colorIdNorm });
@@ -108,7 +105,7 @@ export async function addCartLine(userId: string, input: CartLineInput) {
 
   try {
     if (existing) {
-      const nextQty = Math.min(existing.quantity + quantity, variant.stock);
+      const nextQty = existing.quantity + quantity;
       const cartItem = await prisma.cartItem.update({
         where: { id: existing.id },
         data: { quantity: nextQty, variantId, sizeMode: "STANDARD" },
@@ -123,7 +120,7 @@ export async function addCartLine(userId: string, input: CartLineInput) {
         productId: input.productId,
         variantId,
         colorId: colorIdNorm,
-        quantity: Math.min(quantity, variant.stock),
+        quantity,
         sizeMode: "STANDARD",
         lineKey,
       },
@@ -239,9 +236,6 @@ export async function updateCartLineQty(userId: string, itemId: string, quantity
     include: { variant: true },
   });
   if (!item) return { ok: false as const, status: 404, error: "Not found" };
-  if (!isCustomLine(item.sizeMode) && item.variant && quantity > item.variant.stock) {
-    return { ok: false as const, status: 400, error: "Quantity exceeds stock" };
-  }
   const cartItem = await prisma.cartItem.update({
     where: { id: item.id },
     data: { quantity },
@@ -262,7 +256,7 @@ export async function changeCartLineSize(userId: string, itemId: string, variant
 
   const variant = await prisma.productVariant.findUnique({
     where: { id: variantId },
-    select: { id: true, stock: true, productId: true, size: true },
+    select: { id: true, productId: true, size: true },
   });
   if (!variant || variant.productId !== item.productId) {
     return { ok: false as const, status: 400, error: "Invalid size" };
@@ -270,11 +264,8 @@ export async function changeCartLineSize(userId: string, itemId: string, variant
   if (variant.size.trim().toLowerCase() === "custom") {
     return { ok: false as const, status: 400, error: "Use made-to-measure on the product page" };
   }
-  if (variant.stock < 1) {
-    return { ok: false as const, status: 400, error: "That size just sold out." };
-  }
 
-  const nextQty = Math.min(item.quantity, variant.stock);
+  const nextQty = item.quantity;
   const lineKey = cartLineKey({
     sizeMode: "STANDARD",
     productId: item.productId,
@@ -288,7 +279,7 @@ export async function changeCartLineSize(userId: string, itemId: string, variant
 
   try {
     if (existing) {
-      const mergedQty = Math.min(existing.quantity + nextQty, variant.stock);
+      const mergedQty = existing.quantity + nextQty;
       await prisma.$transaction([
         prisma.cartItem.update({
           where: { id: existing.id },

@@ -26,7 +26,6 @@ import {
   InvoiceStatus,
 } from "@prisma/client";
 import { assertFixturesAllowed } from "../scripts/fixture-guard";
-import { ensureAllOpeningMovements } from "../src/lib/stock-ledger";
 
 assertFixturesAllowed("prisma/seed-fixtures.ts");
 
@@ -42,7 +41,7 @@ const IMG = {
   bridal2: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?w=800",
 };
 
-type VariantSeed = { size: string; priceNGN: number; salePriceNGN?: number | null; stock: number };
+type VariantSeed = { size: string; priceNGN: number; salePriceNGN?: number | null };
 
 type ProductSeed = {
   name: string;
@@ -83,9 +82,9 @@ const PRODUCTS: ProductSeed[] = [
       { url: IMG.bridal2, alt: "Amore detail", isPrimary: false, sortOrder: 1 },
     ],
     variants: [
-      { size: "UK8", priceNGN: 1_850_000, stock: 2 },
-      { size: "UK10", priceNGN: 1_900_000, stock: 3 },
-      { size: "UK12", priceNGN: 1_950_000, stock: 1 },
+      { size: "UK8", priceNGN: 1_850_000 },
+      { size: "UK10", priceNGN: 1_900_000 },
+      { size: "UK12", priceNGN: 1_950_000 },
     ],
     colors: [
       { name: "Ivory", hex: "#FFFFF0" },
@@ -109,10 +108,10 @@ const PRODUCTS: ProductSeed[] = [
       { url: IMG.formal, alt: "Ebony alternate", isPrimary: false, sortOrder: 1 },
     ],
     variants: [
-      { size: "XS", priceNGN: 450_000, salePriceNGN: 360_000, stock: 4 },
-      { size: "S", priceNGN: 450_000, salePriceNGN: 360_000, stock: 5 },
-      { size: "M", priceNGN: 450_000, salePriceNGN: 360_000, stock: 2 },
-      { size: "L", priceNGN: 450_000, salePriceNGN: 360_000, stock: 0 },
+      { size: "XS", priceNGN: 450_000, salePriceNGN: 360_000 },
+      { size: "S", priceNGN: 450_000, salePriceNGN: 360_000 },
+      { size: "M", priceNGN: 450_000, salePriceNGN: 360_000 },
+      { size: "L", priceNGN: 450_000, salePriceNGN: 360_000 },
     ],
     colors: [{ name: "Black", hex: "#1a1a1a" }],
   },
@@ -127,9 +126,9 @@ const PRODUCTS: ProductSeed[] = [
     tags: ["Corporate", "Evening", "suit"],
     images: [{ url: IMG.formal, alt: "Lagos Power Suit", isPrimary: true, sortOrder: 0 }],
     variants: [
-      { size: "UK8", priceNGN: 285_000, stock: 6 },
-      { size: "UK10", priceNGN: 295_000, stock: 4 },
-      { size: "UK12", priceNGN: 305_000, stock: 3 },
+      { size: "UK8", priceNGN: 285_000 },
+      { size: "UK10", priceNGN: 295_000 },
+      { size: "UK12", priceNGN: 305_000 },
     ],
     colors: [
       { name: "Navy", hex: "#1B2838" },
@@ -146,9 +145,9 @@ const PRODUCTS: ProductSeed[] = [
     tags: ["Evening", "dress", "la-femme"],
     images: [{ url: IMG.evening, alt: "Celestial Sequin Gown", isPrimary: true, sortOrder: 0 }],
     variants: [
-      { size: "S", priceNGN: 520_000, stock: 2 },
-      { size: "M", priceNGN: 540_000, stock: 2 },
-      { size: "L", priceNGN: 560_000, stock: 1 },
+      { size: "S", priceNGN: 520_000 },
+      { size: "M", priceNGN: 540_000 },
+      { size: "L", priceNGN: 560_000 },
     ],
   },
   {
@@ -161,9 +160,9 @@ const PRODUCTS: ProductSeed[] = [
     tags: ["Casual", "set"],
     images: [{ url: IMG.casual, alt: "Ivy Casual Set", isPrimary: true, sortOrder: 0 }],
     variants: [
-      { size: "XS", priceNGN: 125_000, stock: 8 },
-      { size: "S", priceNGN: 125_000, stock: 10 },
-      { size: "M", priceNGN: 130_000, stock: 7 },
+      { size: "XS", priceNGN: 125_000 },
+      { size: "S", priceNGN: 125_000 },
+      { size: "M", priceNGN: 130_000 },
     ],
   },
   {
@@ -176,9 +175,9 @@ const PRODUCTS: ProductSeed[] = [
     tags: ["Kiddies", "dress"],
     images: [{ url: IMG.kiddies, alt: "Kiddies Party Dress", isPrimary: true, sortOrder: 0 }],
     variants: [
-      { size: "Age 4-5", priceNGN: 68_000, stock: 5 },
-      { size: "Age 6-7", priceNGN: 72_000, stock: 4 },
-      { size: "Age 8-10", priceNGN: 76_000, stock: 3 },
+      { size: "Age 4-5", priceNGN: 68_000 },
+      { size: "Age 6-7", priceNGN: 72_000 },
+      { size: "Age 8-10", priceNGN: 76_000 },
     ],
   },
   {
@@ -191,7 +190,7 @@ const PRODUCTS: ProductSeed[] = [
     tags: ["Traditional", "accessories"],
     images: [{ url: IMG.accessories, alt: "Silk Scarf", isPrimary: true, sortOrder: 0 }],
     variants: [
-      { size: "One Size", priceNGN: 45_000, stock: 20 },
+      { size: "One Size", priceNGN: 45_000 },
     ],
   },
   {
@@ -205,9 +204,9 @@ const PRODUCTS: ProductSeed[] = [
     tags: ["Traditional", "Corporate", "dress"],
     images: [{ url: IMG.formal, alt: "Aso-Ebi Formal Gown", isPrimary: true, sortOrder: 0 }],
     variants: [
-      { size: "UK8", priceNGN: 380_000, stock: 3 },
-      { size: "UK10", priceNGN: 400_000, stock: 3 },
-      { size: "UK12", priceNGN: 420_000, stock: 2 },
+      { size: "UK8", priceNGN: 380_000 },
+      { size: "UK10", priceNGN: 400_000 },
+      { size: "UK12", priceNGN: 420_000 },
     ],
   },
   {
@@ -220,9 +219,9 @@ const PRODUCTS: ProductSeed[] = [
     tags: ["Evening", "dress"],
     images: [{ url: IMG.evening, alt: "Cocktail Midi", isPrimary: true, sortOrder: 0 }],
     variants: [
-      { size: "S", priceNGN: 195_000, stock: 4 },
-      { size: "M", priceNGN: 195_000, stock: 4 },
-      { size: "L", priceNGN: 210_000, stock: 2 },
+      { size: "S", priceNGN: 195_000 },
+      { size: "M", priceNGN: 195_000 },
+      { size: "L", priceNGN: 210_000 },
     ],
   },
   {
@@ -235,9 +234,9 @@ const PRODUCTS: ProductSeed[] = [
     tags: ["Casual", "Modest", "dress"],
     images: [{ url: IMG.casual, alt: "Linen Shirt Dress", isPrimary: true, sortOrder: 0 }],
     variants: [
-      { size: "XS", priceNGN: 98_000, stock: 5 },
-      { size: "S", priceNGN: 98_000, stock: 6 },
-      { size: "M", priceNGN: 102_000, stock: 4 },
+      { size: "XS", priceNGN: 98_000 },
+      { size: "S", priceNGN: 98_000 },
+      { size: "M", priceNGN: 102_000 },
     ],
   },
   {
@@ -249,7 +248,7 @@ const PRODUCTS: ProductSeed[] = [
     basePriceNGN: 85_000,
     tags: ["Evening", "Bridal", "accessories"],
     images: [{ url: IMG.accessories, alt: "Pearl Clutch", isPrimary: true, sortOrder: 0 }],
-    variants: [{ size: "One Size", priceNGN: 85_000, stock: 12 }],
+    variants: [{ size: "One Size", priceNGN: 85_000 }],
   },
   {
     name: "Traditional Buba Set",
@@ -262,9 +261,9 @@ const PRODUCTS: ProductSeed[] = [
     tags: ["Traditional", "set"],
     images: [{ url: IMG.casual, alt: "Buba Set", isPrimary: true, sortOrder: 0 }],
     variants: [
-      { size: "S", priceNGN: 220_000, stock: 2 },
-      { size: "M", priceNGN: 240_000, stock: 2 },
-      { size: "L", priceNGN: 260_000, stock: 1 },
+      { size: "S", priceNGN: 220_000 },
+      { size: "M", priceNGN: 240_000 },
+      { size: "L", priceNGN: 260_000 },
     ],
   },
   {
@@ -277,9 +276,9 @@ const PRODUCTS: ProductSeed[] = [
     tags: ["Modest", "Corporate", "dress", "church-girl"],
     images: [{ url: IMG.casual, alt: "Modest Wrap Dress", isPrimary: true, sortOrder: 0 }],
     variants: [
-      { size: "XS", priceNGN: 112_000, stock: 3 },
-      { size: "S", priceNGN: 112_000, stock: 4 },
-      { size: "M", priceNGN: 118_000, stock: 3 },
+      { size: "XS", priceNGN: 112_000 },
+      { size: "S", priceNGN: 112_000 },
+      { size: "M", priceNGN: 118_000 },
     ],
   },
   {
@@ -293,8 +292,8 @@ const PRODUCTS: ProductSeed[] = [
     tags: ["Kiddies", "Bridal", "dress"],
     images: [{ url: IMG.kiddies, alt: "Mini-Me", isPrimary: true, sortOrder: 0 }],
     variants: [
-      { size: "Age 4-5", priceNGN: 155_000, stock: 2 },
-      { size: "Age 6-7", priceNGN: 165_000, stock: 2 },
+      { size: "Age 4-5", priceNGN: 155_000 },
+      { size: "Age 6-7", priceNGN: 165_000 },
     ],
   },
 ];
@@ -324,7 +323,6 @@ async function main() {
         saleEndsAt: p.saleEndsAt ?? null,
         isBespokeAvail: p.isBespokeAvail ?? false,
         tags: p.tags,
-        inStock: true,
         images: {
           create: p.images.map((im) => ({
             url: im.url,
@@ -338,7 +336,6 @@ async function main() {
             size: v.size,
             priceNGN: v.priceNGN,
             salePriceNGN: v.salePriceNGN ?? null,
-            stock: v.stock,
             sortOrder: i,
           })),
         },
@@ -370,8 +367,6 @@ async function main() {
   }
 
   console.log(`Ensured ${created.length} fixture products (catalogue not wiped).`);
-  const opening = await ensureAllOpeningMovements(prisma);
-  if (opening > 0) console.log(`Wrote ${opening} opening stock movements.`);
 
   await prisma.shippingZone.createMany({
     skipDuplicates: true,
@@ -1056,7 +1051,7 @@ async function main() {
     { key: "notify_new_order", value: "true", group: SettingGroup.NOTIFICATIONS, label: "Email on new order", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 1 },
     { key: "notify_new_bespoke", value: "true", group: SettingGroup.NOTIFICATIONS, label: "Email on new bespoke request", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 2 },
     { key: "notify_new_consultation", value: "true", group: SettingGroup.NOTIFICATIONS, label: "Email on new consultation booking", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 3 },
-    { key: "notify_low_stock", value: "true", group: SettingGroup.NOTIFICATIONS, label: "Email when variant stock ≤ lowStockAt", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 4 },
+    { key: "rtw_production_copy", value: "7-12 days", group: SettingGroup.STORE, label: "Ready-to-wear production time (shown on the product page, bag, checkout, and confirmation email)", type: SettingType.TEXT, isPublic: true, sortOrder: 25 },
     { key: "slack_webhook_url", value: "", group: SettingGroup.NOTIFICATIONS, label: "Slack Webhook URL (for alerts)", type: SettingType.PASSWORD, isPublic: false, sortOrder: 5 },
   ];
 
@@ -1207,7 +1202,6 @@ async function main() {
     { key: "email_tpl_bespoke_confirmation", label: "Bespoke Confirmation", sortOrder: 103 },
     { key: "email_tpl_password_reset", label: "Password Reset", sortOrder: 104 },
     { key: "email_tpl_referral_success", label: "Referral Success", sortOrder: 105 },
-    { key: "email_tpl_back_in_stock", label: "Back In Stock", sortOrder: 106 },
     { key: "email_tpl_consultation_pending", label: "Consultation Pending", sortOrder: 107 },
     { key: "email_tpl_consultation_confirmed", label: "Consultation Confirmed", sortOrder: 108 },
     { key: "email_tpl_consultation_cancelled", label: "Consultation Cancelled", sortOrder: 109 },

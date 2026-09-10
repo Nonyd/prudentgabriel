@@ -105,7 +105,7 @@ export function womenCmsToChartRows(
   }));
 }
 
-/** True when this house-chart row is a size she can tap on this piece (including sold-out). */
+/** True when this house-chart row is a size she can tap on this piece. */
 export function chartRowIsOffered(label: string, offeredSizes: string[]): boolean {
   const lab = normalizeSizeToken(label);
   if (!lab) return false;

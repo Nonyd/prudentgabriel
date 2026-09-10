@@ -48,7 +48,3 @@ export function eventReminderEmailHtml(params: {
   return WRAPPER(`${params.eventLabel} is coming up`, body, `${params.appUrl}/consultation`, "Book a Consultation");
 }
 
-export function restockEmailHtml(productName: string, size: string, shopUrl: string) {
-  const body = `<p style="font-size:14px;color:#5C3422;"><strong>${productName}</strong> in size ${size} is back in stock.</p>`;
-  return WRAPPER("Back in stock", body, shopUrl, "Shop Now");
-}

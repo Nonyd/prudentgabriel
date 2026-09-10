@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/Button";
 import { NIGERIA_STATES } from "@/lib/geo/nigeria-states";
 import { COUNTRIES } from "@/lib/geo/countries";
 import { CUSTOM_RETURNS_COPY } from "@/lib/custom-size";
+import { useMadeThenShippedCopy } from "@/components/layout/ProductionTimeContext";
 
 interface ShipOpt {
   zoneId: string;
@@ -70,6 +71,7 @@ export function CheckoutClient() {
   const hasCustom = items.some((i) => i.sizeMode === "CUSTOM");
   const customNotReturnable = items.some((i) => i.sizeMode === "CUSTOM" && i.customReturnable !== true);
   const { changeQty, removeFromBag } = useBagActions();
+  const madeCopy = useMadeThenShippedCopy();
 
   const [step, setStep] = useState(1);
   const [couponCode, setCouponCode] = useState("");
@@ -752,9 +754,7 @@ export function CheckoutClient() {
                       className="rounded border border-border px-2"
                       aria-label={`Increase quantity of ${i.productName}`}
                       onClick={() => {
-                        const max = i.stock ?? 999;
-                        const next = Math.min(max, i.quantity + 1);
-                        void changeQty(i.id, next);
+                        void changeQty(i.id, i.quantity + 1);
                       }}
                     >
                       +
@@ -1337,6 +1337,7 @@ export function CheckoutClient() {
       </div>
 
       <aside className="w-full min-w-0 shrink-0 lg:sticky lg:top-24 lg:w-[360px]">
+        <p className="mb-3 font-body text-[12px] leading-5 text-charcoal-mid">{madeCopy}</p>
         <OrderSummary
           items={items}
           couponResult={couponResult}

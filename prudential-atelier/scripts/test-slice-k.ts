@@ -144,7 +144,6 @@ async function makeProduct() {
           sku: `PA-K-${stamp}`,
           size: "M",
           priceNGN: 100_000,
-          stock: 4,
         },
       },
     },

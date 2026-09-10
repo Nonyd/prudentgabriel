@@ -1,5 +1,5 @@
 /**
- * Slice J: Quick Add state machine — no silent size default, sold-out, CTA labels.
+ * Slice J: Quick Add state machine — no silent size default, CTA labels.
  *
  *   pnpm test:slice-j
  */
@@ -11,7 +11,7 @@ import {
   pickVariantForAdd,
   quickAddCtaLabel,
   reduceQuickAdd,
-  stockGuardMessage,
+  bagErrorMessage,
   type QuickAddState,
 } from "../src/lib/quick-add";
 import type { ProductListItem, ProductListVariant } from "../src/types/product";
@@ -26,7 +26,6 @@ function variant(partial: Partial<ProductListVariant> & { id: string; size: stri
     salePriceNGN: null,
     priceUSD: null,
     priceGBP: null,
-    stock: 3,
     ...partial,
   };
 }
@@ -55,9 +54,9 @@ function product(variants: ProductListVariant[], id = "p1"): ProductListItem {
 }
 
 const sizes = [
-  variant({ id: "xs", size: "XS", stock: 2, priceNGN: 180000 }),
-  variant({ id: "s", size: "S", stock: 0, priceNGN: 180000 }),
-  variant({ id: "m", size: "M", stock: 5, priceNGN: 190000 }),
+  variant({ id: "xs", size: "XS", priceNGN: 180000 }),
+  variant({ id: "s", size: "S", priceNGN: 180000 }),
+  variant({ id: "m", size: "M", priceNGN: 190000 }),
 ];
 
 function run() {
@@ -77,7 +76,7 @@ function run() {
 
   state = reduceQuickAdd(state, { type: "open", product: dress });
   assert(state.phase === "sizes", "open goes to sizes");
-  assert(state.variantId === null, "open does not preselect first / first in-stock variant");
+  assert(state.variantId === null, "open does not preselect the first listed size");
   assert(!canSubmit(state), "cannot add before a size is chosen");
 
   state = reduceQuickAdd(state, { type: "submit" });
@@ -89,15 +88,15 @@ function run() {
   assert(state.error === "Please choose your size", "the tap teaches her to choose");
 
   state = reduceQuickAdd(state, { type: "select", variantId: "s" });
-  assert(state.variantId === null, "sold-out size is not selectable");
-  assert(state.phase === "sizes", "still sizes after refused sold-out pick");
+  assert(state.phase === "selected", "every listed size is selectable");
+  assert(state.variantId === "s", "selected id is the one the shopper tapped");
 
   state = reduceQuickAdd(state, { type: "select", variantId: "m" });
-  assert(state.phase === "selected", "in-stock pick -> selected");
+  assert(state.phase === "selected", "pick -> selected");
   assert(state.variantId === "m", "selected id is the one the shopper tapped");
   assert(canSubmit(state), "selected can submit");
 
-  const other = product([variant({ id: "l", size: "L", stock: 1 })], "p2");
+  const other = product([variant({ id: "l", size: "L" })], "p2");
   state = reduceQuickAdd(state, { type: "open", product: other });
   assert(state.product?.id === "p2", "only one product open at a time");
   assert(state.variantId === null, "opening another product clears the previous size");
@@ -106,9 +105,9 @@ function run() {
   state = reduceQuickAdd(state, { type: "select", variantId: "l" });
   state = reduceQuickAdd(state, { type: "submit" });
   assert(state.phase === "submitting", "submit -> submitting");
-  state = reduceQuickAdd(state, { type: "fail", message: "That size just sold out." });
+  state = reduceQuickAdd(state, { type: "fail", message: "Could not add to bag." });
   assert(state.phase === "selected", "error returns to selected");
-  assert(state.error === "That size just sold out.", "inline stock copy");
+  assert(state.error === "Could not add to bag.", "inline bag copy");
   assert(canSubmit(state), "can retry after error");
 
   state = reduceQuickAdd(state, { type: "submit" });
@@ -118,20 +117,19 @@ function run() {
   assert(state.phase === "idle", "close resets");
   assert(state.variantId === null, "close clears size");
 
-  const empty = product([variant({ id: "a", size: "A", stock: 0 }), variant({ id: "b", size: "B", stock: 0 })]);
-  assert(!hasPurchasableSize(empty.variants), "all-zero is sold out");
+  const empty = product([]);
+  assert(!hasPurchasableSize(empty.variants), "no sizes is not purchasable");
   state = reduceQuickAdd(initialQuickAddState(), { type: "open", product: empty });
-  assert(state.phase === "idle", "do not open an empty / sold-out panel");
+  assert(state.phase === "idle", "do not open a piece with no sizes");
 
-  assert(hasPurchasableSize(dress.variants), "staging-style stock is purchasable");
+  assert(hasPurchasableSize(dress.variants), "listed sizes are purchasable");
   assert(quickAddCtaLabel("sizes", "₦180,000") === "Select Size · ₦180,000", "sizes CTA names next action + price");
   assert(quickAddCtaLabel("selected", "₦190,000") === "Add to bag · ₦190,000", "selected CTA names next action + price");
   assert(quickAddCtaLabel("done", "₦190,000") === "Added to bag · ₦190,000", "done keeps price visible");
-  assert(displayPriceNGN(sizes, null, false) === 180000, "unselected display uses lowest in-stock, not first variant");
+  assert(displayPriceNGN(sizes, null, false) === 180000, "unselected display uses lowest listed size, not first variant");
   assert(displayPriceNGN(sizes, "m", false) === 190000, "selected display uses that SKU");
-  assert(stockGuardMessage("Out of stock") === "That size just sold out.", "stock API maps to inline copy");
-  assert(stockGuardMessage("Quantity exceeds stock") === "That size just sold out.", "qty/stock maps to inline copy");
-  assert(stockGuardMessage(undefined) === "Could not add to bag.", "empty API body is not Could not update bag");
+  assert(bagErrorMessage("Please choose your size") === "Please choose your size", "API copy is kept");
+  assert(bagErrorMessage(undefined) === "Could not add to bag.", "empty API body is not Could not update bag");
 
   console.log("slice-j: all checks passed");
 }

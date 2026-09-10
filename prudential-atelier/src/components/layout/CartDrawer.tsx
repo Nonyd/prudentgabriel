@@ -13,6 +13,7 @@ import { formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { cartLineAmountInCurrency } from "@/lib/pricing";
+import { useMadeThenShippedCopy } from "@/components/layout/ProductionTimeContext";
 
 export function CartDrawer() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export function CartDrawer() {
   const panelRef = useRef<HTMLElement>(null);
   useFocusTrap(isOpen, panelRef);
   const sizeMap = useBagProductSizes(items.map((i) => i.productId));
+  const madeCopy = useMadeThenShippedCopy();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -166,7 +168,7 @@ export function CartDrawer() {
                   <span className="font-sans text-xs text-text-mid">Subtotal</span>
                   <span className="font-display text-lg text-charcoal">{formatPrice(subtotalShopper, currency)}</span>
                 </div>
-                <p className="mt-1 text-xs text-charcoal-light">Shipping calculated at checkout</p>
+                <p className="mt-1 text-xs text-charcoal-light">{madeCopy} Shipping calculated at checkout.</p>
                 <Button
                   type="button"
                   className="mt-4 w-full"

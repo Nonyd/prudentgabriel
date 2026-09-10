@@ -29,7 +29,6 @@ const patchSchema = z.object({
     .object({
       orderStage: z.boolean().optional(),
       newCollections: z.boolean().optional(),
-      wishlistRestock: z.boolean().optional(),
       eventReminders: z.boolean().optional(),
     })
     .optional(),

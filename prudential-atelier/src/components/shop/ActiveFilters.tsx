@@ -41,7 +41,6 @@ export function ActiveFilters({ className }: { className?: string }) {
   const minP = sp.get("minPrice");
   const maxP = sp.get("maxPrice");
   const sort = sp.get("sort") ?? "newest";
-  const inStock = sp.get("inStock");
 
   const pills: { label: string; onRemove: () => void }[] = [];
 
@@ -91,13 +90,6 @@ export function ActiveFilters({ className }: { className?: string }) {
       },
     });
   }
-  if (inStock === "true") {
-    pills.push({
-      label: "In stock only",
-      onRemove: () => remove(["inStock"]),
-    });
-  }
-
   if (pills.length === 0) return null;
 
   return (

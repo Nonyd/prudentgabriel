@@ -36,6 +36,7 @@ type OrderConfirmationEmailProps = {
   quotePendingText?: string;
   customLeadDays?: number | null;
   customReturnNote?: string | null;
+  productionCopy?: string | null;
   catalogHeading?: string;
   catalogBody?: string;
   catalogCtaLabel?: string;
@@ -59,6 +60,7 @@ export default function OrderConfirmationEmail({
   quotePendingText,
   customLeadDays,
   customReturnNote,
+  productionCopy,
   catalogHeading,
   catalogBody,
   catalogCtaLabel,
@@ -165,6 +167,11 @@ export default function OrderConfirmationEmail({
         <Text style={{ marginTop: 16, fontSize: 14, color: "#664c2a" }}>
           {quotePendingText ??
             "We'll contact you once your piece is packed to confirm the courier and cost. You have paid for the garment only."}
+        </Text>
+      ) : null}
+      {productionCopy ? (
+        <Text style={{ marginTop: 16, fontSize: 14 }}>
+          Made in {productionCopy}, then shipped. Shipping time is separate.
         </Text>
       ) : null}
       {customLeadDays ? (

@@ -29,7 +29,6 @@ import {
   PointsType,
 } from "@prisma/client";
 import { STAGE_ORDER } from "../src/lib/bespoke-stages";
-import { ensureAllOpeningMovements } from "../src/lib/stock-ledger";
 import { measurementPlausibilityError } from "../src/lib/measurements";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
@@ -484,7 +483,6 @@ async function seedProducts() {
         tags: p.tags,
         orderCount: p.orderCount,
         isBestSeller,
-        inStock: true,
       },
       create: {
         name: p.name,
@@ -502,7 +500,6 @@ async function seedProducts() {
         tags: p.tags,
         orderCount: p.orderCount,
         isBestSeller,
-        inStock: true,
         images: {
           create: {
             url: p.image,
@@ -534,7 +531,6 @@ async function seedProducts() {
         sku: `DEMO-${p.slug.toUpperCase().replace(/-/g, "").slice(0, 12)}-${size.replace(/\s+/g, "")}`,
         size,
         priceNGN: p.priceNGN,
-        stock: randInt(2, 15),
         sortOrder: i,
       })),
     });
@@ -1759,8 +1755,6 @@ async function main() {
   await seedQuotation();
   await seedCollections(productIds);
   await seedCareerJobs();
-  const opening = await ensureAllOpeningMovements(prisma);
-  if (opening > 0) console.log(`  ✅ ${opening} opening stock movements`);
 
   printCredentials();
   console.log("\n✅ Demo seed complete.\n");

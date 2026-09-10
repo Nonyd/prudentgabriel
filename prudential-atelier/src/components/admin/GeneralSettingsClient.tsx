@@ -13,7 +13,7 @@ const FIELDS = [
   { key: "consult_virtual", label: "Virtual consultation (NGN)", defaultValue: "25000" },
   { key: "consult_prudent", label: "In-person with Mrs. Prudent (NGN)", defaultValue: "75000" },
   { key: "consult_team", label: "In-person with team (NGN)", defaultValue: "45000" },
-  { key: "low_stock_threshold", label: "Low stock threshold", defaultValue: "2" },
+  { key: "rtw_production_copy", label: "Ready-to-wear production time", defaultValue: "7-12 days" },
   { key: "best_seller_threshold", label: "Best seller threshold", defaultValue: "10" },
 ];
 

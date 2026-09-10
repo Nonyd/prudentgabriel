@@ -16,7 +16,7 @@ export function RecentlyViewed({ excludeProductId }: { excludeProductId?: string
       return;
     }
     const q = otherIds.join(",");
-    fetch(`/api/products?ids=${encodeURIComponent(q)}&limit=8&inStock=false`)
+    fetch(`/api/products?ids=${encodeURIComponent(q)}&limit=8`)
       .then((r) => r.json())
       .then((j) => {
         const rows = (j.products ?? []) as ProductListItem[];

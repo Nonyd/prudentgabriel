@@ -22,8 +22,8 @@ export function initialQuickAddState(): QuickAddState {
   return { product: null, variantId: null, phase: "idle", error: null };
 }
 
-export function hasPurchasableSize(variants: Pick<ProductListVariant, "stock">[]): boolean {
-  return variants.some((v) => v.stock > 0);
+export function hasPurchasableSize(variants: Pick<ProductListVariant, "id">[]): boolean {
+  return variants.length > 0;
 }
 
 /** Never default. Add is only valid when the shopper picked a size. */
@@ -51,14 +51,8 @@ export function quickAddCtaLabel(phase: QuickAddPhase, price: string): string {
   }
 }
 
-export function stockGuardMessage(apiError?: string | null): string {
+export function bagErrorMessage(apiError?: string | null): string {
   const trimmed = (apiError ?? "").trim();
-  const e = trimmed.toLowerCase();
-  // Remake refusal contains "sold out" — do not rewrite it as a size-stock miss.
-  if (e.includes("cannot be remade") || e.includes("not offered in custom")) {
-    return trimmed;
-  }
-  if (e.includes("stock") || e.includes("sold")) return "That size just sold out.";
   if (trimmed) return trimmed;
   return "Could not add to bag.";
 }
@@ -88,7 +82,7 @@ export function reduceQuickAdd(state: QuickAddState, action: QuickAddAction): Qu
       const variant = state.product
         ? pickVariantForAdd(state.product.variants, action.variantId)
         : null;
-      if (!variant || variant.stock < 1) return state;
+      if (!variant) return state;
       return { ...state, variantId: variant.id, phase: "selected", error: null };
     }
     case "submit": {
@@ -110,7 +104,7 @@ export function reduceQuickAdd(state: QuickAddState, action: QuickAddAction): Qu
       return {
         ...state,
         phase: "selected",
-        error: action.message || "That size just sold out.",
+        error: action.message || "Could not add to bag.",
       };
   }
 }

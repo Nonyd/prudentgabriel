@@ -29,7 +29,6 @@ export type CheckoutSnapshotLine = {
   priceUSD?: number;
   priceGBP?: number;
   quantity: number;
-  stock?: number;
   category?: string;
 };
 
@@ -66,7 +65,6 @@ export function parseCartSnapshot(raw: unknown): CheckoutCartSnapshot {
       priceUSD: Number(l.priceUSD) || 0,
       priceGBP: Number(l.priceGBP) || 0,
       quantity: qty,
-      stock: typeof l.stock === "number" ? l.stock : undefined,
       category: typeof l.category === "string" ? l.category : undefined,
     });
   }
@@ -79,22 +77,6 @@ export function parseCartSnapshot(raw: unknown): CheckoutCartSnapshot {
 
 export function snapshotValueNGN(raw: unknown): number {
   return parseCartSnapshot(raw).subtotalNGN;
-}
-
-export async function allSnapshotItemsOutOfStock(raw: unknown): Promise<boolean> {
-  const { lines } = parseCartSnapshot(raw);
-  if (lines.length === 0) return true;
-  const variantIds = Array.from(new Set(lines.map((l) => l.variantId)));
-  const variants = await prisma.productVariant.findMany({
-    where: { id: { in: variantIds } },
-    select: { id: true, stock: true },
-  });
-  const byId = new Map(variants.map((v) => [v.id, v]));
-  return lines.every((l) => {
-    const v = byId.get(l.variantId);
-    if (!v) return true;
-    return v.stock < 1;
-  });
 }
 
 export async function upsertCheckoutSession(input: {
@@ -206,10 +188,6 @@ export async function sendAbandonedCheckoutReminder(params: {
   const suppressed = await suppressedEmailSet([session.email]);
   if (suppressed.has(normalizeEmail(session.email))) {
     return { queued: false, created: false, reason: "unsubscribed" };
-  }
-
-  if (await allSnapshotItemsOutOfStock(session.cartSnapshot)) {
-    return { queued: false, created: false, reason: "out_of_stock" };
   }
 
   const snap = parseCartSnapshot(session.cartSnapshot);

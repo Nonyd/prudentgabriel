@@ -11,7 +11,7 @@ import { resolveCheckoutShipping } from "../src/lib/shipping/resolve-selection";
 import { setShippingCarriersForTest } from "../src/lib/shipping/carriers";
 import { clearShippingQuoteCacheForTest } from "../src/lib/shipping/rate";
 import { getShippingAdminStatus, setShippingBandModesForTest } from "../src/lib/shipping/mode";
-import { DEFAULT_MANUAL_QUOTE_CONSENT, DEFAULT_UNAVAILABLE_QUOTE_CONSENT } from "../src/lib/shipping/copy";
+import { DEFAULT_MANUAL_QUOTE_CONSENT, DEFAULT_UNAVAILABLE_QUOTE_CONSENT, setShippingCopyForTest } from "../src/lib/shipping/copy";
 import {
   applyOrderAttention,
   QUOTE_PENDING_ALL_ATTENTION,
@@ -32,10 +32,15 @@ const lines = [
   },
 ];
 
+let dhlRateCalls = 0;
+
 const hangingDhl: ShippingCarrier = {
   name: "dhl",
   isConfigured: () => true,
-  rate: () => new Promise(() => {}),
+  rate: () => {
+    dhlRateCalls += 1;
+    return new Promise(() => {});
+  },
 };
 
 const unconfiguredDhl: ShippingCarrier = {
@@ -142,9 +147,17 @@ async function main() {
 
   await ensureMethods();
 
+  setShippingCopyForTest({
+    quoteConsent: DEFAULT_UNAVAILABLE_QUOTE_CONSENT,
+    manualConsent: DEFAULT_MANUAL_QUOTE_CONSENT,
+    unavailableConsent: DEFAULT_UNAVAILABLE_QUOTE_CONSENT,
+    dduDisclosure: "duties",
+    uncollectedDays: 7,
+  });
   setShippingBandModesForTest({ nigeria: "MANUAL", international: "MANUAL" });
   setShippingCarriersForTest([hangingDhl, liveGig]);
   clearShippingQuoteCacheForTest();
+  dhlRateCalls = 0;
 
   const started = Date.now();
   const london = await listCheckoutShippingOptions({
@@ -153,6 +166,7 @@ async function main() {
     lines,
     isFreeShippingCoupon: false,
   });
+  assert(dhlRateCalls === 0, "MANUAL must not call the DHL rate function");
   assert(Date.now() - started < 2_000, "MANUAL must not wait on the DHL API");
   assert(london.band === "INTERNATIONAL", "London is international");
   const londonQuote = london.options.find((o) => o.kind === "QUOTE_PENDING");
@@ -244,6 +258,7 @@ main()
   .finally(() => {
     setShippingCarriersForTest(null);
     setShippingBandModesForTest(null);
+    setShippingCopyForTest(null);
     clearShippingQuoteCacheForTest();
     return prisma.$disconnect();
   });

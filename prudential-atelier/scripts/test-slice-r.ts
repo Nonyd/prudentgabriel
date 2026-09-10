@@ -1,5 +1,5 @@
 /**
- * Slice R: custom measurements, stock skip, sold-out still orderable, range checks.
+ * Slice R: custom measurements, made-to-order processing, range checks.
  *
  *   pnpm test:slice-r
  */
@@ -20,7 +20,6 @@ import {
   formatSnapshotLines,
   fulfilmentKindForLines,
   parseSnapshot,
-  shouldDecrementStock,
   validateCustomMeasurements,
   type MeasurementFieldDef,
 } from "../src/lib/custom-size";
@@ -96,8 +95,6 @@ function runPure() {
   assert(customSurchargeNGN({ unitNGN: 100_000, kind: CustomSurchargeKind.FLAT, value: 5000 }) === 5000, "flat surcharge");
   assert(customSurchargeNGN({ unitNGN: 100_000, kind: CustomSurchargeKind.NONE, value: 99 }) === 0, "none is zero");
 
-  assert(shouldDecrementStock(SizeMode.STANDARD), "standard decrements");
-  assert(!shouldDecrementStock(SizeMode.CUSTOM), "custom does not decrement");
   assert(fulfilmentKindForLines(["CUSTOM"]) === OrderFulfilmentKind.MADE_TO_ORDER, "custom is MTO");
   assert(fulfilmentKindForLines(["STANDARD", "CUSTOM"]) === OrderFulfilmentKind.MIXED, "mixed cart");
 
@@ -109,7 +106,7 @@ function runPure() {
     !canTransitionOrder("CONFIRMED", "PROCESSING", { fulfilmentKind: "MADE_TO_ORDER" }),
     "MTO skips pick-and-pack processing",
   );
-  assert(canTransitionOrder("CONFIRMED", "PROCESSING", {}), "stock orders still process");
+  assert(canTransitionOrder("CONFIRMED", "PROCESSING", {}), "paid standard-size orders still process");
 
   const ordersRoute = readFileSync(join(process.cwd(), "src/app/api/admin/orders/[id]/route.ts"), "utf8");
   assert(ordersRoute.includes('"CUTTING"'), "admin order PATCH accepts CUTTING");
@@ -161,7 +158,6 @@ async function runDb() {
       productId: product.id,
       size: "12",
       priceNGN: 100_000,
-      stock: 2,
     },
   });
 
@@ -195,25 +191,17 @@ async function runDb() {
     },
   });
 
-  const before = (await prisma.productVariant.findUnique({ where: { id: variant.id } }))!.stock;
   await fulfillPaidOrder({
     orderId: customOrder.id,
     paymentRef: `PA-ORDER-R-${stamp}`,
     notify: false,
   });
-  const after = (await prisma.productVariant.findUnique({ where: { id: variant.id } }))!.stock;
-  assert(after === before, `custom must not decrement stock, before ${before} after ${after}`);
-
-  const soldOut = await prisma.productVariant.update({
-    where: { id: variant.id },
-    data: { stock: 0 },
-  });
-  assert(soldOut.stock === 0, "standard size is sold out");
   const stillOffered = await prisma.product.findUnique({
     where: { id: product.id },
     select: { customOffered: true },
   });
-  assert(stillOffered?.customOffered, "custom remains offered when sizes are gone");
+  assert(stillOffered?.customOffered, "custom remains offered");
+  assert(variant.id, "standard size still exists after custom fulfil");
 
   const guestOrder = await prisma.order.create({
     data: {
@@ -243,9 +231,6 @@ async function runDb() {
     paymentRef: `PA-ORDER-RG-${stamp}`,
     notify: false,
   });
-  const stockAfterGuest = (await prisma.productVariant.findUnique({ where: { id: variant.id } }))!.stock;
-  assert(stockAfterGuest === 0, "guest custom still does not touch stock");
-
   const paid = await prisma.order.findUnique({
     where: { id: customOrder.id },
     include: { items: true },

@@ -18,7 +18,6 @@ import {
   ProductType,
   QuoteStatus,
   Role,
-  StockMovementReason,
 } from "@prisma/client";
 import { prisma } from "../src/lib/prisma";
 import {
@@ -112,7 +111,7 @@ async function makeProduct(slug: string, extras?: { sku?: string }) {
       isPublished: true,
       images: { create: [{ url: `/media/public/test/${stamp}-${slug}.jpg`, isPrimary: true, sortOrder: 0 }] },
       variants: {
-        create: [{ size: "12", priceNGN: 90_000, stock: 2, sku: extras?.sku ?? `${stamp}-${slug}-12` }],
+        create: [{ size: "12", priceNGN: 90_000, sku: extras?.sku ?? `${stamp}-${slug}-12` }],
       },
     },
     include: { variants: true },
@@ -295,15 +294,11 @@ async function quietDeletesCleanly() {
   const user = await makeCustomer("quiet");
   const product = await makeProduct("quiet");
   const variant = product.variants[0]!;
-  await prisma.stockMovement.create({
-    data: { variantId: variant.id, delta: 2, reason: StockMovementReason.OPENING },
-  });
   await prisma.cartItem.create({
     data: { userId: user.id, productId: product.id, variantId: variant.id, quantity: 1, lineKey: `STANDARD:${variant.id}:none` },
   });
   await prisma.wishlistItem.create({ data: { userId: user.id, productId: product.id } });
   await prisma.review.create({ data: { userId: user.id, productId: product.id, rating: 5, body: "nice" } });
-  await prisma.stockAlert.create({ data: { email: user.email, variantId: variant.id } });
 
   const preview = await previewProductCascade([product.id]);
   assert(preview.loud === false, "no orders means the quiet path");
@@ -318,8 +313,6 @@ async function quietDeletesCleanly() {
   assert((await prisma.cartItem.count({ where: { productId: product.id } })) === 0, "cart lines are gone");
   assert((await prisma.wishlistItem.count({ where: { productId: product.id } })) === 0, "wishlist rows are gone");
   assert((await prisma.review.count({ where: { productId: product.id } })) === 0, "reviews are gone");
-  assert((await prisma.stockMovement.count({ where: { variantId: variant.id } })) === 0, "stock movements are gone");
-  assert((await prisma.stockAlert.count({ where: { variantId: variant.id } })) === 0, "stock alerts are gone");
 }
 
 async function loudNeedsTypedDeleteAndRemovesDependents() {

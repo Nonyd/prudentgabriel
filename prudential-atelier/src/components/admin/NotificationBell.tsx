@@ -32,8 +32,8 @@ function iconFor(type: AdminNotificationType) {
       return wrap(<Calendar className="h-4 w-4 text-lightbr" strokeWidth={1.5} />, "bg-lightbr/20");
     case "PAYMENT_FAILED":
       return wrap(<CreditCard className="h-4 w-4 text-danger" strokeWidth={1.5} />, "bg-danger/10");
-    case "RTW_OVERSELL":
-      return wrap(<Banknote className="h-4 w-4 text-danger" strokeWidth={1.5} />, "bg-danger/10");
+    case "FABRIC_UNAVAILABLE":
+      return wrap(<AlertTriangle className="h-4 w-4 text-danger" strokeWidth={1.5} />, "bg-danger/10");
     case "NEW_ORDER":
     case "BANK_TRANSFER_RECEIPT":
       return wrap(<CreditCard className="h-4 w-4 text-success" strokeWidth={1.5} />, "bg-success/15");
@@ -51,8 +51,6 @@ function iconFor(type: AdminNotificationType) {
       return wrap(<FileText className="h-4 w-4 text-warning" strokeWidth={1.5} />, "bg-warning/15");
     case "JOB_APPLICATION":
       return wrap(<Briefcase className="h-4 w-4 text-olive" strokeWidth={1.5} />, "bg-olive/15");
-    case "LOW_STOCK":
-      return wrap(<AlertTriangle className="h-4 w-4 text-danger" strokeWidth={1.5} />, "bg-danger/10");
     default:
       return wrap(<Bell className="h-4 w-4 text-nut" strokeWidth={1.5} />, "bg-sand/50");
   }

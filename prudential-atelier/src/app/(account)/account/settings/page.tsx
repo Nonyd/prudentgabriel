@@ -29,7 +29,6 @@ export default async function SettingsPage() {
       prefs={prefs as {
         orderStage: boolean;
         newCollections: boolean;
-        wishlistRestock: boolean;
         eventReminders: boolean;
       }}
     />

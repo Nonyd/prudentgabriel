@@ -10,7 +10,6 @@ export type PricedVariant = {
   salePriceNGN?: number | null;
   priceUSD?: number | null;
   priceGBP?: number | null;
-  stock?: number;
 };
 
 export type PricedProduct = {
@@ -55,17 +54,15 @@ export function pickVariantForPrice<T extends { id: string }>(
   return variants.find((v) => v.id === variantId) ?? null;
 }
 
-/** Unselected: lowest in-stock (or all sizes if none in stock). Selected: that SKU. */
-export function displayPriceNGN<T extends PricedVariant & { id: string; stock: number }>(
+/** Unselected: lowest among all sizes. Selected: that SKU. */
+export function displayPriceNGN<T extends PricedVariant & { id: string }>(
   variants: T[],
   variantId: string | null,
   isOnSale: boolean,
 ): number {
   const selected = pickVariantForPrice(variants, variantId);
   if (selected) return effectiveUnitNGN(selected, isOnSale);
-  const pool = variants.filter((v) => v.stock > 0);
-  const source = pool.length ? pool : variants;
-  return minEffectiveNGN(source, isOnSale);
+  return minEffectiveNGN(variants, isOnSale);
 }
 
 export function resolveCurrencyOverride(
@@ -113,7 +110,7 @@ export function minAmountInCurrency(
   return Math.min(...variants.map((v) => variantAmountInCurrency(v, product, currency, rates)));
 }
 
-export function displayAmountInCurrency<T extends PricedVariant & { id: string; stock: number }>(
+export function displayAmountInCurrency<T extends PricedVariant & { id: string }>(
   variants: T[],
   variantId: string | null,
   product: PricedProduct,
@@ -122,9 +119,7 @@ export function displayAmountInCurrency<T extends PricedVariant & { id: string; 
 ): number {
   const selected = pickVariantForPrice(variants, variantId);
   if (selected) return variantAmountInCurrency(selected, product, currency, rates);
-  const pool = variants.filter((v) => v.stock > 0);
-  const source = pool.length ? pool : variants;
-  return minAmountInCurrency(source, product, currency, rates);
+  return minAmountInCurrency(variants, product, currency, rates);
 }
 
 export function cartLineAmountInCurrency(

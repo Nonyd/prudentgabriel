@@ -64,8 +64,6 @@ export function FilterPanel({ className }: { className?: string }) {
   const sale = sp.get("sale") === "true";
   const minP = sp.get("minPrice") ?? "0";
   const maxP = sp.get("maxPrice") ?? "1000000";
-  const inStock = sp.get("inStock") === "true";
-
   const active =
     Boolean(category) ||
     Boolean(type) ||
@@ -73,8 +71,7 @@ export function FilterPanel({ className }: { className?: string }) {
     Boolean(sizes) ||
     sale ||
     minP !== "0" ||
-    maxP !== "1000000" ||
-    inStock;
+    maxP !== "1000000";
 
   return (
     <aside className={cn("space-y-2", className)}>
@@ -198,15 +195,6 @@ export function FilterPanel({ className }: { className?: string }) {
               className="accent-choc"
             />
             Show sale items only
-          </label>
-          <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-charcoal">
-            <input
-              type="checkbox"
-              checked={inStock}
-              onChange={(e) => set({ inStock: e.target.checked ? "true" : null })}
-              className="accent-choc"
-            />
-            In stock only
           </label>
         </AccItem>
       </Accordion.Root>

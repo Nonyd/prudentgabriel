@@ -68,7 +68,6 @@ function run() {
 
   assert(kpi.includes("glass-1"), "dashboard summary cards are glass-1");
   assert(src("src/components/admin/ExecutiveRevenueChart.tsx").includes("card-surface"), "charts stay solid panels");
-  assert(src("src/components/admin/OutOfStockPanel.tsx").includes("card-surface"), "out-of-stock widget stays solid");
 
   assert(rail.includes("glass-opaque"), "wizard step rail is a solid panel");
   assert(form.includes('const sectionClass = "glass-opaque p-5 md:p-6"'), "wizard step content is a solid panel");

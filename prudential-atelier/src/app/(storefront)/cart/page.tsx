@@ -11,6 +11,7 @@ import { BagQtyButtons, BagSizeSelect, useBagProductSizes } from "@/components/c
 import { formatPrice } from "@/lib/currency";
 import { useCurrencyStore } from "@/store/currencyStore";
 import { cartLineAmountInCurrency } from "@/lib/pricing";
+import { useMadeThenShippedCopy } from "@/components/layout/ProductionTimeContext";
 
 export default function CartPage() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function CartPage() {
   const currency = useCurrencyStore((s) => s.currency);
   const rates = useCurrencyStore((s) => s.rates);
   const sizeMap = useBagProductSizes(items.map((i) => i.productId));
+  const madeCopy = useMadeThenShippedCopy();
 
   useEffect(() => {
     void refreshGuestStock();
@@ -82,7 +84,7 @@ export default function CartPage() {
               <span className="font-label text-xs uppercase text-charcoal-mid">Subtotal</span>
               <span className="font-display text-xl text-charcoal">{formatPrice(subtotalShopper, currency)}</span>
             </div>
-            <p className="mt-2 text-xs text-charcoal-light">Shipping calculated at checkout</p>
+            <p className="mt-2 text-xs text-charcoal-light">{madeCopy} Shipping calculated at checkout.</p>
             <Button type="button" className="mt-6 w-full" size="lg" onClick={() => router.push("/checkout")}>
               Checkout
             </Button>

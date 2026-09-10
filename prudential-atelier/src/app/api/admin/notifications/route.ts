@@ -41,9 +41,8 @@ export async function GET() {
       bespoke: unreadOf("NEW_BESPOKE") + unreadOf("STAGE_COMPLETED") + unreadOf("QUOTE_APPROVED"),
       consultations: unreadOf("NEW_CONSULTATION") + unreadOf("CONSULTATION_COMPLETED"),
       reviews: unreadOf("REVIEW_PENDING") + unreadOf("TESTIMONIAL_SUBMITTED"),
-      lowStock: unreadOf("LOW_STOCK"),
+      fabricUnavailable: unreadOf("FABRIC_UNAVAILABLE"),
       paymentFailed: unreadOf("PAYMENT_FAILED"),
-      oversell: unreadOf("RTW_OVERSELL"),
     },
   });
 }

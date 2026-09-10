@@ -26,8 +26,6 @@ const variantSchema = z.object({
     if (!Number.isFinite(n)) return null;
     return n;
   }, z.number().min(0).nullable().optional()),
-  stock: z.coerce.number().int().min(0),
-  lowStockAt: z.coerce.number().int().min(0).default(3),
   sortOrder: z.coerce.number().int().default(0),
   weightKg: optNonNegNumber(),
   lengthCm: optNonNegNumber(),
@@ -77,7 +75,6 @@ export const productAdminSchema = z.object({
   isNewArrival: z.boolean().default(false),
   isBespokeAvail: z.boolean().default(false),
   customOffered: z.boolean().optional(),
-  customOfferedWhenSoldOut: z.boolean().optional(),
   customSurchargeKind: z.enum(["NONE", "PERCENT", "FLAT"]).optional().nullable(),
   customSurchargeValue: optNonNegNumber(),
   customLeadTimeDays: z.preprocess((v) => {

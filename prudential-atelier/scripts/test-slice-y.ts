@@ -85,7 +85,7 @@ async function testSaleColumnsHidden() {
   assert(rest.sku === false, "stock code hidden until advanced");
   const sale = variantTableColumns({ onSale: true, advanced: false });
   assert(sale.sale === true, "sale column appears when on sale");
-  assert(sale.size && sale.price && sale.stock, "core columns stay visible");
+  assert(sale.size && sale.price, "core columns stay visible");
 }
 
 async function testDuplicateGetsFreshUniqueSkus() {
@@ -100,8 +100,8 @@ async function testDuplicateGetsFreshUniqueSkus() {
       basePriceNGN: 200_000,
       variants: {
         create: [
-          { size: "10", priceNGN: 200_000, stock: 4, sku: `${stamp}-10` },
-          { size: "12", priceNGN: 200_000, stock: 2, sku: `${stamp}-12` },
+          { size: "10", priceNGN: 200_000, sku: `${stamp}-10` },
+          { size: "12", priceNGN: 200_000, sku: `${stamp}-12` },
         ],
       },
     },
@@ -150,7 +150,7 @@ async function testRenameDoesNotTouchManualSku() {
       priceNGN: 10_000,
       basePriceNGN: 10_000,
       variants: {
-        create: [{ size: "10", priceNGN: 10_000, stock: 0, sku: "WAREHOUSE-99", skuManual: true }],
+        create: [{ size: "10", priceNGN: 10_000, sku: "WAREHOUSE-99", skuManual: true }],
       },
     },
   });

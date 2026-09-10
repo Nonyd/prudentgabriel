@@ -284,20 +284,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  for (const line of lines) {
-    if (isCustomLine(line.sizeMode) || !line.variantId) continue;
-    const v = await prisma.productVariant.findUnique({
-      where: { id: line.variantId },
-      select: { stock: true, product: { select: { name: true } } },
-    });
-    if (!v || v.stock < line.quantity) {
-      return NextResponse.json(
-        { error: `Insufficient stock for ${v?.product.name ?? "an item"}` },
-        { status: 400 },
-      );
-    }
-  }
-
   const hasCustom = lines.some((l) => isCustomLine(l.sizeMode));
   const customReturnable = customLinesReturnable(lines);
   if (hasCustom && !customReturnable && !data.customReturnConsent) {

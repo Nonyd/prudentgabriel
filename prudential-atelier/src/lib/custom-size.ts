@@ -4,7 +4,7 @@ import { isStandardSizeLabel, isTypedUnit, sortBySize, toCanonicalCm, type Typed
 export const CUSTOM_CART_SIZE = "Custom";
 
 export const CUSTOM_RETURNS_COPY =
-  "This piece is cut to the measurements you entered. It cannot be returned for a change of mind. Payments are refundable only where the house fails to meet the agreement and cannot offer a reasonable solution.";
+  "Cut to the measurements you entered. It cannot be returned for a change of mind, because a piece made to your body cannot be worn by someone else.";
 
 export const CUSTOM_LEAD_COPY = (days: number) =>
   `Made to your measurements. Allow about ${days} day${days === 1 ? "" : "s"} before dispatch.`;
@@ -156,10 +156,6 @@ export function cartLineKey(params: {
 
 export function isCustomLine(sizeMode: SizeMode | string | null | undefined): boolean {
   return sizeMode === "CUSTOM";
-}
-
-export function shouldDecrementStock(sizeMode: SizeMode | string | null | undefined): boolean {
-  return !isCustomLine(sizeMode);
 }
 
 export function fulfilmentKindForLines(

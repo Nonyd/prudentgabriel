@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import type { ProductListVariant } from "@/types/product";
-import { SOLD_OUT_WORD, soldOutSizeAriaLabel } from "@/lib/bag-size";
 
 export function QuickAddSizeRow({
   variants,
@@ -38,30 +37,24 @@ export function QuickAddSizeRow({
       )}
     >
       {variants.map((v, i) => {
-        const oos = v.stock < 1;
         const selected = selectedId === v.id;
-        const isFirstEnabled = !oos && variants.findIndex((x) => x.stock > 0) === i;
+        const isFirst = i === 0;
         return (
           <button
             key={v.id}
-            ref={isFirstEnabled ? firstEnabled : undefined}
+            ref={isFirst ? firstEnabled : undefined}
             type="button"
             role="radio"
             aria-checked={selected}
-            aria-disabled={oos}
-            aria-label={oos ? soldOutSizeAriaLabel(v.size) : v.size}
-            tabIndex={oos ? -1 : selected || (!selectedId && isFirstEnabled) ? 0 : -1}
-            onClick={() => {
-              if (!oos) onSelect(v.id);
-            }}
+            aria-label={v.size}
+            tabIndex={selected || (!selectedId && isFirst) ? 0 : -1}
+            onClick={() => onSelect(v.id)}
             onKeyDown={(e) => {
-              if (oos) return;
-              const enabled = variants.filter((x) => x.stock > 0);
-              const idx = enabled.findIndex((x) => x.id === v.id);
+              const idx = variants.findIndex((x) => x.id === v.id);
               if (idx < 0) return;
               if (e.key === "ArrowRight" || e.key === "ArrowDown") {
                 e.preventDefault();
-                const next = enabled[(idx + 1) % enabled.length];
+                const next = variants[(idx + 1) % variants.length];
                 onSelect(next.id);
                 requestAnimationFrame(() => {
                   scrollerRef.current
@@ -71,7 +64,7 @@ export function QuickAddSizeRow({
               }
               if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
                 e.preventDefault();
-                const prev = enabled[(idx - 1 + enabled.length) % enabled.length];
+                const prev = variants[(idx - 1 + variants.length) % variants.length];
                 onSelect(prev.id);
                 requestAnimationFrame(() => {
                   scrollerRef.current
@@ -86,13 +79,10 @@ export function QuickAddSizeRow({
               compact ? "shrink-0 scroll-mb-28 text-[11px]" : "shrink-0 text-[10px]",
               selected
                 ? "border-choc bg-choc text-cream"
-                : "border-sand bg-bg-card text-choc",
-              oos && "cursor-not-allowed border-sand bg-transparent text-text-mid",
-              !oos && !selected && "hover:border-choc",
+                : "border-sand bg-bg-card text-choc hover:border-choc",
             )}
           >
-            <span className={cn(oos && "line-through")}>{v.size}</span>
-            {oos ? <span className="mt-0.5 text-[9px] font-semibold normal-case tracking-normal">{SOLD_OUT_WORD}</span> : null}
+            <span>{v.size}</span>
           </button>
         );
       })}

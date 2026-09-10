@@ -5,6 +5,7 @@ import type { CartItem } from "@/store/cartStore";
 import { formatPrice, type ExchangeRatesNGN, type ShopCurrency } from "@/lib/currency";
 import { cartLineAmountInCurrency, extrasAmountInCurrency } from "@/lib/pricing";
 import { useEffect, useState } from "react";
+import { useMadeThenShippedCopy } from "@/components/layout/ProductionTimeContext";
 
 interface CouponResult {
   valid: boolean;
@@ -35,6 +36,7 @@ export function OrderSummary({
   step: number;
   pointRate: number;
 }) {
+  const madeCopy = useMadeThenShippedCopy();
   const [rates, setRates] = useState<ExchangeRatesNGN>({ NGN: 1, USD: 0.00065, GBP: 0.00052 });
 
   useEffect(() => {
@@ -124,6 +126,7 @@ export function OrderSummary({
           <p className="pt-1 text-[11px] text-charcoal-mid">Shipping is paid in cash — points cover the garment only.</p>
         ) : null}
       </div>
+      <p className="mt-3 font-body text-[12px] leading-5 text-charcoal-mid">{madeCopy}</p>
       {step < 3 && (
         <p className="mt-3 font-label text-[11px] text-gold">
           Earn ~{Math.floor(Math.max(0, subtotalNGN - disc) / 100)} pts with this order

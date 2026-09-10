@@ -109,12 +109,10 @@ export function variantTableColumns(opts: { onSale: boolean; advanced: boolean }
   return {
     size: true,
     price: true,
-    stock: true,
     sale: opts.onSale,
     sku: opts.advanced,
     usd: opts.advanced,
     gbp: opts.advanced,
-    lowAt: opts.advanced,
     parcel: opts.advanced,
   };
 }

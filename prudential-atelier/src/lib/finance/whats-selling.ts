@@ -1,4 +1,4 @@
-import { PaymentStatus, SizeMode, StockMovementReason } from "@prisma/client";
+import { PaymentStatus, SizeMode } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isCustomLine } from "@/lib/custom-size";
 import {
@@ -8,14 +8,22 @@ import {
   type FinancePaymentSnap,
 } from "@/lib/finance/classify";
 import { linesInRange, loadFinanceSnaps } from "@/lib/finance/query";
-import { compareSelling, type NotSellingPiece, type SellingCollection, type SellingPiece, type SellingSizeRow, type WhatsSellingReport } from "@/lib/finance/whats-selling-view";
+import {
+  compareSelling,
+  type NotSellingPiece,
+  type SellingCollection,
+  type SellingPiece,
+  type SellingSizeRow,
+  type WhatsSellingReport,
+} from "@/lib/finance/whats-selling-view";
 
 export {
   COLLECTION_DOUBLE_COUNT_COPY,
   compareSelling,
+  DEMAND_COPY,
   NO_COLLECTION_ASSIGNMENTS_COPY,
+  NO_ORDERS_COPY,
   NO_SALES_COPY,
-  SELL_THROUGH_COPY,
   sortValue,
   whatsSellingCsv,
   type NotSellingPiece,
@@ -42,11 +50,6 @@ export function lineCountsAsUnitSale(line: ClassifiedLine): boolean {
   return line.salesNGN > 0 || line.pointsNGN > 0;
 }
 
-export function sellThroughRatio(unitsSold: number, stockedAtStart: number): number | null {
-  if (stockedAtStart <= 0) return null;
-  return unitsSold / stockedAtStart;
-}
-
 export type OrderItemSnap = {
   orderId: string;
   productId: string;
@@ -68,8 +71,6 @@ export type VariantSnap = {
   id: string;
   productId: string;
   size: string;
-  stock: number;
-  laterNet: number;
 };
 
 export type ProductSnap = {
@@ -86,10 +87,6 @@ export type CollectionSnap = {
   slug: string;
   productIds: string[];
 };
-
-function stockedAtStart(v: VariantSnap): number {
-  return v.stock - v.laterNet;
-}
 
 export function qualifyingOrderIds(
   snaps: FinancePaymentSnap[],
@@ -152,8 +149,8 @@ export function aggregatePeriod(input: {
   products: ProductSnap[];
   collections: CollectionSnap[];
 }): {
-  pieces: Omit<SellingPiece, "unitsPrev" | "revenuePrev" | "sellThroughPrev">[];
-  collections: Omit<SellingCollection, "unitsPrev" | "revenuePrev" | "sellThroughPrev">[];
+  pieces: Omit<SellingPiece, "unitsPrev" | "revenuePrev">[];
+  collections: Omit<SellingCollection, "unitsPrev" | "revenuePrev">[];
   collectionsAssigned: boolean;
   notSelling: NotSellingPiece[];
 } {
@@ -209,28 +206,12 @@ export function aggregatePeriod(input: {
     }
   });
 
-  const stockStartByProduct = new Map<string, number>();
-  const sizesHeld = new Map<string, Map<string, number>>();
-  for (const v of input.variants) {
-    stockStartByProduct.set(v.productId, (stockStartByProduct.get(v.productId) ?? 0) + Math.max(0, stockedAtStart(v)));
-    const held = sizesHeld.get(v.productId) ?? new Map();
-    held.set(v.size, (held.get(v.size) ?? 0) + v.stock);
-    sizesHeld.set(v.productId, held);
-  }
-
   const pieces = Array.from(acc.entries())
     .map(([productId, row]) => {
       const product = productsById.get(productId);
-      const stocked = stockStartByProduct.get(productId) ?? 0;
-      const held = sizesHeld.get(productId) ?? new Map();
-      const sizeKeys = new Set(Array.from(row.sizeSold.keys()).concat(Array.from(held.keys())));
-      const sizes: SellingSizeRow[] = Array.from(sizeKeys)
-        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
-        .map((size) => ({
-          size,
-          sold: row.sizeSold.get(size) ?? 0,
-          stockHeld: held.get(size) ?? 0,
-        }));
+      const sizes: SellingSizeRow[] = Array.from(row.sizeSold.entries())
+        .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
+        .map(([size, sold]) => ({ size, sold }));
       return {
         productId,
         slug: product?.slug ?? productId,
@@ -239,8 +220,6 @@ export function aggregatePeriod(input: {
         unitsSold: row.unitsSold,
         revenueNGN: row.revenueNGN,
         orderedToMeasure: row.orderedToMeasure,
-        stockedAtStart: stocked,
-        sellThrough: sellThroughRatio(row.unitsSold, stocked),
         sizes,
       };
     })
@@ -248,19 +227,12 @@ export function aggregatePeriod(input: {
 
   const soldIds = new Set(pieces.map((p) => p.productId));
   const notSelling: NotSellingPiece[] = input.products
-    .filter((p) => p.isPublished)
-    .map((p) => {
-      const heldMap = sizesHeld.get(p.id);
-      const held = heldMap ? Array.from(heldMap.values()).reduce((s, n) => s + n, 0) : 0;
-      return { product: p, stockHeld: held };
-    })
-    .filter(({ product, stockHeld }) => stockHeld > 0 && !soldIds.has(product.id))
-    .map(({ product, stockHeld }) => ({
-      productId: product.id,
-      slug: product.slug,
-      name: product.name,
-      thumbnailUrl: product.thumbnailUrl,
-      stockHeld,
+    .filter((p) => p.isPublished && !soldIds.has(p.id))
+    .map((p) => ({
+      productId: p.id,
+      slug: p.slug,
+      name: p.name,
+      thumbnailUrl: p.thumbnailUrl,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -272,15 +244,12 @@ export function aggregatePeriod(input: {
       let unitsSold = 0;
       let revenueNGN = 0;
       let orderedToMeasure = 0;
-      let stockedAtStartTotal = 0;
       for (const pid of c.productIds) {
         const piece = pieceById.get(pid);
-        if (piece) {
-          unitsSold += piece.unitsSold;
-          revenueNGN = money(revenueNGN + piece.revenueNGN);
-          orderedToMeasure += piece.orderedToMeasure;
-        }
-        stockedAtStartTotal += stockStartByProduct.get(pid) ?? 0;
+        if (!piece) continue;
+        unitsSold += piece.unitsSold;
+        revenueNGN = money(revenueNGN + piece.revenueNGN);
+        orderedToMeasure += piece.orderedToMeasure;
       }
       return {
         collectionId: c.id,
@@ -289,8 +258,6 @@ export function aggregatePeriod(input: {
         unitsSold,
         revenueNGN,
         orderedToMeasure,
-        stockedAtStart: stockedAtStartTotal,
-        sellThrough: sellThroughRatio(unitsSold, stockedAtStartTotal),
       };
     })
     .filter((c) => c.unitsSold > 0 || c.orderedToMeasure > 0 || c.revenueNGN > 0);
@@ -298,11 +265,11 @@ export function aggregatePeriod(input: {
   return { pieces, collections, collectionsAssigned, notSelling };
 }
 
-function withPrev<T extends { unitsSold: number; revenueNGN: number; sellThrough: number | null }>(
+function withPrev<T extends { unitsSold: number; revenueNGN: number }>(
   current: T[],
   previous: T[],
   key: (row: T) => string,
-): Array<T & { unitsPrev: number; revenuePrev: number; sellThroughPrev: number | null }> {
+): Array<T & { unitsPrev: number; revenuePrev: number }> {
   const prevMap = new Map(previous.map((row) => [key(row), row]));
   return current.map((row) => {
     const prev = prevMap.get(key(row));
@@ -310,19 +277,16 @@ function withPrev<T extends { unitsSold: number; revenueNGN: number; sellThrough
       ...row,
       unitsPrev: prev?.unitsSold ?? 0,
       revenuePrev: prev?.revenueNGN ?? 0,
-      sellThroughPrev: prev?.sellThrough ?? null,
     };
   });
 }
 
-async function loadCatalogSnaps(from: Date): Promise<{
-  items: OrderItemSnap[];
-  returns: ReturnSnap[];
+async function loadCatalogSnaps(): Promise<{
   variants: VariantSnap[];
   products: ProductSnap[];
   collections: CollectionSnap[];
 }> {
-  const [products, variants, collections, movementsAfter] = await Promise.all([
+  const [products, variants, collections] = await Promise.all([
     prisma.product.findMany({
       select: {
         id: true,
@@ -333,7 +297,7 @@ async function loadCatalogSnaps(from: Date): Promise<{
       },
     }),
     prisma.productVariant.findMany({
-      select: { id: true, productId: true, size: true, stock: true },
+      select: { id: true, productId: true, size: true },
     }),
     prisma.collection.findMany({
       select: {
@@ -343,29 +307,10 @@ async function loadCatalogSnaps(from: Date): Promise<{
         products: { select: { productId: true } },
       },
     }),
-    prisma.stockMovement.findMany({
-      where: { createdAt: { gte: from } },
-      select: { variantId: true, delta: true },
-    }),
   ]);
 
-  const laterNet = new Map<string, number>();
-  for (const m of movementsAfter) {
-    laterNet.set(m.variantId, (laterNet.get(m.variantId) ?? 0) + m.delta);
-  }
-
-  const variantSnaps: VariantSnap[] = variants.map((v) => ({
-    id: v.id,
-    productId: v.productId,
-    size: v.size,
-    stock: v.stock,
-    laterNet: laterNet.get(v.id) ?? 0,
-  }));
-
   return {
-    items: [],
-    returns: [],
-    variants: variantSnaps,
+    variants,
     products: products.map((p) => ({
       id: p.id,
       name: p.name,
@@ -382,12 +327,16 @@ async function loadCatalogSnaps(from: Date): Promise<{
   };
 }
 
-async function loadItemsAndReturns(orderIds: string[], from: Date, to: Date): Promise<{
+async function loadItemsAndReturns(
+  orderIds: string[],
+  from: Date,
+  to: Date,
+): Promise<{
   items: OrderItemSnap[];
   returns: ReturnSnap[];
 }> {
   if (orderIds.length === 0) return { items: [], returns: [] };
-  const [items, returns] = await Promise.all([
+  const [items, refunded] = await Promise.all([
     prisma.orderItem.findMany({
       where: { orderId: { in: orderIds } },
       select: {
@@ -400,15 +349,32 @@ async function loadItemsAndReturns(orderIds: string[], from: Date, to: Date): Pr
         lineTotal: true,
       },
     }),
-    prisma.stockMovement.findMany({
+    prisma.order.findMany({
       where: {
-        orderId: { in: orderIds },
-        reason: { in: [StockMovementReason.CANCEL_RETURN, StockMovementReason.REFUND_RETURN] },
-        createdAt: { gte: from, lt: to },
+        id: { in: orderIds },
+        refundRecordedAt: { gte: from, lt: to },
       },
-      select: { orderId: true, variantId: true, delta: true, createdAt: true },
+      select: {
+        id: true,
+        refundRecordedAt: true,
+        items: { select: { variantId: true, quantity: true, sizeMode: true } },
+      },
     }),
   ]);
+  const returns: ReturnSnap[] = [];
+  for (const order of refunded) {
+    const at = order.refundRecordedAt;
+    if (!at) continue;
+    for (const item of order.items) {
+      if (!item.variantId || isCustomLine(item.sizeMode ?? SizeMode.STANDARD)) continue;
+      returns.push({
+        orderId: order.id,
+        variantId: item.variantId,
+        quantity: item.quantity,
+        at,
+      });
+    }
+  }
   return {
     items: items.map((it) => ({
       orderId: it.orderId,
@@ -419,21 +385,14 @@ async function loadItemsAndReturns(orderIds: string[], from: Date, to: Date): Pr
       sizeMode: it.sizeMode,
       lineTotal: it.lineTotal,
     })),
-    returns: returns
-      .filter((r): r is typeof r & { orderId: string } => Boolean(r.orderId))
-      .map((r) => ({
-        orderId: r.orderId,
-        variantId: r.variantId,
-        quantity: r.delta,
-        at: r.createdAt,
-      })),
+    returns,
   };
 }
 
 async function periodBundle(from: Date, to: Date) {
   const snaps = await loadFinanceSnaps(from, to);
   const lines = linesInRange(classifyPayments(snaps), from, to);
-  const catalog = await loadCatalogSnaps(from);
+  const catalog = await loadCatalogSnaps();
   const orderIds = Array.from(qualifyingOrderIds(snaps, lines));
   const { items, returns } = await loadItemsAndReturns(orderIds, from, to);
   return aggregatePeriod({
@@ -458,10 +417,10 @@ export async function buildWhatsSelling(from: Date, to: Date, prevFrom?: Date, p
     collectionsAssigned: current.collectionsAssigned,
     notSelling: current.notSelling,
     pieces: withPrev(current.pieces, previous?.pieces ?? [], (p) => p.productId).sort((a, b) =>
-      compareSelling("sellThrough", a, b),
+      compareSelling("units", a, b),
     ),
     collections: withPrev(current.collections, previous?.collections ?? [], (c) => c.collectionId).sort((a, b) =>
-      compareSelling("sellThrough", a, b),
+      compareSelling("units", a, b),
     ),
   };
 }
@@ -470,12 +429,22 @@ async function allTimeBundle() {
   return periodBundle(new Date(0), new Date());
 }
 
-/** All-time units sold (stock + made-to-measure), for the storefront Best sellers row. */
+/**
+ * AG6: homepage Best sellers rank on OrderItem joined to confirmed Payment
+ * (same source as What's Selling). Not Product.orderCount — that cache has
+ * historically been zero and would drift on refunds. Not a garment-stock
+ * ledger — that table is gone in AG1.
+ */
 export async function rankedProductIdsByUnitsSold(): Promise<string[]> {
   const bundle = await allTimeBundle();
   return bundle.pieces
     .slice()
-    .sort((a, b) => b.unitsSold + b.orderedToMeasure - (a.unitsSold + a.orderedToMeasure) || b.revenueNGN - a.revenueNGN || a.name.localeCompare(b.name))
+    .sort(
+      (a, b) =>
+        b.unitsSold + b.orderedToMeasure - (a.unitsSold + a.orderedToMeasure) ||
+        b.revenueNGN - a.revenueNGN ||
+        a.name.localeCompare(b.name),
+    )
     .map((p) => p.productId);
 }
 
@@ -487,4 +456,3 @@ export async function unitsSoldByProductId(): Promise<Map<string, number>> {
   }
   return map;
 }
-

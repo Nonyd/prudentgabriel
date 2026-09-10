@@ -3,8 +3,6 @@ import type {
   BespokeRequest,
   ConsultationBooking,
   Order,
-  Product,
-  ProductVariant,
   Quotation,
   Review,
   User,
@@ -139,13 +137,13 @@ export function notifyTestimonialSubmitted(params: {
   }).catch(() => {});
 }
 
-export function notifyLowStock(product: Pick<Product, "name">, variant: Pick<ProductVariant, "id" | "size" | "stock">): void {
+export function notifyFabricUnavailable(order: Pick<Order, "id" | "orderNumber">): void {
   void createNotification({
-    type: "LOW_STOCK",
-    title: "Low stock",
-    message: `${product.name} — size ${variant.size} (${variant.stock} left)`,
-    link: `/admin/products`,
-    entityId: variant.id,
+    type: "FABRIC_UNAVAILABLE",
+    title: "Fabric unavailable",
+    message: `Order #${order.orderNumber} — offer an alternative or refund within 48 hours`,
+    link: `/admin/orders/${order.id}`,
+    entityId: order.id,
   }).catch(() => {});
 }
 

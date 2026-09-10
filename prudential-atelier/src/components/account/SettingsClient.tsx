@@ -7,7 +7,6 @@ import toast from "react-hot-toast";
 type Prefs = {
   orderStage: boolean;
   newCollections: boolean;
-  wishlistRestock: boolean;
   eventReminders: boolean;
 };
 
@@ -179,7 +178,6 @@ export function SettingsClient({
             [
               ["orderStage", "Email me when my order advances a stage"],
               ["newCollections", "Email me about new collections"],
-              ["wishlistRestock", "Email me when wishlisted items restock"],
               ["eventReminders", "Email me 60 days, 30 days, and 14 days before my saved event dates"],
             ] as const
           ).map(([key, label]) => (

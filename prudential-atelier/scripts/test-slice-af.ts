@@ -16,7 +16,6 @@ import {
   ProductType,
   Role,
   SizeMode,
-  StockMovementReason,
 } from "@prisma/client";
 import {
   classifyPayments,
@@ -28,14 +27,13 @@ import {
   aggregatePeriod,
   buildWhatsSelling,
   cashRevenueNGN,
-  sellThroughRatio,
 } from "../src/lib/finance/whats-selling";
 import {
   COLLECTION_DOUBLE_COUNT_COPY,
   compareSelling,
+  DEMAND_COPY,
   NO_COLLECTION_ASSIGNMENTS_COPY,
   NO_SALES_COPY,
-  SELL_THROUGH_COPY,
 } from "../src/lib/finance/whats-selling-view";
 import { prisma } from "../src/lib/prisma";
 
@@ -109,10 +107,16 @@ function runSource() {
   assert(!reports.includes("Best-selling pieces"), "do not keep the old units-only list");
   assert(panel.includes("card-surface"), "selling charts are solid panels");
   assert(!panel.includes("glass-opaque"), "charts are not glass under data");
-  assert(panel.includes('useState<SellingSort>("sellThrough")'), "sell-through is the default sort");
+  const selling = src("src/lib/finance/whats-selling.ts");
+  assert(!selling.includes("StockMovement"), "what's selling does not read StockMovement");
+  assert(!selling.includes("stockMovement"), "what's selling does not query stockMovement");
+  assert(selling.includes("orderItem.findMany"), "what's selling reads OrderItem");
+  assert(selling.includes("loadFinanceSnaps"), "what's selling reads confirmed Payment");
+  assert(panel.includes('useState<SellingSort>("units")'), "units is the default sort");
   assert(panel.includes("NO_SALES_COPY"), "empty state names the lack of sales");
   assert(view.includes(NO_SALES_COPY), "empty copy is the specified sentence");
-  assert(view.includes(SELL_THROUGH_COPY), "the page says what sell-through means");
+  assert(view.includes(DEMAND_COPY), "the page says these figures are paid demand");
+  assert(!view.includes("Sell-through"), "sell-through copy is gone");
   assert(view.includes(COLLECTION_DOUBLE_COUNT_COPY), "double-count across collections is stated");
   assert(view.includes(NO_COLLECTION_ASSIGNMENTS_COPY), "unassigned collections have an honest empty state");
   assert((panel.match(/<section className="card-surface/g) ?? []).length === 4, "four visuals on the page");
@@ -153,7 +157,7 @@ function runPure() {
       },
     ],
     returns: [],
-    variants: [{ id: "v1", productId: product.id, size: "12", stock: 2, laterNet: -1 }],
+    variants: [{ id: "v1", productId: product.id, size: "12" }],
     products: [product],
     collections: [],
   });
@@ -188,7 +192,7 @@ function runPure() {
       },
     ],
     returns: [],
-    variants: [{ id: "v1", productId: product.id, size: "12", stock: 3, laterNet: 0 }],
+    variants: [{ id: "v1", productId: product.id, size: "12" }],
     products: [product],
     collections: [],
   });
@@ -212,7 +216,7 @@ function runPure() {
       },
     ],
     returns: [{ orderId: "o-sold", variantId: "v1", quantity: 1, at: sept }],
-    variants: [{ id: "v1", productId: product.id, size: "12", stock: 3, laterNet: 0 }],
+    variants: [{ id: "v1", productId: product.id, size: "12" }],
     products: [product],
     collections: [],
   });
@@ -236,7 +240,7 @@ function runPure() {
       },
     ],
     returns: [] as { orderId: string; variantId: string; quantity: number; at: Date }[],
-    variants: [{ id: "v1", productId: product.id, size: "12", stock: 0, laterNet: -3 }],
+    variants: [{ id: "v1", productId: product.id, size: "12" }],
     products: [product],
     collections: [
       { id: "c1", name: "Look one", slug: "look-one", productIds: [product.id] },
@@ -246,9 +250,7 @@ function runPure() {
   const first = aggregatePeriod(threeInput);
   const second = aggregatePeriod(threeInput);
   assert(first.pieces[0]!.unitsSold === 3, "three units sold");
-  assert(first.pieces[0]!.stockedAtStart === 3, "stocked at period start is reconstructed from later movements");
-  assert(first.pieces[0]!.sellThrough === 1, "sell-through is units sold over units stocked at period start");
-  assert(sellThroughRatio(3, 3) === 1, "3 of 3 is 1");
+  assert(first.pieces[0]!.sizes[0]!.sold === 3, "size 12 took the three units");
   assert(JSON.stringify(first.pieces) === JSON.stringify(second.pieces), "re-running a past period returns identical figures");
   assert(first.collections.length === 2, "the same sale is counted in each collection");
   assert(
@@ -282,15 +284,16 @@ function runPure() {
     collections: [],
   });
   assert(mto.pieces[0]!.orderedToMeasure === 1, "made-to-order is ordered to measure");
-  assert(mto.pieces[0]!.unitsSold === 0, "made-to-order has no stock units");
-  assert(mto.pieces[0]!.sellThrough == null, "made-to-order has no sell-through");
+  assert(mto.pieces[0]!.unitsSold === 0, "made-to-order has no standard-size units");
 
   const ranked = [
-    { name: "Slow", unitsSold: 5, revenueNGN: 100, sellThrough: 5 / 40 },
-    { name: "Tight", unitsSold: 3, revenueNGN: 90, sellThrough: 1 },
+    { name: "Slow", unitsSold: 5, revenueNGN: 100 },
+    { name: "Tight", unitsSold: 3, revenueNGN: 90 },
   ];
-  ranked.sort((a, b) => compareSelling("sellThrough", a, b));
-  assert(ranked[0]!.name === "Tight", "sell-through ranks 3 of 3 above 5 of 40");
+  ranked.sort((a, b) => compareSelling("units", a, b));
+  assert(ranked[0]!.name === "Slow", "units ranks five orders above three");
+  ranked.sort((a, b) => compareSelling("revenue", a, b));
+  assert(ranked[0]!.name === "Slow", "revenue ranks 100 above 90");
 }
 
 async function runDb() {
@@ -310,7 +313,7 @@ async function runDb() {
         priceNGN: 80_000,
         basePriceNGN: 80_000,
         isPublished: true,
-        variants: { create: { size: "12", priceNGN: 80_000, stock: 3 } },
+        variants: { create: { size: "12", priceNGN: 80_000 } },
       },
       include: { variants: true },
     });
@@ -353,27 +356,12 @@ async function runDb() {
         createdAt: sept,
       },
     });
-    await prisma.$transaction(async (tx) => {
-      await tx.$executeRawUnsafe(`SELECT set_config('app.ledger_bypass', 'on', true)`);
-      await tx.stockMovement.create({
-        data: {
-          variantId: variant.id,
-          delta: -1,
-          reason: StockMovementReason.SALE,
-          orderId: order.id,
-          createdAt: sept,
-        },
-      });
-      await tx.productVariant.update({ where: { id: variant.id }, data: { stock: 2 } });
-    });
-
     const first = await buildWhatsSelling(range.from, range.to);
     const row = first.pieces.find((p) => p.productId === gown.id);
     assert(row, "db piece appears in the period");
     assert(row.unitsSold === 1, "db counts the unit");
     assert(row.revenueNGN === 80_000, `db shipping is not revenue, got ${row.revenueNGN}`);
-    assert(row.stockedAtStart === 3, `db stocked at start is 3, got ${row.stockedAtStart}`);
-    assert(row.sellThrough === 1 / 3, "db sell-through is 1 of 3");
+    assert(row.sizes.some((s) => s.size === "12" && s.sold === 1), "db counts the size from OrderItem");
 
     await prisma.order.update({ where: { id: order.id }, data: { total: 9_999_999 } });
     const second = await buildWhatsSelling(range.from, range.to);
@@ -386,7 +374,6 @@ async function runDb() {
       await tx.$executeRawUnsafe(`SELECT set_config('app.ledger_bypass', 'on', true)`);
       if (ids.orderIds.length) {
         await tx.payment.deleteMany({ where: { orderId: { in: ids.orderIds } } });
-        await tx.stockMovement.deleteMany({ where: { orderId: { in: ids.orderIds } } });
         await tx.orderItem.deleteMany({ where: { orderId: { in: ids.orderIds } } });
         await tx.order.deleteMany({ where: { id: { in: ids.orderIds } } });
       }

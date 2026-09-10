@@ -48,8 +48,8 @@ const DEFS: {
   },
   {
     key: CUSTOM_SETTING_KEYS.leadTimeDays,
-    value: "21",
-    label: "Custom measurements — lead time in days",
+    value: "12",
+    label: "Made-to-measure — lead time in days (upper bound of the house production promise)",
     type: SettingType.NUMBER,
     sortOrder: 23,
   },
@@ -124,7 +124,7 @@ export async function getCustomGlobals(): Promise<CustomGlobals> {
     offeredDefault: offered === "true",
     surchargeKind: parseKind(kind),
     surchargeValue: Number.isFinite(surcharge) ? surcharge : 0,
-    leadTimeDays: Number.isFinite(lead) && lead > 0 ? Math.round(lead) : 21,
+    leadTimeDays: Number.isFinite(lead) && lead > 0 ? Math.round(lead) : 12,
     returnable: ret === "true",
   };
 }

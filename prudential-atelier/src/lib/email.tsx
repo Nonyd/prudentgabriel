@@ -9,7 +9,6 @@ import BespokeConfirmationEmail from "@/emails/BespokeConfirmationEmail";
 import PasswordResetEmail from "@/emails/PasswordResetEmail";
 import AccountExistsEmail from "@/emails/AccountExistsEmail";
 import ReferralSuccessEmail from "@/emails/ReferralSuccessEmail";
-import BackInStockEmail from "@/emails/BackInStockEmail";
 import ConsultationPendingEmail from "@/emails/ConsultationPendingEmail";
 import ConsultationConfirmedEmail from "@/emails/ConsultationConfirmedEmail";
 import ConsultationCancelledEmail from "@/emails/ConsultationCancelledEmail";
@@ -249,6 +248,7 @@ export async function sendOrderConfirmationEmail(params: {
   quotePendingText?: string;
   customLeadDays?: number | null;
   customReturnNote?: string | null;
+  productionCopy?: string | null;
 }): Promise<void> {
   const subtotal =
     params.subtotalNGN ??
@@ -277,6 +277,7 @@ export async function sendOrderConfirmationEmail(params: {
       quotePendingText={params.quotePendingText}
       customLeadDays={params.customLeadDays}
       customReturnNote={params.customReturnNote}
+      productionCopy={params.productionCopy}
       catalogHeading={copy.heading}
       catalogBody={copy.body1}
       catalogCtaLabel={copy.ctaLabel}
@@ -895,35 +896,6 @@ export async function sendStageAssignmentEmail(params: {
     idempotencyKey: `stage-assignment:${params.orderRef}:${params.stageName}:${params.to}`,
     relatedType: "BespokeOrder",
     relatedId: params.orderRef,
-  });
-}
-
-export async function sendBackInStockEmail(params: {
-  to: string;
-  productName: string;
-  size: string;
-  productSlug: string;
-  priceNGN: number;
-}): Promise<void> {
-  const copy = await catalogCopy(EMAIL_TEMPLATE_KEYS.BACK_IN_STOCK, {
-    outfitName: params.productName,
-    size: params.size,
-    link: `${getPublicAppUrl()}/product/${params.productSlug}`,
-  });
-  const html = await renderBrandedEmail(
-    <BackInStockEmail
-      productName={params.productName}
-      size={params.size}
-      productSlug={params.productSlug}
-      priceNGN={params.priceNGN}
-    />,
-  );
-  await sendEmail({
-    to: params.to,
-    subject: copy.subject,
-    html,
-    template: "back-in-stock",
-    idempotencyKey: `back-in-stock:${params.productSlug}:${params.size}:${params.to}`,
   });
 }
 

@@ -10,20 +10,21 @@ import { CountdownTimer } from "@/components/ui/CountdownTimer";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { PriceDisplay } from "@/components/product/PriceDisplay";
 import { WishlistButton } from "@/components/common/WishlistButton";
-import { StockAlertForm } from "@/components/common/StockAlertForm";
 import { SizeGuideModal } from "@/components/shop/SizeGuideModal";
 import { QuickAddSizeRow } from "@/components/common/quick-add/QuickAddSizeRow";
 import { CustomMeasurementsForm, typedFromForm } from "@/components/product/CustomMeasurementsForm";
 import { sanitizeCmsHtml } from "@/lib/sanitize-html";
 import { useBagActions } from "@/hooks/useBagActions";
 import { formatPrice } from "@/lib/currency";
-import {
-  hasPurchasableSize,
-  pickVariantForAdd,
-  stockGuardMessage,
-} from "@/lib/quick-add";
-import { CUSTOM_LEAD_COPY, CUSTOM_RETURNS_COPY, customSurchargeNGN, standardVariants, validateCustomMeasurements } from "@/lib/custom-size";
+import { pickVariantForAdd, bagErrorMessage } from "@/lib/quick-add";
+import { customSurchargeNGN, standardVariants, validateCustomMeasurements } from "@/lib/custom-size";
 import { isCustomOfferedNow, PDP_INITIAL_FIT_MODE } from "@/lib/custom-availability";
+import {
+  FABRIC_POLICY_COPY,
+  MADE_TO_MEASURE_REASON,
+  STANDARD_SIZE_COPY,
+  madeThenShippedCopy,
+} from "@/lib/production-time";
 import { productAisle } from "@/lib/rtw-aisle";
 import { CHOOSE_SIZE_MESSAGE } from "@/lib/bag-size";
 import type { MeasurementFieldDef } from "@/lib/custom-size";
@@ -44,7 +45,6 @@ interface DetailProduct {
   isOnSale: boolean;
   saleEndsAt: string | null;
   isBespokeAvail: boolean;
-  lowStockAt: number;
   basePriceNGN: number;
   priceUSD: number | null;
   priceGBP: number | null;
@@ -63,9 +63,9 @@ interface ProductDetailClientProps {
   freeLagosAboveNGN?: number | null;
   bespokeFromNGN?: number | null;
   customOffered?: boolean;
-  customOfferedWhenSoldOut?: boolean;
   customFields?: MeasurementFieldDef[];
   customLeadTimeDays?: number;
+  productionCopy?: string;
   customReturnable?: boolean;
   customSurchargeKind?: "NONE" | "PERCENT" | "FLAT";
   customSurchargeValue?: number;
@@ -85,9 +85,9 @@ export function ProductDetailClient({
   freeLagosAboveNGN = null,
   bespokeFromNGN = null,
   customOffered = false,
-  customOfferedWhenSoldOut = false,
   customFields = [],
-  customLeadTimeDays = 21,
+  customLeadTimeDays = 12,
+  productionCopy,
   customReturnable = false,
   customSurchargeKind = "NONE",
   customSurchargeValue = 0,
@@ -110,14 +110,9 @@ export function ProductDetailClient({
     [product.variants, variantId],
   );
   const standardSizes = useMemo(() => standardVariants(product.variants), [product.variants]);
-  const sizesSoldOut = !hasPurchasableSize(standardSizes);
   const aisle = productAisle(product);
-  const customAvailable = isCustomOfferedNow({
-    customOffered,
-    customOfferedWhenSoldOut,
-    variants: product.variants,
-  });
-  const soldOut = sizesSoldOut && !customAvailable;
+  const customAvailable = isCustomOfferedNow({ customOffered });
+  const madeCopy = madeThenShippedCopy(productionCopy);
   const customSurcharge = customSurchargeNGN({
     unitNGN: product.basePriceNGN,
     kind: customSurchargeKind,
@@ -130,9 +125,8 @@ export function ProductDetailClient({
       : displayAmountInCurrency(product.variants, variantId, product, currency, rates),
     currency,
   );
-  const ctaLabel = soldOut
-    ? `Sold out · ${priceLabel}`
-    : fitMode === "custom"
+  const ctaLabel =
+    fitMode === "custom"
       ? `Add to bag · ${priceLabel}`
       : !variant
         ? `Choose your size`
@@ -164,11 +158,8 @@ export function ProductDetailClient({
     _count: { reviews: reviewCount },
   };
 
-  const lowStock =
-    variant && variant.stock > 0 && variant.stock <= (variant.lowStockAt ?? 3) ? variant.stock : 0;
-
   const addToBagClick = async () => {
-    if (soldOut || submitting) return;
+    if (submitting) return;
     if (fitMode === "custom") {
       if (!customAvailable || !customFields.length) {
         setBagError("Custom measurements are not available for this piece.");
@@ -199,7 +190,6 @@ export function ProductDetailClient({
             priceUSD: customPriceNGN * rates.USD,
             priceGBP: customPriceNGN * rates.GBP,
             quantity: 1,
-            stock: 999,
             category: product.category,
             sizeMode: "CUSTOM",
             measurements: checked.snapshot,
@@ -223,10 +213,6 @@ export function ProductDetailClient({
       document.getElementById("product-sizes")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
-    if (variant.stock < 1) {
-      setBagError("That size just sold out.");
-      return;
-    }
     setBagError(null);
     setSubmitting(true);
     try {
@@ -246,17 +232,16 @@ export function ProductDetailClient({
           priceNGN: unit,
           priceUSD: variantAmountInCurrency(variant, product, "USD", rates),
           priceGBP: variantAmountInCurrency(variant, product, "GBP", rates),
-          quantity: Math.min(qty, variant.stock),
-          stock: variant.stock,
+          quantity: qty,
           category: product.category,
         },
         { toastOnError: false },
       );
       if (!result.ok) {
-        setBagError(stockGuardMessage(result.error));
+        setBagError(bagErrorMessage(result.error));
       }
     } catch {
-      setBagError(stockGuardMessage(null));
+      setBagError(bagErrorMessage(null));
     } finally {
       setSubmitting(false);
     }
@@ -387,13 +372,7 @@ export function ProductDetailClient({
                 </button>
               </div>
               <p className="mt-2.5 font-body text-sm leading-6 text-charcoal-mid">
-                {fitMode === "standard"
-                  ? sizesSoldOut
-                    ? "UK sizes from stock — currently sold out."
-                    : "Pick a UK size from stock."
-                  : sizesSoldOut
-                    ? "Sizes are gone. Tap Made to measure if you want this cut for you — it is not chosen until you do."
-                    : "We cut this piece to the figures you enter below."}
+                {fitMode === "standard" ? STANDARD_SIZE_COPY : MADE_TO_MEASURE_REASON}
               </p>
             </div>
           ) : null}
@@ -440,39 +419,7 @@ export function ProductDetailClient({
               onChange={(key, value) => setMeasureValues((p) => ({ ...p, [key]: value }))}
             />
           ) : null}
-          {sizesSoldOut && customAvailable && fitMode === "standard" ? (
-            <button
-              type="button"
-              onClick={() => {
-                setFitMode("custom");
-                setVariantId(null);
-                setBagError(null);
-              }}
-              className="mt-4 w-full rounded-none border-2 border-choc bg-[#f7f2ec] px-4 py-4 text-left"
-            >
-              <span className="block font-body text-lg font-semibold text-choc">Sold out in standard sizes</span>
-              <span className="mt-1 block font-body text-base leading-6 text-charcoal">
-                We can still make this in your measurements. Tap to choose that — it is not selected for you.
-              </span>
-            </button>
-          ) : null}
-          {soldOut ? (
-            <div className="mt-4 border border-border bg-cream px-4 py-4">
-              <p className="font-body text-lg font-semibold text-choc">Sold out</p>
-              <p className="mt-1 font-body text-sm leading-6 text-charcoal-mid">
-                This piece is not being remade. Leave your email and we will tell you if it returns.
-              </p>
-              <StockAlertForm productId={product.id} />
-            </div>
-          ) : null}
-          {lowStock > 0 && (
-            <p className="mt-2 font-body text-[10px] font-medium uppercase tracking-wide text-choc">Only {lowStock} left!</p>
-          )}
-          {variant && variant.stock === 0 && !soldOut ? (
-            <StockAlertForm productId={product.id} variantId={variant.id} />
-          ) : null}
-
-          {variant && variant.stock > 1 ? (
+          {fitMode === "standard" ? (
           <div className="mt-6">
             <p className="font-body text-[10px] font-medium uppercase tracking-[0.14em] text-text-light">Quantity</p>
             <div className="mt-2 flex items-center gap-3">
@@ -490,8 +437,7 @@ export function ProductDetailClient({
                 type="button"
                 aria-label="Increase quantity"
                 className="flex h-11 w-11 items-center justify-center rounded-sm border border-border hover:border-choc"
-                disabled={!variant || qty >= variant.stock}
-                onClick={() => setQty((q) => (variant ? Math.min(variant.stock, q + 1) : q))}
+                onClick={() => setQty((q) => q + 1)}
               >
                 +
               </button>
@@ -499,11 +445,12 @@ export function ProductDetailClient({
           </div>
           ) : null}
 
+          <p className="mt-8 font-body text-sm leading-6 text-charcoal-mid">{madeCopy}</p>
           <Button
             type="button"
-            className="mt-8 h-[52px] w-full bg-choc font-body text-[15px] font-normal normal-case tracking-normal text-cream hover:bg-nut disabled:opacity-40"
+            className="mt-3 h-[52px] w-full bg-choc font-body text-[15px] font-normal normal-case tracking-normal text-cream hover:bg-nut disabled:opacity-40"
             size="lg"
-            disabled={soldOut || submitting}
+            disabled={submitting}
             aria-busy={submitting}
             onClick={() => void addToBagClick()}
           >
@@ -513,7 +460,7 @@ export function ProductDetailClient({
                 aria-hidden
               />
             ) : null}
-            {!soldOut && fitMode === "standard" && !variant ? (
+            {fitMode === "standard" && !variant ? (
               <span className="flex w-full items-center justify-center gap-3">
                 <span>Choose your size</span>
                 <span>{priceLabel}</span>
@@ -574,6 +521,7 @@ export function ProductDetailClient({
                 </Accordion.Trigger>
               </Accordion.Header>
               <Accordion.Content className="space-y-2 pb-4 text-sm text-charcoal-mid">
+                <p>{madeCopy}</p>
                 {freeLagosAboveNGN != null ? (
                   <p>
                     Free Lagos delivery on orders over ₦{Math.round(freeLagosAboveNGN).toLocaleString("en-NG")}.
@@ -582,9 +530,9 @@ export function ProductDetailClient({
                 ) : (
                   <p>Ships worldwide.</p>
                 )}
-                {customAvailable ? <p>{CUSTOM_LEAD_COPY(customLeadTimeDays)}</p> : null}
-                <p>Returns accepted within 14 days in original condition for standard sizes.</p>
-                {customAvailable && !customReturnable ? <p>{CUSTOM_RETURNS_COPY}</p> : null}
+                <p>{STANDARD_SIZE_COPY}</p>
+                {customAvailable ? <p>{MADE_TO_MEASURE_REASON}</p> : null}
+                <p>{FABRIC_POLICY_COPY}</p>
               </Accordion.Content>
             </Accordion.Item>
             {product.isBespokeAvail && product.type !== "RTW" && (

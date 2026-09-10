@@ -7,7 +7,7 @@ import { sendEmail } from "@/lib/email";
 import { reportEmailHtml } from "@/lib/email-templates/reports";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
-import { listRefundRequiredOrders, listTodayOversellNotifications, oversellReportHtml } from "@/lib/oversell-report";
+import { listRefundRequiredOrders, oversellReportHtml } from "@/lib/oversell-report";
 import { getSetting } from "@/lib/settings";
 import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
 
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const to = endOfToday();
     const appUrl = getPublicAppUrl();
 
-    const [rtwRev, stageUpdates, staffToday, consultations, upcoming, pendingPayments, refundRequired, oversellNotices] =
+    const [rtwRev, stageUpdates, staffToday, consultations, upcoming, pendingPayments, refundRequired] =
       await Promise.all([
         prisma.order.aggregate({
           where: { paymentStatus: PaymentStatus.PAID, createdAt: { gte: from, lte: to }, isBespoke: false },
@@ -63,7 +63,6 @@ export async function POST(req: NextRequest) {
           where: { paymentStatus: PaymentStatus.PENDING, createdAt: { gte: from, lte: to } },
         }),
         listRefundRequiredOrders(),
-        listTodayOversellNotifications(from, to),
       ]);
 
     const bespokePaid = await prisma.bespokeOrder.aggregate({
@@ -72,7 +71,7 @@ export async function POST(req: NextRequest) {
     });
     const revenue = (rtwRev._sum.total ?? 0) + (bespokePaid._sum.amountPaid ?? 0);
 
-    const oversellHtml = oversellReportHtml(refundRequired, oversellNotices);
+    const oversellHtml = oversellReportHtml(refundRequired);
 
     const dateLabel = from.toLocaleDateString("en-GB");
     const html = reportEmailHtml(
@@ -130,7 +129,7 @@ export async function POST(req: NextRequest) {
           html: `<p><strong>${pendingPayments}</strong> bank transfer receipts awaiting confirmation</p>`,
         },
         {
-          heading: "RTW oversell — refund required",
+          heading: "Refund required",
           html: oversellHtml,
         },
       ],

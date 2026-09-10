@@ -18,7 +18,6 @@ const lineSchema = z.object({
   priceUSD: z.number().optional(),
   priceGBP: z.number().optional(),
   quantity: z.number().int().min(1).max(99),
-  stock: z.number().optional(),
   category: z.string().optional(),
 });
 

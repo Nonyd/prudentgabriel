@@ -139,10 +139,8 @@ export async function queryProductList(
     if (Number.isFinite(maxP)) where.priceNGN.lte = maxP;
   }
 
-  const inStockOnly = searchParams.get("inStock") === "true";
   const variantSome: Prisma.ProductVariantWhereInput = {};
   if (sizesList.length) variantSome.size = { in: sizesList };
-  if (inStockOnly) variantSome.stock = { gt: 0 };
   if (Object.keys(variantSome).length) {
     where.variants = { some: variantSome };
   }
@@ -200,7 +198,6 @@ export async function queryProductList(
         salePriceNGN: true,
         priceUSD: true,
         priceGBP: true,
-        stock: true,
       },
     },
     colors: { select: { id: true, name: true, hex: true, imageUrl: true } },
@@ -271,7 +268,6 @@ export async function queryProductList(
       salePriceNGN: v.salePriceNGN,
       priceUSD: v.priceUSD,
       priceGBP: v.priceGBP,
-      stock: v.stock,
     })),
     colors: p.colors,
     _count: p._count,

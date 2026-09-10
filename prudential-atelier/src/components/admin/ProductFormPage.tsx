@@ -17,6 +17,7 @@ import { buildDefaultProductSku, isGeneratedProductSku } from "@/lib/product-sku
 import { getPublicAppUrl } from "@/lib/app-url";
 import { cn } from "@/lib/utils";
 import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
+import { DEFAULT_PRODUCTION_LEAD_DAYS } from "@/lib/production-time";
 import { rejectedCatalogueImageFile } from "@/lib/image-upload-mime";
 import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 import { saleFigureIsDormant } from "@/lib/pricing";
@@ -81,7 +82,6 @@ function mapProductToForm(p: FullProduct): ProductAdminInput {
     isNewArrival: p.isNewArrival,
     isBespokeAvail: p.isBespokeAvail,
     customOffered: p.customOffered,
-    customOfferedWhenSoldOut: p.customOfferedWhenSoldOut,
     customSurchargeKind: p.customSurchargeKind,
     customSurchargeValue: p.customSurchargeValue ?? undefined,
     customLeadTimeDays: p.customLeadTimeDays ?? undefined,
@@ -106,8 +106,6 @@ function mapProductToForm(p: FullProduct): ProductAdminInput {
       priceUSD: v.priceUSD ?? undefined,
       priceGBP: v.priceGBP ?? undefined,
       salePriceNGN: v.salePriceNGN,
-      stock: v.stock,
-      lowStockAt: v.lowStockAt,
       sortOrder: v.sortOrder ?? i,
       weightKg: v.weightKg ?? undefined,
       lengthCm: v.lengthCm ?? undefined,
@@ -156,7 +154,6 @@ const defaultCreate = (custom?: {
   isNewArrival: false,
   isBespokeAvail: false,
   customOffered: custom?.offeredDefault ?? false,
-  customOfferedWhenSoldOut: false,
   customSurchargeKind: custom?.surchargeKind === "NONE" ? null : (custom?.surchargeKind ?? null),
   customSurchargeValue: custom?.surchargeKind && custom.surchargeKind !== "NONE" ? custom.surchargeValue : undefined,
   customLeadTimeDays: undefined,
@@ -655,7 +652,7 @@ export function ProductFormPage({
   };
 
   const images = form.watch("images");
-  const storeDefaultLead = customDefaults?.leadTimeDays ?? 21;
+  const storeDefaultLead = customDefaults?.leadTimeDays ?? DEFAULT_PRODUCTION_LEAD_DAYS;
   const show = (i: number) => !wizard || step === i;
 
   return (
@@ -953,14 +950,6 @@ export function ProductFormPage({
             {form.formState.errors.basePriceNGN && (
               <p className="mt-2 text-xs text-red-400">Enter a naira price.</p>
             )}
-            {product?.id ? (
-              <p className="mt-4 font-body text-[13px]">
-                <Link href={`/admin/products/${product.id}/stock`} className="text-olive hover:underline">
-                  Stock history
-                </Link>
-                <span className="text-[#6B6B68]"> — every sale, count, and return for each size.</span>
-              </p>
-            ) : null}
           </section>
         ) : null}
 
@@ -968,7 +957,7 @@ export function ProductFormPage({
           <>
             <details className={sectionClass}>
               <summary className="cursor-pointer font-display text-2xl text-choc">Custom measurements</summary>
-              <p className="mt-1 text-xs text-[#A8A8A4]">Made to order. Does not take stock.</p>
+              <p className="mt-1 text-xs text-[#A8A8A4]">Cut to the measurements she enters. Made to order.</p>
               <Controller
                 control={form.control}
                 name="customOffered"
@@ -981,24 +970,6 @@ export function ProductFormPage({
               />
               {customOfferedWatch ? (
                 <div className="mt-4 space-y-3 text-sm text-charcoal">
-                  <Controller
-                    control={form.control}
-                    name="customOfferedWhenSoldOut"
-                    render={({ field }) => (
-                      <label className="flex justify-between gap-2">
-                        Keep offering it after the sizes sell out
-                        <input
-                          type="checkbox"
-                          checked={Boolean(field.value)}
-                          onChange={(e) => field.onChange(e.target.checked)}
-                        />
-                      </label>
-                    )}
-                  />
-                  <p className="text-[11px] text-[#A8A8A4]">
-                    Off by default. Only tick this if the fabric can be sourced again. A sold-out one-off must not
-                    promise a remake.
-                  </p>
                   <label className="block text-xs uppercase text-[#A8A8A4]">
                     Surcharge
                     <select {...form.register("customSurchargeKind")} className={fieldClass}>
@@ -1149,7 +1120,7 @@ export function ProductFormPage({
                   Bespoke
                 </label>
                 <p className="mt-1 text-xs text-[#A8A8A4]">
-                  Ready to wear sells from stock. Bespoke shows an atelier consultation on the product page.
+                  Ready to wear is made to order. Bespoke shows an atelier consultation on the product page.
                 </p>
               </fieldset>
               <div className="mt-4 space-y-3 text-sm text-charcoal">

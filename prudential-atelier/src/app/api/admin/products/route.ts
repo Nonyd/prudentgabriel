@@ -8,7 +8,6 @@ import { loadTakenSkus, resolvePreferredSku, uniqueSkuFromTaken } from "@/lib/pr
 import { allocateProductSlug } from "@/lib/product-slug-unique";
 import { revalidateProduct } from "@/lib/revalidate";
 import { derivedCatalogMinNGN } from "@/lib/pricing";
-import { applyOpening, afterStockWrites, syncProductInStock, type StockWriteResult } from "@/lib/stock-ledger";
 
 const PAGE_SIZE_DEFAULT = 20;
 
@@ -24,7 +23,6 @@ export async function GET(req: NextRequest) {
   const type = searchParams.get("type") as ProductType | null;
   const published = searchParams.get("published");
   const needsPrice = searchParams.get("needsPrice");
-  const stock = searchParams.get("stock");
   const sort = searchParams.get("sort") ?? "newest";
 
   const where: Prisma.ProductWhereInput = {};
@@ -48,12 +46,6 @@ export async function GET(req: NextRequest) {
     where.basePriceNGN = 0;
   }
 
-  if (stock === "out") {
-    where.variants = { some: { stock: 0 } };
-  } else if (stock === "in") {
-    where.NOT = { variants: { some: { stock: 0 } } };
-  }
-
   const orderBy: Prisma.ProductOrderByWithRelationInput =
     sort === "name"
       ? { name: "asc" }
@@ -71,7 +63,7 @@ export async function GET(req: NextRequest) {
       include: {
         images: { where: { isPrimary: true }, take: 1 },
         variants: {
-          select: { id: true, priceNGN: true, salePriceNGN: true, stock: true },
+          select: { id: true, priceNGN: true, salePriceNGN: true },
           orderBy: { sortOrder: "asc" },
         },
         _count: { select: { orderItems: true } },
@@ -81,7 +73,6 @@ export async function GET(req: NextRequest) {
 
   const items = rows.map((p) => {
     const minPrice = derivedCatalogMinNGN(p.variants, p.isOnSale);
-    const totalStock = p.variants.reduce((s, v) => s + v.stock, 0);
     return {
       id: p.id,
       name: p.name,
@@ -96,7 +87,6 @@ export async function GET(req: NextRequest) {
       primaryImage: p.images[0]?.url ?? null,
       variantCount: p.variants.length,
       minPriceNGN: minPrice,
-      totalStock,
       orderItemsCount: p._count.orderItems,
     };
   });
@@ -157,12 +147,10 @@ export async function POST(req: NextRequest) {
           isNewArrival: data.isNewArrival,
           isBespokeAvail: data.isBespokeAvail,
           customOffered: data.customOffered ?? false,
-          customOfferedWhenSoldOut: data.customOfferedWhenSoldOut ?? false,
           customSurchargeKind: data.customSurchargeKind ?? null,
           customSurchargeValue: data.customSurchargeValue ?? null,
           customLeadTimeDays: data.customLeadTimeDays ?? null,
           customReturnable: data.customReturnable ?? null,
-          inStock: false,
           defaultWeightKg: data.defaultWeightKg ?? null,
           defaultLengthCm: data.defaultLengthCm ?? null,
           defaultWidthCm: data.defaultWidthCm ?? null,
@@ -170,7 +158,6 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      const stockWrites: StockWriteResult[] = [];
       const taken = await loadTakenSkus(tx);
       for (let i = 0; i < data.variants.length; i++) {
         const v = data.variants[i];
@@ -194,8 +181,6 @@ export async function POST(req: NextRequest) {
             priceUSD: v.priceUSD ?? null,
             priceGBP: v.priceGBP ?? null,
             salePriceNGN: v.salePriceNGN ?? null,
-            stock: 0,
-            lowStockAt: v.lowStockAt,
             sortOrder: v.sortOrder ?? i,
             weightKg: v.weightKg ?? null,
             lengthCm: v.lengthCm ?? null,
@@ -203,8 +188,6 @@ export async function POST(req: NextRequest) {
             heightCm: v.heightCm ?? null,
           },
         });
-        const write = await applyOpening(tx, { variantId: created.id, stock: v.stock });
-        if (write) stockWrites.push(write);
       }
 
       for (const c of data.colors) {
@@ -258,14 +241,12 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      await syncProductInStock(tx, p.id);
-      return { product: p, stockWrites };
+      return p;
     });
 
-    await revalidateProduct(product.product.slug);
-    if (product.stockWrites.length) await afterStockWrites(product.stockWrites);
+    await revalidateProduct(product.slug);
 
-    return NextResponse.json({ id: product.product.id, slug });
+    return NextResponse.json({ id: product.id, slug });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       return NextResponse.json({ error: "That stock code is already in use" }, { status: 409 });

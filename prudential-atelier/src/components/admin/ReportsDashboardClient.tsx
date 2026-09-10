@@ -24,7 +24,6 @@ type ReportData = {
     total: number;
     byStatus: { status: string; count: number; revenue: number }[];
   };
-  inventory?: { product: string; category: string | null; size: string; stock: number; status: string }[];
   production?: {
     orderRef: string;
     clientName: string;
@@ -251,40 +250,6 @@ export function ReportsDashboardClient() {
               </tbody>
             </table>
           </div>
-
-          {data.inventory && data.inventory.length > 0 ? (
-            <div className="card-surface p-6">
-              <h2 className="font-display text-lg text-choc">RTW inventory</h2>
-              <table className="mt-4 w-full font-sans text-sm">
-                <thead>
-                  <tr className="border-b border-sand text-left text-xs text-text-light">
-                    <th className="py-2">Product</th>
-                    <th className="py-2">Size</th>
-                    <th className="py-2 text-right">Stock</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.inventory.map((row, i) => (
-                    <tr key={i} className="border-b border-sand/40">
-                      <td className="py-2">{row.product}</td>
-                      <td className="py-2">{row.size}</td>
-                      <td
-                        className={`py-2 text-right ${
-                          row.status === "out"
-                            ? "text-red-700"
-                            : row.status === "low"
-                              ? "text-amber-700"
-                              : ""
-                        }`}
-                      >
-                        {row.stock}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : null}
 
           {data.production && data.production.length > 0 ? (
             <div className="card-surface p-6">

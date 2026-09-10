@@ -89,7 +89,6 @@ export async function getNotificationPrefs(userId: string): Promise<Record<strin
     return {
       orderStage: true,
       newCollections: true,
-      wishlistRestock: true,
       eventReminders: true,
     };
   }
@@ -99,7 +98,6 @@ export async function getNotificationPrefs(userId: string): Promise<Record<strin
     return {
       orderStage: true,
       newCollections: true,
-      wishlistRestock: true,
       eventReminders: true,
     };
   }
@@ -107,7 +105,7 @@ export async function getNotificationPrefs(userId: string): Promise<Record<strin
 
 export async function customerAllowsPref(
   userId: string,
-  key: "orderStage" | "newCollections" | "wishlistRestock" | "eventReminders",
+  key: "orderStage" | "newCollections" | "eventReminders",
 ): Promise<boolean> {
   const prefs = await getNotificationPrefs(userId);
   return prefs[key] !== false;

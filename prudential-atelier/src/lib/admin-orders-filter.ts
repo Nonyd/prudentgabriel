@@ -1,5 +1,6 @@
 /** Shared admin order-list filters (page + CSV API). */
 import { OrderStatus, PaymentGateway, PaymentStatus, type Prisma } from "@prisma/client";
+import { FABRIC_UNAVAILABLE_ATTENTION, fabricQueueWhere } from "@/lib/fabric-unavailable";
 
 export const REFUND_REQUIRED_ATTENTION = "refund-required";
 /** Quote-pending orders that have reached PROCESSING — ready to contact after packing. */
@@ -10,6 +11,7 @@ export const QUOTE_PENDING_ALL_ATTENTION = "quote-pending-all";
 export const GUEST_CUSTOM_ATTENTION = "guest-custom";
 /** Bank transfer uploaded, waiting for admin to approve the receipt. */
 export const BANK_TRANSFER_PENDING_ATTENTION = "bank-transfer-pending";
+export { FABRIC_UNAVAILABLE_ATTENTION };
 
 export function isRefundRequiredOrder(row: {
   paymentStatus: PaymentStatus | string;
@@ -54,6 +56,12 @@ export function applyOrderAttention(
       ...where,
       paymentGateway: PaymentGateway.BANK_TRANSFER,
       paymentStatus: PaymentStatus.PENDING,
+    };
+  }
+  if (attention === FABRIC_UNAVAILABLE_ATTENTION) {
+    return {
+      ...where,
+      ...fabricQueueWhere(),
     };
   }
   return where;

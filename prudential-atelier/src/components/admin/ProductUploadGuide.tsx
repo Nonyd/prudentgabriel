@@ -52,8 +52,8 @@ export function ProductUploadGuide() {
         <p className="font-display text-lg text-wine">Three rules</p>
         <ol className="mt-3 list-decimal space-y-2 pl-5 text-[15px] leading-relaxed text-charcoal">
           <li>
-            Do <strong>not</strong> click <strong>Publish</strong> until photos, naira price, sizes, and stock
-            numbers are filled in.
+            Do <strong>not</strong> click <strong>Publish</strong> until photos, naira price, and sizes
+            are filled in.
           </li>
           <li>
             Click <strong>Save draft</strong> often. If you close the tab without saving, the product is lost.
@@ -76,7 +76,7 @@ export function ProductUploadGuide() {
             should appear when someone hovers on the shop.
           </li>
           <li>The naira price for each size (or one price if every size costs the same).</li>
-          <li>How many pieces you have of each size (the stock count).</li>
+          <li>The sizes you offer (every piece is made to order).</li>
           <li>
             A short sentence about the piece, plus fabric and care notes if you have them.
           </li>
@@ -102,7 +102,7 @@ export function ProductUploadGuide() {
               <li>Open Products and find a piece that is almost the same.</li>
               <li>Click the name to open it.</li>
               <li>Click <strong>Duplicate</strong> at the top.</li>
-              <li>Change the name, photos, price, and stock.</li>
+              <li>Change the name, photos, and price.</li>
               <li>Save draft, check, then Publish.</li>
             </ol>
             <p className="mt-2 text-[13px] text-[#6B6B68]">
@@ -201,7 +201,7 @@ export function ProductUploadGuide() {
         </p>
       </Step>
 
-      <Step n={4} title="Price, sizes, and stock">
+      <Step n={4} title="Price and sizes">
         <p>
           This is the part that makes the product buyable. Please go slowly.
         </p>
@@ -241,17 +241,12 @@ export function ProductUploadGuide() {
             will be asked to confirm, because it replaces prices you already typed.
           </li>
           <li>
-            In each row, fill <strong>Stock</strong> with how many pieces you have of that size. Use 0 if
-            that size is sold out. If stock is 0, customers cannot buy that size.
+            Every size is made to order. Customers can buy any size you list. There is no stock count.
           </li>
         </ol>
         <p>
-          The stock code fills itself when you save (it looks like PA-AVRIL-10). You do not need to type
+          The SKU fills itself when you save (it looks like PA-AVRIL-10). You do not need to type
           one. Open <strong>Advanced</strong> only if a warehouse already has a different code.
-        </p>
-        <p>
-          <strong>Low at</strong> is usually 3. That means you get a low-stock warning when 3 are left.
-          You can leave it.
         </p>
         <p>
           Need a size that is not in the list (for example One Size)? Click{" "}
@@ -314,7 +309,7 @@ export function ProductUploadGuide() {
         </p>
         <ul className="list-disc space-y-1 pl-5">
           <li>
-            <strong>RTW</strong> — ready to wear. The piece is made and in stock. Most shop products are
+            <strong>RTW</strong> — ready to wear, made to order. Most shop products are
             this.
           </li>
           <li>
@@ -349,9 +344,7 @@ export function ProductUploadGuide() {
             they book through Atelier.
           </li>
           <li>
-            <strong>Offer custom</strong> — she can enter measurements while sizes are in stock.
-            <strong> Keep offering after sold out</strong> stays off unless the fabric can be sourced again.
-            If it is off, a sold-out piece shows Notify me, not a remake.
+            <strong>Offer custom</strong> — she can enter measurements so the piece is cut to her body.
           </li>
         </ul>
       </Step>
@@ -362,7 +355,7 @@ export function ProductUploadGuide() {
             Click <strong>Save draft</strong> at the top. You should see “Product created” or “Changes
             saved”. The page will reopen in Edit mode.
           </li>
-          <li>Scroll through once more. Check name, photos, each size’s price, and each size’s stock.</li>
+          <li>Scroll through once more. Check name, photos, and each size’s price.</li>
           <li>
             When it is ready for customers, click the wine <strong>Publish</strong> button.
           </li>
@@ -450,14 +443,8 @@ export function ProductUploadGuide() {
           <div>
             <dt className="font-medium">I cannot click Publish / I see a red note about variants</dt>
             <dd className="mt-1 text-[#6B6B68]">
-              Every size row needs a size name, a price of at least 1, and a stock number (0 is allowed).
+              Every size row needs a size name and a price of at least 1.
               The naira price cannot be 0.
-            </dd>
-          </div>
-          <div>
-            <dt className="font-medium">The product is live but says sold out</dt>
-            <dd className="mt-1 text-[#6B6B68]">
-              Stock is 0 on every size. Open the product and type the real stock numbers, then save.
             </dd>
           </div>
           <div>
@@ -500,7 +487,7 @@ export function ProductUploadGuide() {
             "The front shot is marked ★ Primary",
             "Price in naira is the real price, not 0",
             "Every size you sell has a row",
-            "Every size has the correct stock number",
+            "Every size you sell has a price",
             "Category and Ready to wear / Bespoke are correct",
             "If on sale: tick is on AND sale price is filled",
             "I clicked Save draft first and checked the page",

@@ -49,10 +49,9 @@ function sampleOrder(id: string, storedReference: string | null, total = 50_000)
 function makeFulfillDb(order: {
   id: string;
   total: number;
-  items: { variantId: string | null; quantity: number }[];
+  items: { variantId: string | null; quantity: number; productId?: string }[];
 }) {
   let status: PaymentStatus = PaymentStatus.PENDING;
-  let stockDecrements = 0;
   let ledgerWrites = 0;
   const gate: { wait: Promise<void>; release: () => void } = (() => {
     let release = () => {};
@@ -78,37 +77,14 @@ function makeFulfillDb(order: {
     pointsUsed: 0,
     addressSnapshot: null,
     user: { id: "user_1", email: "a@example.test", name: "A" },
-    items: order.items.map((i) => ({ ...i, product: { name: "Dress" }, size: "M", color: "Black", price: order.total })),
-  };
-
-  // Minimal in-memory mocks for the stock ledger path inside fulfillPaidOrder.
-  const variantsById: Record<
-    string,
-    {
-      id: string;
-      stock: number;
-      size: string;
-      lowStockAt: number;
-      productId: string;
-      product: { id: string; name: string; slug: string };
-    }
-  > = {
-    var_1: {
-      id: "var_1",
-      stock: 2,
+    items: order.items.map((i) => ({
+      ...i,
+      productId: i.productId ?? "prod_1",
+      product: { name: "Dress" },
       size: "M",
-      lowStockAt: -1000, // avoid low-stock notifications in tests
-      productId: "prod_1",
-      product: { id: "prod_1", name: "Dress", slug: "dress" },
-    },
-  };
-
-  const stockMovementsByVariantId: Record<
-    string,
-    { delta: number; reason: string; orderId?: string | null }[]
-  > = {
-    // Seed OPENING so ensureOpeningIfBare is a no-op (keeps "ledger writes" expectation stable).
-    var_1: [{ delta: 2, reason: "OPENING" }],
+      color: "Black",
+      price: order.total,
+    })),
   };
 
   const tx = {
@@ -122,51 +98,8 @@ function makeFulfillDb(order: {
         return { count: 1 };
       },
     },
-    productVariant: {
-      findUnique: async (args: { where: { id: string } }) => {
-        const id = args.where.id;
-        const v = variantsById[id];
-        if (!v) return null;
-        return {
-          id: v.id,
-          stock: v.stock,
-          size: v.size,
-          lowStockAt: v.lowStockAt,
-          productId: v.productId,
-          product: v.product,
-        };
-      },
-      update: async (args: { where: { id: string }; data: { stock: number } }) => {
-        const id = args.where.id;
-        const v = variantsById[id];
-        if (!v) throw new Error(`Unknown variant ${id}`);
-        v.stock = args.data.stock;
-        return { id };
-      },
-      findFirst: async (args: { where: { productId: string; stock: { gt: number } }; select: { id: true } }) => {
-        const { productId } = args.where;
-        const hit = Object.values(variantsById).find((v) => v.productId === productId && v.stock > 0);
-        return hit ? { id: hit.id } : null;
-      },
-    },
-    stockMovement: {
-      count: async (args: { where: { variantId: string } }) => stockMovementsByVariantId[args.where.variantId]?.length ?? 0,
-      aggregate: async (args: { where: { variantId: string }; _sum: { delta: true } }) => {
-        const list = stockMovementsByVariantId[args.where.variantId] ?? [];
-        const sum = list.reduce((a, r) => a + r.delta, 0);
-        return { _sum: { delta: sum } };
-      },
-      create: async (args: { data: { variantId: string; delta: number; reason: string; orderId?: string | null } }) => {
-        const list = (stockMovementsByVariantId[args.data.variantId] ??= []);
-        list.push({ delta: args.data.delta, reason: args.data.reason, orderId: args.data.orderId });
-        if (args.data.reason === "SALE") stockDecrements += 1;
-        return { id: `sm-${Date.now()}` };
-      },
-    },
     product: {
-      update: async () => {
-        // syncProductInStock: no-op for this test
-      },
+      update: async () => ({ id: "prod_1" }),
     },
     payment: {
       create: async () => {
@@ -178,15 +111,14 @@ function makeFulfillDb(order: {
   };
 
   const db = {
-    stockDecrements: () => stockDecrements,
     ledgerWrites: () => ledgerWrites,
     order: {
       findUnique: async () => ({ ...row, paymentStatus: status }),
     },
-    $transaction: async (fn: (inner: typeof tx) => Promise<any>) => fn(tx),
+    $transaction: async (fn: (inner: typeof tx) => Promise<unknown>) => fn(tx),
   };
 
-  return { db, release: gate.release, stock: () => stockDecrements, ledger: () => ledgerWrites };
+  return { db, release: gate.release, ledger: () => ledgerWrites };
 }
 
 async function main() {
@@ -329,7 +261,7 @@ async function main() {
     }),
   );
 
-  // Concurrent fulfillPaidOrder: one claim, one stock decrement, one ledger write.
+  // Concurrent fulfillPaidOrder: one claim, no availability gate, one ledger write.
   const fixture = makeFulfillDb({
     id: "order-race",
     total: 50_000,
@@ -348,7 +280,6 @@ async function main() {
   fixture.release();
   const results = await pending;
   assert(results.filter(Boolean).length === 2, "both callers should report success (winner + already fulfilled)");
-  assert(fixture.stock() === 1, `stock decrements expected 1, got ${fixture.stock()}`);
   assert(fixture.ledger() === 1, `ledger writes expected 1, got ${fixture.ledger()}`);
 
   // encrypt() throws when the key env is unset (module load).

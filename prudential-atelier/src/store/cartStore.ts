@@ -17,8 +17,6 @@ export interface CartItem {
   priceUSD: number;
   priceGBP: number;
   quantity: number;
-  /** Variant stock at time of add — used for checkout qty cap. Custom lines skip the cap. */
-  stock: number;
   /** ProductCategory enum string — coupon scope */
   category?: string;
   sizeMode?: "STANDARD" | "CUSTOM";
@@ -76,16 +74,16 @@ export const useCartStore = create<CartStore>()(
           const nextQty =
             existing.sizeMode === "CUSTOM"
               ? item.quantity
-              : capGuestQuantity(existing.quantity + item.quantity, item.stock, item.sizeMode);
+              : capGuestQuantity(existing.quantity + item.quantity);
           newItems = items.map((i) =>
-            i.id === item.id ? { ...i, ...item, quantity: nextQty, stock: item.stock } : i,
+            i.id === item.id ? { ...i, ...item, quantity: nextQty } : i,
           );
         } else {
           newItems = [
             ...items,
             {
               ...item,
-              quantity: capGuestQuantity(item.quantity, item.stock, item.sizeMode),
+              quantity: capGuestQuantity(item.quantity),
             },
           ];
         }
@@ -113,7 +111,7 @@ export const useCartStore = create<CartStore>()(
           return;
         }
         const newItems = get().items.map((i) =>
-          i.id === id ? { ...i, quantity: capGuestQuantity(qty, i.stock, i.sizeMode) } : i,
+          i.id === id ? { ...i, quantity: capGuestQuantity(qty) } : i,
         );
         set({
           items: newItems,
@@ -126,7 +124,7 @@ export const useCartStore = create<CartStore>()(
       replaceItems: (incoming: CartItem[]) => {
         const items = incoming.map((i) => ({
           ...i,
-          stock: typeof i.stock === "number" ? i.stock : 999,
+          quantity: capGuestQuantity(i.quantity),
         }));
         set({
           items,
@@ -142,7 +140,7 @@ export const useCartStore = create<CartStore>()(
         if (state) {
           state.items = state.items.map((i) => ({
             ...i,
-            stock: typeof i.stock === "number" ? i.stock : 999,
+            quantity: capGuestQuantity(i.quantity),
           }));
           state.totalItems = state.items.reduce((sum, i) => sum + i.quantity, 0);
           state.totalNGN = state.items.reduce((sum, i) => sum + i.priceNGN * i.quantity, 0);

@@ -19,7 +19,6 @@ export const MARKETING_TEMPLATES = new Set([
   "collection-campaign",
   "abandoned-checkout",
   "abandoned-cart",
-  "back-in-stock",
   "uncollected-pickup",
   "prudent-points-expiry",
 ]);

@@ -5,4 +5,3 @@ export { default as OrderProductionStartedEmail } from "./OrderProductionStarted
 export { default as BespokeConfirmationEmail } from "./BespokeConfirmationEmail";
 export { default as PasswordResetEmail } from "./PasswordResetEmail";
 export { default as ReferralSuccessEmail } from "./ReferralSuccessEmail";
-export { default as BackInStockEmail } from "./BackInStockEmail";

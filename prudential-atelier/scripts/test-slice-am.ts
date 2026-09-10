@@ -208,8 +208,8 @@ function run() {
   assert(!migration.toLowerCase().includes("documentnumbersequence"), "migration does not touch document number sequence");
 
   assert(
-    CUSTOM_RETURNS_COPY.includes("fails to meet the agreement"),
-    "site returns copy is wired to Term 4",
+    CUSTOM_RETURNS_COPY.includes("cannot be returned for a change of mind"),
+    "site returns copy states why made-to-measure is not returnable",
   );
   const legal = readFileSync(resolve("scripts/legal-content.ts"), "utf8");
   assert(legal.includes("fails to meet the agreement"), "returns policy markdown matches Term 4");

@@ -51,7 +51,6 @@ export const EMAIL_TEMPLATE_KEYS = {
   UNCOLLECTED_PICKUP: "uncollected_pickup",
   SHIPPING_QUOTE: "shipping_quote",
   ABANDONED_CART: "abandoned_cart",
-  BACK_IN_STOCK: "back_in_stock",
   PRODUCT_REVIEW_REQUEST: "product_review_request",
   CONSULTATION_REVIEW_REQUEST: "consultation_review_request",
   PASSWORD_RESET: "password_reset",
@@ -66,7 +65,6 @@ export const EMAIL_TEMPLATE_KEYS = {
   DAILY_REPORT: "daily_report",
   WEEKLY_REPORT: "weekly_report",
   CONTACT_FORM: "contact_form",
-  LOW_STOCK: "low_stock",
   LATE_STAFF: "late_staff",
   JOB_APPLICATION: "job_application",
   ADMIN_CONSULTATION: "admin_consultation",
@@ -107,8 +105,7 @@ export function resolveEmailLane(meta: Pick<EmailTemplateMeta, "key" | "group" |
     k === "pickup_ready" ||
     k === "uncollected_pickup" ||
     k === "abandoned_cart" ||
-    k === "shipping_quote" ||
-    k === "back_in_stock"
+    k === "shipping_quote"
   ) {
     return "rtw";
   }
@@ -861,13 +858,13 @@ const CLIENT_TEMPLATES: EmailTemplateMeta[] = [
   },
   {
     key: EMAIL_TEMPLATE_KEYS.RTW_FULFILMENT_REFUSED,
-    label: "RTW — Could not fulfil (sold out)",
+    label: "RTW — Could not fulfil",
     group: "client",
     sortOrder: 52,
     defaults: {
       subject: "We could not fulfil order #{{orderRef}} — refund underway",
       heading: "We could not fulfil this order",
-      body_1: "Dear {{firstName}},\n\nThank you for your order {{orderRef}}. Your payment of {{amount}} was received, but the piece sold out before we could reserve it.",
+      body_1: "Dear {{firstName}},\n\nThank you for your order {{orderRef}}. Your payment of {{amount}} was received, but we could not make this piece as ordered.",
       body_2: "We will not ship a substitute. A refund of the full amount will be issued. If you have not seen it within a few working days, write to us.",
       cta_label: "Contact us",
       cta_link: `${APP()}/contact`,
@@ -930,21 +927,6 @@ const CLIENT_TEMPLATES: EmailTemplateMeta[] = [
       body_1: "Dear {{firstName}},\n\nYou left a few pieces in your bag. They are still waiting for you.",
       body_2: "",
       cta_label: "Return to checkout",
-      cta_link: "{{link}}",
-      footer_note: "",
-    },
-  },
-  {
-    key: EMAIL_TEMPLATE_KEYS.BACK_IN_STOCK,
-    label: "RTW — Back in stock",
-    group: "client",
-    sortOrder: 57,
-    defaults: {
-      subject: "{{outfitName}} is back in stock",
-      heading: "Back in stock",
-      body_1: "{{outfitName}} in size {{size}} is available again.",
-      body_2: "",
-      cta_label: "Shop now",
       cta_link: "{{link}}",
       footer_note: "",
     },
@@ -1058,21 +1040,6 @@ const ADMIN_TEMPLATES: EmailTemplateMeta[] = [
     },
   },
   {
-    key: EMAIL_TEMPLATE_KEYS.LOW_STOCK,
-    label: "Low Stock Alert",
-    group: "admin",
-    sortOrder: 103,
-    defaults: {
-      subject: "Low stock alert",
-      heading: "Inventory attention needed",
-      body_1: "One or more products are below the restock threshold.",
-      body_2: "",
-      cta_label: "View inventory",
-      cta_link: `${APP()}/admin/products`,
-      footer_note: "",
-    },
-  },
-  {
     key: EMAIL_TEMPLATE_KEYS.LATE_STAFF,
     label: "Late Staff Alert",
     group: "admin",
@@ -1119,14 +1086,14 @@ const ADMIN_TEMPLATES: EmailTemplateMeta[] = [
   },
   {
     key: EMAIL_TEMPLATE_KEYS.RTW_FULFILMENT_REFUSED_ADMIN,
-    label: "RTW oversell refund (admin)",
+    label: "RTW refund required (admin)",
     group: "admin",
     sortOrder: 107,
     defaults: {
-      subject: "Refund required — RTW oversell #{{orderRef}}",
+      subject: "Refund required — #{{orderRef}}",
       heading: "Paid order could not be fulfilled",
-      body_1: "Order {{orderRef}} was paid ({{amount}}) but stock was insufficient at fulfilment. The order is cancelled.",
-      body_2: "Refund the client in the payment provider, then record the ledger correction.",
+      body_1: "Order {{orderRef}} was paid ({{amount}}) but could not be made as ordered. The order is cancelled.",
+      body_2: "Refund the client in the payment provider, then record the refund on the order.",
       cta_label: "Open the order",
       cta_link: "{{link}}",
       footer_note: "",

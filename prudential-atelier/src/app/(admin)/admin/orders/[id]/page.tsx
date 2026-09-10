@@ -101,6 +101,10 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           carrier: order.carrier,
           balance: order.balance,
           collectionCode: order.collectionCode,
+          fabricUnavailableAt: order.fabricUnavailableAt,
+          fabricUnavailableChoice: order.fabricUnavailableChoice,
+          fabricUnavailableByName: order.fabricUnavailableByName,
+          fabricUnavailableNote: order.fabricUnavailableNote,
         }}
       />
 

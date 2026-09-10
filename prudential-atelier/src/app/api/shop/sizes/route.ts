@@ -17,7 +17,6 @@ export async function GET(req: NextRequest) {
         select: {
           id: true,
           size: true,
-          stock: true,
           priceNGN: true,
           salePriceNGN: true,
           priceUSD: true,
@@ -34,7 +33,6 @@ export async function GET(req: NextRequest) {
       variants: {
         id: string;
         size: string;
-        stock: number;
         priceNGN: number;
         salePriceNGN: number | null;
         priceUSD: number | null;

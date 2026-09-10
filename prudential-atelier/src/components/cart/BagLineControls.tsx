@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { canChooseBagSize, SOLD_OUT_WORD, type BagSizeOption } from "@/lib/bag-size";
+import { canChooseBagSize, type BagSizeOption } from "@/lib/bag-size";
 import { useBagActions } from "@/hooks/useBagActions";
 import type { CartItem } from "@/store/cartStore";
 
@@ -71,15 +71,11 @@ export function BagSizeSelect({
         }}
       >
         {options.map((o) => (
-          <option key={o.id} value={o.id} disabled={!canChooseBagSize(o) && o.id !== item.variantId}>
+          <option key={o.id} value={o.id} disabled={!canChooseBagSize() && o.id !== item.variantId}>
             {o.size}
-            {canChooseBagSize(o) ? "" : ` — ${SOLD_OUT_WORD}`}
           </option>
         ))}
       </select>
-      {item.stock < 1 ? (
-        <span className="mt-1 block font-body text-[11px] text-choc">{SOLD_OUT_WORD} in this size. Choose another.</span>
-      ) : null}
     </label>
   );
 }
@@ -93,7 +89,6 @@ export function BagQtyButtons({
   onDecrease: () => void;
   onIncrease: () => void;
 }) {
-  const atCap = item.sizeMode !== "CUSTOM" && (item.stock < 1 || item.quantity >= item.stock);
   return (
     <div className="flex items-center gap-2">
       <button
@@ -110,7 +105,6 @@ export function BagQtyButtons({
       <span className="w-6 text-center text-sm">{item.quantity}</span>
       <button
         type="button"
-        disabled={atCap}
         className="flex h-11 w-11 items-center justify-center border border-border text-sm disabled:opacity-40"
         aria-label={`Increase quantity of ${item.productName}`}
         onClick={onIncrease}

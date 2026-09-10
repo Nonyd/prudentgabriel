@@ -155,7 +155,7 @@ Atelier commissions require a 50% deposit before production begins, with the bal
 ## 6. Returns and Refunds
 
 Please see our Returns Policy for full details. In summary:
-- Ready-to-wear: eligible for exchange within 7 days of delivery
+- Ready-to-wear: eligible for exchange within 14 days of delivery
 - Custom/atelier garments: not eligible for return once production has begun
 - Consultations: non-refundable
 
@@ -180,9 +180,19 @@ export const RETURNS_MD = `## Our Commitment
 
 At Prudential Atelier, every piece is crafted with exceptional care. We want you to love what you receive. Please read this policy carefully before making a purchase.
 
+## Standard size and made to measure
+
+**Standard size** is cut to the house chart in your size. It is returnable because another woman can wear a standard size.
+
+**Made to measure** is cut to the measurements you entered. It cannot be returned for a change of mind, because a piece made to your body cannot be worn by someone else.
+
+## Fabric
+
+If the fabric for your piece is unavailable, we will offer an alternative or a refund within 48 hours.
+
 ## Ready-to-Wear Returns
 
-**Eligibility:** Ready-to-wear items may be returned for exchange within 7 days of delivery, provided the item is:
+**Eligibility:** Ready-to-wear items may be returned for exchange within 14 days of delivery, provided the item is:
 - Unworn, unwashed, and unaltered
 - In its original packaging with all tags attached
 - Not a final sale or discounted item

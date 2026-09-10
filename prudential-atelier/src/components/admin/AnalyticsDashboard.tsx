@@ -29,13 +29,6 @@ export type RecentOrderRow = {
   createdAt: string;
 };
 
-export type OosRow = {
-  productId: string;
-  productName: string;
-  slug: string;
-  size: string;
-};
-
 export type BespokeAlertRow = {
   id: string;
   requestNumber: string;
@@ -63,7 +56,6 @@ type AnalyticsDashboardProps = {
   pendingOrdersFulfilment: number;
   chartData: DailyRevenuePoint[];
   recentOrders: RecentOrderRow[];
-  oosVariants: OosRow[];
   bespokePendingList: BespokeAlertRow[];
   expiringCoupons: CouponExpiringRow[];
 };
@@ -142,7 +134,6 @@ export function AnalyticsDashboard({
   pendingOrdersFulfilment,
   chartData,
   recentOrders,
-  oosVariants,
   bespokePendingList,
   expiringCoupons,
 }: AnalyticsDashboardProps) {
@@ -339,31 +330,7 @@ export function AnalyticsDashboard({
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="border border-sand bg-canvas p-5">
-          <div className="flex items-center justify-between">
-            <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-ink">Out of stock</h3>
-            {oosVariants.length > 0 ? (
-              <span className="bg-[#FDECEA] px-2 py-0.5 font-body text-[9px] text-[#8B1A1A]">{oosVariants.length}</span>
-            ) : null}
-          </div>
-          <ul className="mt-4 divide-y divide-[#F5F5F3]">
-            {oosVariants.length === 0 ? (
-              <li className="py-3 font-body text-xs text-[#1B5E20]">All variants are in stock ✓</li>
-            ) : (
-              oosVariants.map((r, i) => (
-                <li key={`${r.slug}-${r.size}-${i}`} className="flex items-center justify-between gap-2 py-3 font-body text-xs text-ink">
-                  <span className="min-w-0 truncate">
-                    {r.productName} <span className="text-[#6B6B68]">({r.size})</span>
-                  </span>
-                  <Link href={`/admin/products/${r.productId}/edit`} className="shrink-0 font-body text-[11px] text-olive hover:underline">
-                    Edit
-                  </Link>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
+      <div className="grid gap-4 lg:grid-cols-2">
         <div className="border border-sand bg-canvas p-5">
           <div className="flex items-center justify-between">
             <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-ink">Atelier requests</h3>

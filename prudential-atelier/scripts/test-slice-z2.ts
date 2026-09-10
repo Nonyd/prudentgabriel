@@ -1,5 +1,5 @@
 /**
- * Slice Z2: custom is never auto-selected; remake after sell-out is a default-off gate.
+ * Slice Z2: custom is never auto-selected; offered only when customOffered is on.
  *
  *   pnpm test:slice-z2
  */
@@ -8,13 +8,8 @@ import { ProductCategory, ProductType, Role } from "@prisma/client";
 import { prisma } from "../src/lib/prisma";
 import { addCartLine } from "../src/lib/cart-service";
 import { resolveCustomCheckoutLine } from "../src/lib/custom-order-line";
-import {
-  CUSTOM_REMAKE_REFUSED,
-  PDP_INITIAL_FIT_MODE,
-  isCustomOfferedNow,
-} from "../src/lib/custom-availability";
-import { stockGuardMessage } from "../src/lib/quick-add";
-import { processRestockAlerts } from "../src/lib/stock-alerts";
+import { PDP_INITIAL_FIT_MODE, isCustomOfferedNow } from "../src/lib/custom-availability";
+import { bagErrorMessage } from "../src/lib/quick-add";
 import type { LockedFx } from "../src/lib/fx";
 
 function assert(cond: unknown, message: string): asserts cond {
@@ -30,32 +25,13 @@ const fx: LockedFx = {
   stale: false,
 };
 
+const CUSTOM_REFUSED = "This piece is not offered in custom measurements";
+
 function runPure() {
   assert(PDP_INITIAL_FIT_MODE === "standard", "PDP starts on standard, never custom");
-
-  const inStock = [{ size: "12", stock: 2 }];
-  const soldOut = [{ size: "12", stock: 0 }];
-
-  assert(
-    isCustomOfferedNow({ customOffered: true, customOfferedWhenSoldOut: false, variants: inStock }),
-    "custom is available while sizes are in stock",
-  );
-  assert(
-    !isCustomOfferedNow({ customOffered: true, customOfferedWhenSoldOut: false, variants: soldOut }),
-    "sold out + remake off hides custom",
-  );
-  assert(
-    isCustomOfferedNow({ customOffered: true, customOfferedWhenSoldOut: true, variants: soldOut }),
-    "sold out + remake on still offers custom",
-  );
-  assert(
-    !isCustomOfferedNow({ customOffered: false, customOfferedWhenSoldOut: true, variants: soldOut }),
-    "custom not offered at all — remake switch cannot invent it",
-  );
-  assert(
-    stockGuardMessage(CUSTOM_REMAKE_REFUSED) === CUSTOM_REMAKE_REFUSED,
-    "guest bag must keep the remake refusal, not rewrite it as a size miss",
-  );
+  assert(isCustomOfferedNow({ customOffered: true }), "custom is available when the switch is on");
+  assert(!isCustomOfferedNow({ customOffered: false }), "custom is hidden when the switch is off");
+  assert(bagErrorMessage(CUSTOM_REFUSED) === CUSTOM_REFUSED, "guest bag keeps the custom refusal copy");
 }
 
 async function runDb() {
@@ -73,8 +49,7 @@ async function runDb() {
       priceNGN: 80_000,
       basePriceNGN: 80_000,
       isPublished: true,
-      customOffered: true,
-      customOfferedWhenSoldOut: false,
+      customOffered: false,
     },
   });
   const bust = await prisma.measurementField.findUnique({ where: { key: "bust" } });
@@ -86,8 +61,8 @@ async function runDb() {
       { productId: product.id, fieldId: waist.id, required: true, sortOrder: 1 },
     ],
   });
-  const variant = await prisma.productVariant.create({
-    data: { productId: product.id, size: "12", priceNGN: 80_000, stock: 0 },
+  await prisma.productVariant.create({
+    data: { productId: product.id, size: "12", priceNGN: 80_000 },
   });
 
   const measurements = [
@@ -102,9 +77,9 @@ async function runDb() {
     measurements,
     typedUnit: "cm",
   });
-  assert(!refusedCart.ok, "cart POST must refuse custom when remake is off");
+  assert(!refusedCart.ok, "cart POST must refuse custom when custom is not offered");
   if (!refusedCart.ok) {
-    assert(refusedCart.error === CUSTOM_REMAKE_REFUSED, `cart error, got ${refusedCart.error}`);
+    assert(refusedCart.error === CUSTOM_REFUSED, `cart error, got ${refusedCart.error}`);
   }
 
   const refusedCheckout = await resolveCustomCheckoutLine({
@@ -113,14 +88,14 @@ async function runDb() {
     measurements,
     fx,
   });
-  assert(!refusedCheckout.ok, "checkout POST must refuse custom when remake is off");
+  assert(!refusedCheckout.ok, "checkout POST must refuse custom when custom is not offered");
   if (!refusedCheckout.ok) {
-    assert(refusedCheckout.error === CUSTOM_REMAKE_REFUSED, `checkout error, got ${refusedCheckout.error}`);
+    assert(refusedCheckout.error === CUSTOM_REFUSED, `checkout error, got ${refusedCheckout.error}`);
   }
 
   await prisma.product.update({
     where: { id: product.id },
-    data: { customOfferedWhenSoldOut: true },
+    data: { customOffered: true },
   });
 
   const allowedCart = await addCartLine(user.id, {
@@ -130,25 +105,11 @@ async function runDb() {
     measurements,
     typedUnit: "cm",
   });
-  assert(allowedCart.ok, "cart accepts custom when remake is on");
+  assert(allowedCart.ok, "cart accepts custom when the switch is on");
   if (allowedCart.ok) {
     assert(allowedCart.cartItem.sizeMode === "CUSTOM", "line is custom");
     assert(allowedCart.cartItem.variantId == null, "custom does not take a size");
   }
-
-  await prisma.stockAlert.upsert({
-    where: { email_variantId: { email: user.email!, variantId: variant.id } },
-    create: { email: user.email!, variantId: variant.id },
-    update: {},
-  });
-  const held = await prisma.stockAlert.count({ where: { variantId: variant.id } });
-  assert(held === 1, "notify-me writes a StockAlert row");
-
-  await prisma.productVariant.update({ where: { id: variant.id }, data: { stock: 1 } });
-  const sent = await processRestockAlerts([variant.id]);
-  assert(sent >= 1, `restock must email the subscriber, sent ${sent}`);
-  const afterMail = await prisma.stockAlert.count({ where: { variantId: variant.id } });
-  assert(afterMail === 0, "alert is consumed after the restock mail");
 
   await prisma.cartItem.deleteMany({ where: { userId: user.id } });
   await prisma.productMeasurement.deleteMany({ where: { productId: product.id } });

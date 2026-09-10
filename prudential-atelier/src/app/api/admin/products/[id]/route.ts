@@ -8,10 +8,8 @@ import { allocateProductSlug } from "@/lib/product-slug-unique";
 import { missingPublishNeeds, joinNeedLabels } from "@/lib/product-wizard";
 import { revalidateProduct } from "@/lib/revalidate";
 import { canInlineEditPrice, derivedCatalogMinNGN } from "@/lib/pricing";
-import { processRestockAlerts } from "@/lib/stock-alerts";
 import { destroyStoredMedia } from "@/lib/media/destroy";
 import { executeProductCascade, previewProductCascade, ProductCascadeError } from "@/lib/product-cascade-delete";
-import { applyCountCorrection, applyOpening, afterStockWrites, syncProductInStock, type StockWriteResult } from "@/lib/stock-ledger";
 import { logServerError } from "@/lib/logger";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -162,14 +160,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const oldVariants = await prisma.productVariant.findMany({
     where: { productId: id },
-    select: { id: true, stock: true, sku: true, skuManual: true, size: true },
+    select: { id: true, sku: true, skuManual: true, size: true },
   });
-  const oldStockMap = new Map(oldVariants.map((v) => [v.id, v.stock]));
   const oldVariantMap = new Map(oldVariants.map((v) => [v.id, v]));
   const oldName = (await prisma.product.findUnique({ where: { id }, select: { name: true } }))?.name ?? data.name;
-
-  const actorId = gate.session.user.id!;
-  const stockWrites: StockWriteResult[] = [];
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -196,7 +190,6 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           isNewArrival: data.isNewArrival,
           isBespokeAvail: data.isBespokeAvail,
           customOffered: data.customOffered ?? false,
-          customOfferedWhenSoldOut: data.customOfferedWhenSoldOut ?? false,
           customSurchargeKind: data.customSurchargeKind ?? null,
           customSurchargeValue: data.customSurchargeValue ?? null,
           customLeadTimeDays: data.customLeadTimeDays ?? null,
@@ -252,7 +245,6 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
               priceUSD: v.priceUSD ?? null,
               priceGBP: v.priceGBP ?? null,
               salePriceNGN: v.salePriceNGN ?? null,
-              lowStockAt: v.lowStockAt,
               sortOrder: v.sortOrder ?? i,
               weightKg: v.weightKg ?? null,
               lengthCm: v.lengthCm ?? null,
@@ -260,12 +252,6 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
               heightCm: v.heightCm ?? null,
             },
           });
-          const write = await applyCountCorrection(tx, {
-            variantId: v.id,
-            newStock: v.stock,
-            actorId,
-          });
-          if (write) stockWrites.push(write);
         } else {
           const created = await tx.productVariant.create({
             data: {
@@ -277,8 +263,6 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
               priceUSD: v.priceUSD ?? null,
               priceGBP: v.priceGBP ?? null,
               salePriceNGN: v.salePriceNGN ?? null,
-              stock: 0,
-              lowStockAt: v.lowStockAt,
               sortOrder: v.sortOrder ?? i,
               weightKg: v.weightKg ?? null,
               lengthCm: v.lengthCm ?? null,
@@ -286,8 +270,6 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
               heightCm: v.heightCm ?? null,
             },
           });
-          const write = await applyOpening(tx, { variantId: created.id, stock: v.stock });
-          if (write) stockWrites.push(write);
         }
       }
 
@@ -341,18 +323,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         });
       }
 
-      await syncProductInStock(tx, id);
     });
 
     await revalidateProduct(slug);
-    if (stockWrites.length) await afterStockWrites(stockWrites);
-
-    const restockedIds = data.variants
-      .filter((v) => v.id && (oldStockMap.get(v.id) ?? 0) <= 0 && v.stock > 0)
-      .map((v) => v.id as string);
-    if (restockedIds.length) {
-      void processRestockAlerts(restockedIds);
-    }
 
     return NextResponse.json({ ok: true });
   } catch (e) {

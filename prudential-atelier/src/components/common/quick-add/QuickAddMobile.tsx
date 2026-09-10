@@ -13,27 +13,17 @@ import type { ProductListItem } from "@/types/product";
 export function QuickAddMobileTrigger({
   productName,
   productId,
-  soldOut,
   isOpen,
   onOpen,
   passThroughSwipe = false,
 }: {
   productName: string;
   productId: string;
-  soldOut: boolean;
   isOpen: boolean;
   onOpen: () => void;
   /** When the image strip is paging, let the swipe through; a tap in this corner still opens Quick Add. */
   passThroughSwipe?: boolean;
 }) {
-  if (soldOut) {
-    return (
-      <span className="absolute bottom-2 left-2 z-10 bg-choc/80 px-2 py-1 font-sans text-[9px] font-medium uppercase tracking-[0.12em] text-cream md:hidden">
-        Sold out
-      </span>
-    );
-  }
-
   if (isOpen) return null;
 
   return (

@@ -11,14 +11,12 @@
  *   CollectionProduct, CollectionReel (SetNull on product), BundleItem (source and target)
  *
  * Via ProductVariant (Cascade from variant, except OrderItem which is Restrict):
- *   StockMovement (append-only trigger — same app.ledger_bypass as Payment)
- *   StockAlert, CartItem.variantId
+ *   CartItem.variantId
  *
  * Via Order (an order that contains any of the products is removed whole):
  *   OrderItem (Cascade from Order)
  *   CouponUsage (Cascade from Order)
  *   Payment (RESTRICT + append-only trigger — delete with bypass before Order)
- *   StockMovement.orderId (SetNull on Order delete; rows then go with the variant)
  *
  * Loose pointers (no FK, still point at the gone product/order):
  *   PointsTransaction.orderId
@@ -73,8 +71,6 @@ export const PRODUCT_CASCADE_DEPENDENCIES = [
   "CartItem",
   "WishlistItem",
   "Order (and OrderItem, CouponUsage)",
-  "StockMovement",
-  "StockAlert",
   "ProductImage",
   "ProductColor",
   "ProductMeasurement",

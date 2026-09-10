@@ -30,7 +30,6 @@ import {
 } from "../src/lib/checkout-reservations";
 import { applyOrderAttention, REFUND_REQUIRED_ATTENTION } from "../src/lib/admin-orders-filter";
 import { listRefundRequiredOrders } from "../src/lib/oversell-report";
-import { FULFILMENT_STOCK_REFUSE_NOTE } from "../src/lib/stock-ledger";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -111,7 +110,7 @@ async function runDb() {
     },
   });
   const variant = await prisma.productVariant.create({
-    data: { productId: product.id, size: "12", priceNGN: 80_000, stock: 3 },
+    data: { productId: product.id, size: "12", priceNGN: 80_000 },
   });
   const cart = await prisma.cartItem.create({
     data: {
@@ -301,7 +300,7 @@ async function runDb() {
       total: 80_000,
       paymentStatus: PaymentStatus.PAID,
       status: "CANCELLED",
-      adminNotes: FULFILMENT_STOCK_REFUSE_NOTE,
+      adminNotes: "Refund required",
       items: {
         create: {
           productId: product.id,

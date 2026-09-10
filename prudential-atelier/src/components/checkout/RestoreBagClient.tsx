@@ -35,7 +35,6 @@ export function RestoreBagClient({ token }: { token: string }) {
             priceUSD: l.priceUSD ?? 0,
             priceGBP: l.priceGBP ?? 0,
             quantity: l.quantity,
-            stock: l.stock ?? 999,
             category: l.category,
           })),
         );

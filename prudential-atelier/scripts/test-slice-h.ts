@@ -187,8 +187,8 @@ async function testDuplicateProduct() {
       isPublished: true,
       variants: {
         create: [
-          { size: "S", priceNGN: 10_000, stock: 2, sku: `${stamp}-S` },
-          { size: "M", priceNGN: 10_000, stock: 2, sku: `${stamp}-M` },
+          { size: "S", priceNGN: 10_000, sku: `${stamp}-S` },
+          { size: "M", priceNGN: 10_000, sku: `${stamp}-M` },
         ],
       },
     },
@@ -204,7 +204,7 @@ async function testDuplicateProduct() {
   });
   assert(loaded?.isPublished === false, "copy is unpublished");
   assert(loaded?.variants.length === 2, "variants copied");
-  assert(loaded?.variants.every((v) => v.stock === 0), "copy stock is 0");
+  assert(loaded?.variants.every((v) => v.size === "S" || v.size === "M"), "copy sizes match");
 }
 
 async function testUnpublishPreviewListsSharedCollections() {

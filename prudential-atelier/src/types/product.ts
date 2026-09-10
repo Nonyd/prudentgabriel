@@ -13,8 +13,6 @@ export interface ProductListVariant {
   salePriceNGN: number | null;
   priceUSD: number | null;
   priceGBP: number | null;
-  stock: number;
-  lowStockAt?: number;
 }
 
 export interface ProductListColor {
