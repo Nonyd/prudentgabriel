@@ -171,7 +171,7 @@ export async function POST(req: NextRequest) {
           nameChanged: false,
         });
         const sku = uniqueSkuFromTaken(preferred.sku, taken);
-        const created = await tx.productVariant.create({
+        await tx.productVariant.create({
           data: {
             productId: p.id,
             sku,

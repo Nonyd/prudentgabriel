@@ -14,7 +14,6 @@ import {
   CreditCard,
   FileText,
   AlertTriangle,
-  Banknote,
   Scissors,
 } from "lucide-react";
 import Link from "next/link";

@@ -253,7 +253,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
             },
           });
         } else {
-          const created = await tx.productVariant.create({
+          await tx.productVariant.create({
             data: {
               productId: id,
               sku,
