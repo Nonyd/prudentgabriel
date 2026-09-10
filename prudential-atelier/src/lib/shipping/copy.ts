@@ -22,6 +22,18 @@ export const SHIPPING_MODE_INTERNATIONAL_KEY = "shipping_mode_international";
 
 export type QuoteConsentReason = "manual" | "unavailable";
 
+let testCopy: {
+  quoteConsent: string;
+  manualConsent: string;
+  unavailableConsent: string;
+  dduDisclosure: string;
+  uncollectedDays: number;
+} | null = null;
+
+export function setShippingCopyForTest(copy: typeof testCopy): void {
+  testCopy = copy;
+}
+
 export async function getShippingCopy(): Promise<{
   quoteConsent: string;
   manualConsent: string;
@@ -29,6 +41,7 @@ export async function getShippingCopy(): Promise<{
   dduDisclosure: string;
   uncollectedDays: number;
 }> {
+  if (testCopy) return testCopy;
   const { getSetting } = await import("@/lib/settings");
   const [consent, manual, ddu, daysRaw] = await Promise.all([
     getSetting(SHIPPING_QUOTE_CONSENT_KEY),
