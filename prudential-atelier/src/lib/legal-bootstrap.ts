@@ -1,10 +1,23 @@
-import { PrismaClient, SettingGroup, SettingType } from "@prisma/client";
-import { DEFAULT_LEGAL_UPDATED, LEGAL_COPY_REVISION, LEGAL_SEED_ENTRIES, legalMdToHtml } from "../src/lib/legal-copy";
+import { SettingGroup, SettingType } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import {
+  DEFAULT_LEGAL_UPDATED,
+  LEGAL_COPY_REVISION,
+  LEGAL_SEED_ENTRIES,
+  legalMdToHtml,
+} from "@/lib/legal-copy";
 
-const prisma = new PrismaClient();
+const REVISION_KEY = "legal_copy_revision";
 
-async function main() {
-  console.log("Seeding legal page content…");
+/** Writes AR legal drafts when the revision in code is newer than the row in CMS. */
+export async function ensureLegalCopy(): Promise<void> {
+  if (process.env.SKIP_DB_BUILD === "1") return;
+
+  const current = await prisma.siteSetting.findUnique({
+    where: { key: REVISION_KEY },
+    select: { value: true },
+  });
+  if (current?.value === LEGAL_COPY_REVISION) return;
 
   for (const entry of LEGAL_SEED_ENTRIES) {
     const html = legalMdToHtml(entry.md);
@@ -22,6 +35,7 @@ async function main() {
       update: {
         value: html,
         isPublic: true,
+        label: entry.label,
       },
     });
     await prisma.siteSetting.upsert({
@@ -40,13 +54,12 @@ async function main() {
         isPublic: true,
       },
     });
-    console.log(`  ✓ ${entry.label}`);
   }
 
   await prisma.siteSetting.upsert({
-    where: { key: "legal_copy_revision" },
+    where: { key: REVISION_KEY },
     create: {
-      key: "legal_copy_revision",
+      key: REVISION_KEY,
       value: LEGAL_COPY_REVISION,
       group: SettingGroup.CONTENT,
       label: "Legal copy revision",
@@ -56,13 +69,4 @@ async function main() {
     },
     update: { value: LEGAL_COPY_REVISION },
   });
-
-  console.log("Done — 5 legal pages seeded.");
 }
-
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());

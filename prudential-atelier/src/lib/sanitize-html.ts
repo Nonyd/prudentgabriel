@@ -22,7 +22,16 @@ const ALLOWED_TAGS = new Set([
 const ALLOWED_ATTR: Record<string, Set<string>> = {
   a: new Set(["href", "title", "target", "rel"]),
   img: new Set(["src", "alt", "width", "height"]),
+  h2: new Set(["id"]),
+  h3: new Set(["id"]),
+  h4: new Set(["id"]),
 };
+
+function safeId(value: string): string | null {
+  const v = value.trim();
+  if (!/^[a-z][a-z0-9-]{0,79}$/.test(v)) return null;
+  return v;
+}
 
 function safeUrl(value: string, img: boolean): string | null {
   const v = value.trim();
@@ -57,6 +66,12 @@ function sanitizeAttrs(tag: string, rawAttrs: string): string {
     if (name.startsWith("on")) continue;
     if (!allowed.has(name)) continue;
     const value = m[3] ?? m[4] ?? m[5] ?? "";
+    if (name === "id") {
+      const ok = safeId(value);
+      if (!ok) continue;
+      out.push(`id="${ok}"`);
+      continue;
+    }
     if (name === "href" || name === "src") {
       const ok = safeUrl(value, tag === "img" && name === "src");
       if (!ok) continue;

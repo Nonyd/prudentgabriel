@@ -155,9 +155,9 @@ export function Footer({
             <div className="flex flex-wrap items-center justify-center gap-6">
               {(
                 [
-                  ["Privacy Policy", "/legal/privacy"],
-                  ["Terms", "/legal/terms"],
-                  ["Returns", "/legal/returns"],
+                  ["Privacy Policy", "/privacy-policy"],
+                  ["Terms", "/terms-and-conditions"],
+                  ["Returns", "/returns-policy"],
                 ] as const
               ).map(([label, href]) => (
                 <Link key={href} href={href} className="font-body text-[11px] text-white/25 transition-colors hover:text-white/60">

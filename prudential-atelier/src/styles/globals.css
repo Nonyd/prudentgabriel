@@ -206,6 +206,41 @@ body {
     color: var(--text-mid);
   }
 
+  .legal-toc {
+    margin: 0 0 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--choc) 12%, transparent);
+  }
+
+  .legal-toc-label {
+    font-family: var(--font-jost);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-mid);
+    margin: 0 0 0.75rem;
+  }
+
+  .legal-toc ol {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  .legal-toc li {
+    font-family: var(--font-jost);
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 0.2rem;
+  }
+
+  .legal-updated {
+    font-family: var(--font-jost);
+    font-size: 12px;
+    color: var(--text-light);
+    margin: 2.5rem 0 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid color-mix(in srgb, var(--choc) 12%, transparent);
+  }
+
   .legal-content h2 {
     font-family: var(--font-cormorant);
     font-size: 28px;
@@ -213,6 +248,7 @@ body {
     color: var(--choc);
     margin-top: 2rem;
     margin-bottom: 0.75rem;
+    scroll-margin-top: 6rem;
   }
 
   .legal-content h3 {

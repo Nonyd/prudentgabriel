@@ -1,3 +1,4 @@
+import { extractLegalToc } from "@/lib/legal-copy";
 import { sanitizeCmsHtml } from "@/lib/sanitize-html";
 
 type LegalPageTemplateProps = {
@@ -7,9 +8,12 @@ type LegalPageTemplateProps = {
 };
 
 export function LegalPageTemplate({ title, lastUpdated, html }: LegalPageTemplateProps) {
+  const sanitized = sanitizeCmsHtml(html);
+  const toc = extractLegalToc(sanitized);
+
   return (
-    <article className="px-6 pb-24 pt-20 lg:px-10">
-      <header className="glass-2 glass-panel mx-auto max-w-[760px] px-8 py-10 text-center">
+    <article className="px-6 pb-24 pt-28 lg:px-10 lg:pt-32">
+      <header className="mx-auto max-w-[68ch]">
         <h1
           className="mt-0"
           style={{
@@ -22,22 +26,26 @@ export function LegalPageTemplate({ title, lastUpdated, html }: LegalPageTemplat
         >
           {title}
         </h1>
-        <p
-          className="mt-3"
-          style={{
-            fontFamily: "var(--font-jost)",
-            fontSize: "11px",
-            color: "var(--text-light)",
-          }}
-        >
-          Last updated: {lastUpdated}
-        </p>
       </header>
 
-      <div
-        className="legal-content glass-2 glass-panel mx-auto mt-12 max-w-[760px] px-8 py-10"
-        dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(html) }}
-      />
+      <div className="legal-content glass-2 glass-panel mx-auto mt-10 max-w-[68ch] px-8 py-10 sm:px-10 sm:py-12">
+        {toc.length > 0 ? (
+          <nav className="legal-toc" aria-label="Contents">
+            <p className="legal-toc-label">Contents</p>
+            <ol>
+              {toc.map((item) => (
+                <li key={item.id}>
+                  <a href={`#${item.id}`}>{item.text}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        ) : null}
+
+        <div dangerouslySetInnerHTML={{ __html: sanitized }} />
+
+        <p className="legal-updated">Last updated: {lastUpdated}</p>
+      </div>
     </article>
   );
 }

@@ -919,27 +919,42 @@ export const CMS_PAGES: CmsPageDef[] = [
       {
         id: "privacy",
         label: "Privacy Policy",
-        fields: [{ key: "legal_privacy_policy", label: "Privacy Policy content", type: "richtext", default: "" }],
+        fields: [
+          { key: "legal_privacy_updated", label: "Last updated", type: "text", default: "12 September 2026" },
+          { key: "legal_privacy_policy", label: "Privacy Policy content", type: "richtext", default: "" },
+        ],
       },
       {
         id: "terms",
         label: "Terms & Conditions",
-        fields: [{ key: "legal_terms", label: "Terms content", type: "richtext", default: "" }],
+        fields: [
+          { key: "legal_terms_updated", label: "Last updated", type: "text", default: "12 September 2026" },
+          { key: "legal_terms", label: "Terms content", type: "richtext", default: "" },
+        ],
       },
       {
         id: "cookie",
         label: "Cookie Policy",
-        fields: [{ key: "legal_cookie_policy", label: "Cookie Policy content", type: "richtext", default: "" }],
+        fields: [
+          { key: "legal_cookie_updated", label: "Last updated", type: "text", default: "12 September 2026" },
+          { key: "legal_cookie_policy", label: "Cookie Policy content", type: "richtext", default: "" },
+        ],
       },
       {
         id: "returns",
         label: "Returns Policy",
-        fields: [{ key: "legal_returns_policy", label: "Returns Policy content", type: "richtext", default: "" }],
+        fields: [
+          { key: "legal_returns_updated", label: "Last updated", type: "text", default: "12 September 2026" },
+          { key: "legal_returns_policy", label: "Returns Policy content", type: "richtext", default: "" },
+        ],
       },
       {
         id: "shipping",
         label: "Shipping Policy",
-        fields: [{ key: "legal_shipping_policy", label: "Shipping Policy content", type: "richtext", default: "" }],
+        fields: [
+          { key: "legal_shipping_updated", label: "Last updated", type: "text", default: "12 September 2026" },
+          { key: "legal_shipping_policy", label: "Shipping Policy content", type: "richtext", default: "" },
+        ],
       },
     ],
   },
@@ -977,37 +992,42 @@ export const CMS_PAGE_GROUPS: CmsPageGroup[] = [
 
 export const LEGAL_PAGE_META: Record<
   string,
-  { title: string; route: string; contentKey: string; lastUpdated: string }
+  { title: string; route: string; contentKey: string; updatedKey: string; lastUpdated: string }
 > = {
   privacy: {
     title: "Privacy Policy",
     route: "/privacy-policy",
     contentKey: "legal_privacy_policy",
-    lastUpdated: "June 2026",
+    updatedKey: "legal_privacy_updated",
+    lastUpdated: "12 September 2026",
   },
   terms: {
     title: "Terms & Conditions",
     route: "/terms-and-conditions",
     contentKey: "legal_terms",
-    lastUpdated: "June 2026",
+    updatedKey: "legal_terms_updated",
+    lastUpdated: "12 September 2026",
   },
   cookie: {
     title: "Cookie Policy",
     route: "/cookie-policy",
     contentKey: "legal_cookie_policy",
-    lastUpdated: "June 2026",
+    updatedKey: "legal_cookie_updated",
+    lastUpdated: "12 September 2026",
   },
   returns: {
     title: "Returns & Refunds Policy",
     route: "/returns-policy",
     contentKey: "legal_returns_policy",
-    lastUpdated: "June 2026",
+    updatedKey: "legal_returns_updated",
+    lastUpdated: "12 September 2026",
   },
   shipping: {
     title: "Shipping Policy",
     route: "/shipping-policy",
     contentKey: "legal_shipping_policy",
-    lastUpdated: "June 2026",
+    updatedKey: "legal_shipping_updated",
+    lastUpdated: "12 September 2026",
   },
 };
 
