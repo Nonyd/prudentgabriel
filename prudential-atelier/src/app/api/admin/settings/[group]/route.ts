@@ -19,6 +19,8 @@ import {
 } from "@/lib/settings-developer";
 import { hasPermission } from "@/lib/roles";
 import type { SettingGroup } from "@prisma/client";
+import { LEGAL_SIGNIFICANT_SETTING_KEYS } from "@/lib/legal-token-syntax";
+import { logLegallySignificantChange } from "@/lib/legal-tokens";
 
 const GROUPS = new Set<string>([
   "STORE",
@@ -168,7 +170,7 @@ export async function PATCH(
   for (const { key, value } of parsed.data.updates) {
     const row = await prisma.siteSetting.findUnique({
       where: { key },
-      select: { group: true, type: true },
+      select: { group: true, type: true, value: true },
     });
 
     if (!row) {
@@ -192,6 +194,18 @@ export async function PATCH(
 
     await setSetting(key, value, userId);
     updated += 1;
+
+    if (LEGAL_SIGNIFICANT_SETTING_KEYS.has(key) && row.value !== value) {
+      await logLegallySignificantChange({
+        userId,
+        userEmail: gate.session.user?.email ?? undefined,
+        userRole: gate.session.user?.role ?? undefined,
+        key,
+        previous: row.value,
+        next: value,
+        redactValues: row.type === "PASSWORD",
+      });
+    }
   }
 
   await revalidateSettings();

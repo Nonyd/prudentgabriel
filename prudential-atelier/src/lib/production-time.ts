@@ -1,5 +1,6 @@
 import { getSetting } from "@/lib/settings";
 import { CUSTOM_SETTING_KEYS } from "@/lib/custom-settings";
+import { FABRIC_PROMISE_HOURS } from "@/lib/fabric-unavailable";
 
 export const PRODUCTION_COPY_KEY = "rtw_production_copy";
 export const DEFAULT_PRODUCTION_COPY = "7-12 days";
@@ -11,8 +12,7 @@ export const STANDARD_SIZE_COPY =
 export const MADE_TO_MEASURE_REASON =
   "Cut to the measurements you entered. It cannot be returned for a change of mind, because a piece made to your body cannot be worn by someone else.";
 
-export const FABRIC_POLICY_COPY =
-  "If the fabric for your piece is unavailable, we will offer an alternative or a refund within 48 hours.";
+export const FABRIC_POLICY_COPY = `If the fabric for your piece is unavailable, we will offer an alternative or a refund within ${FABRIC_PROMISE_HOURS} hours.`;
 
 export function normalizeProductionCopy(raw: string | null | undefined): string {
   const t = raw?.trim();

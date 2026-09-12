@@ -1,3 +1,4 @@
+import { LEGAL_PUBLIC_PATHS } from "@/lib/legal-token-syntax";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 /** Call after any admin save operation; pass extra paths as needed. */
@@ -14,6 +15,7 @@ export async function revalidateStorefront(paths: string[] = []) {
     "/bespoke",
     "/our-story",
     "/journal",
+    ...LEGAL_PUBLIC_PATHS,
   ];
 
   const allPaths = Array.from(new Set([...corePaths, ...paths]));
@@ -50,6 +52,7 @@ export async function revalidateSettings() {
   revalidateTag("logo-settings");
   revalidateTag("cms-chrome");
   revalidateTag("maintenance");
+  for (const path of LEGAL_PUBLIC_PATHS) revalidatePath(path);
 }
 
 export async function revalidateGallery(category: "ATELIER" | "BRIDAL" | "KIDS") {

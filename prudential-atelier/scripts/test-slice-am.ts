@@ -212,7 +212,7 @@ function run() {
     "site returns copy states why made-to-measure is not returnable",
   );
   const legal = readFileSync(resolve("src/lib/legal-copy.ts"), "utf8");
-  assert(legal.includes("fails to meet the agreement"), "returns policy markdown matches Term 4");
+  assert(legal.includes("{{house_term_refunds}}"), "returns policy markdown uses the CMS refunds term");
   assert(legal.includes("48 hours of delivery"), "48-hour fabric/fault window remains the house-failure path");
 
   const formSrc = readFileSync(resolve("src/components/admin/QuotationFormClient.tsx"), "utf8");

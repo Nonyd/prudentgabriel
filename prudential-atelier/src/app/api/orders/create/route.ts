@@ -34,6 +34,7 @@ import {
 } from "@/lib/custom-size";
 import { resolveCustomCheckoutLine, syncProfileFromSnapshots } from "@/lib/custom-order-line";
 import { logServerError } from "@/lib/logger";
+import { createLegalTermsSnapshot } from "@/lib/legal-tokens";
 
 function snapshotFromAddress(a: AddressInput) {
   return {
@@ -497,6 +498,7 @@ export async function POST(req: NextRequest) {
   const collectionCode = ship.kind === "PICKUP" ? generateCollectionCode() : null;
   const consentAt = ship.requiresConsent ? new Date() : null;
   const consentText = ship.requiresConsent ? (data.shippingConsentText?.trim() || ship.consentText) : null;
+  const legalTerms = await createLegalTermsSnapshot();
 
   try {
     const order = await prisma.$transaction(async (tx) => {
@@ -524,6 +526,10 @@ export async function POST(req: NextRequest) {
           shippingQuoteLocked: ship.quoteLocked as Prisma.InputJsonValue | undefined,
           shippingConsentAt: consentAt,
           shippingConsentText: consentText,
+          ...{
+            legalTermsVersion: legalTerms.version,
+            legalTermsSnapshot: legalTerms as Prisma.InputJsonValue,
+          },
           preferredContactMethod: ship.requiresConsent ? (data.preferredContactMethod ?? null) : null,
           collectionCode,
           fxRateLocked: fx.rate,

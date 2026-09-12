@@ -14,5 +14,5 @@ export const metadata: Metadata = {
 
 export default async function ReturnsPolicyPage() {
   const page = await loadLegalPage("returns");
-  return <LegalPageTemplate title={page.title} lastUpdated={page.lastUpdated} html={page.html} />;
+  return <LegalPageTemplate title={page.title} lastUpdated={page.lastUpdated} html={page.html} termsVersion={page.termsVersion} />;
 }

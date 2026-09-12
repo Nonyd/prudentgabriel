@@ -586,6 +586,10 @@ model Order {
   shippingConsentAt   DateTime?
   /// Exact consent wording shown at checkout (not a boolean).
   shippingConsentText String?         @db.Text
+  /// Slice AR: terms version shown at purchase (copy revision + resolved-token hash).
+  legalTermsVersion   String?
+  /// Resolved legal tokens + copy revision at purchase. Same idea as shippingConsentText.
+  legalTermsSnapshot  Json?
   /// How the house should reach the client to agree shipping (Slice O).
   preferredContactMethod PreferredContactMethod?
   /// Note from the agreed quote conversation (carrier lives on `carrier`).
@@ -2300,6 +2304,10 @@ model Quotation {
   /// URL of the generated quotation PDF (admin/public PDF route), set on send.
   pdfUrl        String?
   sentAt        DateTime?
+  /// Slice AR: terms version shown when this quotation was sent.
+  legalTermsVersion  String?
+  /// Resolved legal tokens + copy revision at send. Same idea as Order.shippingConsentText.
+  legalTermsSnapshot Json?
 
   parentQuotationId String?
   parentQuotation   Quotation?  @relation("QuotationVersions", fields: [parentQuotationId], references: [id], onDelete: SetNull)

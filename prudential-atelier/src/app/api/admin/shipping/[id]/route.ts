@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
+import { logLegallySignificantChange } from "@/lib/legal-tokens";
+import { revalidateSettings } from "@/lib/revalidate";
 
 const lagosSchema = z.object({
   name: z.string().min(2).optional(),
@@ -28,6 +30,28 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   const existing = await prisma.lagosLocation.findUnique({ where: { id } });
   if (existing) {
     const loc = await prisma.lagosLocation.update({ where: { id }, data: parsed.data });
+    await logLegallySignificantChange({
+      userId: gate.session.user?.id,
+      userEmail: gate.session.user?.email ?? undefined,
+      userRole: gate.session.user?.role ?? undefined,
+      key: `lagos_location.${id}`,
+      previous: JSON.stringify({
+        name: existing.name,
+        price: existing.price,
+        freeAboveNGN: existing.freeAboveNGN,
+        etaText: existing.etaText,
+        isActive: existing.isActive,
+      }),
+      next: JSON.stringify({
+        name: loc.name,
+        price: loc.price,
+        freeAboveNGN: loc.freeAboveNGN,
+        etaText: loc.etaText,
+        isActive: loc.isActive,
+      }),
+      recordType: "LagosLocation",
+    });
+    await revalidateSettings();
     return NextResponse.json(loc);
   }
 
@@ -59,6 +83,16 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     const m = methodSchema.safeParse(body);
     if (!m.success) return NextResponse.json({ error: m.error.flatten() }, { status: 400 });
     const row = await prisma.shippingMethod.update({ where: { id }, data: m.data });
+    await logLegallySignificantChange({
+      userId: gate.session.user?.id,
+      userEmail: gate.session.user?.email ?? undefined,
+      userRole: gate.session.user?.role ?? undefined,
+      key: `shipping_method.${id}`,
+      previous: JSON.stringify({ name: method.name, isActive: method.isActive }),
+      next: JSON.stringify({ name: row.name, isActive: row.isActive }),
+      recordType: "ShippingMethod",
+    });
+    await revalidateSettings();
     return NextResponse.json(row);
   }
 

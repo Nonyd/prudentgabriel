@@ -4,7 +4,7 @@ import { absolutePublicUrl } from "@/lib/app-url";
 
 export { adminReceiptSrc } from "@/lib/media/admin-receipt-src";
 
-const RECEIPT_EMAIL_TTL_SEC = 7 * 24 * 60 * 60;
+export const RECEIPT_EMAIL_TTL_SEC = 7 * 24 * 60 * 60;
 
 /**
  * Href for a receipt in outbound email. Relative `/media/private/...` paths are

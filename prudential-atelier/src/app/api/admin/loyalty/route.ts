@@ -6,6 +6,8 @@ import { ensureLoyaltySettingKeys } from "@/lib/loyalty-settings-bootstrap";
 import { getExpiryMonths, getMinRedemptionPoints, getPointRateNGN, outstandingPointsTotal, pointsToNaira } from "@/lib/points";
 import { setSetting, clearSettingCacheKey } from "@/lib/settings";
 import { LOYALTY_ACTIONS, NGN_PER_EARN_UNIT, PRUDENT_POINTS_COPY, SETTING_KEYS } from "@/lib/points-value";
+import { logLegallySignificantChange } from "@/lib/legal-tokens";
+import { revalidateSettings } from "@/lib/revalidate";
 
 const patchSchema = z.object({
   rateNGN: z.number().positive().optional(),
@@ -119,6 +121,8 @@ export async function PATCH(req: NextRequest) {
   }
 
   const userId = gate.session.user!.id!;
+  const userEmail = gate.session.user?.email ?? undefined;
+  const userRole = gate.session.user?.role ?? undefined;
   const currentRate = await getPointRateNGN();
 
   if (parsed.data.rateNGN != null && parsed.data.rateNGN !== currentRate) {
@@ -133,24 +137,68 @@ export async function PATCH(req: NextRequest) {
       },
     });
     await setSetting(SETTING_KEYS.rateNGN, String(parsed.data.rateNGN), userId);
+    await logLegallySignificantChange({
+      userId,
+      userEmail,
+      userRole,
+      key: SETTING_KEYS.rateNGN,
+      previous: String(currentRate),
+      next: String(parsed.data.rateNGN),
+    });
   }
 
   if (parsed.data.minRedemption != null) {
+    const previous = await getMinRedemptionPoints();
     await setSetting(SETTING_KEYS.minRedemption, String(parsed.data.minRedemption), userId);
+    if (previous !== parsed.data.minRedemption) {
+      await logLegallySignificantChange({
+        userId,
+        userEmail,
+        userRole,
+        key: SETTING_KEYS.minRedemption,
+        previous: String(previous),
+        next: String(parsed.data.minRedemption),
+      });
+    }
   }
 
   if (parsed.data.expiryMonths != null) {
+    const previous = await getExpiryMonths();
     await setSetting(SETTING_KEYS.expiryMonths, String(parsed.data.expiryMonths), userId);
+    if (previous !== parsed.data.expiryMonths) {
+      await logLegallySignificantChange({
+        userId,
+        userEmail,
+        userRole,
+        key: SETTING_KEYS.expiryMonths,
+        previous: String(previous),
+        next: String(parsed.data.expiryMonths),
+      });
+    }
   }
 
   if (parsed.data.rules) {
     for (const rule of parsed.data.rules) {
       if (rule.action === "SIGNUP_REFERRAL" || rule.action === "PURCHASE_PER_100") continue;
+      const existing = await prisma.loyaltyRule.findUnique({ where: { action: rule.action } });
       await prisma.loyaltyRule.upsert({
         where: { action: rule.action },
         create: { action: rule.action, points: rule.points, isActive: rule.isActive },
         update: { points: rule.points, isActive: rule.isActive },
       });
+      const prev = existing ? `${existing.points}:${existing.isActive}` : "";
+      const next = `${rule.points}:${rule.isActive}`;
+      if (prev !== next) {
+        await logLegallySignificantChange({
+          userId,
+          userEmail,
+          userRole,
+          key: `loyalty_rule.${rule.action}`,
+          previous: prev,
+          next,
+          recordType: "LoyaltyRule",
+        });
+      }
     }
   }
 
@@ -159,6 +207,8 @@ export async function PATCH(req: NextRequest) {
   clearSettingCacheKey(SETTING_KEYS.expiryMonths);
   clearSettingCacheKey(SETTING_KEYS.rateNGNLegacy);
   clearSettingCacheKey(SETTING_KEYS.minRedemptionLegacy);
+
+  await revalidateSettings();
 
   return NextResponse.json({ ok: true });
 }
