@@ -229,6 +229,13 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         </div>
       </div>
 
+      {order.isGift ? (
+        <div className="rounded-sm border border-sand bg-canvas p-6 text-sm text-charcoal">
+          <h2 className="font-display text-lg text-gold">Gift</h2>
+          <p className="mt-2">{order.giftMessage?.trim() || "This order is marked as a gift."}</p>
+        </div>
+      ) : null}
+
       {snap && (
         <div className="rounded-sm border border-sand bg-canvas p-6 text-sm text-charcoal">
           <h2 className="font-display text-lg text-gold">Address</h2>

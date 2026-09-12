@@ -32,7 +32,8 @@ export default function WelcomeCredentialsEmail({
       </Heading>
       <Text style={{ fontFamily: FONT_BODY, fontSize: 15, lineHeight: "24px", color: EMAIL_INK }}>
         Your account has been created so you can follow your {sourceLabel} with us — track the
-        commission, open invoices, and use the atelier portal. Design approval and receipt
+        commission, open invoices, and use the atelier portal. Paying an invoice, a consultation
+        or a shop order without signing up first is what opens this account. Design approval and receipt
         confirmation each arrive as their own link in a separate email; you do not need this password for those.
       </Text>
       <table
