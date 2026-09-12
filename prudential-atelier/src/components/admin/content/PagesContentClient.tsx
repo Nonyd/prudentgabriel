@@ -17,6 +17,7 @@ import {
   type CmsField,
   type CmsPageDef,
 } from "@/lib/cms-config";
+import { findUnknownLegalTokens, isLegalContentSettingKey } from "@/lib/legal-token-syntax";
 
 type LinkItem = { label: string; url: string };
 
@@ -254,13 +255,24 @@ function PageEditor({ page }: { page: CmsPageDef }) {
     try {
       const patch: Record<string, string> = {};
       for (const f of section.fields) patch[f.key] = values[f.key] ?? getFieldDefault(f.key);
+      const unknown = new Set<string>();
+      for (const [key, value] of Object.entries(patch)) {
+        if (isLegalContentSettingKey(key)) {
+          for (const token of findUnknownLegalTokens(value)) unknown.add(token);
+        }
+      }
+      if (unknown.size > 0) {
+        toast.error(`Unknown legal tokens: ${Array.from(unknown).join(", ")}`);
+        return;
+      }
       const res = await fetch("/api/admin/content/pages", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pageId: page.id, values: patch }),
       });
       if (!res.ok) {
-        toast.error("Failed to save");
+        const err = (await res.json().catch(() => null)) as { error?: string } | null;
+        toast.error(err?.error ?? "Failed to save");
         return;
       }
       toast.success(`${section.label} saved`);
@@ -284,6 +296,12 @@ function PageEditor({ page }: { page: CmsPageDef }) {
         <div>
           <h2 className="font-display text-xl text-ink">{page.label}</h2>
           <p className="mt-1 font-sans text-xs text-text-light">Last edited: {formatLastEdited(lastEdited)}</p>
+        {page.id === "legal" ? (
+          <p className="mt-2 max-w-xl font-sans text-xs leading-relaxed text-text-mid">
+            Figures resolve from live settings. Use tokens such as {"{{production_time}}"} and
+            {" {{#token}}…{{/token}}"}. Unknown names cannot be saved, and public pages never show braces.
+          </p>
+        ) : null}
         </div>
         {page.previewPath ? (
           <Link

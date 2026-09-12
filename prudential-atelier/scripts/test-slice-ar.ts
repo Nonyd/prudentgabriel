@@ -22,6 +22,11 @@ import {
 } from "../src/lib/legal-copy";
 import { FABRIC_POLICY_COPY, MADE_TO_MEASURE_REASON, STANDARD_SIZE_COPY } from "../src/lib/production-time";
 import { sanitizeCmsHtml } from "../src/lib/sanitize-html";
+import {
+  applyLegalTokens,
+  findUnknownLegalTokens,
+  formatLagosLocationLine,
+} from "../src/lib/legal-token-syntax";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -29,6 +34,39 @@ function assert(cond: unknown, message: string): asserts cond {
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const src = (rel: string) => readFileSync(join(root, rel), "utf8");
+
+const FIXTURE_TOKENS: Record<string, string> = {
+  production_time: "7-12 days",
+  custom_lead_time_days: "12",
+  alteration_warranty_days: "30",
+  fabric_promise_hours: "48",
+  invoice_validity_days: "14",
+  points_per_ten: "1",
+  points_spend_unit: "10",
+  points_rate: "1",
+  points_referral: "12,500",
+  points_expiry_months: "24",
+  points_min_redemption: "5,000",
+  house_term_delivery: DEFAULT_HOUSE_DOCUMENT_TERMS[0]!.body,
+  house_term_changes: DEFAULT_HOUSE_DOCUMENT_TERMS[1]!.body,
+  house_term_shipping: DEFAULT_HOUSE_DOCUMENT_TERMS[2]!.body,
+  house_term_refunds: DEFAULT_HOUSE_DOCUMENT_TERMS[3]!.body,
+  contact_email: "hello@prudentgabriel.com",
+  contact_phone: "+234 000",
+  contact_address: "No. 4 Akinwale Shitu Divine Homes, Thomas Estates\nAjah, Lagos, Nigeria",
+  shipping_ddu:
+    "International orders may attract import duties and taxes on arrival, payable by the recipient. These are set by your country's customs authority and are not included in the price.",
+  shipping_uncollected_days: "7",
+  shipping_lagos: "Ikeja: 2-4 business days; free above ₦50,000",
+  shipping_methods: "Lagos courier, DHL, Collection",
+  currencies_offered: "NGN, USD, GBP",
+  receipt_link_days: "7",
+  impersonation_minutes: "30",
+};
+
+function resolved(md: string): string {
+  return applyLegalTokens(legalMdToHtml(md), FIXTURE_TOKENS, "public").html;
+}
 
 function runConverter() {
   const html = legalMdToHtml("## Who we are\n\nHello **world** and [mail](mailto:hello@prudentgabriel.com).\n\n- one\n- two\n\n### Nested\n\n1. first\n2. second");
@@ -44,36 +82,42 @@ function runConverter() {
 }
 
 function runFacts() {
-  assert(LEGAL_COPY_REVISION === "ar-3", "revision stamp");
+  assert(LEGAL_COPY_REVISION === "ar-5", "revision stamp");
   assert(DEFAULT_LEGAL_UPDATED.includes("September 2026"), "last-updated date is this slice");
 
   for (const term of DEFAULT_HOUSE_DOCUMENT_TERMS) {
-    assert(TERMS_MD.includes(term.body), `terms include invoice term: ${term.key}`);
+    assert(TERMS_MD.includes(`{{house_term_${term.key}}}`), `terms tokenise invoice term: ${term.key}`);
+    const html = resolved(TERMS_MD);
+    assert(html.includes(term.body), `resolved terms include invoice term: ${term.key}`);
     if (term.key === "refunds") {
-      assert(RETURNS_MD.includes(term.body), "returns page includes the refunds house term");
+      assert(RETURNS_MD.includes("{{house_term_refunds}}"), "returns page uses the refunds house term token");
+      assert(resolved(RETURNS_MD).includes(term.body), "resolved returns include the refunds house term");
     }
     if (term.key === "shipping") {
-      assert(SHIPPING_MD.includes(term.body), "shipping page includes the shipping house term");
+      assert(SHIPPING_MD.includes("{{house_term_shipping}}"), "shipping page uses the shipping house term token");
+      assert(resolved(SHIPPING_MD).includes(term.body), "resolved shipping include the shipping house term");
     }
   }
 
   assert(RETURNS_MD.includes(STANDARD_SIZE_COPY), "returns uses AG standard-size copy");
   assert(RETURNS_MD.includes(MADE_TO_MEASURE_REASON), "returns uses AG made-to-measure reason");
-  assert(RETURNS_MD.includes(FABRIC_POLICY_COPY), "returns uses 48-hour fabric copy");
+  assert(RETURNS_MD.includes("{{fabric_promise_hours}}"), "returns uses fabric-hours token");
+  assert(resolved(RETURNS_MD).includes(FABRIC_POLICY_COPY), "resolved returns match 48-hour fabric copy");
   assert(TERMS_MD.includes(STANDARD_SIZE_COPY), "terms agree with PDP on standard size");
   assert(TERMS_MD.includes(MADE_TO_MEASURE_REASON), "terms agree with PDP on made to measure");
-  assert(TERMS_MD.includes(FABRIC_POLICY_COPY), "terms agree on fabric");
+  assert(resolved(TERMS_MD).includes(FABRIC_POLICY_COPY), "resolved terms agree on fabric");
 
   assert(TERMS_MD.includes("Nothing is held in stock"), "made to order");
-  assert(TERMS_MD.includes("7-12 days"), "production window");
+  assert(TERMS_MD.includes("{{production_time}}"), "production window is a token");
   assert(TERMS_MD.includes("Shipping time is separate"), "shipping is extra");
-  assert(TERMS_MD.includes("70 percent"), "deposit default matches CMS");
+  assert(!TERMS_MD.includes("70 percent") && !TERMS_MD.includes("70%"), "deposit is not a typed house-wide percent");
+  assert(TERMS_MD.includes("agreed on that quotation"), "deposit is per quotation");
   assert(TERMS_MD.includes("thirteen stages"), "atelier stages");
   assert(TERMS_MD.includes("Design approval"), "approval gate");
-  assert(TERMS_MD.includes("30-day alteration"), "alteration window");
+  assert(TERMS_MD.includes("{{alteration_warranty_days}}"), "alteration window is a token");
   assert(TERMS_MD.includes("revalues every outstanding balance"), "points rate change");
   assert(TERMS_MD.includes("not returned for cash"), "points are not cash");
-  assert(TERMS_MD.includes("two years"), "points expiry");
+  assert(TERMS_MD.includes("{{points_expiry_months}}"), "points expiry is a token");
   assert(TERMS_MD.includes("DDU"), "DDU in terms");
   assert(TERMS_MD.includes("courts of Lagos State"), "governing law");
   assert(TERMS_MD.includes("Federal Competition and Consumer Protection Act 2018"), "FCCPA");
@@ -82,14 +126,15 @@ function runFacts() {
   assert(PRIVACY_POLICY_MD.includes("bust, waist, hip"), "measurements named");
   assert(PRIVACY_POLICY_MD.includes("cut your garment"), "measurements purpose");
   assert(PRIVACY_POLICY_MD.includes("private media"), "receipts are private");
-  assert(PRIVACY_POLICY_MD.includes("seven days"), "signed receipt TTL");
+  assert(PRIVACY_POLICY_MD.includes("{{receipt_link_days}}"), "signed receipt TTL is a token");
   assert(PRIVACY_POLICY_MD.includes("CV"), "careers files");
   assert(PRIVACY_POLICY_MD.includes("impersonate") || PRIVACY_POLICY_MD.includes("viewing the site as you"), "impersonation");
   assert(PRIVACY_POLICY_MD.includes("Paystack"), "Paystack named");
   assert(PRIVACY_POLICY_MD.includes("Open Exchange Rates"), "FX source named");
   assert(PRIVACY_POLICY_MD.includes("opens an account"), "guest onboarding");
-  assert(PRIVACY_POLICY_MD.includes("hello@prudentgabriel.com"), "real email");
-  assert(PRIVACY_POLICY_MD.includes("Akinwale Shitu"), "real Lagos address");
+  assert(PRIVACY_POLICY_MD.includes("{{contact_email}}"), "contact email is a token");
+  assert(PRIVACY_POLICY_MD.includes("{{contact_address}}"), "contact address is a token");
+  assert(resolved(PRIVACY_POLICY_MD).includes("hello@prudentgabriel.com"), "resolved privacy uses invoice email");
   assert(PRIVACY_POLICY_MD.includes("statutory period"), "financial retention is statutory, not invented");
   assert(!PRIVACY_POLICY_MD.includes("UK GDPR"), "do not claim UK GDPR as a done fact");
   assert(!PRIVACY_POLICY_MD.includes("Vercel"), "hosting claim matches current VPS, not old Vercel copy");
@@ -113,16 +158,67 @@ function runFacts() {
     assert(html.length > 400, `${key} html is not empty`);
     assert(extractLegalToc(html).length >= 4, `${key} has a contents list`);
     assert(!md.includes("\u2014") && !md.includes("\u2013"), `${key} has no em/en dashes`);
+    const publicHtml = applyLegalTokens(html, FIXTURE_TOKENS, "public").html;
+    assert(!publicHtml.includes("{{"), `${key} public render never leaves braces`);
   }
+}
+
+function runTokens() {
+  const unknown = findUnknownLegalTokens("Hello {{not_a_real_token}} and {{production_time}}");
+  assert(unknown.includes("not_a_real_token"), "unknown token is listed");
+  assert(!unknown.includes("production_time"), "catalogued token is not unknown");
+
+  const omitted = applyLegalTokens(
+    "{{#shipping_lagos}}Lagos: {{shipping_lagos}}{{/shipping_lagos}} leftover",
+    {},
+    "public",
+  ).html;
+  assert(!omitted.includes("Lagos:"), "empty section is omitted");
+  assert(!omitted.includes("{{"), "public mode strips leftover braces");
+  assert(omitted.includes("leftover"), "surrounding copy remains");
+
+  const line = formatLagosLocationLine({
+    name: "Ikeja",
+    etaText: "2-4 business days",
+    price: 0,
+    freeAboveNGN: 0,
+  });
+  assert(line === "Ikeja: 2-4 business days", "zero free-threshold is not published");
+  assert(
+    formatLagosLocationLine({ name: "VI", etaText: "", price: 0, freeAboveNGN: null }) === null,
+    "a location with nothing to say is omitted",
+  );
+
+  const schema = src("prisma/schema.prisma");
+  assert(schema.includes("legalTermsVersion"), "order and quotation store a terms version");
+  assert(schema.includes("legalTermsSnapshot"), "order and quotation snapshot resolved tokens");
+  assert(src("src/app/api/orders/create/route.ts").includes("legalTermsSnapshot"), "shop order snapshots at purchase");
+  assert(src("src/app/api/quotations/[id]/send/route.ts").includes("legalTermsSnapshot"), "quotation snapshots at send");
+  assert(
+    src("src/lib/legal-tokens.ts").includes("Legally-significant setting changed"),
+    "ActivityLog description names legally-significant settings",
+  );
+  assert(
+    src("src/app/api/admin/settings/[group]/route.ts").includes("logLegallySignificantChange"),
+    "settings PATCH logs legally-significant keys",
+  );
 }
 
 function runPresentation() {
   const tpl = src("src/components/legal/LegalPageTemplate.tsx");
   assert(tpl.includes("glass-2"), "one glass-2 panel");
   assert(!tpl.includes("glass-2 glass-panel mx-auto max-w-[760px] px-8 py-10 text-center"), "title is not a second glass card");
-  assert(tpl.includes("legal-toc"), "contents list");
+  assert(tpl.includes("LegalToc"), "contents sit beside the article");
   assert(tpl.includes("legal-updated"), "last updated at the bottom");
-  assert(tpl.includes("max-w-[68ch]"), "generous measure");
+  assert(tpl.includes("termsVersion"), "page shows the resolved terms version");
+
+  const toc = src("src/components/legal/LegalToc.tsx");
+  assert(toc.includes("legal-toc"), "contents list");
+  assert(toc.includes("aria-current"), "active chapter is announced");
+
+  const css = src("src/styles/globals.css");
+  assert(css.includes("legal-shell--toc"), "sidebar layout");
+  assert(css.includes("minmax(0, 68ch)"), "generous measure");
 
   const privacy = src("src/app/(storefront)/privacy-policy/page.tsx");
   assert(privacy.includes("loadLegalPage"), "privacy loads CMS + draft fallback");
@@ -146,6 +242,7 @@ function runPresentation() {
 function run() {
   runConverter();
   runFacts();
+  runTokens();
   runPresentation();
   console.log("slice-ar: pass");
 }

@@ -10,6 +10,7 @@ import { getLockedFx, persistableFxFields } from "@/lib/fx";
 import { lockedDocumentTotal } from "@/lib/atelier-fx";
 import { buildQuoteEmailHtml } from "@/lib/quote-email";
 import { quotationCurrencySendable } from "@/lib/atelier-quote-currency";
+import { createLegalTermsSnapshot } from "@/lib/legal-tokens";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -104,6 +105,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
 
     const fx = quote.fxRateLocked ? null : await getLockedFx();
     const lockedTotals = fx ? lockedDocumentTotal(quote.currency || "NGN", quote.total) : null;
+    const legalTerms = await createLegalTermsSnapshot();
     const item = await prisma.quotation.update({
       where: { id },
       data: {
@@ -111,6 +113,10 @@ export async function POST(_req: NextRequest, { params }: Params) {
         sentAt: new Date(),
         approvalUrl,
         pdfUrl: pdfPublicUrl,
+        ...{
+          legalTermsVersion: legalTerms.version,
+          legalTermsSnapshot: legalTerms,
+        },
         ...(fx
           ? {
               ...persistableFxFields(fx),
