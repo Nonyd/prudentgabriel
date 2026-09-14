@@ -288,6 +288,12 @@ async function run() {
     const aboutHouse = await readFile(join(process.cwd(), "src/components/about/AboutHousePage.tsx"), "utf8");
     assert(aboutPage.includes("filterAboutStats"), "about page filters fake location counts");
     assert(!aboutPage.includes("about_abuja"), "about page does not render a second city");
+    const contactPage = await readFile(join(process.cwd(), "src/app/(storefront)/contact/page.tsx"), "utf8");
+    const cmsConfig = await readFile(join(process.cwd(), "src/lib/cms-config.ts"), "utf8");
+    assert(!contactPage.includes("Abuja"), "contact page does not list an Abuja studio");
+    assert(!contactPage.includes("Wuse"), "contact page does not use the dummy Wuse address");
+    assert(!cmsConfig.includes("contact_abuja"), "CMS cannot re-enable a fake Abuja studio");
+    assert(!cmsConfig.includes("about_abuja"), "about CMS has no second-city fields");
     assert(aboutHouse.includes("data-about-atelier"), "about page has one atelier block");
     assert(aboutHouse.includes("GalleryFrame"), "about hero looks can be stills or film");
     assert(aboutHouse.includes("btn-primary"), "about consultation uses the house button");
