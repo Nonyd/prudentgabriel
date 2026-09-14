@@ -7,6 +7,7 @@ import {
   DEFAULT_SIZE_TIP,
   DEFAULT_WOMEN_SIZE_CHART,
 } from "@/lib/page-content-defaults";
+import { PAGE_SEO_CMS, PAGE_SEO_FALLBACKS } from "@/lib/seo-copy";
 
 export type CmsFieldType =
   | "text"
@@ -57,7 +58,40 @@ const consultationTypeFields = (prefix: string, defaults: Record<string, string>
   { key: `${prefix}_enabled`, label: "Enabled", type: "toggle", default: defaults.enabled ?? "true" },
 ];
 
-export const CMS_PAGES: CmsPageDef[] = [
+function seoSection(
+  prefix: string,
+  defaults: { title: string; description: string },
+  sectionId = "seo",
+): CmsSection {
+  return {
+    id: sectionId,
+    label: "Search and sharing",
+    fields: [
+      {
+        key: `${prefix}_seo_title`,
+        label: "SEO title",
+        type: "text",
+        default: defaults.title,
+        placeholder: "Google and WhatsApp title",
+      },
+      {
+        key: `${prefix}_seo_description`,
+        label: "SEO description",
+        type: "textarea",
+        default: defaults.description,
+      },
+      {
+        key: `${prefix}_seo_image`,
+        label: "Share image",
+        type: "image",
+        default: "",
+        uploadFolder: "prudent-gabriel/seo",
+      },
+    ],
+  };
+}
+
+const CMS_PAGES_BASE: CmsPageDef[] = [
   {
     id: "homepage",
     label: "Homepage",
@@ -823,6 +857,30 @@ export const CMS_PAGES: CmsPageDef[] = [
     ],
   },
   {
+    id: "collections",
+    label: "Collections",
+    previewPath: "/collections",
+    sections: [],
+  },
+  {
+    id: "our-story",
+    label: "Our story",
+    previewPath: "/our-story",
+    sections: [],
+  },
+  {
+    id: "press",
+    label: "Press",
+    previewPath: "/press",
+    sections: [],
+  },
+  {
+    id: "careers",
+    label: "Careers",
+    previewPath: "/careers",
+    sections: [],
+  },
+  {
     id: "track",
     label: "Track Order",
     previewPath: "/track",
@@ -960,6 +1018,22 @@ export const CMS_PAGES: CmsPageDef[] = [
   },
 ];
 
+export const CMS_PAGES: CmsPageDef[] = CMS_PAGES_BASE.map((page) => {
+  if (page.id === "legal") {
+    return {
+      ...page,
+      sections: page.sections.flatMap((s) => {
+        const fb = PAGE_SEO_FALLBACKS[s.id];
+        if (!fb) return [s];
+        return [s, seoSection(s.id, fb, `${s.id}-seo`)];
+      }),
+    };
+  }
+  const seo = PAGE_SEO_CMS[page.id];
+  if (!seo) return page;
+  return { ...page, sections: [...page.sections, seoSection(seo.prefix, seo)] };
+});
+
 export type CmsPageGroup = {
   id: string;
   label: string;
@@ -971,7 +1045,7 @@ export const CMS_PAGE_GROUPS: CmsPageGroup[] = [
   {
     id: "main",
     label: "Main site",
-    pageIds: ["homepage", "about", "contact", "size-guide", "footer"],
+    pageIds: ["homepage", "about", "contact", "size-guide", "our-story", "press", "careers", "collections", "footer"],
   },
   {
     id: "brands",
@@ -999,7 +1073,7 @@ export const LEGAL_PAGE_META: Record<
     route: "/privacy-policy",
     contentKey: "legal_privacy_policy",
     updatedKey: "legal_privacy_updated",
-    lastUpdated: "12 September 2026",
+    lastUpdated: "14 September 2026",
   },
   terms: {
     title: "Terms & Conditions",
@@ -1013,7 +1087,7 @@ export const LEGAL_PAGE_META: Record<
     route: "/cookie-policy",
     contentKey: "legal_cookie_policy",
     updatedKey: "legal_cookie_updated",
-    lastUpdated: "12 September 2026",
+    lastUpdated: "14 September 2026",
   },
   returns: {
     title: "Returns & Refunds Policy",

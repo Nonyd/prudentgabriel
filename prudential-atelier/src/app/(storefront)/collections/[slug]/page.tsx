@@ -9,20 +9,12 @@ import { findLivePublishedCollection, listLivePublishedCollections } from "@/lib
 import { CollectionDetailPage } from "@/components/collections/CollectionDetailPage";
 import { optimizeImageUrl } from "@/lib/utils";
 import type { CollectionReelRecord } from "@/lib/collection-gallery";
-
-export const revalidate = 300;
+import { pageMetadata } from "@/lib/seo";
+import { PAGE_SEO_FALLBACKS } from "@/lib/seo-copy";
+import { breadcrumbJsonLd } from "@/lib/seo-jsonld";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 const PAGE_LIMIT = 24;
-
-export async function generateStaticParams() {
-  if (process.env.SKIP_DB_BUILD === "1" || !process.env.DATABASE_URL?.trim()) return [];
-  try {
-    const live = await listLivePublishedCollections();
-    return live.map(({ collection }) => ({ slug: collection.slug }));
-  } catch {
-    return [];
-  }
-}
 
 export async function generateMetadata({
   params,
@@ -31,13 +23,17 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const c = await findLivePublishedCollection(slug);
-  if (!c) return { title: "Collection | Prudent Gabriel" };
-  const title = c.metaTitle?.trim() || `${c.name} | Prudent Gabriel`;
-  const description = c.metaDescription?.trim() || c.excerpt || c.description || undefined;
-  const images = c.coverImage
-    ? [{ url: optimizeImageUrl(c.coverImage, 1200), alt: c.coverImageAlt || c.name }]
-    : undefined;
-  return { title, description, openGraph: { title, description, images } };
+  if (!c) notFound();
+  const title = c.metaTitle?.trim() || `${c.name} — a collection from Prudential Atelier`;
+  const description =
+    c.metaDescription?.trim() || c.excerpt || c.description || PAGE_SEO_FALLBACKS.collections.description;
+  return pageMetadata({
+    title,
+    description,
+    path: `/collections/${c.slug}`,
+    image: c.coverImage ? optimizeImageUrl(c.coverImage, 1200) : undefined,
+    imageAlt: c.coverImageAlt || c.name,
+  });
 }
 
 async function loadActiveReels(collectionId: string): Promise<CollectionReelRecord[]> {
@@ -97,14 +93,22 @@ export default async function CollectionSlugPage({ params }: { params: Promise<{
   };
 
   return (
-    <CollectionDetailPage
-      collection={hero}
-      initialProducts={slice}
-      total={total}
-      initialPage={1}
-      initialHasNext={hasNext}
-      otherCollections={otherCollections}
-      reels={reels}
-    />
+    <>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Collections", path: "/collections" },
+          { name: collection.name, path: `/collections/${collection.slug}` },
+        ])}
+      />
+      <CollectionDetailPage
+        collection={hero}
+        initialProducts={slice}
+        total={total}
+        initialPage={1}
+        initialHasNext={hasNext}
+        otherCollections={otherCollections}
+        reels={reels}
+      />
+    </>
   );
 }

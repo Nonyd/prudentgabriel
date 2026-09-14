@@ -2,14 +2,11 @@ import type { Metadata } from "next";
 import { listLivePublishedCollections } from "@/lib/live-collections";
 import { CollectionsPage } from "@/components/collections/CollectionsPage";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
+import { cmsRouteMetadata } from "@/lib/seo";
 
-export const revalidate = 300;
-
-export const metadata: Metadata = {
-  title: "Ready-to-Wear Collections | Prudent Gabriel",
-  description:
-    "Explore curated ready-to-wear collections from Prudential Atelier — house edits with their own mood, silhouette, and story.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return cmsRouteMetadata("collections", "/collections");
+}
 
 export default async function CollectionsListingPage() {
   if (isSkipDbBuild()) {

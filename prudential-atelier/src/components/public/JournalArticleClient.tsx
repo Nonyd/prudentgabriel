@@ -1,71 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatDate, optimizeImageUrl } from "@/lib/utils";
 import { sanitizeCmsHtml } from "@/lib/sanitize-html";
+import type { JournalArticleJson, JournalListItemJson } from "@/lib/journal";
+import { JournalShareBar } from "@/components/public/JournalShareBar";
 
-type Article = {
-  title: string;
-  slug: string;
-  excerpt: string | null;
-  content: string;
-  featuredImage: string | null;
-  category: string | null;
-  publishedAt: string | null;
-  authorName: string | null;
-  readTime: number | null;
-};
-
-type Related = {
-  title: string;
-  slug: string;
-  excerpt: string | null;
-  featuredImage: string | null;
-  publishedAt: string | null;
-  readTime: number | null;
-};
-
-export function JournalArticleClient({ slug }: { slug: string }) {
-  const [item, setItem] = useState<Article | null>(null);
-  const [related, setRelated] = useState<Related[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    void (async () => {
-      const res = await fetch(`/api/blog/public/${slug}`);
-      if (!res.ok) {
-        setLoading(false);
-        return;
-      }
-      const data = (await res.json()) as { item: Article; related: Related[] };
-      setItem(data.item);
-      setRelated(data.related);
-      setLoading(false);
-    })();
-  }, [slug]);
-
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-site px-6 py-20">
-        <p className="font-sans text-sm text-text-mid">Loading article…</p>
-      </div>
-    );
-  }
-
-  if (!item) {
-    return (
-      <div className="mx-auto max-w-site px-6 py-20 text-center">
-        <h1 className="font-serif text-3xl text-choc">Article not found</h1>
-        <Link href="/journal" className="btn-ghost-light mt-8 inline-flex">
-          Back to Journal
-        </Link>
-      </div>
-    );
-  }
-
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-
+export function JournalArticleClient({
+  item,
+  related,
+  shareUrl,
+}: {
+  item: JournalArticleJson;
+  related: JournalListItemJson[];
+  shareUrl: string;
+}) {
   return (
     <article className="mx-auto max-w-site px-6 py-16 lg:px-10">
       <Link
@@ -79,7 +28,7 @@ export function JournalArticleClient({ slug }: { slug: string }) {
         <div className="relative mt-8 img-portrait overflow-hidden rounded-lg bg-sand/20">
           <img
             src={optimizeImageUrl(item.featuredImage, 1200)}
-            alt=""
+            alt={item.title}
             className="h-full w-full object-cover"
           />
         </div>
@@ -106,25 +55,7 @@ export function JournalArticleClient({ slug }: { slug: string }) {
         dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(item.content) }}
       />
 
-      <div className="mx-auto mt-12 flex max-w-3xl flex-wrap gap-3 border-t border-sand pt-8">
-        <button
-          type="button"
-          className="btn-ghost-light text-[10px]"
-          onClick={() => {
-            void navigator.clipboard.writeText(shareUrl);
-          }}
-        >
-          Copy link
-        </button>
-        <a
-          href={`https://wa.me/?text=${encodeURIComponent(`${item.title} ${shareUrl}`)}`}
-          target="_blank"
-          rel="noreferrer"
-          className="btn-ghost-light text-[10px]"
-        >
-          WhatsApp
-        </a>
-      </div>
+      <JournalShareBar title={item.title} shareUrl={shareUrl} />
 
       {related.length > 0 ? (
         <section className="mt-16 border-t border-sand pt-12">
@@ -135,7 +66,7 @@ export function JournalArticleClient({ slug }: { slug: string }) {
                 {r.featuredImage ? (
                   <img
                     src={optimizeImageUrl(r.featuredImage, 400)}
-                    alt=""
+                    alt={r.title}
                     className="aspect-[4/3] w-full rounded object-cover"
                   />
                 ) : null}

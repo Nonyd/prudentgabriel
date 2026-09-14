@@ -3,14 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { AtelierLandingPage } from "@/components/atelier/AtelierLandingPage";
 import { getCMSContent } from "@/lib/cms";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
+import { cmsRouteMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
 
-export const revalidate = 300;
-
-export const metadata = {
-  title: "The Atelier | Prudent Gabriel",
-  description:
-    "Every commission begins with a conversation. Bespoke couture designed entirely around you at the Prudent Gabriel atelier in Lagos.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return cmsRouteMetadata("atelier", "/atelier");
+}
 
 const ATELIER_KEYS = [
   "atelier_hero_headline",

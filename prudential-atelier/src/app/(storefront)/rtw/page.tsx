@@ -1,31 +1,22 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { queryProductList } from "@/lib/products-list-query";
 import { RTWPageClient } from "@/components/rtw/RTWPageClient";
 import { cmsGet, getCMSContent } from "@/lib/cms";
 import { resolveHeroCarouselItems } from "@/lib/hero-carousel";
 import { listLivePublishedCollections } from "@/lib/live-collections";
 import { prisma } from "@/lib/prisma";
-import { CATALOG_PAGE_SIZE, RTW_EXCLUDE_CATEGORY_QUERY, SHOP_ACCESSORIES, SHOP_LISTING } from "@/lib/rtw-aisle";
+import { CATALOG_PAGE_SIZE, RTW_EXCLUDE_CATEGORY_QUERY } from "@/lib/rtw-aisle";
+import { cmsRouteMetadata, flattenSearchParams, rtwCanonicalPath } from "@/lib/seo";
 import { rtwHeroCopy, rtwHeroLooks, rtwHeroSideLooks } from "@/lib/rtw-hero";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
 import { warmHeroWebmMp4 } from "@/lib/transcode-webm-mp4";
 
-export const revalidate = 300;
-
-export const metadata: Metadata = {
-  title: "Ready to Wear | Prudent Gabriel",
-  description:
-    "Shop the latest ready-to-wear collection from Prudent Gabriel — evening, formal, casual, and more, crafted in Lagos.",
-};
-
-function flattenSearchParams(sp: Record<string, string | string[] | undefined>) {
-  const u = new URLSearchParams();
-  for (const [k, v] of Object.entries(sp)) {
-    if (typeof v === "string" && v.length) u.set(k, v);
-    else if (Array.isArray(v) && typeof v[0] === "string") u.set(k, v[0]);
-  }
-  return u;
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Record<string, string | string[] | undefined>;
+}): Promise<Metadata> {
+  return cmsRouteMetadata("rtw", rtwCanonicalPath(flattenSearchParams(searchParams)));
 }
 
 const RTW_CMS_KEYS = [
@@ -46,10 +37,7 @@ export default async function RTWPage({
   searchParams: Record<string, string | string[] | undefined>;
 }) {
   const u = flattenSearchParams(searchParams);
-  const category = u.get("category");
-  if (category === "ACCESSORIES") redirect(SHOP_ACCESSORIES);
-  if (category === "KIDDIES") redirect(`${SHOP_LISTING}?category=KIDDIES`);
-  if (category === "BRIDAL") u.delete("category");
+  if (u.get("category") === "BRIDAL") u.delete("category");
 
   u.set("type", "RTW");
   u.set("excludeCategory", RTW_EXCLUDE_CATEGORY_QUERY);

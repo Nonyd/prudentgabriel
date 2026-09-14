@@ -223,8 +223,10 @@ function runPresentation() {
   const privacy = src("src/app/(storefront)/privacy-policy/page.tsx");
   assert(privacy.includes("loadLegalPage"), "privacy loads CMS + draft fallback");
 
-  const redir = src("src/app/(storefront)/legal/privacy/page.tsx");
-  assert(redir.includes('redirect("/privacy-policy")'), "old /legal/privacy redirects");
+  const redir = src("redirects.mjs");
+  assert(redir.includes('source: "/legal/privacy"'), "old /legal/privacy is a 301");
+  assert(redir.includes('destination: "/privacy-policy"'), "privacy 301 lands on the live policy");
+  assert(redir.includes("permanent: true"), "moves are 301, not 307");
 
   const cms = src("src/lib/cms-config.ts");
   assert(cms.includes("legal_privacy_updated"), "last-updated is CMS-editable");

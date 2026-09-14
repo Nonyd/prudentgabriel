@@ -9,9 +9,13 @@ import {
   resolveHouseAddressLine2,
   resolveHouseMapsEmbed,
 } from "@/lib/house-address";
+import { cmsRouteMetadata } from "@/lib/seo";
 import { CONTACT_SUBJECTS } from "@/validations/contact";
+import type { Metadata } from "next";
 
-export const revalidate = 300;
+export async function generateMetadata(): Promise<Metadata> {
+  return cmsRouteMetadata("contact", "/contact");
+}
 
 const CONTACT_KEYS = [
   "contact_lagos_address_1",

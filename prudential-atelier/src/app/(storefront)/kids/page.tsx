@@ -4,13 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { KidsGalleryPage } from "@/components/gallery/KidsGalleryPage";
 import { cmsGet, getCMSContent } from "@/lib/cms";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
+import { cmsRouteMetadata } from "@/lib/seo";
 
-export const revalidate = 300;
-
-export const metadata: Metadata = {
-  title: "Prudential Kids | Prudent Gabriel",
-  description: "Luxury fashion for the little ones.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return cmsRouteMetadata("kids", "/kids");
+}
 
 const LIMIT = 24;
 

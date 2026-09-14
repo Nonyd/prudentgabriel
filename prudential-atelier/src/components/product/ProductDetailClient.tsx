@@ -261,7 +261,7 @@ export function ProductDetailClient({
 
       <div className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-12">
         <div className="min-w-0">
-          <ProductGallery images={product.images} />
+          <ProductGallery images={product.images} productName={product.name} />
         </div>
 
         <div className="min-w-0 lg:sticky lg:top-32 lg:self-start">

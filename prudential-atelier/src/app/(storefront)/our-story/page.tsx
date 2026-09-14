@@ -1,11 +1,15 @@
 import Image from "next/image";
+import type { Metadata } from "next";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { PFABanner } from "@/components/common/PFABanner";
 import { BrandStats } from "@/components/home/BrandStats";
 import { Testimonials } from "@/components/home/Testimonials";
 import { getImageSettings } from "@/lib/settings";
+import { cmsRouteMetadata } from "@/lib/seo";
 
-export const revalidate = 300;
+export async function generateMetadata(): Promise<Metadata> {
+  return cmsRouteMetadata("our-story", "/our-story");
+}
 
 const DEF_STORY = "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1400";
 

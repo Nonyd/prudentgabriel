@@ -2,12 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PublicStageApprovalClient } from "@/components/public/PublicStageApprovalClient";
 import { loadPublicStageApproval } from "@/lib/public-stage-approval-payload";
+import { tokenRouteMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return {
-    title: "Review your commission | Prudential Atelier",
-    robots: { index: false, follow: false },
-  };
+  return tokenRouteMetadata("Review your commission");
 }
 
 export default async function PublicStageApprovalPage({

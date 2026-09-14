@@ -5,12 +5,12 @@ import { prisma } from "@/lib/prisma";
 import { TrackSearchForm } from "@/components/track/TrackSearchForm";
 import { cmsGet, getCMSContent } from "@/lib/cms";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { tokenRouteMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Order Tracking — Prudential Atelier",
-  description: "Track your atelier commission with your order reference.",
+  ...tokenRouteMetadata("Order tracking"),
 };
 
 type Props = {

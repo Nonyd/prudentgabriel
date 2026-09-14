@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/product-image-url";
-import { shouldShowGalleryDots } from "@/lib/product-gallery";
+import { gallerySwipeAlt, shouldShowGalleryDots } from "@/lib/product-gallery";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 
 export interface GalleryImage {
@@ -46,11 +46,11 @@ function GalleryImageTile({
   );
 }
 
-export function ProductGallery({ images }: { images: GalleryImage[] }) {
+export function ProductGallery({ images, productName }: { images: GalleryImage[]; productName: string }) {
   const display: GalleryImage[] =
     images.length > 0
       ? images
-      : [{ id: "placeholder", url: PRODUCT_IMAGE_PLACEHOLDER, alt: "Prudent Gabriel" }];
+      : [{ id: "placeholder", url: PRODUCT_IMAGE_PLACEHOLDER, alt: productName }];
   const [idx, setIdx] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const main = display[idx] ?? display[0];
@@ -84,7 +84,7 @@ export function ProductGallery({ images }: { images: GalleryImage[] }) {
               <div key={im.id} className="img-portrait relative w-full shrink-0 snap-center overflow-hidden bg-ivory-dark">
                 <GalleryImageTile
                   src={im.url}
-                  alt={im.alt ?? ""}
+                  alt={im.alt?.trim() || gallerySwipeAlt(productName, i, display.length)}
                   className="object-cover object-top"
                   sizes="100vw"
                   priority={i === 0}
@@ -123,7 +123,7 @@ export function ProductGallery({ images }: { images: GalleryImage[] }) {
               {main && (
                 <GalleryImageTile
                   src={main.url}
-                  alt={main.alt ?? ""}
+                  alt={main.alt?.trim() || gallerySwipeAlt(productName, idx, display.length)}
                   className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.08]"
                   sizes="(max-width: 1024px) 100vw, 55vw"
                   priority={idx === 0}
@@ -147,7 +147,12 @@ export function ProductGallery({ images }: { images: GalleryImage[] }) {
                     i === idx ? "border-2 border-choc" : "border border-transparent opacity-80 hover:opacity-100",
                   )}
                 >
-                  <GalleryImageTile src={im.url} alt="" className="object-cover object-top" sizes="72px" />
+                  <GalleryImageTile
+                    src={im.url}
+                    alt={im.alt?.trim() || gallerySwipeAlt(productName, i, display.length)}
+                    className="object-cover object-top"
+                    sizes="72px"
+                  />
                 </button>
               ))}
             </div>

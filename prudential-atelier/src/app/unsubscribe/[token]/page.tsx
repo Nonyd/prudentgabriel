@@ -1,5 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { UnsubscribeClient } from "@/components/public/UnsubscribeClient";
+import { tokenRouteMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return tokenRouteMetadata("Unsubscribe");
+}
 
 export default async function UnsubscribePage({
   params,
@@ -29,8 +35,4 @@ export default async function UnsubscribePage({
       email={pref.email}
     />
   );
-}
-
-export async function generateMetadata() {
-  return { title: "Unsubscribe | Prudent Gabriel" };
 }

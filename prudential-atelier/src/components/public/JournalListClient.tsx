@@ -1,34 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { formatDate, optimizeImageUrl } from "@/lib/utils";
-
-type BlogPost = {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt: string | null;
-  featuredImage: string | null;
-  category: string | null;
-  publishedAt: string | null;
-  authorName: string | null;
-  readTime: number | null;
-};
+import type { JournalListItemJson } from "@/lib/journal";
 
 export function JournalListClient({
   title = "Style & Stories",
   subtitle = "Stories from the atelier, styling notes, and behind-the-scenes craft.",
+  initialItems,
+  initialTotal = 0,
 }: {
   eyebrow?: string;
   title?: string;
   subtitle?: string;
+  initialItems?: JournalListItemJson[];
+  initialTotal?: number;
 }) {
-  const [items, setItems] = useState<BlogPost[]>([]);
-  const [total, setTotal] = useState(0);
+  const ssr = initialItems !== undefined;
+  const [items, setItems] = useState<JournalListItemJson[]>(initialItems ?? []);
+  const [total, setTotal] = useState(initialTotal);
   const [page, setPage] = useState(1);
   const [category, setCategory] = useState("all");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!ssr);
+  const skipFirst = useRef(ssr);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -36,7 +31,7 @@ export function JournalListClient({
     if (category !== "all") params.set("category", category);
     const res = await fetch(`/api/blog/public?${params}`);
     if (res.ok) {
-      const data = (await res.json()) as { items: BlogPost[]; total: number };
+      const data = (await res.json()) as { items: JournalListItemJson[]; total: number };
       setItems(data.items);
       setTotal(data.total);
     }
@@ -44,8 +39,12 @@ export function JournalListClient({
   }, [page, category]);
 
   useEffect(() => {
+    if (skipFirst.current && page === 1 && category === "all") {
+      skipFirst.current = false;
+      return;
+    }
     void refresh();
-  }, [refresh]);
+  }, [refresh, page, category]);
 
   const categories = Array.from(
     new Set(items.map((i) => i.category).filter(Boolean) as string[]),
@@ -106,7 +105,7 @@ export function JournalListClient({
                 <div className="relative min-h-[280px] overflow-hidden bg-sand/20 md:min-h-0 md:aspect-auto md:h-full">
                   <img
                     src={optimizeImageUrl(featured.featuredImage, 900)}
-                    alt=""
+                    alt={featured.title}
                     className="h-full min-h-[280px] w-full object-cover object-center transition-transform duration-500 group-hover:scale-105 md:absolute md:inset-0 md:min-h-0"
                   />
                 </div>
@@ -145,7 +144,7 @@ export function JournalListClient({
                   <div className="img-portrait relative overflow-hidden bg-sand/20">
                     <img
                       src={optimizeImageUrl(post.featuredImage, 600)}
-                      alt=""
+                      alt={post.title}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>

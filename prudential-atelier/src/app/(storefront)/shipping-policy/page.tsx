@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
 import { LegalPageTemplate } from "@/components/legal/LegalPageTemplate";
-import { LEGAL_PAGE_META } from "@/lib/cms-config";
 import { loadLegalPage } from "@/lib/legal-page";
+import { legalRouteMetadata } from "@/lib/seo";
 
-export const revalidate = 3600;
-
-const meta = LEGAL_PAGE_META.shipping;
-
-export const metadata: Metadata = {
-  title: meta.title,
-  description: "Shipping times, costs, and delivery information for Prudential Atelier orders.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return legalRouteMetadata("shipping");
+}
 
 export default async function ShippingPolicyPage() {
   const page = await loadLegalPage("shipping");

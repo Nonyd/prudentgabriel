@@ -1,3 +1,5 @@
+import { PERMANENT_REDIRECTS } from "./redirects.mjs";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -21,6 +23,9 @@ const nextConfig = {
   experimental: {
     instrumentationHook: true,
     serverComponentsExternalPackages: ["heic-convert", "libheif-js"],
+  },
+  async redirects() {
+    return PERMANENT_REDIRECTS;
   },
 };
 

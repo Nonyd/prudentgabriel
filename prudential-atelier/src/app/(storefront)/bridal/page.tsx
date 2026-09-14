@@ -4,13 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { BridalGalleryPage } from "@/components/gallery/BridalGalleryPage";
 import { cmsGet, getCMSContent } from "@/lib/cms";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
+import { cmsRouteMetadata } from "@/lib/seo";
 
-export const revalidate = 300;
-
-export const metadata: Metadata = {
-  title: "Prudential Bride | Prudent Gabriel",
-  description: "Every bride is a masterpiece. Explore the Prudential Bride collection.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return cmsRouteMetadata("bridal", "/bridal");
+}
 
 const LIMIT = 24;
 
