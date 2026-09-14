@@ -1,8 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { CareersListingClient } from "@/components/careers/CareersListingClient";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
+import { cmsRouteMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
 
-export const revalidate = 60;
+export async function generateMetadata(): Promise<Metadata> {
+  return cmsRouteMetadata("careers", "/careers");
+}
 
 export default async function CareersPage() {
   const jobs = isSkipDbBuild()

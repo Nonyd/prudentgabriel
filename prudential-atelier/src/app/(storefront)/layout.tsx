@@ -3,8 +3,12 @@ import { Footer } from "@/components/public/Footer";
 import { CartDrawer } from "@/components/layout/CartDrawer";
 import { ProductionTimeProvider } from "@/components/layout/ProductionTimeContext";
 import { SearchModal } from "@/components/layout/SearchModal";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { ANNOUNCEMENT_SPEED_MS, cmsBool, cmsGet, cmsJson } from "@/lib/cms";
+import { getLogoSettingsSafe } from "@/lib/logos";
 import { getProductionCopy } from "@/lib/production-time";
+import { organizationJsonLd } from "@/lib/seo-jsonld";
+import { getSetting } from "@/lib/settings";
 import {
   STOREFRONT_CACHE_TAGS,
   getCachedCMSContent,
@@ -24,11 +28,24 @@ const FOOTER_KEYS = [
 ] as const;
 
 export default async function StorefrontLayout({ children }: { children: React.ReactNode }) {
-  const [announcementCms, footerCms, collections, productionCopy] = await Promise.all([
+  const [announcementCms, footerCms, collections, productionCopy, org] = await Promise.all([
     getCachedCMSContent([...ANNOUNCEMENT_KEYS], STOREFRONT_CACHE_TAGS.cmsChrome),
     getCachedCMSContent([...FOOTER_KEYS], STOREFRONT_CACHE_TAGS.cmsChrome),
     getNavCollections(),
     getProductionCopy(),
+    Promise.all([
+      getLogoSettingsSafe(),
+      getSetting("social_instagram"),
+      getSetting("social_tiktok"),
+      getSetting("social_facebook"),
+    ]).then(([logos, instagram, tiktok, facebook]) =>
+      organizationJsonLd({
+        logo: logos.logoDark || logos.logoWhite,
+        instagram,
+        tiktok,
+        facebook,
+      }),
+    ),
   ]);
 
   const showAnnouncement = cmsBool(announcementCms, "announcement_bar_enabled", true);
@@ -53,6 +70,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
           announcementIntervalMs={intervalMs}
         />
         <main id="main-content" tabIndex={-1} className="storefront-main min-h-screen">
+          <JsonLd data={org} />
           {children}
         </main>
         <div className="relative z-[1]">

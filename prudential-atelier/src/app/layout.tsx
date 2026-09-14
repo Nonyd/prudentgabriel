@@ -6,6 +6,8 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { getLogoSettings } from "@/lib/logos";
 import { RootProvider } from "@/providers/RootProvider";
 import { CookieConsent } from "@/components/gdpr/CookieConsent";
+import { houseShareImage, pageMetadata } from "@/lib/seo";
+import { PAGE_SEO_FALLBACKS } from "@/lib/seo-copy";
 
 const SmoothScroll = nextDynamic(
   () => import("@/components/public/SmoothScroll").then((m) => ({ default: m.SmoothScroll })),
@@ -39,23 +41,23 @@ const jost = Jost({
 
 const siteUrl = getPublicAppUrl();
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    template: "%s | Prudential Atelier",
-    default: "Prudential Atelier — Luxury Fashion & Bespoke Couture",
-  },
-  description:
-    "Bespoke couture and ready-to-wear by Mrs. Prudent Gabriel-Okopi. Luxury Nigerian fashion — bridal, evening, and everyday elegance.",
-  openGraph: {
-    type: "website",
-    locale: "en_NG",
-    url: siteUrl,
-    siteName: "Prudential Atelier",
-    title: "Prudential Atelier",
-    description: "Bespoke couture and ready-to-wear by Mrs. Prudent Gabriel-Okopi. Luxury Nigerian fashion — bridal, evening, and everyday elegance.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const image = await houseShareImage();
+  const home = PAGE_SEO_FALLBACKS.home;
+  return {
+    metadataBase: new URL(siteUrl),
+    ...pageMetadata({
+      title: home.title,
+      description: home.description,
+      path: "/",
+      image,
+    }),
+    title: {
+      default: home.title,
+      template: "%s",
+    },
+  };
+}
 
 export const dynamic = "force-dynamic";
 

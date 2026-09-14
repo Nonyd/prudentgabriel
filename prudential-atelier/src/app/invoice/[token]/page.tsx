@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { PublicInvoiceView } from "@/components/invoice/PublicInvoiceView";
+import { tokenRouteMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return {
-    title: `Invoice | Prudential Atelier`,
-    robots: { index: false, follow: false },
-  };
+  return tokenRouteMetadata("Invoice");
 }
 
 export default async function PublicInvoicePage({ params }: { params: Promise<{ token: string }> }) {

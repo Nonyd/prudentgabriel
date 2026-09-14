@@ -3,21 +3,15 @@ import { queryProductList } from "@/lib/products-list-query";
 import { ShopBrowse } from "@/components/shop/ShopBrowse";
 import { cmsGet, getCMSContent } from "@/lib/cms";
 import { CATALOG_PAGE_SIZE, shopHeroCopy } from "@/lib/rtw-aisle";
+import { cmsRouteMetadata, flattenSearchParams, shopCanonicalPath } from "@/lib/seo";
 
-export const revalidate = 300;
-
-export const metadata: Metadata = {
-  title: "Shop | Prudent Gabriel",
-  description: "Everything the house sells — ready-to-wear, bridal, kids, and accessories.",
-};
-
-function flattenSearchParams(sp: Record<string, string | string[] | undefined>) {
-  const u = new URLSearchParams();
-  for (const [k, v] of Object.entries(sp)) {
-    if (typeof v === "string" && v.length) u.set(k, v);
-    else if (Array.isArray(v) && typeof v[0] === "string") u.set(k, v[0]);
-  }
-  return u;
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Record<string, string | string[] | undefined>;
+}): Promise<Metadata> {
+  const path = shopCanonicalPath(flattenSearchParams(searchParams));
+  return cmsRouteMetadata("shop", path);
 }
 
 export default async function ShopPage({

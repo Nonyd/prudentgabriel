@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { GalleryCategory } from "@prisma/client";
 import { AboutHousePage } from "@/components/about/AboutHousePage";
 import { cmsBool, cmsGet, cmsJson, getCMSContent } from "@/lib/cms";
@@ -13,8 +14,11 @@ import {
 import { prisma } from "@/lib/prisma";
 import { getImageSettings } from "@/lib/settings";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
+import { cmsRouteMetadata } from "@/lib/seo";
 
-export const revalidate = 300;
+export async function generateMetadata(): Promise<Metadata> {
+  return cmsRouteMetadata("about", "/about");
+}
 
 const ABOUT_KEYS = [
   "about_hero_headline",

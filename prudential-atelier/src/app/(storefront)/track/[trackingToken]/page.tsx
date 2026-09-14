@@ -10,20 +10,15 @@ import {
   stageHistoryForLiveCompletions,
 } from "@/lib/atelier/live-stages";
 import type { Metadata } from "next";
+import { tokenRouteMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 type Props = { params: Promise<{ trackingToken: string }> };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { trackingToken } = await params;
-  const order = await prisma.bespokeOrder.findUnique({
-    where: { trackingToken },
-    select: { orderRef: true },
-  });
-  if (!order) return { title: "Order not found — Prudential Atelier" };
-  return { title: `Order ${order.orderRef} — Prudential Atelier` };
+export async function generateMetadata(): Promise<Metadata> {
+  return tokenRouteMetadata("Order tracking");
 }
 
 export default async function TrackOrderPage({ params }: Props) {

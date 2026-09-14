@@ -8,8 +8,14 @@ import {
 } from "@/components/public/QuoteApprovalClient";
 import { findLatestQuotationVersion } from "@/lib/quotation-versioning";
 import { getHouseDocumentTerms } from "@/lib/invoice-terms";
+import { tokenRouteMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
 
 type Props = { params: Promise<{ approvalToken: string }> };
+
+export async function generateMetadata(): Promise<Metadata> {
+  return tokenRouteMetadata("Quotation");
+}
 
 export default async function QuoteApprovalPage({ params }: Props) {
   const { approvalToken } = await params;

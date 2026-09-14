@@ -10,8 +10,12 @@ import {
   DEFAULT_SIZE_TIP,
   DEFAULT_WOMEN_SIZE_CHART,
 } from "@/lib/page-content-defaults";
+import { cmsRouteMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
 
-export const revalidate = 300;
+export async function generateMetadata(): Promise<Metadata> {
+  return cmsRouteMetadata("size-guide", "/size-guide");
+}
 
 const SIZE_GUIDE_KEYS = [
   "size_guide_women",

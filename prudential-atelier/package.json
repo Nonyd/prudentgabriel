@@ -22,6 +22,7 @@
     "seed:email-templates": "tsx --tsconfig tsconfig.scripts.json scripts/seed-email-templates.ts",
     "backfill:payments": "tsx --tsconfig tsconfig.scripts.json scripts/backfill-payments.ts",
     "purge:demo": "tsx --tsconfig tsconfig.scripts.json scripts/purge-demo-data.ts",
+    "test:slice-as": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-as.ts",
     "test:slice-am": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-am.ts",
     "test:slice-ar": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-ar.ts",
     "test:slice-an": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-an.ts",

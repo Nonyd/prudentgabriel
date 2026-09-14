@@ -1,11 +1,30 @@
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { JOB_TYPE_LABELS } from "@/lib/job-custom-fields";
 import { JobApplicationForm } from "@/components/careers/JobApplicationForm";
 import { sanitizeCmsHtml } from "@/lib/sanitize-html";
+import { pageMetadata, houseShareImage } from "@/lib/seo";
 
-export const revalidate = 60;
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const job = await prisma.jobPosting.findFirst({
+    where: { slug, isPublished: true },
+    select: { title: true, department: true, location: true, slug: true },
+  });
+  if (!job) notFound();
+  return pageMetadata({
+    title: `${job.title} — careers at Prudential Atelier`,
+    description: `${job.title} in ${job.department}, ${job.location}. Join the Lagos house.`,
+    path: `/careers/${job.slug}`,
+    image: await houseShareImage(),
+  });
+}
 
 export default async function CareerJobPage({
   params,

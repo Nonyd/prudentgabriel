@@ -2,12 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ReceiptConfirmClient } from "@/components/public/ReceiptConfirmClient";
 import { loadPublicReceipt } from "@/lib/public-receipt-payload";
+import { tokenRouteMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return {
-    title: "Confirm receipt | Prudential Atelier",
-    robots: { index: false, follow: false },
-  };
+  return tokenRouteMetadata("Confirm receipt");
 }
 
 export default async function ReceiptConfirmPage({

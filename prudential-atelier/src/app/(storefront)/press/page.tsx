@@ -1,9 +1,13 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { PFABanner } from "@/components/common/PFABanner";
 import { cn } from "@/lib/utils";
+import { cmsRouteMetadata } from "@/lib/seo";
 
-export const revalidate = 300;
+export async function generateMetadata(): Promise<Metadata> {
+  return cmsRouteMetadata("press", "/press");
+}
 
 const PRESS_ITEMS = [
   {

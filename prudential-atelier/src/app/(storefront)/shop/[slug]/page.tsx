@@ -15,10 +15,15 @@ import type { ProductListItem } from "@/types/product";
 import { mapListVariant, mapProductToListItem } from "@/lib/map-product-list-item";
 import { getSetting } from "@/lib/settings";
 import { bespokeFromNGN, derivedCatalogMinNGN } from "@/lib/pricing";
-import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
+import { GALLERY_GRID_IMAGE_TAKE, gallerySwipeAlt } from "@/lib/product-gallery";
 import { getProductCustomContext } from "@/lib/custom-context";
 import { unitsSoldByProductId } from "@/lib/finance/whats-selling";
 import { getProductionCopy } from "@/lib/production-time";
+import { productAisle } from "@/lib/rtw-aisle";
+import { absolutePublicUrl } from "@/lib/app-url";
+import { pageMetadata, productSeoDescription, productSeoTitle } from "@/lib/seo";
+import { breadcrumbJsonLd, productBreadcrumbItems, productJsonLd } from "@/lib/seo-jsonld";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 
 const RelatedProducts = nextDynamic(() => import("@/components/product/RelatedProducts").then((m) => ({ default: m.RelatedProducts })), {
@@ -31,26 +36,9 @@ const RelatedProducts = nextDynamic(() => import("@/components/product/RelatedPr
   ),
 });
 
-export const revalidate = 300;
-
-export async function generateStaticParams() {
-  if (process.env.SKIP_DB_BUILD === "1" || !process.env.DATABASE_URL?.trim()) return [];
-  try {
-    const rows = await prisma.product.findMany({
-      where: { isPublished: true },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-      select: { slug: true },
-    });
-    return rows.map((r) => ({ slug: r.slug }));
-  } catch {
-    return [];
-  }
-}
-
 const getPublishedProduct = cache(async (slug: string) =>
-  prisma.product.findUnique({
-    where: { slug },
+  prisma.product.findFirst({
+    where: { slug, isPublished: true },
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       variants: { orderBy: { priceNGN: "asc" } },
@@ -77,15 +65,24 @@ const getPublishedProduct = cache(async (slug: string) =>
   }),
 );
 
+function sentenceLabel(value: string): string {
+  const s = value.replace(/_/g, " ").toLowerCase();
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const product = await getPublishedProduct(params.slug);
-  if (!product?.isPublished) return { title: "Product" };
+  if (!product) notFound();
   const primary = product.images.find((im) => im.isPrimary) ?? product.images[0];
-  return {
-    title: product.name,
-    description: product.description.slice(0, 160),
-    openGraph: primary?.url ? { images: [{ url: primary.url, alt: product.name }] } : undefined,
-  };
+  const title = productSeoTitle(product);
+  const description = productSeoDescription(product);
+  return pageMetadata({
+    title,
+    description,
+    path: `/shop/${product.slug}`,
+    image: primary?.url,
+    imageAlt: primary?.alt?.trim() || product.name,
+  });
 }
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {
@@ -186,8 +183,36 @@ export default async function ProductPage({ params }: { params: { slug: string }
     canWriteReview = Boolean(paidItem) && !existingReview;
   }
 
+  const galleryImages = product.images.map((im, i) => ({
+    ...im,
+    alt: im.alt?.trim() || gallerySwipeAlt(product.name, i, product.images.length),
+  }));
+  const aisle = productAisle(product);
+  const productUrl = absolutePublicUrl(`/shop/${product.slug}`);
+  const priceNGN = derivedCatalogMinNGN(product.variants, product.isOnSale);
+
   return (
     <>
+      <JsonLd
+        data={productJsonLd({
+          name: product.name,
+          description: productSeoDescription(product),
+          images: galleryImages.map((im) => im.url),
+          url: productUrl,
+          priceNGN,
+        })}
+      />
+      <JsonLd
+        data={breadcrumbJsonLd(
+          productBreadcrumbItems({
+            aisleHref: aisle.href,
+            aisleLabel: aisle.label,
+            categoryLabel: sentenceLabel(product.category),
+            name: product.name,
+            slug: product.slug,
+          }),
+        )}
+      />
       <ViewTracker productId={product.id} />
       <ProductDetailClient
         product={{
@@ -207,7 +232,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
           isNewArrival: product.isNewArrival,
           isFeatured: product.isFeatured,
           tags: product.tags,
-          images: product.images,
+          images: galleryImages,
           variants: product.variants.map(mapListVariant),
           colors: product.colors,
         }}

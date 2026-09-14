@@ -7,8 +7,15 @@ import { prisma } from "@/lib/prisma";
 import { deniedAdminRedirect } from "@/lib/admin-route-access";
 import { resolveSessionAccess } from "@/lib/admin-auth";
 import { hasAnyAdminPermission } from "@/lib/roles";
+import { NOINDEX } from "@/lib/seo";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  robots: NOINDEX,
+  title: "Admin",
+};
 
 const adminRoles = [
   "SUPER_ADMIN",
