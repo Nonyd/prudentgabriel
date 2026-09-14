@@ -20,8 +20,6 @@ export async function generateMetadata(): Promise<Metadata> {
 const CONTACT_KEYS = [
   "contact_lagos_address_1",
   "contact_lagos_address_2",
-  "contact_abuja_address_1",
-  "contact_abuja_address_2",
   "contact_whatsapp",
   "contact_phone",
   "contact_email",
@@ -87,8 +85,6 @@ export default async function ContactPage({
 
   const lagos1 = resolveHouseAddressLine1(cmsGet(cms, "contact_lagos_address_1", HOUSE_ADDRESS_LINE_1));
   const lagos2 = resolveHouseAddressLine2(cmsGet(cms, "contact_lagos_address_2", HOUSE_ADDRESS_LINE_2));
-  const abuja1 = cmsGet(cms, "contact_abuja_address_1", "Plot 1234, Wuse Zone 5");
-  const abuja2 = cmsGet(cms, "contact_abuja_address_2", "Abuja, FCT, Nigeria");
   const whatsapp = cmsGet(cms, "contact_whatsapp", "+2348012345678");
   const phone = cmsGet(cms, "contact_phone", "+2348012345678");
   const email = cmsGet(cms, "contact_email", "hello@prudentgabriel.com");
@@ -121,7 +117,7 @@ export default async function ContactPage({
             color: "var(--text-mid)",
           }}
         >
-          Lagos atelier and Abuja studio. Form, WhatsApp, or phone.
+          The Lagos atelier. Form, WhatsApp, or phone.
         </p>
       </header>
 
@@ -149,11 +145,6 @@ export default async function ContactPage({
                 {lagos1}
                 <br />
                 {lagos2}
-              </DetailBlock>
-              <DetailBlock label="Abuja">
-                {abuja1}
-                <br />
-                {abuja2}
               </DetailBlock>
             </div>
           </div>
