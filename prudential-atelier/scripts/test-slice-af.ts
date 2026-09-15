@@ -12,11 +12,11 @@ import {
   PaymentMethod,
   PaymentPurpose,
   PaymentStatus,
-  ProductCategory,
   ProductType,
   Role,
   SizeMode,
 } from "@prisma/client";
+import { ProductCategory } from "../src/lib/shop-category-slug";
 import {
   classifyPayments,
   type FinanceOrderSnap,

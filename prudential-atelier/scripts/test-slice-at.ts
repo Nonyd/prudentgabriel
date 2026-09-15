@@ -10,10 +10,10 @@ import { fileURLToPath } from "node:url";
 import {
   OrderStatus,
   PaymentStatus,
-  ProductCategory,
   ProductType,
   Role,
 } from "@prisma/client";
+import { ProductCategory } from "../src/lib/shop-category-slug";
 import { COOKIE_BANNER_NOTICE } from "../src/lib/cookie-consent";
 import {
   ATTRIBUTION_STORAGE_KEY,

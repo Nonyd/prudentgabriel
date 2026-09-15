@@ -18,7 +18,7 @@ export interface CartItem {
   priceUSD: number;
   priceGBP: number;
   quantity: number;
-  /** ProductCategory enum string — coupon scope */
+  /** ShopCategory slug — coupon scope */
   category?: string;
   sizeMode?: "STANDARD" | "CUSTOM";
   measurements?: {

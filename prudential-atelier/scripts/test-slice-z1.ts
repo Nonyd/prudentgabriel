@@ -9,10 +9,10 @@ import {
   CouponUsageStatus,
   PaymentStatus,
   PointsType,
-  ProductCategory,
   ProductType,
   Role,
 } from "@prisma/client";
+import { ProductCategory } from "../src/lib/shop-category-slug";
 import { prisma } from "../src/lib/prisma";
 import { addCalendarMonths } from "../src/lib/points";
 import { reservePoints, returnRedeemedPoints } from "../src/lib/points";

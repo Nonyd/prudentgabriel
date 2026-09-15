@@ -7,10 +7,10 @@ import path from "path";
 import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
 import { assertFixturesAllowed } from "./fixture-guard";
+import { ProductCategory } from "../src/lib/shop-category-slug";
 import {
   PrismaClient,
   Role,
-  ProductCategory,
   ProductType,
   LoyaltyTier,
   StaffDepartment,

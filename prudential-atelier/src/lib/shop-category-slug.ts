@@ -17,6 +17,18 @@ export const SEED_SHOP_CATEGORIES: Array<{
   { slug: UNCATEGORIZED_SLUG, label: "Uncategorized", sortOrder: 999, locked: true },
 ];
 
+/** Seed aisle slugs. Prisma does not emit unused schema enums to the client. */
+export const ProductCategory = {
+  BRIDAL: "BRIDAL",
+  EVENING_WEAR: "EVENING_WEAR",
+  CASUAL: "CASUAL",
+  FORMAL: "FORMAL",
+  KIDDIES: "KIDDIES",
+  ACCESSORIES: "ACCESSORIES",
+} as const;
+
+export type ProductCategory = (typeof ProductCategory)[keyof typeof ProductCategory];
+
 export function slugFromCategoryLabel(label: string): string {
   return slugify(label, { replacement: "_", strict: true, trim: true })
     .toUpperCase()
