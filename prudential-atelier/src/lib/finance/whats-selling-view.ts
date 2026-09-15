@@ -14,6 +14,11 @@ export const NO_COLLECTION_ASSIGNMENTS_COPY =
 export const NO_ORDERS_COPY =
   "Published pieces with no confirmed orders this period.";
 
+export type SellingOptionRow = {
+  option: string;
+  sold: number;
+};
+
 export type SellingSizeRow = {
   size: string;
   sold: number;
@@ -28,6 +33,7 @@ export type SellingPiece = {
   revenueNGN: number;
   orderedToMeasure: number;
   sizes: SellingSizeRow[];
+  options: SellingOptionRow[];
   unitsPrev: number;
   revenuePrev: number;
 };
@@ -84,6 +90,7 @@ export function whatsSellingCsv(pieces: SellingPiece[]): string {
     "Ordered to measure",
     "Units previous",
     "Revenue previous (NGN)",
+    "Options",
   ];
   const rows = pieces.map((p) => [
     p.name,
@@ -92,6 +99,7 @@ export function whatsSellingCsv(pieces: SellingPiece[]): string {
     String(p.orderedToMeasure),
     String(p.unitsPrev),
     String(p.revenuePrev),
+    p.options.map((o) => `${o.option}:${o.sold}`).join("; "),
   ]);
   const escape = (cell: string) => {
     if (/[",\n]/.test(cell)) return `"${cell.replace(/"/g, '""')}"`;

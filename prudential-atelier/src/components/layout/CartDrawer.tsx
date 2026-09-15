@@ -136,6 +136,11 @@ export function CartDrawer() {
                             <X className="h-4 w-4" />
                           </button>
                         </div>
+                        {item.optionLabel ? (
+                          <p className="mt-0.5 font-body text-[11px] text-dark-grey">
+                            {item.optionLabel}
+                          </p>
+                        ) : null}
                         <BagSizeSelect item={item} product={sizeMap[item.productId]} />
                         {item.color && (
                           <p className="mt-0.5 text-xs text-charcoal-light">{item.color}</p>

@@ -79,7 +79,8 @@ export function OrderSummary({
               <div className="flex-1">
                 <p className="font-medium text-charcoal">{i.productName}</p>
                 <p className="text-charcoal-mid">
-                  {i.sizeMode === "CUSTOM" ? "Made to measure" : i.size} ×{i.quantity}
+                  {[i.optionLabel, i.sizeMode === "CUSTOM" ? "Made to measure" : i.size].filter(Boolean).join(", ")} ×
+                  {i.quantity}
                 </p>
               </div>
               <p>{fmtLine(i)}</p>

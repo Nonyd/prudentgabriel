@@ -263,6 +263,7 @@ export async function fulfillPaidOrder(params: {
               qty: i.quantity,
               priceNGN: i.price,
               custom: i.sizeMode === "CUSTOM",
+              optionLabel: i.optionLabel ?? undefined,
               measurements: snap.length ? formatSnapshotLines(snap) : undefined,
             };
           }),

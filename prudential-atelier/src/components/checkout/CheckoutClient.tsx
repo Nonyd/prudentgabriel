@@ -521,6 +521,7 @@ export function CheckoutClient() {
           colorHex: i.colorHex,
           colorId: i.colorId,
           sizeMode: i.sizeMode ?? "STANDARD",
+          optionId: i.optionId ?? null,
           measurements: i.measurements?.map((m) => ({
             key: m.key,
             value: m.typedValue,
@@ -731,8 +732,9 @@ export function CheckoutClient() {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{i.productName}</p>
                   <p className="text-sm text-charcoal-mid">
-                    {i.sizeMode === "CUSTOM" ? "Made to your measurements" : i.size}
-                    {i.color ? ` · ${i.color}` : ""}
+                    {[i.optionLabel, i.sizeMode === "CUSTOM" ? "Made to your measurements" : i.size, i.color]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </p>
                   {i.sizeMode === "CUSTOM" && i.measurements?.length ? (
                     <p className="mt-1 text-xs text-charcoal-mid">

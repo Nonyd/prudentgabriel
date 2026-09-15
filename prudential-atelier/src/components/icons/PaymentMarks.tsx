@@ -104,6 +104,7 @@ const SETS = {
   ngn: ["visa", "mastercard", "verve"] as const,
   flutterwave: ["visa", "mastercard", "verve", "paypal"] as const,
   intl: ["visa", "mastercard", "paypal"] as const,
+  cards: ["visa", "mastercard"] as const,
   all: ["visa", "mastercard", "verve", "paypal"] as const,
 };
 
@@ -131,10 +132,12 @@ export function PaymentMarks({
 
 export function GatewayPaymentMarks({
   gateway,
+  currency,
   className,
   markClassName,
 }: {
   gateway: "PAYSTACK" | "FLUTTERWAVE" | "STRIPE" | "MONNIFY";
+  currency?: string;
   className?: string;
   markClassName?: string;
 }) {
@@ -145,5 +148,8 @@ export function GatewayPaymentMarks({
     return <PaymentMarks set="flutterwave" className={className} markClassName={markClassName} />;
   }
   if (gateway === "MONNIFY") return null;
+  if (currency && currency !== "NGN") {
+    return <PaymentMarks set="cards" className={className} markClassName={markClassName} />;
+  }
   return <PaymentMarks set="ngn" className={className} markClassName={markClassName} />;
 }

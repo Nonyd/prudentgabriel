@@ -67,6 +67,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                     <span>{it.product.name}</span>
                   </td>
                   <td>
+                    {it.optionLabel ? (
+                      <>
+                        {it.optionLabel}
+                        {it.sizeMode === "CUSTOM" || it.size ? ", " : ""}
+                      </>
+                    ) : null}
                     {it.sizeMode === "CUSTOM" ? (
                       <span>
                         Made to your measurements

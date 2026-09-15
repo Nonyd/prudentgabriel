@@ -2,8 +2,8 @@ import { Column, Hr, Row, Section, Text } from "@react-email/components";
 import EmailLayout from "./components/EmailLayout";
 import EmailButton from "./components/EmailButton";
 import { CatalogHeading } from "./components/CatalogHeading";
-
 import { getPublicAppUrl } from "@/lib/app-url";
+import { formatGarmentChoice } from "@/lib/product-options";
 
 const APP = getPublicAppUrl();
 
@@ -14,6 +14,7 @@ export type OrderItemLine = {
   qty: number;
   priceNGN: number;
   custom?: boolean;
+  optionLabel?: string;
   measurements?: string[];
   leadTimeDays?: number;
   returnable?: boolean;
@@ -69,8 +70,12 @@ export default function OrderConfirmationEmail({
   const addr = addressSnapshot ?? {};
   const line = (i: OrderItemLine) => {
     const bits = [
-      i.name,
-      i.custom ? "Made to your measurements" : `Size ${i.size}`,
+      formatGarmentChoice({
+        name: i.name,
+        optionLabel: i.optionLabel,
+        size: i.size,
+        custom: i.custom,
+      }),
       i.color ? i.color : null,
       `×${i.qty}`,
     ]

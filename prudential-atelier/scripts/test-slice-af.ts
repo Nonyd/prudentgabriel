@@ -119,7 +119,8 @@ function runSource() {
   assert(!view.includes("Sell-through"), "sell-through copy is gone");
   assert(view.includes(COLLECTION_DOUBLE_COUNT_COPY), "double-count across collections is stated");
   assert(view.includes(NO_COLLECTION_ASSIGNMENTS_COPY), "unassigned collections have an honest empty state");
-  assert((panel.match(/<section className="card-surface/g) ?? []).length === 4, "four visuals on the page");
+  assert((panel.match(/<section className="card-surface/g) ?? []).length === 5, "five visuals on the page");
+  assert(panel.includes("By option"), "selling chart breaks down by option");
   assert(route.includes("requireAdminApi(\"reports\")"), "still behind reports");
   assert(route.includes("buildWhatsSelling"), "reports API reads the selling ledger");
   assert(bestsellers.includes("rankedProductIdsByUnitsSold"), "homepage Best sellers uses ledger ranking");
@@ -153,6 +154,7 @@ function runPure() {
         quantity: 1,
         size: "12",
         sizeMode: SizeMode.STANDARD,
+        optionLabel: null,
         lineTotal: 80_000,
       },
     ],
@@ -188,6 +190,7 @@ function runPure() {
         quantity: 1,
         size: "12",
         sizeMode: SizeMode.STANDARD,
+        optionLabel: null,
         lineTotal: 55_000,
       },
     ],
@@ -212,6 +215,7 @@ function runPure() {
         quantity: 1,
         size: "12",
         sizeMode: SizeMode.STANDARD,
+        optionLabel: null,
         lineTotal: 80_000,
       },
     ],
@@ -236,6 +240,7 @@ function runPure() {
         quantity: 3,
         size: "12",
         sizeMode: SizeMode.STANDARD,
+        optionLabel: null,
         lineTotal: 240_000,
       },
     ],
@@ -251,6 +256,13 @@ function runPure() {
   const second = aggregatePeriod(threeInput);
   assert(first.pieces[0]!.unitsSold === 3, "three units sold");
   assert(first.pieces[0]!.sizes[0]!.sold === 3, "size 12 took the three units");
+  assert(first.pieces[0]!.options.length === 0, "no option label means no option breakdown");
+
+  const withOption = aggregatePeriod({
+    ...threeInput,
+    items: threeInput.items.map((it) => ({ ...it, optionLabel: "Skirt" })),
+  });
+  assert(withOption.pieces[0]!.options.some((o) => o.option === "Skirt" && o.sold === 3), "option breakdown counts the version sold");
   assert(JSON.stringify(first.pieces) === JSON.stringify(second.pieces), "re-running a past period returns identical figures");
   assert(first.collections.length === 2, "the same sale is counted in each collection");
   assert(
@@ -275,6 +287,7 @@ function runPure() {
         quantity: 1,
         size: "Custom",
         sizeMode: SizeMode.CUSTOM,
+        optionLabel: null,
         lineTotal: 90_000,
       },
     ],

@@ -9,6 +9,7 @@ import { ShippingQuotePanel } from "@/components/admin/ShippingQuotePanel";
 import { orderWhatsAppUrl, phoneFromOrder } from "@/lib/shipping/whatsapp";
 import { OrderMeasurementsBlock } from "@/components/admin/OrderMeasurementsBlock";
 import { PrintGuideButton } from "@/components/admin/PrintGuideButton";
+import { formatChoiceShort, buildWorkroomSku } from "@/lib/product-options";
 import { AdminBankTransferProof } from "@/components/admin/AdminBankTransferProof";
 
 function formatAddress(snap: Record<string, string>) {
@@ -29,7 +30,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   const order = await prisma.order.findUnique({
     where: { id },
     include: {
-      items: { include: { product: { include: { images: true } }, variant: true } },
+      items: { include: { product: { include: { images: true } }, variant: true, option: { select: { skuPart: true, group: { select: { includeInSku: true } } } } } },
       user: true,
       shippingZone: true,
       coupon: true,
@@ -153,7 +154,21 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                     <span className="text-charcoal">{it.product.name}</span>
                   </td>
                   <td className="py-3 text-xs text-[#A8A8A4]">
-                    {it.sizeMode === "CUSTOM" ? "Custom" : it.size ?? it.variant?.size ?? "—"}
+                    {formatChoiceShort({
+                      optionLabel: it.optionLabel,
+                      size: it.sizeMode === "CUSTOM" ? null : it.size ?? it.variant?.size,
+                      custom: it.sizeMode === "CUSTOM",
+                    })}
+                    {it.variant?.sku ? (
+                      <span className="mt-1 block text-[10px] uppercase tracking-wide">
+                        {buildWorkroomSku({
+                          variantSku: it.variant.sku,
+                          includeInSku: it.option?.group.includeInSku ?? Boolean(it.optionLabel),
+                          optionLabel: it.optionLabel,
+                          skuPart: it.option?.skuPart,
+                        })}
+                      </span>
+                    ) : null}
                   </td>
                   <td className="py-3">{it.quantity}</td>
                   <td className="py-3 text-right">₦{Math.round(it.lineTotal).toLocaleString("en-NG")}</td>

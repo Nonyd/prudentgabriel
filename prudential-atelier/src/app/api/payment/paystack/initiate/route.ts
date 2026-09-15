@@ -6,8 +6,9 @@ import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { initializeTransaction } from "@/lib/payments/paystack";
 import { rtwGatewayEmail } from "@/lib/payments/payer-email";
-import { canAcceptRtwPayment, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
+import { canAcceptRtwPayment } from "@/lib/payments/rtw-totals";
 import { generatePaymentReference } from "@/lib/payments/index";
+import { asPaystackCurrency, paystackRtwMajor, paystackSubunits } from "@/lib/payments/paystack-amount";
 import { catchPaymentInit } from "@/lib/payments/catch-init";
 import { prepareRtwPaymentAttempt } from "@/lib/checkout-reservations";
 
@@ -59,8 +60,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing email" }, { status: 400 });
     }
 
-    const chargeNGN = rtwChargeAmountNGN(order);
-    if (chargeNGN < 1) {
+    const currency = asPaystackCurrency(order.currency);
+    const chargeMajor = paystackRtwMajor(order, currency);
+    const minCharge = currency === "NGN" ? 1 : 0.5;
+    if (chargeMajor < minCharge) {
       return NextResponse.json({ error: "This order is already paid" }, { status: 400 });
     }
     const reference =
@@ -70,7 +73,8 @@ export async function POST(req: NextRequest) {
 
     const init = await initializeTransaction({
       email,
-      amountKobo: Math.round(chargeNGN * 100),
+      amountKobo: paystackSubunits(chargeMajor),
+      currency,
       reference,
       callbackUrl,
       metadata: { orderId: order.id, orderNumber: order.orderNumber },

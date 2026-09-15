@@ -1,9 +1,11 @@
 /**
  * Single place that decides what a size costs.
  * Display, bag, order lines, catalog min, and PSP amounts all call this.
+ * Option adjustments enter here — never around it.
  */
 import type { ExchangeRatesNGN, ShopCurrency } from "@/lib/currency";
 import { convertFromNGN } from "@/lib/currency";
+import { cheapestOptionAdjustmentNGN, selectedOptionAdjustmentNGN } from "@/lib/product-options";
 
 export type PricedVariant = {
   priceNGN: number;
@@ -18,12 +20,20 @@ export type PricedProduct = {
   priceGBP?: number | null;
 };
 
-/** Sale ₦ counts only while the product is on sale. Flag off → list price. */
-export function effectiveUnitNGN(variant: PricedVariant, isOnSale: boolean): number {
-  if (isOnSale && variant.salePriceNGN != null && Number.isFinite(variant.salePriceNGN)) {
-    return variant.salePriceNGN;
-  }
-  return variant.priceNGN;
+export type PricedOptionAdj = { priceAdjustmentNGN?: number | null };
+
+/** Sale ₦ counts only while the product is on sale. Flag off → list price. Option adj is signed. */
+export function effectiveUnitNGN(
+  variant: PricedVariant,
+  isOnSale: boolean,
+  optionAdjustmentNGN = 0,
+): number {
+  const base =
+    isOnSale && variant.salePriceNGN != null && Number.isFinite(variant.salePriceNGN)
+      ? variant.salePriceNGN
+      : variant.priceNGN;
+  const adj = Number.isFinite(optionAdjustmentNGN) ? optionAdjustmentNGN : 0;
+  return base + adj;
 }
 
 export function saleFigureIsDormant(isOnSale: boolean, variants: PricedVariant[]): boolean {
@@ -31,9 +41,14 @@ export function saleFigureIsDormant(isOnSale: boolean, variants: PricedVariant[]
   return variants.some((v) => v.salePriceNGN != null && Number.isFinite(v.salePriceNGN));
 }
 
-export function minEffectiveNGN(variants: PricedVariant[], isOnSale: boolean): number {
+export function minEffectiveNGN(
+  variants: PricedVariant[],
+  isOnSale: boolean,
+  options?: PricedOptionAdj[] | null,
+): number {
   if (!variants.length) return 0;
-  return Math.min(...variants.map((v) => effectiveUnitNGN(v, isOnSale)));
+  const adj = cheapestOptionAdjustmentNGN(options);
+  return Math.min(...variants.map((v) => effectiveUnitNGN(v, isOnSale, adj)));
 }
 
 /**
@@ -42,8 +57,12 @@ export function minEffectiveNGN(variants: PricedVariant[], isOnSale: boolean): n
  * (or the denormalised column after save). basePriceNGN is no longer an independent catalog price;
  * the form field only seeds new size rows and “copy onto every size”.
  */
-export function derivedCatalogMinNGN(variants: PricedVariant[], isOnSale: boolean): number {
-  return minEffectiveNGN(variants, isOnSale);
+export function derivedCatalogMinNGN(
+  variants: PricedVariant[],
+  isOnSale: boolean,
+  options?: PricedOptionAdj[] | null,
+): number {
+  return minEffectiveNGN(variants, isOnSale, options);
 }
 
 export function pickVariantForPrice<T extends { id: string }>(
@@ -54,15 +73,18 @@ export function pickVariantForPrice<T extends { id: string }>(
   return variants.find((v) => v.id === variantId) ?? null;
 }
 
-/** Unselected: lowest among all sizes. Selected: that SKU. */
+/** Unselected size: lowest among all sizes. Unselected option: cheapest option. */
 export function displayPriceNGN<T extends PricedVariant & { id: string }>(
   variants: T[],
   variantId: string | null,
   isOnSale: boolean,
+  options?: Array<PricedOptionAdj & { id: string }> | null,
+  optionId?: string | null,
 ): number {
+  const adj = selectedOptionAdjustmentNGN(options, optionId);
   const selected = pickVariantForPrice(variants, variantId);
-  if (selected) return effectiveUnitNGN(selected, isOnSale);
-  return minEffectiveNGN(variants, isOnSale);
+  if (selected) return effectiveUnitNGN(selected, isOnSale, adj);
+  return minEffectiveNGN(variants, isOnSale, options);
 }
 
 export function resolveCurrencyOverride(
@@ -90,14 +112,40 @@ export function overrideOrConvert(
   return convertFromNGN(amountNGN, currency, rates);
 }
 
+/**
+ * Size-level USD/GBP override stays. The option's naira adjustment is converted and added,
+ * so a cheaper skirt is cheaper in every currency.
+ */
+export function overrideOrConvertWithOption(
+  amountNGN: number,
+  currency: ShopCurrency,
+  override: number | null | undefined,
+  rates: ExchangeRatesNGN,
+  optionAdjustmentNGN = 0,
+): number {
+  if (currency === "NGN") return amountNGN;
+  const adj = Number.isFinite(optionAdjustmentNGN) ? optionAdjustmentNGN : 0;
+  if (override != null && override > 0) {
+    return override + (adj !== 0 ? convertFromNGN(adj, currency, rates) : 0);
+  }
+  return convertFromNGN(amountNGN, currency, rates);
+}
+
 export function variantAmountInCurrency(
   variant: PricedVariant,
   product: PricedProduct,
   currency: ShopCurrency,
   rates: ExchangeRatesNGN,
+  optionAdjustmentNGN = 0,
 ): number {
-  const ngn = effectiveUnitNGN(variant, product.isOnSale);
-  return overrideOrConvert(ngn, currency, resolveCurrencyOverride(currency, variant, product), rates);
+  const ngn = effectiveUnitNGN(variant, product.isOnSale, optionAdjustmentNGN);
+  return overrideOrConvertWithOption(
+    ngn,
+    currency,
+    resolveCurrencyOverride(currency, variant, product),
+    rates,
+    optionAdjustmentNGN,
+  );
 }
 
 export function minAmountInCurrency(
@@ -105,9 +153,11 @@ export function minAmountInCurrency(
   product: PricedProduct,
   currency: ShopCurrency,
   rates: ExchangeRatesNGN,
+  options?: PricedOptionAdj[] | null,
 ): number {
   if (!variants.length) return 0;
-  return Math.min(...variants.map((v) => variantAmountInCurrency(v, product, currency, rates)));
+  const adj = cheapestOptionAdjustmentNGN(options);
+  return Math.min(...variants.map((v) => variantAmountInCurrency(v, product, currency, rates, adj)));
 }
 
 export function displayAmountInCurrency<T extends PricedVariant & { id: string }>(
@@ -116,10 +166,13 @@ export function displayAmountInCurrency<T extends PricedVariant & { id: string }
   product: PricedProduct,
   currency: ShopCurrency,
   rates: ExchangeRatesNGN,
+  options?: Array<PricedOptionAdj & { id: string }> | null,
+  optionId?: string | null,
 ): number {
+  const adj = selectedOptionAdjustmentNGN(options, optionId);
   const selected = pickVariantForPrice(variants, variantId);
-  if (selected) return variantAmountInCurrency(selected, product, currency, rates);
-  return minAmountInCurrency(variants, product, currency, rates);
+  if (selected) return variantAmountInCurrency(selected, product, currency, rates, adj);
+  return minAmountInCurrency(variants, product, currency, rates, options);
 }
 
 export function cartLineAmountInCurrency(

@@ -12,7 +12,7 @@ import { RecentlyViewed } from "@/components/common/RecentlyViewed";
 import { ViewTracker } from "@/components/product/ViewTracker";
 import { ReviewsSection, type ReviewItem } from "@/components/product/ReviewsSection";
 import type { ProductListItem } from "@/types/product";
-import { mapListVariant, mapProductToListItem } from "@/lib/map-product-list-item";
+import { mapListOptionGroup, mapListVariant, mapProductToListItem, listOptionGroupSelect } from "@/lib/map-product-list-item";
 import { getSetting } from "@/lib/settings";
 import { bespokeFromNGN, derivedCatalogMinNGN } from "@/lib/pricing";
 import { GALLERY_GRID_IMAGE_TAKE, gallerySwipeAlt } from "@/lib/product-gallery";
@@ -43,6 +43,11 @@ const getPublishedProduct = cache(async (slug: string) =>
       images: { orderBy: { sortOrder: "asc" } },
       variants: { orderBy: { priceNGN: "asc" } },
       colors: true,
+      optionGroup: {
+        include: {
+          options: { orderBy: { sortOrder: "asc" } },
+        },
+      },
       reviews: {
         where: { isApproved: true },
         include: { user: { select: { name: true, image: true } } },
@@ -56,6 +61,7 @@ const getPublishedProduct = cache(async (slug: string) =>
               images: { orderBy: { sortOrder: "asc" }, take: GALLERY_GRID_IMAGE_TAKE },
               variants: { orderBy: { priceNGN: "asc" } },
               colors: { take: 6 },
+              optionGroup: listOptionGroupSelect,
               _count: { select: { reviews: true } },
             },
           },
@@ -119,6 +125,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         images: { orderBy: { sortOrder: "asc" }, take: GALLERY_GRID_IMAGE_TAKE },
         variants: { orderBy: { priceNGN: "asc" } },
         colors: { take: 6 },
+        optionGroup: listOptionGroupSelect,
         _count: { select: { reviews: true } },
       },
     }),
@@ -155,7 +162,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
   });
   const bespokeFrom = product.isBespokeAvail
     ? bespokeFromNGN(
-        derivedCatalogMinNGN(product.variants, product.isOnSale),
+        derivedCatalogMinNGN(product.variants, product.isOnSale, product.optionGroup?.options),
         await getSetting("bespoke_from_markup"),
       )
     : null;
@@ -189,7 +196,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
   }));
   const aisle = productAisle(product);
   const productUrl = absolutePublicUrl(`/shop/${product.slug}`);
-  const priceNGN = derivedCatalogMinNGN(product.variants, product.isOnSale);
+  const priceNGN = derivedCatalogMinNGN(product.variants, product.isOnSale, product.optionGroup?.options);
 
   return (
     <>
@@ -235,6 +242,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
           images: galleryImages,
           variants: product.variants.map(mapListVariant),
           colors: product.colors,
+          optionGroup: mapListOptionGroup(product.optionGroup),
         }}
         averageRating={averageRating}
         reviewCount={reviewCount}
@@ -248,6 +256,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         customSurchargeKind={customCtx?.policy.surchargeKind ?? "NONE"}
         customSurchargeValue={customCtx?.policy.surchargeValue ?? 0}
         previousCm={customCtx?.previousCm ?? {}}
+        optionMeasurementOverrides={customCtx?.optionOverrides ?? []}
       />
       <div className="mx-auto max-w-site px-4 lg:px-10">
         <ReviewsSection

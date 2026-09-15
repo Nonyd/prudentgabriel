@@ -9,6 +9,7 @@ import { loadTakenSkus, resolvePreferredSku, uniqueSkuFromTaken } from "@/lib/pr
 import { allocateProductSlug } from "@/lib/product-slug-unique";
 import { revalidateProduct } from "@/lib/revalidate";
 import { derivedCatalogMinNGN } from "@/lib/pricing";
+import { syncProductOptionGroup } from "@/lib/sync-product-option-group";
 
 const PAGE_SIZE_DEFAULT = 20;
 
@@ -67,13 +68,14 @@ export async function GET(req: NextRequest) {
           select: { id: true, priceNGN: true, salePriceNGN: true },
           orderBy: { sortOrder: "asc" },
         },
+        optionGroup: { select: { options: { select: { priceAdjustmentNGN: true } } } },
         _count: { select: { orderItems: true } },
       },
     }),
   ]);
 
   const items = rows.map((p) => {
-    const minPrice = derivedCatalogMinNGN(p.variants, p.isOnSale);
+    const minPrice = derivedCatalogMinNGN(p.variants, p.isOnSale, p.optionGroup?.options);
     return {
       id: p.id,
       name: p.name,
@@ -130,7 +132,7 @@ export async function POST(req: NextRequest) {
     throw error;
   }
   const slug = await allocateProductSlug(prisma, { name: data.name, requested: data.slug });
-  const minPrice = derivedCatalogMinNGN(data.variants, data.isOnSale);
+  const minPrice = derivedCatalogMinNGN(data.variants, data.isOnSale, data.optionGroup?.options);
 
   try {
     const product = await prisma.$transaction(async (tx) => {
@@ -249,6 +251,8 @@ export async function POST(req: NextRequest) {
           },
         });
       }
+
+      await syncProductOptionGroup(tx, p.id, data.optionGroup);
 
       return p;
     });

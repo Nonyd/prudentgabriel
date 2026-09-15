@@ -32,7 +32,6 @@ const GATEWAY_META: Record<
   PAYSTACK: {
     title: "Card",
     subtitle: "Visa, Mastercard, Verve",
-    badge: "NGN",
   },
   FLUTTERWAVE: {
     title: "Card, bank, or mobile money",
@@ -232,7 +231,15 @@ export function PaymentMethodSelector({
           const meta = GATEWAY_META[gw];
           const isSelected = selected === gw;
           const badge =
-            gw === "STRIPE" ? (currency === "GBP" ? "GBP" : "USD") : gw === "FLUTTERWAVE" ? currency : meta.badge;
+            gw === "STRIPE"
+              ? currency === "GBP"
+                ? "GBP"
+                : "USD"
+              : gw === "FLUTTERWAVE" || gw === "PAYSTACK"
+                ? currency
+                : meta.badge;
+          const subtitle =
+            gw === "PAYSTACK" && currency !== "NGN" ? "Visa, Mastercard" : meta.subtitle;
 
           return (
             <button
@@ -264,10 +271,11 @@ export function PaymentMethodSelector({
                     <span className="font-sans text-[10px] uppercase text-lightbr">{badge}</span>
                   ) : null}
                 </div>
-                <p className="mt-0.5 font-body text-sm text-text-light">{meta.subtitle}</p>
+                <p className="mt-0.5 font-body text-sm text-text-light">{subtitle}</p>
                 {gw !== "MONNIFY" ? (
                   <GatewayPaymentMarks
                     gateway={gw}
+                    currency={currency}
                     className="mt-2.5 flex flex-wrap items-center gap-1 text-choc"
                   />
                 ) : null}
@@ -276,9 +284,11 @@ export function PaymentMethodSelector({
           );
         })}
       </div>
-      {currency === "NGN" && gateways.includes("PAYSTACK") ? (
+      {gateways.includes("PAYSTACK") ? (
         <p className="mt-3 font-body text-xs leading-relaxed text-text-light">
-          {paystackFeeCopy(amountNGN ?? amount).sentence}
+          {currency === "NGN"
+            ? paystackFeeCopy(amountNGN ?? amount).sentence
+            : "Paystack may add its international processing fee on the card screen. We do not add a house fee."}
         </p>
       ) : null}
     </div>

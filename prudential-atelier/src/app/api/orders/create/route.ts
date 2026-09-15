@@ -19,8 +19,8 @@ import { notifyNewOrder } from "@/lib/notifications";
 import { orderCreateBodySchema, type AddressInput } from "@/validations/order";
 import { resolveCheckoutShipping } from "@/lib/shipping/resolve-selection";
 import { generateCollectionCode } from "@/lib/shipping/collection";
-import { getLockedFx, lockForeignTotals, usdOverrideOrConvert, gbpOverrideOrConvert } from "@/lib/fx";
-import { effectiveUnitNGN, resolveCurrencyOverride } from "@/lib/pricing";
+import { getLockedFx, lockForeignTotals, ratesFromLockedFx } from "@/lib/fx";
+import { effectiveUnitNGN, overrideOrConvertWithOption, resolveCurrencyOverride } from "@/lib/pricing";
 import type { CartParcelLine } from "@/lib/shipping/options";
 import { fulfillPaidOrder } from "@/lib/order-payment";
 import {
@@ -36,6 +36,7 @@ import { resolveCustomCheckoutLine, syncProfileFromSnapshots } from "@/lib/custo
 import { logServerError } from "@/lib/logger";
 import { createLegalTermsSnapshot } from "@/lib/legal-tokens";
 import { sanitizeAttribution } from "@/lib/analytics/attribution";
+import { assertChosenOption } from "@/lib/product-options";
 
 function snapshotFromAddress(a: AddressInput) {
   return {
@@ -106,6 +107,9 @@ export async function POST(req: NextRequest) {
     surchargeNGN: number;
     customLeadTimeDays?: number | null;
     customReturnable?: boolean | null;
+    optionId: string | null;
+    optionLabel: string | null;
+    optionAdjustmentNGN: number;
   };
 
   function lineFromVariant(params: {
@@ -137,11 +141,16 @@ export async function POST(req: NextRequest) {
     color?: string;
     colorHex?: string;
     colorId?: string;
+    optionId?: string | null;
+    optionLabel?: string | null;
+    optionAdjustmentNGN?: number;
     fx: Awaited<ReturnType<typeof getLockedFx>>;
   }): Line {
-    const unit = effectiveUnitNGN(params.variant, params.product.isOnSale);
+    const adj = params.optionAdjustmentNGN ?? 0;
+    const unit = effectiveUnitNGN(params.variant, params.product.isOnSale, adj);
     const overrideUsd = resolveCurrencyOverride("USD", params.variant, params.product);
     const overrideGbp = resolveCurrencyOverride("GBP", params.variant, params.product);
+    const rates = ratesFromLockedFx(params.fx);
     return {
       productId: params.productId,
       variantId: params.variant.id,
@@ -151,8 +160,8 @@ export async function POST(req: NextRequest) {
       colorHex: params.colorHex,
       colorId: params.colorId,
       unitPrice: unit,
-      unitUsd: usdOverrideOrConvert(unit, overrideUsd, params.fx),
-      unitGbp: gbpOverrideOrConvert(unit, overrideGbp, params.fx),
+      unitUsd: overrideOrConvertWithOption(unit, "USD", overrideUsd, rates, adj),
+      unitGbp: overrideOrConvertWithOption(unit, "GBP", overrideGbp, rates, adj),
       category: params.product.category,
       productName: params.product.name,
       parcel: {
@@ -172,6 +181,9 @@ export async function POST(req: NextRequest) {
       },
       sizeMode: "STANDARD",
       surchargeNGN: 0,
+      optionId: params.optionId ?? null,
+      optionLabel: params.optionLabel ?? null,
+      optionAdjustmentNGN: params.optionAdjustmentNGN ?? 0,
     };
   }
 
@@ -198,6 +210,7 @@ export async function POST(req: NextRequest) {
         product: { select: productPriceSelect },
         variant: true,
         color: true,
+        option: { include: { group: true } },
       },
     });
 
@@ -218,6 +231,7 @@ export async function POST(req: NextRequest) {
           color: ci.color?.name,
           colorHex: ci.color?.hex,
           colorId: ci.colorId ?? undefined,
+          optionId: ci.optionId,
           fx,
         });
         if (!resolved.ok) {
@@ -229,6 +243,33 @@ export async function POST(req: NextRequest) {
       if (!ci.variant) {
         return NextResponse.json({ error: "Invalid cart item" }, { status: 400 });
       }
+      const chosen = assertChosenOption({
+        group: ci.option
+          ? {
+              isRequired: ci.option.group.isRequired,
+              includeInSku: ci.option.group.includeInSku,
+              label: ci.option.group.label,
+              options: [
+                {
+                  id: ci.option.id,
+                  label: ci.option.label,
+                  priceAdjustmentNGN: ci.option.priceAdjustmentNGN,
+                  isDefault: ci.option.isDefault,
+                  skuPart: ci.option.skuPart,
+                },
+              ],
+            }
+          : (
+              await prisma.productOptionGroup.findUnique({
+                where: { productId: ci.productId },
+                include: { options: { orderBy: { sortOrder: "asc" } } },
+              })
+            ),
+        optionId: ci.optionId,
+      });
+      if (!chosen.ok) {
+        return NextResponse.json({ error: chosen.error }, { status: 400 });
+      }
       lines.push(
         lineFromVariant({
           productId: ci.productId,
@@ -238,6 +279,9 @@ export async function POST(req: NextRequest) {
           color: ci.color?.name,
           colorHex: ci.color?.hex,
           colorId: ci.colorId ?? undefined,
+          optionId: chosen.chosen?.optionId ?? null,
+          optionLabel: chosen.chosen?.label ?? null,
+          optionAdjustmentNGN: chosen.chosen?.priceAdjustmentNGN ?? 0,
           fx,
         }),
       );
@@ -253,6 +297,7 @@ export async function POST(req: NextRequest) {
           color: gl.color,
           colorHex: gl.colorHex,
           colorId: gl.colorId,
+          optionId: gl.optionId,
           fx,
         });
         if (!resolved.ok) {
@@ -271,6 +316,14 @@ export async function POST(req: NextRequest) {
       if (!variant || variant.productId !== gl.productId) {
         return NextResponse.json({ error: "Invalid cart item" }, { status: 400 });
       }
+      const group = await prisma.productOptionGroup.findUnique({
+        where: { productId: gl.productId },
+        include: { options: { orderBy: { sortOrder: "asc" } } },
+      });
+      const chosen = assertChosenOption({ group, optionId: gl.optionId });
+      if (!chosen.ok) {
+        return NextResponse.json({ error: chosen.error }, { status: 400 });
+      }
       lines.push(
         lineFromVariant({
           productId: gl.productId,
@@ -280,6 +333,9 @@ export async function POST(req: NextRequest) {
           color: gl.color,
           colorHex: gl.colorHex,
           colorId: gl.colorId,
+          optionId: chosen.chosen?.optionId ?? null,
+          optionLabel: chosen.chosen?.label ?? null,
+          optionAdjustmentNGN: chosen.chosen?.priceAdjustmentNGN ?? 0,
           fx,
         }),
       );
@@ -579,6 +635,9 @@ export async function POST(req: NextRequest) {
             surchargeNGN: line.surchargeNGN,
             customLeadTimeDays: line.customLeadTimeDays ?? null,
             customReturnable: line.customReturnable ?? null,
+            optionId: line.optionId,
+            optionLabel: line.optionLabel,
+            optionAdjustmentNGN: line.optionAdjustmentNGN,
           },
         });
       }

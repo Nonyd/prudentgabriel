@@ -89,9 +89,11 @@ export async function initializeBespokeGatewayPayment(params: {
   const verifyBase = `${appUrl}/api/bespoke/${order.id}/verify-payment`;
 
   if (params.gateway === "PAYSTACK") {
+    const psAmount = currency === "NGN" ? payAmountNGN : chargeForeign;
     const init = await initPaystack({
       email,
-      amountKobo: Math.round(payAmountNGN * 100),
+      amountKobo: Math.round(psAmount * 100),
+      currency,
       reference,
       callbackUrl: `${verifyBase}?gateway=PAYSTACK`,
       metadata: { bespokeOrderId: order.id, amountNGN: String(payAmountNGN) },

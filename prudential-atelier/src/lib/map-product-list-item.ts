@@ -1,5 +1,58 @@
-import type { ProductListItem, ProductListVariant } from "@/types/product";
+import type { ProductListItem, ProductListOptionGroup, ProductListVariant } from "@/types/product";
 import { derivedCatalogMinNGN } from "@/lib/pricing";
+
+export const listOptionGroupSelect = {
+  select: {
+    id: true,
+    label: true,
+    isRequired: true,
+    includeInSku: true,
+    options: {
+      orderBy: { sortOrder: "asc" as const },
+      select: {
+        id: true,
+        label: true,
+        priceAdjustmentNGN: true,
+        isDefault: true,
+        sortOrder: true,
+        skuPart: true,
+      },
+    },
+  },
+} as const;
+
+export function mapListOptionGroup(
+  group?: {
+    id: string;
+    label: string;
+    isRequired: boolean;
+    includeInSku: boolean;
+    options: Array<{
+      id: string;
+      label: string;
+      priceAdjustmentNGN: number;
+      isDefault: boolean;
+      sortOrder: number;
+      skuPart?: string | null;
+    }>;
+  } | null,
+): ProductListOptionGroup | null {
+  if (!group || group.options.length === 0) return null;
+  return {
+    id: group.id,
+    label: group.label,
+    isRequired: group.isRequired,
+    includeInSku: group.includeInSku,
+    options: group.options.map((o) => ({
+      id: o.id,
+      label: o.label,
+      priceAdjustmentNGN: o.priceAdjustmentNGN,
+      isDefault: o.isDefault,
+      sortOrder: o.sortOrder,
+      skuPart: o.skuPart ?? null,
+    })),
+  };
+}
 
 export function mapListVariant(v: {
   id: string;
@@ -46,7 +99,9 @@ export function mapProductToListItem(p: {
   colors: { id: string; name: string; hex: string; imageUrl?: string | null }[];
   _count: { reviews: number };
   customOffered?: boolean;
+  optionGroup?: ProductListOptionGroup | null;
 }): ProductListItem {
+  const optionGroup = mapListOptionGroup(p.optionGroup ?? null);
   return {
     id: p.id,
     name: p.name,
@@ -54,7 +109,9 @@ export function mapProductToListItem(p: {
     description: p.description,
     category: p.category,
     type: p.type,
-    basePriceNGN: p.variants.length ? derivedCatalogMinNGN(p.variants, p.isOnSale) : p.basePriceNGN,
+    basePriceNGN: p.variants.length
+      ? derivedCatalogMinNGN(p.variants, p.isOnSale, optionGroup?.options)
+      : p.basePriceNGN,
     priceUSD: p.priceUSD ?? null,
     priceGBP: p.priceGBP ?? null,
     isOnSale: p.isOnSale,
@@ -71,5 +128,6 @@ export function mapProductToListItem(p: {
     colors: p.colors,
     _count: p._count,
     customOffered: p.customOffered ?? false,
+    optionGroup,
   };
 }

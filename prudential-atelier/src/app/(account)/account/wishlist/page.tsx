@@ -12,6 +12,7 @@ export default async function WishlistPage() {
         include: {
           images: { where: { isPrimary: true }, take: 1 },
           variants: { orderBy: { sortOrder: "asc" } },
+          optionGroup: { select: { options: { select: { priceAdjustmentNGN: true } } } },
         },
       },
     },
@@ -26,7 +27,9 @@ export default async function WishlistPage() {
       productId: w.productId,
       name: w.product.name,
       slug: w.product.slug,
-      price: variants.length ? derivedCatalogMinNGN(variants, w.product.isOnSale) : w.product.priceNGN,
+      price: variants.length
+        ? derivedCatalogMinNGN(variants, w.product.isOnSale, w.product.optionGroup?.options)
+        : w.product.priceNGN,
       imageUrl: w.product.images[0]?.url ?? null,
       defaultVariantId: defaultVariant?.id ?? null,
       defaultSize: defaultVariant?.size ?? null,

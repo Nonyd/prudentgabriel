@@ -26,13 +26,22 @@ import {
   madeThenShippedCopy,
 } from "@/lib/production-time";
 import { productAisle } from "@/lib/rtw-aisle";
-import { CHOOSE_SIZE_MESSAGE } from "@/lib/bag-size";
+import { CHOOSE_SIZE_MESSAGE, guestLineId } from "@/lib/bag-size";
+import {
+  chooseOptionCta,
+  chooseOptionMessage,
+  fieldsForOption,
+  requiresOptionChoice,
+  selectedOptionAdjustmentNGN,
+  type OptionMeasurementOverride,
+} from "@/lib/product-options";
+import { ProductOptionRow } from "@/components/product/ProductOptionRow";
 import type { MeasurementFieldDef } from "@/lib/custom-size";
 import { displayAmountInCurrency, effectiveUnitNGN, variantAmountInCurrency } from "@/lib/pricing";
 import { useCurrencyStore } from "@/store/currencyStore";
 import { cn } from "@/lib/utils";
 import type { ProductType } from "@prisma/client";
-import type { ProductListItem, ProductListVariant } from "@/types/product";
+import type { ProductListItem, ProductListOptionGroup, ProductListVariant } from "@/types/product";
 import type { TypedUnit } from "@/lib/sizing";
 interface DetailProduct {
   id: string;
@@ -54,6 +63,7 @@ interface DetailProduct {
   images: { id: string; url: string; alt: string | null }[];
   variants: ProductListVariant[];
   colors: { id: string; name: string; hex: string }[];
+  optionGroup?: ProductListOptionGroup | null;
 }
 
 interface ProductDetailClientProps {
@@ -70,6 +80,7 @@ interface ProductDetailClientProps {
   customSurchargeKind?: "NONE" | "PERCENT" | "FLAT";
   customSurchargeValue?: number;
   previousCm?: Record<string, number>;
+  optionMeasurementOverrides?: OptionMeasurementOverride[];
 }
 
 function sentenceCase(value: string): string {
@@ -92,8 +103,11 @@ export function ProductDetailClient({
   customSurchargeKind = "NONE",
   customSurchargeValue = 0,
   previousCm = {},
+  optionMeasurementOverrides = [],
 }: ProductDetailClientProps) {
+  const optionGroup = product.optionGroup ?? null;
   const [variantId, setVariantId] = useState<string | null>(null);
+  const [optionId, setOptionId] = useState<string | null>(null);
   const [colorId, setColorId] = useState<string | null>(product.colors[0]?.id ?? null);
   const [qty, setQty] = useState(1);
   const [submitting, setSubmitting] = useState(false);
@@ -113,24 +127,41 @@ export function ProductDetailClient({
   const aisle = productAisle(product);
   const customAvailable = isCustomOfferedNow({ customOffered });
   const madeCopy = madeThenShippedCopy(productionCopy);
+  const optionAdj = selectedOptionAdjustmentNGN(optionGroup?.options, optionId);
+  const missingRequiredOption = requiresOptionChoice(optionGroup) && !optionId;
+  const activeCustomFields = fieldsForOption(customFields, optionMeasurementOverrides, optionId);
   const customSurcharge = customSurchargeNGN({
     unitNGN: product.basePriceNGN,
     kind: customSurchargeKind,
     value: customSurchargeValue,
   });
-  const customPriceNGN = product.basePriceNGN + customSurcharge;
+  const cheapestSize = standardSizes[0];
+  const customUnitNGN = cheapestSize
+    ? effectiveUnitNGN(cheapestSize, product.isOnSale, optionAdj) + customSurcharge
+    : product.basePriceNGN + optionAdj + customSurcharge;
+  const customPriceNGN = customUnitNGN;
   const priceLabel = formatPrice(
     fitMode === "custom"
       ? customPriceNGN * (currency === "NGN" ? 1 : currency === "USD" ? rates.USD : rates.GBP)
-      : displayAmountInCurrency(product.variants, variantId, product, currency, rates),
+      : displayAmountInCurrency(
+          product.variants,
+          variantId,
+          product,
+          currency,
+          rates,
+          optionGroup?.options,
+          optionId,
+        ),
     currency,
   );
   const ctaLabel =
     fitMode === "custom"
       ? `Add to bag · ${priceLabel}`
-      : !variant
-        ? `Choose your size`
-        : `Add to bag · ${priceLabel}`;
+      : missingRequiredOption
+        ? chooseOptionCta(optionGroup?.label)
+        : !variant
+          ? `Choose your size`
+          : `Add to bag · ${priceLabel}`;
   const color = product.colors.find((c) => c.id === colorId) ?? null;
 
   const productLike: ProductListItem = {
@@ -156,17 +187,23 @@ export function ProductDetailClient({
     variants: product.variants,
     colors: product.colors,
     _count: { reviews: reviewCount },
+    optionGroup,
   };
 
   const addToBagClick = async () => {
     if (submitting) return;
     if (fitMode === "custom") {
-      if (!customAvailable || !customFields.length) {
+      if (!customAvailable || !activeCustomFields.length) {
         setBagError("Custom measurements are not available for this piece.");
         return;
       }
-      const typed = typedFromForm(customFields, measureValues, measureUnit);
-      const checked = validateCustomMeasurements(customFields, typed);
+      if (missingRequiredOption) {
+        setBagError(chooseOptionMessage(optionGroup?.label));
+        document.getElementById("product-options")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      const typed = typedFromForm(activeCustomFields, measureValues, measureUnit);
+      const checked = validateCustomMeasurements(activeCustomFields, typed);
       if (!checked.ok) {
         setBagError(checked.errors[0]?.message ?? "Check your measurements");
         return;
@@ -176,7 +213,7 @@ export function ProductDetailClient({
       try {
         const result = await addToBag(
           {
-            id: `custom:${product.id}-${color?.id ?? "none"}`,
+            id: `custom:${product.id}-${color?.id ?? "none"}-${optionId ?? "none"}`,
             productId: product.id,
             productName: product.name,
             productSlug: product.slug,
@@ -197,6 +234,9 @@ export function ProductDetailClient({
             surchargeNGN: customSurcharge,
             customLeadTimeDays,
             customReturnable,
+            optionId: optionId ?? undefined,
+            optionLabel: optionGroup?.options.find((o) => o.id === optionId)?.label,
+            optionAdjustmentNGN: optionAdj,
           },
           { toastOnError: false },
         );
@@ -208,6 +248,11 @@ export function ProductDetailClient({
       }
       return;
     }
+    if (missingRequiredOption) {
+      setBagError(chooseOptionMessage(optionGroup?.label));
+      document.getElementById("product-options")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     if (!variant) {
       setBagError(CHOOSE_SIZE_MESSAGE);
       document.getElementById("product-sizes")?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -216,10 +261,10 @@ export function ProductDetailClient({
     setBagError(null);
     setSubmitting(true);
     try {
-      const unit = effectiveUnitNGN(variant, product.isOnSale);
+      const unit = effectiveUnitNGN(variant, product.isOnSale, optionAdj);
       const result = await addToBag(
         {
-          id: `${variant.id}-${color?.id ?? "none"}`,
+            id: guestLineId(variant.id, color?.id, optionId),
           productId: product.id,
           productName: product.name,
           productSlug: product.slug,
@@ -230,10 +275,13 @@ export function ProductDetailClient({
           colorHex: color?.hex,
           imageUrl: product.images[0]?.url ?? "",
           priceNGN: unit,
-          priceUSD: variantAmountInCurrency(variant, product, "USD", rates),
-          priceGBP: variantAmountInCurrency(variant, product, "GBP", rates),
+          priceUSD: variantAmountInCurrency(variant, product, "USD", rates, optionAdj),
+          priceGBP: variantAmountInCurrency(variant, product, "GBP", rates, optionAdj),
           quantity: qty,
           category: product.category,
+          optionId: optionId ?? undefined,
+          optionLabel: optionGroup?.options.find((o) => o.id === optionId)?.label,
+          optionAdjustmentNGN: optionAdj,
         },
         { toastOnError: false },
       );
@@ -288,7 +336,12 @@ export function ProductDetailClient({
 
           <Divider className="my-6" />
 
-          <PriceDisplay product={productLike} selectedVariant={variant} />
+          <PriceDisplay
+            product={productLike}
+            selectedVariant={variant}
+            options={optionGroup?.options}
+            optionId={optionId}
+          />
 
           {product.saleEndsAt && product.isOnSale && (
             <CountdownTimer endsAt={product.saleEndsAt} className="mt-2" />
@@ -324,6 +377,20 @@ export function ProductDetailClient({
               </div>
             </div>
           )}
+
+          {optionGroup && optionGroup.options.length > 0 ? (
+            <div className="mb-6">
+              <ProductOptionRow
+                label={optionGroup.label}
+                options={optionGroup.options}
+                selectedId={optionId}
+                onSelect={(id) => {
+                  setOptionId(id);
+                  setBagError(null);
+                }}
+              />
+            </div>
+          ) : null}
 
           {customAvailable ? (
             <div className="mb-6 min-w-0">
@@ -404,7 +471,7 @@ export function ProductDetailClient({
           ) : null}
           {fitMode === "custom" && customAvailable ? (
             <CustomMeasurementsForm
-              fields={customFields}
+              fields={activeCustomFields}
               previousCm={previousCm}
               leadTimeDays={customLeadTimeDays}
               returnable={customReturnable}
@@ -460,7 +527,12 @@ export function ProductDetailClient({
                 aria-hidden
               />
             ) : null}
-            {fitMode === "standard" && !variant ? (
+            {fitMode === "standard" && missingRequiredOption ? (
+              <span className="flex w-full items-center justify-center gap-3">
+                <span>{chooseOptionCta(optionGroup?.label)}</span>
+                <span>{priceLabel}</span>
+              </span>
+            ) : fitMode === "standard" && !variant ? (
               <span className="flex w-full items-center justify-center gap-3">
                 <span>Choose your size</span>
                 <span>{priceLabel}</span>

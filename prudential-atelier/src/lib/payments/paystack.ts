@@ -15,6 +15,7 @@ export async function initializeTransaction(params: {
   reference: string;
   callbackUrl: string;
   metadata: Record<string, string>;
+  currency?: "NGN" | "USD" | "GBP";
 }): Promise<PaystackInitResult> {
   const secret = await getPaystackSecret();
   if (!secret) throw new Error("Paystack secret key is not configured");
@@ -28,6 +29,7 @@ export async function initializeTransaction(params: {
     body: JSON.stringify({
       email: params.email,
       amount: params.amountKobo,
+      currency: params.currency ?? "NGN",
       reference: params.reference,
       callback_url: params.callbackUrl,
       metadata: params.metadata,

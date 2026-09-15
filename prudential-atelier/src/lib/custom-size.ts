@@ -148,10 +148,12 @@ export function cartLineKey(params: {
   productId: string;
   variantId?: string | null;
   colorId?: string | null;
+  optionId?: string | null;
 }): string {
   const color = params.colorId?.trim() || "";
-  if (params.sizeMode === "CUSTOM") return `CUSTOM:${params.productId}:${color}`;
-  return `STANDARD:${params.variantId ?? ""}:${color}`;
+  const option = params.optionId?.trim() ? `:${params.optionId.trim()}` : "";
+  if (params.sizeMode === "CUSTOM") return `CUSTOM:${params.productId}:${color}${option}`;
+  return `STANDARD:${params.variantId ?? ""}:${color}${option}`;
 }
 
 export function isCustomLine(sizeMode: SizeMode | string | null | undefined): boolean {

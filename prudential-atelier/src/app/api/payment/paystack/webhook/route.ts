@@ -6,11 +6,13 @@ import { fulfillPaidOrder } from "@/lib/order-payment";
 import { notifyPaymentFailed } from "@/lib/notifications";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
 import { fulfillPaidBespokeBalance } from "@/lib/bespoke-payment";
-import { rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
 import { markRtwOrderPaymentFailed } from "@/lib/checkout-reservations";
 import {
+  expectedPaystackConsultationBind,
+  expectedPaystackRtwBind,
+} from "@/lib/payments/paystack-amount";
+import {
   assertPspChargeBinds,
-  expectedAmountInPspUnits,
   PaymentBindError,
 } from "@/lib/payment-bind";
 
@@ -64,12 +66,16 @@ export async function POST(req: NextRequest) {
       } else if (isConsultation && bookingId) {
         const booking = await prisma.consultationBooking.findUnique({ where: { id: bookingId } });
         if (booking) {
+          const expected = await expectedPaystackConsultationBind({
+            feeNGN: booking.feeNGN,
+            currency: booking.currency,
+          });
           assertPspChargeBinds(
             {
               id: booking.id,
               storedReference: booking.paymentRef,
-              expectedAmount: expectedAmountInPspUnits(PaymentGateway.PAYSTACK, booking.feeNGN),
-              expectedCurrency: "NGN",
+              expectedAmount: expected.amount,
+              expectedCurrency: expected.currency,
             },
             {
               gateway: PaymentGateway.PAYSTACK,
@@ -88,12 +94,13 @@ export async function POST(req: NextRequest) {
       } else if (orderId) {
         const order = await prisma.order.findUnique({ where: { id: orderId } });
         if (order) {
+          const expected = expectedPaystackRtwBind(order);
           assertPspChargeBinds(
             {
               id: order.id,
               storedReference: order.paymentRef,
-              expectedAmount: expectedAmountInPspUnits(PaymentGateway.PAYSTACK, rtwChargeAmountNGN(order)),
-              expectedCurrency: String(order.currency),
+              expectedAmount: expected.amount,
+              expectedCurrency: expected.currency,
             },
             {
               gateway: PaymentGateway.PAYSTACK,

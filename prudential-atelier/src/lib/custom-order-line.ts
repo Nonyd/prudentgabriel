@@ -10,9 +10,10 @@ import {
   type TypedMeasurement,
 } from "@/lib/custom-size";
 import { getCustomGlobals } from "@/lib/custom-settings";
-import { effectiveUnitNGN, resolveCurrencyOverride } from "@/lib/pricing";
-import { gbpOverrideOrConvert, usdOverrideOrConvert, type LockedFx } from "@/lib/fx";
+import { effectiveUnitNGN, overrideOrConvertWithOption, resolveCurrencyOverride } from "@/lib/pricing";
+import { gbpOverrideOrConvert, ratesFromLockedFx, usdOverrideOrConvert, type LockedFx } from "@/lib/fx";
 import type { CartParcelLine } from "@/lib/shipping/options";
+import { fieldsForOption, assertChosenOption } from "@/lib/product-options";
 import { assertCustomLineAllowed } from "@/lib/custom-availability";
 
 export type CustomResolvedLine = {
@@ -35,6 +36,9 @@ export type CustomResolvedLine = {
   surchargeNGN: number;
   customLeadTimeDays: number;
   customReturnable: boolean;
+  optionId: string | null;
+  optionLabel: string | null;
+  optionAdjustmentNGN: number;
 };
 
 export async function resolveCustomCheckoutLine(params: {
@@ -44,6 +48,7 @@ export async function resolveCustomCheckoutLine(params: {
   color?: string;
   colorHex?: string;
   colorId?: string;
+  optionId?: string | null;
   fx: LockedFx;
 }): Promise<{ ok: true; line: CustomResolvedLine } | { ok: false; error: string; status: number }> {
   const product = await prisma.product.findUnique({
@@ -51,6 +56,14 @@ export async function resolveCustomCheckoutLine(params: {
     include: {
       measurementFields: { include: { field: true }, orderBy: { sortOrder: "asc" } },
       variants: { orderBy: { priceNGN: "asc" } },
+      optionGroup: {
+        include: {
+          options: {
+            orderBy: { sortOrder: "asc" },
+            include: { measurementFields: { include: { field: true }, orderBy: { sortOrder: "asc" } } },
+          },
+        },
+      },
     },
   });
   if (!product) {
@@ -60,7 +73,14 @@ export async function resolveCustomCheckoutLine(params: {
   if (!allowed.ok) {
     return { ok: false, status: allowed.status, error: allowed.error };
   }
-  const fields = product.measurementFields.map((pm) => ({
+  const chosen = assertChosenOption({
+    group: product.optionGroup,
+    optionId: params.optionId,
+  });
+  if (!chosen.ok) {
+    return { ok: false, status: 400, error: chosen.error };
+  }
+  const productFields = product.measurementFields.map((pm) => ({
     key: pm.field.key,
     label: pm.field.label,
     helpText: pm.field.helpText,
@@ -69,6 +89,19 @@ export async function resolveCustomCheckoutLine(params: {
     required: pm.required,
     sortOrder: pm.sortOrder,
   }));
+  const overrides = (product.optionGroup?.options ?? []).map((o) => ({
+    optionId: o.id,
+    fields: o.measurementFields.map((pm) => ({
+      key: pm.field.key,
+      label: pm.field.label,
+      helpText: pm.field.helpText,
+      minCm: pm.field.minCm,
+      maxCm: pm.field.maxCm,
+      required: pm.required,
+      sortOrder: pm.sortOrder,
+    })),
+  }));
+  const fields = fieldsForOption(productFields, overrides, chosen.chosen?.optionId ?? null);
   if (!fields.length) {
     return { ok: false, status: 400, error: "No measurements are configured for this piece" };
   }
@@ -80,7 +113,8 @@ export async function resolveCustomCheckoutLine(params: {
   const policy = resolveCustomPolicy({ product, globals });
   const pricedPool = standardVariants(product.variants);
   const priced = (pricedPool.length ? pricedPool : product.variants).slice().sort((a, b) => a.priceNGN - b.priceNGN)[0];
-  const unitBase = priced ? effectiveUnitNGN(priced, product.isOnSale) : product.priceNGN;
+  const optionAdj = chosen.chosen?.priceAdjustmentNGN ?? 0;
+  const unitBase = priced ? effectiveUnitNGN(priced, product.isOnSale, optionAdj) : product.priceNGN + optionAdj;
   const surcharge = customSurchargeNGN({
     unitNGN: unitBase,
     kind: policy.surchargeKind,
@@ -89,6 +123,7 @@ export async function resolveCustomCheckoutLine(params: {
   const unit = unitBase + surcharge;
   const overrideUsd = priced ? resolveCurrencyOverride("USD", priced, product) : product.priceUSD;
   const overrideGbp = priced ? resolveCurrencyOverride("GBP", priced, product) : product.priceGBP;
+  const rates = ratesFromLockedFx(params.fx);
   return {
     ok: true,
     line: {
@@ -100,8 +135,8 @@ export async function resolveCustomCheckoutLine(params: {
       colorHex: params.colorHex,
       colorId: params.colorId,
       unitPrice: unit,
-      unitUsd: usdOverrideOrConvert(unit, overrideUsd, params.fx),
-      unitGbp: gbpOverrideOrConvert(unit, overrideGbp, params.fx),
+      unitUsd: overrideOrConvertWithOption(unit, "USD", overrideUsd, rates, optionAdj),
+      unitGbp: overrideOrConvertWithOption(unit, "GBP", overrideGbp, rates, optionAdj),
       category: product.category,
       productName: product.name,
       parcel: {
@@ -120,6 +155,9 @@ export async function resolveCustomCheckoutLine(params: {
       surchargeNGN: surcharge,
       customLeadTimeDays: policy.leadTimeDays,
       customReturnable: policy.returnable,
+      optionId: chosen.chosen?.optionId ?? null,
+      optionLabel: chosen.chosen?.label ?? null,
+      optionAdjustmentNGN: optionAdj,
     },
   };
 }

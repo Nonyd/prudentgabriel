@@ -8,6 +8,7 @@ import { allocateProductSlug } from "@/lib/product-slug-unique";
 import { missingPublishNeeds, joinNeedLabels } from "@/lib/product-wizard";
 import { revalidateProduct } from "@/lib/revalidate";
 import { canInlineEditPrice, derivedCatalogMinNGN } from "@/lib/pricing";
+import { syncProductOptionGroup } from "@/lib/sync-product-option-group";
 import { destroyStoredMedia } from "@/lib/media/destroy";
 import { executeProductCascade, previewProductCascade, ProductCascadeError } from "@/lib/product-cascade-delete";
 import { logServerError } from "@/lib/logger";
@@ -25,6 +26,14 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
       variants: { orderBy: { sortOrder: "asc" } },
       colors: true,
       measurementFields: { include: { field: true }, orderBy: { sortOrder: "asc" } },
+      optionGroup: {
+        include: {
+          options: {
+            orderBy: { sortOrder: "asc" },
+            include: { measurementFields: { orderBy: { sortOrder: "asc" } } },
+          },
+        },
+      },
       bundleItems: {
         orderBy: { sortOrder: "asc" },
         include: { targetProduct: { select: { id: true, name: true } } },
@@ -165,7 +174,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     }
   }
 
-  const minPrice = derivedCatalogMinNGN(data.variants, data.isOnSale);
+  const minPrice = derivedCatalogMinNGN(data.variants, data.isOnSale, data.optionGroup?.options);
 
   const oldVariants = await prisma.productVariant.findMany({
     where: { productId: id },
@@ -331,6 +340,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           },
         });
       }
+
+      await syncProductOptionGroup(tx, id, data.optionGroup);
 
     });
 

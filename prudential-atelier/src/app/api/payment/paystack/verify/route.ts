@@ -4,11 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { verifyTransaction } from "@/lib/payments/paystack";
 import { fulfillPaidOrder } from "@/lib/order-payment";
-import { rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
+import { expectedPaystackRtwBind } from "@/lib/payments/paystack-amount";
 import { markRtwOrderPaymentFailed } from "@/lib/checkout-reservations";
 import {
   assertPspChargeBinds,
-  expectedAmountInPspUnits,
   PaymentBindError,
 } from "@/lib/payment-bind";
 
@@ -30,12 +29,13 @@ export async function GET(req: NextRequest) {
     }
 
     if (result.status === "success") {
+      const expected = expectedPaystackRtwBind(order);
       assertPspChargeBinds(
         {
           id: order.id,
           storedReference: order.paymentRef,
-          expectedAmount: expectedAmountInPspUnits(PaymentGateway.PAYSTACK, rtwChargeAmountNGN(order)),
-          expectedCurrency: String(order.currency),
+          expectedAmount: expected.amount,
+          expectedCurrency: expected.currency,
         },
         {
           gateway: PaymentGateway.PAYSTACK,

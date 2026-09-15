@@ -19,6 +19,14 @@ export default async function AdminEditProductPage({
       variants: { orderBy: { sortOrder: "asc" } },
       colors: true,
       measurementFields: { include: { field: true }, orderBy: { sortOrder: "asc" } },
+      optionGroup: {
+        include: {
+          options: {
+            orderBy: { sortOrder: "asc" },
+            include: { measurementFields: { orderBy: { sortOrder: "asc" } } },
+          },
+        },
+      },
       bundleItems: { select: { targetProductId: true, targetProduct: { select: { name: true } } } },
     },
   });
