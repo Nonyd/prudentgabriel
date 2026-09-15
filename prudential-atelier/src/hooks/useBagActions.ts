@@ -7,6 +7,7 @@ import { deleteCartLine, patchCartLine, postCartLine } from "@/lib/cart-client";
 import {
   applyGuestSizeChange,
   capGuestQuantity,
+  guestLineId,
   type BagSizeOption,
 } from "@/lib/bag-size";
 import { bagErrorMessage } from "@/lib/quick-add";
@@ -58,8 +59,8 @@ export function useBagActions() {
           id:
             item.id ??
             (item.sizeMode === "CUSTOM"
-              ? `custom:${item.productId}-${item.colorId ?? "none"}`
-              : `${item.variantId}-${item.colorId ?? "none"}`),
+              ? `custom:${item.productId}-${item.colorId ?? "none"}-${item.optionId ?? "none"}`
+              : guestLineId(item.variantId, item.colorId, item.optionId)),
         },
         { open: openOnSuccess },
       );
@@ -78,6 +79,7 @@ export function useBagActions() {
         unit: m.typedUnit,
       })),
       typedUnit: item.typedUnit === "in" || item.typedUnit === "cm" ? item.typedUnit : undefined,
+      optionId: item.optionId ?? null,
     });
     if (!result.ok) {
       const message = bagErrorMessage(result.error);
@@ -111,11 +113,12 @@ export function useBagActions() {
       if (!line || line.sizeMode === "CUSTOM") return false;
       const priced = applyGuestSizeChange(line, option);
       const product = { isOnSale, priceUSD: option.priceUSD, priceGBP: option.priceGBP };
+      const adj = line.optionAdjustmentNGN ?? 0;
       const withPrices: CartItem = {
         ...priced,
-        priceNGN: effectiveUnitNGN(option, isOnSale),
-        priceUSD: variantAmountInCurrency(option, product, "USD", rates),
-        priceGBP: variantAmountInCurrency(option, product, "GBP", rates),
+        priceNGN: effectiveUnitNGN(option, isOnSale, adj),
+        priceUSD: variantAmountInCurrency(option, product, "USD", rates, adj),
+        priceGBP: variantAmountInCurrency(option, product, "GBP", rates, adj),
       };
       const rest = items.filter((i) => i.id !== id);
       const clash = rest.find((i) => i.id === withPrices.id);

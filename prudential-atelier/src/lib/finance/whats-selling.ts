@@ -14,6 +14,7 @@ import {
   type SellingCollection,
   type SellingPiece,
   type SellingSizeRow,
+  type SellingOptionRow,
   type WhatsSellingReport,
 } from "@/lib/finance/whats-selling-view";
 
@@ -29,6 +30,7 @@ export {
   type NotSellingPiece,
   type SellingCollection,
   type SellingPiece,
+  type SellingOptionRow,
   type SellingSizeRow,
   type SellingSort,
   type WhatsSellingReport,
@@ -58,6 +60,7 @@ export type OrderItemSnap = {
   size: string | null;
   sizeMode: string | null;
   lineTotal: number;
+  optionLabel: string | null;
 };
 
 export type ReturnSnap = {
@@ -164,12 +167,19 @@ export function aggregatePeriod(input: {
     revenueNGN: number;
     orderedToMeasure: number;
     sizeSold: Map<string, number>;
+    optionSold: Map<string, number>;
   };
   const acc = new Map<string, Acc>();
   const ensure = (productId: string): Acc => {
     let row = acc.get(productId);
     if (!row) {
-      row = { unitsSold: 0, revenueNGN: 0, orderedToMeasure: 0, sizeSold: new Map() };
+      row = {
+        unitsSold: 0,
+        revenueNGN: 0,
+        orderedToMeasure: 0,
+        sizeSold: new Map(),
+        optionSold: new Map(),
+      };
       acc.set(productId, row);
     }
     return row;
@@ -202,6 +212,9 @@ export function aggregatePeriod(input: {
         row.unitsSold += remaining;
         const size = item.size || variantsById.get(item.variantId ?? "")?.size || "?";
         row.sizeSold.set(size, (row.sizeSold.get(size) ?? 0) + remaining);
+        if (item.optionLabel?.trim()) {
+          row.optionSold.set(item.optionLabel, (row.optionSold.get(item.optionLabel) ?? 0) + remaining);
+        }
       }
     }
   });
@@ -212,6 +225,9 @@ export function aggregatePeriod(input: {
       const sizes: SellingSizeRow[] = Array.from(row.sizeSold.entries())
         .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
         .map(([size, sold]) => ({ size, sold }));
+      const options: SellingOptionRow[] = Array.from(row.optionSold.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([option, sold]) => ({ option, sold }));
       return {
         productId,
         slug: product?.slug ?? productId,
@@ -221,6 +237,7 @@ export function aggregatePeriod(input: {
         revenueNGN: row.revenueNGN,
         orderedToMeasure: row.orderedToMeasure,
         sizes,
+        options,
       };
     })
     .filter((p) => p.unitsSold > 0 || p.orderedToMeasure > 0 || p.revenueNGN > 0);
@@ -347,6 +364,7 @@ async function loadItemsAndReturns(
         size: true,
         sizeMode: true,
         lineTotal: true,
+        optionLabel: true,
       },
     }),
     prisma.order.findMany({
@@ -384,6 +402,7 @@ async function loadItemsAndReturns(
       size: it.size,
       sizeMode: it.sizeMode,
       lineTotal: it.lineTotal,
+      optionLabel: it.optionLabel,
     })),
     returns,
   };

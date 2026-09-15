@@ -22,8 +22,11 @@ export function canChooseBagSize(): boolean {
   return true;
 }
 
-export function guestLineId(variantId: string, colorId?: string | null): string {
-  return `${variantId}-${colorId?.trim() || "none"}`;
+export function guestLineId(variantId: string, colorId?: string | null, optionId?: string | null): string {
+  const color = colorId?.trim() || "none";
+  const option = optionId?.trim() || "none";
+  if (option === "none") return `${variantId}-${color}`;
+  return `${variantId}-${color}-${option}`;
 }
 
 export function applyGuestSizeChange<
@@ -34,11 +37,12 @@ export function applyGuestSizeChange<
     quantity: number;
     colorId?: string;
     sizeMode?: string;
+    optionId?: string | null;
   },
 >(line: T, next: BagSizeOption): T {
   return {
     ...line,
-    id: guestLineId(next.id, line.colorId),
+    id: guestLineId(next.id, line.colorId, line.optionId),
     variantId: next.id,
     size: next.size,
     quantity: capGuestQuantity(line.quantity),

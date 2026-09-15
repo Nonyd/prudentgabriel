@@ -5,6 +5,7 @@ import { derivedCatalogMinNGN } from "@/lib/pricing";
 import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
 import { publishedProductIdsForCollection } from "@/lib/collection-products";
 import { unitsSoldByProductId } from "@/lib/finance/whats-selling";
+import { listOptionGroupSelect, mapListOptionGroup } from "@/lib/map-product-list-item";
 
 const TYPES = new Set(["RTW", "BESPOKE"] as const);
 
@@ -200,6 +201,7 @@ export async function queryProductList(
       },
     },
     colors: { select: { id: true, name: true, hex: true, imageUrl: true } },
+    optionGroup: listOptionGroupSelect,
     _count: { select: { reviews: true } },
   } satisfies Prisma.ProductSelect;
 
@@ -246,7 +248,9 @@ export async function queryProductList(
     description: "",
     category: p.category,
     type: p.type,
-    basePriceNGN: p.variants.length ? derivedCatalogMinNGN(p.variants, p.isOnSale) : p.basePriceNGN,
+    basePriceNGN: p.variants.length
+      ? derivedCatalogMinNGN(p.variants, p.isOnSale, p.optionGroup?.options)
+      : p.basePriceNGN,
     priceUSD: p.priceUSD,
     priceGBP: p.priceGBP,
     isOnSale: p.isOnSale,
@@ -269,6 +273,7 @@ export async function queryProductList(
       priceGBP: v.priceGBP,
     })),
     colors: p.colors,
+    optionGroup: mapListOptionGroup(p.optionGroup),
     _count: p._count,
   }));
 

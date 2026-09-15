@@ -26,6 +26,7 @@ import { swipeableGallery } from "@/lib/product-gallery";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import type { ProductListItem } from "@/types/product";
 import { minAmountInCurrency } from "@/lib/pricing";
+import { requiresOptionChoice } from "@/lib/product-options";
 
 export interface ProductCardProps {
   product: ProductListItem;
@@ -62,7 +63,13 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
   }, []);
 
   const saleOn = product.isOnSale && product.variants.some((v) => v.salePriceNGN != null);
-  const lowestEffShopper = minAmountInCurrency(product.variants, product, currency, rates);
+  const lowestEffShopper = minAmountInCurrency(
+    product.variants,
+    product,
+    currency,
+    rates,
+    product.optionGroup?.options,
+  );
   const multi = product.variants.length > 1;
 
   const gallery = product.images.filter((im) => im.url?.trim());
@@ -82,6 +89,7 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
     { ...product, isOnSale: false },
     currency,
     rates,
+    product.optionGroup?.options,
   );
 
   const formatShopper = (n: number) => formatPrice(n, currency);
@@ -94,6 +102,13 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
   const garmentAlt = primary?.alt?.trim() || product.name;
 
   const goToProduct = () => router.push(`/shop/${product.slug}`);
+  const openQuickAdd = () => {
+    if (requiresOptionChoice(product.optionGroup)) {
+      goToProduct();
+      return;
+    }
+    qa.open();
+  };
 
   const priceBlock = (
     <>
@@ -240,7 +255,7 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
           productName={product.name}
           productId={product.id}
           isOpen={qa.isOpen}
-          onOpen={qa.open}
+          onOpen={openQuickAdd}
           passThroughSwipe={mobileSwipe}
         />
         {qa.isOpen ? (
@@ -251,7 +266,7 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
       <div className="product-gallery-meta" onClick={goToProduct}>
         {!qa.isOpen ? (
           <div className="mb-3 hidden justify-center md:flex">
-            <QuickAddDesktopTrigger product={product} isOpen={qa.isOpen} onOpen={qa.open} />
+            <QuickAddDesktopTrigger product={product} isOpen={qa.isOpen} onOpen={openQuickAdd} />
           </div>
         ) : null}
         <h3

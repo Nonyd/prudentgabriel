@@ -103,6 +103,38 @@ export const productAdminSchema = z.object({
     )
     .optional()
     .default([]),
+  optionGroup: z
+    .object({
+      id: z.string().optional(),
+      label: z.string().trim().min(1).max(80),
+      isRequired: z.boolean().default(true),
+      includeInSku: z.boolean().default(true),
+      sortOrder: z.coerce.number().int().default(0),
+      options: z
+        .array(
+          z.object({
+            id: z.string().optional(),
+            label: z.string().trim().min(1).max(80),
+            priceAdjustmentNGN: z.coerce.number(),
+            isDefault: z.boolean().default(false),
+            sortOrder: z.coerce.number().int().default(0),
+            skuPart: z.string().max(8).optional().nullable(),
+            measurementFieldIds: z
+              .array(
+                z.object({
+                  fieldId: z.string().min(1),
+                  required: z.boolean().default(true),
+                  sortOrder: z.number().int().default(0),
+                }),
+              )
+              .optional()
+              .default([]),
+          }),
+        )
+        .min(2, "Add at least two choices"),
+    })
+    .nullable()
+    .optional(),
   defaultWeightKg: optNonNegNumber(),
   defaultLengthCm: optNonNegNumber(),
   defaultWidthCm: optNonNegNumber(),
@@ -121,6 +153,16 @@ export const productAdminSchema = z.object({
       path: ["name"],
       message: "Give this piece a name to save a draft.",
     });
+  }
+  if (data.optionGroup && data.optionGroup.options.length > 0) {
+    const defaults = data.optionGroup.options.filter((o) => o.isDefault);
+    if (defaults.length !== 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["optionGroup", "options"],
+        message: "Mark exactly one choice as the default.",
+      });
+    }
   }
   if (!data.isPublished) return;
   for (const need of missingPublishNeeds(data)) {

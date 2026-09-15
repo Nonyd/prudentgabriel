@@ -153,6 +153,7 @@ export function WhatsSellingPanel({ data }: { data: WhatsSellingReport }) {
     [data.collections, sort],
   );
   const sizePieces = pieces.filter((p) => p.sizes.some((s) => s.sold > 0));
+  const optionPieces = pieces.filter((p) => p.options.some((o) => o.sold > 0));
 
   function downloadCsv() {
     const csv = whatsSellingCsv(data.pieces.slice().sort((a, b) => compareSelling(sort, a, b)));
@@ -228,6 +229,38 @@ export function WhatsSellingPanel({ data }: { data: WhatsSellingReport }) {
                           <span className="h-2 bg-[var(--choc-deep)]" style={{ width: `${(s.sold / maxSold) * 100}%` }} />
                         </div>
                         <span className="text-[#6B6B68]">{s.sold} ordered</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section className="card-surface p-5">
+        <h2 className="font-display text-lg text-choc">By option</h2>
+        <p className="mt-1 font-sans text-xs text-[#6B6B68]">
+          Trousers versus skirt, jacket or none — which version she actually ordered.
+        </p>
+        {optionPieces.length === 0 ? (
+          <p className="mt-3 font-sans text-sm text-[#6B6B68]">{NO_SALES_COPY}</p>
+        ) : (
+          <div className="mt-4 space-y-5">
+            {optionPieces.map((p) => {
+              const maxSold = Math.max(...p.options.map((o) => o.sold), 1);
+              return (
+                <div key={p.productId}>
+                  <p className="font-sans text-sm text-choc">{p.name}</p>
+                  <ul className="mt-2 space-y-1.5">
+                    {p.options.map((o) => (
+                      <li key={o.option} className="grid grid-cols-[6rem_1fr_auto] items-center gap-2 font-sans text-xs">
+                        <span className="truncate text-[#6B6B68]">{o.option}</span>
+                        <div className="flex h-2 overflow-hidden bg-sand/70">
+                          <span className="h-2 bg-[var(--choc-deep)]" style={{ width: `${(o.sold / maxSold) * 100}%` }} />
+                        </div>
+                        <span className="text-[#6B6B68]">{o.sold} ordered</span>
                       </li>
                     ))}
                   </ul>

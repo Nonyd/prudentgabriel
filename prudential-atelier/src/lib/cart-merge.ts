@@ -5,6 +5,7 @@ export type MergeLine = {
   colorId?: string | null;
   quantity: number;
   sizeMode?: "STANDARD" | "CUSTOM";
+  optionId?: string | null;
   measurements?: {
     key: string;
     label: string;
@@ -18,9 +19,12 @@ export function cartLineKey(variantId: string, colorId?: string | null): string 
   return `${variantId}:${colorId ?? ""}`;
 }
 
-function mergeKey(line: Pick<MergeLine, "productId" | "variantId" | "colorId" | "sizeMode">): string {
-  if (line.sizeMode === "CUSTOM") return `CUSTOM:${line.productId}:${line.colorId ?? ""}`;
-  return `STANDARD:${cartLineKey(line.variantId ?? "", line.colorId)}`;
+function mergeKey(
+  line: Pick<MergeLine, "productId" | "variantId" | "colorId" | "sizeMode" | "optionId">,
+): string {
+  const option = line.optionId?.trim() ? `:${line.optionId.trim()}` : "";
+  if (line.sizeMode === "CUSTOM") return `CUSTOM:${line.productId}:${line.colorId ?? ""}${option}`;
+  return `STANDARD:${cartLineKey(line.variantId ?? "", line.colorId)}${option}`;
 }
 
 /**

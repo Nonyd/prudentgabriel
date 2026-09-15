@@ -20,6 +20,14 @@ export async function duplicateProduct(sourceId: string): Promise<{ id: string; 
       variants: { orderBy: { sortOrder: "asc" } },
       images: { orderBy: { sortOrder: "asc" } },
       colors: true,
+      optionGroup: {
+        include: {
+          options: {
+            orderBy: { sortOrder: "asc" },
+            include: { measurementFields: { orderBy: { sortOrder: "asc" } } },
+          },
+        },
+      },
     },
   });
   if (!source) return null;
@@ -100,6 +108,34 @@ export async function duplicateProduct(sourceId: string): Promise<{ id: string; 
           name: c.name,
           hex: c.hex,
           imageUrl: c.imageUrl,
+        },
+      });
+    }
+
+    if (source.optionGroup && source.optionGroup.options.length > 0) {
+      await tx.productOptionGroup.create({
+        data: {
+          productId: product.id,
+          label: source.optionGroup.label,
+          isRequired: source.optionGroup.isRequired,
+          includeInSku: source.optionGroup.includeInSku,
+          sortOrder: source.optionGroup.sortOrder,
+          options: {
+            create: source.optionGroup.options.map((o) => ({
+              label: o.label,
+              priceAdjustmentNGN: o.priceAdjustmentNGN,
+              isDefault: o.isDefault,
+              sortOrder: o.sortOrder,
+              skuPart: o.skuPart,
+              measurementFields: {
+                create: o.measurementFields.map((mf) => ({
+                  fieldId: mf.fieldId,
+                  required: mf.required,
+                  sortOrder: mf.sortOrder,
+                })),
+              },
+            })),
+          },
         },
       });
     }

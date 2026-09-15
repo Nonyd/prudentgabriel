@@ -2,7 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { ProductListItem } from "@/types/product";
 import { derivedCatalogMinNGN, minEffectiveNGN } from "@/lib/pricing";
-import { mapListVariant } from "@/lib/map-product-list-item";
+import { mapListVariant, listOptionGroupSelect, mapListOptionGroup } from "@/lib/map-product-list-item";
 import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
 
 export const collectionListProductInclude = {
@@ -19,6 +19,7 @@ export const collectionListProductInclude = {
     },
   },
   colors: { select: { id: true, name: true, hex: true, imageUrl: true } },
+  optionGroup: listOptionGroupSelect,
   _count: { select: { reviews: true } },
 } satisfies Prisma.ProductInclude;
 
@@ -36,7 +37,9 @@ export function mapProductToListItemWithMeta(p: CollectionListProduct): Collecti
     description: p.description,
     category: p.category,
     type: p.type,
-    basePriceNGN: p.variants.length ? derivedCatalogMinNGN(p.variants, p.isOnSale) : p.basePriceNGN,
+    basePriceNGN: p.variants.length
+      ? derivedCatalogMinNGN(p.variants, p.isOnSale, p.optionGroup?.options)
+      : p.basePriceNGN,
     priceUSD: p.priceUSD,
     priceGBP: p.priceGBP,
     isOnSale: p.isOnSale,
@@ -53,6 +56,7 @@ export function mapProductToListItemWithMeta(p: CollectionListProduct): Collecti
     colors: p.colors,
     _count: p._count,
     customOffered: p.customOffered,
+    optionGroup: mapListOptionGroup(p.optionGroup),
     createdAt: p.createdAt.toISOString(),
   };
 }
@@ -207,10 +211,18 @@ export function sortCollectionProducts(
   const copy = [...products];
   switch (sort) {
     case "price-asc":
-      copy.sort((a, b) => minEffectiveNGN(a.variants, a.isOnSale) - minEffectiveNGN(b.variants, b.isOnSale));
+      copy.sort(
+        (a, b) =>
+          minEffectiveNGN(a.variants, a.isOnSale, a.optionGroup?.options) -
+          minEffectiveNGN(b.variants, b.isOnSale, b.optionGroup?.options),
+      );
       break;
     case "price-desc":
-      copy.sort((a, b) => minEffectiveNGN(b.variants, b.isOnSale) - minEffectiveNGN(a.variants, a.isOnSale));
+      copy.sort(
+        (a, b) =>
+          minEffectiveNGN(b.variants, b.isOnSale, b.optionGroup?.options) -
+          minEffectiveNGN(a.variants, a.isOnSale, a.optionGroup?.options),
+      );
       break;
     case "newest":
       copy.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());

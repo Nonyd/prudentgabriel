@@ -90,6 +90,7 @@ export function toPublicRtwOrderDto(order: {
     product: { name: string };
     size: string | null;
     sizeMode?: string | null;
+    optionLabel?: string | null;
     quantity: number;
   }[];
 }): PublicRtwOrderDto {
@@ -100,7 +101,12 @@ export function toPublicRtwOrderDto(order: {
     paid: rtwPaidInChargedCurrency(order),
     items: order.items.map((i) => ({
       name: i.product.name,
-      size: i.sizeMode === "CUSTOM" ? "Made to your measurements" : (i.size ?? "—"),
+      size: [
+        i.optionLabel?.trim() || null,
+        i.sizeMode === "CUSTOM" ? "Made to your measurements" : (i.size ?? "—"),
+      ]
+        .filter(Boolean)
+        .join(", "),
       quantity: i.quantity,
     })),
   };

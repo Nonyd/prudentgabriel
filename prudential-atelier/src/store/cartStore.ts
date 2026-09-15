@@ -32,6 +32,9 @@ export interface CartItem {
   surchargeNGN?: number;
   customLeadTimeDays?: number;
   customReturnable?: boolean;
+  optionId?: string;
+  optionLabel?: string;
+  optionAdjustmentNGN?: number;
 }
 
 interface CartStore {

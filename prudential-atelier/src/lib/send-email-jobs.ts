@@ -110,7 +110,7 @@ export async function buildCampaignHtml(params: {
         name: p.name,
         slug: p.slug,
         imageUrl: img?.url ? optimizeImageUrl(img.url, 240) : null,
-        priceLabel: `From ₦${Math.round(p.variants.length ? derivedCatalogMinNGN(p.variants, p.isOnSale) : p.basePriceNGN).toLocaleString("en-NG")}`,
+        priceLabel: `From ₦${Math.round(p.variants.length ? derivedCatalogMinNGN(p.variants, p.isOnSale, p.optionGroup?.options) : p.basePriceNGN).toLocaleString("en-NG")}`,
       };
     });
     const rendered = await renderCollectionCampaignHtml({

@@ -22,6 +22,23 @@ export interface ProductListColor {
   imageUrl?: string | null;
 }
 
+export interface ProductListOption {
+  id: string;
+  label: string;
+  priceAdjustmentNGN: number;
+  isDefault: boolean;
+  sortOrder: number;
+  skuPart?: string | null;
+}
+
+export interface ProductListOptionGroup {
+  id: string;
+  label: string;
+  isRequired: boolean;
+  includeInSku: boolean;
+  options: ProductListOption[];
+}
+
 export interface ProductListItem {
   id: string;
   name: string;
@@ -42,4 +59,5 @@ export interface ProductListItem {
   colors: ProductListColor[];
   _count: { reviews: number };
   customOffered?: boolean;
+  optionGroup?: ProductListOptionGroup | null;
 }

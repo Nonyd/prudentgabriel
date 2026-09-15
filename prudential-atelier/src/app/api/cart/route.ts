@@ -19,6 +19,7 @@ const postSchema = z.object({
     )
     .optional(),
   typedUnit: z.enum(["cm", "in"]).optional(),
+  optionId: z.string().min(1).optional().nullable(),
 });
 
 export async function GET() {

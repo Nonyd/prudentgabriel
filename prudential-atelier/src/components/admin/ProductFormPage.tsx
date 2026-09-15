@@ -13,6 +13,7 @@ import { ProductType as PT } from "@prisma/client";
 import type { ProductListItem } from "@/types/product";
 import { productAdminSchema, type ProductAdminInput } from "@/validations/product";
 import { VariantManager } from "./VariantManager";
+import { ProductOptionGroupEditor } from "./ProductOptionGroupEditor";
 import { ProductCategoryField } from "./ProductCategoryField";
 import { buildDefaultProductSku, isGeneratedProductSku } from "@/lib/product-sku";
 import { getPublicAppUrl } from "@/lib/app-url";
@@ -43,6 +44,22 @@ type FullProduct = Product & {
   colors: ProductColor[];
   bundleItems: { targetProductId: string; targetProduct?: { name: string } }[];
   measurementFields?: { fieldId: string; required: boolean; sortOrder: number }[];
+  optionGroup?: {
+    id: string;
+    label: string;
+    isRequired: boolean;
+    includeInSku: boolean;
+    sortOrder: number;
+    options: Array<{
+      id: string;
+      label: string;
+      priceAdjustmentNGN: number;
+      isDefault: boolean;
+      sortOrder: number;
+      skuPart: string | null;
+      measurementFields: Array<{ fieldId: string; required: boolean; sortOrder: number }>;
+    }>;
+  } | null;
 };
 
 const STEPS = PRODUCT_WIZARD_STEPS;
@@ -83,6 +100,28 @@ function mapProductToForm(p: FullProduct): ProductAdminInput {
       required: m.required,
       sortOrder: m.sortOrder,
     })),
+    optionGroup: p.optionGroup
+      ? {
+          id: p.optionGroup.id,
+          label: p.optionGroup.label,
+          isRequired: p.optionGroup.isRequired,
+          includeInSku: p.optionGroup.includeInSku,
+          sortOrder: p.optionGroup.sortOrder,
+          options: p.optionGroup.options.map((o) => ({
+            id: o.id,
+            label: o.label,
+            priceAdjustmentNGN: o.priceAdjustmentNGN,
+            isDefault: o.isDefault,
+            sortOrder: o.sortOrder,
+            skuPart: o.skuPart,
+            measurementFieldIds: o.measurementFields.map((m) => ({
+              fieldId: m.fieldId,
+              required: m.required,
+              sortOrder: m.sortOrder,
+            })),
+          })),
+        }
+      : null,
     defaultWeightKg: p.defaultWeightKg ?? undefined,
     defaultLengthCm: p.defaultLengthCm ?? undefined,
     defaultWidthCm: p.defaultWidthCm ?? undefined,
@@ -151,6 +190,7 @@ const defaultCreate = (custom?: {
   customLeadTimeDays: undefined,
   customReturnable: custom?.returnable ?? false,
   measurementFieldIds: [],
+  optionGroup: null,
   defaultWeightKg: undefined,
   defaultLengthCm: undefined,
   defaultWidthCm: undefined,
@@ -934,6 +974,14 @@ export function ProductFormPage({
                   onRegenerate={(savedId ?? product?.id) ? regenerateSkus : undefined}
                 />
               )}
+            />
+            <ProductOptionGroupEditor
+              control={form.control}
+              watch={form.watch}
+              setValue={form.setValue}
+              libraryFields={libraryFields}
+              variants={variantsWatch ?? []}
+              isOnSale={Boolean(isOnSaleWatch)}
             />
             {form.formState.errors.variants && (
               <p className="mt-2 text-xs text-red-400">

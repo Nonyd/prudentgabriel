@@ -13,6 +13,8 @@ import { getCustomGlobals } from "@/lib/custom-settings";
 import { effectiveUnitNGN } from "@/lib/pricing";
 import { assertCustomLineAllowed } from "@/lib/custom-availability";
 import { logServerError } from "@/lib/logger";
+import { assertChosenOption, fieldsForOption } from "@/lib/product-options";
+import type { MeasurementFieldDef } from "@/lib/custom-size";
 
 function isMissingCartUserError(error: unknown): boolean {
   if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2003") {
@@ -29,6 +31,7 @@ export type CartLineInput = {
   sizeMode?: SizeMode | "STANDARD" | "CUSTOM";
   measurements?: TypedMeasurement[];
   typedUnit?: string | null;
+  optionId?: string | null;
 };
 
 const cartInclude = {
@@ -62,6 +65,7 @@ const cartInclude = {
   },
   variant: true,
   color: true,
+  option: true,
 } as const;
 
 export async function listCartLines(userId: string) {
@@ -72,13 +76,64 @@ export async function listCartLines(userId: string) {
   });
 }
 
+const optionGroupInclude = {
+  include: {
+    options: {
+      orderBy: { sortOrder: "asc" as const },
+      include: {
+        measurementFields: { include: { field: true }, orderBy: { sortOrder: "asc" as const } },
+      },
+    },
+  },
+} as const;
+
+function optionFields(option: {
+  measurementFields: Array<{
+    required: boolean;
+    sortOrder: number;
+    field: {
+      key: string;
+      label: string;
+      helpText: string | null;
+      minCm: number | null;
+      maxCm: number | null;
+    };
+  }>;
+}): MeasurementFieldDef[] {
+  return option.measurementFields.map((pm) => ({
+    key: pm.field.key,
+    label: pm.field.label,
+    helpText: pm.field.helpText,
+    minCm: pm.field.minCm,
+    maxCm: pm.field.maxCm,
+    required: pm.required,
+    sortOrder: pm.sortOrder,
+  }));
+}
+
 export async function addCartLine(userId: string, input: CartLineInput) {
   const colorIdNorm = input.colorId?.trim() ? input.colorId : null;
   const quantity = Math.max(1, Math.floor(input.quantity));
   const sizeMode: SizeMode = input.sizeMode === "CUSTOM" ? "CUSTOM" : "STANDARD";
 
+  const product = await prisma.product.findUnique({
+    where: { id: input.productId },
+    include: { optionGroup: optionGroupInclude },
+  });
+  if (!product) {
+    return { ok: false as const, status: 404, error: "Product not found" };
+  }
+  const chosen = assertChosenOption({
+    group: product.optionGroup,
+    optionId: input.optionId,
+  });
+  if (!chosen.ok) {
+    return { ok: false as const, status: 400, error: chosen.error };
+  }
+  const optionId = chosen.chosen?.optionId ?? null;
+
   if (sizeMode === "CUSTOM") {
-    return addCustomLine(userId, input, colorIdNorm, quantity);
+    return addCustomLine(userId, input, colorIdNorm, quantity, optionId, product.optionGroup);
   }
 
   const variantId = input.variantId?.trim();
@@ -98,7 +153,13 @@ export async function addCartLine(userId: string, input: CartLineInput) {
     return { ok: false as const, status: 400, error: "Use made-to-measure on the product page" };
   }
 
-  const lineKey = cartLineKey({ sizeMode: "STANDARD", productId: input.productId, variantId, colorId: colorIdNorm });
+  const lineKey = cartLineKey({
+    sizeMode: "STANDARD",
+    productId: input.productId,
+    variantId,
+    colorId: colorIdNorm,
+    optionId,
+  });
   const existing = await prisma.cartItem.findFirst({
     where: { userId, lineKey },
   });
@@ -108,7 +169,7 @@ export async function addCartLine(userId: string, input: CartLineInput) {
       const nextQty = existing.quantity + quantity;
       const cartItem = await prisma.cartItem.update({
         where: { id: existing.id },
-        data: { quantity: nextQty, variantId, sizeMode: "STANDARD" },
+        data: { quantity: nextQty, variantId, sizeMode: "STANDARD", optionId },
         include: cartInclude,
       });
       return { ok: true as const, cartItem };
@@ -122,6 +183,7 @@ export async function addCartLine(userId: string, input: CartLineInput) {
         colorId: colorIdNorm,
         quantity,
         sizeMode: "STANDARD",
+        optionId,
         lineKey,
       },
       include: cartInclude,
@@ -141,6 +203,24 @@ async function addCustomLine(
   input: CartLineInput,
   colorIdNorm: string | null,
   quantity: number,
+  optionId: string | null,
+  optionGroup: {
+    options: Array<{
+      id: string;
+      priceAdjustmentNGN: number;
+      measurementFields: Array<{
+        required: boolean;
+        sortOrder: number;
+        field: {
+          key: string;
+          label: string;
+          helpText: string | null;
+          minCm: number | null;
+          maxCm: number | null;
+        };
+      }>;
+    }>;
+  } | null,
 ) {
   const product = await prisma.product.findUnique({
     where: { id: input.productId },
@@ -156,7 +236,7 @@ async function addCustomLine(
   if (!product) {
     return { ok: false as const, status: 404, error: "Product not found" };
   }
-  const fields = product.measurementFields.map((pm) => ({
+  const productFields = product.measurementFields.map((pm) => ({
     key: pm.field.key,
     label: pm.field.label,
     helpText: pm.field.helpText,
@@ -165,6 +245,11 @@ async function addCustomLine(
     required: pm.required,
     sortOrder: pm.sortOrder,
   }));
+  const overrides = (optionGroup?.options ?? []).map((o) => ({
+    optionId: o.id,
+    fields: optionFields(o),
+  }));
+  const fields = fieldsForOption(productFields, overrides, optionId);
   if (!fields.length) {
     return { ok: false as const, status: 400, error: "No measurements are configured for this piece" };
   }
@@ -179,7 +264,11 @@ async function addCustomLine(
   const cheapest = (pricedPool.length ? pricedPool : product.variants)
     .slice()
     .sort((a, b) => a.priceNGN - b.priceNGN)[0];
-  const unit = cheapest ? effectiveUnitNGN(cheapest, product.isOnSale) : product.priceNGN;
+  const optionAdj =
+    optionId != null
+      ? optionGroup?.options.find((o) => o.id === optionId)?.priceAdjustmentNGN ?? 0
+      : 0;
+  const unit = cheapest ? effectiveUnitNGN(cheapest, product.isOnSale, optionAdj) : product.priceNGN + optionAdj;
   const surchargeNGN = customSurchargeNGN({
     unitNGN: unit,
     kind: policy.surchargeKind,
@@ -190,6 +279,7 @@ async function addCustomLine(
     sizeMode: "CUSTOM",
     productId: input.productId,
     colorId: colorIdNorm,
+    optionId,
   });
 
   try {
@@ -202,6 +292,7 @@ async function addCustomLine(
       sizeMode: SizeMode.CUSTOM,
       variantId: null,
       colorId: colorIdNorm,
+      optionId,
     };
     if (existing) {
       const cartItem = await prisma.cartItem.update({
@@ -271,6 +362,7 @@ export async function changeCartLineSize(userId: string, itemId: string, variant
     productId: item.productId,
     variantId: variant.id,
     colorId: item.colorId,
+    optionId: item.optionId,
   });
 
   const existing = await prisma.cartItem.findFirst({

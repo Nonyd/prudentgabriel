@@ -195,8 +195,13 @@ export function AccountOrdersClient({
                   <div>
                     <p className="font-sans text-sm text-choc">{item.product.name}</p>
                     <p className="font-sans text-xs text-text-light">
-                      {item.sizeMode === "CUSTOM" ? "Made to your measurements" : `Size ${item.size}`} · Qty{" "}
-                      {item.quantity}
+                      {[
+                        item.optionLabel,
+                        item.sizeMode === "CUSTOM" ? "Made to your measurements" : `Size ${item.size}`,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}{" "}
+                      · Qty {item.quantity}
                     </p>
                     {item.sizeMode === "CUSTOM" ? (
                       <p className="mt-1 font-sans text-xs text-text-mid">

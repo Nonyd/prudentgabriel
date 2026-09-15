@@ -15,6 +15,8 @@ type ServerCartRow = {
   measurements?: CartItem["measurements"];
   typedUnit?: string | null;
   surchargeNGN?: number;
+  optionId?: string | null;
+  option?: { id: string; label: string; priceAdjustmentNGN: number } | null;
   product: {
     id: string;
     name: string;
@@ -51,9 +53,10 @@ function serverRowToCartItem(
 ): CartItem {
   const sizeMode = row.sizeMode === "CUSTOM" ? "CUSTOM" : "STANDARD";
   const priceSource = row.variant ?? row.product.variants?.[0];
+  const optionAdj = row.option?.priceAdjustmentNGN ?? 0;
   const unitBase = priceSource
-    ? effectiveUnitNGN(priceSource, row.product.isOnSale)
-    : (row.product.priceNGN ?? 0);
+    ? effectiveUnitNGN(priceSource, row.product.isOnSale, optionAdj)
+    : (row.product.priceNGN ?? 0) + optionAdj;
   const unit = unitBase + (row.surchargeNGN ?? 0);
   const img = row.product.images[0]?.url ?? "";
   const priced = { isOnSale: row.product.isOnSale, priceUSD: row.product.priceUSD, priceGBP: row.product.priceGBP };
@@ -69,8 +72,12 @@ function serverRowToCartItem(
     colorHex: row.color?.hex,
     imageUrl: img,
     priceNGN: unit,
-    priceUSD: priceSource ? variantAmountInCurrency(priceSource, priced, "USD", rates) + (row.surchargeNGN ?? 0) * rates.USD : unit * rates.USD,
-    priceGBP: priceSource ? variantAmountInCurrency(priceSource, priced, "GBP", rates) + (row.surchargeNGN ?? 0) * rates.GBP : unit * rates.GBP,
+    priceUSD: priceSource
+      ? variantAmountInCurrency(priceSource, priced, "USD", rates, optionAdj) + (row.surchargeNGN ?? 0) * rates.USD
+      : unit * rates.USD,
+    priceGBP: priceSource
+      ? variantAmountInCurrency(priceSource, priced, "GBP", rates, optionAdj) + (row.surchargeNGN ?? 0) * rates.GBP
+      : unit * rates.GBP,
     quantity: row.quantity,
     category: row.product.category,
     sizeMode,
@@ -79,6 +86,9 @@ function serverRowToCartItem(
     surchargeNGN: row.surchargeNGN,
     customLeadTimeDays: row.product.customLeadTimeDays ?? undefined,
     customReturnable: row.product.customReturnable ?? undefined,
+    optionId: row.optionId ?? row.option?.id ?? undefined,
+    optionLabel: row.option?.label,
+    optionAdjustmentNGN: optionAdj,
   };
 }
 
@@ -116,6 +126,7 @@ export async function postCartLine(line: {
   sizeMode?: "STANDARD" | "CUSTOM";
   measurements?: { key: string; value: number; unit: "cm" | "in" }[];
   typedUnit?: "cm" | "in";
+  optionId?: string | null;
 }): Promise<{ ok: boolean; error?: string }> {
   const res = await fetch("/api/cart", {
     method: "POST",
@@ -171,6 +182,7 @@ export async function mergeGuestLinesIntoServer(local: CartItem[]): Promise<bool
         value: m.typedValue,
         unit: m.typedUnit,
       })),
+      optionId: line.optionId ?? null,
     });
     if (!result.ok) return false;
   }

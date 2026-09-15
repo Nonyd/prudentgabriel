@@ -3,7 +3,7 @@ import { Prisma, ProductType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ProductsTable, type ProductRow } from "@/components/admin/ProductsTable";
 import { MigrateImagesBanner } from "@/components/admin/MigrateImagesBanner";
-import { effectiveUnitNGN } from "@/lib/pricing";
+import { derivedCatalogMinNGN } from "@/lib/pricing";
 
 const PAGE_SIZE = 20;
 
@@ -49,6 +49,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       include: {
         images: { where: { isPrimary: true }, take: 1 },
         variants: { select: { id: true, priceNGN: true, salePriceNGN: true }, orderBy: { sortOrder: "asc" } },
+        optionGroup: { select: { options: { select: { priceAdjustmentNGN: true } } } },
         _count: { select: { orderItems: true } },
       },
     }),
@@ -58,8 +59,9 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   ]);
 
   const items: ProductRow[] = rows.map((p) => {
-    const prices = p.variants.map((v) => effectiveUnitNGN(v, p.isOnSale));
-    const minPrice = prices.length ? Math.min(...prices) : p.basePriceNGN;
+    const minPrice = p.variants.length
+      ? derivedCatalogMinNGN(p.variants, p.isOnSale, p.optionGroup?.options)
+      : p.basePriceNGN;
     return {
       id: p.id,
       name: p.name,
