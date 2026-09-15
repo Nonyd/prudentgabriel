@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { revalidateStorefront } from "@/lib/revalidate";
+import { isSkipDbBuild } from "@/lib/skip-db-build";
 import {
   SEED_SHOP_CATEGORIES,
   ShopCategoryError,
@@ -22,8 +23,12 @@ export type ShopCategoryRow = {
   productCount: number;
 };
 
+function seedRowsForBuild(): ShopCategoryRow[] {
+  return SEED_SHOP_CATEGORIES.map((row) => ({ ...row, productCount: 0 }));
+}
+
 export async function ensureShopCategories(): Promise<void> {
-  if (process.env.SKIP_DB_BUILD === "1") return;
+  if (isSkipDbBuild()) return;
   for (const seed of SEED_SHOP_CATEGORIES) {
     await prisma.shopCategory.upsert({
       where: { slug: seed.slug },
@@ -55,6 +60,7 @@ async function withCounts(
 }
 
 export async function listShopCategories(): Promise<ShopCategoryRow[]> {
+  if (isSkipDbBuild()) return seedRowsForBuild();
   await ensureShopCategories();
   const rows = await prisma.shopCategory.findMany({
     orderBy: [{ sortOrder: "asc" }, { label: "asc" }],
@@ -64,6 +70,9 @@ export async function listShopCategories(): Promise<ShopCategoryRow[]> {
 }
 
 export async function listStorefrontCategories(): Promise<ShopCategoryRow[]> {
+  if (isSkipDbBuild()) {
+    return seedRowsForBuild().filter((row) => row.slug !== UNCATEGORIZED_SLUG);
+  }
   await ensureShopCategories();
   const rows = await prisma.shopCategory.findMany({
     orderBy: [{ sortOrder: "asc" }, { label: "asc" }],

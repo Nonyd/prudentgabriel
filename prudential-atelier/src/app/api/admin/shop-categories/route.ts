@@ -6,6 +6,8 @@ import {
   ShopCategoryError,
 } from "@/lib/shop-categories";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const gate = await requireAdminApi("shop.products");
   if (!gate.ok) return gate.response;

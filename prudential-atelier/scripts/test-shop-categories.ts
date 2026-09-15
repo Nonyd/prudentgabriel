@@ -44,6 +44,10 @@ async function main() {
   assert(src("src/components/admin/ProductCategoryField.tsx").includes("Add a category"), "product form can add");
   assert(src("src/components/admin/ProductCategoryField.tsx").includes("Remove this category"), "product form can remove");
   assert(src("src/lib/shop-categories.ts").includes("UNCATEGORIZED"), "delete falls back to Uncategorized");
+  assert(
+    src("src/app/api/shop/categories/route.ts").includes('export const dynamic = "force-dynamic"'),
+    "shop categories are not prerendered without a database",
+  );
 
   await ensureShopCategories();
   const stamp = `cat-${Date.now()}`;
