@@ -21,7 +21,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const json = await req.json().catch(() => null);
   const parsed = bodySchema.safeParse(json);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Invalid media URL" },
+      { status: 400 },
+    );
   }
 
   try {

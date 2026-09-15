@@ -20,14 +20,20 @@ export async function getOrCreateClientProfile(userId: string): Promise<ClientPr
   const thresholds = await getTierThresholds();
   const tier = tierFromPoints(user.pointsBalance, thresholds);
 
-  return prisma.clientProfile.create({
-    data: {
-      userId,
-      loyaltyPoints: user.pointsBalance,
-      loyaltyTier: tier,
-      referredBy: user.referredById ?? undefined,
-    },
-  });
+  try {
+    return await prisma.clientProfile.create({
+      data: {
+        userId,
+        loyaltyPoints: user.pointsBalance,
+        loyaltyTier: tier,
+        referredBy: user.referredById ?? undefined,
+      },
+    });
+  } catch (error) {
+    const raced = await prisma.clientProfile.findUnique({ where: { userId } });
+    if (raced) return raced;
+    throw error;
+  }
 }
 
 export async function syncClientLoyaltyTier(userId: string, pointsBalance: number): Promise<void> {

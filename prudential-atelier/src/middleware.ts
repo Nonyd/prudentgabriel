@@ -1,18 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { auth } from "@/lib/auth.config";
-
-const ADMIN_ROLES = [
-  "SUPER_ADMIN",
-  "ADMIN",
-  "STAFF_ADMIN",
-  "BESPOKE_MANAGER",
-  "RTW_MANAGER",
-  "CONTENT_MANAGER",
-  "FINANCE_MANAGER",
-  "HR_MANAGER",
-  "CONSULTATION_MANAGER",
-];
+import { userHasAdminAccess } from "@/lib/login-paths";
 
 const MAINTENANCE_TTL_MS = 15_000;
 
@@ -91,7 +80,7 @@ export default auth(async function middleware(request) {
   }
 
   const role = (session?.user?.role as string | undefined) ?? "";
-  const isAdminUser = ADMIN_ROLES.includes(role);
+  const isAdminUser = userHasAdminAccess(session?.user);
   const skipMaintenanceGate =
     pathname.startsWith("/admin") ||
     pathname.startsWith("/staff") ||
@@ -171,7 +160,7 @@ export default auth(async function middleware(request) {
     const role = (session.user?.role as string | undefined) ?? "";
     const isStaff = session.user?.isStaff === true;
 
-    if (ADMIN_ROLES.includes(role)) {
+    if (userHasAdminAccess(session.user)) {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
 
@@ -192,7 +181,7 @@ export default auth(async function middleware(request) {
 
     const role = (session.user?.role as string | undefined) ?? "";
 
-    if (!ADMIN_ROLES.includes(role)) {
+    if (!userHasAdminAccess(session.user)) {
       return NextResponse.redirect(new URL("/login?tab=admin", request.url));
     }
 

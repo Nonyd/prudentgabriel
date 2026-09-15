@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
-import { hasAnyAdminPermission } from "@/lib/roles";
+import { userHasAdminAccess } from "@/lib/login-paths";
 import { sessionHasRole } from "@/lib/bespoke-roles";
 import { verifyCronRequest } from "@/lib/cron/verify";
 
@@ -37,7 +37,7 @@ export async function requireRoles(roles: string[]): Promise<AuthResult> {
 export async function requireAdmin(): Promise<AuthResult> {
   const gate = await requireSession();
   if (!gate.ok) return gate;
-  if (!hasAnyAdminPermission(gate.session.user.role)) {
+  if (!userHasAdminAccess(gate.session.user)) {
     return { ok: false, response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
   }
   return gate;
@@ -51,7 +51,7 @@ export async function requireStaffPortal(): Promise<AuthResult> {
   const gate = await requireSession();
   if (!gate.ok) return gate;
   const { role, isStaff } = gate.session.user;
-  if (isStaff === true || role === "STAFF" || hasAnyAdminPermission(role)) return gate;
+  if (isStaff === true || role === "STAFF" || userHasAdminAccess(gate.session.user)) return gate;
   return { ok: false, response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
 }
 

@@ -7,7 +7,7 @@ import { enforcePublicMaintenance } from "@/lib/maintenance";
 
 export default async function AccountGroupLayout({ children }: { children: React.ReactNode }) {
   const session = await authOrNull();
-  await enforcePublicMaintenance(session?.user?.role);
+  await enforcePublicMaintenance(session?.user);
 
   if (!session?.user) {
     redirect("/login?callbackUrl=/account");

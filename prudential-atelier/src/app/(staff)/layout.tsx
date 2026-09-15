@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default async function StaffLayout({ children }: { children: React.ReactNode }) {
   const session = await authOrNull();
-  await enforcePublicMaintenance(session?.user?.role);
+  await enforcePublicMaintenance(session?.user);
   if (!session?.user) {
     redirect("/login?tab=staff");
   }

@@ -372,6 +372,9 @@ export function ProductFormPage({
     });
     const data = (await res.json()) as ProductImage & { error?: string };
     if (!res.ok) {
+      if (res.status === 403) {
+        throw new Error("You do not have permission to add product photographs.");
+      }
       throw new Error(typeof data.error === "string" ? data.error : "Could not save image");
     }
     return {

@@ -69,7 +69,11 @@ export const productAdminSchema = z.object({
   basePriceUSD: optNonNegNumber(),
   basePriceGBP: optNonNegNumber(),
   isOnSale: z.boolean().default(false),
-  saleEndsAt: z.coerce.date().optional().nullable(),
+  saleEndsAt: z.preprocess((v) => {
+    if (v === "" || v === null || v === undefined) return null;
+    const d = v instanceof Date ? v : new Date(String(v));
+    return Number.isNaN(d.getTime()) ? null : d;
+  }, z.date().nullable().optional()),
   isPublished: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
   isNewArrival: z.boolean().default(false),

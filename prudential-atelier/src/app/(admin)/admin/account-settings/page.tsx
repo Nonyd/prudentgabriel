@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AdminAccountSettingsClient } from "@/components/admin/AdminAccountSettingsClient";
+import { resolveSessionAccess } from "@/lib/admin-auth";
 import { hasAnyAdminPermission } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 
@@ -8,7 +9,11 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminAccountSettingsPage() {
   const session = await auth();
-  if (!session?.user?.id || !hasAnyAdminPermission(session.user.role)) {
+  if (!session?.user?.id) {
+    redirect("/login?tab=admin");
+  }
+  const { role, actor } = await resolveSessionAccess(session);
+  if (!hasAnyAdminPermission(role, actor)) {
     redirect("/login?tab=admin");
   }
 
