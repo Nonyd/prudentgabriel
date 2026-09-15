@@ -25,7 +25,7 @@ const CARDS: {
   {
     href: "/admin/gallery",
     title: "Portfolio gallery",
-    description: "Curate Atelier, Bridal, and Kids gallery images shown on brand pages.",
+    description: "Curate stills and film for Atelier, Bridal, and Kids. Drag to reorder.",
     icon: Images,
   },
   {

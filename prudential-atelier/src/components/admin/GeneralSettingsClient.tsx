@@ -34,6 +34,8 @@ export function GeneralSettingsClient() {
   const [atelierBookings, setAtelierBookings] = useState(false);
   const [atelierSaving, setAtelierSaving] = useState(false);
   const [atelierSavedEnabled, setAtelierSavedEnabled] = useState(false);
+  const [retentionDays, setRetentionDays] = useState(90);
+  const [retentionSaving, setRetentionSaving] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -48,6 +50,7 @@ export function GeneralSettingsClient() {
             maintenanceModeEnabled?: boolean;
             maintenanceModeMessage?: string;
             atelierBookingsEnabled?: boolean;
+            analyticsDailyRetentionDays?: number;
           };
           setAutoConvert(Boolean(data.autoConvertApprovedQuotes));
           setMaintenanceEnabled(Boolean(data.maintenanceModeEnabled));
@@ -55,6 +58,9 @@ export function GeneralSettingsClient() {
           setMaintenanceMessage(data.maintenanceModeMessage ?? "");
           setAtelierBookings(Boolean(data.atelierBookingsEnabled));
           setAtelierSavedEnabled(Boolean(data.atelierBookingsEnabled));
+          if (typeof data.analyticsDailyRetentionDays === "number") {
+            setRetentionDays(data.analyticsDailyRetentionDays);
+          }
         }
       } finally {
         setAutoConvertLoading(false);
@@ -151,6 +157,26 @@ export function GeneralSettingsClient() {
       toast.error("Could not save atelier bookings setting");
     } finally {
       setAtelierSaving(false);
+    }
+  };
+
+  const onSaveRetention = async () => {
+    setRetentionSaving(true);
+    try {
+      const res = await fetch("/api/admin/settings/general", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ analyticsDailyRetentionDays: retentionDays }),
+      });
+      if (!res.ok) {
+        toast.error("Could not save visit retention");
+        return;
+      }
+      toast.success("Daily visit counts will be kept for that many days, then monthly totals");
+    } catch {
+      toast.error("Could not save visit retention");
+    } finally {
+      setRetentionSaving(false);
     }
   };
 
@@ -260,6 +286,37 @@ export function GeneralSettingsClient() {
               disabled={maintenanceLoading}
               onClick={() => void onSaveAtelier()}
             >
+              Save
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="card-surface p-6">
+        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+          House numbers
+        </p>
+        <div className="mt-4 border-t border-sand pt-4">
+          <p className="font-sans text-sm font-medium text-ink">Keep daily visit counts</p>
+          <p className="mt-1 font-sans text-xs leading-relaxed text-text-mid">
+            After this many days, daily path totals roll into monthly totals. No visitor list is kept
+            at either grain. 90 days covers a collection season and the previous period beside it.
+          </p>
+          <label className="mt-4 block max-w-xs">
+            <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+              Days
+            </span>
+            <input
+              type="number"
+              min={30}
+              max={730}
+              value={retentionDays}
+              onChange={(e) => setRetentionDays(Number(e.target.value))}
+              className="input-field w-full"
+            />
+          </label>
+          <div className="mt-5">
+            <Button type="button" loading={retentionSaving} onClick={() => void onSaveRetention()}>
               Save
             </Button>
           </div>

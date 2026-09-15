@@ -45,6 +45,16 @@ export const checkoutSchema = z.object({
   customReturnConsent: z.boolean().optional(),
   preferredContactMethod: z.enum(["WHATSAPP", "CALL", "EMAIL"]).optional(),
   paymentRef: z.string().regex(/^PA-ORDER-[A-Z0-9-]+$/i).optional(),
+  attribution: z
+    .object({
+      source: z.string().max(80).optional(),
+      medium: z.string().max(80).optional(),
+      campaign: z.string().max(120).optional(),
+      content: z.string().max(120).optional(),
+      referrer: z.string().max(120).optional(),
+      landingPath: z.string().max(200).optional(),
+    })
+    .optional(),
 });
 
 export const guestCartLineSchema = z.object({

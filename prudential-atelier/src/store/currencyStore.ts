@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { ESSENTIAL_CURRENCY_STORAGE_KEY } from "@/lib/cookie-consent";
 
 type Currency = "NGN" | "USD" | "GBP";
 
@@ -33,7 +34,7 @@ export const useCurrencyStore = create<CurrencyStore>()(
       setRates: (rates) => set({ rates }),
     }),
     {
-      name: "pa-currency",
+      name: ESSENTIAL_CURRENCY_STORAGE_KEY,
     },
   ),
 );

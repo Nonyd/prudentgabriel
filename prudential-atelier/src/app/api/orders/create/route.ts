@@ -35,6 +35,7 @@ import {
 import { resolveCustomCheckoutLine, syncProfileFromSnapshots } from "@/lib/custom-order-line";
 import { logServerError } from "@/lib/logger";
 import { createLegalTermsSnapshot } from "@/lib/legal-tokens";
+import { sanitizeAttribution } from "@/lib/analytics/attribution";
 
 function snapshotFromAddress(a: AddressInput) {
   return {
@@ -553,6 +554,7 @@ export async function POST(req: NextRequest) {
           guestCustom: !userId && hasCustom,
           customLeadTimeDays: maxCustomLeadDays(lines),
           customReturnable,
+          attribution: (sanitizeAttribution(data.attribution) ?? undefined) as Prisma.InputJsonValue | undefined,
         },
       });
 

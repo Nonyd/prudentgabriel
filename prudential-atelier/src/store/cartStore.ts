@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { capGuestQuantity } from "@/lib/bag-size";
+import { ESSENTIAL_CART_STORAGE_KEY } from "@/lib/cookie-consent";
 
 export interface CartItem {
   id: string;
@@ -134,7 +135,7 @@ export const useCartStore = create<CartStore>()(
       },
     }),
     {
-      name: "pa-cart",
+      name: ESSENTIAL_CART_STORAGE_KEY,
       partialize: (state) => ({ items: state.items }),
       onRehydrateStorage: () => (state) => {
         if (state) {

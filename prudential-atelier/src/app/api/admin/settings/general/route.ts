@@ -6,19 +6,21 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { clearSettingCacheKey } from "@/lib/settings";
 import { ATELIER_BOOKINGS_SETTING_KEY } from "@/lib/atelier-bookings";
+import { ANALYTICS_DAILY_RETENTION_DEFAULT, ANALYTICS_DAILY_RETENTION_KEY } from "@/lib/analytics/paths";
 
 const patchSchema = z.object({
   autoConvertApprovedQuotes: z.boolean().optional(),
   maintenanceModeEnabled: z.boolean().optional(),
   maintenanceModeMessage: z.string().max(500).optional(),
   atelierBookingsEnabled: z.boolean().optional(),
+  analyticsDailyRetentionDays: z.number().int().min(30).max(730).optional(),
 });
 
 export async function GET() {
   const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
 
-  const [autoConvertRow, maintenanceEnabledRow, maintenanceMessageRow, atelierRow] = await Promise.all([
+  const [autoConvertRow, maintenanceEnabledRow, maintenanceMessageRow, atelierRow, retentionRow] = await Promise.all([
     prisma.siteSetting.findUnique({
       where: { key: "auto_convert_approved_quotes" },
       select: { value: true },
@@ -35,13 +37,23 @@ export async function GET() {
       where: { key: ATELIER_BOOKINGS_SETTING_KEY },
       select: { value: true },
     }),
+    prisma.siteSetting.findUnique({
+      where: { key: ANALYTICS_DAILY_RETENTION_KEY },
+      select: { value: true },
+    }),
   ]);
+
+  const retentionDays = Math.max(
+    30,
+    Math.min(730, Number(retentionRow?.value) || ANALYTICS_DAILY_RETENTION_DEFAULT),
+  );
 
   return NextResponse.json({
     autoConvertApprovedQuotes: autoConvertRow?.value === "true",
     maintenanceModeEnabled: maintenanceEnabledRow?.value === "true",
     maintenanceModeMessage: maintenanceMessageRow?.value ?? "",
     atelierBookingsEnabled: atelierRow?.value === "true",
+    analyticsDailyRetentionDays: retentionDays,
   });
 }
 
@@ -60,13 +72,15 @@ export async function PATCH(req: NextRequest) {
     maintenanceModeEnabled,
     maintenanceModeMessage,
     atelierBookingsEnabled,
+    analyticsDailyRetentionDays,
   } = parsed.data;
 
   if (
     autoConvertApprovedQuotes === undefined &&
     maintenanceModeEnabled === undefined &&
     maintenanceModeMessage === undefined &&
-    atelierBookingsEnabled === undefined
+    atelierBookingsEnabled === undefined &&
+    analyticsDailyRetentionDays === undefined
   ) {
     return NextResponse.json({ error: "No updates provided" }, { status: 400 });
   }
@@ -158,11 +172,31 @@ export async function PATCH(req: NextRequest) {
     clearSettingCacheKey(ATELIER_BOOKINGS_SETTING_KEY);
   }
 
+  if (analyticsDailyRetentionDays !== undefined) {
+    const value = String(analyticsDailyRetentionDays);
+    await prisma.siteSetting.upsert({
+      where: { key: ANALYTICS_DAILY_RETENTION_KEY },
+      create: {
+        key: ANALYTICS_DAILY_RETENTION_KEY,
+        value,
+        group: "STORE",
+        label: "Keep daily visit counts (days), then monthly totals",
+        type: SettingType.NUMBER,
+        isPublic: false,
+        sortOrder: 26,
+        updatedBy: userId,
+      },
+      update: { value, updatedBy: userId },
+    });
+    clearSettingCacheKey(ANALYTICS_DAILY_RETENTION_KEY);
+  }
+
   return NextResponse.json({
     success: true,
     autoConvertApprovedQuotes,
     maintenanceModeEnabled,
     maintenanceModeMessage,
     atelierBookingsEnabled,
+    analyticsDailyRetentionDays,
   });
 }

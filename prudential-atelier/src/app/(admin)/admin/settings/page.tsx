@@ -56,7 +56,7 @@ const CARD_SECTIONS: CardSection[] = [
       {
         slug: "gallery",
         title: "Portfolio gallery",
-        description: "Atelier, Bridal, and Kids gallery grids",
+        description: "Atelier, Bridal, and Kids stills and film",
         icon: Images,
         href: "/admin/gallery",
         countKind: "images",

@@ -185,9 +185,10 @@ function testSourceContracts() {
   assert(footer.includes("Developed with love by SonsHub Media Ltd"), "credit lives in the legal row");
   assert(footer.includes("data-footer-copyright"), "copyright is its own last line");
   const privacyIdx = footer.indexOf('href: "/privacy-policy"');
-  const cookieSettingsIdx = footer.indexOf("Cookie Settings");
+  const cookiePolicyIdx = footer.indexOf('href: "/cookie-policy"');
   const copyrightIdx = footer.indexOf("data-footer-copyright");
-  assert(privacyIdx >= 0 && cookieSettingsIdx >= 0 && copyrightIdx > cookieSettingsIdx, "copyright follows the privacy policy line");
+  assert(privacyIdx >= 0 && cookiePolicyIdx > privacyIdx && copyrightIdx > cookiePolicyIdx, "copyright follows the cookie policy line");
+  assert(!footer.includes("Cookie Settings"), "footer has no cookie-settings panel opener");
   assert(!footer.includes("International luxury couture"), "house tagline left the footer");
 }
 

@@ -18,6 +18,14 @@ const STORE_SETTING_DEFS: {
     isPublic: false,
     sortOrder: 10,
   },
+  {
+    key: "analytics_daily_retention_days",
+    value: "90",
+    label: "Keep daily visit counts (days), then monthly totals",
+    type: SettingType.NUMBER,
+    isPublic: false,
+    sortOrder: 26,
+  },
 ];
 
 /** Idempotent — creates missing STORE SiteSetting rows (safe on every admin load). */

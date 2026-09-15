@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { upsertCheckoutSession, type CheckoutCartSnapshot } from "@/lib/checkout-session";
+import { sanitizeAttribution } from "@/lib/analytics/attribution";
 
 const lineSchema = z.object({
   id: z.string().optional(),
@@ -30,6 +31,16 @@ const bodySchema = z.object({
   }),
   currency: z.string().max(8).optional().default("NGN"),
   furthestStep: z.number().int().min(1).max(3),
+  attribution: z
+    .object({
+      source: z.string().max(80).optional(),
+      medium: z.string().max(80).optional(),
+      campaign: z.string().max(120).optional(),
+      content: z.string().max(120).optional(),
+      referrer: z.string().max(120).optional(),
+      landingPath: z.string().max(200).optional(),
+    })
+    .optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -65,6 +76,7 @@ export async function POST(req: NextRequest) {
     cartSnapshot: snapshot,
     currency: parsed.data.currency,
     furthestStep: parsed.data.furthestStep,
+    attribution: sanitizeAttribution(parsed.data.attribution),
   });
 
   return NextResponse.json({ id: row.id });
