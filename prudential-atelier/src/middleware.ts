@@ -79,7 +79,6 @@ export default auth(async function middleware(request) {
     return NextResponse.next();
   }
 
-  const role = (session?.user?.role as string | undefined) ?? "";
   const isAdminUser = userHasAdminAccess(session?.user);
   const skipMaintenanceGate =
     pathname.startsWith("/admin") ||
