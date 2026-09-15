@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PaymentGateway, PaymentStatus, Prisma, ProductCategory, ShippingQuoteStatus } from "@prisma/client";
+import { PaymentGateway, PaymentStatus, Prisma, ShippingQuoteStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     unitPrice: number;
     unitUsd: number;
     unitGbp: number;
-    category: ProductCategory;
+    category: string;
     productName: string;
     parcel: CartParcelLine;
     sizeMode: "STANDARD" | "CUSTOM";
@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
     };
     product: {
       name: string;
-      category: ProductCategory;
+      category: string;
       isOnSale: boolean;
       priceUSD: number | null;
       priceGBP: number | null;

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ProductCategory } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { couponAdminSchema } from "@/validations/coupon";
@@ -34,9 +33,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 
   const d = parsed.data;
-  const scope =
-    d.categoryScope?.map((c) => c as ProductCategory).filter((c) => (Object.values(ProductCategory) as string[]).includes(c)) ??
-    undefined;
+  const scope = d.categoryScope;
 
   const c = await prisma.coupon.update({
     where: { id },

@@ -1,5 +1,3 @@
-import { ProductCategory } from "@prisma/client";
-
 export const PRODUCT_WIZARD_STEPS = [
   { id: "piece", label: "The piece" },
   { id: "sizes", label: "Sizes and prices" },
@@ -28,18 +26,18 @@ export type PublishSnapshot = {
   images?: { url?: string }[];
   variants?: { size?: string; priceNGN?: number }[];
   basePriceNGN?: number;
-  category?: ProductCategory;
+  category?: string;
 };
 
 /** Categories that skip UK sizes. Empty until ACCESSORIES (scarves, jewellery) is sold that way. */
-const CATEGORIES_WITHOUT_SIZES = new Set<ProductCategory>([]);
+const CATEGORIES_WITHOUT_SIZES = new Set<string>([]);
 
 /**
  * Scarves and jewellery will not use UK sizes. Keep every publish-size check behind this
  * so ACCESSORIES can drop the size requirement in one place later.
  * Do not special-case ACCESSORIES until that category is actually sold.
  */
-export function categoryNeedsSizes(category?: ProductCategory): boolean {
+export function categoryNeedsSizes(category?: string): boolean {
   if (!category) return true;
   return !CATEGORIES_WITHOUT_SIZES.has(category);
 }
@@ -62,7 +60,7 @@ export function hasPublishSize(data: PublishSnapshot): boolean {
   return (data.variants ?? []).some((v) => (v.size ?? "").trim().length > 0);
 }
 
-export function publishNeedsFor(category?: ProductCategory): PublishNeed[] {
+export function publishNeedsFor(category?: string): PublishNeed[] {
   const needs: PublishNeed[] = [
     { id: "name", label: "a name", path: "name" },
     { id: "price", label: "a price", path: "basePriceNGN" },

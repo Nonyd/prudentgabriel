@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import type { Coupon, ProductCategory } from "@prisma/client";
-import { ProductCategory as PC } from "@prisma/client";
+import type { Coupon } from "@prisma/client";
 import toast from "react-hot-toast";
 import { X, Lock } from "lucide-react";
+import { SEED_SHOP_CATEGORIES, UNCATEGORIZED_SLUG } from "@/lib/shop-category-slug";
 
 const formSchema = z
   .object({
@@ -20,7 +20,7 @@ const formSchema = z
     maxUsesTotal: z.number().int().optional().nullable(),
     maxUsesPerUser: z.number().int().min(1),
     appliesToAll: z.boolean(),
-    categoryScope: z.array(z.nativeEnum(PC)),
+    categoryScope: z.array(z.string()),
     isActive: z.boolean(),
     startsAt: z.string(),
     expiresAt: z.string().optional().nullable(),
@@ -33,14 +33,7 @@ const formSchema = z
 
 type FormValues = z.infer<typeof formSchema>;
 
-const CATEGORIES: ProductCategory[] = [
-  PC.BRIDAL,
-  PC.EVENING_WEAR,
-  PC.FORMAL,
-  PC.CASUAL,
-  PC.KIDDIES,
-  PC.ACCESSORIES,
-];
+const FALLBACK_CATEGORIES = SEED_SHOP_CATEGORIES.filter((c) => c.slug !== UNCATEGORIZED_SLUG);
 
 function toYmd(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -58,6 +51,7 @@ export function CouponFormModal({
   onSaved: () => void;
 }) {
   const isEdit = Boolean(coupon);
+  const [categories, setCategories] = useState<Array<{ slug: string; label: string }>>(FALLBACK_CATEGORIES);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -79,6 +73,15 @@ export function CouponFormModal({
 
   useEffect(() => {
     if (!open) return;
+    void fetch("/api/admin/shop-categories", { credentials: "include" })
+      .then((res) => res.json())
+      .then((data: { items?: Array<{ slug: string; label: string }> }) => {
+        const items = (data.items ?? []).filter((item) => item.slug !== UNCATEGORIZED_SLUG);
+        if (items.length) setCategories(items);
+      })
+      .catch(() => {
+        /* keep seed fallback */
+      });
     if (coupon) {
       form.reset({
         code: coupon.code,
@@ -89,7 +92,7 @@ export function CouponFormModal({
         maxUsesTotal: coupon.maxUsesTotal,
         maxUsesPerUser: coupon.maxUsesPerUser,
         appliesToAll: coupon.appliesToAll,
-        categoryScope: (coupon.categoryScope ?? []) as ProductCategory[],
+        categoryScope: coupon.categoryScope ?? [],
         isActive: coupon.isActive,
         startsAt: toYmd(new Date(coupon.startsAt)),
         expiresAt: coupon.expiresAt ? toYmd(new Date(coupon.expiresAt)) : "",
@@ -277,20 +280,20 @@ export function CouponFormModal({
               </label>
               {!appliesToAll ? (
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {CATEGORIES.map((c) => (
-                    <label key={c} className="flex items-center gap-1 font-body text-xs">
+                  {categories.map((c) => (
+                    <label key={c.slug} className="flex items-center gap-1 font-body text-xs">
                       <input
                         type="checkbox"
-                        checked={form.watch("categoryScope").includes(c)}
+                        checked={form.watch("categoryScope").includes(c.slug)}
                         onChange={(e) => {
                           const cur = form.getValues("categoryScope");
                           form.setValue(
                             "categoryScope",
-                            e.target.checked ? [...cur, c] : cur.filter((x) => x !== c),
+                            e.target.checked ? [...cur, c.slug] : cur.filter((x) => x !== c.slug),
                           );
                         }}
                       />
-                      {c.replace(/_/g, " ")}
+                      {c.label}
                     </label>
                   ))}
                 </div>

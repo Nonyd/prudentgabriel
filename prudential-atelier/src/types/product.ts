@@ -1,4 +1,4 @@
-import type { ProductCategory, ProductType } from "@prisma/client";
+import type { ProductType } from "@prisma/client";
 
 export interface ProductListImage {
   url: string;
@@ -27,7 +27,7 @@ export interface ProductListItem {
   name: string;
   slug: string;
   description: string;
-  category: ProductCategory;
+  category: string;
   type: ProductType;
   basePriceNGN: number;
   priceUSD: number | null;

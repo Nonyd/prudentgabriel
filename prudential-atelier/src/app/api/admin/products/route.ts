@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma, ProductCategory, ProductType } from "@prisma/client";
+import { Prisma, ProductType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { productAdminSchema } from "@/validations/product";
 import { logServerError } from "@/lib/logger";
+import { assertShopCategoryExists, ShopCategoryError } from "@/lib/shop-categories";
 import { loadTakenSkus, resolvePreferredSku, uniqueSkuFromTaken } from "@/lib/product-sku";
 import { allocateProductSlug } from "@/lib/product-slug-unique";
 import { revalidateProduct } from "@/lib/revalidate";
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
   const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
   const take = Math.min(50, Math.max(10, Number(searchParams.get("perPage") ?? String(PAGE_SIZE_DEFAULT)) || PAGE_SIZE_DEFAULT));
   const search = (searchParams.get("search") ?? "").trim();
-  const category = searchParams.get("category") as ProductCategory | null;
+  const category = searchParams.get("category");
   const type = searchParams.get("type") as ProductType | null;
   const published = searchParams.get("published");
   const needsPrice = searchParams.get("needsPrice");
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
       { slug: { contains: search, mode: "insensitive" } },
     ];
   }
-  if (category && Object.values(ProductCategory).includes(category)) {
+  if (category) {
     where.category = category;
   }
   if (type && Object.values(ProductType).includes(type)) {
@@ -120,6 +121,14 @@ export async function POST(req: NextRequest) {
   }
 
   const data = parsed.data;
+  try {
+    await assertShopCategoryExists(data.category);
+  } catch (error) {
+    if (error instanceof ShopCategoryError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
+  }
   const slug = await allocateProductSlug(prisma, { name: data.name, requested: data.slug });
   const minPrice = derivedCatalogMinNGN(data.variants, data.isOnSale);
 

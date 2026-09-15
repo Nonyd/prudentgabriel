@@ -1,4 +1,4 @@
-import { Prisma, ProductCategory, ProductType } from "@prisma/client";
+import { Prisma, ProductType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { ProductListItem } from "@/types/product";
 import { derivedCatalogMinNGN } from "@/lib/pricing";
@@ -6,15 +6,14 @@ import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
 import { publishedProductIdsForCollection } from "@/lib/collection-products";
 import { unitsSoldByProductId } from "@/lib/finance/whats-selling";
 
-const CATEGORIES = new Set(Object.values(ProductCategory));
 const TYPES = new Set(["RTW", "BESPOKE"] as const);
 
-function parseCategoryList(raw: string | null): ProductCategory[] {
+function parseCategoryList(raw: string | null): string[] {
   if (!raw) return [];
   return raw
     .split(",")
     .map((s) => s.trim())
-    .filter((s): s is ProductCategory => CATEGORIES.has(s as ProductCategory));
+    .filter(Boolean);
 }
 
 export function parseIntParam(v: string | null, def: number, max?: number): number {
@@ -61,8 +60,8 @@ export async function queryProductList(
     where.isPublished = true;
   }
 
-  if (categoryParam && CATEGORIES.has(categoryParam as ProductCategory)) {
-    where.category = categoryParam as ProductCategory;
+  if (categoryParam) {
+    where.category = categoryParam;
   } else if (excludeCategories.length === 1) {
     where.category = { not: excludeCategories[0] };
   } else if (excludeCategories.length > 1) {

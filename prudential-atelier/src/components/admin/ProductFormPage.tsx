@@ -8,11 +8,12 @@ import { useForm, useFieldArray, Controller, type Resolver, type SubmitHandler }
 import { zodResolver } from "@hookform/resolvers/zod";
 import slugify from "slugify";
 import toast from "react-hot-toast";
-import type { Product, ProductCategory, ProductColor, ProductImage, ProductVariant } from "@prisma/client";
+import type { Product, ProductColor, ProductImage, ProductVariant } from "@prisma/client";
+import { ProductType as PT } from "@prisma/client";
 import type { ProductListItem } from "@/types/product";
-import { ProductCategory as PC, ProductType as PT } from "@prisma/client";
 import { productAdminSchema, type ProductAdminInput } from "@/validations/product";
 import { VariantManager } from "./VariantManager";
+import { ProductCategoryField } from "./ProductCategoryField";
 import { buildDefaultProductSku, isGeneratedProductSku } from "@/lib/product-sku";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { cn } from "@/lib/utils";
@@ -43,15 +44,6 @@ type FullProduct = Product & {
   bundleItems: { targetProductId: string; targetProduct?: { name: string } }[];
   measurementFields?: { fieldId: string; required: boolean; sortOrder: number }[];
 };
-
-const CATEGORY_OPTIONS: ProductCategory[] = [
-  PC.BRIDAL,
-  PC.EVENING_WEAR,
-  PC.CASUAL,
-  PC.FORMAL,
-  PC.KIDDIES,
-  PC.ACCESSORIES,
-];
 
 const STEPS = PRODUCT_WIZARD_STEPS;
 
@@ -141,7 +133,7 @@ const defaultCreate = (custom?: {
   slug: "",
   description: "",
   details: "",
-  category: PC.BRIDAL,
+  category: "CASUAL",
   type: PT.RTW,
   tags: [],
   basePriceNGN: 0,
@@ -1094,16 +1086,13 @@ export function ProductFormPage({
               <p className="mt-2 font-body text-sm text-choc/60">
                 Drafts stay off the shop. Collections are chosen on the collection page.
               </p>
-              <label className={labelClass}>
+              <div className={labelClass}>
                 Category
-                <select {...form.register("category")} className={fieldClass}>
-                  {CATEGORY_OPTIONS.map((c) => (
-                    <option key={c} value={c}>
-                      {c.replace(/_/g, " ")}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <ProductCategoryField
+                  value={form.watch("category")}
+                  onChange={(slug) => form.setValue("category", slug, { shouldDirty: true, shouldValidate: true })}
+                />
+              </div>
               <fieldset className="mt-4 text-sm text-charcoal">
                 <legend className="text-xs uppercase text-[#A8A8A4]">Ready to wear or bespoke</legend>
                 <label className="mr-4 mt-2 inline-flex items-center gap-2">

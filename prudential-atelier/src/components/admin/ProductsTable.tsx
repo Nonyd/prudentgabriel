@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { ProductCategory, ProductType } from "@prisma/client";
+import type { ProductType } from "@prisma/client";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { ProductCascadeDialog } from "@/components/admin/ProductCascadeDialog";
@@ -15,7 +15,7 @@ export type ProductRow = {
   id: string;
   name: string;
   slug: string;
-  category: ProductCategory;
+  category: string;
   type: ProductType;
   isPublished: boolean;
   isFeatured: boolean;
@@ -72,10 +72,22 @@ export function ProductsTable({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingPrice, setEditingPrice] = useState<Record<string, string>>({});
+  const [categories, setCategories] = useState<Array<{ slug: string; label: string }>>([]);
 
   useEffect(() => {
     setSearch(initialSearch);
   }, [initialSearch]);
+
+  useEffect(() => {
+    void fetch("/api/admin/shop-categories", { credentials: "include" })
+      .then((res) => res.json())
+      .then((data: { items?: Array<{ slug: string; label: string }> }) => {
+        setCategories(data.items ?? []);
+      })
+      .catch(() => {
+        setCategories([]);
+      });
+  }, []);
 
   const pushFilters = useCallback(
     (next: Record<string, string>) => {
@@ -282,9 +294,9 @@ export function ProductsTable({
           className="rounded-sm border border-sand bg-canvas px-2 py-2 text-sm text-charcoal"
         >
           <option value="">All categories</option>
-          {Object.values(["BRIDAL", "EVENING_WEAR", "CASUAL", "FORMAL", "KIDDIES", "ACCESSORIES"]).map((c) => (
-            <option key={c} value={c}>
-              {c.replace(/_/g, " ")}
+          {categories.map((c) => (
+            <option key={c.slug} value={c.slug}>
+              {c.label}
             </option>
           ))}
         </select>
