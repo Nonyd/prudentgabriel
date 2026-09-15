@@ -14,11 +14,11 @@ import {
   PaymentMethod,
   PaymentPurpose,
   PaymentStatus,
-  ProductCategory,
   ProductType,
   QuoteStatus,
   Role,
 } from "@prisma/client";
+import { ProductCategory } from "../src/lib/shop-category-slug";
 import { prisma } from "../src/lib/prisma";
 import {
   assertCascadeAllowed,

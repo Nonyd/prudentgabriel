@@ -8,11 +8,11 @@ import {
   Currency,
   OrderStatus,
   PaymentStatus,
-  ProductCategory,
   ProductType,
   Role,
   SizeMode,
 } from "@prisma/client";
+import { ProductCategory } from "../src/lib/shop-category-slug";
 import { prisma } from "../src/lib/prisma";
 import { fulfillPaidOrder } from "../src/lib/order-payment";
 import { duplicateProduct } from "../src/lib/duplicate-product";

@@ -7,12 +7,12 @@ import "./preload-test-env";
 import {
   Currency,
   PaymentStatus,
-  ProductCategory,
   ProductType,
   ShippingMarkupKind,
   ShippingMethodKind,
   ShippingQuoteStatus,
 } from "@prisma/client";
+import { ProductCategory } from "../src/lib/shop-category-slug";
 import { prisma } from "../src/lib/prisma";
 import { listCheckoutShippingOptions } from "../src/lib/shipping/options";
 import { resolveCheckoutShipping } from "../src/lib/shipping/resolve-selection";

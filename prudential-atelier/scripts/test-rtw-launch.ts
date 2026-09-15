@@ -12,12 +12,12 @@ import {
   OrderStatus,
   PaymentGateway,
   PaymentStatus,
-  ProductCategory,
   ProductType,
   Role,
   SettingGroup,
   SettingType,
 } from "@prisma/client";
+import { ProductCategory } from "../src/lib/shop-category-slug";
 import { prisma } from "../src/lib/prisma";
 import { addCartLine, listCartLines } from "../src/lib/cart-service";
 import { fulfillPaidOrder } from "../src/lib/order-payment";

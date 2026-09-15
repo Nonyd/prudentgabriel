@@ -6,7 +6,7 @@
 import "./preload-test-env";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { ProductCategory } from "@prisma/client";
+import { ProductCategory } from "../src/lib/shop-category-slug";
 import { z } from "zod";
 import { mimeFromMagicBytes, isHeifMagic, rejectedCatalogueImageFile, HEIC_CATALOGUE_MESSAGE } from "../src/lib/image-upload-mime";
 import { mediaPutFailureMessage } from "../src/lib/media/put-error";

@@ -1,7 +1,8 @@
-import { GalleryCategory, ProductCategory, ProductType } from "@prisma/client";
+import { GalleryCategory, ProductType } from "@prisma/client";
 import { getCMSContent } from "@/lib/cms";
 import { prisma } from "@/lib/prisma";
 import { RTW_EXCLUDED_CATEGORIES } from "@/lib/rtw-aisle";
+import { ProductCategory } from "@/lib/shop-category-slug";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
 import { optimizeImageUrl } from "@/lib/utils";
 

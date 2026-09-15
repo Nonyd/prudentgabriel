@@ -4,7 +4,8 @@
  *   pnpm test:slice-z2
  */
 import "./preload-test-env";
-import { ProductCategory, ProductType, Role } from "@prisma/client";
+import { ProductType, Role } from "@prisma/client";
+import { ProductCategory } from "../src/lib/shop-category-slug";
 import { prisma } from "../src/lib/prisma";
 import { addCartLine } from "../src/lib/cart-service";
 import { resolveCustomCheckoutLine } from "../src/lib/custom-order-line";

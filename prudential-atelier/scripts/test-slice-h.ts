@@ -4,7 +4,8 @@
  *   pnpm test:slice-h
  */
 import "./preload-test-env";
-import { EmailStatus, ProductCategory, ProductType, Role } from "@prisma/client";
+import { EmailStatus, ProductType, Role } from "@prisma/client";
+import { ProductCategory } from "../src/lib/shop-category-slug";
 import { prisma } from "../src/lib/prisma";
 import { setEmailProvidersForTest, type EmailProvider } from "../src/lib/email-providers";
 import {

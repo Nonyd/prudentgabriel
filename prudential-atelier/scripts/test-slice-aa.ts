@@ -9,10 +9,10 @@ import {
   PaymentMethod,
   PaymentPurpose,
   PaymentStatus,
-  ProductCategory,
   ProductType,
   Role,
 } from "@prisma/client";
+import { ProductCategory } from "../src/lib/shop-category-slug";
 import {
   classifyPayments,
   combinedTotals,

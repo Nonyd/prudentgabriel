@@ -9,7 +9,6 @@ import bcrypt from "bcryptjs";
 import {
   PrismaClient,
   CouponType,
-  ProductCategory,
   ProductType,
   Role,
   BespokeStatus,
@@ -25,6 +24,7 @@ import {
   GalleryCategory,
   InvoiceStatus,
 } from "@prisma/client";
+import { ProductCategory } from "../src/lib/shop-category-slug";
 import { assertFixturesAllowed } from "../scripts/fixture-guard";
 
 assertFixturesAllowed("prisma/seed-fixtures.ts");

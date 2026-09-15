@@ -1418,7 +1418,8 @@ enum Role {
   STAFF
 }
 
-/// Seed slugs for aisles and tests. Live catalogue rows live in ShopCategory.
+/// Historical aisle slugs. Unused by any model, so Prisma Client does not emit this enum.
+/// Seeds and tests use ProductCategory in src/lib/shop-category-slug.ts.
 enum ProductCategory {
   BRIDAL
   EVENING_WEAR

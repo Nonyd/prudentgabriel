@@ -4,7 +4,8 @@
  *   pnpm test:slice-y
  */
 import "./preload-test-env";
-import { ProductCategory, ProductType } from "@prisma/client";
+import { ProductType } from "@prisma/client";
+import { ProductCategory } from "../src/lib/shop-category-slug";
 import { prisma } from "../src/lib/prisma";
 import { duplicateProduct } from "../src/lib/duplicate-product";
 import {

@@ -6,9 +6,9 @@
 import "./preload-test-env";
 import {
   PaymentStatus,
-  ProductCategory,
   ProductType,
 } from "@prisma/client";
+import { ProductCategory } from "../src/lib/shop-category-slug";
 import { prisma } from "../src/lib/prisma";
 import { autoOnboardClient } from "../src/lib/client-onboarding";
 import { toPublicRtwOrderDto } from "../src/lib/public-pii-dtos";
