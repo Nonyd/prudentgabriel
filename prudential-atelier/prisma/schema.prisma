@@ -306,6 +306,19 @@ model PointsTransaction {
   @@index([expiresAt, remaining])
 }
 
+/// Admin-managed shop aisle. Deleting a row moves products to Uncategorized.
+model ShopCategory {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  label     String
+  sortOrder Int       @default(0)
+  /// Uncategorized cannot be deleted.
+  locked    Boolean   @default(false)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 model Product {
   id             String          @id @default(cuid())
   name           String
@@ -314,7 +327,8 @@ model Product {
   details        String?         @db.Text
   metaTitle      String?
   metaDescription String?
-  category       ProductCategory
+  category       String
+  shopCategory   ShopCategory    @relation(fields: [category], references: [slug], onUpdate: Cascade, onDelete: Restrict)
   type           ProductType     @default(RTW)
   /// Denormalised cheapest effective unit (sale ₦ only while isOnSale). Filter, sort, wishlist.
   priceNGN       Float
@@ -835,7 +849,7 @@ model Coupon {
   maxUsesPerUser Int               @default(1)
   usedCount      Int               @default(0)
   appliesToAll   Boolean           @default(true)
-  categoryScope  ProductCategory[] @default([])
+  categoryScope  String[]          @default([])
   productScope   String[]          @default([])
   isActive       Boolean           @default(true)
   startsAt       DateTime          @default(now())
@@ -1404,6 +1418,7 @@ enum Role {
   STAFF
 }
 
+/// Seed slugs for aisles and tests. Live catalogue rows live in ShopCategory.
 enum ProductCategory {
   BRIDAL
   EVENING_WEAR

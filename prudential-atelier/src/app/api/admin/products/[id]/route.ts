@@ -11,6 +11,7 @@ import { canInlineEditPrice, derivedCatalogMinNGN } from "@/lib/pricing";
 import { destroyStoredMedia } from "@/lib/media/destroy";
 import { executeProductCascade, previewProductCascade, ProductCascadeError } from "@/lib/product-cascade-delete";
 import { logServerError } from "@/lib/logger";
+import { assertShopCategoryExists, ShopCategoryError } from "@/lib/shop-categories";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi("shop.products");
@@ -143,6 +144,14 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 
   const data = parsed.data;
+  try {
+    await assertShopCategoryExists(data.category);
+  } catch (error) {
+    if (error instanceof ShopCategoryError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
+  }
   const slug = data.slug?.trim()
     ? data.slug.trim()
     : await allocateProductSlug(prisma, { name: data.name, excludeId: id });

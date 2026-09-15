@@ -13,7 +13,6 @@ import { getCustomGlobals } from "@/lib/custom-settings";
 import { effectiveUnitNGN, resolveCurrencyOverride } from "@/lib/pricing";
 import { gbpOverrideOrConvert, usdOverrideOrConvert, type LockedFx } from "@/lib/fx";
 import type { CartParcelLine } from "@/lib/shipping/options";
-import type { ProductCategory } from "@prisma/client";
 import { assertCustomLineAllowed } from "@/lib/custom-availability";
 
 export type CustomResolvedLine = {
@@ -27,7 +26,7 @@ export type CustomResolvedLine = {
   unitPrice: number;
   unitUsd: number;
   unitGbp: number;
-  category: ProductCategory;
+  category: string;
   productName: string;
   parcel: CartParcelLine;
   sizeMode: "CUSTOM";

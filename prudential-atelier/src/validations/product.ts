@@ -1,4 +1,4 @@
-import { ProductCategory, ProductType } from "@prisma/client";
+import { ProductType } from "@prisma/client";
 import { z } from "zod";
 import { optionalStoredPublicMediaUrlSchema, storedPublicMediaUrlSchema } from "@/lib/media/stored-url";
 import { missingPublishNeeds } from "@/lib/product-wizard";
@@ -58,7 +58,12 @@ export const productAdminSchema = z.object({
     .default(""),
   description: z.string().optional(),
   details: z.string().optional(),
-  category: z.nativeEnum(ProductCategory),
+  category: z
+    .string()
+    .trim()
+    .min(1)
+    .max(40)
+    .regex(/^[A-Z0-9_]+$/, "Pick or add a category."),
   type: z.nativeEnum(ProductType),
   tags: z.array(z.string()).default([]),
   basePriceNGN: z.preprocess((v) => {

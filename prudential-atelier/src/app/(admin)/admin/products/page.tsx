@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Prisma, ProductCategory, ProductType } from "@prisma/client";
+import { Prisma, ProductType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ProductsTable, type ProductRow } from "@/components/admin/ProductsTable";
 import { MigrateImagesBanner } from "@/components/admin/MigrateImagesBanner";
@@ -13,7 +13,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   const sp = await searchParams;
   const page = Math.max(1, Number(Array.isArray(sp.page) ? sp.page[0] : sp.page) || 1);
   const search = (Array.isArray(sp.search) ? sp.search[0] : sp.search)?.trim() ?? "";
-  const category = (Array.isArray(sp.category) ? sp.category[0] : sp.category) as ProductCategory | undefined;
+  const category = (Array.isArray(sp.category) ? sp.category[0] : sp.category) ?? undefined;
   const type = (Array.isArray(sp.type) ? sp.type[0] : sp.type) as ProductType | undefined;
   const statusParam = Array.isArray(sp.status) ? sp.status[0] : sp.status;
   const published =
@@ -31,7 +31,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       { slug: { contains: search, mode: "insensitive" } },
     ];
   }
-  if (category && Object.values(ProductCategory).includes(category)) where.category = category;
+  if (category) where.category = category;
   if (type && Object.values(ProductType).includes(type)) where.type = type;
   if (published === "true") where.isPublished = true;
   if (published === "false") where.isPublished = false;

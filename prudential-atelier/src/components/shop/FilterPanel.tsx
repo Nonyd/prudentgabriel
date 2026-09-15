@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as Accordion from "@radix-ui/react-accordion";
 import * as Slider from "@radix-ui/react-slider";
-import { ProductCategory } from "@prisma/client";
 import { cn } from "@/lib/utils";
+import { SEED_SHOP_CATEGORIES } from "@/lib/shop-category-slug";
 
 const SORTS = [
   { value: "newest", label: "Newest" },
@@ -15,14 +15,12 @@ const SORTS = [
   { value: "featured", label: "Featured" },
 ];
 
-const CATEGORIES: { value: ProductCategory | ""; label: string }[] = [
+const FALLBACK_CATEGORIES: { value: string; label: string }[] = [
   { value: "", label: "All" },
-  { value: ProductCategory.BRIDAL, label: "Bridal" },
-  { value: ProductCategory.EVENING_WEAR, label: "Evening Wear" },
-  { value: ProductCategory.FORMAL, label: "Formal" },
-  { value: ProductCategory.CASUAL, label: "Casual" },
-  { value: ProductCategory.KIDDIES, label: "Kiddies" },
-  { value: ProductCategory.ACCESSORIES, label: "Accessories" },
+  ...SEED_SHOP_CATEGORIES.filter((c) => c.slug !== "UNCATEGORIZED").map((c) => ({
+    value: c.slug,
+    label: c.label,
+  })),
 ];
 
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "UK8", "UK10", "UK12", "Custom"];
@@ -56,6 +54,7 @@ function toggleCsv(current: string | undefined, val: string) {
 
 export function FilterPanel({ className }: { className?: string }) {
   const { sp, set } = useQs();
+  const [categoryOptions, setCategoryOptions] = useState(FALLBACK_CATEGORIES);
   const sort = sp.get("sort") ?? "newest";
   const category = sp.get("category") ?? "";
   const type = sp.get("type") ?? "";
@@ -72,6 +71,22 @@ export function FilterPanel({ className }: { className?: string }) {
     sale ||
     minP !== "0" ||
     maxP !== "1000000";
+
+  useEffect(() => {
+    void fetch("/api/shop/categories")
+      .then((res) => res.json())
+      .then((data: { items?: Array<{ slug: string; label: string }> }) => {
+        const items = data.items ?? [];
+        if (!items.length) return;
+        setCategoryOptions([
+          { value: "", label: "All" },
+          ...items.map((item) => ({ value: item.slug, label: item.label })),
+        ]);
+      })
+      .catch(() => {
+        /* keep seed fallback */
+      });
+  }, []);
 
   return (
     <aside className={cn("space-y-2", className)}>
@@ -104,8 +119,8 @@ export function FilterPanel({ className }: { className?: string }) {
 
         <AccItem value="category" title="Category">
           <div className="space-y-2">
-            {CATEGORIES.map((c) => (
-              <label key={c.label} className="flex cursor-pointer items-center gap-2 font-body text-[13px] text-charcoal">
+            {categoryOptions.map((c) => (
+              <label key={c.value} className="flex cursor-pointer items-center gap-2 font-body text-[13px] text-charcoal">
                 <input
                   type="radio"
                   name="category"

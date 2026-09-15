@@ -1,4 +1,4 @@
-import { CouponType, CouponUsageStatus, ProductCategory, type Prisma, type PrismaClient } from "@prisma/client";
+import { CouponType, CouponUsageStatus, type Prisma, type PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export interface CouponValidationResult {
@@ -18,7 +18,7 @@ export interface CouponValidationResult {
 export interface CartLineForCoupon {
   priceNGN: number;
   quantity: number;
-  category?: ProductCategory;
+  category?: string;
 }
 
 type CouponDb = Prisma.TransactionClient | PrismaClient;

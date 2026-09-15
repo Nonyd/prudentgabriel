@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ProductCategory } from "@prisma/client";
 import { validateCoupon } from "@/lib/coupon";
 import { expireStaleCheckoutReservationsForActor } from "@/lib/checkout-reservations";
 import { couponValidateSchema } from "@/validations/coupon";
-
-function parseCategory(raw: string | undefined): ProductCategory | undefined {
-  if (!raw) return undefined;
-  const vals = Object.values(ProductCategory) as string[];
-  return vals.includes(raw) ? (raw as ProductCategory) : undefined;
-}
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -28,7 +21,7 @@ export async function POST(req: NextRequest) {
   const lines = cartLines.map((l) => ({
     priceNGN: l.priceNGN,
     quantity: l.quantity,
-    category: parseCategory(l.category),
+    category: l.category,
   }));
 
   const result = await validateCoupon(code, subtotalNGN, email, null, lines);
