@@ -11,7 +11,7 @@ import {
 } from "@/lib/custom-size";
 import { getCustomGlobals } from "@/lib/custom-settings";
 import { effectiveUnitNGN, overrideOrConvertWithOption, resolveCurrencyOverride } from "@/lib/pricing";
-import { gbpOverrideOrConvert, ratesFromLockedFx, usdOverrideOrConvert, type LockedFx } from "@/lib/fx";
+import { ratesFromLockedFx, type LockedFx } from "@/lib/fx";
 import type { CartParcelLine } from "@/lib/shipping/options";
 import { fieldsForOption, assertChosenOption } from "@/lib/product-options";
 import { assertCustomLineAllowed } from "@/lib/custom-availability";
