@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { hasAnyAdminPermission } from "@/lib/roles";
+import { userHasAdminAccess, type LoginPathUser } from "@/lib/login-paths";
 
 export async function isMaintenanceEnabled(): Promise<boolean> {
   try {
@@ -15,9 +15,10 @@ export async function isMaintenanceEnabled(): Promise<boolean> {
 }
 
 /** Send non-admin visitors to the maintenance page. Admins keep full access. */
-export async function enforcePublicMaintenance(role?: string | null) {
+export async function enforcePublicMaintenance(user?: LoginPathUser | string | null) {
   const enabled = await isMaintenanceEnabled();
   if (!enabled) return;
-  if (hasAnyAdminPermission(role)) return;
+  const actor = typeof user === "string" ? { role: user } : user;
+  if (userHasAdminAccess(actor)) return;
   redirect("/maintenance");
 }

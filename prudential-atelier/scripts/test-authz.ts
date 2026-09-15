@@ -47,11 +47,7 @@ import {
 } from "../src/lib/permission-policy";
 import { KEMI_EMAIL } from "../src/lib/permission-catalog";
 import { canAccessStaffPortal, authApiErrorMessage, loginPathAfterPasswordReset } from "../src/lib/client-auth";
-import {
-  destinationAfterCustomerSignIn,
-  loginPathForUser,
-  safeLoginNext,
-} from "../src/lib/login-paths";
+import { destinationAfterCustomerSignIn, loginPathForUser, safeLoginNext, userHasAdminAccess } from "../src/lib/login-paths";
 import type { Session } from "next-auth";
 import {
   actorOwnsBespokeOrder,
@@ -70,6 +66,7 @@ import { sanitizeCmsHtml } from "../src/lib/sanitize-html";
 import { passwordPolicySchema } from "../src/lib/password-policy";
 import { mimeFromMagicBytes } from "../src/lib/image-upload-mime";
 import { verifyPFAStudent } from "../src/lib/pfa-verify";
+import { productAdminSchema } from "../src/validations/product";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -270,6 +267,8 @@ async function main() {
     usersMw.includes('pathname.startsWith("/admin/settings/users") && role !== "SUPER_ADMIN"'),
     "Users & Roles middleware is Super Admin only",
   );
+  assert(usersMw.includes("userHasAdminAccess"), "middleware admits granted shop staff, not only hardcoded roles");
+  assert(!usersMw.includes("ADMIN_ROLES.includes"), "middleware no longer AND-filters admin by a role list");
   assert(routeSource("app/api/staff/route.ts").includes('requireAdminApi("staff")'), "staff list API is staff permission");
   assert(routeSource("app/api/attendance/today/route.ts").includes('requireAdminApi("attendance")'), "attendance API is attendance permission");
   assert(routeSource("app/api/quotations/route.ts").includes('requireAdminApi("quotations")'), "quotations API is quotations permission");
@@ -277,6 +276,7 @@ async function main() {
   assert(routeSource("app/api/admin/clients/search/route.ts").includes('requireAdminApi("clients")'), "client search matches Client CRM");
   const layoutSrc = routeSource("app/(admin)/layout.tsx");
   assert(layoutSrc.includes("deniedAdminRedirect"), "admin layout uses the shared path guard");
+  assert(!layoutSrc.includes("adminRoles.includes"), "admin layout does not reject granted users before resolveSessionAccess");
   const permSrc = routeSource("lib/permissions.ts");
   assert(!permSrc.includes("getJobPermissionsForAdminPath"), "dead JobRole path checks are gone");
 
@@ -393,6 +393,25 @@ async function main() {
   );
   assert(!sidebarSrc.includes("jobRoleAllowsNavItem"), "JobRole must not hide Slice T grants in the sidebar");
   assert(!sidebarSrc.includes("shouldEnforceJobPermissions"), "sidebar is not a second JobRole AND-filter");
+  assert(userHasAdminAccess({ role: "CONTENT_MANAGER" }), "Content Manager reaches admin from role seed");
+  assert(
+    userHasAdminAccess({ role: "STAFF", permissionGrants: ["shop.products"] }),
+    "a STAFF grant of shop.products is enough for the admin portal",
+  );
+  assert(!userHasAdminAccess({ role: "STAFF" }), "STAFF without grants stays off the admin portal");
+  assert(!userHasAdminAccess({ role: "CUSTOMER" }), "customers stay off the admin portal");
+  const edgeAuth = routeSource("lib/auth.config.ts");
+  assert(edgeAuth.includes("permissionGrants"), "sign-in JWT copies user grants for Edge middleware");
+  const imagePersist = routeSource("app/api/admin/products/[id]/images/route.ts");
+  assert(imagePersist.includes("parsed.error.issues"), "product image persist returns the real validation message");
+  assert(!imagePersist.includes('"Invalid body"'), "product image persist no longer hides Zod as Invalid body");
+  const saleDraft = productAdminSchema.safeParse({
+    name: "Avril",
+    category: "CASUAL",
+    type: "RTW",
+    saleEndsAt: "",
+  });
+  assert(saleDraft.success, "empty saleEndsAt does not block a product draft");
 
   assert(roleMayAccessAdminPath("FINANCE_MANAGER", "/admin/settings/bank-accounts"), "FINANCE_MANAGER reaches bank accounts via the split permission");
   assert(roleMayAccessAdminPath("FINANCE_MANAGER", "/admin/reports"), "FINANCE_MANAGER reaches reports");

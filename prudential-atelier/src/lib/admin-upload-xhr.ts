@@ -47,6 +47,10 @@ function xhrSend(
         return;
       }
       if (xhr.status < 200 || xhr.status >= 300) {
+        if (xhr.status === 403) {
+          reject(new Error("You do not have permission to upload this file."));
+          return;
+        }
         const err = typeof parsed.error === "string" ? parsed.error : `Request failed (${xhr.status})`;
         reject(new Error(err));
         return;

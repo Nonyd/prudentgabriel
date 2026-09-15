@@ -1,23 +1,14 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import {
-  hasPermission,
-  type Permission,
-  type PermissionSession,
-} from "@/lib/permissions";
+import { hasPermission, type AdminPermission } from "@/lib/roles";
+import { accessActorFromUser } from "@/lib/login-paths";
 
-export function useHasPermission(permissionKey: Permission): boolean {
+/** Catalogue/admin permission from the resolved JWT set, not the old JobRole list. */
+export function useHasPermission(permissionKey: AdminPermission): boolean {
   const { data: session } = useSession();
-  const permissionSession: PermissionSession = session
-    ? {
-        user: {
-          role: session.user?.role,
-          jobRolePermissions: session.user?.jobRolePermissions,
-        },
-      }
-    : null;
-  return hasPermission(permissionSession, permissionKey);
+  if (!session?.user?.role) return false;
+  return hasPermission(session.user.role, permissionKey, accessActorFromUser(session.user));
 }
 
 export { hasPermission };

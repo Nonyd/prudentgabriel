@@ -10,26 +10,10 @@ import { hasAnyAdminPermission } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 
-const adminRoles = [
-  "SUPER_ADMIN",
-  "ADMIN",
-  "STAFF_ADMIN",
-  "BESPOKE_MANAGER",
-  "RTW_MANAGER",
-  "CONTENT_MANAGER",
-  "FINANCE_MANAGER",
-  "HR_MANAGER",
-  "CONSULTATION_MANAGER",
-];
-
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await authOrNull();
 
   if (!session?.user) {
-    redirect("/login?tab=admin");
-  }
-
-  if (!adminRoles.includes(session.user.role)) {
     redirect("/login?tab=admin");
   }
 

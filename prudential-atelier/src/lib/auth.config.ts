@@ -28,6 +28,14 @@ export const authConfig = {
         token.pointsBalance = (user as { pointsBalance?: number }).pointsBalance ?? 0;
         token.jobRolePermissions =
           (user as { jobRole?: { permissions: string[] } | null }).jobRole?.permissions ?? [];
+        const userPermissions =
+          (user as { userPermissions?: { permission: string; mode: string }[] }).userPermissions ?? [];
+        token.permissionGrants = userPermissions
+          .filter((p) => p.mode === "GRANT")
+          .map((p) => p.permission);
+        token.permissionRevokes = userPermissions
+          .filter((p) => p.mode === "REVOKE")
+          .map((p) => p.permission);
         token.name = user.name;
         token.picture = user.image;
         token.jobTitle = (user as { jobTitle?: string | null }).jobTitle ?? undefined;
