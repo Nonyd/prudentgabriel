@@ -269,6 +269,10 @@ async function main() {
   );
   assert(usersMw.includes("userHasAdminAccess"), "middleware admits granted shop staff, not only hardcoded roles");
   assert(!usersMw.includes("ADMIN_ROLES.includes"), "middleware no longer AND-filters admin by a role list");
+  assert(
+    !usersMw.includes('const role = (session?.user?.role as string | undefined) ?? "";\n  const isAdminUser'),
+    "middleware does not leave an unused role next to the grant check",
+  );
   assert(routeSource("app/api/staff/route.ts").includes('requireAdminApi("staff")'), "staff list API is staff permission");
   assert(routeSource("app/api/attendance/today/route.ts").includes('requireAdminApi("attendance")'), "attendance API is attendance permission");
   assert(routeSource("app/api/quotations/route.ts").includes('requireAdminApi("quotations")'), "quotations API is quotations permission");
