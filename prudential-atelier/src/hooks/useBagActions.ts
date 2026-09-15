@@ -13,6 +13,7 @@ import { bagErrorMessage } from "@/lib/quick-add";
 import { effectiveUnitNGN, variantAmountInCurrency } from "@/lib/pricing";
 import { useCartStore, type CartItem } from "@/store/cartStore";
 import { useCurrencyStore } from "@/store/currencyStore";
+import { sendAddToBagEvent } from "@/components/analytics/PageBeacon";
 
 export type AddToBagResult = { ok: true } | { ok: false; error: string };
 
@@ -62,6 +63,7 @@ export function useBagActions() {
         },
         { open: openOnSuccess },
       );
+      sendAddToBagEvent();
       return { ok: true };
     }
     const result = await postCartLine({
@@ -83,6 +85,7 @@ export function useBagActions() {
       return { ok: false, error: message };
     }
     if (openOnSuccess) openCart();
+    sendAddToBagEvent();
     return { ok: true };
   };
 

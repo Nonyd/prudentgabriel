@@ -26,6 +26,12 @@ export const LEGAL_TOKEN_NAMES = [
   "currencies_offered",
   "receipt_link_days",
   "impersonation_minutes",
+  "cookie_banner_notice",
+  "cookie_banner_acknowledge",
+  "cookie_consent_key",
+  "cookie_consent_version",
+  "cookie_cart_key",
+  "cookie_currency_key",
 ] as const;
 
 export type LegalTokenName = (typeof LEGAL_TOKEN_NAMES)[number];
@@ -52,6 +58,11 @@ export const LEGAL_SIGNIFICANT_SETTING_KEYS = new Set<string>([
   "legal_returns_updated",
   "legal_shipping_updated",
   "legal_copy_revision",
+  "legal_page_revision_privacy",
+  "legal_page_revision_terms",
+  "legal_page_revision_cookie",
+  "legal_page_revision_returns",
+  "legal_page_revision_shipping",
   "rtw_production_copy",
   "custom_lead_time_days",
   "alteration_warranty_days",

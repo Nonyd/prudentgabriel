@@ -86,6 +86,7 @@ export async function upsertCheckoutSession(input: {
   cartSnapshot: CheckoutCartSnapshot;
   currency: string;
   furthestStep: number;
+  attribution?: unknown;
 }): Promise<{ id: string }> {
   const email = normalizeEmail(input.email);
   const furthestStep = Math.min(3, Math.max(1, Math.floor(input.furthestStep) || 1));
@@ -105,7 +106,11 @@ export async function upsertCheckoutSession(input: {
       const nextStep = Math.max(existing.furthestStep, furthestStep);
       await prisma.checkoutSession.update({
         where: { id: existing.id },
-        data: { ...data, furthestStep: nextStep },
+        data: {
+          ...data,
+          furthestStep: nextStep,
+          attribution: existing.attribution ?? (input.attribution as object | undefined) ?? undefined,
+        },
       });
       return { id: existing.id };
     }
@@ -119,12 +124,18 @@ export async function upsertCheckoutSession(input: {
     const nextStep = Math.max(open.furthestStep, furthestStep);
     await prisma.checkoutSession.update({
       where: { id: open.id },
-      data: { ...data, furthestStep: nextStep },
+      data: {
+        ...data,
+        furthestStep: nextStep,
+        attribution: open.attribution ?? (input.attribution as object | undefined) ?? undefined,
+      },
     });
     return { id: open.id };
   }
 
-  const created = await prisma.checkoutSession.create({ data });
+  const created = await prisma.checkoutSession.create({
+    data: { ...data, attribution: (input.attribution as object | undefined) ?? undefined },
+  });
   return { id: created.id };
 }
 

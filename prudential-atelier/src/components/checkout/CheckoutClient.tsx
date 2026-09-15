@@ -26,6 +26,7 @@ import { NIGERIA_STATES } from "@/lib/geo/nigeria-states";
 import { COUNTRIES } from "@/lib/geo/countries";
 import { CUSTOM_RETURNS_COPY } from "@/lib/custom-size";
 import { useMadeThenShippedCopy } from "@/components/layout/ProductionTimeContext";
+import { readHeldAttribution } from "@/lib/analytics/attribution";
 
 interface ShipOpt {
   zoneId: string;
@@ -410,6 +411,7 @@ export function CheckoutClient() {
             lines: items,
             subtotalNGN,
           },
+          attribution: readHeldAttribution() ?? undefined,
         }),
       });
       const json = (await res.json()) as { id?: string };
@@ -506,6 +508,7 @@ export function CheckoutClient() {
         guestPhone: isGuest ? guestPhone : undefined,
         paymentRef,
         customReturnConsent: hasCustom && customNotReturnable ? customReturnConsent : undefined,
+        attribution: readHeldAttribution() ?? undefined,
       };
 
       if (isGuest) {

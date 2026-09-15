@@ -1,58 +1,52 @@
 export const CONSENT_KEY = "pg_cookie_consent";
-export const CURRENT_CONSENT_VERSION = "1.0";
+export const CURRENT_CONSENT_VERSION = "2.0";
+
+/** Bag and currency are essential: the shop cannot work without them. */
+export const ESSENTIAL_CART_STORAGE_KEY = "pa-cart";
+export const ESSENTIAL_CURRENCY_STORAGE_KEY = "pa-currency";
+
+/** Shared by the banner and the cookie policy token. Do not duplicate this sentence. */
+export const COOKIE_BANNER_NOTICE =
+  "This site uses cookies to keep you signed in, hold your bag and remember your currency. Nothing else.";
+
+export const COOKIE_BANNER_ACKNOWLEDGE = "Acknowledge";
 
 export type CookieConsent = {
   version: string;
   timestamp: string;
-  necessary: true;
-  functional: boolean;
-  analytics: boolean;
-  marketing: boolean;
+  acknowledged: true;
 };
+
+export function parseCookieConsent(raw: unknown): CookieConsent | null {
+  if (!raw || typeof raw !== "object") return null;
+  const row = raw as { version?: unknown; timestamp?: unknown; acknowledged?: unknown };
+  if (row.version !== CURRENT_CONSENT_VERSION) return null;
+  if (row.acknowledged !== true) return null;
+  if (typeof row.timestamp !== "string" || !row.timestamp) return null;
+  return { version: CURRENT_CONSENT_VERSION, timestamp: row.timestamp, acknowledged: true };
+}
 
 export function readCookieConsent(): CookieConsent | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(CONSENT_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as CookieConsent;
+    return parseCookieConsent(JSON.parse(raw));
   } catch {
     return null;
   }
 }
 
-export function saveCookieConsent(consent: Omit<CookieConsent, "timestamp"> & { timestamp?: string }): CookieConsent {
+export function acknowledgeCookieNotice(): CookieConsent {
   const stored: CookieConsent = {
-    ...consent,
-    necessary: true,
-    timestamp: consent.timestamp ?? new Date().toISOString(),
+    version: CURRENT_CONSENT_VERSION,
+    timestamp: new Date().toISOString(),
+    acknowledged: true,
   };
   localStorage.setItem(CONSENT_KEY, JSON.stringify(stored));
   return stored;
 }
 
-export function acceptAllConsent(): CookieConsent {
-  return saveCookieConsent({
-    version: CURRENT_CONSENT_VERSION,
-    necessary: true,
-    functional: true,
-    analytics: true,
-    marketing: true,
-  });
-}
-
-export function rejectNonEssentialConsent(): CookieConsent {
-  return saveCookieConsent({
-    version: CURRENT_CONSENT_VERSION,
-    necessary: true,
-    functional: false,
-    analytics: false,
-    marketing: false,
-  });
-}
-
 export function needsConsentBanner(): boolean {
-  const consent = readCookieConsent();
-  if (!consent) return true;
-  return consent.version !== CURRENT_CONSENT_VERSION;
+  return readCookieConsent() === null;
 }

@@ -14,7 +14,8 @@ export default function AdminGalleryPage() {
         <p className="eyebrow">Content</p>
         <h1 className="font-display text-2xl text-ink">Portfolio gallery</h1>
         <p className="mt-1 font-sans text-sm text-text-mid">
-          Curated image grids for Atelier, Bridal, and Kids pages. Page headlines and intro copy are in{" "}
+          Stills and film for Atelier, Bridal, and Kids. Drag to set the public order. Videos are labelled so they do
+          not hide among photographs. Page headlines live in{" "}
           <Link href="/admin/content/pages" className="text-choc hover:underline">
             Page content
           </Link>

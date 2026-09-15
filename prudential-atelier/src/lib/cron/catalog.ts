@@ -136,6 +136,12 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     migrated: true,
     budgetMs: 90_000,
   },
+  {
+    name: "analytics-rollup",
+    schedule: "15 1 * * *",
+    description: "Roll daily first-party page counts older than the retention window into monthly totals",
+    migrated: true,
+  },
 ];
 
 export function cronPath(name: string): string {

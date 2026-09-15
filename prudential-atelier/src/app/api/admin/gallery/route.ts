@@ -8,7 +8,8 @@ import { MAX_COLLECTION_REEL_BYTES } from "@/lib/collection-reel-limits";
 import { revalidateGallery } from "@/lib/revalidate";
 import { logServerError } from "@/lib/logger";
 
-const PAGE_DEFAULT = 30;
+const PAGE_DEFAULT = 200;
+const PAGE_MAX = 500;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 function parseCategory(v: string | null): GalleryCategory | null {
@@ -26,7 +27,10 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const category = parseCategory(searchParams.get("category"));
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? String(PAGE_DEFAULT), 10) || PAGE_DEFAULT));
+  const limit = Math.min(
+    PAGE_MAX,
+    Math.max(1, parseInt(searchParams.get("limit") ?? String(PAGE_DEFAULT), 10) || PAGE_DEFAULT),
+  );
 
   const where = category ? { category } : {};
 

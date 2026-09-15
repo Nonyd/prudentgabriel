@@ -27,6 +27,7 @@ import { formatPrice } from "@/lib/currency";
 import { cmsGet } from "@/lib/cms-helpers";
 import { ConsultationReviewsSlider } from "@/components/consultation/ConsultationReviewsSlider";
 import type { ConsultationReviewSlide } from "@/lib/consultation-reviews";
+import { readHeldAttribution } from "@/lib/analytics/attribution";
 import {
   ATELIER_BOOKINGS_CLOSED_COPY,
   ATELIER_ENQUIRE_CTA,
@@ -273,6 +274,7 @@ export function ConsultationBookingFlow({
         preferredDate1: manualFlow && pref1 ? prefYmdToDate(pref1) : undefined,
         preferredDate2: manualFlow && pref2 ? prefYmdToDate(pref2) : undefined,
         preferredDate3: manualFlow && pref3 ? prefYmdToDate(pref3) : undefined,
+        attribution: readHeldAttribution() ?? undefined,
       };
 
       const cr = await fetch("/api/consultations/create", {

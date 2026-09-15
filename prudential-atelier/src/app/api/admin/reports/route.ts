@@ -5,6 +5,7 @@ import { AA0_LINES } from "@/lib/finance/aa0";
 import { customRange, financeRange, type FinancePeriodKind } from "@/lib/finance/period";
 import { buildFinanceReport } from "@/lib/finance/query";
 import { buildWhatsSelling } from "@/lib/finance/whats-selling";
+import { buildHouseNumbers } from "@/lib/analytics/query";
 import type { FinanceLine } from "@/lib/finance/classify";
 
 function parseKind(raw: string | null): FinancePeriodKind {
@@ -32,11 +33,18 @@ export async function GET(req: NextRequest) {
         ? { ...customRange(fromParam, toParam), kind, label: `${fromParam} – ${toParam}`, prevFrom: new Date(0), prevTo: new Date(0), prevLabel: "" }
         : financeRange(kind, new Date());
 
-    const [current, previous, whatsSelling] = await Promise.all([
+    const [current, previous, whatsSelling, houseBase] = await Promise.all([
       buildFinanceReport(range.from, range.to, line),
       range.prevTo.getTime() > 0 ? buildFinanceReport(range.prevFrom, range.prevTo, line) : Promise.resolve(null),
       buildWhatsSelling(range.from, range.to, range.prevFrom, range.prevTo),
+      buildHouseNumbers(range.from, range.to, range.prevFrom, range.prevTo, 0, 0),
     ]);
+
+    const house = {
+      ...houseBase,
+      revenueNGN: current.combined.salesNGN,
+      revenuePrev: previous?.combined.salesNGN ?? 0,
+    };
 
     return NextResponse.json({
       aa0: AA0_LINES,
@@ -63,6 +71,7 @@ export async function GET(req: NextRequest) {
         asOf: current.asOf,
       },
       whatsSelling,
+      house,
       unassignedCount: current.unassigned.length,
     });
   } catch (e) {

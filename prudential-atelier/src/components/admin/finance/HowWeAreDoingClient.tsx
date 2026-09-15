@@ -4,9 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { FinanceAa0Note } from "@/components/admin/finance/FinanceAa0Note";
 import { WhatsSellingPanel } from "@/components/admin/finance/WhatsSellingPanel";
+import { HouseNumbersPanel } from "@/components/admin/finance/HouseNumbersPanel";
 import type { LineTotals } from "@/lib/finance/classify";
 import type { FinancePeriodKind } from "@/lib/finance/period";
 import type { WhatsSellingReport } from "@/lib/finance/whats-selling-view";
+import type { HouseNumbers } from "@/lib/analytics/view";
 
 type Payload = {
   range: { kind: string; label: string; prevLabel: string };
@@ -20,6 +22,7 @@ type Payload = {
     asOf: string;
   };
   whatsSelling: WhatsSellingReport;
+  house: HouseNumbers;
 };
 
 const KINDS: { id: FinancePeriodKind; label: string }[] = [
@@ -124,6 +127,7 @@ export function HowWeAreDoingClient() {
             {data.range.label}
             {data.range.prevLabel ? ` · previous ${data.range.prevLabel}` : ""}
           </p>
+          {data.house ? <HouseNumbersPanel data={data.house} /> : null}
           <Three title="Together" now={data.current.combined} prev={data.previous?.combined ?? null} />
           <div className="grid gap-4 lg:grid-cols-2">
             <Three title="Ready-to-wear" now={data.current.rtw} prev={data.previous?.rtw ?? null} />

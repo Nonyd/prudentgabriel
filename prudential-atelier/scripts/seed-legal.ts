@@ -40,6 +40,20 @@ async function main() {
         isPublic: true,
       },
     });
+    const pageRevKey = `legal_page_revision_${entry.page}`;
+    await prisma.siteSetting.upsert({
+      where: { key: pageRevKey },
+      create: {
+        key: pageRevKey,
+        value: entry.revision,
+        group: SettingGroup.CONTENT,
+        label: `${entry.label} copy revision`,
+        type: SettingType.TEXT,
+        isPublic: false,
+        sortOrder: 498,
+      },
+      update: { value: entry.revision },
+    });
     console.log(`  ✓ ${entry.label}`);
   }
 

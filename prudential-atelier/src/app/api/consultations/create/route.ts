@@ -19,6 +19,7 @@ import { consultationBookingSchema } from "@/validations/consultation";
 import { notifyNewConsultation } from "@/lib/notifications";
 import { getCMSContent } from "@/lib/cms";
 import { getPageFieldKeys } from "@/lib/cms-config";
+import { sanitizeAttribution } from "@/lib/analytics/attribution";
 import {
   getOfferingTypeConfig,
   isOfferingTypeManual,
@@ -169,6 +170,7 @@ export async function POST(req: NextRequest) {
         paymentRef: paymentRef ?? null,
         paymentStatus: PaymentStatus.PENDING,
         status: ConsultationStatus.PENDING_PAYMENT,
+        attribution: sanitizeAttribution(data.attribution) ?? undefined,
       },
     });
   });

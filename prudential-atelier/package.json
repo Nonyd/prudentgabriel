@@ -25,6 +25,8 @@
     "test:slice-as": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-as.ts",
     "test:slice-am": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-am.ts",
     "test:slice-ar": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-ar.ts",
+    "test:slice-at": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-at.ts",
+    "test:slice-aa": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-aa.ts",
     "test:slice-an": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-an.ts",
     "test:slice-ao": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-ao.ts",
     "test:slice-ai": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-ai.ts",

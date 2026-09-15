@@ -9,7 +9,6 @@ import { Logo } from "@/components/ui/Logo";
 import { usePublicSettings, getSettingFromPublic } from "@/hooks/usePublicSettings";
 import { cmsGet, cmsJson } from "@/lib/cms-helpers";
 import { instagramHandleToUrl } from "@/lib/sub-brand";
-import { useCookieConsentStore } from "@/store/cookieConsentStore";
 import { filterStorefrontLinks } from "@/lib/atelier-storefront";
 
 type LinkItem = { label: string; url: string };
@@ -146,7 +145,6 @@ export function Footer({
   cms?: Record<string, string>;
 }) {
   const settings = usePublicSettings();
-  const openCookieModal = useCookieConsentStore((s) => s.openModal);
 
   const instagramHandle = getSettingFromPublic(settings, "social_instagram", "@the_prudentgabriel");
   const instagramUrl = instagramHandleToUrl(instagramHandle);
@@ -273,10 +271,6 @@ export function Footer({
                   </Link>
                 </span>
               ))}
-              {" · "}
-              <button type="button" onClick={openCookieModal} className="transition-colors hover:text-choc">
-                Cookie Settings
-              </button>
             </p>
 
             <p

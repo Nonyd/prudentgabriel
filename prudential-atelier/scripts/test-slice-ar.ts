@@ -13,6 +13,7 @@ import {
   LEGAL_COPY_REVISION,
   LEGAL_HTML,
   LEGAL_MARKDOWN,
+  LEGAL_SEED_ENTRIES,
   PRIVACY_POLICY_MD,
   RETURNS_MD,
   SHIPPING_MD,
@@ -20,6 +21,15 @@ import {
   extractLegalToc,
   legalMdToHtml,
 } from "../src/lib/legal-copy";
+import {
+  CONSENT_KEY,
+  COOKIE_BANNER_ACKNOWLEDGE,
+  COOKIE_BANNER_NOTICE,
+  CURRENT_CONSENT_VERSION,
+  ESSENTIAL_CART_STORAGE_KEY,
+  ESSENTIAL_CURRENCY_STORAGE_KEY,
+  parseCookieConsent,
+} from "../src/lib/cookie-consent";
 import { FABRIC_POLICY_COPY, MADE_TO_MEASURE_REASON, STANDARD_SIZE_COPY } from "../src/lib/production-time";
 import { sanitizeCmsHtml } from "../src/lib/sanitize-html";
 import {
@@ -62,6 +72,12 @@ const FIXTURE_TOKENS: Record<string, string> = {
   currencies_offered: "NGN, USD, GBP",
   receipt_link_days: "7",
   impersonation_minutes: "30",
+  cookie_banner_notice: COOKIE_BANNER_NOTICE,
+  cookie_banner_acknowledge: COOKIE_BANNER_ACKNOWLEDGE,
+  cookie_consent_key: CONSENT_KEY,
+  cookie_consent_version: CURRENT_CONSENT_VERSION,
+  cookie_cart_key: ESSENTIAL_CART_STORAGE_KEY,
+  cookie_currency_key: ESSENTIAL_CURRENCY_STORAGE_KEY,
 };
 
 function resolved(md: string): string {
@@ -82,8 +98,11 @@ function runConverter() {
 }
 
 function runFacts() {
-  assert(LEGAL_COPY_REVISION === "ar-5", "revision stamp");
+  assert(LEGAL_COPY_REVISION === "ar-6", "revision stamp");
   assert(DEFAULT_LEGAL_UPDATED.includes("September 2026"), "last-updated date is this slice");
+  const byPage = Object.fromEntries(LEGAL_SEED_ENTRIES.map((e) => [e.page, e.revision]));
+  assert(byPage.cookie === "ar-6" && byPage.privacy === "ar-6", "cookie and privacy republish this slice");
+  assert(byPage.terms === "ar-5" && byPage.returns === "ar-5" && byPage.shipping === "ar-5", "other legal pages keep their lawyer revision");
 
   for (const term of DEFAULT_HOUSE_DOCUMENT_TERMS) {
     assert(TERMS_MD.includes(`{{house_term_${term.key}}}`), `terms tokenise invoice term: ${term.key}`);
@@ -139,12 +158,19 @@ function runFacts() {
   assert(!PRIVACY_POLICY_MD.includes("UK GDPR"), "do not claim UK GDPR as a done fact");
   assert(!PRIVACY_POLICY_MD.includes("Vercel"), "hosting claim matches current VPS, not old Vercel copy");
 
-  assert(COOKIE_MD.includes("Reject Non-Essential"), "banner wording");
-  assert(COOKIE_MD.includes("pa-cart"), "cart storage named");
-  assert(COOKIE_MD.includes("pa-currency"), "currency storage named");
-  assert(COOKIE_MD.includes("pg_cookie_consent"), "consent key named");
-  assert(COOKIE_MD.includes("does not currently load Google Analytics"), "analytics honesty");
+  assert(COOKIE_MD.includes("{{cookie_banner_notice}}"), "cookie policy uses the same banner sentence");
+  assert(PRIVACY_POLICY_MD.includes("{{cookie_banner_notice}}"), "privacy cookie paragraph uses the banner sentence");
+  assert(resolved(COOKIE_MD).includes(COOKIE_BANNER_NOTICE), "resolved cookie policy matches the banner");
+  assert(resolved(COOKIE_MD).includes(ESSENTIAL_CART_STORAGE_KEY), "resolved cookie policy names the bag key");
+  assert(resolved(COOKIE_MD).includes(ESSENTIAL_CURRENCY_STORAGE_KEY), "resolved cookie policy names the currency key");
+  assert(COOKIE_MD.includes("{{cookie_cart_key}}"), "bag key is a token");
+  assert(COOKIE_MD.includes("{{cookie_currency_key}}"), "currency key is a token");
+  assert(COOKIE_MD.includes("{{cookie_consent_key}}"), "consent key is a token");
+  assert(COOKIE_MD.includes("There is no Reject Non-Essential"), "policy records that the refuse button is gone");
+  assert(COOKIE_MD.includes("does not load Google Analytics"), "analytics honesty");
   assert(COOKIE_MD.includes("pg_admin_impersonate"), "admin impersonation cookie");
+  assert(COOKIE_MD.includes("Essential: without it the bag empties"), "bag is classified essential");
+  assert(COOKIE_MD.includes("Essential: without it the price you saw"), "currency is classified essential");
 
   assert(SHIPPING_MD.includes("DDU"), "shipping DDU");
   assert(SHIPPING_MD.includes("GIG"), "GIG named");
@@ -160,6 +186,61 @@ function runFacts() {
     assert(!md.includes("\u2014") && !md.includes("\u2013"), `${key} has no em/en dashes`);
     const publicHtml = applyLegalTokens(html, FIXTURE_TOKENS, "public").html;
     assert(!publicHtml.includes("{{"), `${key} public render never leaves braces`);
+  }
+}
+
+function runCookieConsent() {
+  assert(CURRENT_CONSENT_VERSION === "2.0", "acknowledgement version bumps past category JSON");
+  assert(
+    parseCookieConsent({
+      version: "1.0",
+      timestamp: "2026-01-01T00:00:00.000Z",
+      necessary: true,
+      functional: false,
+      analytics: false,
+      marketing: false,
+    }) === null,
+    "v1 category flags are not treated as an acknowledgement",
+  );
+  const ok = parseCookieConsent({
+    version: "2.0",
+    timestamp: "2026-09-14T00:00:00.000Z",
+    acknowledged: true,
+    analytics: true,
+  });
+  assert(ok?.acknowledged === true && ok.version === "2.0", "v2 acknowledgement is accepted");
+  assert(ok && !("analytics" in ok) && !("marketing" in ok) && !("functional" in ok), "stored shape has no category flags");
+
+  const consentSrc = src("src/lib/cookie-consent.ts");
+  assert(!consentSrc.includes("acceptAllConsent"), "accept-all helper is gone");
+  assert(!consentSrc.includes("rejectNonEssentialConsent"), "reject helper is gone");
+  assert(!consentSrc.includes("functional:"), "no functional flag in consent module");
+  assert(consentSrc.includes("ESSENTIAL_CART_STORAGE_KEY"), "bag key is classified essential in code");
+  assert(consentSrc.includes("ESSENTIAL_CURRENCY_STORAGE_KEY"), "currency key is classified essential in code");
+
+  const cart = src("src/store/cartStore.ts");
+  const currency = src("src/store/currencyStore.ts");
+  assert(cart.includes("ESSENTIAL_CART_STORAGE_KEY"), "cart persist uses the essential key");
+  assert(currency.includes("ESSENTIAL_CURRENCY_STORAGE_KEY"), "currency persist uses the essential key");
+
+  const banner = src("src/components/gdpr/CookieConsent.tsx");
+  assert(banner.includes("COOKIE_BANNER_NOTICE"), "banner copy comes from the shared constant");
+  assert(banner.includes("COOKIE_BANNER_ACKNOWLEDGE"), "one acknowledge button");
+  assert(banner.includes("/cookie-policy"), "banner links the cookie policy");
+  assert(!banner.includes("Reject Non-Essential"), "no reject button");
+  assert(!banner.includes("Accept All"), "no accept-all button");
+  assert(!banner.includes("Cookie Settings"), "no settings button");
+  assert(!banner.includes("Analytics Cookies"), "no analytics toggle");
+  assert(!banner.includes("Marketing Cookies"), "no marketing toggle");
+  assert(!banner.includes("Functional Cookies"), "no functional toggle");
+  assert(!banner.includes("cookieConsentStore"), "settings modal store is unused");
+  assert(!banner.includes("@radix-ui/react-dialog"), "preferences dialog is gone");
+
+  try {
+    src("src/store/cookieConsentStore.ts");
+    assert(false, "cookieConsentStore.ts should be deleted");
+  } catch {
+    // expected: file removed
   }
 }
 
@@ -233,6 +314,8 @@ function runPresentation() {
 
   const boot = src("src/lib/legal-bootstrap.ts");
   assert(boot.includes("LEGAL_COPY_REVISION"), "deploy can republish drafts");
+  assert(boot.includes("legal_page_revision_"), "republish is per legal page");
+  assert(boot.includes("alreadyPublishedAtThisRevision"), "matching revision does not overwrite lawyer edits");
 
   const welcome = src("src/emails/WelcomeCredentialsEmail.tsx");
   assert(welcome.includes("Paying an invoice"), "welcome email says paying opens the account");
@@ -244,6 +327,7 @@ function runPresentation() {
 function run() {
   runConverter();
   runFacts();
+  runCookieConsent();
   runTokens();
   runPresentation();
   console.log("slice-ar: pass");

@@ -17,6 +17,14 @@ import { IMPERSONATE_TTL_MS } from "@/lib/admin-impersonate";
 import { RECEIPT_EMAIL_TTL_SEC } from "@/lib/media/receipt-src";
 import { logActivity } from "@/lib/logger";
 import {
+  CONSENT_KEY,
+  COOKIE_BANNER_ACKNOWLEDGE,
+  COOKIE_BANNER_NOTICE,
+  CURRENT_CONSENT_VERSION,
+  ESSENTIAL_CART_STORAGE_KEY,
+  ESSENTIAL_CURRENCY_STORAGE_KEY,
+} from "@/lib/cookie-consent";
+import {
   applyLegalTokens,
   formatCountLegal,
   formatLagosLocationLine,
@@ -148,6 +156,12 @@ export async function resolveLegalTokens(): Promise<LegalTokenMap> {
     currencies_offered: currencies.join(", "),
     receipt_link_days: asToken(RECEIPT_EMAIL_TTL_SEC / 86400),
     impersonation_minutes: asToken(IMPERSONATE_TTL_MS / 60000),
+    cookie_banner_notice: COOKIE_BANNER_NOTICE,
+    cookie_banner_acknowledge: COOKIE_BANNER_ACKNOWLEDGE,
+    cookie_consent_key: CONSENT_KEY,
+    cookie_consent_version: CURRENT_CONSENT_VERSION,
+    cookie_cart_key: ESSENTIAL_CART_STORAGE_KEY,
+    cookie_currency_key: ESSENTIAL_CURRENCY_STORAGE_KEY,
   };
 
   return tokens;

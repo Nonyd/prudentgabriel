@@ -1,7 +1,10 @@
-/** Canonical legal drafts. CMS can amend without a deploy. Bump LEGAL_COPY_REVISION to republish. */
+/** Canonical legal drafts. CMS can amend without a deploy.
+ *  Bump a page's `revision` in LEGAL_SEED_ENTRIES to republish that page only.
+ *  LEGAL_COPY_REVISION is the newest of those page stamps. */
 
-export const LEGAL_COPY_REVISION = "ar-5";
-export const DEFAULT_LEGAL_UPDATED = "12 September 2026";
+
+export const LEGAL_COPY_REVISION = "ar-6";
+export const DEFAULT_LEGAL_UPDATED = "14 September 2026";
 
 export function slugifyHeading(text: string): string {
   return text
@@ -234,7 +237,7 @@ If you already have an account, the order is attached to it. Older guest payment
 
 ## Cookies and the browser
 
-See the [Cookie Policy](/cookie-policy). The short version: a session cookie keeps you logged in. The bag, currency, wishlist, theme and recent searches live in your browser's local storage, not as cookies. The banner lets you refuse non-essential cookies. We do not currently load analytics or advertising pixels, even if you press Accept All.
+See the [Cookie Policy](/cookie-policy). {{cookie_banner_notice}} There is no analytics or advertising tracker.
 
 ## Security
 
@@ -401,46 +404,40 @@ To the extent Nigerian law allows, the house is not liable for indirect loss (fo
 
 export const COOKIE_MD = `## What this page covers
 
-This is the list of what the site actually sets, not a generic cookie brochure. It matches the banner you see: Accept All, Reject Non-Essential, and Cookie Settings.
+This is the list of what the site actually sets. It matches the banner:
 
-## Strictly necessary
+{{cookie_banner_notice}}
 
-These are needed for the site to work. The banner cannot turn them off.
+The button on that banner is {{cookie_banner_acknowledge}}. There is no Reject Non-Essential, no Accept All, and no settings panel for analytics or marketing. The house does not run Meta or Google advertising on this site, and will not.
+
+## Essential
+
+Needed for the shop to work. They are not optional.
 
 - **Signed-in session.** When you log in, Auth.js sets a session cookie (the name is the Auth.js default, typically \`authjs.session-token\`, or a secure variant on HTTPS). It holds a login token, not your password. It is required to stay logged in.
+- **Your bag** (\`{{cookie_cart_key}}\`). Local storage. Includes any measurements you typed for a made-to-measure line. Essential: without it the bag empties when you change page.
+- **Your currency** (\`{{cookie_currency_key}}\`). Local storage. Naira, dollar or sterling, and a cached rate. Essential: without it the price you saw would not be the price at checkout.
 - {{#impersonation_minutes}}**Admin only.** If a Super Admin views the site as you, a cookie named \`pg_admin_impersonate\` lasts {{impersonation_minutes}} minutes. A role-preview cookie named \`pg_admin_preview_role\` lasts one hour. Ordinary customers never receive these.{{/impersonation_minutes}}
 
-## What "non-essential" means here
+## Other essential browser storage
 
-The banner's Reject Non-Essential button records that you refused functional, analytics and marketing cookies. Cookie Settings lets you toggle those three groups. Strictly necessary stays on.
+These also live in local storage and are written because the site uses them. There is no toggle to refuse them, because there is no non-essential category left.
 
-**Functional**, as the banner describes it, means remembering preferences.
-
-**Analytics**, as the banner describes it, means helping us improve the site.
-
-**Marketing**, as the banner describes it, means personalised content.
-
-## What we store in your browser (not cookies)
-
-These live in local storage. The software writes them whether or not you pressed Reject Non-Essential. That is how the bag and the currency picker work today.
-
-- \`pa-cart\`: your bag, including any measurements you typed for a made-to-measure line
-- \`pa-currency\`: naira, dollar or sterling, and a cached rate
 - \`pa-wishlist\`: pieces you saved
 - \`pa-recently-viewed\`: recent products
 - \`pa-recent-searches\`: recent search words
 - \`pg-theme\`: light or dark
-- \`pg_cookie_consent\`: the choice you made on this banner (version 1.0)
+- \`{{cookie_consent_key}}\`: a single acknowledgement that you saw this notice (version {{cookie_consent_version}}). It does not store analytics or marketing flags.
 
 Admin screens may also remember whether the sidebar is collapsed.
 
-## Analytics and marketing
+## No advertising
 
-The banner offers analytics and marketing choices. The site does not currently load Google Analytics, advertising pixels, or any other marketing tracker when you press Accept All. Your choice is stored so that if those tools are added later, the banner already knows. Until then, Reject Non-Essential does not change any tracking, because there is none to refuse.
+The site does not load Google Analytics, Meta Pixel, or any other advertising or analytics tracker. There is nothing to opt into and nothing to refuse.
 
-## How to change your choice
+## How to clear
 
-Open Cookie Settings from the banner, or from the Cookie Settings control in the footer. Clearing your browser storage forgets the bag, the currency and the consent itself. The banner will ask again if we change the consent version.
+Clearing your browser storage forgets the bag, the currency and the acknowledgement. The banner will ask again. The next visit still needs the bag and the currency to shop.
 
 ## Contact
 
@@ -544,10 +541,17 @@ export const LEGAL_HTML: Record<LegalPageKey, string> = {
   shipping: legalMdToHtml(SHIPPING_MD),
 };
 
-export const LEGAL_SEED_ENTRIES: { key: string; label: string; updatedKey: string; md: string }[] = [
-  { key: "legal_privacy_policy", label: "Privacy Policy", updatedKey: "legal_privacy_updated", md: PRIVACY_POLICY_MD },
-  { key: "legal_terms", label: "Terms & Conditions", updatedKey: "legal_terms_updated", md: TERMS_MD },
-  { key: "legal_cookie_policy", label: "Cookie Policy", updatedKey: "legal_cookie_updated", md: COOKIE_MD },
-  { key: "legal_returns_policy", label: "Returns Policy", updatedKey: "legal_returns_updated", md: RETURNS_MD },
-  { key: "legal_shipping_policy", label: "Shipping Policy", updatedKey: "legal_shipping_updated", md: SHIPPING_MD },
+export const LEGAL_SEED_ENTRIES: {
+  page: LegalPageKey;
+  key: string;
+  label: string;
+  updatedKey: string;
+  md: string;
+  revision: string;
+}[] = [
+  { page: "privacy", key: "legal_privacy_policy", label: "Privacy Policy", updatedKey: "legal_privacy_updated", md: PRIVACY_POLICY_MD, revision: "ar-6" },
+  { page: "terms", key: "legal_terms", label: "Terms & Conditions", updatedKey: "legal_terms_updated", md: TERMS_MD, revision: "ar-5" },
+  { page: "cookie", key: "legal_cookie_policy", label: "Cookie Policy", updatedKey: "legal_cookie_updated", md: COOKIE_MD, revision: "ar-6" },
+  { page: "returns", key: "legal_returns_policy", label: "Returns Policy", updatedKey: "legal_returns_updated", md: RETURNS_MD, revision: "ar-5" },
+  { page: "shipping", key: "legal_shipping_policy", label: "Shipping Policy", updatedKey: "legal_shipping_updated", md: SHIPPING_MD, revision: "ar-5" },
 ];

@@ -9,17 +9,47 @@ import {
 
 const REVISION_KEY = "legal_copy_revision";
 
-/** Writes AR legal drafts when the revision in code is newer than the row in CMS. */
+function pageRevisionKey(page: string): string {
+  return `legal_page_revision_${page}`;
+}
+
+/** Writes legal drafts per page when that page's revision in code is newer. */
 export async function ensureLegalCopy(): Promise<void> {
   if (process.env.SKIP_DB_BUILD === "1") return;
 
-  const current = await prisma.siteSetting.findUnique({
+  const published = await prisma.siteSetting.findUnique({
     where: { key: REVISION_KEY },
     select: { value: true },
   });
-  if (current?.value === LEGAL_COPY_REVISION) return;
+  const lastFullPublish = published?.value ?? "";
 
   for (const entry of LEGAL_SEED_ENTRIES) {
+    const revKey = pageRevisionKey(entry.page);
+    const current = await prisma.siteSetting.findUnique({
+      where: { key: revKey },
+      select: { value: true },
+    });
+
+    if (current?.value === entry.revision) continue;
+
+    const alreadyPublishedAtThisRevision = !current && lastFullPublish === entry.revision;
+    if (alreadyPublishedAtThisRevision) {
+      await prisma.siteSetting.upsert({
+        where: { key: revKey },
+        create: {
+          key: revKey,
+          value: entry.revision,
+          group: SettingGroup.CONTENT,
+          label: `${entry.label} copy revision`,
+          type: SettingType.TEXT,
+          isPublic: false,
+          sortOrder: 498,
+        },
+        update: { value: entry.revision },
+      });
+      continue;
+    }
+
     const html = legalMdToHtml(entry.md);
     await prisma.siteSetting.upsert({
       where: { key: entry.key },
@@ -53,6 +83,19 @@ export async function ensureLegalCopy(): Promise<void> {
         value: DEFAULT_LEGAL_UPDATED,
         isPublic: true,
       },
+    });
+    await prisma.siteSetting.upsert({
+      where: { key: revKey },
+      create: {
+        key: revKey,
+        value: entry.revision,
+        group: SettingGroup.CONTENT,
+        label: `${entry.label} copy revision`,
+        type: SettingType.TEXT,
+        isPublic: false,
+        sortOrder: 498,
+      },
+      update: { value: entry.revision },
     });
   }
 

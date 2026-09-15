@@ -1,13 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import type { GalleryCategory, GalleryImage } from "@prisma/client";
 import toast from "react-hot-toast";
-import { Eye, EyeOff, Trash2, Pencil, ChevronUp, ChevronDown, Loader2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  EyeOff,
+  Film,
+  GripVertical,
+  Loader2,
+  Pencil,
+  Play,
+  Trash2,
+} from "lucide-react";
 import { isGalleryVideoUrl, galleryPlaybackUrl } from "@/lib/gallery-media";
+import { cn } from "@/lib/utils";
 
 type UploadJob = {
   id: string;
@@ -16,6 +28,16 @@ type UploadJob = {
   status: "queued" | "uploading" | "done" | "error";
   error?: string;
 };
+
+type MediaFilter = "all" | "photos" | "videos" | "hidden";
+
+const CATEGORY_LABEL: Record<GalleryCategory, string> = {
+  ATELIER: "Atelier",
+  BRIDAL: "Bridal",
+  KIDS: "Kids",
+};
+
+const ADMIN_GALLERY_LIMIT = 500;
 
 function newJobId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
@@ -47,8 +69,8 @@ function uploadGalleryFile(
   });
 }
 
-async function fetchPage(category: GalleryCategory, page: number) {
-  const res = await fetch(`/api/admin/gallery?category=${category}&page=${page}&limit=30`);
+async function fetchGallery(category: GalleryCategory) {
+  const res = await fetch(`/api/admin/gallery?category=${category}&page=1&limit=${ADMIN_GALLERY_LIMIT}`);
   if (!res.ok) throw new Error("Failed to load");
   return (await res.json()) as {
     images: GalleryImage[];
@@ -58,10 +80,71 @@ async function fetchPage(category: GalleryCategory, page: number) {
   };
 }
 
+function moveId(ids: string[], fromId: string, toId: string): string[] {
+  const from = ids.indexOf(fromId);
+  const to = ids.indexOf(toId);
+  if (from < 0 || to < 0 || from === to) return ids;
+  const next = [...ids];
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved!);
+  return next;
+}
+
+function applyOrder(items: GalleryImage[], orderedIds: string[]): GalleryImage[] {
+  const byId = new Map(items.map((item) => [item.id, item]));
+  return orderedIds.map((id) => byId.get(id)).filter((item): item is GalleryImage => Boolean(item));
+}
+
+function mediaCaption(item: GalleryImage): string {
+  const caption = item.caption?.trim();
+  if (caption) return caption;
+  const alt = item.alt?.trim();
+  if (alt) return alt;
+  return isGalleryVideoUrl(item.url) ? "Untitled film" : "Untitled look";
+}
+
+function AdminGalleryPreview({ item }: { item: GalleryImage }) {
+  const video = isGalleryVideoUrl(item.url);
+  const ref = useRef<HTMLVideoElement>(null);
+
+  if (video) {
+    return (
+      <video
+        ref={ref}
+        src={galleryPlaybackUrl(item.url)}
+        muted
+        playsInline
+        preload="metadata"
+        className="h-full w-full object-contain"
+        onMouseEnter={() => void ref.current?.play().catch(() => undefined)}
+        onMouseLeave={() => {
+          const el = ref.current;
+          if (!el) return;
+          el.pause();
+          el.currentTime = 0;
+        }}
+      />
+    );
+  }
+
+  return (
+    <Image
+      src={item.url}
+      alt={item.alt || ""}
+      fill
+      className="object-cover object-top"
+      sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
+      unoptimized
+    />
+  );
+}
+
 export function GalleryManager() {
   const [tab, setTab] = useState<GalleryCategory>("ATELIER");
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState<{ images: GalleryImage[]; total: number; totalPages: number } | null>(null);
+  const [items, setItems] = useState<GalleryImage[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<MediaFilter>("all");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadJobs, setUploadJobs] = useState<UploadJob[]>([]);
   const [uploadInFlight, setUploadInFlight] = useState(false);
@@ -69,57 +152,101 @@ export function GalleryManager() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dropId, setDropId] = useState<string | null>(null);
   const [editing, setEditing] = useState<GalleryImage | null>(null);
   const [editAlt, setEditAlt] = useState("");
   const [editCaption, setEditCaption] = useState("");
   const [editPublished, setEditPublished] = useState(true);
-  const [editSort, setEditSort] = useState(0);
+  const [editCategory, setEditCategory] = useState<GalleryCategory>("ATELIER");
 
   const load = useCallback(async () => {
     try {
-      const j = await fetchPage(tab, page);
-      setData({ images: j.images, total: j.total, totalPages: j.totalPages });
+      const j = await fetchGallery(tab);
+      setItems(j.images);
+      setTotal(j.total);
     } catch {
       toast.error("Could not load gallery");
+    } finally {
+      setLoading(false);
     }
-  }, [tab, page]);
+  }, [tab]);
 
   useEffect(() => {
+    setLoading(true);
     void load();
   }, [load]);
 
   useEffect(() => {
-    setPage(1);
-  }, [tab]);
-
-  useEffect(() => {
     setSelectedIds([]);
     setSelectMode(false);
+    setReorder(false);
+    setFilter("all");
+    setDragId(null);
+    setDropId(null);
   }, [tab]);
 
-  useEffect(() => {
-    setSelectedIds([]);
-  }, [page]);
+  const photoCount = items.filter((item) => !isGalleryVideoUrl(item.url)).length;
+  const videoCount = items.filter((item) => isGalleryVideoUrl(item.url)).length;
+  const hiddenCount = items.filter((item) => !item.isPublished).length;
 
-  const move = async (index: number, dir: -1 | 1) => {
-    if (!data) return;
-    const next = [...data.images];
-    const j = index + dir;
-    if (j < 0 || j >= next.length) return;
-    const tmp = next[index];
-    next[index] = next[j];
-    next[j] = tmp;
-    const orderedIds = next.map((x) => x.id);
+  const visible = useMemo(() => {
+    return items.filter((item) => {
+      const video = isGalleryVideoUrl(item.url);
+      if (filter === "photos") return !video;
+      if (filter === "videos") return video;
+      if (filter === "hidden") return !item.isPublished;
+      return true;
+    });
+  }, [items, filter]);
+
+  const canDrag = reorder && filter === "all" && !selectMode && !savingOrder;
+
+  const persistOrder = async (nextItems: GalleryImage[]) => {
+    setSavingOrder(true);
     const res = await fetch("/api/admin/gallery/reorder", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderedIds }),
+      body: JSON.stringify({ category: tab, orderedIds: nextItems.map((item) => item.id) }),
     });
-    if (!res.ok) toast.error("Reorder failed");
-    else {
-      toast.success("Order updated");
+    setSavingOrder(false);
+    if (!res.ok) {
+      toast.error("Reorder failed");
       void load();
+      return;
     }
+  };
+
+  const dropOnto = (targetId: string) => {
+    if (!canDrag || !dragId || dragId === targetId) {
+      setDragId(null);
+      setDropId(null);
+      return;
+    }
+    const orderedIds = moveId(
+      items.map((item) => item.id),
+      dragId,
+      targetId,
+    );
+    const next = applyOrder(items, orderedIds);
+    setItems(next);
+    setDragId(null);
+    setDropId(null);
+    void persistOrder(next);
+  };
+
+  const move = (id: string, dir: -1 | 1) => {
+    if (!canDrag) return;
+    const index = items.findIndex((item) => item.id === id);
+    const j = index + dir;
+    if (index < 0 || j < 0 || j >= items.length) return;
+    const next = [...items];
+    const tmp = next[index]!;
+    next[index] = next[j]!;
+    next[j] = tmp;
+    setItems(next);
+    void persistOrder(next);
   };
 
   const togglePublished = async (img: GalleryImage) => {
@@ -162,9 +289,17 @@ export function GalleryManager() {
     setSelectedIds([]);
     setSelectMode(false);
     void load();
-    if (fail === 0) toast.success(`${ok} image${ok === 1 ? "" : "s"} removed`);
+    if (fail === 0) toast.success(`${ok} ${ok === 1 ? "item" : "items"} removed`);
     else if (ok > 0) toast.error(`Removed ${ok}; ${fail} failed`);
     else toast.error("Delete failed");
+  };
+
+  const openEdit = (img: GalleryImage) => {
+    setEditing(img);
+    setEditAlt(img.alt ?? "");
+    setEditCaption(img.caption ?? "");
+    setEditPublished(img.isPublished);
+    setEditCategory(img.category);
   };
 
   const saveEdit = async () => {
@@ -176,7 +311,7 @@ export function GalleryManager() {
         alt: editAlt || null,
         caption: editCaption || null,
         isPublished: editPublished,
-        sortOrder: editSort,
+        category: editCategory,
       }),
     });
     if (!res.ok) toast.error("Save failed");
@@ -204,7 +339,7 @@ export function GalleryManager() {
     let fail = 0;
     await Promise.all(
       list.map(async (file, i) => {
-        const jobId = jobs[i].id;
+        const jobId = jobs[i]!.id;
         setUploadJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, status: "uploading" as const } : j)));
         try {
           await uploadGalleryFile(file, tab, (pct) => {
@@ -227,35 +362,38 @@ export function GalleryManager() {
 
     setUploadInFlight(false);
     void load();
-    if (ok > 0 && fail === 0) toast.success(`${ok} image${ok === 1 ? "" : "s"} uploaded`);
+    if (ok > 0 && fail === 0) toast.success(`${ok} ${ok === 1 ? "file" : "files"} uploaded`);
     else if (ok > 0 && fail > 0) toast(`Finished with errors: ${ok} ok, ${fail} failed`, { icon: "⚠️" });
   };
 
-  const images = data?.images ?? [];
-  const total = data?.total ?? 0;
-  const pageIds = images.map((x) => x.id);
-  const allOnPageSelected =
-    selectMode && pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+  const allVisibleSelected =
+    selectMode && visible.length > 0 && visible.every((item) => selectedIds.includes(item.id));
+  const truncated = total > items.length;
 
   return (
     <div className="mt-8 space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex gap-1 border-b border-sand">
           {(["ATELIER", "BRIDAL", "KIDS"] as const).map((c) => (
             <button
               key={c}
               type="button"
               onClick={() => setTab(c)}
-              className={`px-4 py-2 font-body text-xs font-medium uppercase tracking-wide ${
-                tab === c ? "border-b-2 border-[#37392d] text-ink" : "text-charcoal-mid"
-              }`}
+              className={cn(
+                "px-4 py-2 font-body text-xs font-medium uppercase tracking-wide",
+                tab === c ? "border-b-2 border-[#37392d] text-ink" : "text-charcoal-mid",
+              )}
             >
-              {c === "ATELIER" ? "Atelier" : c === "BRIDAL" ? "Bridal" : "Kids"}
+              {CATEGORY_LABEL[c]}
             </button>
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <span className="font-body text-xs text-[#6B6B68]">{total} images</span>
+          <span className="font-body text-xs text-[#6B6B68]">
+            {photoCount} {photoCount === 1 ? "look" : "looks"}
+            {videoCount > 0 ? ` · ${videoCount} ${videoCount === 1 ? "film" : "films"}` : ""}
+            {hiddenCount > 0 ? ` · ${hiddenCount} hidden` : ""}
+          </span>
           <button
             type="button"
             onClick={() => {
@@ -264,15 +402,17 @@ export function GalleryManager() {
                 if (next) {
                   setSelectMode(false);
                   setSelectedIds([]);
+                  setFilter("all");
                 }
                 return next;
               });
             }}
-            className={`border px-3 py-2 font-body text-[11px] uppercase tracking-wide ${
-              reorder ? "border-[#37392d] bg-[#37392d] text-white" : "border-sand text-charcoal"
-            }`}
+            className={cn(
+              "border px-3 py-2 font-body text-[11px] uppercase tracking-wide",
+              reorder ? "border-[#37392d] bg-[#37392d] text-white" : "border-sand text-charcoal",
+            )}
           >
-            Reorder
+            {savingOrder ? "Saving…" : "Reorder"}
           </button>
           <button
             type="button"
@@ -284,22 +424,23 @@ export function GalleryManager() {
                 return next;
               });
             }}
-            className={`border px-3 py-2 font-body text-[11px] uppercase tracking-wide ${
-              selectMode ? "border-[#37392d] bg-[#37392d] text-white" : "border-sand text-charcoal"
-            }`}
+            className={cn(
+              "border px-3 py-2 font-body text-[11px] uppercase tracking-wide",
+              selectMode ? "border-[#37392d] bg-[#37392d] text-white" : "border-sand text-charcoal",
+            )}
           >
             Select
           </button>
-          {selectMode && pageIds.length > 0 ? (
+          {selectMode && visible.length > 0 ? (
             <button
               type="button"
               onClick={() => {
-                if (allOnPageSelected) setSelectedIds([]);
-                else setSelectedIds([...pageIds]);
+                if (allVisibleSelected) setSelectedIds([]);
+                else setSelectedIds(visible.map((item) => item.id));
               }}
               className="border border-sand px-3 py-2 font-body text-[11px] uppercase tracking-wide text-charcoal"
             >
-              {allOnPageSelected ? "Deselect all" : "Select all"}
+              {allVisibleSelected ? "Deselect all" : "Select all"}
             </button>
           ) : null}
           {selectMode && selectedIds.length > 0 ? (
@@ -317,7 +458,7 @@ export function GalleryManager() {
                 <AlertDialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
                 <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 glass-3 glass-panel p-6">
                   <AlertDialog.Title className="font-body text-sm font-medium">
-                    Delete {selectedIds.length} image{selectedIds.length === 1 ? "" : "s"}?
+                    Delete {selectedIds.length} {selectedIds.length === 1 ? "item" : "items"}?
                   </AlertDialog.Title>
                   <p className="mt-2 font-body text-xs text-[#6B6B68]">This cannot be undone.</p>
                   <div className="mt-6 flex justify-end gap-2">
@@ -350,153 +491,251 @@ export function GalleryManager() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {images.map((img, idx) => (
-          <div key={img.id} className="group relative border border-sand bg-[#fafafa]">
-            <div className="relative aspect-[3/4] w-full overflow-hidden">
-              {isGalleryVideoUrl(img.url) ? (
-                <video
-                  src={galleryPlaybackUrl(img.url)}
-                  muted
-                  playsInline
-                  preload="metadata"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <Image
-                  src={img.url}
-                  alt=""
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 16vw"
-                  unoptimized
-                />
-              )}
-              {selectMode && !reorder ? (
-                <>
-                  <button
-                    type="button"
-                    className="absolute inset-0 z-[1] cursor-pointer border-0 bg-transparent p-0"
-                    onClick={() => toggleImageSelected(img.id)}
-                    aria-label={selectedIds.includes(img.id) ? "Deselect image" : "Select image"}
-                  />
-                  <label
-                    className="absolute left-2 top-2 z-10 flex cursor-pointer items-center gap-0"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(img.id)}
-                      onChange={() => toggleImageSelected(img.id)}
-                      className="h-4 w-4 border-sand accent-[#37392d]"
-                      aria-label={selectedIds.includes(img.id) ? "Deselect image" : "Select image"}
-                    />
-                  </label>
-                </>
-              ) : null}
-              <div
-                className={`absolute inset-0 flex flex-col justify-between bg-black/0 p-2 transition-opacity group-hover:bg-black/40 ${
-                  selectMode && !reorder ? "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100" : "opacity-0 group-hover:opacity-100"
-                }`}
-              >
-                <div className="flex justify-between">
-                  {reorder ? (
-                    <div className="flex gap-1">
-                      <button
-                        type="button"
-                        className="bg-canvas/90 p-1 text-charcoal"
-                        onClick={() => void move(idx, -1)}
-                        aria-label="Move up"
-                      >
-                        <ChevronUp size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        className="bg-canvas/90 p-1 text-charcoal"
-                        onClick={() => void move(idx, 1)}
-                        aria-label="Move down"
-                      >
-                        <ChevronDown size={16} />
-                      </button>
-                    </div>
-                  ) : (
-                    <span />
-                  )}
-                  <button
-                    type="button"
-                    className="bg-canvas/90 p-1 text-charcoal"
-                    onClick={() => void togglePublished(img)}
-                    aria-label="Toggle published"
-                  >
-                    {img.isPublished ? <Eye size={16} /> : <EyeOff size={16} />}
-                  </button>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    className="bg-canvas/90 p-1 text-charcoal"
-                    onClick={() => {
-                      setEditing(img);
-                      setEditAlt(img.alt ?? "");
-                      setEditCaption(img.caption ?? "");
-                      setEditPublished(img.isPublished);
-                      setEditSort(img.sortOrder);
-                    }}
-                  >
-                    <Pencil size={16} />
-                  </button>
-                  <AlertDialog.Root>
-                    <AlertDialog.Trigger asChild>
-                      <button type="button" className="bg-canvas/90 p-1 text-red-700">
-                        <Trash2 size={16} />
-                      </button>
-                    </AlertDialog.Trigger>
-                    <AlertDialog.Portal>
-                      <AlertDialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
-                      <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 glass-3 glass-panel p-6">
-                        <AlertDialog.Title className="font-body text-sm font-medium">Delete image?</AlertDialog.Title>
-                        <div className="mt-6 flex justify-end gap-2">
-                          <AlertDialog.Cancel asChild>
-                            <button type="button" className="border border-sand px-4 py-2 text-xs uppercase">
-                              Cancel
-                            </button>
-                          </AlertDialog.Cancel>
-                          <AlertDialog.Action asChild>
-                            <button
-                              type="button"
-                              className="bg-red-700 px-4 py-2 text-xs uppercase text-white"
-                              onClick={() => void remove(img.id)}
-                            >
-                              Delete
-                            </button>
-                          </AlertDialog.Action>
-                        </div>
-                      </AlertDialog.Content>
-                    </AlertDialog.Portal>
-                  </AlertDialog.Root>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {(
+          [
+            ["all", "All"],
+            ["photos", "Photos"],
+            ["videos", "Videos"],
+            ["hidden", "Hidden"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => {
+              setFilter(id);
+              if (id !== "all") setReorder(false);
+            }}
+            className={cn(
+              "border px-3 py-1.5 font-body text-[11px] uppercase tracking-wide",
+              filter === id ? "border-[#37392d] bg-[#37392d] text-white" : "border-sand text-charcoal",
+            )}
+          >
+            {label}
+            {id === "videos" && videoCount > 0 ? ` (${videoCount})` : ""}
+            {id === "hidden" && hiddenCount > 0 ? ` (${hiddenCount})` : ""}
+          </button>
         ))}
       </div>
 
-      {data && data.totalPages > 1 ? (
-        <div className="flex flex-wrap justify-center gap-2">
-          {Array.from({ length: data.totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPage(p)}
-              className={`min-w-[2rem] border px-2 py-1 font-body text-xs ${
-                page === p ? "border-[#37392d] bg-[#37392d] text-white" : "border-sand text-charcoal"
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
+      {reorder ? (
+        <p className="font-body text-xs text-[#6B6B68]">
+          Drag a tile, or use the arrows, to set the public order. Films span two columns so they sit as film, not as
+          postage stamps.
+        </p>
+      ) : filter !== "all" ? (
+        <p className="font-body text-xs text-[#6B6B68]">Show all to reorder.</p>
       ) : null}
+
+      {truncated ? (
+        <p className="font-body text-xs text-[#6B6B68]">
+          Showing the first {items.length} of {total}. Reorder after trimming this gallery.
+        </p>
+      ) : null}
+
+      {loading ? (
+        <p className="font-body text-sm text-[#6B6B68]">Loading gallery…</p>
+      ) : visible.length === 0 ? (
+        <p className="border border-dashed border-sand px-6 py-16 text-center font-body text-sm text-[#6B6B68]">
+          {items.length === 0
+            ? "No looks in this gallery yet. Upload photographs or film."
+            : "Nothing matches this filter."}
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {visible.map((img, idx) => {
+            const video = isGalleryVideoUrl(img.url);
+            const position = items.findIndex((item) => item.id === img.id) + 1;
+            return (
+              <article
+                key={img.id}
+                draggable={canDrag}
+                onDragStart={(e) => {
+                  if (!canDrag) return;
+                  setDragId(img.id);
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData("text/plain", img.id);
+                }}
+                onDragOver={(e) => {
+                  if (!canDrag) return;
+                  e.preventDefault();
+                  if (dropId !== img.id) setDropId(img.id);
+                }}
+                onDragLeave={() => {
+                  if (dropId === img.id) setDropId(null);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  dropOnto(img.id);
+                }}
+                onDragEnd={() => {
+                  setDragId(null);
+                  setDropId(null);
+                }}
+                className={cn(
+                  "group flex flex-col border bg-bg-card transition-[box-shadow,opacity] duration-150",
+                  video ? "sm:col-span-2" : "",
+                  canDrag ? "cursor-grab active:cursor-grabbing" : "",
+                  dragId === img.id ? "opacity-50" : "opacity-100",
+                  dropId === img.id && dragId && dragId !== img.id
+                    ? "border-[#37392d] shadow-[0_0_0_1px_#37392d]"
+                    : img.isPublished
+                      ? "border-sand"
+                      : "border-sand border-dashed",
+                )}
+              >
+                <div
+                  className={cn(
+                    "relative overflow-hidden bg-[#1a1a18]",
+                    video ? "aspect-video" : "aspect-[3/4]",
+                  )}
+                >
+                  <AdminGalleryPreview item={img} />
+                  {video ? (
+                    <span
+                      className={cn(
+                        "pointer-events-none absolute top-2 inline-flex items-center gap-1 bg-[#37392d] px-2 py-1 font-body text-[10px] font-medium uppercase tracking-[0.12em] text-white",
+                        selectMode && !reorder ? "left-8" : "left-2",
+                      )}
+                    >
+                      <Film size={12} aria-hidden />
+                      Video
+                    </span>
+                  ) : null}
+                  {!img.isPublished ? (
+                    <span className="pointer-events-none absolute right-2 top-2 bg-canvas/95 px-2 py-1 font-body text-[10px] uppercase tracking-[0.12em] text-charcoal">
+                      Hidden
+                    </span>
+                  ) : null}
+                  {video ? (
+                    <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-90 transition-opacity duration-150 group-hover:opacity-0">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white">
+                        <Play size={16} fill="currentColor" aria-hidden />
+                      </span>
+                    </span>
+                  ) : null}
+                  {reorder ? (
+                    <span className="pointer-events-none absolute bottom-2 left-2 bg-canvas/95 px-1.5 py-0.5 font-body text-[10px] tabular-nums text-charcoal">
+                      {position}
+                    </span>
+                  ) : null}
+                  {selectMode && !reorder ? (
+                    <>
+                      <button
+                        type="button"
+                        className="absolute inset-0 z-[1] cursor-pointer border-0 bg-transparent p-0"
+                        onClick={() => toggleImageSelected(img.id)}
+                        aria-label={selectedIds.includes(img.id) ? "Deselect" : "Select"}
+                      />
+                      <label className="absolute left-2 top-2 z-10" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(img.id)}
+                          onChange={() => toggleImageSelected(img.id)}
+                          className="h-4 w-4 border-sand accent-[#37392d]"
+                          aria-label={selectedIds.includes(img.id) ? "Deselect" : "Select"}
+                        />
+                      </label>
+                    </>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-1 flex-col gap-2 p-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="min-w-0 flex-1 font-body text-[12px] leading-snug text-ink">
+                      {mediaCaption(img)}
+                      {!img.caption?.trim() && !img.alt?.trim() ? (
+                        <span className="block text-[11px] text-[#A8A8A4]">Add a caption</span>
+                      ) : null}
+                    </p>
+                    {canDrag ? (
+                      <span className="mt-0.5 shrink-0 text-[#A8A8A4]" aria-hidden>
+                        <GripVertical size={14} />
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-auto flex items-center justify-between gap-1">
+                    {canDrag ? (
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          className="border border-sand p-1 text-charcoal disabled:opacity-30"
+                          onClick={() => move(img.id, -1)}
+                          disabled={idx === 0 || savingOrder}
+                          aria-label="Move earlier"
+                        >
+                          <ChevronUp size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className="border border-sand p-1 text-charcoal disabled:opacity-30"
+                          onClick={() => move(img.id, 1)}
+                          disabled={idx === visible.length - 1 || savingOrder}
+                          aria-label="Move later"
+                        >
+                          <ChevronDown size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span />
+                    )}
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        className="border border-sand p-1 text-charcoal"
+                        onClick={() => void togglePublished(img)}
+                        aria-label={img.isPublished ? "Hide from public gallery" : "Publish"}
+                      >
+                        {img.isPublished ? <Eye size={14} /> : <EyeOff size={14} />}
+                      </button>
+                      <button
+                        type="button"
+                        className="border border-sand p-1 text-charcoal"
+                        onClick={() => openEdit(img)}
+                        aria-label="Edit"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <AlertDialog.Root>
+                        <AlertDialog.Trigger asChild>
+                          <button type="button" className="border border-sand p-1 text-red-700" aria-label="Delete">
+                            <Trash2 size={14} />
+                          </button>
+                        </AlertDialog.Trigger>
+                        <AlertDialog.Portal>
+                          <AlertDialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
+                          <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(90vw,400px)] -translate-x-1/2 -translate-y-1/2 glass-3 glass-panel p-6">
+                            <AlertDialog.Title className="font-body text-sm font-medium">
+                              Delete {video ? "this film" : "this look"}?
+                            </AlertDialog.Title>
+                            <div className="mt-6 flex justify-end gap-2">
+                              <AlertDialog.Cancel asChild>
+                                <button type="button" className="border border-sand px-4 py-2 text-xs uppercase">
+                                  Cancel
+                                </button>
+                              </AlertDialog.Cancel>
+                              <AlertDialog.Action asChild>
+                                <button
+                                  type="button"
+                                  className="bg-red-700 px-4 py-2 text-xs uppercase text-white"
+                                  onClick={() => void remove(img.id)}
+                                >
+                                  Delete
+                                </button>
+                              </AlertDialog.Action>
+                            </div>
+                          </AlertDialog.Content>
+                        </AlertDialog.Portal>
+                      </AlertDialog.Root>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
 
       <Dialog.Root
         open={uploadOpen}
@@ -513,8 +752,7 @@ export function GalleryManager() {
           <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] max-h-[min(90vh,640px)] w-[min(90vw,520px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto glass-3 glass-panel p-6">
             <Dialog.Title className="font-display text-xl text-ink">Upload images or video</Dialog.Title>
             <p className="mt-2 font-body text-xs text-[#6B6B68]">
-              Uploading to: {tab === "ATELIER" ? "Atelier" : tab === "BRIDAL" ? "Bridal" : "Kids"}. Photos up to 5MB;
-              MP4 or WebM up to 20MB.
+              Uploading to: {CATEGORY_LABEL[tab]}. Photos up to 5MB; MP4 or WebM up to 20MB.
             </p>
             <label
               className="mt-6 flex cursor-pointer flex-col items-center justify-center border border-dashed border-sand bg-[#fafafa] px-6 py-12 transition-colors hover:border-[#37392d]/40"
@@ -567,9 +805,10 @@ export function GalleryManager() {
                     </div>
                     <div className="mt-1.5 h-1.5 w-full overflow-hidden bg-[#EBEBEA]">
                       <div
-                        className={`h-full transition-[width] duration-150 ${
-                          job.status === "error" ? "bg-red-400" : "bg-[#37392d]"
-                        }`}
+                        className={cn(
+                          "h-full transition-[width] duration-150",
+                          job.status === "error" ? "bg-red-400" : "bg-[#37392d]",
+                        )}
                         style={{ width: `${job.status === "done" ? 100 : job.progress}%` }}
                       />
                     </div>
@@ -594,8 +833,39 @@ export function GalleryManager() {
       <Dialog.Root open={Boolean(editing)} onOpenChange={(o) => !o && setEditing(null)}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
-          <Dialog.Content className="fixed right-0 top-0 z-[101] flex h-full w-[min(100vw,380px)] flex-col border-l border-[var(--glass-edge)] glass-3 p-6">
-            <Dialog.Title className="font-display text-lg">Edit image</Dialog.Title>
+          <Dialog.Content className="fixed right-0 top-0 z-[101] flex h-full w-[min(100vw,400px)] flex-col border-l border-[var(--glass-edge)] glass-3 p-6">
+            <Dialog.Title className="font-display text-lg">
+              {editing && isGalleryVideoUrl(editing.url) ? "Edit film" : "Edit look"}
+            </Dialog.Title>
+            {editing ? (
+              <div className="mt-4 overflow-hidden border border-sand bg-[#1a1a18]">
+                {isGalleryVideoUrl(editing.url) ? (
+                  <video
+                    src={galleryPlaybackUrl(editing.url)}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    className="aspect-video w-full object-contain"
+                  />
+                ) : (
+                  <div className="relative aspect-[3/4] w-full">
+                    <Image src={editing.url} alt={editing.alt || ""} fill className="object-cover object-top" unoptimized />
+                  </div>
+                )}
+              </div>
+            ) : null}
+            <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Gallery</label>
+            <select
+              className="mt-1 border border-sand bg-white px-3 py-2 text-sm"
+              value={editCategory}
+              onChange={(e) => setEditCategory(e.target.value as GalleryCategory)}
+            >
+              {(["ATELIER", "BRIDAL", "KIDS"] as const).map((c) => (
+                <option key={c} value={c}>
+                  {CATEGORY_LABEL[c]}
+                </option>
+              ))}
+            </select>
             <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Alt</label>
             <input
               className="mt-1 border border-sand px-3 py-2 text-sm"
@@ -610,15 +880,8 @@ export function GalleryManager() {
             />
             <label className="mt-4 flex items-center gap-2 font-body text-sm">
               <input type="checkbox" checked={editPublished} onChange={(e) => setEditPublished(e.target.checked)} />
-              Published
+              Published on the public page
             </label>
-            <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Sort order</label>
-            <input
-              type="number"
-              className="mt-1 border border-sand px-3 py-2 text-sm"
-              value={editSort}
-              onChange={(e) => setEditSort(parseInt(e.target.value, 10) || 0)}
-            />
             <div className="mt-auto flex gap-2 pt-8">
               <Dialog.Close asChild>
                 <button type="button" className="flex-1 border border-sand py-2 text-xs uppercase">

@@ -38,6 +38,16 @@ export const consultationBookingSchema = z.object({
   preferredDate1: z.coerce.date().optional(),
   preferredDate2: z.coerce.date().optional(),
   preferredDate3: z.coerce.date().optional(),
+  attribution: z
+    .object({
+      source: z.string().max(80).optional(),
+      medium: z.string().max(80).optional(),
+      campaign: z.string().max(120).optional(),
+      content: z.string().max(120).optional(),
+      referrer: z.string().max(120).optional(),
+      landingPath: z.string().max(200).optional(),
+    })
+    .optional(),
 });
 
 export type ConsultationBookingInput = z.infer<typeof consultationBookingSchema>;

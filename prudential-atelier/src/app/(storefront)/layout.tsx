@@ -3,6 +3,7 @@ import { Footer } from "@/components/public/Footer";
 import { CartDrawer } from "@/components/layout/CartDrawer";
 import { ProductionTimeProvider } from "@/components/layout/ProductionTimeContext";
 import { SearchModal } from "@/components/layout/SearchModal";
+import { PageBeacon } from "@/components/analytics/PageBeacon";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ANNOUNCEMENT_SPEED_MS, cmsBool, cmsGet, cmsJson } from "@/lib/cms";
 import { getLogoSettingsSafe } from "@/lib/logos";
@@ -78,6 +79,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
         </div>
         <CartDrawer />
         <SearchModal />
+        <PageBeacon />
       </div>
     </ProductionTimeProvider>
   );

@@ -194,6 +194,9 @@ model ConsultationBooking {
   /// Set when the 48h unsent-quote alert has been sent (once per consultation).
   quoteAlertSentAt DateTime?
 
+  /// First-touch campaign tags copied from the visit at booking create. No visitor id.
+  attribution Json?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -543,6 +546,8 @@ model CheckoutSession {
   remindersSent  Int       @default(0)
   restoreToken   String    @unique @default(cuid())
   lastReminderAt DateTime?
+  /// First-touch campaign tags for this checkout (UTM / referrer host). No visitor id.
+  attribution    Json?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -651,6 +656,9 @@ model Order {
   fabricUnavailableById    String?
   fabricUnavailableByName  String?
   fabricUnavailableNote    String?
+
+  /// First-touch campaign tags copied from the visit at order create. No visitor id.
+  attribution      Json?
 
   payments Payment[]
 
@@ -2590,4 +2598,91 @@ model EmailMessage {
   @@index([relatedType, relatedId])
   @@index([template])
   @@index([priority, status, nextAttemptAt])
+}
+
+/// Slice AT: aggregate page views for one Lagos calendar day. No visitor id.
+model AnalyticsPageDaily {
+  id    String   @id @default(cuid())
+  day   DateTime @db.Date
+  path  String
+  count Int      @default(0)
+
+  @@unique([day, path])
+  @@index([day])
+}
+
+/// Slice AT: first-landing campaign counts for one Lagos day. No visitor id.
+model AnalyticsReferralDaily {
+  id       String   @id @default(cuid())
+  day      DateTime @db.Date
+  source   String
+  medium   String   @default("")
+  campaign String   @default("")
+  content  String   @default("")
+  count    Int      @default(0)
+
+  @@unique([day, source, medium, campaign, content])
+  @@index([day])
+}
+
+/// Slice AT: aggregate product-page opens for one Lagos day. No visitor id.
+model AnalyticsProductDaily {
+  id        String   @id @default(cuid())
+  day       DateTime @db.Date
+  productId String
+  count     Int      @default(0)
+
+  @@unique([day, productId])
+  @@index([day])
+}
+
+/// Slice AT: named funnel ticks that are not pages (add_to_bag). No visitor id.
+model AnalyticsEventDaily {
+  id    String   @id @default(cuid())
+  day   DateTime @db.Date
+  name  String
+  count Int      @default(0)
+
+  @@unique([day, name])
+  @@index([day])
+}
+
+/// Monthly roll-up after daily rows expire. Path totals only.
+model AnalyticsPageMonthly {
+  id        String @id @default(cuid())
+  yearMonth String
+  path      String
+  count     Int    @default(0)
+
+  @@unique([yearMonth, path])
+}
+
+model AnalyticsReferralMonthly {
+  id        String @id @default(cuid())
+  yearMonth String
+  source    String
+  medium    String @default("")
+  campaign  String @default("")
+  content   String @default("")
+  count     Int    @default(0)
+
+  @@unique([yearMonth, source, medium, campaign, content])
+}
+
+model AnalyticsProductMonthly {
+  id        String @id @default(cuid())
+  yearMonth String
+  productId String
+  count     Int    @default(0)
+
+  @@unique([yearMonth, productId])
+}
+
+model AnalyticsEventMonthly {
+  id        String @id @default(cuid())
+  yearMonth String
+  name      String
+  count     Int    @default(0)
+
+  @@unique([yearMonth, name])
 }
