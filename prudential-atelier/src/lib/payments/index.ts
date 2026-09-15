@@ -26,8 +26,7 @@ export function fromKobo(kobo: number): number {
  */
 export function getSupportedGateways(currency: PaymentCurrency): PaymentGatewayType[] {
   if (currency === "NGN") return ["PAYSTACK", "FLUTTERWAVE", "MONNIFY"];
-  if (currency === "USD") return ["FLUTTERWAVE", "STRIPE"];
-  if (currency === "GBP") return ["FLUTTERWAVE", "STRIPE"];
+  if (currency === "USD" || currency === "GBP") return ["PAYSTACK", "FLUTTERWAVE", "STRIPE"];
   return [];
 }
 

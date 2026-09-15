@@ -4,9 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { verifyTransaction } from "@/lib/payments/paystack";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
+import { expectedPaystackConsultationBind } from "@/lib/payments/paystack-amount";
 import {
   assertPspChargeBinds,
-  expectedAmountInPspUnits,
   PaymentBindError,
 } from "@/lib/payment-bind";
 
@@ -28,12 +28,16 @@ export async function GET(req: NextRequest) {
     }
 
     if (result.status === "success") {
+      const expected = await expectedPaystackConsultationBind({
+        feeNGN: booking.feeNGN,
+        currency: booking.currency,
+      });
       assertPspChargeBinds(
         {
           id: booking.id,
           storedReference: booking.paymentRef,
-          expectedAmount: expectedAmountInPspUnits(PaymentGateway.PAYSTACK, booking.feeNGN),
-          expectedCurrency: "NGN",
+          expectedAmount: expected.amount,
+          expectedCurrency: expected.currency,
         },
         {
           gateway: PaymentGateway.PAYSTACK,

@@ -142,11 +142,8 @@ export async function getSupportedGateways(
     if (flutterwaveReady) out.push("FLUTTERWAVE");
     if (monnifyReady) out.push("MONNIFY");
     if (bankReady) out.push("BANK_TRANSFER");
-  } else if (currency === "USD") {
-    if (flutterwaveReady) out.push("FLUTTERWAVE");
-    if (stripeReady) out.push("STRIPE");
-    if (bankReady) out.push("BANK_TRANSFER");
-  } else if (currency === "GBP") {
+  } else if (currency === "USD" || currency === "GBP") {
+    if (paystackReady) out.push("PAYSTACK");
     if (flutterwaveReady) out.push("FLUTTERWAVE");
     if (stripeReady) out.push("STRIPE");
     if (bankReady) out.push("BANK_TRANSFER");

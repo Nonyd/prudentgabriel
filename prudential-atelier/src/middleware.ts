@@ -69,6 +69,7 @@ export default auth(async function middleware(request) {
 
   if (
     pathname.startsWith("/_next") ||
+    pathname.startsWith("/.well-known") ||
     pathname.startsWith("/images") ||
     pathname.startsWith("/icons") ||
     pathname.includes("favicon") ||
@@ -231,6 +232,6 @@ export default auth(async function middleware(request) {
 export const config = {
   matcher: [
     // Multipart uploads skip Edge — a ~20MB reel 502s if middleware buffers the body.
-    "/((?!_next/static|_next/image|_next/data|favicon.ico|robots.txt|sitemap.xml|images/|icons/|api/admin/upload|api/account/upload|api/consultations/upload|api/careers/upload|api/upload/|.*\\..*).*)",
+    "/((?!_next/static|_next/image|_next/data|favicon.ico|robots.txt|sitemap.xml|images/|icons/|\\.well-known|api/admin/upload|api/account/upload|api/consultations/upload|api/careers/upload|api/upload/|.*\\..*).*)",
   ],
 };

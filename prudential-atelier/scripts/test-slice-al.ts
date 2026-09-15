@@ -21,6 +21,9 @@ import {
 import { measurementPlausibilityError } from "../src/lib/measurements";
 import { DEPOSIT_SATISFACTION_TOLERANCE_NGN, depositIsSatisfied, roundToKobo } from "../src/lib/money";
 import { paystackCheckoutTotalNGN, paystackLocalFeeNGN } from "../src/lib/payments/paystack-fee";
+import { getSupportedGateways } from "../src/lib/payments/index";
+import { asPaystackCurrency, expectedPaystackRtwBind, paystackSubunits } from "../src/lib/payments/paystack-amount";
+import { PaymentStatus } from "@prisma/client";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -111,6 +114,22 @@ function run() {
   assert(paystackCheckoutTotalNGN(6_461_538.46) === 6_463_538.46, "checkout total is invoice plus the disclosed fee");
   const selectorSrc = readFileSync(resolve("src/components/checkout/PaymentMethodSelector.tsx"), "utf8");
   assert(selectorSrc.includes("paystackFeeCopy"), "Paystack fee is shown before handover on RTW and atelier");
+  assert(getSupportedGateways("USD").includes("PAYSTACK"), "USD checkout lists Paystack");
+  assert(getSupportedGateways("GBP").includes("PAYSTACK"), "GBP checkout lists Paystack");
+  assert(asPaystackCurrency("EUR") === "NGN", "euro is not a live Paystack charge currency until FX exists");
+  const usdBind = expectedPaystackRtwBind({
+    paymentStatus: PaymentStatus.PENDING,
+    total: 1_000_000,
+    currency: "USD",
+    fxRateLocked: 0.00065,
+    fxGbpRateLocked: 0.00052,
+    fxUsdAmountLocked: 650,
+  });
+  assert(usdBind.currency === "USD", "USD Paystack bind expects dollars");
+  assert(usdBind.amount === paystackSubunits(650), "USD Paystack bind uses the locked dollar amount in cents");
+  const configSrc = readFileSync(resolve("src/lib/payments/config.ts"), "utf8");
+  assert(configSrc.includes('currency === "USD" || currency === "GBP"'), "live gateway list treats USD and GBP the same");
+  assert(configSrc.includes('if (paystackReady) out.push("PAYSTACK")'), "Paystack is offered when the keys are live");
 
   assert(measurementPlausibilityError({ bust: 24, waist: 32, hips: 43, unit: "inches" }), "bust 24″ / waist 32″ is refused");
   assert(measurementPlausibilityError({ bust: 38, waist: 30, hips: 42, unit: "inches" }) === null, "a plausible adult set is accepted");

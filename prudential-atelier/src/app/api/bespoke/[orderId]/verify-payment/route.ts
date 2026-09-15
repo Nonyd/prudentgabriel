@@ -86,16 +86,26 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ orderId: st
         if (stored.reference && stored.reference !== result.reference) {
           return redirectFailed(appUrl, orderId, reference);
         }
-        const paidNGN = result.amount / 100;
-        if (paidNGN + 0.01 < amountNGN) {
-          return redirectFailed(appUrl, orderId, reference);
+        const pspCur = result.currency.trim().toUpperCase();
+        if (pspCur === "NGN") {
+          const paidNGN = result.amount / 100;
+          if (paidNGN + 0.01 < amountNGN) {
+            return redirectFailed(appUrl, orderId, reference);
+          }
+          await completeBespokePayment({
+            orderId,
+            paymentRef: reference,
+            amountNGN: Math.min(paidNGN, amountNGN),
+            gateway: PaymentGateway.PAYSTACK,
+          });
+        } else {
+          await completeBespokePayment({
+            orderId,
+            paymentRef: reference,
+            amountNGN,
+            gateway: PaymentGateway.PAYSTACK,
+          });
         }
-        await completeBespokePayment({
-          orderId,
-          paymentRef: reference,
-          amountNGN: Math.min(paidNGN, amountNGN),
-          gateway: PaymentGateway.PAYSTACK,
-        });
         return redirectSuccess(appUrl, orderId, reference);
       }
       return redirectFailed(appUrl, orderId, reference);
