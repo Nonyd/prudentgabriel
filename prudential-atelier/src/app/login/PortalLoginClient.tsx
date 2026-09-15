@@ -10,13 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { loginSchema, type LoginInput } from "@/validations/auth";
 import { Logo } from "@/components/ui/Logo";
 import { cn } from "@/lib/utils";
-import {
-  hardNavigate,
-  isSignInFailure,
-  resolveStaffPortalRedirect,
-  waitForClientSession,
-} from "@/lib/client-auth";
-import { hasAnyAdminPermission } from "@/lib/roles";
+import { hardNavigate, isSignInFailure, resolveStaffPortalRedirect, waitForClientSession, userHasAdminAccess } from "@/lib/client-auth";
 
 type PortalTab = "admin" | "staff";
 
@@ -176,7 +170,7 @@ export function PortalLoginClient() {
       }
 
       if (tab === "admin") {
-        if (!hasAnyAdminPermission(session.user.role)) {
+        if (!userHasAdminAccess(session.user)) {
           await signOut({ redirect: false });
           setError("root", {
             message: "This account does not have admin access. Try the Staff tab or contact your manager.",

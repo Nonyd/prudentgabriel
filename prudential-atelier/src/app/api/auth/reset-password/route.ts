@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { passwordPolicySchema } from "@/lib/password-policy";
 import { applyPasswordHash, hashResetToken } from "@/lib/password-reset";
+import { loginPathForUser } from "@/lib/login-paths";
 import { rateLimitOr429 } from "@/lib/rate-limit";
 import { logServerError } from "@/lib/logger";
 
@@ -51,8 +52,26 @@ export async function POST(req: NextRequest) {
       if (consumed.count !== 1) {
         return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
       }
+      const user = await prisma.user.findUnique({
+        where: { id: row.userId },
+        select: {
+          role: true,
+          isStaff: true,
+          userPermissions: { select: { permission: true, mode: true } },
+        },
+      });
       await applyPasswordHash(row.userId, hashed);
-      return NextResponse.json({ success: true });
+      const grants = (user?.userPermissions ?? [])
+        .filter((p) => p.mode === "GRANT")
+        .map((p) => p.permission);
+      return NextResponse.json({
+        success: true,
+        next: loginPathForUser({
+          role: user?.role,
+          isStaff: user?.isStaff,
+          permissionGrants: grants,
+        }),
+      });
     }
 
     const session = await auth();
@@ -64,7 +83,10 @@ export async function POST(req: NextRequest) {
     }
 
     await applyPasswordHash(session.user.id, hashed);
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      next: loginPathForUser(session.user),
+    });
   } catch (err) {
     await logServerError({ errorType: "RESET_PASSWORD", error: err });
     return NextResponse.json({ error: "Could not update password" }, { status: 500 });

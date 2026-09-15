@@ -47,6 +47,11 @@ import {
 } from "../src/lib/permission-policy";
 import { KEMI_EMAIL } from "../src/lib/permission-catalog";
 import { canAccessStaffPortal, authApiErrorMessage, loginPathAfterPasswordReset } from "../src/lib/client-auth";
+import {
+  destinationAfterCustomerSignIn,
+  loginPathForUser,
+  safeLoginNext,
+} from "../src/lib/login-paths";
 import type { Session } from "next-auth";
 import {
   actorOwnsBespokeOrder,
@@ -371,6 +376,24 @@ async function main() {
     );
   }
 
+  const gloryGrants = { grants: ["shop", "shop.products", "shop.orders"] as const };
+  assert(
+    roleMayAccessAdminPath("CONTENT_MANAGER", "/admin/products", null, gloryGrants),
+    "Glory shop.products grant reaches the catalogue",
+  );
+  assert(
+    firstAdminPathForRole("CONTENT_MANAGER", null, gloryGrants) === "/admin/products",
+    "Glory with catalogue grants lands on products",
+  );
+  const gloryNav = visibleAdminNavSections("CONTENT_MANAGER", null, gloryGrants);
+  assert(gloryNav.some((s) => s.id === "catalogue"), "Glory nav shows Catalogue after grant");
+  assert(
+    gloryNav.some((s) => s.items.some((item) => item.href === "/admin/products")),
+    "Glory nav includes Products",
+  );
+  assert(!sidebarSrc.includes("jobRoleAllowsNavItem"), "JobRole must not hide Slice T grants in the sidebar");
+  assert(!sidebarSrc.includes("shouldEnforceJobPermissions"), "sidebar is not a second JobRole AND-filter");
+
   assert(roleMayAccessAdminPath("FINANCE_MANAGER", "/admin/settings/bank-accounts"), "FINANCE_MANAGER reaches bank accounts via the split permission");
   assert(roleMayAccessAdminPath("FINANCE_MANAGER", "/admin/reports"), "FINANCE_MANAGER reaches reports");
   assert(!roleMayAccessAdminPath("FINANCE_MANAGER", "/admin/settings/email"), "FINANCE_MANAGER does not get the rest of Settings");
@@ -612,6 +635,25 @@ async function main() {
   );
   assert(loginPathAfterPasswordReset({ user: { role: "ADMIN" } } as Session) === "/login?tab=admin", "admin reset lands on admin login");
   assert(loginPathAfterPasswordReset(null) === "/auth/login", "unknown session lands on customer login");
+  assert(
+    loginPathForUser({ role: "CONTENT_MANAGER" }) === "/login?tab=admin",
+    "content manager reset lands on admin login, not /account",
+  );
+  assert(loginPathForUser({ role: "STAFF", isStaff: true }) === "/login?tab=staff", "staff reset lands on staff login");
+  assert(safeLoginNext("/login?tab=admin") === "/login?tab=admin", "admin next is allowed");
+  assert(safeLoginNext("https://evil.example") === "/auth/login", "forged next is ignored");
+  assert(
+    destinationAfterCustomerSignIn({ role: "CONTENT_MANAGER" }, "/account") === "/admin",
+    "default customer callback does not trap house staff on /account",
+  );
+  assert(
+    destinationAfterCustomerSignIn({ role: "CONTENT_MANAGER" }, "/account/orders") === "/account/orders",
+    "an explicit client-portal callback is kept",
+  );
+  const resetApi = routeSource("app/api/auth/reset-password/route.ts");
+  assert(resetApi.includes("loginPathForUser"), "token reset returns the role-correct login path");
+  const customerLogin = routeSource("app/(auth)/auth/login/LoginContent.tsx");
+  assert(customerLogin.includes("destinationAfterCustomerSignIn"), "customer login reroutes house staff off /account");
 
   // B6 — register responses are identical
   const existingBody = { success: true };
