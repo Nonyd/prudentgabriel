@@ -41,18 +41,10 @@ import { signOut, useSession } from "next-auth/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "next-auth";
 import { cn, getInitials } from "@/lib/utils";
-import {
-  ADMIN_NAV_JOB_PERMISSIONS,
-  hasAnyPermission,
-  shouldEnforceJobPermissions,
-  type PermissionSession,
-} from "@/lib/permissions";
 import { roleLabel } from "@/lib/roles";
 import { Logo } from "@/components/ui/Logo";
 import {
   ADMIN_NAV_STORAGE_KEY,
-  accessRuleForAdminPath,
-  adminNavAccessPath,
   adminNavItemIsActive,
   adminNavItemMatchesQuery,
   adminNavSectionIdForPath,
@@ -119,23 +111,6 @@ function iconFor(item: AdminNavItemDef): LucideIcon {
   return NAV_ICONS[item.icon] ?? Layout;
 }
 
-function jobRoleAllowsNavItem(item: AdminNavItemDef, session: Session): boolean {
-  const permissionSession: PermissionSession = {
-    user: {
-      role: session.user?.role,
-      jobRolePermissions: session.user?.jobRolePermissions,
-    },
-  };
-  if (!shouldEnforceJobPermissions(permissionSession)) return true;
-  const path = adminNavAccessPath(item.href);
-  const gate = accessRuleForAdminPath(path);
-  if (!gate || gate.type !== "permission") return true;
-  const lookup: string = Array.isArray(gate.permission) ? "content" : String(gate.permission);
-  const jobKeys = ADMIN_NAV_JOB_PERMISSIONS[lookup];
-  if (!jobKeys?.length) return true;
-  return hasAnyPermission(permissionSession, jobKeys);
-}
-
 function readStoredOpen(): Record<string, boolean> | null {
   if (typeof window === "undefined") return null;
   try {
@@ -177,15 +152,7 @@ export function AdminSidebar({
   const avatarUrl = user?.image;
   const realRole = user?.role ?? session.user?.role ?? "ADMIN";
   const role = accessRole ?? realRole;
-  const navSession: Session = {
-    ...session,
-    user: {
-      ...session.user,
-      ...user,
-      role,
-      jobRolePermissions: user?.jobRolePermissions ?? session.user?.jobRolePermissions ?? [],
-    },
-  };
+  const email = previewRole ? null : (user?.email ?? session.user?.email ?? null);
 
   const search = searchParams.toString();
   const [hash, setHash] = useState("");
@@ -221,8 +188,6 @@ export function AdminSidebar({
     });
   }, [currentSectionId]);
 
-  const jobPermsKey = (navSession.user?.jobRolePermissions ?? []).join(",");
-  const email = previewRole ? null : (navSession.user?.email ?? null);
   const grantsKey = permissionGrants.join(",");
   const revokesKey = permissionRevokes.join(",");
   const rolePermsKey = Array.isArray(rolePermissions) ? rolePermissions.join(",") : rolePermissions ?? "";
@@ -233,15 +198,9 @@ export function AdminSidebar({
       grants: permissionGrants,
       revokes: permissionRevokes,
       rolePermissions,
-    })
-      .map((section) => ({
-        ...section,
-        items: section.items.filter((item) => jobRoleAllowsNavItem(item, navSession)),
-      }))
-      .filter((section) => section.items.length > 0);
-    // navSession is rebuilt each render; jobPermsKey is the JobRole AND input.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [role, email, jobPermsKey, grantsKey, revokesKey, rolePermsKey]);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- grantsKey/revokesKey/rolePermsKey are the value inputs
+  }, [role, email, grantsKey, revokesKey, rolePermsKey]);
 
   const filteredSections = useMemo(() => {
     const q = menuQuery.trim();

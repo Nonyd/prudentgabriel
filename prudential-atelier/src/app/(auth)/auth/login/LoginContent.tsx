@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { hardNavigate, isSignInFailure, waitForClientSession } from "@/lib/client-auth";
+import { destinationAfterCustomerSignIn } from "@/lib/login-paths";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/validations/auth";
@@ -33,7 +34,9 @@ export function LoginContent() {
       setError("root", { message: "Invalid email or password" });
       return;
     }
-    const session = await waitForClientSession();
+    const session = await waitForClientSession({
+      until: (current) => Boolean(current?.user?.id && current?.user?.role),
+    });
     if (!session?.user?.id) {
       setError("root", { message: "Signed in, but the session did not load. Please try again." });
       return;
@@ -42,7 +45,7 @@ export function LoginContent() {
       hardNavigate("/reset-password?required=true");
       return;
     }
-    hardNavigate(callbackUrl);
+    hardNavigate(destinationAfterCustomerSignIn(session.user, callbackUrl));
   };
 
   return (

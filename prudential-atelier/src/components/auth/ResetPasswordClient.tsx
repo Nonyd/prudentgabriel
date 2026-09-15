@@ -5,7 +5,12 @@ import { useSearchParams } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { Logo } from "@/components/ui/Logo";
-import { authApiErrorMessage, hardNavigate, loginPathAfterPasswordReset } from "@/lib/client-auth";
+import {
+  authApiErrorMessage,
+  hardNavigate,
+  loginPathAfterPasswordReset,
+  safeLoginNext,
+} from "@/lib/client-auth";
 
 export function ResetPasswordClient() {
   const searchParams = useSearchParams();
@@ -37,7 +42,10 @@ export function ResetPasswordClient() {
       if (!res.ok) {
         throw new Error(authApiErrorMessage(data, "Could not update password"));
       }
-      const nextLogin = loginPathAfterPasswordReset(session);
+      const nextLogin = safeLoginNext(
+        (data as { next?: unknown }).next,
+        loginPathAfterPasswordReset(session),
+      );
       await signOut({ redirect: false }).catch(() => undefined);
       toast.success("Password updated. Sign in with your new password.");
       hardNavigate(nextLogin);

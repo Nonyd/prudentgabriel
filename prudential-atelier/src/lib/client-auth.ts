@@ -1,7 +1,9 @@
 import { getSession } from "next-auth/react";
 import type { Session } from "next-auth";
 import type { SignInResponse } from "next-auth/react";
-import { hasAnyAdminPermission } from "@/lib/roles";
+import { loginPathForUser, userHasAdminAccess } from "@/lib/login-paths";
+
+export { loginPathForUser, safeLoginNext, destinationAfterCustomerSignIn, userHasAdminAccess } from "@/lib/login-paths";
 
 export function isSignInFailure(res: SignInResponse | undefined): boolean {
   return !res?.ok || Boolean(res?.error);
@@ -21,8 +23,7 @@ export function resolveStaffPortalRedirect(session: Session | null | undefined):
     return "/reset-password?required=true";
   }
 
-  const role = session.user.role ?? "";
-  if (hasAnyAdminPermission(role)) {
+  if (userHasAdminAccess(session.user)) {
     return "/admin";
   }
 
@@ -61,10 +62,7 @@ export function hardNavigate(url: string): void {
 
 /** Sign-in screen to open after a password reset (cookie is no longer valid). */
 export function loginPathAfterPasswordReset(session: Session | null | undefined): string {
-  const role = session?.user?.role ?? "";
-  if (session?.user?.isStaff === true || role === "STAFF") return "/login?tab=staff";
-  if (hasAnyAdminPermission(role)) return "/login?tab=admin";
-  return "/auth/login";
+  return loginPathForUser(session?.user);
 }
 
 /** API `{ error }` may be a string or Zod fieldErrors — never pass an object to React. */
