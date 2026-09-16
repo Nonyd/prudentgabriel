@@ -49,8 +49,10 @@ export default async function AdminBespokeOrderPage({
     <BespokeOrderDetailClient
       order={order}
       actorRole={session?.user?.role ?? null}
+      actorUserId={session?.user?.id ?? null}
       staffList={staffList.map((s) => ({
         id: s.id,
+        userId: s.userId,
         name: s.user.name ?? s.user.email ?? "Staff",
         department: s.department,
         activeOrders: s.assignments.length,

@@ -88,6 +88,8 @@ const PATH_RULES: PathRule[] = [
   { prefix: "/admin/quotations", gate: perm("quotations") },
   { prefix: "/admin/alterations", gate: { type: "roles", roles: ALTERATION_ROLES } },
 
+  { prefix: "/admin/store", gate: perm("store") },
+
   { prefix: "/admin/bespoke", gate: perm("bespoke") },
   { prefix: "/admin/consultations", gate: perm("consultations") },
   { prefix: "/admin/consultants", gate: perm("consultations") },
@@ -160,6 +162,7 @@ export function roleMayAccessAdminPath(
 /** First sidebar-shaped landing a role may open. Account settings is last resort. */
 export const ADMIN_LANDING_CANDIDATES = [
   "/admin",
+  "/admin/store",
   "/admin/bespoke",
   "/admin/consultations",
   "/admin/invoices",
@@ -227,6 +230,7 @@ export const ADMIN_MATRIX_ROUTES: {
   { group: "Messages", path: "/admin/content/messages", api: "GET /api/admin/messages" },
   { group: "Logs", path: "/admin/logs/activity", api: "GET /api/logs/activity" },
   { group: "System", path: "/admin/system/jobs", api: "GET /api/admin/system/jobs" },
+  { group: "Store", path: "/admin/store", api: "GET /api/admin/store/morning" },
   { group: "Settings", path: "/admin/settings", api: "GET /api/admin/settings" },
   { group: "Developer", path: "/admin/settings/developer", api: "GET /api/admin/settings/developer" },
   { group: "Users & Roles", path: "/admin/settings/users", api: "GET /api/admin/users" },
@@ -284,6 +288,10 @@ export const ADMIN_PAGE_OWNERS: readonly {
   { path: "/admin/notifications", owns: "Admin notification inbox", linksTo: "Top bar bell" },
   { path: "/admin/bespoke/intake", owns: "Bespoke intake forms", linksTo: "Pipeline, not nav" },
   { path: "/admin/customers/[id]", owns: "Shop account / points (kept; not the Clients list)", linksTo: "Clients + consultations" },
+  { path: "/admin/store", owns: "Materials book — morning view, catalogue, issue slips", linksTo: "Nav" },
+  { path: "/admin/store/items", owns: "Store catalogue", linksTo: "/admin/store" },
+  { path: "/admin/store/book", owns: "Issue book and returns", linksTo: "/admin/store" },
+  { path: "/admin/store/opening", owns: "Opening count and day-one lock", linksTo: "/admin/store" },
   { path: "/admin/settings", owns: "Settings hub and general store fields", linksTo: "Nav" },
   { path: "/admin/settings/payments", owns: "Gateway on/off, deposit, overlay FX, warranty days", linksTo: "Settings hub" },
   { path: "/admin/settings/store", owns: "Store name, contact, currency, shipping thresholds", linksTo: "Settings hub" },
@@ -384,6 +392,17 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
     items: [
       { href: "/admin/consultations", label: "Bookings", icon: "consultations", badgeKey: "consultations" },
       { href: "/admin/consultants", label: "Consultants", icon: "consultants" },
+    ],
+  },
+  {
+    id: "store",
+    label: "Store",
+    defaultOpen: true,
+    items: [
+      { href: "/admin/store", label: "Morning", icon: "store" },
+      { href: "/admin/store/items", label: "Catalogue", icon: "store-items" },
+      { href: "/admin/store/book", label: "Issue book", icon: "store-book" },
+      { href: "/admin/store/opening", label: "Opening count", icon: "store-opening" },
     ],
   },
   {
@@ -556,6 +575,8 @@ export function adminNavItemIsActive(
   let pathOk = false;
   if (itemPath === "/admin") {
     pathOk = path === "/admin";
+  } else if (itemPath === "/admin/store") {
+    pathOk = path === "/admin/store";
   } else {
     pathOk =
       path === itemPath ||

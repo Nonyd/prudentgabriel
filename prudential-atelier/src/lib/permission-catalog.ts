@@ -28,6 +28,7 @@ export const ALL_ADMIN_PERMISSIONS: readonly AdminPermission[] = [
   "settings",
   "settings.bank-accounts",
   "settings.developer",
+  "store",
 ] as const;
 
 export type PermissionCatalogEntry = {
@@ -185,6 +186,12 @@ export const ADMIN_PERMISSION_CATALOG: readonly PermissionCatalogEntry[] = [
     description: "API secrets, gateways, and technical credentials. Super Admin only.",
     superAdminOnly: true,
   },
+  {
+    key: "store",
+    group: "Daily work",
+    label: "Store",
+    description: "The materials book: items, movements, issue slips, and the morning view. Not client or shop orders.",
+  },
 ];
 
 export const EDITABLE_ADMIN_ROLES = [
@@ -197,6 +204,7 @@ export const EDITABLE_ADMIN_ROLES = [
   "HR_MANAGER",
   "CONSULTATION_MANAGER",
   "STAFF",
+  "STORE_MANAGER",
 ] as const;
 
 export type RolePermissionProposal = {

@@ -67,6 +67,11 @@ model User {
   userPermissions   UserPermission[]
   adminNotificationReads AdminNotificationRead[]
   acknowledgedAdminNotifications AdminNotification[] @relation("AdminNotificationAck")
+  storeMovementsActor    StoreMovement[] @relation("StoreMovementActor")
+  storeMovementsTaken    StoreMovement[] @relation("StoreMovementTakenBy")
+  storeMovementsApproved StoreMovement[] @relation("StoreMovementApprovedBy")
+  storeMovementsReceived StoreMovement[] @relation("StoreMovementReceivedBy")
+  storeBookLocks         StoreBook[]     @relation("StoreBookLockedBy")
 }
 
 model Consultant {
@@ -729,6 +734,7 @@ model Order {
   attribution      Json?
 
   payments Payment[]
+  storeMovements StoreMovement[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1475,6 +1481,7 @@ enum Role {
   HR_MANAGER
   CONSULTATION_MANAGER
   STAFF
+  STORE_MANAGER
 }
 
 /// Historical aisle slugs. Unused by any model, so Prisma Client does not emit this enum.
@@ -2013,6 +2020,7 @@ model BespokeOrder {
   archivedReason String?
 
   payments Payment[]
+  storeMovements StoreMovement[]
   alterationRequests AlterationRequest[]
 
   createdAt DateTime @default(now())
@@ -2212,6 +2220,13 @@ model Material {
   totalCost Float?
   supplier  String?
   notes     String?
+
+  /// Optional link to the store catalogue. The gown note stays free text.
+  storeItemId String?
+  storeItem   StoreItem? @relation(fields: [storeItemId], references: [id], onDelete: SetNull)
+  /// ISSUE row that took this material from the store, when recorded.
+  storeMovementId String?        @unique
+  storeMovement   StoreMovement? @relation(fields: [storeMovementId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 }
@@ -2761,4 +2776,101 @@ model AnalyticsEventMonthly {
   count     Int    @default(0)
 
   @@unique([yearMonth, name])
+}
+
+/// Slice AQ — the store book. Categories are rows so the storekeeper can add
+/// "Hangers" without a deploy. Quantity on hand is SUM(StoreMovement.delta).
+enum StoreLine {
+  SHARED
+  ATELIER
+  RTW
+}
+
+enum StoreMovementReason {
+  OPENING
+  RECEIPT
+  ISSUE
+  RETURN
+  ADJUSTMENT
+  WRITE_OFF
+}
+
+model ItemCategory {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  sortOrder Int         @default(0)
+  items     StoreItem[]
+}
+
+model StoreItem {
+  id         String       @id @default(cuid())
+  name       String
+  categoryId String
+  category   ItemCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  /// Free text. Suggested list is led by yard. One unit per item, no conversion.
+  unit       String
+  spec       String?
+  supplier   String?
+  unitCost   Decimal?     @db.Decimal(12, 2)
+  storeLine  StoreLine    @default(SHARED)
+  isActive   Boolean      @default(true)
+  movements  StoreMovement[]
+  materials  Material[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([categoryId, isActive])
+  @@index([name])
+}
+
+/// Append-only store ledger. Never UPDATE delta, reason, item or createdAt —
+/// corrections are new rows. DB trigger enforces this (payment-ledger shape).
+model StoreMovement {
+  id     String              @id @default(cuid())
+  itemId String
+  item   StoreItem           @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  delta  Decimal             @db.Decimal(12, 4)
+  reason StoreMovementReason
+  actorId String
+  actor   User               @relation("StoreMovementActor", fields: [actorId], references: [id], onDelete: Restrict)
+  note    String?            @db.Text
+  /// Shared slip number for an issue booklet page (several lines, one ref).
+  ref     String?
+
+  takenById     String?
+  takenBy       User?   @relation("StoreMovementTakenBy", fields: [takenById], references: [id], onDelete: Restrict)
+  approvedById  String?
+  approvedBy    User?   @relation("StoreMovementApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
+  receivedById  String?
+  receivedBy    User?   @relation("StoreMovementReceivedBy", fields: [receivedById], references: [id], onDelete: Restrict)
+
+  bespokeOrderId String?
+  bespokeOrder   BespokeOrder? @relation(fields: [bespokeOrderId], references: [id], onDelete: Restrict)
+  orderId        String?
+  order          Order?        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  /// RETURN rows point at the ISSUE they close.
+  issueId String?
+  issue   StoreMovement?  @relation("StoreIssueReturns", fields: [issueId], references: [id], onDelete: Restrict)
+  returns StoreMovement[] @relation("StoreIssueReturns")
+
+  materials Material[]
+
+  createdAt DateTime @default(now())
+
+  @@index([itemId, createdAt])
+  @@index([reason, createdAt])
+  @@index([ref])
+  @@index([issueId])
+  @@index([bespokeOrderId])
+  @@index([orderId])
+}
+
+/// Singleton. dayOne is locked when the opening count is committed.
+model StoreBook {
+  id         String    @id
+  dayOne     DateTime?
+  lockedById String?
+  lockedBy   User?     @relation("StoreBookLockedBy", fields: [lockedById], references: [id], onDelete: SetNull)
+  lockedAt   DateTime?
 }

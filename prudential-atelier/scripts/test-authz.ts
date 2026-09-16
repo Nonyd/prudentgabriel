@@ -176,6 +176,7 @@ async function main() {
     BESPOKE_MANAGER: ["bespoke", "consultations"],
     CONSULTATION_MANAGER: ["consultations"],
     HR_MANAGER: [],
+    STORE_MANAGER: [],
   };
   for (const [role, allowed] of Object.entries(expect200)) {
     for (const g of groups) {
@@ -196,6 +197,7 @@ async function main() {
     "BESPOKE_MANAGER",
     "CONSULTATION_MANAGER",
     "HR_MANAGER",
+    "STORE_MANAGER",
   ];
   for (const role of matrixRoles) {
     for (const row of ADMIN_MATRIX_ROUTES) {
@@ -227,6 +229,10 @@ async function main() {
   assert(matrixAccess("BESPOKE_MANAGER", "/admin/bespoke") === "allow", "BESPOKE_MANAGER reaches atelier (positive)");
   assert(matrixAccess("CONSULTATION_MANAGER", "/admin/consultations") === "allow", "CONSULTATION_MANAGER reaches consultations (positive)");
   assert(matrixAccess("CONSULTATION_MANAGER", "/admin/clients") === "deny", "clients.view is not the clients page gate");
+  assert(matrixAccess("STORE_MANAGER", "/admin/store") === "allow", "STORE_MANAGER reaches the store (positive)");
+  assert(matrixAccess("STORE_MANAGER", "/admin/orders") === "deny", "STORE_MANAGER is denied orders");
+  assert(matrixAccess("STORE_MANAGER", "/admin/clients") === "deny", "STORE_MANAGER is denied clients");
+  assert(firstAdminPathForRole("STORE_MANAGER") === "/admin/store", "STORE_MANAGER lands on the morning view");
 
   assert(firstAdminPathForRole("RTW_MANAGER") === "/admin/products", "RTW_MANAGER lands on products");
   assert(firstAdminPathForRole("CONTENT_MANAGER") === "/admin/content", "CONTENT_MANAGER lands on content");

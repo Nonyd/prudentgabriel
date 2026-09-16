@@ -36,6 +36,7 @@ const patchSchema = z.object({
       "HR_MANAGER",
       "CONSULTATION_MANAGER",
       "STAFF",
+      "STORE_MANAGER",
     ])
     .optional(),
   isActive: z.boolean().optional(),

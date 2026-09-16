@@ -34,6 +34,7 @@ import {
   UserRoundCog,
   Users,
   Wallet,
+  Warehouse,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -105,6 +106,10 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   developer: Lock,
   users: UserRoundCog,
   roles: UserRoundCog,
+  store: Warehouse,
+  "store-items": Package,
+  "store-book": FileText,
+  "store-opening": ClipboardCheck,
 };
 
 function iconFor(item: AdminNavItemDef): LucideIcon {

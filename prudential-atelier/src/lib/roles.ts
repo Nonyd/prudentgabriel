@@ -33,7 +33,8 @@ export type AdminPermission =
   | "logs"
   | "settings"
   | "settings.bank-accounts"
-  | "settings.developer";
+  | "settings.developer"
+  | "store";
 
 /** CMS surfaces: parent `content` plus CONTENT_MANAGER's dotted keys. */
 export const CMS_ADMIN_PERMISSIONS = [
@@ -63,6 +64,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
     "content",
     "logs",
     "settings",
+    "store",
   ],
 
   STAFF_ADMIN: [
@@ -78,6 +80,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
     "finance",
     "payments",
     "content",
+    "store",
   ],
 
   BESPOKE_MANAGER: ["bespoke", "consultations", "clients.view"],
@@ -87,6 +90,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
   HR_MANAGER: ["staff", "attendance"],
   CONSULTATION_MANAGER: ["consultations", "clients.view"],
   STAFF: [],
+  STORE_MANAGER: ["store"],
 } as const;
 
 export const PROTECTED_ACCOUNTS = [
@@ -207,6 +211,7 @@ export const ALL_PERMISSIONS: readonly AdminPermission[] = [
   "settings",
   "settings.bank-accounts",
   "settings.developer",
+  "store",
 ];
 
 /** Dotted children unlocked only because the parent key is on the role. */

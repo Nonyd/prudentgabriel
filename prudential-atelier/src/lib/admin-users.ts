@@ -11,6 +11,7 @@ export const MANAGED_STAFF_ROLES: Role[] = [
   Role.HR_MANAGER,
   Role.CONSULTATION_MANAGER,
   Role.STAFF,
+  Role.STORE_MANAGER,
 ];
 
 export const INVITE_ROLES: Role[] = [
@@ -23,6 +24,7 @@ export const INVITE_ROLES: Role[] = [
   Role.HR_MANAGER,
   Role.CONSULTATION_MANAGER,
   Role.STAFF,
+  Role.STORE_MANAGER,
 ];
 
 export const INVITE_ROLE_LABELS: Record<string, string> = {
@@ -35,6 +37,7 @@ export const INVITE_ROLE_LABELS: Record<string, string> = {
   HR_MANAGER: "HR Manager",
   CONSULTATION_MANAGER: "Consultation Manager",
   STAFF: "Staff",
+  STORE_MANAGER: "Store Manager",
 };
 
 export type RoleBadgeVariant = "wine" | "gold" | "success" | "grey" | "outline-gold" | "outline-wine" | "accent";
@@ -53,6 +56,7 @@ export function roleBadgeVariant(role: string): RoleBadgeVariant {
     case "FINANCE_MANAGER":
     case "HR_MANAGER":
     case "CONSULTATION_MANAGER":
+    case "STORE_MANAGER":
       return "accent";
     case "STAFF":
       return "grey";

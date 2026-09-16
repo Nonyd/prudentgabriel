@@ -129,6 +129,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     if (body.material && typeof body.material === "object") {
+      if (existing.status === "ARCHIVED") {
+        return NextResponse.json(
+          { error: "Archived commissions cannot take materials." },
+          { status: 409 },
+        );
+      }
       const m = body.material as {
         name?: string;
         quantity?: string | null;
@@ -136,12 +142,60 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         totalCost?: number | null;
         supplier?: string | null;
         notes?: string | null;
+        storeItemId?: string | null;
+        takenById?: string | null;
+        approvedById?: string | null;
       };
-      if (m.name) {
+      const name = m.name?.trim();
+      if (!name && !m.storeItemId) {
+        return NextResponse.json({ error: "Material name is required." }, { status: 400 });
+      }
+
+      if (m.storeItemId) {
+        const { appendMovement, newIssueRef, parseQty } = await import("@/lib/store/ledger");
+        const item = await prisma.storeItem.findUnique({ where: { id: m.storeItemId } });
+        if (!item) return NextResponse.json({ error: "Store item not found." }, { status: 404 });
+        const qty = parseQty(m.quantity ?? null);
+        if (qty == null || qty <= 0) {
+          return NextResponse.json({ error: "Quantity is required to issue from the store." }, { status: 400 });
+        }
+        const takenById = m.takenById || gate.session.user?.id;
+        const approvedById = m.approvedById;
+        if (!takenById || !approvedById) {
+          return NextResponse.json(
+            { error: "An issue needs who is taking it and the supervisor who approved." },
+            { status: 400 },
+          );
+        }
+        const movement = await appendMovement({
+          itemId: item.id,
+          delta: -qty,
+          reason: "ISSUE",
+          actorId: gate.session.user?.id ?? takenById,
+          takenById,
+          approvedById,
+          bespokeOrderId: orderId,
+          ref: newIssueRef(),
+          note: m.notes ?? null,
+        });
         await prisma.material.create({
           data: {
             orderId,
-            name: m.name,
+            name: name || item.name,
+            quantity: m.quantity ?? String(qty),
+            unitCost: m.unitCost ?? (item.unitCost ? Number(item.unitCost) : null),
+            totalCost: m.totalCost ?? m.unitCost ?? null,
+            supplier: m.supplier ?? item.supplier,
+            notes: m.notes ?? null,
+            storeItemId: item.id,
+            storeMovementId: movement.id,
+          },
+        });
+      } else if (name) {
+        await prisma.material.create({
+          data: {
+            orderId,
+            name,
             quantity: m.quantity ?? null,
             unitCost: m.unitCost ?? null,
             totalCost: m.totalCost ?? m.unitCost ?? null,

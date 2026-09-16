@@ -72,18 +72,20 @@ function ledgerAmount(p: LedgerPayment): number {
   return typeof p.amount === "number" ? p.amount : Number(p.amount.toString());
 }
 
-type StaffOption = { id: string; name: string; department: string; activeOrders: number };
+type StaffOption = { id: string; userId: string; name: string; department: string; activeOrders: number };
 
 export function BespokeOrderDetailClient({
   order: initial,
   staffList,
   trackingUrl,
   actorRole,
+  actorUserId,
 }: {
   order: OrderWithRelations;
   staffList: StaffOption[];
   trackingUrl: string;
   actorRole?: string | null;
+  actorUserId?: string | null;
 }) {
   const router = useRouter();
   const [order, setOrder] = useState(initial);
@@ -96,7 +98,15 @@ export function BespokeOrderDetailClient({
   const [uploading, setUploading] = useState(false);
   const [assignRole, setAssignRole] = useState("TAILOR");
   const [assignStaffId, setAssignStaffId] = useState("");
-  const [materialForm, setMaterialForm] = useState({ name: "", quantity: "", unitCost: "" });
+  const [materialForm, setMaterialForm] = useState({
+    name: "",
+    quantity: "",
+    unitCost: "",
+    storeItemId: "",
+    takenById: "",
+    approvedById: "",
+  });
+  const [storeItems, setStoreItems] = useState<{ id: string; name: string; unit: string }[]>([]);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [measurementsDraft, setMeasurementsDraft] = useState<MeasurementData | null>(null);
   const [requestingApproval, setRequestingApproval] = useState(false);
@@ -190,6 +200,15 @@ export function BespokeOrderDetailClient({
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [notes]);
+
+  useEffect(() => {
+    void fetch("/api/admin/store/items")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { items?: { id: string; name: string; unit: string }[] } | null) => {
+        if (data?.items) setStoreItems(data.items);
+      })
+      .catch(() => undefined);
+  }, []);
 
   const handleUpload = async (files: FileList | null, type: "images" | "videos") => {
     if (!files?.length) return;
@@ -365,24 +384,38 @@ export function BespokeOrderDetailClient({
   };
 
   const addMaterial = async () => {
-    if (!materialForm.name.trim()) return;
+    if (!materialForm.name.trim() && !materialForm.storeItemId) return;
     const unitCost = materialForm.unitCost ? parseFloat(materialForm.unitCost) : null;
+    const selected = storeItems.find((s) => s.id === materialForm.storeItemId);
     const res = await fetch(`/api/bespoke/${order.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         material: {
-          name: materialForm.name,
+          name: materialForm.name.trim() || selected?.name,
           quantity: materialForm.quantity || null,
           unitCost,
           totalCost: unitCost,
+          storeItemId: materialForm.storeItemId || null,
+          takenById: materialForm.takenById || actorUserId || null,
+          approvedById: materialForm.approvedById || null,
         },
       }),
     });
     if (res.ok) {
-      toast.success("Material added");
-      setMaterialForm({ name: "", quantity: "", unitCost: "" });
+      toast.success(materialForm.storeItemId ? "Issued from the store" : "Material noted");
+      setMaterialForm({
+        name: "",
+        quantity: "",
+        unitCost: "",
+        storeItemId: "",
+        takenById: materialForm.takenById,
+        approvedById: materialForm.approvedById,
+      });
       router.refresh();
+    } else {
+      const data = (await res.json()) as { error?: string };
+      toast.error(data.error ?? "Could not add material");
     }
   };
 
@@ -833,20 +866,89 @@ export function BespokeOrderDetailClient({
                 <li key={m.id}>
                   {m.name}
                   {m.quantity ? ` · ${m.quantity}` : ""}
+                  {m.unitCost != null ? ` · ₦${m.unitCost}` : ""}
+                  {m.storeMovementId ? (
+                    <span className="ml-2 text-[10px] uppercase tracking-wide text-text-light">Issued</span>
+                  ) : null}
                 </li>
               ))}
             </ul>
-            <div className="mt-3 space-y-2">
-              <input
-                placeholder="Material name"
-                value={materialForm.name}
-                onChange={(e) => setMaterialForm((f) => ({ ...f, name: e.target.value }))}
-                className="w-full rounded border border-sand px-2 py-2 font-sans text-sm"
-              />
-              <Button size="sm" variant="secondary" onClick={() => void addMaterial()}>
-                Add material
-              </Button>
-            </div>
+            {isArchived ? (
+              <p className="mt-3 font-sans text-xs text-text-light">Archived commissions cannot take materials.</p>
+            ) : (
+              <div className="mt-3 space-y-2">
+                <select
+                  value={materialForm.storeItemId}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    const selected = storeItems.find((s) => s.id === next);
+                    setMaterialForm((f) => ({
+                      ...f,
+                      storeItemId: next,
+                      name: selected ? selected.name : f.name,
+                    }));
+                  }}
+                  className="w-full rounded border border-sand px-2 py-2 font-sans text-sm"
+                >
+                  <option value="">Store item (issues from the book)…</option>
+                  {storeItems.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} · {s.unit}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  placeholder="Name (if not in the catalogue)"
+                  value={materialForm.name}
+                  onChange={(e) => setMaterialForm((f) => ({ ...f, name: e.target.value }))}
+                  className="w-full rounded border border-sand px-2 py-2 font-sans text-sm"
+                />
+                <input
+                  placeholder="Quantity"
+                  value={materialForm.quantity}
+                  onChange={(e) => setMaterialForm((f) => ({ ...f, quantity: e.target.value }))}
+                  className="w-full rounded border border-sand px-2 py-2 font-sans text-sm"
+                />
+                <input
+                  placeholder="Unit cost"
+                  type="number"
+                  value={materialForm.unitCost}
+                  onChange={(e) => setMaterialForm((f) => ({ ...f, unitCost: e.target.value }))}
+                  className="w-full rounded border border-sand px-2 py-2 font-sans text-sm"
+                />
+                {materialForm.storeItemId ? (
+                  <>
+                    <select
+                      value={materialForm.takenById}
+                      onChange={(e) => setMaterialForm((f) => ({ ...f, takenById: e.target.value }))}
+                      className="w-full rounded border border-sand px-2 py-2 font-sans text-sm"
+                    >
+                      <option value="">Who is taking it…</option>
+                      {staffList.map((s) => (
+                        <option key={s.userId} value={s.userId}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={materialForm.approvedById}
+                      onChange={(e) => setMaterialForm((f) => ({ ...f, approvedById: e.target.value }))}
+                      className="w-full rounded border border-sand px-2 py-2 font-sans text-sm"
+                    >
+                      <option value="">Supervisor who approved…</option>
+                      {staffList.map((s) => (
+                        <option key={`ap-${s.userId}`} value={s.userId}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+                  </>
+                ) : null}
+                <Button size="sm" variant="secondary" onClick={() => void addMaterial()}>
+                  {materialForm.storeItemId ? "Issue from store" : "Add material"}
+                </Button>
+              </div>
+            )}
           </section>
         </div>
       </div>
