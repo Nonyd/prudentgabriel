@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { getPaystackSecret } from "@/lib/payments/config";
 import { timingSafeEqualString } from "@/lib/crypto-compare";
 import { parseJsonResponse } from "@/lib/http/read-json";
+import { paystackPublicInitError } from "@/lib/payments/init-error";
 
 export interface PaystackInitResult {
   authorizationUrl: string;
@@ -20,21 +21,30 @@ export async function initializeTransaction(params: {
   const secret = await getPaystackSecret();
   if (!secret) throw new Error("Paystack secret key is not configured");
 
-  const res = await fetch("https://api.paystack.co/transaction/initialize", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${secret}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email: params.email,
-      amount: params.amountKobo,
-      currency: params.currency ?? "NGN",
-      reference: params.reference,
-      callback_url: params.callbackUrl,
-      metadata: params.metadata,
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch("https://api.paystack.co/transaction/initialize", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${secret}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: params.email,
+        amount: params.amountKobo,
+        currency: params.currency ?? "NGN",
+        reference: params.reference,
+        callback_url: params.callbackUrl,
+        metadata: params.metadata,
+      }),
+      signal: AbortSignal.timeout(20_000),
+    });
+  } catch (e) {
+    if (e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError")) {
+      throw new Error("Paystack did not respond. Try again or pay by bank transfer.");
+    }
+    throw e;
+  }
 
   const json = await parseJsonResponse<{
     status?: boolean;
@@ -43,7 +53,7 @@ export async function initializeTransaction(params: {
   }>(res, "Paystack");
 
   if (!res.ok || !json.status || !json.data) {
-    throw new Error(json.message ?? "Paystack initialize failed");
+    throw new Error(paystackPublicInitError(json.message ?? "Paystack initialize failed", params.currency));
   }
 
   return {

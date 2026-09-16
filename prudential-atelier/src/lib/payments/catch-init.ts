@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
+import { paymentInitHttpStatus } from "@/lib/payments/init-error";
 
 /** Uncaught Paystack/Stripe throws become empty 500s; the checkout toast then says "Unexpected end of JSON input". */
 export async function catchPaymentInit(
@@ -17,6 +18,6 @@ export async function catchPaymentInit(
       stack: e instanceof Error ? e.stack : undefined,
       orderId,
     });
-    return NextResponse.json({ error: message }, { status: 502 });
+    return NextResponse.json({ error: message }, { status: paymentInitHttpStatus(message) });
   }
 }

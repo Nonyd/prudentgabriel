@@ -23,6 +23,7 @@ import { DEPOSIT_SATISFACTION_TOLERANCE_NGN, depositIsSatisfied, roundToKobo } f
 import { paystackCheckoutTotalNGN, paystackLocalFeeNGN } from "../src/lib/payments/paystack-fee";
 import { getSupportedGateways } from "../src/lib/payments/index";
 import { asPaystackCurrency, expectedPaystackRtwBind, paystackSubunits } from "../src/lib/payments/paystack-amount";
+import { paymentInitHttpStatus, paystackPublicInitError } from "../src/lib/payments/init-error";
 import { PaymentStatus } from "@prisma/client";
 
 function assert(cond: unknown, message: string): asserts cond {
@@ -130,6 +131,13 @@ function run() {
   const configSrc = readFileSync(resolve("src/lib/payments/config.ts"), "utf8");
   assert(configSrc.includes('currency === "USD" || currency === "GBP"'), "live gateway list treats USD and GBP the same");
   assert(configSrc.includes('if (paystackReady) out.push("PAYSTACK")'), "Paystack is offered when the keys are live");
+  assert(
+    paystackPublicInitError("Currency not supported by merchant", "USD").includes("dollars"),
+    "USD Paystack refusal says dollars, not 502",
+  );
+  assert(paymentInitHttpStatus("Currency not supported by merchant") === 400, "merchant currency refusal is 400, not a gateway 502");
+  const catchInitSrc = readFileSync(resolve("src/lib/payments/catch-init.ts"), "utf8");
+  assert(!catchInitSrc.includes("status: 502"), "Cloudflare replaces JSON 502s with a blank error page");
 
   assert(measurementPlausibilityError({ bust: 24, waist: 32, hips: 43, unit: "inches" }), "bust 24″ / waist 32″ is refused");
   assert(measurementPlausibilityError({ bust: 38, waist: 30, hips: 42, unit: "inches" }) === null, "a plausible adult set is accepted");
