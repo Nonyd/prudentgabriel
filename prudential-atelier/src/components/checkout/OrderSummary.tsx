@@ -67,35 +67,36 @@ export function OrderSummary({
   const fmtExtra = (n: number) => formatPrice(extrasAmountInCurrency(n, currency, rates), currency);
 
   return (
-    <div className="glass-2 glass-panel p-5">
-      <h3 className="font-display text-lg text-choc">Order summary</h3>
-      <ul className="mt-4 max-h-64 space-y-3 overflow-y-auto">
-        {step > 1 ? (
-          <li className="text-sm text-charcoal-mid">{items.length} items</li>
-        ) : (
-          items.map((i) => (
-            <li key={i.id} className="flex gap-3 text-sm">
-              <Image src={i.imageUrl} alt={i.productName} width={48} height={60} className="rounded-sm object-cover" />
-              <div className="flex-1">
-                <p className="font-medium text-charcoal">{i.productName}</p>
-                <p className="text-charcoal-mid">
-                  {[i.optionLabel, i.sizeMode === "CUSTOM" ? "Made to measure" : i.size].filter(Boolean).join(", ")} ×
-                  {i.quantity}
-                </p>
-              </div>
-              <p>{fmtLine(i)}</p>
-            </li>
-          ))
-        )}
+    <div className="glass-2 glass-panel p-6">
+      <h2 className="font-display text-xl text-choc">Order summary</h2>
+      <ul className="mt-5 max-h-64 space-y-4 overflow-y-auto">
+        {items.map((i) => (
+          <li key={i.id} className="flex gap-3 text-sm">
+            <div className="relative h-16 w-12 shrink-0 overflow-hidden bg-ivory-dark">
+              {i.imageUrl ? (
+                <Image src={i.imageUrl} alt="" fill className="object-cover" sizes="48px" />
+              ) : null}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-sm text-charcoal">{i.productName}</p>
+              <p className="mt-0.5 text-charcoal-mid">
+                {[i.optionLabel, i.sizeMode === "CUSTOM" ? "Made to measure" : i.size].filter(Boolean).join(", ")}
+                {" · "}
+                {i.quantity}
+              </p>
+            </div>
+            <p className="shrink-0 tabular-nums">{fmtLine(i)}</p>
+          </li>
+        ))}
       </ul>
-      <div className="mt-4 space-y-1 border-t border-border pt-4 text-sm">
+      <div className="mt-5 space-y-2 border-t border-border pt-5 text-sm">
         <div className="flex justify-between">
           <span className="text-charcoal-mid">Subtotal</span>
-          <span>{formatPrice(subtotalShopper, currency)}</span>
+          <span className="tabular-nums">{formatPrice(subtotalShopper, currency)}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-charcoal-mid">Shipping</span>
-          <span>
+          <span className="tabular-nums">
             {shippingCostNGN == null
               ? "—"
               : shippingQuoted
@@ -108,7 +109,7 @@ export function OrderSummary({
         {disc > 0 && (
           <div className="flex justify-between text-success">
             <span>Coupon</span>
-            <span>−{fmtExtra(disc)}</span>
+            <span className="tabular-nums">−{fmtExtra(disc)}</span>
           </div>
         )}
         {ptsValue > 0 && (
@@ -116,18 +117,18 @@ export function OrderSummary({
             <span>
               Points ({pointsToRedeem.toLocaleString()} Prudent Points × ₦{pointRate})
             </span>
-            <span>−{fmtExtra(ptsValue)}</span>
+            <span className="tabular-nums">−{fmtExtra(ptsValue)}</span>
           </div>
         )}
-        <div className="flex justify-between border-t border-border pt-2 font-display text-lg text-choc">
+        <div className="flex justify-between border-t border-border pt-3 font-display text-lg text-choc">
           <span>{ptsValue > 0 ? "To pay" : "Total"}</span>
-          <span>{formatPrice(remainingShopper, currency)}</span>
+          <span className="tabular-nums">{formatPrice(remainingShopper, currency)}</span>
         </div>
         {ptsValue > 0 && remainingNGN > 0.01 && ship > 0 ? (
-          <p className="pt-1 text-[11px] text-charcoal-mid">Shipping is paid in cash — points cover the garment only.</p>
+          <p className="pt-1 text-[11px] text-charcoal-mid">Shipping is paid in cash. Points cover the garment only.</p>
         ) : null}
       </div>
-      <p className="mt-3 font-body text-[12px] leading-5 text-charcoal-mid">{madeCopy}</p>
+      <p className="mt-4 font-body text-[12px] leading-5 text-charcoal-mid">{madeCopy}</p>
       {step < 3 && (
         <p className="mt-3 font-label text-[11px] text-gold">
           Earn ~{Math.floor(Math.max(0, subtotalNGN - disc) / 100)} pts with this order

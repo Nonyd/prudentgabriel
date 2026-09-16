@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import clsx from "clsx";
 import { useCartStore } from "@/store/cartStore";
 import { useBagActions } from "@/hooks/useBagActions";
+import { BagQtyButtons } from "@/components/cart/BagLineControls";
 import { useCurrencyStore } from "@/store/currencyStore";
 import type { ShopCurrency } from "@/lib/currency";
 import type { AddressInput } from "@/validations/order";
@@ -25,7 +26,6 @@ import { Button } from "@/components/ui/Button";
 import { NIGERIA_STATES } from "@/lib/geo/nigeria-states";
 import { COUNTRIES } from "@/lib/geo/countries";
 import { CUSTOM_RETURNS_COPY } from "@/lib/custom-size";
-import { useMadeThenShippedCopy } from "@/components/layout/ProductionTimeContext";
 import { readHeldAttribution } from "@/lib/analytics/attribution";
 
 interface ShipOpt {
@@ -63,6 +63,37 @@ function FieldError({ id, message }: { id?: string; message?: string }) {
   );
 }
 
+const fieldSelectClass =
+  "w-full min-h-[44px] border-0 border-b border-border bg-transparent py-2 font-body text-base text-charcoal outline-none focus:border-b-2 focus:border-choc";
+
+function CheckoutEmpty() {
+  const router = useRouter();
+  return (
+    <div className="mx-auto flex min-h-[calc(100dvh-var(--storefront-chrome-offset,8rem))] max-w-site items-center justify-center px-4 py-16 lg:px-10">
+      <div className="glass-opaque w-full max-w-lg px-8 py-16 text-center sm:px-12">
+        <svg
+          className="mx-auto mb-6 h-14 w-14 text-choc"
+          viewBox="0 0 64 64"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          aria-hidden
+        >
+          <path d="M12 20h40l-4 32H16L12 20z" />
+          <path d="M20 20V14a12 12 0 0124 0v6" />
+        </svg>
+        <h1 className="font-display text-3xl italic leading-[1.15] text-charcoal">Your bag is empty</h1>
+        <p className="mx-auto mt-3 max-w-[36ch] font-body text-base leading-6 text-charcoal-mid">
+          Add a piece, then come back here to pay.
+        </p>
+        <Button type="button" className="mt-8" onClick={() => router.push("/rtw")}>
+          Shop ready-to-wear
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function CheckoutClient() {
   const { data: session, status } = useSession();
   const currency = useCurrencyStore((s) => s.currency);
@@ -72,7 +103,6 @@ export function CheckoutClient() {
   const hasCustom = items.some((i) => i.sizeMode === "CUSTOM");
   const customNotReturnable = items.some((i) => i.sizeMode === "CUSTOM" && i.customReturnable !== true);
   const { changeQty, removeFromBag } = useBagActions();
-  const madeCopy = useMadeThenShippedCopy();
 
   const [step, setStep] = useState(1);
   const [couponCode, setCouponCode] = useState("");
@@ -684,54 +714,63 @@ export function CheckoutClient() {
   }).points;
 
   if (!items.length) {
-    return (
-      <div className="py-20 text-center">
-        <p className="text-charcoal-mid">Your bag is empty.</p>
-        <Link href="/rtw" className="mt-4 inline-block text-choc underline">
-          Continue shopping
-        </Link>
-      </div>
-    );
+    return <CheckoutEmpty />;
   }
 
   return (
-    <div className="mx-auto flex max-w-site flex-col gap-10 px-4 py-10 lg:flex-row lg:items-start lg:px-10">
-      <div className="min-w-0 flex-1 glass-opaque px-5 py-6 lg:px-8">
-        <ol className="mb-8 flex min-w-0 items-center justify-between gap-2">
-          {STEPS.map((s, idx) => (
-            <li key={s.n} className="flex min-w-0 flex-1 items-center gap-2">
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className={clsx(
-                    "flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-medium",
-                    step > s.n
-                      ? "border-choc bg-choc text-cream"
-                      : step === s.n
-                        ? "border-gold text-choc"
-                        : "border-border text-charcoal-mid",
-                  )}
-                  aria-current={step === s.n ? "step" : undefined}
-                >
-                  {step > s.n ? "✓" : s.n}
-                </div>
-                <span className="font-sans text-[10px] font-medium uppercase tracking-wider text-text-mid">{s.label}</span>
-              </div>
-              {idx < STEPS.length - 1 && (
-                <div className={clsx("mb-5 h-0.5 flex-1", step > s.n ? "bg-choc" : "bg-border")} aria-hidden />
-              )}
-            </li>
-          ))}
-        </ol>
+    <div className="mx-auto flex max-w-site flex-col gap-8 px-4 py-10 lg:flex-row lg:items-start lg:gap-12 lg:px-10">
+      <div className="min-w-0 flex-1 glass-opaque px-5 py-8 lg:px-10 lg:py-10">
+        <h1 className="font-display text-3xl text-choc sm:text-4xl">Checkout</h1>
+        <nav aria-label="Checkout steps" className="mt-8 border-b border-border">
+          <ol className="flex min-w-0 gap-6 sm:gap-8">
+            {STEPS.map((s) => {
+              const done = step > s.n;
+              const current = step === s.n;
+              const canGo = s.n < step;
+              return (
+                <li key={s.n}>
+                  <button
+                    type="button"
+                    disabled={!canGo}
+                    onClick={() => {
+                      if (canGo) setStep(s.n);
+                    }}
+                    className={clsx(
+                      "-mb-px min-h-11 border-b-2 pb-3 text-left font-display text-lg leading-none sm:text-xl",
+                      current
+                        ? "border-choc text-choc"
+                        : done
+                          ? "border-transparent text-charcoal hover:text-choc"
+                          : "cursor-default border-transparent text-charcoal-light",
+                    )}
+                    aria-current={current ? "step" : undefined}
+                  >
+                    {s.label}
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
 
         {step === 1 && (
-          <div className="space-y-6">
-            <h2 className="font-display text-2xl text-choc">Your bag</h2>
+          <div className="space-y-8 pt-8">
+            <h2 className="sr-only">Your bag</h2>
             {items.map((i) => (
-              <div key={i.id} className="flex gap-4 border-b border-border pb-4">
-                <Image src={i.imageUrl} alt={i.productName} width={64} height={80} className="rounded-sm object-cover" />
+              <div key={i.id} className="flex gap-4 border-b border-border pb-6">
+                <div className="relative h-24 w-20 shrink-0 overflow-hidden bg-ivory-dark">
+                  {i.imageUrl ? (
+                    <Image src={i.imageUrl} alt={i.productName} fill className="object-cover" sizes="80px" />
+                  ) : null}
+                </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium">{i.productName}</p>
-                  <p className="text-sm text-charcoal-mid">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-display text-base text-charcoal">{i.productName}</p>
+                    <p className="shrink-0 tabular-nums font-medium text-charcoal">
+                      {formatPrice(cartLineAmountInCurrency(i, currency, rates), currency)}
+                    </p>
+                  </div>
+                  <p className="mt-0.5 font-body text-sm text-charcoal-mid">
                     {[i.optionLabel, i.sizeMode === "CUSTOM" ? "Made to your measurements" : i.size, i.color]
                       .filter(Boolean)
                       .join(" · ")}
@@ -741,32 +780,15 @@ export function CheckoutClient() {
                       {i.measurements.map((m) => `${m.label}: ${m.typedValue} ${m.typedUnit}`).join(" · ")}
                     </p>
                   ) : null}
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="mt-3 flex items-center gap-2">
+                    <BagQtyButtons
+                      item={i}
+                      onDecrease={() => void changeQty(i.id, Math.max(1, i.quantity - 1))}
+                      onIncrease={() => void changeQty(i.id, i.quantity + 1)}
+                    />
                     <button
                       type="button"
-                      className="rounded border border-border px-2"
-                      aria-label={`Decrease quantity of ${i.productName}`}
-                      onClick={() => {
-                        const next = Math.max(1, i.quantity - 1);
-                        void changeQty(i.id, next);
-                      }}
-                    >
-                      −
-                    </button>
-                    <span aria-live="polite">{i.quantity}</span>
-                    <button
-                      type="button"
-                      className="rounded border border-border px-2"
-                      aria-label={`Increase quantity of ${i.productName}`}
-                      onClick={() => {
-                        void changeQty(i.id, i.quantity + 1);
-                      }}
-                    >
-                      +
-                    </button>
-                    <button
-                      type="button"
-                      className="ml-auto text-charcoal-light hover:text-choc"
+                      className="ml-auto min-h-11 font-body text-[11px] uppercase tracking-wider text-dark-grey underline underline-offset-4 hover:text-choc"
                       aria-label={`Remove ${i.productName} from bag`}
                       onClick={() => void removeFromBag(i.id)}
                     >
@@ -854,12 +876,12 @@ export function CheckoutClient() {
             </label>
             {isGift && (
               <div>
-                <label htmlFor="gift-message" className="mb-1 block font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+                <label htmlFor="gift-message" className="mb-1 block font-body text-sm text-charcoal">
                   Gift message
                 </label>
                 <textarea
                   id="gift-message"
-                  className="w-full rounded-sm border border-border bg-ivory p-3 text-sm"
+                  className="w-full min-h-[88px] border-0 border-b border-border bg-transparent p-0 py-2 font-body text-base text-charcoal outline-none focus:border-b-2 focus:border-choc"
                   maxLength={200}
                   value={giftMessage}
                   onChange={(e) => setGiftMessage(e.target.value)}
@@ -873,8 +895,8 @@ export function CheckoutClient() {
         )}
 
         {step === 2 && (
-          <div className="space-y-4">
-            <h2 className="font-display text-2xl text-choc">Delivery</h2>
+          <div className="space-y-6 pt-8">
+            <h2 className="sr-only">Delivery</h2>
             {isGuest && (
               <div className="grid gap-3 sm:grid-cols-2">
                 <Input
@@ -914,7 +936,6 @@ export function CheckoutClient() {
                   type="tel"
                   inputMode="numeric"
                   autoComplete="tel"
-                  placeholder="+234 801 234 5678"
                   className="sm:col-span-2"
                   value={guestPhone}
                   error={errors.guestPhone}
@@ -933,7 +954,10 @@ export function CheckoutClient() {
             {savedAddresses.length > 0 && (
               <div className="space-y-2">
                 {savedAddresses.map((a) => (
-                  <label key={a.id} className="flex cursor-pointer gap-2 rounded-sm border border-border p-3">
+                  <label key={a.id} className={clsx(
+                    "flex cursor-pointer gap-3 border p-4",
+                    addressId === a.id ? "border-choc bg-[rgba(68,41,19,0.04)]" : "border-border",
+                  )}>
                     <input type="radio" name="addr" checked={addressId === a.id} onChange={() => setAddressId(a.id)} />
                     <span className="text-sm">
                       {a.firstName} {a.lastName} — {a.street}, {a.city}
@@ -983,7 +1007,6 @@ export function CheckoutClient() {
                   type="tel"
                   inputMode="numeric"
                   autoComplete="tel"
-                  placeholder="+234 801 234 5678"
                   className="sm:col-span-2"
                   value={addr.phone ?? ""}
                   error={errors.phone}
@@ -998,12 +1021,10 @@ export function CheckoutClient() {
                   }}
                 />
                 <label className="block sm:col-span-2">
-                  <span className="mb-1 block font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
-                    Country
-                  </span>
+                  <span className="mb-1 block font-body text-sm text-charcoal">Country</span>
                   <select
                     id="addr-country"
-                    className="w-full rounded-sm border border-border bg-ivory px-3 py-2 text-sm"
+                    className={fieldSelectClass}
                     value={addr.country ?? "NG"}
                     onChange={(e) => {
                       const country = e.target.value;
@@ -1025,12 +1046,10 @@ export function CheckoutClient() {
                 </label>
                 {addr.country === "NG" ? (
                   <label className="block">
-                    <span className="mb-1 block font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
-                      State
-                    </span>
+                    <span className="mb-1 block font-body text-sm text-charcoal">State</span>
                     <select
                       id="addr-state"
-                      className="w-full rounded-sm border border-border bg-ivory px-3 py-2 text-sm"
+                      className={fieldSelectClass}
                       value={addr.state ?? ""}
                       onChange={(e) => {
                         setAddr((p) => ({ ...p, state: e.target.value }));
@@ -1119,7 +1138,10 @@ export function CheckoutClient() {
                 <p className="font-body text-base text-charcoal-mid">Enter your city and state to see shipping options.</p>
               )}
               {shippingOpts.map((z) => (
-                <label key={z.zoneId} className="mb-2 flex cursor-pointer gap-3 rounded-sm border border-border p-4">
+                <label key={z.zoneId} className={clsx(
+                  "mb-2 flex cursor-pointer gap-3 border p-4 transition-colors",
+                  zoneId === z.zoneId ? "border-choc bg-[rgba(68,41,19,0.04)]" : "border-border hover:border-choc/40",
+                )}>
                   <input type="radio" name="ship" checked={zoneId === z.zoneId} onChange={() => setZoneId(z.zoneId)} />
                   <span className="font-body text-base leading-6">
                     {z.zoneName} — {z.isFree ? <span className="text-gold">FREE</span> : `₦${z.costNGN.toLocaleString()}`} · {z.estimatedDays}
@@ -1189,12 +1211,12 @@ export function CheckoutClient() {
             ) : null}
             <FieldError message={errors.customReturn} />
             <div>
-              <label htmlFor="order-notes" className="mb-1 block font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+              <label htmlFor="order-notes" className="mb-1 block font-body text-sm text-charcoal">
                 Order notes (optional)
               </label>
               <textarea
                 id="order-notes"
-                className="w-full rounded-sm border border-border p-3 text-sm"
+                className="w-full min-h-[96px] border-0 border-b border-border bg-transparent p-0 py-2 font-body text-base text-charcoal outline-none focus:border-b-2 focus:border-choc"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
@@ -1211,8 +1233,8 @@ export function CheckoutClient() {
         )}
 
         {step === 3 && (
-          <div className="space-y-4">
-            <h2 className="font-display text-2xl text-choc">Payment</h2>
+          <div className="space-y-6 pt-8">
+            <h2 className="sr-only">Payment</h2>
             <div className="flex flex-wrap gap-2" role="group" aria-label="Currency">
               {(["NGN", "USD", "GBP"] as ShopCurrency[]).map((c) => (
                 <button
@@ -1221,8 +1243,8 @@ export function CheckoutClient() {
                   onClick={() => setCurrency(c)}
                   aria-pressed={currency === c}
                   className={clsx(
-                    "rounded-full px-4 py-1 text-sm",
-                    currency === c ? "bg-choc text-cream" : "border border-border",
+                    "min-h-11 rounded-full px-4 text-sm",
+                    currency === c ? "bg-choc text-cream" : "border border-border text-charcoal hover:border-choc",
                   )}
                 >
                   {c}
@@ -1342,7 +1364,6 @@ export function CheckoutClient() {
       </div>
 
       <aside className="w-full min-w-0 shrink-0 lg:sticky lg:top-24 lg:w-[360px]">
-        <p className="mb-3 font-body text-[12px] leading-5 text-charcoal-mid">{madeCopy}</p>
         <OrderSummary
           items={items}
           couponResult={couponResult}
