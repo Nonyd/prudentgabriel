@@ -146,8 +146,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const parsed = productAdminSchema.safeParse(body);
   if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const where = issue?.path?.length ? `${issue.path.join(".")}: ` : "";
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid request" },
+      { error: `${where}${issue?.message ?? "Invalid request"}` },
       { status: 400 },
     );
   }

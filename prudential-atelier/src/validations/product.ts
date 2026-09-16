@@ -139,8 +139,15 @@ export const productAdminSchema = z.object({
   defaultLengthCm: optNonNegNumber(),
   defaultWidthCm: optNonNegNumber(),
   defaultHeightCm: optNonNegNumber(),
-  metaTitle: z.string().max(60).optional(),
-  metaDescription: z.string().max(160).optional(),
+  // RSC / JSON often send null for empty SEO fields; optional() alone rejects null in Zod 4.
+  metaTitle: z.preprocess(
+    (v) => (v == null || v === "" ? undefined : v),
+    z.string().max(60).optional(),
+  ),
+  metaDescription: z.preprocess(
+    (v) => (v == null || v === "" ? undefined : v),
+    z.string().max(160).optional(),
+  ),
   variants: z.array(variantSchema).default([]),
   colors: z.array(colorSchema).default([]),
   images: z.array(imageSchema).default([]),
