@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import type { Role } from "@prisma/client";
+import { PasswordField } from "@/components/ui/PasswordField";
 
 export function AcceptInviteClient({
   token,
@@ -61,8 +62,8 @@ export function AcceptInviteClient({
             <input value={role} disabled className="w-full border border-[#EBEBEA] bg-[#FAFAFA] px-3 py-2 font-body text-sm text-[#6B6B68]" />
             <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First Name" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
             <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last Name" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password (min 8 chars)" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
-            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm Password" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
+            <PasswordField value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password (min 8 chars)" autoComplete="new-password" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
+            <PasswordField value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm Password" autoComplete="new-password" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
             {error ? <p className="font-body text-xs text-red-600">{error}</p> : null}
             <button type="button" onClick={() => void submit()} className="w-full bg-[#37392d] px-3 py-2 font-body text-[12px] uppercase tracking-[0.08em] text-white">
               Create Account

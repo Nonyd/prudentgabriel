@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/validations/auth";
 import { Button } from "@/components/ui/Button";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { useGoogleAuthEnabled } from "@/hooks/useGoogleAuthEnabled";
 import { AuthBrandPanel } from "@/components/auth/AuthBrandPanel";
 
@@ -85,8 +86,7 @@ export function LoginContent() {
               <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
                 Password
               </span>
-              <input
-                type="password"
+              <PasswordField
                 autoComplete="current-password"
                 className="input-field"
                 {...register("password")}

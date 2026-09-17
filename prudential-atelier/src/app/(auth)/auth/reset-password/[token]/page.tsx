@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema, type ResetPasswordInput } from "@/validations/auth";
 import { authApiErrorMessage, hardNavigate, safeLoginNext } from "@/lib/client-auth";
 import { Button } from "@/components/ui/Button";
+import { PasswordField } from "@/components/ui/PasswordField";
 
 export default function ResetPasswordPage() {
   const params = useParams();
@@ -73,8 +74,7 @@ export default function ResetPasswordPage() {
               <label className="font-label text-[10px] uppercase tracking-[0.15em] text-charcoal-mid">
                 New password
               </label>
-              <input
-                type="password"
+              <PasswordField
                 autoComplete="new-password"
                 className="mt-2 w-full border border-border bg-cream px-4 py-3 font-body text-sm outline-none focus:border-choc"
                 {...register("password")}
@@ -87,8 +87,7 @@ export default function ResetPasswordPage() {
               <label className="font-label text-[10px] uppercase tracking-[0.15em] text-charcoal-mid">
                 Confirm password
               </label>
-              <input
-                type="password"
+              <PasswordField
                 autoComplete="new-password"
                 className="mt-2 w-full border border-border bg-cream px-4 py-3 font-body text-sm outline-none focus:border-choc"
                 {...register("confirmPassword")}

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { Logo } from "@/components/ui/Logo";
+import { PasswordField } from "@/components/ui/PasswordField";
 import {
   authApiErrorMessage,
   hardNavigate,
@@ -81,8 +82,7 @@ export function ResetPasswordClient() {
           <label className="font-body text-[11px] uppercase tracking-wide text-[var(--text-light)]">
             New password
           </label>
-          <input
-            type="password"
+          <PasswordField
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -95,8 +95,7 @@ export function ResetPasswordClient() {
           <label className="font-body text-[11px] uppercase tracking-wide text-[var(--text-light)]">
             Confirm password
           </label>
-          <input
-            type="password"
+          <PasswordField
             autoComplete="new-password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}

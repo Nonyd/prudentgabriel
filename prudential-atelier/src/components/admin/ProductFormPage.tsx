@@ -14,6 +14,7 @@ import type { ProductListItem } from "@/types/product";
 import { productAdminSchema, type ProductAdminInput } from "@/validations/product";
 import { VariantManager } from "./VariantManager";
 import { ProductOptionGroupEditor } from "./ProductOptionGroupEditor";
+import { firstErrorMessage, focusField, getFirstErrorPath } from "@/lib/form-errors";
 import { ProductCategoryField } from "./ProductCategoryField";
 import { buildDefaultProductSku, isGeneratedProductSku } from "@/lib/product-sku";
 import { getPublicAppUrl } from "@/lib/app-url";
@@ -539,16 +540,24 @@ export function ProductFormPage({
     if (draftMsg) {
       if (!opts.silent) toast.error(draftMsg);
       if (wizard) setStep(0);
+      requestAnimationFrame(() => focusField("product-name"));
       return false;
     }
     if (asPublish) {
       const blocked = publishBlockedMessage(values);
       if (blocked) {
         toast.error(blocked);
+        const missingPhoto = !(values.images ?? []).length;
+        const missingName = !values.name?.trim();
         if (wizard) {
-          if (!values.name?.trim() || !(values.images ?? []).length) setStep(0);
+          if (missingName || missingPhoto) setStep(0);
           else setStep(1);
         }
+        requestAnimationFrame(() => {
+          if (missingName) focusField("product-name");
+          else if (missingPhoto) focusField("product-photos");
+          else focusField("product-sizes");
+        });
         return false;
       }
     }
@@ -641,14 +650,20 @@ export function ProductFormPage({
   const submit = form.handleSubmit(onSubmit, (errors) => {
     const values = form.getValues();
     const blocked = values.isPublished ? publishBlockedMessage(values) : draftBlockedMessage(values);
-    if (blocked) toast.error(blocked);
+    const path = getFirstErrorPath(errors);
+    toast.error(blocked ?? firstErrorMessage(errors) ?? "Please complete the highlighted fields");
     if (errors.images || errors.name || errors.slug) {
       setStep(0);
-      return;
-    }
-    if (errors.variants || errors.basePriceNGN) {
+    } else if (errors.variants || errors.basePriceNGN || errors.optionGroup) {
       setStep(1);
     }
+    requestAnimationFrame(() => {
+      if (path?.startsWith("images") || errors.images) focusField("product-photos");
+      else if (path === "name" || errors.name) focusField("product-name");
+      else if (path?.startsWith("variants") || path === "basePriceNGN") focusField("product-sizes");
+      else if (path?.startsWith("optionGroup")) focusField("product-options");
+      else if (path) focusField(path);
+    });
   });
 
   const saveDraft = () => {
@@ -782,7 +797,7 @@ export function ProductFormPage({
       <form onSubmit={submit} className="space-y-5">
         {show(0) ? (
           <>
-            <section className={sectionClass}>
+            <section className={sectionClass} id="product-photos" data-field="product-photos">
               <h2 className="font-display text-2xl text-choc">
                 Photos
                 <Req />
@@ -854,7 +869,12 @@ export function ProductFormPage({
               <label className={labelClass}>
                 Name
                 <Req />
-                <input {...form.register("name", { onBlur: onBlurName })} className={fieldClass} />
+                <input
+                  id="product-name"
+                  data-field="product-name"
+                  {...form.register("name", { onBlur: onBlurName })}
+                  className={cn(fieldClass, form.formState.errors.name && "border-[var(--error)]")}
+                />
               </label>
               {form.formState.errors.name && (
                 <p className="mt-1 font-body text-sm text-wine">{form.formState.errors.name.message}</p>
@@ -925,7 +945,7 @@ export function ProductFormPage({
         ) : null}
 
         {show(1) ? (
-          <section className={sectionClass}>
+          <section className={sectionClass} id="product-sizes" data-field="product-sizes">
             <h2 className="font-display text-2xl text-choc">Sizes and prices</h2>
             <label className={labelClass}>
               Price in naira
@@ -984,6 +1004,7 @@ export function ProductFormPage({
                 />
               )}
             />
+            <div id="product-options" data-field="product-options">
             <ProductOptionGroupEditor
               control={form.control}
               watch={form.watch}
@@ -992,6 +1013,7 @@ export function ProductFormPage({
               variants={variantsWatch ?? []}
               isOnSale={Boolean(isOnSaleWatch)}
             />
+            </div>
             {form.formState.errors.variants && (
               <p className="mt-2 text-xs text-red-400">
                 {categoryNeedsSizes(form.getValues("category"))

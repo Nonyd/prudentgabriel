@@ -5,13 +5,26 @@ import { prisma } from "@/lib/prisma";
 import { requireGeneralAdminApi } from "@/lib/admin-auth";
 import { uniqueJobSlug } from "@/lib/job-slug";
 
+const richTextMin = (label: string) =>
+  z
+    .string()
+    .refine(
+      (v) =>
+        v
+          .replace(/<[^>]*>/g, " ")
+          .replace(/&nbsp;/gi, " ")
+          .replace(/\s+/g, " ")
+          .trim().length >= 10,
+      { message: `Add a ${label} — at least a short sentence` },
+    );
+
 const jobBodySchema = z.object({
-  title: z.string().min(2).max(200),
-  department: z.string().min(1).max(120),
+  title: z.string().min(2, "Add a job title").max(200),
+  department: z.string().min(1, "Add a department").max(120),
   type: z.nativeEnum(JobType),
-  location: z.string().min(1).max(200),
-  description: z.string().min(10),
-  requirements: z.string().min(10),
+  location: z.string().min(1, "Add a location").max(200),
+  description: richTextMin("description"),
+  requirements: richTextMin("requirements list"),
   benefits: z.string().optional().nullable(),
   salaryRange: z.string().optional().nullable(),
   deadline: z.string().optional().nullable(),
@@ -48,7 +61,15 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const parsed = jobBodySchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const issue = parsed.error.issues[0];
+    const where = issue?.path?.length ? `${issue.path.join(".")}: ` : "";
+    return NextResponse.json(
+      {
+        error: `${where}${issue?.message ?? "Invalid request"}`,
+        details: parsed.error.flatten(),
+      },
+      { status: 400 },
+    );
   }
 
   const existing = await prisma.jobPosting.findUnique({ where: { id } });

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signOut } from "next-auth/react";
 import toast from "react-hot-toast";
+import { PasswordField } from "@/components/ui/PasswordField";
 
 type Prefs = {
   orderStage: boolean;
@@ -144,25 +145,24 @@ export function SettingsClient({
       <section className="card-surface p-6">
         <h2 className="font-display text-xl text-choc">Password</h2>
         <div className="mt-4 space-y-3">
-          <input
-            type="password"
+          <PasswordField
             placeholder="Current password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             className="w-full border border-sand px-3 py-2 font-sans text-sm"
           />
-          <input
-            type="password"
+          <PasswordField
             placeholder="New password (min 8 chars)"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
+            autoComplete="new-password"
             className="w-full border border-sand px-3 py-2 font-sans text-sm"
           />
-          <input
-            type="password"
+          <PasswordField
             placeholder="Confirm new password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
+            autoComplete="new-password"
             className="w-full border border-sand px-3 py-2 font-sans text-sm"
           />
         </div>

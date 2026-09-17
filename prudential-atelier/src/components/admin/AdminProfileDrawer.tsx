@@ -9,6 +9,7 @@ import { Lock, X } from "lucide-react";
 import { DarkModeToggle } from "@/components/common/DarkModeToggle";
 import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
 import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
+import { PasswordField } from "@/components/ui/PasswordField";
 
 function getInitials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -142,9 +143,9 @@ export function AdminProfileDrawer({
 
               <p className="mb-3 font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Change Password</p>
               <div className="space-y-3">
-                <input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} placeholder="Current Password" className="w-full border border-sand px-3 py-2 font-body text-sm" />
-                <input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="New Password" className="w-full border border-sand px-3 py-2 font-body text-sm" />
-                <input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Confirm Password" className="w-full border border-sand px-3 py-2 font-body text-sm" />
+                <PasswordField value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} placeholder="Current Password" className="w-full border border-sand px-3 py-2 font-body text-sm" />
+                <PasswordField value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="New Password" autoComplete="new-password" className="w-full border border-sand px-3 py-2 font-body text-sm" />
+                <PasswordField value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Confirm Password" autoComplete="new-password" className="w-full border border-sand px-3 py-2 font-body text-sm" />
                 <button type="button" onClick={() => void updatePassword()} className="w-full border border-[#37392d] px-3 py-2 font-body text-[12px] uppercase tracking-[0.08em] text-[#37392d]">
                   Update Password
                 </button>

@@ -14,6 +14,7 @@ import {
 } from "@/validations/auth";
 import { useAuthModalStore } from "@/store/authModalStore";
 import { Logo } from "@/components/ui/Logo";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useGoogleAuthEnabled } from "@/hooks/useGoogleAuthEnabled";
 
@@ -221,8 +222,7 @@ function LoginForm() {
           <span className="mb-2 block" style={labelStyle}>
             Password
           </span>
-          <input
-            type="password"
+          <PasswordField
             autoComplete="current-password"
             className={inputClass}
             style={inputStyle}
@@ -434,8 +434,7 @@ function RegisterForm() {
           <span className="mb-2 block" style={labelStyle}>
             Password
           </span>
-          <input
-            type="password"
+          <PasswordField
             autoComplete="new-password"
             className={inputClass}
             style={inputStyle}
@@ -450,8 +449,7 @@ function RegisterForm() {
           <span className="mb-2 block" style={labelStyle}>
             Confirm password
           </span>
-          <input
-            type="password"
+          <PasswordField
             autoComplete="new-password"
             className={inputClass}
             style={inputStyle}

@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { uploadAccountImage } from "@/lib/admin-upload-xhr";
 import { getInitials } from "@/lib/utils";
 
@@ -197,8 +198,7 @@ export function StaffAccountSettingsClient({ initial }: Props) {
           <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
             Current password
           </span>
-          <input
-            type="password"
+          <PasswordField
             autoComplete="current-password"
             className="input-field w-full"
             value={currentPassword}
@@ -210,8 +210,7 @@ export function StaffAccountSettingsClient({ initial }: Props) {
           <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
             New password
           </span>
-          <input
-            type="password"
+          <PasswordField
             autoComplete="new-password"
             className="input-field w-full"
             value={newPassword}
@@ -224,8 +223,7 @@ export function StaffAccountSettingsClient({ initial }: Props) {
           <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
             Confirm new password
           </span>
-          <input
-            type="password"
+          <PasswordField
             autoComplete="new-password"
             className="input-field w-full"
             value={confirmPassword}

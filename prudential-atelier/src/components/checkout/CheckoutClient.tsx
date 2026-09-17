@@ -27,6 +27,7 @@ import { NIGERIA_STATES } from "@/lib/geo/nigeria-states";
 import { COUNTRIES } from "@/lib/geo/countries";
 import { CUSTOM_RETURNS_COPY } from "@/lib/custom-size";
 import { readHeldAttribution } from "@/lib/analytics/attribution";
+import { focusField } from "@/lib/form-errors";
 
 interface ShipOpt {
   zoneId: string;
@@ -46,13 +47,6 @@ const STEPS = [
   { n: 2, label: "Delivery" },
   { n: 3, label: "Payment" },
 ] as const;
-
-function focusField(id: string) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.focus();
-  el.scrollIntoView({ behavior: "smooth", block: "center" });
-}
 
 function FieldError({ id, message }: { id?: string; message?: string }) {
   if (!message) return null;

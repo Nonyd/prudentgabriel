@@ -3,6 +3,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { DarkModeToggle } from "@/components/common/DarkModeToggle";
+import { PasswordField } from "@/components/ui/PasswordField";
 
 export function ProfileFormClient({
   initial,
@@ -133,19 +134,18 @@ function PasswordSection() {
     <div className="mt-10 border-t border-border pt-8">
       <h2 className="font-display text-lg text-charcoal">Change password</h2>
       <form onSubmit={changePassword} className="mt-4 space-y-3">
-        <input
-          type="password"
+        <PasswordField
           placeholder="Current password"
           className="w-full border-b border-border bg-transparent py-2 outline-none focus:border-wine"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
         />
-        <input
-          type="password"
+        <PasswordField
           placeholder="New password"
           className="w-full border-b border-border bg-transparent py-2 outline-none focus:border-wine"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
+          autoComplete="new-password"
         />
         <p
           className={
@@ -154,12 +154,12 @@ function PasswordSection() {
         >
           {strength === "strong" ? "Strong" : strength === "fair" ? "Fair" : "Weak"}
         </p>
-        <input
-          type="password"
+        <PasswordField
           placeholder="Confirm new password"
           className="w-full border-b border-border bg-transparent py-2 outline-none focus:border-wine"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          autoComplete="new-password"
         />
         <button
           type="submit"
