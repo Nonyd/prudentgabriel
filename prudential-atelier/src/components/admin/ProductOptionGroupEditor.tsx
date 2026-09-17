@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Controller, useFieldArray, type Control, type UseFormSetValue, type UseFormWatch } from "react-hook-form";
 import { effectiveUnitNGN } from "@/lib/pricing";
 import type { ProductAdminInput } from "@/validations/product";
@@ -22,11 +23,19 @@ export function ProductOptionGroupEditor({
   isOnSale: boolean;
 }) {
   const group = watch("optionGroup");
-  const enabled = Boolean(group);
+  // useFieldArray can invent `{ options: [] }` while the choice is off — only
+  // treat a real group (with a label string) as enabled.
+  const enabled = group != null && typeof group.label === "string";
   const { fields, append, remove } = useFieldArray({
     control,
     name: "optionGroup.options",
   });
+
+  useEffect(() => {
+    if (group != null && typeof group.label !== "string" && (group.options?.length ?? 0) === 0) {
+      setValue("optionGroup", null, { shouldDirty: false });
+    }
+  }, [group, setValue]);
 
   const cheapestSize = variants.reduce<(typeof variants)[number] | null>((best, v) => {
     if (!best) return v;

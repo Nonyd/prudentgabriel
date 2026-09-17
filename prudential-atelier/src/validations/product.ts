@@ -103,38 +103,55 @@ export const productAdminSchema = z.object({
     )
     .optional()
     .default([]),
-  optionGroup: z
-    .object({
-      id: z.string().optional(),
-      label: z.string().trim().min(1).max(80),
-      isRequired: z.boolean().default(true),
-      includeInSku: z.boolean().default(true),
-      sortOrder: z.coerce.number().int().default(0),
-      options: z
-        .array(
-          z.object({
-            id: z.string().optional(),
-            label: z.string().trim().min(1).max(80),
-            priceAdjustmentNGN: z.coerce.number(),
-            isDefault: z.boolean().default(false),
-            sortOrder: z.coerce.number().int().default(0),
-            skuPart: z.string().max(8).optional().nullable(),
-            measurementFieldIds: z
-              .array(
-                z.object({
-                  fieldId: z.string().min(1),
-                  required: z.boolean().default(true),
-                  sortOrder: z.number().int().default(0),
-                }),
-              )
-              .optional()
-              .default([]),
-          }),
-        )
-        .min(2, "Add at least two choices"),
-    })
-    .nullable()
-    .optional(),
+  // RHF useFieldArray on optionGroup.options can leave an empty shell `{}` when
+  // the choice is off — treat incomplete groups as null so publish is not blocked.
+  optionGroup: z.preprocess(
+    (v) => {
+      if (v == null) return null;
+      if (typeof v !== "object") return null;
+      const g = v as { label?: unknown; options?: unknown };
+      const label = typeof g.label === "string" ? g.label.trim() : "";
+      const options = Array.isArray(g.options) ? g.options : [];
+      if (!label && options.length === 0) return null;
+      return v;
+    },
+    z
+      .object({
+        id: z.string().optional(),
+        label: z
+          .string({ error: "Name what she is choosing." })
+          .trim()
+          .min(1, "Name what she is choosing.")
+          .max(80),
+        isRequired: z.boolean().default(true),
+        includeInSku: z.boolean().default(true),
+        sortOrder: z.coerce.number().int().default(0),
+        options: z
+          .array(
+            z.object({
+              id: z.string().optional(),
+              label: z.string().trim().min(1, "Name each choice.").max(80),
+              priceAdjustmentNGN: z.coerce.number(),
+              isDefault: z.boolean().default(false),
+              sortOrder: z.coerce.number().int().default(0),
+              skuPart: z.string().max(8).optional().nullable(),
+              measurementFieldIds: z
+                .array(
+                  z.object({
+                    fieldId: z.string().min(1),
+                    required: z.boolean().default(true),
+                    sortOrder: z.number().int().default(0),
+                  }),
+                )
+                .optional()
+                .default([]),
+            }),
+          )
+          .min(2, "Add at least two choices"),
+      })
+      .nullable()
+      .optional(),
+  ),
   defaultWeightKg: optNonNegNumber(),
   defaultLengthCm: optNonNegNumber(),
   defaultWidthCm: optNonNegNumber(),

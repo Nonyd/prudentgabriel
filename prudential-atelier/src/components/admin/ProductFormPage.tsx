@@ -557,8 +557,17 @@ export function ProductFormPage({
       form.setValue("slug", slugify(values.name, { lower: true, strict: true }));
     }
 
+    const raw = form.getValues();
+    const og = raw.optionGroup;
+    const optionGroup =
+      og == null ||
+      (typeof og.label !== "string" && !(og.options?.length)) ||
+      (!(og.label ?? "").trim() && !(og.options?.length))
+        ? null
+        : og;
     const payload = {
-      ...form.getValues(),
+      ...raw,
+      optionGroup,
       isPublished: asPublish,
       isBespokeAvail: form.getValues("type") === PT.BESPOKE,
     };
