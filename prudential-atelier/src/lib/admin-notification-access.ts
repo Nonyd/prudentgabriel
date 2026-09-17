@@ -38,6 +38,15 @@ export const ADMIN_NOTIFICATION_TARGETS: Record<AdminNotificationType, readonly 
   JOB_APPLICATION: ["staff"],
   EMAIL_DEAD: [ADMIN_NOTIFICATION_EVERYONE],
   EMAIL_PROVIDER_AUTH: [ADMIN_NOTIFICATION_EVERYONE],
+  /** Fallback when a create omits targets — live creates pass the desk that must act. */
+  REQUISITION_PENDING: [
+    "store",
+    "requisition.approve",
+    "requisition.fund",
+    "requisition.buy",
+    "payments",
+    "production.cost",
+  ],
 };
 
 export function targetsForAdminNotificationType(type: AdminNotificationType): string[] {

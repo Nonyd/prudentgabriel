@@ -34,7 +34,11 @@ export type AdminPermission =
   | "settings"
   | "settings.bank-accounts"
   | "settings.developer"
-  | "store";
+  | "store"
+  | "production.cost"
+  | "requisition.approve"
+  | "requisition.fund"
+  | "requisition.buy";
 
 /** CMS surfaces: parent `content` plus CONTENT_MANAGER's dotted keys. */
 export const CMS_ADMIN_PERMISSIONS = [
@@ -65,6 +69,9 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
     "logs",
     "settings",
     "store",
+    "production.cost",
+    "requisition.approve",
+    "requisition.fund",
   ],
 
   STAFF_ADMIN: [
@@ -81,9 +88,11 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
     "payments",
     "content",
     "store",
+    "production.cost",
+    "requisition.approve",
   ],
 
-  BESPOKE_MANAGER: ["bespoke", "consultations", "clients.view"],
+  BESPOKE_MANAGER: ["bespoke", "consultations", "clients.view", "production.cost", "requisition.approve"],
   RTW_MANAGER: ["shop.products", "shop.orders"],
   CONTENT_MANAGER: ["content.blog", "content.pages"],
   FINANCE_MANAGER: ["invoices", "quotations", "finance", "payments", "reports", "settings.bank-accounts"],
@@ -91,6 +100,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
   CONSULTATION_MANAGER: ["consultations", "clients.view"],
   STAFF: [],
   STORE_MANAGER: ["store"],
+  PROCUREMENT_OFFICER: ["requisition.buy"],
 } as const;
 
 export const PROTECTED_ACCOUNTS = [
@@ -212,6 +222,10 @@ export const ALL_PERMISSIONS: readonly AdminPermission[] = [
   "settings.bank-accounts",
   "settings.developer",
   "store",
+  "production.cost",
+  "requisition.approve",
+  "requisition.fund",
+  "requisition.buy",
 ];
 
 /** Dotted children unlocked only because the parent key is on the role. */

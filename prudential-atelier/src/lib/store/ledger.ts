@@ -203,7 +203,7 @@ export async function morningView(now = new Date()) {
 
   const onHandMap = new Map(onHandRows.map((r) => [r.id, r.onHand]));
   const needs: {
-    kind: "short" | "overissued" | "unlisted";
+    kind: "short" | "overissued" | "unlisted" | "bom_short";
     label: string;
     detail: string;
     itemId?: string;
@@ -250,11 +250,73 @@ export async function morningView(now = new Date()) {
     });
   }
 
+  // AQ11: open paid shop orders × ProductMaterial lists vs shelf.
+  const openShop = await prisma.orderItem.findMany({
+    where: {
+      order: {
+        paymentStatus: "PAID",
+        status: { notIn: ["CANCELLED", "REFUNDED", "DELIVERED", "COLLECTED", "ARCHIVED"] },
+      },
+    },
+    select: {
+      quantity: true,
+      productId: true,
+      optionId: true,
+      order: { select: { orderNumber: true } },
+      product: { select: { name: true } },
+    },
+    take: 500,
+  });
+  const productIds = Array.from(new Set(openShop.map((r) => r.productId).filter(Boolean))) as string[];
+  const bom =
+    productIds.length === 0
+      ? []
+      : await prisma.productMaterial.findMany({
+          where: { productId: { in: productIds }, isOptional: false },
+          include: { item: { select: { id: true, name: true, unit: true } } },
+        });
+  const demandByItem = new Map<string, { need: number; unit: string; name: string; samples: string[] }>();
+  for (const line of openShop) {
+    if (!line.productId) continue;
+    const mats = bom.filter(
+      (m) =>
+        m.productId === line.productId &&
+        (m.productOptionId == null || m.productOptionId === line.optionId),
+    );
+    for (const m of mats) {
+      const add = toQty(m.quantityPerUnit) * line.quantity;
+      const cur = demandByItem.get(m.itemId) ?? {
+        need: 0,
+        unit: m.unit || m.item.unit,
+        name: m.item.name,
+        samples: [],
+      };
+      cur.need += add;
+      const tag = `${line.product.name} · ${line.order.orderNumber}`;
+      if (cur.samples.length < 3 && !cur.samples.includes(tag)) cur.samples.push(tag);
+      demandByItem.set(m.itemId, cur);
+    }
+  }
+  for (const [itemId, d] of Array.from(demandByItem.entries())) {
+    const have = onHandMap.get(itemId) ?? 0;
+    if (d.need - have > 1e-9) {
+      needs.push({
+        kind: "bom_short",
+        itemId,
+        label: d.name,
+        detail: `Open paid orders need ${d.need} ${d.unit}; store holds ${have}. ${d.samples.join("; ")}`,
+      });
+    }
+  }
+
   return {
     book: {
       dayOne: book.dayOne,
       lockedAt: book.lockedAt,
     },
+    /** AQ11: empty is not a full shelf — this panel only sees typed commissions + product lists. */
+    needsSource:
+      "Comparing typed commission materials and product material lists against the shelf. A piece with no list does not appear here.",
     categories: categories.map((c) => ({
       id: c.id,
       name: c.name,

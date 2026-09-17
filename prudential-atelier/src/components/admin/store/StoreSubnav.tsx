@@ -9,6 +9,8 @@ const LINKS = [
   { href: "/admin/store/items", label: "Catalogue" },
   { href: "/admin/store/book", label: "Issue book" },
   { href: "/admin/store/opening", label: "Opening count" },
+  { href: "/admin/store/costs", label: "Cost of production" },
+  { href: "/admin/store/requisitions", label: "Requisitions" },
 ] as const;
 
 export function StoreSubnav() {

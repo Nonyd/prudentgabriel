@@ -72,6 +72,11 @@ model User {
   storeMovementsApproved StoreMovement[] @relation("StoreMovementApprovedBy")
   storeMovementsReceived StoreMovement[] @relation("StoreMovementReceivedBy")
   storeBookLocks         StoreBook[]     @relation("StoreBookLockedBy")
+
+  costsOfProductionApproved CostOfProduction[] @relation("CostOfProductionApprovedBy")
+  costsOfProductionDrafted  CostOfProduction[] @relation("CostOfProductionDraftedBy")
+  requisitionsRaised        Requisition[]      @relation("RequisitionRaisedBy")
+  requisitionEvents         RequisitionEvent[] @relation("RequisitionEventActor")
 }
 
 model Consultant {
@@ -381,6 +386,8 @@ model Product {
   measurementFields   ProductMeasurement[]
   /// One group per product. A second group is a separate product decision.
   optionGroup         ProductOptionGroup?
+  /// Optional bill of materials. A piece with no list still sells.
+  materials           ProductMaterial[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -527,6 +534,7 @@ model ProductOption {
   measurementFields  ProductOptionMeasurement[]
   cartItems          CartItem[]
   orderItems         OrderItem[]
+  materials          ProductMaterial[]
   createdAt          DateTime                    @default(now())
   updatedAt          DateTime                    @updatedAt
 
@@ -735,6 +743,8 @@ model Order {
 
   payments Payment[]
   storeMovements StoreMovement[]
+  costsOfProduction CostOfProduction[]
+  requisitions Requisition[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1426,6 +1436,8 @@ enum AdminNotificationType {
   QUOTE_AWAITING
   EMAIL_DEAD
   EMAIL_PROVIDER_AUTH
+  /// Requisition waiting on a desk (targets set per transition).
+  REQUISITION_PENDING
 }
 
 enum CustomerNotificationType {
@@ -1482,6 +1494,7 @@ enum Role {
   CONSULTATION_MANAGER
   STAFF
   STORE_MANAGER
+  PROCUREMENT_OFFICER
 }
 
 /// Historical aisle slugs. Unused by any model, so Prisma Client does not emit this enum.
@@ -2022,6 +2035,8 @@ model BespokeOrder {
   payments Payment[]
   storeMovements StoreMovement[]
   alterationRequests AlterationRequest[]
+  costsOfProduction CostOfProduction[]
+  requisitions Requisition[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2816,6 +2831,9 @@ model StoreItem {
   isActive   Boolean      @default(true)
   movements  StoreMovement[]
   materials  Material[]
+  costItems  CostOfProductionItem[]
+  requisitionLines RequisitionLine[]
+  productMaterials ProductMaterial[]
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
 
@@ -2873,4 +2891,143 @@ model StoreBook {
   lockedById String?
   lockedBy   User?     @relation("StoreBookLockedBy", fields: [lockedById], references: [id], onDelete: SetNull)
   lockedAt   DateTime?
+}
+
+/// Slice AQ phase 2 — cost of production before a requisition.
+enum CostOfProductionStatus {
+  DRAFT
+  APPROVED
+}
+
+model CostOfProduction {
+  id             String                 @id @default(cuid())
+  orderId        String?
+  order          Order?                 @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  bespokeOrderId String?
+  bespokeOrder   BespokeOrder?          @relation(fields: [bespokeOrderId], references: [id], onDelete: Restrict)
+  /// Tailor compensation as a figure — not payroll.
+  tailorCostNGN  Decimal                @db.Decimal(12, 2)
+  notes          String?                @db.Text
+  status         CostOfProductionStatus @default(DRAFT)
+  draftedById    String
+  draftedBy      User                   @relation("CostOfProductionDraftedBy", fields: [draftedById], references: [id], onDelete: Restrict)
+  approvedById   String?
+  approvedBy     User?                  @relation("CostOfProductionApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
+  approvedAt     DateTime?
+  items          CostOfProductionItem[]
+  requisitions   Requisition[]
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  @@index([bespokeOrderId])
+  @@index([orderId])
+  @@index([status])
+}
+
+model CostOfProductionItem {
+  id                  String          @id @default(cuid())
+  costOfProductionId  String
+  costOfProduction    CostOfProduction @relation(fields: [costOfProductionId], references: [id], onDelete: Cascade)
+  itemId              String?
+  item                StoreItem?      @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  freeText            String?
+  quantity            Decimal         @db.Decimal(12, 4)
+  unit                String
+  estimatedCostNGN    Decimal         @db.Decimal(12, 2)
+
+  @@index([costOfProductionId])
+}
+
+enum RequisitionStatus {
+  RAISED
+  STOCK_CHECKED
+  WITH_ACCOUNTS
+  AWAITING_FUNDS
+  FUNDED
+  PURCHASED
+  RECEIVED
+  CLOSED
+  DECLINED
+}
+
+model Requisition {
+  id                 String            @id @default(cuid())
+  ref                String            @unique
+  costOfProductionId String?
+  costOfProduction   CostOfProduction? @relation(fields: [costOfProductionId], references: [id], onDelete: Restrict)
+  orderId            String?
+  order              Order?            @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  bespokeOrderId     String?
+  bespokeOrder       BespokeOrder?     @relation(fields: [bespokeOrderId], references: [id], onDelete: Restrict)
+  status             RequisitionStatus @default(RAISED)
+  raisedById         String
+  raisedBy           User              @relation("RequisitionRaisedBy", fields: [raisedById], references: [id], onDelete: Restrict)
+  notes              String?           @db.Text
+  declineReason      String?           @db.Text
+  /// AQ12: true when any consecutive transition was by the same person.
+  sameActorShortCircuit Boolean        @default(false)
+  lines              RequisitionLine[]
+  events             RequisitionEvent[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([status, createdAt])
+  @@index([orderId])
+  @@index([bespokeOrderId])
+}
+
+model RequisitionLine {
+  id                 String      @id @default(cuid())
+  requisitionId      String
+  requisition        Requisition @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+  itemId             String?
+  item               StoreItem?  @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  freeText           String?
+  quantity           Decimal     @db.Decimal(12, 4)
+  unit               String
+  estimatedCostNGN   Decimal     @db.Decimal(12, 2)
+  /// Set when supervisor confirms what arrived (may be less than requested).
+  confirmedQuantity  Decimal?    @db.Decimal(12, 4)
+  /// Dropped at stock check because shelf already held enough.
+  coveredByStock     Boolean     @default(false)
+  /// Visible shortfall after a partial purchase/receipt.
+  shortfallQuantity  Decimal?    @db.Decimal(12, 4)
+
+  @@index([requisitionId])
+}
+
+/// Append-only transition log. Each step records who and when.
+model RequisitionEvent {
+  id                   String             @id @default(cuid())
+  requisitionId        String
+  requisition          Requisition        @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+  fromStatus           RequisitionStatus?
+  toStatus             RequisitionStatus
+  actorId              String
+  actor                User               @relation("RequisitionEventActor", fields: [actorId], references: [id], onDelete: Restrict)
+  note                 String?            @db.Text
+  /// AQ12: actor also performed the previous transition.
+  sameActorAsPrevious  Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+
+  @@index([requisitionId, createdAt])
+}
+
+/// Slice AQ phase 3 — optional material list on a product (or a Slice AU option).
+model ProductMaterial {
+  id              String         @id @default(cuid())
+  productId       String
+  product         Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productOptionId String?
+  productOption   ProductOption? @relation(fields: [productOptionId], references: [id], onDelete: Cascade)
+  itemId          String
+  item            StoreItem      @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  quantityPerUnit Decimal        @db.Decimal(12, 4)
+  unit            String
+  isOptional      Boolean        @default(false)
+  sortOrder       Int            @default(0)
+
+  @@index([productId])
+  @@index([productOptionId])
+  @@index([itemId])
 }

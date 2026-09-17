@@ -5,7 +5,7 @@ import Link from "next/link";
 import { formatQty } from "@/lib/store/qty";
 import { StoreSubnav } from "@/components/admin/store/StoreSubnav";
 
-type Need = { kind: "short" | "overissued" | "unlisted"; label: string; detail: string; itemId?: string };
+type Need = { kind: "short" | "overissued" | "unlisted" | "bom_short"; label: string; detail: string; itemId?: string };
 type ItemRow = {
   id: string;
   name: string;
@@ -37,6 +37,7 @@ type View = {
   categories: Category[];
   yesterday: Yesterday[];
   needs: Need[];
+  needsSource?: string;
 };
 
 function fmtWhen(iso: string) {
@@ -171,10 +172,14 @@ export function StoreMorningClient() {
           <section className="border border-sand bg-bg-card p-6">
             <h2 className="font-display text-lg text-ink">Needed and not in the store</h2>
             <p className="mt-1 font-sans text-sm text-text-mid">
-              This is the useful signal — an order that needs materials we do not have — not a reorder level.
+              {view.needsSource ??
+                "This is the useful signal — an order that needs materials we do not have — not a reorder level."}
             </p>
             {view.needs.length === 0 ? (
-              <p className="mt-3 font-sans text-sm text-text-mid">Nothing outstanding against the shelf.</p>
+              <p className="mt-3 font-sans text-sm text-text-mid">
+                Nothing outstanding against the lists we can see. An empty panel is not a full shelf — pieces without
+                a material list never appear here.
+              </p>
             ) : (
               <ul className="mt-3 space-y-2 font-sans text-sm">
                 {view.needs.map((n, i) => (

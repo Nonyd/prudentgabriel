@@ -88,6 +88,8 @@ const PATH_RULES: PathRule[] = [
   { prefix: "/admin/quotations", gate: perm("quotations") },
   { prefix: "/admin/alterations", gate: { type: "roles", roles: ALTERATION_ROLES } },
 
+  { prefix: "/admin/store/requisitions", gate: perm(["store", "production.cost", "requisition.approve", "requisition.fund", "requisition.buy", "payments"]) },
+  { prefix: "/admin/store/costs", gate: perm(["production.cost", "store"]) },
   { prefix: "/admin/store", gate: perm("store") },
 
   { prefix: "/admin/bespoke", gate: perm("bespoke") },
@@ -174,6 +176,7 @@ export const ADMIN_LANDING_CANDIDATES = [
   "/admin/attendance",
   "/admin/clients",
   "/admin/payments",
+  "/admin/store/requisitions",
   "/admin/reports",
   "/admin/content",
   "/admin/content/blog",
@@ -403,6 +406,8 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
       { href: "/admin/store/items", label: "Catalogue", icon: "store-items" },
       { href: "/admin/store/book", label: "Issue book", icon: "store-book" },
       { href: "/admin/store/opening", label: "Opening count", icon: "store-opening" },
+      { href: "/admin/store/costs", label: "Cost of production", icon: "store-book" },
+      { href: "/admin/store/requisitions", label: "Requisitions", icon: "store-book" },
     ],
   },
   {

@@ -238,6 +238,7 @@ export function aggregatePeriod(input: {
         orderedToMeasure: row.orderedToMeasure,
         sizes,
         options,
+        materialsConsumed: [] as { itemName: string; quantity: number; unit: string }[],
       };
     })
     .filter((p) => p.unitsSold > 0 || p.orderedToMeasure > 0 || p.revenueNGN > 0);
@@ -432,10 +433,37 @@ export async function buildWhatsSelling(from: Date, to: Date, prevFrom?: Date, p
   const previous =
     prevFrom && prevTo && prevTo.getTime() > 0 ? await periodBundle(prevFrom, prevTo) : null;
 
+  const productIds = current.pieces.map((p) => p.productId);
+  const bom =
+    productIds.length === 0
+      ? []
+      : await prisma.productMaterial.findMany({
+          where: { productId: { in: productIds }, isOptional: false, productOptionId: null },
+          include: { item: { select: { name: true, unit: true } } },
+        });
+  const byProduct = new Map<string, typeof bom>();
+  for (const m of bom) {
+    const list = byProduct.get(m.productId) ?? [];
+    list.push(m);
+    byProduct.set(m.productId, list);
+  }
+  const piecesWithMats = current.pieces.map((p) => {
+    const mats = byProduct.get(p.productId) ?? [];
+    const units = p.unitsSold + p.orderedToMeasure;
+    return {
+      ...p,
+      materialsConsumed: mats.map((m) => ({
+        itemName: m.item.name,
+        quantity: Number(m.quantityPerUnit) * units,
+        unit: m.unit || m.item.unit,
+      })),
+    };
+  });
+
   return {
     collectionsAssigned: current.collectionsAssigned,
     notSelling: current.notSelling,
-    pieces: withPrev(current.pieces, previous?.pieces ?? [], (p) => p.productId).sort((a, b) =>
+    pieces: withPrev(piecesWithMats, previous?.pieces ?? [], (p) => p.productId).sort((a, b) =>
       compareSelling("units", a, b),
     ),
     collections: withPrev(current.collections, previous?.collections ?? [], (c) => c.collectionId).sort((a, b) =>

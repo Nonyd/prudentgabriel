@@ -36,6 +36,8 @@ export type SellingPiece = {
   options: SellingOptionRow[];
   unitsPrev: number;
   revenuePrev: number;
+  /** AQ11 / Slice AF — materials the sold units would consume from ProductMaterial lists. */
+  materialsConsumed: { itemName: string; quantity: number; unit: string }[];
 };
 
 export type SellingCollection = {
@@ -91,6 +93,7 @@ export function whatsSellingCsv(pieces: SellingPiece[]): string {
     "Units previous",
     "Revenue previous (NGN)",
     "Options",
+    "Materials consumed",
   ];
   const rows = pieces.map((p) => [
     p.name,
@@ -100,6 +103,7 @@ export function whatsSellingCsv(pieces: SellingPiece[]): string {
     String(p.unitsPrev),
     String(p.revenuePrev),
     p.options.map((o) => `${o.option}:${o.sold}`).join("; "),
+    (p.materialsConsumed ?? []).map((m) => `${m.quantity} ${m.unit} ${m.itemName}`).join("; "),
   ]);
   const escape = (cell: string) => {
     if (/[",\n]/.test(cell)) return `"${cell.replace(/"/g, '""')}"`;

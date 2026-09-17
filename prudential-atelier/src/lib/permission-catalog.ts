@@ -29,6 +29,10 @@ export const ALL_ADMIN_PERMISSIONS: readonly AdminPermission[] = [
   "settings.bank-accounts",
   "settings.developer",
   "store",
+  "production.cost",
+  "requisition.approve",
+  "requisition.fund",
+  "requisition.buy",
 ] as const;
 
 export type PermissionCatalogEntry = {
@@ -192,6 +196,30 @@ export const ADMIN_PERMISSION_CATALOG: readonly PermissionCatalogEntry[] = [
     label: "Store",
     description: "The materials book: items, movements, issue slips, and the morning view. Not client or shop orders.",
   },
+  {
+    key: "production.cost",
+    group: "Daily work",
+    label: "Cost of production",
+    description: "Draft and approve what a piece will cost to make — tailor figure and materials — before a requisition.",
+  },
+  {
+    key: "requisition.approve",
+    group: "Daily work",
+    label: "Requisition supervise",
+    description: "Stock-check a requisition and confirm received quantities. The supervisor steps in the chain.",
+  },
+  {
+    key: "requisition.fund",
+    group: "Money",
+    label: "Fund requisitions",
+    description: "Release money for a materials purchase. General Admin (Mrs. Prudent) only — not Super Admin.",
+  },
+  {
+    key: "requisition.buy",
+    group: "Daily work",
+    label: "Procurement",
+    description: "Record what was bought against a funded requisition.",
+  },
 ];
 
 export const EDITABLE_ADMIN_ROLES = [
@@ -205,6 +233,7 @@ export const EDITABLE_ADMIN_ROLES = [
   "CONSULTATION_MANAGER",
   "STAFF",
   "STORE_MANAGER",
+  "PROCUREMENT_OFFICER",
 ] as const;
 
 export type RolePermissionProposal = {

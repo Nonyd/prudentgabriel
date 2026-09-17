@@ -70,6 +70,7 @@ type Ranked = {
   orderedToMeasure: number;
   unitsPrev: number;
   revenuePrev: number;
+  materialsLine?: string | null;
 };
 
 function RankedBars({ rows, sort }: { rows: Ranked[]; sort: SellingSort }) {
@@ -93,6 +94,9 @@ function RankedBars({ rows, sort }: { rows: Ranked[]; sort: SellingSort }) {
                 {" · "}
                 {changeText(metricNow(sort, row), metricPrev(sort, row), metricKind(sort))}
               </p>
+              {row.materialsLine ? (
+                <p className="mt-0.5 font-sans text-[11px] text-[#8A8A86]">Ate: {row.materialsLine}</p>
+              ) : null}
               <div className="mt-1.5 h-2 w-full bg-sand/70">
                 <div className="h-2 bg-[var(--choc-deep)]" style={{ width: `${width}%` }} />
               </div>
@@ -125,6 +129,10 @@ function toPieceRow(p: SellingPiece): Ranked {
     orderedToMeasure: p.orderedToMeasure,
     unitsPrev: p.unitsPrev,
     revenuePrev: p.revenuePrev,
+    materialsLine:
+      p.materialsConsumed?.length > 0
+        ? p.materialsConsumed.map((m) => `${m.quantity} ${m.unit} ${m.itemName}`).join("; ")
+        : null,
   };
 }
 

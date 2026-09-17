@@ -14,6 +14,7 @@ import type { ProductListItem } from "@/types/product";
 import { productAdminSchema, type ProductAdminInput } from "@/validations/product";
 import { VariantManager } from "./VariantManager";
 import { ProductOptionGroupEditor } from "./ProductOptionGroupEditor";
+import { ProductMaterialsEditor } from "./ProductMaterialsEditor";
 import { firstErrorMessage, focusField, getFirstErrorPath } from "@/lib/form-errors";
 import { ProductCategoryField } from "./ProductCategoryField";
 import { buildDefaultProductSku, isGeneratedProductSku } from "@/lib/product-sku";
@@ -1014,6 +1015,16 @@ export function ProductFormPage({
               isOnSale={Boolean(isOnSaleWatch)}
             />
             </div>
+            {(savedId ?? product?.id) ? (
+              <ProductMaterialsEditor
+                productId={(savedId ?? product?.id)!}
+                options={(product?.optionGroup?.options ?? []).map((o) => ({ id: o.id, label: o.label }))}
+              />
+            ) : (
+              <p className="mt-6 text-xs text-[#A8A8A4]">
+                Save the piece first to attach an optional material list. Without one it still sells.
+              </p>
+            )}
             {form.formState.errors.variants && (
               <p className="mt-2 text-xs text-red-400">
                 {categoryNeedsSizes(form.getValues("category"))
