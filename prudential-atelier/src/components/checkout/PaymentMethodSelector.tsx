@@ -137,8 +137,8 @@ export function PaymentMethodSelector({
 
   return (
     <div>
-      <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-lightbr">Payment</p>
-      <div className="mt-4 space-y-2">
+      <p className="font-display text-lg text-choc">How you&apos;ll pay</p>
+      <div className="mt-4 space-y-3">
         {loaded && gateways.length === 0 ? (
           <p className="font-body text-sm text-text-mid">
             No payment methods are available for this currency. Choose another currency if one is offered, or
@@ -285,10 +285,10 @@ export function PaymentMethodSelector({
         })}
       </div>
       {gateways.includes("PAYSTACK") ? (
-        <p className="mt-3 font-body text-xs leading-relaxed text-text-light">
+        <p className="mt-4 font-body text-sm leading-6 text-charcoal-mid">
           {currency === "NGN"
             ? paystackFeeCopy(amountNGN ?? amount).sentence
-            : "Paystack may add its international processing fee on the card screen. We do not add a house fee."}
+            : "Paystack may add its card fee on the next screen. We do not add a house fee."}
         </p>
       ) : null}
     </div>

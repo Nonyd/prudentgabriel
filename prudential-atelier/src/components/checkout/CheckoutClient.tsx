@@ -146,8 +146,6 @@ export function CheckoutClient() {
     () => `PA-ORDER-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
     [],
   );
-  const [lockedUsdPerNgn, setLockedUsdPerNgn] = useState<number | null>(null);
-
   const [gateway, setGateway] = useState<PaymentGatewayType | null>(null);
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -391,10 +389,9 @@ export function CheckoutClient() {
   useEffect(() => {
     void fetch("/api/shipping/calculate")
       .then((r) => r.json())
-      .then((j: { quoteConsent?: string; dduDisclosure?: string; fx?: { rate: number } }) => {
+      .then((j: { quoteConsent?: string; dduDisclosure?: string }) => {
         if (j.quoteConsent) setQuoteConsent(j.quoteConsent);
         if (j.dduDisclosure) setDduDisclosure(j.dduDisclosure);
-        if (j.fx?.rate) setLockedUsdPerNgn(j.fx.rate);
       })
       .catch(() => {});
   }, []);
@@ -1227,26 +1224,47 @@ export function CheckoutClient() {
         )}
 
         {step === 3 && (
-          <div className="space-y-6 pt-8">
+          <div className="space-y-8 pt-8">
             <h2 className="sr-only">Payment</h2>
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Currency">
-              {(["NGN", "USD", "GBP"] as ShopCurrency[]).map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCurrency(c)}
-                  aria-pressed={currency === c}
-                  className={clsx(
-                    "min-h-11 rounded-full px-4 text-sm",
-                    currency === c ? "bg-choc text-cream" : "border border-border text-charcoal hover:border-choc",
-                  )}
-                >
-                  {c}
-                </button>
-              ))}
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="font-body text-sm text-charcoal-mid">Pay in</p>
+                <p className="mt-1 font-display text-2xl tabular-nums text-choc">
+                  {formatPrice(payableShopper, currency)}
+                </p>
+                {currency !== "NGN" ? (
+                  <p className="mt-1 font-body text-sm text-charcoal-mid">
+                    About ₦{Math.round(payable).toLocaleString("en-NG")} at today’s atelier rate
+                  </p>
+                ) : null}
+              </div>
+              <div
+                className="inline-flex w-fit rounded-sm border border-border p-0.5"
+                role="group"
+                aria-label="Currency"
+              >
+                {(["NGN", "USD", "GBP"] as ShopCurrency[]).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCurrency(c)}
+                    aria-pressed={currency === c}
+                    className={clsx(
+                      "min-h-10 min-w-[3.25rem] px-3 font-body text-sm transition-colors",
+                      currency === c
+                        ? "bg-choc text-cream"
+                        : "text-charcoal-mid hover:text-choc",
+                    )}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
             </div>
+
             {payable > 0.01 ? (
-              <div id="payment-method" className="space-y-2">
+              <div id="payment-method" className="space-y-5">
                 <PrudentPointsPayOption
                   isGuest={status !== "authenticated"}
                   availablePoints={availablePoints}
@@ -1315,49 +1333,49 @@ export function CheckoutClient() {
                 <FieldError message={errors.receipt} />
               </div>
             ) : (
-              <p className="rounded-sm border border-border bg-cream p-4 font-sans text-sm text-choc">
+              <p className="border-b border-border pb-6 font-body text-base leading-6 text-charcoal">
                 Prudent Points cover this order. Shipping is not included — collection and quoted shipping stay
                 payable separately when they apply.
               </p>
             )}
-            {currency === "USD" && lockedUsdPerNgn ? (
-              <p className="text-xs text-charcoal-mid">
-                {formatPrice(payableShopper, "USD")} · ₦{Math.round(payable).toLocaleString("en-NG")} at ₦1 = $
-                {lockedUsdPerNgn.toFixed(6)}
-              </p>
-            ) : null}
             {isInternational && dduDisclosure ? (
-              <p className="text-xs leading-relaxed text-charcoal-mid">{dduDisclosure}</p>
+              <p className="font-body text-sm leading-6 text-charcoal-mid">{dduDisclosure}</p>
             ) : null}
             {!stripeClientSecret && (
-              <Button
-                type="button"
-                className="w-full"
-                size="lg"
-                disabled={submitting || (payable > 0.01 && !gateway)}
-                aria-busy={submitting}
-                onClick={() => void submitOrder()}
-              >
-                {submitting
-                  ? "Please wait…"
-                  : payable <= 0.01
-                    ? "Place order"
-                    : gateway === "BANK_TRANSFER"
-                      ? "Confirm order"
-                      : `Pay ${formatPrice(payableShopper, currency)}`}
-              </Button>
+              <div className="flex flex-col-reverse gap-3 border-t border-border pt-8 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  className="min-h-11 font-body text-sm text-charcoal-mid underline underline-offset-4 hover:text-choc"
+                  onClick={() => setStep(2)}
+                >
+                  Back to delivery
+                </button>
+                <Button
+                  type="button"
+                  className="sm:ml-auto sm:min-w-[14rem]"
+                  size="lg"
+                  disabled={submitting || (payable > 0.01 && !gateway)}
+                  aria-busy={submitting}
+                  onClick={() => void submitOrder()}
+                >
+                  {submitting
+                    ? "Please wait…"
+                    : payable <= 0.01
+                      ? "Place order"
+                      : gateway === "BANK_TRANSFER"
+                        ? "Confirm order"
+                        : `Pay ${formatPrice(payableShopper, currency)}`}
+                </Button>
+              </div>
             )}
             {stripeClientSecret && stripePk && createdOrder && stripeReturnUrl && (
               <StripePayBlock clientSecret={stripeClientSecret} publishableKey={stripePk} returnUrl={stripeReturnUrl} />
             )}
-            <button type="button" className="text-sm text-charcoal-mid underline" onClick={() => setStep(2)}>
-              Back
-            </button>
           </div>
         )}
       </div>
 
-      <aside className="w-full min-w-0 shrink-0 lg:sticky lg:top-24 lg:w-[360px]">
+      <aside className="w-full min-w-0 shrink-0 lg:sticky lg:top-24 lg:w-[340px]">
         <OrderSummary
           items={items}
           couponResult={couponResult}

@@ -67,7 +67,7 @@ export function OrderSummary({
   const fmtExtra = (n: number) => formatPrice(extrasAmountInCurrency(n, currency, rates), currency);
 
   return (
-    <div className="glass-2 glass-panel p-6">
+    <div className="glass-opaque px-5 py-6 lg:px-6 lg:py-8">
       <h2 className="font-display text-xl text-choc">Order summary</h2>
       <ul className="mt-5 max-h-64 space-y-4 overflow-y-auto">
         {items.map((i) => (
@@ -79,24 +79,25 @@ export function OrderSummary({
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-display text-sm text-charcoal">{i.productName}</p>
-              <p className="mt-0.5 text-charcoal-mid">
-                {[i.optionLabel, i.sizeMode === "CUSTOM" ? "Made to measure" : i.size].filter(Boolean).join(", ")}
-                {" · "}
-                {i.quantity}
+              <p className="mt-0.5 font-body text-sm text-charcoal-mid">
+                {[i.optionLabel, i.sizeMode === "CUSTOM" ? "Made to measure" : i.size ? `Size ${i.size}` : null]
+                  .filter(Boolean)
+                  .join(" · ")}
+                {i.quantity > 1 ? ` · Qty ${i.quantity}` : null}
               </p>
             </div>
-            <p className="shrink-0 tabular-nums">{fmtLine(i)}</p>
+            <p className="shrink-0 font-body tabular-nums text-charcoal">{fmtLine(i)}</p>
           </li>
         ))}
       </ul>
-      <div className="mt-5 space-y-2 border-t border-border pt-5 text-sm">
+      <div className="mt-5 space-y-2 border-t border-border pt-5 font-body text-sm">
         <div className="flex justify-between">
           <span className="text-charcoal-mid">Subtotal</span>
-          <span className="tabular-nums">{formatPrice(subtotalShopper, currency)}</span>
+          <span className="tabular-nums text-charcoal">{formatPrice(subtotalShopper, currency)}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-charcoal-mid">Shipping</span>
-          <span className="tabular-nums">
+          <span className="tabular-nums text-charcoal">
             {shippingCostNGN == null
               ? "—"
               : shippingQuoted
@@ -113,9 +114,9 @@ export function OrderSummary({
           </div>
         )}
         {ptsValue > 0 && (
-          <div className="flex justify-between text-gold">
+          <div className="flex justify-between text-choc">
             <span>
-              Points ({pointsToRedeem.toLocaleString()} Prudent Points × ₦{pointRate})
+              Points ({pointsToRedeem.toLocaleString()} × ₦{pointRate})
             </span>
             <span className="tabular-nums">−{fmtExtra(ptsValue)}</span>
           </div>
@@ -125,13 +126,13 @@ export function OrderSummary({
           <span className="tabular-nums">{formatPrice(remainingShopper, currency)}</span>
         </div>
         {ptsValue > 0 && remainingNGN > 0.01 && ship > 0 ? (
-          <p className="pt-1 text-[11px] text-charcoal-mid">Shipping is paid in cash. Points cover the garment only.</p>
+          <p className="pt-1 text-sm text-charcoal-mid">Shipping is paid in cash. Points cover the garment only.</p>
         ) : null}
       </div>
-      <p className="mt-4 font-body text-[12px] leading-5 text-charcoal-mid">{madeCopy}</p>
+      <p className="mt-4 font-body text-sm leading-5 text-charcoal-mid">{madeCopy}</p>
       {step < 3 && (
-        <p className="mt-3 font-label text-[11px] text-gold">
-          Earn ~{Math.floor(Math.max(0, subtotalNGN - disc) / 100)} pts with this order
+        <p className="mt-3 font-body text-sm text-choc">
+          Earn about {Math.floor(Math.max(0, subtotalNGN - disc) / 100)} points with this order
         </p>
       )}
     </div>

@@ -31,91 +31,91 @@ export function PrudentPointsPayOption({
   const canRedeem = !isGuest && maxPts >= minRedemption && maxPts > 0;
   const belowMin = !isGuest && availablePoints > 0 && (maxPts < minRedemption || availablePoints < minRedemption);
 
+  // Quiet one-liner when there is nothing to redeem — do not compete with payment methods.
+  if (isGuest) {
+    return (
+      <p className="font-body text-sm text-charcoal-mid">
+        Have Prudent Points?{" "}
+        <button
+          type="button"
+          onClick={() => openLogin("/checkout")}
+          className="text-choc underline underline-offset-4 hover:text-choc/80"
+        >
+          Sign in
+        </button>{" "}
+        to use them. Shipping cannot be paid with points.
+      </p>
+    );
+  }
+
+  if (availablePoints <= 0) {
+    return (
+      <p className="font-body text-sm text-charcoal-mid">
+        Earn 1 Prudent Point for every ₦10 you spend on this order.
+      </p>
+    );
+  }
+
   return (
     <div
       className={clsx(
-        "rounded-sm border p-4",
-        applied
-          ? "border-[1.5px] border-choc bg-[rgba(68,41,19,0.04)]"
-          : "border-[0.5px] border-sand bg-bg-card",
+        "border-b border-border pb-5",
+        applied && "border-choc/30",
       )}
     >
       <div className="flex items-start gap-3">
-        <Crown className="mt-0.5 h-5 w-5 shrink-0 text-choc" strokeWidth={1.25} />
+        <Crown className="mt-0.5 h-5 w-5 shrink-0 text-choc" strokeWidth={1.25} aria-hidden />
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <p className="font-body text-sm text-choc">Pay with Prudent Points</p>
-            {!isGuest ? (
-              <span className="font-sans text-[10px] uppercase text-lightbr">
-                {availablePoints.toLocaleString()} pts
-              </span>
-            ) : null}
+            <p className="font-display text-lg text-choc">Prudent Points</p>
+            <span className="font-body text-sm tabular-nums text-charcoal-mid">
+              {availablePoints.toLocaleString()} available
+            </span>
           </div>
-          {isGuest ? (
-            <>
-              <p className="mt-0.5 font-body text-xs text-text-light">
-                Sign in to apply your balance toward this order. Shipping cannot be paid with points.
-              </p>
+          <p className="mt-1 font-body text-sm text-charcoal-mid">
+            Worth up to {maxValueLabel}. Shipping cannot be paid with points.
+          </p>
+          {belowMin ? (
+            <p className="mt-2 font-body text-sm text-charcoal-mid">
+              Minimum redemption is {minRedemption.toLocaleString()} points.
+            </p>
+          ) : null}
+          {canRedeem ? (
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <input
+                id="points-redeem-payment"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={maxPts}
+                value={pointsToRedeem}
+                onChange={(e) => onChange(Number(e.target.value) || 0)}
+                aria-label="Prudent Points to redeem"
+                className="w-28 border-0 border-b border-border bg-transparent py-2 font-body text-base text-charcoal outline-none focus:border-b-2 focus:border-choc"
+              />
               <button
                 type="button"
-                onClick={() => openLogin("/checkout")}
-                className="mt-3 font-sans text-[10px] uppercase tracking-wider text-choc underline underline-offset-4"
+                onClick={() => onChange(maxPts)}
+                className="min-h-11 font-body text-[11px] uppercase tracking-wider text-choc underline underline-offset-4"
               >
-                Sign in
+                Use all
               </button>
-            </>
-          ) : availablePoints <= 0 ? (
-            <p className="mt-0.5 font-body text-xs text-text-light">
-              You have no Prudent Points yet. Earn 1 point for every ₦10 you spend.
+              {pointsToRedeem > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => onChange(0)}
+                  className="min-h-11 font-body text-[11px] uppercase tracking-wider text-charcoal-mid underline underline-offset-4 hover:text-choc"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+          {applied ? (
+            <p className="mt-2 font-body text-sm text-choc">
+              {pointsToRedeem.toLocaleString()} pts applied · remaining {remainingLabel}
             </p>
-          ) : (
-            <>
-              <p className="mt-0.5 font-body text-xs text-text-light">
-                Worth up to {maxValueLabel}. Shipping cannot be paid with points.
-              </p>
-              {belowMin ? (
-                <p className="mt-2 font-body text-xs text-text-mid">
-                  Minimum redemption is {minRedemption.toLocaleString()} points.
-                </p>
-              ) : null}
-              {canRedeem ? (
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <input
-                    id="points-redeem-payment"
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={maxPts}
-                    value={pointsToRedeem}
-                    onChange={(e) => onChange(Number(e.target.value) || 0)}
-                    aria-label="Prudent Points to redeem"
-                    className="w-28 rounded-sm border border-sand bg-ivory px-2 py-1.5 font-body text-sm text-choc"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => onChange(maxPts)}
-                    className="font-sans text-[10px] uppercase tracking-wider text-choc underline underline-offset-4"
-                  >
-                    Apply all
-                  </button>
-                  {pointsToRedeem > 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => onChange(0)}
-                      className="font-sans text-[10px] uppercase tracking-wider text-text-light underline underline-offset-4"
-                    >
-                      Clear
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-              {applied ? (
-                <p className="mt-2 font-sans text-xs text-nut">
-                  {pointsToRedeem.toLocaleString()} pts applied · remaining {remainingLabel}
-                </p>
-              ) : null}
-            </>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
