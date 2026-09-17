@@ -3,7 +3,16 @@ import { OrderStatus, PaymentStatus, Prisma, ShippingQuoteStatus } from "@prisma
 import { prisma } from "@/lib/prisma";
 import { AdminOrdersCsvExport } from "@/components/admin/AdminOrdersCsvExport";
 import { AdminOrdersListClient, type AdminOrderListRow } from "@/components/admin/AdminOrdersListClient";
-import { REFUND_REQUIRED_ATTENTION, QUOTE_PENDING_ATTENTION, QUOTE_PENDING_ALL_ATTENTION, GUEST_CUSTOM_ATTENTION, BANK_TRANSFER_PENDING_ATTENTION, applyOrderAttention } from "@/lib/admin-orders-filter";
+import {
+  REFUND_REQUIRED_ATTENTION,
+  QUOTE_PENDING_ATTENTION,
+  QUOTE_PENDING_ALL_ATTENTION,
+  GUEST_CUSTOM_ATTENTION,
+  BANK_TRANSFER_PENDING_ATTENTION,
+  ABANDONED_ATTEMPTS_ATTENTION,
+  applyAdminOrdersListWhere,
+  abandonedCheckoutAttemptWhere,
+} from "@/lib/admin-orders-filter";
 
 const PAGE = 20;
 
@@ -31,9 +40,21 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   if (paymentStatus && (Object.values(PaymentStatus) as string[]).includes(paymentStatus)) {
     where.paymentStatus = paymentStatus as PaymentStatus;
   }
-  where = applyOrderAttention(where, attention);
+  where = applyAdminOrdersListWhere(where, attention, {
+    explicitStatus: Boolean(status),
+    explicitPayment: Boolean(paymentStatus),
+  });
 
-  const [total, orders, refundRequiredCount, quoteReadyCount, quotePendingAllCount, guestCustomCount, bankTransferCount] = await Promise.all([
+  const [
+    total,
+    orders,
+    refundRequiredCount,
+    quoteReadyCount,
+    quotePendingAllCount,
+    guestCustomCount,
+    bankTransferCount,
+    abandonedAttemptsCount,
+  ] = await Promise.all([
     prisma.order.count({ where }),
     prisma.order.findMany({
       where,
@@ -61,6 +82,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
     prisma.order.count({
       where: { paymentGateway: "BANK_TRANSFER", paymentStatus: PaymentStatus.PENDING },
     }),
+    prisma.order.count({ where: abandonedCheckoutAttemptWhere() }),
   ]);
 
   function pageHref(p: number) {
@@ -106,6 +128,14 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-charcoal">Orders</h1>
         <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href={`/admin/orders?attention=${ABANDONED_ATTEMPTS_ATTENTION}`}
+            className={`admin-chip glass-1 glass-pill font-body text-[11px] uppercase tracking-wide ${
+              attention === ABANDONED_ATTEMPTS_ATTENTION ? "text-choc underline" : "text-olive hover:underline"
+            }`}
+          >
+            Abandoned attempts{abandonedAttemptsCount > 0 ? ` (${abandonedAttemptsCount})` : ""}
+          </Link>
           <Link
             href={`/admin/orders?attention=${QUOTE_PENDING_ATTENTION}`}
             className={`admin-chip glass-1 glass-pill font-body text-[11px] uppercase tracking-wide ${
@@ -180,17 +210,20 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
         <button type="submit" className="bg-olive px-4 py-2 font-body text-xs uppercase tracking-wide text-white">
           Filter
         </button>
-        {attention === REFUND_REQUIRED_ATTENTION ? (
+        {attention ? (
           <Link href="/admin/orders" className="px-3 py-2 font-body text-xs uppercase tracking-wide text-olive hover:underline">
-            Clear refund filter
-          </Link>
-        ) : null}
-        {attention === QUOTE_PENDING_ATTENTION || attention === QUOTE_PENDING_ALL_ATTENTION ? (
-          <Link href="/admin/orders" className="px-3 py-2 font-body text-xs uppercase tracking-wide text-olive hover:underline">
-            Clear quote filter
+            Clear filter
           </Link>
         ) : null}
       </form>
+
+      {attention === ABANDONED_ATTEMPTS_ATTENTION ? (
+        <p className="mt-4 max-w-2xl font-body text-sm text-[#6B6B68]">
+          Unpaid checkout attempts. Live holds still say Pending; after the reservation window (24 hours for cards,
+          7 days for bank transfer) they are marked Abandoned so an old attempt does not look like one from five
+          minutes ago.
+        </p>
+      ) : null}
 
       <div className="mt-8">
         <AdminOrdersListClient orders={listRows} />
@@ -198,6 +231,9 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
 
       <p className="mt-4 text-sm text-[#A8A8A4]">
         {total} orders · page {page} of {Math.max(1, Math.ceil(total / PAGE))}
+        {attention !== ABANDONED_ATTEMPTS_ATTENTION && abandonedAttemptsCount > 0
+          ? ` · ${abandonedAttemptsCount} abandoned attempt${abandonedAttemptsCount === 1 ? "" : "s"} hidden`
+          : ""}
       </p>
       <div className="mt-2 flex gap-2">
         {page > 1 ? (

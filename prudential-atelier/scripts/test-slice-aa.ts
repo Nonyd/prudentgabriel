@@ -87,11 +87,12 @@ function figures(lines: ReturnType<typeof classifyPayments>) {
 }
 
 function runPure() {
-  assert(AA0_LINES.length === 4, "AA0 states basis, VAT, currency, and access");
+  assert(AA0_LINES.length === 5, "AA0 states basis, VAT, currency, access, and order numbers");
   assert(AA0_LINES[0].title === "Cash basis", "cash basis is stated first");
   assert(AA0_LINES[1].title === "VAT", "VAT is stated");
   assert(AA0_LINES[2].title === "Reporting currency", "naira reporting is stated");
   assert(AA0_LINES[3].title === "Who can open this", "access is stated");
+  assert(AA0_LINES[4].title === "Order numbers", "abandoned checkout order numbers are explained");
 
   const pointsPaid = classifyPayments([
     snap({

@@ -11,6 +11,11 @@ export const QUOTE_PENDING_ALL_ATTENTION = "quote-pending-all";
 export const GUEST_CUSTOM_ATTENTION = "guest-custom";
 /** Bank transfer uploaded, waiting for admin to approve the receipt. */
 export const BANK_TRANSFER_PENDING_ATTENTION = "bank-transfer-pending";
+/**
+ * Unpaid checkout attempts: live PENDING holds and expired ABANDONED rows.
+ * Bank-transfer PENDING stays on the main list (needs proof review).
+ */
+export const ABANDONED_ATTEMPTS_ATTENTION = "abandoned-attempts";
 export { FABRIC_UNAVAILABLE_ATTENTION };
 
 export function isRefundRequiredOrder(row: {
@@ -18,6 +23,56 @@ export function isRefundRequiredOrder(row: {
   status: OrderStatus | string;
 }): boolean {
   return row.paymentStatus === PaymentStatus.PAID && row.status === OrderStatus.CANCELLED;
+}
+
+/** Unpaid checkout attempt that should not clutter the default orders list. */
+export function isAbandonedCheckoutAttempt(row: {
+  status: OrderStatus | string;
+  paymentStatus: PaymentStatus | string;
+  paymentGateway?: PaymentGateway | string | null;
+}): boolean {
+  if (row.status === OrderStatus.ABANDONED || row.status === "ABANDONED") return true;
+  if (row.status !== OrderStatus.PENDING && row.status !== "PENDING") return false;
+  if (row.paymentStatus === PaymentStatus.PAID || row.paymentStatus === "PAID") return false;
+  if (row.paymentStatus === PaymentStatus.REFUNDED || row.paymentStatus === "REFUNDED") return false;
+  if (
+    (row.paymentGateway === PaymentGateway.BANK_TRANSFER || row.paymentGateway === "BANK_TRANSFER") &&
+    (row.paymentStatus === PaymentStatus.PENDING || row.paymentStatus === "PENDING")
+  ) {
+    return false;
+  }
+  return (
+    row.paymentStatus === PaymentStatus.PENDING ||
+    row.paymentStatus === "PENDING" ||
+    row.paymentStatus === PaymentStatus.FAILED ||
+    row.paymentStatus === "FAILED"
+  );
+}
+
+/** Prisma clause matching {@link isAbandonedCheckoutAttempt}. */
+export function abandonedCheckoutAttemptWhere(): Prisma.OrderWhereInput {
+  return {
+    OR: [
+      { status: OrderStatus.ABANDONED },
+      {
+        status: OrderStatus.PENDING,
+        paymentStatus: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
+        NOT: {
+          paymentGateway: PaymentGateway.BANK_TRANSFER,
+          paymentStatus: PaymentStatus.PENDING,
+        },
+      },
+    ],
+  };
+}
+
+/** Default list: real orders — paid and beyond, plus bank proof waiting. */
+export function excludeAbandonedCheckoutAttempts(
+  where: Prisma.OrderWhereInput,
+): Prisma.OrderWhereInput {
+  const exclude = { NOT: abandonedCheckoutAttemptWhere() };
+  if (!where || Object.keys(where).length === 0) return exclude;
+  return { AND: [where, exclude] };
 }
 
 export function applyOrderAttention(
@@ -58,6 +113,11 @@ export function applyOrderAttention(
       paymentStatus: PaymentStatus.PENDING,
     };
   }
+  if (attention === ABANDONED_ATTEMPTS_ATTENTION) {
+    return {
+      AND: [where, abandonedCheckoutAttemptWhere()],
+    };
+  }
   if (attention === FABRIC_UNAVAILABLE_ATTENTION) {
     return {
       ...where,
@@ -65,4 +125,23 @@ export function applyOrderAttention(
     };
   }
   return where;
+}
+
+/**
+ * Apply attention filters, then (unless viewing abandoned attempts or an explicit status/payment
+ * filter) hide unpaid checkout clutter from the default list.
+ */
+export function applyAdminOrdersListWhere(
+  where: Prisma.OrderWhereInput,
+  attention: string | null | undefined,
+  opts?: { explicitStatus?: boolean; explicitPayment?: boolean },
+): Prisma.OrderWhereInput {
+  const attended = applyOrderAttention(where, attention);
+  if (attention === ABANDONED_ATTEMPTS_ATTENTION) return attended;
+  if (attention) return attended;
+  if (opts?.explicitStatus || opts?.explicitPayment) {
+    if (opts.explicitStatus) return attended;
+    return { AND: [attended, { status: { not: OrderStatus.ABANDONED } }] };
+  }
+  return excludeAbandonedCheckoutAttempts(attended);
 }

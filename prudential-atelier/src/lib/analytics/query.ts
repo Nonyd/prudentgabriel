@@ -12,9 +12,9 @@ import {
   isRtwAislePath,
 } from "@/lib/analytics/paths";
 import { analyticsDayUtc } from "@/lib/analytics/record";
-import type { FunnelStep, HouseNumbers, LookedRow, TrafficRow } from "@/lib/analytics/view";
+import type { FunnelStep, HouseNumbers, LookedRow, RisingRow, TrafficRow } from "@/lib/analytics/view";
 
-export type { FunnelStep, HouseNumbers, LookedRow, TrafficRow } from "@/lib/analytics/view";
+export type { FunnelStep, HouseNumbers, LookedRow, RisingRow, TrafficRow } from "@/lib/analytics/view";
 
 function sumCounts(rows: { count: number }[]): number {
   return rows.reduce((s, r) => s + r.count, 0);
@@ -286,6 +286,52 @@ export async function buildHouseNumbers(
     unitsSold: r.unitsSold,
   }));
 
+  const soldPrevIds = await prisma.orderItem.groupBy({
+    by: ["productId"],
+    where: { order: { paidAt: { gte: prevFrom, lt: prevTo }, paymentStatus: PaymentStatus.PAID } },
+    _sum: { quantity: true },
+  });
+  const soldPrevMap = new Map(soldPrevIds.map((r) => [r.productId, r._sum.quantity ?? 0]));
+  const risingIds = new Set<string>([
+    ...Array.from(views.keys()),
+    ...Array.from(viewsPrev.keys()),
+    ...Array.from(soldMap.keys()),
+    ...Array.from(soldPrevMap.keys()),
+  ]);
+  const risingCandidates = Array.from(risingIds).map((productId) => {
+    const viewNow = views.get(productId) ?? 0;
+    const viewWas = viewsPrev.get(productId) ?? 0;
+    const orderNow = soldMap.get(productId) ?? 0;
+    const orderWas = soldPrevMap.get(productId) ?? 0;
+    const viewRise = viewNow - viewWas;
+    const orderRise = orderNow - orderWas;
+    const useOrders = orderRise >= viewRise;
+    const rise = useOrders ? orderRise : viewRise;
+    return {
+      productId,
+      views: viewNow,
+      viewsPrev: viewWas,
+      orders: orderNow,
+      ordersPrev: orderWas,
+      rise,
+      riseKind: (useOrders ? "orders" : "views") as "orders" | "views",
+    };
+  }).filter((r) => r.rise > 0);
+  risingCandidates.sort((a, b) => b.rise - a.rise || b.orders - a.orders || b.views - a.views);
+  const risingTop = risingCandidates.slice(0, 12);
+  const risingProducts =
+    risingTop.length === 0
+      ? []
+      : await prisma.product.findMany({
+          where: { id: { in: risingTop.map((r) => r.productId) } },
+          select: { id: true, name: true },
+        });
+  const risingNameById = new Map(risingProducts.map((p) => [p.id, p.name]));
+  const rising: RisingRow[] = risingTop.map((r) => ({
+    ...r,
+    name: risingNameById.get(r.productId) ?? nameById.get(r.productId) ?? "Removed piece",
+  }));
+
   const abandonedValue = abandonedRows.reduce((s, row) => s + snapshotValueNGN(row.cartSnapshot), 0);
   const emailCount = (status: string) => emailGroups.find((g) => g.status === status)?._count._all ?? 0;
 
@@ -321,6 +367,7 @@ export async function buildHouseNumbers(
     atelierFunnel,
     traffic,
     lookedNotBought,
+    rising,
     abandoned: { sessions: abandonedRows.length, valueNGN: abandonedValue },
     email: { sent: emailCount("SENT"), failed: emailCount("FAILED"), dead: emailCount("DEAD") },
     points: {

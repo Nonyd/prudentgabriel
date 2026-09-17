@@ -42,7 +42,7 @@ export default async function RTWPage({
   u.set("type", "RTW");
   u.set("excludeCategory", RTW_EXCLUDE_CATEGORY_QUERY);
   u.set("limit", String(CATALOG_PAGE_SIZE));
-  if (!u.get("sort")) u.set("sort", "featured");
+  if (!u.get("sort")) u.set("sort", "curated");
 
   let products: Awaited<ReturnType<typeof queryProductList>>["products"] = [];
   let total = 0;

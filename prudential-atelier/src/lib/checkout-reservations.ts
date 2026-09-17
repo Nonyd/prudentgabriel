@@ -1,5 +1,6 @@
 import {
   CouponUsageStatus,
+  OrderStatus,
   PaymentGateway,
   PaymentPurpose,
   PaymentStatus,
@@ -44,7 +45,7 @@ export function isCheckoutReservationStale(params: {
   return now.getTime() - params.createdAt.getTime() >= reservationTtlMs(params.paymentGateway);
 }
 
-async function loadStalePendingOrders(
+async function loadStaleUnpaidOrders(
   db: ReservationsDb,
   now: Date,
   take: number,
@@ -52,11 +53,13 @@ async function loadStalePendingOrders(
   const cardCutoff = new Date(now.getTime() - PSP_RESERVATION_TTL_MS);
   const bankCutoff = new Date(now.getTime() - BANK_RESERVATION_TTL_MS);
   const select = { id: true, createdAt: true, paymentGateway: true, paymentStatus: true } as const;
+  const unpaid = { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] as PaymentStatus[] };
 
   const [card, bank] = await Promise.all([
     db.order.findMany({
       where: {
-        paymentStatus: PaymentStatus.PENDING,
+        status: OrderStatus.PENDING,
+        paymentStatus: unpaid,
         createdAt: { lte: cardCutoff },
         NOT: { paymentGateway: PaymentGateway.BANK_TRANSFER },
       },
@@ -66,7 +69,8 @@ async function loadStalePendingOrders(
     }),
     db.order.findMany({
       where: {
-        paymentStatus: PaymentStatus.PENDING,
+        status: OrderStatus.PENDING,
+        paymentStatus: unpaid,
         paymentGateway: PaymentGateway.BANK_TRANSFER,
         createdAt: { lte: bankCutoff },
       },
@@ -168,6 +172,7 @@ export async function prepareRtwPaymentAttempt(orderId: string): Promise<{ error
     where: { id: orderId },
     select: {
       id: true,
+      status: true,
       paymentStatus: true,
       couponId: true,
       pointsUsed: true,
@@ -177,7 +182,8 @@ export async function prepareRtwPaymentAttempt(orderId: string): Promise<{ error
       user: { select: { email: true } },
     },
   });
-  if (!order || order.paymentStatus !== PaymentStatus.FAILED) return {};
+  if (!order || order.status === OrderStatus.ABANDONED) return {};
+  if (order.paymentStatus !== PaymentStatus.FAILED) return {};
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -216,6 +222,20 @@ export async function prepareRtwPaymentAttempt(orderId: string): Promise<{ error
   return {};
 }
 
+async function markOrderAbandoned(orderId: string, db: ReservationsDb): Promise<void> {
+  await db.order.updateMany({
+    where: {
+      id: orderId,
+      status: OrderStatus.PENDING,
+      paymentStatus: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
+    },
+    data: {
+      status: OrderStatus.ABANDONED,
+      paymentStatus: PaymentStatus.FAILED,
+    },
+  });
+}
+
 export async function expireStaleCheckoutReservationsForActor(
   params: { userId?: string | null; email?: string | null },
   db: ReservationsDb = prisma,
@@ -229,6 +249,7 @@ export async function expireStaleCheckoutReservationsForActor(
 
   const orders = await db.order.findMany({
     where: {
+      status: OrderStatus.PENDING,
       paymentStatus: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
       OR: or,
     },
@@ -241,12 +262,7 @@ export async function expireStaleCheckoutReservationsForActor(
     if (!isCheckoutReservationStale({ createdAt: order.createdAt, paymentGateway: order.paymentGateway, now })) {
       continue;
     }
-    if (order.paymentStatus === PaymentStatus.PENDING) {
-      await db.order.updateMany({
-        where: { id: order.id, paymentStatus: PaymentStatus.PENDING },
-        data: { paymentStatus: PaymentStatus.FAILED },
-      });
-    }
+    await markOrderAbandoned(order.id, db);
     await releaseUnpaidCheckoutReservations(order.id, db);
     processed += 1;
   }
@@ -258,17 +274,12 @@ export async function expireStaleCheckoutReservations(
   now = new Date(),
   limit = 50,
 ): Promise<number> {
-  const candidates = await loadStalePendingOrders(db, now, 200);
+  const candidates = await loadStaleUnpaidOrders(db, now, 200);
   const stale = candidates.slice(0, limit);
 
   let processed = 0;
   for (const order of stale) {
-    if (order.paymentStatus === PaymentStatus.PENDING) {
-      await db.order.updateMany({
-        where: { id: order.id, paymentStatus: PaymentStatus.PENDING },
-        data: { paymentStatus: PaymentStatus.FAILED },
-      });
-    }
+    await markOrderAbandoned(order.id, db);
     await releaseUnpaidCheckoutReservations(order.id, db);
     processed += 1;
   }

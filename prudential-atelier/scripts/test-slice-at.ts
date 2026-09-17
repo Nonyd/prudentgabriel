@@ -50,6 +50,8 @@ function runPure() {
   const cookieMd = src("src/lib/legal-copy.ts");
   assert(cookieMd.includes("There is no Reject Non-Essential"), "cookie policy still has no analytics toggle");
   assert(cookieMd.includes("does not load Google Analytics, Meta Pixel"), "cookie policy still names no third-party trackers");
+  assert(cookieMd.includes("sessionStorage"), "cookie policy names sessionStorage for visit tags");
+  assert(cookieMd.includes("pa-visit-attribution"), "cookie policy names the visit-tag key");
 
   const recordSrc = src("src/lib/analytics/record.ts");
   assert(!/visitorId|clientId|anonymousId|distinct_id|hashedIp|salt/i.test(recordSrc), "record layer has no visitor id");
@@ -66,6 +68,8 @@ function runPure() {
   assert(src("src/components/admin/finance/HouseNumbersPanel.tsx").includes("glass-opaque"), "data sits on solid panels");
   assert(!src("src/components/admin/finance/HouseNumbersPanel.tsx").includes("googletagmanager"), "no tag manager on the report");
   assert(GLORY_UTM_NOTE.includes("utm_source=instagram"), "Glory has a tagged-link example");
+  assert(GLORY_UTM_NOTE.toLowerCase().includes("same-session"), "traffic note states same-session only");
+  assert(src("src/components/admin/finance/HouseNumbersPanel.tsx").includes("Same-session purchases only"), "traffic panel states same-session plainly");
   assert(ATTRIBUTION_STORAGE_KEY === "pa-visit-attribution", "visit hold is named and is not a cookie");
 
   assert(isExcludedPath("/admin/reports"), "admin is excluded");

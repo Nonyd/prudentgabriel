@@ -37,7 +37,7 @@ function rtwHref(sp: URLSearchParams, updates: Record<string, string | null>): s
   const collection = updates.collection !== undefined ? updates.collection : sp.get("collection");
   const tags = updates.tags !== undefined ? updates.tags : (sp.get("tags") ?? sp.get("tag"));
   const page = updates.page !== undefined ? updates.page : null;
-  if (sort && sort !== "featured") n.set("sort", sort);
+  if (sort && sort !== "curated") n.set("sort", sort);
   if (collection) n.set("collection", collection);
   if (tags) n.set("tags", tags);
   if (page && page !== "1") n.set("page", page);
@@ -103,7 +103,7 @@ export function RTWPageClient({
   const activeChip = useMemo(() => activeChipFromSearchParams(sp), [sp]);
   const collectionValue = sp.get("collection") || "all";
 
-  const sortValue = sp.get("sort") ?? "featured";
+  const sortValue = sp.get("sort") ?? "curated";
   const sortTriggerLabel =
     sortValue === "price-asc"
       ? "Price: low–high"
@@ -113,7 +113,9 @@ export function RTWPageClient({
           ? "Recent"
           : sortValue === "bestsellers"
             ? "Best selling"
-            : "Featured";
+            : sortValue === "featured"
+              ? "Featured only"
+              : "Curated order";
 
   const go = (href: string) => startTransition(() => router.push(href, { scroll: false }));
 
@@ -205,7 +207,8 @@ export function RTWPageClient({
                 <Select.Viewport className="p-0">
                   {(
                     [
-                      ["featured", "Featured"],
+                      ["curated", "Curated order"],
+                      ["featured", "Featured only"],
                       ["newest", "Recent"],
                       ["bestsellers", "Best selling"],
                       ["price-asc", "Price: Low–High"],

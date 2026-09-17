@@ -213,11 +213,13 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
               <tr
                 key={o.id}
                 className={
-                  o.paymentStatus === "PAID" && o.status === "CANCELLED"
-                    ? "border-b border-[#F5F5F3] bg-[#F8F1E8] hover:bg-[#F3E6D8]"
-                    : o.paymentGateway === "BANK_TRANSFER" && o.paymentStatus === "PENDING"
-                      ? "border-b border-[#F5F5F3] bg-[#FFF8F0] hover:bg-[#FFF1E4]"
-                      : "border-b border-[#F5F5F3] hover:bg-[#FAFAFA]"
+                  o.status === "ABANDONED"
+                    ? "border-b border-[#F5F5F3] bg-[#FAFAFA] text-[#8A8A86] hover:bg-[#F5F5F3]"
+                    : o.paymentStatus === "PAID" && o.status === "CANCELLED"
+                      ? "border-b border-[#F5F5F3] bg-[#F8F1E8] hover:bg-[#F3E6D8]"
+                      : o.paymentGateway === "BANK_TRANSFER" && o.paymentStatus === "PENDING"
+                        ? "border-b border-[#F5F5F3] bg-[#FFF8F0] hover:bg-[#FFF1E4]"
+                        : "border-b border-[#F5F5F3] hover:bg-[#FAFAFA]"
                 }
               >
                 <td className="p-3">
@@ -243,6 +245,10 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                 <td className="p-3 text-xs">
                   {o.paymentStatus === "PAID" && o.status === "CANCELLED" ? (
                     <span className="font-medium text-choc">Refund required</span>
+                  ) : o.status === "ABANDONED" ? (
+                    <span className="font-medium text-[#8A8A86]">Abandoned</span>
+                  ) : o.status === "PENDING" && o.paymentStatus !== "PAID" ? (
+                    <span className="text-[#6B6B68]">Pending payment</span>
                   ) : (
                     o.status
                   )}

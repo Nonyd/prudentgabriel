@@ -68,6 +68,7 @@ const STATUS_COPY: Record<OrderStatus, string> = {
   COLLECTED: "Collected",
   CANCELLED: "Cancelled",
   REFUNDED: "Refunded",
+  ABANDONED: "Checkout not completed",
   ARCHIVED: "Complete",
 };
 

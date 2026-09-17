@@ -20,6 +20,7 @@ export type ProductRow = {
   isPublished: boolean;
   isFeatured: boolean;
   isNewArrival: boolean;
+  displayOrder: number;
   basePriceNGN: number;
   defaultVariantId: string | null;
   primaryImage: string | null;
@@ -38,6 +39,9 @@ type ProductsTableProps = {
   type: string;
   published: string;
   needsPrice: string;
+  aisle?: string;
+  reorderMode?: boolean;
+  canReorder?: boolean;
 };
 
 type DeleteState =
@@ -50,7 +54,7 @@ function formatNGN(n: number) {
 }
 
 export function ProductsTable({
-  items,
+  items: initialItems,
   page,
   total,
   perPage,
@@ -59,6 +63,9 @@ export function ProductsTable({
   type,
   published,
   needsPrice,
+  aisle = "",
+  reorderMode = false,
+  canReorder = false,
 }: ProductsTableProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -73,6 +80,13 @@ export function ProductsTable({
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingPrice, setEditingPrice] = useState<Record<string, string>>({});
   const [categories, setCategories] = useState<Array<{ slug: string; label: string }>>([]);
+  const [rows, setRows] = useState(initialItems);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+
+  useEffect(() => {
+    setRows(initialItems);
+  }, [initialItems]);
 
   useEffect(() => {
     setSearch(initialSearch);
@@ -233,14 +247,52 @@ export function ProductsTable({
     });
   };
 
-  const allVisibleSelected = items.length > 0 && items.every((p) => selected.has(p.id));
+  const allVisibleSelected = rows.length > 0 && rows.every((p) => selected.has(p.id));
 
   const toggleSelectAll = () => {
     if (allVisibleSelected) {
       setSelected(new Set());
       return;
     }
-    setSelected(new Set(items.map((p) => p.id)));
+    setSelected(new Set(rows.map((p) => p.id)));
+  };
+
+  const persistOrder = async (ordered: ProductRow[]) => {
+    setSavingOrder(true);
+    try {
+      const res = await fetch("/api/admin/products/reorder", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ orderedIds: ordered.map((p) => p.id) }),
+      });
+      if (!res.ok) {
+        toast.error("Could not save order");
+        setRows(initialItems);
+        return;
+      }
+      toast.success("Aisle order saved");
+      router.refresh();
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
+  const onDropRow = (targetId: string) => {
+    if (!reorderMode || !dragId || dragId === targetId || savingOrder) {
+      setDragId(null);
+      return;
+    }
+    const from = rows.findIndex((r) => r.id === dragId);
+    const to = rows.findIndex((r) => r.id === targetId);
+    setDragId(null);
+    if (from < 0 || to < 0) return;
+    const next = [...rows];
+    const [moved] = next.splice(from, 1);
+    if (!moved) return;
+    next.splice(to, 0, moved);
+    setRows(next);
+    void persistOrder(next);
   };
 
   const bulkPatch = async (body: Record<string, boolean>) => {
@@ -290,7 +342,7 @@ export function ProductsTable({
         />
         <select
           value={category}
-          onChange={(e) => pushFilters({ category: e.target.value })}
+          onChange={(e) => pushFilters({ category: e.target.value, aisle: "" })}
           className="rounded-sm border border-sand bg-canvas px-2 py-2 text-sm text-charcoal"
         >
           <option value="">All categories</option>
@@ -302,12 +354,26 @@ export function ProductsTable({
         </select>
         <select
           value={type}
-          onChange={(e) => pushFilters({ type: e.target.value })}
+          onChange={(e) => pushFilters({ type: e.target.value, aisle: "", reorder: "" })}
           className="rounded-sm border border-sand bg-canvas px-2 py-2 text-sm text-charcoal"
         >
           <option value="">All types</option>
           <option value="RTW">RTW</option>
           <option value="BESPOKE">Bespoke</option>
+        </select>
+        <select
+          value={aisle}
+          onChange={(e) =>
+            pushFilters({
+              aisle: e.target.value,
+              type: e.target.value === "rtw" ? "" : type,
+              category: e.target.value === "rtw" ? "" : category,
+            })
+          }
+          className="rounded-sm border border-sand bg-canvas px-2 py-2 text-sm text-charcoal"
+        >
+          <option value="">All aisles</option>
+          <option value="rtw">Ready to wear (/rtw)</option>
         </select>
         <select
           value={published}
@@ -325,7 +391,43 @@ export function ProductsTable({
           <option value="false">Draft</option>
           <option value="needs-price">Needs Price</option>
         </select>
+        {canReorder ? (
+          <button
+            type="button"
+            onClick={() => {
+              if (reorderMode) {
+                pushFilters({ reorder: "" });
+                return;
+              }
+              pushFilters({
+                reorder: "1",
+                aisle: aisle || "rtw",
+                type: "",
+                category: aisle === "rtw" || !category ? "" : category,
+              });
+            }}
+            className={cn(
+              "rounded-sm border px-3 py-2 font-label text-xs uppercase tracking-wide",
+              reorderMode ? "border-choc bg-choc text-white" : "border-sand text-charcoal hover:bg-sand/40",
+            )}
+          >
+            {reorderMode ? "Done reordering" : "Reorder aisle"}
+          </button>
+        ) : null}
       </div>
+
+      {reorderMode ? (
+        <p className="font-body text-sm text-[#6B6B68]">
+          Drag rows to set the curated order on /rtw. Featured pieces still pin to the top; this order decides everything
+          beneath them. Collections keep their own order.
+        </p>
+      ) : null}
+
+      {!canReorder ? (
+        <p className="font-body text-xs text-[#A8A8A4]">
+          Filter to Ready to wear (/rtw) or a category to drag-reorder what customers see.
+        </p>
+      ) : null}
 
       {published === "false" ? (
         <div className="rounded-sm border border-amber-300 bg-amber-50 px-4 py-3 font-body text-[13px] text-amber-900">
@@ -387,16 +489,39 @@ export function ProductsTable({
             </tr>
           </thead>
           <tbody>
-            {items.map((p) => (
+            {rows.map((p) => (
               <tr
                 key={p.id}
+                draggable={reorderMode && !savingOrder}
+                onDragStart={() => {
+                  if (!reorderMode) return;
+                  setDragId(p.id);
+                }}
+                onDragOver={(e) => {
+                  if (!reorderMode) return;
+                  e.preventDefault();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  onDropRow(p.id);
+                }}
+                onDragEnd={() => setDragId(null)}
                 className={cn(
                   "border-b border-[#F5F5F3] transition-colors hover:bg-[#FAFAFA]",
                   pending && "opacity-60",
+                  reorderMode && "cursor-grab active:cursor-grabbing",
+                  dragId === p.id && "bg-sand/50",
+                  p.isFeatured && reorderMode && "bg-[#F8F1E8]/40",
                 )}
               >
                 <td className="p-2">
-                  <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} aria-label={`Select ${p.name}`} />
+                  {reorderMode ? (
+                    <span className="font-mono text-[10px] text-[#A8A8A4]" aria-hidden>
+                      ∷
+                    </span>
+                  ) : (
+                    <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} aria-label={`Select ${p.name}`} />
+                  )}
                 </td>
                 <td className="p-2">
                   <div className="relative h-[52px] w-10 overflow-hidden rounded-sm border border-sand bg-canvas">

@@ -4,8 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { ProductsTable, type ProductRow } from "@/components/admin/ProductsTable";
 import { MigrateImagesBanner } from "@/components/admin/MigrateImagesBanner";
 import { derivedCatalogMinNGN } from "@/lib/pricing";
+import { RTW_EXCLUDED_CATEGORIES } from "@/lib/rtw-aisle";
 
 const PAGE_SIZE = 20;
+const REORDER_TAKE = 200;
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -23,6 +25,8 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
         ? sp.published[0]
         : sp.published;
   const needsPrice = Array.isArray(sp.needsPrice) ? sp.needsPrice[0] : sp.needsPrice;
+  const aisle = (Array.isArray(sp.aisle) ? sp.aisle[0] : sp.aisle) ?? "";
+  const reorder = (Array.isArray(sp.reorder) ? sp.reorder[0] : sp.reorder) === "1";
 
   const where: Prisma.ProductWhereInput = {};
   if (search) {
@@ -31,21 +35,34 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       { slug: { contains: search, mode: "insensitive" } },
     ];
   }
-  if (category) where.category = category;
-  if (type && Object.values(ProductType).includes(type)) where.type = type;
+  if (aisle === "rtw") {
+    where.type = ProductType.RTW;
+    where.category = { notIn: [...RTW_EXCLUDED_CATEGORIES] };
+  } else {
+    if (category) where.category = category;
+    if (type && Object.values(ProductType).includes(type)) where.type = type;
+  }
   if (published === "true") where.isPublished = true;
   if (published === "false") where.isPublished = false;
   if (needsPrice === "true") {
     where.isPublished = false;
     where.basePriceNGN = 0;
   }
+
+  const canReorder = aisle === "rtw" || Boolean(category) || type === ProductType.RTW;
+  const useReorderMode = reorder && canReorder;
+  const orderBy: Prisma.ProductOrderByWithRelationInput[] =
+    useReorderMode || canReorder
+      ? [{ isFeatured: "desc" }, { displayOrder: "asc" }, { createdAt: "desc" }]
+      : [{ createdAt: "desc" }];
+
   const [total, rows, legacyImageCount] = await Promise.all([
     prisma.product.count({ where }),
     prisma.product.findMany({
       where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
+      orderBy,
+      skip: useReorderMode ? 0 : (page - 1) * PAGE_SIZE,
+      take: useReorderMode ? REORDER_TAKE : PAGE_SIZE,
       include: {
         images: { where: { isPrimary: true }, take: 1 },
         variants: { select: { id: true, priceNGN: true, salePriceNGN: true }, orderBy: { sortOrder: "asc" } },
@@ -71,6 +88,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       isPublished: p.isPublished,
       isFeatured: p.isFeatured,
       isNewArrival: p.isNewArrival,
+      displayOrder: p.displayOrder,
       primaryImage: p.images[0]?.url ?? null,
       variantCount: p.variants.length,
       minPriceNGN: minPrice,
@@ -104,12 +122,15 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
         items={items}
         page={page}
         total={total}
-        perPage={PAGE_SIZE}
+        perPage={useReorderMode ? Math.max(total, items.length) : PAGE_SIZE}
         search={search}
         category={category ?? ""}
         type={type ?? ""}
         published={published ?? ""}
         needsPrice={needsPrice ?? ""}
+        aisle={aisle}
+        reorderMode={useReorderMode}
+        canReorder={canReorder}
       />
     </div>
   );

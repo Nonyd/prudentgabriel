@@ -1,6 +1,6 @@
 "use client";
 
-import type { FunnelStep, HouseNumbers, LookedRow, TrafficRow } from "@/lib/analytics/view";
+import type { FunnelStep, HouseNumbers, LookedRow, RisingRow, TrafficRow } from "@/lib/analytics/view";
 
 function naira(n: number) {
   return `₦${Math.round(n).toLocaleString("en-NG")}`;
@@ -65,6 +65,9 @@ function Traffic({ rows, note }: { rows: TrafficRow[]; note: string }) {
   return (
     <div className="glass-opaque p-5">
       <h2 className="font-display text-lg text-choc">Where they came from</h2>
+      <p className="mt-1 font-sans text-xs text-[#6B6B68]">
+        Same-session purchases only. A tag dies with the tab — return visits tomorrow show as direct.
+      </p>
       <p className="mt-2 max-w-2xl whitespace-pre-line font-sans text-xs leading-relaxed text-[#6B6B68]">{note}</p>
       {rows.length === 0 ? (
         <p className="mt-4 font-sans text-sm text-[#6B6B68]">No tagged landings or attributed orders in this period.</p>
@@ -117,6 +120,38 @@ function Looked({ rows }: { rows: LookedRow[] }) {
   );
 }
 
+function Rising({ rows }: { rows: RisingRow[] }) {
+  return (
+    <div className="glass-opaque p-5">
+      <h2 className="font-display text-lg text-choc">Rising</h2>
+      <p className="mt-1 font-sans text-xs text-[#6B6B68]">
+        Grew most against the previous period — views or paid orders. A steady seller stays quiet; a piece that went
+        from none to a few is the story.
+      </p>
+      {rows.length === 0 ? (
+        <p className="mt-4 font-sans text-sm text-[#6B6B68]">Nothing rising against the previous period yet.</p>
+      ) : (
+        <ol className="mt-4 space-y-2">
+          {rows.map((row) => {
+            const detail =
+              row.riseKind === "orders"
+                ? `${row.ordersPrev} → ${row.orders} orders`
+                : `${row.viewsPrev} → ${row.views} views`;
+            return (
+              <li key={row.productId} className="flex items-baseline justify-between gap-3 border-b border-sand/60 py-2">
+                <span className="font-sans text-sm text-choc">{row.name}</span>
+                <span className="shrink-0 font-sans text-xs text-[#6B6B68]">
+                  +{row.rise.toLocaleString("en-NG")} · {detail}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </div>
+  );
+}
+
 export function HouseNumbersPanel({ data }: { data: HouseNumbers }) {
   const kpis = [
     { label: "Visits", value: data.visits.toLocaleString("en-NG"), prev: vsPrev(data.visits, data.visitsPrev, "number") },
@@ -143,7 +178,10 @@ export function HouseNumbersPanel({ data }: { data: HouseNumbers }) {
       </div>
 
       <Traffic rows={data.traffic} note={data.gloryNote} />
-      <Looked rows={data.lookedNotBought} />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Looked rows={data.lookedNotBought} />
+        <Rising rows={data.rising} />
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="glass-opaque p-5">

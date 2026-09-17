@@ -162,6 +162,9 @@ export async function queryProductList(
     case "featured":
       orderBy = [{ isFeatured: "desc" }, { createdAt: "desc" }];
       break;
+    case "curated":
+      orderBy = [{ isFeatured: "desc" }, { displayOrder: "asc" }, { createdAt: "desc" }];
+      break;
     case "newest":
     default:
       orderBy = { createdAt: "desc" };

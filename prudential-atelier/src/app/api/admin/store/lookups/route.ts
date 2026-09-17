@@ -22,7 +22,7 @@ export async function GET() {
       select: { id: true, orderRef: true, clientName: true },
     }),
     prisma.order.findMany({
-      where: { status: { notIn: [OrderStatus.CANCELLED, OrderStatus.REFUNDED, OrderStatus.ARCHIVED] } },
+      where: { status: { notIn: [OrderStatus.CANCELLED, OrderStatus.REFUNDED, OrderStatus.ARCHIVED, OrderStatus.ABANDONED] } },
       orderBy: { createdAt: "desc" },
       take: 40,
       select: { id: true, orderNumber: true },

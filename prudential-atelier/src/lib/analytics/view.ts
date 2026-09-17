@@ -23,6 +23,18 @@ export type LookedRow = {
   unitsSold: number;
 };
 
+export type RisingRow = {
+  productId: string;
+  name: string;
+  views: number;
+  viewsPrev: number;
+  orders: number;
+  ordersPrev: number;
+  /** Larger of view growth and order growth; only positive risers. */
+  rise: number;
+  riseKind: "views" | "orders";
+};
+
 export type HouseNumbers = {
   visits: number;
   visitsPrev: number;
@@ -36,6 +48,7 @@ export type HouseNumbers = {
   atelierFunnel: FunnelStep[];
   traffic: TrafficRow[];
   lookedNotBought: LookedRow[];
+  rising: RisingRow[];
   abandoned: { sessions: number; valueNGN: number };
   email: { sent: number; failed: number; dead: number };
   points: { issued: number; redeemed: number; outstanding: number };

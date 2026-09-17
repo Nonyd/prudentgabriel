@@ -284,8 +284,12 @@ async function runDb() {
   });
   const beforeExpire = await prisma.user.findUnique({ where: { id: user.id }, select: { pointsBalance: true } });
   await expireStaleCheckoutReservations(prisma, new Date(), 50);
-  const staleRow = await prisma.order.findUnique({ where: { id: stale.id }, select: { paymentStatus: true } });
+  const staleRow = await prisma.order.findUnique({
+    where: { id: stale.id },
+    select: { paymentStatus: true, status: true },
+  });
   assert(staleRow?.paymentStatus === PaymentStatus.FAILED, "cron marks a stale pending order failed");
+  assert(staleRow?.status === "ABANDONED", "cron marks a stale reservation abandoned");
   const afterExpire = await prisma.user.findUnique({ where: { id: user.id }, select: { pointsBalance: true } });
   assert(
     afterExpire != null && beforeExpire != null && afterExpire.pointsBalance === beforeExpire.pointsBalance + 5_000,

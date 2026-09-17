@@ -11,7 +11,7 @@ export const GLORY_UTM_NOTE = `To tag a post, add these to the shop link:
 
 source is where (instagram). medium is how (social, paid, email). campaign is the name of this effort. content tells two posts in the same campaign apart.
 
-The first landing keeps the tags for that visit. When she orders or books, they are written on that order. No pixel.`;
+The first landing keeps the tags for that visit only — they live in the tab's sessionStorage and die when she closes it. A woman who taps Instagram today and buys tomorrow shows as direct. Attribution only captures same-session purchases. When she orders or books in that same visit, the tags are written on that order. No pixel.`;
 
 export type VisitAttribution = {
   source: string;

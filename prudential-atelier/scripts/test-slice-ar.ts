@@ -98,10 +98,10 @@ function runConverter() {
 }
 
 function runFacts() {
-  assert(LEGAL_COPY_REVISION === "ar-6", "revision stamp");
+  assert(LEGAL_COPY_REVISION === "av-1", "revision stamp");
   assert(DEFAULT_LEGAL_UPDATED.includes("September 2026"), "last-updated date is this slice");
   const byPage = Object.fromEntries(LEGAL_SEED_ENTRIES.map((e) => [e.page, e.revision]));
-  assert(byPage.cookie === "ar-6" && byPage.privacy === "ar-6", "cookie and privacy republish this slice");
+  assert(byPage.cookie === "av-1" && byPage.privacy === "ar-6", "cookie republishes this slice; privacy stays");
   assert(byPage.terms === "ar-5" && byPage.returns === "ar-5" && byPage.shipping === "ar-5", "other legal pages keep their lawyer revision");
 
   for (const term of DEFAULT_HOUSE_DOCUMENT_TERMS) {

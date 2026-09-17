@@ -67,7 +67,7 @@ export function OrderSummary({
   const fmtExtra = (n: number) => formatPrice(extrasAmountInCurrency(n, currency, rates), currency);
 
   return (
-    <div className="glass-opaque px-5 py-6 lg:px-6 lg:py-8">
+    <div className="glass-2 glass-panel px-5 py-6 lg:px-6 lg:py-8">
       <h2 className="font-display text-xl text-choc">Order summary</h2>
       <ul className="mt-5 max-h-64 space-y-4 overflow-y-auto">
         {items.map((i) => (

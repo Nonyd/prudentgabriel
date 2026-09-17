@@ -355,6 +355,8 @@ model Product {
   tags           String[]        @default([])
   orderCount     Int             @default(0)
   isBestSeller   Boolean         @default(false)
+  /// Storefront curated order beneath Featured. Independent of CollectionProduct.sortOrder.
+  displayOrder   Int             @default(0)
 
   /// Fallback parcel weight/dims when a variant leaves them blank. Carriers bill the greater of actual vs volumetric.
   defaultWeightKg  Float?
@@ -394,6 +396,7 @@ model Product {
 
   @@index([isPublished, createdAt])
   @@index([isPublished, category])
+  @@index([isPublished, isFeatured, displayOrder])
   @@index([packagingProfileId])
 }
 
@@ -1527,6 +1530,8 @@ enum OrderStatus {
   COLLECTED
   CANCELLED
   REFUNDED
+  /// Unpaid checkout attempt past the reservation TTL (24h card / 7d bank). Not a cancelled sale.
+  ABANDONED
   /// Terminal: delivered, receipt confirmed, balance zero, no open alterations.
   ARCHIVED
 }

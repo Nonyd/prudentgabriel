@@ -3,7 +3,7 @@
  *  LEGAL_COPY_REVISION is the newest of those page stamps. */
 
 
-export const LEGAL_COPY_REVISION = "ar-6";
+export const LEGAL_COPY_REVISION = "av-1";
 export const DEFAULT_LEGAL_UPDATED = "14 September 2026";
 
 export function slugifyHeading(text: string): string {
@@ -429,6 +429,10 @@ These also live in local storage and are written because the site uses them. The
 - \`pg-theme\`: light or dark
 - \`{{cookie_consent_key}}\`: a single acknowledgement that you saw this notice (version {{cookie_consent_version}}). It does not store analytics or marketing flags.
 
+## Visit tags (sessionStorage, not a cookie)
+
+The banner says nothing else is stored as a cookie. Campaign tags from a shared link (\`utm_source\` and friends) are held in **sessionStorage** under \`pa-visit-attribution\` for that browser tab only. They are not a cookie, they are not written to local storage, and they disappear when the tab closes. The house uses them only if you order or book in the same visit, so a report can show which post led to that sale. Closing the tab and coming back tomorrow is recorded as a direct visit.
+
 Admin screens may also remember whether the sidebar is collapsed.
 
 ## No advertising
@@ -551,7 +555,7 @@ export const LEGAL_SEED_ENTRIES: {
 }[] = [
   { page: "privacy", key: "legal_privacy_policy", label: "Privacy Policy", updatedKey: "legal_privacy_updated", md: PRIVACY_POLICY_MD, revision: "ar-6" },
   { page: "terms", key: "legal_terms", label: "Terms & Conditions", updatedKey: "legal_terms_updated", md: TERMS_MD, revision: "ar-5" },
-  { page: "cookie", key: "legal_cookie_policy", label: "Cookie Policy", updatedKey: "legal_cookie_updated", md: COOKIE_MD, revision: "ar-6" },
+  { page: "cookie", key: "legal_cookie_policy", label: "Cookie Policy", updatedKey: "legal_cookie_updated", md: COOKIE_MD, revision: "av-1" },
   { page: "returns", key: "legal_returns_policy", label: "Returns Policy", updatedKey: "legal_returns_updated", md: RETURNS_MD, revision: "ar-5" },
   { page: "shipping", key: "legal_shipping_policy", label: "Shipping Policy", updatedKey: "legal_shipping_updated", md: SHIPPING_MD, revision: "ar-5" },
 ];

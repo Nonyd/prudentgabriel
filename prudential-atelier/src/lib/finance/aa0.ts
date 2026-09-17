@@ -27,4 +27,9 @@ export const AA0_LINES = [
   { title: VAT_TITLE, body: VAT_COPY },
   { title: CURRENCY_TITLE, body: CURRENCY_COPY },
   { title: ACCESS_TITLE, body: ACCESS_COPY },
+  {
+    title: "Order numbers",
+    body:
+      "A checkout creates an order number (PA-YY-NNNNN) before payment clears, so the gateway bind has something to match. Abandoned attempts keep that number. Gaps or unused numbers are normal — they are not missing sales.",
+  },
 ] as const;
