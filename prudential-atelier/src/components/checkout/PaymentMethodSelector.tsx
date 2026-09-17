@@ -160,7 +160,7 @@ export function PaymentMethodSelector({
                   type="button"
                   onClick={() => onSelect("BANK_TRANSFER")}
                   className={clsx(
-                    "flex w-full items-start gap-3 rounded-sm border p-4 text-left transition-colors",
+                    "flex w-full items-start gap-3 rounded-none border p-4 text-left transition-colors",
                     isSelected
                       ? "border-[1.5px] border-choc bg-[rgba(68,41,19,0.04)]"
                       : "border-[0.5px] border-sand bg-bg-card",
@@ -184,7 +184,7 @@ export function PaymentMethodSelector({
                   </div>
                 </button>
                 {isSelected && bank ? (
-                  <div className="mt-2 rounded-sm border border-sand bg-[#FAF7F2] p-4">
+                  <div className="mt-2 rounded-none border border-sand bg-[#FAF7F2] p-4">
                     <BankTransferDetails bank={bank} paymentReference={paymentReference} />
                     <p className="mt-2 font-serif text-lg text-choc">{formatPrice(amount, currency)}</p>
                     {currency !== "NGN" && amountNGN != null ? (
@@ -207,7 +207,7 @@ export function PaymentMethodSelector({
                       type="button"
                       disabled={uploading}
                       onClick={() => fileRef.current?.click()}
-                      className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-sm border border-choc bg-bg-card px-4 py-2 font-sans text-[10px] uppercase tracking-wider text-choc"
+                      className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-none border border-choc bg-bg-card px-4 py-2 font-sans text-[10px] uppercase tracking-wider text-choc"
                     >
                       <Upload className="h-3.5 w-3.5" />
                       {uploading ? "Uploading…" : receiptUrl ? "Replace receipt" : "Upload payment receipt"}
@@ -247,7 +247,7 @@ export function PaymentMethodSelector({
               type="button"
               onClick={() => onSelect(gw)}
               className={clsx(
-                "flex w-full items-start gap-3 rounded-sm border p-4 text-left transition-colors",
+                "flex w-full items-start gap-3 rounded-none border p-4 text-left transition-colors",
                 isSelected
                   ? "border-[1.5px] border-choc bg-[rgba(68,41,19,0.04)]"
                   : "border-[0.5px] border-sand bg-bg-card",

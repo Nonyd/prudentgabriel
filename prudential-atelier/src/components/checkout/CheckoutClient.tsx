@@ -727,7 +727,7 @@ export function CheckoutClient() {
                       if (canGo) setStep(s.n);
                     }}
                     className={clsx(
-                      "-mb-px min-h-11 border-b-2 pb-3 text-left font-display text-lg leading-none sm:text-xl",
+                      "-mb-px min-h-11 rounded-none border-b-2 pb-3 text-left font-display text-lg leading-none sm:text-xl",
                       current
                         ? "border-choc text-choc"
                         : done
@@ -1240,7 +1240,7 @@ export function CheckoutClient() {
                 ) : null}
               </div>
               <div
-                className="inline-flex w-fit rounded-sm border border-border p-0.5"
+                className="inline-flex w-fit overflow-hidden rounded-none border border-border p-0.5"
                 role="group"
                 aria-label="Currency"
               >
@@ -1251,7 +1251,7 @@ export function CheckoutClient() {
                     onClick={() => setCurrency(c)}
                     aria-pressed={currency === c}
                     className={clsx(
-                      "min-h-10 min-w-[3.25rem] px-3 font-body text-sm transition-colors",
+                      "min-h-10 min-w-[3.25rem] rounded-none px-3 font-body text-sm transition-colors",
                       currency === c
                         ? "bg-choc text-cream"
                         : "text-charcoal-mid hover:text-choc",
