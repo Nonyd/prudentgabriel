@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma, RequisitionStatus } from "@prisma/client";
-import { requireAdminApi, resolveSessionAccess } from "@/lib/admin-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { jsonError } from "@/lib/store/http";
 import { newRequisitionRef } from "@/lib/requisition/states";
