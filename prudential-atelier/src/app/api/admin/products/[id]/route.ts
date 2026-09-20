@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
+import { ActivityAction, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi, requireSuperAdminApi } from "@/lib/admin-auth";
 import { productAdminSchema, productToggleSchema } from "@/validations/product";
@@ -11,8 +11,13 @@ import { canInlineEditPrice, derivedCatalogMinNGN } from "@/lib/pricing";
 import { syncProductOptionGroup } from "@/lib/sync-product-option-group";
 import { destroyStoredMedia } from "@/lib/media/destroy";
 import { executeProductCascade, previewProductCascade, ProductCascadeError } from "@/lib/product-cascade-delete";
-import { logServerError } from "@/lib/logger";
+import { logActivity, logServerError } from "@/lib/logger";
 import { assertShopCategoryExists, ShopCategoryError } from "@/lib/shop-categories";
+import {
+  formatPublishedAtForLog,
+  publishedAtChanged,
+  resolveProductPublishedAt,
+} from "@/lib/product-published-at";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi("shop.products");
@@ -129,6 +134,42 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
             { status: 400 },
           );
         }
+        const published = resolveProductPublishedAt({
+          nextPublished: true,
+          requested: undefined,
+          existing: current.publishedAt,
+        });
+        if (!published.ok) {
+          return NextResponse.json({ error: published.error }, { status: 400 });
+        }
+        const updated = await prisma.product.update({
+          where: { id },
+          data: {
+            isPublished: true,
+            publishedAt: published.publishedAt,
+            ...(toggle.data.isFeatured !== undefined ? { isFeatured: toggle.data.isFeatured } : {}),
+            ...(toggle.data.isNewArrival !== undefined ? { isNewArrival: toggle.data.isNewArrival } : {}),
+          },
+          select: { id: true, slug: true, isPublished: true, isFeatured: true, isNewArrival: true, publishedAt: true, name: true },
+        });
+        if (publishedAtChanged(current.publishedAt, updated.publishedAt)) {
+          await logActivity({
+            userId: gate.session.user.id!,
+            userEmail: gate.session.user.email ?? undefined,
+            userRole: gate.session.user.role,
+            action: ActivityAction.UPDATE,
+            module: "shop.products",
+            description: `Set publish date on "${updated.name}" to ${formatPublishedAtForLog(updated.publishedAt)}`,
+            recordId: updated.id,
+            recordType: "Product",
+            snapshot: {
+              before: current.publishedAt?.toISOString() ?? null,
+              after: updated.publishedAt?.toISOString() ?? null,
+            },
+          });
+        }
+        await revalidateProduct(updated.slug);
+        return NextResponse.json(updated);
       }
       const updated = await prisma.product.update({
         where: { id },
@@ -178,12 +219,27 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const minPrice = derivedCatalogMinNGN(data.variants, data.isOnSale, data.optionGroup?.options);
 
+  const existing = await prisma.product.findUnique({
+    where: { id },
+    select: { name: true, publishedAt: true },
+  });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const published = resolveProductPublishedAt({
+    nextPublished: data.isPublished,
+    requested: data.publishedAt,
+    existing: existing.publishedAt,
+  });
+  if (!published.ok) {
+    return NextResponse.json({ error: published.error }, { status: 400 });
+  }
+
   const oldVariants = await prisma.productVariant.findMany({
     where: { productId: id },
     select: { id: true, sku: true, skuManual: true, size: true },
   });
   const oldVariantMap = new Map(oldVariants.map((v) => [v.id, v]));
-  const oldName = (await prisma.product.findUnique({ where: { id }, select: { name: true } }))?.name ?? data.name;
+  const oldName = existing.name;
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -206,6 +262,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           isOnSale: data.isOnSale,
           saleEndsAt: data.saleEndsAt ?? null,
           isPublished: data.isPublished,
+          publishedAt: published.publishedAt,
           isFeatured: data.isFeatured,
           isNewArrival: data.isNewArrival,
           isBespokeAvail: data.isBespokeAvail,
@@ -348,6 +405,23 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     });
 
     await revalidateProduct(slug);
+
+    if (publishedAtChanged(existing.publishedAt, published.publishedAt)) {
+      await logActivity({
+        userId: gate.session.user.id!,
+        userEmail: gate.session.user.email ?? undefined,
+        userRole: gate.session.user.role,
+        action: ActivityAction.UPDATE,
+        module: "shop.products",
+        description: `Changed publish date on "${data.name}" from ${formatPublishedAtForLog(existing.publishedAt)} to ${formatPublishedAtForLog(published.publishedAt)}`,
+        recordId: id,
+        recordType: "Product",
+        snapshot: {
+          before: existing.publishedAt?.toISOString() ?? null,
+          after: published.publishedAt?.toISOString() ?? null,
+        },
+      });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (e) {

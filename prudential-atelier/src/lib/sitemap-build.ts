@@ -77,12 +77,13 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
       select: {
         slug: true,
         updatedAt: true,
+        publishedAt: true,
         images: { orderBy: { sortOrder: "asc" }, take: 1, select: { url: true } },
       },
     });
     products = rows.map((p) => ({
       url: `${base}/shop/${p.slug}`,
-      lastModified: p.updatedAt,
+      lastModified: p.updatedAt ?? p.publishedAt ?? new Date(),
       changeFrequency: "weekly" as const,
       priority: 0.8,
       images: p.images[0]?.url ? [absolutePublicUrl(p.images[0].url)] : undefined,

@@ -1,6 +1,7 @@
 import { ProductType } from "@prisma/client";
 import { z } from "zod";
 import { optionalStoredPublicMediaUrlSchema, storedPublicMediaUrlSchema } from "@/lib/media/stored-url";
+import { FUTURE_PUBLISH_DATE_MESSAGE, isFuturePublishDate, parsePublishDateInput } from "@/lib/product-published-at";
 import { missingPublishNeeds } from "@/lib/product-wizard";
 
 function optNonNegNumber() {
@@ -82,6 +83,7 @@ export const productAdminSchema = z.object({
   isPublished: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
   isNewArrival: z.boolean().default(false),
+  publishedAt: z.preprocess((v) => parsePublishDateInput(v), z.date().nullable().optional()),
   isBespokeAvail: z.boolean().default(false),
   customOffered: z.boolean().optional(),
   customSurchargeKind: z.enum(["NONE", "PERCENT", "FLAT"]).optional().nullable(),
@@ -187,6 +189,13 @@ export const productAdminSchema = z.object({
         message: "Mark exactly one choice as the default.",
       });
     }
+  }
+  if (data.publishedAt && isFuturePublishDate(data.publishedAt)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["publishedAt"],
+      message: FUTURE_PUBLISH_DATE_MESSAGE,
+    });
   }
   if (!data.isPublished) return;
   for (const need of missingPublishNeeds(data)) {

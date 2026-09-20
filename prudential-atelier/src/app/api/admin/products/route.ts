@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma, ProductType } from "@prisma/client";
+import { ActivityAction, Prisma, ProductType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { productAdminSchema } from "@/validations/product";
-import { logServerError } from "@/lib/logger";
+import { logActivity, logServerError } from "@/lib/logger";
 import { assertShopCategoryExists, ShopCategoryError } from "@/lib/shop-categories";
 import { loadTakenSkus, resolvePreferredSku, uniqueSkuFromTaken } from "@/lib/product-sku";
 import { allocateProductSlug } from "@/lib/product-slug-unique";
 import { revalidateProduct } from "@/lib/revalidate";
 import { derivedCatalogMinNGN } from "@/lib/pricing";
 import { syncProductOptionGroup } from "@/lib/sync-product-option-group";
+import {
+  formatPublishedAtForLog,
+  publishedAtChanged,
+  resolveProductPublishedAt,
+} from "@/lib/product-published-at";
 
 const PAGE_SIZE_DEFAULT = 20;
 
@@ -135,6 +140,14 @@ export async function POST(req: NextRequest) {
   }
   const slug = await allocateProductSlug(prisma, { name: data.name, requested: data.slug });
   const minPrice = derivedCatalogMinNGN(data.variants, data.isOnSale, data.optionGroup?.options);
+  const published = resolveProductPublishedAt({
+    nextPublished: data.isPublished,
+    requested: data.publishedAt,
+    existing: null,
+  });
+  if (!published.ok) {
+    return NextResponse.json({ error: published.error }, { status: 400 });
+  }
 
   try {
     const product = await prisma.$transaction(async (tx) => {
@@ -156,6 +169,7 @@ export async function POST(req: NextRequest) {
           isOnSale: data.isOnSale,
           saleEndsAt: data.saleEndsAt ?? null,
           isPublished: data.isPublished,
+          publishedAt: published.publishedAt,
           isFeatured: data.isFeatured,
           isNewArrival: data.isNewArrival,
           isBespokeAvail: data.isBespokeAvail,
@@ -260,6 +274,20 @@ export async function POST(req: NextRequest) {
     });
 
     await revalidateProduct(product.slug);
+
+    if (publishedAtChanged(null, published.publishedAt)) {
+      await logActivity({
+        userId: gate.session.user.id!,
+        userEmail: gate.session.user.email ?? undefined,
+        userRole: gate.session.user.role,
+        action: ActivityAction.CREATE,
+        module: "shop.products",
+        description: `Set publish date on "${product.name}" to ${formatPublishedAtForLog(published.publishedAt)}`,
+        recordId: product.id,
+        recordType: "Product",
+        snapshot: { publishedAt: published.publishedAt?.toISOString() ?? null },
+      });
+    }
 
     return NextResponse.json({ id: product.id, slug });
   } catch (e) {

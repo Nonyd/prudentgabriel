@@ -120,7 +120,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         isPublished: true,
       },
       take: 24,
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ publishedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
       include: {
         images: { orderBy: { sortOrder: "asc" }, take: GALLERY_GRID_IMAGE_TAKE },
         variants: { orderBy: { priceNGN: "asc" } },
@@ -133,7 +133,12 @@ export default async function ProductPage({ params }: { params: { slug: string }
   ]);
   const relatedRaw = relatedPool
     .slice()
-    .sort((a, b) => (units.get(b.id) ?? 0) - (units.get(a.id) ?? 0) || b.createdAt.getTime() - a.createdAt.getTime())
+    .sort(
+      (a, b) =>
+        (units.get(b.id) ?? 0) - (units.get(a.id) ?? 0) ||
+        (b.publishedAt?.getTime() ?? b.createdAt.getTime()) -
+          (a.publishedAt?.getTime() ?? a.createdAt.getTime()),
+    )
     .slice(0, 4);
 
   const bundleProducts: ProductListItem[] = product.bundleItems.map((b) =>
@@ -207,6 +212,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
           images: galleryImages.map((im) => im.url),
           url: productUrl,
           priceNGN,
+          datePublished: product.publishedAt,
         })}
       />
       <JsonLd

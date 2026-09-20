@@ -145,9 +145,14 @@ export async function queryProductList(
     where.variants = { some: variantSome };
   }
 
-  let orderBy: Prisma.ProductOrderByWithRelationInput[] | Prisma.ProductOrderByWithRelationInput = {
-    createdAt: "desc",
+  const publishedAtDesc: Prisma.ProductOrderByWithRelationInput = {
+    publishedAt: { sort: "desc", nulls: "last" },
   };
+
+  let orderBy: Prisma.ProductOrderByWithRelationInput[] | Prisma.ProductOrderByWithRelationInput = [
+    { isFeatured: "desc" },
+    publishedAtDesc,
+  ];
 
   switch (sortParam) {
     case "price-asc":
@@ -157,17 +162,18 @@ export async function queryProductList(
       orderBy = { priceNGN: "desc" };
       break;
     case "bestsellers":
-      orderBy = { createdAt: "desc" };
+      orderBy = [{ isFeatured: "desc" }, publishedAtDesc];
       break;
     case "featured":
-      orderBy = [{ isFeatured: "desc" }, { createdAt: "desc" }];
+      orderBy = [{ isFeatured: "desc" }, publishedAtDesc];
       break;
     case "curated":
-      orderBy = [{ isFeatured: "desc" }, { displayOrder: "asc" }, { createdAt: "desc" }];
+      orderBy = [{ isFeatured: "desc" }, { displayOrder: "asc" }, publishedAtDesc];
       break;
     case "newest":
     default:
-      orderBy = { createdAt: "desc" };
+      // Newest first: Featured pins, then publish date. Curated displayOrder is a different sort.
+      orderBy = [{ isFeatured: "desc" }, publishedAtDesc];
   }
 
   const skip = (page - 1) * limit;
@@ -213,14 +219,16 @@ export async function queryProductList(
 
   if (sortParam === "bestsellers") {
     const [idRows, units] = await Promise.all([
-      prisma.product.findMany({ where, select: { id: true, createdAt: true } }),
+      prisma.product.findMany({ where, select: { id: true, publishedAt: true, createdAt: true } }),
       unitsSoldByProductId(),
     ]);
     idRows.sort((a, b) => {
       const ua = units.get(a.id) ?? 0;
       const ub = units.get(b.id) ?? 0;
       if (ub !== ua) return ub - ua;
-      return b.createdAt.getTime() - a.createdAt.getTime();
+      const ta = a.publishedAt?.getTime() ?? a.createdAt.getTime();
+      const tb = b.publishedAt?.getTime() ?? b.createdAt.getTime();
+      return tb - ta;
     });
     total = idRows.length;
     const pageIds = idRows.slice(skip, skip + limit).map((r) => r.id);

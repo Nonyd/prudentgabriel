@@ -27,7 +27,10 @@ export type CollectionListProduct = Prisma.ProductGetPayload<{
   include: typeof collectionListProductInclude;
 }>;
 
-export type CollectionProductWithMeta = ProductListItem & { createdAt: string };
+export type CollectionProductWithMeta = ProductListItem & {
+  createdAt: string;
+  publishedAt: string | null;
+};
 
 export function mapProductToListItemWithMeta(p: CollectionListProduct): CollectionProductWithMeta {
   return {
@@ -58,6 +61,7 @@ export function mapProductToListItemWithMeta(p: CollectionListProduct): Collecti
     customOffered: p.customOffered,
     optionGroup: mapListOptionGroup(p.optionGroup),
     createdAt: p.createdAt.toISOString(),
+    publishedAt: p.publishedAt?.toISOString() ?? null,
   };
 }
 
@@ -157,7 +161,7 @@ export async function mergePublishedCollectionProducts(
     }
     const autoRows = await prisma.product.findMany({
       where: autoWhere,
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ publishedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
       include: collectionListProductInclude,
     });
     autoProducts = autoRows.map(mapProductToListItemWithMeta);
@@ -191,7 +195,7 @@ export async function mergeCollectionProductsForCampaign(
     }
     const autoRows = await prisma.product.findMany({
       where: autoWhere,
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ publishedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
       take,
       include: collectionListProductInclude,
     });
@@ -225,7 +229,11 @@ export function sortCollectionProducts(
       );
       break;
     case "newest":
-      copy.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      copy.sort((a, b) => {
+        const ta = new Date(a.publishedAt ?? a.createdAt).getTime();
+        const tb = new Date(b.publishedAt ?? b.createdAt).getTime();
+        return tb - ta;
+      });
       break;
     default:
       break;

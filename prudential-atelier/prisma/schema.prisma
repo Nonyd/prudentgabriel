@@ -357,6 +357,8 @@ model Product {
   isBestSeller   Boolean         @default(false)
   /// Storefront curated order beneath Featured. Independent of CollectionProduct.sortOrder.
   displayOrder   Int             @default(0)
+  /// When the piece went live (or a backdate). Newest first sorts on this — not curated order.
+  publishedAt    DateTime?
 
   /// Fallback parcel weight/dims when a variant leaves them blank. Carriers bill the greater of actual vs volumetric.
   defaultWeightKg  Float?
@@ -395,6 +397,7 @@ model Product {
   updatedAt DateTime @updatedAt
 
   @@index([isPublished, createdAt])
+  @@index([isPublished, publishedAt])
   @@index([isPublished, category])
   @@index([isPublished, isFeatured, displayOrder])
   @@index([packagingProfileId])

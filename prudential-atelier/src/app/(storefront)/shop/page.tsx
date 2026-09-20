@@ -21,6 +21,7 @@ export default async function ShopPage({
 }) {
   const u = flattenSearchParams(searchParams);
   u.set("limit", String(CATALOG_PAGE_SIZE));
+  if (!u.get("sort")) u.set("sort", "featured");
 
   const { products, total, page, totalPages, hasNext, hasPrev } = await queryProductList(u, {
     isAdmin: false,

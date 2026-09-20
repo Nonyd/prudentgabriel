@@ -48,6 +48,8 @@ export function productJsonLd(input: {
   images: string[];
   url: string;
   priceNGN: number;
+  /** Catalogue publish date — same value Newest first sorts on. */
+  datePublished?: string | Date | null;
 }): JsonLd {
   const images = input.images.filter(Boolean).map((u) => absolutePublicUrl(u));
   return {
@@ -57,6 +59,9 @@ export function productJsonLd(input: {
     description: input.description.replace(/\s+/g, " ").trim(),
     image: images,
     brand: { "@type": "Brand", name: HOUSE_NAME },
+    ...(input.datePublished
+      ? { releaseDate: new Date(input.datePublished).toISOString() }
+      : {}),
     offers: {
       "@type": "Offer",
       url: input.url,

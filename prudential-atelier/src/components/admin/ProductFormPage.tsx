@@ -28,6 +28,9 @@ import { saleFigureIsDormant } from "@/lib/pricing";
 import { isLegacyWordPressImageUrl } from "@/lib/product-image-url";
 import { ProductWizardRail } from "./ProductWizardRail";
 import {
+  publishedAtInputValue,
+} from "@/lib/product-published-at";
+import {
   PRODUCT_WIZARD_STEPS,
   categoryNeedsSizes,
   clearWizardDraft,
@@ -91,6 +94,7 @@ function mapProductToForm(p: FullProduct): ProductAdminInput {
     isPublished: p.isPublished,
     isFeatured: p.isFeatured,
     isNewArrival: p.isNewArrival,
+    publishedAt: p.publishedAt,
     isBespokeAvail: p.isBespokeAvail,
     customOffered: p.customOffered,
     customSurchargeKind: p.customSurchargeKind,
@@ -185,6 +189,7 @@ const defaultCreate = (custom?: {
   isPublished: false,
   isFeatured: false,
   isNewArrival: false,
+  publishedAt: null,
   isBespokeAvail: false,
   customOffered: custom?.offeredDefault ?? false,
   customSurchargeKind: custom?.surchargeKind === "NONE" ? null : (custom?.surchargeKind ?? null),
@@ -1226,6 +1231,35 @@ export function ProductFormPage({
                     <label className="flex justify-between gap-2">
                       New arrival
                       <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
+                    </label>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="publishedAt"
+                  render={({ field }) => (
+                    <label className="block">
+                      <span className="text-xs uppercase text-[#A8A8A4]">Publish date</span>
+                      <input
+                        type="date"
+                        max={publishedAtInputValue(new Date())}
+                        className={fieldClass}
+                        value={publishedAtInputValue(field.value ?? null)}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          field.onChange(raw ? new Date(`${raw}T12:00:00`) : null);
+                        }}
+                      />
+                      <span className="mt-1 block text-[11px] text-[#A8A8A4]">
+                        Defaults to the day you first publish. Backdating only moves the piece under Newest
+                        first (Recent) — Curated order on /rtw stays where you dragged it. Future dates are
+                        not accepted yet.
+                      </span>
+                      {form.formState.errors.publishedAt ? (
+                        <span className="mt-1 block text-xs text-wine">
+                          {form.formState.errors.publishedAt.message}
+                        </span>
+                      ) : null}
                     </label>
                   )}
                 />

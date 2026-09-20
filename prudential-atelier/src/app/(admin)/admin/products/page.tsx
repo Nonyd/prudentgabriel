@@ -53,7 +53,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   const useReorderMode = reorder && canReorder;
   const orderBy: Prisma.ProductOrderByWithRelationInput[] =
     useReorderMode || canReorder
-      ? [{ isFeatured: "desc" }, { displayOrder: "asc" }, { createdAt: "desc" }]
+      ? [{ isFeatured: "desc" }, { displayOrder: "asc" }, { publishedAt: { sort: "desc", nulls: "last" } }]
       : [{ createdAt: "desc" }];
 
   const [total, rows, legacyImageCount] = await Promise.all([
