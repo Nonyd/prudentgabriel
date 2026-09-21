@@ -58,11 +58,17 @@ export async function POST(req: NextRequest) {
             "Paystack bespoke metadata does not match the webhook booking",
           );
         }
-        await fulfillPaidBespokeBalance({
-          bespokeRequestId,
-          paymentRef: ref,
-          gateway: PaymentGateway.PAYSTACK,
-        });
+        if (verified.status === "success") {
+          await fulfillPaidBespokeBalance({
+            bespokeRequestId,
+            gateway: PaymentGateway.PAYSTACK,
+            charge: {
+              reference: verified.reference,
+              amount: verified.amount,
+              currency: verified.currency,
+            },
+          });
+        }
       } else if (isConsultation && bookingId) {
         const booking = await prisma.consultationBooking.findUnique({ where: { id: bookingId } });
         if (booking) {

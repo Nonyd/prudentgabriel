@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { verifyTransaction } from "@/lib/payments/paystack";
 import { fulfillPaidBespokeBalance } from "@/lib/bespoke-payment";
+import { PaymentBindError } from "@/lib/payment-bind";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -23,18 +24,27 @@ export async function GET(req: NextRequest) {
     }
 
     if (result.status === "success") {
-      const metaId = result.metadata.bespokeRequestId;
-      const stored = bespoke.balancePaystackRef;
-      const metaOk = Boolean(metaId && metaId === bespoke.id);
-      const refOk = Boolean(stored && stored === result.reference);
-      if (!metaOk && !refOk) {
-        return NextResponse.redirect(`${appUrl}/bespoke?error=payment-failed`);
+      if (bespoke.balancePaymentStatus !== PaymentStatus.PAID) {
+        try {
+          const ok = await fulfillPaidBespokeBalance({
+            bespokeRequestId: bespoke.id,
+            gateway: PaymentGateway.PAYSTACK,
+            charge: {
+              reference: result.reference,
+              amount: result.amount,
+              currency: result.currency,
+            },
+          });
+          if (!ok) {
+            return NextResponse.redirect(`${appUrl}/bespoke?error=payment-failed`);
+          }
+        } catch (e) {
+          if (e instanceof PaymentBindError) {
+            return NextResponse.redirect(`${appUrl}/bespoke?error=payment-failed`);
+          }
+          throw e;
+        }
       }
-      await fulfillPaidBespokeBalance({
-        bespokeRequestId: bespoke.id,
-        paymentRef: reference,
-        gateway: PaymentGateway.PAYSTACK,
-      });
       return NextResponse.redirect(
         `${appUrl}/bespoke?payment=success&ref=${encodeURIComponent(bespoke.requestNumber)}`,
       );
