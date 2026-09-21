@@ -80,6 +80,9 @@ export const CATALOGUE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 export const HEIC_CATALOGUE_MESSAGE =
   "iPhone HEIC photos are not supported. Save as JPEG or PNG and try again.";
 
+/** Guest receipt upload when sharp cannot decode iPhone HEVC (AZ1 — no heic-convert fallback). */
+export const RECEIPT_HEIC_FALLBACK_MESSAGE = "Please send a screenshot or a JPG.";
+
 /** Client-side guard before POST /api/admin/upload. Magic bytes are still checked on the server. */
 export function rejectedCatalogueImageFile(file: { name?: string; type?: string; size: number }): string | null {
   const name = (file.name ?? "").toLowerCase();

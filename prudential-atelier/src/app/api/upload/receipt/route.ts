@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getMediaStore } from "@/lib/media";
-import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
+import { RECEIPT_HEIC_FALLBACK_MESSAGE, mimeFromMagicBytes } from "@/lib/image-upload-mime";
 import { rateLimitOr429 } from "@/lib/rate-limit";
 import { receiptRasterToJpeg } from "@/lib/receipt-raster";
 import { verifyReceiptUploadTicket } from "@/lib/receipt-upload-ticket";
@@ -60,10 +60,7 @@ export async function POST(req: NextRequest) {
       storedName = fileName?.replace(/\.(heic|heif)$/i, ".jpg") ?? "receipt.jpg";
     } catch (e) {
       await logServerError({ errorType: "RECEIPT_HEIC", error: e });
-      return NextResponse.json(
-        { error: "Could not read this iPhone photo. Try saving it as a JPG, or take the photo again." },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: RECEIPT_HEIC_FALLBACK_MESSAGE }, { status: 400 });
     }
   }
 
