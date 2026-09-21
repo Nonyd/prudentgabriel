@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { tokenPageRateLimited } from "@/lib/page-rate-limit";
 import Link from "next/link";
 import { QuoteStatus } from "@prisma/client";
 import {
@@ -22,6 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function QuoteApprovalPage({ params }: Props) {
+  if (await tokenPageRateLimited("quote-token-page")) notFound();
   const { approvalToken } = await params;
 
   const found = await findQuotationByApprovalToken(approvalToken);

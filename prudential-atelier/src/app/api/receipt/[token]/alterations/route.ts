@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 import { AlterationReason } from "@prisma/client";
 import { createAlterationRequestByReceiptToken } from "@/lib/alterations/service";
 import { CAPABILITY_EXPIRED_COPY } from "@/lib/capability-token";
@@ -12,6 +13,9 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest, { params }: Params) {
+  const limited = rateLimitOr429(req, "receipt-token-alteration", 5, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const { token } = await params;
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {

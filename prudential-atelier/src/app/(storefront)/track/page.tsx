@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { TrackSearchForm } from "@/components/track/TrackSearchForm";
 import { cmsGet, getCMSContent } from "@/lib/cms";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { tokenRouteMetadata } from "@/lib/seo";
 import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
 
@@ -29,8 +29,7 @@ export default async function TrackLandingPage({ searchParams }: Props) {
 
   if (ref?.trim()) {
     const h = await headers();
-    const ip =
-      h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
+    const ip = clientIpFromHeaders(h);
     const limited = checkRateLimit(`track-ref:${ip}`, 20, 15 * 60 * 1000);
     if (!limited.ok) {
       return <TrackSearchForm notFound {...trackProps} />;

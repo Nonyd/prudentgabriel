@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { tokenPageRateLimited } from "@/lib/page-rate-limit";
 import { PublicInvoiceView } from "@/components/invoice/PublicInvoiceView";
 import { CapabilityExpiredPage } from "@/components/public/CapabilityExpiredPage";
 import { findInvoiceByPublicToken } from "@/lib/capability-token-lookup";
@@ -10,6 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PublicInvoicePage({ params }: { params: Promise<{ token: string }> }) {
+  if (await tokenPageRateLimited("invoice-token-page")) notFound();
   const { token } = await params;
   const found = await findInvoiceByPublicToken(token);
   if (!found.ok) {

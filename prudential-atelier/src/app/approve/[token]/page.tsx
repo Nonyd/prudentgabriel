@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { tokenPageRateLimited } from "@/lib/page-rate-limit";
 import { PublicStageApprovalClient } from "@/components/public/PublicStageApprovalClient";
 import { CapabilityExpiredPage } from "@/components/public/CapabilityExpiredPage";
 import { loadPublicStageApproval } from "@/lib/public-stage-approval-payload";
@@ -14,6 +15,7 @@ export default async function PublicStageApprovalPage({
 }: {
   params: Promise<{ token: string }>;
 }) {
+  if (await tokenPageRateLimited("stage-approval-page")) notFound();
   const { token } = await params;
   const result = await loadPublicStageApproval(token);
   if (!result.ok) {

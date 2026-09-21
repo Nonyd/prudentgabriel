@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 import { respondToStageApprovalByToken } from "@/lib/atelier/stage-actions";
 import {
   loadPublicStageApproval,
@@ -8,7 +9,10 @@ import { CAPABILITY_EXPIRED_COPY } from "@/lib/capability-token";
 
 type Params = { params: Promise<{ token: string }> };
 
-export async function GET(_req: NextRequest, { params }: Params) {
+export async function GET(req: NextRequest, { params }: Params) {
+  const limited = rateLimitOr429(req, "stage-approval-view", 60, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const { token } = await params;
   const result = await loadPublicStageApproval(token);
   if (!result.ok) {
@@ -28,6 +32,9 @@ export async function GET(_req: NextRequest, { params }: Params) {
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
+  const limited = rateLimitOr429(req, "stage-approval-respond", 10, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const { token } = await params;
   let body: { decision?: string; comment?: string };
   try {

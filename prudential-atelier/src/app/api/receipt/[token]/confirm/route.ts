@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 import { auth } from "@/auth";
 import { confirmBespokeReceipt, ReceiptConfirmError } from "@/lib/bespoke-receipt";
 import {
@@ -11,7 +12,10 @@ import { CAPABILITY_EXPIRED_COPY } from "@/lib/capability-token";
 
 type Params = { params: Promise<{ token: string }> };
 
-export async function GET(_req: NextRequest, { params }: Params) {
+export async function GET(req: NextRequest, { params }: Params) {
+  const limited = rateLimitOr429(req, "receipt-token-view", 60, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const { token } = await params;
   const result = await loadPublicReceipt(token);
   if (!result.ok) {
@@ -27,7 +31,10 @@ export async function GET(_req: NextRequest, { params }: Params) {
   return NextResponse.json(payload);
 }
 
-export async function POST(_req: NextRequest, { params }: Params) {
+export async function POST(req: NextRequest, { params }: Params) {
+  const limited = rateLimitOr429(req, "receipt-token-confirm", 10, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const session = await auth();
   const { token } = await params;
   const actor =

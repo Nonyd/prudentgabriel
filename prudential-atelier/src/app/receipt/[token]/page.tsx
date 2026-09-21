@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { tokenPageRateLimited } from "@/lib/page-rate-limit";
 import { ReceiptConfirmClient } from "@/components/public/ReceiptConfirmClient";
 import { CapabilityExpiredPage } from "@/components/public/CapabilityExpiredPage";
 import { loadPublicReceipt } from "@/lib/public-receipt-payload";
@@ -14,6 +15,7 @@ export default async function ReceiptConfirmPage({
 }: {
   params: Promise<{ token: string }>;
 }) {
+  if (await tokenPageRateLimited("receipt-token-page")) notFound();
   const { token } = await params;
   const result = await loadPublicReceipt(token);
   if (!result.ok) {

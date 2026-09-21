@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 import { InvoiceStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getBankDetails, getInvoiceSettings, parseInvoiceLineItems } from "@/lib/invoice";
@@ -17,7 +18,10 @@ import { expiredInvoiceBlocksPayment, isDocumentExpired } from "@/lib/document-v
 import { findInvoiceByPublicToken } from "@/lib/capability-token-lookup";
 import { CAPABILITY_EXPIRED_COPY } from "@/lib/capability-token";
 
-export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: string }> }) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ token: string }> }) {
+  const limited = rateLimitOr429(req, "invoice-token-view", 60, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const { token } = await ctx.params;
 
   const found = await findInvoiceByPublicToken(token);

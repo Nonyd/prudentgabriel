@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 import { InvoiceStatus, PaymentGateway, PaymentMethod, PaymentPurpose, PaymentStatus } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -31,6 +32,9 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ token: string }> }) {
+  const limited = rateLimitOr429(req, "invoice-token-bank-transfer", 5, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const { token } = await ctx.params;
   let body: unknown;
   try {

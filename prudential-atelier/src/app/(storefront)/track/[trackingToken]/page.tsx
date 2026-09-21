@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+import { tokenPageRateLimited } from "@/lib/page-rate-limit";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
@@ -24,6 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function TrackOrderPage({ params }: Props) {
+  if (await tokenPageRateLimited("track-token-page")) notFound();
   const { trackingToken } = await params;
 
   const found = await findOrderByTrackingToken(trackingToken);

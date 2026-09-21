@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 import { QuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logActivity, logError } from "@/lib/logger";
@@ -21,6 +22,9 @@ import {
 type Params = { params: Promise<{ id: string }> };
 
 export async function POST(req: NextRequest, { params }: Params) {
+  const limited = rateLimitOr429(req, "quote-token-approve", 10, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const { id } = await params;
 
   let body: { approvalToken?: string };
