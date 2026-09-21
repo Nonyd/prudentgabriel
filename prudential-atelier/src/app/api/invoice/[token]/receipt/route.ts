@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { getMediaStore } from "@/lib/media";
-import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
+import { RECEIPT_HEIC_FALLBACK_MESSAGE, mimeFromMagicBytes } from "@/lib/image-upload-mime";
 import { rateLimitOr429 } from "@/lib/rate-limit";
 import { receiptRasterToJpeg } from "@/lib/receipt-raster";
 import { logServerError } from "@/lib/logger";
+import { findInvoiceByPublicToken } from "@/lib/capability-token-lookup";
+import { CAPABILITY_EXPIRED_COPY } from "@/lib/capability-token";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const FOLDER = "prudential-atelier/receipts";
@@ -18,11 +19,14 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ token: str
   if (limited) return limited;
 
   const { token } = await ctx.params;
-  const inv = await prisma.invoice.findUnique({
-    where: { publicToken: token },
-    select: { id: true },
-  });
-  if (!inv) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const found = await findInvoiceByPublicToken(token);
+  if (!found.ok) {
+    if (found.reason === "expired") {
+      return NextResponse.json({ error: CAPABILITY_EXPIRED_COPY.body }, { status: 410 });
+    }
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  const inv = { id: found.inv.id };
 
   let form: FormData;
   try {
@@ -55,10 +59,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ token: str
       storedName = fileName?.replace(/\.(heic|heif)$/i, ".jpg") ?? "receipt.jpg";
     } catch (e) {
       await logServerError({ errorType: "RECEIPT_HEIC", error: e });
-      return NextResponse.json(
-        { error: "Could not read this iPhone photo. Try saving it as a JPG, or take the photo again." },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: RECEIPT_HEIC_FALLBACK_MESSAGE }, { status: 400 });
     }
   }
 

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { PublicInvoiceView } from "@/components/invoice/PublicInvoiceView";
+import { CapabilityExpiredPage } from "@/components/public/CapabilityExpiredPage";
+import { findInvoiceByPublicToken } from "@/lib/capability-token-lookup";
 import { tokenRouteMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -8,5 +11,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PublicInvoicePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
+  const found = await findInvoiceByPublicToken(token);
+  if (!found.ok) {
+    if (found.reason === "expired") return <CapabilityExpiredPage />;
+    notFound();
+  }
   return <PublicInvoiceView token={token} />;
 }

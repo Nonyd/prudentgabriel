@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ReceiptConfirmClient } from "@/components/public/ReceiptConfirmClient";
+import { CapabilityExpiredPage } from "@/components/public/CapabilityExpiredPage";
 import { loadPublicReceipt } from "@/lib/public-receipt-payload";
 import { tokenRouteMetadata } from "@/lib/seo";
 
@@ -14,12 +15,15 @@ export default async function ReceiptConfirmPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  const view = await loadPublicReceipt(token);
-  if (!view) notFound();
+  const result = await loadPublicReceipt(token);
+  if (!result.ok) {
+    if (result.reason === "expired") return <CapabilityExpiredPage />;
+    notFound();
+  }
 
   return (
     <main className="min-h-screen bg-ivory">
-      <ReceiptConfirmClient token={token} view={view} />
+      <ReceiptConfirmClient token={token} view={result.payload} />
     </main>
   );
 }

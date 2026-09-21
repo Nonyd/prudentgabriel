@@ -6,6 +6,8 @@ import { isQuotationEditable } from "@/lib/quotation-versioning";
 import { logActivity, logError } from "@/lib/logger";
 import { clampDepositPercent } from "@/lib/invoice-deposit";
 import { parseDateInput } from "@/lib/document-validity";
+import { ensureQuoteApprovalRaw } from "@/lib/capability-token-lookup";
+import { getPublicAppUrl } from "@/lib/app-url";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -53,6 +55,10 @@ export async function GET(_req: NextRequest, { params }: Params) {
     });
     if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+    const approvalRaw = await ensureQuoteApprovalRaw(item);
+    const base = getPublicAppUrl().replace(/\/+$/, "");
+    const approvalUrl = `${base}/quote/${approvalRaw}`;
+
     const history = await prisma.quotation.findMany({
       where: { baseQuoteRef: item.baseQuoteRef },
       orderBy: { version: "asc" },
@@ -91,7 +97,10 @@ export async function GET(_req: NextRequest, { params }: Params) {
       };
     });
 
-    return NextResponse.json({ item, versionHistory });
+    return NextResponse.json({
+      item: { ...item, approvalToken: approvalRaw, approvalUrl },
+      versionHistory,
+    });
   } catch (e) {
     await logError({
       severity: "WARNING",

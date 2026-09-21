@@ -28,6 +28,16 @@ import {
   type StageGateResult,
 } from "@/lib/atelier/can-complete-stage";
 import { getStageRequirement } from "@/lib/atelier/stage-requirements";
+import {
+  CAPABILITY_TTL_MS,
+  CAPABILITY_EXPIRED_COPY,
+  generateCapabilityToken,
+} from "@/lib/capability-token";
+import {
+  ensureReceiptConfirmRaw,
+  ensureTrackingRaw,
+  findStageApprovalByPublicToken,
+} from "@/lib/capability-token-lookup";
 
 export type StageActionActor = StageGateActor & {
   email?: string | null;
@@ -102,6 +112,7 @@ export async function completeOrderStage(params: {
       clientEmail: true,
       clientProfileId: true,
       trackingToken: true,
+      trackingTokenEnc: true,
       deliveryDate: true,
     },
   });
@@ -221,13 +232,40 @@ export async function completeOrderStage(params: {
   const refreshed = isDeliveryComplete
     ? await prisma.bespokeOrder.findUnique({
         where: { id: order.id },
-        select: { receiptConfirmToken: true },
+        select: {
+          id: true,
+          receiptConfirmToken: true,
+          receiptConfirmTokenEnc: true,
+          receiptConfirmTokenExpiresAt: true,
+        },
       })
     : null;
 
+  const trackingRaw = await ensureTrackingRaw({
+    id: order.id,
+    trackingToken: order.trackingToken,
+    trackingTokenEnc: order.trackingTokenEnc,
+  });
+
   if (isDeliveryComplete && refreshed?.receiptConfirmToken) {
+    const expiresAt =
+      refreshed.receiptConfirmTokenExpiresAt ??
+      new Date(Date.now() + CAPABILITY_TTL_MS.receiptConfirm);
+    if (!refreshed.receiptConfirmTokenExpiresAt) {
+      await prisma.bespokeOrder.update({
+        where: { id: refreshed.id },
+        data: { receiptConfirmTokenExpiresAt: expiresAt },
+      });
+    }
+
+    const receiptRaw = await ensureReceiptConfirmRaw({
+      id: refreshed.id,
+      receiptConfirmToken: refreshed.receiptConfirmToken,
+      receiptConfirmTokenEnc: refreshed.receiptConfirmTokenEnc,
+      receiptConfirmTokenExpiresAt: expiresAt,
+    });
     const base = getPublicAppUrl().replace(/\/+$/, "");
-    const confirmUrl = `${base}/receipt/${refreshed.receiptConfirmToken}`;
+    const confirmUrl = `${base}/receipt/${receiptRaw}`;
     const accountUrl = `${base}/account/orders/bespoke/${order.id}`;
     try {
       await sendBespokeDeliveredEmail({
@@ -252,7 +290,7 @@ export async function completeOrderStage(params: {
       notes,
       images,
       videos,
-      trackingToken: order.trackingToken,
+      trackingToken: trackingRaw,
       deliveryDate: order.deliveryDate,
     });
 
@@ -292,7 +330,7 @@ export async function completeOrderStage(params: {
     orderId: order.id,
     orderRef: order.orderRef,
     stage,
-    trackingToken: order.trackingToken,
+    trackingToken: trackingRaw,
     clientProfileId: order.clientProfileId,
     clientEmail: order.clientEmail,
   });
@@ -478,16 +516,20 @@ export async function requestStageApproval(params: {
     return { ok: true, approvalId: existingPending.id, approval: existingPending };
   }
 
+  const stageTok = generateCapabilityToken();
   const approval = await prisma.stageApproval.create({
     data: {
       orderId: order.id,
       stage: order.currentStage,
       status: StageApprovalStatus.PENDING,
       requestedById: params.actor.id,
+      publicToken: stageTok.hash,
+      publicTokenEnc: stageTok.enc,
+      publicTokenExpiresAt: new Date(Date.now() + CAPABILITY_TTL_MS.stageApproval),
     },
   });
 
-  const approveUrl = stageApprovalPublicUrl(approval.publicToken);
+  const approveUrl = stageApprovalPublicUrl(stageTok.raw);
   const media = await prisma.orderStageMedia.findMany({
     where: { orderId: order.id, stage: order.currentStage },
     orderBy: { createdAt: "asc" },
@@ -682,8 +724,16 @@ export async function respondToStageApprovalByToken(params: {
   decision: "APPROVED" | "CHANGES_REQUESTED";
   comment?: string | null;
 }): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  const found = await findStageApprovalByPublicToken(params.publicToken);
+  if (!found.ok) {
+    if (found.reason === "expired") {
+      return { ok: false, status: 410, error: CAPABILITY_EXPIRED_COPY.body };
+    }
+    return { ok: false, status: 404, error: "Approval not found." };
+  }
+
   const approval = await prisma.stageApproval.findUnique({
-    where: { publicToken: params.publicToken },
+    where: { id: found.approval.id },
     include: { order: { select: STAGE_APPROVAL_ORDER_SELECT } },
   });
   if (!approval) return { ok: false, status: 404, error: "Approval not found." };

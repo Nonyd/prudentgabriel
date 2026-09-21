@@ -8,6 +8,7 @@ import { calculateInvoiceTotals, parseInvoiceLineItems, syncLineItemAmounts } fr
 import { clampDepositPercent } from "@/lib/invoice-deposit";
 import { parseDateInput } from "@/lib/document-validity";
 import type { InvoiceLineItem } from "@/types/invoice";
+import { ensureInvoicePublicRaw } from "@/lib/capability-token-lookup";
 
 const lineItemInput = z.object({
   id: z.string().optional(),
@@ -57,6 +58,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   });
   if (!inv) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  const publicTokenRaw = await ensureInvoicePublicRaw(inv);
+
   if (
     inv.dueDate &&
     inv.balanceDue > 0 &&
@@ -70,10 +73,10 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
         bespokeRequest: { select: { id: true, requestNumber: true, occasion: true, status: true } },
       },
     });
-    return NextResponse.json(upd);
+    return NextResponse.json({ ...upd, publicToken: publicTokenRaw });
   }
 
-  return NextResponse.json(inv);
+  return NextResponse.json({ ...inv, publicToken: publicTokenRaw });
 }
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {

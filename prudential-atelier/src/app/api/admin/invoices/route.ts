@@ -17,6 +17,10 @@ import { getSetting } from "@/lib/settings";
 import { mapBespokeOrdersByRequestId, mapBespokeOrdersByClientEmail } from "@/lib/invoice-bespoke-order";
 import { roundToKobo } from "@/lib/money";
 import type { InvoiceLineItem } from "@/types/invoice";
+import {
+  generateCapabilityToken,
+  invoiceCapabilityExpiresAt,
+} from "@/lib/capability-token";
 
 const lineItemInput = z.object({
   id: z.string().optional(),
@@ -319,6 +323,7 @@ export async function POST(req: NextRequest) {
   const validityDays = await getInvoiceDefaultValidityDays();
   const expiresAt = d.expiresAt ? parseDateInput(d.expiresAt) : defaultExpiresAt(new Date(), validityDays);
 
+  const tok = generateCapabilityToken();
   const created = await prisma.$transaction(async (tx) => {
     const number = await generateInvoiceNumber(tx);
     return tx.invoice.create({
@@ -358,6 +363,12 @@ export async function POST(req: NextRequest) {
         showRcNumber: d.showRcNumber ?? false,
         paymentHistory: [],
         createdBy: gate.session.user?.id ?? null,
+        publicToken: tok.hash,
+        publicTokenEnc: tok.enc,
+        publicTokenExpiresAt: invoiceCapabilityExpiresAt({
+          documentExpiresAt: expiresAt,
+          paidAt: null,
+        }),
       },
       include: {
         bespokeRequest: { select: { id: true, requestNumber: true, occasion: true } },

@@ -2,6 +2,8 @@ import { QuoteStatus, type Quotation, type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { allocateQuotationBaseRef, formatQuotationRef } from "@/lib/document-numbers";
 import { logActivity } from "@/lib/logger";
+import { generateCapabilityToken } from "@/lib/capability-token";
+import { quotationApprovalExpiresAt } from "@/lib/capability-token-lookup";
 
 export async function findLatestQuotationVersion(baseQuoteRef: string) {
   return prisma.quotation.findFirst({
@@ -56,6 +58,7 @@ export async function reviseQuotation(params: {
       data: { status: QuoteStatus.SUPERSEDED },
     });
 
+    const approval = generateCapabilityToken();
     return tx.quotation.create({
       data: {
         quoteRef,
@@ -78,6 +81,9 @@ export async function reviseQuotation(params: {
         createdBy: params.actor.id,
         revisedBy: params.actor.id,
         currency: existing.currency,
+        approvalToken: approval.hash,
+        approvalTokenEnc: approval.enc,
+        approvalTokenExpiresAt: quotationApprovalExpiresAt(existing.expiresAt),
       },
     });
   });

@@ -7,6 +7,7 @@ import { sendWelcomeCredentialsEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { rtwOrderSuccessPath } from "@/lib/atelier-storefront";
 import { generateTempPassword } from "@/lib/temp-password";
+import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
 
 export type OnboardSource = "CONSULTATION" | "RTW_ORDER" | "BESPOKE_ORDER";
 
@@ -127,7 +128,12 @@ export async function autoOnboardClient(params: {
           })
         : await prisma.bespokeOrder.findUnique({
             where: { id: params.sourceId },
-            select: { trackingToken: true },
+            select: {
+              id: true,
+              trackingToken: true,
+              trackingTokenEnc: true,
+              trackingTokenExpiresAt: true,
+            },
           });
 
   let trackUrl = `${getPublicAppUrl()}/account`;
@@ -136,7 +142,8 @@ export async function autoOnboardClient(params: {
   } else if (params.source === "CONSULTATION" && trackToken && "bookingNumber" in trackToken) {
     trackUrl = `${getPublicAppUrl()}/consultation/${encodeURIComponent(trackToken.bookingNumber)}`;
   } else if (params.source === "BESPOKE_ORDER" && trackToken && "trackingToken" in trackToken) {
-    trackUrl = `${getPublicAppUrl()}/track/${encodeURIComponent(trackToken.trackingToken)}`;
+    const raw = await ensureTrackingRaw(trackToken);
+    trackUrl = `${getPublicAppUrl()}/track/${encodeURIComponent(raw)}`;
   }
 
   void sendWelcomeCredentialsEmail({

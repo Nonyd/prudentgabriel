@@ -8,6 +8,8 @@ import { clampDepositPercent } from "@/lib/invoice-deposit";
 import { defaultExpiresAt, parseDateInput } from "@/lib/document-validity";
 import { getInvoiceDefaultValidityDays } from "@/lib/invoice";
 import { getBespokeDepositPercent } from "@/lib/payments/ledger";
+import { generateCapabilityToken } from "@/lib/capability-token";
+import { quotationApprovalExpiresAt } from "@/lib/capability-token-lookup";
 
 export type QuoteLineItem = {
   description: string;
@@ -151,6 +153,7 @@ export async function POST(req: NextRequest) {
     const item = await prisma.$transaction(async (tx) => {
       const baseQuoteRef = await allocateQuotationBaseRef(tx);
       const quoteRef = formatQuotationRef(baseQuoteRef, 1);
+      const approval = generateCapabilityToken();
       return tx.quotation.create({
         data: {
           quoteRef,
@@ -173,6 +176,9 @@ export async function POST(req: NextRequest) {
             typeof body.currency === "string" && ["NGN", "USD", "GBP", "EUR"].includes(body.currency)
               ? body.currency
               : "NGN",
+          approvalToken: approval.hash,
+          approvalTokenEnc: approval.enc,
+          approvalTokenExpiresAt: quotationApprovalExpiresAt(expiresAt),
         },
       });
     });

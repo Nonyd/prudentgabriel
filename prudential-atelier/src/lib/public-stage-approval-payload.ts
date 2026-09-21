@@ -1,6 +1,7 @@
 import { StageApprovalStatus, type StageMediaKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
+import { findStageApprovalByPublicToken } from "@/lib/capability-token-lookup";
 
 /** Public stage-approval DTO — the stage, atelier notes, photographs. No client record. */
 export type PublicStageApprovalPayload = {
@@ -26,16 +27,24 @@ export function publicStageApprovalOmitsClientRecord(payload: Record<string, unk
   return forbidden.every((key) => !(key in payload) || payload[key] == null);
 }
 
-export async function loadPublicStageApproval(token: string): Promise<PublicStageApprovalPayload | null> {
+export async function loadPublicStageApproval(
+  token: string,
+): Promise<
+  | { ok: true; payload: PublicStageApprovalPayload }
+  | { ok: false; reason: "missing" | "expired" }
+> {
+  const found = await findStageApprovalByPublicToken(token);
+  if (!found.ok) return { ok: false, reason: found.reason };
+
   const approval = await prisma.stageApproval.findUnique({
-    where: { publicToken: token },
+    where: { id: found.approval.id },
     select: {
       stage: true,
       status: true,
       order: { select: { id: true, orderRef: true } },
     },
   });
-  if (!approval) return null;
+  if (!approval) return { ok: false, reason: "missing" };
 
   const [draft, media] = await Promise.all([
     prisma.orderStageDraft.findUnique({
@@ -58,5 +67,5 @@ export async function loadPublicStageApproval(token: string): Promise<PublicStag
     status: approval.status,
   };
 
-  return payload;
+  return { ok: true, payload };
 }

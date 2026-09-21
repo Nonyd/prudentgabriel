@@ -20,6 +20,7 @@ import {
 import { rtwHasOutstandingBalance } from "@/lib/payments/rtw-totals";
 import { generatePaymentReference } from "@/lib/payments/index";
 import { feeShortfallWithinTolerance, resolveBankAccount, type BusinessLineCode } from "@/lib/payments/bank-account";
+import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
 
 function parsePaymentId(
   id: string,
@@ -295,25 +296,28 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     receiptUrl: bespoke.paymentReceiptUrl,
   });
 
+  const trackingRaw = await ensureTrackingRaw(bespoke);
+  const trackPath = `${appUrl}/track/${encodeURIComponent(trackingRaw)}`;
+
   void sendPaymentConfirmedEmail({
     to: bespoke.clientEmail,
     ref: bespoke.orderRef,
     amountNGN: payAmount,
     kind: "bespoke",
-    trackUrl: `${appUrl}/track/${encodeURIComponent(bespoke.trackingToken)}`,
+    trackUrl: trackPath,
   });
   notifyPaymentConfirmed({
     userId: null,
     clientEmail: bespoke.clientEmail,
     ref: bespoke.orderRef,
-    link: `${appUrl}/track/${encodeURIComponent(bespoke.trackingToken)}`,
+    link: trackPath,
     entityId: bespoke.id,
   });
   notifyBankTransferConfirmed({
     userId: null,
     clientEmail: bespoke.clientEmail,
     ref: bespoke.orderRef,
-    link: `${appUrl}/track/${encodeURIComponent(bespoke.trackingToken)}`,
+    link: trackPath,
     entityId: bespoke.id,
   });
   void logActivity({

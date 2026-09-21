@@ -4,14 +4,21 @@ import {
   loadPublicStageApproval,
   publicStageApprovalOmitsClientRecord,
 } from "@/lib/public-stage-approval-payload";
+import { CAPABILITY_EXPIRED_COPY } from "@/lib/capability-token";
 
 type Params = { params: Promise<{ token: string }> };
 
 export async function GET(_req: NextRequest, { params }: Params) {
   const { token } = await params;
-  const payload = await loadPublicStageApproval(token);
-  if (!payload) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const result = await loadPublicStageApproval(token);
+  if (!result.ok) {
+    if (result.reason === "expired") {
+      return NextResponse.json({ error: CAPABILITY_EXPIRED_COPY.body }, { status: 410 });
+    }
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 
+  const payload = result.payload;
   const body = payload as unknown as Record<string, unknown>;
   if (!publicStageApprovalOmitsClientRecord(body)) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });

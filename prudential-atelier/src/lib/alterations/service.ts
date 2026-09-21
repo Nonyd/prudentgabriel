@@ -15,6 +15,11 @@ import {
 } from "@/lib/alterations/policy";
 import { allocateQuotationBaseRef, formatQuotationRef } from "@/lib/document-numbers";
 import { maybeArchiveBespokeOrder } from "@/lib/bespoke-archive";
+import { generateCapabilityToken } from "@/lib/capability-token";
+import {
+  findOrderByReceiptToken,
+  quotationApprovalExpiresAt,
+} from "@/lib/capability-token-lookup";
 
 export async function createAlterationRequest(params: {
   orderId: string;
@@ -70,11 +75,12 @@ export async function createAlterationRequestByReceiptToken(params: {
   reason: AlterationReason;
   media?: string[];
 }) {
-  const order = await prisma.bespokeOrder.findUnique({
-    where: { receiptConfirmToken: params.token },
-    select: { id: true, clientProfileId: true },
-  });
-  if (!order) throw new Error("NOT_FOUND");
+  const found = await findOrderByReceiptToken(params.token);
+  if (!found.ok) {
+    if (found.reason === "expired") throw new Error("TOKEN_EXPIRED");
+    throw new Error("NOT_FOUND");
+  }
+  const order = found.order;
   if (!order.clientProfileId) throw new Error("NO_PROFILE");
   const profile = await prisma.clientProfile.findUnique({
     where: { id: order.clientProfileId },
@@ -169,6 +175,7 @@ export async function triageAlterationRequest(params: {
   const result = await prisma.$transaction(async (tx) => {
     const baseQuoteRef = await allocateQuotationBaseRef(tx);
     const quoteRef = formatQuotationRef(baseQuoteRef, 1);
+    const approval = generateCapabilityToken();
     const quote = await tx.quotation.create({
       data: {
         quoteRef,
@@ -185,6 +192,9 @@ export async function triageAlterationRequest(params: {
         notes: `Alteration for ${row.order.orderRef}: ${row.description.slice(0, 500)}`,
         status: QuoteStatus.DRAFT,
         createdBy: params.actorId,
+        approvalToken: approval.hash,
+        approvalTokenEnc: approval.enc,
+        approvalTokenExpiresAt: quotationApprovalExpiresAt(null),
       },
     });
     const updated = await tx.alterationRequest.update({

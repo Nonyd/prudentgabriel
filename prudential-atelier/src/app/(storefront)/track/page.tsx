@@ -6,6 +6,7 @@ import { TrackSearchForm } from "@/components/track/TrackSearchForm";
 import { cmsGet, getCMSContent } from "@/lib/cms";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { tokenRouteMetadata } from "@/lib/seo";
+import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
 
 export const dynamic = "force-dynamic";
 
@@ -36,9 +37,17 @@ export default async function TrackLandingPage({ searchParams }: Props) {
     }
     const order = await prisma.bespokeOrder.findFirst({
       where: { orderRef: { equals: ref.trim(), mode: "insensitive" } },
-      select: { trackingToken: true },
+      select: {
+        id: true,
+        trackingToken: true,
+        trackingTokenEnc: true,
+        trackingTokenExpiresAt: true,
+      },
     });
-    if (order) redirect(`/track/${order.trackingToken}`);
+    if (order) {
+      const raw = await ensureTrackingRaw(order);
+      redirect(`/track/${raw}`);
+    }
     return <TrackSearchForm notFound {...trackProps} />;
   }
 

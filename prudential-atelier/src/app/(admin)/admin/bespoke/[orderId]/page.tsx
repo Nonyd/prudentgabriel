@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { BespokeOrderDetailClient } from "@/components/admin/BespokeOrderDetailClient";
 import { stageGateInclude } from "@/lib/atelier/can-complete-stage";
 import { maybeArchiveBespokeOrder } from "@/lib/bespoke-archive";
+import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
+import { getPublicAppUrl } from "@/lib/app-url";
 
 export default async function AdminBespokeOrderPage({
   params,
@@ -43,7 +45,8 @@ export default async function AdminBespokeOrderPage({
   });
 
   const session = await auth();
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://prudentgabriel.com";
+  const baseUrl = getPublicAppUrl().replace(/\/+$/, "");
+  const trackingRaw = await ensureTrackingRaw(order);
 
   return (
     <BespokeOrderDetailClient
@@ -57,7 +60,7 @@ export default async function AdminBespokeOrderPage({
         department: s.department,
         activeOrders: s.assignments.length,
       }))}
-      trackingUrl={`${baseUrl}/track/${order.trackingToken}`}
+      trackingUrl={`${baseUrl}/track/${trackingRaw}`}
     />
   );
 }

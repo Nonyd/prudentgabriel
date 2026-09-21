@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { buildInvoicePdfModel } from "@/lib/invoice-pdf-data";
 import { renderInvoicePdfBuffer } from "@/lib/render-invoice-pdf";
+import { findInvoiceByPublicToken } from "@/lib/capability-token-lookup";
+import { CAPABILITY_EXPIRED_COPY } from "@/lib/capability-token";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: string }> }) {
   const { token } = await ctx.params;
 
-  const inv = await prisma.invoice.findUnique({ where: { publicToken: token } });
-  if (!inv) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const found = await findInvoiceByPublicToken(token);
+  if (!found.ok) {
+    if (found.reason === "expired") {
+      return NextResponse.json({ error: CAPABILITY_EXPIRED_COPY.body }, { status: 410 });
+    }
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  const inv = found.inv;
 
   const model = await buildInvoicePdfModel(inv);
   const buf = await renderInvoicePdfBuffer(model);

@@ -9,6 +9,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { syncIntakeStageNotes } from "@/lib/atelier/intake-notes-sync";
 import { getOrderPaymentSummary } from "@/lib/payments/ledger";
 import type { InvoiceCurrency } from "@/types/invoice";
+import { ensureInvoicePublicRaw } from "@/lib/capability-token-lookup";
 
 function asCurrency(c: string): InvoiceCurrency {
   if (c === "USD" || c === "GBP" || c === "EUR") return c;
@@ -26,7 +27,8 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
   const cur = asCurrency(inv.currency);
   const business = await getInvoiceSettings();
   const base = getPublicAppUrl().replace(/\/+$/, "");
-  const publicLink = `${base}/invoice/${inv.publicToken}`;
+  const publicTokenRaw = await ensureInvoicePublicRaw(inv);
+  const publicLink = `${base}/invoice/${publicTokenRaw}`;
 
   await sendInvoiceEmail({
     to: inv.clientEmail,
@@ -55,7 +57,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     clientEmail: inv.clientEmail,
     invoiceId: inv.id,
     invoiceNumber: inv.invoiceNumber,
-    publicToken: inv.publicToken,
+    publicToken: publicTokenRaw,
   });
 
   if (inv.quotationId) {

@@ -16,6 +16,7 @@ import { formatBespokeBook } from "@/lib/atelier-fx";
 import { liveCompletionStages, stageHistoryForLiveCompletions } from "@/lib/atelier/live-stages";
 import { isBespokeCommissionActive } from "@/lib/bespoke-archive";
 import { getAlterationWarrantyDays } from "@/lib/alterations/policy";
+import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
 
 const BUDGET_RANGES: Record<string, [number, number]> = {
   "₦50k–₦150k": [50000, 150000],
@@ -149,6 +150,7 @@ export default async function AccountDashboardPage() {
   const activeBespoke = activeBespokeRaw
     ? {
         ...activeBespokeRaw,
+        trackingToken: await ensureTrackingRaw(activeBespokeRaw),
         stageHistory: stageHistoryForLiveCompletions(
           activeBespokeRaw.stageHistory,
           liveCompletionStages(activeBespokeRaw.stageCompletions),

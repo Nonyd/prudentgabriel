@@ -6,6 +6,8 @@ import {
   alterationWindowClosesAt,
   getAlterationWarrantyDays,
 } from "@/lib/alterations/policy";
+import { findOrderByReceiptToken } from "@/lib/capability-token-lookup";
+import { CAPABILITY_EXPIRED_COPY } from "@/lib/capability-token";
 
 export class ReceiptConfirmError extends Error {
   constructor(
@@ -42,11 +44,21 @@ export async function confirmBespokeReceipt(params: {
     throw new ReceiptConfirmError("Only the client can confirm receipt", 403);
   }
 
-  const order = params.token
-    ? await prisma.bespokeOrder.findUnique({ where: { receiptConfirmToken: params.token } })
-    : params.orderId
+  let order =
+    params.orderId && !params.token
       ? await prisma.bespokeOrder.findUnique({ where: { id: params.orderId } })
       : null;
+
+  if (params.token) {
+    const found = await findOrderByReceiptToken(params.token);
+    if (!found.ok) {
+      if (found.reason === "expired") {
+        throw new ReceiptConfirmError(CAPABILITY_EXPIRED_COPY.body, 410);
+      }
+      throw new ReceiptConfirmError("Order not found", 404);
+    }
+    order = found.order;
+  }
 
   if (!order) throw new ReceiptConfirmError("Order not found", 404);
 

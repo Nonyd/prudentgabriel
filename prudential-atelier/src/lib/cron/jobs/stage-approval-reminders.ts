@@ -6,6 +6,7 @@ import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { sendStageApprovalReminderEmail } from "@/lib/email";
 import { createClientNotification, resolveUserIdByEmail } from "@/lib/customer-notifications";
 import { logServerError } from "@/lib/logger";
+import { ensureStageApprovalRaw } from "@/lib/capability-token-lookup";
 
 const SEVENTY_TWO_HOURS_MS = 72 * 60 * 60 * 1000;
 
@@ -43,7 +44,8 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
       break;
     }
     try {
-      const approveUrl = `${appUrl}/approve/${row.publicToken}`;
+      const approveRaw = await ensureStageApprovalRaw(row);
+      const approveUrl = `${appUrl}/approve/${approveRaw}`;
       await sendStageApprovalReminderEmail({
         to: row.order.clientEmail,
         clientName: row.order.clientName,

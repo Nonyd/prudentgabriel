@@ -221,10 +221,10 @@ async function runDb() {
 
   try {
     const payload = await loadPublicReceipt(order.receiptConfirmToken);
-    assert(payload, "public receipt payload loads");
-    assert(publicReceiptOmitsClientRecord(payload as unknown as Record<string, unknown>), "DTO omits client record");
-    assert(!("clientName" in payload!), "no clientName on public receipt");
-    assert(payload!.orderRef === order.orderRef, "orderRef present");
+    assert(payload.ok, "public receipt payload loads");
+    assert(publicReceiptOmitsClientRecord(payload.payload as unknown as Record<string, unknown>), "DTO omits client record");
+    assert(!("clientName" in payload.payload), "no clientName on public receipt");
+    assert(payload.payload.orderRef === order.orderRef, "orderRef present");
 
     const result = await confirmBespokeReceipt({ token: order.receiptConfirmToken });
     assert(result.orderRef === order.orderRef, "token confirm with no session");

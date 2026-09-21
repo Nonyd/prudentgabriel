@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { InvoiceDetailAdmin } from "@/components/admin/InvoiceDetailAdmin";
 import { getBespokeOrderForInvoice } from "@/lib/invoice-bespoke-order";
+import { ensureInvoicePublicRaw } from "@/lib/capability-token-lookup";
 
 export default async function AdminInvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,9 +20,11 @@ export default async function AdminInvoiceDetailPage({ params }: { params: Promi
     clientEmail: inv.clientEmail,
   });
 
+  const publicTokenRaw = await ensureInvoicePublicRaw(inv);
+
   return (
     <InvoiceDetailAdmin
-      initial={JSON.parse(JSON.stringify({ ...inv, bespokeOrder }))}
+      initial={JSON.parse(JSON.stringify({ ...inv, publicToken: publicTokenRaw, bespokeOrder }))}
     />
   );
 }

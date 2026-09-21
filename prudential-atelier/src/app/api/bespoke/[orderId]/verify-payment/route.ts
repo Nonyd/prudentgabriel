@@ -11,6 +11,7 @@ import { parseBespokePaymentRef } from "@/lib/bespoke-order-access";
 import { sendPaymentConfirmedEmail } from "@/lib/email";
 import { logActivity } from "@/lib/logger";
 import { getStripeSecret } from "@/lib/payments/config";
+import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
 
 function redirectSuccess(appUrl: string, orderId: string, reference: string) {
   return NextResponse.redirect(
@@ -46,7 +47,7 @@ async function completeBespokePayment(params: {
     ref: order.orderRef,
     amountNGN: params.amountNGN,
     kind: "bespoke",
-    trackUrl: `${getPublicAppUrl()}/track/${encodeURIComponent(order.trackingToken)}`,
+    trackUrl: `${getPublicAppUrl()}/track/${encodeURIComponent(await ensureTrackingRaw(order))}`,
   });
   void logActivity({
     action: "PAYMENT_CONFIRM",

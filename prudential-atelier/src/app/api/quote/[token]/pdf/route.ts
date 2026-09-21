@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { buildQuotationPdfModel } from "@/lib/quotation-pdf-data";
 import { renderQuotationPdfBuffer } from "@/lib/render-quotation-pdf";
+import { findQuotationByApprovalToken } from "@/lib/capability-token-lookup";
+import { CAPABILITY_EXPIRED_COPY } from "@/lib/capability-token";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: string }> }) {
   const { token } = await ctx.params;
 
-  const quote = await prisma.quotation.findUnique({ where: { approvalToken: token } });
-  if (!quote) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const found = await findQuotationByApprovalToken(token);
+  if (!found.ok) {
+    if (found.reason === "expired") {
+      return NextResponse.json({ error: CAPABILITY_EXPIRED_COPY.body }, { status: 410 });
+    }
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  const quote = found.quote;
 
   const model = await buildQuotationPdfModel(quote);
   const buf = await renderQuotationPdfBuffer(model);

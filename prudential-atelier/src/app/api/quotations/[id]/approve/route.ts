@@ -9,6 +9,14 @@ import { findLatestQuotationVersion } from "@/lib/quotation-versioning";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { getSetting } from "@/lib/settings";
 import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
+import {
+  ensureQuoteApprovalRaw,
+} from "@/lib/capability-token-lookup";
+import {
+  CAPABILITY_EXPIRED_COPY,
+  assertCapabilityNotExpired,
+  capabilityLookupKey,
+} from "@/lib/capability-token";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -29,22 +37,31 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   try {
     const quote = await prisma.quotation.findFirst({
-      where: { id, approvalToken },
+      where: { id, approvalToken: capabilityLookupKey(approvalToken) },
     });
 
     if (!quote) {
       return NextResponse.json({ error: "Quotation not found" }, { status: 404 });
     }
 
+    if (assertCapabilityNotExpired(quote.approvalTokenExpiresAt) === "expired") {
+      return NextResponse.json({ error: CAPABILITY_EXPIRED_COPY.body }, { status: 410 });
+    }
+
     if (quote.status === QuoteStatus.SUPERSEDED) {
       const latest = await findLatestQuotationVersion(quote.baseQuoteRef);
       const base = getPublicAppUrl().replace(/\/+$/, "");
+      let latestApprovalUrl: string | null = null;
+      if (latest) {
+        const raw = await ensureQuoteApprovalRaw(latest);
+        latestApprovalUrl = `${base}/quote/${raw}`;
+      }
       return NextResponse.json(
         {
           error: "This quotation has been superseded by a newer version.",
           superseded: true,
           latestQuoteRef: latest?.quoteRef ?? null,
-          latestApprovalUrl: latest ? `${base}/quote/${latest.approvalToken}` : null,
+          latestApprovalUrl,
         },
         { status: 409 },
       );

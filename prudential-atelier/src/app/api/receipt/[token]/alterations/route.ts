@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AlterationReason } from "@prisma/client";
 import { createAlterationRequestByReceiptToken } from "@/lib/alterations/service";
+import { CAPABILITY_EXPIRED_COPY } from "@/lib/capability-token";
 import { z } from "zod";
 
 type Params = { params: Promise<{ token: string }> };
@@ -27,6 +28,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     const msg = e instanceof Error ? e.message : "ERROR";
     const map: Record<string, number> = {
       NOT_FOUND: 404,
+      TOKEN_EXPIRED: 410,
       ARCHIVED: 400,
       NOT_DELIVERED: 400,
       RECEIPT_REQUIRED: 400,
@@ -34,6 +36,9 @@ export async function POST(req: NextRequest, { params }: Params) {
       NO_PROFILE: 400,
       FORBIDDEN: 403,
     };
-    return NextResponse.json({ error: msg }, { status: map[msg] ?? 500 });
+    const status = map[msg] ?? 500;
+    const error =
+      msg === "TOKEN_EXPIRED" ? CAPABILITY_EXPIRED_COPY.body : msg;
+    return NextResponse.json({ error }, { status });
   }
 }

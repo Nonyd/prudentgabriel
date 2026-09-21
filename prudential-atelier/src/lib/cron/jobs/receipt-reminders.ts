@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { sendReceiptReminderEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { createClientNotification, resolveUserIdByEmail } from "@/lib/customer-notifications";
+import { ensureReceiptConfirmRaw } from "@/lib/capability-token-lookup";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -31,7 +32,8 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
       break;
     }
     try {
-      const confirmUrl = `${base}/receipt/${order.receiptConfirmToken}`;
+      const receiptRaw = await ensureReceiptConfirmRaw(order);
+      const confirmUrl = `${base}/receipt/${receiptRaw}`;
       const firstName = order.clientName.split(/\s+/)[0] ?? order.clientName;
       await sendReceiptReminderEmail({
         to: order.clientEmail,

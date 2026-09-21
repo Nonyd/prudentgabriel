@@ -1,10 +1,10 @@
 import { OrderStatus } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
 import {
   alterationWindowClosesAt,
   getAlterationWarrantyDays,
   isAlterationWindowOpen,
 } from "@/lib/alterations/policy";
+import { findOrderByReceiptToken } from "@/lib/capability-token-lookup";
 
 /** Public receipt DTO — the commission, delivery, window. No client record. */
 export type PublicReceiptPayload = {
@@ -31,18 +31,16 @@ export function publicReceiptOmitsClientRecord(payload: Record<string, unknown>)
   return forbidden.every((key) => !(key in payload) || payload[key] == null);
 }
 
-export async function loadPublicReceipt(token: string): Promise<PublicReceiptPayload | null> {
-  const order = await prisma.bespokeOrder.findUnique({
-    where: { receiptConfirmToken: token },
-    select: {
-      orderRef: true,
-      status: true,
-      deliveredAt: true,
-      receiptConfirmedAt: true,
-    },
-  });
-  if (!order) return null;
+export async function loadPublicReceipt(
+  token: string,
+): Promise<
+  | { ok: true; payload: PublicReceiptPayload }
+  | { ok: false; reason: "missing" | "expired" }
+> {
+  const found = await findOrderByReceiptToken(token);
+  if (!found.ok) return { ok: false, reason: found.reason };
 
+  const order = found.order;
   const warrantyDays = await getAlterationWarrantyDays();
   const warrantyEndsAt = order.receiptConfirmedAt
     ? alterationWindowClosesAt(order.receiptConfirmedAt, warrantyDays)
@@ -61,5 +59,5 @@ export async function loadPublicReceipt(token: string): Promise<PublicReceiptPay
     windowOpen,
     archived: order.status === OrderStatus.ARCHIVED,
   };
-  return payload;
+  return { ok: true, payload };
 }

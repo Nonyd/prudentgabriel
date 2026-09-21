@@ -229,12 +229,12 @@ async function runToken() {
 
   try {
     const payload = await loadPublicStageApproval(approval.publicToken);
-    assert(payload, "public token loads a payload");
-    assert(publicStageApprovalOmitsClientRecord(payload as unknown as Record<string, unknown>), "public DTO has no client record");
-    assert(!("clientEmail" in (payload as object)), "payload object has no clientEmail key");
-    assert(payload!.orderRef === order.orderRef, "payload shows the commission ref");
-    assert(payload!.media.length === 1, "payload includes the photograph");
-    assert(payload!.notes?.includes("Final fitting"), "payload includes atelier notes");
+    assert(payload.ok, "public token loads a payload");
+    assert(publicStageApprovalOmitsClientRecord(payload.payload as unknown as Record<string, unknown>), "public DTO has no client record");
+    assert(!("clientEmail" in (payload.payload as object)), "payload object has no clientEmail key");
+    assert(payload.payload.orderRef === order.orderRef, "payload shows the commission ref");
+    assert(payload.payload.media.length === 1, "payload includes the photograph");
+    assert(payload.payload.notes?.includes("Final fitting"), "payload includes atelier notes");
 
     const result = await respondToStageApprovalByToken({
       publicToken: approval.publicToken,

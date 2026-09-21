@@ -6,6 +6,8 @@ import { initializeBespokeGatewayPayment } from "@/lib/atelier-payment";
 import { remainingDepositNGN } from "@/lib/atelier-fx";
 import { getOrderPaymentSummary, toNumber } from "@/lib/payments/ledger";
 import { roundToKobo } from "@/lib/money";
+import { findInvoiceByPublicToken } from "@/lib/capability-token-lookup";
+import { CAPABILITY_EXPIRED_COPY } from "@/lib/capability-token";
 
 const bodySchema = z.object({
   amount: z.union([z.literal("deposit"), z.literal("full"), z.number().positive()]),
@@ -26,8 +28,14 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ token: str
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const inv = await prisma.invoice.findUnique({ where: { publicToken: token } });
-  if (!inv) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const found = await findInvoiceByPublicToken(token);
+  if (!found.ok) {
+    if (found.reason === "expired") {
+      return NextResponse.json({ error: CAPABILITY_EXPIRED_COPY.body }, { status: 410 });
+    }
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  const inv = found.inv;
   if (inv.status === InvoiceStatus.DRAFT || inv.status === InvoiceStatus.PAID || inv.status === InvoiceStatus.CANCELLED) {
     return NextResponse.json({ error: "This invoice cannot collect payment" }, { status: 400 });
   }

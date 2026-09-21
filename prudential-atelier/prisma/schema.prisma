@@ -888,6 +888,10 @@ model Invoice {
   viewCount Int       @default(0)
 
   publicToken String @unique @default(cuid())
+  /// AES-GCM of the raw URL token (new issuances). Null for grandfathered cuid rows.
+  publicTokenEnc String?
+  /// Null = never expires (legacy inbox links). New issuances set a date.
+  publicTokenExpiresAt DateTime?
 
   /// Append-only log for admin payment history UI: [{ recordedAt, amount, method, reference? }]
   /// Prefer Payment ledger rows; kept for back-compat until fully migrated.
@@ -2014,6 +2018,8 @@ model BespokeOrder {
   outfitBrief     String?  @db.Text
 
   trackingToken String @unique @default(cuid())
+  trackingTokenEnc String?
+  trackingTokenExpiresAt DateTime?
 
   /// Set when depositSatisfied first becomes true (confirmed payments ≥ deposit). Sprint B gates stage advancement on this.
   productionUnlockedAt DateTime?
@@ -2025,6 +2031,8 @@ model BespokeOrder {
   deliveredAt DateTime?
 
   receiptConfirmToken   String    @unique @default(cuid())
+  receiptConfirmTokenEnc String?
+  receiptConfirmTokenExpiresAt DateTime?
   receiptConfirmedAt    DateTime?
   receiptConfirmedById  String?
   receiptConfirmedBy    User?     @relation("ReceiptConfirmedBy", fields: [receiptConfirmedById], references: [id], onDelete: SetNull)
@@ -2209,6 +2217,8 @@ model StageApproval {
   clientComment String?             @db.Text
   reminderSentAt DateTime?
   publicToken   String              @unique @default(cuid())
+  publicTokenEnc String?
+  publicTokenExpiresAt DateTime?
 
   @@index([orderId, stage])
   @@index([status, requestedAt])
@@ -2419,6 +2429,9 @@ model Quotation {
   depositPercent Float @default(70)
 
   approvalToken String    @unique @default(cuid())
+  approvalTokenEnc String?
+  /// Token TTL. Distinct from quote `expiresAt` (price validity). Null = grandfathered.
+  approvalTokenExpiresAt DateTime?
   approvedAt    DateTime?
   expiresAt     DateTime?
   /// Public client approval page URL (never a PDF).

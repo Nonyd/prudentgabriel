@@ -9,6 +9,7 @@ import { auth } from "@/auth";
 import { generateBespokeNumber } from "@/lib/order-number";
 import { sendBespokeConfirmationEmail, sendAdminNotificationEmail } from "@/lib/email";
 import { notifyNewBespoke } from "@/lib/notifications";
+import { CAPABILITY_TTL_MS, generateCapabilityToken } from "@/lib/capability-token";
 
 export async function GET(req: NextRequest) {
   const gate = await requireRoles(BESPOKE_STAFF_ROLES);
@@ -108,6 +109,8 @@ export async function POST(req: NextRequest) {
     }
 
     const total = d.totalAmount ?? 0;
+    const track = generateCapabilityToken();
+    const receipt = generateCapabilityToken();
     const created = await prisma.bespokeOrder.create({
       data: {
         orderRef,
@@ -123,6 +126,11 @@ export async function POST(req: NextRequest) {
         notes: d.notes || null,
         totalAmount: total,
         balance: total,
+        trackingToken: track.hash,
+        trackingTokenEnc: track.enc,
+        trackingTokenExpiresAt: new Date(Date.now() + CAPABILITY_TTL_MS.track),
+        receiptConfirmToken: receipt.hash,
+        receiptConfirmTokenEnc: receipt.enc,
       },
     });
 

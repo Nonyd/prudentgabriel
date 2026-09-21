@@ -21,6 +21,11 @@ import {
 } from "@/lib/atelier-fx";
 import { INTAKE_STAGES, intakeStageNotes } from "@/lib/atelier/intake-stages";
 import { quotationCurrencySendable } from "@/lib/atelier-quote-currency";
+import {
+  CAPABILITY_TTL_MS,
+  generateCapabilityToken,
+  invoiceCapabilityExpiresAt,
+} from "@/lib/capability-token";
 
 type QuotationRecord = {
   id: string;
@@ -183,6 +188,10 @@ export async function convertQuotationToOrder(
   const validityDays = await getInvoiceDefaultValidityDays();
   const expiresAt = quote.expiresAt ?? defaultExpiresAt(new Date(), validityDays);
 
+  const invTok = generateCapabilityToken();
+  const track = generateCapabilityToken();
+  const receipt = generateCapabilityToken();
+
   const result = await prisma.$transaction(async (tx) => {
     const invoiceNumber = await generateInvoiceNumber(tx);
     const invoice = await tx.invoice.create({
@@ -214,6 +223,12 @@ export async function convertQuotationToOrder(
         notes: quote.notes,
         paymentHistory: [],
         createdBy: createdBy ?? null,
+        publicToken: invTok.hash,
+        publicTokenEnc: invTok.enc,
+        publicTokenExpiresAt: invoiceCapabilityExpiresAt({
+          documentExpiresAt: expiresAt,
+          paidAt: null,
+        }),
       },
     });
 
@@ -238,6 +253,11 @@ export async function convertQuotationToOrder(
         balance: totalNGN,
         notes: quote.notes,
         currentStage: BespokeStage.SKETCHING_CONCEPT,
+        trackingToken: track.hash,
+        trackingTokenEnc: track.enc,
+        trackingTokenExpiresAt: new Date(Date.now() + CAPABILITY_TTL_MS.track),
+        receiptConfirmToken: receipt.hash,
+        receiptConfirmTokenEnc: receipt.enc,
       },
     });
 

@@ -11,6 +11,7 @@ import { lockedDocumentTotal } from "@/lib/atelier-fx";
 import { buildQuoteEmailHtml } from "@/lib/quote-email";
 import { quotationCurrencySendable } from "@/lib/atelier-quote-currency";
 import { createLegalTermsSnapshot } from "@/lib/legal-tokens";
+import { ensureQuoteApprovalRaw } from "@/lib/capability-token-lookup";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -56,8 +57,9 @@ export async function POST(_req: NextRequest, { params }: Params) {
     }
 
     const base = getPublicAppUrl().replace(/\/+$/, "");
-    const approvalUrl = `${base}/quote/${quote.approvalToken}`;
-    const pdfPublicUrl = `${base}/api/quote/${quote.approvalToken}/pdf`;
+    const approvalRaw = await ensureQuoteApprovalRaw(quote);
+    const approvalUrl = `${base}/quote/${approvalRaw}`;
+    const pdfPublicUrl = `${base}/api/quote/${approvalRaw}/pdf`;
     const lineItems = quote.lineItems as QuoteLineItem[];
 
     let consultationSection = "";
@@ -142,7 +144,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
       clientEmail: quote.clientEmail,
       quoteId: quote.id,
       quoteRef: quote.quoteRef,
-      approvalToken: quote.approvalToken,
+      approvalToken: approvalRaw,
     });
 
     return NextResponse.json({ item, approvalUrl, pdfUrl: pdfPublicUrl });

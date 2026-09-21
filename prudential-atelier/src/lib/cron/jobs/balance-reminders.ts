@@ -5,6 +5,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { notifyBalanceReminder } from "@/lib/customer-notifications";
 import { logServerError } from "@/lib/logger";
 import { formatBespokeBook } from "@/lib/atelier-fx";
+import { ensureInvoicePublicRaw } from "@/lib/capability-token-lookup";
 
 const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 const REMINDER_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
@@ -70,12 +71,21 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
         ? await prisma.invoice.findFirst({
             where: { quotationId: order.quotationId },
             orderBy: { createdAt: "desc" },
-            select: { publicToken: true },
+            select: {
+              id: true,
+              publicToken: true,
+              publicTokenEnc: true,
+              publicTokenExpiresAt: true,
+              expiresAt: true,
+              paidAt: true,
+            },
           })
         : null;
-      const payPath = invoice?.publicToken
-        ? `/invoice/${invoice.publicToken}`
-        : `/account/orders/bespoke/${order.id}/pay`;
+      let payPath = `/account/orders/bespoke/${order.id}/pay`;
+      if (invoice) {
+        const raw = await ensureInvoicePublicRaw(invoice);
+        payPath = `/invoice/${raw}`;
+      }
       const payUrl = `${appUrl}${payPath}`;
       const outfitName = order.outfitDescription?.slice(0, 80) ?? "Your commission";
       const balanceLabel = formatBespokeBook(order.balance, order);
