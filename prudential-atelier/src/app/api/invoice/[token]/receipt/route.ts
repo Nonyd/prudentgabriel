@@ -26,7 +26,6 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ token: str
     }
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  const inv = { id: found.inv.id };
 
   let form: FormData;
   try {
