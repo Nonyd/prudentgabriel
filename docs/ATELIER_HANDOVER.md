@@ -14,10 +14,21 @@ Staging Docker migrate applied `archivedAt` / `archivedReason` on 9 Sept 2026 (A
 
 ---
 
+## Security — Slice AZ (in progress)
+
+| Item | Status | Notes |
+|---|---|---|
+| **AZ1 Image Optimization RCE** ([GHSA-2xp9-vwfh-vxw4](https://github.com/vercel/next.js/security/advisories/GHSA-2xp9-vwfh-vxw4)) | **Mitigated, not fixed** | Next stays on `14.2.35`. AVIF is **off** in `next.config.mjs` (`formats: ["image/webp"]` only). **Do not re-enable AVIF on 14.x** — that reopens the hole. The only real fix is migrating to **Next ≥15.5.24** (or 16.3.3). Treat that migration as required security work, not a nice-to-have. |
+| Guest HEIC receipt decode ([GHSA-rgj7-g3m4-5g8c](https://github.com/advisories/GHSA-rgj7-g3m4-5g8c)) | Mitigated on the upload path | Public receipt upload used `sharp` + `heic-convert`/`libheif-js@1.19.x` on customer bytes. `sharp` is pinned ≥`0.35.4`; the `heic-convert` fallback was **removed** (old libheif). If an iPhone HEIC still fails, ask for JPEG/PNG. |
+| **AZ2 Auth.js** | Patched | `next-auth@5.0.0-beta.32` + `@auth/core@0.41.3`. Middleware fails closed unless `request.auth?.user` exists. After every staging deploy that touches auth: **browser-test** sign-in, sign-out, password reset, `/admin`, `/account` — a green unit suite has been wrong here before. |
+
+---
+
 ## What still needs a developer
 
 | Item | How often | Notes |
 |---|---|---|
+| **Next 15.5.24+ security migration** | Once (blocking) | Closes AZ1 properly and lets AVIF return. Do not treat as optional. |
 | ORD-9590 is archived under the **old** rule | Once | Confirmed receipt 9 Sept 19:22, archived the same minute. `archivedAt`/`archivedReason` are null. Cron leaves it alone. To give Adaeze the window AO promised: set status `DELIVERED`, leave `receiptConfirmedAt`, do not write archive fields. Do not do this silently. |
 | Client alteration form does not say FIT/WORKMANSHIP are free | Every post-delivery request | She picks a reason; the house sees *Policy default: FREE*. She will telephone about cost. |
 | Email names “30 days”, not a calendar date | Every delivery | Date appears only **after** confirm (`You have until 9 October 2026…`). `body_2` (“After you confirm, you have N days…”) is in the catalog and not rendered. |

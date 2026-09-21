@@ -34,7 +34,9 @@ async function isMaintenanceEnabled(request: NextRequest): Promise<boolean> {
 }
 
 export default auth(async function middleware(request) {
-  const session = request.auth;
+  // Require a real user on the session. Auth.js ≤beta.31 could put a truthy error
+  // object on request.auth (GHSA-8fpg-xm3f-6cx3); existence checks must fail closed.
+  const session = request.auth?.user ? request.auth : null;
   const pathname = request.nextUrl.pathname;
 
   const impersonating = Boolean(request.cookies.get("pg_admin_impersonate")?.value);

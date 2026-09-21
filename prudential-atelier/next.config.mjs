@@ -13,7 +13,11 @@ const nextConfig = {
       { protocol: "http", hostname: "localhost", pathname: "/media/**" },
       { protocol: "http", hostname: "127.0.0.1", pathname: "/media/**" },
     ],
-    formats: ["image/avif", "image/webp"],
+    // AZ1 — GHSA-2xp9-vwfh-vxw4: MITIGATED, NOT FIXED. No patched Next 14.x.
+    // AVIF via the Image Optimization API is RCE-capable until Next ≥15.5.24.
+    // Do not re-enable "image/avif" before that migration (Slice X measured ~6×
+    // smaller; the hole reopens the day AVIF returns on 14.x).
+    formats: ["image/webp"],
     minimumCacheTTL: 31536000,
   },
   compress: true,
@@ -22,7 +26,7 @@ const nextConfig = {
   output: process.env.SKIP_STANDALONE === "1" && !process.env.CI ? undefined : "standalone",
   experimental: {
     instrumentationHook: true,
-    serverComponentsExternalPackages: ["heic-convert", "libheif-js"],
+    serverComponentsExternalPackages: ["sharp"],
   },
   async redirects() {
     return PERMANENT_REDIRECTS;
