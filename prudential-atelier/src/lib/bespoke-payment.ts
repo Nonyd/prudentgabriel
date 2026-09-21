@@ -33,6 +33,8 @@ export async function fulfillPaidBespokeBalance(params: {
   charge: BespokeBalanceCharge;
   /** Test seam; defaults to the shared Prisma client. */
   db?: Pick<typeof prisma, "$transaction">;
+  /** Report bind failures to ErrorLog (default true). Tests pass false. */
+  logBindFailures?: boolean;
 }): Promise<boolean> {
   const { charge } = params;
   const note = `\n\nOnline balance paid (${params.gateway}) ref: ${charge.reference}`;
@@ -69,6 +71,7 @@ export async function fulfillPaidBespokeBalance(params: {
         // Deliberately omitted: bind on the stored reference only.
         metadataEntityId: null,
       },
+      { log: params.logBindFailures !== false },
     );
 
     // Claim atomically so a webhook and the redirect callback can't both fulfil.

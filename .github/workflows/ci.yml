@@ -1,0 +1,64 @@
+# Typecheck, lint and database-free tests on every push and PR touching the app.
+# Catches what would otherwise first fail inside the Docker image build.
+
+name: ci
+
+on:
+  push:
+    branches: [staging, main]
+    paths:
+      - "prudential-atelier/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    paths:
+      - "prudential-atelier/**"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: prudential-atelier
+    env:
+      # Unreachable on purpose: CI tests must not touch a real database.
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:1/none
+      DIRECT_URL: postgresql://ci:ci@127.0.0.1:1/none
+      SKIP_DB_BUILD: "1"
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: prudential-atelier/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: prudential-atelier/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Prisma generate
+        run: pnpm prisma generate
+
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit -p tsconfig.json
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Tests (no database)
+        run: pnpm test:ci

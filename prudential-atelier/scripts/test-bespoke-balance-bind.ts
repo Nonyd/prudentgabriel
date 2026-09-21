@@ -61,6 +61,7 @@ function pay(db: never, charge: { reference?: string; amount?: number; currency?
     bespokeRequestId: "besp_1",
     gateway: PaymentGateway.PAYSTACK,
     db,
+    logBindFailures: false,
     charge: {
       reference: charge.reference ?? REF,
       amount: charge.amount ?? 150_000_000,
