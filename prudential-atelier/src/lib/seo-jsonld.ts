@@ -10,6 +10,8 @@ export function organizationJsonLd(input: {
   instagram?: string | null;
   tiktok?: string | null;
   facebook?: string | null;
+  /** Making time before dispatch, from the live production-time setting. */
+  handlingDays?: { min: number; max: number } | null;
 }): JsonLd {
   const sameAs = [
     input.instagram ? instagramHandleToUrl(input.instagram) : "https://instagram.com/the_prudentgabriel",
@@ -39,6 +41,29 @@ export function organizationJsonLd(input: {
       description: HOUSE_ADDRESS_LINE_2,
     },
     sameAs,
+    // Google's recommended home for shop-wide handling time (merchant shipping
+    // policy): every piece is made after the order, then shipped.
+    ...(input.handlingDays
+      ? {
+          hasShippingService: {
+            "@type": "ShippingService",
+            name: "Made to order, then shipped",
+            handlingTime: {
+              "@type": "ServicePeriod",
+              duration: {
+                "@type": "QuantitativeValue",
+                minValue: input.handlingDays.min,
+                maxValue: input.handlingDays.max,
+                unitCode: "DAY",
+              },
+            },
+            shippingConditions: {
+              "@type": "ShippingConditions",
+              shippingOrigin: { "@type": "DefinedRegion", addressCountry: "NG" },
+            },
+          },
+        }
+      : {}),
   };
 }
 
@@ -50,6 +75,8 @@ export function productJsonLd(input: {
   priceNGN: number;
   /** Catalogue publish date — same value Newest first sorts on. */
   datePublished?: string | Date | null;
+  /** schema.org ItemAvailability URL — see product-orderability.ts. */
+  availability: string;
 }): JsonLd {
   const images = input.images.filter(Boolean).map((u) => absolutePublicUrl(u));
   return {
@@ -67,7 +94,7 @@ export function productJsonLd(input: {
       url: input.url,
       priceCurrency: "NGN",
       price: String(Math.round(input.priceNGN)),
-      availability: "https://schema.org/InStock",
+      availability: input.availability,
       itemCondition: "https://schema.org/NewCondition",
     },
   };

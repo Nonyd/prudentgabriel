@@ -27,6 +27,13 @@ export function productionLeadDaysFromCopy(copy: string): number {
   return Math.max(...nums);
 }
 
+/** "7-12 days" → { min: 7, max: 12 }; a single number is both. */
+export function productionLeadRangeFromCopy(copy: string): { min: number; max: number } {
+  const nums = copy.match(/\d+/g)?.map((n) => Number(n)).filter((n) => Number.isFinite(n) && n > 0) ?? [];
+  if (!nums.length) return { min: DEFAULT_PRODUCTION_LEAD_DAYS, max: DEFAULT_PRODUCTION_LEAD_DAYS };
+  return { min: Math.min(...nums), max: Math.max(...nums) };
+}
+
 export function madeThenShippedCopy(copy = DEFAULT_PRODUCTION_COPY): string {
   const c = normalizeProductionCopy(copy);
   const body = c.toLowerCase().includes("day") ? c : `${c} days`;

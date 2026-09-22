@@ -37,6 +37,7 @@ import { logServerError } from "@/lib/logger";
 import { createLegalTermsSnapshot } from "@/lib/legal-tokens";
 import { sanitizeAttribution } from "@/lib/analytics/attribution";
 import { assertChosenOption } from "@/lib/product-options";
+import { firstUnorderableProduct } from "@/lib/product-orderability-db";
 
 function snapshotFromAddress(a: AddressInput) {
   return {
@@ -340,6 +341,13 @@ export async function POST(req: NextRequest) {
         }),
       );
     }
+  }
+
+  // Nothing unpublished, or with no size to order, can be bought — even if it
+  // was added to a bag before it was withdrawn, or posted by id.
+  const unorderable = await firstUnorderableProduct(lines.map((l) => l.productId));
+  if (unorderable) {
+    return NextResponse.json({ error: unorderable.error, productId: unorderable.productId }, { status: 409 });
   }
 
   const hasCustom = lines.some((l) => isCustomLine(l.sizeMode));

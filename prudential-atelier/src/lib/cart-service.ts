@@ -1,5 +1,6 @@
 import { Prisma, SizeMode } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { firstUnorderableProduct } from "@/lib/product-orderability-db";
 import {
   cartLineKey,
   customSurchargeNGN,
@@ -122,6 +123,10 @@ export async function addCartLine(userId: string, input: CartLineInput) {
   });
   if (!product) {
     return { ok: false as const, status: 404, error: "Product not found" };
+  }
+  const unorderable = await firstUnorderableProduct([product.id]);
+  if (unorderable) {
+    return { ok: false as const, status: 409, error: unorderable.error };
   }
   const chosen = assertChosenOption({
     group: product.optionGroup,

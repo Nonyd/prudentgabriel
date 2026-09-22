@@ -11,6 +11,8 @@ import { ProductType } from "@prisma/client";
 import { ProductCategory } from "../src/lib/shop-category-slug";
 import { prisma } from "../src/lib/prisma";
 import { ROBOTS_DISALLOW, shopCanonicalPath, tokenRouteMetadata, withHouse } from "../src/lib/seo";
+import { schemaAvailability } from "../src/lib/product-orderability";
+import { productionLeadRangeFromCopy } from "../src/lib/production-time";
 import { PAGE_SEO_FALLBACKS, uniqueFallbackTitles } from "../src/lib/seo-copy";
 import { buildSitemap, sitemapExcludesPath, SITEMAP_EXCLUDED_PATHS } from "../src/lib/sitemap-build";
 import { productJsonLd, organizationJsonLd, articleJsonLd, breadcrumbJsonLd } from "../src/lib/seo-jsonld";
@@ -138,9 +140,16 @@ function testSource() {
     images: ["https://example.com/a.jpg"],
     url: "https://staging.prudentgabriel.com/shop/avril",
     priceNGN: 120000,
+    availability: schemaAvailability({ isPublished: true, customOffered: false, variants: [{ size: "M" }] }),
   });
   assert(productLd["@type"] === "Product", "Product JSON-LD");
-  assert((productLd.offers as { availability: string }).availability.includes("InStock"), "availability is InStock");
+  assert((productLd.offers as { availability: string }).availability === "https://schema.org/InStock", "orderable piece is InStock");
+  // Only Google-supported values; never MadeToOrder (Google does not support it).
+  assert(schemaAvailability({ isPublished: true, customOffered: true, variants: [{ size: "Custom" }] }).endsWith("/InStock"), "made-to-measure only is still orderable");
+  assert(schemaAvailability({ isPublished: true, customOffered: false, variants: [{ size: "Custom" }] }).endsWith("/OutOfStock"), "no size to order is OutOfStock");
+  assert(schemaAvailability({ isPublished: false, customOffered: true, variants: [{ size: "M" }] }).endsWith("/OutOfStock"), "unpublished is OutOfStock");
+  const withHandling = JSON.stringify(organizationJsonLd({ handlingDays: productionLeadRangeFromCopy("7-12 days") }));
+  assert(withHandling.includes('"minValue":7') && withHandling.includes('"maxValue":12') && withHandling.includes("ShippingService"), "Organization declares 7-12 day handling");
 
   const org = organizationJsonLd({});
   assert(org["@type"] === "Organization", "Organization JSON-LD");

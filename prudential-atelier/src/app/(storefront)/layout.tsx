@@ -7,7 +7,7 @@ import { PageBeacon } from "@/components/analytics/PageBeacon";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ANNOUNCEMENT_SPEED_MS, cmsBool, cmsGet, cmsJson } from "@/lib/cms";
 import { getLogoSettingsSafe } from "@/lib/logos";
-import { getProductionCopy } from "@/lib/production-time";
+import { getProductionCopy, productionLeadRangeFromCopy } from "@/lib/production-time";
 import { getFabricPromiseHours } from "@/lib/fabric-promise";
 import { organizationJsonLd } from "@/lib/seo-jsonld";
 import { getSetting } from "@/lib/settings";
@@ -40,12 +40,14 @@ export default async function StorefrontLayout({ children }: { children: React.R
       getSetting("social_instagram"),
       getSetting("social_tiktok"),
       getSetting("social_facebook"),
-    ]).then(([logos, instagram, tiktok, facebook]) =>
+      getProductionCopy(),
+    ]).then(([logos, instagram, tiktok, facebook, copy]) =>
       organizationJsonLd({
         logo: logos.logoDark || logos.logoWhite,
         instagram,
         tiktok,
         facebook,
+        handlingDays: productionLeadRangeFromCopy(copy),
       }),
     ),
     getFabricPromiseHours(),

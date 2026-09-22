@@ -24,6 +24,7 @@ import { absolutePublicUrl } from "@/lib/app-url";
 import { pageMetadata, productSeoDescription, productSeoTitle } from "@/lib/seo";
 import { breadcrumbJsonLd, productBreadcrumbItems, productJsonLd } from "@/lib/seo-jsonld";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { schemaAvailability } from "@/lib/product-orderability";
 
 
 const RelatedProducts = nextDynamic(() => import("@/components/product/RelatedProducts").then((m) => ({ default: m.RelatedProducts })), {
@@ -213,6 +214,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
           url: productUrl,
           priceNGN,
           datePublished: product.publishedAt,
+          availability: schemaAvailability(product),
         })}
       />
       <JsonLd
