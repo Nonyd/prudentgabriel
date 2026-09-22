@@ -254,6 +254,7 @@ export const ADMIN_PAGE_OWNERS: readonly {
   { path: "/admin", owns: "Executive dashboard", linksTo: "Nav" },
   { path: "/admin/orders", owns: "Ready-to-wear orders", linksTo: "Nav" },
   { path: "/admin/checkouts", owns: "Abandoned checkouts", linksTo: "Nav" },
+  { path: "/admin/consultations/enquiries", owns: "Consultation enquiries (BA2 queue)", linksTo: "Nav" },
   { path: "/admin/consultations", owns: "Consultation bookings", linksTo: "Nav" },
   { path: "/admin/consultants", owns: "Consultant roster", linksTo: "Nav" },
   { path: "/admin/bespoke", owns: "Atelier pipeline", linksTo: "Nav" },
@@ -393,6 +394,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
     label: "Consultations",
     defaultOpen: true,
     items: [
+      { href: "/admin/consultations/enquiries", label: "Enquiries", icon: "enquiries", badgeKey: "enquiries" },
       { href: "/admin/consultations", label: "Bookings", icon: "consultations", badgeKey: "consultations" },
       { href: "/admin/consultants", label: "Consultants", icon: "consultants" },
     ],

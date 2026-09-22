@@ -15,6 +15,8 @@ export const ROBOTS_DISALLOW = [
   "/auth",
   "/staff",
   "/approve",
+  // BA2: personal booking links on approved enquiries.
+  "/consultation/book",
   "/receipt",
   "/invoice",
   "/track",

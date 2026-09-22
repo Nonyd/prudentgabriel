@@ -145,7 +145,7 @@ function run() {
   assert(isMeetingReminderWindow(starts, hourBefore), "T-60 minutes is in the reminder window");
   assert(!isMeetingReminderWindow(starts, new Date(starts.getTime() - 2 * 60 * 60 * 1000)), "T-2h is too early");
 
-  const wizard = readFileSync(resolve("src/components/consultation/ConsultationBookingFlow.tsx"), "utf8");
+  const wizard = readFileSync(resolve("src/components/consultation/ConsultationInvitationFlow.tsx"), "utf8");
   assert(wizard.includes("about an hour before"), "wizard still promises the hour-before reminder");
   const confirmEmail = readFileSync(resolve("src/emails/ConsultationConfirmedEmail.tsx"), "utf8");
   assert(confirmEmail.includes("does not include a meeting link"), "confirmation says the link follows");

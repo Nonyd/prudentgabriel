@@ -28,6 +28,7 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
           take: 1,
           select: { id: true, quoteRef: true, status: true },
         },
+        enquiry: { select: { id: true, enquiryNumber: true } },
       },
     });
   } catch (error) {
@@ -56,6 +57,10 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
     clientInstagram: booking.clientInstagram,
     occasion: booking.occasion,
     description: booking.description,
+    termsText: booking.termsText,
+    termsAcknowledgedAt: toIso(booking.termsAcknowledgedAt),
+    legalTermsVersion: booking.legalTermsVersion,
+    enquiry: booking.enquiry,
     preferredDate1: toIso(booking.preferredDate1),
     preferredDate2: toIso(booking.preferredDate2),
     preferredDate3: toIso(booking.preferredDate3),

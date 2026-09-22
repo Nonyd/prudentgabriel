@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { rejectIfAtelierBookingsClosed } from "@/lib/atelier-bookings";
 import { getMediaStore } from "@/lib/media";
 import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
 import { rateLimitOr429 } from "@/lib/rate-limit";
 import { dailyUploadCapOr429 } from "@/lib/upload-limits";
 import { logServerError } from "@/lib/logger";
+import { rejectIfAtelierClosed } from "@/lib/atelier-bookings";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const FOLDER = "prudential-atelier/consultations";
@@ -13,9 +13,14 @@ function isFileLike(v: unknown): v is Blob & { name?: string } {
   return typeof v === "object" && v !== null && typeof (v as Blob).arrayBuffer === "function";
 }
 
+/**
+ * Moodboard and inspiration pictures for the enquiry form (BA2): open only
+ * while the atelier is, then capped per address and per day (AZ5). Files
+ * never attached are swept by orphan-uploads.
+ */
 export async function POST(req: NextRequest) {
-  const blocked = await rejectIfAtelierBookingsClosed();
-  if (blocked) return blocked;
+  const closed = await rejectIfAtelierClosed();
+  if (closed) return closed;
 
   const limited = await rateLimitOr429(req, "consultations-upload", 8, 15 * 60 * 1000);
   if (limited) return limited;

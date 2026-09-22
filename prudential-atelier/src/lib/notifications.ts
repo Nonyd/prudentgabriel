@@ -59,6 +59,42 @@ export function notifyNewBespoke(request: Pick<BespokeRequest, "id" | "requestNu
   }).catch(() => {});
 }
 
+/**
+ * BA2: a new enquiry, and an enquiry still waiting after a day. Both reuse
+ * NEW_CONSULTATION, so they reach the same "consultations" desk (Slice W)
+ * without a new notification type; the title says which it is.
+ */
+export async function notifyConsultationEnquiry(
+  enquiry: {
+    id: string;
+    enquiryNumber: string;
+    clientName: string;
+    eventDate: Date;
+    shortNotice: boolean;
+  },
+  kind: "new" | "waiting",
+): Promise<void> {
+  const eventOn = enquiry.eventDate.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+  const title =
+    kind === "waiting"
+      ? "Enquiry waiting over a day"
+      : enquiry.shortNotice
+        ? "New enquiry — short notice, call her"
+        : "New consultation enquiry";
+  await createNotification({
+    type: "NEW_CONSULTATION",
+    title,
+    message: `${enquiry.enquiryNumber} — ${enquiry.clientName}, event ${eventOn}${enquiry.shortNotice && kind === "waiting" ? " (short notice)" : ""}`,
+    link: `/admin/consultations/enquiries?open=${enquiry.id}`,
+    entityId: enquiry.id,
+  });
+}
+
 export function notifyNewConsultation(
   booking: Pick<ConsultationBooking, "id" | "bookingNumber" | "clientName" | "offeringType">,
 ): void {

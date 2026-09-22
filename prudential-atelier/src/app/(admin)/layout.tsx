@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { authOrNull } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { BespokeStage, ConsultationStatus, OrderStatus, PaymentStatus } from "@prisma/client";
+import { BespokeStage, ConsultationEnquiryStatus, ConsultationStatus, OrderStatus, PaymentStatus } from "@prisma/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { prisma } from "@/lib/prisma";
 import { deniedAdminRedirect } from "@/lib/admin-route-access";
@@ -46,7 +46,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   try {
-    const [bespoke, consultations, orders, messages] = await Promise.all([
+    const [bespoke, consultations, orders, messages, enquiries] = await Promise.all([
       prisma.bespokeOrder.count({
         where: { currentStage: { not: BespokeStage.DELIVERY } },
       }),
@@ -63,8 +63,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         },
       }),
       prisma.contactMessage.count({ where: { isRead: false } }),
+      prisma.consultationEnquiry.count({ where: { status: ConsultationEnquiryStatus.PENDING } }),
     ]);
-    badges = { bespoke, consultations, orders, messages };
+    badges = { bespoke, consultations, orders, messages, enquiries };
   } catch {
     /* DB unavailable */
   }

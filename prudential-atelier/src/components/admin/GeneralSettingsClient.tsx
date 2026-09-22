@@ -139,7 +139,7 @@ export function GeneralSettingsClient() {
         body: JSON.stringify({ atelierBookingsEnabled: atelierBookings }),
       });
       if (!res.ok) {
-        toast.error("Could not save atelier bookings setting");
+        toast.error("Could not save the enquiries setting");
         return;
       }
 
@@ -151,10 +151,10 @@ export function GeneralSettingsClient() {
       } else if (!atelierBookings && wasEnabled) {
         toast.success("Consultation bookings closed. Pages stay live; new bookings return 403.");
       } else {
-        toast.success("Atelier bookings setting saved");
+        toast.success("Enquiries setting saved");
       }
     } catch {
-      toast.error("Could not save atelier bookings setting");
+      toast.error("Could not save the enquiries setting");
     } finally {
       setAtelierSaving(false);
     }
@@ -252,22 +252,23 @@ export function GeneralSettingsClient() {
 
       <section className="card-surface p-6">
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-text-mid">
-          Atelier bookings
+          Atelier enquiries
         </p>
         <div className="mt-4 border-t border-sand pt-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <p className="font-sans text-sm font-medium text-ink">Allow new consultation bookings</p>
+              <p className="font-sans text-sm font-medium text-ink">Accept new commission enquiries</p>
               <p className="mt-1 font-sans text-xs leading-relaxed text-text-mid">
-                When off, atelier pages stay public. Visitors can read the offerings but cannot start a
-                booking. Existing bookings remain viewable and payable. Admin screens are unchanged.
+                When off, the consultation page says the house isn&apos;t taking new commissions at present
+                and offers the contact page. Booking links already sent keep working, and existing
+                bookings remain viewable and payable. Use it when the diary is full or Mrs. Prudent is away.
               </p>
             </div>
             <Toggle
               checked={atelierBookings}
               onChange={setAtelierBookings}
               disabled={maintenanceLoading || atelierSaving}
-              srLabel="Atelier bookings"
+              srLabel="Accept new commission enquiries"
             />
           </div>
 
@@ -275,8 +276,8 @@ export function GeneralSettingsClient() {
             {maintenanceLoading
               ? "Loading status…"
               : atelierBookings
-                ? "Current status: ● BOOKINGS OPEN"
-                : "Current status: pages live · bookings closed"}
+                ? "Current status: ● OPEN TO ENQUIRIES"
+                : "Current status: closed to new commissions"}
           </p>
 
           <div className="mt-5">

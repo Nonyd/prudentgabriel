@@ -28,6 +28,7 @@ const PAYMENT_SETTING_DEFS: {
   { key: "alteration_warranty_days", value: "30", label: "Alteration warranty (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 26 },
   { key: "fabric_promise_hours", value: "48", label: "Fabric unavailable: offer alternative or refund within (hours)", type: SettingType.NUMBER, isPublic: false, sortOrder: 27 },
   { key: "post_delivery_fault_hours", value: "48", label: "Faulty or damaged piece: report within (hours of delivery)", type: SettingType.NUMBER, isPublic: false, sortOrder: 28 },
+  { key: "consultation_short_notice_days", value: "30", label: "Consultation enquiry: flag for a call when the event is within (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 29 },
   { key: "exchange_rate_usd", value: "0.00065", label: "USD Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 30 },
   { key: "exchange_rate_gbp", value: "0.00052", label: "GBP Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 31 },
   {

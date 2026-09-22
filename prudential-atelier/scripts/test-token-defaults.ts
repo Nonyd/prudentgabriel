@@ -22,7 +22,8 @@ function assert(cond: unknown, message: string): asserts cond {
 function schema() {
   const s = readFileSync(path.join(__dirname, "..", "prisma/schema.prisma"), "utf8");
   const cols = s.match(/^\s*(publicToken|trackingToken|receiptConfirmToken|approvalToken)\s+String[^\n]*$/gm) ?? [];
-  assert(cols.length === 5, `five token columns found (${cols.length})`);
+  // BA2 added ConsultationEnquiry.publicToken (the booking link).
+  assert(cols.length === 6, `six token columns found (${cols.length})`);
   for (const c of cols) {
     assert(!c.includes("cuid()"), `no cuid default: ${c.trim()}`);
     assert(c.includes("gen_random_uuid()"), `random database default: ${c.trim()}`);

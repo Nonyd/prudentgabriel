@@ -22,7 +22,8 @@ import { prisma } from "../src/lib/prisma";
 import { addCartLine, listCartLines } from "../src/lib/cart-service";
 import { fulfillPaidOrder } from "../src/lib/order-payment";
 import { filterStorefrontLinks, isOrderTrackLink, rtwOrderSuccessPath } from "../src/lib/atelier-storefront";
-import { ATELIER_BOOKINGS_CLOSED_MESSAGE, ATELIER_BOOKINGS_SETTING_KEY } from "../src/lib/atelier-bookings";
+import { ATELIER_BOOKINGS_SETTING_KEY } from "../src/lib/atelier-bookings";
+import { INVITATION_ONLY_MESSAGE } from "../src/lib/consultation-enquiry-shared";
 import { clearSettingCacheKey } from "../src/lib/settings";
 import { planGuestServerMerge } from "../src/lib/cart-merge";
 import { resolveAdminAlertEmail } from "../src/lib/admin-alert-email";
@@ -244,9 +245,10 @@ async function testAtelierBookingsGate() {
       body: JSON.stringify({}),
     });
     const res = await POST(req);
-    assert(res.status === 403, `POST /api/consultations/create must 403 when bookings closed, got ${res.status}`);
+    // BA2: without an approved enquiry token nothing can be booked, open or closed.
+    assert(res.status === 403, `POST /api/consultations/create must 403 without an invitation, got ${res.status}`);
     const body = (await res.json()) as { error?: string };
-    assert(body.error === ATELIER_BOOKINGS_CLOSED_MESSAGE, "403 body must explain that bookings are closed");
+    assert(body.error === INVITATION_ONLY_MESSAGE, "403 body must say consultations are by invitation");
 
     const origin = process.env.RTW_LAUNCH_PUBLIC_ORIGIN?.replace(/\/$/, "");
     if (origin) {

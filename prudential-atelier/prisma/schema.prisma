@@ -207,6 +207,17 @@ model ConsultationBooking {
   /// First-touch campaign tags copied from the visit at booking create. No visitor id.
   attribution Json?
 
+  /// BA2: the approved enquiry this booking came from (null for bookings made before invitations).
+  enquiry ConsultationEnquiry?
+  /// BA2: when the client ticked the non-refundable terms at booking.
+  termsAcknowledgedAt DateTime?
+  /// BA2: exact wording she acknowledged, fee included (not a boolean). Same idea as Order.shippingConsentText.
+  termsText           String?   @db.Text
+  /// Slice AR: terms version shown at booking (copy revision + resolved-token hash).
+  legalTermsVersion   String?
+  /// Resolved legal tokens + copy revision at booking.
+  legalTermsSnapshot  Json?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -215,6 +226,60 @@ model ConsultationBooking {
   @@index([confirmedDate])
   @@index([consultantId])
   @@index([status, quoteAlertSentAt, completedAt])
+}
+
+enum ConsultationEnquiryStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  BOOKED
+}
+
+/// BA2: an application for a consultation. Nobody books or pays until the house
+/// approves one; approval emails a capability link (AZ3) to the booking step.
+model ConsultationEnquiry {
+  id              String   @id @default(cuid())
+  enquiryNumber   String   @unique
+  clientName      String
+  clientEmail     String
+  clientPhone     String
+  eventDate       DateTime @db.Date
+  eventType       String
+  /// Screening: who will wear it — BRIDE, FAMILY, GUEST, OTHER.
+  wearer          String
+  /// Screening: what kind of outfit.
+  outfitType      String
+  notes           String?  @db.Text
+  moodboardImages String[] @default([])
+
+  /// Event inside the short-notice window when submitted: flagged so the house
+  /// calls (express fee by phone). Never a reason to refuse.
+  shortNotice     Boolean  @default(false)
+
+  status          ConsultationEnquiryStatus @default(PENDING)
+  /// Required for both approve and decline.
+  decisionReason  String?  @db.Text
+  decidedAt       DateTime?
+  /// Name or email of the staff member who decided (like ConsultationBooking.confirmedBy).
+  decidedBy       String?
+
+  /// Booking link (AZ3): SHA-256 of the raw token. Random default opens nothing.
+  publicToken          String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
+  publicTokenEnc       String?
+  /// Set on approval. The link opens only while APPROVED and before this.
+  publicTokenExpiresAt DateTime?
+
+  bookingId       String?  @unique
+  booking         ConsultationBooking? @relation(fields: [bookingId], references: [id])
+
+  /// Set when the "waiting over a day" alert has gone out (once per enquiry).
+  overdueAlertSentAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([clientEmail])
 }
 
 enum ConsultationSessionType {

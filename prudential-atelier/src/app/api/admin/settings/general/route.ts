@@ -160,7 +160,7 @@ export async function PATCH(req: NextRequest) {
         key: ATELIER_BOOKINGS_SETTING_KEY,
         value,
         group: "STORE",
-        label: "Atelier bookings enabled",
+        label: "Accept new commission enquiries",
         type: SettingType.BOOLEAN,
         isPublic: false,
         sortOrder: 2,

@@ -92,6 +92,18 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     migrated: true,
   },
   {
+    name: "consultation-enquiry-alerts",
+    schedule: "15 * * * *",
+    description: "BA2: raise consultation enquiries still undecided after a day (once each)",
+    migrated: true,
+  },
+  {
+    name: "consultation-day-before",
+    schedule: "0 8 * * *",
+    description: "BA2: remind clients the day before a confirmed consultation",
+    migrated: true,
+  },
+  {
     name: "unsent-quote-alerts",
     schedule: "0 11 * * *",
     description: "Alert when COMPLETED consultations have no quotation after 48h",

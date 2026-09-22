@@ -20,6 +20,12 @@ export const CAPABILITY_TTL_MS = {
   track: 180 * 24 * 60 * 60 * 1000,
   /** After invoice document expiry (or paidAt), keep the link this long. */
   invoiceAfterDocument: 90 * 24 * 60 * 60 * 1000,
+  /**
+   * BA2: booking link on an approved enquiry — a fortnight, like stage approval.
+   * Long enough to agree dates at home; short enough that a forwarded link dies.
+   * The house can re-send a fresh one.
+   */
+  consultationBooking: 14 * 24 * 60 * 60 * 1000,
 } as const;
 
 export type IssuedCapabilityToken = {

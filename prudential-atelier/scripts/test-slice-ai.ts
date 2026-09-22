@@ -95,7 +95,12 @@ function run() {
   assert(adminUpload.includes("gateUploadFolder"), "admin moodboard uses the authenticated folder gate");
 
   const publicUpload = readFileSync(resolve("src/app/api/consultations/upload/route.ts"), "utf8");
-  assert(publicUpload.includes("rejectIfAtelierBookingsClosed"), "public consultation upload stays gated");
+  // BA2: the enquiry form uploads moodboards here — open only while the atelier is, then capped.
+  assert(publicUpload.includes("rejectIfAtelierClosed"), "public consultation upload closes with the atelier");
+  assert(
+    publicUpload.includes("rateLimitOr429") && publicUpload.includes("dailyUploadCapOr429"),
+    "public consultation upload stays capped per address and per day",
+  );
 
   const privateUrl = "/media/private/prudential-atelier/consultations/ref.jpg";
   assert(

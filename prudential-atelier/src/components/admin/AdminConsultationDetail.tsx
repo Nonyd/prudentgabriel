@@ -39,6 +39,11 @@ type Booking = {
   clientInstagram: string | null;
   occasion: string;
   description: string;
+  /** BA2: exact non-refundable wording acknowledged at booking, and the enquiry it came from. */
+  termsText: string | null;
+  termsAcknowledgedAt: string | null;
+  legalTermsVersion: string | null;
+  enquiry: { id: string; enquiryNumber: string } | null;
   preferredDate1: string | null;
   preferredDate2: string | null;
   preferredDate3: string | null;
@@ -387,6 +392,26 @@ export function AdminConsultationDetail({
         </div>
       </div>
 
+      {booking.termsText || booking.enquiry ? (
+        <div className="glass-opaque p-5">
+          <h3 className="font-label text-gold">Invitation and terms</h3>
+          {booking.enquiry ? (
+            <p className="mt-2 text-sm text-ink">
+              From enquiry{" "}
+              <a href={`/admin/consultations/enquiries?open=${booking.enquiry.id}`} className="font-mono text-olive underline">
+                {booking.enquiry.enquiryNumber}
+              </a>
+            </p>
+          ) : null}
+          {booking.termsText ? (
+            <p className="mt-2 text-sm text-[#6B6B68]">
+              Acknowledged {booking.termsAcknowledgedAt ? formatWatDateTime(booking.termsAcknowledgedAt) : ""}
+              {booking.legalTermsVersion ? ` (terms ${booking.legalTermsVersion.slice(0, 10)})` : ""}: “{booking.termsText}”
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       {isVirtual ? (
         <div className="glass-opaque p-5">
           <h3 className="font-label text-gold">Virtual meeting link</h3>
@@ -559,11 +584,28 @@ export function AdminConsultationDetail({
               Set the final date and time for {booking.clientName}. A confirmation email will be sent.
             </p>
             {booking.preferredDate1 ? (
-              <p className="mt-3 text-xs text-[#6B6B68]">
-                Client preferred: {formatWatDate(booking.preferredDate1)}
-                {booking.preferredDate2 ? ` · alt ${formatWatDate(booking.preferredDate2)}` : ""}
-                {booking.preferredDate3 ? ` · alt ${formatWatDate(booking.preferredDate3)}` : ""}
-              </p>
+              <div className="mt-3">
+                <p className="text-xs text-[#6B6B68]">She proposed — pick one against Mrs. Prudent&apos;s diary:</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {[booking.preferredDate1, booking.preferredDate2, booking.preferredDate3]
+                    .filter((d): d is NonNullable<typeof d> => Boolean(d))
+                    .map((d, i) => {
+                      const value = isoToDateInput(d);
+                      return (
+                        <button
+                          key={`${value}-${i}`}
+                          type="button"
+                          onClick={() => setConfirmDate(value)}
+                          className={`rounded-sm border px-3 py-1.5 text-xs ${
+                            confirmDate === value ? "border-ink bg-ink text-white" : "border-sand text-ink"
+                          }`}
+                        >
+                          {i + 1}. {formatWatDate(d)}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
             ) : null}
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <label className="block text-xs text-[#6B6B68]">
