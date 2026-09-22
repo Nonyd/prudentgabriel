@@ -27,6 +27,7 @@ import {
 } from "../src/lib/public-stage-approval-payload";
 import { generateBespokeOrderRef } from "../src/lib/bespoke-stages";
 import { prisma } from "../src/lib/prisma";
+import { generateCapabilityToken } from "../src/lib/capability-token";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -208,8 +209,12 @@ async function runToken() {
       balance: 30_000,
     },
   });
+  // Issue the link as the app does: hash stored, raw token in the URL.
+  const approvalToken = generateCapabilityToken();
   const approval = await prisma.stageApproval.create({
     data: {
+      publicToken: approvalToken.hash,
+      publicTokenEnc: approvalToken.enc,
       orderId: order.id,
       stage: BespokeStage.FINAL_FITTING,
       status: StageApprovalStatus.PENDING,
@@ -228,7 +233,7 @@ async function runToken() {
   });
 
   try {
-    const payload = await loadPublicStageApproval(approval.publicToken);
+    const payload = await loadPublicStageApproval(approvalToken.raw);
     assert(payload.ok, "public token loads a payload");
     assert(publicStageApprovalOmitsClientRecord(payload.payload as unknown as Record<string, unknown>), "public DTO has no client record");
     assert(!("clientEmail" in (payload.payload as object)), "payload object has no clientEmail key");
@@ -237,7 +242,7 @@ async function runToken() {
     assert(payload.payload.notes?.includes("Final fitting"), "payload includes atelier notes");
 
     const result = await respondToStageApprovalByToken({
-      publicToken: approval.publicToken,
+      publicToken: approvalToken.raw,
       decision: "APPROVED",
     });
     assert(result.ok, `token approval with no session must succeed: ${"error" in result ? result.error : ""}`);
@@ -246,7 +251,7 @@ async function runToken() {
     assert(after?.status === StageApprovalStatus.APPROVED, "token approval marks the row APPROVED");
 
     const again = await respondToStageApprovalByToken({
-      publicToken: approval.publicToken,
+      publicToken: approvalToken.raw,
       decision: "APPROVED",
     });
     assert(!again.ok && again.status === 409, "a second token response is refused");

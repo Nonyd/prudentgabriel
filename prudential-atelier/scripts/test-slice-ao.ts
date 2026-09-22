@@ -30,6 +30,7 @@ import { inferBespokePurpose } from "../src/lib/payments/ledger";
 import { encodeBespokePaymentRef, parseBespokePaymentRef } from "../src/lib/bespoke-order-access";
 import { generateBespokeOrderRef } from "../src/lib/bespoke-stages";
 import { prisma } from "../src/lib/prisma";
+import { generateCapabilityToken } from "../src/lib/capability-token";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -204,8 +205,12 @@ async function runDb() {
     data: { email, name: "AO Client", role: Role.CUSTOMER, password: "x" },
   });
   const profile = await prisma.clientProfile.create({ data: { userId: user.id } });
+  // Issue the receipt link as the app does: hash stored, raw token in the URL.
+  const receiptToken = generateCapabilityToken();
   const order = await prisma.bespokeOrder.create({
     data: {
+      receiptConfirmToken: receiptToken.hash,
+      receiptConfirmTokenEnc: receiptToken.enc,
       orderRef: generateBespokeOrderRef(),
       clientProfileId: profile.id,
       clientName: "AO Client",
@@ -220,13 +225,13 @@ async function runDb() {
   });
 
   try {
-    const payload = await loadPublicReceipt(order.receiptConfirmToken);
+    const payload = await loadPublicReceipt(receiptToken.raw);
     assert(payload.ok, "public receipt payload loads");
     assert(publicReceiptOmitsClientRecord(payload.payload as unknown as Record<string, unknown>), "DTO omits client record");
     assert(!("clientName" in payload.payload), "no clientName on public receipt");
     assert(payload.payload.orderRef === order.orderRef, "orderRef present");
 
-    const result = await confirmBespokeReceipt({ token: order.receiptConfirmToken });
+    const result = await confirmBespokeReceipt({ token: receiptToken.raw });
     assert(result.orderRef === order.orderRef, "token confirm with no session");
     const after = await prisma.bespokeOrder.findUnique({ where: { id: order.id } });
     assert(after?.receiptConfirmedAt, "receipt confirmed");
