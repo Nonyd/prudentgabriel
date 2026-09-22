@@ -4,7 +4,8 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Lenis from "@studio-freight/lenis";
 
-export function SmoothScroll({ children }: { children: React.ReactNode }) {
+/** Effect-only: renders nothing, so it never wraps the page tree. */
+export function SmoothScroll() {
   const pathname = usePathname();
   const skipLenis =
     pathname?.startsWith("/admin") ||
@@ -54,5 +55,5 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     };
   }, [skipLenis]);
 
-  return <>{children}</>;
+  return null;
 }

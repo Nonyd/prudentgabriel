@@ -44,14 +44,23 @@ const siteUrl = getPublicAppUrl();
 export async function generateMetadata(): Promise<Metadata> {
   const image = await houseShareImage();
   const home = PAGE_SEO_FALLBACKS.home;
+  // Root metadata reaches every page, including not-found. It must not claim a
+  // robots directive (it sat beside Next's `noindex` on 404s) or a canonical /
+  // og:url of "/" (every page without its own claimed to be the homepage).
+  // Pages set those themselves.
+  const homeMeta = pageMetadata({
+    title: home.title,
+    description: home.description,
+    path: "/",
+    image,
+  });
+  const openGraph: NonNullable<Metadata["openGraph"]> = { ...homeMeta.openGraph };
+  delete openGraph.url;
   return {
     metadataBase: new URL(siteUrl),
-    ...pageMetadata({
-      title: home.title,
-      description: home.description,
-      path: "/",
-      image,
-    }),
+    description: homeMeta.description,
+    openGraph,
+    twitter: homeMeta.twitter,
     title: {
       default: home.title,
       template: "%s",
@@ -79,7 +88,8 @@ export default async function RootLayout({
       </head>
       <body className="min-h-screen font-sans antialiased">
         <RootProvider logos={logos}>
-          <SmoothScroll>{children}</SmoothScroll>
+          <SmoothScroll />
+          {children}
           <CookieConsent />
         </RootProvider>
       </body>

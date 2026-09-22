@@ -103,3 +103,9 @@ export const CAPABILITY_EXPIRED_COPY = {
   title: "This link has expired",
   body: "Ask the house for a fresh link — reply to the email that brought you here, or write to the atelier.",
 } as const;
+
+/** Token routes 404 for expired and unknown links alike (real status, one message). */
+export const CAPABILITY_GONE_COPY = {
+  title: "This link has expired or is no longer valid",
+  body: "Ask the house for a fresh link — reply to the email that brought you here, or write to the atelier.",
+} as const;

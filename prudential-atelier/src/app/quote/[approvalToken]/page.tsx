@@ -6,7 +6,6 @@ import {
   QuoteApprovalClient,
   type QuoteApprovalData,
 } from "@/components/public/QuoteApprovalClient";
-import { CapabilityExpiredPage } from "@/components/public/CapabilityExpiredPage";
 import { findLatestQuotationVersion } from "@/lib/quotation-versioning";
 import { getHouseDocumentTerms } from "@/lib/invoice-terms";
 import { tokenRouteMetadata } from "@/lib/seo";
@@ -28,7 +27,7 @@ export default async function QuoteApprovalPage({ params }: Props) {
 
   const found = await findQuotationByApprovalToken(approvalToken);
   if (!found.ok) {
-    if (found.reason === "expired") return <CapabilityExpiredPage />;
+    // Expired and unknown alike: a real 404, rendered by ./not-found.tsx.
     notFound();
   }
   const quote = found.quote;

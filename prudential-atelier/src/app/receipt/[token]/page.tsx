@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { tokenPageRateLimited } from "@/lib/page-rate-limit";
 import { ReceiptConfirmClient } from "@/components/public/ReceiptConfirmClient";
-import { CapabilityExpiredPage } from "@/components/public/CapabilityExpiredPage";
 import { loadPublicReceipt } from "@/lib/public-receipt-payload";
 import { tokenRouteMetadata } from "@/lib/seo";
 
@@ -19,7 +18,7 @@ export default async function ReceiptConfirmPage({
   const { token } = await params;
   const result = await loadPublicReceipt(token);
   if (!result.ok) {
-    if (result.reason === "expired") return <CapabilityExpiredPage />;
+    // Expired and unknown alike: a real 404, rendered by ./not-found.tsx.
     notFound();
   }
 

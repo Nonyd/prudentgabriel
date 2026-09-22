@@ -5,8 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { BespokeStageTracker } from "@/components/bespoke/BespokeStageTracker";
 import { TrackOrderActions } from "@/components/track/TrackOrderActions";
-import { TrackSearchForm } from "@/components/track/TrackSearchForm";
-import { CapabilityExpiredPage } from "@/components/public/CapabilityExpiredPage";
 import {
   countLiveCompletions,
   liveCompletionStages,
@@ -30,24 +28,8 @@ export default async function TrackOrderPage({ params }: Props) {
   const { trackingToken } = await params;
 
   const found = await findOrderByTrackingToken(trackingToken);
-  if (!found.ok) {
-    if (found.reason === "expired") {
-      return <CapabilityExpiredPage homeHref="/track" />;
-    }
-    return (
-      <div className="min-h-screen">
-        <TrackSearchForm notFound />
-        <div className="pb-16 text-center">
-          <Link
-            href="/contact"
-            className="inline-block border border-choc px-6 py-3 font-sans text-[10px] font-semibold uppercase tracking-wider text-choc"
-          >
-            Contact the atelier
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Expired and unknown alike: a real 404, rendered by ./not-found.tsx.
+  if (!found.ok) notFound();
 
   const order = await prisma.bespokeOrder.findUnique({
     where: { id: found.order.id },
@@ -65,21 +47,7 @@ export default async function TrackOrderPage({ params }: Props) {
     },
   });
 
-  if (!order) {
-    return (
-      <div className="min-h-screen">
-        <TrackSearchForm notFound />
-        <div className="pb-16 text-center">
-          <Link
-            href="/contact"
-            className="inline-block border border-choc px-6 py-3 font-sans text-[10px] font-semibold uppercase tracking-wider text-choc"
-          >
-            Contact the atelier
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  if (!order) notFound();
 
   const live = liveCompletionStages(order.stageCompletions);
   const stagesComplete = countLiveCompletions(live);

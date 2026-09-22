@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { tokenPageRateLimited } from "@/lib/page-rate-limit";
 import { PublicInvoiceView } from "@/components/invoice/PublicInvoiceView";
-import { CapabilityExpiredPage } from "@/components/public/CapabilityExpiredPage";
 import { findInvoiceByPublicToken } from "@/lib/capability-token-lookup";
 import { tokenRouteMetadata } from "@/lib/seo";
 
@@ -15,7 +14,7 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
   const { token } = await params;
   const found = await findInvoiceByPublicToken(token);
   if (!found.ok) {
-    if (found.reason === "expired") return <CapabilityExpiredPage />;
+    // Expired and unknown alike: a real 404, rendered by ./not-found.tsx.
     notFound();
   }
   return <PublicInvoiceView token={token} />;
