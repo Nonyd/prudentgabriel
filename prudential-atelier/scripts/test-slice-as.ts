@@ -1,5 +1,5 @@
 /**
- * Slice AS — robots, sitemap, 301s, titles, structured data.
+ * Slice AS — robots, sitemap, permanent (308) redirects, titles, structured data.
  *
  *   pnpm test:slice-as
  */
@@ -34,7 +34,7 @@ function testSource() {
   const robots = src("src/app/robots.ts");
   assert(robots.includes("ROBOTS_DISALLOW"), "robots.txt uses the shared disallow list");
 
-  for (const path of ["/staff", "/approve", "/receipt", "/invoice", "/track"] as const) {
+  for (const path of ["/staff", "/approve", "/receipt", "/invoice", "/track", "/checkout"] as const) {
     assert(ROBOTS_DISALLOW.includes(path), `robots disallow ${path}`);
   }
 
@@ -72,11 +72,16 @@ function testSource() {
   }
 
   const redirects = src("redirects.mjs");
-  assert(redirects.includes('source: "/legal/privacy"'), "privacy 301");
-  assert(redirects.includes('source: "/bespoke"'), "bespoke 301");
-  assert(redirects.includes('source: "/rtw/:slug"'), "rtw slug 301");
+  assert(redirects.includes('source: "/legal/privacy"'), "privacy permanent redirect");
+  assert(redirects.includes('source: "/bespoke"'), "bespoke permanent redirect");
+  assert(redirects.includes('source: "/rtw/:slug"'), "rtw slug permanent redirect");
   assert(redirects.includes("permanent: true"), "redirects are permanent");
-  assert(src("next.config.mjs").includes("PERMANENT_REDIRECTS"), "next.config serves the 301 list");
+  assert(src("next.config.mjs").includes("PERMANENT_REDIRECTS"), "next.config serves the permanent redirect list");
+  // Placeholder slugs from duplicated pieces are renamed, and the old URLs redirect.
+  for (const [from, to] of [["def", "delphinium-dress"], ["def-copy", "poppy-2-piece"], ["def-copy-copy", "camellia-dress"], ["def-copy-copy-copy", "primrose-dress"]]) {
+    assert(redirects.includes(`source: "/shop/${from}", destination: "/shop/${to}", permanent: true`), `/shop/${from} redirects to /shop/${to}`);
+    assert(src("prisma/migrations/20260922_rename_def_slugs/migration.sql").includes(`SET "slug" = '${to}'`), `${from} is renamed to ${to}`);
+  }
 
   const rootLayout = src("src/app/layout.tsx");
   assert(rootLayout.includes('template: "%s"'), "root title template does not double the house name");

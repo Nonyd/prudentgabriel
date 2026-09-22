@@ -20,7 +20,8 @@ export const ROBOTS_DISALLOW = [
   "/track",
   "/quote",
   "/unsubscribe",
-  "/checkout/restore",
+  // The whole checkout (cart hand-off, steps, restore links) — never a landing page.
+  "/checkout",
 ] as const;
 
 export function withHouse(title: string): string {
