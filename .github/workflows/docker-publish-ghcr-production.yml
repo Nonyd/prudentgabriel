@@ -184,3 +184,8 @@ jobs:
                 echo "* * * * * /opt/prudentgabriel/deploy/cron-fire.sh email-outbox"
               } | crontab -
             fi
+
+      # A wrong NEXT_PUBLIC_APP_URL fails toward noindex (search-indexing.mjs) and
+      # would silently delist the shop. Fail the deploy loudly instead.
+      - name: Production must stay indexable
+        run: bash deploy/check-indexable.sh https://prudentgabriel.com
