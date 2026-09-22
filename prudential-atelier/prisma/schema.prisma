@@ -887,7 +887,7 @@ model Invoice {
   viewedAt  DateTime?
   viewCount Int       @default(0)
 
-  publicToken String @unique @default(cuid())
+  publicToken String @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
   /// AES-GCM of the raw URL token (new issuances). Null for grandfathered cuid rows.
   publicTokenEnc String?
   /// Null = never expires (legacy inbox links). New issuances set a date.
@@ -2017,7 +2017,7 @@ model BespokeOrder {
   occasionDetails String?
   outfitBrief     String?  @db.Text
 
-  trackingToken String @unique @default(cuid())
+  trackingToken String @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
   trackingTokenEnc String?
   trackingTokenExpiresAt DateTime?
 
@@ -2030,7 +2030,7 @@ model BespokeOrder {
   /// When the DELIVERY stage completed (status → DELIVERED). Used for warranty + reminders.
   deliveredAt DateTime?
 
-  receiptConfirmToken   String    @unique @default(cuid())
+  receiptConfirmToken   String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
   receiptConfirmTokenEnc String?
   receiptConfirmTokenExpiresAt DateTime?
   receiptConfirmedAt    DateTime?
@@ -2216,7 +2216,7 @@ model StageApproval {
   respondedAt   DateTime?
   clientComment String?             @db.Text
   reminderSentAt DateTime?
-  publicToken   String              @unique @default(cuid())
+  publicToken   String              @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
   publicTokenEnc String?
   publicTokenExpiresAt DateTime?
 
@@ -2428,7 +2428,7 @@ model Quotation {
   /// Deposit % the client agrees on this quotation. Defaults from CMS `bespoke_deposit_percent`. Carries through to the invoice.
   depositPercent Float @default(70)
 
-  approvalToken String    @unique @default(cuid())
+  approvalToken String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
   approvalTokenEnc String?
   /// Token TTL. Distinct from quote `expiresAt` (price validity). Null = grandfathered.
   approvalTokenExpiresAt DateTime?

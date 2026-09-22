@@ -18,6 +18,8 @@ const TESTS = [
   "test-staff-data-access",
   "test-upload-limits",
   "test-ssrf-guard",
+  "test-session-revocation",
+  "test-token-defaults",
   "test-cron-registry",
   "test-slice-ab",
   "test-slice-ad",
