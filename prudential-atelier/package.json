@@ -88,6 +88,7 @@
     "test:client-ip": "tsx --tsconfig tsconfig.scripts.json scripts/test-client-ip.ts",
     "test:staff-data-access": "tsx --tsconfig tsconfig.scripts.json scripts/test-staff-data-access.ts",
     "test:upload-limits": "tsx --tsconfig tsconfig.scripts.json scripts/test-upload-limits.ts",
+    "test:ssrf-guard": "tsx --tsconfig tsconfig.scripts.json scripts/test-ssrf-guard.ts",
     "test:ci": "node scripts/run-ci-tests.mjs",
     "test:rtw-launch": "tsx --tsconfig tsconfig.scripts.json scripts/test-rtw-launch.ts",
     "test:authz": "tsx --tsconfig tsconfig.scripts.json scripts/test-authz.ts",

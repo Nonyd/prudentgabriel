@@ -2,6 +2,14 @@
 
 export type MigrateAction = "copy" | "already-local" | "skip-remote" | "skip-empty";
 
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
 export function classifyMediaUrl(url: string | null | undefined): {
   action: MigrateAction;
   reason?: string;
@@ -15,7 +23,8 @@ export function classifyMediaUrl(url: string | null | undefined): {
   if (u.includes("images.unsplash.com") || u.includes("unsplash.com")) {
     return { action: "skip-remote", reason: "Unsplash placeholder — not copied" };
   }
-  if (u.includes("res.cloudinary.com")) return { action: "copy" };
+  // Exact host, not a substring: "https://evil.example/?res.cloudinary.com" is not Cloudinary.
+  if (hostOf(u) === "res.cloudinary.com") return { action: "copy" };
   return { action: "skip-remote", reason: "unrecognised host" };
 }
 
@@ -23,7 +32,7 @@ export function classifyMediaUrl(url: string | null | undefined): {
 export function folderFromCloudinaryUrl(url: string): { folder: string; private: boolean } | null {
   try {
     const u = new URL(url);
-    if (!u.hostname.includes("cloudinary.com")) return null;
+    if (u.hostname !== "res.cloudinary.com") return null;
     const parts = u.pathname.split("/").filter(Boolean);
     const uploadIdx = parts.indexOf("upload");
     if (uploadIdx === -1) return null;

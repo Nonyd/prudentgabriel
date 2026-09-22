@@ -16,6 +16,7 @@ import { PrismaClient } from "@prisma/client";
 import { createLocalDiskMediaStore } from "../src/lib/media/local-disk";
 import { mimeFromMagicBytes, mimeFromVideoMagicBytes } from "../src/lib/image-upload-mime";
 import { classifyMediaUrl, folderFromCloudinaryUrl } from "../src/lib/media/migrate-plan";
+import { safeFetchBuffer } from "../src/lib/http/safe-fetch";
 
 const APPLY = process.argv.includes("--apply");
 const prisma = new PrismaClient();
@@ -147,10 +148,10 @@ async function headBytes(url: string): Promise<{ ok: boolean; status: number; by
   }
 }
 
+/** Slice AZ7: guarded fetch — https only, public addresses only, bounded size and time. */
 async function download(url: string): Promise<Buffer> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`GET ${res.status}`);
-  return Buffer.from(await res.arrayBuffer());
+  const { buffer } = await safeFetchBuffer(url, { maxBytes: 250 * 1024 * 1024, timeoutMs: 120_000 });
+  return buffer;
 }
 
 function mimeOf(buf: Buffer): string {

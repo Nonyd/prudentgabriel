@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Prisma, ProductType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ProductsTable, type ProductRow } from "@/components/admin/ProductsTable";
-import { MigrateImagesBanner } from "@/components/admin/MigrateImagesBanner";
 import { derivedCatalogMinNGN } from "@/lib/pricing";
 import { RTW_EXCLUDED_CATEGORIES } from "@/lib/rtw-aisle";
 
@@ -56,7 +55,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       ? [{ isFeatured: "desc" }, { displayOrder: "asc" }, { publishedAt: { sort: "desc", nulls: "last" } }]
       : [{ createdAt: "desc" }];
 
-  const [total, rows, legacyImageCount] = await Promise.all([
+  const [total, rows] = await Promise.all([
     prisma.product.count({ where }),
     prisma.product.findMany({
       where,
@@ -69,9 +68,6 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
         optionGroup: { select: { options: { select: { priceAdjustmentNGN: true } } } },
         _count: { select: { orderItems: true } },
       },
-    }),
-    prisma.productImage.count({
-      where: { url: { contains: "wp-content/uploads" } },
     }),
   ]);
 
@@ -117,7 +113,6 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
           </Link>
         </div>
       </div>
-      <MigrateImagesBanner initialCount={legacyImageCount} />
       <ProductsTable
         items={items}
         page={page}

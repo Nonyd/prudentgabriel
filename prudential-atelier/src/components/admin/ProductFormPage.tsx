@@ -267,7 +267,6 @@ export function ProductFormPage({
   const [libraryFields, setLibraryFields] = useState<{ id: string; key: string; label: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const [reuploadingId, setReuploadingId] = useState<string | null>(null);
   const [colorUploading, setColorUploading] = useState<number | null>(null);
   const [bundleSearch, setBundleSearch] = useState("");
   const [bundleResults, setBundleResults] = useState<ProductListItem[]>([]);
@@ -508,34 +507,6 @@ export function ProductFormPage({
         form.setValue("images", imgs);
         toast.error(e instanceof Error ? e.message : "Delete failed");
       }
-    }
-  };
-
-  const reuploadLegacyImage = async (index: number) => {
-    const imgs = form.getValues("images");
-    const target = imgs[index];
-    if (!target?.id || mode !== "edit" || !product?.id) return;
-
-    setReuploadingId(target.id);
-    try {
-      const res = await fetch(`/api/admin/products/${product.id}/images/reupload`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sourceUrl: target.url, imageId: target.id }),
-      });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !data.url) {
-        throw new Error(typeof data.error === "string" ? data.error : "Re-upload failed");
-      }
-      const updated = imgs.map((im, i) => (i === index ? { ...im, url: data.url! } : im));
-      form.setValue("images", updated);
-      toast.success("Image migrated to Cloudinary");
-      router.refresh();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Re-upload failed");
-    } finally {
-      setReuploadingId(null);
     }
   };
 
@@ -836,17 +807,7 @@ export function ProductFormPage({
                     <img src={im.url} alt="" className="h-36 w-full rounded-sm object-cover" />
                     {isLegacyWordPressImageUrl(im.url) && (
                       <div className="mt-1 space-y-1">
-                        <p className="text-[10px] text-amber-700">Hosted on the old server</p>
-                        {(savedId ?? product?.id) && im.id && (
-                          <button
-                            type="button"
-                            disabled={reuploadingId === im.id}
-                            onClick={() => void reuploadLegacyImage(idx)}
-                            className="min-h-[44px] text-xs text-gold hover:underline disabled:opacity-50"
-                          >
-                            {reuploadingId === im.id ? "Migrating…" : "Re-upload to Cloudinary →"}
-                          </button>
-                        )}
+                        <p className="text-[10px] text-amber-700">Hosted on the old server — upload a replacement.</p>
                       </div>
                     )}
                     <div className="mt-2 flex min-h-[44px] items-center justify-between gap-1">
