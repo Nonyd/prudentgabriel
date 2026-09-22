@@ -11,6 +11,10 @@ Slices A, B, T, U, X and related work: small where possible, named where not.
 
 No secret, key, password or token value appears below.
 
+> **Status update 2026-09-22.** Findings in this audit have since been fixed on
+> `staging`; see **§8a** for the current state of every gap. §1–§8 below are the
+> audit as recorded on 2026-09-21 and are kept unchanged as the baseline.
+
 ---
 
 ## 1. The front door
@@ -359,6 +363,27 @@ that snapshot is a manual process, not an automated undo.
 | Revoke every session at once? | Per-user `forceSignOutUser` only (`password-reset.ts:33–38`). Rotating `AUTH_SECRET` on the host would invalidate JWTs but is not an app button. | **EXPOSED** |
 
 ---
+
+## 8a. Status on 2026-09-22 (branch `staging`, not yet on `main`)
+
+| # | Gap | Status | Evidence |
+|---|-----|--------|----------|
+| 1 | Security headers | **Done** — HSTS (1y, no preload/includeSubDomains), nosniff, strict-origin-when-cross-origin, Permissions-Policy, X-Frame-Options SAMEORIGIN, enforced `frame-ancestors 'self'`, no-referrer on token routes. **CSP is report-only** until violation reports are reviewed. | `24337bc`; `security-headers.mjs`; `test:security-headers` live on staging |
+| 2 | Next image optimiser RCE (AZ1) | **Mitigated, not fixed** — AVIF off on 14.2.35; staging never serves AVIF. Fixed only by Next ≥15.5.24. | `bfd72eb`; `next.config.mjs:16-21`; `docs/VERIFICATION_2026-09.md` §1 |
+| 3 | Auth.js advisories (AZ2) | **Done** — next-auth beta.32, @auth/core 0.41.3, fail-closed middleware. Live sign-in pass still owed (Nony). | `bfd72eb`; `src/middleware.ts:39` |
+| 4 | Unauthenticated careers / consultation uploads (AZ5) | **Done** — per-IP limits, daily cap per route, nightly sweep of unattached uploads. | `1edb26c`; `src/lib/upload-limits.ts`; cron `orphan-uploads` |
+| 5 | cuid tokens, no TTL (AZ3) | **Done** — 256-bit random, SHA-256 stored, per-link expiry, legacy links grandfathered; token columns no longer default to cuid. | `9951541`, `a011fca`; `test:token-defaults` |
+| 6 | Admin SSRF via image re-host (AZ7) | **Done** — admin re-host removed (unused since Slice X); CLI migration uses a guarded fetch; Cloudinary matched by exact host. | `f8fee3a`; `src/lib/http/safe-fetch.ts`; `test:ssrf-guard` |
+| 7 | Backups on the same host (AZ10) | **Open — needs Nony**: rclone remote, `BACKUP_RCLONE_REMOTE`, schedule, one timed restore. Backup scripts are now written only by the production deploy. | `c084881`; `deploy/backup-media.sh` |
+| 8 | No global session kill (AZ9) | **Done** — SUPER_ADMIN "Sign out everyone", typed confirmation, logged. | `4faa4a6`; `test:session-revocation` |
+| 9 | In-memory rate limits (AZ6) | **Done** — Postgres-backed counters; client IP from the proxy peer, CF-Connecting-IP only from Cloudflare ranges (production had bucketed all Cloudflare visitors together). Falls back to per-process counters if Postgres is down. | `23fc180`; `test:client-ip` live on staging |
+| 10 | STAFF read measurements + receipt URLs (AZ8) | **Done** — no payments/receipts to STAFF; measurements only to the assigned tailor/pattern cutter. | `a7a7ff3`; `test:staff-data-access` |
+| 11–12, 14–18 | (unchanged) | **Open** as recorded below. | — |
+| 13 | Guest receipt ticket uploads | **Done** — 5 uploads per ticket, daily cap. | `1edb26c` |
+
+Also found and fixed since: a push to `staging` rewrote production's live
+Traefik routes and backup scripts (`c084881`); every dynamic 404 returned 200
+(`06e9775`); staging was indexable (`5e73923`).
 
 ## 8. Gap register
 
