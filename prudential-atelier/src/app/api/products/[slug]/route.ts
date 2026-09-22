@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_PRODUCT_WHERE } from "@/lib/product-visibility";
 import { GALLERY_GRID_IMAGE_TAKE } from "@/lib/product-gallery";
 import { logServerError } from "@/lib/logger";
 
@@ -30,6 +31,7 @@ export async function GET(
           take: 20,
         },
         bundleItems: {
+          where: { targetProduct: PUBLIC_PRODUCT_WHERE },
           orderBy: { sortOrder: "asc" },
           include: {
             targetProduct: {
@@ -71,7 +73,13 @@ export async function GET(
         averageRating,
         reviewCount,
       },
-      { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" } },
+      {
+        headers: {
+          "Cache-Control": product.isPublished
+            ? "public, s-maxage=60, stale-while-revalidate=120"
+            : "private, no-store",
+        },
+      },
     );
   } catch (e) {
     await logServerError({ errorType: "PRODUCT_DETAIL", error: e });

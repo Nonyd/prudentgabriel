@@ -12,9 +12,9 @@ export async function assertCustomLineAllowed(
 ): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
   const product = await prisma.product.findUnique({
     where: { id: productId },
-    select: { customOffered: true },
+    select: { customOffered: true, isPublished: true },
   });
-  if (!product) {
+  if (!product || !product.isPublished) {
     return { ok: false, status: 404, error: "Product not found" };
   }
   if (!product.customOffered) {

@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { PaymentStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_PRODUCT_WHERE } from "@/lib/product-visibility";
 import { ProductDetailClient } from "@/components/product/ProductDetailClient";
 import { CompleteTheLook } from "@/components/product/CompleteTheLook";
 import { ProductCardSkeleton } from "@/components/common/ProductCardSkeleton";
@@ -55,6 +56,7 @@ const getPublishedProduct = cache(async (slug: string) =>
         orderBy: { createdAt: "desc" },
       },
       bundleItems: {
+        where: { targetProduct: PUBLIC_PRODUCT_WHERE },
         orderBy: { sortOrder: "asc" },
         include: {
           targetProduct: {

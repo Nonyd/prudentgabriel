@@ -1,5 +1,6 @@
 import type { CronJobContext, JobResult } from "@/lib/cron/types";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_PRODUCT_WHERE } from "@/lib/product-visibility";
 import { sendAbandonedCartEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
 
@@ -26,7 +27,8 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
     }
     try {
       const items = await prisma.cartItem.findMany({
-        where: { userId: row.userId },
+        // Never email a withdrawn piece; a bag of only withdrawn pieces sends nothing.
+        where: { userId: row.userId, product: PUBLIC_PRODUCT_WHERE },
         include: {
           product: { select: { name: true } },
           user: { select: { email: true, name: true } },

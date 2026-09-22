@@ -40,7 +40,7 @@ async function loadActiveReels(collectionId: string): Promise<CollectionReelReco
   const rows = await prisma.collectionReel.findMany({
     where: { collectionId, isActive: true },
     orderBy: [{ sortOrder: "asc" }, { position: "asc" }],
-    include: { product: { select: { name: true, slug: true } } },
+    include: { product: { select: { name: true, slug: true, isPublished: true } } },
   });
   return rows.map((r) => ({
     id: r.id,
@@ -50,8 +50,9 @@ async function loadActiveReels(collectionId: string): Promise<CollectionReelReco
     videoKey: r.videoKey,
     posterKey: r.posterKey,
     productId: r.productId,
-    productName: r.product?.name ?? null,
-    productSlug: r.product?.slug ?? null,
+    // Never name or link an unpublished piece from a public page.
+    productName: r.product?.isPublished ? r.product.name : null,
+    productSlug: r.product?.isPublished ? r.product.slug : null,
   }));
 }
 

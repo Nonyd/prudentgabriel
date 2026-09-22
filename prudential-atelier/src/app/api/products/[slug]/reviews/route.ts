@@ -16,14 +16,14 @@ const postSchema = z.object({
 async function resolveProduct(slug: string) {
   return prisma.product.findUnique({
     where: { slug },
-    select: { id: true, name: true, slug: true },
+    select: { id: true, name: true, slug: true, isPublished: true },
   });
 }
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ slug: string }> }) {
   const { slug } = await ctx.params;
   const product = await resolveProduct(slug);
-  if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
+  if (!product || !product.isPublished) return NextResponse.json({ error: "Product not found" }, { status: 404 });
 
   const reviews = await prisma.review.findMany({
     where: { productId: product.id, isApproved: true },

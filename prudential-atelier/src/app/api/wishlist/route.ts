@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_PRODUCT_WHERE } from "@/lib/product-visibility";
 
 export async function GET() {
   const session = await auth();
@@ -25,6 +26,11 @@ export async function POST(req: NextRequest) {
   const body = (await req.json()) as { productId?: string };
   if (!body.productId) {
     return NextResponse.json({ error: "productId required" }, { status: 400 });
+  }
+
+  const product = await prisma.product.findFirst({ where: { id: body.productId, ...PUBLIC_PRODUCT_WHERE }, select: { id: true } });
+  if (!product) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   await prisma.wishlistItem.upsert({

@@ -1,12 +1,14 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_PRODUCT_WHERE } from "@/lib/product-visibility";
 import { WishlistClient, type WishlistItemView } from "@/components/account/WishlistClient";
 import { derivedCatalogMinNGN } from "@/lib/pricing";
 
 export default async function WishlistPage() {
   const session = await auth();
   const items = await prisma.wishlistItem.findMany({
-    where: { userId: session!.user!.id! },
+    // A withdrawn piece drops out of the wishlist.
+    where: { userId: session!.user!.id!, product: PUBLIC_PRODUCT_WHERE },
     include: {
       product: {
         include: {

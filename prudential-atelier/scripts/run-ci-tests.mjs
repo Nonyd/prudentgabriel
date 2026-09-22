@@ -22,6 +22,7 @@ const TESTS = [
   "test-token-defaults",
   "test-legal-figures",
   "test-orderability",
+  "test-product-visibility",
   "test-cron-registry",
   "test-slice-ab",
   "test-slice-ad",

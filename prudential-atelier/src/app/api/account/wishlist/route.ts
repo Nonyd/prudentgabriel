@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSession } from "@/lib/api-auth";
 import { getOrCreateClientProfile } from "@/lib/account-helpers";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_PRODUCT_WHERE } from "@/lib/product-visibility";
 import { logActivity, logError } from "@/lib/logger";
 
 export async function GET() {
@@ -12,7 +13,8 @@ export async function GET() {
   try {
     const profile = await getOrCreateClientProfile(gate.session.user.id!);
     const items = await prisma.wishlistItem.findMany({
-      where: { userId: gate.session.user.id! },
+      // A withdrawn piece drops out of the wishlist.
+      where: { userId: gate.session.user.id!, product: PUBLIC_PRODUCT_WHERE },
       include: {
         product: {
           include: {
@@ -53,6 +55,13 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const product = await prisma.product.findFirst({
+      where: { id: parsed.data.productId, ...PUBLIC_PRODUCT_WHERE },
+      select: { id: true },
+    });
+    if (!product) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
     const item = await prisma.wishlistItem.upsert({
       where: {
         userId_productId: {
@@ -62,7 +71,7 @@ export async function POST(req: NextRequest) {
       },
       create: { userId: gate.session.user.id!, productId: parsed.data.productId },
       update: {},
-      include: { product: true },
+      include: { product: { select: { id: true, name: true, slug: true } } },
     });
 
     await logActivity({

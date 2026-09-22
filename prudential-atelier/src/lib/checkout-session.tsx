@@ -3,6 +3,7 @@ import React from "react";
 import { EMAIL_PRIORITY_MARKETING } from "@/lib/email-priority";
 import { normalizeEmail, suppressedEmailSet } from "@/lib/email-consent";
 import { prisma } from "@/lib/prisma";
+import { publishedProductIds } from "@/lib/product-visibility";
 import { queueEmail } from "@/lib/email-outbox";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { primeEmailBranding } from "@/lib/email-branding";
@@ -201,10 +202,20 @@ export async function sendAbandonedCheckoutReminder(params: {
     return { queued: false, created: false, reason: "unsubscribed" };
   }
 
-  const snap = parseCartSnapshot(session.cartSnapshot);
-  if (snap.lines.length === 0) {
+  const parsed = parseCartSnapshot(session.cartSnapshot);
+  if (parsed.lines.length === 0) {
     return { queued: false, created: false, reason: "empty" };
   }
+  // Never email a withdrawn piece (the snapshot was taken while it was live).
+  const live = await publishedProductIds(parsed.lines.map((l) => l.productId));
+  const liveLines = parsed.lines.filter((l) => live.has(l.productId));
+  if (liveLines.length === 0) {
+    return { queued: false, created: false, reason: "unavailable" };
+  }
+  const snap =
+    liveLines.length === parsed.lines.length
+      ? parsed
+      : { ...parsed, lines: liveLines, subtotalNGN: liveLines.reduce((s, l) => s + l.priceNGN * l.quantity, 0) };
 
   const reminderNumber = params.kind === "manual" ? "manual" : String(params.kind);
   const idempotencyKey = `abandoned-checkout:${session.id}:${reminderNumber}`;
