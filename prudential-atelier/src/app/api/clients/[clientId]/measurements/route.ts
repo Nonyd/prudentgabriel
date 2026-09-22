@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
+import { canSeeClientMeasurements } from "@/lib/bespoke-data-access";
 import { logActivity, logError } from "@/lib/logger";
 import { measurementPlausibilityError } from "@/lib/measurements";
 
@@ -33,6 +34,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!gate.ok) return gate.response;
 
   const { clientId } = await params;
+
+  // Slice AZ8: only whoever cuts this client's garments (or a manager) records measurements.
+  if (!(await canSeeClientMeasurements(gate.session.user, clientId))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   let body: MeasurementInput;
   try {

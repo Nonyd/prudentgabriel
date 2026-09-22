@@ -66,6 +66,9 @@ type OrderWithRelations = BespokeOrder & {
     occasion: string;
   } | null;
   payments?: LedgerPayment[];
+  /** Slice AZ8: set by the API when this viewer may not see payments / measurements. */
+  paymentsHidden?: boolean;
+  measurementsHidden?: boolean;
 };
 
 function ledgerAmount(p: LedgerPayment): number {
@@ -658,7 +661,7 @@ export function BespokeOrderDetailClient({
               rows={4}
               className="mt-4 w-full rounded border border-sand px-3 py-2 font-sans text-sm"
             />
-            {order.currentStage === "CONSULTATION_SESSION" ? (
+            {order.currentStage === "CONSULTATION_SESSION" && !order.measurementsHidden ? (
               <div className="mt-4">
                 <p className="font-sans text-[11px] text-text-mid">
                   Capture measurements now to save a trip later (optional)
@@ -821,7 +824,7 @@ export function BespokeOrderDetailClient({
                   {(order.payments ?? []).length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-3 text-text-light">
-                        No ledger payments yet.
+                        {order.paymentsHidden ? "Payments are visible to managers and finance." : "No ledger payments yet."}
                       </td>
                     </tr>
                   ) : (

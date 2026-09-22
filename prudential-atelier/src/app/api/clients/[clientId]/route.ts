@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { BESPOKE_MANAGER_ROLES, BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
 import { logActivity, logError } from "@/lib/logger";
 import { getClientPayments } from "@/lib/payments/ledger";
+import { canSeeClientMeasurements, canSeePaymentDetails } from "@/lib/bespoke-data-access";
 
 type Params = { params: Promise<{ clientId: string }> };
 
@@ -61,14 +62,22 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
     if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const payments = await getClientPayments({
-      userId: item.userId,
-      email: item.user.email,
-    });
+    // Slice AZ8: payments for money roles; measurements for whoever cuts this client's garments.
+    const seePayments = canSeePaymentDetails(gate.session.user);
+    const seeMeasurements = await canSeeClientMeasurements(gate.session.user, item.id);
+    const payments = seePayments
+      ? await getClientPayments({
+          userId: item.userId,
+          email: item.user.email,
+        })
+      : [];
 
     return NextResponse.json({
       item: {
         ...item,
+        measurements: seeMeasurements ? item.measurements : null,
+        paymentsHidden: !seePayments,
+        measurementsHidden: !seeMeasurements,
         payments: payments.map((p) => ({
           id: p.id,
           reference: p.reference,

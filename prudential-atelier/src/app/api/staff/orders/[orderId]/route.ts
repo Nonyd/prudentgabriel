@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { MEASUREMENT_ASSIGNMENT_ROLES } from "@/lib/bespoke-data-access";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: string }> }) {
   const session = await auth();
@@ -35,7 +36,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: s
   if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const clientFirstName = order.clientName.split(/\s+/)[0] ?? order.clientName;
-  const m = order.clientProfile?.measurements;
+  // Slice AZ8: measurements for the tailor / pattern cutter, not every assignee.
+  const m = MEASUREMENT_ASSIGNMENT_ROLES.includes(assignment.role) ? order.clientProfile?.measurements : null;
   const measurements = m
     ? {
         bust: m.bust,

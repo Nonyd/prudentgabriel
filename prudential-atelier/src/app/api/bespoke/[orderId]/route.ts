@@ -13,6 +13,7 @@ import {
 } from "@/lib/payments/ledger";
 import { generatePaymentReference } from "@/lib/payments/index";
 import { stageGateInclude } from "@/lib/atelier/can-complete-stage";
+import { canSeeOrderMeasurements, canSeePaymentDetails, redactBespokeOrder } from "@/lib/bespoke-data-access";
 
 type Params = { params: Promise<{ orderId: string }> };
 
@@ -44,6 +45,11 @@ export async function GET(_req: NextRequest, { params }: Params) {
       },
     });
     if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    // Slice AZ8: payments/receipts for money roles; measurements for whoever cuts the garment.
+    const access = {
+      payments: canSeePaymentDetails(gate.session.user),
+      measurements: await canSeeOrderMeasurements(gate.session.user, order.id),
+    };
     const summary = await getOrderPaymentSummary(order.id);
     const totalDrift = Math.abs(order.totalAmount - toNumber(summary.total)) > 0.005;
     const unlockDrift = Boolean(order.productionUnlockedAt) !== summary.depositSatisfied;
@@ -63,9 +69,9 @@ export async function GET(_req: NextRequest, { params }: Params) {
           ...stageGateInclude(),
         },
       });
-      if (refreshed) return NextResponse.json({ item: refreshed });
+      if (refreshed) return NextResponse.json({ item: redactBespokeOrder(refreshed, access) });
     }
-    return NextResponse.json({ item: order });
+    return NextResponse.json({ item: redactBespokeOrder(order, access) });
   } catch (e) {
     await logError({
       severity: "WARNING",

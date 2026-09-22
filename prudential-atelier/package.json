@@ -86,6 +86,7 @@
     "test:search-indexing": "tsx --tsconfig tsconfig.scripts.json scripts/test-search-indexing.ts",
     "test:security-headers": "tsx --tsconfig tsconfig.scripts.json scripts/test-security-headers.ts",
     "test:client-ip": "tsx --tsconfig tsconfig.scripts.json scripts/test-client-ip.ts",
+    "test:staff-data-access": "tsx --tsconfig tsconfig.scripts.json scripts/test-staff-data-access.ts",
     "test:ci": "node scripts/run-ci-tests.mjs",
     "test:rtw-launch": "tsx --tsconfig tsconfig.scripts.json scripts/test-rtw-launch.ts",
     "test:authz": "tsx --tsconfig tsconfig.scripts.json scripts/test-authz.ts",
