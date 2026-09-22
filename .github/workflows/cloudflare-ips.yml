@@ -1,0 +1,25 @@
+# Monthly: fail if Cloudflare's published IP ranges no longer match the
+# snapshot the rate limiter trusts (prudential-atelier/src/lib/http/client-ip.ts).
+# Scheduled workflows run from the default branch (main).
+
+name: cloudflare-ips
+
+on:
+  schedule:
+    - cron: "0 6 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Compare snapshot with cloudflare.com/ips-v4 and ips-v6
+        run: node prudential-atelier/scripts/check-cloudflare-ips.mjs
