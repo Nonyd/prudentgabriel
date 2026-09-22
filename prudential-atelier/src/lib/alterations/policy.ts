@@ -13,6 +13,14 @@ import { getSetting } from "@/lib/settings";
 
 export const DEFAULT_ALTERATION_WARRANTY_DAYS = 30;
 
+/** AR5: hours after delivery to report a faulty or damaged piece (setting `post_delivery_fault_hours`). */
+export const DEFAULT_POST_DELIVERY_FAULT_HOURS = 48;
+
+export async function getPostDeliveryFaultHours(): Promise<number> {
+  const n = Number(await getSetting("post_delivery_fault_hours"));
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : DEFAULT_POST_DELIVERY_FAULT_HOURS;
+}
+
 export async function getAlterationWarrantyDays(): Promise<number> {
   const raw = await getSetting("alteration_warranty_days");
   const n = Number(raw);

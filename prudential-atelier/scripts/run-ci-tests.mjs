@@ -20,6 +20,7 @@ const TESTS = [
   "test-ssrf-guard",
   "test-session-revocation",
   "test-token-defaults",
+  "test-legal-figures",
   "test-cron-registry",
   "test-slice-ab",
   "test-slice-ad",

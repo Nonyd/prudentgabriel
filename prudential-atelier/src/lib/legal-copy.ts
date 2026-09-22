@@ -473,7 +473,7 @@ That includes shop made-to-measure and atelier commissions. Another woman cannot
 
 That is the fourth house term on your invoice. It covers a piece not produced, not delivered in good and useable condition, or not delivered by the agreed date, where we cannot put it right. It does not cover a change of mind after a made-to-measure piece has been cut.
 
-If you receive a faulty or damaged item, write within 48 hours of delivery with photographs. That is how we meet the agreement when the piece is not in good and useable condition. We will repair, remake, or refund where we cannot offer a reasonable solution.
+{{#post_delivery_fault_hours}}If you receive a faulty or damaged item, write within {{post_delivery_fault_hours}} hours of delivery with photographs.{{/post_delivery_fault_hours}} That is how we meet the agreement when the piece is not in good and useable condition. We will repair, remake, or refund where we cannot offer a reasonable solution.
 
 ## Atelier after delivery
 

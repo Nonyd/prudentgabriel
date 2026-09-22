@@ -1,7 +1,9 @@
 import { FabricUnavailableChoice, type Prisma } from "@prisma/client";
 
 export const FABRIC_UNAVAILABLE_ATTENTION = "fabric-unavailable";
-export const FABRIC_PROMISE_HOURS = 48;
+/** AR5: live setting `fabric_promise_hours` (read in fabric-promise.ts, server only); this is the fallback. */
+export const DEFAULT_FABRIC_PROMISE_HOURS = 48;
+export const FABRIC_PROMISE_HOURS_KEY = "fabric_promise_hours";
 
 export const FABRIC_CHOICE_LABEL: Record<FabricUnavailableChoice, string> = {
   ALTERNATIVE_OFFERED: "Alternative offered",
@@ -23,6 +25,6 @@ export function hoursOnFabricQueue(at: Date, now = new Date()): number {
   return Math.max(0, (now.getTime() - at.getTime()) / 36e5);
 }
 
-export function fabricQueueOverdue(at: Date, now = new Date()): boolean {
-  return hoursOnFabricQueue(at, now) > FABRIC_PROMISE_HOURS;
+export function fabricQueueOverdue(at: Date, promiseHours: number, now = new Date()): boolean {
+  return hoursOnFabricQueue(at, now) > promiseHours;
 }

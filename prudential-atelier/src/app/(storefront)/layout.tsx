@@ -8,6 +8,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { ANNOUNCEMENT_SPEED_MS, cmsBool, cmsGet, cmsJson } from "@/lib/cms";
 import { getLogoSettingsSafe } from "@/lib/logos";
 import { getProductionCopy } from "@/lib/production-time";
+import { getFabricPromiseHours } from "@/lib/fabric-promise";
 import { organizationJsonLd } from "@/lib/seo-jsonld";
 import { getSetting } from "@/lib/settings";
 import {
@@ -29,7 +30,7 @@ const FOOTER_KEYS = [
 ] as const;
 
 export default async function StorefrontLayout({ children }: { children: React.ReactNode }) {
-  const [announcementCms, footerCms, collections, productionCopy, org] = await Promise.all([
+  const [announcementCms, footerCms, collections, productionCopy, org, fabricPromiseHours] = await Promise.all([
     getCachedCMSContent([...ANNOUNCEMENT_KEYS], STOREFRONT_CACHE_TAGS.cmsChrome),
     getCachedCMSContent([...FOOTER_KEYS], STOREFRONT_CACHE_TAGS.cmsChrome),
     getNavCollections(),
@@ -47,6 +48,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
         facebook,
       }),
     ),
+    getFabricPromiseHours(),
   ]);
 
   const showAnnouncement = cmsBool(announcementCms, "announcement_bar_enabled", true);
@@ -58,7 +60,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
   const intervalMs = ANNOUNCEMENT_SPEED_MS[speedKey] ?? 3000;
 
   return (
-    <ProductionTimeProvider copy={productionCopy}>
+    <ProductionTimeProvider copy={productionCopy} fabricPromiseHours={fabricPromiseHours}>
       <div className="storefront-shell" data-announcement={showAnnouncement ? "on" : "off"}>
         <div className="storefront-field" aria-hidden="true" />
         <a href="#main-content" className="skip-link">

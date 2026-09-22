@@ -20,7 +20,6 @@ import { pickVariantForAdd, bagErrorMessage } from "@/lib/quick-add";
 import { customSurchargeNGN, standardVariants, validateCustomMeasurements } from "@/lib/custom-size";
 import { isCustomOfferedNow, PDP_INITIAL_FIT_MODE } from "@/lib/custom-availability";
 import {
-  FABRIC_POLICY_COPY,
   MADE_TO_MEASURE_REASON,
   STANDARD_SIZE_COPY,
   madeThenShippedCopy,
@@ -41,6 +40,7 @@ import { displayAmountInCurrency, effectiveUnitNGN, variantAmountInCurrency } fr
 import { useCurrencyStore } from "@/store/currencyStore";
 import { cn } from "@/lib/utils";
 import type { ProductType } from "@prisma/client";
+import { useFabricPolicyCopy } from "@/components/layout/ProductionTimeContext";
 import type { ProductListItem, ProductListOptionGroup, ProductListVariant } from "@/types/product";
 import type { TypedUnit } from "@/lib/sizing";
 interface DetailProduct {
@@ -105,6 +105,7 @@ export function ProductDetailClient({
   previousCm = {},
   optionMeasurementOverrides = [],
 }: ProductDetailClientProps) {
+  const fabricPolicy = useFabricPolicyCopy();
   const optionGroup = product.optionGroup ?? null;
   const [variantId, setVariantId] = useState<string | null>(null);
   const [optionId, setOptionId] = useState<string | null>(null);
@@ -604,7 +605,7 @@ export function ProductDetailClient({
                 )}
                 <p>{STANDARD_SIZE_COPY}</p>
                 {customAvailable ? <p>{MADE_TO_MEASURE_REASON}</p> : null}
-                <p>{FABRIC_POLICY_COPY}</p>
+                <p>{fabricPolicy}</p>
               </Accordion.Content>
             </Accordion.Item>
             {product.isBespokeAvail && product.type !== "RTW" && (

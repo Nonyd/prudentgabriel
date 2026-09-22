@@ -394,6 +394,8 @@ async function upsertSiteSettings() {
     { key: "monnify_environment", value: "sandbox", group: SettingGroup.PAYMENTS, label: "Monnify Environment", type: SettingType.SELECT, isPublic: false, sortOrder: 14 },
     { key: "bespoke_deposit_percent", value: "70", group: SettingGroup.PAYMENTS, label: "Bespoke Deposit %", type: SettingType.NUMBER, isPublic: false, sortOrder: 25 },
     { key: "alteration_warranty_days", value: "30", group: SettingGroup.PAYMENTS, label: "Alteration warranty (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 26 },
+    { key: "fabric_promise_hours", value: "48", group: SettingGroup.PAYMENTS, label: "Fabric unavailable: offer alternative or refund within (hours)", type: SettingType.NUMBER, isPublic: false, sortOrder: 27 },
+    { key: "post_delivery_fault_hours", value: "48", group: SettingGroup.PAYMENTS, label: "Faulty or damaged piece: report within (hours of delivery)", type: SettingType.NUMBER, isPublic: false, sortOrder: 28 },
     { key: "exchange_rate_usd", value: "0.00065", group: SettingGroup.PAYMENTS, label: "USD Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 30 },
     { key: "exchange_rate_gbp", value: "0.00052", group: SettingGroup.PAYMENTS, label: "GBP Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 31 },
     {
@@ -542,6 +544,8 @@ async function upsertSiteSettings() {
     { key: "invoice_deposit_terms", value: "70% deposit required to commence. Balance due before delivery.", group: SettingGroup.INVOICE, label: "Default Payment Terms", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 44 },
     { key: "bespoke_deposit_percent", value: "70", group: SettingGroup.PAYMENTS, label: "Default bespoke deposit %", type: SettingType.NUMBER, isPublic: false, sortOrder: 25 },
     { key: "alteration_warranty_days", value: "30", group: SettingGroup.PAYMENTS, label: "Alteration warranty (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 26 },
+    { key: "fabric_promise_hours", value: "48", group: SettingGroup.PAYMENTS, label: "Fabric unavailable: offer alternative or refund within (hours)", type: SettingType.NUMBER, isPublic: false, sortOrder: 27 },
+    { key: "post_delivery_fault_hours", value: "48", group: SettingGroup.PAYMENTS, label: "Faulty or damaged piece: report within (hours of delivery)", type: SettingType.NUMBER, isPublic: false, sortOrder: 28 },
     { key: "invoice_logo_url", value: "/images/atelier-logo.png", group: SettingGroup.INVOICE, label: "Invoice Logo URL", type: SettingType.IMAGE, isPublic: false, sortOrder: 45 },
     { key: "invoice_prefix", value: "PA-INV", group: SettingGroup.INVOICE, label: "Invoice Number Prefix", type: SettingType.TEXT, isPublic: false, sortOrder: 46 },
     { key: "invoice_term_delivery", value: "The house is responsible for producing and delivering the agreed design, in good and useable condition, by the agreed date.", group: SettingGroup.INVOICE, label: "Term 1 — Delivery", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 50 },

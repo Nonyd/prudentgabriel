@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getFabricPromiseHours } from "@/lib/fabric-promise";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ShippingQuoteStatus } from "@prisma/client";
@@ -89,6 +90,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       />
 
       <AdminOrderToolbar
+        fabricPromiseHours={await getFabricPromiseHours()}
         order={{
           id: order.id,
           orderNumber: order.orderNumber,

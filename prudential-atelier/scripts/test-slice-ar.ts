@@ -30,7 +30,10 @@ import {
   ESSENTIAL_CURRENCY_STORAGE_KEY,
   parseCookieConsent,
 } from "../src/lib/cookie-consent";
-import { FABRIC_POLICY_COPY, MADE_TO_MEASURE_REASON, STANDARD_SIZE_COPY } from "../src/lib/production-time";
+import { fabricPolicyCopy, MADE_TO_MEASURE_REASON, STANDARD_SIZE_COPY } from "../src/lib/production-time";
+import { DEFAULT_FABRIC_PROMISE_HOURS } from "../src/lib/fabric-unavailable";
+
+const FABRIC_POLICY_COPY = fabricPolicyCopy(DEFAULT_FABRIC_PROMISE_HOURS);
 import { sanitizeCmsHtml } from "../src/lib/sanitize-html";
 import {
   applyLegalTokens,

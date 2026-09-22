@@ -9,7 +9,6 @@ import { X } from "lucide-react";
 import { AlertDialog } from "@/components/ui/AlertDialog";
 import {
   FABRIC_CHOICE_LABEL,
-  FABRIC_PROMISE_HOURS,
   fabricQueueOverdue,
   hoursOnFabricQueue,
 } from "@/lib/fabric-unavailable";
@@ -62,7 +61,14 @@ function gatewayLabel(g: PaymentGateway | null | undefined) {
   return g;
 }
 
-export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
+export function AdminOrderToolbar({
+  order,
+  fabricPromiseHours,
+}: {
+  order: ToolbarOrder;
+  /** AR5: live `fabric_promise_hours` setting. */
+  fabricPromiseHours: number;
+}) {
   const router = useRouter();
   const [notes, setNotes] = useState(order.adminNotes ?? "");
   const [refundOpen, setRefundOpen] = useState(false);
@@ -176,7 +182,7 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
   const unpaid = order.paymentStatus !== "PAID";
   const fabricAt = order.fabricUnavailableAt ? new Date(order.fabricUnavailableAt) : null;
   const fabricHours = fabricAt ? hoursOnFabricQueue(fabricAt) : 0;
-  const fabricOverdue = fabricAt ? fabricQueueOverdue(fabricAt) : false;
+  const fabricOverdue = fabricAt ? fabricQueueOverdue(fabricAt, fabricPromiseHours) : false;
   const options = (NEXT_OPTIONS[order.status] ?? []).filter((o) => {
     if (unpaid && o.value !== "CANCELLED") return false;
     if (isPickup && o.value === "SHIPPED") return false;
@@ -315,7 +321,7 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
               </Dialog.Close>
             </div>
             <Dialog.Description className="mt-2 text-sm text-[#6B6B68]">
-              Offer an alternative or a refund within {FABRIC_PROMISE_HOURS} hours. This does not block the sale.
+              Offer an alternative or a refund within {fabricPromiseHours} hours. This does not block the sale.
             </Dialog.Description>
             <div className="mt-4 space-y-3 text-sm">
               <label className="flex cursor-pointer items-center gap-2">
@@ -388,7 +394,7 @@ export function AdminOrderToolbar({ order }: { order: ToolbarOrder }) {
       ) : null}
       {fabricAt ? (
         <p className={`mt-2 font-body text-sm ${fabricOverdue ? "text-wine" : "text-[#92660A]"}`}>
-          Fabric unavailable · {Math.floor(fabricHours)}h of {FABRIC_PROMISE_HOURS}h
+          Fabric unavailable · {Math.floor(fabricHours)}h of {fabricPromiseHours}h
           {order.fabricUnavailableChoice
             ? ` · ${FABRIC_CHOICE_LABEL[order.fabricUnavailableChoice]}`
             : ""}

@@ -13,7 +13,7 @@ import { displayPriceNGN } from "../src/lib/pricing";
 import {
   DEFAULT_PRODUCTION_COPY,
   DEFAULT_PRODUCTION_LEAD_DAYS,
-  FABRIC_POLICY_COPY,
+  fabricPolicyCopy,
   MADE_TO_MEASURE_REASON,
   STANDARD_SIZE_COPY,
   madeThenShippedCopy,
@@ -21,7 +21,7 @@ import {
   productionLeadDaysFromCopy,
 } from "../src/lib/production-time";
 import {
-  FABRIC_PROMISE_HOURS,
+  DEFAULT_FABRIC_PROMISE_HOURS,
   FABRIC_UNAVAILABLE_ATTENTION,
   fabricQueueOverdue,
   fabricQueueWhere,
@@ -66,20 +66,21 @@ function runProduction() {
   assert(madeThenShippedCopy() === "Made in 7-12 days, then shipped.", "bag/checkout note");
   assert(STANDARD_SIZE_COPY.includes("Returnable"), "standard size is returnable");
   assert(MADE_TO_MEASURE_REASON.includes("cannot be returned"), "custom reason is on the PDP");
-  assert(FABRIC_POLICY_COPY.includes("48 hours"), "fabric promise is 48 hours");
+  assert(fabricPolicyCopy(DEFAULT_FABRIC_PROMISE_HOURS).includes("48 hours"), "fabric promise defaults to 48 hours");
+  assert(fabricPolicyCopy(72).includes("72 hours"), "fabric promise copy follows the setting");
 }
 
 function runFabric() {
   assert(FABRIC_UNAVAILABLE_ATTENTION === "fabric-unavailable", "orders queue key");
-  assert(FABRIC_PROMISE_HOURS === 48, "48h clock");
+  assert(DEFAULT_FABRIC_PROMISE_HOURS === 48, "48h default clock");
   assert(isFabricUnavailableChoice("ALTERNATIVE_OFFERED"), "alternative is a choice");
   assert(isFabricUnavailableChoice("REFUNDED"), "refunded is a choice");
   assert(!isFabricUnavailableChoice("PENDING"), "unknown choice is rejected");
   assert(fabricQueueWhere().refundRecordedAt === null, "queue drops refunded rows");
   const started = new Date("2026-09-10T10:00:00Z");
   assert(hoursOnFabricQueue(started, new Date("2026-09-10T20:00:00Z")) === 10, "hours on queue");
-  assert(!fabricQueueOverdue(started, new Date("2026-09-12T09:00:00Z")), "under 48h is on time");
-  assert(fabricQueueOverdue(started, new Date("2026-09-12T11:00:00Z")), "over 48h is overdue");
+  assert(!fabricQueueOverdue(started, 48, new Date("2026-09-12T09:00:00Z")), "under 48h is on time");
+  assert(fabricQueueOverdue(started, 48, new Date("2026-09-12T11:00:00Z")), "over 48h is overdue");
 }
 
 function runBag() {

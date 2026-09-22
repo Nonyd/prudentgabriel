@@ -5,6 +5,7 @@ export const LEGAL_TOKEN_NAMES = [
   "custom_lead_time_days",
   "alteration_warranty_days",
   "fabric_promise_hours",
+  "post_delivery_fault_hours",
   "invoice_validity_days",
   "points_per_ten",
   "points_spend_unit",

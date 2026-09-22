@@ -5,8 +5,8 @@ import { getInvoiceDefaultValidityDays, getInvoiceSettings } from "@/lib/invoice
 import { getSetting } from "@/lib/settings";
 import { getProductionCopy } from "@/lib/production-time";
 import { CUSTOM_SETTING_KEYS } from "@/lib/custom-settings";
-import { getAlterationWarrantyDays } from "@/lib/alterations/policy";
-import { FABRIC_PROMISE_HOURS } from "@/lib/fabric-unavailable";
+import { getAlterationWarrantyDays, getPostDeliveryFaultHours } from "@/lib/alterations/policy";
+import { getFabricPromiseHours } from "@/lib/fabric-promise";
 import { getExpiryMonths, getMinRedemptionPoints, getPointRateNGN } from "@/lib/points";
 import { getLoyaltyRulePoints } from "@/lib/loyalty";
 import { LOYALTY_ACTIONS, NGN_PER_EARN_UNIT } from "@/lib/points-value";
@@ -134,7 +134,8 @@ export async function resolveLegalTokens(): Promise<LegalTokenMap> {
     production_time: production.trim(),
     custom_lead_time_days: Number.isFinite(customLead) && customLead > 0 ? String(Math.round(customLead)) : "",
     alteration_warranty_days: asToken(alterationDays),
-    fabric_promise_hours: asToken(FABRIC_PROMISE_HOURS),
+    fabric_promise_hours: asToken(await getFabricPromiseHours()),
+    post_delivery_fault_hours: asToken(await getPostDeliveryFaultHours()),
     invoice_validity_days: asToken(validityDays),
     points_per_ten: asToken(pointsPerTen),
     points_spend_unit: asToken(NGN_PER_EARN_UNIT),
