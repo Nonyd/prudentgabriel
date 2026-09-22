@@ -131,6 +131,17 @@ jobs:
                 sudo -n cp /tmp/pg-compose-stacks.yaml /data/coolify/proxy/dynamic/pg-compose-stacks.yaml \
                   || cp /tmp/pg-compose-stacks.yaml /data/coolify/proxy/dynamic/pg-compose-stacks.yaml
               fi
+              # Host-shared backup tooling (dumps both databases). Owned by the
+              # production deploy so a push to staging can never change it.
+              curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.raw" \
+                "https://api.github.com/repos/Nonyd/prudentgabriel/contents/deploy/backup-media.sh?ref=${DEPLOY_SHA}" \
+                -o /opt/prudentgabriel/deploy/backup-media.sh || true
+              curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.raw" \
+                "https://api.github.com/repos/Nonyd/prudentgabriel/contents/deploy/restore-media.sh?ref=${DEPLOY_SHA}" \
+                -o /opt/prudentgabriel/deploy/restore-media.sh || true
+              chmod 0755 /opt/prudentgabriel/deploy/backup-media.sh /opt/prudentgabriel/deploy/restore-media.sh || true
+              mkdir -p /home/deploy/prudentgabriel-backups
+              ( crontab -l 2>/dev/null | grep -v backup-media.sh || true; echo "15 2 * * * /opt/prudentgabriel/deploy/backup-media.sh" ) | crontab - || true
             fi
             # Pull only the app image from GHCR. A full `compose pull` also hits Docker Hub
             # for postgres:18-alpine and fails when Hub resets IPv6 connections.
