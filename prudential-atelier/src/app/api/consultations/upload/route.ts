@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   const blocked = await rejectIfAtelierBookingsClosed();
   if (blocked) return blocked;
 
-  const limited = rateLimitOr429(req, "consultations-upload", 8, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(req, "consultations-upload", 8, 15 * 60 * 1000);
   if (limited) return limited;
 
   let form: FormData;

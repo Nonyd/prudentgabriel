@@ -15,7 +15,7 @@ function isFileLike(v: unknown): v is Blob & { name?: string } {
 }
 
 export async function POST(req: NextRequest) {
-  const limited = rateLimitOr429(req, "receipt-upload", 12, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(req, "receipt-upload", 12, 15 * 60 * 1000);
   if (limited) return limited;
 
   const session = await auth();

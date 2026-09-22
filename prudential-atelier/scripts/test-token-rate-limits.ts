@@ -7,6 +7,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { checkRateLimit, rateLimitOr429 } from "../src/lib/rate-limit";
+import { prisma } from "../src/lib/prisma";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -51,7 +52,7 @@ function handlerBodies(code: string): { method: string; body: string }[] {
   return out;
 }
 
-function main() {
+async function main() {
   for (const rel of API_ROUTES) {
     const handlers = handlerBodies(src(rel));
     assert(handlers.length > 0, `${rel} has handlers`);
@@ -72,19 +73,26 @@ function main() {
   }
 
   // Limiter behaviour: blocks at the limit, separates buckets and IPs.
-  const key = `test:${Date.now()}`;
-  for (let i = 0; i < 3; i++) assert(checkRateLimit(key, 3, 60_000).ok, `request ${i + 1} allowed`);
-  const blocked = checkRateLimit(key, 3, 60_000);
+  // With DATABASE_URL unreachable (CI) this exercises the per-process fallback;
+  // against a database it exercises RateLimitBucket.
+  const key = `test:${Date.now()}:${Math.random()}`;
+  for (let i = 0; i < 3; i++) assert((await checkRateLimit(key, 3, 60_000)).ok, `request ${i + 1} allowed`);
+  const blocked = await checkRateLimit(key, 3, 60_000);
   assert(!blocked.ok && blocked.retryAfterSec > 0, "4th request blocked with Retry-After");
 
   const req = (ip: string) => new Request("http://x/api", { headers: { "x-real-ip": ip } });
-  const bucket = `test-bucket-${Date.now()}`;
-  assert(rateLimitOr429(req("1.1.1.1"), bucket, 1, 60_000) === null, "first request passes");
-  const res = rateLimitOr429(req("1.1.1.1"), bucket, 1, 60_000);
+  const bucket = `test-bucket-${Date.now()}-${Math.random()}`;
+  assert((await rateLimitOr429(req("1.1.1.1"), bucket, 1, 60_000)) === null, "first request passes");
+  const res = await rateLimitOr429(req("1.1.1.1"), bucket, 1, 60_000);
   assert(res?.status === 429 && res.headers.get("Retry-After"), "second request is 429 with Retry-After");
-  assert(rateLimitOr429(req("2.2.2.2"), bucket, 1, 60_000) === null, "another IP has its own budget");
+  assert((await rateLimitOr429(req("2.2.2.2"), bucket, 1, 60_000)) === null, "another IP has its own budget");
 
   console.log("OK test-token-rate-limits");
 }
 
-main();
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exitCode = 1;
+  })
+  .finally(() => prisma.$disconnect());

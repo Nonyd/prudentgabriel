@@ -22,7 +22,7 @@ import {
 type Params = { params: Promise<{ id: string }> };
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const limited = rateLimitOr429(req, "quote-token-approve", 10, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(req, "quote-token-approve", 10, 15 * 60 * 1000);
   if (limited) return limited;
 
   const { id } = await params;

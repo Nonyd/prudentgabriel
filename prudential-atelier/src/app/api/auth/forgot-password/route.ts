@@ -7,7 +7,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { rateLimitOr429 } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
-  const limited = rateLimitOr429(request, "forgot-password", 5, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(request, "forgot-password", 5, 15 * 60 * 1000);
   if (limited) return limited;
 
   let body: unknown;

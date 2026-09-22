@@ -45,7 +45,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   if (isBookingNumber(id)) {
-    const limited = rateLimitOr429(req, "consultation-ref", 20, 15 * 60 * 1000);
+    const limited = await rateLimitOr429(req, "consultation-ref", 20, 15 * 60 * 1000);
     if (limited) return limited;
     if (!canAccessPublicSuccess(booking)) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });

@@ -32,7 +32,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ token: string }> }) {
-  const limited = rateLimitOr429(req, "invoice-token-bank-transfer", 5, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(req, "invoice-token-bank-transfer", 5, 15 * 60 * 1000);
   if (limited) return limited;
 
   const { token } = await ctx.params;

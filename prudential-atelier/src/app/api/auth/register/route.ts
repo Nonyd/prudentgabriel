@@ -11,7 +11,7 @@ import { notifyNewCustomer } from "@/lib/notifications";
 import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
 
 export async function POST(request: Request) {
-  const limited = rateLimitOr429(request, "register", 5, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(request, "register", 5, 15 * 60 * 1000);
   if (limited) return limited;
 
   let body: unknown;

@@ -41,7 +41,7 @@ const applySchema = z.object({
 export async function POST(req: NextRequest, ctx: { params: Promise<{ slug: string }> }) {
   const { slug } = await ctx.params;
   const ip = getClientIp(req);
-  const rate = checkRateLimit(`careers-apply:${ip}`, 3, 60 * 60 * 1000);
+  const rate = await checkRateLimit(`careers-apply:${ip}`, 3, 60 * 60 * 1000);
   if (!rate.ok) {
     return NextResponse.json(
       { error: "Too many applications. Please try again later." },

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/rate-limit";
 import { ActivityAction, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi, requireSuperAdminApi } from "@/lib/admin-auth";
@@ -466,7 +467,7 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
         userId: gate.session.user.id!,
         email: gate.session.user.email ?? null,
         role: gate.session.user.role ?? "",
-        ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || null,
+        ip: getClientIp(req),
       },
     });
 

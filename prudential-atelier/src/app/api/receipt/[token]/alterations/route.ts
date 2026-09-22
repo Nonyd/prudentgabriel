@@ -13,7 +13,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const limited = rateLimitOr429(req, "receipt-token-alteration", 5, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(req, "receipt-token-alteration", 5, 15 * 60 * 1000);
   if (limited) return limited;
 
   const { token } = await params;

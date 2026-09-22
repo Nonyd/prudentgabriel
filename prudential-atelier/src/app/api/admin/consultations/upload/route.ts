@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   const folderGate = await gateUploadFolder(FOLDER);
   if (!folderGate.ok) return folderGate.response;
 
-  const limited = rateLimitOr429(req, "admin-consultations-upload", 20, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(req, "admin-consultations-upload", 20, 15 * 60 * 1000);
   if (limited) return limited;
 
   let form: FormData;

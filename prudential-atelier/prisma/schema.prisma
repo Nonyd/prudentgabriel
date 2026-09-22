@@ -3068,3 +3068,14 @@ model CspViolation {
   @@unique([directive, blockedOrigin, documentPath])
   @@index([lastSeenAt])
 }
+
+/// Slice AZ6 — rate-limit counters, shared by every app instance and kept
+/// across deploys. One row per bucket key (route bucket + client IP); rows
+/// past resetAt are swept opportunistically by src/lib/rate-limit.ts.
+model RateLimitBucket {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+
+  @@index([resetAt])
+}

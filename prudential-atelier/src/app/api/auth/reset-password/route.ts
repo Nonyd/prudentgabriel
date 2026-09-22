@@ -21,7 +21,7 @@ const bodySchema = z
   });
 
 export async function POST(req: NextRequest) {
-  const limited = rateLimitOr429(req, "reset-password", 8, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(req, "reset-password", 8, 15 * 60 * 1000);
   if (limited) return limited;
 
   let body: unknown;

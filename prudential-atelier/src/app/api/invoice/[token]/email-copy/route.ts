@@ -16,7 +16,7 @@ function asCurrency(c: string): InvoiceCurrency {
 }
 
 export async function POST(req: Request, ctx: { params: Promise<{ token: string }> }) {
-  const limited = rateLimitOr429(req, "invoice-email-copy", 5, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(req, "invoice-email-copy", 5, 15 * 60 * 1000);
   if (limited) return limited;
 
   const { token } = await ctx.params;

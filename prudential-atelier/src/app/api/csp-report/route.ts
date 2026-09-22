@@ -9,7 +9,7 @@ import { CSP_REPORT_MAX_BYTES, parseCspReports } from "@/lib/csp-report";
  * cannot act on an error, and an attacker learns nothing.
  */
 export async function POST(req: NextRequest) {
-  const limited = rateLimitOr429(req, "csp-report", 60, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(req, "csp-report", 60, 15 * 60 * 1000);
   if (limited) return new Response(null, { status: 204 });
 
   const length = Number(req.headers.get("content-length") ?? "0");

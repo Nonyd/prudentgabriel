@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     path.endsWith("/signin") ||
     path.includes("/signin/");
   if (authAttempt) {
-    const limited = rateLimitOr429(req, "auth-credentials", 10, 15 * 60 * 1000);
+    const limited = await rateLimitOr429(req, "auth-credentials", 10, 15 * 60 * 1000);
     if (limited) return limited;
   }
   return handlers.POST(req);

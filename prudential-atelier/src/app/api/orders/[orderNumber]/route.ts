@@ -18,7 +18,7 @@ export async function GET(
   const session = await auth();
   const emailParam = req.nextUrl.searchParams.get("email")?.trim().toLowerCase();
   if (!session?.user?.id) {
-    const limited = rateLimitOr429(req, "rtw-order-lookup", 20, 15 * 60 * 1000);
+    const limited = await rateLimitOr429(req, "rtw-order-lookup", 20, 15 * 60 * 1000);
     if (limited) return limited;
   }
 

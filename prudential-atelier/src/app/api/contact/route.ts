@@ -6,12 +6,12 @@ import { contactSchema } from "@/validations/contact";
 import { prisma } from "@/lib/prisma";
 import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import { getPublicAppUrl } from "@/lib/app-url";
-import { rateLimitOr429 } from "@/lib/rate-limit";
+import { rateLimitOr429, getClientIp } from "@/lib/rate-limit";
 import { getSetting } from "@/lib/settings";
 import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
 
 export async function POST(req: NextRequest) {
-  const limited = rateLimitOr429(req, "contact-form", 5, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(req, "contact-form", 5, 15 * 60 * 1000);
   if (limited) return limited;
 
   let body: unknown;
@@ -47,9 +47,7 @@ export async function POST(req: NextRequest) {
   const appUrl = getPublicAppUrl();
 
   const ipAddress =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    req.headers.get("x-real-ip") ??
-    null;
+    getClientIp(req);
 
   const saved = await prisma.contactMessage.create({
     data: {

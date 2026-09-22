@@ -10,7 +10,7 @@ import { CAPABILITY_EXPIRED_COPY } from "@/lib/capability-token";
 type Params = { params: Promise<{ token: string }> };
 
 export async function GET(req: NextRequest, { params }: Params) {
-  const limited = rateLimitOr429(req, "stage-approval-view", 60, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(req, "stage-approval-view", 60, 15 * 60 * 1000);
   if (limited) return limited;
 
   const { token } = await params;
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const limited = rateLimitOr429(req, "stage-approval-respond", 10, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(req, "stage-approval-respond", 10, 15 * 60 * 1000);
   if (limited) return limited;
 
   const { token } = await params;

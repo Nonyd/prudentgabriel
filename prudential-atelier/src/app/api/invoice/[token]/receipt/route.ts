@@ -15,7 +15,7 @@ function isFileLike(v: unknown): v is Blob & { name?: string } {
 }
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ token: string }> }) {
-  const limited = rateLimitOr429(req, "invoice-receipt-upload", 12, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(req, "invoice-receipt-upload", 12, 15 * 60 * 1000);
   if (limited) return limited;
 
   const { token } = await ctx.params;

@@ -12,5 +12,5 @@ export const TOKEN_PAGE_WINDOW_MS = 15 * 60 * 1000;
  */
 export async function tokenPageRateLimited(bucket: string): Promise<boolean> {
   const ip = clientIpFromHeaders(await headers());
-  return !checkRateLimit(`${bucket}:${ip}`, TOKEN_PAGE_LIMIT, TOKEN_PAGE_WINDOW_MS).ok;
+  return !(await checkRateLimit(`${bucket}:${ip}`, TOKEN_PAGE_LIMIT, TOKEN_PAGE_WINDOW_MS)).ok;
 }

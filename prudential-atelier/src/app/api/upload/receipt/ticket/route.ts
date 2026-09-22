@@ -6,7 +6,7 @@ import { signReceiptUploadTicket } from "@/lib/receipt-upload-ticket";
 const bodySchema = z.object({ email: z.string().email() });
 
 export async function POST(req: NextRequest) {
-  const limited = rateLimitOr429(req, "receipt-ticket", 8, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(req, "receipt-ticket", 8, 15 * 60 * 1000);
   if (limited) return limited;
   if (!process.env.AUTH_SECRET && !process.env.NEXTAUTH_SECRET) {
     return NextResponse.json({ error: "Upload unavailable" }, { status: 503 });

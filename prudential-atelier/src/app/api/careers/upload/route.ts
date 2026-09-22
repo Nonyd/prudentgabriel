@@ -12,7 +12,7 @@ function isFileLike(v: unknown): v is Blob & { name?: string } {
 }
 
 export async function POST(req: NextRequest) {
-  const limited = rateLimitOr429(req, "careers-upload", 8, 15 * 60 * 1000);
+  const limited = await rateLimitOr429(req, "careers-upload", 8, 15 * 60 * 1000);
   if (limited) return limited;
 
   let form: FormData;

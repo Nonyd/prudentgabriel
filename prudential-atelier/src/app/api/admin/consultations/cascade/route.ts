@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIp } from "@/lib/rate-limit";
 import { z } from "zod";
 import { requireAdminApi, requireSuperAdminApi } from "@/lib/admin-auth";
 import { destroyStoredMedia } from "@/lib/media/destroy";
@@ -12,7 +13,7 @@ const bodySchema = z.object({
 });
 
 function clientIp(req: NextRequest): string | null {
-  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || null;
+  return getClientIp(req);
 }
 
 export async function POST(req: NextRequest) {

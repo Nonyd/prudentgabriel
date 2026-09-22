@@ -14,6 +14,7 @@ const TESTS = [
   "test-not-found-status",
   "test-search-indexing",
   "test-security-headers",
+  "test-client-ip",
   "test-cron-registry",
   "test-slice-ab",
   "test-slice-ad",

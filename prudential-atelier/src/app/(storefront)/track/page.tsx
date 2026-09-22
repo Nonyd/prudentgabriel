@@ -30,7 +30,7 @@ export default async function TrackLandingPage({ searchParams }: Props) {
   if (ref?.trim()) {
     const h = await headers();
     const ip = clientIpFromHeaders(h);
-    const limited = checkRateLimit(`track-ref:${ip}`, 20, 15 * 60 * 1000);
+    const limited = await checkRateLimit(`track-ref:${ip}`, 20, 15 * 60 * 1000);
     if (!limited.ok) {
       return <TrackSearchForm notFound {...trackProps} />;
     }
