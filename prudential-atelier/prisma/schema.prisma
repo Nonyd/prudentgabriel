@@ -3052,3 +3052,19 @@ model ProductMaterial {
   @@index([productOptionId])
   @@index([itemId])
 }
+
+/// Slice AZ4 — CSP report-only violations, aggregated. Holds no user data:
+/// only the directive, the blocked origin (never a full URL) and the first
+/// path segment of the page (token routes would otherwise leak the token).
+model CspViolation {
+  id            String   @id @default(cuid())
+  directive     String
+  blockedOrigin String
+  documentPath  String
+  count         Int      @default(1)
+  firstSeenAt   DateTime @default(now())
+  lastSeenAt    DateTime @default(now())
+
+  @@unique([directive, blockedOrigin, documentPath])
+  @@index([lastSeenAt])
+}

@@ -13,6 +13,7 @@ const TESTS = [
   "test-token-rate-limits",
   "test-not-found-status",
   "test-search-indexing",
+  "test-security-headers",
   "test-cron-registry",
   "test-slice-ab",
   "test-slice-ad",

@@ -1,5 +1,6 @@
 import { PERMANENT_REDIRECTS } from "./redirects.mjs";
 import { NOINDEX_HEADER_VALUE, searchIndexingAllowed } from "./search-indexing.mjs";
+import { securityHeaderRules } from "./security-headers.mjs";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -22,6 +23,7 @@ const nextConfig = {
     minimumCacheTTL: 31536000,
   },
   compress: true,
+  poweredByHeader: false,
   transpilePackages: ["mediabunny"],
   // SKIP_STANDALONE is local Windows only. CI/Docker must always emit standalone.
   output: process.env.SKIP_STANDALONE === "1" && !process.env.CI ? undefined : "standalone",
@@ -34,6 +36,7 @@ const nextConfig = {
   },
   async headers() {
     return [
+      ...securityHeaderRules(),
       {
         source: "/.well-known/apple-developer-merchantid-domain-association",
         headers: [
