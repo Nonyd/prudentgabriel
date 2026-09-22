@@ -12,6 +12,7 @@ const TESTS = [
   "test-bespoke-balance-bind",
   "test-token-rate-limits",
   "test-not-found-status",
+  "test-search-indexing",
   "test-cron-registry",
   "test-slice-ab",
   "test-slice-ad",

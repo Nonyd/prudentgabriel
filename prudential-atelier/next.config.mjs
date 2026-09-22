@@ -1,4 +1,5 @@
 import { PERMANENT_REDIRECTS } from "./redirects.mjs";
+import { NOINDEX_HEADER_VALUE, searchIndexingAllowed } from "./search-indexing.mjs";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -40,6 +41,12 @@ const nextConfig = {
           { key: "Cache-Control", value: "public, max-age=86400" },
         ],
       },
+      // Every response of a non-production deployment (staging, previews,
+      // localhost) — pages, API, media, static — carries noindex. Decided by the
+      // image's own NEXT_PUBLIC_APP_URL, never a flag. See search-indexing.mjs.
+      ...(searchIndexingAllowed()
+        ? []
+        : [{ source: "/:path*", headers: [{ key: "X-Robots-Tag", value: NOINDEX_HEADER_VALUE }] }]),
     ];
   },
 };
