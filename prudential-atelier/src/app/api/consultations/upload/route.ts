@@ -3,6 +3,7 @@ import { rejectIfAtelierBookingsClosed } from "@/lib/atelier-bookings";
 import { getMediaStore } from "@/lib/media";
 import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
 import { rateLimitOr429 } from "@/lib/rate-limit";
+import { dailyUploadCapOr429 } from "@/lib/upload-limits";
 import { logServerError } from "@/lib/logger";
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -18,6 +19,8 @@ export async function POST(req: NextRequest) {
 
   const limited = await rateLimitOr429(req, "consultations-upload", 8, 15 * 60 * 1000);
   if (limited) return limited;
+  const capped = await dailyUploadCapOr429("consultations-upload");
+  if (capped) return capped;
 
   let form: FormData;
   try {

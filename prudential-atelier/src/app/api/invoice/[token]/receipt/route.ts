@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMediaStore } from "@/lib/media";
 import { RECEIPT_HEIC_FALLBACK_MESSAGE, mimeFromMagicBytes } from "@/lib/image-upload-mime";
 import { rateLimitOr429 } from "@/lib/rate-limit";
+import { dailyUploadCapOr429 } from "@/lib/upload-limits";
 import { receiptRasterToJpeg } from "@/lib/receipt-raster";
 import { logServerError } from "@/lib/logger";
 import { findInvoiceByPublicToken } from "@/lib/capability-token-lookup";
@@ -17,6 +18,8 @@ function isFileLike(v: unknown): v is Blob & { name?: string } {
 export async function POST(req: NextRequest, ctx: { params: Promise<{ token: string }> }) {
   const limited = await rateLimitOr429(req, "invoice-receipt-upload", 12, 15 * 60 * 1000);
   if (limited) return limited;
+  const capped = await dailyUploadCapOr429("invoice-receipt-upload");
+  if (capped) return capped;
 
   const { token } = await ctx.params;
   const found = await findInvoiceByPublicToken(token);

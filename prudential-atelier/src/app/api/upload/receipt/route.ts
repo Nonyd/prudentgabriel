@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { getMediaStore } from "@/lib/media";
 import { RECEIPT_HEIC_FALLBACK_MESSAGE, mimeFromMagicBytes } from "@/lib/image-upload-mime";
 import { rateLimitOr429 } from "@/lib/rate-limit";
+import { dailyUploadCapOr429, receiptTicketCapOr429 } from "@/lib/upload-limits";
 import { receiptRasterToJpeg } from "@/lib/receipt-raster";
 import { verifyReceiptUploadTicket } from "@/lib/receipt-upload-ticket";
 import { logServerError } from "@/lib/logger";
@@ -34,6 +35,11 @@ export async function POST(req: NextRequest) {
     if (!verifyReceiptUploadTicket(email, ticket, exp)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    // Slice AZ5: guest uploads are capped per ticket and per day; signed-in customers are not anonymous.
+    const ticketCapped = await receiptTicketCapOr429(ticket, exp);
+    if (ticketCapped) return ticketCapped;
+    const capped = await dailyUploadCapOr429("receipt-upload");
+    if (capped) return capped;
   }
 
   const raw = form.get("file");

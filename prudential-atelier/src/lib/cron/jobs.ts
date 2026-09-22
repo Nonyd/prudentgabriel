@@ -15,6 +15,7 @@ import { run as runPrudentPoints } from "@/lib/cron/jobs/prudent-points";
 import { run as runCheckoutReservations } from "@/lib/cron/jobs/checkout-reservations";
 import { run as runMeetingLinkReminders } from "@/lib/cron/jobs/meeting-link-reminders";
 import { run as runAnalyticsRollup } from "@/lib/cron/jobs/analytics-rollup";
+import { run as runOrphanUploads } from "@/lib/cron/jobs/orphan-uploads";
 
 const HANDLERS: Record<string, CronJobHandler> = {
   "abandoned-cart": runAbandonedCart,
@@ -32,6 +33,7 @@ const HANDLERS: Record<string, CronJobHandler> = {
   "meeting-link-reminders": runMeetingLinkReminders,
   "email-outbox": runEmailOutbox,
   "analytics-rollup": runAnalyticsRollup,
+  "orphan-uploads": runOrphanUploads,
 };
 
 /**

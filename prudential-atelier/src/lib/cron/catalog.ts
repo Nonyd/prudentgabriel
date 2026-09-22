@@ -142,6 +142,12 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     description: "Roll daily first-party page counts older than the retention window into monthly totals",
     migrated: true,
   },
+  {
+    name: "orphan-uploads",
+    schedule: "30 3 * * *",
+    description: "Delete careers/consultation uploads older than 48h that no row in the database references (Slice AZ5)",
+    migrated: true,
+  },
 ];
 
 export function cronPath(name: string): string {

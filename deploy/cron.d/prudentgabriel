@@ -33,3 +33,4 @@ CRON_TZ=UTC
 */15 * * * * root /opt/prudentgabriel/deploy/cron-fire.sh meeting-link-reminders
 * * * * * root /opt/prudentgabriel/deploy/cron-fire.sh email-outbox
 15 1 * * * root /opt/prudentgabriel/deploy/cron-fire.sh analytics-rollup
+30 3 * * * root /opt/prudentgabriel/deploy/cron-fire.sh orphan-uploads
