@@ -67,6 +67,23 @@ export async function checkRateLimit(key: string, limit: number, windowMs: numbe
   }
 }
 
+/**
+ * Give back one unit taken by checkRateLimit, e.g. when the attempt succeeded
+ * and only failures should count. Taking first and refunding after keeps the
+ * atomic bound: parallel attempts can never exceed `limit` in flight.
+ */
+export async function refundRateLimit(key: string): Promise<void> {
+  try {
+    await prisma.$executeRaw`
+      UPDATE "RateLimitBucket" SET "count" = GREATEST("count" - 1, 0)
+      WHERE "key" = ${key} AND "resetAt" > now()
+    `;
+  } catch {
+    const bucket = memory.get(key);
+    if (bucket && Date.now() < bucket.resetAt) bucket.count = Math.max(0, bucket.count - 1);
+  }
+}
+
 export function getClientIp(req: Request): string {
   return clientIpFromHeaders(req.headers);
 }

@@ -22,14 +22,25 @@ function ForgotPasswordForm() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting, isSubmitSuccessful },
+    setError,
   } = useForm<ForgotPasswordInput>({ resolver: zodResolver(forgotPasswordSchema) });
 
   const onSubmit = async (data: ForgotPasswordInput) => {
-    await fetch("/api/auth/forgot-password", {
+    const res = await fetch("/api/auth/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+    // A refused request must not show "you will receive instructions": no email is coming.
+    if (res.status === 429) {
+      const secs = Number(res.headers.get("Retry-After"));
+      const minutes = Number.isFinite(secs) && secs > 0 ? Math.max(1, Math.ceil(secs / 60)) : 15;
+      setError("root", {
+        message: `Too many reset requests. Please wait ${minutes} minute${minutes === 1 ? "" : "s"}, then try once more.`,
+      });
+    } else if (!res.ok) {
+      setError("root", { message: "We could not send a reset link just now. Please try again." });
+    }
   };
 
   return (
@@ -64,6 +75,11 @@ function ForgotPasswordForm() {
                   <p className="mt-1 font-sans text-xs text-danger">{errors.email.message}</p>
                 ) : null}
               </label>
+              {errors.root ? (
+                <p className="font-sans text-sm text-danger" role="alert">
+                  {errors.root.message}
+                </p>
+              ) : null}
               <Button type="submit" className="w-full" loading={isSubmitting}>
                 Send reset link
               </Button>

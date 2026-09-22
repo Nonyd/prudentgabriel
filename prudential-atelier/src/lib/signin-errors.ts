@@ -19,7 +19,7 @@ export function signInErrorMessage(result: SignInResultLike): string {
   if (result?.error === RATE_LIMITED_ERROR || result?.status === 429) {
     const secs = Number(result?.code);
     const minutes = Number.isFinite(secs) && secs > 0 ? Math.max(1, Math.ceil(secs / 60)) : 15;
-    return `Too many sign-in attempts from this device. Please wait ${minutes} minute${minutes === 1 ? "" : "s"}, then try once more.`;
+    return `Too many sign-in attempts. Please wait ${minutes} minute${minutes === 1 ? "" : "s"}, then try once more.`;
   }
   return "Invalid email or password. Please try again.";
 }
