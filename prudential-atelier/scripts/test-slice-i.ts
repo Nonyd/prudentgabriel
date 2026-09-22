@@ -27,11 +27,13 @@ const stamp = `slice-i-${Date.now()}`;
 const sessionIds: string[] = [];
 const prefEmails: string[] = [];
 
-function snapshot(variantId = `missing-var-${stamp}`) {
+let liveProductId = "";
+
+function snapshot(variantId = `missing-var-${stamp}`, productId = liveProductId) {
   return {
     lines: [
       {
-        productId: `prod-${stamp}`,
+        productId,
         productName: "Evening column",
         productSlug: "evening-column",
         variantId,
@@ -50,12 +52,13 @@ async function makeSession(extra?: {
   recoveredAt?: Date | null;
   remindersSent?: number;
   variantId?: string;
+  productId?: string;
 }) {
   const email = extra?.email ?? `${stamp}-${Math.random().toString(16).slice(2)}@example.test`;
   const row = await prisma.checkoutSession.create({
     data: {
       email,
-      cartSnapshot: snapshot(extra?.variantId),
+      cartSnapshot: snapshot(extra?.variantId, extra?.productId),
       currency: "NGN",
       furthestStep: 2,
       lastActiveAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
@@ -84,6 +87,10 @@ async function main() {
   process.env.E2E_CAPTURE_EMAIL = "1";
   clearCapturedEmails();
 
+  const live = await prisma.product.findFirst({ where: { isPublished: true }, select: { id: true } });
+  assert(live, "a published product exists for the snapshot");
+  liveProductId = live.id;
+
   const parsed = parseCartSnapshot(snapshot());
   assert(parsed.lines.length === 1 && parsed.subtotalNGN === 250000, "snapshot parse");
 
@@ -107,6 +114,10 @@ async function main() {
   const ghost = await makeSession({ variantId: `ghost-variant-${stamp}` });
   const ghostSend = await sendAbandonedCheckoutReminder({ sessionId: ghost.id, kind: 1 });
   assert(ghostSend.queued, "a listed size still gets a reminder — nothing is refused for stock");
+
+  const withdrawn = await makeSession({ productId: `prod-gone-${stamp}` });
+  const withdrawnSend = await sendAbandonedCheckoutReminder({ sessionId: withdrawn.id, kind: 1 });
+  assert(!withdrawnSend.queued && withdrawnSend.reason === "unavailable", "a bag of only withdrawn pieces sends nothing");
 
   const txHtml = await render(
     React.createElement(PasswordResetEmail, { resetUrl: "https://example.test/reset" }),

@@ -213,7 +213,7 @@ function run() {
   );
   const legal = readFileSync(resolve("src/lib/legal-copy.ts"), "utf8");
   assert(legal.includes("{{house_term_refunds}}"), "returns policy markdown uses the CMS refunds term");
-  assert(legal.includes("48 hours of delivery"), "48-hour fabric/fault window remains the house-failure path");
+  assert(legal.includes("{{post_delivery_fault_hours}} hours of delivery"), "fault window (setting, default 48h) remains the house-failure path");
 
   const formSrc = readFileSync(resolve("src/components/admin/QuotationFormClient.tsx"), "utf8");
   assert(formSrc.includes("depositPercent"), "admin sets the percentage on the quotation");
