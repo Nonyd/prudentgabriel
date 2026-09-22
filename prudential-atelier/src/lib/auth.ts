@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
 import { jwtIssuedBeforePasswordChange } from "@/lib/password-reset";
+import { sessionRevokedGlobally } from "@/lib/session-revocation";
 import { isGoogleOAuthConfigured } from "@/lib/auth-google";
 import { bindSessionUser } from "@/lib/session-user";
 import { cachedRoleActorPatch, ensurePermissionCache } from "@/lib/permission-cache";
@@ -186,6 +187,10 @@ const nextAuth = NextAuth({
               dbUser.passwordChangedAt,
             )
           ) {
+            return null;
+          }
+          // Slice AZ9: a SUPER_ADMIN "sign out everyone" drops every session issued before it.
+          if (await sessionRevokedGlobally(typeof token.iat === "number" ? token.iat : undefined)) {
             return null;
           }
           if (dbUser) {

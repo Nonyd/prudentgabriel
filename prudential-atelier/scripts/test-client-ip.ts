@@ -59,6 +59,13 @@ async function spoofDoesNotBypass() {
 }
 
 async function live(base: string) {
+  // Only meaningful behind the real proxy: Traefik replaces X-Forwarded-For.
+  // A bare local server has no proxy, so the header is exactly what we send.
+  const host = new URL(base).hostname;
+  if (host === "localhost" || host === "127.0.0.1") {
+    console.log("skip live spoof burst: needs a deployment behind Traefik (e.g. staging)");
+    return;
+  }
   // /api/invoice/<token> allows 60 per 15 min per client. Rotate spoofed headers on every request.
   const url = `${base}/api/invoice/zz-spoof-${Date.now()}`;
   let last = 0;
