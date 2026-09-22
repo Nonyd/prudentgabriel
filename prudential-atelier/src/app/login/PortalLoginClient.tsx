@@ -11,6 +11,7 @@ import { loginSchema, type LoginInput } from "@/validations/auth";
 import { Logo } from "@/components/ui/Logo";
 import { cn } from "@/lib/utils";
 import { hardNavigate, isSignInFailure, resolveStaffPortalRedirect, waitForClientSession, userHasAdminAccess } from "@/lib/client-auth";
+import { signInErrorMessage } from "@/lib/signin-errors";
 
 type PortalTab = "admin" | "staff";
 
@@ -149,7 +150,7 @@ export function PortalLoginClient() {
       });
 
       if (isSignInFailure(res)) {
-        setError("root", { message: "Invalid credentials. Please try again." });
+        setError("root", { message: signInErrorMessage(res) });
         return;
       }
 

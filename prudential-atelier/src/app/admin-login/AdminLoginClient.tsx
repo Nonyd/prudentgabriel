@@ -9,6 +9,7 @@ import { useId, useState } from "react";
 import { loginSchema, type LoginInput } from "@/validations/auth";
 import { Logo } from "@/components/ui/Logo";
 import { cn } from "@/lib/utils";
+import { signInErrorMessage } from "@/lib/signin-errors";
 function AdminField({
   id,
   label,
@@ -102,7 +103,7 @@ export function AdminLoginClient() {
 
       if (result.error) {
         console.log("SIGN IN ERROR:", result.error);
-        setError("root", { message: "Invalid credentials. Please try again." });
+        setError("root", { message: signInErrorMessage(result) });
         return;
       }
 

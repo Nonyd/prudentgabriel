@@ -94,6 +94,7 @@
     "test:legal-figures": "tsx --tsconfig tsconfig.scripts.json scripts/test-legal-figures.ts",
     "test:orderability": "tsx --tsconfig tsconfig.scripts.json scripts/test-orderability.ts",
     "test:product-visibility": "tsx --tsconfig tsconfig.scripts.json scripts/test-product-visibility.ts",
+    "test:signin-errors": "tsx --tsconfig tsconfig.scripts.json scripts/test-signin-errors.ts",
     "test:ci": "node scripts/run-ci-tests.mjs",
     "test:rtw-launch": "tsx --tsconfig tsconfig.scripts.json scripts/test-rtw-launch.ts",
     "test:authz": "tsx --tsconfig tsconfig.scripts.json scripts/test-authz.ts",

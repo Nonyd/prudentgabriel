@@ -17,6 +17,7 @@ import { Logo } from "@/components/ui/Logo";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useGoogleAuthEnabled } from "@/hooks/useGoogleAuthEnabled";
+import { signInErrorMessage } from "@/lib/signin-errors";
 
 function GoogleIcon() {
   return (
@@ -164,7 +165,7 @@ function LoginForm() {
       return;
     }
 
-    setError("root", { message: "Invalid credentials. Please try again." });
+    setError("root", { message: signInErrorMessage(result) });
   };
 
   return (

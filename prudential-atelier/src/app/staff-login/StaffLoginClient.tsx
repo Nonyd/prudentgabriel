@@ -16,6 +16,7 @@ import { useSearchParams } from "next/navigation";
 import { loginSchema, type LoginInput } from "@/validations/auth";
 import { Logo } from "@/components/ui/Logo";
 import { cn } from "@/lib/utils";
+import { signInErrorMessage } from "@/lib/signin-errors";
 
 function StaffField({
   id,
@@ -113,7 +114,7 @@ export function StaffLoginClient() {
       });
 
       if (isSignInFailure(res)) {
-        setError("root", { message: "Invalid credentials. Please try again." });
+        setError("root", { message: signInErrorMessage(res) });
         return;
       }
 

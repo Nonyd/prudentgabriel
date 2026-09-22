@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { useGoogleAuthEnabled } from "@/hooks/useGoogleAuthEnabled";
 import { AuthBrandPanel } from "@/components/auth/AuthBrandPanel";
+import { signInErrorMessage } from "@/lib/signin-errors";
 
 export function LoginContent() {
   const searchParams = useSearchParams();
@@ -32,7 +33,7 @@ export function LoginContent() {
       redirect: false,
     });
     if (isSignInFailure(res)) {
-      setError("root", { message: "Invalid email or password" });
+      setError("root", { message: signInErrorMessage(res) });
       return;
     }
     const session = await waitForClientSession({

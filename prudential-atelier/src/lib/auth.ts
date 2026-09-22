@@ -12,8 +12,28 @@ import { bindSessionUser } from "@/lib/session-user";
 import { cachedRoleActorPatch, ensurePermissionCache } from "@/lib/permission-cache";
 import { resolveEffectivePermissionSet } from "@/lib/roles";
 import { serializePermissionSet } from "@/lib/permission-resolve";
-import { logServerError } from "@/lib/logger";
+import { logError, logServerError } from "@/lib/logger";
 import type { JWT } from "next-auth/jwt";
+
+/** "margaret@prudentgabriel.com" → "m***@prudentgabriel.com": enough to spot a wrong address, not a directory of emails. */
+function maskEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  return domain ? `${local.slice(0, 1)}***@${domain}` : "***";
+}
+
+/** Why a credentials sign-in was refused, for the admin error log. Never logs the password. */
+async function recordSignInRefusal(
+  reason: "NO_ACCOUNT" | "NO_PASSWORD_SET" | "DEACTIVATED" | "WRONG_PASSWORD",
+  email: string,
+  userId?: string,
+): Promise<void> {
+  await logError({
+    severity: "INFO",
+    errorType: `AUTH_SIGNIN_${reason}`,
+    message: `Sign-in refused (${reason}) for ${maskEmail(email)}`,
+    userId,
+  }).catch(() => {});
+}
 
 const jwtUserSelect = {
   id: true,
@@ -90,15 +110,24 @@ const nextAuth = NextAuth({
             },
           });
 
-          if (!user || !user.password) {
+          if (!user) {
+            await recordSignInRefusal("NO_ACCOUNT", email);
+            return null;
+          }
+          if (!user.password) {
+            await recordSignInRefusal("NO_PASSWORD_SET", email, user.id);
             return null;
           }
           if (user.isActive === false) {
+            await recordSignInRefusal("DEACTIVATED", email, user.id);
             return null;
           }
 
           const valid = await bcrypt.compare(password, user.password);
-          if (!valid) return null;
+          if (!valid) {
+            await recordSignInRefusal("WRONG_PASSWORD", email, user.id);
+            return null;
+          }
 
           await prisma.user.update({
             where: { id: user.id },
@@ -112,7 +141,9 @@ const nextAuth = NextAuth({
             jobRole,
             userPermissions,
           };
-        } catch {
+        } catch (e) {
+          // A server error must not masquerade silently as a wrong password.
+          await logServerError({ errorType: "AUTH_SIGNIN_ERROR", error: e });
           return null;
         }
       },
