@@ -3,7 +3,7 @@ import { z } from "zod";
 import { PaymentStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getExchangeRates, convertFromNGN } from "@/lib/currency";
+import { consultationChargeIn } from "@/lib/consultation-fees";
 import { createConsultationPaymentIntent } from "@/lib/payments/stripe";
 import { getStripePublicKey } from "@/lib/payments/config";
 import { consultationGatewayEmail } from "@/lib/payments/payer-email";
@@ -45,9 +45,10 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const rates = await getExchangeRates();
-  const converted = convertFromNGN(booking.feeNGN, currency, rates);
-  const amountCents = Math.max(50, Math.round(converted * 100));
+  // BA3: charge the amount locked at booking (the figure she was shown).
+  const charge = await consultationChargeIn(booking, currency);
+  if (!charge) return NextResponse.json({ error: "This booking is priced in another currency." }, { status: 409 });
+  const amountCents = Math.max(50, Math.round(charge.major * 100));
 
   const email = consultationGatewayEmail(booking);
 

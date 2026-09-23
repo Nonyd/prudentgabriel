@@ -19,6 +19,7 @@ import {
   type VirtualPlatformId,
 } from "@/lib/consultation-types";
 import { consultationTermsText } from "@/lib/consultation-enquiry-shared";
+import type { ConsultationFeeQuote } from "@/lib/consultation-fees";
 import { StripePayBlock } from "@/components/checkout/StripePayBlock";
 import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
 import type { PaymentGatewayType } from "@/lib/payments/index";
@@ -95,10 +96,13 @@ function StepIndicator({ step }: { step: number }) {
 export function ConsultationInvitationFlow({
   consultants,
   cms = {},
+  fees,
   invitation,
 }: {
   consultants: ConsultantWithOfferings[];
   cms?: Record<string, string>;
+  /** BA3: server-quoted fee per type and currency — the exact amount a booking made now charges. */
+  fees: Record<OfferingTypeKey, ConsultationFeeQuote>;
   invitation: InvitationView;
 }) {
   const { data: session } = useSession();
@@ -141,7 +145,8 @@ export function ConsultationInvitationFlow({
   }
 
   const typeConfig = selectedType ? getOfferingTypeConfig(selectedType, cms) : null;
-  const termsText = typeConfig ? consultationTermsText(typeConfig.priceNgn) : "";
+  const quote = selectedType ? fees[selectedType] : null;
+  const termsText = quote ? consultationTermsText(quote.NGN) : "";
   const datesDistinct = new Set([pref1, pref2, pref3]).size === 3;
 
   const stripeReturnUrl =
@@ -160,6 +165,7 @@ export function ConsultationInvitationFlow({
         enquiryToken: invitation.token,
         termsAccepted: true,
         termsText,
+        quotedAmount: paymentAmount(currency),
         offeringId: offering.id,
         consultantId: consultant.id,
         offeringType: selectedType,
@@ -245,18 +251,13 @@ export function ConsultationInvitationFlow({
 
   const showVirtualPlatform = selectedType && isOfferingTypeVirtual(selectedType);
 
-  function displayPrice(cur: ShopCur): string {
-    if (!typeConfig) return "";
-    if (cur === "NGN") return formatPrice(typeConfig.priceNgn, "NGN");
-    if (cur === "USD") return formatPrice(typeConfig.priceUsd, "USD");
-    return formatPrice(typeConfig.priceGbp, "GBP");
+  // BA3: shown = charged. Every figure is the server quote the booking will lock.
+  function paymentAmount(cur: ShopCur): number {
+    return quote ? quote[cur] : 0;
   }
 
-  function paymentAmount(cur: ShopCur): number {
-    if (!typeConfig) return 0;
-    if (cur === "USD") return typeConfig.priceUsd;
-    if (cur === "GBP") return typeConfig.priceGbp;
-    return typeConfig.priceNgn;
+  function displayPrice(cur: ShopCur): string {
+    return quote ? formatPrice(quote[cur], cur) : "";
   }
 
   const dateInput = (label: string, value: string, set: (v: string) => void) => (
@@ -329,7 +330,7 @@ export function ConsultationInvitationFlow({
                       ))}
                     </ul>
                     <div className="mt-6 flex items-end justify-between">
-                      <p className="font-serif text-[28px] text-choc">{formatPrice(cfg.priceNgn, "NGN")}</p>
+                      <p className="font-serif text-[28px] text-choc">{formatPrice(fees[key].NGN, "NGN")}</p>
                       <span className="font-sans text-[10px] uppercase tracking-[0.14em] text-text-light">
                         {selected ? "SELECTED" : "SELECT"}
                       </span>
@@ -476,6 +477,12 @@ export function ConsultationInvitationFlow({
                 ))}
               </div>
               <p className="mt-4 font-serif text-[28px] text-choc">{displayPrice(currency)}</p>
+              {currency !== "NGN" ? (
+                <p className="mt-1 font-body text-xs text-text-light">
+                  {formatPrice(quote?.NGN ?? 0, "NGN")} at today&apos;s rate. This is the amount you will be charged; it is
+                  fixed when you book.
+                </p>
+              ) : null}
             </div>
 
             <label className="flex cursor-pointer items-start gap-3 glass-opaque p-6">

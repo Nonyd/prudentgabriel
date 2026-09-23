@@ -15,6 +15,7 @@ import { findBookableEnquiry } from "@/lib/consultation-enquiry";
 import { INVITATION_ONLY_MESSAGE, consultationTermsText, wearerLabel } from "@/lib/consultation-enquiry-shared";
 import { createLegalTermsSnapshot } from "@/lib/legal-tokens";
 import { rateLimitOr429 } from "@/lib/rate-limit";
+import { asChargeCurrency, getConsultationFeeNGN, lockConsultationCharge } from "@/lib/consultation-fees";
 
 /** Proposed dates are at least this many days out (WAT): the house needs time to fit Mrs. Prudent's diary. */
 const MIN_LEAD_DAYS = 3;
@@ -93,7 +94,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Please propose three different dates" }, { status: 400 });
   }
 
-  const feeNGN = typeConfig.priceNgn;
+  // BA3: the fee is a setting, frozen here; USD/GBP also lock the rate and the exact amount.
+  const feeNGN = await getConsultationFeeNGN(typeKey);
   const termsText = consultationTermsText(feeNGN);
   if (data.termsText.trim() !== termsText) {
     // The fee changed after the page loaded: she must see and accept the new wording.
@@ -114,6 +116,15 @@ export async function POST(req: NextRequest) {
         ? data.paymentRef
         : generatePaymentReference("CONSULT")
       : undefined;
+
+  // Shown one number, charged another — never. The amount she saw must be the amount locked.
+  const charge = await lockConsultationCharge(feeNGN, asChargeCurrency(data.currency));
+  if (Math.abs(charge.amount - data.quotedAmount) > 0.005) {
+    return NextResponse.json(
+      { error: "The price in your currency has changed. Please review it again.", amount: charge.amount },
+      { status: 409 },
+    );
+  }
 
   const legalTerms = await createLegalTermsSnapshot();
   const now = new Date();
@@ -155,6 +166,7 @@ export async function POST(req: NextRequest) {
             : null,
           // Frozen here: payment, invoices and reports read this, never the live price.
           feeNGN,
+          ...charge.data,
           currency: data.currency,
           paymentGateway,
           paymentRef: paymentRef ?? null,

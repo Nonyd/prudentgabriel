@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { consultationGatewayEmail } from "@/lib/payments/payer-email";
-import { getExchangeRates, convertFromNGN } from "@/lib/currency";
+import { consultationChargeIn } from "@/lib/consultation-fees";
 import { initializeTransaction } from "@/lib/payments/flutterwave";
 
 const bodySchema = z.object({
@@ -45,13 +45,10 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const rates = await getExchangeRates();
-  let amount = booking.feeNGN;
-  if (currency === "USD") {
-    amount = Math.round(convertFromNGN(booking.feeNGN, "USD", rates) * 100) / 100;
-  } else if (currency === "GBP") {
-    amount = Math.round(convertFromNGN(booking.feeNGN, "GBP", rates) * 100) / 100;
-  }
+  // BA3: charge the amount locked at booking (the figure she was shown).
+  const charge = await consultationChargeIn(booking, currency);
+  if (!charge) return NextResponse.json({ error: "This booking is priced in another currency." }, { status: 409 });
+  const amount = charge.major;
 
   const email = consultationGatewayEmail(booking);
   const name = booking.clientName;

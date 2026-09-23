@@ -218,6 +218,16 @@ model ConsultationBooking {
   /// Resolved legal tokens + copy revision at booking.
   legalTermsSnapshot  Json?
 
+  /// BA3: a USD/GBP booking locks the rate at booking, like an RTW order, and
+  /// charges exactly fxAmountLocked in `currency` — the figure she was shown.
+  /// Null on NGN bookings and on bookings made before BA3 (live conversion).
+  fxRateLocked        Float?
+  fxGbpRateLocked     Float?
+  fxRateSource        String?
+  fxRateFetchedAt     DateTime?
+  fxRateStale         Boolean   @default(false)
+  fxAmountLocked      Float?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -43,11 +43,14 @@ export const consultationBookingSchema = z.object({
   termsAccepted: z.literal(true),
   /** The wording she saw; must match what the server shows for this fee. */
   termsText: z.string().min(20).max(1000),
+  /** BA3: the fee she was shown in her currency; must equal what the booking locks. */
+  quotedAmount: z.number().positive(),
   offeringId: z.string().min(1),
   consultantId: z.string().min(1),
   offeringType: z.enum(OFFERING_TYPE_VALUES),
   virtualPlatform: z.enum(["zoom", "google_meet", "whatsapp_video"]).optional(),
-  currency: z.nativeEnum(Currency).default(Currency.NGN),
+  /** Consultations are priced in NGN, USD or GBP only (BA3 locks USD/GBP). */
+  currency: z.enum([Currency.NGN, Currency.USD, Currency.GBP]).default(Currency.NGN),
   gateway: z.enum(["PAYSTACK", "FLUTTERWAVE", "STRIPE", "MONNIFY", "BANK_TRANSFER"]),
   paymentRef: z.string().regex(/^PA-CONSULT-/i).optional(),
 

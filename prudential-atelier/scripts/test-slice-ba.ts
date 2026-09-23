@@ -11,8 +11,14 @@
  * - approval issues a working link; booking snapshots the acknowledged terms
  *   and the fee; the link cannot be used twice; no token is a 403;
  * - the queue is for the consultations desk only; the one-day clock fires once.
+ *
+ * Slice BA3 — four fee settings; the fee and (USD/GBP) the exact foreign amount
+ * are frozen on the booking; a price change never alters a booking already
+ * made; the figure shown is the figure charged and bound (Slice A).
  */
 import "./preload-test-env";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import bcrypt from "bcryptjs";
 import { BankAccountCurrency, BusinessLine, ConsultationDeliveryMode, ConsultationSessionType, Role } from "@prisma/client";
 import { prisma } from "../src/lib/prisma";
@@ -25,9 +31,16 @@ import {
 } from "../src/lib/consultation-enquiry-shared";
 import { CAPABILITY_TTL_MS, generateCapabilityToken, revealCapabilityToken } from "../src/lib/capability-token";
 import { consultationEnquirySchema } from "../src/validations/consultation";
-import { getOfferingTypeConfig } from "../src/lib/consultation-types";
-import { getCMSContent } from "../src/lib/cms";
-import { getPageFieldKeys } from "../src/lib/cms-config";
+import {
+  CONSULTATION_FEE_KEYS,
+  DEFAULT_CONSULTATION_FEES_NGN,
+  consultationCharge,
+  consultationChargeAt,
+  expectedConsultationBind,
+  getConsultationFeeNGN,
+  quoteConsultationFees,
+} from "../src/lib/consultation-fees";
+import { expectedPaystackConsultationBind } from "../src/lib/payments/paystack-amount";
 import { addDaysToWatYmd, getWatYmd } from "../src/lib/consultation";
 import { ATELIER_BOOKINGS_SETTING_KEY, ATELIER_CLOSED_MESSAGE } from "../src/lib/atelier-bookings";
 import { clearSettingCacheKey } from "../src/lib/settings";
@@ -56,6 +69,23 @@ function unit() {
   assert(consultationEnquirySchema.safeParse(base).success, "a complete enquiry validates");
   assert(!consultationEnquirySchema.safeParse({ ...base, clientEmail: "" }).success, "email is required");
   assert(!consultationEnquirySchema.safeParse({ ...base, wearer: undefined }).success, "the screening question is required");
+
+  // BA3
+  assert(
+    DEFAULT_CONSULTATION_FEES_NGN.PHYSICAL_PRUDENT_TEAM === 250_000 &&
+      DEFAULT_CONSULTATION_FEES_NGN.PHYSICAL_TEAM_ONLY === 200_000 &&
+      DEFAULT_CONSULTATION_FEES_NGN.VIRTUAL_PRUDENT_TEAM === 200_000 &&
+      DEFAULT_CONSULTATION_FEES_NGN.VIRTUAL_TEAM_ONLY === 180_000,
+    "the four fees the meeting set",
+  );
+  assert(new Set(Object.values(CONSULTATION_FEE_KEYS)).size === 4, "four distinct settings, one per type");
+  const fx = { rate: 0.00065, gbpRate: 0.00052, source: "test", fetchedAt: new Date(), stale: false };
+  assert(consultationChargeAt(180_000, "USD", fx) === 117, "₦180,000 at 0.00065 is $117.00");
+  assert(consultationChargeAt(180_000, "NGN", fx) === 180_000, "naira is the fee itself");
+  const migration = readFileSync(resolve(__dirname, "../prisma/migrations/20260923_slice_ba3_consultation_fx_lock/migration.sql"), "utf8");
+  for (const [key, fee] of Object.entries(CONSULTATION_FEE_KEYS).map(([k, v]) => [v, DEFAULT_CONSULTATION_FEES_NGN[k as keyof typeof DEFAULT_CONSULTATION_FEES_NGN]] as const)) {
+    assert(migration.includes(`'${key}', '${fee}'`), `the migration seeds ${key} = ${fee}`);
+  }
   console.log("ok unit");
 }
 
@@ -142,6 +172,21 @@ async function live(base: string) {
           accountName: "BA Fixture",
           accountNumber: `9${String(stamp).slice(-9)}`,
           bankName: "Fixture Bank",
+        },
+      });
+  const hadUsdBank = await prisma.bankAccount.findFirst({
+    where: { currency: BankAccountCurrency.USD, businessLine: BusinessLine.ATELIER, isActive: true },
+  });
+  const usdBank = hadUsdBank
+    ? null
+    : await prisma.bankAccount.create({
+        data: {
+          currency: BankAccountCurrency.USD,
+          businessLine: BusinessLine.ATELIER,
+          accountName: "BA Fixture USD",
+          accountNumber: `8${String(stamp).slice(-9)}`,
+          bankName: "Fixture Bank",
+          swiftBic: "FIXTUS33",
         },
       });
   const enquiryIds: string[] = [];
@@ -250,13 +295,13 @@ async function live(base: string) {
     const page = await fetch(`${base}/consultation/book/${raw}`, { headers: { "x-forwarded-for": ip } });
     assert(page.status === 200, `the approved link opens (${page.status})`);
 
-    const cms = await getCMSContent(getPageFieldKeys("consultation"));
-    const fee = getOfferingTypeConfig("PHYSICAL_TEAM_ONLY", cms).priceNgn;
+    const fee = await getConsultationFeeNGN("PHYSICAL_TEAM_ONLY");
     const d = (n: number) => `${addDaysToWatYmd(getWatYmd(), n)}T12:00:00+01:00`;
     const booking = {
       enquiryToken: raw,
       termsAccepted: true,
       termsText: consultationTermsText(fee),
+      quotedAmount: fee,
       offeringId: consultant.offerings[0].id,
       consultantId: consultant.id,
       offeringType: "PHYSICAL_TEAM_ONLY",
@@ -285,6 +330,28 @@ async function live(base: string) {
     assert(row.preferredDate1 && row.preferredDate2 && row.preferredDate3, "three dates proposed");
     assert(row.enquiry?.id === okRow.id && row.enquiry.status === "BOOKED", "the enquiry is marked booked");
     assert(row.clientEmail === `ba-ok-${stamp}@example.test`, "name and email come from the enquiry");
+
+    // BA3: a price change never alters a booking already made — nor what its payment must bind to.
+    const feeKey = CONSULTATION_FEE_KEYS.PHYSICAL_TEAM_ONLY;
+    const feeRow = await prisma.siteSetting.findUnique({ where: { key: feeKey } });
+    await prisma.siteSetting.upsert({
+      where: { key: feeKey },
+      create: { key: feeKey, value: String(fee + 50_000), group: "PAYMENTS", label: "fixture", type: "NUMBER" },
+      update: { value: String(fee + 50_000) },
+    });
+    clearSettingCacheKey(feeKey);
+    try {
+      assert((await getConsultationFeeNGN("PHYSICAL_TEAM_ONLY")) === fee + 50_000, "the setting now reads the new price");
+      assert((await quoteConsultationFees()).fees.PHYSICAL_TEAM_ONLY.NGN === fee + 50_000, "a new booking would be quoted it");
+      const kept = await prisma.consultationBooking.findUniqueOrThrow({ where: { id: bookingId } });
+      assert(kept.feeNGN === fee, "the existing booking keeps its fee");
+      const bind = await expectedPaystackConsultationBind(kept);
+      assert(bind.amount === fee * 100 && bind.currency === "NGN", "and its payment still binds to that fee");
+    } finally {
+      if (feeRow) await prisma.siteSetting.update({ where: { key: feeKey }, data: { value: feeRow.value } });
+      else await prisma.siteSetting.delete({ where: { key: feeKey } });
+      clearSettingCacheKey(feeKey);
+    }
 
     const reuse = await fetch(`${base}/api/consultations/create`, json(booking));
     assert(reuse.status === 404, `the link cannot book twice (${reuse.status})`);
@@ -320,6 +387,44 @@ async function live(base: string) {
     });
     assert(reminders === 1, `one day-before reminder (${reminders})`);
 
+    // BA3 USD: the amount shown is the amount locked, charged and bound.
+    const usdRes = await fetch(`${base}/api/consultations/enquiries`, json(enquiry(`ba-usd-${stamp}@example.test`, later)));
+    const usdEnquiry = await prisma.consultationEnquiry.findUniqueOrThrow({
+      where: { enquiryNumber: ((await usdRes.json()) as { enquiryNumber: string }).enquiryNumber },
+    });
+    enquiryIds.push(usdEnquiry.id);
+    await fetch(`${base}/api/admin/consultations/enquiries/${usdEnquiry.id}`, patch({ action: "approve", reason: "Diaspora bride" }, deskJar));
+    const usdRow = await prisma.consultationEnquiry.findUniqueOrThrow({ where: { id: usdEnquiry.id } });
+    const usdRaw = revealCapabilityToken({ token: usdRow.publicToken, enc: usdRow.publicTokenEnc })!;
+    const shownUsd = (await quoteConsultationFees()).fees.PHYSICAL_TEAM_ONLY.USD;
+    const usdBooking = { ...booking, enquiryToken: usdRaw, currency: "USD", quotedAmount: shownUsd };
+    const wrongUsd = await fetch(`${base}/api/consultations/create`, json({ ...usdBooking, quotedAmount: shownUsd + 1 }));
+    assert(wrongUsd.status === 409, `a USD figure that is not the locked one is refused (${wrongUsd.status})`);
+    const usdCreated = await fetch(`${base}/api/consultations/create`, json(usdBooking));
+    assert(usdCreated.status === 200, `USD booking at the shown figure (${usdCreated.status} ${await usdCreated.clone().text()})`);
+    const usdId = ((await usdCreated.json()) as { bookingId: string }).bookingId;
+    bookingIds.push(usdId);
+    const usd = await prisma.consultationBooking.findUniqueOrThrow({ where: { id: usdId } });
+    assert(usd.currency === "USD" && usd.fxAmountLocked === shownUsd && usd.fxRateLocked, "the shown USD amount and its rate are locked");
+    assert(usd.feeNGN === fee, "the naira fee is frozen too");
+    const usdCharge = await consultationCharge(usd);
+    assert(usdCharge.major === shownUsd && usdCharge.currency === "USD", "the charge is exactly the figure shown");
+    const stripeBind = await expectedConsultationBind("STRIPE", usd, "usd");
+    assert(stripeBind.amount === Math.round(shownUsd * 100) && stripeBind.currency === "USD", "Stripe must have charged that, in cents");
+    const otherCurrency = await expectedConsultationBind("STRIPE", usd, "gbp");
+    assert(otherCurrency.currency === "USD", "a GBP charge on a USD booking is expected in USD — so the bind refuses it");
+    const rateRow = await prisma.siteSetting.findUnique({ where: { key: "exchange_rate_usd" } });
+    if (rateRow) {
+      await prisma.siteSetting.update({ where: { key: rateRow.key }, data: { value: String(Number(rateRow.value) * 2) } });
+      clearSettingCacheKey("exchange_rate_usd");
+      try {
+        assert((await consultationCharge(usd)).major === shownUsd, "a new exchange rate does not move a locked booking");
+      } finally {
+        await prisma.siteSetting.update({ where: { key: rateRow.key }, data: { value: rateRow.value } });
+        clearSettingCacheKey("exchange_rate_usd");
+      }
+    }
+
     // The one-day clock: an enquiry waiting over a day is raised once.
     const waitingRes = await fetch(`${base}/api/consultations/enquiries`, json(enquiry(`ba-wait-${stamp}@example.test`, later)));
     const waiting = (await waitingRes.json()) as { enquiryNumber: string };
@@ -336,7 +441,7 @@ async function live(base: string) {
       where: { entityId: waitingRow.id, title: "Enquiry waiting over a day" },
     });
     assert(raised.length === 1 && raised[0].type === "NEW_CONSULTATION", `raised once, as NEW_CONSULTATION (${raised.length})`);
-    console.log("ok live: short notice flagged, unapproved link closed, decline recorded, terms and fee snapshotted, clock fires once");
+    console.log("ok live: BA2 invitation walk and BA3 fees — frozen on the booking, USD shown = locked = charged = bound");
   } finally {
     await prisma.consultationEnquiry.deleteMany({ where: { id: { in: enquiryIds } } });
     await prisma.adminNotification.deleteMany({ where: { entityId: { in: [...enquiryIds, ...bookingIds] } } });
@@ -344,13 +449,16 @@ async function live(base: string) {
     await prisma.consultationBooking.deleteMany({ where: { id: { in: bookingIds } } });
     // Payment auto-onboards the client in the background; give it a moment, then remove it.
     await new Promise((r) => setTimeout(r, 1500));
-    const onboarded = await prisma.user.findMany({ where: { email: { startsWith: "ba-ok-" }, AND: { email: { endsWith: `${stamp}@example.test` } } } });
+    const onboarded = await prisma.user.findMany({
+      where: { OR: ["ba-ok-", "ba-usd-"].map((prefix) => ({ email: { startsWith: prefix, endsWith: `${stamp}@example.test` } })) },
+    });
     for (const u of onboarded) {
       await prisma.clientProfile.deleteMany({ where: { userId: u.id } });
       await prisma.user.delete({ where: { id: u.id } }).catch(() => {});
     }
     await prisma.consultant.delete({ where: { id: consultant.id } });
     if (bank) await prisma.bankAccount.delete({ where: { id: bank.id } });
+    if (usdBank) await prisma.bankAccount.delete({ where: { id: usdBank.id } });
     for (const u of [desk, customer]) {
       await prisma.errorLog.deleteMany({ where: { userId: u.id } });
       await prisma.user.delete({ where: { id: u.id } });

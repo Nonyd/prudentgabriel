@@ -1,3 +1,4 @@
+import { expectedConsultationBind } from "@/lib/consultation-fees";
 import { NextRequest, NextResponse } from "next/server";
 import { PaymentGateway, PaymentStatus } from "@prisma/client";
 import Stripe from "stripe";
@@ -8,7 +9,7 @@ import { notifyPaymentFailed } from "@/lib/notifications";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
 import { rtwChargeAmountForeign, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
 import { markRtwOrderPaymentFailed } from "@/lib/checkout-reservations";
-import { convertFromNGN, getExchangeRates, type ShopCurrency } from "@/lib/currency";
+import type { ShopCurrency } from "@/lib/currency";
 import { lockedFxFromOrder } from "@/lib/fx";
 import {
   assertPspChargeBinds,
@@ -17,19 +18,6 @@ import {
 } from "@/lib/payment-bind";
 
 export const runtime = "nodejs";
-
-async function expectedStripeMinor(totalNGN: number, pspCurrency: string): Promise<{
-  amount: number;
-  currency: string;
-}> {
-  const cur = pspCurrency.trim().toUpperCase();
-  if (cur === "USD" || cur === "GBP") {
-    const rates = await getExchangeRates();
-    const major = convertFromNGN(totalNGN, cur as ShopCurrency, rates);
-    return { amount: expectedAmountInPspUnits(PaymentGateway.STRIPE, major), currency: cur };
-  }
-  return { amount: expectedAmountInPspUnits(PaymentGateway.STRIPE, totalNGN), currency: cur || "USD" };
-}
 
 export async function POST(req: NextRequest) {
   const buf = Buffer.from(await req.arrayBuffer());
@@ -51,7 +39,7 @@ export async function POST(req: NextRequest) {
       if (isConsultation && bookingId) {
         const booking = await prisma.consultationBooking.findUnique({ where: { id: bookingId } });
         if (booking) {
-          const expected = await expectedStripeMinor(booking.feeNGN, pi.currency);
+          const expected = await expectedConsultationBind(PaymentGateway.STRIPE, booking, pi.currency);
           assertPspChargeBinds(
             {
               id: booking.id,

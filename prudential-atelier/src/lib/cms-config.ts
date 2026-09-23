@@ -44,6 +44,7 @@ export type CmsPageDef = {
   sections: CmsSection[];
 };
 
+/** Consultation fees are settings (BA3: consultation_fee_*), not CMS copy. */
 const consultationTypeFields = (prefix: string, defaults: Record<string, string>): CmsField[] => [
   { key: `${prefix}_badge`, label: "Badge label", type: "text", default: defaults.badge ?? "" },
   { key: `${prefix}_title`, label: "Title", type: "text", default: defaults.title ?? "" },
@@ -51,9 +52,6 @@ const consultationTypeFields = (prefix: string, defaults: Record<string, string>
   { key: `${prefix}_feature_1`, label: "Feature 1", type: "text", default: defaults.feature1 ?? "" },
   { key: `${prefix}_feature_2`, label: "Feature 2", type: "text", default: defaults.feature2 ?? "" },
   { key: `${prefix}_feature_3`, label: "Feature 3", type: "text", default: defaults.feature3 ?? "" },
-  { key: `${prefix}_price_ngn`, label: "Price (NGN)", type: "number", default: defaults.priceNgn ?? "0" },
-  { key: `${prefix}_price_usd`, label: "Price (USD)", type: "number", default: defaults.priceUsd ?? "0" },
-  { key: `${prefix}_price_gbp`, label: "Price (GBP)", type: "number", default: defaults.priceGbp ?? "0" },
   { key: `${prefix}_duration`, label: "Duration", type: "text", default: defaults.duration ?? "" },
   { key: `${prefix}_enabled`, label: "Enabled", type: "toggle", default: defaults.enabled ?? "true" },
 ];
@@ -392,9 +390,6 @@ const CMS_PAGES_BASE: CmsPageDef[] = [
           feature1: "Led by Mrs. Prudent",
           feature2: "Full creative team",
           feature3: "Up to 90 minutes",
-          priceNgn: "150000",
-          priceUsd: "120",
-          priceGbp: "95",
           duration: "Up to 90 minutes",
           enabled: "true",
         }),
@@ -409,9 +404,6 @@ const CMS_PAGES_BASE: CmsPageDef[] = [
           feature1: "Senior design team",
           feature2: "In-atelier fabric viewing",
           feature3: "Up to 60 minutes",
-          priceNgn: "75000",
-          priceUsd: "60",
-          priceGbp: "48",
           duration: "Up to 60 minutes",
           enabled: "true",
         }),
@@ -426,9 +418,6 @@ const CMS_PAGES_BASE: CmsPageDef[] = [
           feature1: "Led by Mrs. Prudent",
           feature2: "Full creative team",
           feature3: "Up to 60 minutes",
-          priceNgn: "60000",
-          priceUsd: "48",
-          priceGbp: "38",
           duration: "Up to 60 minutes",
           enabled: "true",
         }),
@@ -443,9 +432,6 @@ const CMS_PAGES_BASE: CmsPageDef[] = [
           feature1: "Senior design team",
           feature2: "Screen-shared lookbook",
           feature3: "Up to 45 minutes",
-          priceNgn: "40000",
-          priceUsd: "32",
-          priceGbp: "26",
           duration: "Up to 45 minutes",
           enabled: "true",
         }),

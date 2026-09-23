@@ -40,9 +40,6 @@ const DEFAULT_UI: Record<
     title: string;
     description: string;
     features: string[];
-    defaultPriceNgn: number;
-    defaultPriceUsd: number;
-    defaultPriceGbp: number;
     defaultDuration: string;
     isVirtual: boolean;
     includesPrudent: boolean;
@@ -53,9 +50,6 @@ const DEFAULT_UI: Record<
     title: "Mrs. Prudent Gabriel-Okopi & The Creative Team",
     description: "A private session led by Mrs. Prudent herself.",
     features: ["Led by Mrs. Prudent", "Full creative team", "Premium fabric access", "Up to 90 minutes"],
-    defaultPriceNgn: 150000,
-    defaultPriceUsd: 120,
-    defaultPriceGbp: 95,
     defaultDuration: "Up to 90 minutes",
     isVirtual: false,
     includesPrudent: true,
@@ -65,9 +59,6 @@ const DEFAULT_UI: Record<
     title: "The Creative Team",
     description: "Work with our senior designers in our Lagos atelier.",
     features: ["Senior design team", "In-atelier fabric viewing", "Up to 60 minutes"],
-    defaultPriceNgn: 75000,
-    defaultPriceUsd: 60,
-    defaultPriceGbp: 48,
     defaultDuration: "Up to 60 minutes",
     isVirtual: false,
     includesPrudent: false,
@@ -77,9 +68,6 @@ const DEFAULT_UI: Record<
     title: "Mrs. Prudent Gabriel-Okopi & The Creative Team",
     description: "Meet virtually with Mrs. Prudent from anywhere.",
     features: ["Led by Mrs. Prudent", "Full creative team", "Screen-shared lookbook", "Up to 60 minutes"],
-    defaultPriceNgn: 60000,
-    defaultPriceUsd: 48,
-    defaultPriceGbp: 38,
     defaultDuration: "Up to 60 minutes",
     isVirtual: true,
     includesPrudent: true,
@@ -89,9 +77,6 @@ const DEFAULT_UI: Record<
     title: "The Creative Team",
     description: "Connect with our designers from anywhere.",
     features: ["Senior design team", "Screen-shared lookbook", "Up to 45 minutes"],
-    defaultPriceNgn: 40000,
-    defaultPriceUsd: 32,
-    defaultPriceGbp: 26,
     defaultDuration: "Up to 45 minutes",
     isVirtual: true,
     includesPrudent: false,
@@ -130,9 +115,6 @@ export function getOfferingTypeConfig(key: OfferingTypeKey, cms: Record<string, 
     description: read("description", base.description),
     features: features.length ? features : base.features,
     duration: read("duration", base.defaultDuration),
-    priceNgn: Number(read("price_ngn", String(base.defaultPriceNgn))) || base.defaultPriceNgn,
-    priceUsd: Number(read("price_usd", String(base.defaultPriceUsd))) || base.defaultPriceUsd,
-    priceGbp: Number(read("price_gbp", String(base.defaultPriceGbp))) || base.defaultPriceGbp,
     enabled: enabledRaw !== "false",
     isVirtual: base.isVirtual,
     includesPrudent: base.includesPrudent,

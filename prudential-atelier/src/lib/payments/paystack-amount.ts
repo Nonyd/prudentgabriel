@@ -1,9 +1,9 @@
 import { PaymentGateway, PaymentStatus } from "@prisma/client";
-import { convertFromNGN, getExchangeRates, type ShopCurrency } from "@/lib/currency";
 import { lockedFxFromOrder } from "@/lib/fx";
 import { expectedAmountInPspUnits } from "@/lib/payment-bind";
 import type { PaymentCurrency } from "@/lib/payments/index";
 import { rtwChargeAmountForeign, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
+import { consultationCharge } from "@/lib/consultation-fees";
 
 export function asPaystackCurrency(currency: string | null | undefined): PaymentCurrency {
   const u = (currency ?? "NGN").trim().toUpperCase();
@@ -44,21 +44,11 @@ export function expectedPaystackRtwBind(order: RtwChargeOrder): { amount: number
   };
 }
 
-export async function consultationPaystackMajor(
-  feeNGN: number,
-  currency: PaymentCurrency,
-): Promise<number> {
-  if (currency === "NGN") return feeNGN;
-  const rates = await getExchangeRates();
-  return Math.round(convertFromNGN(feeNGN, currency as ShopCurrency, rates) * 100) / 100;
-}
-
-export async function expectedPaystackConsultationBind(params: {
-  feeNGN: number;
-  currency: string | null | undefined;
-}): Promise<{ amount: number; currency: string }> {
-  const currency = asPaystackCurrency(params.currency);
-  const major = await consultationPaystackMajor(params.feeNGN, currency);
+/** Slice A bind for a consultation: the booking's currency and its charge (locked for BA3 USD/GBP). */
+export async function expectedPaystackConsultationBind(
+  booking: Parameters<typeof consultationCharge>[0],
+): Promise<{ amount: number; currency: string }> {
+  const { major, currency } = await consultationCharge(booking);
   return {
     amount: expectedAmountInPspUnits(PaymentGateway.PAYSTACK, major),
     currency,

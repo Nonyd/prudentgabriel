@@ -72,10 +72,7 @@ export async function POST(req: NextRequest) {
       } else if (isConsultation && bookingId) {
         const booking = await prisma.consultationBooking.findUnique({ where: { id: bookingId } });
         if (booking) {
-          const expected = await expectedPaystackConsultationBind({
-            feeNGN: booking.feeNGN,
-            currency: booking.currency,
-          });
+          const expected = await expectedPaystackConsultationBind(booking);
           assertPspChargeBinds(
             {
               id: booking.id,

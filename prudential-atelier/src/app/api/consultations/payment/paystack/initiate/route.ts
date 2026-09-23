@@ -6,11 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { initializeTransaction } from "@/lib/payments/paystack";
 import { consultationGatewayEmail } from "@/lib/payments/payer-email";
-import {
-  asPaystackCurrency,
-  consultationPaystackMajor,
-  paystackSubunits,
-} from "@/lib/payments/paystack-amount";
+import { paystackSubunits } from "@/lib/payments/paystack-amount";
+import { consultationCharge } from "@/lib/consultation-fees";
 
 const bodySchema = z.object({
   bookingId: z.string().min(1),
@@ -51,8 +48,8 @@ export async function POST(req: NextRequest) {
   const email = consultationGatewayEmail(booking);
   const appUrl = getPublicAppUrl();
   const callbackUrl = `${appUrl}/api/consultations/payment/paystack/verify?bookingId=${encodeURIComponent(bookingId)}`;
-  const currency = asPaystackCurrency(booking.currency);
-  const major = await consultationPaystackMajor(booking.feeNGN, currency);
+  // BA3: the booking's own currency and its locked amount (the figure she was shown).
+  const { major, currency } = await consultationCharge(booking);
 
   const init = await initializeTransaction({
     email,

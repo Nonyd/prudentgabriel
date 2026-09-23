@@ -8,6 +8,7 @@ import { tokenRouteMetadata } from "@/lib/seo";
 import { tokenPageRateLimited } from "@/lib/page-rate-limit";
 import { findBookableEnquiry } from "@/lib/consultation-enquiry";
 import { ConsultationInvitationFlow } from "@/components/consultation/ConsultationInvitationFlow";
+import { quoteConsultationFees } from "@/lib/consultation-fees";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export default async function ConsultationInvitationPage({ params }: { params: P
   const enquiry = await findBookableEnquiry(token);
   if (!enquiry) notFound();
 
-  const [rows, cms] = await Promise.all([
+  const [rows, cms, quote] = await Promise.all([
     prisma.consultant.findMany({
       where: { isActive: true },
       orderBy: { displayOrder: "asc" },
@@ -35,12 +36,14 @@ export default async function ConsultationInvitationPage({ params }: { params: P
       },
     }),
     getCMSContent(getPageFieldKeys("consultation")),
+    quoteConsultationFees(),
   ]);
 
   return (
     <ConsultationInvitationFlow
       consultants={rows as ConsultantWithOfferings[]}
       cms={cms}
+      fees={quote.fees}
       invitation={{
         token,
         enquiryNumber: enquiry.enquiryNumber,

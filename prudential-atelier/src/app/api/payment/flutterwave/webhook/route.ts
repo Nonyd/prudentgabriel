@@ -1,3 +1,4 @@
+import { expectedConsultationBind } from "@/lib/consultation-fees";
 import { NextRequest, NextResponse } from "next/server";
 import { PaymentGateway } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -6,23 +7,13 @@ import { fulfillPaidOrder } from "@/lib/order-payment";
 import { markRtwOrderPaymentFailed } from "@/lib/checkout-reservations";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
 import { rtwChargeAmountForeign, rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
-import { convertFromNGN, getExchangeRates, type ShopCurrency } from "@/lib/currency";
+import type { ShopCurrency } from "@/lib/currency";
 import { lockedFxFromOrder } from "@/lib/fx";
 import {
   assertPspChargeBinds,
   expectedAmountInPspUnits,
   PaymentBindError,
 } from "@/lib/payment-bind";
-
-async function expectedFlutterwaveCharge(totalNGN: number, pspCurrency: string) {
-  const cur = pspCurrency.trim().toUpperCase();
-  if (cur === "USD" || cur === "GBP") {
-    const rates = await getExchangeRates();
-    const major = convertFromNGN(totalNGN, cur as ShopCurrency, rates);
-    return { amount: expectedAmountInPspUnits(PaymentGateway.FLUTTERWAVE, major), currency: cur };
-  }
-  return { amount: expectedAmountInPspUnits(PaymentGateway.FLUTTERWAVE, totalNGN), currency: "NGN" };
-}
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
@@ -66,7 +57,7 @@ export async function POST(req: NextRequest) {
       if (bookingId && reference) {
         const booking = await prisma.consultationBooking.findUnique({ where: { id: bookingId } });
         if (booking) {
-          const expected = await expectedFlutterwaveCharge(booking.feeNGN, currency);
+          const expected = await expectedConsultationBind(PaymentGateway.FLUTTERWAVE, booking, currency);
           assertPspChargeBinds(
             {
               id: booking.id,
