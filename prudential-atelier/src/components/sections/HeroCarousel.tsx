@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { HeroCarouselItem } from "@/lib/hero-carousel";
-import { heroPlaybackUrl, isIosDevice } from "@/lib/hero-playback";
+import { HERO_TAP_TO_PLAY_QUERY, heroPlaybackUrl, heroWaitsForTap, isIosDevice } from "@/lib/hero-playback";
 import { optimizeImageUrl } from "@/lib/utils";
 
 interface HeroCarouselProps {
@@ -13,6 +13,14 @@ interface HeroCarouselProps {
 
 const IMAGE_ADVANCE_MS = 2500;
 const VIDEO_MAX_MS = 60_000;
+/** A video card waiting for a tap holds its poster this long, then the carousel moves on. */
+const POSTER_HOLD_MS = 6000;
+
+function connectionSaveData(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+  return Boolean(conn?.saveData);
+}
 
 function CarouselArrowLeft() {
   return (
@@ -79,13 +87,24 @@ function CarouselMedia({
   isMuted,
   videoRef,
   onVideoEnded,
+  mayPlay,
+  waitsForTap,
+  onTapToPlay,
 }: {
   item: HeroCarouselItem;
   isCenter: boolean;
   isMuted: boolean;
   videoRef?: React.MutableRefObject<HTMLVideoElement | null>;
   onVideoEnded: () => void;
+  /** The page has loaded and the hero is near the viewport (or she tapped). */
+  mayPlay: boolean;
+  /** Phone, Save-Data or reduced motion, and no tap yet. */
+  waitsForTap: boolean;
+  onTapToPlay: () => void;
 }) {
+  // Same rules as the /rtw hero (Slice AE's reels): the poster is what paints
+  // first; the video mounts only once it may play, and never preloads.
+  const showVideo = item.type === "video" && isCenter && mayPlay && !waitsForTap;
   const localRef = useRef<HTMLVideoElement | null>(null);
   const endedRef = useRef(onVideoEnded);
   const mutedRef = useRef(isMuted);
@@ -106,7 +125,7 @@ function CarouselMedia({
   );
 
   useEffect(() => {
-    if (item.type !== "video" || !isCenter) return;
+    if (item.type !== "video" || !isCenter || !showVideo) return;
     const video = localRef.current;
     if (!video) return;
 
@@ -169,7 +188,7 @@ function CarouselMedia({
       window.clearTimeout(canPlayTimer);
       window.clearTimeout(safetyTimer);
     };
-  }, [isCenter, item.type, item.url]);
+  }, [isCenter, item.type, item.url, showVideo]);
 
   useEffect(() => {
     const video = localRef.current;
@@ -178,6 +197,12 @@ function CarouselMedia({
 
   const unlock = (event: React.SyntheticEvent) => {
     event.stopPropagation();
+    if (!showVideo) {
+      // Mounts the video; muted autoplay takes it from there (iPhone included).
+      event.preventDefault();
+      onTapToPlay();
+      return;
+    }
     const video = localRef.current;
     if (!video) return;
     armInlineMuted(video);
@@ -188,29 +213,43 @@ function CarouselMedia({
   };
 
   if (item.type === "video") {
-    if (!isCenter) {
-      return <div className="absolute inset-0 bg-choc" aria-hidden />;
-    }
+    const poster = item.poster?.trim();
     return (
       <>
-        <video
-          ref={bindVideo}
-          src={heroPlaybackUrl(item.url)}
-          muted
-          playsInline
-          autoPlay
-          preload="auto"
-          disablePictureInPicture
-          controls={false}
-          className="absolute inset-0 h-full w-full object-cover"
-          {...{ "webkit-playsinline": "true" }}
-        />
-        {needsTap ? (
+        {poster ? (
+          <Image
+            src={optimizeImageUrl(poster, 900)}
+            alt={item.alt ?? "Hero carousel"}
+            fill
+            sizes="(max-width: 767px) 72vw, 340px"
+            priority={isCenter}
+            className="object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-choc" aria-hidden />
+        )}
+        {showVideo ? (
+          <video
+            ref={bindVideo}
+            // The card is at most 340 px wide: the 720-wide encode is sharp at 2x everywhere.
+            src={item.phoneUrl ?? heroPlaybackUrl(item.url)}
+            poster={poster}
+            muted
+            playsInline
+            autoPlay
+            preload="none"
+            disablePictureInPicture
+            controls={false}
+            className="absolute inset-0 h-full w-full object-cover"
+            {...{ "webkit-playsinline": "true" }}
+          />
+        ) : null}
+        {isCenter && (needsTap || waitsForTap) ? (
           <button
             type="button"
             onClick={unlock}
             onTouchEnd={unlock}
-            aria-label="Play video"
+            aria-label="Play the film"
             className="absolute inset-0 z-[15] flex items-center justify-center"
           >
             <span
@@ -249,6 +288,12 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
   // Assume a phone until matchMedia runs. iPhone's first paint must not get CSS 3D
   // perspective — Safari refuses muted autoplay inside a 3D containing block.
   const [isMobile, setIsMobile] = useState(true);
+  const [saveData, setSaveData] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [afterLoad, setAfterLoad] = useState(false);
+  const [nearView, setNearView] = useState(true);
+  const [tappedIndex, setTappedIndex] = useState<number | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const centerVideoRef = useRef<HTMLVideoElement | null>(null);
   const isPaused = useRef(false);
   const touchStartX = useRef(0);
@@ -257,11 +302,45 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
-    const update = () => setIsMobile(mq.matches);
+    const tap = window.matchMedia(HERO_TAP_TO_PLAY_QUERY);
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      setIsMobile(mq.matches || tap.matches);
+      setReducedMotion(motion.matches);
+    };
     update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
+    setSaveData(connectionSaveData());
+    for (const q of [mq, tap, motion]) q.addEventListener("change", update);
+    return () => {
+      for (const q of [mq, tap, motion]) q.removeEventListener("change", update);
+    };
   }, []);
+
+  // The video waits for the page: poster first, the film after load.
+  useEffect(() => {
+    let idle = 0;
+    const ready = () => {
+      idle = window.setTimeout(() => setAfterLoad(true), 300);
+    };
+    if (document.readyState === "complete") ready();
+    else window.addEventListener("load", ready, { once: true });
+    return () => {
+      window.removeEventListener("load", ready);
+      window.clearTimeout(idle);
+    };
+  }, []);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const near = new IntersectionObserver((entries) => setNearView(entries.some((e) => e.isIntersecting)), {
+      rootMargin: "50% 0px",
+    });
+    near.observe(el);
+    return () => near.disconnect();
+  }, []);
+
+  const tapPolicy = heroWaitsForTap({ narrow: isMobile, saveData, reducedMotion });
 
   useEffect(() => {
     if (currentIndex >= total) setCurrentIndex(0);
@@ -296,7 +375,14 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
     if (total <= 1) return;
 
     const current = items[currentIndex];
-    if (current?.type === "video") return;
+    if (current?.type === "video") {
+      if (!tapPolicy || tappedIndex === currentIndex) return;
+      // Waiting for a tap: hold the poster, then move on as an image would.
+      const hold = window.setTimeout(() => {
+        if (!isPaused.current) setCurrentIndex((prev) => (prev + 1) % total);
+      }, POSTER_HOLD_MS);
+      return () => window.clearTimeout(hold);
+    }
 
     const timer = window.setInterval(() => {
       if (!isPaused.current) {
@@ -305,7 +391,7 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
     }, IMAGE_ADVANCE_MS);
 
     return () => window.clearInterval(timer);
-  }, [total, currentIndex, items]);
+  }, [total, currentIndex, items, tapPolicy, tappedIndex]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
@@ -328,6 +414,7 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
 
   return (
     <div
+      ref={rootRef}
       className="relative flex h-full w-full flex-col md:min-h-[600px]"
       onMouseEnter={() => {
         isPaused.current = true;
@@ -378,6 +465,9 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
                     isMuted={isMuted}
                     videoRef={isCenter ? centerVideoRef : undefined}
                     onVideoEnded={handleVideoEnded}
+                    mayPlay={tappedIndex === index || (afterLoad && nearView)}
+                    waitsForTap={tapPolicy && tappedIndex !== index}
+                    onTapToPlay={() => setTappedIndex(index)}
                   />
                   {item.type === "video" ? (
                     <button

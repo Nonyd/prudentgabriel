@@ -133,3 +133,16 @@ function run(kind: "phone" | "poster", srcAbs: string, outAbs: string): Promise<
     });
   });
 }
+
+/**
+ * Server side, for any hero: video slides get a poster (the house's, or the
+ * server's still) and the phone-sized encode, and both are warmed.
+ */
+export function withHeroVideoVariants<T extends { type: string; url: string; poster?: string; phoneUrl?: string }>(items: T[]): T[] {
+  return items.map((item) => {
+    if (item.type !== "video") return item;
+    warmHeroVideoVariants(item.url);
+    const variants = heroVariantUrls(item.url);
+    return variants ? { ...item, poster: item.poster?.trim() || variants.poster, phoneUrl: variants.phone } : item;
+  });
+}

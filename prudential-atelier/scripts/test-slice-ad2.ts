@@ -51,8 +51,9 @@ function run() {
   const carousel = src("src/components/sections/HeroCarousel.tsx");
   const playback = src("src/lib/hero-playback.ts");
   assert(carousel.includes("webkit-playsinline"), "hero video sets webkit-playsinline for iPhone");
-  assert(carousel.includes("Play video"), "hero offers tap-to-play when autoplay is blocked");
-  assert(carousel.includes("if (!isCenter)"), "only the center slide mounts a <video>");
+  assert(carousel.includes("Play the film"), "hero offers tap-to-play when autoplay is blocked");
+  assert(carousel.includes('const showVideo = item.type === "video" && isCenter &&'), "only the center slide mounts a <video>, and only once it may play");
+  assert(!carousel.includes("preload=\"auto\"") && carousel.includes("preload=\"none\""), "the homepage film never preloads (behaviour: scripts/test-hero-video.ts)");
   assert(carousel.includes("heroPlaybackUrl"), "homepage carousel uses the shared hero playback rewrite");
   assert(playback.includes("pgv="), "hero local MP4s cache-bust the poisoned iPhone 206");
   assert(playback.includes("w_1080,c_limit"), "Cloudinary hero video is width-capped");

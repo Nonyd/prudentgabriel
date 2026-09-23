@@ -102,9 +102,11 @@ async function live(key: string | null) {
     const phone = await fetch(`${base}/media/${keys.phone}`, { headers: { range: "bytes=0-1023" } });
     assert(phone.status === 206, `live: the phone encode Range-streams (${phone.status})`);
   }
+  const home = await (await fetch(`${base}/`)).text();
+  assert(!/<video/i.test(home), "live: the homepage server HTML carries no <video> either");
   const outside = await fetch(`${base}/media/public/prudent-gabriel/products/nothing-phone.mp4`);
   assert(outside.status === 404, "live: a variant name outside the hero folder is a plain 404");
-  console.log("ok live: no preload, no server-side autoplay, variants served");
+  console.log("ok live: /rtw and the homepage start no video in the server HTML; variants served");
 }
 
 async function main() {

@@ -3,6 +3,7 @@ import { resolveHeroCarouselItems, type HeroCarouselItem } from "@/lib/hero-caro
 import { prisma } from "@/lib/prisma";
 import { HeroSectionClient } from "./HeroSectionClient";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
+import { withHeroVideoVariants } from "@/lib/hero-video-variants";
 
 const HERO_KEYS = [
   "home_hero_eyebrow",
@@ -29,7 +30,8 @@ export async function HeroSection() {
         prisma.siteSetting.findUnique({ where: { key: "home_hero_carousel" } }),
       ]);
       cms = content;
-      carouselItems = resolveHeroCarouselItems(carouselSetting?.value ?? cms.home_hero_carousel);
+      // Video cards get a poster and the phone-sized encode (hero-video-variants.ts).
+      carouselItems = withHeroVideoVariants(resolveHeroCarouselItems(carouselSetting?.value ?? cms.home_hero_carousel));
     }
   } catch {
     /* defaults */
