@@ -31,6 +31,13 @@ fi
 echo "[entrypoint] Hashing any plaintext capability tokens..."
 $TSX_CLI --tsconfig tsconfig.scripts.json scripts/upgrade-capability-tokens.ts   || echo "[entrypoint] ERROR: upgrade-capability-tokens failed; pre-sweep links will not open until it runs."
 
+# Key rotation: with ENCRYPTION_KEY_PREVIOUS set, rewrite every encrypted column under
+# the current key. Remove the previous key only after this reports "unreadable 0".
+if [ -n "${ENCRYPTION_KEY_PREVIOUS:-}" ]; then
+  echo "[entrypoint] ENCRYPTION_KEY_PREVIOUS is set: re-encrypting secrets under the current key..."
+  $TSX_CLI --tsconfig tsconfig.scripts.json scripts/reencrypt-secrets.ts     || echo "[entrypoint] ERROR: reencrypt-secrets found values no key can read; keep ENCRYPTION_KEY_PREVIOUS."
+fi
+
 # RUN_DB_SEED_ON_START=safe → production-safe bootstrap (settings, consultants, admin). Never demo data.
 # RUN_DB_SEED_ON_START=true  → same bootstrap (seed.ts does not wipe catalogue/orders).
 # unset / false              → skip.

@@ -709,6 +709,9 @@ function instrumentFingerprint(row: { gatewayPayload: Prisma.JsonValue | null })
       : obj;
   const last4 = String(nested.last4 ?? nested.last_4 ?? nested.cardLast4 ?? "").replace(/\D/g, "");
   const bin = String(nested.bin ?? nested.cardBin ?? nested.iin ?? "").replace(/\D/g, "");
+  // Paystack's card signature identifies the card without the power to charge it.
+  const signature = String(nested.signature ?? "").trim();
+  if (signature.length > 4) return `sig:${signature}`;
   const auth = String(nested.authorization_code ?? nested.authorizationCode ?? "").trim();
   if (auth.length > 4) return `auth:${auth}`;
   if (last4.length === 4 && bin.length >= 4) return `card:${bin}:${last4}`;

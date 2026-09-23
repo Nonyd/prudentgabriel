@@ -5,6 +5,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPaystackSecret, getStripeSecret } from "@/lib/payments/config";
+import { decrypt, encrypt } from "@/lib/encryption";
 
 function toSafeMethod(method: {
   id: string;
@@ -97,6 +98,20 @@ export async function POST(req: NextRequest) {
     const expiry =
       authz.exp_month && authz.exp_year ? `${authz.exp_month}/${authz.exp_year}` : "";
 
+    // The code is a reusable authority to charge the card: stored only encrypted,
+    // never returned. Her few cards are compared by decrypting them.
+    const saved = await prisma.savedPaymentMethod.findMany({
+      where: { userId: session.user.id, gateway: "PAYSTACK", paystackAuthCodeEnc: { not: null } },
+    });
+    const same = saved.find((m) => {
+      try {
+        return decrypt(m.paystackAuthCodeEnc!) === authz.authorization_code;
+      } catch {
+        return false;
+      }
+    });
+    if (same) return NextResponse.json({ success: true, method: toSafeMethod(same), alreadySaved: true });
+
     if (parsed.data.isDefault) {
       await prisma.savedPaymentMethod.updateMany({
         where: { userId: session.user.id },
@@ -108,7 +123,7 @@ export async function POST(req: NextRequest) {
       data: {
         userId: session.user.id,
         gateway: "PAYSTACK",
-        paystackAuthCode: authz.authorization_code,
+        paystackAuthCodeEnc: encrypt(authz.authorization_code),
         paystackCardLast4: authz.last4 ?? null,
         paystackCardBrand: authz.brand ?? null,
         paystackCardExpiry: expiry || null,

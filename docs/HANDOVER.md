@@ -28,7 +28,8 @@ Depth lives elsewhere:
 - **Live chat.** First-party, no third-party script; name and email required; kept indefinitely by decision, erased on request by SUPER_ADMIN (BA5).
 - **Legal pages.** Privacy, cookies, terms, returns, shipping, published from `src/lib/legal-copy.ts` by revision. Hosting in Germany (Contabo) is stated.
 - **Security (Slice AZ and the token sweep).** Headers and report-only CSP, Postgres-backed rate limits, upload limits, SSRF guard, staff data access, session revocation. Every secret that opens something from a link is random, hashed and expiring (see the rule below). No emailed passwords.
-- **/rtw hero.** Poster first, phone-sized encode, tap to play on a phone.
+- **Hero videos (/rtw and the homepage).** Poster first, a 720-wide encode the server makes itself, tap to play on a phone, `preload="none"`.
+- **Secrets at rest.** Saved-card authorisation codes and gateway keys encrypted; the key can be rotated.
 
 ## What is left
 
@@ -37,8 +38,7 @@ Depth lives elsewhere:
 | Item | Why it matters |
 |---|---|
 | **Next.js ≥ 15.5.24** | The image optimiser advisory (AZ1) is mitigated by AVIF being off, not fixed. Required security work. |
-| **Homepage hero video** | Same problem the /rtw hero had: 5 MB, `preload="auto"`, no poster; the LCP is the video at ~8.8 s on Slow 4G. The /rtw fix (`src/lib/hero-video-variants.ts`) applies as is. |
-| `SavedPaymentMethod.paystackAuthCode` in plain text | A reusable card authorisation. Encrypt at rest. |
+| Drop `SavedPaymentMethod.paystackAuthCode` | Always empty since the encryption change; drop the column in a migration once production has run the upgrade. |
 | CSP is report-only | Enforce once the violation reports are reviewed. |
 | Off-host backups (AZ10) | Backups sit on the same VPS. Needs an rclone remote, a schedule and one timed restore. |
 | Atelier leftovers | Listed with their cost in `ATELIER_HANDOVER.md` → *What still needs a developer*. |
@@ -69,7 +69,8 @@ Learned the hard way, in no particular order.
 - **Paystack test cards decline large sums.** On staging, pay bridal/FX totals by bank transfer (or Bank Authentication). Never round a locked total to make Paystack pass.
 - **Production cron must be reinstalled whenever jobs change.** Jobs live in `src/lib/cron/catalog.ts`; `pnpm render:cron` writes `deploy/cron.d/prudentgabriel`; `deploy/install-host-cron.sh` installs it. `pnpm test:cron` fails if they disagree. There are 26 jobs.
 - **`main` deploys production and owns the shared Traefik routes and backup scripts.** A push to `staging` once rewrote production's live routes (fixed in `c084881`). Shared host files change only from `main`.
-- **Deploy:** push → GHCR image → the VPS recreates the container; the entrypoint runs `prisma migrate deploy`, then `scripts/upgrade-capability-tokens.ts` (idempotent).
+- **Deploy:** push → GHCR image → the VPS recreates the container; the entrypoint runs `prisma migrate deploy`, then `scripts/upgrade-capability-tokens.ts` (idempotent). Check the log for `[capability-tokens] done` and no ERROR line.
+- **Rotating the encryption key:** set the new `ENCRYPTION_KEY`, put the old one in `ENCRYPTION_KEY_PREVIOUS`, deploy. The entrypoint re-encrypts every column on `src/lib/encrypted-columns.ts`; remove the previous key only after its log says `unreadable 0`. Changing the key without this makes gateway keys, saved cards and re-sendable links unreadable.
 - **Databases:** staging is Postgres on the VPS; local `.env` points at a Neon scratch database. Tests refuse to run fixtures against staging or production.
 - **Testing locally:** `SKIP_DB_BUILD=1 pnpm build:next` (the Windows standalone symlink error at the end is harmless), then `next start -p 3100`, then `ALLOW_FIXTURES=true BASE_URL=http://localhost:3100 npx tsx --tsconfig tsconfig.scripts.json scripts/test-*.ts`. `pnpm test:ci` runs the database-free subset, as CI does.
 

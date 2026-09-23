@@ -1492,7 +1492,10 @@ model SavedPaymentMethod {
   userId                String
   user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   gateway               PaymentGateway
+  /// Deprecated: always null. The code lives only in paystackAuthCodeEnc; this column goes once production has run scripts/upgrade-capability-tokens.ts.
   paystackAuthCode      String?
+  /// AES-GCM of the Paystack authorisation code (src/lib/encryption.ts). Never returned by any API.
+  paystackAuthCodeEnc   String?
   paystackCardLast4     String?
   paystackCardBrand     String?
   paystackCardExpiry    String?
@@ -1506,7 +1509,6 @@ model SavedPaymentMethod {
   nickname              String?
   createdAt             DateTime       @default(now())
 
-  @@unique([userId, gateway, paystackAuthCode])
   @@index([userId])
 }
 

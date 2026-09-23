@@ -405,10 +405,18 @@ registry, and on any plaintext value at rest.
 `scripts/upgrade-capability-tokens.ts` does the one-time conversion; the
 container entrypoint runs it after `prisma migrate deploy` (idempotent).
 Not moved, and why: `NOT_CAPABILITY_COLUMNS` in the registry.
-Still open: `SavedPaymentMethod.paystackAuthCode` is a reusable card
-authorisation stored in plain text (it is in no URL or email, so outside this
-sweep); `/api/staff` shows a new staff member's temporary password to the admin
-once, on screen.
+Since closed (same day, its own change): a saved card's Paystack authorisation
+code (a reusable authority to charge it) is stored only AES-GCM encrypted
+(`paystackAuthCodeEnc`); the plaintext column is emptied by the upgrade and
+dropped later. The payment ledger never stores the code (`appendPayment` strips
+it; `gatewayPayload` is not a protected ledger column, so older rows are
+cleaned without a bypass). No code in the app charges a saved card today.
+The encryption key can now be rotated: `ENCRYPTION_KEY_PREVIOUS` reads old
+values and `scripts/reencrypt-secrets.ts` (run by the entrypoint while it is set)
+rewrites every column on `src/lib/encrypted-columns.ts`. `test:secrets-at-rest`.
+
+Still open: `/api/staff` shows a new staff member's temporary password to the
+admin once, on screen.
 
 Also found and fixed since: a push to `staging` rewrote production's live
 Traefik routes and backup scripts (`c084881`); every dynamic 404 returned 200

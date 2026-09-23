@@ -78,6 +78,29 @@ async function main() {
   );
   if (restore) console.log(`[capability-tokens] CheckoutSession: ${restore} restore links given an expiry`);
 
+  // Saved cards: the Paystack authorisation code is a reusable authority to
+  // charge. Encrypt it and empty the plaintext column.
+  const cards = await prisma.savedPaymentMethod.findMany({
+    where: { paystackAuthCode: { not: null } },
+    select: { id: true, paystackAuthCode: true, paystackAuthCodeEnc: true },
+  });
+  for (const c of cards) {
+    await prisma.savedPaymentMethod.update({
+      where: { id: c.id },
+      data: { paystackAuthCodeEnc: c.paystackAuthCodeEnc ?? encrypt(c.paystackAuthCode!), paystackAuthCode: null },
+    });
+  }
+  if (cards.length) console.log(`[capability-tokens] encrypted ${cards.length} saved-card authorisation codes`);
+
+  // Payment ledger: the gateway payload is evidence, not an authority to charge.
+  // gatewayPayload is not one of the ledger's protected columns (amount,
+  // currency, purpose, reference, links, createdAt), so no bypass is involved.
+  const payloads = await prisma.$executeRawUnsafe(
+    `UPDATE "Payment" SET "gatewayPayload" = ("gatewayPayload" #- '{authorization,authorization_code}' #- '{authorization,authorizationCode}') - 'authorization_code' - 'authorizationCode'
+     WHERE "gatewayPayload"::text ~ '"authorization_?[cC]ode"'`,
+  );
+  if (payloads) console.log(`[capability-tokens] removed card authorisation codes from ${payloads} payment payloads`);
+
   // Only the two temporary-password flows ever set mustResetPassword, and the
   // middleware holds such an account at the reset screen, so a flagged account
   // has never chosen a password of its own. Forgot password opens it again.

@@ -357,6 +357,25 @@ export type CreatePaymentInput = {
 };
 
 /**
+ * A gateway payload may carry a reusable card authorisation (Paystack
+ * authorization.authorization_code). The ledger keeps evidence, not the
+ * authority to charge: the code is removed; Paystack's card signature stays.
+ */
+export function withoutChargeAuthority(payload: Prisma.InputJsonValue | undefined): Prisma.InputJsonValue | undefined {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return payload;
+  const strip = (o: Record<string, unknown>) => {
+    const { authorization_code: _a, authorizationCode: _b, ...rest } = o;
+    void _a;
+    void _b;
+    return rest;
+  };
+  const top = strip(payload as Record<string, unknown>);
+  const auth = top.authorization;
+  if (auth && typeof auth === "object" && !Array.isArray(auth)) top.authorization = strip(auth as Record<string, unknown>);
+  return top as Prisma.InputJsonValue;
+}
+
+/**
  * Append a Payment row. Never mutates amount on an existing row —
  * pass a new reference for corrections / refunds.
  */
@@ -375,7 +394,7 @@ export async function appendPayment(input: CreatePaymentInput): Promise<Payment>
       status: input.status,
       purpose: input.purpose,
       receiptUrl: input.receiptUrl ?? null,
-      gatewayPayload: input.gatewayPayload ?? undefined,
+      gatewayPayload: withoutChargeAuthority(input.gatewayPayload) ?? undefined,
       invoiceId: input.invoiceId ?? null,
       bespokeOrderId: input.bespokeOrderId ?? null,
       consultationId: input.consultationId ?? null,
