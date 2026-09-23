@@ -382,7 +382,18 @@ the largest text: the cookie banner on a first visit, the headline after. To mov
 the first-visit LCP, the banner has to paint sooner or smaller; the hero is no
 longer what holds it back.
 
-**Homepage hero carousel:** the same problem. 5.0 MB video, `preload="auto"`,
-no poster; LCP is the video's first frame at 8.8 s, 2.4 MB of video fetched by
-30 s. `src/lib/hero-video-variants.ts` applies as is (the homepage uses the same
-`hero-videos` folder).
+### Homepage hero carousel (`dbec659`, same method, staging before and after)
+
+| | Before | After |
+|---|---|---|
+| Reported LCP, first visit | **12.7 s**, the video (9.9–13.1 s) | **6.2 s**, the poster (5.4–7.1 s over six runs) |
+| Reported LCP, returning | 14.2 s, the video | 5.0 s, the poster |
+| Bytes by 30 s, first visit | 2,177 KB (1,323 KB video, of 5.0 MB) | 1,102 KB, 0 video |
+| First contentful paint, first visit | 3.4 s (3.3–4.5) | 4.7 s median over six runs (3.3–5.9) |
+
+Unlike /rtw, the carousel card does not fill the viewport, so its poster *is*
+the reported LCP. After a tap a phone downloads 1.8 MB (the 720-wide encode)
+instead of 5.0 MB. First contentful paint may be up to a second later: the
+poster is now a high-priority preload competing with CSS and scripts on a
+1.6 Mbps link. The spread overlaps, so this is not established either way;
+if it holds on a real phone, lower the poster to normal priority and compare.
