@@ -25,34 +25,39 @@ const KEY_B = "test-rotation-key-b-not-a-real-key";
 const KEY_C = "test-rotation-key-c-never-configured";
 
 /** Run encryption.ts in a fresh process under a given keyring (the key is fixed at module load). */
-function underKeys(env: { current: string; previous?: string }, code: string): { ok: boolean; out: string } {
+function underKeys(env: { current: string; previous?: string }, code: string): { ok: boolean; out: string; why: string } {
   const r = spawnSync(process.execPath, ["--import", "tsx", "-e", code], {
     env: { ...process.env, ENCRYPTION_KEY: env.current, SETTINGS_ENCRYPTION_KEY: "", ENCRYPTION_KEY_PREVIOUS: env.previous ?? "" },
     encoding: "utf8",
   });
-  return { ok: r.status === 0, out: (r.stdout ?? "").trim() };
+  const out = (r.stdout ?? "").trim();
+  // What the child said on stderr: without it a CI failure here says nothing.
+  const why = (r.stderr ?? "").trim().split(/\r?\n/).slice(-4).join(" | ");
+  return { ok: r.status === 0, out, why };
 }
 // A file URL that is right on Windows and on the Linux CI runner alike.
 const enc = pathToFileURL(path.resolve("src/lib/encryption.ts")).href;
-const encryptWith = (key: string, plain: string) =>
-  underKeys({ current: key }, `import("${enc}").then(m => console.log(m.encrypt(${JSON.stringify(plain)})))`).out;
+const encryptRun = (key: string, plain: string) =>
+  underKeys({ current: key }, `import("${enc}").then(ns => (ns.encrypt ? ns : ns.default)).then(m => console.log(m.encrypt(${JSON.stringify(plain)})))`);
+const encryptWith = (key: string, plain: string) => encryptRun(key, plain).out;
 
 function keyring() {
-  const a = encryptWith(KEY_A, "AUTH_secret123");
-  assert(a.startsWith("gcm:"), "encrypts as GCM");
+  const first = encryptRun(KEY_A, "AUTH_secret123");
+  const a = first.out;
+  assert(a.startsWith("gcm:"), `encrypts as GCM (child: ${first.why || "no stderr"})`);
   const read = (keys: { current: string; previous?: string }, value: string) =>
-    underKeys(keys, `import("${enc}").then(m => console.log(m.decrypt(${JSON.stringify(value)})))`);
+    underKeys(keys, `import("${enc}").then(ns => (ns.encrypt ? ns : ns.default)).then(m => console.log(m.decrypt(${JSON.stringify(value)})))`);
   assert(read({ current: KEY_A }, a).out === "AUTH_secret123", "the key that wrote it reads it");
   assert(!read({ current: KEY_B }, a).ok, "a different key cannot read it (GCM refuses, it does not return noise)");
   assert(read({ current: KEY_B, previous: KEY_A }, a).out === "AUTH_secret123", "after rotation, the previous key still reads old values");
 
   const again = underKeys(
     { current: KEY_B, previous: KEY_A },
-    `import("${enc}").then(m => console.log(m.reencryptIfNeeded(${JSON.stringify(a)})))`,
+    `import("${enc}").then(ns => (ns.encrypt ? ns : ns.default)).then(m => console.log(m.reencryptIfNeeded(${JSON.stringify(a)})))`,
   ).out;
   assert(again.startsWith("gcm:") && again !== a, "re-encryption writes it under the new key");
   assert(read({ current: KEY_B }, again).out === "AUTH_secret123", "which the new key alone can read");
-  const settled = underKeys({ current: KEY_B }, `import("${enc}").then(m => console.log(String(m.reencryptIfNeeded(${JSON.stringify(again)}))))`).out;
+  const settled = underKeys({ current: KEY_B }, `import("${enc}").then(ns => (ns.encrypt ? ns : ns.default)).then(m => console.log(String(m.reencryptIfNeeded(${JSON.stringify(again)}))))`).out;
   assert(settled === "null", "and a value already under the current key is left alone");
   console.log("ok keyring: rotate with ENCRYPTION_KEY_PREVIOUS, re-encrypt, then retire the old key");
 }
