@@ -9,8 +9,9 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Published pieces only, matching the wishlist page (a withdrawn piece's id is not a heart to fill).
   const items = await prisma.wishlistItem.findMany({
-    where: { userId: session.user.id },
+    where: { userId: session.user.id, product: PUBLIC_PRODUCT_WHERE },
     select: { productId: true },
   });
 

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { authOrNull } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_PRODUCT_WHERE } from "@/lib/product-visibility";
 import { getOrCreateClientProfile, SessionUserMissingError } from "@/lib/account-helpers";
 import { AccountShell } from "@/components/account/AccountShell";
 import { enforcePublicMaintenance } from "@/lib/maintenance";
@@ -37,7 +38,8 @@ export default async function AccountGroupLayout({ children }: { children: React
         currentStage: { not: "DELIVERY" },
       },
     }),
-    prisma.wishlistItem.count({ where: { userId } }),
+    // The badge counts what the wishlist page shows: published pieces.
+    prisma.wishlistItem.count({ where: { userId, product: PUBLIC_PRODUCT_WHERE } }),
     prisma.user.findUnique({
       where: { id: userId },
       select: { pointsBalance: true },

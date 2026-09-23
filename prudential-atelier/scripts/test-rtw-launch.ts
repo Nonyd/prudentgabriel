@@ -122,7 +122,7 @@ async function testLoggedInCartSurvivesToCheckout() {
     });
     assert(added.ok, "addCartLine must succeed");
 
-    const lines = await listCartLines(user.id);
+    const { items: lines } = await listCartLines(user.id);
     assert(lines.length === 1, `expected 1 cart line, got ${lines.length}`);
     assert(lines[0]!.variantId === variant.id, "checkout source of truth must be the cartItem row");
     assert(lines[0]!.quantity === 1, "quantity must persist");

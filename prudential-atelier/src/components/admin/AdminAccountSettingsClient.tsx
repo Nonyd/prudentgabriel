@@ -2,7 +2,8 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
+import { submitPasswordChange } from "@/lib/client-auth";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { PasswordField } from "@/components/ui/PasswordField";
@@ -106,27 +107,17 @@ export function AdminAccountSettingsClient({ initial, canChangeEmail = false }: 
     }
     setSavingPassword(true);
     try {
-      const res = await fetch("/api/admin/account/password", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
-      });
-      const data = (await res.json()) as { error?: unknown };
-      if (!res.ok) {
-        const msg =
-          typeof data.error === "string"
-            ? data.error
-            : typeof data.error === "object" && data.error !== null
-              ? "Please check your password fields"
-              : "Could not update password";
-        throw new Error(msg);
+      const result = await submitPasswordChange("/api/admin/account/password", { currentPassword, newPassword, confirmPassword });
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
       }
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      toast.success("Password updated");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not update password");
+      toast.success("Password updated. Please sign in with your new password.");
+      // The change ended every session, this one included: sign out cleanly.
+      await signOut({ callbackUrl: "/login?tab=admin&reason=password-changed" });
     } finally {
       setSavingPassword(false);
     }

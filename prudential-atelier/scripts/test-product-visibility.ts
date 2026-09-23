@@ -15,6 +15,10 @@ import { Role } from "@prisma/client";
 import { encode } from "next-auth/jwt";
 import { prisma } from "../src/lib/prisma";
 import { publishedProductIds } from "../src/lib/product-visibility";
+import { queryProductList } from "../src/lib/products-list-query";
+import { buildSitemap } from "../src/lib/sitemap-build";
+import { mergeCollectionProductsForCampaign } from "../src/lib/collection-products";
+import { listCartLines } from "../src/lib/cart-service";
 import { looksLikeProductionDatabase, looksLikeStagingDatabase } from "./fixture-guard";
 
 function assert(cond: unknown, message: string): asserts cond {
@@ -39,8 +43,6 @@ function staticGuard() {
     ["src/lib/custom-availability.ts", /!product\.isPublished/, "custom-measurement gate"],
     ["src/lib/cron/jobs/abandoned-cart.ts", /product: PUBLIC_PRODUCT_WHERE/, "abandoned-cart email"],
     ["src/lib/checkout-session.tsx", /publishedProductIds\(/, "abandoned-checkout email"],
-    ["src/lib/products-list-query.ts", /isPublished/, "catalogue list / search / recently viewed"],
-    ["src/lib/sitemap-build.ts", /isPublished: true/, "sitemap"],
   ];
   for (const [rel, re, what] of guarded) assert(re.test(src(rel)), `${what}: ${rel}`);
   assert(!/include: \{ product: true \}/.test(src("src/app/api/account/wishlist/route.ts")), "wishlist never returns the whole product row");
@@ -64,6 +66,28 @@ async function live(base?: string) {
   const ids = await publishedProductIds([pub.id, unpub.id]);
   assert(ids.has(pub.id) && !ids.has(unpub.id), "publishedProductIds keeps only the published piece");
   console.log("ok database helper");
+  const shopper = await behaviour(pub, unpub);
+  try {
+    if (shopper) {
+      const badge = await prisma.wishlistItem.count({ where: { userId: shopper.id, product: { isPublished: true } } });
+      assert(badge === 1, "the account badge counts published pieces (the layout's own where)");
+    }
+    if (base && shopper && (new URL(base).hostname === "localhost" || new URL(base).hostname === "127.0.0.1")) {
+      const name = "authjs.session-token";
+      const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+      assert(secret, "AUTH_SECRET set");
+      const cookie = `${name}=${await encode({ token: { id: shopper.id, sub: shopper.id, email: shopper.email }, secret, salt: name })}`;
+      const res = await fetch(`${base}/api/wishlist`, { headers: { cookie } });
+      const { ids } = (await res.json()) as { ids: string[] };
+      assert(res.status === 200 && ids.includes(pub.id) && !ids.includes(unpub.id), "wishlist ids leave out the withdrawn piece");
+    }
+  } finally {
+    if (shopper) {
+      await prisma.wishlistItem.deleteMany({ where: { userId: shopper.id } });
+      await prisma.user.delete({ where: { id: shopper.id } });
+    }
+  }
+  console.log("ok behaviour: list, search, sitemap, campaign, restore link, bag and wishlist leave out the unpublished piece");
 
   if (!base) return;
   const host = new URL(base).hostname;
@@ -103,6 +127,90 @@ async function live(base?: string) {
     await prisma.wishlistItem.deleteMany({ where: { userId: user.id } });
     await prisma.user.delete({ where: { id: user.id } });
     await prisma.bundleItem.delete({ where: { id: bundle.id } });
+  }
+}
+
+/**
+ * Behaviour, not text: each check calls the real code and would fail if its
+ * isPublished filter were deleted. (The two guards these replace only looked
+ * for the word in a file, the weakness that let Slice AS pass for four weeks.)
+ */
+async function behaviour(pub: { id: string; slug: string }, unpub: { id: string; slug: string }) {
+  const unpubRow = await prisma.product.findUniqueOrThrow({ where: { id: unpub.id }, select: { name: true } });
+
+  // Catalogue list, search and recently viewed (/api/products).
+  const list = (params: Record<string, string>, isAdmin = false) =>
+    queryProductList(new URLSearchParams(params), { isAdmin }).then((r) => r.products.map((x) => x.id));
+  const byIds = await list({ ids: `${pub.id},${unpub.id}`, limit: "48" });
+  assert(byIds.includes(pub.id) && !byIds.includes(unpub.id), "recently viewed by id: published only");
+  assert(!(await list({ ids: unpub.id, isPublished: "false" })).includes(unpub.id), "a customer asking for isPublished=false still gets nothing");
+  assert(!(await list({ search: unpubRow.name, limit: "48" })).includes(unpub.id), "search never finds the unpublished piece");
+  assert((await list({ ids: unpub.id, isPublished: "false" }, true)).includes(unpub.id), "an admin does see it (so this test can see a leak)");
+
+  // Sitemap.
+  const urls = (await buildSitemap()).map((e) => e.url);
+  assert(urls.some((u) => u.endsWith(`/shop/${pub.slug}`)), "the sitemap lists a published piece");
+  assert(!urls.some((u) => u.endsWith(`/shop/${unpub.slug}`)), "and never the unpublished one");
+
+  // Collection campaign email (decided 23 Sep: published pieces only).
+  const tag = `vis-${Date.now()}`;
+  const collection = await prisma.collection.create({
+    data: { name: "Visibility fixture", slug: tag, autoTag: tag, products: { create: [{ productId: unpub.id, sortOrder: 0 }, { productId: pub.id, sortOrder: 1 }] } },
+  });
+  const tagged = await prisma.product.findMany({ where: { id: { in: [pub.id, unpub.id] } }, select: { id: true, tags: true } });
+  await Promise.all(tagged.map((t) => prisma.product.update({ where: { id: t.id }, data: { tags: { set: [...t.tags, tag] } } })));
+  try {
+    const campaign = (await mergeCollectionProductsForCampaign(collection.id, tag, 8)).map((x) => x.id);
+    assert(campaign.includes(pub.id), "the campaign carries the published piece");
+    assert(!campaign.includes(unpub.id), "and no unpublished piece, by hand or by tag");
+  } finally {
+    await Promise.all(tagged.map((t) => prisma.product.update({ where: { id: t.id }, data: { tags: { set: t.tags } } })));
+    await prisma.collection.delete({ where: { id: collection.id } });
+  }
+
+  // Abandoned-checkout restore link and the signed-in bag.
+  // Each piece needs a size to sit in a bag; add a temporary one where missing (removed below).
+  const tempVariants: string[] = [];
+  const variantFor = async (productId: string) => {
+    const found = await prisma.productVariant.findFirst({ where: { productId }, select: { id: true } });
+    if (found) return found;
+    const made = await prisma.productVariant.create({ data: { productId, size: "VIS", priceNGN: 1000 }, select: { id: true } });
+    tempVariants.push(made.id);
+    return made;
+  };
+  const pubVariant = await variantFor(pub.id);
+  const unpubVariant = await variantFor(unpub.id);
+  {
+    const line = (productId: string, variantId: string) => ({ productId, variantId, productName: productId, quantity: 1, priceNGN: 1000 });
+    const checkout = await prisma.checkoutSession.create({
+      data: { email: `vis-restore-${Date.now()}@example.test`, cartSnapshot: { lines: [line(pub.id, pubVariant.id), line(unpub.id, unpubVariant.id)], subtotalNGN: 2000 } },
+    });
+    const shopper = await prisma.user.create({ data: { email: `vis-bag-${Date.now()}@example.test`, name: "Bag", role: Role.CUSTOMER, password: "x" } });
+    try {
+      const { GET } = await import("../src/app/api/checkout/restore/[token]/route");
+      const res = await GET(new Request("http://localhost/x"), { params: Promise.resolve({ token: checkout.restoreToken }) });
+      const restored = (await res.json()) as { lines: { productId: string }[]; subtotalNGN: number; withdrawn: number };
+      assert(res.status === 200 && restored.lines.length === 1 && restored.lines[0].productId === pub.id, "the restore link brings back only the published piece");
+      assert(restored.subtotalNGN === 1000 && restored.withdrawn === 1, "and says one was withdrawn");
+
+      await prisma.cartItem.createMany({
+        data: [
+          { userId: shopper.id, productId: pub.id, variantId: pubVariant.id, quantity: 1, lineKey: `vis-${pubVariant.id}` },
+          { userId: shopper.id, productId: unpub.id, variantId: unpubVariant.id, quantity: 1, lineKey: `vis-${unpubVariant.id}` },
+        ],
+      });
+      const bag = await listCartLines(shopper.id);
+      assert(bag.items.length === 1 && bag.items[0].productId === pub.id, "the signed-in bag holds only the published piece");
+      assert(bag.removed.length === 1 && bag.removed[0] === unpubRow.name, "and names the one it took out");
+      assert((await prisma.cartItem.count({ where: { userId: shopper.id, productId: unpub.id } })) === 0, "so checkout is not blocked by a line she cannot see");
+
+      await prisma.wishlistItem.createMany({ data: [{ userId: shopper.id, productId: pub.id }, { userId: shopper.id, productId: unpub.id }] });
+    } finally {
+      await prisma.checkoutSession.delete({ where: { id: checkout.id } });
+      await prisma.cartItem.deleteMany({ where: { userId: shopper.id } });
+      await prisma.productVariant.deleteMany({ where: { id: { in: tempVariants } } });
+    }
+    return shopper;
   }
 }
 

@@ -12,7 +12,9 @@ export const authConfig = {
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
-    error: "/login",
+    // Sign-in errors (Google, rate limit) reach customers; the customer page
+    // shows the reason. The staff/admin /login only reads its own errors.
+    error: "/auth/login",
   },
   providers: [],
   callbacks: {

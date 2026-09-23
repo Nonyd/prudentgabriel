@@ -3,6 +3,8 @@
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import type { Role } from "@prisma/client";
+import toast from "react-hot-toast";
+import { NETWORK_ERROR_MESSAGE, authResponseMessage } from "@/lib/client-auth";
 
 export function InviteAdminModal({
   open,
@@ -16,14 +18,32 @@ export function InviteAdminModal({
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("ADMIN");
   const [message, setMessage] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   async function submit() {
-    const response = await fetch("/api/admin/team/invite", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, role, message: message || undefined }),
-    });
-    if (!response.ok) return;
+    if (busy) return;
+    setError(null);
+    setBusy(true);
+    let response: Response;
+    try {
+      response = await fetch("/api/admin/team/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, role, message: message || undefined }),
+      });
+    } catch {
+      setError(NETWORK_ERROR_MESSAGE);
+      setBusy(false);
+      return;
+    }
+    setBusy(false);
+    if (!response.ok) {
+      // e.g. 409 "User already exists": say so instead of leaving the modal open in silence.
+      setError(await authResponseMessage(response, "Could not send the invitation."));
+      return;
+    }
+    toast.success(`Invitation sent to ${email}`);
     setEmail("");
     setRole("ADMIN");
     setMessage("");
@@ -51,6 +71,11 @@ export function InviteAdminModal({
                 <span className="font-body text-sm">Super Admin</span>
               </label>
             </div>
+            {error ? (
+              <p className="font-body text-xs text-red-700" role="alert">
+                {error}
+              </p>
+            ) : null}
             <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={300} placeholder="Add a personal note to the invitation email..." className="h-20 w-full border border-sand px-3 py-2 font-body text-sm" />
             <div className="border border-sand bg-[#FAFAF8] p-4">
               <p className="mb-2 font-body text-xs text-[#6B6B68]">The invitation email will look like this:</p>
@@ -64,7 +89,7 @@ export function InviteAdminModal({
           </div>
           <div className="flex justify-end gap-2 border-t border-sand px-5 py-3">
             <button type="button" onClick={() => onOpenChange(false)} className="border border-sand px-4 py-2 font-body text-xs">Cancel</button>
-            <button type="button" onClick={() => void submit()} className="bg-[#37392d] px-4 py-2 font-body text-xs text-white">Send Invitation</button>
+            <button type="button" disabled={busy} onClick={() => void submit()} className="bg-[#37392d] px-4 py-2 font-body text-xs text-white disabled:opacity-50">{busy ? "Sending…" : "Send Invitation"}</button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { forgotPasswordSchema, type ForgotPasswordInput } from "@/validations/auth";
 import { Button } from "@/components/ui/Button";
+import { NETWORK_ERROR_MESSAGE } from "@/lib/client-auth";
 import { AuthBrandPanel } from "@/components/auth/AuthBrandPanel";
 
 function signInHref(from: string | null): string {
@@ -26,11 +27,17 @@ function ForgotPasswordForm() {
   } = useForm<ForgotPasswordInput>({ resolver: zodResolver(forgotPasswordSchema) });
 
   const onSubmit = async (data: ForgotPasswordInput) => {
-    const res = await fetch("/api/auth/forgot-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+    let res: Response;
+    try {
+      res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    } catch {
+      setError("root", { message: NETWORK_ERROR_MESSAGE });
+      return;
+    }
     // A refused request must not show "you will receive instructions": no email is coming.
     if (res.status === 429) {
       const secs = Number(res.headers.get("Retry-After"));

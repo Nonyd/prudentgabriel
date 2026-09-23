@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_PRODUCT_WHERE } from "@/lib/product-visibility";
 import type { ProductListItem } from "@/types/product";
 import { derivedCatalogMinNGN, minEffectiveNGN } from "@/lib/pricing";
 import { mapListVariant, listOptionGroupSelect, mapListOptionGroup } from "@/lib/map-product-list-item";
@@ -170,14 +171,19 @@ export async function mergePublishedCollectionProducts(
   return [...manualProducts, ...autoProducts];
 }
 
-/** Collection lookbook: include drafts so a drop email can go out at launch hour. */
+/**
+ * Collection campaign email: published pieces only. Emailing a dress she cannot
+ * buy, behind a link that 404s, to the whole list has no good version (decided
+ * 23 Sep 2026, reversing 24a56b6). The HTML is built at send time, so a
+ * launch-hour drop still works: publish the pieces, then send.
+ */
 export async function mergeCollectionProductsForCampaign(
   collectionId: string,
   autoTag: string | null | undefined,
   take = 8,
 ): Promise<CollectionProductWithMeta[]> {
   const manualRows = await prisma.collectionProduct.findMany({
-    where: { collectionId },
+    where: { collectionId, product: PUBLIC_PRODUCT_WHERE },
     orderBy: { sortOrder: "asc" },
     include: {
       product: { include: collectionListProductInclude },
@@ -189,7 +195,7 @@ export async function mergeCollectionProductsForCampaign(
   const tag = autoTag?.trim();
   let autoProducts: CollectionProductWithMeta[] = [];
   if (tag) {
-    const autoWhere: Prisma.ProductWhereInput = { tags: { has: tag } };
+    const autoWhere: Prisma.ProductWhereInput = { ...PUBLIC_PRODUCT_WHERE, tags: { has: tag } };
     if (manualIds.size > 0) {
       autoWhere.id = { notIn: Array.from(manualIds) };
     }

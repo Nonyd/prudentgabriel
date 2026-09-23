@@ -7,7 +7,7 @@ import { signOut } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema, type ResetPasswordInput } from "@/validations/auth";
-import { authApiErrorMessage, hardNavigate, safeLoginNext } from "@/lib/client-auth";
+import { NETWORK_ERROR_MESSAGE, authResponseMessage, hardNavigate, safeLoginNext } from "@/lib/client-auth";
 import { Button } from "@/components/ui/Button";
 import { PasswordField } from "@/components/ui/PasswordField";
 
@@ -37,15 +37,15 @@ export default function ResetPasswordPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError("root", { message: authApiErrorMessage(json, "Reset failed") });
+        setError("root", { message: await authResponseMessage(res, "Reset failed") });
         return;
       }
+      const json = await res.json().catch(() => ({}));
       await signOut({ redirect: false }).catch(() => undefined);
       hardNavigate(safeLoginNext((json as { next?: unknown }).next));
     } catch {
-      setError("root", { message: "Reset failed" });
+      setError("root", { message: NETWORK_ERROR_MESSAGE });
     }
   };
 

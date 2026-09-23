@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import type { Role, TeamInvitation } from "@prisma/client";
 import { InviteAdminModal } from "@/components/admin/InviteAdminModal";
+import toast from "react-hot-toast";
+import { NETWORK_ERROR_MESSAGE, authResponseMessage } from "@/lib/client-auth";
 
 type Member = {
   id: string;
@@ -41,38 +43,57 @@ export function TeamClient({
     setInvitations(payload.invitations);
   }
 
-  async function changeRole(member: Member, role: Role) {
-    const response = await fetch(`/api/admin/team/${member.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role }),
-    });
-    if (!response.ok) return;
+  /** Every team action reports its outcome: the server's refusal is shown, never swallowed. */
+  async function act(run: () => Promise<Response>, done: string, failed: string) {
+    let response: Response;
+    try {
+      response = await run();
+    } catch {
+      toast.error(NETWORK_ERROR_MESSAGE);
+      return;
+    }
+    if (!response.ok) {
+      toast.error(await authResponseMessage(response, failed));
+      return;
+    }
+    toast.success(done);
     await reload();
+  }
+
+  async function changeRole(member: Member, role: Role) {
+    await act(
+      () =>
+        fetch(`/api/admin/team/${member.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role }),
+        }),
+      "Role updated",
+      "Could not change the role.",
+    );
   }
 
   async function removeMember(member: Member) {
-    const response = await fetch(`/api/admin/team/${member.id}`, { method: "DELETE" });
-    if (!response.ok) return;
-    await reload();
+    await act(() => fetch(`/api/admin/team/${member.id}`, { method: "DELETE" }), "Removed from the team", "Could not remove this member.");
   }
 
   async function cancelInvite(token: string) {
-    const response = await fetch(`/api/admin/invitations/${token}/cancel`, { method: "DELETE" });
-    if (!response.ok) return;
-    await reload();
+    await act(() => fetch(`/api/admin/invitations/${token}/cancel`, { method: "DELETE" }), "Invitation cancelled", "Could not cancel the invitation.");
   }
 
   async function resendInvite(token: string) {
     const target = invitations.find((invite) => invite.token === token);
     if (!target) return;
-    const response = await fetch("/api/admin/team/invite", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: target.email, role: target.role }),
-    });
-    if (!response.ok) return;
-    await reload();
+    await act(
+      () =>
+        fetch("/api/admin/team/invite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: target.email, role: target.role }),
+        }),
+      `A new invitation was sent to ${target.email}. The earlier link no longer works.`,
+      "Could not resend the invitation.",
+    );
   }
 
   return (

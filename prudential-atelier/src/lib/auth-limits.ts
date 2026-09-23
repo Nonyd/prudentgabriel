@@ -21,6 +21,8 @@ export const AUTH_WINDOW_MS = 15 * 60 * 1000;
 export const AUTH_ADDRESS_LIMIT = 50;
 /** Failed sign-ins at one account from one address. */
 export const SIGNIN_ACCOUNT_LIMIT = 10;
+/** Google (or other provider) sign-in starts from one address: its own bucket, never the password budget. */
+export const AUTH_OAUTH_START_LIMIT = 100;
 /** Reset emails to one inbox, from anywhere. */
 export const FORGOT_ACCOUNT_LIMIT = 5;
 
@@ -37,12 +39,12 @@ export function maskAddress(ip: string): string {
 }
 
 /** Log once per window that an address hit its cap. */
-export async function noteAddressCapHit(flow: string, ip: string, retryAfterSec: number): Promise<void> {
+export async function noteAddressCapHit(flow: string, ip: string, retryAfterSec: number, limit = AUTH_ADDRESS_LIMIT): Promise<void> {
   const first = await checkRateLimit(`auth-address-alert:${flow}:${ip}`, 1, Math.max(1, retryAfterSec) * 1000);
   if (!first.ok) return;
   await logError({
     severity: "WARNING",
     errorType: "AUTH_ADDRESS_CAP",
-    message: `${flow}: ${maskAddress(ip)} reached ${AUTH_ADDRESS_LIMIT} failures in 15 minutes; refused for ${retryAfterSec}s.`,
+    message: `${flow}: ${maskAddress(ip)} reached ${limit} in 15 minutes; refused for ${retryAfterSec}s.`,
   }).catch(() => {});
 }

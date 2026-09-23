@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { hardNavigate, isSignInFailure, waitForClientSession } from "@/lib/client-auth";
+import { NETWORK_ERROR_MESSAGE, PASSWORD_CHANGED_REASON, hardNavigate, isSignInFailure, waitForClientSession } from "@/lib/client-auth";
 import { destinationAfterCustomerSignIn } from "@/lib/login-paths";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,28 +27,39 @@ export function LoginContent() {
     setError,
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
 
+  // Auth.js sends sign-in errors here (?error=, ?code=): say what happened.
+  const pageError = searchParams.get("error");
+  const pageCode = searchParams.get("code");
+  useEffect(() => {
+    if (pageError) setError("root", { message: signInErrorMessage({ error: pageError, code: pageCode }) });
+  }, [pageError, pageCode, setError]);
+
   const onSubmit = async (data: LoginInput) => {
-    const res = await signIn("credentials", {
-      email: data.email,
-      password: data.password,
-      redirect: false,
-    });
-    if (isSignInFailure(res)) {
-      setError("root", { message: signInErrorMessage(res) });
-      return;
+    try {
+      const res = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+      if (isSignInFailure(res)) {
+        setError("root", { message: signInErrorMessage(res) });
+        return;
+      }
+      const session = await waitForClientSession({
+        until: (current) => Boolean(current?.user?.id && current?.user?.role),
+      });
+      if (!session?.user?.id) {
+        setError("root", { message: "Signed in, but the session did not load. Please try again." });
+        return;
+      }
+      if (session.user.mustResetPassword) {
+        hardNavigate("/reset-password?required=true");
+        return;
+      }
+      hardNavigate(destinationAfterCustomerSignIn(session.user, callbackUrl));
+    } catch {
+      setError("root", { message: NETWORK_ERROR_MESSAGE });
     }
-    const session = await waitForClientSession({
-      until: (current) => Boolean(current?.user?.id && current?.user?.role),
-    });
-    if (!session?.user?.id) {
-      setError("root", { message: "Signed in, but the session did not load. Please try again." });
-      return;
-    }
-    if (session.user.mustResetPassword) {
-      hardNavigate("/reset-password?required=true");
-      return;
-    }
-    hardNavigate(destinationAfterCustomerSignIn(session.user, callbackUrl));
   };
 
   return (
@@ -69,7 +81,12 @@ export function LoginContent() {
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
-            {errors.root ? (
+            {searchParams.get("reason") === PASSWORD_CHANGED_REASON && !errors.root ? (
+            <p className="font-sans text-sm text-text-mid" role="status">
+              Your password was changed. Please sign in with your new password.
+            </p>
+          ) : null}
+          {errors.root ? (
               <p className="font-sans text-sm text-danger" role="alert">
                 {errors.root.message}
               </p>

@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
@@ -13,7 +13,17 @@ import { cachedRoleActorPatch, ensurePermissionCache } from "@/lib/permission-ca
 import { resolveEffectivePermissionSet } from "@/lib/roles";
 import { serializePermissionSet } from "@/lib/permission-resolve";
 import { logError, logServerError } from "@/lib/logger";
+import { SIGNIN_SERVER_ERROR_CODE } from "@/lib/signin-errors";
 import type { JWT } from "next-auth/jwt";
+
+/**
+ * A sign-in that failed on our side (database down, bug), not a wrong password.
+ * The client gets error=CredentialsSignin&code=server_error and says to retry,
+ * instead of telling someone with the right password that it is wrong.
+ */
+class SignInUnavailable extends CredentialsSignin {
+  code = SIGNIN_SERVER_ERROR_CODE;
+}
 
 /** "margaret@prudentgabriel.com" → "m***@prudentgabriel.com": enough to spot a wrong address, not a directory of emails. */
 function maskEmail(email: string): string {
@@ -142,9 +152,9 @@ const nextAuth = NextAuth({
             userPermissions,
           };
         } catch (e) {
-          // A server error must not masquerade silently as a wrong password.
+          // A server error must not masquerade as a wrong password.
           await logServerError({ errorType: "AUTH_SIGNIN_ERROR", error: e });
-          return null;
+          throw new SignInUnavailable();
         }
       },
     }),

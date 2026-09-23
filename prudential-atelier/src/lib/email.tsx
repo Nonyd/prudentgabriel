@@ -366,7 +366,8 @@ export async function sendAccountExistsEmail(to: string, loginUrl: string): Prom
     subject: copy.subject,
     html,
     template: "account-exists",
-    idempotencyKey: `account-exists:${to}`,
+    // One a day per inbox: the people who register twice are the ones who forgot.
+    idempotencyKey: `account-exists:${to}:${new Date().toISOString().slice(0, 10)}`,
   });
 }
 

@@ -10,7 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { loginSchema, type LoginInput } from "@/validations/auth";
 import { Logo } from "@/components/ui/Logo";
 import { cn } from "@/lib/utils";
-import { hardNavigate, isSignInFailure, resolveStaffPortalRedirect, waitForClientSession, userHasAdminAccess } from "@/lib/client-auth";
+import { PASSWORD_CHANGED_REASON, hardNavigate, isSignInFailure, resolveStaffPortalRedirect, waitForClientSession, userHasAdminAccess } from "@/lib/client-auth";
 import { signInErrorMessage } from "@/lib/signin-errors";
 
 type PortalTab = "admin" | "staff";
@@ -245,6 +245,11 @@ export function PortalLoginClient() {
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+          {searchParams.get("reason") === PASSWORD_CHANGED_REASON && !errors.root ? (
+            <p className="mb-4 rounded-[4px] px-3.5 py-2.5 font-sans text-xs text-[#37392d]" role="status">
+              Your password was changed. Please sign in with your new password.
+            </p>
+          ) : null}
           {errors.root ? (
             <p
               className="mb-4 rounded-[4px] px-3.5 py-2.5 font-sans text-xs text-[#8B2020]"

@@ -57,7 +57,9 @@ export async function POST(req: NextRequest) {
     subject: "You've been invited to join Prudent Gabriel Admin",
     html,
     template: "team-invite",
-    idempotencyKey: `team-invite:${invitation.id}`,
+    // One email per issued link. A resend issues a new token (the old link stops
+    // working), so it must not be deduplicated against the first email.
+    idempotencyKey: `team-invite:${invitation.id}:${expiresAt.getTime()}`,
     relatedType: "TeamInvitation",
     relatedId: invitation.id,
   });

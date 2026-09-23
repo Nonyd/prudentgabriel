@@ -1,5 +1,6 @@
 "use client";
 
+import toast from "react-hot-toast";
 import { planGuestServerMerge } from "@/lib/cart-merge";
 import { bagErrorMessage } from "@/lib/quick-add";
 import { useCartStore, type CartItem } from "@/store/cartStore";
@@ -110,7 +111,10 @@ export async function replaceCartFromServer(): Promise<boolean> {
   const rates = await loadRates();
   const res = await fetch("/api/cart");
   if (!res.ok) return false;
-  const json = (await res.json()) as { items?: ServerCartRow[] };
+  const json = (await res.json()) as { items?: ServerCartRow[]; removed?: string[] };
+  if (json.removed?.length) {
+    toast(`${json.removed.join(", ")} ${json.removed.length === 1 ? "is" : "are"} no longer available and ${json.removed.length === 1 ? "was" : "were"} taken out of your bag.`);
+  }
   const merged = (json.items ?? []).map((r) => serverRowToCartItem(r, rates));
   const totalItems = merged.reduce((s, i) => s + i.quantity, 0);
   const totalNGN = merged.reduce((s, i) => s + i.priceNGN * i.quantity, 0);

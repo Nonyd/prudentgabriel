@@ -4,6 +4,7 @@ import { RATE_LIMITED_ERROR } from "@/lib/signin-errors";
 import { checkRateLimit, getClientIp, refundRateLimit } from "@/lib/rate-limit";
 import {
   AUTH_ADDRESS_LIMIT,
+  AUTH_OAUTH_START_LIMIT,
   AUTH_WINDOW_MS,
   SIGNIN_ACCOUNT_LIMIT,
   accountKey,
@@ -53,8 +54,12 @@ export async function POST(req: NextRequest) {
 
   const ip = getClientIp(req);
   const email = credentials ? await attemptedEmail(req) : "";
-  const keys = [`auth-address:${ip}`];
-  const limits = [AUTH_ADDRESS_LIMIT];
+  // Starting Google (or another provider) sign-in is not a password guess and
+  // its outcome is not known here, so it never touches the password budget. It
+  // has its own, wider bucket (BA1 follow-up: Google starts used to consume the
+  // shared address budget and never gave it back).
+  const keys = [credentials ? `auth-address:${ip}` : `auth-oauth:${ip}`];
+  const limits = [credentials ? AUTH_ADDRESS_LIMIT : AUTH_OAUTH_START_LIMIT];
   if (email) {
     keys.push(`auth-account:${ip}:${accountKey(email)}`);
     limits.push(SIGNIN_ACCOUNT_LIMIT);
@@ -68,7 +73,7 @@ export async function POST(req: NextRequest) {
       taken.push(keys[i]);
     } else {
       retryAfterSec = Math.max(retryAfterSec, result.retryAfterSec);
-      if (i === 0) await noteAddressCapHit("sign-in", ip, result.retryAfterSec);
+      if (i === 0) await noteAddressCapHit(credentials ? "sign-in" : "oauth-start", ip, result.retryAfterSec, limits[0]);
     }
   }
   if (retryAfterSec > 0) {
@@ -78,7 +83,7 @@ export async function POST(req: NextRequest) {
     // next-auth's signIn() reads { url } and takes ?error / ?code from it; a bare
     // { error } made the client throw, so a lockout surfaced as "invalid credentials".
     const retryAfter = String(retryAfterSec);
-    const url = new URL("/login", req.nextUrl.origin);
+    const url = new URL("/auth/login", req.nextUrl.origin);
     url.searchParams.set("error", RATE_LIMITED_ERROR);
     url.searchParams.set("code", retryAfter);
     return NextResponse.json({ url: url.toString() }, { status: 429, headers: { "Retry-After": retryAfter } });

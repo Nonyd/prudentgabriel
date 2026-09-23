@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
+import { NETWORK_ERROR_MESSAGE, authResponseMessage, submitPasswordChange } from "@/lib/client-auth";
 import toast from "react-hot-toast";
 import { PasswordField } from "@/components/ui/PasswordField";
 
@@ -56,31 +57,34 @@ export function SettingsClient({
   }
 
   async function changePassword() {
-    const res = await fetch("/api/account/password", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
-    });
-    if (res.ok) {
-      toast.success("Password updated");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } else {
-      const j = (await res.json()) as { error?: string };
-      toast.error(typeof j.error === "string" ? j.error : "Password change failed");
+    const result = await submitPasswordChange("/api/account/password", { currentPassword, newPassword, confirmPassword });
+    if (!result.ok) {
+      toast.error(result.message);
+      return;
     }
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+      toast.success("Password updated. Please sign in with your new password.");
+      // The change ended every session, this one included: sign out cleanly.
+      await signOut({ callbackUrl: "/auth/login?reason=password-changed" });
   }
 
   async function deleteAccount() {
-    const res = await fetch("/api/account", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ confirm: "DELETE" }),
-    });
+    let res: Response;
+    try {
+      res = await fetch("/api/account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirm: "DELETE" }),
+      });
+    } catch {
+      toast.error(NETWORK_ERROR_MESSAGE);
+      return;
+    }
     if (res.ok) {
       await signOut({ callbackUrl: "/" });
-    } else toast.error("Could not delete account");
+    } else toast.error(await authResponseMessage(res, "Could not close your account."));
   }
 
   async function uploadPhoto(file: File) {

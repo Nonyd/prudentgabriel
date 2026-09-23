@@ -623,6 +623,29 @@ async function live(base: string) {
       const custInbox = await fetch(`${base}/api/admin/chat`, { headers: { cookie: custJar.header() } });
       assert(custInbox.status === 403, `a customer cannot read the chat inbox (${custInbox.status})`);
 
+      // Auto-close after 30 quiet days: reversible, nothing deleted.
+      const { run: runAutoclose } = await import("../src/lib/cron/jobs/chat-autoclose");
+      const quiet = await prisma.chatConversation.create({
+        data: {
+          visitorName: "Quiet", visitorEmail: `ba-chat-visitor-quiet-${stamp}@example.test`, contextKind: "GENERAL", contextPath: "/",
+          publicTokenExpiresAt: new Date(), lastMessageAt: new Date(Date.now() - 31 * 86_400_000), messages: { create: { author: "VISITOR", body: "hello?" } },
+        },
+      });
+      const recent = await prisma.chatConversation.create({
+        data: {
+          visitorName: "Recent", visitorEmail: `ba-chat-visitor-recent-${stamp}@example.test`, contextKind: "GENERAL", contextPath: "/",
+          publicTokenExpiresAt: new Date(), lastMessageAt: new Date(Date.now() - 29 * 86_400_000),
+        },
+      });
+      await runAutoclose({ now: new Date(), batchLimit: 500, isBudgetExhausted: () => false } as Parameters<typeof runAutoclose>[0]);
+      const [quietAfter, recentAfter] = await Promise.all([
+        prisma.chatConversation.findUniqueOrThrow({ where: { id: quiet.id } }),
+        prisma.chatConversation.findUniqueOrThrow({ where: { id: recent.id } }),
+      ]);
+      assert(quietAfter.status === "CLOSED" && quietAfter.closedAt, "31 quiet days: closed");
+      assert(recentAfter.status === "OPEN", "29 quiet days: still open");
+      assert((await prisma.chatMessage.count({ where: { conversationId: quiet.id } })) === 1, "closing deletes nothing");
+
       // Kept indefinitely: even three years untouched, the job deletes nothing.
       await prisma.chatConversation.update({ where: { id: convo.id }, data: { lastMessageAt: new Date(Date.now() - 3 * 365 * 86_400_000) } });
       await retentionJob();

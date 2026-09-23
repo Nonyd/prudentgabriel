@@ -1,5 +1,6 @@
 import { Prisma, SizeMode } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_PRODUCT_WHERE } from "@/lib/product-visibility";
 import { firstUnorderableProduct } from "@/lib/product-orderability-db";
 import {
   cartLineKey,
@@ -69,12 +70,32 @@ const cartInclude = {
   option: true,
 } as const;
 
+/**
+ * The signed-in bag. A piece withdrawn since it was added is taken out (and
+ * named, so the bag can say so) rather than shown: checkout refuses it anyway,
+ * and a hidden line she cannot remove would block her checkout.
+ */
 export async function listCartLines(userId: string) {
-  return prisma.cartItem.findMany({
+  const withdrawn = await prisma.cartItem.findMany({
+    where: { userId, product: { isPublished: false } },
+    select: { id: true, product: { select: { name: true } } },
+  });
+  if (withdrawn.length) {
+    await prisma.cartItem.deleteMany({ where: { id: { in: withdrawn.map((w) => w.id) } } });
+  }
+  const items = await prisma.cartItem.findMany({
     where: { userId },
     include: cartInclude,
     orderBy: { updatedAt: "desc" },
   });
+  return { items, removed: Array.from(new Set(withdrawn.map((w) => w.product.name))) };
+}
+
+const NO_LONGER_AVAILABLE = { ok: false as const, status: 409, error: "This piece is no longer available." };
+
+async function isWithdrawn(productId: string): Promise<boolean> {
+  const live = await prisma.product.findFirst({ where: { id: productId, ...PUBLIC_PRODUCT_WHERE }, select: { id: true } });
+  return !live;
 }
 
 const optionGroupInclude = {
@@ -332,6 +353,7 @@ export async function updateCartLineQty(userId: string, itemId: string, quantity
     include: { variant: true },
   });
   if (!item) return { ok: false as const, status: 404, error: "Not found" };
+  if (await isWithdrawn(item.productId)) return NO_LONGER_AVAILABLE;
   const cartItem = await prisma.cartItem.update({
     where: { id: item.id },
     data: { quantity },
@@ -346,6 +368,7 @@ export async function changeCartLineSize(userId: string, itemId: string, variant
     include: { variant: true },
   });
   if (!item) return { ok: false as const, status: 404, error: "Not found" };
+  if (await isWithdrawn(item.productId)) return NO_LONGER_AVAILABLE;
   if (isCustomLine(item.sizeMode)) {
     return { ok: false as const, status: 400, error: "Made-to-measure pieces keep their measurements" };
   }

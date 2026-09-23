@@ -19,6 +19,8 @@ import { Role } from "@prisma/client";
 import { prisma } from "../src/lib/prisma";
 import { RATE_LIMITED_ERROR, signInErrorMessage } from "../src/lib/signin-errors";
 import { accountKey, maskAddress } from "../src/lib/auth-limits";
+import { authApiErrorMessage, isSignInFailure } from "../src/lib/client-auth";
+import { SIGNIN_SERVER_ERROR_CODE } from "../src/lib/signin-errors";
 import { assertFixturesAllowed } from "./fixture-guard";
 
 function assert(cond: unknown, message: string): asserts cond {
@@ -32,6 +34,17 @@ function unit() {
   assert(maskAddress("102.211.122.253") === "102.211.122.x", "a logged IPv4 address keeps only its /24");
   assert(maskAddress("2a06:98c1:3120::6") === "2a06:98c1:3120::/48", "a logged IPv6 address keeps only its /48");
   assert(accountKey(" Bride@Example.com ") === accountKey("bride@example.com") && !accountKey("a@b.c").includes("@"), "account keys are normalised hashes");
+  // The sign-in pop-up bug: next-auth answers a refused password with ok: true.
+  assert(isSignInFailure({ ok: true, error: "CredentialsSignin", status: 200, url: null } as never), "ok: true with an error is a failure");
+  assert(isSignInFailure({ ok: false, error: "RateLimited", status: 429, url: null } as never), "a 429 is a failure");
+  assert(!isSignInFailure({ ok: true, error: undefined, status: 200, url: "/x" } as never), "a clean ok is a success");
+  assert(/couldn't check your password/.test(signInErrorMessage({ error: "CredentialsSignin", code: SIGNIN_SERVER_ERROR_CODE })), "a server error is not 'wrong password'");
+  assert(/already has an account with a password/.test(signInErrorMessage({ error: "OAuthAccountNotLinked" })), "Google on a password account says why");
+  // Forms must show the rule, never render an object (the invite page crashed on this).
+  const zodBody = { error: { formErrors: [], fieldErrors: { password: ["Password must contain at least one number"] } } };
+  assert(authApiErrorMessage(zodBody) === "Password must contain at least one number", "a zod flatten() body gives the rule");
+  assert(authApiErrorMessage({ error: { lastName: ["Please give your last name"] } }) === "Please give your last name", "any field is read");
+  assert(typeof authApiErrorMessage({ error: { weird: { deep: 1 } } }, "fallback") === "string", "never an object");
   console.log("ok messages");
 }
 
@@ -81,6 +94,67 @@ async function reset(base: string, body: Record<string, string>, ip: string): Pr
   return res.status;
 }
 
+const cut = (x: string): [string, string] => { const i = x.indexOf("="); return [x.slice(0, i), x.slice(i + 1)]; };
+
+/** Staff invitations: a resend must send, and the invite page must get a readable refusal. */
+async function invites(base: string, octet: number) {
+  const hash = await bcrypt.hash("Correct-Horse-9", 12);
+  const boss = await prisma.user.create({
+    data: { email: `invite-boss-${Date.now()}@example.test`, name: "Boss", role: Role.SUPER_ADMIN, password: hash },
+  });
+  const invitee = `invitee-${Date.now()}@example.test`;
+  const ip = `203.0.116.${octet}`;
+  try {
+    const c = await fetch(`${base}/api/auth/csrf`, { headers: { "x-forwarded-for": ip } });
+    const jar = new Map(c.headers.getSetCookie().map((x) => cut(x.split(";")[0])));
+    const { csrfToken } = (await c.json()) as { csrfToken: string };
+    const login = await fetch(`${base}/api/auth/callback/credentials`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        "x-auth-return-redirect": "1",
+        "x-forwarded-for": ip,
+        cookie: Array.from(jar).map(([k, v]) => `${k}=${v}`).join("; "),
+      },
+      body: new URLSearchParams({ csrfToken, email: boss.email!, password: "Correct-Horse-9" }),
+    });
+    for (const x of login.headers.getSetCookie()) {
+      const [k, v] = cut(x.split(";")[0]);
+      jar.set(k, v);
+    }
+    const cookie = Array.from(jar).map(([k, v]) => `${k}=${v}`).join("; ");
+    const invite = () =>
+      fetch(`${base}/api/admin/team/invite`, {
+        method: "POST",
+        headers: { "content-type": "application/json", cookie, "x-forwarded-for": ip },
+        body: JSON.stringify({ email: invitee, role: "ADMIN" }),
+      });
+    assert((await invite()).status === 200, "invite sent");
+    await new Promise((r) => setTimeout(r, 5));
+    assert((await invite()).status === 200, "invite re-sent");
+    const sent = await prisma.emailMessage.count({ where: { to: invitee, template: "team-invite" } });
+    assert(sent === 2, `a resend queues a second email, not a silent duplicate (${sent})`);
+
+    const row = await prisma.teamInvitation.findUniqueOrThrow({ where: { email: invitee } });
+    const weak = await fetch(`${base}/api/auth/accept-invite`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-forwarded-for": ip },
+      body: JSON.stringify({ token: row.token, firstName: "In", lastName: "Vitee", password: "lowercaseonly" }),
+    });
+    assert(weak.status === 400, `a weak invite password is a 400 (${weak.status})`);
+    const message = authApiErrorMessage(await weak.json(), "fallback");
+    assert(/uppercase|number/i.test(message), `and the page gets the rule as text (${message})`);
+    console.log("ok live: invite resend sends; weak invite password is a readable 400");
+  } finally {
+    await prisma.emailMessage.deleteMany({ where: { to: invitee } });
+    await prisma.teamInvitation.deleteMany({ where: { email: invitee } });
+    await prisma.errorLog.deleteMany({ where: { userId: boss.id } });
+    await prisma.user.delete({ where: { id: boss.id } });
+    await prisma.rateLimitBucket.deleteMany({ where: { key: { contains: ip } } });
+  }
+}
+
 async function live(base: string) {
   const host = new URL(base).hostname;
   assert(host === "localhost" || host === "127.0.0.1", "local server only");
@@ -99,6 +173,7 @@ async function live(base: string) {
     },
   });
   const octet = Math.floor(Math.random() * 200) + 20;
+  const extraUsers: string[] = [];
   const ip = `198.51.100.${octet}`;
   const sprayIp = `203.0.113.${octet}`;
   const forgotIp = `192.0.2.${octet}`;
@@ -195,7 +270,48 @@ async function live(base: string) {
     }
     assert(badLinks === 50 && status === 429, `an address is refused after 50 wrong reset links (${badLinks})`);
     console.log("ok live: reset-password counts only wrong links");
+
+    // The server really answers a wrong password with 200 + error (why the pop-up must not check ok alone).
+    const wrong = await signInOnce(base, email, "Not-The-Password-7", `203.0.114.${octet}`);
+    assert(wrong.status === 200 && wrong.error === "CredentialsSignin", `a wrong password is 200 with an error (${JSON.stringify(wrong)})`);
+
+    // Google starts no longer spend the password budget of a shared address.
+    const oauthIp = `198.51.101.${octet}`;
+    const csrf = await fetch(`${base}/api/auth/csrf`, { headers: { "x-forwarded-for": oauthIp } });
+    const csrfCookie = csrf.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
+    const { csrfToken: oauthCsrf } = (await csrf.json()) as { csrfToken: string };
+    for (let i = 0; i < 60; i++) {
+      const r = await fetch(`${base}/api/auth/signin/google`, {
+        method: "POST",
+        redirect: "manual",
+        headers: { "content-type": "application/x-www-form-urlencoded", "x-forwarded-for": oauthIp, cookie: csrfCookie },
+        body: new URLSearchParams({ csrfToken: oauthCsrf }),
+      });
+      await r.arrayBuffer();
+    }
+    const afterOauth = await signInOnce(base, colleague.email!, password, oauthIp);
+    assert(afterOauth.status === 200 && !afterOauth.error, `60 Google starts do not lock out a correct password (${JSON.stringify(afterOauth)})`);
+
+    // Registration: a one-letter surname is a surname.
+    const regEmail = `reg-o-${Date.now()}@example.test`;
+    const reg = await fetch(`${base}/api/auth/register`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-forwarded-for": `203.0.115.${octet}` },
+      body: JSON.stringify({ firstName: "Ade", lastName: "O", email: regEmail, phone: "08030000000", password: "Correct-Horse-9", confirmPassword: "Correct-Horse-9", acceptTerms: true }),
+    });
+    assert(reg.status === 200, `a one-letter surname registers (${reg.status} ${await reg.clone().text()})`);
+    extraUsers.push(regEmail);
+    console.log("ok live: wrong password is 200+error; Google starts spare the password budget; one-letter surname");
+
+    await invites(base, octet);
   } finally {
+    for (const e of extraUsers) {
+      const u = await prisma.user.findUnique({ where: { email: e } });
+      if (!u) continue;
+      await prisma.clientProfile.deleteMany({ where: { userId: u.id } });
+      await prisma.pointsTransaction.deleteMany({ where: { userId: u.id } }).catch(() => {});
+      await prisma.user.delete({ where: { id: u.id } }).catch(() => {});
+    }
     for (const u of [user, colleague]) {
       await prisma.errorLog.deleteMany({ where: { userId: u.id } });
       await prisma.session.deleteMany({ where: { userId: u.id } });
@@ -206,7 +322,7 @@ async function live(base: string) {
     await prisma.errorLog.deleteMany({ where: { errorType: "AUTH_ADDRESS_CAP", message: { contains: resetMasked } } });
     await prisma.rateLimitBucket.deleteMany({ where: { key: { in: forgotEmails.map((e) => `forgot-account:${accountKey(e)}`) } } });
     await prisma.rateLimitBucket.deleteMany({ where: { key: { startsWith: `forgot-address:${inboxRange}` } } });
-    for (const addr of [ip, sprayIp, forgotIp, resetIp]) {
+    for (const addr of [ip, sprayIp, forgotIp, resetIp, `203.0.114.${octet}`, `198.51.101.${octet}`, `203.0.115.${octet}`]) {
       await prisma.rateLimitBucket.deleteMany({
         where: { OR: [{ key: { endsWith: `:${addr}` } }, { key: { contains: `:${addr}:` } }] },
       });

@@ -7,7 +7,8 @@ import toast from "react-hot-toast";
 import { Logo } from "@/components/ui/Logo";
 import { PasswordField } from "@/components/ui/PasswordField";
 import {
-  authApiErrorMessage,
+  NETWORK_ERROR_MESSAGE,
+  authResponseMessage,
   hardNavigate,
   loginPathAfterPasswordReset,
   safeLoginNext,
@@ -39,10 +40,15 @@ export function ResetPasswordClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password, confirmPassword }),
       });
-      const data: unknown = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(authApiErrorMessage(data, "Could not update password"));
+        // 401 here means the session behind "you must reset your password" ended.
+        throw new Error(
+          res.status === 401
+            ? "Your session has ended. Please sign in again, then set your new password."
+            : await authResponseMessage(res, "Could not update password"),
+        );
       }
+      const data: unknown = await res.json().catch(() => ({}));
       const nextLogin = safeLoginNext(
         (data as { next?: unknown }).next,
         loginPathAfterPasswordReset(session),
@@ -51,7 +57,7 @@ export function ResetPasswordClient() {
       toast.success("Password updated. Sign in with your new password.");
       hardNavigate(nextLogin);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not update password");
+      toast.error(err instanceof Error && err.message !== "Failed to fetch" ? err.message : NETWORK_ERROR_MESSAGE);
     } finally {
       setBusy(false);
     }

@@ -18,6 +18,14 @@ import { PasswordField } from "@/components/ui/PasswordField";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useGoogleAuthEnabled } from "@/hooks/useGoogleAuthEnabled";
 import { signInErrorMessage } from "@/lib/signin-errors";
+import {
+  NETWORK_ERROR_MESSAGE,
+  authResponseMessage,
+  destinationAfterCustomerSignIn,
+  hardNavigate,
+  isSignInFailure,
+  waitForClientSession,
+} from "@/lib/client-auth";
 
 function GoogleIcon() {
   return (
@@ -152,20 +160,32 @@ function LoginForm() {
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = async (data: LoginInput) => {
-    const result = await signIn("credentials", {
-      email: data.email,
-      password: data.password,
-      redirect: false,
-    });
-
-    if (result?.ok) {
-      setTimeout(() => {
-        window.location.href = callbackUrl?.startsWith("/") ? callbackUrl : "/account";
-      }, 1000);
-      return;
+    try {
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+      // next-auth returns ok: true for a refused password; the refusal is in `error`.
+      if (isSignInFailure(result)) {
+        setError("root", { message: signInErrorMessage(result) });
+        return;
+      }
+      const session = await waitForClientSession({
+        until: (current) => Boolean(current?.user?.id && current?.user?.role),
+      });
+      if (!session?.user?.id) {
+        setError("root", { message: "Signed in, but the session did not load. Please try again." });
+        return;
+      }
+      if (session.user.mustResetPassword) {
+        hardNavigate("/reset-password?required=true");
+        return;
+      }
+      hardNavigate(destinationAfterCustomerSignIn(session.user, callbackUrl?.startsWith("/") ? callbackUrl : "/account"));
+    } catch {
+      setError("root", { message: "We could not reach the server. Please check your connection and try again." });
     }
-
-    setError("root", { message: signInErrorMessage(result) });
   };
 
   return (
@@ -325,17 +345,20 @@ function RegisterForm() {
       acceptTerms: data.acceptTerms,
     };
 
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const json = await res.json().catch(() => ({}));
+    let res: Response;
+    try {
+      res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      setError("root", { message: NETWORK_ERROR_MESSAGE });
+      return;
+    }
     if (!res.ok) {
-      const err = (json as { error?: string | Record<string, unknown> }).error;
-      const message =
-        typeof err === "string" ? err : "Registration failed. Please check the form and try again.";
-      setError("root", { message });
+      // The server's reason (the password rule, a wait after 429), never "check the form".
+      setError("root", { message: await authResponseMessage(res, "Registration failed. Please try again.") });
       return;
     }
     setSubmitted(true);

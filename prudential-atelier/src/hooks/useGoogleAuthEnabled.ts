@@ -9,7 +9,8 @@ async function fetchGoogleEnabled(): Promise<boolean> {
   if (cached != null) return cached;
   if (inflight) return inflight;
   inflight = fetch("/api/auth/public-config")
-    .then((r) => (r.ok ? r.json() : { google: false }))
+    // A failed check is not an answer: do not cache "off" for the page.
+    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
     .then((j: { google?: boolean }) => {
       cached = Boolean(j.google);
       inflight = null;

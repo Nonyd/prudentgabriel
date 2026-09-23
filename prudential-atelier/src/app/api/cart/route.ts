@@ -28,8 +28,8 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const items = await listCartLines(session.user.id);
-  return NextResponse.json({ items });
+  const { items, removed } = await listCartLines(session.user.id);
+  return NextResponse.json({ items, removed });
 }
 
 export async function POST(req: NextRequest) {

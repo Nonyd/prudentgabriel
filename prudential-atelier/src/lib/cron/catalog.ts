@@ -92,6 +92,12 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     migrated: true,
   },
   {
+    name: "chat-autoclose",
+    schedule: "30 2 * * *",
+    description: "BA5: close chat conversations after 30 quiet days (reversible; nothing deleted)",
+    migrated: true,
+  },
+  {
     name: "chat-retention",
     schedule: "45 2 * * *",
     description: "BA5: delete chat conversations older than the house's retention period",
