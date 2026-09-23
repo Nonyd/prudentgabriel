@@ -60,7 +60,7 @@ Staging Docker migrate applied `archivedAt` / `archivedReason` on 9 Sept 2026 (A
 
 ## Operational facts
 
-- **Bookings on/off:** Admin → Settings → General → `atelier_bookings_enabled`. Missing or not `"true"` is off. Staging was turned on for the walks; production is typically off.
+- **Enquiries on/off:** Admin → Settings → General → `atelier_bookings_enabled`. Missing or not `"true"` is off. Since BA2 it opens and closes the consultation *enquiry* form; a booking is made only from an approved enquiry's link. (Project-wide handover: [`HANDOVER.md`](HANDOVER.md).)
 - **Terms:** Admin → Settings → Invoice. Keys `invoice_term_delivery` / `changes` / `shipping` / `refunds`. Printed on quote and invoice PDFs.
 - **Validity:** same Invoice settings page, `invoice_default_validity_days` (default 14). Copied onto the quotation; convert copies `expiresAt` onto the invoice.
 - **Deposit percent:** default is Payments → `bespoke_deposit_percent` (70). **The quotation’s own percent wins** and is what the invoice `depositRequired` uses. Production unlocks from that figure, not from the CMS default.
