@@ -52,7 +52,7 @@ Depth lives elsewhere:
 | Terms → Consultations paragraph (non-refundable fee, new refund commitment) and record retention. | Mrs. Prudent; `LEGAL_OPEN_QUESTIONS.md` |
 | Contabo data-processing agreement (hosting in Germany). | Nony |
 | Hero posters: optional. The server now takes a still; a chosen one looks better. | Glory, Admin → Content |
-| **/atelier: price floors, titles and descriptions for the three gowns; group the duplicate frames; a hero photograph or film.** Exact screens and a tick list in [`prudential-atelier/docs/ATELIER_PAGE_CHECKLIST.md`](../prudential-atelier/docs/ATELIER_PAGE_CHECKLIST.md). | Mrs. Prudent (floors, words), Glory (entry, hero) |
+| **/atelier: price floors, titles and descriptions for the five gowns; group their frames and delete two duplicates; a hero photograph (landscape, 2400 px+) or film.** Exact screens and a tick list in [`prudential-atelier/docs/ATELIER_PAGE_CHECKLIST.md`](../prudential-atelier/docs/ATELIER_PAGE_CHECKLIST.md). | Mrs. Prudent (floors, words), Glory (entry, hero) |
 | Accounts opened before the sweep with a temporary password never changed now need *Forgot password*. Tell anyone who asks. | Front of house |
 
 ---

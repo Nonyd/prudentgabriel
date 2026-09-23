@@ -1,87 +1,93 @@
-# /atelier: what the house fills in (Slice BB4)
+# /atelier: what the house fills in (Slices BB and BB2)
 
-The code for Slice BB is on `staging`. Most of what a bride now sees on /atelier
-depends on what is entered here. None of it needs a developer.
+The code is on `staging`. What a bride sees on /atelier now depends on what is
+entered here, and none of it needs a developer.
 
-**Inventory, 23 September 2026** (published atelier gallery, the same on staging
-and production): **8 frames, 3 gowns.** No gown has a price floor, a title or a
-description. Two frames are the same file uploaded twice.
+**Inventory, 23 September 2026.** The published atelier gallery has **14 rows
+showing 5 gowns in 12 distinct photographs.** Two rows are the same file
+uploaded twice. No gown has a price floor, a title or a description.
 
-| Gown | What it looks like | Frames today (public order) |
+(An earlier count of "3 gowns in 8 frames" was wrong. The old page loaded only
+the first 8 rows, so the other gowns never appeared.)
+
+| Gown | What it looks like | Tiles in Admin → Gallery → Atelier |
 |---|---|---|
-| A | Pink, purple and blue beaded corset mini; pink studio backdrop; pink clutch | #1, #2, #3, #5, #7 |
-| B | Green and navy beaded mini with a scalloped hem; chandelier room | #4, #6 |
-| C | Silver beaded column gown with cape sleeves, worn with a gele; grey backdrop | #8 |
+| A | Pink, purple and blue beaded corset mini; pink studio backdrop | #1, #2, #5, plus duplicates #3 (of #2) and #7 (of #1) |
+| B | Green and navy beaded mini with scalloped hem; chandelier room | #4, #6, #14 |
+| C | Silver sculpted column gown with beaded cape sleeves, silver gele; grey backdrop | #8, #9 |
+| D | Purple sequinned column, black pleated ruffle sleeves, purple gele, coral necklace | #10, #13 |
+| E | Green beaded gown with lattice shoulders, green gele, green patent bag | #11, #12 |
 
-The `#` numbers are the ones shown on each tile in **Admin → Gallery → Atelier**.
-They change if the gallery is reordered, so work from the photographs.
+The `#` numbers are the ones printed on each tile, and they assume no hidden
+rows sit between them. If a number doesn't match the description, go by the
+photograph. Numbers change when the gallery is reordered.
 
-## 1. Frames that are one gown (Glory, 5 minutes)
+## 1. Frames that are one gown (Glory, about 10 minutes)
 
 **Admin → Gallery → Atelier.** A tile marked **Same file as #n** is an exact
-duplicate. Deleting it no longer removes the photograph from its twin.
+duplicate. Deleting it leaves its twin's photograph in place.
 
-1. Delete **#3** (same file as #2) and **#7** (same file as #1).
-2. Gown A: open **#2**, set **Piece** to "Another photograph of #1", Save. Do the same for **#5**.
-3. Gown B: open **#6**, set **Piece** to "Another photograph of #4", Save.
-4. Gown C is one photograph and needs nothing here.
+1. Delete **#3** and **#7**, the two duplicates.
+2. For each extra photograph, open it, set **Piece** to "Another photograph of #n", then Save:
+   - Gown A: #2 and #5 → #1
+   - Gown B: #6 and #14 → #4
+   - Gown C: #9 → #8
+   - Gown D: #13 → #10
+   - Gown E: #12 → #11
 
-Afterwards the header reads **3 pieces**. On /atelier each gown appears once,
-with its photographs together.
+Afterwards the header reads **5 pieces**, and /atelier shows five gowns. Each
+gown's photographs page inside its card: swipe on a phone, arrows on a desktop.
 
 ## 2. Price floors (Mrs. Prudent decides; Glory enters)
 
-**Admin → Gallery → Atelier**, open each gown's *main* photograph (#1, #4, #8),
-**Price guide → From (₦)**. The dialog shows the exact sentence the page will
-print: "Pieces like this begin around ₦3,000,000." A ceiling is optional.
+**Admin → Gallery → Atelier**. Open each gown's *main* photograph (#1, #4, #8,
+#10, #11) and fill in **Price guide → From (₦)**. The card then shows "Begins
+around ₦3,000,000 · A guide, not a price"; the dialog previews the wording.
 
-- [ ] Gown A (#1): floor ₦________
-- [ ] Gown B (#4): floor ₦________
-- [ ] Gown C (#8): floor ₦________
+- [ ] Gown A (#1): ₦________
+- [ ] Gown B (#4): ₦________
+- [ ] Gown C (#8): ₦________
+- [ ] Gown D (#10): ₦________
+- [ ] Gown E (#11): ₦________
 
-Tiles marked **No price guide**, or the **Needs price guide** filter, list what
-is still missing. Display only: nothing that charges money reads this (BA4).
+Use the **Needs price guide** filter to see what is still missing. Display
+only: nothing that charges money reads this (BA4).
 
-## 3. Descriptions (Mrs. Prudent's words; Glory enters)
+## 3. Titles and descriptions (Mrs. Prudent's words; Glory enters)
 
-Same dialog, on each main photograph:
+In the same dialog, on each main photograph:
 
 - **Title**: what the piece is called.
-- **Description**: what it is, what it is made of, what it was for. For example: *"Ivory silk faille, a hand-beaded corset bodice. Made for a church wedding in Enugu."*
+- **Description**: what it is, what it is made of, what it was for. For example: *"Ivory silk faille with a hand-beaded corset bodice. Made for a church wedding in Enugu."*
 
-- [ ] Gown A (#1): title and description
-- [ ] Gown B (#4): title and description
-- [ ] Gown C (#8): title and description
+- [ ] Gown A · [ ] Gown B · [ ] Gown C · [ ] Gown D · [ ] Gown E
 
-Tiles marked **No description**, or the **Needs description** filter, list what
-is still missing. Until a gown has words, it is shown as its photographs alone.
+Use the **Needs description** filter to see what is still missing. The name,
+description and floor appear over the photograph on hover on a desktop, and
+under it on a phone. A gown with no words shows its photograph alone.
 
 ## 4. Stage lines (Mrs. Prudent, optional)
 
-**Admin → Content → Pages → Atelier**: one **Stage line** for each of the nine
-craft stages. The defaults are plain and make no claims about hours. If the
-house wants a line such as *"Beading and finishing: four hundred hours,
-sometimes more, by hand"*, write it here, with the real number.
-
-The section heading counts the stages itself ("Nine stages of craft"). If the
-**Process section headline** field names a number, it must be nine, or the page
-ignores it. Use `{count}` to have the page fill in the number.
+**Admin → Content → Pages → Atelier** has one **Stage line** per craft stage.
+The defaults make no claims about hours. If the house wants a line such as
+*"Beading and finishing: four hundred hours, sometimes more, by hand"*, write
+it here with the real number. The heading counts the stages itself; to word it
+differently, use `{count}` where the number goes.
 
 ## 5. The hero photograph or film (Glory)
 
-**No hero-grade photograph exists yet.** All the atelier images are 4:5 portrait
-gallery frames. Until one is set, the hero shows the first gown in the gallery,
-which is the house's own photography and never stock.
+**No hero-grade photograph exists yet.** Until one is set, the hero shows gown
+A's first frame. That file is 1080 × 1350 and 86 KB, so on a laptop it is
+stretched across a 1440-wide screen and looks soft. The code can't sharpen it.
 
-**Admin → Content → Pages → Atelier → Hero photograph or film.** Add an image,
-or a video (MP4/WebM). A film gets a poster and a phone-sized copy, made by the
-server, and waits for a tap on a phone, as on /rtw. On a wide screen it sits in
-the right-hand column, so a **portrait** photograph or film works best. Change
-it each season. The headline, line and button stay on the glass panel over it.
+**Admin → Content → Pages → Atelier → Hero photograph or film.** The hero is
+edge to edge at every width, so the ideal is a **landscape photograph at least
+2400 px wide**, with the subject off to the right (the headline panel sits on
+the left). A film works too: the server makes its poster and a phone-sized
+copy. Change it each season.
 
-## What the gallery needs that no screen can fix
+## What no screen can fix
 
-Three gowns is a small portfolio for a house quoting ₦3M to ₦10M. The page now
-shows each gown once, well. It cannot show gowns that were never photographed.
-A bridal and an evening commission photographed properly would do more for this
-page than any further code.
+Five gowns, each shown once with its photographs together, is a real
+portfolio. Five is still few for a house quoting ₦3M to ₦10M, and every new
+commission photographed properly adds to this page with no code at all.
