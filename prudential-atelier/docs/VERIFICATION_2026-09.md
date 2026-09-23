@@ -349,25 +349,30 @@ Also found: staging itself is indexable. PDPs send `robots: index, follow` and `
 ## 6. The /rtw hero video — measured (23 September 2026)
 
 Headless Chrome, 390×844 at DPR 3, Android UA, Lighthouse's Slow 4G
-(1.6 Mbps, 150 ms RTT) and 4× CPU, cache off. Median of three runs each.
-**Before** is staging (`e00ec9c`); **after** is the same build of this change
-served locally with the same 11.9 MB campaign file. Emulation, not a handset.
-The harness is `puppeteer-core` with Element Timing on the hero image and
+(1.6 Mbps, 150 ms RTT) and 4× CPU, cache off, against staging. **Before** is
+`e00ec9c`, **after** is `2d2f992`, same server and same 11.9 MB campaign file.
+Median of three runs each. Emulation, not a handset. The harness is
+`puppeteer-core` with Element Timing on the hero image and
 `requestVideoFrameCallback` on the video.
 
 | First visit | Before | After |
 |---|---|---|
-| Bytes by 8 s / 30 s | 687 KB / 2,639 KB (still downloading: 1,836 KB of video, of 11.9 MB) | 753 KB / **793 KB** (0 video) |
-| Hero shows an image | never an image; brown box until the first video frame at **10.0 s** | poster painted at **4.1 s** (with first paint) |
-| First contentful paint | 4.4 s | 3.8 s |
-| Reported LCP | 11.6 s, the cookie-banner text | 9.0 s, the cookie-banner text |
+| First contentful paint | 4.4 s | **3.1 s** |
+| Hero shows an image | brown box until the first video frame at **10.0 s** | poster at **4.0 s** |
+| Bytes by 8 s / 30 s | 687 KB / 2,639 KB, still downloading (1,836 KB of video so far, of 11.9 MB) | 603 KB / **613 KB**, 0 video |
+| Reported LCP | 11.6 s, the cookie-banner text | 10.7 s, the cookie-banner text |
 
-Returning visitor (no banner): LCP is the headline both times (4.4 s / 5.9 s;
-paint times swing ±2 s run to run, and the two ran against different servers, so
-the timing columns are not a like-for-like win or loss). The bytes are.
+| Returning visit (no banner) | Before | After |
+|---|---|---|
+| First contentful paint | 4.2 s | 3.3 s |
+| Hero shows an image | first video frame at 7.6 s | poster at 4.0 s |
+| Bytes by 30 s | 2,277 KB (1,471 KB video) | 827 KB (0 video) |
+| Reported LCP | 4.4 s, the headline | 4.0 s, the headline |
 
+Paint times swing about ±1 s run to run; the bytes do not.
 After a tap, a phone downloads the 720-wide H.264 encode (2.7 MB for the minute)
 instead of the 1080×1920 VP9 file (11.9 MB, which older iPhones cannot decode).
+Wider screens: no video in the first HTML; the full file autoplays after load.
 
 **Why the poster is never the reported LCP.** Chrome does not count an image
 that exactly fills the viewport as LCP content (it treats it as a background).
