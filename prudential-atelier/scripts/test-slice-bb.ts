@@ -40,7 +40,8 @@ import {
   type AtelierPiece,
   type GalleryRow,
 } from "../src/lib/atelier-gallery";
-import { AtelierLandingPage, AtelierPieceEntry } from "../src/components/atelier/AtelierLandingPage";
+import { AtelierLandingPage } from "../src/components/atelier/AtelierLandingPage";
+import { AtelierPieceCard, atelierGridColumns } from "../src/components/atelier/AtelierPieceGrid";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -169,24 +170,34 @@ function pieces() {
   assert(!pieceGaps(row("a", "/a", { pieceOfId: "b" })).needsPriceGuide, "a frame is never flagged: its piece is");
   assert(!pieceGaps(row("a", "/a", { priceFloorNGN: 1, description: "x" })).needsDescription, "a finished piece needs nothing");
 
-  // A piece with no floor and no description: its photographs, and no empty slot.
+  // A piece with no floor and no description: its photograph, and no empty slot.
   for (const plain of [grouped[2]!, grouped[1]!]) {
-    const html = render(h(AtelierPieceEntry, { piece: plain }));
-    assert((html.match(/<img\b/g) ?? []).length === plain.frames.length, "the photographs render");
-    assert(!/<h3\b/.test(html) && !/<figcaption/.test(html), "no title slot, no caption slot");
+    const html = render(h(AtelierPieceCard, { piece: plain }));
+    assert((html.match(/<img\b/g) ?? []).length === 1, "the photograph renders");
+    assert(!/<h3\b/.test(html) && !html.includes("product-gallery-meta"), "no name slot, no caption block");
     assert(!/<(p|h3|div|span|figcaption)\b[^>]*>\s*<\/\1>/.test(html), "no empty element");
-    assert(!/begin around|A guide, not a price/.test(html), "no price line without a floor");
-    assert(!html.includes("7fr"), "no empty text column beside it");
+    assert(!/Begins around|A guide, not a price/.test(html), "no price line without a floor");
+    assert(html.includes('href="#begin"'), "a gown leads to the screening questions on this page");
+    const chevrons = (html.match(/aria-label="(Previous|Next) image"/g) ?? []).length;
+    assert(chevrons === (plain.frames.length > 1 ? 2 : 0), "a gown's other frames page inside its card");
   }
-  const described: AtelierPiece = { ...grouped[0]!, title: "Ivory corset gown", description: "Silk faille.\nFor a church wedding.", guide: { priceFloorNGN: 3_000_000, priceCeilingNGN: null } };
-  const full = render(h(AtelierPieceEntry, { piece: described }));
-  assert(full.includes("Ivory corset gown") && full.includes("Silk faille.") && full.includes("7fr"), "a described piece has its words beside it");
-  assert(full.includes("Pieces like this begin around ₦3,000,000.") && full.includes("A guide, not a price."), "and the price guide, as BA4 words it");
-  const floorOnly = render(h(AtelierPieceEntry, { piece: { ...grouped[2]!, guide: { priceFloorNGN: 5_000_000, priceCeilingNGN: null } } }));
+  const described: AtelierPiece = { ...grouped[0]!, title: "Ivory corset gown", description: "Silk faille. For a church wedding.", guide: { priceFloorNGN: 3_000_000, priceCeilingNGN: null } };
+  const full = render(h(AtelierPieceCard, { piece: described }));
+  assert(full.includes("product-gallery-card") && full.includes("product-gallery-shot") && full.includes("product-gallery-meta"), "the shop's gallery card, not a new style");
+  assert(full.includes("Ivory corset gown") && full.includes("Silk faille."), "name and words, revealed as the shop's are");
+  assert(full.includes("Begins around ₦3,000,000") && full.includes("A guide, not a price"), "and the price guide, never a price");
+  assert(!/Add to bag|quick-add-trigger|wishlist/i.test(full), "nothing to buy on an atelier card");
+  const floorOnly = render(h(AtelierPieceCard, { piece: { ...grouped[2]!, guide: { priceFloorNGN: 5_000_000, priceCeilingNGN: null } } }));
   assert(floorOnly.includes("₦5,000,000") && !/<h3\b/.test(floorOnly), "a floor alone shows the floor and no empty title");
 
   const pageHtml = page({ pieces: grouped });
-  assert((pageHtml.match(/data-atelier-piece=/g) ?? []).length === 3, "the page shows one entry per piece");
+  assert((pageHtml.match(/data-atelier-piece=/g) ?? []).length === 3, "one gown, one place in the grid");
+  const grid = /<div class="([^"]*)"><article class="product-gallery-card/.exec(pageHtml)?.[1] ?? "";
+  assert(grid.includes("gap-px") && grid.includes("bg-white") && grid.includes("grid-cols-2"), "hairline seams, two across on a phone");
+  assert(!/max-w-site[^"]*"[^>]*>\s*<div class="[^"]*gap-px/.test(pageHtml), "and edge to edge, outside the page container");
+  assert(atelierGridColumns(3) === 3 && atelierGridColumns(6) === 3 && atelierGridColumns(8) === 4 && atelierGridColumns(12) === 4 && atelierGridColumns(5) === 4, "several across on a wide screen, no ragged row when avoidable");
+  const order = ["atelier-stages", "atelier-pieces"].map((id) => pageHtml.indexOf(`id="${id}"`));
+  assert(order[0]! > 0 && order[1]! > order[0]!, "the stages sit between the hero and the gallery");
   console.log("ok pieces: one piece one entry; duplicates once; a bare piece is photographs only");
 }
 
@@ -250,6 +261,11 @@ function hero() {
   const house = page({ pieces: [piece] });
   assert(/fetchpriority="high"/i.test(firstImg(house)) && firstImg(house).includes("9f6eb9"), "with nothing set, the house's own first piece is the hero");
   assert(!/unsplash|pexels|stock/i.test(house), "never stock");
+  for (const html of [film, house]) {
+    const heroHtml = html.slice(0, html.indexOf('id="atelier-stages"'));
+    assert(!heroHtml.includes("lg:left-[40%]") && !heroHtml.includes("rounded-[26px]"), "one hero: the photograph edge to edge, not a card beside a framed picture");
+    assert(heroHtml.includes("hero-copy-scrim"), "the panel has its scrim, as on /rtw");
+  }
 
   const bare = page({});
   for (const html of [film, house, bare]) {

@@ -5,6 +5,7 @@ import { ProductCard } from "@/components/common/ProductCard";
 import { GallerySwipeNudgeHost } from "@/components/common/GallerySwipeNudgeHost";
 import { QuickAddMobilePanel } from "@/components/common/quick-add/QuickAddMobile";
 import { cn } from "@/lib/utils";
+import { GALLERY_GRID_CLASS, GALLERY_GRID_SEAMS } from "@/components/common/gallery-grid";
 import { useQuickAddStore } from "@/store/quickAddStore";
 import type { ProductListItem } from "@/types/product";
 
@@ -35,8 +36,8 @@ export function ProductCardGrid({
     <GallerySwipeNudgeHost>
       <div
         className={cn(
-          "grid min-w-0 [&>*]:min-w-0",
-          teaser ? "gap-4 bg-transparent px-4 lg:px-6" : "gap-px bg-white",
+          GALLERY_GRID_CLASS,
+          teaser ? "gap-4 bg-transparent px-4 lg:px-6" : GALLERY_GRID_SEAMS,
           className,
           isOpen && activeIndex >= 0 && "max-md:pb-28",
         )}
@@ -83,7 +84,7 @@ export function ProductCardRail({
   return (
     <GallerySwipeNudgeHost>
       <div className={inRail ? "max-md:pb-28" : undefined}>
-        <div className={cn("flex overflow-x-auto pb-0", teaser ? "gap-4 bg-transparent" : "gap-px bg-white")}>
+        <div className={cn("flex overflow-x-auto pb-0", teaser ? "gap-4 bg-transparent" : GALLERY_GRID_SEAMS)}>
           {products.map((p) => (
             <div key={p.id} className={itemClassName}>
               {teaser ? (

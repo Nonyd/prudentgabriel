@@ -31,6 +31,20 @@ export function priceGuideText(guide: PriceGuide): string | null {
   return `Pieces like this begin around ${naira(floor)}.`;
 }
 
+/**
+ * BB2: the same guide in the few words a gallery card has room for, beside
+ * PRICE_GUIDE_SHORT_NOTE. Null when there is no floor.
+ */
+export function priceGuideShort(guide: PriceGuide): string | null {
+  const floor = guide.priceFloorNGN;
+  if (!floor || floor <= 0) return null;
+  const ceiling = guide.priceCeilingNGN;
+  if (ceiling && ceiling > floor) return `About ${naira(floor)} – ${naira(ceiling)}`;
+  return `Begins around ${naira(floor)}`;
+}
+
+export const PRICE_GUIDE_SHORT_NOTE = "A guide, not a price";
+
 /** Admin validation: a ceiling needs a floor and must not be below it. */
 export function priceGuideError(guide: PriceGuide): string | null {
   const { priceFloorNGN: floor, priceCeilingNGN: ceiling } = guide;

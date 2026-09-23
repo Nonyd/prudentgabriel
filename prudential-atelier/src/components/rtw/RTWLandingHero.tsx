@@ -249,11 +249,13 @@ function FeaturedFrame({
   looks,
   index,
   onIndex,
+  bleed = false,
 }: {
   items: HeroCarouselItem[];
   looks: RTWHeroLook[];
   index: number;
   onIndex: (n: number) => void;
+  bleed?: boolean;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(true);
@@ -290,7 +292,7 @@ function FeaturedFrame({
   if (items.length === 0 && !featuredLook) return null;
 
   return (
-    <div ref={rootRef} className="absolute inset-0 overflow-hidden rounded-none lg:rounded-[26px]">
+    <div ref={rootRef} className={cn("absolute inset-0 overflow-hidden rounded-none", !bleed && "lg:rounded-[26px]")}>
       {items.length > 0
         ? items.map((item, i) => (
             <div
@@ -315,7 +317,7 @@ function FeaturedFrame({
               <LookFrame
                 look={featuredLook}
                 priority
-                className="absolute inset-0 rounded-none lg:rounded-[26px]"
+                className={cn("absolute inset-0 rounded-none", !bleed && "lg:rounded-[26px]")}
                 sizes={FEATURED_SIZES}
               />
             )
@@ -346,14 +348,24 @@ function LookWall({
   featuredItems,
   featuredIndex,
   onFeaturedIndex,
+  bleed = false,
 }: {
   looks: RTWHeroLook[];
   sideLooks: RTWHeroLook[];
   featuredItems: HeroCarouselItem[];
   featuredIndex: number;
   onFeaturedIndex: (n: number) => void;
+  bleed?: boolean;
 }) {
   const campaign = featuredItems.length > 0;
+  if (bleed) {
+    if (!campaign && !looks[0]) return null;
+    return (
+      <div className="absolute inset-0">
+        <FeaturedFrame items={featuredItems} looks={looks} index={featuredIndex} onIndex={onFeaturedIndex} bleed />
+      </div>
+    );
+  }
   const featuredLook = looks[0];
   const sides = sideLooks.length
     ? sideLooks.slice(0, 2)
@@ -406,6 +418,7 @@ export function RTWLandingHero({
   subline,
   ctaLabel,
   ctaHref,
+  bleed = false,
 }: {
   items: HeroCarouselItem[];
   looks?: RTWHeroLook[];
@@ -415,6 +428,11 @@ export function RTWLandingHero({
   ctaLabel: string;
   /** A page of its own (/atelier → /consultation). Without it the CTA scrolls to the /rtw grid. */
   ctaHref?: string;
+  /**
+   * One photograph edge to edge at every width, the copy on its glass panel over
+   * it (BB2: /atelier). Without it, wide screens get the /rtw look wall.
+   */
+  bleed?: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const count = items.length;
@@ -440,9 +458,15 @@ export function RTWLandingHero({
 
   return (
     <section className="hero-under-chrome hero-bleed-chrome relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-choc">
-      <div className="relative min-h-0 flex-1 pt-3 max-lg:absolute max-lg:inset-0 max-lg:pt-0">
+      <div
+        className={cn(
+          "relative min-h-0 flex-1",
+          bleed ? "absolute inset-0" : "pt-3 max-lg:absolute max-lg:inset-0 max-lg:pt-0",
+        )}
+      >
         {hasStage ? (
           <LookWall
+            bleed={bleed}
             looks={looks}
             sideLooks={sideLooks}
             featuredItems={items}
@@ -451,6 +475,16 @@ export function RTWLandingHero({
           />
         ) : null}
 
+        {bleed && hasStage ? (
+          <div
+            className="pointer-events-none absolute inset-0 z-[1] hidden lg:block"
+            style={{
+              background:
+                "linear-gradient(to right, rgb(26 15 8 / 0.5) 0%, rgb(26 15 8 / 0.2) 38%, transparent 62%)",
+            }}
+            aria-hidden
+          />
+        ) : null}
         <div
           className={cn("pointer-events-none absolute inset-0 z-[1]", hasStage && "lg:hidden")}
           style={{
@@ -464,7 +498,9 @@ export function RTWLandingHero({
         <div
           className={cn(
             "absolute z-[2] flex",
-            hasStage
+            bleed && hasStage
+              ? "inset-x-0 bottom-0 items-end px-5 pb-10 md:px-10 md:pb-14 lg:inset-y-0 lg:right-auto lg:w-[46%] lg:items-center lg:pl-16 lg:pr-0 lg:pb-0"
+              : hasStage
               ? "inset-x-0 bottom-0 items-end px-5 pb-10 md:px-10 md:pb-14 lg:inset-y-0 lg:right-auto lg:w-[40%] lg:items-center lg:px-10 lg:pb-0"
               : "inset-x-0 bottom-0 items-end px-5 pb-10 md:px-10 md:pb-14 lg:inset-y-0 lg:items-center lg:pb-0",
           )}
