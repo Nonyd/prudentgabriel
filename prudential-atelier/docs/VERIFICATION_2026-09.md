@@ -343,3 +343,41 @@ Also found: staging itself is indexable. PDPs send `robots: index, follow` and `
 4. **Production read-only checks:** `EmailMessage` status counts for 7 days, and whether Paystack and Resend keys are present.
 5. **Rate-limit IP fix prerequisite:** confirm Cloudflare proxy is on for both hosts and the origin accepts only Cloudflare IPs.
 6. **Apply the AZ3 migration to the Neon dev database** (`prisma migrate deploy`) so the 6 failing tests can run.
+
+---
+
+## 6. The /rtw hero video — measured (23 September 2026)
+
+Headless Chrome, 390×844 at DPR 3, Android UA, Lighthouse's Slow 4G
+(1.6 Mbps, 150 ms RTT) and 4× CPU, cache off. Median of three runs each.
+**Before** is staging (`e00ec9c`); **after** is the same build of this change
+served locally with the same 11.9 MB campaign file. Emulation, not a handset.
+The harness is `puppeteer-core` with Element Timing on the hero image and
+`requestVideoFrameCallback` on the video.
+
+| First visit | Before | After |
+|---|---|---|
+| Bytes by 8 s / 30 s | 687 KB / 2,639 KB (still downloading: 1,836 KB of video, of 11.9 MB) | 753 KB / **793 KB** (0 video) |
+| Hero shows an image | never an image; brown box until the first video frame at **10.0 s** | poster painted at **4.1 s** (with first paint) |
+| First contentful paint | 4.4 s | 3.8 s |
+| Reported LCP | 11.6 s, the cookie-banner text | 9.0 s, the cookie-banner text |
+
+Returning visitor (no banner): LCP is the headline both times (4.4 s / 5.9 s;
+paint times swing ±2 s run to run, and the two ran against different servers, so
+the timing columns are not a like-for-like win or loss). The bytes are.
+
+After a tap, a phone downloads the 720-wide H.264 encode (2.7 MB for the minute)
+instead of the 1080×1920 VP9 file (11.9 MB, which older iPhones cannot decode).
+
+**Why the poster is never the reported LCP.** Chrome does not count an image
+that exactly fills the viewport as LCP content (it treats it as a background).
+Reproduced in isolation: a full-viewport `<img>` produces no LCP entry; the same
+image at 90% height does. The /rtw hero is `100dvh`, so the reported LCP falls to
+the largest text: the cookie banner on a first visit, the headline after. To move
+the first-visit LCP, the banner has to paint sooner or smaller; the hero is no
+longer what holds it back.
+
+**Homepage hero carousel:** the same problem. 5.0 MB video, `preload="auto"`,
+no poster; LCP is the video's first frame at 8.8 s, 2.4 MB of video fetched by
+30 s. `src/lib/hero-video-variants.ts` applies as is (the homepage uses the same
+`hero-videos` folder).

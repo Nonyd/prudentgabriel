@@ -4,8 +4,8 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { HeroCarouselItem } from "@/lib/hero-carousel";
 import { shouldAutoplayReel, shouldPrefetchReelVideo } from "@/lib/collection-reel-playback";
-import { RTW_GRID_ID, rtwHeroPlaybackUrl, type RTWHeroLook } from "@/lib/rtw-hero";
-import { isIosDevice } from "@/lib/hero-playback";
+import { RTW_GRID_ID, type RTWHeroLook } from "@/lib/rtw-hero";
+import { HERO_TAP_TO_PLAY_QUERY, heroVideoSrc, heroWaitsForTap, isIosDevice } from "@/lib/hero-playback";
 import { cn, optimizeImageUrl } from "@/lib/utils";
 
 const IMAGE_ADVANCE_MS = 4500;
@@ -47,10 +47,15 @@ function HeroSlide({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [saveData, setSaveData] = useState(false);
+  // Until the browser says otherwise, assume a phone: the server HTML carries the
+  // poster and no <video>, so the poster is what paints first everywhere.
+  const [narrow, setNarrow] = useState(true);
+  const [afterLoad, setAfterLoad] = useState(false);
   const [tappedToPlay, setTappedToPlay] = useState(false);
   const [needsTap, setNeedsTap] = useState(false);
   const ios = isIosDevice();
 
+  const waitsForTap = heroWaitsForTap({ narrow, saveData, reducedMotion });
   const prefetch = shouldPrefetchReelVideo({
     withinOneViewport: active && nearView,
     saveData,
@@ -58,11 +63,14 @@ function HeroSlide({
   });
   const wantAutoplay = shouldAutoplayReel({
     inView: active && inView && pageVisible,
-    saveData,
-    reducedMotion,
+    saveData: waitsForTap,
+    reducedMotion: false,
     tappedToPlay,
   });
-  const showVideo = active || prefetch;
+  // Wide screens: the video joins after the page has loaded (poster first), and
+  // only while the hero is within a viewport of the screen.
+  // Narrow screens: only once she taps.
+  const showVideo = tappedToPlay ? active : !waitsForTap && afterLoad && nearView && (active || prefetch);
 
   const bindVideo = useCallback((el: HTMLVideoElement | null) => {
     videoRef.current = el;
@@ -71,17 +79,38 @@ function HeroSlide({
   }, []);
 
   useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setReducedMotion(mq.matches);
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const width = window.matchMedia(HERO_TAP_TO_PLAY_QUERY);
+    const sync = () => {
+      setReducedMotion(motion.matches);
+      setNarrow(width.matches);
+    };
     sync();
-    mq.addEventListener("change", sync);
+    motion.addEventListener("change", sync);
+    width.addEventListener("change", sync);
     setSaveData(connectionSaveData());
-    return () => mq.removeEventListener("change", sync);
+    return () => {
+      motion.removeEventListener("change", sync);
+      width.removeEventListener("change", sync);
+    };
+  }, []);
+
+  useEffect(() => {
+    let idle = 0;
+    const ready = () => {
+      idle = window.setTimeout(() => setAfterLoad(true), 300);
+    };
+    if (document.readyState === "complete") ready();
+    else window.addEventListener("load", ready, { once: true });
+    return () => {
+      window.removeEventListener("load", ready);
+      window.clearTimeout(idle);
+    };
   }, []);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || item.type !== "video") return;
+    if (!video || item.type !== "video" || !showVideo) return;
     armInlineMuted(video);
 
     // iPhone Safari treats a scripted play() as a failed gesture and then will
@@ -100,7 +129,7 @@ function HeroSlide({
       };
     }
 
-    if (!showVideo || !wantAutoplay) {
+    if (!wantAutoplay) {
       video.pause();
       return;
     }
@@ -113,6 +142,16 @@ function HeroSlide({
   const poster = item.poster?.trim() || undefined;
 
   if (item.type === "video") {
+    const play = () => {
+      setTappedToPlay(true);
+      setNeedsTap(false);
+      const video = videoRef.current;
+      if (video) {
+        armInlineMuted(video);
+        void video.play().catch(() => setNeedsTap(true));
+      }
+    };
+    const offerPlay = needsTap || (waitsForTap && !tappedToPlay);
     return (
       <div className="absolute inset-0">
         {poster ? (
@@ -130,13 +169,13 @@ function HeroSlide({
         {showVideo ? (
           <video
             ref={bindVideo}
-            src={rtwHeroPlaybackUrl(item.url)}
+            src={heroVideoSrc(item, narrow)}
             poster={poster}
             muted
             playsInline
             loop
             autoPlay
-            preload="auto"
+            preload="none"
             disableRemotePlayback
             disablePictureInPicture
             controls={false}
@@ -146,31 +185,22 @@ function HeroSlide({
             {...{ "webkit-playsinline": "true" }}
           />
         ) : null}
-        {(needsTap || ((reducedMotion || saveData) && !tappedToPlay)) ? (
+        {offerPlay && active ? (
           <button
             type="button"
-            onClick={() => {
-              setTappedToPlay(true);
-              setNeedsTap(false);
-              const video = videoRef.current;
-              if (video) {
-                armInlineMuted(video);
-                void video.play().catch(() => setNeedsTap(true));
-              }
-            }}
+            onClick={play}
             onTouchEnd={(event) => {
+              event.preventDefault();
               event.stopPropagation();
-              setTappedToPlay(true);
-              setNeedsTap(false);
-              const video = videoRef.current;
-              if (video) {
-                armInlineMuted(video);
-                void video.play().catch(() => setNeedsTap(true));
-              }
+              play();
             }}
-            aria-label="Play video"
+            aria-label="Play the film"
             className="absolute inset-0 z-[1]"
-          />
+          >
+            <span className="absolute right-5 top-[calc(env(safe-area-inset-top)+5.5rem)] inline-flex items-center gap-2 rounded-full bg-choc/55 px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-cream backdrop-blur-sm">
+              <span aria-hidden>▶</span> Play film
+            </span>
+          </button>
         ) : null}
       </div>
     );

@@ -101,6 +101,18 @@ export async function streamMediaKey(
   } catch {
     st = null;
   }
+  if (!st) {
+    // /rtw hero: the phone-sized encode and the poster still are made on first request.
+    const { ensureHeroVariant, heroVariantRequest } = await import("@/lib/hero-video-variants");
+    if (heroVariantRequest(key) && (await ensureHeroVariant(key))) {
+      try {
+        st = await stat(abs);
+        if (!st.isFile()) st = null;
+      } catch {
+        st = null;
+      }
+    }
+  }
   if (!st && key.toLowerCase().endsWith(".mp4")) {
     const webmAbs = getMediaStore().absolutePath(`${key.slice(0, -4)}.webm`);
     if (webmAbs) {

@@ -34,3 +34,18 @@ export function isIosDevice(): boolean {
   if (/iPad|iPhone|iPod/i.test(ua)) return true;
   return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
 }
+
+/**
+ * /rtw hero (the page the advertising points at): below this width the video
+ * waits for a tap, as the collection reels do (Slice AE). The poster is the page.
+ */
+export const HERO_TAP_TO_PLAY_QUERY = "(max-width: 767px)";
+
+export function heroWaitsForTap(opts: { narrow: boolean; saveData: boolean; reducedMotion: boolean }): boolean {
+  return opts.narrow || opts.saveData || opts.reducedMotion;
+}
+
+/** The file a slide plays: the phone encode on a narrow screen when there is one. */
+export function heroVideoSrc(item: { url: string; phoneUrl?: string }, narrow: boolean): string {
+  return narrow && item.phoneUrl ? item.phoneUrl : heroPlaybackUrl(item.url);
+}

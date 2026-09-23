@@ -92,6 +92,8 @@
     "test:ssrf-guard": "tsx --tsconfig tsconfig.scripts.json scripts/test-ssrf-guard.ts",
     "test:session-revocation": "tsx --tsconfig tsconfig.scripts.json scripts/test-session-revocation.ts",
     "test:token-defaults": "tsx --tsconfig tsconfig.scripts.json scripts/test-token-defaults.ts",
+    "test:token-sweep": "tsx --tsconfig tsconfig.scripts.json scripts/test-token-sweep.ts",
+    "test:hero-video": "tsx --tsconfig tsconfig.scripts.json scripts/test-hero-video.ts",
     "test:legal-figures": "tsx --tsconfig tsconfig.scripts.json scripts/test-legal-figures.ts",
     "test:orderability": "tsx --tsconfig tsconfig.scripts.json scripts/test-orderability.ts",
     "test:product-visibility": "tsx --tsconfig tsconfig.scripts.json scripts/test-product-visibility.ts",

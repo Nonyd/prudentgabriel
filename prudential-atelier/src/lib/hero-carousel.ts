@@ -4,6 +4,8 @@ export interface HeroCarouselItem {
   alt?: string;
   /** Poster still for video slides. RTW landing shows this before the file plays. */
   poster?: string;
+  /** Server-derived, never stored: the phone-sized encode of a /media hero video (hero-video-variants.ts). */
+  phoneUrl?: string;
 }
 
 export const FALLBACK_CAROUSEL_ITEMS: HeroCarouselItem[] = [

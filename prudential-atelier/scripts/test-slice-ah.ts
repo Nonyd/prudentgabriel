@@ -151,7 +151,9 @@ function runSource() {
   assert(!hero.includes("!hasCampaign && looks"), "campaign media does not replace the look wall");
   assert(hero.includes("hero-bleed-chrome"), "on mobile the film sits under the nav, not below it");
   assert(hero.includes("max-lg:absolute max-lg:inset-0"), "mobile media is viewport-bleed under the chrome");
-  assert(hero.includes("preload=\"auto\""), "RTW hero video preloads so iPhone can autoplay on load");
+  // Superseded (23 Sep): the whole-file preload cost a phone 12 MB and the LCP.
+  // The poster is the page now; behaviour is in scripts/test-hero-video.ts.
+  assert(!hero.includes("preload=\"auto\"") && hero.includes("preload=\"none\""), "RTW hero video never preloads the whole file");
   assert(!hero.includes("preload=\"metadata\""), "iPhone muted autoplay does not wait on metadata-only");
   assert(hero.includes("autoPlay"), "iPhone muted autoplay is an attribute, not a scripted play()");
   assert(!hero.includes("autoPlay={wantAutoplay}"), "toggling autoPlay off poisons iPhone playback");

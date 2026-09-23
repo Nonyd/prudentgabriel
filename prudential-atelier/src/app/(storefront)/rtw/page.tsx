@@ -10,6 +10,7 @@ import { cmsRouteMetadata, flattenSearchParams, rtwCanonicalPath } from "@/lib/s
 import { rtwHeroCopy, rtwHeroLooks, rtwHeroSideLooks } from "@/lib/rtw-hero";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
 import { warmHeroWebmMp4 } from "@/lib/transcode-webm-mp4";
+import { heroVariantUrls, warmHeroVideoVariants } from "@/lib/hero-video-variants";
 
 export async function generateMetadata({
   searchParams,
@@ -101,10 +102,14 @@ export default async function RTWPage({
     fallback: heroLooks,
   });
 
-  const heroItems = resolveHeroCarouselItems(carouselRaw);
-  for (const item of heroItems) {
-    if (item.type === "video") warmHeroWebmMp4(item.url);
-  }
+  // Video slides get a poster (Glory's, or a still the server takes) and a phone-sized encode.
+  const heroItems = resolveHeroCarouselItems(carouselRaw).map((item) => {
+    if (item.type !== "video") return item;
+    warmHeroWebmMp4(item.url);
+    warmHeroVideoVariants(item.url);
+    const variants = heroVariantUrls(item.url);
+    return variants ? { ...item, poster: item.poster?.trim() || variants.poster, phoneUrl: variants.phone } : item;
+  });
 
   return (
     <RTWPageClient
