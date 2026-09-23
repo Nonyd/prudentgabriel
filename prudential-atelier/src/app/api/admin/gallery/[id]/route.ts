@@ -5,6 +5,10 @@ import { requireAdminApi, CMS_ADMIN_PERMISSIONS } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { destroyStoredMedia } from "@/lib/media/destroy";
 import { revalidateGallery } from "@/lib/revalidate";
+import { priceGuideError } from "@/lib/price-guide";
+
+/** BA4: whole naira, display only. Null clears it. */
+const nairaGuide = z.number().int().positive().max(10_000_000_000).nullable().optional();
 
 const patchSchema = z.object({
   alt: z.string().nullable().optional(),
@@ -12,6 +16,8 @@ const patchSchema = z.object({
   isPublished: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
   category: z.nativeEnum(GalleryCategory).optional(),
+  priceFloorNGN: nairaGuide,
+  priceCeilingNGN: nairaGuide,
 });
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -28,6 +34,15 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   const existing = await prisma.galleryImage.findUnique({ where: { id } });
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const guide = {
+    priceFloorNGN: parsed.data.priceFloorNGN !== undefined ? parsed.data.priceFloorNGN : existing.priceFloorNGN,
+    priceCeilingNGN: parsed.data.priceCeilingNGN !== undefined ? parsed.data.priceCeilingNGN : existing.priceCeilingNGN,
+  };
+  const guideError = priceGuideError(guide);
+  if (guideError) {
+    return NextResponse.json({ error: guideError }, { status: 400 });
   }
 
   const nextCategory = parsed.data.category;
@@ -49,6 +64,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       ...(parsed.data.isPublished !== undefined ? { isPublished: parsed.data.isPublished } : {}),
       ...(sortOrder !== undefined ? { sortOrder } : {}),
       ...(moving && nextCategory ? { category: nextCategory } : {}),
+      priceFloorNGN: guide.priceFloorNGN,
+      priceCeilingNGN: guide.priceCeilingNGN,
     },
   });
 

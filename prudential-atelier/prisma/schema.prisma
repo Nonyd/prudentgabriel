@@ -1387,6 +1387,11 @@ model GalleryImage {
   sortOrder   Int             @default(0)
   isPublished Boolean         @default(true)
   uploadedBy  String?
+  /// BA4: display-only price guide beside the photograph ("begin around ₦…").
+  /// Never a checkout price: nothing chargeable reads GalleryImage. Ceiling is
+  /// optional (a range); the floor alone is the recommended form.
+  priceFloorNGN   Int?
+  priceCeilingNGN Int?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 

@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import type { GalleryImage } from "@prisma/client";
+import { PriceGuideLine } from "@/components/gallery/PriceGuideLine";
 import { optimizeImageUrl } from "@/lib/utils";
 
 function splitLines(text: string) {
@@ -93,6 +94,7 @@ export function BridalGalleryClient({
                     {splitLines(img.caption)}
                   </div>
                 ) : null}
+                <PriceGuideLine guide={img} className="px-1 pb-2" />
               </div>
             ))}
           </div>

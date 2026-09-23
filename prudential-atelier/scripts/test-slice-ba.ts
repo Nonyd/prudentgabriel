@@ -15,6 +15,9 @@
  * Slice BA3 — four fee settings; the fee and (USD/GBP) the exact foreign amount
  * are frozen on the booking; a price change never alters a booking already
  * made; the figure shown is the figure charged and bound (Slice A).
+ *
+ * Slice BA4 — a display-only price guide on gallery photographs: the wording,
+ * the admin validation (400), and that no chargeable code reads it.
  */
 import "./preload-test-env";
 import { readFileSync } from "node:fs";
@@ -41,6 +44,8 @@ import {
   quoteConsultationFees,
 } from "../src/lib/consultation-fees";
 import { expectedPaystackConsultationBind } from "../src/lib/payments/paystack-amount";
+import { priceGuideError, priceGuideText } from "../src/lib/price-guide";
+import { readdirSync, statSync } from "node:fs";
 import { addDaysToWatYmd, getWatYmd } from "../src/lib/consultation";
 import { ATELIER_BOOKINGS_SETTING_KEY, ATELIER_CLOSED_MESSAGE } from "../src/lib/atelier-bookings";
 import { clearSettingCacheKey } from "../src/lib/settings";
@@ -86,6 +91,44 @@ function unit() {
   for (const [key, fee] of Object.entries(CONSULTATION_FEE_KEYS).map(([k, v]) => [v, DEFAULT_CONSULTATION_FEES_NGN[k as keyof typeof DEFAULT_CONSULTATION_FEES_NGN]] as const)) {
     assert(migration.includes(`'${key}', '${fee}'`), `the migration seeds ${key} = ${fee}`);
   }
+
+  // BA4
+  assert(
+    priceGuideText({ priceFloorNGN: 3_000_000, priceCeilingNGN: null }) === "Pieces like this begin around ₦3,000,000.",
+    "a floor reads as a guide, not an offer",
+  );
+  assert(
+    priceGuideText({ priceFloorNGN: 3_000_000, priceCeilingNGN: 8_000_000 }) ===
+      "Pieces like this range from about ₦3,000,000 to ₦8,000,000.",
+    "a range is supported",
+  );
+  assert(priceGuideText({ priceFloorNGN: null, priceCeilingNGN: 8_000_000 }) === null, "no floor, no guide");
+  assert(priceGuideError({ priceFloorNGN: 5, priceCeilingNGN: 4 }) !== null, "a ceiling below the floor is refused");
+  assert(priceGuideError({ priceFloorNGN: null, priceCeilingNGN: 4 }) !== null, "a ceiling needs a floor");
+  assert(priceGuideError({ priceFloorNGN: 3, priceCeilingNGN: null }) === null, "a floor alone is fine");
+  const schemaText = readFileSync(resolve(__dirname, "../prisma/schema.prisma"), "utf8");
+  const productModel = schemaText.slice(schemaText.indexOf("model Product {"), schemaText.indexOf("}", schemaText.indexOf("model Product {")));
+  assert(!/priceFloor|priceCeiling/.test(productModel), "the guide is not on Product, so no product price path can read it");
+  // Every reader of the guide is display or admin. A chargeable path reading it fails here.
+  const allowed = new Set([
+    "src/lib/price-guide.ts",
+    "src/components/gallery/PriceGuideLine.tsx",
+    "src/components/admin/GalleryManager.tsx",
+    "src/app/api/admin/gallery/[id]/route.ts",
+    "src/app/(storefront)/atelier/page.tsx",
+    "src/components/atelier/AtelierLandingPage.tsx",
+  ]);
+  const root = resolve(__dirname, "..");
+  const walk = (dir: string): string[] =>
+    readdirSync(dir).flatMap((name) => {
+      const full = resolve(dir, name);
+      return statSync(full).isDirectory() ? walk(full) : /\.(ts|tsx)$/.test(name) ? [full] : [];
+    });
+  const readers = walk(resolve(root, "src"))
+    .filter((f) => /priceFloorNGN|priceCeilingNGN|price-guide/.test(readFileSync(f, "utf8")))
+    .map((f) => f.slice(root.length + 1).replace(/\\/g, "/"));
+  const stray = readers.filter((f) => !allowed.has(f));
+  assert(stray.length === 0, `only display and admin code reads the price guide (${stray.join(", ")})`);
   console.log("ok unit");
 }
 
@@ -425,6 +468,39 @@ async function live(base: string) {
       }
     }
 
+    // BA4: the admin sets a guide; nonsense is a 400; the pages still render.
+    const cms = await prisma.user.create({
+      data: { email: `ba-cms-${stamp}@example.test`, name: "BA CMS", role: Role.ADMIN, password: hash },
+    });
+    const photo = await prisma.galleryImage.create({
+      data: { url: "/media/public/fixture/ba4.jpg", publicId: `ba4-${stamp}`, category: "ATELIER", isPublished: false },
+    });
+    try {
+      const cmsJar = await signIn(base, cms.email!, "Correct-Horse-9", ip);
+      const put = (body: unknown) => fetch(`${base}/api/admin/gallery/${photo.id}`, patch(body, cmsJar));
+      const upside = await put({ priceFloorNGN: 8_000_000, priceCeilingNGN: 3_000_000 });
+      assert(upside.status === 400, `a ceiling below the floor is a 400 (${upside.status})`);
+      const ceilingOnly = await put({ priceCeilingNGN: 3_000_000 });
+      assert(ceilingOnly.status === 400, `a ceiling without a floor is a 400 (${ceilingOnly.status})`);
+      const floor = await put({ priceFloorNGN: 3_000_000 });
+      assert(floor.status === 200, `a floor saves (${floor.status})`);
+      const kept = await put({ caption: "Fixture" });
+      assert(kept.status === 200, "an unrelated edit keeps the guide");
+      const row = await prisma.galleryImage.findUniqueOrThrow({ where: { id: photo.id } });
+      assert(row.priceFloorNGN === 3_000_000 && row.priceCeilingNGN === null, "stored as whole naira, floor only");
+      const custPut = await fetch(`${base}/api/admin/gallery/${photo.id}`, patch({ priceFloorNGN: 1 }, custJar));
+      assert(custPut.status === 403, `a customer cannot set it (${custPut.status})`);
+      for (const path of ["/atelier", "/bridal", "/consultation?wearer=BRIDE&outfit=Wedding%20gown&date=2027-01-16"]) {
+        const r = await fetch(`${base}${path}`, { headers: { "x-forwarded-for": ip } });
+        assert(r.status === 200, `${path} renders (${r.status})`);
+      }
+    } finally {
+      await prisma.galleryImage.delete({ where: { id: photo.id } });
+      await prisma.errorLog.deleteMany({ where: { userId: cms.id } });
+      await prisma.activityLog.deleteMany({ where: { userId: cms.id } }).catch(() => {});
+      await prisma.user.delete({ where: { id: cms.id } });
+    }
+
     // The one-day clock: an enquiry waiting over a day is raised once.
     const waitingRes = await fetch(`${base}/api/consultations/enquiries`, json(enquiry(`ba-wait-${stamp}@example.test`, later)));
     const waiting = (await waitingRes.json()) as { enquiryNumber: string };
@@ -441,7 +517,7 @@ async function live(base: string) {
       where: { entityId: waitingRow.id, title: "Enquiry waiting over a day" },
     });
     assert(raised.length === 1 && raised[0].type === "NEW_CONSULTATION", `raised once, as NEW_CONSULTATION (${raised.length})`);
-    console.log("ok live: BA2 invitation walk and BA3 fees — frozen on the booking, USD shown = locked = charged = bound");
+    console.log("ok live: BA2 invitation walk, BA3 fees (frozen; USD shown = locked = charged = bound), BA4 price guide");
   } finally {
     await prisma.consultationEnquiry.deleteMany({ where: { id: { in: enquiryIds } } });
     await prisma.adminNotification.deleteMany({ where: { entityId: { in: [...enquiryIds, ...bookingIds] } } });

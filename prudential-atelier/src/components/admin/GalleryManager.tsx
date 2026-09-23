@@ -5,6 +5,7 @@ import Image from "next/image";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import type { GalleryCategory, GalleryImage } from "@prisma/client";
+import { priceGuideText } from "@/lib/price-guide";
 import toast from "react-hot-toast";
 import {
   ChevronDown,
@@ -95,6 +96,12 @@ function applyOrder(items: GalleryImage[], orderedIds: string[]): GalleryImage[]
   return orderedIds.map((id) => byId.get(id)).filter((item): item is GalleryImage => Boolean(item));
 }
 
+/** "3,000,000" → 3000000 (digits only, whole naira); blank → null. */
+function nairaOrNull(raw: string): number | null {
+  const digits = raw.replace(/[^0-9]/g, "");
+  return digits ? Number(digits) : null;
+}
+
 function mediaCaption(item: GalleryImage): string {
   const caption = item.caption?.trim();
   if (caption) return caption;
@@ -158,6 +165,9 @@ export function GalleryManager() {
   const [editing, setEditing] = useState<GalleryImage | null>(null);
   const [editAlt, setEditAlt] = useState("");
   const [editCaption, setEditCaption] = useState("");
+  // BA4: display-only price guide (whole naira; blank = none).
+  const [editFloor, setEditFloor] = useState("");
+  const [editCeiling, setEditCeiling] = useState("");
   const [editPublished, setEditPublished] = useState(true);
   const [editCategory, setEditCategory] = useState<GalleryCategory>("ATELIER");
 
@@ -298,6 +308,8 @@ export function GalleryManager() {
     setEditing(img);
     setEditAlt(img.alt ?? "");
     setEditCaption(img.caption ?? "");
+    setEditFloor(img.priceFloorNGN ? String(img.priceFloorNGN) : "");
+    setEditCeiling(img.priceCeilingNGN ? String(img.priceCeilingNGN) : "");
     setEditPublished(img.isPublished);
     setEditCategory(img.category);
   };
@@ -310,12 +322,16 @@ export function GalleryManager() {
       body: JSON.stringify({
         alt: editAlt || null,
         caption: editCaption || null,
+        priceFloorNGN: nairaOrNull(editFloor),
+        priceCeilingNGN: nairaOrNull(editCeiling),
         isPublished: editPublished,
         category: editCategory,
       }),
     });
-    if (!res.ok) toast.error("Save failed");
-    else {
+    if (!res.ok) {
+      const j = (await res.json().catch(() => ({}))) as { error?: unknown };
+      toast.error(typeof j.error === "string" ? j.error : "Save failed");
+    } else {
       toast.success("Saved");
       setEditing(null);
       void load();
@@ -878,6 +894,37 @@ export function GalleryManager() {
               value={editCaption}
               onChange={(e) => setEditCaption(e.target.value)}
             />
+            <p className="mt-6 font-body text-[11px] uppercase text-[#6B6B68]">Price guide (display only)</p>
+            <p className="mt-1 font-body text-xs text-[#6B6B68]">
+              Shown beside the photograph as a reference, never charged. A floor alone is recommended; add a ceiling only
+              if you want a range.
+            </p>
+            <div className="mt-2 grid grid-cols-2 gap-3">
+              <label className="font-body text-[11px] uppercase text-[#6B6B68]">
+                From (₦)
+                <input
+                  inputMode="numeric"
+                  className="mt-1 w-full border border-sand px-3 py-2 text-sm"
+                  value={editFloor}
+                  onChange={(e) => setEditFloor(e.target.value)}
+                  placeholder="3,000,000"
+                />
+              </label>
+              <label className="font-body text-[11px] uppercase text-[#6B6B68]">
+                Up to (₦, optional)
+                <input
+                  inputMode="numeric"
+                  className="mt-1 w-full border border-sand px-3 py-2 text-sm"
+                  value={editCeiling}
+                  onChange={(e) => setEditCeiling(e.target.value)}
+                />
+              </label>
+            </div>
+            {priceGuideText({ priceFloorNGN: nairaOrNull(editFloor), priceCeilingNGN: nairaOrNull(editCeiling) }) ? (
+              <p className="mt-2 font-body text-xs italic text-[#6B6B68]">
+                Shows as: {priceGuideText({ priceFloorNGN: nairaOrNull(editFloor), priceCeilingNGN: nairaOrNull(editCeiling) })}
+              </p>
+            ) : null}
             <label className="mt-4 flex items-center gap-2 font-body text-sm">
               <input type="checkbox" checked={editPublished} onChange={(e) => setEditPublished(e.target.checked)} />
               Published on the public page

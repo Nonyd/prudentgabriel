@@ -3,12 +3,16 @@ import Link from "next/link";
 import { STAGE_LABELS, STAGE_ORDER } from "@/lib/bespoke-stages";
 import { optimizeImageUrl } from "@/lib/utils";
 import { cmsGet } from "@/lib/cms-helpers";
+import { PriceGuideLine } from "@/components/gallery/PriceGuideLine";
+import { AtelierScreening } from "@/components/atelier/AtelierScreening";
 
 type GalleryImage = {
   id: string;
   url: string;
   alt: string | null;
   caption: string | null;
+  priceFloorNGN: number | null;
+  priceCeilingNGN: number | null;
 };
 
 type ReviewItem = {
@@ -130,15 +134,20 @@ export function AtelierLandingPage({
             </h2>
             <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {galleryImages.slice(0, 8).map((img) => (
-                <div key={img.id} className="relative aspect-[3/4] overflow-hidden bg-sand/20">
-                  <Image
-                    src={optimizeImageUrl(img.url, 600)}
-                    alt={img.alt || img.caption || "Atelier work"}
-                    fill
-                    className="object-cover object-top"
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                  />
-                </div>
+                <figure key={img.id} className="m-0">
+                  <div className="relative aspect-[3/4] overflow-hidden bg-sand/20">
+                    <Image
+                      src={optimizeImageUrl(img.url, 600)}
+                      alt={img.alt || img.caption || "Atelier work"}
+                      fill
+                      className="object-cover object-top"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                    />
+                  </div>
+                  <figcaption>
+                    <PriceGuideLine guide={img} className="mt-2" />
+                  </figcaption>
+                </figure>
               ))}
             </div>
           </div>
@@ -177,25 +186,8 @@ export function AtelierLandingPage({
         </section>
       ) : null}
 
-      <section className="px-6 py-16 text-center lg:px-10">
-        <div className="glass-2 glass-panel mx-auto max-w-xl px-8 py-10">
-        <p
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "28px",
-            color: "var(--choc)",
-          }}
-        >
-          {ctaHeadline}
-        </p>
-        <Link
-          href="/consultation"
-          className="btn-ghost-light mt-6 inline-block"
-        >
-          {ctaButton}
-        </Link>
-        </div>
-      </section>
+      {/* BA4: the screening questions come first; the answers carry into the enquiry form. */}
+      <AtelierScreening headline={ctaHeadline} buttonLabel={ctaButton} />
     </div>
   );
 }

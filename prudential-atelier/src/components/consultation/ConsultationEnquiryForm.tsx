@@ -17,14 +17,23 @@ const MAX_IMAGES = 5;
  * BA2: the atelier application. Nothing is booked or paid here; the house
  * reads it, and an approved enquiry receives a booking link by email.
  */
-export function ConsultationEnquiryForm({ cms = {} }: { cms?: Record<string, string> }) {
+export type EnquiryPrefill = { wearer?: string; outfitType?: string; eventDate?: string };
+
+export function ConsultationEnquiryForm({
+  cms = {},
+  initial = {},
+}: {
+  cms?: Record<string, string>;
+  /** BA4: answers from the atelier page's screening questions. */
+  initial?: EnquiryPrefill;
+}) {
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
-  const [eventDate, setEventDate] = useState("");
+  const [eventDate, setEventDate] = useState(initial.eventDate ?? "");
   const [eventType, setEventType] = useState("");
-  const [wearer, setWearer] = useState("");
-  const [outfitType, setOutfitType] = useState("");
+  const [wearer, setWearer] = useState(initial.wearer ?? "");
+  const [outfitType, setOutfitType] = useState(initial.outfitType ?? "");
   const [notes, setNotes] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);

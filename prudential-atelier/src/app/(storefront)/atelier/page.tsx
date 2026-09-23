@@ -30,7 +30,7 @@ export default async function AtelierPage() {
       where: { isPublished: true, category: GalleryCategory.ATELIER },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
       take: 8,
-      select: { id: true, url: true, alt: true, caption: true },
+      select: { id: true, url: true, alt: true, caption: true, priceFloorNGN: true, priceCeilingNGN: true },
     }),
     prisma.review.findMany({
       where: { isApproved: true },
