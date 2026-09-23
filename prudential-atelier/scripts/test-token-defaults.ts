@@ -1,7 +1,8 @@
 /**
- * Slice AZ3 follow-up: a capability-token column can never default to a
- * guessable value. A row created without a token gets a random SHA-256-shaped
- * value that opens no link.
+ * Slice AZ3 follow-up, made a rule by the token sweep: every column that opens
+ * something from a link is on src/lib/capability-registry.ts, stores only a
+ * hash, and can never default to a guessable value. A row created without a
+ * token gets a random SHA-256-shaped value that opens no link.
  *
  *   pnpm test:token-defaults     # schema check always; DB check when reachable
  */
@@ -14,21 +15,63 @@ import { findOrderByTrackingToken } from "../src/lib/capability-token-lookup";
 import { generateCapabilityToken } from "../src/lib/capability-token";
 import { generateBespokeOrderRef } from "../src/lib/bespoke-stages";
 import { looksLikeProductionDatabase, looksLikeStagingDatabase } from "./fixture-guard";
+import { CAPABILITY_COLUMNS, NOT_CAPABILITY_COLUMNS } from "../src/lib/capability-registry";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
 }
 
-function schema() {
-  const s = readFileSync(path.join(__dirname, "..", "prisma/schema.prisma"), "utf8");
-  const cols = s.match(/^\s*(publicToken|trackingToken|receiptConfirmToken|approvalToken)\s+String[^\n]*$/gm) ?? [];
-  // BA2 added ConsultationEnquiry.publicToken (the booking link); BA5 ChatConversation.publicToken.
-  assert(cols.length === 7, `seven token columns found (${cols.length})`);
-  for (const c of cols) {
-    assert(!c.includes("cuid()"), `no cuid default: ${c.trim()}`);
-    assert(c.includes("gen_random_uuid()"), `random database default: ${c.trim()}`);
+/** model -> field -> declaration line */
+function parseSchema(): Map<string, Map<string, string>> {
+  const s = readFileSync(path.join(__dirname, "..", "prisma/schema.prisma"), "utf8").replace(/\r\n/g, "\n");
+  const models = new Map<string, Map<string, string>>();
+  for (const m of Array.from(s.matchAll(/^model (\w+) \{\n([\s\S]*?)^\}/gm))) {
+    const fields = new Map<string, string>();
+    for (const line of m[2].split("\n")) {
+      const t = line.trim();
+      const f = /^(\w+)\s+\S+/.exec(t);
+      if (f && !t.startsWith("//") && !t.startsWith("@@")) fields.set(f[1], t);
+    }
+    models.set(m[1], fields);
   }
-  console.log("ok schema: no token column defaults to cuid()");
+  return models;
+}
+
+function schema() {
+  const models = parseSchema();
+  const listed = new Set(CAPABILITY_COLUMNS.map((c) => `${c.model}.${c.column}`));
+
+  // The rule: a token-named String column is on the registry, or says why not.
+  for (const [model, fields] of Array.from(models)) {
+    for (const [name, line] of Array.from(fields)) {
+      if (!/token/i.test(name) || !/^\w+\s+String/.test(line) || /(Enc|ExpiresAt)$/.test(name)) continue;
+      const key = `${model}.${name}`;
+      assert(listed.has(key) || key in NOT_CAPABILITY_COLUMNS, `${key} is on capability-registry.ts (or NOT_CAPABILITY_COLUMNS says why not)`);
+    }
+  }
+
+  for (const c of CAPABILITY_COLUMNS) {
+    const fields = models.get(c.model);
+    const line = fields?.get(c.column);
+    assert(fields && line, `${c.model}.${c.column} exists`);
+    assert(!/cuid\(\)|nanoid|autoincrement|[^_]uuid\(\)/.test(line), `no guessable default: ${line}`);
+    if (line.includes("@default")) assert(line.includes("gen_random_uuid()") && line.includes("sha256"), `random hash default: ${line}`);
+    if (c.enc) assert(fields.has(c.enc), `${c.model}.${c.enc} exists`);
+    if (c.expires) assert(fields.has(c.expires), `${c.model}.${c.expires} exists`);
+    else assert(c.noExpiryReason, `${c.model}.${c.column} expires, or says why it cannot`);
+  }
+  console.log(`ok schema: ${CAPABILITY_COLUMNS.length} capability columns on the registry, none with a guessable default; every other token-named column explained`);
+}
+
+/** Nothing opens from a plaintext value: every stored token is a SHA-256. */
+async function atRest() {
+  for (const c of CAPABILITY_COLUMNS) {
+    const rows = await prisma.$queryRawUnsafe<{ n: bigint }[]>(
+      `SELECT count(*) AS n FROM "${c.model}" WHERE "${c.column}" !~ '^[0-9a-f]{64}$'`,
+    );
+    assert(rows[0].n === BigInt(0), `${c.model}.${c.column}: ${rows[0].n} rows still plaintext (run scripts/upgrade-capability-tokens.ts)`);
+  }
+  console.log("ok at rest: every capability column holds only hashes");
 }
 
 async function database() {
@@ -39,6 +82,7 @@ async function database() {
     return;
   }
   assert(!looksLikeProductionDatabase() && !looksLikeStagingDatabase(), "never against production or staging");
+  await atRest();
   const email = `az3b-${Date.now()}@example.test`;
   const user = await prisma.user.create({ data: { email, name: "AZ3b", role: Role.CUSTOMER, password: "x" } });
   const profile = await prisma.clientProfile.create({ data: { userId: user.id } });

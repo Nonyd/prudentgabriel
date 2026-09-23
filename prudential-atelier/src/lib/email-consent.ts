@@ -2,6 +2,7 @@ import { EmailStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { UNSUBSCRIBE_URL_PLACEHOLDER } from "@/lib/email-priority";
+import { ensureUnsubscribeRaw, findEmailPreferenceByUnsubscribeToken } from "@/lib/capability-token-lookup";
 
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -35,10 +36,12 @@ export function listUnsubscribeHeaders(url: string): Record<string, string> {
   };
 }
 
+/** The raw token is issued from the preference row; the row itself stores only its hash. */
 export async function applyMarketingUnsubscribe(
   html: string,
-  token: string,
+  pref: { id: string; unsubscribeToken: string; unsubscribeTokenEnc: string | null },
 ): Promise<{ html: string; headers: Record<string, string>; url: string }> {
+  const token = await ensureUnsubscribeRaw(pref);
   const pageUrl = unsubscribeUrlForToken(token);
   const apiUrl = listUnsubscribeApiUrl(token);
   return {
@@ -49,7 +52,7 @@ export async function applyMarketingUnsubscribe(
 }
 
 export async function unsubscribeByToken(token: string): Promise<{ email: string; already: boolean } | null> {
-  const pref = await prisma.emailPreference.findUnique({ where: { unsubscribeToken: token } });
+  const pref = await findEmailPreferenceByUnsubscribeToken(token);
   if (!pref) return null;
   const now = new Date();
   const already = Boolean(pref.unsubscribedAt);

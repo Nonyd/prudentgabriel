@@ -164,7 +164,7 @@ const CLIENT_TEMPLATES: EmailTemplateMeta[] = [
     defaults: {
       subject: `Welcome to ${CUSTOMER_HOUSE_NAME}, {{firstName}}`,
       heading: "Welcome to the house",
-      body_1: "Dear {{firstName}},\n\nYour account is for tracking this commission, viewing invoices, and the atelier portal. Design approval and receipt confirmation each arrive as their own link in a separate email — you do not need this password for those.",
+      body_1: "Dear {{firstName}},\n\nYour account is for tracking this commission, viewing invoices, and the atelier portal. Design approval and receipt confirmation each arrive as their own link in a separate email — you do not need an account for those.",
       body_2: "We are honoured to dress your story.",
       cta_label: "Sign in to your account",
       cta_link: customerLoginUrl(),

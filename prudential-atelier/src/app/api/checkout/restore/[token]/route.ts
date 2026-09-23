@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 import { parseCartSnapshot } from "@/lib/checkout-session";
 import { publishedProductIds } from "@/lib/product-visibility";
+import { findCheckoutSessionByRestoreToken } from "@/lib/capability-token-lookup";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<{ token: string }> },
 ) {
+  const limited = await rateLimitOr429(req, "restore-token", 30, 15 * 60 * 1000);
+  if (limited) return limited;
   const { token } = await ctx.params;
-  const session = await prisma.checkoutSession.findUnique({
-    where: { restoreToken: decodeURIComponent(token) },
-  });
-  if (!session || session.recoveredAt) {
+  const session = await findCheckoutSessionByRestoreToken(decodeURIComponent(token));
+  if (!session) {
     return NextResponse.json({ error: "This restore link is no longer valid." }, { status: 404 });
   }
   const snapshot = parseCartSnapshot(session.cartSnapshot);

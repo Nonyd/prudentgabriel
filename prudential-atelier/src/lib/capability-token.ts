@@ -6,7 +6,8 @@ export const CAPABILITY_TOKEN_BYTES = 32;
 
 /**
  * TTLs for newly issued capability links (AZ3).
- * Legacy cuid links in customer inboxes have null *ExpiresAt and stay valid.
+ * Links issued before AZ3 have null *ExpiresAt and stay valid; since the token
+ * sweep their stored value is a hash like every other (scripts/upgrade-capability-tokens.ts).
  */
 export const CAPABILITY_TTL_MS = {
   /** Stage design approval — a fortnight. */
@@ -26,6 +27,15 @@ export const CAPABILITY_TTL_MS = {
    * The house can re-send a fresh one.
    */
   consultationBooking: 14 * 24 * 60 * 60 * 1000,
+  /** Staff invitation: three days, as the email has always said. */
+  teamInvite: 72 * 60 * 60 * 1000,
+  /** Abandoned-checkout restore link: the reminders run over days, not months. */
+  checkoutRestore: 30 * 24 * 60 * 60 * 1000,
+  /**
+   * Set-a-password link in a welcome or staff invitation email (replaces the
+   * temporary password those emails used to carry). Forgot-password still works after.
+   */
+  welcomePassword: 7 * 24 * 60 * 60 * 1000,
 } as const;
 
 export type IssuedCapabilityToken = {
@@ -46,7 +56,10 @@ export function hashCapabilityToken(raw: string): string {
   return createHash("sha256").update(raw, "utf8").digest("hex");
 }
 
-/** Prisma cuid() strings are ~25 chars starting with `c`. New tokens are longer base64url. */
+/**
+ * Prisma cuid() strings are ~25 chars starting with `c`. New tokens are longer base64url.
+ * Only used to refuse cuid-shaped input early; nothing stores a cuid token any more.
+ */
 export function isLegacyCuidToken(raw: string): boolean {
   const t = raw.trim();
   return /^c[a-z0-9]{20,32}$/i.test(t);
@@ -60,14 +73,13 @@ export function capabilityHashesEqual(storedHash: string, candidateHash: string)
 }
 
 /**
- * Resolve a raw URL token to the DB lookup key.
- * - New tokens → SHA-256 hash
- * - Legacy cuid → plaintext (grandfathered inbox links)
+ * Resolve a raw URL token to the DB lookup key: always its SHA-256.
+ * Pre-AZ3 cuid links still work because the upgrade stored their hash too;
+ * no column compares a URL value to plaintext any more.
  */
 export function capabilityLookupKey(raw: string): string {
   const t = raw.trim();
   if (!t) return t;
-  if (isLegacyCuidToken(t)) return t;
   return hashCapabilityToken(t);
 }
 
@@ -79,12 +91,11 @@ export function assertCapabilityNotExpired(
   return expiresAt.getTime() < now.getTime() ? "expired" : "ok";
 }
 
-/** Reveal the raw URL token for email / admin copy. */
+/** Reveal the raw URL token for email / admin copy. Null means issue a fresh one. */
 export function revealCapabilityToken(row: {
   token: string;
   enc: string | null | undefined;
 }): string | null {
-  if (isLegacyCuidToken(row.token)) return row.token;
   if (!row.enc?.trim()) return null;
   try {
     return decrypt(row.enc);

@@ -7,7 +7,8 @@ import { EMAIL_CHOC, EMAIL_INK, EMAIL_MUTED, FONT_BODY, FONT_UI } from "./compon
 type Props = {
   firstName: string;
   email: string;
-  tempPassword: string;
+  /** Set-your-password link (a PasswordResetToken). The email never carries a password. */
+  setPasswordUrl: string;
   sourceLabel: string;
   trackUrl: string;
   loginUrl: string;
@@ -20,7 +21,7 @@ export function subjectWelcomeCredentials(firstName: string): string {
 export default function WelcomeCredentialsEmail({
   firstName,
   email,
-  tempPassword,
+  setPasswordUrl,
   sourceLabel,
   trackUrl,
   loginUrl,
@@ -34,7 +35,7 @@ export default function WelcomeCredentialsEmail({
         Your account has been created so you can follow your {sourceLabel} with us — track the
         commission, open invoices, and use the atelier portal. Paying an invoice, a consultation
         or a shop order without signing up first is what opens this account. Design approval and receipt
-        confirmation each arrive as their own link in a separate email; you do not need this password for those.
+        confirmation each arrive as their own link in a separate email; you do not need an account for those.
       </Text>
       <table
         width="100%"
@@ -63,13 +64,14 @@ export default function WelcomeCredentialsEmail({
                 <strong>Email:</strong> {email}
               </Text>
               <Text style={{ margin: 0, fontFamily: FONT_BODY, fontSize: 14, color: EMAIL_INK }}>
-                <strong>Temporary password:</strong> {tempPassword}
+                Choose your password with the button below. The link works once, for seven days. After
+                that, use Forgot password on the <a href={loginUrl}>sign-in page</a>.
               </Text>
             </td>
           </tr>
         </tbody>
       </table>
-      <EmailButton href={loginUrl}>Log in</EmailButton>
+      <EmailButton href={setPasswordUrl}>Set your password</EmailButton>
       <Text
         style={{
           margin: "24px 0 0",

@@ -3,7 +3,7 @@
  *  LEGAL_COPY_REVISION is the newest of those page stamps. */
 
 
-export const LEGAL_COPY_REVISION = "ba-2";
+export const LEGAL_COPY_REVISION = "ba-3";
 export const DEFAULT_LEGAL_UPDATED = "23 September 2026";
 
 export function slugifyHeading(text: string): string {
@@ -217,7 +217,7 @@ We do not sell your information. These companies receive what they need to do th
 
 **Paystack, Flutterwave, Stripe and Monnify.** Email, amount, currency, and a payment reference, so they can take the card or transfer. Saved-card tokens stay with them. Paystack and Monnify are Nigerian companies. Stripe is American. Flutterwave operates from Nigeria and abroad. Card data they process leaves our servers and sits on theirs.
 
-**Resend, Brevo, or the SMTP host we have configured.** The To address, subject and the email body (which can include your name, order number, tracking link, and, for a welcome mail, a temporary password). Resend is American. Brevo is European. Mail about your order has to leave Nigeria to be delivered.
+**Resend, Brevo, or the SMTP host we have configured.** The To address, subject and the email body (which can include your name, order number, tracking link, and, for a welcome mail, a link to choose your password). We never email a password. Resend is American. Brevo is European. Mail about your order has to leave Nigeria to be delivered.
 
 **DHL and GIG.** For an automatic rate we send destination city, country, postcode if we have it, package weight and size, and a declared value. We do not send your name on that quote call. When the house actually books the parcel, your name, phone and address go to the carrier so they can deliver. DHL's rate API is outside Nigeria. GIG is Nigerian.
 
@@ -255,7 +255,7 @@ Server error logs and activity logs (including impersonation) are kept until an 
 
 ## Guest accounts
 
-You can check out as a guest. When payment succeeds on a shop order, a consultation, or a commission (including paying an invoice that belongs to a commission), the house opens an account for that email if one does not already exist. You receive a welcome email with a temporary password. That is the same account you would have created yourself. You should change the password on first login.
+You can check out as a guest. When payment succeeds on a shop order, a consultation, or a commission (including paying an invoice that belongs to a commission), the house opens an account for that email if one does not already exist. You receive a welcome email with a link to choose your password; the link works once, for seven days, and after that Forgot password does the same. That is the same account you would have created yourself.
 
 If you already have an account, the order is attached to it. Older guest payments stay filed under the email they were made with. They still show in your payment history.
 
@@ -578,7 +578,7 @@ export const LEGAL_SEED_ENTRIES: {
   md: string;
   revision: string;
 }[] = [
-  { page: "privacy", key: "legal_privacy_policy", label: "Privacy Policy", updatedKey: "legal_privacy_updated", md: PRIVACY_POLICY_MD, revision: "ba-2" },
+  { page: "privacy", key: "legal_privacy_policy", label: "Privacy Policy", updatedKey: "legal_privacy_updated", md: PRIVACY_POLICY_MD, revision: "ba-3" },
   { page: "terms", key: "legal_terms", label: "Terms & Conditions", updatedKey: "legal_terms_updated", md: TERMS_MD, revision: "ar-5" },
   { page: "cookie", key: "legal_cookie_policy", label: "Cookie Policy", updatedKey: "legal_cookie_updated", md: COOKIE_MD, revision: "ba-2" },
   { page: "returns", key: "legal_returns_policy", label: "Returns Policy", updatedKey: "legal_returns_updated", md: RETURNS_MD, revision: "ar-5" },

@@ -372,7 +372,7 @@ that snapshot is a manual process, not an automated undo.
 | 2 | Next image optimiser RCE (AZ1) | **Mitigated, not fixed** — AVIF off on 14.2.35; staging never serves AVIF. Fixed only by Next ≥15.5.24. | `bfd72eb`; `next.config.mjs:16-21`; `docs/VERIFICATION_2026-09.md` §1 |
 | 3 | Auth.js advisories (AZ2) | **Done** — next-auth beta.32, @auth/core 0.41.3, fail-closed middleware. Live sign-in pass still owed (Nony). | `bfd72eb`; `src/middleware.ts:39` |
 | 4 | Unauthenticated careers / consultation uploads (AZ5) | **Done** — per-IP limits, daily cap per route, nightly sweep of unattached uploads. | `1edb26c`; `src/lib/upload-limits.ts`; cron `orphan-uploads` |
-| 5 | cuid tokens, no TTL (AZ3) | **Done** — 256-bit random, SHA-256 stored, per-link expiry, legacy links grandfathered; token columns no longer default to cuid. | `9951541`, `a011fca`; `test:token-defaults` |
+| 5 | cuid tokens, no TTL (AZ3) | **Done** — 256-bit random, SHA-256 stored, per-link expiry, legacy links grandfathered; token columns no longer default to cuid. Extended to every link secret by the token sweep (below). | `9951541`, `a011fca`; `test:token-defaults`, `test:token-sweep` |
 | 6 | Admin SSRF via image re-host (AZ7) | **Done** — admin re-host removed (unused since Slice X); CLI migration uses a guarded fetch; Cloudinary matched by exact host. | `f8fee3a`; `src/lib/http/safe-fetch.ts`; `test:ssrf-guard` |
 | 7 | Backups on the same host (AZ10) | **Open — needs Nony**: rclone remote, `BACKUP_RCLONE_REMOTE`, schedule, one timed restore. Backup scripts are now written only by the production deploy. | `c084881`; `deploy/backup-media.sh` |
 | 8 | No global session kill (AZ9) | **Done** — SUPER_ADMIN "Sign out everyone", typed confirmation, logged. | `4faa4a6`; `test:session-revocation` |
@@ -380,6 +380,35 @@ that snapshot is a manual process, not an automated undo.
 | 10 | STAFF read measurements + receipt URLs (AZ8) | **Done** — no payments/receipts to STAFF; measurements only to the assigned tailor/pattern cutter. | `a7a7ff3`; `test:staff-data-access` |
 | 11–12, 14–18 | (unchanged) | **Open** as recorded below. | — |
 | 13 | Guest receipt ticket uploads | **Done** — 5 uploads per ticket, daily cap. | `1edb26c` |
+
+### The token sweep (2026-09-23): AZ3 becomes a rule
+
+AZ3 covered five columns and missed the rest. The sweep brought every value
+that opens something from a link or an email onto one pattern, written down in
+`src/lib/capability-registry.ts`:
+32 random bytes, only the SHA-256 stored, an AES-GCM copy only where the house
+re-sends the same link, a random-hash database default, an expiry (or a written
+reason for none), and a 404 for unknown and expired alike.
+`test:token-defaults` fails on any token-named column that is not on the
+registry, and on any plaintext value at rest.
+
+| Was | Now |
+|-----|-----|
+| `TeamInvitation.token`: `nanoid(32)` stored plaintext; the admin team list returned it | Hashed, 72 h; list and cancel use the row id; unknown / expired / accepted are 404 |
+| `CheckoutSession.restoreToken`: `cuid()`, no expiry | Hashed + encrypted copy, 30 days |
+| `EmailPreference.unsubscribeToken`: `cuid()` | Hashed + encrypted copy; no expiry (an unsubscribe link has to keep working); unknown is a 404 |
+| AZ3's grandfathered pre-AZ3 cuids, stored plaintext | Hashed in place with an encrypted copy; old links still open |
+| Welcome and Users & Roles invitation emails carried a temporary password: `WORD-NNNN` from `Math.random` (~90,000 values), kept in the outbox as plain text | The account starts with a password nobody knows; the email carries a 7-day set-your-password link (`PasswordResetToken`, hashed). Temporary passwords never replaced are retired; stored copies of those emails are redacted |
+| `/track?ref=ORD-NNNN` (9,000 references) redirected to the tracking link | `POST /api/track/lookup` needs the reference and the email on the order; limited per address and per reference |
+| `CB-YY-NNNNN` booking number returned her first name | The public consultation read carries no part of her name |
+
+`scripts/upgrade-capability-tokens.ts` does the one-time conversion; the
+container entrypoint runs it after `prisma migrate deploy` (idempotent).
+Not moved, and why: `NOT_CAPABILITY_COLUMNS` in the registry.
+Still open: `SavedPaymentMethod.paystackAuthCode` is a reusable card
+authorisation stored in plain text (it is in no URL or email, so outside this
+sweep); `/api/staff` shows a new staff member's temporary password to the admin
+once, on screen.
 
 Also found and fixed since: a push to `staging` rewrote production's live
 Traefik routes and backup scripts (`c084881`); every dynamic 404 returned 200

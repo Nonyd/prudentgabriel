@@ -241,3 +241,73 @@ export async function ensureQuoteApprovalRaw(quote: {
 export function quotationApprovalExpiresAt(quoteExpiresAt: Date | null | undefined): Date {
   return quoteExpiresAt ?? new Date(Date.now() + CAPABILITY_TTL_MS.stageApproval);
 }
+
+/** Token sweep: abandoned-checkout restore link. Unknown, expired and used answer alike. */
+export async function findCheckoutSessionByRestoreToken(raw: string) {
+  const key = capabilityLookupKey(raw);
+  if (!key) return null;
+  const session = await prisma.checkoutSession.findUnique({ where: { restoreToken: key } });
+  if (!session || session.recoveredAt) return null;
+  if (assertCapabilityNotExpired(session.restoreTokenExpiresAt) === "expired") return null;
+  return session;
+}
+
+/** The raw restore link for a reminder; every reminder for one bag carries the same link. */
+export async function ensureRestoreRaw(session: {
+  id: string;
+  restoreToken: string;
+  restoreTokenEnc?: string | null;
+  restoreTokenExpiresAt?: Date | null;
+}): Promise<string> {
+  const existing = revealCapabilityToken({ token: session.restoreToken, enc: session.restoreTokenEnc });
+  const live = assertCapabilityNotExpired(session.restoreTokenExpiresAt) === "ok";
+  if (existing && live) return existing;
+  const tok = generateCapabilityToken();
+  await prisma.checkoutSession.update({
+    where: { id: session.id },
+    data: {
+      restoreToken: tok.hash,
+      restoreTokenEnc: tok.enc,
+      restoreTokenExpiresAt: new Date(Date.now() + CAPABILITY_TTL_MS.checkoutRestore),
+    },
+  });
+  return tok.raw;
+}
+
+/** Token sweep: marketing unsubscribe link. Never expires (capability-registry.ts says why). */
+export async function findEmailPreferenceByUnsubscribeToken(raw: string) {
+  const key = capabilityLookupKey(raw);
+  if (!key) return null;
+  return prisma.emailPreference.findUnique({ where: { unsubscribeToken: key } });
+}
+
+/** The raw unsubscribe link for an address; the same one in every email. */
+export async function ensureUnsubscribeRaw(pref: {
+  id: string;
+  unsubscribeToken: string;
+  unsubscribeTokenEnc?: string | null;
+}): Promise<string> {
+  const existing = revealCapabilityToken({ token: pref.unsubscribeToken, enc: pref.unsubscribeTokenEnc });
+  if (existing) return existing;
+  const tok = generateCapabilityToken();
+  // Only replace the default the row was created with; a concurrent send may have issued one.
+  const claimed = await prisma.emailPreference.updateMany({
+    where: { id: pref.id, unsubscribeTokenEnc: null },
+    data: { unsubscribeToken: tok.hash, unsubscribeTokenEnc: tok.enc },
+  });
+  if (claimed.count === 1) return tok.raw;
+  const again = await prisma.emailPreference.findUniqueOrThrow({ where: { id: pref.id } });
+  const raw = revealCapabilityToken({ token: again.unsubscribeToken, enc: again.unsubscribeTokenEnc });
+  if (!raw) throw new Error("Could not issue an unsubscribe link");
+  return raw;
+}
+
+/** Token sweep: staff invitation. Unknown, expired and accepted answer alike. */
+export async function findPendingInvitationByToken(raw: string) {
+  const key = capabilityLookupKey(raw);
+  if (!key) return null;
+  const invitation = await prisma.teamInvitation.findUnique({ where: { token: key } });
+  if (!invitation || invitation.acceptedAt) return null;
+  if (assertCapabilityNotExpired(invitation.expiresAt) === "expired") return null;
+  return invitation;
+}

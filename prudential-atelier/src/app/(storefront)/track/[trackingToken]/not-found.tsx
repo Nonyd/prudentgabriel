@@ -5,7 +5,7 @@ import { TrackSearchForm } from "@/components/track/TrackSearchForm";
 export default function TrackTokenNotFound() {
   return (
     <div className="min-h-screen">
-      <TrackSearchForm notFound />
+      <TrackSearchForm notice="That tracking link has expired or is no longer valid. Look your order up below, or contact the atelier." />
       <div className="pb-16 text-center">
         <Link
           href="/contact"

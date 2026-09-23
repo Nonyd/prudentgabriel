@@ -136,19 +136,44 @@ async function invites(base: string, octet: number) {
     const sent = await prisma.emailMessage.count({ where: { to: invitee, template: "team-invite" } });
     assert(sent === 2, `a resend queues a second email, not a silent duplicate (${sent})`);
 
+    // Token sweep: the row holds a hash; the raw token exists only in the email.
     const row = await prisma.teamInvitation.findUniqueOrThrow({ where: { email: invitee } });
-    const weak = await fetch(`${base}/api/auth/accept-invite`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-forwarded-for": ip },
-      body: JSON.stringify({ token: row.token, firstName: "In", lastName: "Vitee", password: "lowercaseonly" }),
-    });
+    const mails = await prisma.emailMessage.findMany({ where: { to: invitee, template: "team-invite" }, orderBy: { createdAt: "asc" } });
+    const rawOf = (html: string) => decodeURIComponent(/accept-invite\?token=([^"&<\s]+)/.exec(html)?.[1] ?? "");
+    const [firstRaw, raw] = mails.map((m) => rawOf(m.html));
+    assert(/^[0-9a-f]{64}$/.test(row.token), "the invitation stores a SHA-256, not the link token");
+    assert(raw.length >= 43 && !mails.some((m) => m.html.includes(row.token)), "the email carries the raw token, never the stored value");
+    const team = await fetch(`${base}/api/admin/team`, { headers: { cookie, "x-forwarded-for": ip } });
+    assert(team.status === 200 && !(await team.text()).includes(row.token), "the team list never returns the token column");
+
+    const accept = (token: string, password = "Correct-Horse-9") =>
+      fetch(`${base}/api/auth/accept-invite`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-forwarded-for": ip },
+        body: JSON.stringify({ token, firstName: "In", lastName: "Vitee", password }),
+      });
+    const page = (token: string) => fetch(`${base}/accept-invite?token=${encodeURIComponent(token)}`, { headers: { "x-forwarded-for": ip } });
+    assert((await page(raw)).status === 200, "the emailed link opens the invitation page");
+    for (const [label, token] of [["the stored hash", row.token], ["the superseded link", firstRaw], ["an unknown token", "x".repeat(43)]] as const) {
+      assert((await page(token)).status === 404, `${label}: the page is a 404`);
+      assert((await accept(token)).status === 404, `${label}: accepting is a 404`);
+    }
+
+    const weak = await accept(raw, "lowercaseonly");
     assert(weak.status === 400, `a weak invite password is a 400 (${weak.status})`);
     const message = authApiErrorMessage(await weak.json(), "fallback");
     assert(/uppercase|number/i.test(message), `and the page gets the rule as text (${message})`);
-    console.log("ok live: invite resend sends; weak invite password is a readable 400");
+
+    await prisma.teamInvitation.update({ where: { id: row.id }, data: { expiresAt: new Date(Date.now() - 1000) } });
+    assert((await page(raw)).status === 404 && (await accept(raw)).status === 404, "an expired invitation answers like an unknown one");
+    await prisma.teamInvitation.update({ where: { id: row.id }, data: { expiresAt: new Date(Date.now() + 60_000) } });
+    assert((await accept(raw)).status === 200, "the live link creates the account");
+    assert((await accept(raw)).status === 404, "and works once");
+    console.log("ok live: invite stored hashed; unknown, superseded, expired and used links are 404s; resend sends; weak password is a readable 400");
   } finally {
     await prisma.emailMessage.deleteMany({ where: { to: invitee } });
     await prisma.teamInvitation.deleteMany({ where: { email: invitee } });
+    await prisma.user.deleteMany({ where: { email: invitee } });
     await prisma.errorLog.deleteMany({ where: { userId: boss.id } });
     await prisma.user.delete({ where: { id: boss.id } });
     await prisma.rateLimitBucket.deleteMany({ where: { key: { contains: ip } } });

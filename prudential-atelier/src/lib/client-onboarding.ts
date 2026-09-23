@@ -1,4 +1,3 @@
-import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { awardSignupPoints } from "@/lib/points";
@@ -6,7 +5,9 @@ import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
 import { sendWelcomeCredentialsEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { rtwOrderSuccessPath } from "@/lib/atelier-storefront";
-import { generateTempPassword } from "@/lib/temp-password";
+import { unusablePasswordHash } from "@/lib/temp-password";
+import { issuePasswordResetToken, passwordLinkUrl } from "@/lib/password-reset";
+import { CAPABILITY_TTL_MS } from "@/lib/capability-token";
 import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
 
 export type OnboardSource = "CONSULTATION" | "RTW_ORDER" | "BESPOKE_ORDER";
@@ -21,7 +22,7 @@ export async function autoOnboardClient(params: {
   phone?: string;
   source: OnboardSource;
   sourceId: string;
-}): Promise<{ userId: string; isNew: boolean; tempPassword?: string }> {
+}): Promise<{ userId: string; isNew: boolean }> {
   const email = params.email.trim().toLowerCase();
   const existing = await prisma.user.findUnique({
     where: { email },
@@ -60,8 +61,8 @@ export async function autoOnboardClient(params: {
     return { userId: existing.id, isNew: false };
   }
 
-  const tempPassword = generateTempPassword();
-  const hashedPassword = await bcrypt.hash(tempPassword, 12);
+  // A password nobody knows; she chooses her own from the welcome email.
+  const hashedPassword = await unusablePasswordHash();
   const thresholds = await getTierThresholds();
 
   const user = await prisma.$transaction(async (tx) => {
@@ -71,7 +72,6 @@ export async function autoOnboardClient(params: {
         email,
         phone: params.phone?.trim() || null,
         password: hashedPassword,
-        mustResetPassword: true,
       },
     });
 
@@ -146,14 +146,15 @@ export async function autoOnboardClient(params: {
     trackUrl = `${getPublicAppUrl()}/track/${encodeURIComponent(raw)}`;
   }
 
+  const { raw } = await issuePasswordResetToken(user.id, CAPABILITY_TTL_MS.welcomePassword);
   void sendWelcomeCredentialsEmail({
     to: email,
     firstName: firstNameFromName(params.name),
     email,
-    tempPassword,
+    setPasswordUrl: passwordLinkUrl(raw),
     sourceLabel,
     trackUrl,
   }).catch((e) => console.warn("[autoOnboardClient] email", e));
 
-  return { userId: user.id, isNew: true, tempPassword };
+  return { userId: user.id, isNew: true };
 }

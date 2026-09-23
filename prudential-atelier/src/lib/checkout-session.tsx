@@ -4,6 +4,7 @@ import { EMAIL_PRIORITY_MARKETING } from "@/lib/email-priority";
 import { normalizeEmail, suppressedEmailSet } from "@/lib/email-consent";
 import { prisma } from "@/lib/prisma";
 import { publishedProductIds } from "@/lib/product-visibility";
+import { ensureRestoreRaw } from "@/lib/capability-token-lookup";
 import { queueEmail } from "@/lib/email-outbox";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { primeEmailBranding } from "@/lib/email-branding";
@@ -222,10 +223,11 @@ export async function sendAbandonedCheckoutReminder(params: {
 
   await primeEmailBranding();
   const firstName = session.email.split("@")[0] || "there";
+  const restoreUrl = restoreUrlForToken(await ensureRestoreRaw(session));
   const html = await render(
     <AbandonedCheckoutEmail
       firstName={firstName}
-      restoreUrl={restoreUrlForToken(session.restoreToken)}
+      restoreUrl={restoreUrl}
       currencyNote={formatPriceLabel(snap.subtotalNGN, session.currency)}
       lines={snap.lines.map((l) => ({
         name: l.productName,

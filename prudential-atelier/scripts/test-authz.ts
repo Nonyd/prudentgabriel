@@ -534,7 +534,9 @@ async function main() {
     consultant: { name: "Prudent" },
   });
   const consultJson = JSON.stringify(consult);
-  for (const key of ["clientEmail", "clientPhone", "paymentRef", "sessionNotes"]) {
+  // Read by a guessable booking number: not even a first name (token sweep).
+  assert(!consultJson.includes("Ada"), "consultation DTO carries no part of her name");
+  for (const key of ["clientEmail", "clientPhone", "paymentRef", "sessionNotes", "clientFirstName"]) {
     assert(!Object.prototype.hasOwnProperty.call(consult, key), `consultation DTO must not have ${key}`);
     assert(!consultJson.includes("clientEmail"), "consultation DTO must not leak clientEmail");
   }

@@ -15,6 +15,7 @@ import { Role } from "@prisma/client";
 import { encode } from "next-auth/jwt";
 import { prisma } from "../src/lib/prisma";
 import { publishedProductIds } from "../src/lib/product-visibility";
+import { ensureRestoreRaw } from "../src/lib/capability-token-lookup";
 import { queryProductList } from "../src/lib/products-list-query";
 import { buildSitemap } from "../src/lib/sitemap-build";
 import { mergeCollectionProductsForCampaign } from "../src/lib/collection-products";
@@ -188,7 +189,8 @@ async function behaviour(pub: { id: string; slug: string }, unpub: { id: string;
     const shopper = await prisma.user.create({ data: { email: `vis-bag-${Date.now()}@example.test`, name: "Bag", role: Role.CUSTOMER, password: "x" } });
     try {
       const { GET } = await import("../src/app/api/checkout/restore/[token]/route");
-      const res = await GET(new Request("http://localhost/x"), { params: Promise.resolve({ token: checkout.restoreToken }) });
+      const raw = await ensureRestoreRaw(checkout);
+      const res = await GET(new Request("http://localhost/x", { headers: { "x-real-ip": "203.0.113.77" } }), { params: Promise.resolve({ token: raw }) });
       const restored = (await res.json()) as { lines: { productId: string }[]; subtotalNGN: number; withdrawn: number };
       assert(res.status === 200 && restored.lines.length === 1 && restored.lines[0].productId === pub.id, "the restore link brings back only the published piece");
       assert(restored.subtotalNGN === 1000 && restored.withdrawn === 1, "and says one was withdrawn");

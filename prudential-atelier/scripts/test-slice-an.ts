@@ -188,7 +188,8 @@ function runPure() {
   assert(mw.includes('pathname.startsWith("/approve")'), "public /approve is not account-gated");
 
   const welcome = readFileSync(resolve("src/emails/WelcomeCredentialsEmail.tsx"), "utf8");
-  assert(welcome.includes("you do not need this password for those"), "welcome email says what the account is for");
+  assert(welcome.includes("you do not need an account for those"), "welcome email says what the account is for");
+  assert(!/tempPassword|Temporary password/.test(welcome), "and carries a set-your-password link, never a password (token sweep)");
 }
 
 async function runToken() {

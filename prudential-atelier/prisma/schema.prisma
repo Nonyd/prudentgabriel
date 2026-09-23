@@ -684,7 +684,9 @@ model NewsletterSubscriber {
 model EmailPreference {
   id               String    @id @default(cuid())
   email            String    @unique
-  unsubscribeToken String    @unique @default(cuid())
+  /// SHA-256 of the raw link token (capability-registry.ts). Never plaintext.
+  unsubscribeToken String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
+  unsubscribeTokenEnc String?
   unsubscribedAt   DateTime?
   bounceAt         DateTime?
   bounceReason     String?
@@ -706,7 +708,10 @@ model CheckoutSession {
   recoveredAt    DateTime?
   orderId        String?
   remindersSent  Int       @default(0)
-  restoreToken   String    @unique @default(cuid())
+  /// SHA-256 of the raw link token (capability-registry.ts). Never plaintext.
+  restoreToken   String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
+  restoreTokenEnc String?
+  restoreTokenExpiresAt DateTime?
   lastReminderAt DateTime?
   /// First-touch campaign tags for this checkout (UTM / referrer host). No visitor id.
   attribution    Json?
@@ -1471,7 +1476,8 @@ model TeamInvitation {
   id         String   @id @default(cuid())
   email      String   @unique
   role       Role     @default(ADMIN)
-  token      String   @unique @default(cuid())
+  /// SHA-256 of the raw link token (capability-registry.ts). Never plaintext.
+  token      String   @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
   invitedBy  String
   expiresAt  DateTime
   acceptedAt DateTime?

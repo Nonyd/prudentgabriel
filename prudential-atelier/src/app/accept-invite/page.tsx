@@ -1,27 +1,19 @@
-import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import { tokenPageRateLimited } from "@/lib/page-rate-limit";
 import { AcceptInviteClient } from "@/components/auth/AcceptInviteClient";
+import { findPendingInvitationByToken } from "@/lib/capability-token-lookup";
 
 export default async function AcceptInvitePage({
   searchParams,
 }: {
   searchParams: Promise<{ token?: string }>;
 }) {
+  if (await tokenPageRateLimited("invite-token-page")) notFound();
   const params = await searchParams;
-  const token = params.token;
-  if (!token) {
-    return <div className="mx-auto max-w-xl py-16 text-center font-body text-sm text-[#6B6B68]">Invalid invitation link</div>;
-  }
+  const token = params.token?.trim();
+  // Unknown, expired and already-accepted invitations answer alike: a 404.
+  const invitation = token ? await findPendingInvitationByToken(token) : null;
+  if (!token || !invitation) notFound();
 
-  const invitation = await prisma.teamInvitation.findUnique({ where: { token } });
-  if (!invitation) {
-    return <div className="mx-auto max-w-xl py-16 text-center font-body text-sm text-[#6B6B68]">Invalid invitation link</div>;
-  }
-  if (invitation.expiresAt < new Date()) {
-    return <div className="mx-auto max-w-xl py-16 text-center font-body text-sm text-[#6B6B68]">This invitation has expired. Contact the admin.</div>;
-  }
-  if (invitation.acceptedAt) {
-    return <div className="mx-auto max-w-xl py-16 text-center font-body text-sm text-[#6B6B68]">This invitation has already been accepted.</div>;
-  }
-
-  return <AcceptInviteClient token={invitation.token} email={invitation.email} role={invitation.role} />;
+  return <AcceptInviteClient token={token} email={invitation.email} role={invitation.role} />;
 }

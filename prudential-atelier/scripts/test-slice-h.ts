@@ -19,6 +19,7 @@ import {
   unsubscribeByToken,
 } from "../src/lib/email-consent";
 import { resolveCampaignRecipients } from "../src/lib/send-email-recipients";
+import { ensureUnsubscribeRaw } from "../src/lib/capability-token-lookup";
 import { createEmailSendJob, queueCampaignEmails } from "../src/lib/send-email-jobs";
 import { duplicateProduct } from "../src/lib/duplicate-product";
 import { previewUnpublishImpact } from "../src/lib/collection-publish";
@@ -81,7 +82,8 @@ async function testUnsubscribeExcluded() {
   const email = normalizeEmail(`${stamp}-unsub@example.test`);
   await prisma.newsletterSubscriber.create({ data: { email } });
   const pref = await ensureEmailPreference(email);
-  const result = await unsubscribeByToken(pref.unsubscribeToken);
+  assert(!(await unsubscribeByToken(pref.unsubscribeToken)), "the stored hash is not a working link");
+  const result = await unsubscribeByToken(await ensureUnsubscribeRaw(pref));
   assert(result?.email === email, "unsubscribe returns email");
   const resolved = await resolveCampaignRecipients({ sources: ["newsletter"] });
   assert(!resolved.emails.includes(email), "unsubscribed address excluded at resolve");

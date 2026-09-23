@@ -65,6 +65,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 # so files land on MEDIA_ROOT, not a laptop disk.
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/migrate-cloudinary-media.ts ./scripts/migrate-cloudinary-media.ts
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/preload-test-env.ts ./scripts/preload-test-env.ts
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/upgrade-capability-tokens.ts ./scripts/upgrade-capability-tokens.ts
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib ./src/lib
 COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./tsconfig.json
 COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.scripts.json ./tsconfig.scripts.json

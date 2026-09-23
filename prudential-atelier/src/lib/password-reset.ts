@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { getPublicAppUrl } from "@/lib/app-url";
 
 export const RESET_TTL_MS = 60 * 60 * 1000;
 
@@ -38,14 +39,22 @@ export async function forceSignOutUser(userId: string): Promise<void> {
   await prisma.session.deleteMany({ where: { userId } });
 }
 
-export async function issuePasswordResetToken(userId: string): Promise<{ raw: string; hash: string }> {
+/** The page that consumes a PasswordResetToken: forgot password, and first-time set-a-password. */
+export function passwordLinkUrl(raw: string): string {
+  return `${getPublicAppUrl()}/auth/reset-password/${raw}`;
+}
+
+export async function issuePasswordResetToken(
+  userId: string,
+  ttlMs: number = RESET_TTL_MS,
+): Promise<{ raw: string; hash: string }> {
   await prisma.passwordResetToken.deleteMany({ where: { userId } });
   const { raw, hash } = generateResetToken();
   await prisma.passwordResetToken.create({
     data: {
       token: hash,
       userId,
-      expiresAt: new Date(Date.now() + RESET_TTL_MS),
+      expiresAt: new Date(Date.now() + ttlMs),
     },
   });
   return { raw, hash };

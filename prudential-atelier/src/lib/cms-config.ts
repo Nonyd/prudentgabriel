@@ -865,7 +865,7 @@ const CMS_PAGES_BASE: CmsPageDef[] = [
             key: "track_page_subtitle",
             label: "Page subtitle",
             type: "text",
-            default: "No login required — just your order reference.",
+            default: "No login required — your order reference and the email on the order.",
           },
         ],
       },

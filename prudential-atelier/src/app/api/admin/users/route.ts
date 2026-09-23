@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { Role, StaffDepartment } from "@prisma/client";
 import { z } from "zod";
 import { requireSuperAdminApi } from "@/lib/admin-auth";
 import { MANAGED_STAFF_ROLES, parseOptionalPhone } from "@/lib/admin-users";
-import { getPublicAppUrl } from "@/lib/app-url";
 import { sendEmail } from "@/lib/email";
 import { logActivity } from "@/lib/logger";
 import { mapDepartmentToEnum, resolveSystemRoleForAdmin } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { isProtectedAccount } from "@/lib/roles";
-import { generateTempPassword } from "@/lib/temp-password";
+import { unusablePasswordHash } from "@/lib/temp-password";
+import { issuePasswordResetToken, passwordLinkUrl } from "@/lib/password-reset";
+import { CAPABILITY_TTL_MS } from "@/lib/capability-token";
 
 const createSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -143,11 +143,8 @@ export async function POST(req: NextRequest) {
     ? Role.STAFF
     : (resolveSystemRoleForAdmin(jobRole.name) as Role);
 
-  const tempPassword = generateTempPassword();
-  const passwordHash = await bcrypt.hash(tempPassword, 12);
-  const loginUrl = isStaffMember
-    ? `${getPublicAppUrl()}/login?tab=staff`
-    : `${getPublicAppUrl()}/login?tab=admin`;
+  // A password nobody knows. The email carries a set-your-password link, never a password.
+  const passwordHash = await unusablePasswordHash();
   const firstName = parsed.data.name.trim().split(/\s+/)[0] ?? parsed.data.name.trim();
 
   const user = await prisma.$transaction(async (tx) => {
@@ -162,7 +159,6 @@ export async function POST(req: NextRequest) {
         jobTitle: parsed.data.jobTitle?.trim() || jobRole.name,
         department: parsed.data.department?.trim() || null,
         isStaff: isStaffMember,
-        mustResetPassword: true,
         isActive: true,
       },
       select: {
@@ -191,25 +187,21 @@ export async function POST(req: NextRequest) {
     return created;
   });
 
+  const { raw } = await issuePasswordResetToken(user.id, CAPABILITY_TTL_MS.welcomePassword);
+  const setPasswordUrl = passwordLinkUrl(raw);
   const html = isStaffMember
     ? `
     <p>Hi ${firstName},</p>
     <p>You've been set up on the Prudential Atelier staff system.</p>
-    <p><strong>Your login details:</strong><br/>
-    URL: <a href="${loginUrl}">prudentgabriel.com/login</a> (Staff tab)<br/>
-    Email: ${email}<br/>
-    Temporary password: <strong>${tempPassword}</strong></p>
-    <p>You'll be asked to set a new password when you first log in.</p>
+    <p>Your sign-in email is ${email}. <a href="${setPasswordUrl}">Choose your password</a> to finish setting up.</p>
+    <p>The link works once, for seven days. After that, ask the admin who added you to send a password link again.</p>
     <p>— Prudential Atelier</p>
   `
     : `
     <p>Hi ${firstName},</p>
     <p>You've been given access to the Prudential Atelier operations system.</p>
-    <p><strong>Your login details:</strong><br/>
-    URL: <a href="${loginUrl}">prudentgabriel.com/login</a> (Admin tab)<br/>
-    Email: ${email}<br/>
-    Temporary password: <strong>${tempPassword}</strong></p>
-    <p>You'll be asked to set a new password on first login.</p>
+    <p>Your sign-in email is ${email}. <a href="${setPasswordUrl}">Choose your password</a> to finish setting up.</p>
+    <p>The link works once, for seven days. After that, ask the admin who added you to send a password link again.</p>
     <p>— Prudential Atelier</p>
   `;
 

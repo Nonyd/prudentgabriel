@@ -23,6 +23,8 @@ export async function GET() {
     prisma.teamInvitation.findMany({
       where: { acceptedAt: null, expiresAt: { gt: now } },
       orderBy: { createdAt: "desc" },
+      // Never the token column: it is a hash and has no use outside the server.
+      select: { id: true, email: true, role: true, invitedBy: true, expiresAt: true, createdAt: true },
     }),
   ]);
 

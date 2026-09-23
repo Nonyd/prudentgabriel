@@ -158,7 +158,7 @@ export async function queueCampaignEmails(jobId: string): Promise<void> {
       continue;
     }
     const pref = await ensureEmailPreference(to);
-    const { html, headers } = await applyMarketingUnsubscribe(built.html, pref.unsubscribeToken);
+    const { html, headers } = await applyMarketingUnsubscribe(built.html, pref);
     await sendEmail({
       to,
       subject: built.subject,
@@ -191,7 +191,7 @@ export async function sendSingleMarketingEmail(params: {
     return;
   }
   const pref = await ensureEmailPreference(to);
-  const { html, headers } = await applyMarketingUnsubscribe(params.html, pref.unsubscribeToken);
+  const { html, headers } = await applyMarketingUnsubscribe(params.html, pref);
   await sendEmail({
     to,
     subject: params.subject,

@@ -30,11 +30,14 @@ export function toPublicTrackDto(order: {
   };
 }
 
+/**
+ * Read by booking number alone (CB-YY-NNNNN, about 100,000 a year), so it says
+ * nothing about who she is: no name, not even a first one (token sweep).
+ */
 export type PublicConsultationDto = {
   bookingNumber: string;
   status: ConsultationStatus;
   paymentStatus: PaymentStatus;
-  clientFirstName: string;
   offeringName: string | null;
   consultantName: string | null;
   confirmedDate: string | null;
@@ -55,7 +58,6 @@ export function toPublicConsultationDto(booking: {
     bookingNumber: booking.bookingNumber,
     status: booking.status,
     paymentStatus: booking.paymentStatus,
-    clientFirstName: clientFirstName(booking.clientName),
     offeringName: booking.offering?.sessionType ?? null,
     consultantName: booking.consultant?.name ?? null,
     confirmedDate: booking.confirmedDate ? booking.confirmedDate.toISOString() : null,

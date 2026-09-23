@@ -66,7 +66,7 @@ export async function queueEmail(params: QueueEmailParams): Promise<{ id: string
       return { id: "", created: false };
     }
     const pref = await ensureEmailPreference(params.to);
-    const applied = await applyMarketingUnsubscribe(html, pref.unsubscribeToken);
+    const applied = await applyMarketingUnsubscribe(html, pref);
     html = applied.html;
     if (!html.includes(applied.url)) {
       html += `<p style="font-size:11px;text-align:center;"><a href="${applied.url}">Unsubscribe</a></p>`;

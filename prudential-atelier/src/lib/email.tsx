@@ -99,7 +99,7 @@ export async function sendWelcomeCredentialsEmail(params: {
   to: string;
   firstName: string;
   email: string;
-  tempPassword: string;
+  setPasswordUrl: string;
   sourceLabel: string;
   trackUrl: string;
 }): Promise<void> {
@@ -112,7 +112,7 @@ export async function sendWelcomeCredentialsEmail(params: {
     <WelcomeCredentialsEmail
       firstName={params.firstName}
       email={params.email}
-      tempPassword={params.tempPassword}
+      setPasswordUrl={params.setPasswordUrl}
       sourceLabel={params.sourceLabel}
       trackUrl={params.trackUrl}
       loginUrl={loginUrl}

@@ -26,6 +26,11 @@ if ! $PRISMA_CLI migrate deploy; then
   echo "[entrypoint] WARNING: continuing because PRISMA_MIGRATE_DEPLOY_FATAL is not set."
 fi
 
+# Token sweep: hash any link token still stored in plaintext (idempotent; a no-op once done).
+# Non-fatal so a failure cannot keep the shop down, but it is loud: old links 404 until it succeeds.
+echo "[entrypoint] Hashing any plaintext capability tokens..."
+$TSX_CLI --tsconfig tsconfig.scripts.json scripts/upgrade-capability-tokens.ts   || echo "[entrypoint] ERROR: upgrade-capability-tokens failed; pre-sweep links will not open until it runs."
+
 # RUN_DB_SEED_ON_START=safe → production-safe bootstrap (settings, consultants, admin). Never demo data.
 # RUN_DB_SEED_ON_START=true  → same bootstrap (seed.ts does not wipe catalogue/orders).
 # unset / false              → skip.

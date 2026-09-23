@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import type { Role, TeamInvitation } from "@prisma/client";
+
+type PendingInvitation = Omit<TeamInvitation, "token" | "acceptedAt">;
 import { InviteAdminModal } from "@/components/admin/InviteAdminModal";
 import toast from "react-hot-toast";
 import { NETWORK_ERROR_MESSAGE, authResponseMessage } from "@/lib/client-auth";
@@ -27,7 +29,7 @@ export function TeamClient({
   initialInvitations,
 }: {
   initialMembers: Member[];
-  initialInvitations: TeamInvitation[];
+  initialInvitations: PendingInvitation[];
 }) {
   const [members, setMembers] = useState(initialMembers);
   const [invitations, setInvitations] = useState(initialInvitations);
@@ -38,7 +40,7 @@ export function TeamClient({
   async function reload() {
     const response = await fetch("/api/admin/team");
     if (!response.ok) return;
-    const payload = (await response.json()) as { members: Member[]; invitations: TeamInvitation[] };
+    const payload = (await response.json()) as { members: Member[]; invitations: PendingInvitation[] };
     setMembers(payload.members);
     setInvitations(payload.invitations);
   }
@@ -77,12 +79,12 @@ export function TeamClient({
     await act(() => fetch(`/api/admin/team/${member.id}`, { method: "DELETE" }), "Removed from the team", "Could not remove this member.");
   }
 
-  async function cancelInvite(token: string) {
-    await act(() => fetch(`/api/admin/invitations/${token}/cancel`, { method: "DELETE" }), "Invitation cancelled", "Could not cancel the invitation.");
+  async function cancelInvite(id: string) {
+    await act(() => fetch(`/api/admin/invitations/${id}/cancel`, { method: "DELETE" }), "Invitation cancelled", "Could not cancel the invitation.");
   }
 
-  async function resendInvite(token: string) {
-    const target = invitations.find((invite) => invite.token === token);
+  async function resendInvite(id: string) {
+    const target = invitations.find((invite) => invite.id === id);
     if (!target) return;
     await act(
       () =>
@@ -187,10 +189,10 @@ export function TeamClient({
                   <td className="px-3 py-3 font-body text-xs text-[#6B6B68]">{invitation.invitedBy}</td>
                   <td className="px-3 py-3 font-body text-xs text-[#6B6B68]">{new Date(invitation.expiresAt).toLocaleString("en-GB")}</td>
                   <td className="px-3 py-3 text-right">
-                    <button type="button" onClick={() => void resendInvite(invitation.token)} className="mr-3 font-body text-xs text-[#37392d] hover:underline">
+                    <button type="button" onClick={() => void resendInvite(invitation.id)} className="mr-3 font-body text-xs text-[#37392d] hover:underline">
                       Resend
                     </button>
-                    <button type="button" onClick={() => void cancelInvite(invitation.token)} className="font-body text-xs text-red-600 hover:underline">
+                    <button type="button" onClick={() => void cancelInvite(invitation.id)} className="font-body text-xs text-red-600 hover:underline">
                       Cancel
                     </button>
                   </td>

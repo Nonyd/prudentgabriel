@@ -31,6 +31,10 @@ const API_ROUTES = [
   "src/app/api/quotations/[id]/approve/route.ts",
   "src/app/api/track/[token]/route.ts",
   "src/app/api/unsubscribe/[token]/route.ts",
+  // Token sweep.
+  "src/app/api/checkout/restore/[token]/route.ts",
+  "src/app/api/auth/accept-invite/route.ts",
+  "src/app/api/track/lookup/route.ts",
 ];
 
 const PAGES = [
@@ -39,6 +43,9 @@ const PAGES = [
   "src/app/quote/[approvalToken]/page.tsx",
   "src/app/receipt/[token]/page.tsx",
   "src/app/(storefront)/track/[trackingToken]/page.tsx",
+  // Token sweep.
+  "src/app/unsubscribe/[token]/page.tsx",
+  "src/app/accept-invite/page.tsx",
 ];
 
 function handlerBodies(code: string): { method: string; body: string }[] {

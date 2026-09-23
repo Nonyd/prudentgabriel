@@ -102,11 +102,11 @@ function runConverter() {
 }
 
 function runFacts() {
-  assert(LEGAL_COPY_REVISION === "ba-2", "revision stamp");
+  assert(LEGAL_COPY_REVISION === "ba-3", "revision stamp");
   assert(DEFAULT_LEGAL_UPDATED.includes("September 2026"), "last-updated date is this slice");
   const byPage = Object.fromEntries(LEGAL_SEED_ENTRIES.map((e) => [e.page, e.revision]));
   // BA5/BA6: chat, enquiries and hosting in Germany republish privacy and cookie.
-  assert(byPage.cookie === "ba-2" && byPage.privacy === "ba-2", "privacy and cookie republish this slice");
+  assert(byPage.cookie === "ba-2" && byPage.privacy === "ba-3", "privacy republishes for the token sweep (no emailed passwords); cookie stays at BA5");
   assert(byPage.terms === "ar-5" && byPage.returns === "ar-5" && byPage.shipping === "ar-5", "other legal pages keep their lawyer revision");
 
   for (const term of DEFAULT_HOUSE_DOCUMENT_TERMS) {
