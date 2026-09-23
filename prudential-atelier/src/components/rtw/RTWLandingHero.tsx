@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { HeroCarouselItem } from "@/lib/hero-carousel";
 import { shouldAutoplayReel, shouldPrefetchReelVideo } from "@/lib/collection-reel-playback";
@@ -404,6 +405,7 @@ export function RTWLandingHero({
   headline,
   subline,
   ctaLabel,
+  ctaHref,
 }: {
   items: HeroCarouselItem[];
   looks?: RTWHeroLook[];
@@ -411,6 +413,8 @@ export function RTWLandingHero({
   headline: string;
   subline: string;
   ctaLabel: string;
+  /** A page of its own (/atelier → /consultation). Without it the CTA scrolls to the /rtw grid. */
+  ctaHref?: string;
 }) {
   const [index, setIndex] = useState(0);
   const count = items.length;
@@ -473,19 +477,25 @@ export function RTWLandingHero({
                   {headline}
                 </h1>
                 <p className="mt-5 max-w-sm font-body text-sm font-light leading-relaxed text-text-mid">{subline}</p>
-                <a
-                  href={`#${RTW_GRID_ID}`}
-                  className="btn-primary mt-8 inline-flex active:scale-[0.97]"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const lenisOn = document.documentElement.classList.contains("lenis");
-                    document
-                      .getElementById(RTW_GRID_ID)
-                      ?.scrollIntoView({ behavior: lenisOn ? "auto" : "smooth", block: "start" });
-                  }}
-                >
-                  {ctaLabel}
-                </a>
+                {ctaHref ? (
+                  <Link href={ctaHref} className="btn-primary mt-8 inline-flex active:scale-[0.97]">
+                    {ctaLabel}
+                  </Link>
+                ) : (
+                  <a
+                    href={`#${RTW_GRID_ID}`}
+                    className="btn-primary mt-8 inline-flex active:scale-[0.97]"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const lenisOn = document.documentElement.classList.contains("lenis");
+                      document
+                        .getElementById(RTW_GRID_ID)
+                        ?.scrollIntoView({ behavior: lenisOn ? "auto" : "smooth", block: "start" });
+                    }}
+                  >
+                    {ctaLabel}
+                  </a>
+                )}
               </div>
             </div>
           </div>

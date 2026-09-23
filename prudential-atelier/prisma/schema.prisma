@@ -1397,11 +1397,21 @@ model GalleryImage {
   /// optional (a range); the floor alone is the recommended form.
   priceFloorNGN   Int?
   priceCeilingNGN Int?
+  /// BB3: what the piece is, what it is made of, what it was for. Shown beside
+  /// the photographs on /atelier; set on the piece's main photograph.
+  description String?
+  /// BB3: one piece, one entry. A frame of another piece points at that piece's
+  /// main photograph (one level only); the main photograph carries the title
+  /// (caption), description and price guide for the whole piece.
+  pieceOfId   String?
+  pieceOf     GalleryImage?   @relation("GalleryPiece", fields: [pieceOfId], references: [id], onDelete: SetNull)
+  frames      GalleryImage[]  @relation("GalleryPiece")
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
   @@index([category, isPublished])
   @@index([sortOrder])
+  @@index([pieceOfId])
 }
 
 enum GalleryCategory {

@@ -130,6 +130,8 @@ function unit() {
     "src/app/api/admin/gallery/[id]/route.ts",
     "src/app/(storefront)/atelier/page.tsx",
     "src/components/atelier/AtelierLandingPage.tsx",
+    // BB3: pieces carry the guide on their main photograph; display and admin only.
+    "src/lib/atelier-gallery.ts",
   ]);
   const root = resolve(__dirname, "..");
   const walk = (dir: string): string[] =>

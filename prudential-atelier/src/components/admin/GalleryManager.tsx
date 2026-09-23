@@ -6,6 +6,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import type { GalleryCategory, GalleryImage } from "@prisma/client";
 import { priceGuideText } from "@/lib/price-guide";
+import { duplicateFileOf, pieceGaps } from "@/lib/atelier-gallery";
 import toast from "react-hot-toast";
 import {
   ChevronDown,
@@ -30,7 +31,7 @@ type UploadJob = {
   error?: string;
 };
 
-type MediaFilter = "all" | "photos" | "videos" | "hidden";
+type MediaFilter = "all" | "photos" | "videos" | "hidden" | "needs-guide" | "needs-description";
 
 const CATEGORY_LABEL: Record<GalleryCategory, string> = {
   ATELIER: "Atelier",
@@ -146,6 +147,89 @@ function AdminGalleryPreview({ item }: { item: GalleryImage }) {
   );
 }
 
+/** BB4: what an atelier tile is, and what it still needs, without opening it. */
+function PieceStatus({
+  position,
+  gaps,
+  frameOf,
+  frameCount,
+  duplicateOf,
+}: {
+  position: number;
+  gaps: { needsPriceGuide: boolean; needsDescription: boolean };
+  frameOf: string | null;
+  frameCount: number;
+  duplicateOf: number | null;
+}) {
+  const flag = "inline-block border px-1.5 py-0.5 text-[10px] uppercase tracking-[0.08em]";
+  const needs = "border-[#E0B872] bg-[#FFF6E5] text-[#8A5A00]";
+  return (
+    <div className="flex flex-wrap gap-1 font-body" data-piece-status>
+      <span className={cn(flag, "border-sand text-[#6B6B68]")}>#{position}</span>
+      {frameOf ? (
+        <span className={cn(flag, "border-sand normal-case tracking-normal text-[#6B6B68]")}>Photo of {frameOf}</span>
+      ) : (
+        <>
+          {frameCount > 0 ? (
+            <span className={cn(flag, "border-sand text-[#6B6B68]")}>Piece · {frameCount + 1} photos</span>
+          ) : null}
+          {gaps.needsPriceGuide ? <span className={cn(flag, needs)}>No price guide</span> : null}
+          {gaps.needsDescription ? <span className={cn(flag, needs)}>No description</span> : null}
+        </>
+      )}
+      {duplicateOf ? (
+        <span className={cn(flag, "border-[#E3A5A5] bg-[#FDEEEE] text-[#9B2C2C]")}>Same file as #{duplicateOf}</span>
+      ) : null}
+    </div>
+  );
+}
+
+/** BA4: display-only price guide inputs, with the exact wording the page will show. */
+function PriceGuideFields({
+  floor,
+  ceiling,
+  onFloor,
+  onCeiling,
+}: {
+  floor: string;
+  ceiling: string;
+  onFloor: (v: string) => void;
+  onCeiling: (v: string) => void;
+}) {
+  const preview = priceGuideText({ priceFloorNGN: nairaOrNull(floor), priceCeilingNGN: nairaOrNull(ceiling) });
+  return (
+    <>
+      <p className="mt-6 font-body text-[11px] uppercase text-[#6B6B68]">Price guide (display only)</p>
+      <p className="mt-1 font-body text-xs text-[#6B6B68]">
+        Shown beside the photograph as a reference, never charged. A floor alone is recommended; add a ceiling only if
+        you want a range.
+      </p>
+      <div className="mt-2 grid grid-cols-2 gap-3">
+        <label className="font-body text-[11px] uppercase text-[#6B6B68]">
+          From (₦)
+          <input
+            inputMode="numeric"
+            className="mt-1 w-full border border-sand px-3 py-2 text-sm"
+            value={floor}
+            onChange={(e) => onFloor(e.target.value)}
+            placeholder="3,000,000"
+          />
+        </label>
+        <label className="font-body text-[11px] uppercase text-[#6B6B68]">
+          Up to (₦, optional)
+          <input
+            inputMode="numeric"
+            className="mt-1 w-full border border-sand px-3 py-2 text-sm"
+            value={ceiling}
+            onChange={(e) => onCeiling(e.target.value)}
+          />
+        </label>
+      </div>
+      {preview ? <p className="mt-2 font-body text-xs italic text-[#6B6B68]">Shows as: {preview}</p> : null}
+    </>
+  );
+}
+
 export function GalleryManager() {
   const [tab, setTab] = useState<GalleryCategory>("ATELIER");
   const [items, setItems] = useState<GalleryImage[]>([]);
@@ -170,6 +254,9 @@ export function GalleryManager() {
   const [editCeiling, setEditCeiling] = useState("");
   const [editPublished, setEditPublished] = useState(true);
   const [editCategory, setEditCategory] = useState<GalleryCategory>("ATELIER");
+  // BB3: atelier pieces — a description on the main photograph, and which piece a frame belongs to.
+  const [editDescription, setEditDescription] = useState("");
+  const [editPieceOf, setEditPieceOf] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -201,12 +288,32 @@ export function GalleryManager() {
   const videoCount = items.filter((item) => isGalleryVideoUrl(item.url)).length;
   const hiddenCount = items.filter((item) => !item.isPublished).length;
 
+  // BB3/BB4: on the atelier tab a tile is a piece (its main photograph) or a frame of
+  // one. What each piece still needs is on the tile; nobody opens pieces to find out.
+  const pieceMode = tab === "ATELIER";
+  const positionOf = useMemo(() => new Map(items.map((item, i) => [item.id, i + 1])), [items]);
+  const duplicates = useMemo(() => duplicateFileOf(items), [items]);
+  const heads = useMemo(() => items.filter((item) => !item.pieceOfId), [items]);
+  const framesPerHead = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const item of items) if (item.pieceOfId) m.set(item.pieceOfId, (m.get(item.pieceOfId) ?? 0) + 1);
+    return m;
+  }, [items]);
+  const needsGuideCount = heads.filter((item) => pieceGaps(item).needsPriceGuide).length;
+  const needsDescriptionCount = heads.filter((item) => pieceGaps(item).needsDescription).length;
+  const headLabel = (id: string) => {
+    const head = items.find((item) => item.id === id);
+    return head ? `#${positionOf.get(id) ?? "?"} ${mediaCaption(head)}` : "another piece";
+  };
+
   const visible = useMemo(() => {
     return items.filter((item) => {
       const video = isGalleryVideoUrl(item.url);
       if (filter === "photos") return !video;
       if (filter === "videos") return video;
       if (filter === "hidden") return !item.isPublished;
+      if (filter === "needs-guide") return pieceGaps(item).needsPriceGuide;
+      if (filter === "needs-description") return pieceGaps(item).needsDescription;
       return true;
     });
   }, [items, filter]);
@@ -312,7 +419,11 @@ export function GalleryManager() {
     setEditCeiling(img.priceCeilingNGN ? String(img.priceCeilingNGN) : "");
     setEditPublished(img.isPublished);
     setEditCategory(img.category);
+    setEditDescription(img.description ?? "");
+    setEditPieceOf(img.pieceOfId ?? "");
   };
+
+  const editIsFrame = pieceMode && editCategory === "ATELIER" && Boolean(editPieceOf);
 
   const saveEdit = async () => {
     if (!editing) return;
@@ -322,10 +433,18 @@ export function GalleryManager() {
       body: JSON.stringify({
         alt: editAlt || null,
         caption: editCaption || null,
-        priceFloorNGN: nairaOrNull(editFloor),
-        priceCeilingNGN: nairaOrNull(editCeiling),
         isPublished: editPublished,
         category: editCategory,
+        // A frame's words and guide belong to its piece: send none, and the server
+        // passes anything this photograph carried to the piece when it joins.
+        ...(editIsFrame
+          ? {}
+          : {
+              priceFloorNGN: nairaOrNull(editFloor),
+              priceCeilingNGN: nairaOrNull(editCeiling),
+              ...(pieceMode ? { description: editDescription.trim() || null } : {}),
+            }),
+        ...(pieceMode ? { pieceOfId: editPieceOf || null } : {}),
       }),
     });
     if (!res.ok) {
@@ -409,6 +528,9 @@ export function GalleryManager() {
             {photoCount} {photoCount === 1 ? "look" : "looks"}
             {videoCount > 0 ? ` · ${videoCount} ${videoCount === 1 ? "film" : "films"}` : ""}
             {hiddenCount > 0 ? ` · ${hiddenCount} hidden` : ""}
+            {pieceMode && items.length > 0
+              ? ` · ${heads.length} ${heads.length === 1 ? "piece" : "pieces"} · ${needsGuideCount} need a price guide · ${needsDescriptionCount} need a description`
+              : ""}
           </span>
           <button
             type="button"
@@ -514,6 +636,12 @@ export function GalleryManager() {
             ["photos", "Photos"],
             ["videos", "Videos"],
             ["hidden", "Hidden"],
+            ...(pieceMode
+              ? ([
+                  ["needs-guide", "Needs price guide"],
+                  ["needs-description", "Needs description"],
+                ] as const)
+              : []),
           ] as const
         ).map(([id, label]) => (
           <button
@@ -531,6 +659,8 @@ export function GalleryManager() {
             {label}
             {id === "videos" && videoCount > 0 ? ` (${videoCount})` : ""}
             {id === "hidden" && hiddenCount > 0 ? ` (${hiddenCount})` : ""}
+            {id === "needs-guide" ? ` (${needsGuideCount})` : ""}
+            {id === "needs-description" ? ` (${needsDescriptionCount})` : ""}
           </button>
         ))}
       </div>
@@ -661,7 +791,7 @@ export function GalleryManager() {
                   <div className="flex items-start justify-between gap-2">
                     <p className="min-w-0 flex-1 font-body text-[12px] leading-snug text-ink">
                       {mediaCaption(img)}
-                      {!img.caption?.trim() && !img.alt?.trim() ? (
+                      {!img.caption?.trim() && !img.alt?.trim() && !(pieceMode && img.pieceOfId) ? (
                         <span className="block text-[11px] text-[#A8A8A4]">Add a caption</span>
                       ) : null}
                     </p>
@@ -671,6 +801,19 @@ export function GalleryManager() {
                       </span>
                     ) : null}
                   </div>
+                  {pieceMode ? (
+                    <PieceStatus
+                      position={position}
+                      gaps={pieceGaps(img)}
+                      frameOf={img.pieceOfId ? headLabel(img.pieceOfId) : null}
+                      frameCount={framesPerHead.get(img.id) ?? 0}
+                      duplicateOf={duplicates.has(img.id) ? (positionOf.get(duplicates.get(img.id)!) ?? null) : null}
+                    />
+                  ) : duplicates.has(img.id) ? (
+                    <span className="font-body text-[11px] text-[#9B2C2C]">
+                      Same file as #{positionOf.get(duplicates.get(img.id)!)}
+                    </span>
+                  ) : null}
                   <div className="mt-auto flex items-center justify-between gap-1">
                     {canDrag ? (
                       <div className="flex gap-1">
@@ -888,43 +1031,64 @@ export function GalleryManager() {
               value={editAlt}
               onChange={(e) => setEditAlt(e.target.value)}
             />
-            <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Caption</label>
+            <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">
+              {pieceMode && !editIsFrame ? "Title (what the piece is called)" : "Caption"}
+            </label>
             <textarea
-              className="mt-1 min-h-[80px] resize-y border border-sand px-3 py-2 text-sm"
+              className="mt-1 min-h-[60px] resize-y border border-sand px-3 py-2 text-sm"
               value={editCaption}
               onChange={(e) => setEditCaption(e.target.value)}
             />
-            <p className="mt-6 font-body text-[11px] uppercase text-[#6B6B68]">Price guide (display only)</p>
-            <p className="mt-1 font-body text-xs text-[#6B6B68]">
-              Shown beside the photograph as a reference, never charged. A floor alone is recommended; add a ceiling only
-              if you want a range.
-            </p>
-            <div className="mt-2 grid grid-cols-2 gap-3">
-              <label className="font-body text-[11px] uppercase text-[#6B6B68]">
-                From (₦)
-                <input
-                  inputMode="numeric"
-                  className="mt-1 w-full border border-sand px-3 py-2 text-sm"
-                  value={editFloor}
-                  onChange={(e) => setEditFloor(e.target.value)}
-                  placeholder="3,000,000"
-                />
-              </label>
-              <label className="font-body text-[11px] uppercase text-[#6B6B68]">
-                Up to (₦, optional)
-                <input
-                  inputMode="numeric"
-                  className="mt-1 w-full border border-sand px-3 py-2 text-sm"
-                  value={editCeiling}
-                  onChange={(e) => setEditCeiling(e.target.value)}
-                />
-              </label>
-            </div>
-            {priceGuideText({ priceFloorNGN: nairaOrNull(editFloor), priceCeilingNGN: nairaOrNull(editCeiling) }) ? (
-              <p className="mt-2 font-body text-xs italic text-[#6B6B68]">
-                Shows as: {priceGuideText({ priceFloorNGN: nairaOrNull(editFloor), priceCeilingNGN: nairaOrNull(editCeiling) })}
-              </p>
+            {pieceMode && editing && editCategory === "ATELIER" ? (
+              <>
+                <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Piece</label>
+                <select
+                  className="mt-1 border border-sand bg-white px-3 py-2 text-sm"
+                  value={editPieceOf}
+                  onChange={(e) => setEditPieceOf(e.target.value)}
+                >
+                  <option value="">Its own piece (this is the main photograph)</option>
+                  {heads
+                    .filter((head) => head.id !== editing.id)
+                    .map((head) => (
+                      <option key={head.id} value={head.id}>
+                        Another photograph of {headLabel(head.id)}
+                      </option>
+                    ))}
+                </select>
+                <p className="mt-1 font-body text-xs text-[#6B6B68]">
+                  Several photographs of one gown are one piece. Choose the gown&apos;s main photograph here and they
+                  show together on /atelier.
+                </p>
+              </>
             ) : null}
+            {editIsFrame ? (
+              <p className="mt-6 font-body text-xs text-[#6B6B68]">
+                The description and price guide are set on the piece&apos;s main photograph ({headLabel(editPieceOf)}).
+                Anything this photograph had moves there when you save, if the piece has none.
+              </p>
+            ) : (
+              <>
+                {pieceMode ? (
+                  <>
+                    <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Description</label>
+                    <textarea
+                      className="mt-1 min-h-[110px] resize-y border border-sand px-3 py-2 text-sm"
+                      value={editDescription}
+                      maxLength={2000}
+                      placeholder="What it is, what it is made of, what it was for."
+                      onChange={(e) => setEditDescription(e.target.value)}
+                    />
+                  </>
+                ) : null}
+                <PriceGuideFields
+                  floor={editFloor}
+                  ceiling={editCeiling}
+                  onFloor={setEditFloor}
+                  onCeiling={setEditCeiling}
+                />
+              </>
+            )}
             <label className="mt-4 flex items-center gap-2 font-body text-sm">
               <input type="checkbox" checked={editPublished} onChange={(e) => setEditPublished(e.target.checked)} />
               Published on the public page

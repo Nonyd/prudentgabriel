@@ -22,7 +22,7 @@ Depth lives elsewhere:
 ## What is done
 
 - **Shop (ready-to-wear).** Catalogue, bag, checkout in NGN/USD/GBP with the rate locked at checkout, Paystack / Flutterwave / Monnify / bank transfer, abandoned-checkout reminders, order tracking by number and email. Product grid is ~369 KB on a phone (Slice S).
-- **Atelier.** Consultation is by invitation: enquiry → the house approves or declines with a reason → an expiring booking link → she proposes three dates → the house picks one → payment → reminders (BA2). Four consultation fees, frozen on the booking (BA3). Quotation → commission → 13 gated stages → delivery → receipt → 30-day alteration window. Price guides beside atelier photographs, never a price (BA4).
+- **Atelier.** Consultation is by invitation: enquiry → the house approves or declines with a reason → an expiring booking link → she proposes three dates → the house picks one → payment → reminders (BA2). Four consultation fees, frozen on the booking (BA3). Quotation → commission → 13 gated stages → delivery → receipt → 30-day alteration window. Price guides beside atelier photographs, never a price (BA4). The /atelier page is dressed (BB): a full-bleed hero on glass, the nine craft stages (the administrative four stay in the pipeline), and the gallery as pieces with their words and guide beside them.
 - **Money.** Append-only payment ledger; the bind between what is shown and what is charged is checked server-side (Slice A). FX totals kept in kobo.
 - **Accounts and staff.** Customer, staff and admin sign-in with per-account and per-address limits (BA1). Roles and permissions (Slice T). SUPER_ADMIN can sign everyone out.
 - **Live chat.** First-party, no third-party script; name and email required; kept indefinitely by decision, erased on request by SUPER_ADMIN (BA5).
@@ -52,6 +52,7 @@ Depth lives elsewhere:
 | Terms → Consultations paragraph (non-refundable fee, new refund commitment) and record retention. | Mrs. Prudent; `LEGAL_OPEN_QUESTIONS.md` |
 | Contabo data-processing agreement (hosting in Germany). | Nony |
 | Hero posters: optional. The server now takes a still; a chosen one looks better. | Glory, Admin → Content |
+| **/atelier: price floors, titles and descriptions for the three gowns; group the duplicate frames; a hero photograph or film.** Exact screens and a tick list in [`prudential-atelier/docs/ATELIER_PAGE_CHECKLIST.md`](../prudential-atelier/docs/ATELIER_PAGE_CHECKLIST.md). | Mrs. Prudent (floors, words), Glory (entry, hero) |
 | Accounts opened before the sweep with a temporary password never changed now need *Forgot password*. Tell anyone who asks. | Front of house |
 
 ---

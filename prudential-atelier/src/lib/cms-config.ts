@@ -8,6 +8,13 @@ import {
   DEFAULT_WOMEN_SIZE_CHART,
 } from "@/lib/page-content-defaults";
 import { PAGE_SEO_CMS, PAGE_SEO_FALLBACKS } from "@/lib/seo-copy";
+import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
+import {
+  CRAFT_STAGES,
+  CRAFT_STAGE_LINES,
+  DEFAULT_PROCESS_HEADLINE,
+  craftStageLineKey,
+} from "@/lib/atelier-craft-stages";
 
 export type CmsFieldType =
   | "text"
@@ -43,6 +50,15 @@ export type CmsPageDef = {
   previewPath?: string;
   sections: CmsSection[];
 };
+
+/** BB2: one line under each craft stage on /atelier. */
+const craftStageLineFields = (): CmsField[] =>
+  CRAFT_STAGES.map((stage) => ({
+    key: craftStageLineKey(stage),
+    label: `Stage line — ${STAGE_SHORT_LABELS[stage]}`,
+    type: "textarea" as const,
+    default: CRAFT_STAGE_LINES[stage] ?? "",
+  }));
 
 /** Consultation fees are settings (BA3: consultation_fee_*), not CMS copy. */
 const consultationTypeFields = (prefix: string, defaults: Record<string, string>): CmsField[] => [
@@ -284,6 +300,12 @@ const CMS_PAGES_BASE: CmsPageDef[] = [
         id: "main",
         label: "Page Content",
         fields: [
+          {
+            key: "atelier_hero_media",
+            label: "Hero photograph or film (full-bleed behind the headline)",
+            type: "carousel",
+            default: "[]",
+          },
           { key: "atelier_hero_headline", label: "Hero headline", type: "text", default: "The Atelier" },
           {
             key: "atelier_hero_subtext",
@@ -292,15 +314,21 @@ const CMS_PAGES_BASE: CmsPageDef[] = [
             default: "Every commission begins with a conversation. We design entirely around you.",
           },
           { key: "atelier_hero_cta_label", label: "Hero CTA label", type: "text", default: "Begin a Commission" },
-          { key: "atelier_process_headline", label: "Process section headline", type: "text", default: "The Thirteen Stages" },
+          {
+            key: "atelier_process_headline",
+            label: "Process section headline ({count} = the number of stages shown)",
+            type: "text",
+            default: DEFAULT_PROCESS_HEADLINE,
+          },
           {
             key: "atelier_process_subtext",
             label: "Process section subtext",
             type: "textarea",
-            default: "From consultation to delivery — every step documented and shared with you.",
+            default: "After the consultation, the making begins. Every stage is documented and shared with you.",
           },
+          ...craftStageLineFields(),
           { key: "atelier_gallery_label", label: "Gallery section label", type: "text", default: "FROM THE ATELIER" },
-          { key: "atelier_gallery_headline", label: "Gallery section headline", type: "text", default: "Recent Commissions" },
+          { key: "atelier_gallery_headline", label: "Gallery section headline", type: "text", default: "From our atelier" },
           { key: "atelier_cta_headline", label: "Final CTA headline", type: "text", default: "Ready to begin?" },
           { key: "atelier_cta_button_label", label: "Final CTA button label", type: "text", default: "Book a Consultation" },
         ],

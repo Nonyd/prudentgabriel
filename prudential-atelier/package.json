@@ -31,6 +31,7 @@
     "test:slice-aw": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-aw.ts",
     "test:slice-az12": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-az12.ts",
     "test:slice-ba": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-ba.ts",
+    "test:slice-bb": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-bb.ts",
     "test:shop-categories": "tsx --tsconfig tsconfig.scripts.json scripts/test-shop-categories.ts",
     "test:slice-aa": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-aa.ts",
     "test:slice-an": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-an.ts",
