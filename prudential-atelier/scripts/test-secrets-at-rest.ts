@@ -9,6 +9,7 @@ import "./preload-test-env";
 import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { PaymentMethod, PaymentPurpose, PaymentStatus, Role } from "@prisma/client";
 import { prisma } from "../src/lib/prisma";
 import { withoutChargeAuthority, appendPayment } from "../src/lib/payments/ledger";
@@ -31,26 +32,27 @@ function underKeys(env: { current: string; previous?: string }, code: string): {
   });
   return { ok: r.status === 0, out: (r.stdout ?? "").trim() };
 }
-const enc = path.resolve("src/lib/encryption.ts").replace(/\\/g, "/");
+// A file URL that is right on Windows and on the Linux CI runner alike.
+const enc = pathToFileURL(path.resolve("src/lib/encryption.ts")).href;
 const encryptWith = (key: string, plain: string) =>
-  underKeys({ current: key }, `import("file:///${enc}").then(m => console.log(m.encrypt(${JSON.stringify(plain)})))`).out;
+  underKeys({ current: key }, `import("${enc}").then(m => console.log(m.encrypt(${JSON.stringify(plain)})))`).out;
 
 function keyring() {
   const a = encryptWith(KEY_A, "AUTH_secret123");
   assert(a.startsWith("gcm:"), "encrypts as GCM");
   const read = (keys: { current: string; previous?: string }, value: string) =>
-    underKeys(keys, `import("file:///${enc}").then(m => console.log(m.decrypt(${JSON.stringify(value)})))`);
+    underKeys(keys, `import("${enc}").then(m => console.log(m.decrypt(${JSON.stringify(value)})))`);
   assert(read({ current: KEY_A }, a).out === "AUTH_secret123", "the key that wrote it reads it");
   assert(!read({ current: KEY_B }, a).ok, "a different key cannot read it (GCM refuses, it does not return noise)");
   assert(read({ current: KEY_B, previous: KEY_A }, a).out === "AUTH_secret123", "after rotation, the previous key still reads old values");
 
   const again = underKeys(
     { current: KEY_B, previous: KEY_A },
-    `import("file:///${enc}").then(m => console.log(m.reencryptIfNeeded(${JSON.stringify(a)})))`,
+    `import("${enc}").then(m => console.log(m.reencryptIfNeeded(${JSON.stringify(a)})))`,
   ).out;
   assert(again.startsWith("gcm:") && again !== a, "re-encryption writes it under the new key");
   assert(read({ current: KEY_B }, again).out === "AUTH_secret123", "which the new key alone can read");
-  const settled = underKeys({ current: KEY_B }, `import("file:///${enc}").then(m => console.log(String(m.reencryptIfNeeded(${JSON.stringify(again)}))))`).out;
+  const settled = underKeys({ current: KEY_B }, `import("${enc}").then(m => console.log(String(m.reencryptIfNeeded(${JSON.stringify(again)}))))`).out;
   assert(settled === "null", "and a value already under the current key is left alone");
   console.log("ok keyring: rotate with ENCRYPTION_KEY_PREVIOUS, re-encrypt, then retire the old key");
 }
