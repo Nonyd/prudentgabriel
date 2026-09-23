@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import clsx from "clsx";
 import toast from "react-hot-toast";
 
@@ -18,7 +19,8 @@ type Item = {
 
 type Message = { id: string; author: "VISITOR" | "STAFF" | "SYSTEM"; staffName: string | null; body: string; createdAt: string; emailedAt: string | null };
 type Thread = Item & { status: "OPEN" | "CLOSED"; orderRef: string | null; messages: Message[] };
-type Settings = { enabled: boolean; retentionDays: number | null; hoursText: string };
+type Retention = { mode: "unset" } | { mode: "keep" } | { mode: "days"; days: number };
+type Settings = { enabled: boolean; retention: Retention; hoursText: string };
 
 const POLL_MS = 5000;
 
@@ -32,6 +34,7 @@ const CONTEXT_HINT: Record<Item["contextKind"], string> = {
 
 function ChatSettings() {
   const [s, setS] = useState<Settings | null>(null);
+  const [mode, setMode] = useState<"unset" | "keep" | "days">("unset");
   const [days, setDays] = useState("");
   const [hours, setHours] = useState("");
   const [busy, setBusy] = useState(false);
@@ -41,7 +44,8 @@ function ChatSettings() {
       .then((r) => r.json())
       .then((j: Settings) => {
         setS(j);
-        setDays(j.retentionDays ? String(j.retentionDays) : "");
+        setMode(j.retention.mode);
+        setDays(j.retention.mode === "days" ? String(j.retention.days) : "");
         setHours(j.hoursText);
       });
   }, []);
@@ -52,7 +56,11 @@ function ChatSettings() {
       const res = await fetch("/api/admin/chat/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled, retentionDays: days.trim() ? Number(days) : null, hoursText: hours }),
+        body: JSON.stringify({
+          enabled,
+          retention: mode === "keep" ? "keep" : mode === "days" && days.trim() ? Number(days) : null,
+          hoursText: hours,
+        }),
       });
       const j = (await res.json()) as Settings & { error?: unknown };
       if (!res.ok) throw new Error(typeof j.error === "string" ? j.error : "Could not save");
@@ -72,16 +80,28 @@ function ChatSettings() {
         Settings — chat is <strong>{s.enabled ? "on" : "off"}</strong>
       </summary>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <label className="block text-xs text-[#6B6B68]">
-          Keep conversations for (days) — required before chat can be switched on
-          <input
-            inputMode="numeric"
-            className="mt-1 w-full border border-sand px-3 py-2 text-sm text-ink"
-            value={days}
-            onChange={(e) => setDays(e.target.value.replace(/[^0-9]/g, ""))}
-            placeholder="Set by Mrs. Prudent"
-          />
-        </label>
+        <fieldset className="block text-xs text-[#6B6B68]">
+          <legend>How long conversations are kept — a decision is required before chat can be switched on</legend>
+          <label className="mt-2 flex items-center gap-2 text-sm text-ink">
+            <input type="radio" name="chat-retention" checked={mode === "keep"} onChange={() => setMode("keep")} />
+            Keep indefinitely (erase on request)
+          </label>
+          <label className="mt-1 flex items-center gap-2 text-sm text-ink">
+            <input type="radio" name="chat-retention" checked={mode === "days"} onChange={() => setMode("days")} />
+            Delete after
+            <input
+              inputMode="numeric"
+              className="w-20 border border-sand px-2 py-1 text-sm text-ink"
+              value={days}
+              onChange={(e) => {
+                setMode("days");
+                setDays(e.target.value.replace(/[^0-9]/g, ""));
+              }}
+            />
+            days
+          </label>
+          {mode === "unset" ? <p className="mt-1 text-amber-800">Not decided yet.</p> : null}
+        </fieldset>
         <label className="block text-xs text-[#6B6B68]">
           Who answers and when (shown to visitors)
           <input
@@ -105,18 +125,90 @@ function ChatSettings() {
   );
 }
 
+function EraseControl({ id, email, onDone }: { id: string; email: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [all, setAll] = useState(true);
+  const [reason, setReason] = useState("Erasure request under the NDPA");
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function erase() {
+    setBusy(true);
+    try {
+      const r = await fetch(`/api/admin/chat/${id}/erase`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: confirm, allForVisitor: all, reason }),
+      });
+      const j = (await r.json()) as { deleted?: number; error?: string };
+      if (!r.ok) throw new Error(j.error ?? "Could not erase");
+      toast.success(`Erased ${j.deleted} conversation${j.deleted === 1 ? "" : "s"}; logged`);
+      onDone();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not erase");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="text-xs text-red-800 underline">
+        Erase…
+      </button>
+    );
+  }
+  return (
+    <div className="mt-2 space-y-2 border border-red-200 p-3 text-xs">
+      <p className="text-red-900">Erase permanently. This cannot be undone; the activity log keeps who and how many, not the words.</p>
+      <label className="flex items-center gap-2">
+        <input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} />
+        Every conversation with {email}
+      </label>
+      <input className="w-full border border-sand px-2 py-1" value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Reason" />
+      <input className="w-full border border-sand px-2 py-1" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Type DELETE" aria-label="Type DELETE" />
+      <div className="flex gap-2">
+        <button type="button" disabled={busy || confirm !== "DELETE"} onClick={() => void erase()} className="bg-red-800 px-3 py-1.5 uppercase text-white disabled:opacity-50">
+          Erase
+        </button>
+        <button type="button" onClick={() => setOpen(false)} className="underline">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function AdminChatClient({ openId }: { openId: string | null }) {
+  const { data: session } = useSession();
+  const isSuperAdmin = session?.user?.role === "SUPER_ADMIN";
   const [status, setStatus] = useState<"OPEN" | "CLOSED">("OPEN");
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
   const [selected, setSelected] = useState<string | null>(openId);
   const [thread, setThread] = useState<Thread | null>(null);
   const [reply, setReply] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // Pages 1..page are kept on screen: "Load more" extends, polling refreshes the same span.
   const loadList = useCallback(async () => {
-    const r = await fetch(`/api/admin/chat?status=${status}`, { cache: "no-store" });
-    if (r.ok) setItems(((await r.json()) as { items: Item[] }).items);
-  }, [status]);
+    const all: Item[] = [];
+    let more = false;
+    for (let p = 1; p <= page; p++) {
+      const qs = new URLSearchParams({ status, page: String(p) });
+      if (query.trim()) qs.set("q", query.trim());
+      const r = await fetch(`/api/admin/chat?${qs.toString()}`, { cache: "no-store" });
+      if (!r.ok) return;
+      const j = (await r.json()) as { items: Item[]; hasMore: boolean };
+      all.push(...j.items);
+      more = j.hasMore;
+      if (!j.hasMore) break;
+    }
+    setItems(all);
+    setHasMore(more);
+  }, [status, query, page]);
 
   const loadThread = useCallback(async () => {
     if (!selected) return setThread(null);
@@ -169,12 +261,26 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
   return (
     <div>
       <ChatSettings />
-      <div className="mt-4 flex gap-2 font-body text-[11px]">
+      <div className="mt-4 flex flex-wrap items-center gap-2 font-body text-[11px]">
+        <input
+          className="min-w-[220px] flex-1 border border-sand px-3 py-1.5 text-sm"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(1);
+          }}
+          placeholder="Search open and closed: name, email, order, piece"
+          aria-label="Search conversations"
+        />
         {(["OPEN", "CLOSED"] as const).map((s) => (
           <button
             key={s}
             type="button"
-            onClick={() => setStatus(s)}
+            disabled={Boolean(query.trim())}
+            onClick={() => {
+              setStatus(s);
+              setPage(1);
+            }}
             className={clsx("admin-chip glass-1 glass-pill uppercase tracking-[0.08em]", status === s ? "border-[var(--glass-edge-bright)] text-choc" : "text-ink")}
           >
             {s === "OPEN" ? "Open" : "Closed"}
@@ -202,6 +308,13 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
               </button>
             </li>
           ))}
+          {hasMore ? (
+            <li>
+              <button type="button" onClick={() => setPage((p) => p + 1)} className="w-full border border-sand py-2 text-xs uppercase">
+                Load more
+              </button>
+            </li>
+          ) : null}
         </ul>
         <div className="glass-1 min-h-[50vh] p-4">
           {!thread ? (
@@ -219,6 +332,18 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
                 <p className={clsx("mt-2 text-xs", thread.contextKind === "ATELIER" ? "font-medium text-red-800" : "text-[#6B6B68]")}>
                   {CONTEXT_HINT[thread.contextKind]}
                 </p>
+                {isSuperAdmin ? (
+                  <div className="mt-2">
+                    <EraseControl
+                      id={thread.id}
+                      email={thread.visitorEmail}
+                      onDone={() => {
+                        setSelected(null);
+                        void loadList();
+                      }}
+                    />
+                  </div>
+                ) : null}
               </div>
               <div className="flex-1 space-y-2 overflow-y-auto py-3">
                 {thread.messages.map((m) => (

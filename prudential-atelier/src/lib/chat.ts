@@ -28,17 +28,39 @@ export const CHAT_AWAY_MS = 2 * 60 * 1000;
 /** The cookie lasts at most this long (and never longer than retention). */
 const CHAT_COOKIE_MAX_DAYS = 30;
 
-export async function getChatRetentionDays(): Promise<number | null> {
-  const raw = (await getSetting(CHAT_RETENTION_DAYS_KEY))?.trim();
-  if (!raw) return null;
-  const n = Number(raw);
-  return Number.isInteger(n) && n > 0 ? n : null;
+/** Stored value meaning "keep indefinitely" — an explicit decision, not an empty field. */
+export const CHAT_RETENTION_KEEP = "keep";
+
+/**
+ * The house's retention decision:
+ * - unset: nobody has decided — chat cannot be switched on;
+ * - keep: kept indefinitely, by decision (the house's answer, 23 Sep 2026);
+ * - days: deleted that many days after the last message.
+ */
+export type ChatRetention = { kind: "unset" } | { kind: "keep" } | { kind: "days"; days: number };
+
+export function parseChatRetention(raw: string | null | undefined): ChatRetention {
+  const v = raw?.trim().toLowerCase();
+  if (!v) return { kind: "unset" };
+  if (v === CHAT_RETENTION_KEEP) return { kind: "keep" };
+  const n = Number(v);
+  return Number.isInteger(n) && n > 0 ? { kind: "days", days: n } : { kind: "unset" };
 }
 
-/** Open only when switched on AND a retention period is set — never "forever" by default. */
+export async function getChatRetention(): Promise<ChatRetention> {
+  return parseChatRetention(await getSetting(CHAT_RETENTION_DAYS_KEY));
+}
+
+/** Days before deletion, or null (unset or kept indefinitely). */
+export async function getChatRetentionDays(): Promise<number | null> {
+  const r = await getChatRetention();
+  return r.kind === "days" ? r.days : null;
+}
+
+/** Open only when switched on AND a retention decision exists — never by default. */
 export async function isChatOpen(): Promise<boolean> {
   if ((await getSetting(CHAT_ENABLED_KEY)) !== "true") return false;
-  return (await getChatRetentionDays()) !== null;
+  return (await getChatRetention()).kind !== "unset";
 }
 
 export async function getChatHoursText(): Promise<string> {

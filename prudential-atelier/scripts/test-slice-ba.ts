@@ -23,6 +23,9 @@
  * email before a conversation (400); an atelier page is handed the form, not a
  * quote; the cookie is httpOnly; no browsing trail; replies emailed only when
  * she has left; the retention job deletes; the banner and privacy policy say so.
+ * Retention answered (keep indefinitely): untouched setting 409, "keep" enables
+ * and the job deletes nothing, closed conversations leave the list but stay
+ * searchable, erasure is SUPER_ADMIN only, confirmed, gone and logged.
  */
 import "./preload-test-env";
 import { readFileSync } from "node:fs";
@@ -51,7 +54,7 @@ import {
 import { expectedPaystackConsultationBind } from "../src/lib/payments/paystack-amount";
 import { priceGuideError, priceGuideText } from "../src/lib/price-guide";
 import { ChatContextKind } from "@prisma/client";
-import { openingLine } from "../src/lib/chat";
+import { openingLine, parseChatRetention } from "../src/lib/chat";
 import { isAtelierPath } from "../src/lib/chat-shared";
 import { COOKIE_BANNER_NOTICE } from "../src/lib/cookie-consent";
 import { COOKIE_MD, PRIVACY_POLICY_MD } from "../src/lib/legal-copy";
@@ -153,6 +156,11 @@ function unit() {
   assert(/start a chat, keep that conversation open/.test(COOKIE_BANNER_NOTICE), "the banner says chat stores something");
   assert(COOKIE_MD.includes("pg_chat"), "the cookie policy lists the chat cookie");
   assert(/## Live chat/.test(PRIVACY_POLICY_MD) && PRIVACY_POLICY_MD.includes("{{chat_retention_days}}"), "the privacy policy covers chat and its retention");
+  assert(/\{\{#chat_retention_keep\}\}[^{]*kept indefinitely/i.test(PRIVACY_POLICY_MD), "it says plainly when conversations are kept indefinitely");
+  assert(/To have a conversation removed, write to us/.test(PRIVACY_POLICY_MD), "and how to ask for one to be removed");
+  assert(parseChatRetention("keep").kind === "keep", "\"keep\" is a decision");
+  assert(parseChatRetention("").kind === "unset" && parseChatRetention(null).kind === "unset", "an empty field is not");
+  assert(parseChatRetention("90").kind === "days", "a day count is a period");
   assert(/## Consultation enquiries/.test(PRIVACY_POLICY_MD), "and the enquiry form");
   assert(/Contabo GmbH, in Germany/.test(PRIVACY_POLICY_MD), "and says the site and database are in Germany");
   assert(!/hosting regions can change/.test(PRIVACY_POLICY_MD), "the vague hosting line is gone");
@@ -539,19 +547,47 @@ async function live(base: string) {
     const chatAdmin = await prisma.user.create({
       data: { email: `ba-chat-${stamp}@example.test`, name: "BA Chat", role: Role.ADMIN, password: hash },
     });
+    const chatSuper = await prisma.user.create({
+      data: { email: `ba-chat-super-${stamp}@example.test`, name: "BA Super", role: Role.SUPER_ADMIN, password: hash },
+    });
+    const chatStaff = await prisma.user.create({
+      data: { email: `ba-chat-staff-${stamp}@example.test`, name: "BA Staff", role: Role.STAFF, isStaff: true, password: hash },
+    });
     const chatKeys = ["chat_enabled", "chat_retention_days", "chat_hours_text"];
     const chatBefore = await prisma.siteSetting.findMany({ where: { key: { in: chatKeys } } });
+    await prisma.siteSetting.deleteMany({ where: { key: { in: chatKeys } } });
+    const erasureLogs: string[] = [];
     try {
       const adminJar = await signIn(base, chatAdmin.email!, "Correct-Horse-9", ip);
+      const superJar = await signIn(base, chatSuper.email!, "Correct-Horse-9", ip);
+      const staffJar = await signIn(base, chatStaff.email!, "Correct-Horse-9", ip);
       const settings = (body: unknown) => fetch(`${base}/api/admin/chat/settings`, patch(body, adminJar));
-      const noRetention = await settings({ enabled: true, retentionDays: null });
-      assert(noRetention.status === 409, `chat cannot be switched on without a retention period (${noRetention.status})`);
-      const custSettings = await fetch(`${base}/api/admin/chat/settings`, patch({ enabled: true, retentionDays: 90 }, custJar));
+      // Start from "nobody has decided", through the API so the server's settings cache agrees.
+      const reset = await settings({ enabled: false, retention: null, hoursText: "" });
+      assert(reset.status === 200, "settings reset");
+      const { run: runRetention } = await import("../src/lib/cron/jobs/chat-retention");
+      const retentionJob = () => {
+        clearSettingCacheKey("chat_retention_days");
+        return runRetention({ now: new Date(), batchLimit: 500, isBudgetExhausted: () => false } as Parameters<typeof runRetention>[0]);
+      };
+
+      // The retention setting untouched: chat cannot be switched on.
+      const untouched = await settings({ enabled: true });
+      assert(untouched.status === 409, `chat cannot be enabled with the retention setting untouched (${untouched.status})`);
+      const cleared = await settings({ enabled: true, retention: null });
+      assert(cleared.status === 409, `nor with it cleared (${cleared.status})`);
+      const custSettings = await fetch(`${base}/api/admin/chat/settings`, patch({ enabled: true, retention: "keep" }, custJar));
       assert(custSettings.status === 403, `a customer cannot switch chat on (${custSettings.status})`);
       const offStart = await fetch(`${base}/api/chat`, json({ name: "Ada", email: "a@example.test", message: "hi", path: "/" }));
       assert(offStart.status === 403, `chat that is off refuses to start (${offStart.status})`);
-      const on = await settings({ enabled: true, retentionDays: 90, hoursText: "We answer 9-6 WAT." });
-      assert(on.status === 200, `with a retention period it switches on (${on.status})`);
+
+      // "Keep indefinitely" is a decision: it enables chat, and is recorded as such.
+      const keep = await settings({ enabled: true, retention: "keep", hoursText: "We answer 9-6 WAT." });
+      assert(keep.status === 200, `"keep indefinitely" enables chat (${keep.status})`);
+      const keepView = (await keep.json()) as { enabled: boolean; retention: { mode: string } };
+      assert(keepView.enabled && keepView.retention.mode === "keep", "and the setting records the decision");
+      const stored = await prisma.siteSetting.findUniqueOrThrow({ where: { key: "chat_retention_days" } });
+      assert(stored.value === "keep", "stored as a decision, not an empty field");
 
       const chatEmail = `ba-chat-visitor-${stamp}@example.test`;
       const noName = await fetch(`${base}/api/chat`, json({ email: chatEmail, message: "hi", path: "/" }));
@@ -587,26 +623,82 @@ async function live(base: string) {
       const custInbox = await fetch(`${base}/api/admin/chat`, { headers: { cookie: custJar.header() } });
       assert(custInbox.status === 403, `a customer cannot read the chat inbox (${custInbox.status})`);
 
-      await prisma.chatConversation.update({ where: { id: convo.id }, data: { lastMessageAt: new Date(Date.now() - 91 * 86_400_000) } });
-      const { run: runRetention } = await import("../src/lib/cron/jobs/chat-retention");
-      clearSettingCacheKey("chat_retention_days");
-      await runRetention({ now: new Date(), batchLimit: 500, isBudgetExhausted: () => false } as Parameters<typeof runRetention>[0]);
-      assert((await prisma.chatConversation.count({ where: { id: convo.id } })) === 0, "the retention job deletes a conversation past the period");
-      assert((await prisma.chatMessage.count({ where: { conversationId: convo.id } })) === 0, "with its messages");
+      // Kept indefinitely: even three years untouched, the job deletes nothing.
+      await prisma.chatConversation.update({ where: { id: convo.id }, data: { lastMessageAt: new Date(Date.now() - 3 * 365 * 86_400_000) } });
+      await retentionJob();
+      assert((await prisma.chatConversation.count({ where: { id: convo.id } })) === 1, "with \"keep\", the retention job deletes nothing");
+
+      // The inbox survives it: closed conversations leave the active list but stay findable.
+      const close = await fetch(`${base}/api/admin/chat/${convo.id}`, { ...patch({ status: "CLOSED" }, adminJar) });
+      assert(close.status === 200, "a conversation closes");
+      const active = (await (await fetch(`${base}/api/admin/chat`, { headers: { cookie: adminJar.header() } })).json()) as { items: { id: string }[]; hasMore: boolean };
+      assert(!active.items.some((c) => c.id === convo.id), "the active list shows open conversations only");
+      for (const q of [chatEmail, "Ada Obi"]) {
+        const found = (await (await fetch(`${base}/api/admin/chat?q=${encodeURIComponent(q)}`, { headers: { cookie: adminJar.header() } })).json()) as { items: { id: string }[] };
+        assert(found.items.some((c) => c.id === convo.id), `a closed conversation is found by "${q}"`);
+      }
+
+      // A period, if the house sets one later, is enforced by the same job.
+      await prisma.chatConversation.update({ where: { id: convo.id }, data: { lastMessageAt: new Date() } });
+      const ninety = await settings({ retention: 90 });
+      assert(ninety.status === 200, "a day count can replace \"keep\"");
+      const second = await prisma.chatConversation.create({
+        data: {
+          visitorName: "Ada Obi", visitorEmail: chatEmail, contextKind: "GENERAL", contextPath: "/", publicTokenExpiresAt: new Date(),
+          lastMessageAt: new Date(Date.now() - 91 * 86_400_000), messages: { create: { author: "VISITOR", body: "old" } },
+        },
+      });
+      await retentionJob();
+      assert((await prisma.chatConversation.count({ where: { id: second.id } })) === 0, "with 90 days, the job deletes a conversation past it");
+      await settings({ retention: "keep" });
+
+      // Erasure on request: SUPER_ADMIN only, typed confirmation, logged.
+      const other = await prisma.chatConversation.create({
+        data: { visitorName: "Ada Obi", visitorEmail: chatEmail, contextKind: "SHOP", contextPath: "/shop", publicTokenExpiresAt: new Date(), messages: { create: { author: "VISITOR", body: "second chat" } } },
+      });
+      const erase = (jar: Jar, body: unknown) => fetch(`${base}/api/admin/chat/${convo.id}/erase`, { ...json(body, jar) });
+      const good = { confirmation: "DELETE", allForVisitor: true, reason: "Erasure request under the NDPA" };
+      const byStaff = await erase(staffJar, good);
+      assert(byStaff.status === 403, `a STAFF actor cannot delete a conversation (${byStaff.status})`);
+      const byAdmin = await erase(adminJar, good);
+      assert(byAdmin.status === 403, `nor can a general admin (${byAdmin.status})`);
+      const unconfirmed = await erase(superJar, { ...good, confirmation: "delete" });
+      assert(unconfirmed.status === 400, `without the typed confirmation it is refused (${unconfirmed.status})`);
+      assert((await prisma.chatConversation.count({ where: { visitorEmail: chatEmail } })) === 2, "nothing was deleted by the refusals");
+      const erased = await erase(superJar, good);
+      assert(erased.status === 200, `SUPER_ADMIN erases (${erased.status})`);
+      const { logId, deleted } = (await erased.json()) as { logId: string; deleted: number };
+      erasureLogs.push(logId);
+      assert(deleted === 2, "every conversation for her email");
+      assert((await prisma.chatConversation.count({ where: { visitorEmail: chatEmail } })) === 0, "the conversations are gone");
+      assert((await prisma.chatMessage.count({ where: { conversationId: { in: [convo.id, other.id] } } })) === 0, "with their messages");
+      const log = await prisma.activityLog.findUniqueOrThrow({ where: { id: logId } });
+      const snap = log.snapshot as { visitor: { email: string }; conversations: { id: string; messages: number }[] };
+      assert(log.action === "DELETE" && log.module === "chat" && log.userId === chatSuper.id, "logged as a delete by the super admin");
+      assert(snap.visitor.email === chatEmail && snap.conversations.length === 2, "the log says what was deleted and for whom");
+      assert(!JSON.stringify(log.snapshot).includes("How much is a gown") && !JSON.stringify(log.snapshot).includes("second chat"), "and keeps no words");
 
       const off = await settings({ enabled: false });
       assert(off.status === 200, "chat switches off");
       const afterOff = await fetch(`${base}/api/chat`, json({ name: "Ada Obi", email: chatEmail, message: "hi", path: "/" }));
       assert(afterOff.status === 403, `and then refuses new chats (${afterOff.status})`);
     } finally {
+      // Leave the server's cache matching what is restored below.
+      if (chatBefore.length === 0) {
+        await fetch(`${base}/api/admin/chat/settings`, patch({ enabled: false, retention: null, hoursText: "" }, await signIn(base, chatAdmin.email!, "Correct-Horse-9", ip))).catch(() => {});
+      }
       await prisma.chatConversation.deleteMany({ where: { visitorEmail: { startsWith: "ba-chat-visitor-" } } });
+      await prisma.activityLog.deleteMany({ where: { id: { in: erasureLogs } } });
       await prisma.siteSetting.deleteMany({ where: { key: { in: chatKeys } } });
       for (const row of chatBefore) {
         const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = row as typeof row & { createdAt?: Date; updatedAt?: Date };
         await prisma.siteSetting.create({ data: rest });
       }
-      await prisma.errorLog.deleteMany({ where: { userId: chatAdmin.id } });
-      await prisma.user.delete({ where: { id: chatAdmin.id } });
+      for (const u of [chatAdmin, chatSuper, chatStaff]) {
+        await prisma.errorLog.deleteMany({ where: { userId: u.id } });
+        await prisma.activityLog.deleteMany({ where: { userId: u.id } }).catch(() => {});
+        await prisma.user.delete({ where: { id: u.id } });
+      }
     }
 
     // The one-day clock: an enquiry waiting over a day is raised once.

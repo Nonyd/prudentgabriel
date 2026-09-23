@@ -3,7 +3,7 @@
  *  LEGAL_COPY_REVISION is the newest of those page stamps. */
 
 
-export const LEGAL_COPY_REVISION = "ba-1";
+export const LEGAL_COPY_REVISION = "ba-2";
 export const DEFAULT_LEGAL_UPDATED = "23 September 2026";
 
 export function slugifyHeading(text: string): string {
@@ -207,7 +207,9 @@ The chat is run by the house on its own servers. No chat company receives it, an
 
 Starting a chat sets one cookie that keeps the conversation open on this browser; see the [Cookie Policy](/cookie-policy).
 
-{{#chat_retention_days}}Conversations are deleted {{chat_retention_days}} days after the last message.{{/chat_retention_days}} Chat is only switched on once the house has set how long conversations are kept.
+{{#chat_retention_keep}}The house keeps chat conversations indefinitely, so it can look back at what was said about an order or a piece. They are not deleted on a timer.{{/chat_retention_keep}}{{#chat_retention_days}}Conversations are deleted {{chat_retention_days}} days after the last message.{{/chat_retention_days}}
+
+To have a conversation removed, write to us (see How to write to us below) with "Chat" in the subject and the email you used. The house will erase every conversation held under that email and tell you when it is done.
 
 ## Who else receives your data
 
@@ -247,7 +249,7 @@ Financial records (orders, invoices, the payment ledger, gateway references) are
 
 Measurements, receipts, CVs, consultation enquiries, consultation notes and stage photographs stay until you ask us to delete them and the law lets us, or until the house deletes the record by hand.
 
-{{#chat_retention_days}}Chat conversations are deleted {{chat_retention_days}} days after the last message.{{/chat_retention_days}}
+{{#chat_retention_keep}}Chat conversations are kept indefinitely, until you ask us to erase them.{{/chat_retention_keep}}{{#chat_retention_days}}Chat conversations are deleted {{chat_retention_days}} days after the last message.{{/chat_retention_days}}
 
 Server error logs and activity logs (including impersonation) are kept until an admin clears or the house decides otherwise. There is no coded purge.
 
@@ -439,7 +441,7 @@ Needed for the shop to work. They are not optional.
 - **Signed-in session.** When you log in, Auth.js sets a session cookie (the name is the Auth.js default, typically \`authjs.session-token\`, or a secure variant on HTTPS). It holds a login token, not your password. It is required to stay logged in.
 - **Your bag** (\`{{cookie_cart_key}}\`). Local storage. Includes any measurements you typed for a made-to-measure line. Essential: without it the bag empties when you change page.
 - **Your currency** (\`{{cookie_currency_key}}\`). Local storage. Naira, dollar or sterling, and a cached rate. Essential: without it the price you saw would not be the price at checkout.
-- **Chat** (\`pg_chat\`). Set only if you start a chat. A random token that reopens your conversation on this browser; it holds no name, email or message, and page scripts cannot read it. It lasts up to 30 days{{#chat_retention_days}}, and never longer than conversations are kept ({{chat_retention_days}} days){{/chat_retention_days}}.
+- **Chat** (\`pg_chat\`). Set only if you start a chat. A random token that reopens your conversation on this browser; it holds no name, email or message, and page scripts cannot read it. It lasts up to 30 days{{#chat_retention_days}}, and never longer than conversations are kept ({{chat_retention_days}} days){{/chat_retention_days}}. The conversation itself is kept on the house's servers as the privacy policy describes, not in the cookie.
 - {{#impersonation_minutes}}**Admin only.** If a Super Admin views the site as you, a cookie named \`pg_admin_impersonate\` lasts {{impersonation_minutes}} minutes. A role-preview cookie named \`pg_admin_preview_role\` lasts one hour. Ordinary customers never receive these.{{/impersonation_minutes}}
 
 ## Other essential browser storage
@@ -576,9 +578,9 @@ export const LEGAL_SEED_ENTRIES: {
   md: string;
   revision: string;
 }[] = [
-  { page: "privacy", key: "legal_privacy_policy", label: "Privacy Policy", updatedKey: "legal_privacy_updated", md: PRIVACY_POLICY_MD, revision: "ba-1" },
+  { page: "privacy", key: "legal_privacy_policy", label: "Privacy Policy", updatedKey: "legal_privacy_updated", md: PRIVACY_POLICY_MD, revision: "ba-2" },
   { page: "terms", key: "legal_terms", label: "Terms & Conditions", updatedKey: "legal_terms_updated", md: TERMS_MD, revision: "ar-5" },
-  { page: "cookie", key: "legal_cookie_policy", label: "Cookie Policy", updatedKey: "legal_cookie_updated", md: COOKIE_MD, revision: "ba-1" },
+  { page: "cookie", key: "legal_cookie_policy", label: "Cookie Policy", updatedKey: "legal_cookie_updated", md: COOKIE_MD, revision: "ba-2" },
   { page: "returns", key: "legal_returns_policy", label: "Returns Policy", updatedKey: "legal_returns_updated", md: RETURNS_MD, revision: "ar-5" },
   { page: "shipping", key: "legal_shipping_policy", label: "Shipping Policy", updatedKey: "legal_shipping_updated", md: SHIPPING_MD, revision: "ar-5" },
 ];
