@@ -25,6 +25,7 @@ CRON_TZ=UTC
 0 9 * * * root /opt/prudentgabriel/deploy/cron-fire.sh review-requests
 0 9 * * * root /opt/prudentgabriel/deploy/cron-fire.sh balance-reminders
 0 10 * * * root /opt/prudentgabriel/deploy/cron-fire.sh stage-approval-reminders
+45 2 * * * root /opt/prudentgabriel/deploy/cron-fire.sh chat-retention
 15 * * * * root /opt/prudentgabriel/deploy/cron-fire.sh consultation-enquiry-alerts
 0 8 * * * root /opt/prudentgabriel/deploy/cron-fire.sh consultation-day-before
 0 11 * * * root /opt/prudentgabriel/deploy/cron-fire.sh unsent-quote-alerts

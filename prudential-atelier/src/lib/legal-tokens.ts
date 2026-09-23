@@ -16,6 +16,7 @@ import { isUsableBankAccount } from "@/lib/payments/bank-account";
 import { IMPERSONATE_TTL_MS } from "@/lib/admin-impersonate";
 import { RECEIPT_EMAIL_TTL_SEC } from "@/lib/media/receipt-src";
 import { logActivity } from "@/lib/logger";
+import { getChatRetentionDays } from "@/lib/chat";
 import {
   CONSENT_KEY,
   COOKIE_BANNER_ACKNOWLEDGE,
@@ -157,6 +158,8 @@ export async function resolveLegalTokens(): Promise<LegalTokenMap> {
     currencies_offered: currencies.join(", "),
     receipt_link_days: asToken(RECEIPT_EMAIL_TTL_SEC / 86400),
     impersonation_minutes: asToken(IMPERSONATE_TTL_MS / 60000),
+    // BA5: empty until the house sets it; the policy's chat retention line shows only then.
+    chat_retention_days: asToken((await getChatRetentionDays()) ?? 0),
     cookie_banner_notice: COOKIE_BANNER_NOTICE,
     cookie_banner_acknowledge: COOKIE_BANNER_ACKNOWLEDGE,
     cookie_consent_key: CONSENT_KEY,

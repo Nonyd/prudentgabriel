@@ -1,5 +1,6 @@
 export const CONSENT_KEY = "pg_cookie_consent";
-export const CURRENT_CONSENT_VERSION = "2.0";
+/** 2.1 (BA5): the banner now names the chat cookie, so everyone sees it again. */
+export const CURRENT_CONSENT_VERSION = "2.1";
 
 /** Bag and currency are essential: the shop cannot work without them. */
 export const ESSENTIAL_CART_STORAGE_KEY = "pa-cart";
@@ -7,7 +8,7 @@ export const ESSENTIAL_CURRENCY_STORAGE_KEY = "pa-currency";
 
 /** Shared by the banner and the cookie policy token. Do not duplicate this sentence. */
 export const COOKIE_BANNER_NOTICE =
-  "This site uses cookies to keep you signed in, hold your bag and remember your currency. Nothing else.";
+  "This site uses cookies to keep you signed in, hold your bag, remember your currency and, if you start a chat, keep that conversation open. Nothing else.";
 
 export const COOKIE_BANNER_ACKNOWLEDGE = "Acknowledge";
 

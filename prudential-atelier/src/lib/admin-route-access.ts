@@ -64,6 +64,7 @@ const PATH_RULES: PathRule[] = [
   { prefix: "/admin/system", gate: { type: "general_admin" } },
 
   { prefix: "/admin/content/messages", gate: { type: "general_admin" } },
+  { prefix: "/admin/chat", gate: { type: "general_admin" } },
   { prefix: "/admin/content/email-templates", gate: { type: "general_admin" } },
   { prefix: "/admin/content/send-email", gate: { type: "general_admin" } },
   { prefix: "/admin/content/unsubscribes", gate: { type: "general_admin" } },
@@ -255,6 +256,7 @@ export const ADMIN_PAGE_OWNERS: readonly {
   { path: "/admin/orders", owns: "Ready-to-wear orders", linksTo: "Nav" },
   { path: "/admin/checkouts", owns: "Abandoned checkouts", linksTo: "Nav" },
   { path: "/admin/consultations/enquiries", owns: "Consultation enquiries (BA2 queue)", linksTo: "Nav" },
+  { path: "/admin/chat", owns: "Live chat (BA5)", linksTo: "Nav" },
   { path: "/admin/consultations", owns: "Consultation bookings", linksTo: "Nav" },
   { path: "/admin/consultants", owns: "Consultant roster", linksTo: "Nav" },
   { path: "/admin/bespoke", owns: "Atelier pipeline", linksTo: "Nav" },
@@ -480,6 +482,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
       { href: "/admin/careers", label: "Careers", icon: "careers", alsoActive: ["/admin/careers/new"] },
       { href: "/admin/careers/applications", label: "Applications", icon: "applications" },
       { href: "/admin/content/messages", label: "Messages", icon: "messages", badgeKey: "messages" },
+      { href: "/admin/chat", label: "Chat", icon: "messages", badgeKey: "chat" },
       { href: "/admin/content/email-templates", label: "Email templates", icon: "templates" },
       { href: "/admin/content/send-email", label: "Send email", icon: "send-email" },
       { href: "/admin/content/unsubscribes", label: "Unsubscribes", icon: "unsubscribes" },

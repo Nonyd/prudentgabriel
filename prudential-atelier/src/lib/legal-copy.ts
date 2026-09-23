@@ -3,8 +3,8 @@
  *  LEGAL_COPY_REVISION is the newest of those page stamps. */
 
 
-export const LEGAL_COPY_REVISION = "av-1";
-export const DEFAULT_LEGAL_UPDATED = "14 September 2026";
+export const LEGAL_COPY_REVISION = "ba-1";
+export const DEFAULT_LEGAL_UPDATED = "23 September 2026";
 
 export function slugifyHeading(text: string): string {
   return text
@@ -191,6 +191,24 @@ Consultation notes, moodboards, sketches and stage photographs of a commission a
 
 We keep your points balance and a ledger of every credit and debit: what it was for, how many points, the naira rate locked on a redemption, and when unspent credit will lapse ({{#points_expiry_months}}{{points_expiry_months}} months from the credit{{/points_expiry_months}}). You can see your own wallet. Admin can see it when they look at your client file. Changing the naira-per-point rate revalues every outstanding balance. Past redemptions stay at the rate locked on that order.
 
+## Consultation enquiries
+
+A consultation starts with an enquiry. We collect your name, email and phone, the date and kind of event, who the piece is for and what kind of outfit, any notes, and any inspiration pictures you upload. The house uses it to decide whether it can take the commission and to prepare for you.
+
+The house staff who handle consultations see it in the admin. If the house declines, the reason is recorded for the house and is not sent to you. If it approves, you receive a personal booking link by email; the link stops working after a fortnight, once you have booked, or if the house sends a fresh one.
+
+When you book, we keep the exact wording of the consultation terms you accepted, with the fee, alongside the booking.
+
+## Live chat
+
+If you start a chat, we collect your name and email (asked before the conversation starts, so we can reply if you leave), your messages, and our replies. We also keep where the conversation started: the page you opened it on, and the piece or order it is about. We do not record the other pages you visit.
+
+The chat is run by the house on its own servers. No chat company receives it, and no chat script from another company loads on the site. House staff who answer chat read it in the admin. If you leave before we reply, the reply is also sent to your email, through the mail provider named below.
+
+Starting a chat sets one cookie that keeps the conversation open on this browser; see the [Cookie Policy](/cookie-policy).
+
+{{#chat_retention_days}}Conversations are deleted {{chat_retention_days}} days after the last message.{{/chat_retention_days}} Chat is only switched on once the house has set how long conversations are kept.
+
 ## Who else receives your data
 
 We do not sell your information. These companies receive what they need to do their job.
@@ -211,7 +229,9 @@ We do not sell your information. These companies receive what they need to do th
 
 Pictures you upload for a consultation or a receipt are stored on the house's own disk, not on Cloudinary, for new uploads. Older images may still live on Cloudinary (a US company) until they are migrated.
 
-The customer database is PostgreSQL. The application runs on the house's server. Both are reached over encrypted connections. Exact hosting regions can change; assume the application is in the house's control and that mail and payments leave Nigeria.
+**Contabo.** The website and the customer database run on servers the house rents from Contabo GmbH, in Germany. Everything you give the site (your account, orders, measurements, receipts, consultation enquiries and chat) is stored there, so it leaves Nigeria. Contabo provides the servers. The house controls the application and the database, and both are reached over encrypted connections.
+
+Mail and payments also leave Nigeria, as described above.
 
 ## How long we keep it
 
@@ -225,7 +245,9 @@ The code does not delete personal data on a calendar, except as follows.
 
 Financial records (orders, invoices, the payment ledger, gateway references) are kept for the statutory period Nigerian companies must keep them.
 
-Measurements, receipts, CVs, consultation notes and stage photographs stay until you ask us to delete them and the law lets us, or until the house deletes the record by hand.
+Measurements, receipts, CVs, consultation enquiries, consultation notes and stage photographs stay until you ask us to delete them and the law lets us, or until the house deletes the record by hand.
+
+{{#chat_retention_days}}Chat conversations are deleted {{chat_retention_days}} days after the last message.{{/chat_retention_days}}
 
 Server error logs and activity logs (including impersonation) are kept until an admin clears or the house decides otherwise. There is no coded purge.
 
@@ -417,6 +439,7 @@ Needed for the shop to work. They are not optional.
 - **Signed-in session.** When you log in, Auth.js sets a session cookie (the name is the Auth.js default, typically \`authjs.session-token\`, or a secure variant on HTTPS). It holds a login token, not your password. It is required to stay logged in.
 - **Your bag** (\`{{cookie_cart_key}}\`). Local storage. Includes any measurements you typed for a made-to-measure line. Essential: without it the bag empties when you change page.
 - **Your currency** (\`{{cookie_currency_key}}\`). Local storage. Naira, dollar or sterling, and a cached rate. Essential: without it the price you saw would not be the price at checkout.
+- **Chat** (\`pg_chat\`). Set only if you start a chat. A random token that reopens your conversation on this browser; it holds no name, email or message, and page scripts cannot read it. It lasts up to 30 days{{#chat_retention_days}}, and never longer than conversations are kept ({{chat_retention_days}} days){{/chat_retention_days}}.
 - {{#impersonation_minutes}}**Admin only.** If a Super Admin views the site as you, a cookie named \`pg_admin_impersonate\` lasts {{impersonation_minutes}} minutes. A role-preview cookie named \`pg_admin_preview_role\` lasts one hour. Ordinary customers never receive these.{{/impersonation_minutes}}
 
 ## Other essential browser storage
@@ -553,9 +576,9 @@ export const LEGAL_SEED_ENTRIES: {
   md: string;
   revision: string;
 }[] = [
-  { page: "privacy", key: "legal_privacy_policy", label: "Privacy Policy", updatedKey: "legal_privacy_updated", md: PRIVACY_POLICY_MD, revision: "ar-6" },
+  { page: "privacy", key: "legal_privacy_policy", label: "Privacy Policy", updatedKey: "legal_privacy_updated", md: PRIVACY_POLICY_MD, revision: "ba-1" },
   { page: "terms", key: "legal_terms", label: "Terms & Conditions", updatedKey: "legal_terms_updated", md: TERMS_MD, revision: "ar-5" },
-  { page: "cookie", key: "legal_cookie_policy", label: "Cookie Policy", updatedKey: "legal_cookie_updated", md: COOKIE_MD, revision: "av-1" },
+  { page: "cookie", key: "legal_cookie_policy", label: "Cookie Policy", updatedKey: "legal_cookie_updated", md: COOKIE_MD, revision: "ba-1" },
   { page: "returns", key: "legal_returns_policy", label: "Returns Policy", updatedKey: "legal_returns_updated", md: RETURNS_MD, revision: "ar-5" },
   { page: "shipping", key: "legal_shipping_policy", label: "Shipping Policy", updatedKey: "legal_shipping_updated", md: SHIPPING_MD, revision: "ar-5" },
 ];

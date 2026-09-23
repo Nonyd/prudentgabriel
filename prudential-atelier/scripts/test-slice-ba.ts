@@ -18,6 +18,11 @@
  *
  * Slice BA4 — a display-only price guide on gallery photographs: the wording,
  * the admin validation (400), and that no chargeable code reads it.
+ *
+ * Slice BA5/BA6 — first-party chat: no retention, no chat (409); name and
+ * email before a conversation (400); an atelier page is handed the form, not a
+ * quote; the cookie is httpOnly; no browsing trail; replies emailed only when
+ * she has left; the retention job deletes; the banner and privacy policy say so.
  */
 import "./preload-test-env";
 import { readFileSync } from "node:fs";
@@ -45,6 +50,11 @@ import {
 } from "../src/lib/consultation-fees";
 import { expectedPaystackConsultationBind } from "../src/lib/payments/paystack-amount";
 import { priceGuideError, priceGuideText } from "../src/lib/price-guide";
+import { ChatContextKind } from "@prisma/client";
+import { openingLine } from "../src/lib/chat";
+import { isAtelierPath } from "../src/lib/chat-shared";
+import { COOKIE_BANNER_NOTICE } from "../src/lib/cookie-consent";
+import { COOKIE_MD, PRIVACY_POLICY_MD } from "../src/lib/legal-copy";
 import { readdirSync, statSync } from "node:fs";
 import { addDaysToWatYmd, getWatYmd } from "../src/lib/consultation";
 import { ATELIER_BOOKINGS_SETTING_KEY, ATELIER_CLOSED_MESSAGE } from "../src/lib/atelier-bookings";
@@ -129,6 +139,30 @@ function unit() {
     .map((f) => f.slice(root.length + 1).replace(/\\/g, "/"));
   const stray = readers.filter((f) => !allowed.has(f));
   assert(stray.length === 0, `only display and admin code reads the price guide (${stray.join(", ")})`);
+
+  // BA5 / BA6
+  for (const p of ["/atelier", "/bridal/gowns", "/bespoke", "/consultation"]) assert(isAtelierPath(p), `${p} is the commission journey`);
+  for (const p of ["/shop/avril", "/track", "/about"]) assert(!isAtelierPath(p), `${p} is general support`);
+  const atelierLine = openingLine({ kind: ChatContextKind.ATELIER, path: "/atelier", label: null, productId: null, orderRef: null }, "https://x.test");
+  assert(atelierLine.includes("https://x.test/consultation"), "chat on an atelier page hands her the enquiry form");
+  assert(/can't quote or book/.test(atelierLine) && !/₦|\d{2,}/.test(atelierLine), "and never names a price");
+  const pieceLine = openingLine({ kind: ChatContextKind.PIECE, path: "/shop/avril", label: "Avril Gown", productId: "p", orderRef: null }, "");
+  assert(pieceLine.includes("Avril Gown"), "the opening line names the piece");
+  const chatModel = schemaText.slice(schemaText.indexOf("model ChatMessage {"), schemaText.indexOf("}", schemaText.indexOf("model ChatMessage {")));
+  assert(!/path|url|page/i.test(chatModel), "messages carry no page: context is the conversation's, never a trail");
+  assert(/start a chat, keep that conversation open/.test(COOKIE_BANNER_NOTICE), "the banner says chat stores something");
+  assert(COOKIE_MD.includes("pg_chat"), "the cookie policy lists the chat cookie");
+  assert(/## Live chat/.test(PRIVACY_POLICY_MD) && PRIVACY_POLICY_MD.includes("{{chat_retention_days}}"), "the privacy policy covers chat and its retention");
+  assert(/## Consultation enquiries/.test(PRIVACY_POLICY_MD), "and the enquiry form");
+  assert(/Contabo GmbH, in Germany/.test(PRIVACY_POLICY_MD), "and says the site and database are in Germany");
+  assert(!/hosting regions can change/.test(PRIVACY_POLICY_MD), "the vague hosting line is gone");
+  // CSP: chat is same-origin — no third-party script, socket or frame to allow.
+  const widget = readFileSync(resolve(__dirname, "../src/components/chat/ChatWidget.tsx"), "utf8");
+  const calls = Array.from(widget.matchAll(/fetch\(\s*"([^"]+)"/g)).map((m) => m[1]);
+  assert(calls.length > 0 && calls.every((u) => u.startsWith("/api/chat")), `the widget only calls this site's chat API (${calls})`);
+  assert(!/<script|src=\{?["']https?:/.test(widget), "and loads no external script");
+  const headers = readFileSync(resolve(__dirname, "../security-headers.mjs"), "utf8");
+  assert(!/tawk|crisp|intercom|zendesk|tidio|livechat/i.test(headers), "no chat vendor in the CSP");
   console.log("ok unit");
 }
 
@@ -501,6 +535,80 @@ async function live(base: string) {
       await prisma.user.delete({ where: { id: cms.id } });
     }
 
+    // BA5: chat.
+    const chatAdmin = await prisma.user.create({
+      data: { email: `ba-chat-${stamp}@example.test`, name: "BA Chat", role: Role.ADMIN, password: hash },
+    });
+    const chatKeys = ["chat_enabled", "chat_retention_days", "chat_hours_text"];
+    const chatBefore = await prisma.siteSetting.findMany({ where: { key: { in: chatKeys } } });
+    try {
+      const adminJar = await signIn(base, chatAdmin.email!, "Correct-Horse-9", ip);
+      const settings = (body: unknown) => fetch(`${base}/api/admin/chat/settings`, patch(body, adminJar));
+      const noRetention = await settings({ enabled: true, retentionDays: null });
+      assert(noRetention.status === 409, `chat cannot be switched on without a retention period (${noRetention.status})`);
+      const custSettings = await fetch(`${base}/api/admin/chat/settings`, patch({ enabled: true, retentionDays: 90 }, custJar));
+      assert(custSettings.status === 403, `a customer cannot switch chat on (${custSettings.status})`);
+      const offStart = await fetch(`${base}/api/chat`, json({ name: "Ada", email: "a@example.test", message: "hi", path: "/" }));
+      assert(offStart.status === 403, `chat that is off refuses to start (${offStart.status})`);
+      const on = await settings({ enabled: true, retentionDays: 90, hoursText: "We answer 9-6 WAT." });
+      assert(on.status === 200, `with a retention period it switches on (${on.status})`);
+
+      const chatEmail = `ba-chat-visitor-${stamp}@example.test`;
+      const noName = await fetch(`${base}/api/chat`, json({ email: chatEmail, message: "hi", path: "/" }));
+      assert(noName.status === 400, `chat refuses to start without a name (${noName.status})`);
+      const noEmail = await fetch(`${base}/api/chat`, json({ name: "Ada Obi", message: "hi", path: "/" }));
+      assert(noEmail.status === 400, `chat refuses to start without an email (${noEmail.status})`);
+
+      const atelierChat = await fetch(`${base}/api/chat`, json({ name: "Ada Obi", email: chatEmail, message: "How much is a gown?", path: "/atelier?utm_source=ig" }));
+      assert(atelierChat.status === 201, `a chat starts with name and email (${atelierChat.status})`);
+      const cookie = atelierChat.headers.getSetCookie().find((c) => c.startsWith("pg_chat="));
+      assert(cookie && /HttpOnly/i.test(cookie), "the conversation cookie is httpOnly");
+      const started = (await atelierChat.json()) as { conversation: { contextKind: string }; messages: { author: string; body: string }[] };
+      assert(started.conversation.contextKind === "ATELIER", "started on the atelier journey");
+      const house = started.messages.find((m) => m.author === "SYSTEM");
+      assert(house && house.body.includes("/consultation") && !/₦/.test(house.body), "chat on an atelier page offers the form, not a quote");
+      const convo = await prisma.chatConversation.findFirstOrThrow({ where: { visitorEmail: chatEmail } });
+      assert(convo.contextPath === "/atelier", "the page is kept without its query");
+
+      const chatCookie = cookie!.split(";")[0];
+      const thread = await fetch(`${base}/api/chat`, { headers: { cookie: chatCookie } });
+      assert(thread.status === 200, `her cookie reopens the conversation (${thread.status})`);
+      const add = await fetch(`${base}/api/chat/messages`, { ...json({ body: "Also: sizing?" }), headers: { "content-type": "application/json", cookie: chatCookie, "x-forwarded-for": ip } });
+      assert(add.status === 201, `she can add a message (${add.status})`);
+      const stranger = await fetch(`${base}/api/chat`, { headers: { cookie: "pg_chat=not-a-real-token-but-long-enough-to-try-000" } });
+      assert(stranger.status === 404, `a made-up cookie opens nothing (${stranger.status})`);
+
+      const reply = (body: string) => fetch(`${base}/api/admin/chat/${convo.id}`, { ...json({ body }, adminJar) });
+      const present = await reply("Welcome — the form is linked above.");
+      assert(present.status === 201 && !((await present.json()) as { emailed: boolean }).emailed, "she is here: no email");
+      await prisma.chatConversation.update({ where: { id: convo.id }, data: { visitorSeenAt: new Date(Date.now() - 10 * 60 * 1000) } });
+      const away = await reply("Following up by email too.");
+      assert(away.status === 201 && ((await away.json()) as { emailed: boolean }).emailed, "she left: the reply is emailed");
+      const custInbox = await fetch(`${base}/api/admin/chat`, { headers: { cookie: custJar.header() } });
+      assert(custInbox.status === 403, `a customer cannot read the chat inbox (${custInbox.status})`);
+
+      await prisma.chatConversation.update({ where: { id: convo.id }, data: { lastMessageAt: new Date(Date.now() - 91 * 86_400_000) } });
+      const { run: runRetention } = await import("../src/lib/cron/jobs/chat-retention");
+      clearSettingCacheKey("chat_retention_days");
+      await runRetention({ now: new Date(), batchLimit: 500, isBudgetExhausted: () => false } as Parameters<typeof runRetention>[0]);
+      assert((await prisma.chatConversation.count({ where: { id: convo.id } })) === 0, "the retention job deletes a conversation past the period");
+      assert((await prisma.chatMessage.count({ where: { conversationId: convo.id } })) === 0, "with its messages");
+
+      const off = await settings({ enabled: false });
+      assert(off.status === 200, "chat switches off");
+      const afterOff = await fetch(`${base}/api/chat`, json({ name: "Ada Obi", email: chatEmail, message: "hi", path: "/" }));
+      assert(afterOff.status === 403, `and then refuses new chats (${afterOff.status})`);
+    } finally {
+      await prisma.chatConversation.deleteMany({ where: { visitorEmail: { startsWith: "ba-chat-visitor-" } } });
+      await prisma.siteSetting.deleteMany({ where: { key: { in: chatKeys } } });
+      for (const row of chatBefore) {
+        const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = row as typeof row & { createdAt?: Date; updatedAt?: Date };
+        await prisma.siteSetting.create({ data: rest });
+      }
+      await prisma.errorLog.deleteMany({ where: { userId: chatAdmin.id } });
+      await prisma.user.delete({ where: { id: chatAdmin.id } });
+    }
+
     // The one-day clock: an enquiry waiting over a day is raised once.
     const waitingRes = await fetch(`${base}/api/consultations/enquiries`, json(enquiry(`ba-wait-${stamp}@example.test`, later)));
     const waiting = (await waitingRes.json()) as { enquiryNumber: string };
@@ -517,7 +625,7 @@ async function live(base: string) {
       where: { entityId: waitingRow.id, title: "Enquiry waiting over a day" },
     });
     assert(raised.length === 1 && raised[0].type === "NEW_CONSULTATION", `raised once, as NEW_CONSULTATION (${raised.length})`);
-    console.log("ok live: BA2 invitation walk, BA3 fees (frozen; USD shown = locked = charged = bound), BA4 price guide");
+    console.log("ok live: BA2 invitation walk, BA3 fees (frozen; USD shown = locked = charged = bound), BA4 price guide, BA5 chat");
   } finally {
     await prisma.consultationEnquiry.deleteMany({ where: { id: { in: enquiryIds } } });
     await prisma.adminNotification.deleteMany({ where: { entityId: { in: [...enquiryIds, ...bookingIds] } } });

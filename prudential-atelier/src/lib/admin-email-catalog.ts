@@ -74,6 +74,7 @@ export const EMAIL_TEMPLATE_KEYS = {
   CONSULTATION_ENQUIRY_APPROVED: "consultation_enquiry_approved",
   CONSULTATION_ENQUIRY_DECLINED: "consultation_enquiry_declined",
   CONSULTATION_DAY_BEFORE: "consultation_day_before",
+  CHAT_REPLY: "chat_reply",
 } as const;
 
 export type EmailTemplateKey = (typeof EMAIL_TEMPLATE_KEYS)[keyof typeof EMAIL_TEMPLATE_KEYS];
@@ -1041,6 +1042,21 @@ const CLIENT_TEMPLATES: EmailTemplateMeta[] = [
       cta_label: "Visit the shop",
       cta_link: "{{shopLink}}",
       footer_note: "Reference {{enquiryRef}}",
+    },
+  },
+  {
+    key: EMAIL_TEMPLATE_KEYS.CHAT_REPLY,
+    label: "Chat reply (when the visitor has left)",
+    group: "client",
+    sortOrder: 24,
+    defaults: {
+      subject: "A reply from the house",
+      heading: "{{staffName}} replied to your chat",
+      body_1: "Dear {{firstName}},\n\n{{reply}}",
+      body_2: "You can reply to this email, or carry on the conversation on the site.",
+      cta_label: "Continue the conversation",
+      cta_link: "{{link}}",
+      footer_note: "",
     },
   },
   {

@@ -44,8 +44,8 @@ const sept = new Date("2026-09-14T10:00:00+01:00");
 function runPure() {
   assert(
     COOKIE_BANNER_NOTICE ===
-      "This site uses cookies to keep you signed in, hold your bag and remember your currency. Nothing else.",
-    "cookie banner sentence is unchanged",
+      "This site uses cookies to keep you signed in, hold your bag, remember your currency and, if you start a chat, keep that conversation open. Nothing else.",
+    "cookie banner names exactly what is stored (BA5 added chat)",
   );
   const cookieMd = src("src/lib/legal-copy.ts");
   assert(cookieMd.includes("There is no Reject Non-Essential"), "cookie policy still has no analytics toggle");

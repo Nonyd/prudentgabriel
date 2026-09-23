@@ -3159,3 +3159,70 @@ model RateLimitBucket {
 
   @@index([resetAt])
 }
+
+/// BA5: first-party live chat. The context belongs to the conversation (where
+/// it started and what it concerns), never to the visitor: no browsing trail.
+enum ChatContextKind {
+  PIECE
+  SHOP
+  ORDER
+  ATELIER
+  GENERAL
+}
+
+enum ChatAuthor {
+  VISITOR
+  STAFF
+  SYSTEM
+}
+
+enum ChatStatus {
+  OPEN
+  CLOSED
+}
+
+model ChatConversation {
+  id            String          @id @default(cuid())
+  /// Capability token (AZ3 shape): SHA-256 of the raw value in the visitor's
+  /// httpOnly cookie. Random default opens nothing.
+  publicToken   String          @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
+  publicTokenExpiresAt DateTime?
+  /// Required before a conversation starts (the server refuses without them).
+  visitorName   String
+  visitorEmail  String
+  userId        String?
+  /// Where it started (path only, no query) and what it concerns.
+  contextKind   ChatContextKind
+  contextPath   String
+  contextLabel  String?
+  productId     String?
+  orderRef      String?
+  status        ChatStatus      @default(OPEN)
+  lastMessageAt DateTime        @default(now())
+  /// Last time the visitor's widget fetched the thread: a reply after this is emailed.
+  visitorSeenAt DateTime        @default(now())
+  staffSeenAt   DateTime?
+  closedAt      DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  messages      ChatMessage[]
+
+  @@index([status, lastMessageAt])
+  @@index([lastMessageAt])
+}
+
+model ChatMessage {
+  id             String           @id @default(cuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  author         ChatAuthor
+  staffUserId    String?
+  staffName      String?
+  body           String           @db.Text
+  /// Set when a staff reply was emailed because the visitor had left.
+  emailedAt      DateTime?
+  createdAt      DateTime         @default(now())
+
+  @@index([conversationId, createdAt])
+}

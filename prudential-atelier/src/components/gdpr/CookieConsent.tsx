@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   acknowledgeCookieNotice,
@@ -11,15 +11,34 @@ import {
 
 export function CookieConsent() {
   const [showBanner, setShowBanner] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setShowBanner(needsConsentBanner());
   }, []);
 
+  // While the banner shows, floating controls (the chat launcher) sit above it.
+  useEffect(() => {
+    const root = document.documentElement;
+    const el = ref.current;
+    if (!showBanner || !el) {
+      root.style.removeProperty("--cookie-banner-offset");
+      return;
+    }
+    const set = () => root.style.setProperty("--cookie-banner-offset", `${el.offsetHeight + 12}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      root.style.removeProperty("--cookie-banner-offset");
+    };
+  }, [showBanner]);
+
   if (!showBanner) return null;
 
   return (
-    <div className="fixed inset-x-3 bottom-3 z-[100] glass-1 glass-panel px-4 py-4 sm:px-6">
+    <div ref={ref} className="fixed inset-x-3 bottom-3 z-[100] glass-1 glass-panel px-4 py-4 sm:px-6">
       <div className="mx-auto flex min-w-0 max-w-site flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <p
           className="max-w-2xl leading-relaxed"

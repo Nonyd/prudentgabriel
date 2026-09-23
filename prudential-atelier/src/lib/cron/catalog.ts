@@ -92,6 +92,12 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     migrated: true,
   },
   {
+    name: "chat-retention",
+    schedule: "45 2 * * *",
+    description: "BA5: delete chat conversations older than the house's retention period",
+    migrated: true,
+  },
+  {
     name: "consultation-enquiry-alerts",
     schedule: "15 * * * *",
     description: "BA2: raise consultation enquiries still undecided after a day (once each)",

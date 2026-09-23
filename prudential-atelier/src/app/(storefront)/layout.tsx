@@ -11,6 +11,9 @@ import { getProductionCopy, productionLeadRangeFromCopy } from "@/lib/production
 import { getFabricPromiseHours } from "@/lib/fabric-promise";
 import { organizationJsonLd } from "@/lib/seo-jsonld";
 import { getSetting } from "@/lib/settings";
+import { Suspense } from "react";
+import { ChatWidget } from "@/components/chat/ChatWidget";
+import { isChatOpen } from "@/lib/chat";
 import {
   STOREFRONT_CACHE_TAGS,
   getCachedCMSContent,
@@ -30,7 +33,7 @@ const FOOTER_KEYS = [
 ] as const;
 
 export default async function StorefrontLayout({ children }: { children: React.ReactNode }) {
-  const [announcementCms, footerCms, collections, productionCopy, org, fabricPromiseHours] = await Promise.all([
+  const [announcementCms, footerCms, collections, productionCopy, org, fabricPromiseHours, chatOpen] = await Promise.all([
     getCachedCMSContent([...ANNOUNCEMENT_KEYS], STOREFRONT_CACHE_TAGS.cmsChrome),
     getCachedCMSContent([...FOOTER_KEYS], STOREFRONT_CACHE_TAGS.cmsChrome),
     getNavCollections(),
@@ -51,6 +54,8 @@ export default async function StorefrontLayout({ children }: { children: React.R
       }),
     ),
     getFabricPromiseHours(),
+    // BA5: only when switched on with a retention period set.
+    isChatOpen().catch(() => false),
   ]);
 
   const showAnnouncement = cmsBool(announcementCms, "announcement_bar_enabled", true);
@@ -84,6 +89,11 @@ export default async function StorefrontLayout({ children }: { children: React.R
         <CartDrawer />
         <SearchModal />
         <PageBeacon />
+        {chatOpen ? (
+          <Suspense fallback={null}>
+            <ChatWidget />
+          </Suspense>
+        ) : null}
       </div>
     </ProductionTimeProvider>
   );

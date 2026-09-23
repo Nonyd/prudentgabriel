@@ -27,6 +27,7 @@ export const LEGAL_TOKEN_NAMES = [
   "currencies_offered",
   "receipt_link_days",
   "impersonation_minutes",
+  "chat_retention_days",
   "cookie_banner_notice",
   "cookie_banner_acknowledge",
   "cookie_consent_key",
@@ -89,6 +90,7 @@ export const LEGAL_SIGNIFICANT_SETTING_KEYS = new Set<string>([
   "shipping_quote_pending_consent",
   "shipping_quote_manual_consent",
   "bespoke_deposit_percent",
+  "chat_retention_days",
 ]);
 
 export const LEGAL_PUBLIC_PATHS = [

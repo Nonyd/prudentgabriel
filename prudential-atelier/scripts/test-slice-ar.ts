@@ -75,6 +75,7 @@ const FIXTURE_TOKENS: Record<string, string> = {
   currencies_offered: "NGN, USD, GBP",
   receipt_link_days: "7",
   impersonation_minutes: "30",
+  chat_retention_days: "90",
   cookie_banner_notice: COOKIE_BANNER_NOTICE,
   cookie_banner_acknowledge: COOKIE_BANNER_ACKNOWLEDGE,
   cookie_consent_key: CONSENT_KEY,
@@ -101,10 +102,11 @@ function runConverter() {
 }
 
 function runFacts() {
-  assert(LEGAL_COPY_REVISION === "av-1", "revision stamp");
+  assert(LEGAL_COPY_REVISION === "ba-1", "revision stamp");
   assert(DEFAULT_LEGAL_UPDATED.includes("September 2026"), "last-updated date is this slice");
   const byPage = Object.fromEntries(LEGAL_SEED_ENTRIES.map((e) => [e.page, e.revision]));
-  assert(byPage.cookie === "av-1" && byPage.privacy === "ar-6", "cookie republishes this slice; privacy stays");
+  // BA5/BA6: chat, enquiries and hosting in Germany republish privacy and cookie.
+  assert(byPage.cookie === "ba-1" && byPage.privacy === "ba-1", "privacy and cookie republish this slice");
   assert(byPage.terms === "ar-5" && byPage.returns === "ar-5" && byPage.shipping === "ar-5", "other legal pages keep their lawyer revision");
 
   for (const term of DEFAULT_HOUSE_DOCUMENT_TERMS) {
@@ -193,7 +195,8 @@ function runFacts() {
 }
 
 function runCookieConsent() {
-  assert(CURRENT_CONSENT_VERSION === "2.0", "acknowledgement version bumps past category JSON");
+  // BA5 bumped 2.0 -> 2.1 so everyone sees the banner that now names the chat cookie.
+  assert(CURRENT_CONSENT_VERSION === "2.1", "acknowledgement version bumps with the banner wording");
   assert(
     parseCookieConsent({
       version: "1.0",
@@ -206,12 +209,12 @@ function runCookieConsent() {
     "v1 category flags are not treated as an acknowledgement",
   );
   const ok = parseCookieConsent({
-    version: "2.0",
+    version: "2.1",
     timestamp: "2026-09-14T00:00:00.000Z",
     acknowledged: true,
     analytics: true,
   });
-  assert(ok?.acknowledged === true && ok.version === "2.0", "v2 acknowledgement is accepted");
+  assert(ok?.acknowledged === true && ok.version === "2.1", "current acknowledgement is accepted");
   assert(ok && !("analytics" in ok) && !("marketing" in ok) && !("functional" in ok), "stored shape has no category flags");
 
   const consentSrc = src("src/lib/cookie-consent.ts");
