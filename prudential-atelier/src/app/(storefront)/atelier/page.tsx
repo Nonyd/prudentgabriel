@@ -29,8 +29,10 @@ const ATELIER_KEYS = [
   ...CRAFT_STAGES.map(craftStageLineKey),
 ];
 
-/** Enough rows to assemble a dozen pieces from several frames each. */
-const GALLERY_ROWS = 80;
+/** Every published atelier photograph (34 today); pieces are assembled from all of them. */
+const GALLERY_ROWS = 300;
+/** Pieces shown. The first cap (12) hid six gowns without anyone noticing: keep it well above the gallery. */
+const GALLERY_PIECES = 48;
 
 export default async function AtelierPage() {
   const [galleryRows, reviews, cms] = isSkipDbBuild()
@@ -76,7 +78,7 @@ export default async function AtelierPage() {
     <main>
       <AtelierLandingPage
         heroItems={heroItems}
-        pieces={groupAtelierPieces(galleryRows, 12, {
+        pieces={groupAtelierPieces(galleryRows, GALLERY_PIECES, {
           // Invented demo words and prices: staging and laptops only, never production.
           showPlaceholders: placeholderContentVisible(process.env.NEXT_PUBLIC_APP_URL, [process.env.APP_URL]),
         })}

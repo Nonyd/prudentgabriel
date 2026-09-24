@@ -282,6 +282,49 @@ function demo() {
   const gowns = groupAtelierPieces(applied, 12, { showPlaceholders: true });
   assert(gowns.length === 5 && gowns.map((g) => g.frames.length).join() === "3,3,2,2,2", `five gowns, with 3, 3, 2, 2 and 2 photographs (${gowns.map((g) => g.frames.length)})`);
 
+  // Staging on 24 September, after v1: all 34 published photographs in public order
+  // (read from /api/gallery). v1 had grouped and written gowns A-E from the first twelve.
+  const order = [
+    "9f6eb9302a6d23629d66adc5cb9894f4", "58dfe3dfbcdc911da7eab18ea6af11c1", "d565b4bb9dc541801f94aa224fb4bfac", "60693b9a9f94286201e8fa89557f908e",
+    "f25cadc1420d4eedb54a7b6dd487ce38", "4696eada76848b79175bf95b0610eefe", "4777b76434896042c3f3f6f72b283897", "40574387932d3bea7463d736657c0f9c",
+    "f680ae56ad57a75316258e7915047b80", "2801d5b680d61c11a34294de6e046a97", "563f4d258a8d64de8a93fdb4aa54a1c1", "4472016f48fbc32b060038ec2fa6e24f",
+    "dc53e8287465b1d8785b00d4150e8b5f", "5a30947268ba11bcb95d3c9e2cdd6024", "591c54b3465814f40ea521bbd18d87bd", "82bdf899f88b2edf04cd6875b49e2a6f",
+    "564c742e7d2185c050b56b13c3ae3587", "3f9ac59f4e7f8845acf89ee2852e72b5", "3fa71f830f433deed1474ba899263369", "df1be869eadd6d974ae439f35cf57dfe",
+    "699fc6a5ad7a26dfcb6e620657cbb72b", "761e4eb9799232712c84779687147476", "efad5a12d6f8dfff7e9aa01a3c251dda", "edfd4a3d78aac5db0ba159fad450ac21",
+    "8a9c95991776433dd3e48e03b1065141", "75e1199ae727ff170902175bc30d423f", "aba99014a27db713b9497bb9923ed873", "b6f49778914fb60bddec900a88070e05",
+    "0255eaa9c44275918a7466633896110a", "c3f21f48299abedb2d7b37ff2464fa63", "0d2d39c5bb13d57f325cad9fb093b081", "3e5d8405b84b01df374f6d40ac6df8ec",
+    "0de1d04b8f206778af730ad6ddfcd8c6", "6fe5155335d8e3b2272fd52a90e9de2a",
+  ];
+  const v1Group: Record<string, string> = {
+    "58dfe3dfbcdc911da7eab18ea6af11c1": "s0", "60693b9a9f94286201e8fa89557f908e": "s0",
+    "f25cadc1420d4eedb54a7b6dd487ce38": "s2", "4472016f48fbc32b060038ec2fa6e24f": "s2",
+    "4777b76434896042c3f3f6f72b283897": "s5", "563f4d258a8d64de8a93fdb4aa54a1c1": "s7", "2801d5b680d61c11a34294de6e046a97": "s8",
+  };
+  const v1Heads = new Set(["s0", "s2", "s5", "s7", "s8"]);
+  const now = order.map((hash, i) =>
+    f(`s${i}`, hash, {
+      pieceOfId: v1Group[hash] ?? null,
+      ...(v1Heads.has(`s${i}`) ? { caption: "v1 placeholder", description: "v1", priceFloorNGN: 2_000_000 } : {}),
+    }),
+  );
+  const v2 = planDemoContent(now);
+  assert(v2.deleteDuplicates.length === 0, "v2 deletes nothing");
+  assert(v2.fill.map((x) => x.caption).join() === "Folasade,Omolara,Ebele,Yewande,Zainab,Nkechi", `v2 fills the six gowns v1 never saw (${v2.fill.map((x) => x.caption)})`);
+  assert(["A", "B", "C", "D", "E"].every((g) => v2.skipped.some((x) => x.gown === g && /already written/.test(x.reason))), "and leaves the five v1 wrote alone");
+  assert(v2.group.length === 16 && !v2.group.some((g) => v1Group[order[Number(g.id.slice(1))]!]), `v2 groups the 16 loose photographs and re-points none (${v2.group.length})`);
+  const v2Group = Object.fromEntries(v2.group.map((g) => [g.id, g.pieceOfId]));
+  const after: GalleryRow[] = now.map((r) => {
+    const fill = v2.fill.find((x) => x.id === r.id);
+    return { ...r, alt: null, pieceOfId: r.pieceOfId ?? v2Group[r.id] ?? null, ...(fill ? { caption: fill.caption, description: fill.description, priceFloorNGN: fill.priceFloorNGN } : {}) };
+  });
+  const eleven = groupAtelierPieces(after, 48, { showPlaceholders: true });
+  assert(eleven.length === 11, `the gallery is eleven gowns (${eleven.length})`);
+  assert(eleven.map((g) => g.frames.length).join() === "3,3,3,3,4,3,4,3,3,3,2", `every one of the 34 photographs in its gown (${eleven.map((g) => g.frames.length)})`);
+  assert(eleven.reduce((n, g) => n + g.frames.length, 0) === 34, "no photograph lost");
+  // A grouping the house made is hers.
+  const hers = planDemoContent([f("h1", order[13]!), f("h2", order[16]!, { pieceOfId: "elsewhere" })]);
+  assert(!hers.group.some((g) => g.id === "h2"), "a photograph the house grouped is never re-pointed");
+
   // Never over the house's own words.
   const written = planDemoContent([f("h", "9f6eb9302a6d23629d66adc5cb9894f4", { priceFloorNGN: 2_750_000 })]);
   assert(written.fill.length === 0 && written.skipped.some((x) => x.gown === "A" && /already written/.test(x.reason)), "a gown the house has written is left alone");
@@ -297,7 +340,7 @@ function demo() {
   assert(refusal({ stagingDb: true, allowFixtures: true }) !== null, "the staging database from a laptop is refused");
   assert(refusal({ allowFixtures: true }) === null && refusal({}) !== null, "a laptop's scratch database only with ALLOW_FIXTURES=true");
   assert(DEMO_GOWNS.every((g) => g.files.every((x) => /^[0-9a-f]{32}$/.test(x))), "gowns are found by file hash, not position");
-  console.log("ok demo: 2 duplicates deleted, 7 photographs grouped, 5 gowns given placeholder words and round floors; staging only, once, never over hers");
+  console.log("ok demo: v1 on the first 14 rows (2 duplicates out, 5 gowns); v2 on staging today adds 6 gowns and groups 16 photographs: 11 gowns, all 34 photographs; round floors; staging only, once per version, never over hers");
 }
 
 function joining() {

@@ -122,7 +122,7 @@ export function AtelierPieceCard({
               {piece.title}
             </span>
           ) : null}
-          {piece.title && price ? <span aria-hidden> · </span> : null}
+          {piece.title && price ? <span className="atelier-piece-sep" aria-hidden> · </span> : null}
           {price ? <span className="atelier-piece-price">{piece.title ? price : price.charAt(0).toUpperCase() + price.slice(1)}</span> : null}
         </p>
       ) : null}

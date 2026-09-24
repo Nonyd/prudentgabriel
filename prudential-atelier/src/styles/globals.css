@@ -949,6 +949,18 @@ a.admin-cta {
   white-space: nowrap;
 }
 
+/* Two across on a phone there is no room for one line: name above, price below,
+   rather than a line that breaks after the dot. */
+@media (max-width: 767px) {
+  .atelier-piece-name {
+    display: block;
+  }
+
+  .atelier-piece-sep {
+    display: none;
+  }
+}
+
 .atelier-piece-card .product-gallery-meta {
   display: none;
 }

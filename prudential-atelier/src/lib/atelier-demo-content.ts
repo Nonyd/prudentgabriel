@@ -5,7 +5,7 @@
  * the admin flags on the tile and clears when Mrs. Prudent saves her own values;
  * the production site never renders it (placeholderContentVisible).
  *
- * Applied once, on staging only, by scripts/seed-atelier-demo.ts. Gowns are
+ * Applied on staging only, once per version, by scripts/seed-atelier-demo.ts. Gowns are
  * found by the content hash in their file name, so the plan survives reorders.
  */
 
@@ -18,7 +18,12 @@ export type DemoGown = {
   priceFloorNGN: number;
 };
 
-export const DEMO_CONTENT_MARKER = "atelier_demo_content_v1";
+/**
+ * v1 (23 Sept) covered the first twelve photographs: five gowns. v2 covers all
+ * thirty-four: eleven gowns. A version already applied is never re-run; a new
+ * version only adds (it groups what is ungrouped and fills what is unwritten).
+ */
+export const DEMO_CONTENT_MARKER = "atelier_demo_content_v2";
 
 export const DEMO_GOWNS: DemoGown[] = [
   {
@@ -39,7 +44,7 @@ export const DEMO_GOWNS: DemoGown[] = [
   },
   {
     key: "C",
-    files: ["4696eada76848b79175bf95b0610eefe", "4777b76434896042c3f3f6f72b283897"],
+    files: ["4696eada76848b79175bf95b0610eefe", "4777b76434896042c3f3f6f72b283897", "591c54b3465814f40ea521bbd18d87bd"],
     title: "Morenike",
     description:
       "An engagement gown in silver crepe, the skirt worked from waist to ankle in ribbons of folded fabric. The cape sleeves carry crystal and pearl, matched to her gele.",
@@ -47,7 +52,7 @@ export const DEMO_GOWNS: DemoGown[] = [
   },
   {
     key: "D",
-    files: ["40574387932d3bea7463d736657c0f9c", "563f4d258a8d64de8a93fdb4aa54a1c1"],
+    files: ["40574387932d3bea7463d736657c0f9c", "563f4d258a8d64de8a93fdb4aa54a1c1", "df1be869eadd6d974ae439f35cf57dfe"],
     title: "Titilayo",
     description:
       "A traditional wedding gown in violet sequinned lace. The black sleeves are pleated and built out from the shoulder, and the neckline is edged with fabric flowers sewn on one at a time.",
@@ -55,11 +60,69 @@ export const DEMO_GOWNS: DemoGown[] = [
   },
   {
     key: "E",
-    files: ["f680ae56ad57a75316258e7915047b80", "2801d5b680d61c11a34294de6e046a97"],
+    files: [
+      "f680ae56ad57a75316258e7915047b80",
+      "2801d5b680d61c11a34294de6e046a97",
+      "dc53e8287465b1d8785b00d4150e8b5f",
+      "82bdf899f88b2edf04cd6875b49e2a6f",
+    ],
     title: "Chiamaka",
     description:
       "Made for the sister of the bride: emerald beaded lace with lattice shoulders shaped over a fine wire frame and set with crystals, with a gele and bag to match.",
     priceFloorNGN: 4_000_000,
+  },
+  {
+    key: "F",
+    files: ["5a30947268ba11bcb95d3c9e2cdd6024", "564c742e7d2185c050b56b13c3ae3587", "3f9ac59f4e7f8845acf89ee2852e72b5"],
+    title: "Folasade",
+    description:
+      "A mermaid gown in powder-blue satin for a traditional engagement. The hem opens into stiffened petals lined in orange, green and gold, and a peacock is beaded across the hip by hand.",
+    priceFloorNGN: 3_500_000,
+  },
+  {
+    key: "G",
+    files: [
+      "3fa71f830f433deed1474ba899263369",
+      "761e4eb9799232712c84779687147476",
+      "edfd4a3d78aac5db0ba159fad450ac21",
+      "8a9c95991776433dd3e48e03b1065141",
+    ],
+    title: "Omolara",
+    description:
+      "For a Yoruba traditional wedding: aso-oke woven in violet and green, pleated into sleeves that stand out from the shoulder, with coral beads at the neck and a train of purple silk behind.",
+    priceFloorNGN: 4_000_000,
+  },
+  {
+    key: "H",
+    files: ["699fc6a5ad7a26dfcb6e620657cbb72b", "efad5a12d6f8dfff7e9aa01a3c251dda", "75e1199ae727ff170902175bc30d423f"],
+    title: "Ebele",
+    description:
+      "A pre-wedding portrait gown: a fitted column embroidered in gold sequins and bugle beads, cut to sit beside the groom's jacket so the two catch the light together.",
+    priceFloorNGN: 2_500_000,
+  },
+  {
+    key: "I",
+    files: ["aba99014a27db713b9497bb9923ed873", "b6f49778914fb60bddec900a88070e05", "0255eaa9c44275918a7466633896110a"],
+    title: "Yewande",
+    description:
+      "For an introduction ceremony: a black bodice beaded in silver with sculpted shoulders, over a column skirt embroidered in an ivory-and-black pattern.",
+    priceFloorNGN: 3_000_000,
+  },
+  {
+    key: "J",
+    files: ["c3f21f48299abedb2d7b37ff2464fa63", "0d2d39c5bb13d57f325cad9fb093b081", "3e5d8405b84b01df374f6d40ac6df8ec"],
+    title: "Zainab",
+    description:
+      "A cocktail mini for a thirtieth birthday: a gold corset worked in paillettes and bugle beads, finished with a beaded fringe that swings below the knee.",
+    priceFloorNGN: 1_500_000,
+  },
+  {
+    key: "K",
+    files: ["0de1d04b8f206778af730ad6ddfcd8c6", "6fe5155335d8e3b2272fd52a90e9de2a"],
+    title: "Nkechi",
+    description:
+      "Close work from a reception gown: flowers cut and stitched by hand in pearl, coral and gold over turquoise and blush beading, with a feather bag dyed to match.",
+    priceFloorNGN: 3_500_000,
   },
 ];
 
@@ -120,7 +183,8 @@ export function planDemoContent(rows: DemoRow[]): DemoPlan {
     }
     for (const hash of others) {
       const frame = byHash.get(hash);
-      if (frame && frame.id !== main.id && frame.pieceOfId !== main.id) plan.group.push({ id: frame.id, pieceOfId: main.id });
+      // Only ungrouped photographs: a grouping the house made is hers.
+      if (frame && frame.id !== main.id && !frame.pieceOfId) plan.group.push({ id: frame.id, pieceOfId: main.id });
     }
     const written = Boolean(main.caption?.trim() || main.description?.trim() || main.priceFloorNGN != null);
     if (written) {
