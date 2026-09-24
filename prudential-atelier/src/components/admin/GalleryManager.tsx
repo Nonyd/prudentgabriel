@@ -31,7 +31,7 @@ type UploadJob = {
   error?: string;
 };
 
-type MediaFilter = "all" | "photos" | "videos" | "hidden" | "needs-guide" | "needs-description";
+type MediaFilter = "all" | "photos" | "videos" | "hidden" | "needs-guide" | "needs-description" | "placeholder";
 
 const CATEGORY_LABEL: Record<GalleryCategory, string> = {
   ATELIER: "Atelier",
@@ -156,7 +156,7 @@ function PieceStatus({
   duplicateOf,
 }: {
   position: number;
-  gaps: { needsPriceGuide: boolean; needsDescription: boolean };
+  gaps: { needsPriceGuide: boolean; needsDescription: boolean; placeholder: boolean };
   frameOf: string | null;
   frameCount: number;
   duplicateOf: number | null;
@@ -173,8 +173,19 @@ function PieceStatus({
           {frameCount > 0 ? (
             <span className={cn(flag, "border-sand text-[#6B6B68]")}>Piece · {frameCount + 1} photos</span>
           ) : null}
-          {gaps.needsPriceGuide ? <span className={cn(flag, needs)}>No price guide</span> : null}
-          {gaps.needsDescription ? <span className={cn(flag, needs)}>No description</span> : null}
+          {gaps.placeholder ? (
+            <span
+              className={cn(flag, "border-[#C53030] bg-[#C53030] text-white")}
+              title="The title, description and price on this piece were invented for review. Replace them with the house's own."
+            >
+              Placeholder · invented, replace
+            </span>
+          ) : (
+            <>
+              {gaps.needsPriceGuide ? <span className={cn(flag, needs)}>No price guide</span> : null}
+              {gaps.needsDescription ? <span className={cn(flag, needs)}>No description</span> : null}
+            </>
+          )}
         </>
       )}
       {duplicateOf ? (
@@ -257,6 +268,8 @@ export function GalleryManager() {
   // BB3: atelier pieces — a description on the main photograph, and which piece a frame belongs to.
   const [editDescription, setEditDescription] = useState("");
   const [editPieceOf, setEditPieceOf] = useState("");
+  // Invented words and price (seed-atelier-demo.ts). Saving her own values clears it.
+  const [editPlaceholder, setEditPlaceholder] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -301,6 +314,7 @@ export function GalleryManager() {
   }, [items]);
   const needsGuideCount = heads.filter((item) => pieceGaps(item).needsPriceGuide).length;
   const needsDescriptionCount = heads.filter((item) => pieceGaps(item).needsDescription).length;
+  const placeholderCount = heads.filter((item) => pieceGaps(item).placeholder).length;
   const headLabel = (id: string) => {
     const head = items.find((item) => item.id === id);
     return head ? `#${positionOf.get(id) ?? "?"} ${mediaCaption(head)}` : "another piece";
@@ -314,6 +328,7 @@ export function GalleryManager() {
       if (filter === "hidden") return !item.isPublished;
       if (filter === "needs-guide") return pieceGaps(item).needsPriceGuide;
       if (filter === "needs-description") return pieceGaps(item).needsDescription;
+      if (filter === "placeholder") return pieceGaps(item).placeholder;
       return true;
     });
   }, [items, filter]);
@@ -421,6 +436,7 @@ export function GalleryManager() {
     setEditCategory(img.category);
     setEditDescription(img.description ?? "");
     setEditPieceOf(img.pieceOfId ?? "");
+    setEditPlaceholder(img.placeholder);
   };
 
   const editIsFrame = pieceMode && editCategory === "ATELIER" && Boolean(editPieceOf);
@@ -445,6 +461,7 @@ export function GalleryManager() {
               ...(pieceMode ? { description: editDescription.trim() || null } : {}),
             }),
         ...(pieceMode ? { pieceOfId: editPieceOf || null } : {}),
+        ...(editing.placeholder ? { placeholder: editPlaceholder } : {}),
       }),
     });
     if (!res.ok) {
@@ -529,7 +546,7 @@ export function GalleryManager() {
             {videoCount > 0 ? ` · ${videoCount} ${videoCount === 1 ? "film" : "films"}` : ""}
             {hiddenCount > 0 ? ` · ${hiddenCount} hidden` : ""}
             {pieceMode && items.length > 0
-              ? ` · ${heads.length} ${heads.length === 1 ? "piece" : "pieces"} · ${needsGuideCount} need a price guide · ${needsDescriptionCount} need a description`
+              ? ` · ${heads.length} ${heads.length === 1 ? "piece" : "pieces"} · ${needsGuideCount} need a price guide · ${needsDescriptionCount} need a description${placeholderCount ? ` · ${placeholderCount} placeholder` : ""}`
               : ""}
           </span>
           <button
@@ -640,6 +657,7 @@ export function GalleryManager() {
               ? ([
                   ["needs-guide", "Needs price guide"],
                   ["needs-description", "Needs description"],
+                  ...(placeholderCount > 0 ? ([["placeholder", "Placeholder"]] as const) : []),
                 ] as const)
               : []),
           ] as const
@@ -661,6 +679,7 @@ export function GalleryManager() {
             {id === "hidden" && hiddenCount > 0 ? ` (${hiddenCount})` : ""}
             {id === "needs-guide" ? ` (${needsGuideCount})` : ""}
             {id === "needs-description" ? ` (${needsDescriptionCount})` : ""}
+            {id === "placeholder" ? ` (${placeholderCount})` : ""}
           </button>
         ))}
       </div>
@@ -1039,6 +1058,23 @@ export function GalleryManager() {
               value={editCaption}
               onChange={(e) => setEditCaption(e.target.value)}
             />
+            {editing?.placeholder ? (
+              <div className="mt-4 border border-[#C53030] bg-[#FDEEEE] p-3 font-body text-xs leading-relaxed text-[#7B1E1E]">
+                <p className="font-medium uppercase tracking-[0.08em]">Placeholder: invented for review</p>
+                <p className="mt-1">
+                  The title, description and price on this piece were made up so the page could be judged. None of
+                  it came from the house. Write the real ones and save: that clears this mark.
+                </p>
+                <label className="mt-2 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={editPlaceholder}
+                    onChange={(e) => setEditPlaceholder(e.target.checked)}
+                  />
+                  Still a placeholder
+                </label>
+              </div>
+            ) : null}
             {pieceMode && editing && editCategory === "ATELIER" ? (
               <>
                 <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Piece</label>

@@ -4,7 +4,7 @@ import { AtelierLandingPage } from "@/components/atelier/AtelierLandingPage";
 import { getCMSContent } from "@/lib/cms";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
 import { cmsRouteMetadata } from "@/lib/seo";
-import { groupAtelierPieces } from "@/lib/atelier-gallery";
+import { groupAtelierPieces, placeholderContentVisible } from "@/lib/atelier-gallery";
 import { CRAFT_STAGES, craftStageLineKey } from "@/lib/atelier-craft-stages";
 import { resolveHeroCarouselItems } from "@/lib/hero-carousel";
 import { withHeroVideoVariants } from "@/lib/hero-video-variants";
@@ -49,6 +49,7 @@ export default async function AtelierPage() {
         pieceOfId: true,
         priceFloorNGN: true,
         priceCeilingNGN: true,
+        placeholder: true,
       },
     }),
     prisma.review.findMany({
@@ -75,7 +76,10 @@ export default async function AtelierPage() {
     <main>
       <AtelierLandingPage
         heroItems={heroItems}
-        pieces={groupAtelierPieces(galleryRows)}
+        pieces={groupAtelierPieces(galleryRows, 12, {
+          // Invented demo words and prices: staging and laptops only, never production.
+          showPlaceholders: placeholderContentVisible(process.env.NEXT_PUBLIC_APP_URL, [process.env.APP_URL]),
+        })}
         reviews={reviews.map((r) => ({
           id: r.id,
           clientName: r.user.name ?? "Client",

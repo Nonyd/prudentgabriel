@@ -199,6 +199,13 @@ SQL
 
 psql_prod < "$DUMP"
 
+echo "== strip placeholder atelier content (invented on staging for review; never live)"
+psql_prod <<'SQL'
+UPDATE "GalleryImage"
+SET caption = NULL, description = NULL, "priceFloorNGN" = NULL, "priceCeilingNGN" = NULL, placeholder = false
+WHERE placeholder = true;
+SQL
+
 psql_prod <<'SQL'
 DROP TABLE IF EXISTS _sync_staff_users;
 CREATE TABLE _sync_staff_users (LIKE "User" INCLUDING DEFAULTS);

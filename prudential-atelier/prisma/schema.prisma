@@ -1405,6 +1405,10 @@ model GalleryImage {
   /// (caption), description and price guide for the whole piece.
   pieceOfId   String?
   pieceOf     GalleryImage?   @relation("GalleryPiece", fields: [pieceOfId], references: [id], onDelete: SetNull)
+  /// The title, description and price guide on this row were invented for review
+  /// (scripts/seed-atelier-demo.ts), not written by the house. Flagged in the admin;
+  /// cleared when real values are saved; never rendered on the production site.
+  placeholder Boolean         @default(false)
   frames      GalleryImage[]  @relation("GalleryPiece")
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt

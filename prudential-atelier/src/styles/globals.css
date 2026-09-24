@@ -921,6 +921,44 @@ a.admin-cta {
   }
 }
 
+/* Atelier pieces (/atelier, AtelierPieceGrid). A DELIBERATE DEPARTURE from the
+   gallery card above, which is photography-only at rest. The shop can hide a
+   price because it is one tap away on the product page; an atelier gown has no
+   product page, and the question every visitor arrives with is what it costs.
+   So the gown's name and price guide sit at rest under every frame, at every
+   width. Only the description waits: on hover or keyboard focus over the
+   photograph on a desktop; not shown on touch, where there is no hover and the
+   2-up frames have no room for it. Do not "fix" this back to the shop. */
+.atelier-piece-rest {
+  margin: 0;
+  padding: 0.65rem 0.85rem 0.95rem;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-mid);
+}
+
+.atelier-piece-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--choc);
+}
+
+.atelier-piece-price {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.atelier-piece-card .product-gallery-meta {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) and (min-width: 768px) {
+  .atelier-piece-card .product-gallery-meta {
+    display: flex;
+  }
+}
+
 /* Admin follows html[data-theme]. Dark glass is AD0 choc-deep + .14 edge,
    not an invert of the light fills. Inputs stay solid so naira stays readable. */
 .admin-area {

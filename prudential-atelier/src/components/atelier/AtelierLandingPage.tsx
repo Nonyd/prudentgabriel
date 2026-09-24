@@ -1,5 +1,6 @@
 import { cmsGet } from "@/lib/cms-helpers";
 import type { AtelierPiece } from "@/lib/atelier-gallery";
+import { PRICE_GUIDE_NOTE, priceGuideRest } from "@/lib/price-guide";
 import { craftStages, processHeadline } from "@/lib/atelier-craft-stages";
 import type { HeroCarouselItem } from "@/lib/hero-carousel";
 import { AtelierScreening } from "@/components/atelier/AtelierScreening";
@@ -98,6 +99,10 @@ export function AtelierLandingPage({
             <h2 id="atelier-pieces" className="font-display text-[clamp(2rem,4vw,3rem)] font-normal leading-tight text-choc">
               {galleryHeadline}
             </h2>
+            {/* BA4: the prices under the gowns are a guide; said once, here. */}
+            {pieces.some((p) => priceGuideRest(p.guide)) ? (
+              <p className="mt-3 max-w-xl font-body text-[14px] leading-relaxed text-text-mid">{PRICE_GUIDE_NOTE}</p>
+            ) : null}
           </div>
           <AtelierPieceGrid pieces={pieces} />
         </section>

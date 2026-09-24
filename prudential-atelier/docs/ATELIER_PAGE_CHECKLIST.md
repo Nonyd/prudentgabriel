@@ -1,93 +1,57 @@
-# /atelier: what the house fills in (Slices BB and BB2)
+# /atelier: what the house fills in
 
-The code is on `staging`. What a bride sees on /atelier now depends on what is
-entered here, and none of it needs a developer.
+The atelier gallery on `staging` shows **5 gowns**, each with its photographs
+together. Each gown's name and price sit under its photograph at every width;
+its description shows on hover on a desktop.
 
-**Inventory, 23 September 2026.** The published atelier gallery has **14 rows
-showing 5 gowns in 12 distinct photographs.** Two rows are the same file
-uploaded twice. No gown has a price floor, a title or a description.
+## The names, words and prices on staging are PLACEHOLDERS
 
-(An earlier count of "3 gowns in 8 frames" was wrong. The old page loaded only
-the first 8 rows, so the other gowns never appeared.)
+**Everything below was invented** so the page could be judged with content in
+it. None of it came from the house: not the names, occasions, fabrics or
+prices. Mrs. Prudent's real values replace it.
 
-| Gown | What it looks like | Tiles in Admin → Gallery → Atelier |
-|---|---|---|
-| A | Pink, purple and blue beaded corset mini; pink studio backdrop | #1, #2, #5, plus duplicates #3 (of #2) and #7 (of #1) |
-| B | Green and navy beaded mini with scalloped hem; chandelier room | #4, #6, #14 |
-| C | Silver sculpted column gown with beaded cape sleeves, silver gele; grey backdrop | #8, #9 |
-| D | Purple sequinned column, black pleated ruffle sleeves, purple gele, coral necklace | #10, #13 |
-| E | Green beaded gown with lattice shoulders, green gele, green patent bag | #11, #12 |
+| Gown | Photographs | Placeholder name | Placeholder floor | Placeholder description |
+|---|---|---|---|---|
+| A | pink, purple and blue beaded corset mini (3) | Adaeze | ₦2,000,000 | A corset mini for a fortieth birthday dinner, boned and then beaded by hand in violet, jade and sky, so the colour moves when she does. |
+| B | green and navy beaded mini, scalloped hem (3) | Ifeoma | ₦2,500,000 | For the after-party of a Lagos wedding: navy, emerald and gold beads laid in swirls over a structured bodice, and a scalloped hem beaded to its edge so it holds its shape on the dance floor. |
+| C | silver sculpted column, cape sleeves (2) | Morenike | ₦3,500,000 | An engagement gown in silver crepe, the skirt worked from waist to ankle in ribbons of folded fabric. The cape sleeves carry crystal and pearl, matched to her gele. |
+| D | purple sequinned column, black pleated sleeves (2) | Titilayo | ₦3,000,000 | A traditional wedding gown in violet sequinned lace. The black sleeves are pleated and built out from the shoulder, and the neckline is edged with fabric flowers sewn on one at a time. |
+| E | green beaded gown, lattice shoulders (2) | Chiamaka | ₦4,000,000 | Made for the sister of the bride: emerald beaded lace with lattice shoulders shaped over a fine wire frame and set with crystals, with a gele and bag to match. |
 
-The `#` numbers are the ones printed on each tile, and they assume no hidden
-rows sit between them. If a number doesn't match the description, go by the
-photograph. Numbers change when the gallery is reordered.
+### How they are marked
 
-## 1. Frames that are one gown (Glory, about 10 minutes)
+- Each gown's main photograph carries `placeholder = true` in the database.
+- **Admin → Gallery → Atelier**: its tile shows a red **Placeholder · invented, replace** badge. The header counts them ("… · 5 placeholder"), and a **Placeholder** filter lists them.
+- Opening one shows a red box: *"Placeholder: invented for review. The title, description and price on this piece were made up so the page could be judged. None of it came from the house."*
+- **They never appear on the production site.** The live page shows a placeholder gown as its photographs alone, and `deploy/sync-storefront-from-staging.sh` strips placeholder values when it copies the gallery to production.
 
-**Admin → Gallery → Atelier.** A tile marked **Same file as #n** is an exact
-duplicate. Deleting it leaves its twin's photograph in place.
+### How Mrs. Prudent replaces them
 
-1. Delete **#3** and **#7**, the two duplicates.
-2. For each extra photograph, open it, set **Piece** to "Another photograph of #n", then Save:
-   - Gown A: #2 and #5 → #1
-   - Gown B: #6 and #14 → #4
-   - Gown C: #9 → #8
-   - Gown D: #13 → #10
-   - Gown E: #12 → #11
+**Admin → Gallery → Atelier** → the gown's main photograph (the red-badged tile) → edit:
 
-Afterwards the header reads **5 pieces**, and /atelier shows five gowns. Each
-gown's photographs page inside its card: swipe on a phone, arrows on a desktop.
+- **Title**: the gown's real name.
+- **Description**: what it is, what it is made of, what it was for.
+- **Price guide → From (₦)**: her floor. The dialog previews the sentence.
 
-## 2. Price floors (Mrs. Prudent decides; Glory enters)
+Saving any change to the title, description or floor clears the placeholder
+mark, and the red badge goes. A gown she agrees with as written can be kept by
+unticking **Still a placeholder** and saving; she should do that only for words
+she would have written herself.
 
-**Admin → Gallery → Atelier**. Open each gown's *main* photograph (#1, #4, #8,
-#10, #11) and fill in **Price guide → From (₦)**. The card then shows "Begins
-around ₦3,000,000 · A guide, not a price"; the dialog previews the wording.
+How it got there: `scripts/seed-atelier-demo.ts` (content in
+`src/lib/atelier-demo-content.ts`). The staging container runs it at start-up,
+once. It refuses any database that looks like production, and never overwrites
+a gown the house has already written. It leaves a record in the setting
+`atelier_demo_content_v1`.
 
-- [ ] Gown A (#1): ₦________
-- [ ] Gown B (#4): ₦________
-- [ ] Gown C (#8): ₦________
-- [ ] Gown D (#10): ₦________
-- [ ] Gown E (#11): ₦________
+## What the seed also did (real, not placeholder)
 
-Use the **Needs price guide** filter to see what is still missing. Display
-only: nothing that charges money reads this (BA4).
+- Deleted the two duplicate uploads: gown A's photographs had each been uploaded twice. The files themselves stay.
+- Grouped each gown's photographs under its main photograph, so the page shows 5 gowns rather than 12 frames.
 
-## 3. Titles and descriptions (Mrs. Prudent's words; Glory enters)
+## Still to come from the house
 
-In the same dialog, on each main photograph:
-
-- **Title**: what the piece is called.
-- **Description**: what it is, what it is made of, what it was for. For example: *"Ivory silk faille with a hand-beaded corset bodice. Made for a church wedding in Enugu."*
-
-- [ ] Gown A · [ ] Gown B · [ ] Gown C · [ ] Gown D · [ ] Gown E
-
-Use the **Needs description** filter to see what is still missing. The name,
-description and floor appear over the photograph on hover on a desktop, and
-under it on a phone. A gown with no words shows its photograph alone.
-
-## 4. Stage lines (Mrs. Prudent, optional)
-
-**Admin → Content → Pages → Atelier** has one **Stage line** per craft stage.
-The defaults make no claims about hours. If the house wants a line such as
-*"Beading and finishing: four hundred hours, sometimes more, by hand"*, write
-it here with the real number. The heading counts the stages itself; to word it
-differently, use `{count}` where the number goes.
-
-## 5. The hero photograph or film (Glory)
-
-**No hero-grade photograph exists yet.** Until one is set, the hero shows gown
-A's first frame. That file is 1080 × 1350 and 86 KB, so on a laptop it is
-stretched across a 1440-wide screen and looks soft. The code can't sharpen it.
-
-**Admin → Content → Pages → Atelier → Hero photograph or film.** The hero is
-edge to edge at every width, so the ideal is a **landscape photograph at least
-2400 px wide**, with the subject off to the right (the headline panel sits on
-the left). A film works too: the server makes its poster and a phone-sized
-copy. Change it each season.
-
-## What no screen can fix
-
-Five gowns, each shown once with its photographs together, is a real
-portfolio. Five is still few for a house quoting ₦3M to ₦10M, and every new
-commission photographed properly adds to this page with no code at all.
+- [ ] Real name, description and floor for each of the five gowns (above).
+- [ ] **A hero photograph.** Until one is set, the hero shows gown A's first frame, a 1080 × 1350 file stretched across a laptop screen. **Admin → Content → Pages → Atelier → Hero photograph or film.** Best is a landscape photograph at least 2400 px wide with the subject to the right (the headline panel sits on the left). A film works too.
+- [ ] Optional: the stage lines (**Admin → Content → Pages → Atelier**), with real numbers if the house wants them ("four hundred hours, sometimes more, by hand").
+- [ ] More gowns. Five is a real portfolio but a short one for ₦3M–₦10M commissions. Each new gown is: upload, title, description, floor.

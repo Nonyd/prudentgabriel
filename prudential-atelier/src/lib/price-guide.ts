@@ -32,18 +32,17 @@ export function priceGuideText(guide: PriceGuide): string | null {
 }
 
 /**
- * BB2: the same guide in the few words a gallery card has room for, beside
- * PRICE_GUIDE_SHORT_NOTE. Null when there is no floor.
+ * The same guide in the few words that sit at rest under a gallery frame:
+ * "from ₦3,000,000", or "₦3,000,000 – ₦8,000,000" for a range. Null when there
+ * is no floor. The page states PRICE_GUIDE_NOTE once above the gallery.
  */
-export function priceGuideShort(guide: PriceGuide): string | null {
+export function priceGuideRest(guide: PriceGuide): string | null {
   const floor = guide.priceFloorNGN;
   if (!floor || floor <= 0) return null;
   const ceiling = guide.priceCeilingNGN;
-  if (ceiling && ceiling > floor) return `About ${naira(floor)} – ${naira(ceiling)}`;
-  return `Begins around ${naira(floor)}`;
+  if (ceiling && ceiling > floor) return `${naira(floor)} – ${naira(ceiling)}`;
+  return `from ${naira(floor)}`;
 }
-
-export const PRICE_GUIDE_SHORT_NOTE = "A guide, not a price";
 
 /** Admin validation: a ceiling needs a floor and must not be below it. */
 export function priceGuideError(guide: PriceGuide): string | null {

@@ -133,6 +133,7 @@ function unit() {
     // BB3: pieces carry the guide on their main photograph; display and admin only.
     "src/lib/atelier-gallery.ts",
     "src/components/atelier/AtelierPieceGrid.tsx",
+    "src/lib/atelier-demo-content.ts",
   ]);
   const root = resolve(__dirname, "..");
   const walk = (dir: string): string[] =>

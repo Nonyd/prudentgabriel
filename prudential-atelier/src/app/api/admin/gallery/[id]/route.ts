@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { destroyStoredMedia } from "@/lib/media/destroy";
 import { revalidateGallery } from "@/lib/revalidate";
 import { priceGuideError } from "@/lib/price-guide";
-import { joiningPieceId, planPieceChange } from "@/lib/atelier-gallery";
+import { joiningPieceId, placeholderAfterSave, planPieceChange } from "@/lib/atelier-gallery";
 
 /** BA4: whole naira, display only. Null clears it. */
 const nairaGuide = z.number().int().positive().max(10_000_000_000).nullable().optional();
@@ -23,6 +23,8 @@ const patchSchema = z.object({
   description: z.string().max(2000).nullable().optional(),
   /** BB3: the piece this frame belongs to (its main photograph); null makes it a piece of its own. */
   pieceOfId: z.string().min(1).nullable().optional(),
+  /** Keep (true) or drop (false) the "invented for review" mark; saving real values drops it anyway. */
+  placeholder: z.boolean().optional(),
 });
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -93,6 +95,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         ...(sortOrder !== undefined ? { sortOrder } : {}),
         ...(moving && nextCategory ? { category: nextCategory } : {}),
         ...plan.row,
+        // Invented words and prices stay marked until the house replaces them.
+        placeholder: plan.row.pieceOfId ? false : placeholderAfterSave(existing, parsed.data),
       },
     });
   });

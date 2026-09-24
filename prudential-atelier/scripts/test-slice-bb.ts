@@ -36,11 +36,16 @@ import {
   groupAtelierPieces,
   joiningPieceId,
   pieceGaps,
+  placeholderAfterSave,
+  placeholderContentVisible,
   planPieceChange,
   type AtelierPiece,
   type GalleryRow,
 } from "../src/lib/atelier-gallery";
 import { AtelierLandingPage } from "../src/components/atelier/AtelierLandingPage";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { DEMO_GOWNS, demoSeedRefusal, planDemoContent, type DemoRow } from "../src/lib/atelier-demo-content";
 import { AtelierPieceCard, atelierGridColumns } from "../src/components/atelier/AtelierPieceGrid";
 
 function assert(cond: unknown, message: string): asserts cond {
@@ -133,8 +138,8 @@ const row = (id: string, url: string, extra: Partial<GalleryRow> = {}): GalleryR
 });
 
 function pieces() {
-  // The /atelier gallery on 23 September 2026, in public order: three gowns in eight
-  // frames, two of them the same file uploaded twice.
+  // The first eight rows of the /atelier gallery (all the old page loaded), in public order:
+  // three gowns in eight frames, two of them the same file uploaded twice.
   const A1 = "/media/public/g/9f6eb9.jpg";
   const A2 = "/media/public/g/58dfe3.jpg";
   const A3 = "/media/public/g/60693b.jpg";
@@ -174,31 +179,125 @@ function pieces() {
   for (const plain of [grouped[2]!, grouped[1]!]) {
     const html = render(h(AtelierPieceCard, { piece: plain }));
     assert((html.match(/<img\b/g) ?? []).length === 1, "the photograph renders");
-    assert(!/<h3\b/.test(html) && !html.includes("product-gallery-meta"), "no name slot, no caption block");
+    assert(!html.includes("atelier-piece-rest") && !html.includes("product-gallery-meta"), "no name line, no description block");
     assert(!/<(p|h3|div|span|figcaption)\b[^>]*>\s*<\/\1>/.test(html), "no empty element");
-    assert(!/Begins around|A guide, not a price/.test(html), "no price line without a floor");
+    assert(!/from ₦|A guide, not a price/.test(html), "no price line without a floor");
     assert(html.includes('href="#begin"'), "a gown leads to the screening questions on this page");
     const chevrons = (html.match(/aria-label="(Previous|Next) image"/g) ?? []).length;
     assert(chevrons === (plain.frames.length > 1 ? 2 : 0), "a gown's other frames page inside its card");
   }
-  const described: AtelierPiece = { ...grouped[0]!, title: "Ivory corset gown", description: "Silk faille. For a church wedding.", guide: { priceFloorNGN: 3_000_000, priceCeilingNGN: null } };
+  // BB3: the name and floor at rest, under the photograph; the description waits for hover or focus.
+  const described: AtelierPiece = { ...grouped[0]!, title: "Adaeze", description: "A corset mini for a birthday dinner.", guide: { priceFloorNGN: 3_000_000, priceCeilingNGN: null } };
   const full = render(h(AtelierPieceCard, { piece: described }));
-  assert(full.includes("product-gallery-card") && full.includes("product-gallery-shot") && full.includes("product-gallery-meta"), "the shop's gallery card, not a new style");
-  assert(full.includes("Ivory corset gown") && full.includes("Silk faille."), "name and words, revealed as the shop's are");
-  assert(full.includes("Begins around ₦3,000,000") && full.includes("A guide, not a price"), "and the price guide, never a price");
+  assert(full.includes("product-gallery-card") && full.includes("product-gallery-shot"), "the shop's gallery card, not a new style");
+  const rest = /<p class="atelier-piece-rest"[^>]*>([\s\S]*?)<\/p>/.exec(full)?.[1] ?? "";
+  assert(rest.replace(/<[^>]+>/g, "") === "Adaeze · from ₦3,000,000", `the line at rest reads "Adaeze · from ₦3,000,000" (${rest.replace(/<[^>]+>/g, "")})`);
+  const hoverWords = /<div class="product-gallery-meta"[^>]*>([\s\S]*?)<\/div>/.exec(full)?.[1] ?? "";
+  assert(hoverWords.includes("A corset mini") && !hoverWords.includes("₦"), "the description is the hover block; the price is not in it");
+  assert(full.indexOf("atelier-piece-rest") > full.indexOf("product-gallery-meta"), "the line at rest sits under the photograph, outside the hover block");
+  assert(!/product-gallery-hover-only[^>]*>[^<]*(Adaeze|₦)/.test(full), "neither the name nor the price is hover-only");
   assert(!/Add to bag|quick-add-trigger|wishlist/i.test(full), "nothing to buy on an atelier card");
   const floorOnly = render(h(AtelierPieceCard, { piece: { ...grouped[2]!, guide: { priceFloorNGN: 5_000_000, priceCeilingNGN: null } } }));
-  assert(floorOnly.includes("₦5,000,000") && !/<h3\b/.test(floorOnly), "a floor alone shows the floor and no empty title");
+  assert(floorOnly.includes("From ₦5,000,000") && !floorOnly.includes("atelier-piece-name"), "a floor alone reads 'From ₦5,000,000', no empty name");
+  const css = readFileSync(resolve(__dirname, "../src/styles/globals.css"), "utf8");
+  const restRule = /\.atelier-piece-rest \{[^}]*\}/.exec(css)?.[0] ?? "";
+  assert(restRule && !/display:\s*none|opacity:\s*0/.test(restRule), "the line at rest is never hidden, at any width");
+  assert(/DELIBERATE DEPARTURE/.test(css) && /Do not "fix" this back/.test(css), "and the departure from the shop is written down where the CSS is");
+  const descNote = /atelier-piece-card \.product-gallery-meta \{\s*display: none;/.test(css) && /\(hover: hover\) and \(pointer: fine\) and \(min-width: 768px\) \{\s*\.atelier-piece-card \.product-gallery-meta \{\s*display: flex;/.test(css);
+  assert(descNote, "the description shows only where there is hover");
 
   const pageHtml = page({ pieces: grouped });
   assert((pageHtml.match(/data-atelier-piece=/g) ?? []).length === 3, "one gown, one place in the grid");
   const grid = /<div class="([^"]*)"><article class="product-gallery-card/.exec(pageHtml)?.[1] ?? "";
   assert(grid.includes("gap-px") && grid.includes("bg-white") && grid.includes("grid-cols-2"), "hairline seams, two across on a phone");
   assert(!/max-w-site[^"]*"[^>]*>\s*<div class="[^"]*gap-px/.test(pageHtml), "and edge to edge, outside the page container");
-  assert(atelierGridColumns(3) === 3 && atelierGridColumns(6) === 3 && atelierGridColumns(8) === 4 && atelierGridColumns(12) === 4 && atelierGridColumns(5) === 4, "several across on a wide screen, no ragged row when avoidable");
+  assert(atelierGridColumns(3) === 3 && atelierGridColumns(5) === 3 && atelierGridColumns(6) === 3 && atelierGridColumns(8) === 4 && atelierGridColumns(12) === 4, "several across on a wide screen, the fewest empty cells");
+  const fiveHtml = page({ pieces: [...grouped, { ...grouped[0]!, id: "p4" }, { ...grouped[1]!, id: "p5" }] });
+  assert((fiveHtml.match(/max-md:col-span-2/g) ?? []).length === 1 && /max-md:col-span-2[^"]*" data-gallery-card="" data-atelier-piece="p5"/.test(fiveHtml), "on a phone an odd last gown takes the row");
   const order = ["atelier-stages", "atelier-pieces"].map((id) => pageHtml.indexOf(`id="${id}"`));
   assert(order[0]! > 0 && order[1]! > order[0]!, "the stages sit between the hero and the gallery");
   console.log("ok pieces: one piece one entry; duplicates once; a bare piece is photographs only");
+}
+
+function placeholders() {
+  const staging = "https://staging.prudentgabriel.com";
+  assert(placeholderContentVisible(staging), "staging shows placeholder content for review");
+  assert(placeholderContentVisible("http://localhost:3100"), "and a laptop");
+  for (const prod of ["https://prudentgabriel.com", "https://www.prudentgabriel.com/"]) assert(!placeholderContentVisible(prod), `${prod} never does`);
+  assert(!placeholderContentVisible(undefined) && !placeholderContentVisible(""), "an unknown site never does");
+  assert(!placeholderContentVisible(staging, ["https://prudentgabriel.com"]), "nor a staging build told it is production");
+  assert(!placeholderContentVisible("https://example.com"), "nor anywhere else");
+
+  const invented = row("i", "/i.jpg", { caption: "Adaeze", description: "Invented.", priceFloorNGN: 2_000_000, placeholder: true });
+  const live = groupAtelierPieces([invented], 12, { showPlaceholders: false })[0]!;
+  assert(live.title === null && live.description === null && live.guide.priceFloorNGN === null, "on production an invented piece is its photograph alone");
+  const review = groupAtelierPieces([invented], 12, { showPlaceholders: true })[0]!;
+  assert(review.title === "Adaeze" && review.guide.priceFloorNGN === 2_000_000, "on staging it can be judged");
+  const html = render(h(AtelierPieceCard, { piece: live }));
+  assert(!/Adaeze|₦|Invented/.test(html), "and nothing invented reaches the production markup");
+
+  const gaps = pieceGaps(invented);
+  assert(gaps.placeholder && gaps.needsPriceGuide && gaps.needsDescription, "the admin counts an invented value as still needed");
+
+  const was = { caption: "Adaeze", description: "Invented.", priceFloorNGN: 2_000_000, priceCeilingNGN: null, placeholder: true };
+  assert(placeholderAfterSave(was, { caption: "Adaeze", description: "Invented.", priceFloorNGN: 2_000_000 }), "saving unchanged keeps the mark");
+  assert(!placeholderAfterSave(was, { priceFloorNGN: 2_500_000 }), "her own floor clears it");
+  assert(!placeholderAfterSave(was, { description: "Her own words." }), "so do her own words");
+  assert(!placeholderAfterSave(was, { caption: "Her name" }), "and her own name");
+  assert(!placeholderAfterSave(was, { placeholder: false }), "or unticking it");
+  assert(!placeholderAfterSave({ ...was, placeholder: false }, { priceFloorNGN: 1 }), "a real value is never re-marked");
+  console.log("ok placeholders: staging and laptops only; production shows the photograph alone; her save clears the mark");
+}
+
+function demo() {
+  // Staging's atelier rows on 23 September, in public order (the 14 rows behind the 12 frames).
+  const f = (id: string, hash: string, extra: Partial<DemoRow> = {}): DemoRow => ({
+    id, url: `/media/public/prudent-gabriel/gallery/atelier/${hash}.jpg`, caption: null, description: null, priceFloorNGN: null, priceCeilingNGN: null, pieceOfId: null, ...extra,
+  });
+  const rows = [
+    f("r1", "9f6eb9302a6d23629d66adc5cb9894f4"), f("r2", "58dfe3dfbcdc911da7eab18ea6af11c1"), f("r3", "58dfe3dfbcdc911da7eab18ea6af11c1"),
+    f("r4", "d565b4bb9dc541801f94aa224fb4bfac"), f("r5", "60693b9a9f94286201e8fa89557f908e"), f("r6", "f25cadc1420d4eedb54a7b6dd487ce38"),
+    f("r7", "9f6eb9302a6d23629d66adc5cb9894f4"), f("r8", "4696eada76848b79175bf95b0610eefe"), f("r9", "4777b76434896042c3f3f6f72b283897"),
+    f("r10", "40574387932d3bea7463d736657c0f9c"), f("r11", "f680ae56ad57a75316258e7915047b80"), f("r12", "2801d5b680d61c11a34294de6e046a97"),
+    f("r13", "563f4d258a8d64de8a93fdb4aa54a1c1"), f("r14", "4472016f48fbc32b060038ec2fa6e24f"),
+  ];
+  const plan = planDemoContent(rows);
+  assert(plan.deleteDuplicates.join() === "r3,r7", `the two repeated files go, the first of each stays (${plan.deleteDuplicates})`);
+  const group = Object.fromEntries(plan.group.map((g) => [g.id, g.pieceOfId]));
+  assert(
+    JSON.stringify(group) === JSON.stringify({ r2: "r1", r5: "r1", r6: "r4", r14: "r4", r9: "r8", r13: "r10", r12: "r11" }),
+    `each photograph joins its gown (${JSON.stringify(group)})`,
+  );
+  assert(plan.fill.map((x) => `${x.id}:${x.caption}`).join() === "r1:Adaeze,r4:Ifeoma,r8:Morenike,r10:Titilayo,r11:Chiamaka", "five gowns get words");
+  for (const x of plan.fill) {
+    assert(x.priceFloorNGN >= 1_500_000 && x.priceFloorNGN <= 4_000_000 && x.priceFloorNGN % 500_000 === 0, `${x.caption}: a round floor between ₦1.5M and ₦4M`);
+    assert(x.description.length > 60 && x.description.length < 260 && !/stunning|exquisite|luxur|elevate|timeless/i.test(x.description), `${x.caption}: one or two plain sentences`);
+  }
+  // Applied: five gowns on the page.
+  const deleted = new Set(plan.deleteDuplicates);
+  const applied: GalleryRow[] = rows.filter((r) => !deleted.has(r.id)).map((r) => {
+    const fill = plan.fill.find((x) => x.id === r.id);
+    return { ...r, alt: null, pieceOfId: group[r.id] ?? null, ...(fill ? { caption: fill.caption, description: fill.description, priceFloorNGN: fill.priceFloorNGN, placeholder: true } : {}) };
+  });
+  const gowns = groupAtelierPieces(applied, 12, { showPlaceholders: true });
+  assert(gowns.length === 5 && gowns.map((g) => g.frames.length).join() === "3,3,2,2,2", `five gowns, with 3, 3, 2, 2 and 2 photographs (${gowns.map((g) => g.frames.length)})`);
+
+  // Never over the house's own words.
+  const written = planDemoContent([f("h", "9f6eb9302a6d23629d66adc5cb9894f4", { priceFloorNGN: 2_750_000 })]);
+  assert(written.fill.length === 0 && written.skipped.some((x) => x.gown === "A" && /already written/.test(x.reason)), "a gown the house has written is left alone");
+
+  // Where it may run.
+  const refusal = (o: Partial<Parameters<typeof demoSeedRefusal>[0]>) =>
+    demoSeedRefusal({ siteUrl: undefined, productionDb: false, stagingDb: false, allowFixtures: false, ...o });
+  assert(refusal({ siteUrl: "https://staging.prudentgabriel.com", stagingDb: true }) === null, "runs on the staging site with the staging database");
+  assert(refusal({ siteUrl: "https://staging.prudentgabriel.com", productionDb: true, stagingDb: true }) !== null, "never where the database looks like production");
+  assert(refusal({ siteUrl: "https://staging.prudentgabriel.com" }) !== null, "never on a staging site pointed at another database");
+  assert(refusal({ siteUrl: "https://prudentgabriel.com", allowFixtures: true }) !== null || refusal({ siteUrl: "https://prudentgabriel.com" }) !== null, "never on the production site");
+  assert(refusal({ siteUrl: "https://prudentgabriel.com" }) !== null, "the production site, without the laptop flag, is refused");
+  assert(refusal({ stagingDb: true, allowFixtures: true }) !== null, "the staging database from a laptop is refused");
+  assert(refusal({ allowFixtures: true }) === null && refusal({}) !== null, "a laptop's scratch database only with ALLOW_FIXTURES=true");
+  assert(DEMO_GOWNS.every((g) => g.files.every((x) => /^[0-9a-f]{32}$/.test(x))), "gowns are found by file hash, not position");
+  console.log("ok demo: 2 duplicates deleted, 7 photographs grouped, 5 gowns given placeholder words and round floors; staging only, once, never over hers");
 }
 
 function joining() {
@@ -296,6 +395,8 @@ async function live() {
 async function main() {
   stages();
   pieces();
+  placeholders();
+  demo();
   joining();
   hero();
   await live();

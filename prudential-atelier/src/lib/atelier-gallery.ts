@@ -19,6 +19,8 @@ export type GalleryRow = PriceGuide & {
   caption: string | null;
   description: string | null;
   pieceOfId: string | null;
+  /** Words and guide invented for review, not the house's (seed-atelier-demo.ts). */
+  placeholder?: boolean;
 };
 
 export type AtelierPieceFrame = { id: string; url: string; alt: string };
@@ -37,12 +39,33 @@ function clean(v: string | null | undefined): string | null {
 }
 
 /**
+ * Placeholder words and prices may be shown only where the house is reviewing
+ * them: staging, or a laptop. The site's own URL (baked into each image at
+ * build) decides; any configured URL naming the production host refuses; an
+ * unknown or missing URL refuses. (Staging's gallery is copied to production by
+ * deploy/sync-storefront-from-staging.sh, so this must fail closed.)
+ */
+const PRODUCTION_HOST = /^https?:\/\/(www\.)?prudentgabriel\.com(:\d+)?(\/|$)/i;
+const REVIEW_HOST = /^https?:\/\/(staging\.prudentgabriel\.com|localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i;
+
+export function placeholderContentVisible(siteUrl: string | undefined, otherUrls: Array<string | undefined> = []): boolean {
+  const all = [siteUrl, ...otherUrls].map((u) => u?.trim() ?? "").filter(Boolean);
+  if (all.some((u) => PRODUCTION_HOST.test(u))) return false;
+  return Boolean(siteUrl?.trim()) && REVIEW_HOST.test(siteUrl!.trim());
+}
+
+/**
  * Rows arrive in public order (sortOrder, then newest). Pieces keep the order
  * of their main photograph; frames follow it in their own order. A frame whose
  * main photograph is not in `rows` (hidden, or another category) is left out:
- * hiding the piece hides all of it.
+ * hiding the piece hides all of it. Where placeholders may not be shown, a
+ * placeholder piece is its photographs alone.
  */
-export function groupAtelierPieces(rows: GalleryRow[], limit = 12): AtelierPiece[] {
+export function groupAtelierPieces(
+  rows: GalleryRow[],
+  limit = 12,
+  { showPlaceholders = false }: { showPlaceholders?: boolean } = {},
+): AtelierPiece[] {
   const seenUrls = new Set<string>();
   const unique = rows.filter((row) => {
     const url = row.url.trim();
@@ -62,13 +85,16 @@ export function groupAtelierPieces(rows: GalleryRow[], limit = 12): AtelierPiece
   }
 
   return heads.slice(0, limit).map((head) => {
-    const title = clean(head.caption);
+    const words = !head.placeholder || showPlaceholders;
+    const title = words ? clean(head.caption) : null;
     const alt = clean(head.alt) ?? title ?? "A piece from the atelier";
     return {
       id: head.id,
       title,
-      description: clean(head.description),
-      guide: { priceFloorNGN: head.priceFloorNGN, priceCeilingNGN: head.priceCeilingNGN },
+      description: words ? clean(head.description) : null,
+      guide: words
+        ? { priceFloorNGN: head.priceFloorNGN, priceCeilingNGN: head.priceCeilingNGN }
+        : { priceFloorNGN: null, priceCeilingNGN: null },
       frames: [head, ...(framesOf.get(head.id) ?? [])].map((row, i) => ({
         id: row.id,
         url: row.url,
@@ -78,15 +104,40 @@ export function groupAtelierPieces(rows: GalleryRow[], limit = 12): AtelierPiece
   });
 }
 
-/** What a piece is still missing on the public page. Frames of a piece are never flagged. */
-export type PieceGaps = { needsPriceGuide: boolean; needsDescription: boolean };
+/**
+ * What a piece still needs from the house. Frames of a piece are never flagged.
+ * An invented (placeholder) value still needs the real one.
+ */
+export type PieceGaps = { needsPriceGuide: boolean; needsDescription: boolean; placeholder: boolean };
 
-export function pieceGaps(row: Pick<GalleryRow, "pieceOfId" | "description" | "priceFloorNGN" | "priceCeilingNGN">): PieceGaps {
-  if (row.pieceOfId) return { needsPriceGuide: false, needsDescription: false };
+export function pieceGaps(
+  row: Pick<GalleryRow, "pieceOfId" | "description" | "priceFloorNGN" | "priceCeilingNGN" | "placeholder">,
+): PieceGaps {
+  if (row.pieceOfId) return { needsPriceGuide: false, needsDescription: false, placeholder: false };
+  const placeholder = Boolean(row.placeholder);
   return {
-    needsPriceGuide: priceGuideText(row) === null,
-    needsDescription: clean(row.description) === null,
+    needsPriceGuide: placeholder || priceGuideText(row) === null,
+    needsDescription: placeholder || clean(row.description) === null,
+    placeholder,
   };
+}
+
+/**
+ * A save by the house replaces invented values: the mark stays only while none
+ * of the title, description or guide has changed (or it is kept on purpose).
+ */
+export function placeholderAfterSave(
+  existing: Pick<GalleryRow, "caption" | "description" | "priceFloorNGN" | "priceCeilingNGN" | "placeholder">,
+  input: { caption?: string | null; description?: string | null; priceFloorNGN?: number | null; priceCeilingNGN?: number | null; placeholder?: boolean },
+): boolean {
+  if (!existing.placeholder) return input.placeholder === true;
+  if (input.placeholder === false) return false;
+  const changed =
+    (input.caption !== undefined && clean(input.caption) !== clean(existing.caption)) ||
+    (input.description !== undefined && clean(input.description) !== clean(existing.description)) ||
+    (input.priceFloorNGN !== undefined && input.priceFloorNGN !== existing.priceFloorNGN) ||
+    (input.priceCeilingNGN !== undefined && input.priceCeilingNGN !== existing.priceCeilingNGN);
+  return !changed;
 }
 
 type PieceRow = PriceGuide & {

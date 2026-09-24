@@ -31,6 +31,14 @@ fi
 echo "[entrypoint] Hashing any plaintext capability tokens..."
 $TSX_CLI --tsconfig tsconfig.scripts.json scripts/upgrade-capability-tokens.ts   || echo "[entrypoint] ERROR: upgrade-capability-tokens failed; pre-sweep links will not open until it runs."
 
+# Staging only: PLACEHOLDER atelier words and prices so /atelier can be judged with content
+# in it (src/lib/atelier-demo-content.ts). Once; marked placeholder; the script itself refuses
+# production and needs the staging database. Never runs on the production host.
+if echo "${NEXT_PUBLIC_APP_URL:-} ${APP_URL:-}" | grep -q "staging.prudentgabriel.com"; then
+  echo "[entrypoint] Staging: atelier demo content (placeholder, applied once)..."
+  $TSX_CLI --tsconfig tsconfig.scripts.json scripts/seed-atelier-demo.ts || echo "[entrypoint] WARNING: atelier demo content not applied."
+fi
+
 # Key rotation: with ENCRYPTION_KEY_PREVIOUS set, rewrite every encrypted column under
 # the current key. Remove the previous key only after this reports "unreadable 0".
 if [ -n "${ENCRYPTION_KEY_PREVIOUS:-}" ]; then
