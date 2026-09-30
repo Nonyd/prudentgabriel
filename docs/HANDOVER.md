@@ -5,7 +5,7 @@ Read in one sitting; follow the links for depth.
 
 **Repo:** `github.com/Nonyd/prudentgabriel`, app in `prudential-atelier/`.
 **Branches:** `staging` deploys https://staging.prudentgabriel.com. `main` deploys production. Nothing reaches `main` without being asked.
-**Last updated:** 23 September 2026.
+**Last updated:** 30 September 2026.
 
 Depth lives elsewhere:
 
@@ -30,6 +30,7 @@ Depth lives elsewhere:
 - **Security (Slice AZ and the token sweep).** Headers and report-only CSP, Postgres-backed rate limits, upload limits, SSRF guard, staff data access, session revocation. Every secret that opens something from a link is random, hashed and expiring (see the rule below). No emailed passwords.
 - **Hero videos (/rtw and the homepage).** Poster first, a 720-wide encode the server makes itself, tap to play on a phone, `preload="none"`.
 - **Secrets at rest.** Saved-card authorisation codes and gateway keys encrypted; the key can be rotated.
+- **The client file (Slice BC).** Click a client's name: consultation, measurements, the gown's specification, quotation, payments, sketches and design approval, who is cutting and sewing it, delivery, composed per viewer at the API (`/api/clients/:id/file`); a section someone may not see says so. Gown specifications are ticked from a house library of construction features and are searchable. The quotation carries an expected delivery date to the commission; the pipeline filters by delivery month and shows what is due this month and next. "Where clients are" counts clients by place.
 
 ## What is left
 
@@ -54,6 +55,9 @@ Depth lives elsewhere:
 | Hero posters: optional. The server now takes a still; a chosen one looks better. | Glory, Admin → Content |
 | **/atelier: replace the PLACEHOLDER names, words and floors on the eleven gowns (invented for review; red-badged in Admin → Gallery; never shown in production), and supply a hero photograph (landscape, 2400 px+).** Screens and the placeholder table in [`prudential-atelier/docs/ATELIER_PAGE_CHECKLIST.md`](../prudential-atelier/docs/ATELIER_PAGE_CHECKLIST.md). | Mrs. Prudent (words, floors), Glory (entry, hero) |
 | Accounts opened before the sweep with a temporary password never changed now need *Forgot password*. Tell anyone who asks. | Front of house |
+| **Who opens the client file.** Today only General Admin, Staff Admin and Super Admin. Decide on bespoke managers (proposal waiting since August), the consultation manager and Kemi. Granting Client CRM opens the whole client desk (list with contacts, messages, Customers, Referrals, manual points), not only the file. Committing a grant is SUPER_ADMIN only. | Mrs. Prudent decides; Nony applies |
+| **Ask for city and state on the consultation enquiry?** Without it "Where clients are" stays mostly "not recorded"; the enquiry collects no place today. | Mrs. Prudent |
+| **Enter delivery dates on commissions already open.** New ones take the date from the quotation; older ones appear in no month until a date is entered. | Bespoke managers |
 
 ---
 
@@ -86,3 +90,5 @@ Each one was paid for.
 3. **A secret in a URL or an email is random, hashed and expiring.** 32 random bytes; only the SHA-256 stored; an encrypted copy only where the same link must be re-sent; expired and unknown answer alike with a 404. Every such column is on `src/lib/capability-registry.ts`, and `test:token-defaults` fails on one that is not, or on any plaintext row. No email carries a password.
 4. **No number a customer sees is typed twice.** A price, fee, deposit or total has one source (a setting, the quotation, the locked rate), and every page, PDF and email reads it from there. The server charges what it showed (Slice A's bind).
 5. **Do not weaken, in passing:** Slice A's bind, Slice B's public DTOs, Slice T's permissions, the append-only ledgers.
+6. **A test states what should happen, not what the code happened to do.** Four times now a test has been the unreliable part: it recorded the system's behaviour at the time, gaps included, so closing a real gap turned it red. Most recently, in Slice BC, `test-authz` required the atelier routes to gate on a role list that included STAFF (the gap that let a beader act on any gown), and `test-staff-data-access` required STAFF to read the whole client record. When a fix breaks a test, decide which of the two is wrong before touching either, and say which in the commit.
+7. **A page and its API are one cell.** The page's gate (Slice T key) and its API's gate are the same check, and the page offers only what the API and the stage engine will do. Atelier and client APIs go through `requireBespokeAccess` (`src/lib/atelier/bespoke-access.ts`); STAFF act only on commissions they are assigned to.
