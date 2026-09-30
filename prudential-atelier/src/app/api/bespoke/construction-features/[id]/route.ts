@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { BESPOKE_MANAGER_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { logActivity } from "@/lib/logger";
 
 /**
@@ -17,7 +17,7 @@ const patchSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const gate = await requireRoles(BESPOKE_MANAGER_ROLES);
+  const gate = await requireBespokeAccess("manage");
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
   const parsed = patchSchema.safeParse(await req.json().catch(() => null));

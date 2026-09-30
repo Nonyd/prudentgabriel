@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { BESPOKE_STAFF_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { actorFromSession, saveStageDraft } from "@/lib/atelier/stage-actions";
 
 type Params = { params: Promise<{ orderId: string }> };
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_STAFF_ROLES);
+  const gate = await requireBespokeAccess("work", { orderId: (await params).orderId });
   if (!gate.ok) return gate.response;
   const actor = actorFromSession(gate.session);
   if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -179,7 +179,7 @@ export async function composeClientFile(
 
   const commissions = await prisma.bespokeOrder.findMany({
     where: orderWhere,
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: "asc" },
     select: {
       id: true,
       orderRef: true,
@@ -207,6 +207,7 @@ export async function composeClientFile(
   if (wanted("specification")) {
     const rows = await prisma.bespokeOrder.findMany({
       where: { id: { in: orderIds } },
+      orderBy: { createdAt: "asc" },
       select: { id: true, outfitDescription: true, ...specificationInclude },
     });
     sections.specification = {
@@ -238,6 +239,9 @@ export async function composeClientFile(
         bespokeOrders: { select: { id: true } },
       },
     });
+    const firstOrder = (q: { bespokeOrders: { id: string }[] }) =>
+      Math.min(...q.bespokeOrders.map((o) => orderIds.indexOf(o.id)).filter((i) => i >= 0));
+    quotes.sort((a, b) => firstOrder(a) - firstOrder(b));
     sections.quotation = {
       visible: true,
       data: quotes.map((q) => ({
@@ -259,6 +263,7 @@ export async function composeClientFile(
   if (wanted("payments")) {
     const rows = await prisma.bespokeOrder.findMany({
       where: { id: { in: orderIds } },
+      orderBy: { createdAt: "asc" },
       select: {
         id: true,
         currency: true,
@@ -303,6 +308,7 @@ export async function composeClientFile(
   if (wanted("illustrations")) {
     const rows = await prisma.bespokeOrder.findMany({
       where: { id: { in: orderIds } },
+      orderBy: { createdAt: "asc" },
       select: {
         id: true,
         stageMedia: {
@@ -375,6 +381,7 @@ export async function composeClientFile(
   if (wanted("delivery")) {
     const rows = await prisma.bespokeOrder.findMany({
       where: { id: { in: orderIds } },
+      orderBy: { createdAt: "asc" },
       select: {
         id: true,
         deliveryDate: true,
@@ -470,6 +477,7 @@ async function loadConsultation(
   if (scope === "workroom") {
     const rows = await prisma.bespokeOrder.findMany({
       where: { id: { in: orderIds } },
+      orderBy: { createdAt: "asc" },
       select: { id: true, occasionType: true, occasionDetails: true, outfitBrief: true, sessionNotes: true, moodboardImages: true },
     });
     return {

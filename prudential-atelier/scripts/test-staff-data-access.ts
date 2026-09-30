@@ -157,13 +157,16 @@ async function live(base: string) {
   assert(tItem.payments.length === 0, "tailor gets no payments");
   assert(tItem.clientProfile.measurements?.bust === 36, "tailor gets measurements");
 
-  // Client profile: same rules.
+  // The CRM record is the /admin/clients page's (the `clients` key): STAFF are refused it outright.
   const bc = await get(`/api/clients/${client.id}`, beaderCookie);
-  const bcItem = (JSON.parse(bc.text) as { item: { measurements: unknown; payments: unknown[] } }).item;
-  assert(bc.status === 200 && bcItem.measurements === null && bcItem.payments.length === 0, "client profile: beader sees neither");
+  assert(bc.status === 403 && !bc.text.includes(RECEIPT), `client record: beader refused (${bc.status})`);
   const tc = await get(`/api/clients/${client.id}`, tailorCookie);
-  const tcItem = (JSON.parse(tc.text) as { item: { measurements: { bust: number } | null } }).item;
-  assert(tcItem.measurements?.bust === 36, "client profile: tailor sees measurements");
+  assert(tc.status === 403, `client record: tailor refused (${tc.status})`);
+  // Their view of her is the client file (Slice BC), under the same AZ8 rules.
+  const bf = await get(`/api/clients/${client.id}/file?section=measurements`, beaderCookie);
+  assert(bf.status === 403, `client file: beader refused measurements (${bf.status})`);
+  const tf = await get(`/api/clients/${client.id}/file?section=measurements`, tailorCookie);
+  assert(tf.status === 200 && tf.text.includes('"value":36'), "client file: tailor sees measurements");
 
   // Recording measurements: beader refused, tailor allowed.
   const patch = (cookie: string) =>

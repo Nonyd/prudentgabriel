@@ -130,6 +130,15 @@ const APPROVAL_LABEL: Record<string, string> = {
   NOT_REQUESTED: "Not yet sent for approval",
 };
 
+const QUOTE_STATUS: Record<string, string> = {
+  DRAFT: "Draft, not sent",
+  SENT: "Sent, awaiting her answer",
+  APPROVED: "Agreed",
+  CONVERTED: "Agreed, commission started",
+  REJECTED: "Declined",
+  SUPERSEDED: "Replaced by a revision",
+};
+
 function money(amount: number, currency: string) {
   return formatPrice(amount, (["NGN", "USD", "GBP"].includes(currency) ? currency : "NGN") as "NGN" | "USD" | "GBP");
 }
@@ -473,8 +482,8 @@ function QuotationView({ data }: { data: Quote }) {
       {data.map((q) => (
         <div key={q.quoteRef}>
           <SubHead>
-            {q.quoteRef} · {q.status}
-            {q.agreedAt ? ` · agreed ${date(q.agreedAt)}` : ""}
+            {q.quoteRef} · {QUOTE_STATUS[q.status] ?? q.status}
+            {q.agreedAt ? ` · ${date(q.agreedAt)}` : ""}
           </SubHead>
           <ul className="mt-1 text-ink">
             {q.lines.map((l, i) => (
@@ -501,9 +510,25 @@ function PaymentsView({ data }: { data: Payments }) {
     <div className="space-y-4 font-sans text-sm">
       {data.map((p) => (
         <div key={p.orderRef}>
-          <SubHead>
-            {p.orderRef} · paid {money(p.paidNGN, "NGN")} of {money(p.totalNGN, "NGN")} · balance {money(p.balanceNGN, "NGN")}
-          </SubHead>
+          <SubHead>{p.orderRef}</SubHead>
+          {p.totalNGN > 0 ? (
+            <dl className="mt-1 grid grid-cols-3 gap-2">
+              {(
+                [
+                  ["Price", p.totalNGN],
+                  ["Paid", p.paidNGN],
+                  ["Balance", p.balanceNGN],
+                ] as const
+              ).map(([label, value]) => (
+                <div key={label}>
+                  <dt className="text-[10px] uppercase text-text-light">{label}</dt>
+                  <dd className="text-ink">{money(value, "NGN")}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="mt-1 text-text-mid">No price agreed yet.</p>
+          )}
           <ul className="mt-1 space-y-1">
             {p.payments.map((row) => (
               <li key={row.reference} className="flex flex-wrap justify-between gap-2">
@@ -523,7 +548,9 @@ function PaymentsView({ data }: { data: Payments }) {
                 </span>
               </li>
             ))}
-            {p.payments.length === 0 ? <li className="text-text-mid">No payments recorded.</li> : null}
+            {p.payments.length === 0 && p.totalNGN > 0 ? (
+              <li className="text-text-mid">No payments in the ledger yet.</li>
+            ) : null}
           </ul>
         </div>
       ))}

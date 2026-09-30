@@ -33,6 +33,7 @@
     "test:slice-ba": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-ba.ts",
     "test:slice-bb": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-bb.ts",
     "test:slice-bc": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-bc.ts",
+    "test:bespoke-access": "tsx --tsconfig tsconfig.scripts.json scripts/test-bespoke-access.ts",
     "test:shop-categories": "tsx --tsconfig tsconfig.scripts.json scripts/test-shop-categories.ts",
     "test:slice-aa": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-aa.ts",
     "test:slice-an": "tsx --tsconfig tsconfig.scripts.json scripts/test-slice-an.ts",

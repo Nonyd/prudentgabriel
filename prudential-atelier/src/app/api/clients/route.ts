@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { LoyaltyTier, Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { logError } from "@/lib/logger";
 import { PROTECTED_ACCOUNTS } from "@/lib/roles";
 
 const TIERS = new Set<string>(Object.values(LoyaltyTier));
 
 export async function GET(req: NextRequest) {
-  const gate = await requireRoles(BESPOKE_ROLES);
+  const gate = await requireBespokeAccess("manage", { key: "clients" });
   if (!gate.ok) return gate.response;
 
   try {

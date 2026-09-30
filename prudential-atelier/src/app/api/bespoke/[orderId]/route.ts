@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PaymentMethod, PaymentPurpose, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logError } from "@/lib/logger";
-import { BESPOKE_ADMIN_ROLES, BESPOKE_MANAGER_ROLES, BESPOKE_STAFF_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import {
   appendPayment,
   getOrderPaymentSummary,
@@ -13,7 +13,7 @@ import {
 } from "@/lib/payments/ledger";
 import { generatePaymentReference } from "@/lib/payments/index";
 import { stageGateInclude } from "@/lib/atelier/can-complete-stage";
-import { canSeeOrderMeasurements, canSeePaymentDetails, redactBespokeOrder } from "@/lib/bespoke-data-access";
+import { canSeeOrderMeasurements, redactBespokeOrder } from "@/lib/bespoke-data-access";
 import { parseDeliveryDateInput } from "@/lib/atelier/delivery-month";
 import { specificationInclude } from "@/lib/atelier/construction-features";
 
@@ -27,10 +27,11 @@ const paymentInclude = {
 };
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_STAFF_ROLES);
+  const { orderId } = await params;
+  // The `bespoke` key, or STAFF assigned to this commission.
+  const gate = await requireBespokeAccess("read", { orderId });
   if (!gate.ok) return gate.response;
 
-  const { orderId } = await params;
   try {
     const order = await prisma.bespokeOrder.findUnique({
       where: { id: orderId },
@@ -50,7 +51,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
     // Slice AZ8: payments/receipts for money roles; measurements for whoever cuts the garment.
     const access = {
-      payments: canSeePaymentDetails(gate.session.user),
+      payments: gate.facts.money,
       measurements: await canSeeOrderMeasurements(gate.session.user, order.id),
     };
     const summary = await getOrderPaymentSummary(order.id);
@@ -87,10 +88,10 @@ export async function GET(_req: NextRequest, { params }: Params) {
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_MANAGER_ROLES);
+  const { orderId } = await params;
+  const gate = await requireBespokeAccess("manage", { orderId });
   if (!gate.ok) return gate.response;
 
-  const { orderId } = await params;
   let body: Record<string, unknown>;
   try {
     body = await req.json();
@@ -121,6 +122,17 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     const totalAmount =
       typeof body.totalAmount === "number" ? body.totalAmount : existing.totalAmount;
+
+    // Prices and payments stay with money roles (AZ8), whoever else may edit the commission.
+    const touchesMoney =
+      totalAmount !== existing.totalAmount ||
+      (typeof body.amountPaid === "number" && body.amountPaid !== existing.amountPaid);
+    if (touchesMoney && !gate.facts.money) {
+      return NextResponse.json(
+        { error: "Prices and payments are kept for managers and finance." },
+        { status: 403 },
+      );
+    }
 
     // Legacy clients may send amountPaid as a running total — convert delta into a ledger row.
     if (typeof body.amountPaid === "number" && body.amountPaid !== existing.amountPaid) {
@@ -266,10 +278,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_ADMIN_ROLES);
+  const { orderId } = await params;
+  const gate = await requireBespokeAccess("admin", { orderId });
   if (!gate.ok) return gate.response;
 
-  const { orderId } = await params;
   try {
     await prisma.bespokeOrder.delete({ where: { id: orderId } });
     return NextResponse.json({ success: true });

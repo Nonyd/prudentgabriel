@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { commissionSearch } from "@/lib/atelier/commission-search";
 import { specificationInclude } from "@/lib/atelier/construction-features";
-import { canSeePaymentDetails, stripOrderReceipt } from "@/lib/bespoke-data-access";
+import { stripOrderReceipt } from "@/lib/bespoke-data-access";
 import { logActivity } from "@/lib/logger";
-import { BESPOKE_MANAGER_ROLES, BESPOKE_STAFF_ROLES, requireRoles } from "@/lib/api-auth";
+import { bespokeFacts, requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { generateBespokeOrderRef } from "@/lib/bespoke-stages";
 import { bespokeRequestSchema } from "@/validations/bespoke";
 import { auth } from "@/auth";
@@ -14,7 +14,8 @@ import { notifyNewBespoke } from "@/lib/notifications";
 import { CAPABILITY_TTL_MS, generateCapabilityToken } from "@/lib/capability-token";
 
 export async function GET(req: NextRequest) {
-  const gate = await requireRoles(BESPOKE_STAFF_ROLES);
+  // The whole list is the pipeline page's: the `bespoke` key. STAFF use the staff portal.
+  const gate = await requireBespokeAccess("read");
   if (!gate.ok) return gate.response;
 
   const query = commissionSearch(new URL(req.url).searchParams);
@@ -36,15 +37,13 @@ export async function GET(req: NextRequest) {
   });
 
   // Slice AZ8: the order row carries the last transfer receipt and its reference.
-  const seePayments = canSeePaymentDetails(gate.session.user);
-  return NextResponse.json({ items: seePayments ? items : items.map(stripOrderReceipt) });
+  return NextResponse.json({ items: gate.facts.money ? items : items.map(stripOrderReceipt) });
 }
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  const isAdmin =
-    session?.user?.role &&
-    (BESPOKE_MANAGER_ROLES.includes(session.user.role) || session.user.role === "SUPER_ADMIN");
+  // Whoever holds the pipeline's key creates commissions here; everyone else is the public form.
+  const isAdmin = session?.user?.id ? (await bespokeFacts(session)).facts.house : false;
 
   let body: unknown;
   try {
@@ -54,7 +53,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (isAdmin && body && typeof body === "object" && "clientName" in body) {
-    const gate = await requireRoles(BESPOKE_MANAGER_ROLES);
+    const gate = await requireBespokeAccess("manage");
     if (!gate.ok) return gate.response;
 
     const d = body as {
@@ -83,6 +82,9 @@ export async function POST(req: NextRequest) {
     }
 
     const total = d.totalAmount ?? 0;
+    if (total !== 0 && !gate.facts.money) {
+      return NextResponse.json({ error: "Setting a price is kept for managers and finance." }, { status: 403 });
+    }
     const track = generateCapabilityToken();
     const receipt = generateCapabilityToken();
     const created = await prisma.bespokeOrder.create({

@@ -6,7 +6,8 @@ import { stageGateInclude } from "@/lib/atelier/can-complete-stage";
 import { maybeArchiveBespokeOrder } from "@/lib/bespoke-archive";
 import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
 import { getPublicAppUrl } from "@/lib/app-url";
-import { canSeeOrderMeasurements, canSeePaymentDetails, redactBespokeOrder } from "@/lib/bespoke-data-access";
+import { canSeeOrderMeasurements, redactBespokeOrder } from "@/lib/bespoke-data-access";
+import { bespokeFacts } from "@/lib/atelier/bespoke-access";
 import { specificationInclude } from "@/lib/atelier/construction-features";
 
 export default async function AdminBespokeOrderPage({
@@ -51,18 +52,25 @@ export default async function AdminBespokeOrderPage({
   const baseUrl = getPublicAppUrl().replace(/\/+$/, "");
   const trackingRaw = await ensureTrackingRaw(order);
 
-  // Slice AZ8, as the API applies it: a `bespoke` grant opens this page, but
-  // payments stay with money roles and measurements with managers and cutters.
+  // The same facts the atelier APIs gate on (Slice T key, AZ8 money, admin), so
+  // the page offers only what its APIs will do. A `bespoke` grant opens this page,
+  // but payments stay with money roles and measurements with managers and cutters.
   const viewer = session?.user ?? {};
+  const access = session?.user?.id ? await bespokeFacts(session, { orderId: order.id }) : null;
   const shown = redactBespokeOrder(order, {
-    payments: canSeePaymentDetails(viewer),
+    payments: access?.facts.money ?? false,
     measurements: await canSeeOrderMeasurements(viewer, order.id),
   });
 
   return (
     <BespokeOrderDetailClient
       order={shown}
-      actorRole={session?.user?.role ?? null}
+      actorRole={access?.role ?? null}
+      access={{
+        manage: access?.facts.house ?? false,
+        money: access?.facts.money ?? false,
+        admin: access?.facts.admin ?? false,
+      }}
       actorUserId={session?.user?.id ?? null}
       staffList={staffList.map((s) => ({
         id: s.id,

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { logActivity, logError } from "@/lib/logger";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_ROLES);
+  const gate = await requireBespokeAccess("manage", { key: "clients" });
   if (!gate.ok) return gate.response;
 
   const { id } = await params;

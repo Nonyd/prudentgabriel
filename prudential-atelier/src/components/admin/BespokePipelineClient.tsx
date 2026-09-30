@@ -16,6 +16,7 @@ import {
   getStageProgress,
 } from "@/lib/bespoke-stages";
 import { pipelineBlockFor } from "@/lib/atelier/stage-requirements";
+import { useHasPermission } from "@/hooks/useHasPermission";
 import { cn, formatDate } from "@/lib/utils";
 
 type OrderRow = BespokeOrder & {
@@ -111,6 +112,7 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
   /** BC2: commissions carrying this construction feature. */
   const [featureFilter, setFeatureFilter] = useState("");
   const [library, setLibrary] = useState<LibraryFeature[]>([]);
+  const canOpenClients = useHasPermission("clients");
   const [modalOpen, setModalOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({
@@ -169,7 +171,7 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
         header: "Client",
         cell: (row) => (
           <div>
-            {row.clientProfileId ? (
+            {row.clientProfileId && canOpenClients ? (
               <Link href={`/admin/clients/${row.clientProfileId}`} className="font-sans text-sm text-ink hover:underline">
                 {row.clientName}
               </Link>
@@ -215,7 +217,7 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
         ),
       },
     ],
-    [router],
+    [router, canOpenClients],
   );
 
   const handleBulkDelete = async (ids: string[]) => {

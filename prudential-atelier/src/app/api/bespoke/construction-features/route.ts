@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { BESPOKE_MANAGER_ROLES, BESPOKE_STAFF_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { featureKeyFromLabel } from "@/lib/atelier/construction-features";
 import { logActivity } from "@/lib/logger";
 
@@ -19,7 +19,7 @@ const createSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  const gate = await requireRoles(BESPOKE_STAFF_ROLES);
+  const gate = await requireBespokeAccess("read");
   if (!gate.ok) return gate.response;
   const includeArchived = new URL(req.url).searchParams.get("archived") === "1";
   const items = await prisma.constructionFeature.findMany({
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const gate = await requireRoles(BESPOKE_MANAGER_ROLES);
+  const gate = await requireBespokeAccess("manage");
   if (!gate.ok) return gate.response;
   const parsed = createSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid body" }, { status: 400 });

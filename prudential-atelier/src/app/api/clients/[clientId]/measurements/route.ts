@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireSession } from "@/lib/api-auth";
 import { canSeeClientMeasurements } from "@/lib/bespoke-data-access";
 import { logActivity, logError } from "@/lib/logger";
 import { measurementPlausibilityError } from "@/lib/measurements";
@@ -30,7 +30,7 @@ function parseOptionalFloat(value: unknown): number | null | undefined {
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_ROLES);
+  const gate = await requireSession();
   if (!gate.ok) return gate.response;
 
   const { clientId } = await params;

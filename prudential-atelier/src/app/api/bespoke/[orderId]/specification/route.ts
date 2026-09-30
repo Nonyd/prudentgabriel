@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { BESPOKE_MANAGER_ROLES, BESPOKE_STAFF_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import {
   parseSpecItems,
   replaceSpecification,
@@ -13,7 +13,7 @@ type Params = { params: Promise<{ orderId: string }> };
 
 /** Slice BC2: what this gown is, as ticked construction features with their notes. */
 export async function GET(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_STAFF_ROLES);
+  const gate = await requireBespokeAccess("read", { orderId: (await params).orderId });
   if (!gate.ok) return gate.response;
   const { orderId } = await params;
   const order = await prisma.bespokeOrder.findUnique({
@@ -26,7 +26,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 /** Replace the specification. Managers only, like editing the commission itself. */
 export async function PUT(req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_MANAGER_ROLES);
+  const gate = await requireBespokeAccess("manage", { orderId: (await params).orderId });
   if (!gate.ok) return gate.response;
   const { orderId } = await params;
 

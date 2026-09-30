@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { BESPOKE_STAFF_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import {
   OPEN_COMMISSION_WHERE,
   deliveryMonthLabel,
@@ -16,7 +16,7 @@ import {
  * Also counts open commissions with no delivery date yet, so none hide.
  */
 export async function GET() {
-  const gate = await requireRoles(BESPOKE_STAFF_ROLES);
+  const gate = await requireBespokeAccess("read");
   if (!gate.ok) return gate.response;
 
   const now = new Date();

@@ -4,6 +4,7 @@
  *   pnpm test:authz
  */
 import "./preload-test-env";
+import { bespokeAllows } from "../src/lib/atelier/bespoke-access-rules";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -472,30 +473,35 @@ async function main() {
     "requireStaffPortal: STAFF still enters via isStaff/role, not permissions",
   );
 
-  const staffStageRoutes: { file: string; gate: string }[] = [
-    { file: "app/api/bespoke/[orderId]/complete-stage/route.ts", gate: "BESPOKE_STAFF_ROLES" },
-    { file: "app/api/bespoke/[orderId]/request-approval/route.ts", gate: "BESPOKE_STAFF_ROLES" },
-    { file: "app/api/bespoke/[orderId]/stage-media/route.ts", gate: "BESPOKE_STAFF_ROLES" },
-    { file: "app/api/bespoke/[orderId]/stage-draft/route.ts", gate: "BESPOKE_STAFF_ROLES" },
-    { file: "app/api/bespoke/route.ts", gate: "BESPOKE_STAFF_ROLES" },
-    { file: "app/api/bespoke/[orderId]/route.ts", gate: "BESPOKE_STAFF_ROLES" },
-    { file: "app/api/clients/[clientId]/measurements/route.ts", gate: "BESPOKE_ROLES" },
-    { file: "app/api/clients/[clientId]/notes/route.ts", gate: "BESPOKE_ROLES" },
-    { file: "app/api/clients/[clientId]/communications/route.ts", gate: "BESPOKE_ROLES" },
-    { file: "app/api/moodboards/route.ts", gate: "BESPOKE_ROLES" },
-    { file: "app/api/moodboards/[id]/route.ts", gate: "BESPOKE_ROLES" },
+  // Slice BC: the atelier and client APIs gate on the page's cell (Slice T key)
+  // through requireBespokeAccess. STAFF still reach stage work, but only on a
+  // commission they are assigned to — no longer any commission by role alone.
+  const stageRoutes: { file: string; gate: string }[] = [
+    { file: "app/api/bespoke/[orderId]/complete-stage/route.ts", gate: 'requireBespokeAccess("work", { orderId' },
+    { file: "app/api/bespoke/[orderId]/request-approval/route.ts", gate: 'requireBespokeAccess("work", { orderId' },
+    { file: "app/api/bespoke/[orderId]/stage-media/route.ts", gate: 'requireBespokeAccess("work", { orderId' },
+    { file: "app/api/bespoke/[orderId]/stage-draft/route.ts", gate: 'requireBespokeAccess("work", { orderId' },
+    { file: "app/api/bespoke/[orderId]/route.ts", gate: 'requireBespokeAccess("read", { orderId' },
+    { file: "app/api/bespoke/route.ts", gate: 'requireBespokeAccess("read")' },
+    { file: "app/api/clients/[clientId]/notes/route.ts", gate: 'key: "clients"' },
+    { file: "app/api/clients/[clientId]/communications/route.ts", gate: 'key: "clients"' },
+    { file: "app/api/moodboards/route.ts", gate: 'key: "clients"' },
+    { file: "app/api/moodboards/[id]/route.ts", gate: 'key: "clients"' },
+    { file: "app/api/clients/[clientId]/measurements/route.ts", gate: "canSeeClientMeasurements" },
   ];
-  for (const r of staffStageRoutes) {
+  for (const r of stageRoutes) {
     const src = routeSource(r.file);
-    assert(src.includes("requireRoles"), `${r.file} must use requireRoles`);
+    assert(!src.includes("requireRoles("), `${r.file} must not gate on a bare role list`);
     assert(src.includes(r.gate), `${r.file} must gate on ${r.gate}`);
-    assert(!src.includes("requireAdminApi"), `${r.file} must not use requireAdminApi`);
-    assert(statusForRoles("STAFF", BESPOKE_STAFF_ROLES) === 200, `STAFF 200 on ${r.file}`);
   }
+  const staffFacts = { house: false, money: false, admin: false };
+  assert(bespokeAllows("work", { ...staffFacts, assigned: true }), "STAFF work on a commission they are assigned to");
+  assert(!bespokeAllows("work", { ...staffFacts, assigned: false }), "STAFF 403 on a commission they are not on");
+  assert(!bespokeAllows("read", { ...staffFacts, assigned: false }), "STAFF 403 on the whole commission list");
   const revertSrc = routeSource("app/api/bespoke/[orderId]/revert-stage/route.ts");
-  assert(revertSrc.includes("BESPOKE_ADMIN_ROLES"), "revert-stage uses BESPOKE_ADMIN_ROLES");
+  assert(revertSrc.includes('requireBespokeAccess("admin"'), "revert-stage is admin only");
   assert(!revertSrc.includes("requireAdminApi"), "revert-stage must not use requireAdminApi");
-  assert(statusForRoles("STAFF", BESPOKE_ADMIN_ROLES) === 403, "STAFF 403 on revert-stage");
+  assert(!bespokeAllows("admin", { ...staffFacts, assigned: true }), "STAFF 403 on revert-stage");
   const payConfirmSrc = routeSource("app/api/admin/payments/[id]/confirm/route.ts");
   assert(payConfirmSrc.includes('requireAdminApi("payments")'), "payment confirm is requireAdminApi(payments)");
   assert(!roleAllows("STAFF", "payments"), "STAFF 403 on payment confirm");

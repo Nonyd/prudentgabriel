@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { prisma } from "@/lib/prisma";
 import { logActivity, logError } from "@/lib/logger";
 import { sendEmail } from "@/lib/email";
@@ -8,7 +8,7 @@ import { sendEmail } from "@/lib/email";
 type Params = { params: Promise<{ clientId: string }> };
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_ROLES);
+  const gate = await requireBespokeAccess("manage", { key: "clients" });
   if (!gate.ok) return gate.response;
 
   const { clientId } = await params;
@@ -55,7 +55,7 @@ const sendSchema = z.object({
 });
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const gate = await requireRoles(BESPOKE_ROLES);
+  const gate = await requireBespokeAccess("manage", { key: "clients" });
   if (!gate.ok) return gate.response;
 
   const { clientId } = await params;

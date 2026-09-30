@@ -10,6 +10,7 @@ import { spawnSync } from "node:child_process";
 
 const TESTS = [
   "test-bespoke-balance-bind",
+  "test-bespoke-access",
   "test-token-rate-limits",
   "test-not-found-status",
   "test-search-indexing",

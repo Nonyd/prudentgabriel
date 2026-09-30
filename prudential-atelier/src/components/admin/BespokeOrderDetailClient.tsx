@@ -37,8 +37,9 @@ import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPane
 import { CommissionSpecPanel } from "@/components/admin/CommissionSpecPanel";
 import { specificationRows } from "@/lib/atelier/spec-rows";
 import { BESPOKE_MANAGER_ROLES, sessionHasRole } from "@/lib/bespoke-roles";
+import { useHasPermission } from "@/hooks/useHasPermission";
 import { STAGE_LABELS, STAGE_ORDER, getStageProgress } from "@/lib/bespoke-stages";
-import { getStageRequirement } from "@/lib/atelier/stage-requirements";
+import { getStageRequirement, stageRoleAllows } from "@/lib/atelier/stage-requirements";
 import {
   buildStageChecklistFacts,
   mergeStageMedia,
@@ -92,12 +93,15 @@ export function BespokeOrderDetailClient({
   trackingUrl,
   actorRole,
   actorUserId,
+  access,
 }: {
   order: OrderWithRelations;
   staffList: StaffOption[];
   trackingUrl: string;
   actorRole?: string | null;
   actorUserId?: string | null;
+  /** What this viewer's APIs allow — the same facts they gate on. */
+  access?: { manage: boolean; money: boolean; admin: boolean };
 }) {
   const router = useRouter();
   const [order, setOrder] = useState(initial);
@@ -155,7 +159,13 @@ export function BespokeOrderDetailClient({
     latestApproval?.status !== "APPROVED" &&
     Boolean(draftNotes) &&
     (!req.requiresMedia || stageMedia.length >= req.minMediaCount);
-  const isAdminActor = actorRole === "SUPER_ADMIN" || actorRole === "ADMIN";
+  // The client file opens on the `clients` key; link to it only for those who can open it.
+  const canOpenClients = useHasPermission("clients");
+  const isAdminActor = access ? access.admin : actorRole === "SUPER_ADMIN" || actorRole === "ADMIN";
+  const canManage = access ? access.manage : sessionHasRole(actorRole, null, BESPOKE_MANAGER_ROLES);
+  const canRecordMoney = access ? access.money : sessionHasRole(actorRole, null, BESPOKE_MANAGER_ROLES);
+  // The stage gate engine's own role rule; the page does not offer what it will refuse.
+  const roleMayWorkStage = stageRoleAllows(actorRole, order.currentStage);
   const isArchived = order.status === "ARCHIVED";
   const deliveryComplete = Boolean(order.deliveredAt);
 
@@ -728,7 +738,7 @@ export function BespokeOrderDetailClient({
                 </Button>
               ) : null}
               <Button
-                disabled={!canComplete}
+                disabled={!canComplete || !roleMayWorkStage}
                 onClick={() => setConfirmOpen(true)}
               >
                 Mark Stage Complete
@@ -739,7 +749,11 @@ export function BespokeOrderDetailClient({
                 </Button>
               ) : null}
             </div>
-            {!canComplete ? (
+            {!roleMayWorkStage ? (
+              <p className="mt-2 font-sans text-[11px] text-text-light">
+                Your role can follow this commission but not complete its stages.
+              </p>
+            ) : !canComplete ? (
               <p className="mt-2 font-sans text-[11px] text-text-light">
                 Complete the checklist above. The server will still refuse if anything is missing.
               </p>
@@ -756,7 +770,7 @@ export function BespokeOrderDetailClient({
               <div>
                 <dt className="text-text-light">Name</dt>
                 <dd>
-                  {order.clientProfileId ? (
+                  {order.clientProfileId && canOpenClients ? (
                     <Link href={`/admin/clients/${order.clientProfileId}`} className="underline hover:text-nut">
                       {order.clientName}
                     </Link>
@@ -782,7 +796,7 @@ export function BespokeOrderDetailClient({
             orderId={order.id}
             initialSpec={specificationRows(order.features ?? [])}
             initialDeliveryDate={order.deliveryDate}
-            canEdit={sessionHasRole(actorRole, null, BESPOKE_MANAGER_ROLES)}
+            canEdit={canManage}
           />
 
           <section className="card-surface p-6">
@@ -867,6 +881,7 @@ export function BespokeOrderDetailClient({
                 </tbody>
               </table>
             </div>
+            {canRecordMoney ? (
             <div className="mt-4 flex gap-2">
               <input
                 type="number"
@@ -879,6 +894,7 @@ export function BespokeOrderDetailClient({
                 Record
               </Button>
             </div>
+            ) : null}
           </section>
 
           <section className="card-surface p-6">

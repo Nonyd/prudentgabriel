@@ -90,6 +90,16 @@ export function getStageRequirement(stage: BespokeStage): StageRequirement {
   return STAGE_REQUIREMENTS[stage];
 }
 
+/**
+ * The engine's own role rule, read-only, for screens: would evaluateStageGate
+ * pass FORBIDDEN_ROLE for this role at this stage? Screens use it so they do
+ * not offer a button the engine will refuse.
+ */
+export function stageRoleAllows(role: string | null | undefined, stage: BespokeStage): boolean {
+  if (role === Role.SUPER_ADMIN) return true;
+  return (getStageRequirement(stage).requiredRoles as string[]).includes(role ?? "");
+}
+
 export function stageIndex(stage: BespokeStage): number {
   return STAGE_ORDER.indexOf(stage);
 }
