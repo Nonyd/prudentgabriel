@@ -21,6 +21,8 @@ type OrderDetail = {
   materials: { name: string; quantity: string | null; notes: string | null }[];
   stageNotes: { stage: string; notes: string | null; completedAt: string }[];
   images: string[];
+  clientProfileId: string | null;
+  specification: { key: string; label: string; note: string | null }[];
 };
 
 export default function StaffOrderDetailPage({ params }: { params: { orderId: string } }) {
@@ -64,7 +66,16 @@ export default function StaffOrderDetailPage({ params }: { params: { orderId: st
         <h1 className="font-display text-2xl text-ink">
           {order.outfitDescription ?? "Atelier order"}
         </h1>
-        <p className="mt-1 font-sans text-sm text-text-mid">Client: {order.clientFirstName}</p>
+        <p className="mt-1 font-sans text-sm text-text-mid">
+          Client:{" "}
+          {order.clientProfileId ? (
+            <Link href={`/staff/clients/${order.clientProfileId}`} className="underline">
+              {order.clientFirstName}
+            </Link>
+          ) : (
+            order.clientFirstName
+          )}
+        </p>
         <p className="font-sans text-sm text-text-mid">
           Your assignment: {order.assignment.role} · Stage {order.currentStage.replace(/_/g, " ")}
         </p>
@@ -85,6 +96,22 @@ export default function StaffOrderDetailPage({ params }: { params: { orderId: st
             moodboardImages: order.moodboardImages,
           }}
         />
+      ) : null}
+
+      {order.specification.length > 0 ? (
+        <section className="rounded-lg border border-sand bg-bg-card p-4">
+          <h2 className="mb-3 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+            The gown
+          </h2>
+          <ul className="flex flex-wrap gap-2 font-sans text-sm">
+            {order.specification.map((f) => (
+              <li key={f.key} className="border border-sand px-3 py-1.5 text-ink">
+                {f.label}
+                {f.note ? <span className="text-text-mid"> — {f.note}</span> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       {order.measurements ? (

@@ -118,7 +118,10 @@ export function ClientsListClient() {
         <p className="eyebrow">CRM</p>
         <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">Clients</h1>
         <p className="mt-1 font-sans text-sm text-text-mid">
-          Client profiles, measurements, and order history
+          Client profiles, measurements, and order history ·{" "}
+          <Link href="/admin/clients/places" className="underline hover:text-nut">
+            Where clients are
+          </Link>
         </p>
       </div>
 

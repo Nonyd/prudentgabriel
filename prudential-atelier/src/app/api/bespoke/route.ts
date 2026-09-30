@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { BespokeStage, OrderStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { commissionSearch } from "@/lib/atelier/commission-search";
+import { specificationInclude } from "@/lib/atelier/construction-features";
+import { canSeePaymentDetails, stripOrderReceipt } from "@/lib/bespoke-data-access";
 import { logActivity } from "@/lib/logger";
 import { BESPOKE_MANAGER_ROLES, BESPOKE_STAFF_ROLES, requireRoles } from "@/lib/api-auth";
 import { generateBespokeOrderRef } from "@/lib/bespoke-stages";
@@ -15,43 +17,12 @@ export async function GET(req: NextRequest) {
   const gate = await requireRoles(BESPOKE_STAFF_ROLES);
   if (!gate.ok) return gate.response;
 
-  const { searchParams } = new URL(req.url);
-  const stage = searchParams.get("stage");
-  const status = searchParams.get("status");
-  const search = searchParams.get("search")?.trim();
-  const from = searchParams.get("from");
-  const to = searchParams.get("to");
-  const showArchived = searchParams.get("showArchived") === "1";
-  const awaitingReceipt = searchParams.get("awaitingReceipt") === "1";
-
-  const where: Prisma.BespokeOrderWhereInput = {};
-  if (stage && stage !== "all") where.currentStage = stage as BespokeStage;
-  if (status && status !== "all") {
-    where.status = status as OrderStatus;
-  } else if (!showArchived) {
-    where.status = { not: OrderStatus.ARCHIVED };
-  }
-  if (awaitingReceipt) {
-    where.deliveredAt = { not: null };
-    where.receiptConfirmedAt = null;
-    where.status = { in: [OrderStatus.DELIVERED] };
-  }
-  if (from || to) {
-    where.createdAt = {};
-    if (from) where.createdAt.gte = new Date(from);
-    if (to) where.createdAt.lte = new Date(to);
-  }
-  if (search) {
-    where.OR = [
-      { orderRef: { contains: search, mode: "insensitive" } },
-      { clientName: { contains: search, mode: "insensitive" } },
-      { clientEmail: { contains: search, mode: "insensitive" } },
-    ];
-  }
+  const query = commissionSearch(new URL(req.url).searchParams);
+  if (!query.ok) return NextResponse.json({ error: query.error }, { status: 400 });
 
   const items = await prisma.bespokeOrder.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
+    where: query.where,
+    orderBy: query.orderBy,
     take: 200,
     include: {
       stageHistory: { orderBy: { completedAt: "desc" }, take: 1 },
@@ -60,10 +31,13 @@ export async function GET(req: NextRequest) {
         where: { status: "PENDING" },
         select: { id: true, stage: true, status: true },
       },
+      ...specificationInclude,
     },
   });
 
-  return NextResponse.json({ items });
+  // Slice AZ8: the order row carries the last transfer receipt and its reference.
+  const seePayments = canSeePaymentDetails(gate.session.user);
+  return NextResponse.json({ items: seePayments ? items : items.map(stripOrderReceipt) });
 }
 
 export async function POST(req: NextRequest) {

@@ -36,6 +36,7 @@ const TESTS = [
   "test-slice-az12",
   "test-slice-ba",
   "test-slice-bb",
+  "test-slice-bc",
   "test-slice-j",
   "test-slice-m",
   "test-slice-n",

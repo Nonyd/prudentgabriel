@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { BESPOKE_MANAGER_ROLES, BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
 import { logActivity, logError } from "@/lib/logger";
 import { getClientPayments } from "@/lib/payments/ledger";
-import { canSeeClientMeasurements, canSeePaymentDetails } from "@/lib/bespoke-data-access";
+import { canSeeClientMeasurements, canSeePaymentDetails, stripOrderReceipt } from "@/lib/bespoke-data-access";
 
 type Params = { params: Promise<{ clientId: string }> };
 
@@ -75,6 +75,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     return NextResponse.json({
       item: {
         ...item,
+        bespokeOrders: seePayments ? item.bespokeOrders : item.bespokeOrders.map(stripOrderReceipt),
         measurements: seeMeasurements ? item.measurements : null,
         paymentsHidden: !seePayments,
         measurementsHidden: !seeMeasurements,

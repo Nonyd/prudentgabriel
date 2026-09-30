@@ -52,6 +52,7 @@ type QuotationRecord = {
   fxGbpAmountLocked?: number | null;
   depositPercent?: number | null;
   expiresAt?: Date | null;
+  expectedDeliveryDate?: Date | null;
 };
 
 async function uniqueOrderRef(): Promise<string> {
@@ -243,6 +244,8 @@ export async function convertQuotationToOrder(
         clientPhone: consultation?.clientPhone ?? quote.clientPhone,
         outfitDescription: consultation?.sessionNotes ?? quote.notes,
         occasionType: consultation?.occasion ?? null,
+        // BC3: the date agreed with the quotation. Adjustable on the commission after.
+        deliveryDate: quote.expectedDeliveryDate ?? null,
         sessionNotes: consultation?.sessionNotes ?? null,
         moodboardImages: consultation?.moodboardImages ?? [],
         occasionDetails: consultation?.occasion ?? null,

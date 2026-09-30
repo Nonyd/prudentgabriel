@@ -20,7 +20,11 @@ import { cn, formatDate } from "@/lib/utils";
 
 type OrderRow = BespokeOrder & {
   stageApprovals?: Pick<StageApproval, "id" | "stage" | "status">[];
+  /** Slice BC2: ticked construction features. */
+  features?: { featureId: string; feature: { key: string; label: string } }[];
 };
+
+type LibraryFeature = { id: string; key: string; label: string };
 
 function StageBadge({ stage }: { stage: BespokeStage }) {
   return (
@@ -102,6 +106,11 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [showArchived, setShowArchived] = useState(false);
   const [awaitingReceipt, setAwaitingReceipt] = useState(false);
+  /** BC3: "show me May's orders" — a Lagos calendar month, "YYYY-MM". */
+  const [deliveryMonth, setDeliveryMonth] = useState("");
+  /** BC2: commissions carrying this construction feature. */
+  const [featureFilter, setFeatureFilter] = useState("");
+  const [library, setLibrary] = useState<LibraryFeature[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({
@@ -121,12 +130,20 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
     if (statusFilter !== "all") params.set("status", statusFilter);
     if (showArchived) params.set("showArchived", "1");
     if (awaitingReceipt) params.set("awaitingReceipt", "1");
+    if (deliveryMonth) params.set("deliveryMonth", deliveryMonth);
+    if (featureFilter) params.set("feature", featureFilter);
     const res = await fetch(`/api/bespoke?${params}`);
     if (res.ok) {
       const data = (await res.json()) as { items: OrderRow[] };
       setItems(data.items);
     }
-  }, [search, stageFilter, statusFilter, showArchived, awaitingReceipt]);
+  }, [search, stageFilter, statusFilter, showArchived, awaitingReceipt, deliveryMonth, featureFilter]);
+
+  useEffect(() => {
+    void fetch("/api/bespoke/construction-features")
+      .then((r) => (r.ok ? r.json() : { items: [] }))
+      .then((d: { items: LibraryFeature[] }) => setLibrary(d.items));
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(refresh, 300);
@@ -152,8 +169,17 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
         header: "Client",
         cell: (row) => (
           <div>
-            <p className="font-sans text-sm text-ink">{row.clientName}</p>
+            {row.clientProfileId ? (
+              <Link href={`/admin/clients/${row.clientProfileId}`} className="font-sans text-sm text-ink hover:underline">
+                {row.clientName}
+              </Link>
+            ) : (
+              <p className="font-sans text-sm text-ink">{row.clientName}</p>
+            )}
             <p className="font-sans text-[11px] text-text-light">{row.clientEmail}</p>
+            {row.features?.length ? (
+              <p className="font-sans text-[11px] text-nut">{row.features.map((f) => f.feature.label).join(" · ")}</p>
+            ) : null}
           </div>
         ),
       },
@@ -233,6 +259,8 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
         <Button onClick={() => setModalOpen(true)}>New Atelier Order</Button>
       </div>
 
+      <DueSoon onPickMonth={setDeliveryMonth} activeMonth={deliveryMonth} />
+
       <div className="flex flex-wrap gap-3">
         <input
           type="search"
@@ -282,6 +310,33 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
             onChange={(e) => setAwaitingReceipt(e.target.checked)}
           />
           Awaiting receipt confirm
+        </label>
+        <select
+          value={featureFilter}
+          onChange={(e) => setFeatureFilter(e.target.value)}
+          aria-label="Gown feature"
+          className="rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
+        >
+          <option value="">Any gown</option>
+          {library.map((f) => (
+            <option key={f.id} value={f.key}>
+              With {f.label.toLowerCase()}
+            </option>
+          ))}
+        </select>
+        <label className="flex items-center gap-2 font-sans text-xs text-text-mid">
+          Delivery month
+          <input
+            type="month"
+            value={deliveryMonth}
+            onChange={(e) => setDeliveryMonth(e.target.value)}
+            className="rounded border border-sand bg-bg-card px-2 py-1.5 font-sans text-sm"
+          />
+          {deliveryMonth ? (
+            <button type="button" className="underline" onClick={() => setDeliveryMonth("")}>
+              clear
+            </button>
+          ) : null}
         </label>
       </div>
 
@@ -337,6 +392,73 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
           </div>
         </div>
       </Modal>
+    </div>
+  );
+}
+
+type DueItem = {
+  id: string;
+  orderRef: string;
+  clientName: string;
+  deliveryDate: string | null;
+  currentStage: BespokeStage;
+  deliveredAt: string | null;
+  overdue: boolean;
+};
+type DueMonth = { month: string; label: string; items: DueItem[] };
+
+/** Slice BC3: what is due this month and next — the question behind "show me May's orders". */
+function DueSoon({ onPickMonth, activeMonth }: { onPickMonth: (m: string) => void; activeMonth: string }) {
+  const [due, setDue] = useState<{ thisMonth: DueMonth; nextMonth: DueMonth; undatedOpen: number } | null>(null);
+  useEffect(() => {
+    void fetch("/api/bespoke/due")
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setDue);
+  }, []);
+  if (!due) return null;
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {[due.thisMonth, due.nextMonth].map((m) => (
+        <section key={m.month} className="card-surface p-4">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="font-sans text-xs font-semibold uppercase tracking-wider text-text-light">
+              Due in {m.label} · {m.items.length}
+            </h2>
+            <button
+              type="button"
+              onClick={() => onPickMonth(activeMonth === m.month ? "" : m.month)}
+              className="font-sans text-xs text-nut underline"
+            >
+              {activeMonth === m.month ? "Show all" : "Filter to this month"}
+            </button>
+          </div>
+          {m.items.length === 0 ? (
+            <p className="mt-2 font-sans text-sm text-text-mid">Nothing due.</p>
+          ) : (
+            <ul className="mt-2 space-y-1 font-sans text-sm">
+              {m.items.slice(0, 6).map((o) => (
+                <li key={o.id} className="flex justify-between gap-2">
+                  <Link href={`/admin/bespoke/${o.id}`} className="truncate text-ink hover:underline">
+                    {o.orderRef} · {o.clientName}
+                  </Link>
+                  <span className={cn("shrink-0", o.overdue ? "text-red-700" : "text-text-mid")}>
+                    {o.deliveredAt ? "delivered" : o.deliveryDate ? formatDate(o.deliveryDate, "d MMM") : ""}
+                    {o.overdue ? " · overdue" : ""}
+                  </span>
+                </li>
+              ))}
+              {m.items.length > 6 ? (
+                <li className="text-xs text-text-light">and {m.items.length - 6} more</li>
+              ) : null}
+            </ul>
+          )}
+        </section>
+      ))}
+      {due.undatedOpen > 0 ? (
+        <p className="font-sans text-xs text-text-mid md:col-span-2">
+          {due.undatedOpen} open commission{due.undatedOpen === 1 ? " has" : "s have"} no delivery date yet.
+        </p>
+      ) : null}
     </div>
   );
 }

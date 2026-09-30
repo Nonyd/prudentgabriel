@@ -81,6 +81,8 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
   const [tax, setTax] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [expiresAt, setExpiresAt] = useState("");
+  /** BC3: the delivery date agreed with this quotation; it becomes the commission's. */
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState("");
   const [depositPercent, setDepositPercent] = useState(70);
   const [defaultDepositPercent, setDefaultDepositPercent] = useState(70);
   const [currency, setCurrency] = useState<InvoiceCurrency>("NGN");
@@ -249,6 +251,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
           discount,
           notes: notes || undefined,
           expiresAt: expiresAt || undefined,
+          expectedDeliveryDate: expectedDeliveryDate || undefined,
           depositPercent,
           currency,
           consultationId: consultationId ?? undefined,
@@ -515,6 +518,15 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
               type="date"
               value={expiresAt}
               onChange={(e) => setExpiresAt(e.target.value)}
+              className="w-full rounded border border-sand px-3 py-2 font-sans text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block font-sans text-xs font-medium text-text-mid">Expected delivery</span>
+            <input
+              type="date"
+              value={expectedDeliveryDate}
+              onChange={(e) => setExpectedDeliveryDate(e.target.value)}
               className="w-full rounded border border-sand px-3 py-2 font-sans text-sm"
             />
           </label>

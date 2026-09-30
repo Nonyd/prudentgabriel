@@ -14,6 +14,8 @@ import {
 import { generatePaymentReference } from "@/lib/payments/index";
 import { stageGateInclude } from "@/lib/atelier/can-complete-stage";
 import { canSeeOrderMeasurements, canSeePaymentDetails, redactBespokeOrder } from "@/lib/bespoke-data-access";
+import { parseDeliveryDateInput } from "@/lib/atelier/delivery-month";
+import { specificationInclude } from "@/lib/atelier/construction-features";
 
 type Params = { params: Promise<{ orderId: string }> };
 
@@ -41,6 +43,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
         clientProfile: { include: { measurements: true, moodboards: true } },
         quotation: true,
         ...paymentInclude,
+        ...specificationInclude,
         ...stageGateInclude(),
       },
     });
@@ -66,6 +69,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
           clientProfile: { include: { measurements: true, moodboards: true } },
           quotation: true,
           ...paymentInclude,
+          ...specificationInclude,
           ...stageGateInclude(),
         },
       });
@@ -99,6 +103,16 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       { error: "Stage changes must go through complete-stage or revert-stage." },
       { status: 422 },
     );
+  }
+
+  // BC3: the expected delivery date — set, moved, or cleared ("" / null).
+  let deliveryDate: Date | null | undefined;
+  if ("deliveryDate" in body) {
+    const raw = body.deliveryDate;
+    deliveryDate = parseDeliveryDateInput(typeof raw === "string" ? raw.slice(0, 10) : raw);
+    if (deliveryDate === undefined) {
+      return NextResponse.json({ error: "Delivery date must be a date" }, { status: 400 });
+    }
   }
 
   try {
@@ -223,7 +237,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         occasionType: typeof body.occasionType === "string" ? body.occasionType : undefined,
         eventLocation: typeof body.eventLocation === "string" ? body.eventLocation : undefined,
         clientLocation: typeof body.clientLocation === "string" ? body.clientLocation : undefined,
-        deliveryDate: body.deliveryDate ? new Date(String(body.deliveryDate)) : undefined,
+        deliveryDate,
         notes: typeof body.notes === "string" ? body.notes : undefined,
         totalAmount,
         // amountPaid / balance / currentStage are not writable here.

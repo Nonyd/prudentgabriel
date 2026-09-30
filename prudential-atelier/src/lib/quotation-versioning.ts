@@ -77,6 +77,7 @@ export async function reviseQuotation(params: {
         status: QuoteStatus.DRAFT,
         expiresAt: existing.expiresAt,
         depositPercent: existing.depositPercent,
+        expectedDeliveryDate: existing.expectedDeliveryDate,
         consultationId: existing.consultationId,
         createdBy: params.actor.id,
         revisedBy: params.actor.id,

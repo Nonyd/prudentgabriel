@@ -16,6 +16,8 @@ import type {
   BespokeOrder,
   BespokeStage,
   ClientProfile,
+  CommissionFeature,
+  ConstructionFeature,
   Material,
   Measurement,
   OrderAssignment,
@@ -32,6 +34,9 @@ import type {
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPanel";
+import { CommissionSpecPanel } from "@/components/admin/CommissionSpecPanel";
+import { specificationRows } from "@/lib/atelier/spec-rows";
+import { BESPOKE_MANAGER_ROLES, sessionHasRole } from "@/lib/bespoke-roles";
 import { STAGE_LABELS, STAGE_ORDER, getStageProgress } from "@/lib/bespoke-stages";
 import { getStageRequirement } from "@/lib/atelier/stage-requirements";
 import {
@@ -66,6 +71,10 @@ type OrderWithRelations = BespokeOrder & {
     occasion: string;
   } | null;
   payments?: LedgerPayment[];
+  /** Slice BC2: ticked construction features. */
+  features?: (CommissionFeature & {
+    feature: Pick<ConstructionFeature, "key" | "label" | "group" | "sortOrder">;
+  })[];
   /** Slice AZ8: set by the API when this viewer may not see payments / measurements. */
   paymentsHidden?: boolean;
   measurementsHidden?: boolean;
@@ -627,6 +636,7 @@ export function BespokeOrderDetailClient({
                   className="rounded border border-sand px-2 py-2 font-sans text-sm"
                 >
                   <option value="TAILOR">Tailor</option>
+                  <option value="PATTERN_CUTTER">Pattern cutter</option>
                   <option value="BEADER">Beader</option>
                   <option value="DESIGNER">Designer</option>
                 </select>
@@ -745,7 +755,15 @@ export function BespokeOrderDetailClient({
             <dl className="mt-4 space-y-2 font-sans text-sm">
               <div>
                 <dt className="text-text-light">Name</dt>
-                <dd>{order.clientName}</dd>
+                <dd>
+                  {order.clientProfileId ? (
+                    <Link href={`/admin/clients/${order.clientProfileId}`} className="underline hover:text-nut">
+                      {order.clientName}
+                    </Link>
+                  ) : (
+                    order.clientName
+                  )}
+                </dd>
               </div>
               <div>
                 <dt className="text-text-light">Email</dt>
@@ -757,14 +775,15 @@ export function BespokeOrderDetailClient({
                   <dd>{order.clientPhone}</dd>
                 </div>
               ) : null}
-              {order.deliveryDate ? (
-                <div>
-                  <dt className="text-text-light">Delivery</dt>
-                  <dd>{formatDate(order.deliveryDate)}</dd>
-                </div>
-              ) : null}
             </dl>
           </section>
+
+          <CommissionSpecPanel
+            orderId={order.id}
+            initialSpec={specificationRows(order.features ?? [])}
+            initialDeliveryDate={order.deliveryDate}
+            canEdit={sessionHasRole(actorRole, null, BESPOKE_MANAGER_ROLES)}
+          />
 
           <section className="card-surface p-6">
             <h2 className="font-sans text-xs font-semibold uppercase tracking-wider text-text-light">

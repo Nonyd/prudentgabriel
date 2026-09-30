@@ -96,6 +96,8 @@ const PATH_RULES: PathRule[] = [
   { prefix: "/admin/bespoke", gate: perm("bespoke") },
   { prefix: "/admin/consultations", gate: perm("consultations") },
   { prefix: "/admin/consultants", gate: perm("consultations") },
+  // BC4: counts by place only — the CRM or the reports desk. Same gate as its API.
+  { prefix: "/admin/clients/places", gate: perm(["clients", "reports"]) },
   { prefix: "/admin/clients", gate: perm("clients") },
   { prefix: "/admin/customers", gate: perm("clients") },
   { prefix: "/admin/referrals", gate: perm("clients") },

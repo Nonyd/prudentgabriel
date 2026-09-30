@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { parseDeliveryDateInput } from "@/lib/atelier/delivery-month";
 import { Prisma, QuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
@@ -155,6 +156,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (body.depositPercent !== undefined) {
       const n = typeof body.depositPercent === "number" ? body.depositPercent : Number(body.depositPercent);
       data.depositPercent = clampDepositPercent(n);
+    }
+    if (body.expectedDeliveryDate !== undefined) {
+      const d = parseDeliveryDateInput(body.expectedDeliveryDate);
+      if (d === undefined) {
+        return NextResponse.json({ error: "Expected delivery date must be a date" }, { status: 400 });
+      }
+      data.expectedDeliveryDate = d;
     }
 
     let subtotal = existing.subtotal;

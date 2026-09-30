@@ -58,7 +58,23 @@ export async function canSeeClientMeasurements(user: AccessUser, clientProfileId
   return Boolean(hit);
 }
 
-type WithPayments = { payments?: unknown[] };
+type WithOrderReceipt = { paymentReceiptUrl?: string | null; paymentRef?: string | null };
+
+/**
+ * The commission row itself carries the last bank-transfer receipt URL and its
+ * reference (written by the client's transfer upload). Those are payment
+ * details too: blank them for anyone who may not see payments.
+ */
+export function stripOrderReceipt<T extends WithOrderReceipt>(order: T): T {
+  if (!("paymentReceiptUrl" in order) && !("paymentRef" in order)) return order;
+  return {
+    ...order,
+    ...("paymentReceiptUrl" in order ? { paymentReceiptUrl: null } : {}),
+    ...("paymentRef" in order ? { paymentRef: null } : {}),
+  };
+}
+
+type WithPayments = { payments?: unknown[] } & WithOrderReceipt;
 type WithClientMeasurements = { clientProfile?: ({ measurements?: unknown } & Record<string, unknown>) | null };
 
 /**
@@ -70,7 +86,8 @@ export function redactBespokeOrder<T extends WithPayments & WithClientMeasuremen
   order: T,
   access: { payments: boolean; measurements: boolean },
 ): T & { paymentsHidden: boolean; measurementsHidden: boolean } {
-  const out = { ...order } as T & { paymentsHidden: boolean; measurementsHidden: boolean };
+  const base = access.payments ? order : stripOrderReceipt(order);
+  const out = { ...base } as T & { paymentsHidden: boolean; measurementsHidden: boolean };
   if (!access.payments && "payments" in out) out.payments = [];
   if (!access.measurements && out.clientProfile) {
     out.clientProfile = { ...out.clientProfile, measurements: null };

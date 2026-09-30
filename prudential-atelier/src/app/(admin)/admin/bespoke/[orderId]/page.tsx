@@ -6,6 +6,8 @@ import { stageGateInclude } from "@/lib/atelier/can-complete-stage";
 import { maybeArchiveBespokeOrder } from "@/lib/bespoke-archive";
 import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { canSeeOrderMeasurements, canSeePaymentDetails, redactBespokeOrder } from "@/lib/bespoke-data-access";
+import { specificationInclude } from "@/lib/atelier/construction-features";
 
 export default async function AdminBespokeOrderPage({
   params,
@@ -30,6 +32,7 @@ export default async function AdminBespokeOrderPage({
         orderBy: { createdAt: "desc" },
         include: { confirmedBy: { select: { id: true, name: true, email: true } } },
       },
+      ...specificationInclude,
       ...stageGateInclude(),
     },
   });
@@ -48,9 +51,17 @@ export default async function AdminBespokeOrderPage({
   const baseUrl = getPublicAppUrl().replace(/\/+$/, "");
   const trackingRaw = await ensureTrackingRaw(order);
 
+  // Slice AZ8, as the API applies it: a `bespoke` grant opens this page, but
+  // payments stay with money roles and measurements with managers and cutters.
+  const viewer = session?.user ?? {};
+  const shown = redactBespokeOrder(order, {
+    payments: canSeePaymentDetails(viewer),
+    measurements: await canSeeOrderMeasurements(viewer, order.id),
+  });
+
   return (
     <BespokeOrderDetailClient
-      order={order}
+      order={shown}
       actorRole={session?.user?.role ?? null}
       actorUserId={session?.user?.id ?? null}
       staffList={staffList.map((s) => ({

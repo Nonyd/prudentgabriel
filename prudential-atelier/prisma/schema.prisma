@@ -2087,6 +2087,8 @@ model BespokeOrder {
   stageDrafts      OrderStageDraft[]
   stageApprovals   StageApproval[]
   assignments  OrderAssignment[]
+  /// BC2: what the gown is — construction features ticked from the house library.
+  features     CommissionFeature[]
   materials    Material[]
 
   quotationId String?
@@ -2165,6 +2167,7 @@ model BespokeOrder {
   @@index([consultationId])
   @@index([balance, balanceReminderSentAt, deliveryDate])
   @@index([deliveredAt, receiptConfirmedAt])
+  @@index([deliveryDate])
 }
 
 enum AlterationReason {
@@ -2342,6 +2345,41 @@ model OrderAssignment {
   @@index([orderId])
   @@index([staffProfileId])
   @@index([stage])
+}
+
+/// BC2: construction features the house defines once (mermaid, cup corset, train,
+/// long sleeves …) and ticks per commission. Structured so "which gowns had a corset"
+/// is a query, not a text search. Archived features stay on the commissions that used them.
+model ConstructionFeature {
+  id          String              @id @default(cuid())
+  key         String              @unique
+  label       String
+  /// Where on the gown: Silhouette, Bodice, Sleeves, Train … Display grouping only.
+  group       String?
+  helpText    String?             @db.Text
+  sortOrder   Int                 @default(0)
+  archivedAt  DateTime?
+  commissions CommissionFeature[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([archivedAt, sortOrder])
+}
+
+/// BC2: one ticked feature on one commission, with room for a note ("detachable").
+model CommissionFeature {
+  id        String              @id @default(cuid())
+  orderId   String
+  order     BespokeOrder        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  featureId String
+  feature   ConstructionFeature @relation(fields: [featureId], references: [id], onDelete: Restrict)
+  note      String?             @db.Text
+  addedById String?
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@unique([orderId, featureId])
+  @@index([featureId])
 }
 
 model Material {
@@ -2536,6 +2574,9 @@ model Quotation {
   approvalTokenExpiresAt DateTime?
   approvedAt    DateTime?
   expiresAt     DateTime?
+  /// BC3: the delivery date agreed with the quotation. Copied to BespokeOrder.deliveryDate
+  /// at convert; adjustable on the commission afterwards. Not the enquiry's event date.
+  expectedDeliveryDate DateTime? @db.Date
   /// Public client approval page URL (never a PDF).
   approvalUrl   String?
   /// URL of the generated quotation PDF (admin/public PDF route), set on send.

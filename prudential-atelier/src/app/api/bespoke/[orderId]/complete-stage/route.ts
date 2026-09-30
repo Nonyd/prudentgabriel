@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { BESPOKE_STAFF_ROLES, requireRoles } from "@/lib/api-auth";
 import { actorFromSession, completeOrderStage } from "@/lib/atelier/stage-actions";
 import { bespokeAdminDetailInclude } from "@/lib/atelier/can-complete-stage";
+import { canSeeOrderMeasurements, canSeePaymentDetails, redactBespokeOrder } from "@/lib/bespoke-data-access";
 
 type Params = { params: Promise<{ orderId: string }> };
 
@@ -40,6 +41,12 @@ export async function POST(req: NextRequest, { params }: Params) {
     where: { id: orderId },
     include: bespokeAdminDetailInclude(),
   });
+  if (!updated) return NextResponse.json({ item: null });
 
-  return NextResponse.json({ item: updated });
+  // Slice AZ8: STAFF complete stages too; what comes back is redacted like GET.
+  const access = {
+    payments: canSeePaymentDetails(gate.session.user),
+    measurements: await canSeeOrderMeasurements(gate.session.user, orderId),
+  };
+  return NextResponse.json({ item: redactBespokeOrder(updated, access) });
 }

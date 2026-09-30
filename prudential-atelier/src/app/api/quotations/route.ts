@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { parseDeliveryDateInput } from "@/lib/atelier/delivery-month";
 import { Prisma, QuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
@@ -149,6 +150,12 @@ export async function POST(req: NextRequest) {
     const expiresAt = body.expiresAt
       ? parseDateInput(String(body.expiresAt))
       : defaultExpiresAt(new Date(), validityDays);
+    // BC3: the delivery date agreed with this quotation; carried to the commission at convert.
+    const expectedDeliveryDate =
+      body.expectedDeliveryDate === undefined ? null : parseDeliveryDateInput(body.expectedDeliveryDate);
+    if (expectedDeliveryDate === undefined) {
+      return NextResponse.json({ error: "Expected delivery date must be a date" }, { status: 400 });
+    }
 
     const item = await prisma.$transaction(async (tx) => {
       const baseQuoteRef = await allocateQuotationBaseRef(tx);
@@ -170,6 +177,7 @@ export async function POST(req: NextRequest) {
           notes: typeof body.notes === "string" ? body.notes : null,
           expiresAt,
           depositPercent,
+          expectedDeliveryDate,
           consultationId,
           createdBy: gate.session.user.id,
           currency:

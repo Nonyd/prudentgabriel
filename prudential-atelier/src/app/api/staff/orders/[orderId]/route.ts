@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { MEASUREMENT_ASSIGNMENT_ROLES } from "@/lib/bespoke-data-access";
+import { specificationInclude, specificationRows } from "@/lib/atelier/construction-features";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: string }> }) {
   const session = await auth();
@@ -24,6 +25,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: s
     where: { id: orderId },
     include: {
       materials: true,
+      ...specificationInclude,
       stageHistory: { orderBy: { completedAt: "desc" }, take: 5 },
       clientProfile: {
         include: {
@@ -61,6 +63,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: s
 
   return NextResponse.json({
     orderRef: order.orderRef,
+    clientProfileId: order.clientProfileId,
+    specification: specificationRows(order.features),
     outfitDescription: order.outfitDescription,
     occasionType: order.occasionType,
     occasionDetails: order.occasionDetails,
