@@ -4,7 +4,13 @@ import { consultationEnquirySchema } from "@/validations/consultation";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { AUTH_WINDOW_MS, accountKey } from "@/lib/auth-limits";
 import { getWatYmd } from "@/lib/consultation";
-import { daysUntil, isShortNotice } from "@/lib/consultation-enquiry-shared";
+import {
+  daysUntil,
+  fittingModeLabel,
+  isShortNotice,
+  occasionLabel,
+  occasionPhrase,
+} from "@/lib/consultation-enquiry-shared";
 import { generateEnquiryNumber, getShortNoticeDays } from "@/lib/consultation-enquiry";
 import { notifyConsultationEnquiry } from "@/lib/notifications";
 import { sendAdminNotificationEmail } from "@/lib/email";
@@ -55,6 +61,9 @@ export async function POST(req: NextRequest) {
   if (daysUntil(data.eventDate, today) < 0) {
     return NextResponse.json({ error: "The event date has already passed." }, { status: 400 });
   }
+  if (daysUntil(data.deliveryDate, today) < 0) {
+    return NextResponse.json({ error: "The delivery date has already passed." }, { status: 400 });
+  }
 
   const ip = getClientIp(req);
   const address = await checkRateLimit(`enquiry-address:${ip}`, ADDRESS_LIMIT, AUTH_WINDOW_MS);
@@ -74,10 +83,17 @@ export async function POST(req: NextRequest) {
           clientEmail: email,
           clientPhone: data.clientPhone,
           eventDate: new Date(`${data.eventDate}T00:00:00.000Z`),
-          eventType: data.eventType,
-          wearer: data.wearer,
-          outfitType: data.outfitType,
-          notes: data.notes || null,
+          eventType: occasionLabel(data.occasion),
+          occasionDetails: data.occasion === "OTHER" ? data.occasionDetails || null : null,
+          dressCount: data.dressCount,
+          eventLocation: data.eventLocation,
+          presentCity: data.presentCity,
+          presentState: data.presentState || null,
+          presentCountry: data.presentCountry,
+          fittingMode: data.fittingMode,
+          fittingNote: data.fittingNote || null,
+          deliveryDate: new Date(`${data.deliveryDate}T00:00:00.000Z`),
+          colourPalette: data.colourPalette || null,
           moodboardImages: data.moodboardImages,
           shortNotice,
         },
@@ -101,7 +117,8 @@ export async function POST(req: NextRequest) {
     await sendAdminNotificationEmail(
       `${shortNotice ? "Short-notice enquiry" : "New consultation enquiry"} — ${enquiry.enquiryNumber}`,
       `<p><strong>${escapeHtml(enquiry.clientName)}</strong> · ${escapeHtml(enquiry.clientPhone)} · ${escapeHtml(email)}</p>
-       <p>${escapeHtml(enquiry.eventType)} on ${eventOn}. ${escapeHtml(enquiry.outfitType)}.</p>
+       <p>${escapeHtml(enquiry.eventType)}${enquiry.occasionDetails ? ` (${escapeHtml(enquiry.occasionDetails)})` : ""} on ${eventOn}, ${escapeHtml(enquiry.eventLocation ?? "")}. ${enquiry.dressCount ?? 1} dress${enquiry.dressCount === 1 ? "" : "es"}, needed by ${enquiry.deliveryDate ? enquiry.deliveryDate.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : "—"}.</p>
+       <p>Lives in ${escapeHtml([enquiry.presentCity, enquiry.presentState, enquiry.presentCountry].filter(Boolean).join(", "))}. Fittings: ${escapeHtml(fittingModeLabel(enquiry.fittingMode).toLowerCase())}${enquiry.fittingNote ? `, ${escapeHtml(enquiry.fittingNote)}` : ""}.</p>
        ${shortNotice ? "<p><strong>Short notice: call her about an express commission.</strong></p>" : ""}
        <p><a href="${getPublicAppUrl()}/admin/consultations/enquiries?open=${enquiry.id}">Open the enquiry queue</a></p>`,
       `consultation-enquiry-admin:${enquiry.id}`,
@@ -112,7 +129,8 @@ export async function POST(req: NextRequest) {
       vars: {
         firstName: enquiry.clientName.split(/\s+/)[0] ?? enquiry.clientName,
         enquiryRef: enquiry.enquiryNumber,
-        eventType: enquiry.eventType.toLowerCase(),
+        // "your enquiry for your wedding on …", never "your bride".
+        eventType: occasionPhrase(data.occasion),
         eventDate: eventOn,
       },
       outboxTemplate: "consultation-enquiry-received",

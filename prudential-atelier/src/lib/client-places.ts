@@ -130,6 +130,7 @@ export async function loadClientPlaceRows(): Promise<ClientPlaceRow[]> {
       _count: { select: { bespokeOrders: true } },
       user: {
         select: {
+          email: true,
           // Address has no timestamp; cuid ids sort by creation, so id desc is "latest".
           addresses: {
             orderBy: [{ isDefault: "desc" }, { id: "desc" }],
@@ -146,14 +147,39 @@ export async function loadClientPlaceRows(): Promise<ClientPlaceRow[]> {
     },
   });
 
+  // Where she said she lives on her latest enquiry (asked since 30 September 2026).
+  const enquiries = await prisma.consultationEnquiry.findMany({
+    where: { presentCountry: { not: null } },
+    orderBy: { createdAt: "desc" },
+    select: { clientEmail: true, presentCity: true, presentState: true, presentCountry: true },
+  });
+  const enquiryByEmail = new Map<string, (typeof enquiries)[number]>();
+  for (const e of enquiries) {
+    const key = e.clientEmail.toLowerCase();
+    if (!enquiryByEmail.has(key)) enquiryByEmail.set(key, e);
+  }
+
   return clients.map((c) => {
     const address = c.user.addresses[0];
+    const enquiry = enquiryByEmail.get(c.user.email.toLowerCase());
+    if (address) {
+      return { clientId: c.id, hasCommission: c._count.bespokeOrders > 0, country: address.country, state: address.state, city: address.city };
+    }
+    if (enquiry) {
+      return {
+        clientId: c.id,
+        hasCommission: c._count.bespokeOrders > 0,
+        country: enquiry.presentCountry,
+        state: enquiry.presentState,
+        city: enquiry.presentCity,
+      };
+    }
     return {
       clientId: c.id,
       hasCommission: c._count.bespokeOrders > 0,
-      country: address?.country ?? c.user.consultationBookings[0]?.clientCountry ?? null,
-      state: address?.state ?? null,
-      city: address?.city ?? null,
+      country: c.user.consultationBookings[0]?.clientCountry ?? null,
+      state: null,
+      city: null,
     };
   });
 }

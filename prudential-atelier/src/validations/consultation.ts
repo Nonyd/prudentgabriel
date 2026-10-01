@@ -6,9 +6,9 @@ import {
 } from "@prisma/client";
 import { storedPrivateMediaUrlSchema, optionalStoredPublicMediaUrlSchema } from "@/lib/media/stored-url";
 import {
-  ENQUIRY_EVENT_TYPES,
-  ENQUIRY_OUTFIT_TYPES,
-  ENQUIRY_WEARERS,
+  ENQUIRY_FITTING_MODES,
+  ENQUIRY_OCCASIONS,
+  MAX_DRESSES,
 } from "@/lib/consultation-enquiry-shared";
 
 export const OFFERING_TYPE_VALUES = [
@@ -18,18 +18,44 @@ export const OFFERING_TYPE_VALUES = [
   "VIRTUAL_TEAM_ONLY",
 ] as const;
 
-/** BA2: the atelier application. Name, email and phone, the event, and the screening questions. */
-export const consultationEnquirySchema = z.object({
-  clientName: z.string().trim().min(2).max(100),
-  clientEmail: z.string().trim().email().max(200),
-  clientPhone: z.string().trim().min(7).max(20),
-  eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  eventType: z.enum(ENQUIRY_EVENT_TYPES),
-  wearer: z.enum(ENQUIRY_WEARERS.map((w) => w.id) as [string, ...string[]]),
-  outfitType: z.enum(ENQUIRY_OUTFIT_TYPES),
-  notes: z.string().trim().max(2000).optional(),
-  moodboardImages: z.array(storedPrivateMediaUrlSchema).max(5).default([]),
-});
+const ymd = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a date");
+const words = (max: number) => z.string().trim().max(max);
+
+/**
+ * BA2: the atelier application, asking the house's questions (30 September
+ * 2026): the occasion, name and contact, how many dresses, the event's date
+ * and place, where she lives now, fitting availability, when she needs the
+ * dress, her colour palette and inspiration pictures.
+ */
+export const consultationEnquirySchema = z
+  .object({
+    occasion: z.enum(ENQUIRY_OCCASIONS.map((o) => o.id) as [string, ...string[]]),
+    /** Required when the occasion is Other. */
+    occasionDetails: words(1000).optional(),
+    clientName: z.string().trim().min(2).max(100),
+    clientEmail: z.string().trim().email().max(200),
+    clientPhone: z.string().trim().min(7).max(20),
+    dressCount: z.coerce.number().int().min(1).max(MAX_DRESSES),
+    eventDate: ymd,
+    eventLocation: z.string().trim().min(2).max(200),
+    presentCity: z.string().trim().min(2).max(100),
+    presentState: words(100).optional(),
+    presentCountry: z.string().trim().min(2).max(100),
+    fittingMode: z.enum(ENQUIRY_FITTING_MODES.map((m) => m.id) as [string, ...string[]]),
+    fittingNote: words(500).optional(),
+    deliveryDate: ymd,
+    colourPalette: words(500).optional(),
+    moodboardImages: z.array(storedPrivateMediaUrlSchema).max(5).default([]),
+  })
+  .superRefine((v, ctx) => {
+    if (v.occasion === "OTHER" && (v.occasionDetails ?? "").length < 3) {
+      ctx.addIssue({ code: "custom", path: ["occasionDetails"], message: "Tell us what the occasion is" });
+    }
+    // ISO dates compare as strings. A dress is needed by the event, not after it.
+    if (v.deliveryDate > v.eventDate) {
+      ctx.addIssue({ code: "custom", path: ["deliveryDate"], message: "The delivery date must be on or before the event" });
+    }
+  });
 
 export type ConsultationEnquiryInput = z.infer<typeof consultationEnquirySchema>;
 

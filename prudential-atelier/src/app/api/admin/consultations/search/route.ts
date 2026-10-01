@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
     include: {
       user: { include: { clientProfile: true } },
       offering: { select: { sessionType: true } },
+      enquiry: { select: { deliveryDate: true } },
     },
   });
 
@@ -48,6 +49,8 @@ export async function GET(req: NextRequest) {
       sessionType: getOfferingTypeLabel(booking.offeringType) || booking.offering.sessionType.replace(/_/g, " "),
       userId: booking.userId,
       hasQuotation: Boolean(existingQuote),
+      /** The date she asked for on her enquiry: pre-fills the quotation's expected delivery. */
+      neededBy: booking.enquiry?.deliveryDate?.toISOString().slice(0, 10) ?? null,
       quotation: existingQuote,
     },
   });

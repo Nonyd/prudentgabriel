@@ -31,6 +31,8 @@ type LinkedConsultation = {
   moodboardImages: string[];
   completedAt: string | null;
   sessionType: string;
+  /** From her enquiry: when she needs the dress. */
+  neededBy?: string | null;
 };
 
 const SUGGESTED_LINE_ITEMS = [
@@ -53,8 +55,11 @@ function applyConsultationToForm(
     setLineItems: (v: LineItem[]) => void;
     setLinkedConsultation: (v: LinkedConsultation) => void;
     setConsultationId: (v: string) => void;
+    setExpectedDeliveryDate: (v: string) => void;
   },
 ) {
+  // BC3: start from the date she asked for; the house changes it if it cannot be met.
+  if (c.neededBy) setters.setExpectedDeliveryDate(c.neededBy);
   setters.setConsultationId(c.id);
   setters.setLinkedConsultation(c);
   setters.setClientName(c.clientName);
@@ -116,6 +121,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
         completedAt: string | null;
         offering?: { sessionType?: string };
         offeringType?: string | null;
+        enquiry?: { deliveryDate: string | null } | null;
       };
     };
     const b = j.booking;
@@ -132,6 +138,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
         moodboardImages: b.moodboardImages ?? [],
         completedAt: b.completedAt,
         sessionType: b.offering?.sessionType?.replace(/_/g, " ") ?? "Consultation",
+        neededBy: b.enquiry?.deliveryDate?.slice(0, 10) ?? null,
       },
       {
         setClientName,
@@ -141,6 +148,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
         setLineItems,
         setLinkedConsultation,
         setConsultationId,
+        setExpectedDeliveryDate,
       },
     );
   }, []);
@@ -219,6 +227,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
       setLineItems,
       setLinkedConsultation,
       setConsultationId,
+      setExpectedDeliveryDate,
     });
     setSearchResult(null);
     setConsultationRefSearch("");

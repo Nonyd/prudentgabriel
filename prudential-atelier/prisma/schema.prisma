@@ -254,13 +254,32 @@ model ConsultationEnquiry {
   clientEmail     String
   clientPhone     String
   eventDate       DateTime @db.Date
+  /// The occasion's label (ENQUIRY_OCCASIONS since 30 Sep 2026: Bride, Birthday dress,
+  /// Anniversary, Prom, Other). Older enquiries hold the previous event-type list.
   eventType       String
-  /// Screening: who will wear it — BRIDE, FAMILY, GUEST, OTHER.
-  wearer          String
-  /// Screening: what kind of outfit.
-  outfitType      String
+  /// When the occasion is "Other": her own words for it.
+  occasionDetails String?  @db.Text
+  /// Retired screening question (who will wear it). Kept on enquiries made before 30 Sep 2026.
+  wearer          String?
+  /// Retired screening question (what kind of outfit). Kept on enquiries made before 30 Sep 2026.
+  outfitType      String?
   notes           String?  @db.Text
   moodboardImages String[] @default([])
+
+  /// How many dresses she wants.
+  dressCount      Int?
+  /// Where the event is.
+  eventLocation   String?
+  /// Where she lives now, kept as parts so clients can be counted by place (BC4).
+  presentCity     String?
+  presentState    String?
+  presentCountry  String?
+  /// IN_PERSON, VIRTUAL or BOTH (ENQUIRY_FITTING_MODES), and any dates she gives.
+  fittingMode     String?
+  fittingNote     String?  @db.Text
+  /// When she needs the dress. Pre-fills the quotation's expected delivery date.
+  deliveryDate    DateTime? @db.Date
+  colourPalette   String?  @db.Text
 
   /// Event inside the short-notice window when submitted: flagged so the house
   /// calls (express fee by phone). Never a reason to refuse.

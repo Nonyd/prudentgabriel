@@ -3,6 +3,60 @@
  * the enquiry form, the booking page and the server all read these.
  */
 
+/**
+ * The enquiry's first question: what the dress is for (the house's list, 30
+ * September). "Other" asks her to describe it. The label is what is stored on
+ * the enquiry's `eventType` and carried to the booking as its occasion.
+ */
+export const ENQUIRY_OCCASIONS = [
+  { id: "BRIDE", label: "Bride" },
+  { id: "BIRTHDAY", label: "Birthday dress" },
+  { id: "ANNIVERSARY", label: "Anniversary" },
+  { id: "PROM", label: "Prom" },
+  { id: "OTHER", label: "Other" },
+] as const;
+
+export type EnquiryOccasion = (typeof ENQUIRY_OCCASIONS)[number]["id"];
+
+export function occasionLabel(id: string): string {
+  return ENQUIRY_OCCASIONS.find((o) => o.id === id)?.label ?? id;
+}
+
+/** How the occasion reads in a sentence: "your enquiry for your wedding on …". */
+const OCCASION_PHRASES: Record<EnquiryOccasion, string> = {
+  BRIDE: "wedding",
+  BIRTHDAY: "birthday",
+  ANNIVERSARY: "anniversary",
+  PROM: "prom",
+  OTHER: "event",
+};
+
+export function occasionPhrase(id: string): string {
+  return OCCASION_PHRASES[id as EnquiryOccasion] ?? "event";
+}
+
+/** How she can attend fittings. */
+export const ENQUIRY_FITTING_MODES = [
+  { id: "IN_PERSON", label: "In person, at the atelier" },
+  { id: "VIRTUAL", label: "Virtually" },
+  { id: "BOTH", label: "Either" },
+] as const;
+
+export type EnquiryFittingMode = (typeof ENQUIRY_FITTING_MODES)[number]["id"];
+
+export function fittingModeLabel(id: string | null | undefined): string {
+  return ENQUIRY_FITTING_MODES.find((m) => m.id === id)?.label ?? (id ?? "");
+}
+
+export const MAX_DRESSES = 20;
+
+/** Where an "Other" description from the atelier page waits for the form: session storage, never the URL. */
+export const OCCASION_DETAILS_KEY = "atelier-occasion-details";
+
+/**
+ * Before 30 September the form asked who would wear it and what kind of outfit.
+ * Older enquiries keep those answers; new ones ask the occasion instead.
+ */
 /** Screening: who will wear it. */
 export const ENQUIRY_WEARERS = [
   { id: "BRIDE", label: "I am the bride" },
@@ -39,6 +93,49 @@ export const ENQUIRY_EVENT_TYPES = [
 
 export function wearerLabel(id: string): string {
   return ENQUIRY_WEARERS.find((w) => w.id === id)?.label ?? id;
+}
+
+type EnquiryAnswers = {
+  enquiryNumber: string;
+  eventType: string;
+  occasionDetails?: string | null;
+  wearer?: string | null;
+  outfitType?: string | null;
+  dressCount?: number | null;
+  eventLocation?: string | null;
+  presentCity?: string | null;
+  presentState?: string | null;
+  presentCountry?: string | null;
+  fittingMode?: string | null;
+  fittingNote?: string | null;
+  deliveryDate?: Date | string | null;
+  colourPalette?: string | null;
+};
+
+const longDate = (d: Date | string) =>
+  new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+
+/**
+ * Her answers as the lines the house reads (booking description, queue).
+ * Works for enquiries from before 30 September (wearer, outfit) and after.
+ */
+export function enquiryAnswerLines(e: EnquiryAnswers): string[] {
+  const lines = [
+    `Enquiry ${e.enquiryNumber}: ${e.eventType}${e.occasionDetails ? ` (${e.occasionDetails})` : ""}.`,
+  ];
+  if (e.wearer || e.outfitType) {
+    lines.push([e.wearer ? wearerLabel(e.wearer) : null, e.outfitType].filter(Boolean).join("; ") + ".");
+  }
+  if (e.dressCount) lines.push(`Dresses: ${e.dressCount}.`);
+  if (e.eventLocation) lines.push(`Event at: ${e.eventLocation}.`);
+  const home = [e.presentCity, e.presentState, e.presentCountry].filter(Boolean).join(", ");
+  if (home) lines.push(`Lives in: ${home}.`);
+  if (e.fittingMode) {
+    lines.push(`Fittings: ${fittingModeLabel(e.fittingMode).toLowerCase()}${e.fittingNote ? `, ${e.fittingNote}` : ""}.`);
+  }
+  if (e.deliveryDate) lines.push(`Needed by: ${longDate(e.deliveryDate)}.`);
+  if (e.colourPalette) lines.push(`Colour palette: ${e.colourPalette}.`);
+  return lines;
 }
 
 /** Days before the event inside which an enquiry is flagged for a call (setting overrides). */

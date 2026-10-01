@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ConsultationEnquiryForm, type EnquiryPrefill } from "@/components/consultation/ConsultationEnquiryForm";
-import { ENQUIRY_OUTFIT_TYPES, ENQUIRY_WEARERS } from "@/lib/consultation-enquiry-shared";
+import { ENQUIRY_OCCASIONS } from "@/lib/consultation-enquiry-shared";
 import { ConsultationReviewsSlider } from "@/components/consultation/ConsultationReviewsSlider";
 import { getConsultationPageReviews } from "@/lib/consultation-reviews";
 import { getPageFieldKeys } from "@/lib/cms-config";
@@ -24,8 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
 /** Only values the form offers survive from the query string. */
 function prefillFrom(sp: Record<string, string | undefined>): EnquiryPrefill {
   return {
-    wearer: ENQUIRY_WEARERS.some((w) => w.id === sp.wearer) ? sp.wearer : undefined,
-    outfitType: (ENQUIRY_OUTFIT_TYPES as readonly string[]).includes(sp.outfit ?? "") ? sp.outfit : undefined,
+    occasion: ENQUIRY_OCCASIONS.some((o) => o.id === sp.occasion) ? sp.occasion : undefined,
     eventDate: /^\d{4}-\d{2}-\d{2}$/.test(sp.date ?? "") ? sp.date : undefined,
   };
 }

@@ -16,7 +16,7 @@ export default async function ClientPlacesPage() {
         <h1 className="font-display text-2xl text-ink">Where clients are</h1>
         <p className="mt-1 font-sans text-sm text-text-mid">
           {places.total} client{places.total === 1 ? "" : "s"}, counted by the address on file (her default, else
-          her latest), or the country she gave at booking. {places.notRecorded} with no place recorded.
+          her latest), else where she said she lives on her enquiry, else the country she gave at booking. {places.notRecorded} with no place recorded.
         </p>
       </div>
 

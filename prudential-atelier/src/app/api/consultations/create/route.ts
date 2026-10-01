@@ -12,7 +12,7 @@ import { getPageFieldKeys } from "@/lib/cms-config";
 import { sanitizeAttribution } from "@/lib/analytics/attribution";
 import { getOfferingTypeConfig, isOfferingTypeVirtual, type OfferingTypeKey } from "@/lib/consultation-types";
 import { findBookableEnquiry } from "@/lib/consultation-enquiry";
-import { INVITATION_ONLY_MESSAGE, consultationTermsText, wearerLabel } from "@/lib/consultation-enquiry-shared";
+import { INVITATION_ONLY_MESSAGE, consultationTermsText, enquiryAnswerLines } from "@/lib/consultation-enquiry-shared";
 import { createLegalTermsSnapshot } from "@/lib/legal-tokens";
 import { rateLimitOr429 } from "@/lib/rate-limit";
 import { asChargeCurrency, getConsultationFeeNGN, lockConsultationCharge } from "@/lib/consultation-fees";
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
   const legalTerms = await createLegalTermsSnapshot();
   const now = new Date();
   const description = [
-    `Enquiry ${enquiry.enquiryNumber}: ${wearerLabel(enquiry.wearer)}; ${enquiry.outfitType}.`,
+    enquiryAnswerLines(enquiry).join("\n"),
     enquiry.notes?.trim() || "",
     data.description?.trim() || "",
   ]

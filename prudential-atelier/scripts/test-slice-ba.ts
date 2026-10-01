@@ -39,6 +39,8 @@ import {
   daysUntil,
   isShortNotice,
   INVITATION_ONLY_MESSAGE,
+  enquiryAnswerLines,
+  occasionPhrase,
 } from "../src/lib/consultation-enquiry-shared";
 import { CAPABILITY_TTL_MS, generateCapabilityToken, revealCapabilityToken } from "../src/lib/capability-token";
 import { consultationEnquirySchema } from "../src/validations/consultation";
@@ -75,18 +77,39 @@ function unit() {
   assert(terms.includes("₦250,000") && /non-refundable/.test(terms), "terms name the fee and say non-refundable");
   assert(/not credited towards/.test(terms), "terms say the fee does not credit the commission");
   assert(CAPABILITY_TTL_MS.consultationBooking === 14 * 24 * 60 * 60 * 1000, "booking link lasts a fortnight");
+  // The house's questions (30 September 2026).
   const base = {
+    occasion: "BRIDE",
     clientName: "Ada Obi",
     clientEmail: "ada@example.test",
     clientPhone: "08030000000",
+    dressCount: 2,
     eventDate: "2026-12-05",
-    eventType: "White Wedding",
-    wearer: "BRIDE",
-    outfitType: "Wedding gown",
+    eventLocation: "Eko Hotel, Lagos",
+    presentCity: "Lekki",
+    presentCountry: "Nigeria",
+    fittingMode: "BOTH",
+    deliveryDate: "2026-11-28",
   };
-  assert(consultationEnquirySchema.safeParse(base).success, "a complete enquiry validates");
-  assert(!consultationEnquirySchema.safeParse({ ...base, clientEmail: "" }).success, "email is required");
-  assert(!consultationEnquirySchema.safeParse({ ...base, wearer: undefined }).success, "the screening question is required");
+  const ok = (v: object) => consultationEnquirySchema.safeParse(v).success;
+  assert(ok(base), "a complete enquiry validates (state, fitting note, palette and pictures optional)");
+  assert(!ok({ ...base, clientEmail: "" }), "email is required");
+  assert(!ok({ ...base, occasion: undefined }), "the occasion is required");
+  assert(!ok({ ...base, occasion: "WHITE_WEDDING" }), "only the house's occasions");
+  assert(!ok({ ...base, occasion: "OTHER" }), "Other needs her description");
+  assert(ok({ ...base, occasion: "OTHER", occasionDetails: "My mother's 60th" }), "Other with a description validates");
+  assert(!ok({ ...base, presentCity: "" }), "where she lives is required");
+  assert(!ok({ ...base, dressCount: 0 }), "at least one dress");
+  assert(!ok({ ...base, fittingMode: undefined }), "fitting availability is required");
+  assert(!ok({ ...base, deliveryDate: "2026-12-06" }), "delivery after the event is refused");
+  assert(ok({ ...base, deliveryDate: "2026-12-05" }), "delivery on the day of the event is allowed");
+  assert(occasionPhrase("BRIDE") === "wedding" && occasionPhrase("PROM") === "prom", "the client email says wedding, not bride");
+  const lines = enquiryAnswerLines({ enquiryNumber: "EQ-1", eventType: "Bride", ...base, deliveryDate: "2026-11-28" }).join(" ");
+  assert(/Dresses: 2/.test(lines) && /Lives in: Lekki, Nigeria/.test(lines) && /Needed by: 28 November 2026/.test(lines), "the house reads her answers");
+  assert(
+    /I am the bride; Wedding gown/.test(enquiryAnswerLines({ enquiryNumber: "EQ-0", eventType: "White Wedding", wearer: "BRIDE", outfitType: "Wedding gown" }).join(" ")),
+    "older enquiries keep their screening answers",
+  );
 
   // BA3
   assert(
@@ -291,15 +314,20 @@ async function live(base: string) {
   try {
     const soon = addDaysToWatYmd(getWatYmd(), 5);
     const later = addDaysToWatYmd(getWatYmd(), 120);
-    const enquiry = (email: string, eventDate: string) => ({
+    const enquiry = (email: string, eventDate: string, deliveryDate = eventDate) => ({
+      occasion: "BRIDE",
       clientName: "Ada Obi",
       clientEmail: email,
       clientPhone: "08030000000",
+      dressCount: 1,
       eventDate,
-      eventType: "White Wedding",
-      wearer: "BRIDE",
-      outfitType: "Wedding gown",
-      notes: "Fixture enquiry",
+      eventLocation: "Lagos",
+      presentCity: "Lekki",
+      presentState: "Lagos",
+      presentCountry: "Nigeria",
+      fittingMode: "IN_PERSON",
+      deliveryDate,
+      colourPalette: "Ivory",
     });
 
     // Short notice: accepted and flagged, never refused.
@@ -316,6 +344,21 @@ async function live(base: string) {
 
     const past = await fetch(`${base}/api/consultations/enquiries`, json(enquiry(`ba-past-${stamp}@example.test`, "2020-01-01")));
     assert(past.status === 400, `an event already past is a 400 (${past.status})`);
+    const pastDelivery = await fetch(
+      `${base}/api/consultations/enquiries`,
+      json(enquiry(`ba-pastdel-${stamp}@example.test`, later, "2020-01-01")),
+    );
+    assert(pastDelivery.status === 400, `a delivery date already past is a 400 (${pastDelivery.status})`);
+    const lateDelivery = await fetch(
+      `${base}/api/consultations/enquiries`,
+      json(enquiry(`ba-late-${stamp}@example.test`, soon, later)),
+    );
+    assert(lateDelivery.status === 400, `a delivery date after the event is a 400 (${lateDelivery.status})`);
+    assert(
+      shortRow.presentCity === "Lekki" && shortRow.presentCountry === "Nigeria" && shortRow.fittingMode === "IN_PERSON",
+      "her answers are stored",
+    );
+    assert(shortRow.eventType === "Bride" && shortRow.dressCount === 1 && shortRow.deliveryDate !== null, "occasion, dresses and date stored");
 
     // An unapproved enquiry's link opens nothing, even with a real token on the row.
     const pendingRaw = generateCapabilityToken();
@@ -536,7 +579,7 @@ async function live(base: string) {
       assert(row.priceFloorNGN === 3_000_000 && row.priceCeilingNGN === null, "stored as whole naira, floor only");
       const custPut = await fetch(`${base}/api/admin/gallery/${photo.id}`, patch({ priceFloorNGN: 1 }, custJar));
       assert(custPut.status === 403, `a customer cannot set it (${custPut.status})`);
-      for (const path of ["/atelier", "/bridal", "/consultation?wearer=BRIDE&outfit=Wedding%20gown&date=2027-01-16"]) {
+      for (const path of ["/atelier", "/bridal", "/consultation?occasion=BRIDE&date=2027-01-16"]) {
         const r = await fetch(`${base}${path}`, { headers: { "x-forwarded-for": ip } });
         assert(r.status === 200, `${path} renders (${r.status})`);
       }

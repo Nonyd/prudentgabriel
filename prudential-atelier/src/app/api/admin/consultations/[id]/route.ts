@@ -104,7 +104,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const booking = await prisma.consultationBooking.findUnique({
     where: { id },
-    include: { consultant: true, offering: true },
+    include: { consultant: true, offering: true, enquiry: { select: { deliveryDate: true } } },
   });
   if (!booking) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ booking });

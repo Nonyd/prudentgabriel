@@ -4,7 +4,16 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 import toast from "react-hot-toast";
-import { wearerLabel } from "@/lib/consultation-enquiry-shared";
+import { fittingModeLabel, wearerLabel } from "@/lib/consultation-enquiry-shared";
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="inline text-[#6B6B68]">{label}: </dt>
+      <dd className="inline text-ink">{value}</dd>
+    </div>
+  );
+}
 
 type Status = "PENDING" | "APPROVED" | "BOOKED" | "DECLINED";
 
@@ -16,9 +25,20 @@ type Enquiry = {
   clientPhone: string;
   eventDate: string;
   eventType: string;
-  wearer: string;
-  outfitType: string;
+  /** Retired screening answers: only on enquiries from before 30 September 2026. */
+  wearer: string | null;
+  outfitType: string | null;
   notes: string | null;
+  occasionDetails: string | null;
+  dressCount: number | null;
+  eventLocation: string | null;
+  presentCity: string | null;
+  presentState: string | null;
+  presentCountry: string | null;
+  fittingMode: string | null;
+  fittingNote: string | null;
+  deliveryDate: string | null;
+  colourPalette: string | null;
   moodboardImages: string[];
   shortNotice: boolean;
   status: Status;
@@ -269,17 +289,25 @@ export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) 
                   <div>
                     <dt className="inline text-[#6B6B68]">Event: </dt>
                     <dd className="inline text-ink">
-                      {e.eventType}, {eventLabel(e.eventDate)}
+                      {e.eventType}
+                      {e.occasionDetails ? ` (${e.occasionDetails})` : ""}, {eventLabel(e.eventDate)}
                     </dd>
                   </div>
-                  <div>
-                    <dt className="inline text-[#6B6B68]">Wearer: </dt>
-                    <dd className="inline text-ink">{wearerLabel(e.wearer)}</dd>
-                  </div>
-                  <div>
-                    <dt className="inline text-[#6B6B68]">Outfit: </dt>
-                    <dd className="inline text-ink">{e.outfitType}</dd>
-                  </div>
+                  {e.eventLocation ? <Fact label="Event at" value={e.eventLocation} /> : null}
+                  {e.dressCount ? <Fact label="Dresses" value={String(e.dressCount)} /> : null}
+                  {e.deliveryDate ? <Fact label="Needed by" value={eventLabel(e.deliveryDate)} /> : null}
+                  {e.presentCity || e.presentCountry ? (
+                    <Fact label="Lives in" value={[e.presentCity, e.presentState, e.presentCountry].filter(Boolean).join(", ")} />
+                  ) : null}
+                  {e.fittingMode ? (
+                    <Fact
+                      label="Fittings"
+                      value={`${fittingModeLabel(e.fittingMode)}${e.fittingNote ? ` · ${e.fittingNote}` : ""}`}
+                    />
+                  ) : null}
+                  {e.colourPalette ? <Fact label="Colour palette" value={e.colourPalette} /> : null}
+                  {e.wearer ? <Fact label="Wearer" value={wearerLabel(e.wearer)} /> : null}
+                  {e.outfitType ? <Fact label="Outfit" value={e.outfitType} /> : null}
                   <div>
                     <dt className="inline text-[#6B6B68]">Received: </dt>
                     <dd className="inline text-ink">{new Date(e.createdAt).toLocaleString("en-GB")}</dd>

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import clsx from "clsx";
 import toast from "react-hot-toast";
 import {
-  ENQUIRY_EVENT_TYPES,
-  ENQUIRY_OUTFIT_TYPES,
-  ENQUIRY_WEARERS,
+  ENQUIRY_FITTING_MODES,
+  ENQUIRY_OCCASIONS,
+  MAX_DRESSES,
+  OCCASION_DETAILS_KEY,
 } from "@/lib/consultation-enquiry-shared";
 import { getWatYmd } from "@/lib/consultation";
 import { cmsGet } from "@/lib/cms-helpers";
@@ -14,38 +15,77 @@ import { cmsGet } from "@/lib/cms-helpers";
 const MAX_IMAGES = 5;
 
 /**
- * BA2: the atelier application. Nothing is booked or paid here; the house
- * reads it, and an approved enquiry receives a booking link by email.
+ * BA2: the atelier application, asking the house's questions (30 September
+ * 2026). Nothing is booked or paid here; the house reads it, and an approved
+ * enquiry receives a booking link by email.
  */
-export type EnquiryPrefill = { wearer?: string; outfitType?: string; eventDate?: string };
+export type EnquiryPrefill = { occasion?: string; occasionDetails?: string; eventDate?: string };
+
+/** The API answers 400 with zod's flattened errors; show the first one in words. */
+function firstError(error: unknown): string | null {
+  if (typeof error === "string") return error;
+  const fields = (error as { fieldErrors?: Record<string, string[] | undefined> } | null)?.fieldErrors;
+  if (!fields) return null;
+  for (const messages of Object.values(fields)) if (messages?.[0]) return messages[0];
+  return null;
+}
 
 export function ConsultationEnquiryForm({
   cms = {},
   initial = {},
 }: {
   cms?: Record<string, string>;
-  /** BA4: answers from the atelier page's screening questions. */
+  /** Answers carried from the atelier page's first question. */
   initial?: EnquiryPrefill;
 }) {
+  const [occasion, setOccasion] = useState(initial.occasion ?? "");
+  const [occasionDetails, setOccasionDetails] = useState(initial.occasionDetails ?? "");
+  const [eventDate, setEventDate] = useState(initial.eventDate ?? "");
+  const [eventLocation, setEventLocation] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
-  const [eventDate, setEventDate] = useState(initial.eventDate ?? "");
-  const [eventType, setEventType] = useState("");
-  const [wearer, setWearer] = useState(initial.wearer ?? "");
-  const [outfitType, setOutfitType] = useState(initial.outfitType ?? "");
-  const [notes, setNotes] = useState("");
+  const [presentCity, setPresentCity] = useState("");
+  const [presentState, setPresentState] = useState("");
+  const [presentCountry, setPresentCountry] = useState("");
+  const [dressCount, setDressCount] = useState("1");
+  const [fittingMode, setFittingMode] = useState("");
+  const [fittingNote, setFittingNote] = useState("");
+  const [deliveryDate, setDeliveryDate] = useState("");
+  const [colourPalette, setColourPalette] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ enquiryNumber: string; shortNotice: boolean } | null>(null);
   const today = getWatYmd();
 
+  // An "Other" description typed on the atelier page waits in session storage.
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(OCCASION_DETAILS_KEY);
+      if (saved && initial.occasion === "OTHER") setOccasionDetails((d) => d || saved);
+    } catch {
+      /* storage blocked: she types it here */
+    }
+  }, [initial.occasion]);
+
+  const dresses = Number(dressCount);
   const valid =
+    Boolean(occasion) &&
+    (occasion !== "OTHER" || occasionDetails.trim().length >= 3) &&
+    Boolean(eventDate) &&
+    eventLocation.trim().length >= 2 &&
     clientName.trim().length >= 2 &&
     clientEmail.includes("@") &&
     clientPhone.trim().length >= 7 &&
-    Boolean(eventDate && eventType && wearer && outfitType);
+    presentCity.trim().length >= 2 &&
+    presentCountry.trim().length >= 2 &&
+    Number.isInteger(dresses) &&
+    dresses >= 1 &&
+    dresses <= MAX_DRESSES &&
+    Boolean(fittingMode) &&
+    Boolean(deliveryDate) &&
+    (!eventDate || deliveryDate <= eventDate);
 
   async function upload(file: File) {
     if (images.length >= MAX_IMAGES) return;
@@ -73,20 +113,27 @@ export function ConsultationEnquiryForm({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          occasion,
+          occasionDetails: occasion === "OTHER" ? occasionDetails : undefined,
           clientName,
           clientEmail,
           clientPhone,
+          dressCount: dresses,
           eventDate,
-          eventType,
-          wearer,
-          outfitType,
-          notes: notes || undefined,
+          eventLocation,
+          presentCity,
+          presentState: presentState || undefined,
+          presentCountry,
+          fittingMode,
+          fittingNote: fittingNote || undefined,
+          deliveryDate,
+          colourPalette: colourPalette || undefined,
           moodboardImages: images,
         }),
       });
       const j = (await res.json()) as { enquiryNumber?: string; shortNotice?: boolean; error?: unknown };
       if (!res.ok || !j.enquiryNumber) {
-        throw new Error(typeof j.error === "string" ? j.error : "Please check the form and try again.");
+        throw new Error(firstError(j.error) ?? "Please check the form and try again.");
       }
       setDone({ enquiryNumber: j.enquiryNumber, shortNotice: Boolean(j.shortNotice) });
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -115,63 +162,53 @@ export function ConsultationEnquiryForm({
   }
 
   const label = "font-sans text-[11px] uppercase tracking-[0.12em] text-text-mid";
+  const hint = "mt-1 block font-body text-xs text-text-light";
+  const choice = (on: boolean) =>
+    clsx(
+      "flex cursor-pointer items-center gap-3 rounded-sm border px-4 py-3 transition-colors",
+      on ? "border-choc bg-choc/5" : "border-sand",
+    );
 
   return (
     <form onSubmit={submit} className="mx-auto max-w-2xl space-y-8">
       <section className="space-y-5 glass-opaque p-6">
         <h2 className="font-serif text-xl text-choc">
-          {cmsGet(cms, "consultation_enquiry_screening_title", "A few questions first")}
+          {cmsGet(cms, "consultation_enquiry_screening_title", "The occasion")}
         </h2>
-        <div>
-          <p className={label}>Who will wear it?</p>
+        <fieldset>
+          <legend className={label}>Type of event</legend>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {ENQUIRY_WEARERS.map((w) => (
-              <label
-                key={w.id}
-                className={clsx(
-                  "flex cursor-pointer items-center gap-3 rounded-sm border px-4 py-3 transition-colors",
-                  wearer === w.id ? "border-choc bg-choc/5" : "border-sand",
-                )}
-              >
+            {ENQUIRY_OCCASIONS.map((o) => (
+              <label key={o.id} className={choice(occasion === o.id)}>
                 <input
                   type="radio"
-                  name="wearer"
-                  value={w.id}
-                  checked={wearer === w.id}
-                  onChange={() => setWearer(w.id)}
+                  name="occasion"
+                  value={o.id}
+                  checked={occasion === o.id}
+                  onChange={() => setOccasion(o.id)}
                   className="accent-choc"
                   required
                 />
-                <span className="font-body text-sm text-text-mid">{w.label}</span>
+                <span className="font-body text-sm text-text-mid">{o.label}</span>
               </label>
             ))}
           </div>
-        </div>
-        <label className="block">
-          <span className={label}>What kind of outfit?</span>
-          <select className="input-field mt-2 w-full" value={outfitType} onChange={(e) => setOutfitType(e.target.value)} required>
-            <option value="">Select…</option>
-            {ENQUIRY_OUTFIT_TYPES.map((o) => (
-              <option key={o} value={o}>
-                {o}
-              </option>
-            ))}
-          </select>
-        </label>
+        </fieldset>
+        {occasion === "OTHER" ? (
+          <label className="block">
+            <span className={label}>Tell us about the occasion</span>
+            <textarea
+              className="input-field mt-2 min-h-[96px] w-full"
+              value={occasionDetails}
+              onChange={(e) => setOccasionDetails(e.target.value)}
+              maxLength={1000}
+              required
+            />
+          </label>
+        ) : null}
         <div className="grid gap-5 sm:grid-cols-2">
           <label className="block">
-            <span className={label}>The occasion</span>
-            <select className="input-field mt-2 w-full" value={eventType} onChange={(e) => setEventType(e.target.value)} required>
-              <option value="">Select…</option>
-              {ENQUIRY_EVENT_TYPES.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block">
-            <span className={label}>Event date</span>
+            <span className={label}>Date of event</span>
             <input
               type="date"
               min={today}
@@ -181,13 +218,24 @@ export function ConsultationEnquiryForm({
               required
             />
           </label>
+          <label className="block">
+            <span className={label}>Location of event</span>
+            <input
+              className="input-field mt-2 w-full"
+              value={eventLocation}
+              onChange={(e) => setEventLocation(e.target.value)}
+              placeholder="City, or the venue"
+              maxLength={200}
+              required
+            />
+          </label>
         </div>
       </section>
 
       <section className="space-y-5 glass-opaque p-6">
         <h2 className="font-serif text-xl text-choc">Your details</h2>
         <label className="block">
-          <span className={label}>Full name</span>
+          <span className={label}>Name</span>
           <input className="input-field mt-2 w-full" value={clientName} onChange={(e) => setClientName(e.target.value)} autoComplete="name" required />
         </label>
         <div className="grid gap-5 sm:grid-cols-2">
@@ -207,21 +255,111 @@ export function ConsultationEnquiryForm({
             <input className="input-field mt-2 w-full" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} autoComplete="tel" required />
           </label>
         </div>
+        <fieldset>
+          <legend className={label}>Where you live now</legend>
+          <div className="mt-2 grid gap-3 sm:grid-cols-3">
+            <input
+              className="input-field w-full"
+              aria-label="City"
+              placeholder="City"
+              value={presentCity}
+              onChange={(e) => setPresentCity(e.target.value)}
+              autoComplete="address-level2"
+              maxLength={100}
+              required
+            />
+            <input
+              className="input-field w-full"
+              aria-label="State or region (optional)"
+              placeholder="State or region"
+              value={presentState}
+              onChange={(e) => setPresentState(e.target.value)}
+              autoComplete="address-level1"
+              maxLength={100}
+            />
+            <input
+              className="input-field w-full"
+              aria-label="Country"
+              placeholder="Country"
+              value={presentCountry}
+              onChange={(e) => setPresentCountry(e.target.value)}
+              autoComplete="country-name"
+              maxLength={100}
+              required
+            />
+          </div>
+        </fieldset>
       </section>
 
       <section className="space-y-5 glass-opaque p-6">
-        <h2 className="font-serif text-xl text-choc">Inspiration (optional)</h2>
+        <h2 className="font-serif text-xl text-choc">Your dresses</h2>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <label className="block">
+            <span className={label}>Number of dresses</span>
+            <input
+              type="number"
+              min={1}
+              max={MAX_DRESSES}
+              step={1}
+              className="input-field mt-2 w-full"
+              value={dressCount}
+              onChange={(e) => setDressCount(e.target.value)}
+              required
+            />
+          </label>
+          <label className="block">
+            <span className={label}>Delivery date</span>
+            <input
+              type="date"
+              min={today}
+              max={eventDate || undefined}
+              className="input-field mt-2 w-full"
+              value={deliveryDate}
+              onChange={(e) => setDeliveryDate(e.target.value)}
+              required
+            />
+            <span className={hint}>When you need the dress. On or before the event.</span>
+          </label>
+        </div>
+        <fieldset>
+          <legend className={label}>Fitting availability</legend>
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            {ENQUIRY_FITTING_MODES.map((m) => (
+              <label key={m.id} className={choice(fittingMode === m.id)}>
+                <input
+                  type="radio"
+                  name="fittingMode"
+                  value={m.id}
+                  checked={fittingMode === m.id}
+                  onChange={() => setFittingMode(m.id)}
+                  className="accent-choc"
+                  required
+                />
+                <span className="font-body text-sm text-text-mid">{m.label}</span>
+              </label>
+            ))}
+          </div>
+          <input
+            className="input-field mt-3 w-full"
+            aria-label="When you are available for fittings (optional)"
+            placeholder="When you are available (optional), e.g. weekends in Lagos until December"
+            value={fittingNote}
+            onChange={(e) => setFittingNote(e.target.value)}
+            maxLength={500}
+          />
+        </fieldset>
         <label className="block">
-          <span className={label}>Tell us about it</span>
-          <textarea
-            className="input-field mt-2 min-h-[120px] w-full"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            maxLength={2000}
+          <span className={label}>Colour palette (optional)</span>
+          <input
+            className="input-field mt-2 w-full"
+            value={colourPalette}
+            onChange={(e) => setColourPalette(e.target.value)}
+            placeholder="e.g. ivory and champagne gold, or not sure yet"
+            maxLength={500}
           />
         </label>
         <div>
-          <p className={label}>Moodboard or inspiration pictures (up to {MAX_IMAGES})</p>
+          <p className={label}>Pictorial inspiration (up to {MAX_IMAGES}, optional)</p>
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"

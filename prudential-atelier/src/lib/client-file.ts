@@ -4,6 +4,7 @@ import { BESPOKE_MANAGER_ROLES, sessionHasRole } from "@/lib/bespoke-roles";
 import { MEASUREMENT_ASSIGNMENT_ROLES, canSeePaymentDetails } from "@/lib/bespoke-data-access";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { parseSnapshot } from "@/lib/custom-size";
+import { enquiryAnswerLines } from "@/lib/consultation-enquiry-shared";
 import { specificationInclude, specificationRows } from "@/lib/atelier/construction-features";
 import type { AdminPermission } from "@/lib/roles";
 
@@ -518,7 +519,26 @@ async function loadConsultation(
     prisma.consultationEnquiry.findMany({
       where: { clientEmail: { equals: email, mode: "insensitive" } },
       orderBy: { createdAt: "desc" },
-      select: { enquiryNumber: true, eventDate: true, eventType: true, notes: true, moodboardImages: true, createdAt: true },
+      select: {
+        enquiryNumber: true,
+        eventDate: true,
+        eventType: true,
+        occasionDetails: true,
+        wearer: true,
+        outfitType: true,
+        dressCount: true,
+        eventLocation: true,
+        presentCity: true,
+        presentState: true,
+        presentCountry: true,
+        fittingMode: true,
+        fittingNote: true,
+        deliveryDate: true,
+        colourPalette: true,
+        notes: true,
+        moodboardImages: true,
+        createdAt: true,
+      },
     }),
     prisma.moodboard.findMany({
       where: { clientId: client.id },
@@ -548,6 +568,7 @@ async function loadConsultation(
       enquiryNumber: e.enquiryNumber,
       eventDate: iso(e.eventDate),
       eventType: e.eventType,
+      answers: enquiryAnswerLines(e).slice(1),
       notes: e.notes,
       moodboardImages: e.moodboardImages,
       receivedAt: iso(e.createdAt),

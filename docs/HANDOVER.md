@@ -56,7 +56,7 @@ Depth lives elsewhere:
 | **/atelier: replace the PLACEHOLDER names, words and floors on the eleven gowns (invented for review; red-badged in Admin → Gallery; never shown in production), and supply a hero photograph (landscape, 2400 px+).** Screens and the placeholder table in [`prudential-atelier/docs/ATELIER_PAGE_CHECKLIST.md`](../prudential-atelier/docs/ATELIER_PAGE_CHECKLIST.md). | Mrs. Prudent (words, floors), Glory (entry, hero) |
 | Accounts opened before the sweep with a temporary password never changed now need *Forgot password*. Tell anyone who asks. | Front of house |
 | **Who opens the client file.** Today only General Admin, Staff Admin and Super Admin. Decide on bespoke managers (proposal waiting since August), the consultation manager and Kemi. Granting Client CRM opens the whole client desk (list with contacts, messages, Customers, Referrals, manual points), not only the file. Committing a grant is SUPER_ADMIN only. | Mrs. Prudent decides; Nony applies |
-| **Ask for city and state on the consultation enquiry?** Without it "Where clients are" stays mostly "not recorded"; the enquiry collects no place today. | Mrs. Prudent |
+| **Read the new enquiry answers when approving.** Since 1 October the form asks the house's questions: occasion (Bride, Birthday dress, Anniversary, Prom, Other with her words), number of dresses, event date and place, where she lives, fitting availability, delivery date, colour palette, pictures. Her delivery date pre-fills the quotation; where she lives fills "Where clients are" from now on. | Whoever approves enquiries |
 | **Enter delivery dates on commissions already open.** New ones take the date from the quotation; older ones appear in no month until a date is entered. | Bespoke managers |
 
 ---

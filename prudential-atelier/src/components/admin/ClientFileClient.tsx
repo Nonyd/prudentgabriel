@@ -37,6 +37,8 @@ type Consultation = {
     enquiryNumber: string;
     eventDate: string | null;
     eventType: string;
+    /** Her answers on the enquiry form, as lines. */
+    answers?: string[];
     notes: string | null;
     moodboardImages: string[];
   }[];
@@ -420,6 +422,13 @@ function ConsultationView({ data }: { data: Consultation }) {
           <SubHead>
             Enquiry {e.enquiryNumber} · {e.eventType} on {date(e.eventDate)}
           </SubHead>
+          {e.answers?.length ? (
+            <ul className="mt-1 space-y-0.5 text-text-mid">
+              {e.answers.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          ) : null}
           {e.notes ? <p className="mt-1 text-text-mid">{e.notes}</p> : null}
           <Gallery urls={e.moodboardImages} />
         </div>
