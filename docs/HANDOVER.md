@@ -48,7 +48,6 @@ Depth lives elsewhere:
 
 | Item | Who |
 |---|---|
-| **Merge `staging` → `main`**, then reinstall production cron (26 jobs; see below). | Nony, when asked |
 | Staging sign-in walk, **including one deliberately mistyped password**, on the modal, `/auth/login` and the staff and admin portals. | Kemi |
 | Terms → Consultations paragraph (non-refundable fee, new refund commitment) and record retention. | Mrs. Prudent; `LEGAL_OPEN_QUESTIONS.md` |
 | Contabo data-processing agreement (hosting in Germany). | Nony |
@@ -72,7 +71,7 @@ Learned the hard way, in no particular order.
 - **Chat stays off until retention is set.** Admin → Chat → settings. Retention is "keep" today; switching chat on without a retention answer is refused.
 - **Legal copy** is edited in `src/lib/legal-copy.ts` and republished by bumping that page's `revision`. Editing the CMS directly is overwritten on the next bump.
 - **Paystack test cards decline large sums.** On staging, pay bridal/FX totals by bank transfer (or Bank Authentication). Never round a locked total to make Paystack pass.
-- **Production cron must be reinstalled whenever jobs change.** Jobs live in `src/lib/cron/catalog.ts`; `pnpm render:cron` writes `deploy/cron.d/prudentgabriel`; `deploy/install-host-cron.sh` installs it. `pnpm test:cron` fails if they disagree. There are 26 jobs.
+- **Production cron installs itself on every deploy to `main`.** Jobs live in `src/lib/cron/catalog.ts`; `pnpm render:cron` writes `deploy/cron.d/prudentgabriel`; the deploy runs `deploy/install-host-cron.sh` into `/etc/cron.d` and logs `Installed /etc/cron.d/prudentgabriel (N jobs)`. `pnpm test:cron` fails if catalog and file disagree. Until 8 October the installer failed silently and the host file dated from 18 August. The file holds no secret: `cron-fire.sh` reads `CRON_SECRET` from `.env.production` (rotated 8 October). Each job has one schedule: nothing for it in root's or deploy's crontab, except deploy's nightly `backup-media.sh`.
 - **`main` deploys production and owns the shared Traefik routes and backup scripts.** A push to `staging` once rewrote production's live routes (fixed in `c084881`). Shared host files change only from `main`.
 - **Deploy:** push → GHCR image → the VPS recreates the container; the entrypoint runs `prisma migrate deploy`, then `scripts/upgrade-capability-tokens.ts` (idempotent). Check the log for `[capability-tokens] done` and no ERROR line.
 - **Rotating the encryption key:** set the new `ENCRYPTION_KEY`, put the old one in `ENCRYPTION_KEY_PREVIOUS`, deploy. The entrypoint re-encrypts every column on `src/lib/encrypted-columns.ts`; remove the previous key only after its log says `unreadable 0`. Changing the key without this makes gateway keys, saved cards and re-sendable links unreadable.
