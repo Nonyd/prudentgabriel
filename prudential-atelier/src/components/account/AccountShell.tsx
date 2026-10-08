@@ -40,9 +40,8 @@ export function AccountShell({
         />
         <div className="flex min-w-0 flex-1 flex-col pb-[60px] lg:pb-0">
           <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 glass-1 px-4 sm:px-6 lg:static lg:h-12 lg:justify-end lg:px-6">
-            <Link href="/account" className="shrink-0 lg:hidden" aria-label="Account home">
-              <Logo variant="dark" size="sm" themeAdaptive={false} />
-            </Link>
+            {/* Logo is itself the link: wrapping it in another <Link> nests <a> and breaks hydration. */}
+            <Logo variant="dark" size="sm" themeAdaptive={false} href="/account" className="shrink-0 lg:hidden" />
 
             <div className="flex items-center gap-2 sm:gap-3 lg:gap-5">
               <CustomerNotificationBell />
