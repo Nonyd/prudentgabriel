@@ -176,6 +176,14 @@ jobs:
             if sudo -n bash /opt/prudentgabriel/deploy/install-host-cron.sh 2>/dev/null; then
               echo "Installed /etc/cron.d/prudentgabriel"
               crontab -l 2>/dev/null | grep -v cron-fire.sh | crontab - || true
+            elif grep -qs 'cron-fire.sh email-outbox' /etc/cron.d/prudentgabriel; then
+              # Root's /etc/cron.d already fires every job; a deploy-user copy would double them.
+              crontab -l 2>/dev/null | grep -v cron-fire.sh | crontab - || true
+              if cmp -s /opt/prudentgabriel/deploy/cron.d/prudentgabriel /etc/cron.d/prudentgabriel; then
+                echo "/etc/cron.d/prudentgabriel is current"
+              else
+                echo "::warning::/etc/cron.d/prudentgabriel is out of date. As root: bash /opt/prudentgabriel/deploy/install-host-cron.sh"
+              fi
             else
               echo "No passwordless sudo; scheduling email-outbox on the deploy user crontab"
               {
