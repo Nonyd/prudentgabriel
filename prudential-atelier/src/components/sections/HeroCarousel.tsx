@@ -223,6 +223,7 @@ function CarouselMedia({
             fill
             sizes="(max-width: 767px) 72vw, 340px"
             priority={isCenter}
+            fetchPriority={isCenter ? "high" : undefined}
             className="object-cover"
           />
         ) : (
@@ -277,6 +278,7 @@ function CarouselMedia({
       fill
       sizes="(max-width: 767px) 72vw, 340px"
       priority={isCenter}
+      fetchPriority={isCenter ? "high" : undefined}
       className="object-cover"
     />
   );

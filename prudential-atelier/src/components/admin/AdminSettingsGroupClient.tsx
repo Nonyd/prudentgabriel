@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { SettingGroup, SettingType } from "@prisma/client";
 import { AppearanceSettingsForm } from "@/components/admin/settings/AppearanceSettingsForm";
@@ -70,9 +71,9 @@ export function AdminSettingsGroupClient({ groupSlug }: { groupSlug: AdminSettin
         <div className="space-y-4">
           <p className="font-body text-sm text-[#6B6B68]">
             Slack webhook is a credential — set it in{" "}
-            <a href="/admin/settings/developer" className="underline">
+            <Link href="/admin/settings/developer" className="underline">
               Developer settings
-            </a>
+            </Link>
             .
           </p>
           <SettingsGroupCard title="Notifications" group="NOTIFICATIONS" rows={rowsFor("NOTIFICATIONS")} onSaved={load} />
@@ -97,9 +98,9 @@ export function AdminSettingsGroupClient({ groupSlug }: { groupSlug: AdminSettin
         <div className="space-y-6">
           <p className="font-body text-sm text-[#6B6B68]">
             API keys, SMTP password, and provider order are on{" "}
-            <a href="/admin/settings/developer" className="underline">
+            <Link href="/admin/settings/developer" className="underline">
               Developer settings
-            </a>
+            </Link>
             . Transactional copy is edited under{" "}
             <a href="/admin/content/email-templates" className="underline">
               Content → Email templates

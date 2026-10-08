@@ -41,6 +41,7 @@ function GalleryImageTile({
       className={className}
       sizes={sizes}
       priority={priority}
+      fetchPriority={priority ? "high" : undefined}
       onError={() => setFailed(true)}
     />
   );

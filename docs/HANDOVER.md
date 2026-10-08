@@ -5,7 +5,7 @@ Read in one sitting; follow the links for depth.
 
 **Repo:** `github.com/Nonyd/prudentgabriel`, app in `prudential-atelier/`.
 **Branches:** `staging` deploys https://staging.prudentgabriel.com. `main` deploys production. Nothing reaches `main` without being asked.
-**Last updated:** 30 September 2026.
+**Last updated:** 8 October 2026.
 
 Depth lives elsewhere:
 
@@ -30,6 +30,7 @@ Depth lives elsewhere:
 - **Security (Slice AZ and the token sweep).** Headers and report-only CSP, Postgres-backed rate limits, upload limits, SSRF guard, staff data access, session revocation. Every secret that opens something from a link is random, hashed and expiring (see the rule below). No emailed passwords.
 - **Hero videos (/rtw and the homepage).** Poster first, a 720-wide encode the server makes itself, tap to play on a phone, `preload="none"`.
 - **Secrets at rest.** Saved-card authorisation codes and gateway keys encrypted; the key can be rotated.
+- **Next.js 15.5.27 and React 19.** Closes the image optimiser advisory (AZ1). AVIF stays off until its cost on the VPS is measured.
 - **The client file (Slice BC).** Click a client's name: consultation, measurements, the gown's specification, quotation, payments, sketches and design approval, who is cutting and sewing it, delivery, composed per viewer at the API (`/api/clients/:id/file`); a section someone may not see says so. Gown specifications are ticked from a house library of construction features and are searchable. The quotation carries an expected delivery date to the commission; the pipeline filters by delivery month and shows what is due this month and next. "Where clients are" counts clients by place.
 
 ## What is left
@@ -38,7 +39,6 @@ Depth lives elsewhere:
 
 | Item | Why it matters |
 |---|---|
-| **Next.js ≥ 15.5.24** | The image optimiser advisory (AZ1) is mitigated by AVIF being off, not fixed. Required security work. |
 | Drop `SavedPaymentMethod.paystackAuthCode` | Always empty since the encryption change; drop the column in a migration once production has run the upgrade. |
 | CSP is report-only | Enforce once the violation reports are reviewed. |
 | Off-host backups (AZ10) | Backups sit on the same VPS. Needs an rclone remote, a schedule and one timed restore. |
@@ -78,6 +78,7 @@ Learned the hard way, in no particular order.
 - **Rotating the encryption key:** set the new `ENCRYPTION_KEY`, put the old one in `ENCRYPTION_KEY_PREVIOUS`, deploy. The entrypoint re-encrypts every column on `src/lib/encrypted-columns.ts`; remove the previous key only after its log says `unreadable 0`. Changing the key without this makes gateway keys, saved cards and re-sendable links unreadable.
 - **Databases:** staging is Postgres on the VPS; local `.env` points at a Neon scratch database. Tests refuse to run fixtures against staging or production.
 - **Testing locally:** `SKIP_DB_BUILD=1 pnpm build:next` (the Windows standalone symlink error at the end is harmless), then `next start -p 3100`, then `ALLOW_FIXTURES=true BASE_URL=http://localhost:3100 npx tsx --tsconfig tsconfig.scripts.json scripts/test-*.ts`. `pnpm test:ci` runs the database-free subset, as CI does.
+- **`<Image priority>` is not enough on Next 15.** Next 14 also fetched a priority image first; 15 does not. Every `priority` on a `next/image` carries `fetchPriority="high"` (or the same condition) beside it, and `test:slice-bb` checks the hero.
 
 ---
 

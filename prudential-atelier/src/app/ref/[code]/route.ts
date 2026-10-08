@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request, { params }: { params: { code: string } }) {
+export async function GET(request: Request, props: { params: Promise<{ code: string }> }) {
+  const params = await props.params;
   const origin = new URL(request.url).origin;
   const code = params.code;
   const res = NextResponse.redirect(`${origin}/auth/register?ref=${encodeURIComponent(code)}`);

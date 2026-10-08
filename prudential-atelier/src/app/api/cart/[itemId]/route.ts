@@ -8,10 +8,8 @@ const patchSchema = z.object({
   variantId: z.string().min(1).optional(),
 });
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { itemId: string } },
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ itemId: string }> }) {
+  const params = await props.params;
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -46,10 +44,8 @@ export async function PATCH(
   return NextResponse.json(result.cartItem);
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: { itemId: string } },
-) {
+export async function DELETE(_req: NextRequest, props: { params: Promise<{ itemId: string }> }) {
+  const params = await props.params;
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

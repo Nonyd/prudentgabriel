@@ -5,20 +5,22 @@ import { cmsGet, getCMSContent } from "@/lib/cms";
 import { CATALOG_PAGE_SIZE, shopHeroCopy } from "@/lib/rtw-aisle";
 import { cmsRouteMetadata, flattenSearchParams, shopCanonicalPath } from "@/lib/seo";
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Record<string, string | string[] | undefined>;
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+  }
+): Promise<Metadata> {
+  const searchParams = await props.searchParams;
   const path = shopCanonicalPath(flattenSearchParams(searchParams));
   return cmsRouteMetadata("shop", path);
 }
 
-export default async function ShopPage({
-  searchParams,
-}: {
-  searchParams: Record<string, string | string[] | undefined>;
-}) {
+export default async function ShopPage(
+  props: {
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const u = flattenSearchParams(searchParams);
   u.set("limit", String(CATALOG_PAGE_SIZE));
   if (!u.get("sort")) u.set("sort", "featured");

@@ -7,7 +7,8 @@ const HANDLERS: Record<string, () => Promise<{ POST: (req: NextRequest) => Promi
   monnify: () => import("@/app/api/payment/monnify/webhook/route"),
 };
 
-export async function POST(req: NextRequest, { params }: { params: { gateway: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ gateway: string }> }) {
+  const params = await props.params;
   const gateway = params.gateway.toLowerCase();
   const load = HANDLERS[gateway];
   if (!load) {

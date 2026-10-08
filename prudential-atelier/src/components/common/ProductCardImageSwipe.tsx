@@ -194,6 +194,7 @@ export function ProductCardImageSwipe({
                   sizes="(max-width: 767px) 50vw, 25vw"
                   className="object-cover object-top"
                   priority={priority && i === 0}
+                  fetchPriority={priority && i === 0 ? "high" : undefined}
                   draggable={false}
                 />
               ) : i === 0 && !hasFirst ? (

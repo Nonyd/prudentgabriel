@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { LagosLocation, PickupLocation, ShippingMethod } from "@prisma/client";
 import type { BandAdminStatus } from "@/lib/shipping/mode";
@@ -156,9 +157,9 @@ export function ShippingAdminClient({
         <p className="mt-1 max-w-2xl font-body text-[13px] text-[#6B6B68]">
           Lagos is automatic. Nigeria and international can run as a personal quote until GIG and DHL accounts are live
           — flip each band on its own, so Lekki never waits for a phone call. Carrier API keys are set in{" "}
-          <a href="/admin/settings/developer" className="underline">
+          <Link href="/admin/settings/developer" className="underline">
             Developer settings
-          </a>
+          </Link>
           .
         </p>
       </div>

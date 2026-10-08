@@ -35,6 +35,7 @@ export default async function MaintenancePage() {
           width={88}
           height={88}
           priority
+          fetchPriority="high"
           className="h-[88px] w-[88px] rounded-full object-cover"
         />
       </div>

@@ -116,9 +116,9 @@ export function PaymentsSettingsClient() {
 
       <p className="font-body text-sm text-[#6B6B68]">
         Bank transfer accounts, fee bearer, and tolerance:{" "}
-        <a href="/admin/settings/bank-accounts" className="underline">
+        <Link href="/admin/settings/bank-accounts" className="underline">
           Bank accounts
-        </a>
+        </Link>
         .
       </p>
 

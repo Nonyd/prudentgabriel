@@ -26,6 +26,7 @@ export function BespokePageContent({
           className="object-cover object-center"
           sizes="100vw"
           priority
+          fetchPriority="high"
         />
         <div className="absolute inset-0 bg-black/65" />
         <div className="absolute bottom-0 left-0 z-[1] max-w-xl p-8 pb-12 md:p-20 md:pb-20">

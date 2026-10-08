@@ -4,10 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { clearPublicSettingsCache, clearSettingCacheKey } from "@/lib/settings";
 import { EMAIL_TEMPLATE_META } from "@/lib/email-templates";
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: { key: string } },
-) {
+export async function DELETE(_req: NextRequest, props: { params: Promise<{ key: string }> }) {
+  const params = await props.params;
   const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
 

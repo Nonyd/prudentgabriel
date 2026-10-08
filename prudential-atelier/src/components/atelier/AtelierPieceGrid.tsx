@@ -100,6 +100,7 @@ export function AtelierPieceCard({
                   sizes="(max-width: 767px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   className="object-cover object-top"
                   priority={priority}
+                  fetchPriority={priority ? "high" : undefined}
                 />
               ) : null}
             </a>

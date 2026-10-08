@@ -79,7 +79,8 @@ function sentenceLabel(value: string): string {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const product = await getPublishedProduct(params.slug);
   if (!product) notFound();
   const primary = product.images.find((im) => im.isPrimary) ?? product.images[0];
@@ -94,7 +95,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   });
 }
 
-export default async function ProductPage({ params }: { params: { slug: string } }) {
+export default async function ProductPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const product = await getPublishedProduct(params.slug);
 
   if (!product || !product.isPublished) notFound();

@@ -218,6 +218,7 @@ export function CollectionDetailPage({
                       alt={collection.coverImageAlt || collection.name}
                       fill
                       priority
+                      fetchPriority="high"
                       className="object-cover object-top"
                       sizes={FEATURED_SIZES}
                     />

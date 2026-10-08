@@ -1,10 +1,11 @@
 import Link from "next/link";
 
-export default function AuthErrorPage({
-  searchParams,
-}: {
-  searchParams: { error?: string };
-}) {
+export default async function AuthErrorPage(
+  props: {
+    searchParams: Promise<{ error?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const code = searchParams.error ?? "Configuration";
 
   return (

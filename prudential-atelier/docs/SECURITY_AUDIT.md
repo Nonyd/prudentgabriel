@@ -369,7 +369,7 @@ that snapshot is a manual process, not an automated undo.
 | # | Gap | Status | Evidence |
 |---|-----|--------|----------|
 | 1 | Security headers | **Done** — HSTS (1y, no preload/includeSubDomains), nosniff, strict-origin-when-cross-origin, Permissions-Policy, X-Frame-Options SAMEORIGIN, enforced `frame-ancestors 'self'`, no-referrer on token routes. **CSP is report-only** until violation reports are reviewed. | `24337bc`; `security-headers.mjs`; `test:security-headers` live on staging |
-| 2 | Next image optimiser RCE (AZ1) | **Mitigated, not fixed** — AVIF off on 14.2.35; staging never serves AVIF. Fixed only by Next ≥15.5.24. | `bfd72eb`; `next.config.mjs:16-21`; `docs/VERIFICATION_2026-09.md` §1 |
+| 2 | Next image optimiser RCE (AZ1) | **Fixed** — Next 15.5.27 (October 2026; the fix is in ≥15.5.24). `test:slice-az12` checks the installed version. AVIF stays off until its VPS cost is measured. | `bfd72eb` (mitigation); the Next 15 upgrade commit; `next.config.mjs` |
 | 3 | Auth.js advisories (AZ2) | **Done** — next-auth beta.32, @auth/core 0.41.3, fail-closed middleware. Live sign-in pass still owed (Nony). | `bfd72eb`; `src/middleware.ts:39` |
 | 4 | Unauthenticated careers / consultation uploads (AZ5) | **Done** — per-IP limits, daily cap per route, nightly sweep of unattached uploads. | `1edb26c`; `src/lib/upload-limits.ts`; cron `orphan-uploads` |
 | 5 | cuid tokens, no TTL (AZ3) | **Done** — 256-bit random, SHA-256 stored, per-link expiry, legacy links grandfathered; token columns no longer default to cuid. Extended to every link secret by the token sweep (below). | `9951541`, `a011fca`; `test:token-defaults`, `test:token-sweep` |

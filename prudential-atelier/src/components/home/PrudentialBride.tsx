@@ -41,6 +41,7 @@ export function PrudentialBride({
           className="object-cover object-center"
           sizes="100vw"
           priority
+          fetchPriority="high"
         />
       </div>
 

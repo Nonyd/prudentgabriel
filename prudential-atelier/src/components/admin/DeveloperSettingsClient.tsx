@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Copy, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -289,9 +290,9 @@ export function DeveloperSettingsClient() {
         <h1 className="mt-2 font-serif text-2xl font-medium text-choc">Developer Settings</h1>
         <p className="mt-2 font-sans text-sm font-light text-text-mid">
           Credentials only. Gateway on/off, deposit, and bank accounts are on{" "}
-          <a href="/admin/settings/payments" className="underline">
+          <Link href="/admin/settings/payments" className="underline">
             Payments
-          </a>
+          </Link>
           . Secret keys are AES-256-GCM encrypted at rest. The database is the source of truth —
           an empty field here means the app does not have the key.
         </p>
@@ -351,9 +352,9 @@ export function DeveloperSettingsClient() {
         <h2 className="font-serif text-lg font-medium text-choc">Email, SMS, Slack</h2>
         <p className="mt-1 font-sans text-xs text-text-mid">
           From-name and reply-to stay on{" "}
-          <a href="/admin/settings/email" className="underline">
+          <Link href="/admin/settings/email" className="underline">
             Email settings
-          </a>
+          </Link>
           . Templates are under{" "}
           <a href="/admin/content/email-templates" className="underline">
             Content
@@ -393,9 +394,9 @@ export function DeveloperSettingsClient() {
         <h2 className="font-serif text-lg font-medium text-choc">Live exchange rates</h2>
         <p className="mt-1 font-sans text-xs text-text-mid">
           Open Exchange Rates app ID. Manual ₦ overlay rates stay on{" "}
-          <a href="/admin/settings/payments" className="underline">
+          <Link href="/admin/settings/payments" className="underline">
             Payments
-          </a>
+          </Link>
           .
         </p>
         <div className="mt-6 max-w-md">

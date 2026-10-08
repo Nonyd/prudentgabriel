@@ -161,6 +161,7 @@ function HeroSlide({
             alt={item.alt ?? ""}
             fill
             priority={priority}
+            fetchPriority={priority ? "high" : undefined}
             sizes={sizes}
             className="object-cover"
           />
@@ -213,6 +214,7 @@ function HeroSlide({
       alt={item.alt ?? ""}
       fill
       priority={priority}
+      fetchPriority={priority ? "high" : undefined}
       sizes={sizes}
       className="object-cover"
     />
@@ -237,6 +239,7 @@ function LookFrame({
         alt={look.alt}
         fill
         priority={priority}
+        fetchPriority={priority ? "high" : undefined}
         sizes={sizes}
         className="object-cover object-top"
       />

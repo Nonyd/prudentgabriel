@@ -107,6 +107,7 @@ export function Logo({
       className="object-contain"
       style={{ width: "auto", height: dims.height, maxWidth: dims.width }}
       priority
+      fetchPriority="high"
     />
   ) : (
     <WordmarkFallback

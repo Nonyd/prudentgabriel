@@ -31,6 +31,7 @@ export default async function OurStoryPage() {
           fill
           className="object-cover object-center"
           priority
+          fetchPriority="high"
         />
         <div className="absolute inset-0 bg-black/70" />
         <div className="absolute inset-0 flex flex-col justify-end px-6 pb-16 pt-24 md:px-16 md:pb-24">

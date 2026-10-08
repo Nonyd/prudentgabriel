@@ -43,10 +43,8 @@ const patchSchema = z.object({
   updates: z.array(z.object({ key: z.string().min(1), value: z.string() })),
 });
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { group: string } },
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ group: string }> }) {
+  const params = await props.params;
   const group = params.group.toUpperCase();
   if (!GROUPS.has(group)) {
     return NextResponse.json({ error: "Invalid group" }, { status: 400 });
@@ -112,10 +110,8 @@ export async function GET(
   return NextResponse.json({ items });
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { group: string } },
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ group: string }> }) {
+  const params = await props.params;
   const group = params.group.toUpperCase();
   if (!GROUPS.has(group)) {
     return NextResponse.json({ error: "Invalid group" }, { status: 400 });

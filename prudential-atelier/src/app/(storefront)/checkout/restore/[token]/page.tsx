@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = tokenRouteMetadata("Restore your bag");
 
-export default function CheckoutRestorePage({ params }: { params: { token: string } }) {
+export default async function CheckoutRestorePage(props: { params: Promise<{ token: string }> }) {
+  const params = await props.params;
   return <RestoreBagClient token={params.token} />;
 }

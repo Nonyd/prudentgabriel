@@ -35,6 +35,7 @@ export function BrandLogo({
       width={width}
       height={height}
       priority={priority}
+      fetchPriority={priority ? "high" : undefined}
       className={cn(
         "object-contain",
         variant === "default" && "dark:invert",

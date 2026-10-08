@@ -9,10 +9,8 @@ const patchSchema = z.object({
   caption: z.string().optional(),
 });
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const gate = await requireAdminApi(CMS_ADMIN_PERMISSIONS);
   if (!gate.ok) return gate.response;
 
@@ -33,10 +31,8 @@ export async function PATCH(
   return NextResponse.json(item);
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const gate = await requireAdminApi(CMS_ADMIN_PERMISSIONS);
   if (!gate.ok) return gate.response;
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { SettingGroup, SettingType } from "@prisma/client";
 import { SettingsGroupCard } from "@/components/admin/AdminSettingsClient";
@@ -77,12 +78,12 @@ export function InvoiceSettingsPageClient() {
           <p className="mt-1 font-body text-[13px] text-[#6B6B68]">
             Atelier accounts (including EUR for European invoices) are managed as records, not settings keys.
           </p>
-          <a
+          <Link
             href="/admin/settings/bank-accounts"
             className="mt-3 inline-block font-body text-sm text-[#37392d] underline"
           >
             Open bank accounts →
-          </a>
+          </Link>
         </div>
         <SettingsGroupCard title="Invoice defaults" group="INVOICE" rows={filterKeys(rows, DEFAULT_KEYS)} onSaved={load} />
         <SettingsGroupCard title="House terms (quotation and invoice)" group="INVOICE" rows={filterKeys(rows, TERM_KEYS)} onSaved={load} />

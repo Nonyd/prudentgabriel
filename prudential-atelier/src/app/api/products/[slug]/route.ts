@@ -7,10 +7,8 @@ import { logServerError } from "@/lib/logger";
 
 export const revalidate = 60;
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { slug: string } },
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   try {
     const session = await auth();
     const isAdmin =

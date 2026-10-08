@@ -67,6 +67,7 @@ export function CollectionsGrid({
               alt={c.title}
               fill
               priority
+              fetchPriority="high"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes="(max-width:768px) 50vw, 33vw"
             />

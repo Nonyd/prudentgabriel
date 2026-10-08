@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { format } from "date-fns";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPanel";
@@ -25,7 +25,8 @@ type OrderDetail = {
   specification: { key: string; label: string; note: string | null }[];
 };
 
-export default function StaffOrderDetailPage({ params }: { params: { orderId: string } }) {
+export default function StaffOrderDetailPage(props: { params: Promise<{ orderId: string }> }) {
+  const params = use(props.params);
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

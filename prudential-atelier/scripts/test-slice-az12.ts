@@ -1,5 +1,5 @@
 /**
- * Slice AZ1–AZ2 — Next AVIF mitigation + Auth.js patch pins.
+ * Slice AZ1–AZ2 — Next image optimiser patched + Auth.js patch pins.
  *
  *   pnpm test:slice-az12
  */
@@ -20,14 +20,14 @@ const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
 const nextConfig = readFileSync(join(root, "next.config.mjs"), "utf8");
 const middleware = readFileSync(join(root, "src/middleware.ts"), "utf8");
 
-assert(pkg.dependencies.next === "14.2.35", "Next stays on 14.2.35 (no 15 jump in AZ)");
+// GHSA-2xp9-vwfh-vxw4 (image optimiser RCE via AVIF) is fixed in 15.5.24 and later.
+const nextVer = require("next/package.json").version as string;
+const [major, minor, patch] = nextVer.split(/[.-]/).map(Number);
 assert(
-  /formats:\s*\[\s*["']image\/webp["']\s*\]/.test(nextConfig),
-  "formats is WebP-only (AVIF off for GHSA-2xp9-vwfh-vxw4)",
+  major > 15 || (major === 15 && (minor > 5 || (minor === 5 && patch >= 24))),
+  `installed Next is patched for GHSA-2xp9-vwfh-vxw4 (≥15.5.24), got ${nextVer}`,
 );
-assert(!/formats:\s*\[[^\]]*image\/avif/.test(nextConfig), "formats array must not include AVIF");
 assert(nextConfig.includes("GHSA-2xp9-vwfh-vxw4"), "config cites the advisory");
-assert(/MITIGATED,\s*NOT FIXED/i.test(nextConfig), "config states mitigated not fixed");
 
 const sharpVer = JSON.parse(readFileSync(join(root, "node_modules/sharp/package.json"), "utf8")).version as string;
 assert(/^0\.35\.(?:[4-9]|\d{2,})/.test(sharpVer) || /^0\.(3[6-9]|[4-9])/.test(sharpVer), `sharp is patched (≥0.35.4), got ${sharpVer}`);
@@ -51,4 +51,4 @@ assert(
   "middleware fails closed unless session has a user (GHSA-8fpg-xm3f-6cx3 defense)",
 );
 
-console.log("OK — AZ1 AVIF off on Next 14.2.35; AZ2 next-auth@5.0.0-beta.32 + @auth/core@0.41.3");
+console.log(`OK — AZ1 Next ${nextVer} patched; AZ2 next-auth@5.0.0-beta.32 + @auth/core@0.41.3`);

@@ -71,11 +71,12 @@ function subjectFromSearch(sp: Record<string, string | string[] | undefined>): s
   return undefined;
 }
 
-export default async function ContactPage({
-  searchParams,
-}: {
-  searchParams: Record<string, string | string[] | undefined>;
-}) {
+export default async function ContactPage(
+  props: {
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+  }
+) {
+  const searchParams = await props.searchParams;
   let cms: Record<string, string> = {};
   try {
     cms = await getCMSContent([...CONTACT_KEYS]);

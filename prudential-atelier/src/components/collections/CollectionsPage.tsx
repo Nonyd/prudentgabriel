@@ -34,6 +34,7 @@ function CollectionCard({ item, index }: { item: CollectionListItem; index: numb
           alt={item.coverImageAlt || item.name}
           fill
           priority={index < 3}
+          fetchPriority={index < 3 ? "high" : undefined}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px"
           className="object-cover object-top transition-transform duration-300 ease-out motion-reduce:transition-none group-hover:scale-[1.03] motion-reduce:group-hover:scale-100"
         />

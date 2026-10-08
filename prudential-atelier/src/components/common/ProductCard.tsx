@@ -148,6 +148,7 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
               sizes="(max-width: 768px) 50vw, 33vw"
               className="object-cover object-top"
               priority={priority}
+              fetchPriority={priority ? "high" : undefined}
               onError={() => setImgError(true)}
             />
           ) : (
@@ -198,6 +199,7 @@ export function ProductCard({ product, priority, compact, dimmed, merchBadge }: 
                 sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 className="object-cover object-top"
                 priority={priority}
+                fetchPriority={priority ? "high" : undefined}
                 onError={() => setImgError(true)}
               />
             ) : (

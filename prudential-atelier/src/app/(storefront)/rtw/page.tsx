@@ -12,11 +12,12 @@ import { isSkipDbBuild } from "@/lib/skip-db-build";
 import { warmHeroWebmMp4 } from "@/lib/transcode-webm-mp4";
 import { withHeroVideoVariants } from "@/lib/hero-video-variants";
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Record<string, string | string[] | undefined>;
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+  }
+): Promise<Metadata> {
+  const searchParams = await props.searchParams;
   return cmsRouteMetadata("rtw", rtwCanonicalPath(flattenSearchParams(searchParams)));
 }
 
@@ -32,11 +33,12 @@ const RTW_CMS_KEYS = [
   "rtw_page_subtitle",
 ] as const;
 
-export default async function RTWPage({
-  searchParams,
-}: {
-  searchParams: Record<string, string | string[] | undefined>;
-}) {
+export default async function RTWPage(
+  props: {
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const u = flattenSearchParams(searchParams);
   if (u.get("category") === "BRIDAL") u.delete("category");
 

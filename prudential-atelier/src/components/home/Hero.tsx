@@ -42,6 +42,7 @@ export function Hero({
         alt="Prudent Gabriel — SS 2025"
         fill
         priority
+        fetchPriority="high"
         className="object-cover object-top"
         sizes="100vw"
       />
