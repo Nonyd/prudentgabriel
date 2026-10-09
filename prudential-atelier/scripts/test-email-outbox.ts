@@ -274,6 +274,17 @@ async function main() {
   const safe = await sanitizeFromAddress("Attacker <attacker@evil.test>");
   assert(isAllowedFromAddress(safe), "sanitize recovers brand From");
 
+  const outboxBefore = await prisma.emailMessage.count();
+  const noEmail = await queueEmail({
+    to: "orders26-test@no-email.prudentgabriel.invalid",
+    subject: "Balance reminder",
+    html: "<p>x</p>",
+    template: "bespoke-balance-reminder",
+    idempotencyKey: `${prefix}:invalid-domain`,
+  });
+  assert(!noEmail.created && noEmail.id === "", "an .invalid address is never queued");
+  assert((await prisma.emailMessage.count()) === outboxBefore, "and no outbox row is written for it");
+
   console.log("OK — email outbox");
 }
 

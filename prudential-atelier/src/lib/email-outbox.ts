@@ -56,7 +56,22 @@ export function setSkipImmediateDeliverForTest(skip: boolean): void {
   skipImmediateDeliver = skip;
 }
 
+/**
+ * `.invalid` is reserved (RFC 2606) and can never receive mail. A client with no
+ * email yet carries one (e.g. imported clients), so nothing is queued for her.
+ */
+export function isUndeliverableAddress(address: string): boolean {
+  return address
+    .split(",")
+    .map((a) => a.trim().toLowerCase().replace(/>$/, ""))
+    .some((a) => a.endsWith(".invalid"));
+}
+
 export async function queueEmail(params: QueueEmailParams): Promise<{ id: string; created: boolean }> {
+  if (isUndeliverableAddress(params.to)) {
+    return { id: "", created: false };
+  }
+
   let html = params.html;
   let headers = params.headers;
 
