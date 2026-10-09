@@ -41,3 +41,4 @@ next-env.d.ts
 
 .data/media/
 .data/media-migrate-last.json
+/scripts/dist/

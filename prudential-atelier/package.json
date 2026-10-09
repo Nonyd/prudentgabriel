@@ -105,7 +105,8 @@
     "test:ci": "node scripts/run-ci-tests.mjs",
     "test:rtw-launch": "tsx --tsconfig tsconfig.scripts.json scripts/test-rtw-launch.ts",
     "test:authz": "tsx --tsconfig tsconfig.scripts.json scripts/test-authz.ts",
-    "email:dev": "email dev src/emails --port 3001"
+    "email:dev": "email dev src/emails --port 3001",
+    "bundle:import": "esbuild scripts/import-atelier-orders.ts --bundle --platform=node --target=node20 --format=cjs --tsconfig=tsconfig.json --external:@prisma/client --external:.prisma --external:dotenv --external:sharp --external:next --external:react --external:react-dom --outfile=scripts/dist/import-atelier-orders.cjs --log-level=warning"
   },
   "dependencies": {
     "@auth/core": "0.41.3",
@@ -183,6 +184,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "dotenv": "^17.4.2",
+    "esbuild": "0.28.0",
     "eslint": "^8",
     "eslint-config-next": "15.5.27",
     "postcss": "^8",

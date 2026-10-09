@@ -4,6 +4,11 @@
  *   tsx --tsconfig tsconfig.scripts.json scripts/import-atelier-orders.ts <data.json>           # dry run
  *   tsx --tsconfig tsconfig.scripts.json scripts/import-atelier-orders.ts <data.json> --apply   # write
  *
+ * In a deployed container the image carries it bundled (pnpm bundle:import), since the
+ * runtime image lacks the packages src/lib needs under tsx:
+ *   docker cp data.json <container>:/tmp/data.json
+ *   docker exec -w /app <container> node scripts/import-atelier-orders.cjs /tmp/data.json [--apply]
+ *
  * Client data never enters the repository: the JSON is passed in. Per client, through
  * the app's own code paths:
  *   - a CUSTOMER account with no password and a placeholder `.invalid` email: it cannot

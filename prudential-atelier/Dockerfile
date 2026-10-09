@@ -46,7 +46,7 @@ ENV NEXT_PUBLIC_STRIPE_PUBLIC_KEY=${NEXT_PUBLIC_STRIPE_PUBLIC_KEY}
 # Pages that call Prisma during `next build` must not require a live database.
 ENV SKIP_DB_BUILD=1
 
-RUN pnpm prisma generate && pnpm build:next
+RUN pnpm prisma generate && pnpm build:next && pnpm bundle:import
 
 FROM base AS runner
 ENV NODE_ENV=production
@@ -70,6 +70,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/scripts/reencrypt-secrets.ts ./sc
 # Staging only (the entrypoint checks the host): placeholder atelier content.
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/seed-atelier-demo.ts ./scripts/seed-atelier-demo.ts
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/fixture-guard.ts ./scripts/fixture-guard.ts
+# Commissions from before the app: one self-contained file (the runtime image has no tsx deps for src/lib).
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/dist/import-atelier-orders.cjs ./scripts/import-atelier-orders.cjs
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib ./src/lib
 COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./tsconfig.json
 COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.scripts.json ./tsconfig.scripts.json
