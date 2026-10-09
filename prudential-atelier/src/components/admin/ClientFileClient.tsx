@@ -105,6 +105,8 @@ type ClientFile = {
   client: { id: string; firstName: string | null; name?: string | null; email?: string; phone?: string | null; loyaltyTier?: string };
   scope: "house" | "workroom";
   contactHidden: boolean;
+  /** Decided on the server by canPreviewClientDashboard, the same check as the preview page. */
+  canPreviewDashboard: boolean;
   commissions: { id: string; orderRef: string; currentStageLabel: string | null; status: string; createdAt: string }[];
   sections: {
     consultation: Section<Consultation>;
@@ -178,7 +180,17 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-display text-2xl text-ink">{file.client.name ?? file.client.firstName ?? "Client"}</h1>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h1 className="font-display text-2xl text-ink">{file.client.name ?? file.client.firstName ?? "Client"}</h1>
+          {portal === "admin" && file.canPreviewDashboard ? (
+            <Link
+              href={`/admin/clients/${clientId}/dashboard`}
+              className="border border-sand px-3 py-1.5 font-sans text-xs uppercase tracking-[0.12em] text-ink hover:border-ink"
+            >
+              Preview her dashboard
+            </Link>
+          ) : null}
+        </div>
         {file.contactHidden ? (
           <p className="font-sans text-xs text-text-mid">Contact details are kept for the client desk.</p>
         ) : (

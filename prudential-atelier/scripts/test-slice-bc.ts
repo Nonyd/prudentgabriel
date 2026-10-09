@@ -16,6 +16,7 @@ import { Role, StaffDepartment } from "@prisma/client";
 import { hasPermission, type AccessActor } from "../src/lib/roles";
 import { accessRuleForAdminPath } from "../src/lib/admin-route-access";
 import {
+  canPreviewClientDashboard,
   clientFileAccess,
   composeClientFile,
   deliveryConfirmation,
@@ -104,6 +105,19 @@ function unit() {
   const revoked = clientFileAccess(viewer({ label: "rev", role: "ADMIN", actor: { revokes: ["consultations"] } }));
   assert(revoked.admitted && !revoked.sections.consultation, "a REVOKE on consultations hides the consultation section");
 
+  // ── "Preview her dashboard": only for someone who already sees all of her file ──
+  assert(canPreviewClientDashboard(admin), "Mrs. Prudent can preview a client's dashboard");
+  assert(canPreviewClientDashboard(bm), "a bespoke manager with clients sees her whole file, so can preview");
+  for (const m of [kemi, bmSeed, tailor, beader, store, unassigned]) {
+    assert(!canPreviewClientDashboard(m), "the preview stays closed to anyone without her whole file");
+  }
+  assert(!canPreviewClientDashboard(revoked), "an admin with consultations revoked cannot preview: the dashboard shows consultations");
+  const previewGate = accessRuleForAdminPath("/admin/clients/c1/dashboard");
+  assert(
+    previewGate?.type === "permission" && previewGate.permission === "clients",
+    "the preview page sits behind the clients gate, like the file",
+  );
+
   console.log("\nWho sees what on the client file:");
   console.table(
     matrix.map((m) => ({
@@ -117,6 +131,7 @@ function unit() {
       sketch: m.sections.illustrations ? "yes" : "-",
       making: m.sections.making ? "yes" : "-",
       delivery: m.sections.delivery ? (m.contact ? "yes+address" : "date only") : "-",
+      preview: canPreviewClientDashboard(m) ? "yes" : "-",
     })),
   );
 

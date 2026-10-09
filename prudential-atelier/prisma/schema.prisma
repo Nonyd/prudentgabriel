@@ -1831,6 +1831,7 @@ enum ActivityAction {
   STAFF_CLOCK_IN
   STAFF_CLOCK_OUT
   EMAIL_SENT
+  CLIENT_DASHBOARD_PREVIEW
 }
 
 enum ErrorSeverity {

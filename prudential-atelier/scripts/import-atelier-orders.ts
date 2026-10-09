@@ -295,13 +295,12 @@ async function main() {
     }
 
     // 4. The stages done before the app, written as completeOrderStage writes them.
+    //    Stage notes are shown to her on her dashboard: plain words only. Where they
+    //    came from is in the team's client note (step 5).
     for (const stage of stagesBefore) {
       const done = await prisma.orderStageCompletion.findFirst({ where: { orderId: order.id, stage, revertedAt: null }, select: { id: true } });
       if (done) continue;
-      const notes =
-        stage === BespokeStage.DESIGN_APPROVAL
-          ? `Design approved by the client in person before the app; no approval link was sent. Recorded from ${file.source}.`
-          : `Completed before the app. Recorded from ${file.source}.`;
+      const notes = stage === BespokeStage.DESIGN_APPROVAL ? "Design approved in person." : "Completed.";
       await prisma.stageUpdate.create({
         data: { orderId: order.id, stage, notes, images: [], videos: [], completedBy: actor.id, completedByName: "Import" },
       });
@@ -315,6 +314,7 @@ async function main() {
         clientId: profile.id,
         note: [
           `${mark} Imported on ${IMPORT_DAY} from ${file.source}.`,
+          `Stages before ${c.stage} were completed before the app and recorded as "Completed." (Design Approval: "Design approved in person."; no approval link was sent).`,
           "Her email and phone are missing: add them to her account and to the commission. Until then she cannot sign in, no email reaches her, and the Design Approval and Final Fitting links cannot be sent.",
           c.orderDateNote ?? "",
           c.progressNote ?? "",

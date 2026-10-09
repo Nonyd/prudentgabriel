@@ -99,6 +99,15 @@ export function clientFileAccess(v: FileViewer): FileAccess {
   };
 }
 
+/**
+ * "Preview her dashboard" shows everything she sees: balances, measurements,
+ * consultations. So it opens only for a house viewer who already sees every
+ * section of her file. Adds no permission of its own.
+ */
+export function canPreviewClientDashboard(access: FileAccess): boolean {
+  return access.scope === "house" && FILE_SECTIONS.every((s) => access.sections[s]);
+}
+
 /** The words the house uses for the workroom stages. */
 export const WORKROOM_STAGE_WORDS: Partial<Record<BespokeStage, string>> = {
   TAILORING: "Cutting & sewing",
@@ -142,6 +151,15 @@ async function viewerAssignments(userId: string | null, clientProfileId: string)
     select: { orderId: true, role: true },
   });
   return rows;
+}
+
+/** One viewer's access to one client's file, workroom assignments included. */
+export async function resolveClientFileAccess(
+  viewer: Omit<FileViewer, "assignments">,
+  clientProfileId: string,
+): Promise<FileAccess> {
+  const assignments = await viewerAssignments(viewer.userId, clientProfileId);
+  return clientFileAccess({ ...viewer, assignments });
 }
 
 /**
@@ -435,6 +453,7 @@ export async function composeClientFile(
       },
       scope: access.scope,
       contactHidden: !access.contact,
+      canPreviewDashboard: canPreviewClientDashboard(access),
       commissions: commissions.map((c) => ({
         id: c.id,
         orderRef: c.orderRef,
