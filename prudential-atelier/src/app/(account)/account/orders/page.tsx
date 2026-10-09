@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateClientProfile } from "@/lib/account-helpers";
 import { AccountOrdersClient } from "@/components/account/AccountOrdersClient";
-import { liveCompletionStages, stageHistoryForLiveCompletions } from "@/lib/atelier/live-stages";
+import { liveCompletionStages, clientStageHistory } from "@/lib/atelier/live-stages";
 
 export default async function AccountOrdersPage() {
   const session = await auth();
@@ -36,7 +36,7 @@ export default async function AccountOrdersPage() {
     <AccountOrdersClient
       bespokeOrders={bespokeOrders.map((o) => ({
         ...o,
-        stageHistory: stageHistoryForLiveCompletions(
+        stageHistory: clientStageHistory(
           o.stageHistory,
           liveCompletionStages(o.stageCompletions),
         ),

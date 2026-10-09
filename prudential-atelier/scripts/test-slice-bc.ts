@@ -33,6 +33,14 @@ import { commissionSearch } from "../src/lib/atelier/commission-search";
 import { featureKeyFromLabel, parseFeatureKeys, parseSpecItems } from "../src/lib/atelier/construction-features";
 import { groupClientsByPlace, normaliseState } from "../src/lib/client-places";
 import { redactBespokeOrder, stripOrderReceipt } from "../src/lib/bespoke-data-access";
+import {
+  CLIENT_INTAKE_NOTE,
+  clientStageNote,
+  intakeStageNotes,
+  invoiceIssuanceNote,
+  paymentConfirmationNote,
+} from "../src/lib/atelier/intake-stages";
+import { clientStageHistory } from "../src/lib/atelier/live-stages";
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
@@ -112,6 +120,24 @@ function unit() {
     assert(!canPreviewClientDashboard(m), "the preview stays closed to anyone without her whole file");
   }
   assert(!canPreviewClientDashboard(revoked), "an admin with consultations revoked cannot preview: the dashboard shows consultations");
+  // ── What her tracker says on the intake stages: her words, not the house's record ──
+  const convert = intakeStageNotes({ quoteRef: "QT-2026-0001", invoiceNumber: "INV-1", bookingNumber: "PB-1", consultationPaid: true, consultationPaymentRef: "PS-1" });
+  for (const [stage, note] of Object.entries(convert)) {
+    assert(clientStageNote(stage, note) === CLIENT_INTAKE_NOTE, `she does not see the convert note on ${stage}`);
+  }
+  assert(clientStageNote("INVOICE_ISSUANCE", invoiceIssuanceNote({ invoiceNumber: "INV-1", quoteRef: "QT-1", sent: true })) === CLIENT_INTAKE_NOTE, "nor the invoice-sent note");
+  assert(clientStageNote("PAYMENT_CONFIRMATION", paymentConfirmationNote({ depositSatisfied: true })) === CLIENT_INTAKE_NOTE, "nor the deposit note");
+  assert(clientStageNote("CONSULTATION_SESSION", "Lovely to meet you — sketches by Friday.") === "Lovely to meet you — sketches by Friday.", "a note typed for her on an intake stage stays");
+  assert(clientStageNote("TAILORING", "Completed at convert — x") === "Completed at convert — x", "only intake stages are rewritten");
+  const shown = clientStageHistory(
+    [
+      { stage: "CONSULTATION_BOOKING" as const, notes: convert.CONSULTATION_BOOKING },
+      { stage: "TAILORING" as const, notes: "Bodice cut." },
+    ],
+    new Set(["CONSULTATION_BOOKING", "TAILORING"] as const),
+  );
+  assert(shown[0]!.notes === CLIENT_INTAKE_NOTE && shown[1]!.notes === "Bodice cut.", "her stage history carries her words");
+
   const previewGate = accessRuleForAdminPath("/admin/clients/c1/dashboard");
   assert(
     previewGate?.type === "permission" && previewGate.permission === "clients",

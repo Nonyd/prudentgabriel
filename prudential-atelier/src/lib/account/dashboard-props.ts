@@ -13,7 +13,7 @@ import { mapProductToListItem } from "@/lib/map-product-list-item";
 import type { AccountDashboard, DashboardState } from "@/components/account/AccountDashboard";
 import { canSubmitTestimonial } from "@/lib/testimonial-eligibility";
 import { formatBespokeBook } from "@/lib/atelier-fx";
-import { liveCompletionStages, stageHistoryForLiveCompletions } from "@/lib/atelier/live-stages";
+import { liveCompletionStages, clientStageHistory } from "@/lib/atelier/live-stages";
 import { isBespokeCommissionActive } from "@/lib/bespoke-archive";
 import { getAlterationWarrantyDays } from "@/lib/alterations/policy";
 import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
@@ -161,7 +161,7 @@ export async function loadAccountDashboardProps(params: {
     ? {
         ...activeBespokeRaw,
         trackingToken: preview ? "" : await ensureTrackingRaw(activeBespokeRaw),
-        stageHistory: stageHistoryForLiveCompletions(
+        stageHistory: clientStageHistory(
           activeBespokeRaw.stageHistory,
           liveCompletionStages(activeBespokeRaw.stageCompletions),
         ),

@@ -1,4 +1,5 @@
 import type { BespokeStage } from "@prisma/client";
+import { clientStageNote } from "@/lib/atelier/intake-stages";
 
 export function liveCompletionStages(
   completions: Array<{ stage: BespokeStage; revertedAt: Date | string | null }>,
@@ -27,4 +28,17 @@ export function countLiveCompletions(live: Set<BespokeStage>): number {
 
 export function isLiveStageDone(stage: BespokeStage, live: Set<BespokeStage>): boolean {
   return live.has(stage);
+}
+
+/**
+ * What her own pages show (dashboard, commission page, /track): the live
+ * completions, with the house's system notes on the intake stages in her words.
+ */
+export function clientStageHistory<T extends { stage: BespokeStage; notes?: string | null }>(
+  history: T[],
+  live: Set<BespokeStage>,
+): T[] {
+  return stageHistoryForLiveCompletions(history, live).map((row) =>
+    row.notes == null ? row : { ...row, notes: clientStageNote(row.stage, row.notes) },
+  );
 }

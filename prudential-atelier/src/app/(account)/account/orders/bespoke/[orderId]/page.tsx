@@ -9,7 +9,7 @@ import { BespokePostDeliveryClient } from "@/components/account/BespokePostDeliv
 import { BespokeStageTracker } from "@/components/bespoke/BespokeStageTracker";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { formatBespokeBook } from "@/lib/atelier-fx";
-import { liveCompletionStages, stageHistoryForLiveCompletions } from "@/lib/atelier/live-stages";
+import { liveCompletionStages, clientStageHistory } from "@/lib/atelier/live-stages";
 import { maybeArchiveBespokeOrder } from "@/lib/bespoke-archive";
 import {
   alterationWindowClosesAt,
@@ -98,7 +98,7 @@ export default async function AccountBespokeOrderPage({
       <div className="mt-10">
         <BespokeStageTracker
           currentStage={order.currentStage}
-          stageHistory={stageHistoryForLiveCompletions(
+          stageHistory={clientStageHistory(
             order.stageHistory,
             liveCompletionStages(order.stageCompletions),
           )}

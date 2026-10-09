@@ -80,3 +80,24 @@ export function intakeNotesMatchPaymentState(params: {
     : params.paymentNote.toLowerCase().includes("deposit is still due");
   return invoiceOk && paymentOk;
 }
+
+/**
+ * The notes above are the house's own record (invoice numbers, quotation refs,
+ * "deposit still due") and they reach her stage tracker. She sees this instead.
+ * A note someone typed on an intake stage is hers to read and is left alone.
+ */
+export const CLIENT_INTAKE_NOTE = "Completed.";
+
+export function isIntakeSystemNote(note: string): boolean {
+  const n = note.trim();
+  return (
+    n.startsWith("Completed at convert") ||
+    /^Invoice \S+ sent from quotation \S+\.$/.test(n) ||
+    n.startsWith("Commission deposit received.")
+  );
+}
+
+export function clientStageNote(stage: string, note: string | null | undefined): string | null {
+  if (!note) return note ?? null;
+  return (INTAKE_STAGES as readonly string[]).includes(stage) && isIntakeSystemNote(note) ? CLIENT_INTAKE_NOTE : note;
+}

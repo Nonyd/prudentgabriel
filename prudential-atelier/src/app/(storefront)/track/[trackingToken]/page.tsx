@@ -8,7 +8,7 @@ import { TrackOrderActions } from "@/components/track/TrackOrderActions";
 import {
   countLiveCompletions,
   liveCompletionStages,
-  stageHistoryForLiveCompletions,
+  clientStageHistory,
 } from "@/lib/atelier/live-stages";
 import { findOrderByTrackingToken } from "@/lib/capability-token-lookup";
 import type { Metadata } from "next";
@@ -51,7 +51,7 @@ export default async function TrackOrderPage({ params }: Props) {
 
   const live = liveCompletionStages(order.stageCompletions);
   const stagesComplete = countLiveCompletions(live);
-  const stageHistory = stageHistoryForLiveCompletions(order.stageHistory, live);
+  const stageHistory = clientStageHistory(order.stageHistory, live);
   const firstName = order.clientName.split(" ")[0] ?? order.clientName;
   const outfitName = order.outfitDescription?.split("\n")[0]?.slice(0, 80) || "Atelier commission";
 
