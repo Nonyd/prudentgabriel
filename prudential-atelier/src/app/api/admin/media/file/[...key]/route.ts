@@ -18,6 +18,8 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ key: string
     ? await requireAdminPortalApi()
     : needed === "portal"
     ? await requireAdminPortalApi()
+    : needed === "workroom"
+    ? await requireAdminApi("bespoke")
     : await requireAdminApi(needed);
   if (!gate.ok) return gate.response;
   return streamMediaKey(key, {

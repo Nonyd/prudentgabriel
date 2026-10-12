@@ -11,6 +11,8 @@ import { listRefundRequiredOrders, oversellReportHtml } from "@/lib/oversell-rep
 import { getSetting } from "@/lib/settings";
 import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
 import { workroomDay } from "@/lib/atelier/work-log";
+import { takings } from "@/lib/finance/takings";
+import { financeRange } from "@/lib/finance/period";
 
 /** Staff write the work log; it reaches the email as text, never as markup. */
 function escapeHtml(s: string): string {
@@ -39,12 +41,8 @@ export async function POST(req: NextRequest) {
     const to = endOfToday();
     const appUrl = getPublicAppUrl();
 
-    const [rtwRev, stageUpdates, staffToday, consultations, upcoming, pendingPayments, refundRequired] =
+    const [stageUpdates, staffToday, consultations, upcoming, pendingPayments, refundRequired] =
       await Promise.all([
-        prisma.order.aggregate({
-          where: { paymentStatus: PaymentStatus.PAID, createdAt: { gte: from, lte: to }, isBespoke: false },
-          _sum: { total: true },
-        }),
         prisma.stageUpdate.findMany({
           where: { completedAt: { gte: from, lte: to } },
           include: { order: { select: { orderRef: true } } },
@@ -71,11 +69,11 @@ export async function POST(req: NextRequest) {
         listRefundRequiredOrders(),
       ]);
 
-    const bespokePaid = await prisma.bespokeOrder.aggregate({
-      where: { updatedAt: { gte: from, lte: to } },
-      _sum: { amountPaid: true },
-    });
-    const revenue = (rtwRev._sum.total ?? 0) + (bespokePaid._sum.amountPaid ?? 0);
+    // Payments confirmed on the Lagos day just ended (cron fires 23:00 UTC = 00:00 Lagos),
+    // from the ledger. Not the lifetime paid on every commission touched today.
+    const day = financeRange("day", new Date(Date.now() - 60 * 60 * 1000));
+    const taken = await takings(day.from, day.to);
+    const revenue = taken.totalNGN;
 
     const oversellHtml = oversellReportHtml(refundRequired);
     // BD7: the day's work on each gown, and who with open work has not filed.
@@ -88,7 +86,7 @@ export async function POST(req: NextRequest) {
       [
         {
           heading: "Revenue Today",
-          html: `<p><strong>₦${Math.round(revenue).toLocaleString("en-NG")}</strong> total payments confirmed</p>`,
+          html: `<p><strong>₦${Math.round(revenue).toLocaleString("en-NG")}</strong> in payments confirmed today (atelier ₦${Math.round(taken.atelierNGN).toLocaleString("en-NG")}, ready-to-wear ₦${Math.round(taken.rtwNGN).toLocaleString("en-NG")})</p>`,
         },
         {
           heading: "Stages Completed",

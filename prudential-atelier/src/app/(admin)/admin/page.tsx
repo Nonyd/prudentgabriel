@@ -7,6 +7,7 @@ import { ExecutiveKPICard } from "@/components/admin/ExecutiveKPICard";
 import { ExecutiveRevenueChart, type RevenueChartPoint } from "@/components/admin/ExecutiveRevenueChart";
 import { formatNGN, getInitials } from "@/lib/utils";
 import { getPointRateNGN, outstandingPointsTotal, pointsToNaira } from "@/lib/points";
+import { ledgerLines, takingsIn } from "@/lib/finance/takings";
 
 function startOfDay(d: Date): Date {
   const x = new Date(d);
@@ -89,12 +90,7 @@ export default async function AdminDashboardPage() {
     });
 
     const [
-      rtwWeek,
-      rtwLastWeek,
-      consultPaidWeek,
-      consultPaidLastWeek,
-      bespokePaidWeek,
-      bespokePaidLastWeek,
+      ledger,
       activeCount,
       nearCount,
       consultBookedWeek,
@@ -103,40 +99,11 @@ export default async function AdminDashboardPage() {
       balanceOrders,
       stageLogsToday,
       deliveryTodayCount,
-      orderPaidToday,
-      consultPaidToday,
       pendingConfirm,
-      chartData,
       staffList,
     ] = await Promise.all([
-      prisma.order.aggregate({
-        where: { paymentStatus: PaymentStatus.PAID, paidAt: { gte: weekStart, lte: dayEnd }, isBespoke: false },
-        _sum: { total: true },
-      }),
-      prisma.order.aggregate({
-        where: {
-          paymentStatus: PaymentStatus.PAID,
-          paidAt: { gte: lastWeekStart, lte: lastWeekEnd },
-          isBespoke: false,
-        },
-        _sum: { total: true },
-      }),
-      prisma.consultationBooking.aggregate({
-        where: { paymentStatus: PaymentStatus.PAID, paidAt: { gte: weekStart, lte: dayEnd } },
-        _sum: { feeNGN: true },
-      }),
-      prisma.consultationBooking.aggregate({
-        where: { paymentStatus: PaymentStatus.PAID, paidAt: { gte: lastWeekStart, lte: lastWeekEnd } },
-        _sum: { feeNGN: true },
-      }),
-      prisma.bespokeOrder.aggregate({
-        where: { updatedAt: { gte: weekStart, lte: dayEnd } },
-        _sum: { amountPaid: true },
-      }),
-      prisma.bespokeOrder.aggregate({
-        where: { updatedAt: { gte: lastWeekStart, lte: lastWeekEnd } },
-        _sum: { amountPaid: true },
-      }),
+      // Revenue is payments confirmed, from the ledger (Slice AA) — one read for last week to today.
+      ledgerLines(lastWeekStart, new Date(dayEnd.getTime() + 1)),
       prisma.bespokeOrder.count({ where: { currentStage: { not: BespokeStage.DELIVERY } } }),
       prisma.bespokeOrder.count({
         where: {
@@ -162,46 +129,12 @@ export default async function AdminDashboardPage() {
       prisma.bespokeOrder.count({
         where: { deliveryDate: { gte: dayStart, lte: dayEnd } },
       }),
-      prisma.order.aggregate({
-        where: { paymentStatus: PaymentStatus.PAID, paidAt: { gte: dayStart, lte: dayEnd } },
-        _sum: { total: true },
-      }),
-      prisma.consultationBooking.aggregate({
-        where: { paymentStatus: PaymentStatus.PAID, paidAt: { gte: dayStart, lte: dayEnd } },
-        _sum: { feeNGN: true },
-      }),
       prisma.consultationBooking.count({
         where: {
           status: ConsultationStatus.PENDING_CONFIRMATION,
           paymentStatus: PaymentStatus.PAID,
         },
       }),
-      Promise.all(
-        chartDays.map(async (d) => {
-          const from = startOfDay(d);
-          const to = endOfDay(d);
-          const [rtw, bespoke, consult] = await Promise.all([
-            prisma.order.aggregate({
-              where: { paymentStatus: PaymentStatus.PAID, paidAt: { gte: from, lte: to }, isBespoke: false },
-              _sum: { total: true },
-            }),
-            prisma.bespokeOrder.aggregate({
-              where: { updatedAt: { gte: from, lte: to } },
-              _sum: { amountPaid: true },
-            }),
-            prisma.consultationBooking.aggregate({
-              where: { paymentStatus: PaymentStatus.PAID, paidAt: { gte: from, lte: to } },
-              _sum: { feeNGN: true },
-            }),
-          ]);
-          return {
-            label: DAY_LABELS[d.getDay()],
-            bespoke: bespoke._sum.amountPaid ?? 0,
-            rtw: rtw._sum.total ?? 0,
-            consultations: consult._sum.feeNGN ?? 0,
-          };
-        }),
-      ),
       prisma.staffProfile.findMany({
         where: { isActive: true },
         take: 12,
@@ -216,14 +149,9 @@ export default async function AdminDashboardPage() {
       }),
     ]);
 
-    revenueThisWeek =
-      (rtwWeek._sum.total ?? 0) +
-      (consultPaidWeek._sum.feeNGN ?? 0) +
-      (bespokePaidWeek._sum.amountPaid ?? 0);
-    revenueLastWeek =
-      (rtwLastWeek._sum.total ?? 0) +
-      (consultPaidLastWeek._sum.feeNGN ?? 0) +
-      (bespokePaidLastWeek._sum.amountPaid ?? 0);
+    const endOfToday = new Date(dayEnd.getTime() + 1);
+    revenueThisWeek = takingsIn(ledger, weekStart, endOfToday).totalNGN;
+    revenueLastWeek = takingsIn(ledger, lastWeekStart, weekStart).totalNGN;
     activeCommissions = activeCount;
     nearingDelivery = nearCount;
     consultationsThisWeek = consultBookedWeek;
@@ -234,9 +162,12 @@ export default async function AdminDashboardPage() {
     pointsLiabilityNGN = pointsToNaira(pointsOutstanding, await getPointRateNGN());
     ordersAdvancedToday = stageLogsToday;
     deliveriesToday = deliveryTodayCount;
-    paymentsToday = (orderPaidToday._sum.total ?? 0) + (consultPaidToday._sum.feeNGN ?? 0);
+    paymentsToday = takingsIn(ledger, dayStart, endOfToday).totalNGN;
     confirmationsPending = pendingConfirm;
-    revenueChart = chartData;
+    revenueChart = chartDays.map((d) => {
+      const t = takingsIn(ledger, startOfDay(d), new Date(endOfDay(d).getTime() + 1));
+      return { label: DAY_LABELS[d.getDay()], bespoke: t.commissionNGN, rtw: t.rtwNGN, consultations: t.consultationNGN };
+    });
 
     const resumptionSetting = await prisma.siteSetting.findUnique({ where: { key: "hr_resumption_time" } });
     const resumptionTime = resumptionSetting?.value ?? "09:00";

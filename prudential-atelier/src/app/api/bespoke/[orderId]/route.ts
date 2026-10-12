@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PaymentMethod, PaymentPurpose, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logError } from "@/lib/logger";
+import { getClientIp } from "@/lib/rate-limit";
 import { bespokeView, requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import {
   appendPayment,
@@ -248,18 +249,33 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: Params) {
+/**
+ * Delete a commission and what goes with it (notes, materials, cost sheets,
+ * payments …) — Slice AC's cascade. The typed DELETE is required whenever
+ * anything goes with it; payments make it Super Admin only. Logged with counts.
+ */
+export async function DELETE(req: NextRequest, { params }: Params) {
   const { orderId } = await params;
   const gate = await requireBespokeAccess("admin", { orderId });
   if (!gate.ok) return gate.response;
-
+  const body = (await req.json().catch(() => ({}))) as { confirmation?: string };
   try {
-    await prisma.bespokeOrder.delete({ where: { id: orderId } });
-    return NextResponse.json({ success: true });
+    const { executeCommissionCascade } = await import("@/lib/commission-cascade-delete");
+    const result = await executeCommissionCascade({
+      orderId,
+      confirmation: body.confirmation,
+      actor: {
+        userId: gate.session.user.id!,
+        email: gate.session.user.email ?? null,
+        role: gate.role,
+        ip: getClientIp(req),
+      },
+    });
+    return NextResponse.json({ success: true, logId: result.logId, counts: result.preview.counts });
   } catch (e) {
-    const { mapLedgerDeleteError } = await import("@/lib/payments/ledger-delete-guard");
-    const blocked = mapLedgerDeleteError(e, "order");
-    if (blocked) return NextResponse.json(blocked.body, { status: blocked.status });
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const { ProductCascadeError } = await import("@/lib/product-cascade-delete");
+    if (e instanceof ProductCascadeError) return NextResponse.json({ error: e.message }, { status: e.status });
+    await logError({ severity: "WARNING", errorType: "BESPOKE_DELETE", message: e instanceof Error ? e.message : "Delete failed" });
+    return NextResponse.json({ error: "Delete failed; nothing was removed" }, { status: 500 });
   }
 }

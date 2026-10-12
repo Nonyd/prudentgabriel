@@ -129,6 +129,7 @@ export async function loadConsultationPlan(ids: string[]): Promise<ConsultationC
       },
       invoices: { select: { id: true, invoiceNumber: true } },
       bespokeOrders: { select: { id: true, orderRef: true } },
+      _count: { select: { commissionNotes: true } },
       payments: {
         select: {
           reference: true,
@@ -182,6 +183,8 @@ export async function loadConsultationPlan(ids: string[]): Promise<ConsultationC
     bookings.reduce((s, b) => s + cashReceived(b.payments), 0),
   );
   const loud = !blocked && (paymentRows.length > 0 || quotationIds.length > 0);
+  // BD2: notes on the consultation go with it, counted first and confirmed by typing DELETE.
+  const noteCount = bookings.reduce((s, b) => s + b._count.commissionNotes, 0);
 
   const snaps: ConsultationCascadeBookingSnap[] = bookings.map((b) => ({
     id: b.id,
@@ -229,6 +232,7 @@ export async function loadConsultationPlan(ids: string[]): Promise<ConsultationC
     invoiceRefs,
     receivedNGN,
     mediaUrls,
+    noteCount,
     bookingIds,
     quotationIds,
   };
@@ -256,7 +260,7 @@ export async function executeConsultationCascade(opts: {
       403,
     );
   }
-  if (plan.loud && opts.confirmation !== CASCADE_CONFIRMATION) {
+  if ((plan.loud || (plan.noteCount ?? 0) > 0) && opts.confirmation !== CASCADE_CONFIRMATION) {
     throw new ProductCascadeError(
       "CONFIRM",
       `Type ${CASCADE_CONFIRMATION} to delete a consultation that was paid or produced a quotation`,
@@ -268,6 +272,7 @@ export async function executeConsultationCascade(opts: {
     const logId = await prisma.$transaction(
       async (tx) => {
         await enableLedgerBypass(tx);
+        await tx.commissionNote.deleteMany({ where: { consultationId: { in: plan.bookingIds } } });
         if (plan.bookingIds.length > 0) {
           await tx.payment.deleteMany({ where: { consultationId: { in: plan.bookingIds } } });
         }
@@ -302,6 +307,7 @@ async function writeConsultationLog(
     payments: plan.payments,
     quotationRefs: plan.quotationRefs,
     receivedNGN: plan.receivedNGN,
+    noteCount: plan.noteCount,
     actor: { userId: actor.userId, email: actor.email, role: actor.role, ip: actor.ip },
   };
   const copy = consultationDialogCopy(plan);

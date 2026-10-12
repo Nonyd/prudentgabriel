@@ -5,6 +5,7 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import type { WorkdayItem } from "@/lib/atelier/work-log";
+import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
 
 /**
  * Slice BD7 — the day's entry, one per commission she is on. The portal asks
@@ -21,7 +22,22 @@ function EntryForm({ item, onFiled }: { item: WorkdayItem; onFiled: (w: Workday)
   const [progress, setProgress] = useState(item.entry?.progress ?? 25);
   const [blocker, setBlocker] = useState(item.entry?.blocker ?? "");
   const [partDone, setPartDone] = useState(item.entry?.partDone ?? false);
+  const [images, setImages] = useState<string[]>(item.entry?.images ?? []);
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  async function addPicture(file: File) {
+    setUploading(true);
+    try {
+      // Same upload route, store and size limits as the house; the workroom folder.
+      const url = await uploadAdminAsset(file, "bespoke-workroom");
+      setImages((prev) => [...prev, url].slice(0, 6));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function file() {
     setSaving(true);
@@ -29,7 +45,7 @@ function EntryForm({ item, onFiled }: { item: WorkdayItem; onFiled: (w: Workday)
       const r = await fetch("/api/staff/work-log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assignmentId: item.assignmentId, done, progress, blocker, partDone, images: item.entry?.images ?? [] }),
+        body: JSON.stringify({ assignmentId: item.assignmentId, done, progress, blocker, partDone, images }),
       });
       const j = (await r.json().catch(() => ({}))) as Workday & { error?: string };
       if (!r.ok) throw new Error(j.error ?? "Could not file");
@@ -71,6 +87,27 @@ function EntryForm({ item, onFiled }: { item: WorkdayItem; onFiled: (w: Workday)
         placeholder="Anything in the way? (fabric, beads, a decision…)"
         className="w-full rounded border border-sand px-3 py-2 font-sans text-sm"
       />
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="cursor-pointer font-sans text-xs">
+          <span className="inline-flex rounded border border-sand px-3 py-2">{uploading ? "Uploading…" : "Add a picture"}</span>
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            disabled={uploading || images.length >= 6}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void addPicture(file);
+              e.target.value = "";
+            }}
+          />
+        </label>
+        {images.map((u) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={u} src={u} alt="" className="h-12 w-12 object-cover" />
+        ))}
+      </div>
       <label className="flex items-center gap-2 font-sans text-sm text-ink">
         <input type="checkbox" checked={partDone} onChange={(e) => setPartDone(e.target.checked)} />
         My part on this gown is finished

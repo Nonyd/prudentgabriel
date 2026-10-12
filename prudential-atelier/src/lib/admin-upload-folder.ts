@@ -34,9 +34,12 @@ export const UI_UPLOAD_FOLDERS = [
   "bespoke-videos",
   /** BD3: pictures of the beads and fabric a gown needs. */
   "bespoke-specification",
+  /** BD7: the workroom's own pictures — end-of-day entries. */
+  "bespoke-workroom",
 ] as const;
 
-export type UploadFolderGate = AdminPermission | readonly AdminPermission[] | "portal";
+/** "workroom": staff with an open assignment (they hold no admin keys). */
+export type UploadFolderGate = AdminPermission | readonly AdminPermission[] | "portal" | "workroom";
 
 /**
  * Folder → permission. Unknown folders are rejected.
@@ -61,6 +64,7 @@ export function permissionForUploadFolder(folder: string): UploadFolderGate | nu
   }
   // BD3: Maju's grant says what beads a gown needs, pictures included.
   if (f === "bespoke-specification") return ["bespoke", "bespoke.specification"];
+  if (f === "bespoke-workroom") return "workroom";
   if (f.includes("/consultations")) return "consultations";
   if (f.includes("/careers")) return "staff";
   if (

@@ -34,6 +34,8 @@ import { commissionMeasurements, parseSnapshot, snapshotFrom } from "../src/lib/
 import { sheetLabourNGN } from "../src/lib/atelier/commission-cost";
 import { lagosDay, parseWorkLogInput, promptDue } from "../src/lib/atelier/work-log";
 import { cleanMeasurementInput } from "../src/lib/measurements";
+import { sumTakings } from "../src/lib/finance/takings";
+import { commissionDialogCopy } from "../src/lib/commission-cascade-copy";
 import { clientFileAccess } from "../src/lib/client-file";
 
 function assert(cond: unknown, message: string): asserts cond {
@@ -181,6 +183,25 @@ function unit() {
   assert(!parseWorkLogInput({ assignmentId: "a", done: "", progress: 50 }).ok, "an empty day is refused");
   assert(!parseWorkLogInput({ assignmentId: "a", done: "x", progress: 140 }).ok, "progress is 0–100");
 
+  // ── Revenue is confirmed cash by line, nothing else ──
+  const t0 = sumTakings([
+    { cashNGN: 100, businessLine: "RTW", atelierKind: null },
+    { cashNGN: 300, businessLine: "ATELIER", atelierKind: "commission" },
+    { cashNGN: 50, businessLine: "ATELIER", atelierKind: "consultation" },
+    { cashNGN: 0, businessLine: "ATELIER", atelierKind: "commission" },
+  ]);
+  assert(t0.totalNGN === 450 && t0.rtwNGN === 100 && t0.commissionNGN === 300 && t0.consultationNGN === 50, "takings split by line");
+
+  // ── Deleting a commission with notes: counted in the warning, typed DELETE asked ──
+  const preview = {
+    orderRef: "ORD-1", clientName: "Ada", payments: [], receivedNGN: 0, superAdminOnly: false, blocked: false, blockReason: null,
+    counts: { notes: 3, materials: 1, workLogs: 0, costSheets: 0, stageRecords: 4, payments: 0 }, loud: true,
+  };
+  const copy = commissionDialogCopy(preview);
+  assert(copy.loud && copy.lines.some((l) => l.includes("3 notes")), "the warning counts the notes and asks for DELETE");
+  const blockedCopy = commissionDialogCopy({ ...preview, blocked: true, blockReason: "ORD-1 has 2 store movements in the store book." });
+  assert(blockedCopy.blocked && blockedCopy.heading.includes("store movements"), "store movements refuse, with the reason");
+
   // ── BD3: the client file's new sections keep the money and cost gates ──
   const v = (role: string, extra: Partial<Parameters<typeof clientFileAccess>[0]> = {}) =>
     clientFileAccess({
@@ -275,6 +296,7 @@ async function fixture() {
     await prisma.$transaction(async (tx) => {
       await tx.$executeRawUnsafe(`SELECT set_config('app.ledger_bypass', 'on', true)`);
       await tx.commissionNote.deleteMany({ where: { OR: [{ orderId: order.id }, ...(booking ? [{ consultationId: booking.id }] : [])] } });
+      await tx.payment.deleteMany({ where: { bespokeOrderId: order.id } });
     });
     await prisma.costOfProduction.deleteMany({ where: { id: sheet.id } });
     await prisma.workLog.deleteMany({ where: { orderId: order.id } });
@@ -361,6 +383,47 @@ async function db(fx: Fixture) {
   const storeSide = await commissionCost(fx.order.id, { money: false, materialCost: true, labourCost: false });
   assert(storeSide && storeSide.costOfProductionNGN === undefined && !storeSide.sheet?.labour, "the store side carries no labour or total");
   assert((await commissionCost(fx.order.id, { money: false, materialCost: false, labourCost: false })) === null, "no cost gate, nothing");
+
+  // ── Revenue: a commission paid in the past, touched today, adds nothing today; a payment today adds itself ──
+  const { takings } = await import("../src/lib/finance/takings");
+  const { financeRange } = await import("../src/lib/finance/period");
+  const today = financeRange("day", new Date());
+  const augustAt = new Date(today.from.getTime() - 60 * 86400000);
+  await prisma.payment.create({
+    data: { reference: `BD-OLD-${fx.order.id}`, amount: 5_000_000, method: "MANUAL", status: "CONFIRMED", purpose: "DEPOSIT", bespokeOrderId: fx.order.id, clientId: fx.client.id, confirmedAt: augustAt },
+  });
+  await prisma.bespokeOrder.update({ where: { id: fx.order.id }, data: { amountPaid: 5_000_000 } });
+  const before = (await takings(today.from, today.to)).totalNGN;
+  await prisma.bespokeOrder.update({ where: { id: fx.order.id }, data: { notes: "touched today" } });
+  assert((await takings(today.from, today.to)).totalNGN === before, "a commission paid two months ago, touched today, adds nothing to today");
+  await prisma.payment.create({
+    data: { reference: `BD-TODAY-${fx.order.id}`, amount: 7_777, method: "MANUAL", status: "CONFIRMED", purpose: "BALANCE", bespokeOrderId: fx.order.id, clientId: fx.client.id, confirmedAt: new Date() },
+  });
+  const after = (await takings(today.from, today.to)).totalNGN;
+  assert(Math.round((after - before) * 100) === 777_700, `a payment confirmed today adds exactly itself (added ${after - before})`);
+
+  // ── A commission with notes can be deleted: counted, confirmed, logged without the words ──
+  {
+    const { executeCommissionCascade, previewCommissionCascade } = await import("../src/lib/commission-cascade-delete");
+    const doomed = await prisma.bespokeOrder.create({
+      data: { orderRef: `BD-DEL-${Date.now()}`, clientProfileId: fx.client.id, clientName: "BD client", clientEmail: fx.clientUser.email },
+    });
+    const secret = "private call summary do-not-log";
+    await addNote({ orderId: doomed.id }, { section: "brief", body: secret, supersedesId: null }, { id: fx.admin.id, name: "BD", email: null });
+    const p = await previewCommissionCascade(doomed.id);
+    assert(p.counts.notes === 1 && p.loud && !p.blocked, "the preview counts the note");
+    const actor = { userId: fx.admin.id, email: null, role: "ADMIN", ip: null };
+    let refused = false;
+    await executeCommissionCascade({ orderId: doomed.id, actor }).catch(() => (refused = true));
+    assert(refused, "without the typed DELETE nothing happens");
+    const done = await executeCommissionCascade({ orderId: doomed.id, actor, confirmation: "DELETE" });
+    assert(!(await prisma.bespokeOrder.findUnique({ where: { id: doomed.id } })), "the commission with a note is deleted");
+    assert((await prisma.commissionNote.count({ where: { orderId: doomed.id } })) === 0, "its notes went with it");
+    const log = await prisma.activityLog.findUniqueOrThrow({ where: { id: done.logId } });
+    assert(JSON.stringify(log).includes('"notes":1') && !JSON.stringify(log).includes(secret), "the log keeps the count, never the note");
+    await prisma.activityLog.delete({ where: { id: done.logId } }).catch(() => undefined);
+    await prisma.adminNotification.deleteMany({ where: { entityId: doomed.id } });
+  }
 
   // ── BD7: completedAt is finally written ──
   const filed = await fileWorkLog(fx.tailor.id, { assignmentId: fx.assignment.id, done: "Cut the bodice.", progress: 60, blocker: null, images: [], partDone: true });

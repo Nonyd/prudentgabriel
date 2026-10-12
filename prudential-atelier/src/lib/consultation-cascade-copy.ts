@@ -35,6 +35,8 @@ export type ConsultationCascadePreview = {
   invoiceRefs: string[];
   receivedNGN: number;
   mediaUrls: string[];
+  /** BD2: notes added since the session; they go with it. */
+  noteCount?: number;
 };
 
 export type ConsultationCascadeSnapshot = {
@@ -43,6 +45,8 @@ export type ConsultationCascadeSnapshot = {
   payments: CascadePaymentSnap[];
   quotationRefs: string[];
   receivedNGN: number;
+  /** Counted, never their words. */
+  noteCount?: number;
   actor: CascadeActorSnap;
 };
 
@@ -62,8 +66,18 @@ export function consultationDialogCopy(preview: ConsultationCascadePreview): Cas
       blocked: true,
     };
   }
+  const notes = preview.noteCount ?? 0;
+  const notesLine = notes ? `· ${notes} ${notes === 1 ? "note" : "notes"} added since the session` : null;
   if (!preview.loud) {
     const number = preview.bookings[0]?.bookingNumber;
+    if (notesLine) {
+      return {
+        title: number ? `Delete ${number}` : "Delete consultation",
+        heading,
+        lines: ["No payment and no quotation. Deleting this also removes:", notesLine, "The client record is kept.", "This cannot be undone."],
+        loud: true,
+      };
+    }
     return {
       title: number ? `Delete ${number}` : "Delete consultation",
       heading,
@@ -80,6 +94,7 @@ export function consultationDialogCopy(preview: ConsultationCascadePreview): Cas
       `· ${preview.quotationRefs.length === 1 ? "quotation" : "quotations"} ${joinNamedList(preview.quotationRefs)}`,
     );
   }
+  if (notesLine) lines.push(notesLine);
   lines.push("The client record is kept.");
   lines.push("This cannot be undone.");
   return {

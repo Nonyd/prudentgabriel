@@ -18,6 +18,7 @@ import {
   SpecificationPanel,
 } from "@/components/admin/CommissionFilePanels";
 import { NotesStream } from "@/components/admin/NotesStream";
+import { CommissionDeleteControl } from "@/components/admin/CommissionDeleteControl";
 import { NOTE_SECTIONS } from "@/lib/atelier/commission-notes-shared";
 import { formatNgnKobo } from "@/lib/money";
 import type {
@@ -440,6 +441,7 @@ export function BespokeOrderDetailClient({
             </span>
           ) : null}
           <BadgeStage stage={order.currentStage} />
+          {isAdminActor ? <CommissionDeleteControl orderId={order.id} orderRef={order.orderRef} /> : null}
         </div>
       </div>
 

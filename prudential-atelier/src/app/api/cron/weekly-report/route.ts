@@ -9,6 +9,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { getSetting } from "@/lib/settings";
 import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
+import { takings } from "@/lib/finance/takings";
 
 export async function POST(req: NextRequest) {
   if (!validateCronSecret(req)) {
@@ -20,16 +21,12 @@ export async function POST(req: NextRequest) {
     const from = new Date(to.getTime() - 7 * 86400000);
     const appUrl = getPublicAppUrl();
 
-    const [rtwRev, bespokeRev, activeOrders, overdue, newClients, consultBookings, topProduct] =
+    const [rtwRev, activeOrders, overdue, newClients, consultBookings, topProduct] =
       await Promise.all([
         prisma.order.aggregate({
           where: { paymentStatus: PaymentStatus.PAID, createdAt: { gte: from, lte: to }, isBespoke: false },
           _sum: { total: true },
           _count: { id: true },
-        }),
-        prisma.bespokeOrder.aggregate({
-          where: { createdAt: { gte: from, lte: to } },
-          _sum: { amountPaid: true },
         }),
         prisma.bespokeOrder.findMany({
           where: { currentStage: { not: "DELIVERY" } },
@@ -59,7 +56,9 @@ export async function POST(req: NextRequest) {
       ]);
 
     const consultRevenue = consultBookings.reduce((s, c) => s + c.feeNGN, 0);
-    const totalRev = (rtwRev._sum.total ?? 0) + (bespokeRev._sum.amountPaid ?? 0);
+    // Payments confirmed in the week, from the ledger — not the lifetime paid on commissions created this week.
+    const taken = await takings(from, to);
+    const totalRev = taken.totalNGN;
 
     let topProductName = "—";
     if (topProduct[0]) {
@@ -76,7 +75,7 @@ export async function POST(req: NextRequest) {
       [
         {
           heading: "Revenue This Week",
-          html: `<p><strong>₦${Math.round(totalRev).toLocaleString("en-NG")}</strong><br/>RTW: ₦${Math.round(rtwRev._sum.total ?? 0).toLocaleString("en-NG")}<br/>Bespoke: ₦${Math.round(bespokeRev._sum.amountPaid ?? 0).toLocaleString("en-NG")}</p>`,
+          html: `<p><strong>₦${Math.round(totalRev).toLocaleString("en-NG")}</strong><br/>RTW: ₦${Math.round(taken.rtwNGN).toLocaleString("en-NG")}<br/>Atelier: ₦${Math.round(taken.atelierNGN).toLocaleString("en-NG")}</p>`,
         },
         {
           heading: "Production Progress",
