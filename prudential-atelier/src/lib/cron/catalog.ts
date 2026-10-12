@@ -167,6 +167,12 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     migrated: true,
   },
   {
+    name: "restore-drill-reminder",
+    schedule: "0 9 1 1,4,7,10 *",
+    description: "Quarterly reminder to run the timed backup restore drill (AZ10, deploy/DEPLOY.md)",
+    migrated: true,
+  },
+  {
     name: "orphan-uploads",
     schedule: "30 3 * * *",
     description: "Delete careers/consultation uploads older than 48h that no row in the database references (Slice AZ5)",

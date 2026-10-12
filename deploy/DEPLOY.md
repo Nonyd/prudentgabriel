@@ -240,6 +240,122 @@ Use the `staging.` host for sandbox keys.
 
 ---
 
+## 9b. Restore from backup (runbook and quarterly drill)
+
+Written before the first drill. Every line marked **(drill)** is filled in by the
+first timed restore; until then this section is a plan, not a proof.
+
+### What exists
+
+- `backup-media.sh` runs nightly at **02:15 UTC = 03:15 Lagos** and writes, per
+  run: `pg-prod-*.dump`, `pg-staging-*.dump`, `media-*.tar.gz`,
+  `media-staging-*.tar.gz` — each with `.age` on the end once
+  `BACKUP_AGE_RECIPIENT` is set. Kept `BACKUP_KEEP` days (14, undecided — legal
+  item 9). No off-site copy yet.
+- `media-*.tar.gz` is the whole of `/opt/prudentgabriel/media`, **including
+  `private/`** (bank-transfer receipts, consultation uploads). A database
+  restore without it brings back the payment rows and loses the proof behind them.
+- **Not in any backup:** `deploy/.env.production` and `.env.staging`. They hold
+  `ENCRYPTION_KEY` — without the same key a restored database's `*Enc` columns
+  (gateway keys, saved cards, link tokens) cannot be read — plus `AUTH_SECRET`,
+  `CRON_SECRET` and the database password. They must be kept in the recovery
+  kit below, not only on this server.
+
+### The recovery kit (never on this server)
+
+| Item | Where it lives | Who holds it |
+|---|---|---|
+| age private key (`AGE-SECRET-KEY-…`) | **(decide)** | Nony and **(name a second person)** |
+| `.env.production` copy | **(decide)** — same place as the key | same |
+| SSH key for `deploy@5.189.168.55` | Nony's laptop | **(second person)** |
+
+A backup only one person can decrypt is a single point of failure. Two named
+people, two places, checked at every drill.
+
+### What is lost
+
+The last backup is at 03:15 Lagos. A failure at **20:00 loses about 17 hours**
+of work: every payment confirmed, note added, stage completed and order placed
+since 03:15. A failure just before 03:15 loses almost **24 hours**. Payment
+gateways (Paystack, Flutterwave, Stripe) keep their own records; webhooks that
+arrived in the gap must be replayed or reconciled by hand from the gateway
+dashboards.
+
+### How long it takes
+
+- Decrypt: **(drill)** minutes. Restore: **(drill)** minutes. Site serving again: **(drill)** minutes.
+
+### Drill (quarterly — the `restore-drill-reminder` job emails the house)
+
+Into a throwaway container with **no network**, so neither app can reach it.
+Run on the server as `deploy`; the key file is brought in for the drill and
+removed after, never stored there.
+
+```bash
+cd /var/backups/prudentgabriel            # or BACKUP_DIR
+F=$(ls -t pg-prod-*.dump.age | head -1)   # last night's production dump
+docker run -d --name pg-restore-drill --network none -e POSTGRES_PASSWORD=drill postgres:18-alpine
+sleep 5
+time age -d -i ~/drill-key.txt "$F" > /dev/shm/drill.dump             # decrypt, timed (RAM, not disk)
+time docker exec -i pg-restore-drill pg_restore -U postgres -d postgres --no-owner < /dev/shm/drill.dump
+rm -f /dev/shm/drill.dump ~/drill-key.txt
+```
+
+Check, side by side with production (read-only):
+
+```sql
+SELECT (SELECT count(*) FROM "User") users, (SELECT count(*) FROM "ClientProfile") clients,
+       (SELECT count(*) FROM "BespokeOrder") commissions, (SELECT count(*) FROM "Payment") payments,
+       (SELECT sum(amount) FROM "Payment" WHERE status::text IN ('CONFIRMED','PAID')) ledger_ngn,
+       (SELECT count(*) FROM "ConsultationBooking") consultations, (SELECT count(*) FROM "Order") orders,
+       (SELECT count(*) FROM "StoreItem") store_items, (SELECT count(*) FROM "StoreMovement") movements,
+       (SELECT count(*) FROM pg_trigger WHERE tgname LIKE '%append_only%') append_only_triggers;
+```
+
+The ledger total must match to the naira; `append_only_triggers` must match
+production. Then:
+
+```bash
+M=$(ls -t media-*.tar.gz.age | grep -v staging | head -1)
+age -d -i ~/drill-key.txt "$M" | tar -tz | grep -c 'media/private/'   # receipts are in it
+docker rm -f pg-restore-drill
+```
+
+Encrypted columns: start a local copy of the app against the drill database
+with the kit's `ENCRYPTION_KEY` and open a saved gateway key in Settings — or
+note that the drill did not check it.
+
+Record the date, the three timings and anything improvised in **Drill log**.
+
+### Real recovery: "the database is gone" → "the site is serving"
+
+```bash
+cd /opt/prudentgabriel/deploy
+docker compose --env-file .env.production -f compose.production.yaml stop app        # 1. stop writes
+# 2. turn on maintenance if the app is still reachable, so nobody pays into a gap
+docker compose --env-file .env.production -f compose.production.yaml up -d postgres   # 3. an empty/healthy database
+F=$(ls -t /var/backups/prudentgabriel/pg-prod-*.dump.age | head -1)
+age -d -i ~/recovery-key.txt "$F" | docker exec -i prudentgabriel-postgres \
+  sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --no-owner'   # 4. restore
+M=$(ls -t /var/backups/prudentgabriel/media-2*.tar.gz.age | head -1)
+age -d -i ~/recovery-key.txt "$M" | sudo tar -xz -C /opt/prudentgabriel                  # 5. media, receipts included
+rm -f ~/recovery-key.txt
+docker compose --env-file .env.production -f compose.production.yaml up -d app          # 6. entrypoint runs migrate deploy
+curl -fsS https://prudentgabriel.com/api/maintenance-status                             # 7. serving
+```
+
+If the server itself is gone: provision, follow sections 2–5 with the kit's
+`.env.production`, fetch the latest encrypted files from the off-site copy (once
+it exists), then steps 3–7.
+
+### Drill log
+
+| Date | Dump used | Decrypt | Restore | Counts match | Ledger match | Triggers | Receipt opened | Improvised |
+|---|---|---|---|---|---|---|---|---|
+| — | — | — | — | — | — | — | — | not yet run |
+
+---
+
 ## 10. Troubleshooting
 
 | Symptom | Check |

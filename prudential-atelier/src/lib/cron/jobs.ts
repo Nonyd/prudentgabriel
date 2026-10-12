@@ -16,6 +16,7 @@ import { run as runCheckoutReservations } from "@/lib/cron/jobs/checkout-reserva
 import { run as runMeetingLinkReminders } from "@/lib/cron/jobs/meeting-link-reminders";
 import { run as runAnalyticsRollup } from "@/lib/cron/jobs/analytics-rollup";
 import { run as runOrphanUploads } from "@/lib/cron/jobs/orphan-uploads";
+import { run as runRestoreDrillReminder } from "@/lib/cron/jobs/restore-drill-reminder";
 import { run as runConsultationEnquiryAlerts } from "@/lib/cron/jobs/consultation-enquiry-alerts";
 import { run as runConsultationDayBefore } from "@/lib/cron/jobs/consultation-day-before";
 import { run as runChatRetention } from "@/lib/cron/jobs/chat-retention";
@@ -38,6 +39,7 @@ const HANDLERS: Record<string, CronJobHandler> = {
   "email-outbox": runEmailOutbox,
   "analytics-rollup": runAnalyticsRollup,
   "orphan-uploads": runOrphanUploads,
+  "restore-drill-reminder": runRestoreDrillReminder,
   "consultation-enquiry-alerts": runConsultationEnquiryAlerts,
   "consultation-day-before": runConsultationDayBefore,
   "chat-retention": runChatRetention,
