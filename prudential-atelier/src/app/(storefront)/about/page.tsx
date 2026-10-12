@@ -114,7 +114,8 @@ export default async function AboutPage() {
       { url: founderImage, alt: cmsGet(cms, "about_founder_name", "Mrs. Prudent Gabriel-Okopi") },
       ...FALLBACK_LOOKS.map((url) => ({ url, alt: "Prudential Atelier" })),
     ],
-    3,
+    // Three for the hero, a fourth for the atelier so it never repeats the hero.
+    4,
   );
 
   const stats = filterAboutStats([
@@ -167,7 +168,7 @@ export default async function AboutPage() {
           hours: cmsGet(cms, "about_lagos_hours", "Mon-Fri: 9am-6pm. Sat: 10am-4pm"),
           maps: lagosMaps,
         }}
-        atelierLook={looks[0] ?? { url: storyImage, alt: "The Lagos atelier" }}
+        atelierLook={looks[3] ?? looks[0] ?? { url: storyImage, alt: "The Lagos atelier" }}
         showAcademy={showAcademy}
         academyHeadline={cmsGet(cms, "about_academy_headline", "Prudential Fashion Academy")}
         academyBody={cmsGet(cms, "about_academy_body", "Pattern-cutting, beading and bridal, taught in the Lagos atelier.")}
