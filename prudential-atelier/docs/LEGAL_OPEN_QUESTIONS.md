@@ -82,6 +82,17 @@ date. The fees are the four consultation fee settings (BA3). **Not edited** —
 the Terms page carries the lawyer's revision (ar-5). Flagged for the lawyer to
 redraft.
 
+### 9. How long database backups are kept, and where
+
+Every night both databases (production and staging, which since the October
+import holds real clients) are dumped whole: names, phone numbers, addresses,
+measurements, payments and password hashes. The dumps sit on the shared server
+(with the Fashion Academy portal), unencrypted, for **14 days** — a figure set in
+`deploy/backup-media.sh` (`BACKUP_KEEP`), never decided. There is no off-site
+copy. Decide the retention period, whether staging may hold real client data at
+all, and where an encrypted off-site copy may live (that is a further transfer,
+like item 7).
+
 ## Answered
 
 | Question | Answer | When |
