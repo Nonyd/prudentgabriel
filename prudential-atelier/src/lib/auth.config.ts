@@ -70,6 +70,21 @@ export const authConfig = {
         session.user.permissionGrants = (token.permissionGrants as string[] | undefined) ?? [];
         session.user.permissionRevokes = (token.permissionRevokes as string[] | undefined) ?? [];
         session.user.adminPermissions = (token.adminPermissions as string[] | "*" | undefined) ?? [];
+        // "View as client": the banner, the middleware and the activity log read who is really here.
+        const viewAs = token.viewAs as
+          | { actorId: string; actorEmail: string; actorName: string | null; clientName: string; clientProfileId: string; startedAt: number; exp: number }
+          | undefined;
+        session.user.viewAs = viewAs
+          ? {
+              actorId: viewAs.actorId,
+              actorName: viewAs.actorName ?? viewAs.actorEmail,
+              actorEmail: viewAs.actorEmail,
+              clientName: viewAs.clientName,
+              clientProfileId: viewAs.clientProfileId,
+              startedAt: viewAs.startedAt,
+              exp: viewAs.exp,
+            }
+          : undefined;
       }
       return session;
     },

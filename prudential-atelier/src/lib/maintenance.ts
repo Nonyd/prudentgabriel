@@ -20,5 +20,7 @@ export async function enforcePublicMaintenance(user?: LoginPathUser | string | n
   if (!enabled) return;
   const actor = typeof user === "string" ? { role: user } : user;
   if (userHasAdminAccess(actor)) return;
+  // An admin viewing as a client ("View as client") is still the house.
+  if (actor && "viewAs" in actor && actor.viewAs) return;
   redirect("/maintenance");
 }

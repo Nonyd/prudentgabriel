@@ -7,6 +7,7 @@ import { dailyUploadCapOr429, receiptTicketCapOr429 } from "@/lib/upload-limits"
 import { receiptRasterToJpeg } from "@/lib/receipt-raster";
 import { verifyReceiptUploadTicket } from "@/lib/receipt-upload-ticket";
 import { logServerError } from "@/lib/logger";
+import { logViewAsRequest } from "@/lib/client-view-as";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const FOLDER = "prudential-atelier/receipts";
@@ -20,6 +21,8 @@ export async function POST(req: NextRequest) {
   if (limited) return limited;
 
   const session = await auth();
+  // Uploads skip the middleware, so an admin viewing as a client is logged here.
+  if (session?.user?.viewAs) await logViewAsRequest(session, { method: "POST", pathname: "/api/upload/receipt" });
 
   let form: FormData;
   try {

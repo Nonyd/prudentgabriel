@@ -119,7 +119,16 @@ export function ActivityLogClient() {
           className="rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         >
           <option value="all">All actions</option>
-          {["CREATE", "UPDATE", "DELETE", "STAFF_CLOCK_IN", "STAFF_CLOCK_OUT"].map((a) => (
+          {[
+            "CREATE",
+            "UPDATE",
+            "DELETE",
+            "STAFF_CLOCK_IN",
+            "STAFF_CLOCK_OUT",
+            "CLIENT_VIEW_AS_START",
+            "CLIENT_VIEW_AS_ACTION",
+            "CLIENT_VIEW_AS_END",
+          ].map((a) => (
             <option key={a} value={a}>
               {a}
             </option>

@@ -13,6 +13,7 @@ import { LogoProvider } from "@/components/ui/LogoProvider";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { AuthLinkInterceptor } from "@/components/auth/AuthLinkInterceptor";
 import { QuickAddHost } from "@/components/common/quick-add/QuickAddHost";
+import { ViewAsBanner } from "@/components/common/ViewAsBanner";
 import type { LogoSettings } from "@/lib/logo-settings";
 
 interface RootProviderProps {
@@ -46,6 +47,7 @@ export function RootProvider({ children, session, logos }: RootProviderProps) {
                 {children}
                 <AuthModal />
                 <QuickAddHost />
+                <ViewAsBanner />
               </CartSyncProvider>
             </CurrencyProvider>
             <Toaster

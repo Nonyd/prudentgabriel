@@ -46,19 +46,12 @@ function resolveDashboardState(input: {
   return "new_client";
 }
 
-/**
- * Everything her /account dashboard shows, for one client. Her own page and the
- * admin's "Preview her dashboard" both read it here, so the preview is what she sees.
- *
- * `preview` makes it read-only: no tracking link is minted for an order that has
- * none stored (the live page does that on her first visit), and the link is left out.
- */
+/** Everything her /account dashboard shows, for one client. */
 export async function loadAccountDashboardProps(params: {
   userId: string;
   profile: ClientProfile;
-  preview?: boolean;
 }): Promise<AccountDashboardProps> {
-  const { userId, profile, preview = false } = params;
+  const { userId, profile } = params;
 
   const [user, rtwOrders, consultations, consultationMoodboards, bespokeOrders, measurements, eventDates, orderHistory] =
     await Promise.all([
@@ -160,7 +153,7 @@ export async function loadAccountDashboardProps(params: {
   const activeBespoke = activeBespokeRaw
     ? {
         ...activeBespokeRaw,
-        trackingToken: preview ? "" : await ensureTrackingRaw(activeBespokeRaw),
+        trackingToken: await ensureTrackingRaw(activeBespokeRaw),
         stageHistory: clientStageHistory(
           activeBespokeRaw.stageHistory,
           liveCompletionStages(activeBespokeRaw.stageCompletions),

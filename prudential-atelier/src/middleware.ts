@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { auth } from "@/lib/auth.config";
 import { userHasAdminAccess } from "@/lib/login-paths";
+import {
+  VIEW_AS_BLOCKED_MESSAGE,
+  viewAsBlockedApi,
+  viewAsClosedPage,
+  viewAsLoggable,
+} from "@/lib/client-view-as-rules";
 
 const MAINTENANCE_TTL_MS = 15_000;
 
@@ -33,6 +39,20 @@ async function isMaintenanceEnabled(request: NextRequest): Promise<boolean> {
   }
 }
 
+/** Hands one view-as line to the log route (the edge cannot write the database). */
+async function reportViewAs(request: NextRequest, method: string, pathname: string): Promise<boolean> {
+  try {
+    const res = await fetch(new URL("/api/view-as/log", request.url), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", cookie: request.headers.get("cookie") ?? "" },
+      body: JSON.stringify({ method, pathname, serverAction: request.headers.has("next-action") }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export default auth(async function middleware(request) {
   // Require a real user on the session. Auth.js ≤beta.31 could put a truthy error
   // object on request.auth (GHSA-8fpg-xm3f-6cx3); existence checks must fail closed.
@@ -42,6 +62,28 @@ export default auth(async function middleware(request) {
   const impersonating = Boolean(request.cookies.get("pg_admin_impersonate")?.value);
   const method = request.method.toUpperCase();
   const isImpersonationExit = pathname === "/api/admin/impersonate" && method === "DELETE";
+
+  // "View as client" (lib/client-view-as-rules.ts): an admin is acting as a client.
+  // The portals and what stays hers are closed; every page and change is logged.
+  const viewAs = session?.user?.viewAs ?? null;
+  if (viewAs) {
+    if (!pathname.startsWith("/api/") && viewAsClosedPage(pathname)) {
+      return NextResponse.redirect(new URL("/account", request.url));
+    }
+    if (viewAsBlockedApi(method, pathname)) {
+      return NextResponse.json({ error: VIEW_AS_BLOCKED_MESSAGE }, { status: 403 });
+    }
+    if (viewAsLoggable(method, pathname, request.headers)) {
+      const recorded = await reportViewAs(request, method, pathname);
+      // A change that cannot be recorded is not made; a page view is still shown.
+      if (!recorded && method !== "GET") {
+        return NextResponse.json(
+          { error: "This could not be recorded in the activity log, so it was not done. Try again." },
+          { status: 503 },
+        );
+      }
+    }
+  }
 
   if (impersonating && !isImpersonationExit) {
     if (pathname.startsWith("/admin/settings/developer")) {
@@ -82,7 +124,8 @@ export default auth(async function middleware(request) {
     return NextResponse.next();
   }
 
-  const isAdminUser = userHasAdminAccess(session?.user);
+  // An admin viewing as a client is still the house: maintenance does not lock them out.
+  const isAdminUser = userHasAdminAccess(session?.user) || Boolean(viewAs);
   const skipMaintenanceGate =
     pathname.startsWith("/admin") ||
     pathname.startsWith("/staff") ||
@@ -145,7 +188,8 @@ export default auth(async function middleware(request) {
         new URL(`/auth/login?callbackUrl=${encodeURIComponent(pathname)}`, request.url),
       );
     }
-    if (session.user?.mustResetPassword && !pathname.startsWith("/reset-password")) {
+    // Her pending password reset is hers to do, not the admin's viewing as her.
+    if (session.user?.mustResetPassword && !viewAs && !pathname.startsWith("/reset-password")) {
       return NextResponse.redirect(new URL("/reset-password?required=true", request.url));
     }
     return NextResponse.next();

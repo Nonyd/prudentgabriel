@@ -14,6 +14,7 @@ import { resolveEffectivePermissionSet } from "@/lib/roles";
 import { serializePermissionSet } from "@/lib/permission-resolve";
 import { logError, logServerError } from "@/lib/logger";
 import { SIGNIN_SERVER_ERROR_CODE } from "@/lib/signin-errors";
+import { beginViewAs, endViewAs, readViewAsClaim, viewAsActorStillValid } from "@/lib/client-view-as";
 import type { JWT } from "next-auth/jwt";
 
 /**
@@ -203,7 +204,30 @@ const nextAuth = NextAuth({
           }
         }
 
+        // "View as client" (lib/client-view-as.ts): begins only on a ticket the
+        // view-as route signed for this admin; ends on Exit or after the hour.
+        if (trigger === "update" && session) {
+          const data = session as { viewAs?: unknown; viewAsEnd?: unknown };
+          if (data.viewAsEnd === true) endViewAs(token);
+          else if (data.viewAs !== undefined) await beginViewAs(token, data.viewAs);
+        }
+        const expiredViewAs = readViewAsClaim(token);
+        if (expiredViewAs && expiredViewAs.exp <= Date.now()) endViewAs(token);
+
         if (trigger !== "signIn") {
+          const viewAs = readViewAsClaim(token);
+          if (viewAs) {
+            // The admin is still answerable for this session: if they could not sign in now, it ends.
+            if (!(await viewAsActorStillValid(viewAs, typeof token.iat === "number" ? token.iat : undefined))) {
+              return null;
+            }
+            const client = await prisma.user.findUnique({
+              where: { id: viewAs.targetUserId },
+              select: { isActive: true, role: true },
+            });
+            if (!client?.isActive || client.role !== "CUSTOMER") endViewAs(token);
+          }
+
           const tokenId = typeof token.id === "string" ? token.id : undefined;
           const tokenEmail =
             typeof token.email === "string" ? token.email.trim().toLowerCase() : "";
@@ -221,8 +245,10 @@ const nextAuth = NextAuth({
             token.sub = bound.id;
           }
           const dbUser = foundById ?? foundByEmail;
+          // While viewing as a client the token was issued to the admin; their password was checked above.
           if (
             dbUser &&
+            !readViewAsClaim(token) &&
             jwtIssuedBeforePasswordChange(
               typeof token.iat === "number" ? token.iat : undefined,
               dbUser.passwordChangedAt,
@@ -263,6 +289,9 @@ const nextAuth = NextAuth({
 });
 
 export const { handlers, auth, signIn, signOut } = nextAuth;
+
+/** Server-side session update (re-runs the JWT callback with `trigger: "update"`). */
+export const updateSession = nextAuth.unstable_update;
 
 /** Layouts must not throw a Next.js digest when the session cookie is stale. */
 export async function authOrNull() {

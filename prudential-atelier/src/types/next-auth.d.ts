@@ -1,4 +1,5 @@
 import { DefaultSession, DefaultJWT } from "next-auth";
+import type { ViewAsSessionInfo } from "@/lib/client-view-as-rules";
 
 declare module "next-auth" {
   interface Session {
@@ -15,6 +16,8 @@ declare module "next-auth" {
       permissionGrants?: string[];
       permissionRevokes?: string[];
       adminPermissions?: string[] | "*";
+      /** Set while an admin is viewing as this client ("View as client"). */
+      viewAs?: ViewAsSessionInfo;
     } & DefaultSession["user"];
   }
 
@@ -39,5 +42,7 @@ declare module "next-auth/jwt" {
     permissionGrants?: string[];
     permissionRevokes?: string[];
     adminPermissions?: string[] | "*";
+    /** The admin behind a "View as client" session (ViewAsClaim in lib/client-view-as.ts). */
+    viewAs?: unknown;
   }
 }

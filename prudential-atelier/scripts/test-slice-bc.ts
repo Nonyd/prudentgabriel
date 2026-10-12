@@ -16,7 +16,7 @@ import { Role, StaffDepartment } from "@prisma/client";
 import { hasPermission, type AccessActor } from "../src/lib/roles";
 import { accessRuleForAdminPath } from "../src/lib/admin-route-access";
 import {
-  canPreviewClientDashboard,
+  canViewAsClient,
   clientFileAccess,
   composeClientFile,
   deliveryConfirmation,
@@ -74,7 +74,7 @@ const PEOPLE: Who[] = [
 
 function unit() {
   // ── BC1: the file composes per viewer; it never widens ──
-  const matrix = PEOPLE.map((p) => ({ who: p.label, ...clientFileAccess(viewer(p)) }));
+  const matrix = PEOPLE.map((p) => ({ who: p.label, role: p.role, ...clientFileAccess(viewer(p)) }));
   const row = (label: string) => matrix.find((m) => m.who === label)!;
 
   const admin = row("Mrs. Prudent (ADMIN)");
@@ -113,13 +113,16 @@ function unit() {
   const revoked = clientFileAccess(viewer({ label: "rev", role: "ADMIN", actor: { revokes: ["consultations"] } }));
   assert(revoked.admitted && !revoked.sections.consultation, "a REVOKE on consultations hides the consultation section");
 
-  // ── "Preview her dashboard": only for someone who already sees all of her file ──
-  assert(canPreviewClientDashboard(admin), "Mrs. Prudent can preview a client's dashboard");
-  assert(canPreviewClientDashboard(bm), "a bespoke manager with clients sees her whole file, so can preview");
-  for (const m of [kemi, bmSeed, tailor, beader, store, unassigned]) {
-    assert(!canPreviewClientDashboard(m), "the preview stays closed to anyone without her whole file");
+  // ── "View as client": Admin or Super Admin, and only with all of her file ──
+  assert(canViewAsClient(admin, "ADMIN"), "Mrs. Prudent can view as a client");
+  assert(canViewAsClient(admin, "SUPER_ADMIN"), "a Super Admin with her whole file can view as her");
+  assert(Object.values(bm.sections).every(Boolean), "a bespoke manager with clients sees her whole file…");
+  assert(!canViewAsClient(bm, bm.role), "…but is not an admin, so cannot act as her");
+  for (const m of [kemi, bmSeed, tailor, beader, store]) {
+    assert(!canViewAsClient(m, m.role), "view as client stays closed to everyone but admins");
   }
-  assert(!canPreviewClientDashboard(revoked), "an admin with consultations revoked cannot preview: the dashboard shows consultations");
+  assert(!canViewAsClient(unassigned, "STAFF"), "and to the floor");
+  assert(!canViewAsClient(revoked, "ADMIN"), "an admin with consultations revoked cannot view as her: her account shows consultations");
   // ── What her tracker says on the intake stages: her words, not the house's record ──
   const convert = intakeStageNotes({ quoteRef: "QT-2026-0001", invoiceNumber: "INV-1", bookingNumber: "PB-1", consultationPaid: true, consultationPaymentRef: "PS-1" });
   for (const [stage, note] of Object.entries(convert)) {
@@ -138,11 +141,6 @@ function unit() {
   );
   assert(shown[0]!.notes === CLIENT_INTAKE_NOTE && shown[1]!.notes === "Bodice cut.", "her stage history carries her words");
 
-  const previewGate = accessRuleForAdminPath("/admin/clients/c1/dashboard");
-  assert(
-    previewGate?.type === "permission" && previewGate.permission === "clients",
-    "the preview page sits behind the clients gate, like the file",
-  );
 
   console.log("\nWho sees what on the client file:");
   console.table(
@@ -157,7 +155,7 @@ function unit() {
       sketch: m.sections.illustrations ? "yes" : "-",
       making: m.sections.making ? "yes" : "-",
       delivery: m.sections.delivery ? (m.contact ? "yes+address" : "date only") : "-",
-      preview: canPreviewClientDashboard(m) ? "yes" : "-",
+      "view as": canViewAsClient(m, m.role) ? "yes" : "-",
     })),
   );
 

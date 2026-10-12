@@ -100,11 +100,12 @@ export function clientFileAccess(v: FileViewer): FileAccess {
 }
 
 /**
- * "Preview her dashboard" shows everything she sees: balances, measurements,
- * consultations. So it opens only for a house viewer who already sees every
- * section of her file. Adds no permission of its own.
+ * "View as client" puts the viewer in her account: balances, measurements,
+ * consultations, and acting in her name. So it opens only for an Admin or
+ * Super Admin who already sees every section of her file.
  */
-export function canPreviewClientDashboard(access: FileAccess): boolean {
+export function canViewAsClient(access: FileAccess, role: string | null | undefined): boolean {
+  if (role !== "ADMIN" && role !== "SUPER_ADMIN") return false;
   return access.scope === "house" && FILE_SECTIONS.every((s) => access.sections[s]);
 }
 
@@ -453,7 +454,7 @@ export async function composeClientFile(
       },
       scope: access.scope,
       contactHidden: !access.contact,
-      canPreviewDashboard: canPreviewClientDashboard(access),
+      canViewAs: canViewAsClient(access, viewer.role),
       commissions: commissions.map((c) => ({
         id: c.id,
         orderRef: c.orderRef,

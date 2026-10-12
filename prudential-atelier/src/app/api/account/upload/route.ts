@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { getMediaStore } from "@/lib/media";
 import { mimeFromMagicBytes } from "@/lib/image-upload-mime";
 import { logServerError } from "@/lib/logger";
+import { logViewAsRequest } from "@/lib/client-view-as";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const FOLDER = "prudential-atelier/avatars/customer";
@@ -16,6 +17,8 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  // Uploads skip the middleware, so an admin viewing as a client is logged here.
+  if (session.user.viewAs) await logViewAsRequest(session, { method: "POST", pathname: "/api/account/upload" });
 
   let form: FormData;
   try {

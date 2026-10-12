@@ -106,7 +106,7 @@ type ClientFile = {
   scope: "house" | "workroom";
   contactHidden: boolean;
   /** Decided on the server by canPreviewClientDashboard, the same check as the preview page. */
-  canPreviewDashboard: boolean;
+  canViewAs: boolean;
   commissions: { id: string; orderRef: string; currentStageLabel: string | null; status: string; createdAt: string }[];
   sections: {
     consultation: Section<Consultation>;
@@ -182,14 +182,7 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
       <header>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h1 className="font-display text-2xl text-ink">{file.client.name ?? file.client.firstName ?? "Client"}</h1>
-          {portal === "admin" && file.canPreviewDashboard ? (
-            <Link
-              href={`/admin/clients/${clientId}/dashboard`}
-              className="border border-sand px-3 py-1.5 font-sans text-xs uppercase tracking-[0.12em] text-ink hover:border-ink"
-            >
-              Preview her dashboard
-            </Link>
-          ) : null}
+          {portal === "admin" && file.canViewAs ? <ViewAsClientButton clientId={clientId} /> : null}
         </div>
         {file.contactHidden ? (
           <p className="font-sans text-xs text-text-mid">Contact details are kept for the client desk.</p>
@@ -329,6 +322,43 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
           </div>
         )}
       </FileSection>
+    </div>
+  );
+}
+
+/** "View as client": your session becomes hers until you exit (lib/client-view-as.ts). */
+function ViewAsClientButton({ clientId }: { clientId: string }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function start() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/clients/${clientId}/view-as`, { method: "POST" });
+      const body = (await res.json().catch(() => ({}))) as { redirect?: string; error?: string };
+      if (!res.ok || !body.redirect) throw new Error(body.error ?? "Could not start viewing as this client.");
+      window.location.assign(body.redirect);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not start viewing as this client.");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={start}
+        disabled={busy}
+        className="border border-sand px-3 py-1.5 font-sans text-xs uppercase tracking-[0.12em] text-ink hover:border-ink disabled:opacity-60"
+      >
+        {busy ? "Opening her account…" : "View as client"}
+      </button>
+      <p className="max-w-[18rem] text-right font-sans text-[11px] text-text-mid">
+        {error ?? "Opens her account as her, for up to an hour. Everything you do is recorded in the activity log."}
+      </p>
     </div>
   );
 }
