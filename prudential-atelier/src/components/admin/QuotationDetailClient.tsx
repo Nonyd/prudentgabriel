@@ -125,7 +125,7 @@ export function QuotationDetailClient() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link href="/admin/quotations" className="font-body text-[11px] uppercase tracking-[0.1em] text-[#6B6B68]">
+          <Link href="/admin/quotations" className="font-body text-11px uppercase tracking-[0.1em] text-[#6B6B68]">
             ← Quotations
           </Link>
           <h1 className="mt-2 font-display text-2xl text-ink">{item.quoteRef}</h1>
@@ -145,7 +145,7 @@ export function QuotationDetailClient() {
             href={`/api/admin/quotations/${item.id}/pdf`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center rounded-sm border border-sand px-3 py-2 font-body text-[11px] uppercase tracking-[0.08em] text-ink hover:border-olive"
+            className="inline-flex items-center rounded-sm border border-sand px-3 py-2 font-body text-11px uppercase tracking-[0.08em] text-ink hover:border-olive"
           >
             PDF
           </a>
@@ -164,13 +164,13 @@ export function QuotationDetailClient() {
 
       <section>
         <h2 className="font-display text-lg text-ink">Version history</h2>
-        <p className="mt-1 font-body text-[13px] text-[#6B6B68]">
+        <p className="mt-1 font-body text-13px text-[#6B6B68]">
           Who revised, when, and the total delta between versions.
         </p>
         <div className="mt-4 overflow-x-auto border border-sand">
           <table className="w-full min-w-[720px] border-collapse font-body text-xs">
             <thead>
-              <tr className="bg-[#37392d] text-left text-[10px] font-medium uppercase tracking-[0.1em] text-white">
+              <tr className="bg-[#37392d] text-left text-10px font-medium uppercase tracking-[0.1em] text-white">
                 <th className="px-3 py-2">Version</th>
                 <th className="px-3 py-2">Ref</th>
                 <th className="px-3 py-2">Status</th>

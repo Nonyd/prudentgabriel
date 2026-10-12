@@ -32,7 +32,7 @@ export function AccessManagementClient() {
             type="button"
             onClick={() => setTab(t.id)}
             className={cn(
-              "px-4 py-2 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc",
+              "px-4 py-2 font-sans text-11px font-semibold uppercase tracking-[0.14em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc",
               tab === t.id ? "border-b-2 border-choc text-choc" : "text-text-mid hover:text-text-dark",
             )}
           >

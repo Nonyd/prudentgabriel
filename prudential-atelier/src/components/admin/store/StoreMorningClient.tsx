@@ -60,7 +60,7 @@ export function StoreMorningClient() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-text-light">Store</p>
+        <p className="font-sans text-11px font-medium uppercase tracking-[0.14em] text-text-light">Store</p>
         <h1 className="font-display text-2xl text-ink">This morning</h1>
         <p className="mt-1 max-w-2xl font-sans text-sm text-text-mid">
           What is on the shelf, what moved yesterday, and which orders need materials the store does not have.
@@ -98,7 +98,7 @@ export function StoreMorningClient() {
               <div className="mt-4 space-y-6">
                 {view.categories.map((cat) => (
                   <div key={cat.id}>
-                    <h3 className="font-sans text-[11px] font-semibold uppercase tracking-[0.12em] text-text-light">
+                    <h3 className="font-sans text-11px font-semibold uppercase tracking-[0.12em] text-text-light">
                       {cat.name}
                     </h3>
                     {cat.items.length === 0 ? (
@@ -106,7 +106,7 @@ export function StoreMorningClient() {
                     ) : (
                       <table className="mt-2 w-full border-collapse font-sans text-sm">
                         <thead>
-                          <tr className="border-b border-sand text-left text-[10px] uppercase tracking-wide text-text-light">
+                          <tr className="border-b border-sand text-left text-10px uppercase tracking-wide text-text-light">
                             <th className="py-2 pr-3">Item</th>
                             <th className="py-2 pr-3 text-right">On hand</th>
                             <th className="py-2 text-right">Unit cost</th>
@@ -117,7 +117,7 @@ export function StoreMorningClient() {
                             <tr key={item.id} className="border-b border-sand last:border-0">
                               <td className="py-2 pr-3">
                                 {item.name}
-                                <span className="ml-2 text-[10px] uppercase tracking-wide text-text-light">
+                                <span className="ml-2 text-10px uppercase tracking-wide text-text-light">
                                   {item.storeLine === "SHARED" ? "" : item.storeLine}
                                 </span>
                               </td>
@@ -184,7 +184,7 @@ export function StoreMorningClient() {
               <ul className="mt-3 space-y-2 font-sans text-sm">
                 {view.needs.map((n, i) => (
                   <li key={`${n.kind}-${n.label}-${i}`} className="border-b border-sand py-2 last:border-0">
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-text-light">{n.kind}</span>
+                    <span className="text-10px font-semibold uppercase tracking-wide text-text-light">{n.kind}</span>
                     <p className="font-medium text-ink">{n.label}</p>
                     <p className="text-text-mid">{n.detail}</p>
                   </li>

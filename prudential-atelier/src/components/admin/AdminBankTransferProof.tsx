@@ -94,7 +94,7 @@ export function AdminBankTransferProof({
 
   return (
     <section className="rounded-sm border-2 border-[#C45E0A]/40 bg-[#FFF8F0] p-6">
-      <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-[#C45E0A]">
+      <p className="font-sans text-11px font-semibold uppercase tracking-[0.14em] text-[#C45E0A]">
         Bank transfer
       </p>
       <h2 className="mt-1 font-display text-2xl text-choc">Proof of payment</h2>

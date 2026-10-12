@@ -1,5 +1,18 @@
 import type { Config } from "tailwindcss";
 
+/**
+ * Type sizes scale with --type-scale (default 1), not with the root font size.
+ * Spacing is rem-based, so raising html font-size would zoom the whole layout;
+ * this knob changes text only. Admin and staff raise it in their layouts.
+ */
+const scaled = (size: string) => `calc(${size} * var(--type-scale, 1))`;
+const named = (size: string, lineHeight: string): [string, { lineHeight: string }] => [
+  scaled(size),
+  { lineHeight: scaled(lineHeight) },
+];
+/** `text-11px` = the old `text-[11px]`, scaled. */
+const PX_SIZES = [9, 10, 11, 12, 13, 14, 15, 20, 22, 24, 28, 32, 36, 40];
+
 const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -81,6 +94,16 @@ const config: Config = {
       },
       maxWidth: {
         site: "1400px",
+      },
+      fontSize: {
+        xs: named("0.75rem", "1rem"),
+        sm: named("0.875rem", "1.25rem"),
+        base: named("1rem", "1.5rem"),
+        lg: named("1.125rem", "1.75rem"),
+        xl: named("1.25rem", "1.75rem"),
+        "2xl": named("1.5rem", "2rem"),
+        "3xl": named("1.875rem", "2.25rem"),
+        ...Object.fromEntries(PX_SIZES.map((n) => [`${n}px`, scaled(`${n}px`)])),
       },
     },
   },

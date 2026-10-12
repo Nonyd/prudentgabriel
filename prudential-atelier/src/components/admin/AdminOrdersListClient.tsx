@@ -42,7 +42,7 @@ function gatewayBadgeClass(g: PaymentGateway | null): string {
 
 function GatewayPill({ gateway }: { gateway: PaymentGateway | null }) {
   return (
-    <span className={`inline-block px-2 py-0.5 font-body text-[9px] font-medium uppercase ${gatewayBadgeClass(gateway)}`}>
+    <span className={`inline-block px-2 py-0.5 font-body text-9px font-medium uppercase ${gatewayBadgeClass(gateway)}`}>
       {gateway ?? "—"}
     </span>
   );
@@ -190,7 +190,7 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
 
       <div className="-mx-4 overflow-x-auto glass-opaque px-4 md:mx-0 md:px-0">
         <table className="w-full min-w-[700px] text-left text-sm text-charcoal">
-          <thead className="border-b border-sand text-[11px] uppercase text-[#A8A8A4]">
+          <thead className="border-b border-sand text-11px uppercase text-[#A8A8A4]">
             <tr>
               <th className="w-10 p-3">
                 <input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="Select all on page" />
@@ -225,7 +225,7 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                 <td className="p-3">
                   <input type="checkbox" checked={selected.has(o.id)} onChange={() => toggle(o.id)} aria-label={`Select ${o.orderNumber}`} />
                 </td>
-                <td className="p-3 font-body text-[11px] font-medium text-olive">{o.orderNumber}</td>
+                <td className="p-3 font-body text-11px font-medium text-olive">{o.orderNumber}</td>
                 <td className="p-3">
                   <div className="font-medium text-ink">{o.customerName}</div>
                   <div className="text-xs text-[#A8A8A4]">{o.customerEmail}</div>
@@ -233,7 +233,7 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                 <td className="hidden p-3 text-xs text-[#6B6B68] md:table-cell">
                   {o.itemCount} · {o.firstItemName}
                 </td>
-                <td className="p-3 font-body text-[13px] text-ink">₦{Math.round(o.total).toLocaleString("en-NG")}</td>
+                <td className="p-3 font-body text-13px text-ink">₦{Math.round(o.total).toLocaleString("en-NG")}</td>
                 <td className="hidden p-3 text-xs lg:table-cell">
                   <GatewayPill gateway={o.paymentGateway} />
                 </td>
@@ -256,7 +256,7 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                 <td className="p-3 text-xs text-[#A8A8A4]">{new Date(o.createdAt).toLocaleDateString("en-NG")}</td>
                 <td className="p-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Link href={`/admin/orders/${o.id}`} className="font-body text-[11px] text-olive hover:underline">
+                    <Link href={`/admin/orders/${o.id}`} className="font-body text-11px text-olive hover:underline">
                       {o.paymentGateway === "BANK_TRANSFER" && o.paymentStatus === "PENDING"
                         ? "Review proof"
                         : "View"}
@@ -266,14 +266,14 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                         href={wa}
                         target="_blank"
                         rel="noreferrer"
-                        className="font-body text-[11px] text-olive hover:underline"
+                        className="font-body text-11px text-olive hover:underline"
                       >
                         WhatsApp
                       </a>
                     ) : null}
                     <button
                       type="button"
-                      className="font-body text-[11px] text-red-600 hover:underline"
+                      className="font-body text-11px text-red-600 hover:underline"
                       onClick={() => setDeleteState({ mode: "single", id: o.id, orderNumber: o.orderNumber })}
                     >
                       Delete

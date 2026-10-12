@@ -139,7 +139,7 @@ export function StaffNotificationBell() {
               animate={{ scale: pulse ? [1, 1.15, 1] : 1 }}
               exit={{ scale: 0.6 }}
               transition={{ duration: 0.35 }}
-              className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-danger px-0.5 font-sans text-[9px] font-semibold text-white"
+              className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-choc px-1 font-sans text-10px font-semibold text-ivory ring-2 ring-ivory"
             >
               {badge}
             </motion.span>
@@ -161,7 +161,7 @@ export function StaffNotificationBell() {
               <button
                 type="button"
                 onClick={() => void markAllRead()}
-                className="font-sans text-[11px] text-nut hover:underline"
+                className="font-sans text-11px text-nut hover:underline"
               >
                 Mark all ✓
               </button>
@@ -184,11 +184,11 @@ export function StaffNotificationBell() {
                     >
                       {iconFor(n.type)}
                       <div className="min-w-0 flex-1">
-                        <p className="font-sans text-[13px] font-medium text-choc">{n.title}</p>
-                        <p className="mt-0.5 line-clamp-2 font-sans text-[11px] font-light text-text-mid">
+                        <p className="font-sans text-13px font-medium text-choc">{n.title}</p>
+                        <p className="mt-0.5 line-clamp-2 font-sans text-11px font-light text-text-mid">
                           {n.message}
                         </p>
-                        <p className="mt-1 font-sans text-[11px] text-text-light">{timeLabel(n.createdAt.toString())}</p>
+                        <p className="mt-1 font-sans text-11px text-text-light">{timeLabel(n.createdAt.toString())}</p>
                       </div>
                       {n.isRead ? (
                         <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-text-light" strokeWidth={1.5} />
@@ -205,7 +205,7 @@ export function StaffNotificationBell() {
               <Link
                 href="/staff/notifications"
                 onClick={() => setIsOpen(false)}
-                className="font-sans text-[11px] text-nut hover:underline"
+                className="font-sans text-11px text-nut hover:underline"
               >
                 View all notifications →
               </Link>

@@ -61,7 +61,7 @@ export function AppearanceSettingsCard({
 
   return (
     <div className="rounded-sm border border-sand bg-canvas p-6">
-      <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">Site images</h2>
+      <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">Site images</h2>
       <p className="mt-2 font-body text-xs text-[#6B6B68]">
         Replace static images across the site. Upload fills the URL automatically; you can still paste a CDN URL manually.
       </p>
@@ -92,7 +92,7 @@ export function AppearanceSettingsCard({
         type="button"
         disabled={saving}
         onClick={() => void save()}
-        className="mt-8 h-10 w-full bg-[#37392d] font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
+        className="mt-8 h-10 w-full bg-[#37392d] font-body text-11px font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save appearance"}
       </button>

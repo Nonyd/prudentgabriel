@@ -291,13 +291,13 @@ export default async function AdminDashboardPage() {
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
             <p
-              className="font-sans text-[11px] uppercase tracking-[0.2em]"
+              className="font-sans text-11px uppercase tracking-[0.2em]"
               style={{ color: "rgba(226, 209, 194, 0.7)" }}
             >
               Daily report · {dateLabel}
             </p>
             <h2
-              className="mt-2 font-serif text-[40px] font-normal leading-tight"
+              className="mt-2 font-serif text-40px font-normal leading-tight"
               style={{ color: "#F7F2EC" }}
             >
               {greeting}, {displayName}.
@@ -311,7 +311,7 @@ export default async function AdminDashboardPage() {
           </div>
           <Link
             href="/admin/reports"
-            className="inline-flex shrink-0 items-center justify-center rounded-sm border px-6 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors hover:bg-gold/10"
+            className="inline-flex shrink-0 items-center justify-center rounded-sm border px-6 py-3 font-sans text-11px font-semibold uppercase tracking-[0.12em] transition-colors hover:bg-gold/10"
             style={{ borderColor: "rgba(201,168,76,0.6)", color: "rgba(201,168,76,0.9)" }}
           >
             ↓ Download report
@@ -374,11 +374,11 @@ export default async function AdminDashboardPage() {
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-sm bg-success/10 px-4 py-3">
               <p className="font-serif text-2xl text-choc">{attendanceOnClock}</p>
-              <p className="mt-1 font-sans text-[11px] text-text-mid">On the clock</p>
+              <p className="mt-1 font-sans text-11px text-text-mid">On the clock</p>
             </div>
             <div className="rounded-sm bg-warning/10 px-4 py-3">
               <p className="font-serif text-2xl text-choc">{attendanceLateOrAbsent}</p>
-              <p className="mt-1 font-sans text-[11px] text-text-mid">Late / not in</p>
+              <p className="mt-1 font-sans text-11px text-text-mid">Late / not in</p>
             </div>
           </div>
           <ul className="mt-5 max-h-64 space-y-3 overflow-y-auto">
@@ -387,13 +387,13 @@ export default async function AdminDashboardPage() {
             ) : (
               staffRows.slice(0, 8).map((row) => (
                 <li key={row.name} className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sand/50 font-sans text-[10px] font-medium text-choc">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sand/50 font-sans text-10px font-medium text-choc">
                     {row.initials}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-sans text-[14px] text-choc">{row.name}</p>
+                    <p className="truncate font-sans text-14px text-choc">{row.name}</p>
                     <p
-                      className={`font-sans text-[11px] ${row.status === "in" ? "text-success" : "text-danger"}`}
+                      className={`font-sans text-11px ${row.status === "in" ? "text-success" : "text-danger"}`}
                     >
                       {row.badge}
                     </p>
@@ -404,7 +404,7 @@ export default async function AdminDashboardPage() {
           </ul>
           <Link
             href="/admin/attendance"
-            className="mt-4 inline-block font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-nut"
+            className="mt-4 inline-block font-sans text-10px font-semibold uppercase tracking-[0.14em] text-nut"
           >
             View all attendance
           </Link>

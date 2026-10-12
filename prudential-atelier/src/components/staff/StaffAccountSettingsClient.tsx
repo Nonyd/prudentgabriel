@@ -110,7 +110,7 @@ export function StaffAccountSettingsClient({ initial }: Props) {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr">Account</p>
+        <p className="font-sans text-10px font-semibold uppercase tracking-[0.2em] text-lightbr">Account</p>
         <h1 className="mt-2 font-serif text-3xl font-normal text-choc">Account Settings</h1>
         <p className="mt-2 font-sans text-sm text-text-mid">Manage your profile photo, personal details, and password.</p>
         {initial.jobTitle || initial.department ? (
@@ -164,7 +164,7 @@ export function StaffAccountSettingsClient({ initial }: Props) {
           <p className="mt-1 font-sans text-xs text-text-mid">Your display name appears across the staff portal.</p>
         </div>
         <label className="block">
-          <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+          <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">
             Full name
           </span>
           <input
@@ -175,7 +175,7 @@ export function StaffAccountSettingsClient({ initial }: Props) {
           />
         </label>
         <label className="block">
-          <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+          <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">
             Email
           </span>
           <input className="input-field w-full cursor-not-allowed opacity-60" value={email} readOnly disabled />
@@ -191,7 +191,7 @@ export function StaffAccountSettingsClient({ initial }: Props) {
           <p className="mt-1 font-sans text-xs text-text-mid">Minimum 8 characters. Use a unique password for this account.</p>
         </div>
         <label className="block">
-          <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+          <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">
             Current password
           </span>
           <PasswordField
@@ -203,7 +203,7 @@ export function StaffAccountSettingsClient({ initial }: Props) {
           />
         </label>
         <label className="block">
-          <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+          <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">
             New password
           </span>
           <PasswordField
@@ -216,7 +216,7 @@ export function StaffAccountSettingsClient({ initial }: Props) {
           />
         </label>
         <label className="block">
-          <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+          <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">
             Confirm new password
           </span>
           <PasswordField

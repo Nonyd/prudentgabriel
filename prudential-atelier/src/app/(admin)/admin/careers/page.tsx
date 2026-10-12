@@ -17,7 +17,7 @@ export default async function AdminCareersPage() {
         </div>
         <Link
           href="/admin/careers/new"
-          className="rounded-[3px] bg-choc px-5 py-2.5 font-label text-[11px] font-semibold uppercase tracking-wide text-cream"
+          className="rounded-[3px] bg-choc px-5 py-2.5 font-label text-11px font-semibold uppercase tracking-wide text-cream"
         >
           + New Job Posting
         </Link>

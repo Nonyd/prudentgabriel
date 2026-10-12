@@ -109,7 +109,7 @@ export function ProductOptionGroupEditor({
               </label>
             )}
           />
-          <p className="text-[11px] text-[#A8A8A4]">
+          <p className="text-11px text-[#A8A8A4]">
             The workroom needs to know which version to cut. Size code stays as it is; the choice is appended, e.g. PA-ALLUR-12-SKIRT.
           </p>
           <ul className="space-y-4">
@@ -170,7 +170,7 @@ export function ProductOptionGroupEditor({
                       <summary className="cursor-pointer text-xs uppercase tracking-wide text-[#A8A8A4]">
                         Measurements for this choice
                       </summary>
-                      <p className="mt-1 text-[11px] text-[#A8A8A4]">
+                      <p className="mt-1 text-11px text-[#A8A8A4]">
                         Leave empty to use the piece&apos;s usual fields. Tick a set here and made-to-measure asks only those.
                       </p>
                       <ul className="mt-2 space-y-2">

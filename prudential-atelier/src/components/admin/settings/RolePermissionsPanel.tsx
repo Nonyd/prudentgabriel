@@ -137,7 +137,7 @@ export function RolePermissionsPanel() {
               }`}
             >
               <span>{row.label}</span>
-              <span className="font-sans text-[10px] uppercase tracking-[0.12em] text-text-mid">
+              <span className="font-sans text-10px uppercase tracking-[0.12em] text-text-mid">
                 {row.memberCount}
               </span>
             </button>
@@ -204,7 +204,7 @@ export function RolePermissionsPanel() {
 
               {groups.map((group) => (
                 <div key={group.name} className="glass-opaque p-4">
-                  <p className="mb-2 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+                  <p className="mb-2 font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-mid">
                     {group.name}
                   </p>
                   <ul className="space-y-2">

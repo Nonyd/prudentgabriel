@@ -12,7 +12,7 @@ export default async function AdminUnsubscribesPage() {
   return (
     <div>
       <h1 className="font-display text-2xl text-ink">Unsubscribes</h1>
-      <p className="mt-1 max-w-2xl font-body text-[13px] text-[#6B6B68]">
+      <p className="mt-1 max-w-2xl font-body text-13px text-[#6B6B68]">
         People who opted out of marketing email. They still receive order and account messages.
       </p>
       <UnsubscribesClient />

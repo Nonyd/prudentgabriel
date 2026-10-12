@@ -85,17 +85,17 @@ export default function StaffDashboardPage() {
     <>
       <div className="staff-card p-4 text-center md:p-5">
         <p className="font-display text-2xl text-choc md:text-3xl">{summary.hoursToday.toFixed(1)}h</p>
-        <p className="mt-1 font-sans text-[10px] uppercase tracking-wide text-text-mid">Today</p>
+        <p className="mt-1 font-sans text-10px uppercase tracking-wide text-text-mid">Today</p>
       </div>
       <div className="staff-card p-4 text-center md:p-5">
         <p className="font-display text-2xl text-choc md:text-3xl">{summary.tasksCompletedWeek}</p>
-        <p className="mt-1 font-sans text-[10px] uppercase tracking-wide text-text-mid">This week</p>
+        <p className="mt-1 font-sans text-10px uppercase tracking-wide text-text-mid">This week</p>
       </div>
       <div className="staff-card p-4 text-center md:p-5">
         <p className="font-display text-2xl text-choc md:text-3xl">
           {summary.attendanceScore != null ? `${Math.round(summary.attendanceScore)}%` : "—"}
         </p>
-        <p className="mt-1 font-sans text-[10px] uppercase tracking-wide text-text-mid">Attendance</p>
+        <p className="mt-1 font-sans text-10px uppercase tracking-wide text-text-mid">Attendance</p>
       </div>
     </>
   );
@@ -113,7 +113,7 @@ export default function StaffDashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-8">
         <section>
-          <h2 className="mb-3 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+          <h2 className="mb-3 font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-mid">
             My assignments
           </h2>
           {assignments.length === 0 ? (

@@ -91,7 +91,7 @@ export function AdminProfileDrawer({
             transition={{ duration: 0.22, ease: "easeOut" }}
           >
             <div className="flex items-center justify-between border-b border-sand px-6 py-4">
-              <h3 className="font-display text-[20px] text-ink">My Profile</h3>
+              <h3 className="font-display text-20px text-ink">My Profile</h3>
               <button type="button" onClick={onClose} className="text-[#6B6B68] hover:text-ink">
                 <X size={18} />
               </button>
@@ -116,14 +116,14 @@ export function AdminProfileDrawer({
                     if (file) void uploadAvatar(file);
                   }}
                 />
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="mt-2 font-body text-[11px] text-[#6B6B68] hover:text-ink">
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="mt-2 font-body text-11px text-[#6B6B68] hover:text-ink">
                   Change Photo
                 </button>
                 <div className="mt-2 w-full max-w-[200px] px-2">
                   <UploadProgressBar value={avatarProgress} />
                 </div>
-                <p className="mt-3 text-center font-display text-[20px] text-ink">{`${firstName} ${lastName}`.trim() || initialName}</p>
-                <span className="mt-1 border border-[#37392d] px-2 py-0.5 font-body text-[10px] uppercase tracking-[0.08em] text-[#37392d]">SUPER ADMIN</span>
+                <p className="mt-3 text-center font-display text-20px text-ink">{`${firstName} ${lastName}`.trim() || initialName}</p>
+                <span className="mt-1 border border-[#37392d] px-2 py-0.5 font-body text-10px uppercase tracking-[0.08em] text-[#37392d]">SUPER ADMIN</span>
               </div>
 
               <div className="space-y-3">
@@ -134,19 +134,19 @@ export function AdminProfileDrawer({
                   <Lock size={14} className="absolute right-3 top-3 text-[#A8A8A4]" />
                 </div>
                 <input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Phone" className="w-full border border-sand px-3 py-2 font-body text-sm" />
-                <button type="button" onClick={() => void saveProfile()} className="w-full bg-[#37392d] px-3 py-2 font-body text-[12px] uppercase tracking-[0.08em] text-white">
+                <button type="button" onClick={() => void saveProfile()} className="w-full bg-[#37392d] px-3 py-2 font-body text-12px uppercase tracking-[0.08em] text-white">
                   Save Profile
                 </button>
               </div>
 
               <div className="my-6 border-t border-sand" />
 
-              <p className="mb-3 font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Change Password</p>
+              <p className="mb-3 font-body text-11px uppercase tracking-[0.08em] text-[#6B6B68]">Change Password</p>
               <div className="space-y-3">
                 <PasswordField value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} placeholder="Current Password" className="w-full border border-sand px-3 py-2 font-body text-sm" />
                 <PasswordField value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="New Password" autoComplete="new-password" className="w-full border border-sand px-3 py-2 font-body text-sm" />
                 <PasswordField value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Confirm Password" autoComplete="new-password" className="w-full border border-sand px-3 py-2 font-body text-sm" />
-                <button type="button" onClick={() => void updatePassword()} className="w-full border border-[#37392d] px-3 py-2 font-body text-[12px] uppercase tracking-[0.08em] text-[#37392d]">
+                <button type="button" onClick={() => void updatePassword()} className="w-full border border-[#37392d] px-3 py-2 font-body text-12px uppercase tracking-[0.08em] text-[#37392d]">
                   Update Password
                 </button>
               </div>
@@ -154,8 +154,8 @@ export function AdminProfileDrawer({
               <div className="my-6 border-t border-sand" />
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Display</p>
-                  <p className="font-body text-[11px] text-[#6B6B68]">Affects storefront preview only</p>
+                  <p className="font-body text-11px uppercase tracking-[0.08em] text-[#6B6B68]">Display</p>
+                  <p className="font-body text-11px text-[#6B6B68]">Affects storefront preview only</p>
                 </div>
                 <DarkModeToggle />
               </div>

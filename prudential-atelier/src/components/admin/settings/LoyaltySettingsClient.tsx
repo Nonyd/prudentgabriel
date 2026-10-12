@@ -104,7 +104,7 @@ export function LoyaltySettingsClient() {
   return (
     <div className="space-y-8">
       <div className="rounded-sm border border-sand bg-canvas p-6">
-        <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+        <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
           Prudent Points liability
         </h2>
         <p className="mt-3 font-display text-3xl text-choc">{naira(data.liabilityNGN)}</p>
@@ -116,7 +116,7 @@ export function LoyaltySettingsClient() {
       </div>
 
       <div className="rounded-sm border border-sand bg-canvas p-6">
-        <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+        <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
           Point value
         </h2>
         <label className="mt-4 block font-body text-xs text-charcoal">Naira worth of one point</label>
@@ -154,7 +154,7 @@ export function LoyaltySettingsClient() {
           onChange={(e) => setMinRedemption(e.target.value)}
           className="mt-1.5 w-full max-w-xs border border-sand bg-ivory px-3 py-2 font-body text-sm"
         />
-        <p className="mt-1 font-body text-[12px] text-[#6B6B68]">
+        <p className="mt-1 font-body text-12px text-[#6B6B68]">
           Stops small checkouts. Points still cannot cover shipping. There is no maximum — points may cover 100% of
           the garment.
         </p>
@@ -171,7 +171,7 @@ export function LoyaltySettingsClient() {
       </div>
 
       <div className="rounded-sm border border-sand bg-canvas p-6">
-        <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+        <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
           Earning — what the rules cost in garments
         </h2>
         <p className="mt-2 font-body text-sm text-[#6B6B68]">
@@ -231,14 +231,14 @@ export function LoyaltySettingsClient() {
         type="button"
         disabled={saving}
         onClick={() => void save()}
-        className="h-10 w-full bg-[#37392d] font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
+        className="h-10 w-full bg-[#37392d] font-body text-11px font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
       >
         {saving ? "Saving…" : confirmRate ? "Confirm rate change" : "Save Prudent Points"}
       </button>
 
       {data.history.length > 0 ? (
         <div className="rounded-sm border border-sand bg-canvas p-6">
-          <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+          <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
             Rate history
           </h2>
           <ul className="mt-4 space-y-2 font-body text-sm text-charcoal">

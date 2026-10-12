@@ -102,8 +102,8 @@ export function TeamClient({
     <div>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-[24px] text-ink">Team</h1>
-          <p className="font-body text-[13px] text-[#6B6B68]">{members.length} members</p>
+          <h1 className="font-display text-24px text-ink">Team</h1>
+          <p className="font-body text-13px text-[#6B6B68]">{members.length} members</p>
         </div>
         <button type="button" onClick={() => setInviteOpen(true)} className="bg-[#37392d] px-4 py-2 font-body text-xs uppercase tracking-[0.08em] text-white">
           + Invite Admin
@@ -112,11 +112,11 @@ export function TeamClient({
 
       <div className="mb-6 border border-sand bg-bg-card">
         <div className="border-b border-sand px-4 py-3">
-          <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Active Members</p>
+          <p className="font-body text-11px uppercase tracking-[0.08em] text-[#6B6B68]">Active Members</p>
         </div>
         <table className="w-full min-w-[840px]">
           <thead className="border-b border-sand bg-[#FAFAFA]">
-            <tr className="font-body text-[10px] uppercase tracking-[0.08em] text-[#6B6B68]">
+            <tr className="font-body text-10px uppercase tracking-[0.08em] text-[#6B6B68]">
               <th className="px-3 py-2 text-left">Avatar</th>
               <th className="px-3 py-2 text-left">Name + Email</th>
               <th className="px-3 py-2 text-left">Role</th>
@@ -131,7 +131,7 @@ export function TeamClient({
                   {member.image ? (
                     <img src={member.image} alt="" className="h-8 w-8 rounded-full object-cover" />
                   ) : (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#37392d] font-body text-[11px] text-white">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#37392d] font-body text-11px text-white">
                       {initials(member.name, member.email)}
                     </div>
                   )}
@@ -141,7 +141,7 @@ export function TeamClient({
                   <p className="font-body text-xs text-[#6B6B68]">{member.email}</p>
                 </td>
                 <td className="px-3 py-3">
-                  <span className={`px-2 py-0.5 font-body text-[10px] uppercase ${member.role === "SUPER_ADMIN" ? "bg-[#37392d] text-white" : "bg-[#F0E8FF] text-[#6B3FAD]"}`}>
+                  <span className={`px-2 py-0.5 font-body text-10px uppercase ${member.role === "SUPER_ADMIN" ? "bg-[#37392d] text-white" : "bg-[#F0E8FF] text-[#6B3FAD]"}`}>
                     {member.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}
                   </span>
                 </td>
@@ -169,11 +169,11 @@ export function TeamClient({
       {invitations.length > 0 ? (
         <div className="border border-sand bg-bg-card">
           <div className="border-b border-sand px-4 py-3">
-            <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Pending Invitations</p>
+            <p className="font-body text-11px uppercase tracking-[0.08em] text-[#6B6B68]">Pending Invitations</p>
           </div>
           <table className="w-full min-w-[840px]">
             <thead className="border-b border-sand bg-[#FAFAFA]">
-              <tr className="font-body text-[10px] uppercase tracking-[0.08em] text-[#6B6B68]">
+              <tr className="font-body text-10px uppercase tracking-[0.08em] text-[#6B6B68]">
                 <th className="px-3 py-2 text-left">Email</th>
                 <th className="px-3 py-2 text-left">Role</th>
                 <th className="px-3 py-2 text-left">Invited By</th>

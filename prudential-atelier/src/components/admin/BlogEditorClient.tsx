@@ -126,7 +126,7 @@ export function BlogEditorClient({ postId }: { postId?: string }) {
         <div>
           <Link
             href="/admin/content/blog"
-            className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light hover:text-nut"
+            className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light hover:text-nut"
           >
             ← Blog
           </Link>
@@ -175,7 +175,7 @@ export function BlogEditorClient({ postId }: { postId?: string }) {
                     if (cmd === "orderedList") editor?.chain().focus().toggleOrderedList().run();
                     if (cmd === "blockquote") editor?.chain().focus().toggleBlockquote().run();
                   }}
-                  className="rounded px-2 py-1 font-sans text-[10px] uppercase tracking-wide text-text-mid hover:bg-sand/30"
+                  className="rounded px-2 py-1 font-sans text-10px uppercase tracking-wide text-text-mid hover:bg-sand/30"
                 >
                   {label}
                 </button>
@@ -218,7 +218,7 @@ export function BlogEditorClient({ postId }: { postId?: string }) {
             </label>
           </div>
           <div className="card-surface space-y-3 p-4">
-            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
+            <p className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light">
               SEO
             </p>
             <input

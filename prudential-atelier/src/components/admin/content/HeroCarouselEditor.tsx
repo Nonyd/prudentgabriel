@@ -101,7 +101,7 @@ export function HeroCarouselEditor({
                   )}
                 </div>
                 <span
-                  className={`rounded-full px-2 py-0.5 font-sans text-[10px] font-semibold uppercase tracking-[0.1em] ${
+                  className={`rounded-full px-2 py-0.5 font-sans text-10px font-semibold uppercase tracking-[0.1em] ${
                     item.type === "video"
                       ? "bg-choc/10 text-choc"
                       : "bg-sand/40 text-text-mid"

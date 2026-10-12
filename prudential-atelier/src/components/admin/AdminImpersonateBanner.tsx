@@ -42,7 +42,7 @@ export function AdminImpersonateBanner({ impersonation }: { impersonation?: Impe
       <button
         type="button"
         onClick={() => void exitView()}
-        className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] underline underline-offset-2 hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc"
+        className="font-sans text-10px font-semibold uppercase tracking-[0.14em] underline underline-offset-2 hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc"
       >
         Exit
       </button>

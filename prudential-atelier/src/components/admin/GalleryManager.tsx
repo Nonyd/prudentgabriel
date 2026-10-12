@@ -161,7 +161,7 @@ function PieceStatus({
   frameCount: number;
   duplicateOf: number | null;
 }) {
-  const flag = "inline-block border px-1.5 py-0.5 text-[10px] uppercase tracking-[0.08em]";
+  const flag = "inline-block border px-1.5 py-0.5 text-10px uppercase tracking-[0.08em]";
   const needs = "border-[#E0B872] bg-[#FFF6E5] text-[#8A5A00]";
   return (
     <div className="flex flex-wrap gap-1 font-body" data-piece-status>
@@ -210,13 +210,13 @@ function PriceGuideFields({
   const preview = priceGuideText({ priceFloorNGN: nairaOrNull(floor), priceCeilingNGN: nairaOrNull(ceiling) });
   return (
     <>
-      <p className="mt-6 font-body text-[11px] uppercase text-[#6B6B68]">Price guide (display only)</p>
+      <p className="mt-6 font-body text-11px uppercase text-[#6B6B68]">Price guide (display only)</p>
       <p className="mt-1 font-body text-xs text-[#6B6B68]">
         Shown beside the photograph as a reference, never charged. A floor alone is recommended; add a ceiling only if
         you want a range.
       </p>
       <div className="mt-2 grid grid-cols-2 gap-3">
-        <label className="font-body text-[11px] uppercase text-[#6B6B68]">
+        <label className="font-body text-11px uppercase text-[#6B6B68]">
           From (₦)
           <input
             inputMode="numeric"
@@ -226,7 +226,7 @@ function PriceGuideFields({
             placeholder="3,000,000"
           />
         </label>
-        <label className="font-body text-[11px] uppercase text-[#6B6B68]">
+        <label className="font-body text-11px uppercase text-[#6B6B68]">
           Up to (₦, optional)
           <input
             inputMode="numeric"
@@ -563,7 +563,7 @@ export function GalleryManager() {
               });
             }}
             className={cn(
-              "border px-3 py-2 font-body text-[11px] uppercase tracking-wide",
+              "border px-3 py-2 font-body text-11px uppercase tracking-wide",
               reorder ? "border-[#37392d] bg-[#37392d] text-white" : "border-sand text-charcoal",
             )}
           >
@@ -580,7 +580,7 @@ export function GalleryManager() {
               });
             }}
             className={cn(
-              "border px-3 py-2 font-body text-[11px] uppercase tracking-wide",
+              "border px-3 py-2 font-body text-11px uppercase tracking-wide",
               selectMode ? "border-[#37392d] bg-[#37392d] text-white" : "border-sand text-charcoal",
             )}
           >
@@ -593,7 +593,7 @@ export function GalleryManager() {
                 if (allVisibleSelected) setSelectedIds([]);
                 else setSelectedIds(visible.map((item) => item.id));
               }}
-              className="border border-sand px-3 py-2 font-body text-[11px] uppercase tracking-wide text-charcoal"
+              className="border border-sand px-3 py-2 font-body text-11px uppercase tracking-wide text-charcoal"
             >
               {allVisibleSelected ? "Deselect all" : "Select all"}
             </button>
@@ -604,7 +604,7 @@ export function GalleryManager() {
                 <button
                   type="button"
                   disabled={bulkDeleting}
-                  className="border border-red-800 bg-red-800 px-3 py-2 font-body text-[11px] uppercase tracking-wide text-white disabled:opacity-50"
+                  className="border border-red-800 bg-red-800 px-3 py-2 font-body text-11px uppercase tracking-wide text-white disabled:opacity-50"
                 >
                   {bulkDeleting ? "Deleting…" : `Delete (${selectedIds.length})`}
                 </button>
@@ -639,7 +639,7 @@ export function GalleryManager() {
           <button
             type="button"
             onClick={() => setUploadOpen(true)}
-            className="bg-[#37392d] px-4 py-2 font-body text-[11px] font-medium uppercase tracking-wide text-white"
+            className="bg-[#37392d] px-4 py-2 font-body text-11px font-medium uppercase tracking-wide text-white"
           >
             + Upload
           </button>
@@ -670,7 +670,7 @@ export function GalleryManager() {
               if (id !== "all") setReorder(false);
             }}
             className={cn(
-              "border px-3 py-1.5 font-body text-[11px] uppercase tracking-wide",
+              "border px-3 py-1.5 font-body text-11px uppercase tracking-wide",
               filter === id ? "border-[#37392d] bg-[#37392d] text-white" : "border-sand text-charcoal",
             )}
           >
@@ -760,7 +760,7 @@ export function GalleryManager() {
                   {video ? (
                     <span
                       className={cn(
-                        "pointer-events-none absolute top-2 inline-flex items-center gap-1 bg-[#37392d] px-2 py-1 font-body text-[10px] font-medium uppercase tracking-[0.12em] text-white",
+                        "pointer-events-none absolute top-2 inline-flex items-center gap-1 bg-[#37392d] px-2 py-1 font-body text-10px font-medium uppercase tracking-[0.12em] text-white",
                         selectMode && !reorder ? "left-8" : "left-2",
                       )}
                     >
@@ -769,7 +769,7 @@ export function GalleryManager() {
                     </span>
                   ) : null}
                   {!img.isPublished ? (
-                    <span className="pointer-events-none absolute right-2 top-2 bg-canvas/95 px-2 py-1 font-body text-[10px] uppercase tracking-[0.12em] text-charcoal">
+                    <span className="pointer-events-none absolute right-2 top-2 bg-canvas/95 px-2 py-1 font-body text-10px uppercase tracking-[0.12em] text-charcoal">
                       Hidden
                     </span>
                   ) : null}
@@ -781,7 +781,7 @@ export function GalleryManager() {
                     </span>
                   ) : null}
                   {reorder ? (
-                    <span className="pointer-events-none absolute bottom-2 left-2 bg-canvas/95 px-1.5 py-0.5 font-body text-[10px] tabular-nums text-charcoal">
+                    <span className="pointer-events-none absolute bottom-2 left-2 bg-canvas/95 px-1.5 py-0.5 font-body text-10px tabular-nums text-charcoal">
                       {position}
                     </span>
                   ) : null}
@@ -808,10 +808,10 @@ export function GalleryManager() {
 
                 <div className="flex flex-1 flex-col gap-2 p-2.5">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="min-w-0 flex-1 font-body text-[12px] leading-snug text-ink">
+                    <p className="min-w-0 flex-1 font-body text-12px leading-snug text-ink">
                       {mediaCaption(img)}
                       {!img.caption?.trim() && !img.alt?.trim() && !(pieceMode && img.pieceOfId) ? (
-                        <span className="block text-[11px] text-[#A8A8A4]">Add a caption</span>
+                        <span className="block text-11px text-[#A8A8A4]">Add a caption</span>
                       ) : null}
                     </p>
                     {canDrag ? (
@@ -829,7 +829,7 @@ export function GalleryManager() {
                       duplicateOf={duplicates.has(img.id) ? (positionOf.get(duplicates.get(img.id)!) ?? null) : null}
                     />
                   ) : duplicates.has(img.id) ? (
-                    <span className="font-body text-[11px] text-[#9B2C2C]">
+                    <span className="font-body text-11px text-[#9B2C2C]">
                       Same file as #{positionOf.get(duplicates.get(img.id)!)}
                     </span>
                   ) : null}
@@ -1032,7 +1032,7 @@ export function GalleryManager() {
                 )}
               </div>
             ) : null}
-            <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Gallery</label>
+            <label className="mt-4 font-body text-11px uppercase text-[#6B6B68]">Gallery</label>
             <select
               className="mt-1 border border-sand bg-white px-3 py-2 text-sm"
               value={editCategory}
@@ -1044,13 +1044,13 @@ export function GalleryManager() {
                 </option>
               ))}
             </select>
-            <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Alt</label>
+            <label className="mt-4 font-body text-11px uppercase text-[#6B6B68]">Alt</label>
             <input
               className="mt-1 border border-sand px-3 py-2 text-sm"
               value={editAlt}
               onChange={(e) => setEditAlt(e.target.value)}
             />
-            <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">
+            <label className="mt-4 font-body text-11px uppercase text-[#6B6B68]">
               {pieceMode && !editIsFrame ? "Title (what the piece is called)" : "Caption"}
             </label>
             <textarea
@@ -1077,7 +1077,7 @@ export function GalleryManager() {
             ) : null}
             {pieceMode && editing && editCategory === "ATELIER" ? (
               <>
-                <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Piece</label>
+                <label className="mt-4 font-body text-11px uppercase text-[#6B6B68]">Piece</label>
                 <select
                   className="mt-1 border border-sand bg-white px-3 py-2 text-sm"
                   value={editPieceOf}
@@ -1107,7 +1107,7 @@ export function GalleryManager() {
               <>
                 {pieceMode ? (
                   <>
-                    <label className="mt-4 font-body text-[11px] uppercase text-[#6B6B68]">Description</label>
+                    <label className="mt-4 font-body text-11px uppercase text-[#6B6B68]">Description</label>
                     <textarea
                       className="mt-1 min-h-[110px] resize-y border border-sand px-3 py-2 text-sm"
                       value={editDescription}

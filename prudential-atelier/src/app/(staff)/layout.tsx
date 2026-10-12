@@ -1,6 +1,7 @@
 import { authOrNull } from "@/auth";
 import { redirect } from "next/navigation";
 import { StaffShell } from "@/components/staff/StaffShell";
+import { WorkroomTypeScale } from "@/components/common/WorkroomTypeScale";
 import { enforcePublicMaintenance } from "@/lib/maintenance";
 import { NOINDEX } from "@/lib/seo";
 import type { Metadata } from "next";
@@ -26,5 +27,10 @@ export default async function StaffLayout({ children }: { children: React.ReactN
     redirect("/login?tab=staff");
   }
 
-  return <StaffShell session={session}>{children}</StaffShell>;
+  return (
+    <StaffShell session={session}>
+      <WorkroomTypeScale />
+      {children}
+    </StaffShell>
+  );
 }

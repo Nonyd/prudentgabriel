@@ -101,7 +101,7 @@ export default function StaffOrderDetailPage(props: { params: Promise<{ orderId:
 
       {order.specification.length > 0 ? (
         <section className="rounded-lg border border-sand bg-bg-card p-4">
-          <h2 className="mb-3 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+          <h2 className="mb-3 font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-mid">
             The gown
           </h2>
           <ul className="flex flex-wrap gap-2 font-sans text-sm">
@@ -117,7 +117,7 @@ export default function StaffOrderDetailPage(props: { params: Promise<{ orderId:
 
       {order.measurements ? (
         <section className="rounded-lg border border-sand bg-bg-card p-4">
-          <h2 className="mb-3 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+          <h2 className="mb-3 font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-mid">
             Measurements
           </h2>
           <dl className="grid grid-cols-2 gap-2 font-sans text-sm">
@@ -135,7 +135,7 @@ export default function StaffOrderDetailPage(props: { params: Promise<{ orderId:
 
       {order.materials.length > 0 ? (
         <section className="rounded-lg border border-sand bg-bg-card p-4">
-          <h2 className="mb-3 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+          <h2 className="mb-3 font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-mid">
             Materials
           </h2>
           <ul className="space-y-2 font-sans text-sm">
@@ -152,7 +152,7 @@ export default function StaffOrderDetailPage(props: { params: Promise<{ orderId:
 
       {order.stageNotes.length > 0 ? (
         <section className="rounded-lg border border-sand bg-bg-card p-4">
-          <h2 className="mb-3 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+          <h2 className="mb-3 font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-mid">
             Instructions from manager
           </h2>
           <ul className="space-y-3">
@@ -168,7 +168,7 @@ export default function StaffOrderDetailPage(props: { params: Promise<{ orderId:
 
       {order.images.length > 0 ? (
         <section>
-          <h2 className="mb-3 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+          <h2 className="mb-3 font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-mid">
             Reference images
           </h2>
           <div className="grid grid-cols-2 gap-2">

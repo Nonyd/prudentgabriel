@@ -99,16 +99,16 @@ export function EmailOutboxClient() {
   return (
     <div className="mt-6">
       <div className="mb-4 flex flex-wrap items-end gap-3">
-        <p className="font-body text-[13px] text-ink">
+        <p className="font-body text-13px text-ink">
           DEAD{" "}
-          <span className="ml-1 inline-flex min-w-[1.5rem] justify-center rounded-full bg-red-100 px-2 py-0.5 text-[12px] text-red-800">
+          <span className="ml-1 inline-flex min-w-[1.5rem] justify-center rounded-full bg-red-100 px-2 py-0.5 text-12px text-red-800">
             {deadCount}
           </span>
         </p>
-        <label className="font-body text-[12px] text-[#6B6B68]">
+        <label className="font-body text-12px text-[#6B6B68]">
           Status
           <select
-            className="ml-2 border border-[#E2D1C2] bg-white px-2 py-1 text-[13px]"
+            className="ml-2 border border-[#E2D1C2] bg-white px-2 py-1 text-13px"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
@@ -120,18 +120,18 @@ export function EmailOutboxClient() {
             ))}
           </select>
         </label>
-        <label className="font-body text-[12px] text-[#6B6B68]">
+        <label className="font-body text-12px text-[#6B6B68]">
           Template
           <input
-            className="ml-2 border border-[#E2D1C2] px-2 py-1 text-[13px]"
+            className="ml-2 border border-[#E2D1C2] px-2 py-1 text-13px"
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
           />
         </label>
-        <label className="font-body text-[12px] text-[#6B6B68]">
+        <label className="font-body text-12px text-[#6B6B68]">
           Recipient
           <input
-            className="ml-2 border border-[#E2D1C2] px-2 py-1 text-[13px]"
+            className="ml-2 border border-[#E2D1C2] px-2 py-1 text-13px"
             value={to}
             onChange={(e) => setTo(e.target.value)}
           />
@@ -139,10 +139,10 @@ export function EmailOutboxClient() {
       </div>
 
       {loading ? (
-        <p className="font-body text-[13px] text-[#6B6B68]">Loading…</p>
+        <p className="font-body text-13px text-[#6B6B68]">Loading…</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left font-body text-[13px]">
+          <table className="w-full min-w-[720px] text-left font-body text-13px">
             <thead>
               <tr className="border-b border-[#E2D1C2] text-[#6B6B68]">
                 <th className="py-2 pr-3 font-medium">Status</th>
@@ -178,7 +178,7 @@ export function EmailOutboxClient() {
                       Resend
                     </button>
                     {row.lastError ? (
-                      <p className="mt-1 max-w-xs text-[11px] text-red-800">{row.lastError}</p>
+                      <p className="mt-1 max-w-xs text-11px text-red-800">{row.lastError}</p>
                     ) : null}
                   </td>
                 </tr>
@@ -193,7 +193,7 @@ export function EmailOutboxClient() {
           <div className="max-h-[90vh] w-full max-w-2xl overflow-auto bg-white p-4" onClick={(e) => e.stopPropagation()}>
             <p className="mb-3 font-display text-lg">{preview.subject}</p>
             <iframe title="Email preview" className="h-[70vh] w-full border border-[#E2D1C2]" srcDoc={preview.html} />
-            <button className="mt-3 text-[13px] underline" type="button" onClick={() => setPreview(null)}>
+            <button className="mt-3 text-13px underline" type="button" onClick={() => setPreview(null)}>
               Close
             </button>
           </div>

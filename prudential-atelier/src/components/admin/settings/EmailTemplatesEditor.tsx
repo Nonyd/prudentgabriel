@@ -98,10 +98,10 @@ export function EmailTemplatesEditor({
 
   return (
     <div className="glass-opaque p-6">
-      <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">Email templates</h2>
+      <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">Email templates</h2>
       <p className="mt-2 font-body text-xs text-[#6B6B68]">
         Customise transactional emails. If not customised here, the app uses its built-in defaults. Variables such as{" "}
-        <code className="text-[11px]">{"{{firstName}}"}</code>, <code className="text-[11px]">{"{{orderNumber}}"}</code> may be
+        <code className="text-11px">{"{{firstName}}"}</code>, <code className="text-11px">{"{{orderNumber}}"}</code> may be
         used where supported.
       </p>
       <ul className="mt-4 divide-y divide-[#EBEBEA] border border-sand">
@@ -114,7 +114,7 @@ export function EmailTemplatesEditor({
               <button
                 type="button"
                 onClick={() => openEditor(key)}
-                className="shrink-0 font-body text-[11px] font-medium uppercase tracking-wide text-olive underline"
+                className="shrink-0 font-body text-11px font-medium uppercase tracking-wide text-olive underline"
               >
                 Edit
               </button>
@@ -153,7 +153,7 @@ export function EmailTemplatesEditor({
                 type="button"
                 disabled={resetting || !editingKey}
                 onClick={() => void reset()}
-                className="font-body text-[11px] text-dark-grey underline disabled:opacity-50"
+                className="font-body text-11px text-dark-grey underline disabled:opacity-50"
               >
                 {resetting ? "Resetting…" : "Reset to default"}
               </button>

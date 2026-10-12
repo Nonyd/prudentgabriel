@@ -3,6 +3,7 @@ import { authOrNull } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { BespokeStage, ConsultationEnquiryStatus, ConsultationStatus, OrderStatus, PaymentStatus } from "@prisma/client";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { WorkroomTypeScale } from "@/components/common/WorkroomTypeScale";
 import { prisma } from "@/lib/prisma";
 import { deniedAdminRedirect } from "@/lib/admin-route-access";
 import { resolveSessionAccess } from "@/lib/admin-auth";
@@ -83,6 +84,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       permissionRevokes={actor.revokes ?? []}
       rolePermissions={actor.rolePermissions}
     >
+      <WorkroomTypeScale />
       {children}
     </AdminShell>
   );

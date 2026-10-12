@@ -39,7 +39,7 @@ export function AlertDialog({
         >
           <AlertDialogPrimitive.Title
             className={cn(
-              "font-display text-[22px] text-charcoal",
+              "font-display text-22px text-charcoal",
               variant === "danger" && "text-[var(--error)]",
             )}
           >

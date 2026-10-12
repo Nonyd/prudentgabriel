@@ -149,7 +149,7 @@ export function StoreBookClient() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-text-light">Store</p>
+        <p className="font-sans text-11px font-medium uppercase tracking-[0.14em] text-text-light">Store</p>
         <h1 className="font-display text-2xl text-ink">Issue book</h1>
         <p className="mt-1 max-w-2xl font-sans text-sm text-text-mid">
           The booklet: item, quantity, who is taking it, which client order, and the supervisor who approved. Offcuts
@@ -357,7 +357,7 @@ export function StoreBookClient() {
         <ul className="mt-3 divide-y divide-sand font-sans text-sm">
           {recent.map((m) => (
             <li key={m.id} className="py-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-text-light">{m.reason}</span>{" "}
+              <span className="text-10px font-semibold uppercase tracking-wide text-text-light">{m.reason}</span>{" "}
               {formatQty(m.delta, m.unit)} {m.itemName}
               {m.note ? <span className="text-text-mid"> — {m.note}</span> : null}
             </li>

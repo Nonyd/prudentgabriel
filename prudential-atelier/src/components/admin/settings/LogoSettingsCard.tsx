@@ -54,7 +54,7 @@ export function LogoSettingsCard({
 
   return (
     <div className="rounded-sm border border-sand bg-canvas p-6">
-      <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+      <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
         Brand logos
       </h2>
       <p className="mt-2 font-body text-xs text-[#6B6B68]">
@@ -94,7 +94,7 @@ export function LogoSettingsCard({
         type="button"
         disabled={saving}
         onClick={() => void save()}
-        className="mt-8 h-10 w-full bg-[#37392d] font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
+        className="mt-8 h-10 w-full bg-[#37392d] font-body text-11px font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save logos"}
       </button>

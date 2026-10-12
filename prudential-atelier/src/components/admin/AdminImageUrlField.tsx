@@ -61,7 +61,7 @@ export function AdminImageUrlField({
             // eslint-disable-next-line @next/next/no-img-element -- arbitrary CDN / user URLs
             <img src={url} alt="" className="h-full w-full object-contain" onError={() => setBroken(true)} />
           ) : (
-            <div className="flex h-full items-center justify-center px-2 text-center font-body text-[10px] leading-snug text-[#A8A8A4]">
+            <div className="flex h-full items-center justify-center px-2 text-center font-body text-10px leading-snug text-[#A8A8A4]">
               {canPreview && broken ? "Could not load preview" : "No preview yet"}
             </div>
           )}
@@ -84,7 +84,7 @@ export function AdminImageUrlField({
                 type="button"
                 disabled={progress !== null}
                 onClick={pickFile}
-                className="border border-[#37392d] bg-[#37392d] px-3 py-2 font-body text-[11px] font-medium uppercase tracking-wide text-white disabled:opacity-50"
+                className="border border-[#37392d] bg-[#37392d] px-3 py-2 font-body text-11px font-medium uppercase tracking-wide text-white disabled:opacity-50"
               >
                 {progress !== null ? "Uploading…" : "Upload"}
               </button>
@@ -93,7 +93,7 @@ export function AdminImageUrlField({
                   <button
                     type="button"
                     disabled={!canPreview}
-                    className="border border-sand px-3 py-2 font-body text-[11px] font-medium uppercase tracking-wide text-charcoal disabled:cursor-not-allowed disabled:opacity-40"
+                    className="border border-sand px-3 py-2 font-body text-11px font-medium uppercase tracking-wide text-charcoal disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Enlarge
                   </button>

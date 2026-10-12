@@ -47,7 +47,7 @@ export function CascadeConfirmDialog({
           data-lenis-prevent
           className="fixed left-1/2 top-1/2 z-[101] max-h-[85vh] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain glass-3 glass-panel p-6"
         >
-          <AlertDialogPrimitive.Title className="font-display text-[22px] text-[var(--error)]">
+          <AlertDialogPrimitive.Title className="font-display text-22px text-[var(--error)]">
             {copy?.title ?? "Delete"}
           </AlertDialogPrimitive.Title>
           {loadingPreview || !copy ? (

@@ -123,7 +123,7 @@ export function ProductCategoryField({
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
         <button
           type="button"
-          className="font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-gold hover:underline"
+          className="font-sans text-11px font-medium uppercase tracking-[0.14em] text-gold hover:underline"
           onClick={() => {
             setAdding((v) => !v);
             setConfirmRemove(false);
@@ -134,7 +134,7 @@ export function ProductCategoryField({
         {selected && !selected.locked ? (
           <button
             type="button"
-            className="font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-wine hover:underline"
+            className="font-sans text-11px font-medium uppercase tracking-[0.14em] text-wine hover:underline"
             onClick={() => {
               setConfirmRemove(true);
               setAdding(false);
@@ -189,7 +189,7 @@ export function ProductCategoryField({
               type="button"
               disabled={busy}
               onClick={() => setConfirmRemove(false)}
-              className="font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-choc/70 hover:underline"
+              className="font-sans text-11px font-medium uppercase tracking-[0.14em] text-choc/70 hover:underline"
             >
               Keep it
             </button>

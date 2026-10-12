@@ -155,10 +155,10 @@ export function AnalyticsDashboard({
     <div className="space-y-6">
       <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-[28px] text-ink">Dashboard</h1>
+          <h1 className="font-display text-28px text-ink">Dashboard</h1>
           <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">{todayLabel}</p>
         </div>
-        <span className="inline-flex w-fit border border-sand px-3 py-1 font-body text-[11px] text-[#6B6B68]">
+        <span className="inline-flex w-fit border border-sand px-3 py-1 font-body text-11px text-[#6B6B68]">
           Last 30 days
         </span>
       </header>
@@ -166,10 +166,10 @@ export function AnalyticsDashboard({
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="relative border border-sand bg-canvas p-6">
           <div className="flex items-start justify-between">
-            <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">Revenue (30 days)</p>
+            <p className="font-body text-10px font-medium uppercase tracking-wide text-[#A8A8A4]">Revenue (30 days)</p>
             <TrendingUp className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
           </div>
-          <p className="mt-2 font-display text-[32px] text-ink">{formatNGN(revenue30)}</p>
+          <p className="mt-2 font-display text-32px text-ink">{formatNGN(revenue30)}</p>
           <p className={cn("mt-1 font-body text-xs font-light", growth >= 0 ? "text-olive" : "text-[#8B1A1A]")}>
             {growth >= 0 ? "+" : ""}
             {growth.toFixed(1)}% vs prev 30 days
@@ -177,18 +177,18 @@ export function AnalyticsDashboard({
         </div>
         <div className="border border-sand bg-canvas p-6">
           <div className="flex items-start justify-between">
-            <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">Total orders (30 days)</p>
+            <p className="font-body text-10px font-medium uppercase tracking-wide text-[#A8A8A4]">Total orders (30 days)</p>
             <ShoppingBag className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
           </div>
-          <p className="mt-2 font-display text-[32px] text-ink">{orders30Count}</p>
+          <p className="mt-2 font-display text-32px text-ink">{orders30Count}</p>
           <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">{ordersPendingPayment} pending payment</p>
         </div>
         <div className="border border-sand bg-canvas p-6">
           <div className="flex items-start justify-between">
-            <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">New customers (30 days)</p>
+            <p className="font-body text-10px font-medium uppercase tracking-wide text-[#A8A8A4]">New customers (30 days)</p>
             <Users className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
           </div>
-          <p className="mt-2 font-display text-[32px] text-ink">{newCustomers30}</p>
+          <p className="mt-2 font-display text-32px text-ink">{newCustomers30}</p>
           <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">{newCustomersReferral30} via referral</p>
         </div>
         <Link
@@ -196,10 +196,10 @@ export function AnalyticsDashboard({
           className="block border border-sand bg-canvas p-6 transition-colors hover:bg-[#FAFAFA]"
         >
           <div className="flex items-start justify-between">
-            <p className="font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">Pending actions</p>
+            <p className="font-body text-10px font-medium uppercase tracking-wide text-[#A8A8A4]">Pending actions</p>
             <AlertCircle className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
           </div>
-          <p className={cn("mt-2 font-display text-[32px]", pendingActions > 0 ? "text-[#8B1A1A]" : "text-ink")}>
+          <p className={cn("mt-2 font-display text-32px", pendingActions > 0 ? "text-[#8B1A1A]" : "text-ink")}>
             {pendingActions}
           </p>
           <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">
@@ -264,14 +264,14 @@ export function AnalyticsDashboard({
       <div className="overflow-hidden border border-sand bg-canvas">
         <div className="flex items-center justify-between border-b border-sand px-6 py-4">
           <h2 className="font-body text-xs font-medium uppercase tracking-wide text-ink">Recent Orders</h2>
-          <Link href="/admin/orders" className="font-body text-[11px] text-olive hover:underline">
+          <Link href="/admin/orders" className="font-body text-11px text-olive hover:underline">
             View All →
           </Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead>
-              <tr className="border-b border-sand bg-[#FAFAFA] font-body text-[10px] font-medium uppercase tracking-wide text-[#A8A8A4]">
+              <tr className="border-b border-sand bg-[#FAFAFA] font-body text-10px font-medium uppercase tracking-wide text-[#A8A8A4]">
                 <th className="px-6 py-2.5">Order #</th>
                 <th className="px-6 py-2.5">Customer</th>
                 <th className="px-6 py-2.5">Items</th>
@@ -285,17 +285,17 @@ export function AnalyticsDashboard({
               {recentOrders.map((o) => (
                 <tr key={o.id} className="border-b border-[#F5F5F3] transition-colors hover:bg-[#FAFAFA]">
                   <td className="px-6 py-3.5">
-                    <Link href={`/admin/orders/${o.id}`} className="font-body text-[11px] font-medium text-olive hover:underline">
+                    <Link href={`/admin/orders/${o.id}`} className="font-body text-11px font-medium text-olive hover:underline">
                       #{o.orderNumber}
                     </Link>
                   </td>
-                  <td className="max-w-[180px] truncate px-6 py-3.5 font-body text-[13px] text-ink">{o.customerLabel}</td>
-                  <td className="max-w-[200px] truncate px-6 py-3.5 font-body text-[13px] text-[#6B6B68]">{o.itemSummary}</td>
-                  <td className="px-6 py-3.5 font-body text-[13px] text-ink">{formatNGN(o.total)}</td>
+                  <td className="max-w-[180px] truncate px-6 py-3.5 font-body text-13px text-ink">{o.customerLabel}</td>
+                  <td className="max-w-[200px] truncate px-6 py-3.5 font-body text-13px text-[#6B6B68]">{o.itemSummary}</td>
+                  <td className="px-6 py-3.5 font-body text-13px text-ink">{formatNGN(o.total)}</td>
                   <td className="px-6 py-3.5">
                     <span
                       className={cn(
-                        "inline-block px-2 py-0.5 font-body text-[9px] font-medium uppercase",
+                        "inline-block px-2 py-0.5 font-body text-9px font-medium uppercase",
                         gatewayBadgeClass(o.gateway),
                       )}
                     >
@@ -305,7 +305,7 @@ export function AnalyticsDashboard({
                   <td className="px-6 py-3.5">
                     <span
                       className={cn(
-                        "inline-block px-2 py-0.5 font-body text-[9px] font-medium uppercase",
+                        "inline-block px-2 py-0.5 font-body text-9px font-medium uppercase",
                         statusBadgeClass(o.status),
                       )}
                     >
@@ -313,14 +313,14 @@ export function AnalyticsDashboard({
                     </span>
                     <span
                       className={cn(
-                        "ml-1 inline-block px-2 py-0.5 font-body text-[9px] font-medium uppercase",
+                        "ml-1 inline-block px-2 py-0.5 font-body text-9px font-medium uppercase",
                         paymentBadgeClass(o.paymentStatus),
                       )}
                     >
                       {o.paymentStatus}
                     </span>
                   </td>
-                  <td className="px-6 py-3.5 font-body text-[13px] text-[#A8A8A4]" title={new Date(o.createdAt).toISOString()}>
+                  <td className="px-6 py-3.5 font-body text-13px text-[#A8A8A4]" title={new Date(o.createdAt).toISOString()}>
                     {formatDistanceToNow(new Date(o.createdAt), { addSuffix: true })}
                   </td>
                 </tr>
@@ -333,28 +333,28 @@ export function AnalyticsDashboard({
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="border border-sand bg-canvas p-5">
           <div className="flex items-center justify-between">
-            <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-ink">Atelier requests</h3>
+            <h3 className="font-body text-11px font-medium uppercase tracking-wide text-ink">Atelier requests</h3>
             {bespokePendingList.length > 0 ? (
-              <span className="bg-[#FFF8E7] px-2 py-0.5 font-body text-[9px] text-[#92660A]">{bespokePendingList.length}</span>
+              <span className="bg-[#FFF8E7] px-2 py-0.5 font-body text-9px text-[#92660A]">{bespokePendingList.length}</span>
             ) : null}
           </div>
           <ul className="mt-4 divide-y divide-[#F5F5F3]">
             {bespokePendingList.slice(0, 5).map((b) => (
               <li key={b.id} className="py-3 font-body text-xs text-ink">
                 <span className="font-medium text-olive">#{b.requestNumber}</span> · {b.name} · {b.occasion}
-                <span className="mt-1 block font-body text-[11px] text-[#6B6B68]">
+                <span className="mt-1 block font-body text-11px text-[#6B6B68]">
                   {formatDistanceToNow(new Date(b.createdAt), { addSuffix: true })}
                 </span>
               </li>
             ))}
           </ul>
-          <Link href="/admin/bespoke" className="mt-4 inline-block font-body text-[11px] text-olive hover:underline">
+          <Link href="/admin/bespoke" className="mt-4 inline-block font-body text-11px text-olive hover:underline">
             Review all
           </Link>
         </div>
         <div className="border border-sand bg-canvas p-5">
-          <h3 className="font-body text-[11px] font-medium uppercase tracking-wide text-ink">Coupons expiring soon</h3>
-          <p className="mt-1 font-body text-[11px] text-[#6B6B68]">Within 7 days</p>
+          <h3 className="font-body text-11px font-medium uppercase tracking-wide text-ink">Coupons expiring soon</h3>
+          <p className="mt-1 font-body text-11px text-[#6B6B68]">Within 7 days</p>
           <ul className="mt-4 divide-y divide-[#F5F5F3]">
             {expiringCoupons.length === 0 ? (
               <li className="py-3 font-body text-xs text-[#1B5E20]">No coupons expiring soon ✓</li>

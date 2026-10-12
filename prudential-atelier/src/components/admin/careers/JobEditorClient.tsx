@@ -280,7 +280,7 @@ export function JobEditorClient({ job }: { job?: JobPosting }) {
       </div>
 
       <div>
-        <p className="font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">Custom Fields</p>
+        <p className="font-label text-11px uppercase tracking-wide text-[#A8A8A4]">Custom Fields</p>
         <div className="mt-3">
           <CustomFieldBuilder fields={customFields} onChange={setCustomFields} />
         </div>
@@ -304,7 +304,7 @@ export function JobEditorClient({ job }: { job?: JobPosting }) {
           type="button"
           disabled={saving}
           onClick={() => void save(true)}
-          className="min-h-[44px] rounded-sm bg-choc px-4 py-2 font-label text-[11px] font-semibold uppercase tracking-wide text-cream"
+          className="min-h-[44px] rounded-sm bg-choc px-4 py-2 font-label text-11px font-semibold uppercase tracking-wide text-cream"
         >
           Publish job
         </button>

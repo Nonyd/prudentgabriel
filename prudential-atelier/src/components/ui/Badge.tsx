@@ -17,12 +17,12 @@ const variantClasses: Record<BadgeVariant, string> = {
   "outline-gold": "border border-gold bg-transparent text-gold",
   "outline-wine": "border border-olive bg-transparent text-olive",
   grey: "bg-charcoal/10 text-charcoal-mid",
-  accent: "border border-lightbr/40 bg-choc/80 font-sans text-[9px] font-semibold uppercase tracking-[0.14em] text-cream",
+  accent: "border border-lightbr/40 bg-choc/80 font-sans text-9px font-semibold uppercase tracking-[0.14em] text-cream",
 };
 
 const sizeClasses: Record<BadgeSize, string> = {
-  sm: "px-2 py-0.5 text-[9px] tracking-[0.1em]",
-  md: "px-2.5 py-0.5 text-[10px] tracking-[0.12em]",
+  sm: "px-2 py-0.5 text-9px tracking-[0.1em]",
+  md: "px-2.5 py-0.5 text-10px tracking-[0.12em]",
 };
 
 export function Badge({ children, variant = "wine", size = "md", className }: BadgeProps) {

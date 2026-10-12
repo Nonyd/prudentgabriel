@@ -362,7 +362,7 @@ export function InvoiceFormPage({
 
   return (
     <div>
-      <Link href="/admin/invoices" className="font-body text-[11px] uppercase text-[#6B6B68] hover:text-ink">
+      <Link href="/admin/invoices" className="font-body text-11px uppercase text-[#6B6B68] hover:text-ink">
         ← Invoices
       </Link>
       <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
@@ -375,20 +375,20 @@ export function InvoiceFormPage({
               href={`${base}/invoice/${publicToken}`}
               target="_blank"
               rel="noreferrer"
-              className="border border-sand px-4 py-2 font-body text-[11px] uppercase"
+              className="border border-sand px-4 py-2 font-body text-11px uppercase"
             >
               Preview
             </a>
             <button
               type="button"
-              className="border border-sand px-4 py-2 font-body text-[11px] uppercase"
+              className="border border-sand px-4 py-2 font-body text-11px uppercase"
               onClick={() => window.open(`/api/admin/invoices/${invoiceId}/pdf`, "_blank")}
             >
               Download PDF
             </button>
             <button
               type="button"
-              className="bg-[#37392d] px-4 py-2 font-body text-[11px] uppercase text-white"
+              className="bg-[#37392d] px-4 py-2 font-body text-11px uppercase text-white"
               onClick={async () => {
                 const ok = await save(false);
                 if (!ok) return;
@@ -406,7 +406,7 @@ export function InvoiceFormPage({
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-8">
           <section className="border border-sand bg-canvas p-5">
-            <h2 className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Link to atelier request (optional)</h2>
+            <h2 className="font-body text-11px font-medium uppercase text-[#6B6B68]">Link to atelier request (optional)</h2>
             <input
               className="mt-3 w-full border border-sand px-3 py-2 font-body text-sm"
               placeholder="Search #BQ-… or client name"
@@ -430,7 +430,7 @@ export function InvoiceFormPage({
             {bespokeLabel ? <p className="mt-2 font-body text-xs text-olive">Linked: {bespokeLabel}</p> : null}
             <button
               type="button"
-              className="mt-2 font-body text-[11px] text-olive underline"
+              className="mt-2 font-body text-11px text-olive underline"
               onClick={() => {
                 setBespokeRequestId(null);
                 setBespokeLabel("");
@@ -441,7 +441,7 @@ export function InvoiceFormPage({
           </section>
 
           <section className="border border-sand bg-canvas p-5">
-            <h2 className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Client</h2>
+            <h2 className="font-body text-11px font-medium uppercase text-[#6B6B68]">Client</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <label className="block font-body text-xs">
                 Full name
@@ -475,7 +475,7 @@ export function InvoiceFormPage({
           </section>
 
           <section className="border border-sand bg-canvas p-5">
-            <h2 className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Invoice details</h2>
+            <h2 className="font-body text-11px font-medium uppercase text-[#6B6B68]">Invoice details</h2>
             <div className="mt-4 flex flex-wrap gap-3">
               {(["NGN", "USD", "GBP", "EUR"] as const).map((c) => (
                 <button
@@ -537,7 +537,7 @@ export function InvoiceFormPage({
           </section>
 
           <section className="border border-sand bg-canvas p-5">
-            <h2 className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Line items</h2>
+            <h2 className="font-body text-11px font-medium uppercase text-[#6B6B68]">Line items</h2>
             <div className="mt-4 space-y-3">
               {lineItems.map((li) => (
                 <div key={li.id} className="grid gap-2 border border-sand bg-bg-card p-3 sm:grid-cols-12">
@@ -600,7 +600,7 @@ export function InvoiceFormPage({
             </div>
             <button
               type="button"
-              className="mt-3 font-body text-[11px] uppercase text-olive underline"
+              className="mt-3 font-body text-11px uppercase text-olive underline"
               onClick={() => setLineItems((prev) => [...prev, { id: nanoid(), description: "", quantity: 1, unitPrice: 0, amount: 0 }])}
             >
               + Add line item
@@ -610,7 +610,7 @@ export function InvoiceFormPage({
                 <button
                   key={chip}
                   type="button"
-                  className="border border-sand px-2 py-1 font-body text-[10px] uppercase"
+                  className="border border-sand px-2 py-1 font-body text-10px uppercase"
                   onClick={() =>
                     setLineItems((prev) => [...prev, { id: nanoid(), description: chip, quantity: 1, unitPrice: 0, amount: 0 }])
                   }
@@ -657,7 +657,7 @@ export function InvoiceFormPage({
               />
             ) : null}
             <div>
-              <p className="font-body text-[11px] uppercase text-[#6B6B68]">Deposit %</p>
+              <p className="font-body text-11px uppercase text-[#6B6B68]">Deposit %</p>
               <input
                 type="number"
                 className="mt-1 border border-sand px-2 py-1 text-sm"
@@ -685,7 +685,7 @@ export function InvoiceFormPage({
           </section>
 
           <section className="border border-sand bg-canvas p-5">
-            <h2 className="font-body text-[11px] font-medium uppercase text-[#6B6B68]">Notes</h2>
+            <h2 className="font-body text-11px font-medium uppercase text-[#6B6B68]">Notes</h2>
             <label className="mt-3 block font-body text-xs">
               Client note
               <textarea className="mt-1 min-h-[72px] w-full border border-sand px-3 py-2 text-sm" value={clientNote} onChange={(e) => setClientNote(e.target.value)} />
@@ -708,7 +708,7 @@ export function InvoiceFormPage({
 
         <aside className="lg:sticky lg:top-6 h-fit space-y-4">
           <div className="border border-sand bg-[#FAFAF8] p-5">
-            <div className="bg-[#37392d] px-3 py-2 font-body text-[10px] font-medium uppercase tracking-[0.15em] text-white">
+            <div className="bg-[#37392d] px-3 py-2 font-body text-10px font-medium uppercase tracking-[0.15em] text-white">
               <div className="flex justify-between">
                 <span>Prudential Atelier</span>
                 <span>{invoiceNumber || "—"}</span>
@@ -751,9 +751,9 @@ export function InvoiceFormPage({
                 </>
               ) : null}
             </div>
-            <p className="mt-3 font-body text-[11px] text-[#6B6B68]">Due: {dueDate || "—"}</p>
-            <p className="font-body text-[11px] text-[#6B6B68]">Valid until: {expiresAt || "—"}</p>
-            <p className="mt-2 font-body text-[11px]">Status: {status}</p>
+            <p className="mt-3 font-body text-11px text-[#6B6B68]">Due: {dueDate || "—"}</p>
+            <p className="font-body text-11px text-[#6B6B68]">Valid until: {expiresAt || "—"}</p>
+            <p className="mt-2 font-body text-11px">Status: {status}</p>
           </div>
         </aside>
       </div>

@@ -212,8 +212,8 @@ export function BankAccountsAdminClient({ initialSlots }: { initialSlots: Slot[]
   return (
     <div className="mt-6 space-y-8">
       <div>
-        <h1 className="font-display text-[24px] text-ink">Bank accounts</h1>
-        <p className="mt-1 max-w-2xl font-body text-[13px] text-[#6B6B68]">
+        <h1 className="font-display text-24px text-ink">Bank accounts</h1>
+        <p className="mt-1 max-w-2xl font-body text-13px text-[#6B6B68]">
           One account per currency and business line. Bank transfer only appears when an active account matches the
           cart. EUR is for quotations and invoices — it is not a storefront checkout currency.
         </p>
@@ -237,21 +237,21 @@ export function BankAccountsAdminClient({ initialSlots }: { initialSlots: Slot[]
                     <p className="font-body text-sm text-ink">
                       {currency}
                       {currency === "EUR" ? (
-                        <span className="ml-2 font-body text-[10px] uppercase tracking-wide text-[#A8A8A4]">
+                        <span className="ml-2 font-body text-10px uppercase tracking-wide text-[#A8A8A4]">
                           invoices only
                         </span>
                       ) : null}
                     </p>
                     {account ? (
                       <span
-                        className={`font-body text-[10px] uppercase tracking-wide ${
+                        className={`font-body text-10px uppercase tracking-wide ${
                           account.isActive ? "text-[#1B5E20]" : "text-[#A8A8A4]"
                         }`}
                       >
                         {account.isActive ? "Active" : "Retired"}
                       </span>
                     ) : (
-                      <span className="font-body text-[10px] uppercase tracking-wide text-[#A8A8A4]">Empty</span>
+                      <span className="font-body text-10px uppercase tracking-wide text-[#A8A8A4]">Empty</span>
                     )}
                   </div>
                   {account ? (

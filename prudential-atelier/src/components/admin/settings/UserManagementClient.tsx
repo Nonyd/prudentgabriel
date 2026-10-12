@@ -34,7 +34,7 @@ type UserRow = {
 function AvatarInitials({ name, email }: { name: string | null; email: string }) {
   const label = name?.trim() || email;
   return (
-    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-choc/10 font-sans text-[10px] font-semibold uppercase tracking-wide text-choc">
+    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-choc/10 font-sans text-10px font-semibold uppercase tracking-wide text-choc">
       {getInitials(label)}
     </span>
   );
@@ -577,7 +577,7 @@ export function UserManagementClient({ embedded = false }: { embedded?: boolean 
           <div>
             <span className="block font-sans text-xs text-text-mid">{row.email}</span>
             {row.phone ? (
-              <span className="mt-0.5 block font-sans text-[11px] text-text-light">{row.phone}</span>
+              <span className="mt-0.5 block font-sans text-11px text-text-light">{row.phone}</span>
             ) : null}
           </div>
         ),

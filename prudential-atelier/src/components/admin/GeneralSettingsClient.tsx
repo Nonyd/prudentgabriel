@@ -192,7 +192,7 @@ export function GeneralSettingsClient() {
   return (
     <div className="space-y-6">
       <section className="card-surface p-6">
-        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+        <p className="font-sans text-11px font-semibold uppercase tracking-[0.14em] text-text-mid">
           Maintenance mode
         </p>
         <div className="mt-4 border-t border-sand pt-4">
@@ -224,7 +224,7 @@ export function GeneralSettingsClient() {
           </p>
 
           <label className="mt-5 block">
-            <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+            <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">
               Custom message (optional)
             </span>
             <textarea
@@ -251,7 +251,7 @@ export function GeneralSettingsClient() {
       </section>
 
       <section className="card-surface p-6">
-        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+        <p className="font-sans text-11px font-semibold uppercase tracking-[0.14em] text-text-mid">
           Atelier enquiries
         </p>
         <div className="mt-4 border-t border-sand pt-4">
@@ -294,7 +294,7 @@ export function GeneralSettingsClient() {
       </section>
 
       <section className="card-surface p-6">
-        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+        <p className="font-sans text-11px font-semibold uppercase tracking-[0.14em] text-text-mid">
           House numbers
         </p>
         <div className="mt-4 border-t border-sand pt-4">
@@ -304,7 +304,7 @@ export function GeneralSettingsClient() {
             at either grain. 90 days covers a collection season and the previous period beside it.
           </p>
           <label className="mt-4 block max-w-xs">
-            <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+            <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">
               Days
             </span>
             <input
@@ -346,7 +346,7 @@ export function GeneralSettingsClient() {
               srLabel="Auto-convert approved quotes to orders"
             />
           </div>
-          <p className="mt-2 font-sans text-[11px] text-text-light">
+          <p className="mt-2 font-sans text-11px text-text-light">
             {autoConvertLoading
               ? "Loading…"
               : autoConvertSaving
@@ -360,7 +360,7 @@ export function GeneralSettingsClient() {
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {FIELDS.map((field) => (
             <label key={field.key} className="block">
-              <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+              <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">
                 {field.label}
               </span>
               <input

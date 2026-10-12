@@ -33,7 +33,7 @@ export default async function StoreRequisitionPrintPage({
 
   return (
     <div className="mx-auto max-w-2xl bg-white p-8 text-ink print:p-0">
-      <p className="font-sans text-[11px] uppercase tracking-[0.14em] text-text-light">Prudential Atelier</p>
+      <p className="font-sans text-11px uppercase tracking-[0.14em] text-text-light">Prudential Atelier</p>
       <h1 className="font-display text-2xl">Material requisition</h1>
       <p className="mt-1 font-sans text-sm text-text-mid">
         {r.ref} · {STATUS_LABEL[r.status]}
@@ -41,23 +41,23 @@ export default async function StoreRequisitionPrintPage({
 
       <dl className="mt-6 grid grid-cols-2 gap-3 font-sans text-sm">
         <div>
-          <dt className="text-[10px] uppercase tracking-wide text-text-light">Client</dt>
+          <dt className="text-10px uppercase tracking-wide text-text-light">Client</dt>
           <dd>{client}</dd>
         </div>
         <div>
-          <dt className="text-[10px] uppercase tracking-wide text-text-light">Order</dt>
+          <dt className="text-10px uppercase tracking-wide text-text-light">Order</dt>
           <dd>{orderRef}</dd>
         </div>
         <div>
-          <dt className="text-[10px] uppercase tracking-wide text-text-light">Raised by</dt>
+          <dt className="text-10px uppercase tracking-wide text-text-light">Raised by</dt>
           <dd>{r.raisedBy.name || r.raisedBy.email}</dd>
         </div>
         <div>
-          <dt className="text-[10px] uppercase tracking-wide text-text-light">Stock check</dt>
+          <dt className="text-10px uppercase tracking-wide text-text-light">Stock check</dt>
           <dd>{stockCheck ? stockCheck.actor.name || stockCheck.actor.email : "—"}</dd>
         </div>
         <div>
-          <dt className="text-[10px] uppercase tracking-wide text-text-light">Total</dt>
+          <dt className="text-10px uppercase tracking-wide text-text-light">Total</dt>
           <dd>₦{total.toLocaleString("en-NG")}</dd>
         </div>
       </dl>
@@ -70,7 +70,7 @@ export default async function StoreRequisitionPrintPage({
 
       <table className="mt-8 w-full border-collapse font-sans text-sm">
         <thead>
-          <tr className="border-b border-sand text-left text-[10px] uppercase tracking-wide text-text-light">
+          <tr className="border-b border-sand text-left text-10px uppercase tracking-wide text-text-light">
             <th className="py-2">Material</th>
             <th className="py-2 text-right">Qty</th>
             <th className="py-2 text-right">Confirmed</th>

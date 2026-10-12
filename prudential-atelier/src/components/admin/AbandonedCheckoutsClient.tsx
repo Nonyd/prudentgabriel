@@ -91,7 +91,7 @@ export function AbandonedCheckoutsClient({ rows }: { rows: Row[] }) {
                   </button>
                 </div>
                 {r.recentWarning && r.remindersSent < 2 && !r.recovered ? (
-                  <p className="mt-1 text-[11px] text-[#6B6B68]">Automatic reminder was recent.</p>
+                  <p className="mt-1 text-11px text-[#6B6B68]">Automatic reminder was recent.</p>
                 ) : null}
               </td>
             </tr>

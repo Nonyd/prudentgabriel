@@ -57,7 +57,7 @@ export function InviteAdminModal({
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/20" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[480px] max-w-[95vw] -translate-x-1/2 -translate-y-1/2 glass-3 glass-panel">
           <div className="border-b border-sand px-5 py-4">
-            <Dialog.Title className="font-display text-[22px] text-ink">Invite Team Member</Dialog.Title>
+            <Dialog.Title className="font-display text-22px text-ink">Invite Team Member</Dialog.Title>
           </div>
           <div className="space-y-4 px-5 py-4">
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email Address" className="w-full border border-sand px-3 py-2 font-body text-sm" />

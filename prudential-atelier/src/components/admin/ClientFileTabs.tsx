@@ -25,7 +25,7 @@ export function ClientFileTabs({ clientId }: { clientId: string }) {
         </div>
         <Link
           href="/admin/clients"
-          className="pb-2 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light hover:text-nut"
+          className="pb-2 font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light hover:text-nut"
         >
           ← Clients
         </Link>

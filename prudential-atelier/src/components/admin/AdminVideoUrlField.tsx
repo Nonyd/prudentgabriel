@@ -85,7 +85,7 @@ export function AdminVideoUrlField({ label, value, onChange, folder }: AdminVide
               onError={() => setBroken(true)}
             />
           ) : (
-            <div className="flex flex-col items-center gap-1 px-2 text-center font-body text-[10px] leading-snug text-[#A8A8A4]">
+            <div className="flex flex-col items-center gap-1 px-2 text-center font-body text-10px leading-snug text-[#A8A8A4]">
               <Film className="h-5 w-5" />
               {canPreview && broken ? "Could not load preview" : "No preview yet"}
             </div>
@@ -114,18 +114,18 @@ export function AdminVideoUrlField({ label, value, onChange, folder }: AdminVide
               type="button"
               disabled={progress !== null}
               onClick={pickFile}
-              className="shrink-0 border border-[#37392d] bg-[#37392d] px-3 py-2 font-body text-[11px] font-medium uppercase tracking-wide text-white disabled:opacity-50"
+              className="shrink-0 border border-[#37392d] bg-[#37392d] px-3 py-2 font-body text-11px font-medium uppercase tracking-wide text-white disabled:opacity-50"
             >
               {progress !== null ? "Working…" : "Upload"}
             </button>
           </div>
           <UploadProgressBar value={progress} label={progressLabel} />
           {isRawWebmUrl(url) ? (
-            <p className="font-body text-[10px] text-[#8A5A32]">
+            <p className="font-body text-10px text-[#8A5A32]">
               This WebM plays as uploaded and can stutter. Re-upload it so it compresses to H.264 MP4.
             </p>
           ) : (
-            <p className="font-body text-[10px] text-[#A8A8A4]">
+            <p className="font-body text-10px text-[#A8A8A4]">
               MP4, WebM, or MOV · up to 200MB · compressed here to a muted H.264 MP4 so the hero stays smooth
             </p>
           )}

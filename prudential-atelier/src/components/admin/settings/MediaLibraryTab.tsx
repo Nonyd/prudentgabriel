@@ -85,7 +85,7 @@ export function MediaLibraryTab() {
                 role="img"
                 aria-label={m.filename}
               />
-              <p className="mt-1 truncate font-body text-[10px] text-[#6B6B68]">{m.filename}</p>
+              <p className="mt-1 truncate font-body text-10px text-[#6B6B68]">{m.filename}</p>
             </label>
           );
         })}

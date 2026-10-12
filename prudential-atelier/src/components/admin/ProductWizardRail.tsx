@@ -34,7 +34,7 @@ export function ProductWizardRail({ step, onStep, snapshot }: Props) {
               >
                 <span
                   className={cn(
-                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px]",
+                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-11px",
                     done
                       ? "border-choc bg-choc text-cream"
                       : current
@@ -45,7 +45,7 @@ export function ProductWizardRail({ step, onStep, snapshot }: Props) {
                 >
                   {done ? <Check className="h-3 w-3" strokeWidth={2} /> : i + 1}
                 </span>
-                <span className="truncate font-sans text-[12px] font-medium">{s.label}</span>
+                <span className="truncate font-sans text-12px font-medium">{s.label}</span>
               </button>
             </li>
           );

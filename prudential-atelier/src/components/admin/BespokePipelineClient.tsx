@@ -29,7 +29,7 @@ type LibraryFeature = { id: string; key: string; label: string };
 
 function StageBadge({ stage }: { stage: BespokeStage }) {
   return (
-    <span className="inline-flex rounded-full bg-lightbr/15 px-2.5 py-1 font-sans text-[10px] font-semibold uppercase tracking-wide text-nut">
+    <span className="inline-flex rounded-full bg-lightbr/15 px-2.5 py-1 font-sans text-10px font-semibold uppercase tracking-wide text-nut">
       {STAGE_LABELS[stage].replace(/^\d+\.\s*/, "")}
     </span>
   );
@@ -40,7 +40,7 @@ function ProgressBar({ stage }: { stage: BespokeStage }) {
   const pct = Math.round((progress / 13) * 100);
   return (
     <div className="min-w-[100px]">
-      <div className="mb-1 font-sans text-[10px] text-text-light">
+      <div className="mb-1 font-sans text-10px text-text-light">
         {progress}/13
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-sand/40">
@@ -178,9 +178,9 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
             ) : (
               <p className="font-sans text-sm text-ink">{row.clientName}</p>
             )}
-            <p className="font-sans text-[11px] text-text-light">{row.clientEmail}</p>
+            <p className="font-sans text-11px text-text-light">{row.clientEmail}</p>
             {row.features?.length ? (
-              <p className="font-sans text-[11px] text-nut">{row.features.map((f) => f.feature.label).join(" · ")}</p>
+              <p className="font-sans text-11px text-nut">{row.features.map((f) => f.feature.label).join(" · ")}</p>
             ) : null}
           </div>
         ),

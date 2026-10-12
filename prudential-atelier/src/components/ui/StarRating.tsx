@@ -19,9 +19,9 @@ const containerSizeMap = {
 };
 
 const starSizeMap = {
-  sm: "h-3.5 w-3.5 text-[14px]",
-  md: "h-8 w-8 text-[32px]",
-  lg: "h-9 w-9 text-[36px]",
+  sm: "h-3.5 w-3.5 text-14px",
+  md: "h-8 w-8 text-32px",
+  lg: "h-9 w-9 text-36px",
 };
 
 export function StarRating({

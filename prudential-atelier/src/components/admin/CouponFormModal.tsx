@@ -168,7 +168,7 @@ export function CouponFormModal({
         <Dialog.Overlay className="fixed inset-0 z-[120] bg-black/40" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[121] max-h-[90vh] w-[min(96vw,560px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto glass-3 glass-panel p-6">
           <div className="flex items-start justify-between gap-4">
-            <Dialog.Title className="font-display text-[22px] text-ink">
+            <Dialog.Title className="font-display text-22px text-ink">
               {isEdit ? "Edit coupon" : "Create coupon"}
             </Dialog.Title>
             <Dialog.Close className="text-charcoal hover:text-ink" aria-label="Close">
@@ -178,7 +178,7 @@ export function CouponFormModal({
 
           <form className="mt-6 space-y-4" onSubmit={onSubmit}>
             <div>
-              <label className="font-body text-[11px] uppercase text-[#6B6B68]">Code</label>
+              <label className="font-body text-11px uppercase text-[#6B6B68]">Code</label>
               <div className="mt-1 flex gap-2">
                 <input
                   {...form.register("code")}
@@ -190,7 +190,7 @@ export function CouponFormModal({
                 {!isEdit ? (
                   <button
                     type="button"
-                    className="shrink-0 border border-sand px-3 py-2 font-body text-[11px] uppercase"
+                    className="shrink-0 border border-sand px-3 py-2 font-body text-11px uppercase"
                     onClick={() => {
                       const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
                       let s = "";
@@ -208,17 +208,17 @@ export function CouponFormModal({
             </div>
 
             <div>
-              <label className="font-body text-[11px] uppercase text-[#6B6B68]">Description (optional)</label>
+              <label className="font-body text-11px uppercase text-[#6B6B68]">Description (optional)</label>
               <input {...form.register("description")} className="mt-1 w-full border border-sand px-3 py-2 text-sm" />
             </div>
 
             <div>
-              <p className="font-body text-[11px] uppercase text-[#6B6B68]">Discount type</p>
+              <p className="font-body text-11px uppercase text-[#6B6B68]">Discount type</p>
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {(["PERCENTAGE", "FIXED_AMOUNT", "FREE_SHIPPING"] as const).map((t) => (
                   <label
                     key={t}
-                    className={`cursor-pointer border p-3 text-center font-body text-[11px] uppercase ${
+                    className={`cursor-pointer border p-3 text-center font-body text-11px uppercase ${
                       type === t ? "border-[#37392d] ring-1 ring-[#37392d]" : "border-sand"
                     }`}
                   >
@@ -231,7 +231,7 @@ export function CouponFormModal({
 
             {type !== "FREE_SHIPPING" ? (
               <div>
-                <label className="font-body text-[11px] uppercase text-[#6B6B68]">Value</label>
+                <label className="font-body text-11px uppercase text-[#6B6B68]">Value</label>
                 <input
                   type="number"
                   step="0.01"
@@ -245,7 +245,7 @@ export function CouponFormModal({
             ) : null}
 
             <div>
-              <label className="font-body text-[11px] uppercase text-[#6B6B68]">Min order (₦, optional)</label>
+              <label className="font-body text-11px uppercase text-[#6B6B68]">Min order (₦, optional)</label>
               <input
                 type="number"
                 {...form.register("minOrderNGN", { valueAsNumber: true })}
@@ -255,7 +255,7 @@ export function CouponFormModal({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="font-body text-[11px] uppercase text-[#6B6B68]">Max total uses</label>
+                <label className="font-body text-11px uppercase text-[#6B6B68]">Max total uses</label>
                 <input
                   type="number"
                   {...form.register("maxUsesTotal", { valueAsNumber: true })}
@@ -264,7 +264,7 @@ export function CouponFormModal({
                 />
               </div>
               <div>
-                <label className="font-body text-[11px] uppercase text-[#6B6B68]">Max per customer</label>
+                <label className="font-body text-11px uppercase text-[#6B6B68]">Max per customer</label>
                 <input
                   type="number"
                   {...form.register("maxUsesPerUser", { valueAsNumber: true })}
@@ -302,11 +302,11 @@ export function CouponFormModal({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="font-body text-[11px] uppercase text-[#6B6B68]">Start</label>
+                <label className="font-body text-11px uppercase text-[#6B6B68]">Start</label>
                 <input type="date" {...form.register("startsAt")} className="mt-1 w-full border border-sand px-2 py-2 text-sm" />
               </div>
               <div>
-                <label className="font-body text-[11px] uppercase text-[#6B6B68]">End (optional)</label>
+                <label className="font-body text-11px uppercase text-[#6B6B68]">End (optional)</label>
                 <input type="date" {...form.register("expiresAt")} className="mt-1 w-full border border-sand px-2 py-2 text-sm" />
               </div>
             </div>
@@ -315,7 +315,7 @@ export function CouponFormModal({
                 <button
                   key={d}
                   type="button"
-                  className="border border-sand px-2 py-1 font-body text-[10px] uppercase"
+                  className="border border-sand px-2 py-1 font-body text-10px uppercase"
                   onClick={() => {
                     const end = new Date();
                     end.setDate(end.getDate() + d);

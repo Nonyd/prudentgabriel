@@ -121,7 +121,7 @@ export function AdminEmailTemplatesClient({ templates, adminEmail }: Props) {
                   if (!laneItems.length) return null;
                   return (
                     <div key={lane.id}>
-                      <p className="font-label text-[10px] uppercase tracking-widest text-gold">{lane.label}</p>
+                      <p className="font-label text-10px uppercase tracking-widest text-gold">{lane.label}</p>
                       <ul className="mt-2 space-y-0.5">
                         {laneItems.map((item) => (
                           <li key={item.key}>
@@ -152,7 +152,7 @@ export function AdminEmailTemplatesClient({ templates, adminEmail }: Props) {
           }
           return (
             <div key={group.id}>
-              <p className="font-label text-[10px] uppercase tracking-widest text-gold">{group.label}</p>
+              <p className="font-label text-10px uppercase tracking-widest text-gold">{group.label}</p>
               <ul className="mt-2 space-y-0.5">
                 {items.map((item) => (
                   <li key={item.key}>

@@ -48,7 +48,7 @@ export function ContentHubClient() {
       </div>
 
       <div className="rounded-lg border border-sand/80 bg-bg-card px-4 py-3">
-        <p className="font-sans text-[13px] leading-relaxed text-text-mid">
+        <p className="font-sans text-13px leading-relaxed text-text-mid">
           <span className="font-medium text-ink">Page content</span> is the primary editor for live site copy.
           Use <span className="font-medium text-ink">Appearance</span> in Settings for global logos and brand
           assets. Portfolio grids live in the gallery.
@@ -75,7 +75,7 @@ export function ContentHubClient() {
                 <Icon className="h-8 w-8 shrink-0 text-choc" strokeWidth={1.25} aria-hidden />
                 <div className="min-w-0 flex-1">
                   <p className="font-sans text-sm font-medium text-ink">{card.title}</p>
-                  <p className="mt-1 font-sans text-[13px] leading-snug text-text-mid">{card.description}</p>
+                  <p className="mt-1 font-sans text-13px leading-snug text-text-mid">{card.description}</p>
                 </div>
               </div>
               <span className="shrink-0 self-center font-sans text-sm text-choc transition-transform group-hover:translate-x-0.5">

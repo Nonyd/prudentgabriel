@@ -162,7 +162,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                       custom: it.sizeMode === "CUSTOM",
                     })}
                     {it.variant?.sku ? (
-                      <span className="mt-1 block text-[10px] uppercase tracking-wide">
+                      <span className="mt-1 block text-10px uppercase tracking-wide">
                         {buildWorkroomSku({
                           variantSku: it.variant.sku,
                           includeInSku: it.option?.group.includeInSku ?? Boolean(it.optionLabel),

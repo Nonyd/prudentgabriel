@@ -430,7 +430,7 @@ export function ProductsTable({
       ) : null}
 
       {published === "false" ? (
-        <div className="rounded-sm border border-amber-300 bg-amber-50 px-4 py-3 font-body text-[13px] text-amber-900">
+        <div className="rounded-sm border border-amber-300 bg-amber-50 px-4 py-3 font-body text-13px text-amber-900">
           These products were imported and are awaiting review. Set images, check prices, then publish.
         </div>
       ) : null}
@@ -471,7 +471,7 @@ export function ProductsTable({
 
       <div className="-mx-4 overflow-x-auto glass-opaque px-4 md:mx-0 md:px-0">
         <table className="w-full min-w-[700px] text-left text-sm text-charcoal">
-          <thead className="border-b border-sand font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">
+          <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-[#A8A8A4]">
             <tr>
               <th className="w-10 p-3">
                 <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} aria-label="Select all on page" />
@@ -516,7 +516,7 @@ export function ProductsTable({
               >
                 <td className="p-2">
                   {reorderMode ? (
-                    <span className="font-mono text-[10px] text-[#A8A8A4]" aria-hidden>
+                    <span className="font-mono text-10px text-[#A8A8A4]" aria-hidden>
                       ∷
                     </span>
                   ) : (
@@ -535,12 +535,12 @@ export function ProductsTable({
                     {p.name}
                   </Link>
                   {!p.isPublished ? (
-                    <span className="mt-1 inline-block rounded-sm bg-sand px-2 py-0.5 font-sans text-[10px] uppercase tracking-wide text-choc">
+                    <span className="mt-1 inline-block rounded-sm bg-sand px-2 py-0.5 font-sans text-10px uppercase tracking-wide text-choc">
                       Draft
                     </span>
                   ) : null}
                   {!p.isPublished && p.basePriceNGN === 0 ? (
-                    <span className="mt-1 inline-block rounded-sm bg-amber-100 px-2 py-0.5 text-[10px] text-amber-900">
+                    <span className="mt-1 inline-block rounded-sm bg-amber-100 px-2 py-0.5 text-10px text-amber-900">
                       ⚠ Price needed
                     </span>
                   ) : null}

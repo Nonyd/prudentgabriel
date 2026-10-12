@@ -19,7 +19,7 @@ export function AdminPreviewBanner({ previewRole }: { previewRole?: string | nul
       <button
         type="button"
         onClick={() => void exitPreview()}
-        className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-nut underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc"
+        className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-nut underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc"
       >
         Exit preview
       </button>

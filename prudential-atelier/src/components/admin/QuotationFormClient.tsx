@@ -297,7 +297,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
       <div>
         <Link
           href="/admin/quotations"
-          className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light hover:text-nut"
+          className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light hover:text-nut"
         >
           ← Back to quotations
         </Link>
@@ -311,7 +311,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
       <div className="card-surface space-y-6 p-6">
         {!initialConsultationId ? (
           <section className="border-b border-sand pb-6">
-            <h2 className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
+            <h2 className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light">
               Link consultation (optional)
             </h2>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -370,7 +370,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
         ) : null}
 
         {linkedConsultation ? (
-          <div className="inline-flex items-center gap-2 rounded-full bg-lightbr/15 px-3 py-1 font-sans text-[10px] font-semibold uppercase tracking-wide text-lightbr">
+          <div className="inline-flex items-center gap-2 rounded-full bg-lightbr/15 px-3 py-1 font-sans text-10px font-semibold uppercase tracking-wide text-lightbr">
             Linked to consultation {linkedConsultation.bookingNumber}
           </div>
         ) : null}
@@ -426,7 +426,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
 
         {linkedConsultation && linkedConsultation.moodboardImages.length > 0 ? (
           <section>
-            <h2 className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
+            <h2 className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light">
               Reference images
             </h2>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -444,7 +444,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
 
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
+            <h2 className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light">
               Line items
             </h2>
             <Button

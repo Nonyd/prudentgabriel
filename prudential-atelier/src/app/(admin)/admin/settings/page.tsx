@@ -183,12 +183,12 @@ function SettingCardLink({
         <Icon className="h-8 w-8 shrink-0 text-[#37392d]" strokeWidth={1.25} aria-hidden />
         <div className="min-w-0 flex-1">
           <p className="font-body text-sm font-medium text-ink">{card.title}</p>
-          <p className="mt-1 font-body text-[13px] leading-snug text-[#6B6B68]">{card.description}</p>
+          <p className="mt-1 font-body text-13px leading-snug text-[#6B6B68]">{card.description}</p>
         </div>
       </div>
       <div className="flex shrink-0 flex-col items-end justify-between gap-2 pl-2">
         {count > 0 ? (
-          <span className="whitespace-nowrap font-body text-[11px] text-[#6B6B68]">
+          <span className="whitespace-nowrap font-body text-11px text-[#6B6B68]">
             {count} {countLabel}
           </span>
         ) : null}
@@ -228,7 +228,7 @@ export default async function AdminSettingsOverviewPage() {
       <div>
         <p className="eyebrow">Configuration</p>
         <h1 className="mt-2 font-serif text-2xl font-medium text-choc">Settings</h1>
-        <p className="mt-1 font-sans text-[13px] text-text-mid">
+        <p className="mt-1 font-sans text-13px text-text-mid">
           Store, brand, and system configuration. Website copy is edited under Content.
         </p>
       </div>
@@ -239,7 +239,7 @@ export default async function AdminSettingsOverviewPage() {
         <section key={section.title} className="space-y-4">
           <div>
             <h2 className="font-sans text-sm font-semibold text-ink">{section.title}</h2>
-            <p className="mt-1 font-sans text-[13px] text-text-mid">{section.description}</p>
+            <p className="mt-1 font-sans text-13px text-text-mid">{section.description}</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {section.cards.map((card) => (

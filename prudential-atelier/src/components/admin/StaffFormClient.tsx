@@ -59,7 +59,7 @@ export function StaffFormClient() {
       <div>
         <Link
           href="/admin/staff"
-          className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light hover:text-nut"
+          className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light hover:text-nut"
         >
           ← Staff directory
         </Link>

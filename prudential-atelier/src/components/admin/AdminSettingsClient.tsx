@@ -185,7 +185,7 @@ export function SettingsGroupCard({
 
   return (
     <div className="rounded-sm border border-sand bg-canvas p-6">
-      <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">{title}</h2>
+      <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">{title}</h2>
       <div className="mt-6 space-y-5">
         {local.map((row) => (
           <div key={row.key}>
@@ -200,7 +200,7 @@ export function SettingsGroupCard({
         type="button"
         disabled={saving}
         onClick={() => void save()}
-        className="mt-8 h-10 w-full bg-[#37392d] font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
+        className="mt-8 h-10 w-full bg-[#37392d] font-body text-11px font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
       >
         {saving ? "Saving…" : `Save ${title}`}
       </button>
@@ -259,7 +259,7 @@ export function AdminSettingsClient() {
           <SettingsGroupCard title="Email" group="EMAIL" rows={emailConfig} onSaved={load} />
           <SettingsGroupCard title="SMS" group="SMS" rows={rowsFor("SMS")} onSaved={load} />
           <div className="rounded-sm border border-sand bg-canvas p-6">
-            <p className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+            <p className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
               Email templates
             </p>
             <p className="mt-2 text-sm text-ink">
@@ -343,7 +343,7 @@ export function AdminSettingsClient() {
             <Tabs.Trigger
               key={t.id}
               value={t.id}
-              className="px-3 py-2 text-left font-body text-[11px] font-medium uppercase tracking-[0.1em] text-[#6B6B68] data-[state=active]:bg-[#F5F5F3] data-[state=active]:text-ink lg:w-full"
+              className="px-3 py-2 text-left font-body text-11px font-medium uppercase tracking-[0.1em] text-[#6B6B68] data-[state=active]:bg-[#F5F5F3] data-[state=active]:text-ink lg:w-full"
             >
               {t.label}
             </Tabs.Trigger>

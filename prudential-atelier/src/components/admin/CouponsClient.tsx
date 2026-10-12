@@ -132,14 +132,14 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
   return (
     <div className="mt-8 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="font-body text-[13px] text-[#6B6B68]">{coupons.filter((c) => c.isActive).length} active coupons</p>
+        <p className="font-body text-13px text-[#6B6B68]">{coupons.filter((c) => c.isActive).length} active coupons</p>
         <button
           type="button"
           onClick={() => {
             setEditing(null);
             setModalOpen(true);
           }}
-          className="bg-[#37392d] px-4 py-2 font-body text-[11px] font-medium uppercase tracking-wide text-white"
+          className="bg-[#37392d] px-4 py-2 font-body text-11px font-medium uppercase tracking-wide text-white"
         >
           + Create coupon
         </button>
@@ -147,19 +147,19 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="border border-sand bg-canvas p-4">
-          <p className="font-body text-[11px] uppercase text-[#6B6B68]">Active</p>
+          <p className="font-body text-11px uppercase text-[#6B6B68]">Active</p>
           <p className="mt-1 font-display text-2xl">{coupons.filter((c) => c.isActive).length}</p>
         </div>
         <div className="border border-sand bg-canvas p-4">
-          <p className="font-body text-[11px] uppercase text-[#6B6B68]">Total uses</p>
+          <p className="font-body text-11px uppercase text-[#6B6B68]">Total uses</p>
           <p className="mt-1 font-display text-2xl">{totalUses}</p>
         </div>
         <div className="border border-sand bg-canvas p-4">
-          <p className="font-body text-[11px] uppercase text-[#6B6B68]">Revenue saved</p>
+          <p className="font-body text-11px uppercase text-[#6B6B68]">Revenue saved</p>
           <p className="mt-1 font-display text-2xl">—</p>
         </div>
         <div className="border border-sand bg-canvas p-4">
-          <p className="font-body text-[11px] uppercase text-[#6B6B68]">Expiring soon</p>
+          <p className="font-body text-11px uppercase text-[#6B6B68]">Expiring soon</p>
           <p className="mt-1 font-display text-2xl">
             {
               coupons.filter(
@@ -176,7 +176,7 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
             key={f}
             type="button"
             onClick={() => setFilter(f)}
-            className={`border px-3 py-1.5 font-body text-[11px] uppercase ${
+            className={`border px-3 py-1.5 font-body text-11px uppercase ${
               filter === f ? "border-[#37392d] bg-[#37392d] text-white" : "border-sand text-charcoal"
             }`}
           >
@@ -220,7 +220,7 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
 
       <div className="overflow-x-auto border border-sand bg-canvas">
         <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="font-body text-[11px] uppercase text-[#A8A8A4]">
+          <thead className="font-body text-11px uppercase text-[#A8A8A4]">
             <tr>
               <th className="w-10 p-3">
                 <input

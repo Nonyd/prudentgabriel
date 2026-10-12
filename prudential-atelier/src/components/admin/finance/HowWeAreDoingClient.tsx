@@ -47,7 +47,7 @@ function Three({
 }) {
   const cell = (label: string, value: number, was: number | null) => (
     <div>
-      <p className="font-sans text-[10px] uppercase tracking-wider text-[#6B6B68]">{label}</p>
+      <p className="font-sans text-10px uppercase tracking-wider text-[#6B6B68]">{label}</p>
       <p className="mt-1 font-display text-2xl text-choc">{naira(value)}</p>
       {was != null ? (
         <p className="mt-1 font-sans text-xs text-[#6B6B68]">Before: {naira(was)}</p>

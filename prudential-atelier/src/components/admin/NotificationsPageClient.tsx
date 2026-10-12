@@ -167,13 +167,13 @@ export function NotificationsPageClient({
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="admin-topbar-title font-serif font-medium text-choc">Notifications</h1>
         <div className="flex items-center gap-2">
-          <span className="rounded-sm bg-nut/10 px-2 py-1 font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-nut">
+          <span className="rounded-sm bg-nut/10 px-2 py-1 font-sans text-11px font-semibold uppercase tracking-[0.08em] text-nut">
             {unreadCount || initialUnreadCount} unread
           </span>
           <button
             type="button"
             onClick={() => void markAllRead()}
-            className="rounded-sm border border-sand px-3 py-1.5 font-sans text-[11px] text-nut hover:bg-sand/30"
+            className="rounded-sm border border-sand px-3 py-1.5 font-sans text-11px text-nut hover:bg-sand/30"
           >
             Mark all read
           </button>
@@ -189,7 +189,7 @@ export function NotificationsPageClient({
               setSelectedFilter(tab.id);
               setPage(1);
             }}
-            className={`border-b-2 px-2 py-1.5 font-sans text-[11px] uppercase tracking-[0.08em] ${
+            className={`border-b-2 px-2 py-1.5 font-sans text-11px uppercase tracking-[0.08em] ${
               selectedFilter === tab.id ? "border-nut text-choc" : "border-transparent text-text-light"
             }`}
           >
@@ -216,9 +216,9 @@ export function NotificationsPageClient({
                 >
                   <span className="mt-0.5">{iconFor(row.type)}</span>
                   <div className="min-w-0 flex-1">
-                    <p className="font-sans text-[13px] font-medium text-choc">{row.title}</p>
-                    <p className="mt-0.5 font-sans text-[12px] text-text-mid">{row.message}</p>
-                    <p className="mt-1 font-sans text-[11px] text-text-light">
+                    <p className="font-sans text-13px font-medium text-choc">{row.title}</p>
+                    <p className="mt-0.5 font-sans text-12px text-text-mid">{row.message}</p>
+                    <p className="mt-1 font-sans text-11px text-text-light">
                       {formatDistanceToNow(new Date(row.createdAt), { addSuffix: true })}
                       {row.acknowledgedByName
                         ? ` · Picked up by ${row.acknowledgedByName}`
@@ -231,7 +231,7 @@ export function NotificationsPageClient({
                   <button
                     type="button"
                     onClick={() => void acknowledge(row.id)}
-                    className="shrink-0 rounded-sm border border-sand px-2 py-1 font-sans text-[10px] uppercase tracking-[0.08em] text-nut hover:bg-sand/30"
+                    className="shrink-0 rounded-sm border border-sand px-2 py-1 font-sans text-10px uppercase tracking-[0.08em] text-nut hover:bg-sand/30"
                   >
                     Pick up
                   </button>
@@ -243,7 +243,7 @@ export function NotificationsPageClient({
       </ul>
 
       {totalPages > 1 ? (
-        <div className="mt-4 flex items-center justify-between font-sans text-[11px] text-text-mid">
+        <div className="mt-4 flex items-center justify-between font-sans text-11px text-text-mid">
           <span>
             Page {page} of {totalPages}
           </span>
@@ -268,7 +268,7 @@ export function NotificationsPageClient({
         </div>
       ) : null}
 
-      <Link href="/admin" className="mt-6 inline-block font-sans text-[11px] text-nut hover:underline">
+      <Link href="/admin" className="mt-6 inline-block font-sans text-11px text-nut hover:underline">
         ← Back to dashboard
       </Link>
     </div>

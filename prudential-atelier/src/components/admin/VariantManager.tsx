@@ -112,7 +112,7 @@ export function VariantManager({
 
       <div className="rounded-sm border border-sand bg-[#FAFAFA] p-3">
         <p className="text-xs uppercase tracking-wide text-[#A8A8A4]">Copy this price onto every size</p>
-        <p className="mt-1 text-[11px] text-[#6B6B68]">Replaces each size’s naira price. There is no undo.</p>
+        <p className="mt-1 text-11px text-[#6B6B68]">Replaces each size’s naira price. There is no undo.</p>
         <button
           type="button"
           onClick={() => setCopyOpen(true)}
@@ -223,10 +223,10 @@ export function VariantManager({
                     <tr className="border-b border-[#F5F5F3] bg-[#FAFAFA]">
                       <td colSpan={cols.sale ? 4 : 3} className="p-2">
                         <div className="grid gap-2 sm:grid-cols-2">
-                          <label className="text-[11px] uppercase text-[#A8A8A4]">
+                          <label className="text-11px uppercase text-[#A8A8A4]">
                             Stock code
                             <input
-                              className={`${cell} mt-0.5 font-mono text-[11px]`}
+                              className={`${cell} mt-0.5 font-mono text-11px`}
                               value={v.sku}
                               onChange={(e) => update(i, { sku: e.target.value, skuManual: true })}
                               placeholder={
@@ -234,7 +234,7 @@ export function VariantManager({
                               }
                             />
                           </label>
-                          <label className="text-[11px] uppercase text-[#A8A8A4]">
+                          <label className="text-11px uppercase text-[#A8A8A4]">
                             Price in dollars
                             <input
                               type="number"
@@ -247,7 +247,7 @@ export function VariantManager({
                               }
                             />
                           </label>
-                          <label className="text-[11px] uppercase text-[#A8A8A4]">
+                          <label className="text-11px uppercase text-[#A8A8A4]">
                             Price in pounds
                             <input
                               type="number"
@@ -260,7 +260,7 @@ export function VariantManager({
                               }
                             />
                           </label>
-                          <label className="text-[11px] uppercase text-[#A8A8A4]">
+                          <label className="text-11px uppercase text-[#A8A8A4]">
                             Packed weight kg
                             <input
                               type="number"
@@ -273,7 +273,7 @@ export function VariantManager({
                             />
                           </label>
                           <div className="grid grid-cols-3 gap-1">
-                            <label className="text-[11px] uppercase text-[#A8A8A4]">
+                            <label className="text-11px uppercase text-[#A8A8A4]">
                               Box L
                               <input
                                 type="number"
@@ -287,7 +287,7 @@ export function VariantManager({
                                 }
                               />
                             </label>
-                            <label className="text-[11px] uppercase text-[#A8A8A4]">
+                            <label className="text-11px uppercase text-[#A8A8A4]">
                               Box W
                               <input
                                 type="number"
@@ -301,7 +301,7 @@ export function VariantManager({
                                 }
                               />
                             </label>
-                            <label className="text-[11px] uppercase text-[#A8A8A4]">
+                            <label className="text-11px uppercase text-[#A8A8A4]">
                               Box H
                               <input
                                 type="number"

@@ -116,7 +116,7 @@ export function InvoicesClient() {
           <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">
             Quotations &amp; Invoices
           </h1>
-          <p className="mt-1 font-body text-[13px] text-text-mid">Prudential Atelier</p>
+          <p className="mt-1 font-body text-13px text-text-mid">Prudential Atelier</p>
           <InvoicesQuotationsNav />
         </div>
         <Link href="/admin/invoices/new" className="admin-cta">
@@ -133,7 +133,7 @@ export function InvoicesClient() {
             { label: "Paid this month", value: String(stats.paidThisMonth) },
           ].map((c) => (
             <div key={c.label} className="card-surface p-4">
-              <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-text-light">{c.label}</p>
+              <p className="font-body text-10px font-medium uppercase tracking-[0.12em] text-text-light">{c.label}</p>
               <p className="mt-2 font-body text-lg text-ink">{c.value}</p>
             </div>
           ))}
@@ -194,7 +194,7 @@ export function InvoicesClient() {
       <div className="mt-6 overflow-x-auto border border-sand">
         <table className="w-full min-w-[900px] border-collapse font-body text-xs">
           <thead>
-            <tr className="bg-[var(--choc-deep)] text-left text-[10px] font-medium uppercase tracking-[0.1em] text-[var(--ivory-deep)]">
+            <tr className="bg-[var(--choc-deep)] text-left text-10px font-medium uppercase tracking-[0.1em] text-[var(--ivory-deep)]">
               <th className="px-3 py-2">Invoice #</th>
               <th className="px-3 py-2">Client</th>
               <th className="px-3 py-2">Order</th>
@@ -225,7 +225,7 @@ export function InvoicesClient() {
                 const overdue = r.dueDate && new Date(r.dueDate) < new Date() && r.balanceDue > 0;
                 return (
                   <tr key={r.id} className="border-t border-sand">
-                    <td className="px-3 py-2 font-mono text-[11px] text-olive">{r.invoiceNumber}</td>
+                    <td className="px-3 py-2 font-mono text-11px text-olive">{r.invoiceNumber}</td>
                     <td className="px-3 py-2">
                       <div className="font-medium">{r.clientName}</div>
                       <div className="text-text-mid">{r.clientEmail}</div>

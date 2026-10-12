@@ -38,8 +38,8 @@ export function ShippingZonesClient({ initialZones }: { initialZones: ShippingZo
     <div className="mt-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-[24px] text-ink">Shipping Zones</h1>
-          <p className="font-body text-[13px] text-[#6B6B68]">{zones.length} zones configured</p>
+          <h1 className="font-display text-24px text-ink">Shipping Zones</h1>
+          <p className="font-body text-13px text-[#6B6B68]">{zones.length} zones configured</p>
         </div>
         <button
           type="button"
@@ -65,7 +65,7 @@ export function ShippingZonesClient({ initialZones }: { initialZones: ShippingZo
                 <p className="font-body text-sm font-medium text-ink">{zone.name}</p>
                 <p className="font-body text-xs text-[#6B6B68]">{zone.countries.join(", ")}</p>
                 {zone.countries.includes("NG") ? (
-                  <p className="font-body text-[11px] text-[#6B6B68]">{zone.states.length ? zone.states.join(", ") : "All states"}</p>
+                  <p className="font-body text-11px text-[#6B6B68]">{zone.states.length ? zone.states.join(", ") : "All states"}</p>
                 ) : null}
               </div>
               <div>
@@ -80,8 +80,8 @@ export function ShippingZonesClient({ initialZones }: { initialZones: ShippingZo
                   Active
                 </label>
                 <div className="mt-2 flex justify-end gap-2">
-                  <button type="button" onClick={() => { setEditing(zone); setOpen(true); }} className="font-body text-[11px] text-[#37392d] hover:underline">Edit</button>
-                  <button type="button" onClick={() => void remove(zone.id)} className="font-body text-[11px] text-red-600 hover:underline">Delete</button>
+                  <button type="button" onClick={() => { setEditing(zone); setOpen(true); }} className="font-body text-11px text-[#37392d] hover:underline">Edit</button>
+                  <button type="button" onClick={() => void remove(zone.id)} className="font-body text-11px text-red-600 hover:underline">Delete</button>
                 </div>
               </div>
             </div>

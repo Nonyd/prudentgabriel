@@ -27,7 +27,7 @@ export function PermissionHistory({
 
   return (
     <div>
-      <p className="mb-2 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+      <p className="mb-2 font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-mid">
         History
       </p>
       {items.length === 0 ? (
@@ -37,7 +37,7 @@ export function PermissionHistory({
           {items.map((row) => (
             <li key={row.id} className="border-b border-sand/60 pb-2">
               <p className="font-sans text-xs text-text-dark">{row.description}</p>
-              <p className="mt-0.5 font-sans text-[10px] uppercase tracking-[0.12em] text-text-light">
+              <p className="mt-0.5 font-sans text-10px uppercase tracking-[0.12em] text-text-light">
                 {row.userEmail ?? "system"} · {new Date(row.createdAt).toLocaleString()}
               </p>
             </li>

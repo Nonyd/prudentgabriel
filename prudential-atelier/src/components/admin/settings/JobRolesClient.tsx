@@ -104,7 +104,7 @@ function RoleFormModal({
       <div className="space-y-5">
         {!role ? (
           <div>
-            <label className="mb-2 block font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+            <label className="mb-2 block font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-mid">
               Start from a template
             </label>
             <select
@@ -123,7 +123,7 @@ function RoleFormModal({
         ) : null}
 
         <div>
-          <label className="mb-2 block font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+          <label className="mb-2 block font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-mid">
             Role name
           </label>
           <input
@@ -135,7 +135,7 @@ function RoleFormModal({
         </div>
 
         <div>
-          <label className="mb-2 block font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+          <label className="mb-2 block font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-mid">
             Description
           </label>
           <textarea
@@ -147,7 +147,7 @@ function RoleFormModal({
         </div>
 
         <div className="space-y-4">
-          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+          <p className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-mid">
             Permissions
           </p>
           {PERMISSION_GROUPS.map((group) => (
@@ -270,7 +270,7 @@ export function JobRolesClient() {
                 {role.isPreset ? <Badge variant="gold">PRESET</Badge> : null}
               </div>
               {role.description ? (
-                <p className="mt-2 font-serif text-[13px] leading-relaxed text-text-mid">
+                <p className="mt-2 font-serif text-13px leading-relaxed text-text-mid">
                   {role.description}
                 </p>
               ) : null}

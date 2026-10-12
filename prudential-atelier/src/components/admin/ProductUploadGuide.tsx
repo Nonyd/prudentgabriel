@@ -3,7 +3,7 @@ import { PrintGuideButton } from "./PrintGuideButton";
 
 function Must() {
   return (
-    <span className="ml-2 inline-block rounded-sm bg-wine px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-gold">
+    <span className="ml-2 inline-block rounded-sm bg-wine px-1.5 py-0.5 align-middle text-10px font-semibold uppercase tracking-wide text-gold">
       Must fill
     </span>
   );
@@ -11,7 +11,7 @@ function Must() {
 
 function Skip() {
   return (
-    <span className="ml-2 inline-block rounded-sm border border-sand px-1.5 py-0.5 align-middle text-[10px] uppercase tracking-wide text-[#A8A8A4]">
+    <span className="ml-2 inline-block rounded-sm border border-sand px-1.5 py-0.5 align-middle text-10px uppercase tracking-wide text-[#A8A8A4]">
       Skip if unsure
     </span>
   );
@@ -26,7 +26,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
         </span>
         {title}
       </h2>
-      <div className="mt-4 space-y-3 font-body text-[15px] leading-relaxed text-charcoal">{children}</div>
+      <div className="mt-4 space-y-3 font-body text-15px leading-relaxed text-charcoal">{children}</div>
     </section>
   );
 }
@@ -50,7 +50,7 @@ export function ProductUploadGuide() {
 
       <div className="rounded-sm border border-wine/30 bg-wine/5 p-5 print:break-inside-avoid">
         <p className="font-display text-lg text-wine">Three rules</p>
-        <ol className="mt-3 list-decimal space-y-2 pl-5 text-[15px] leading-relaxed text-charcoal">
+        <ol className="mt-3 list-decimal space-y-2 pl-5 text-15px leading-relaxed text-charcoal">
           <li>
             Do <strong>not</strong> click <strong>Publish</strong> until photos, naira price, and sizes
             are filled in.
@@ -66,10 +66,10 @@ export function ProductUploadGuide() {
 
       <section className="rounded-sm border border-sand bg-canvas p-6 print:break-inside-avoid">
         <h2 className="font-display text-xl text-gold">Before you sit down</h2>
-        <p className="mt-3 text-[15px] leading-relaxed text-charcoal">
+        <p className="mt-3 text-15px leading-relaxed text-charcoal">
           Get these ready on your computer or phone:
         </p>
-        <ul className="mt-3 list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-charcoal">
+        <ul className="mt-3 list-disc space-y-2 pl-5 text-15px leading-relaxed text-charcoal">
           <li>The product name (exactly as it should appear, for example “The Avril Gown”).</li>
           <li>
             At least <strong>2 photos</strong>, ideally 4–6. First photo = front. Second photo = the look that
@@ -81,12 +81,12 @@ export function ProductUploadGuide() {
             A short sentence about the piece, plus fabric and care notes if you have them.
           </li>
         </ul>
-        <div className="mt-4 rounded-sm bg-amber-50 px-4 py-3 text-[14px] leading-relaxed text-amber-950">
+        <div className="mt-4 rounded-sm bg-amber-50 px-4 py-3 text-14px leading-relaxed text-amber-950">
           <strong>iPhone photos:</strong> the website does <em>not</em> accept HEIC files. Save or export as
           JPG or PNG first. On iPhone: Settings → Camera → Formats → Most Compatible. Or AirDrop / share
           the photo and choose JPG.
         </div>
-        <p className="mt-3 text-[14px] text-[#6B6B68]">
+        <p className="mt-3 text-14px text-[#6B6B68]">
           Allowed photo types: JPG, JPEG, PNG, or WebP. Each photo must be under 5 MB. Do not upload PDF,
           Word, GIF, or video here.
         </p>
@@ -98,21 +98,21 @@ export function ProductUploadGuide() {
           <div className="rounded-sm border border-gold/40 bg-gold/5 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gold">Easier — use this if you can</p>
             <p className="mt-2 font-display text-lg text-charcoal">Copy a similar product</p>
-            <ol className="mt-2 list-decimal space-y-1 pl-5 text-[14px] leading-relaxed text-charcoal">
+            <ol className="mt-2 list-decimal space-y-1 pl-5 text-14px leading-relaxed text-charcoal">
               <li>Open Products and find a piece that is almost the same.</li>
               <li>Click the name to open it.</li>
               <li>Click <strong>Duplicate</strong> at the top.</li>
               <li>Change the name, photos, and price.</li>
               <li>Save draft, check, then Publish.</li>
             </ol>
-            <p className="mt-2 text-[13px] text-[#6B6B68]">
+            <p className="mt-2 text-13px text-[#6B6B68]">
               Duplicate makes an unpublished copy. Customers cannot see it until you publish.
             </p>
           </div>
           <div className="rounded-sm border border-sand p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-[#A8A8A4]">From scratch</p>
             <p className="mt-2 font-display text-lg text-charcoal">Start with a blank form</p>
-            <p className="mt-2 text-[14px] leading-relaxed text-charcoal">
+            <p className="mt-2 text-14px leading-relaxed text-charcoal">
               Use this when there is no similar product to copy. The form has four stages: the piece,
             sizes and prices, delivery and custom, then publishing.
             </p>
@@ -137,7 +137,7 @@ export function ProductUploadGuide() {
             Click the wine-coloured <strong>+ Add product</strong> button at the top right.
           </li>
         </ol>
-        <p className="text-[14px] text-[#6B6B68]">
+        <p className="text-14px text-[#6B6B68]">
           Only use staging.prudentgabriel.com if your manager told you to practise there. The live shop
           is prudentgabriel.com.
         </p>
@@ -195,7 +195,7 @@ export function ProductUploadGuide() {
           To delete a photo, click <strong>Remove</strong>. If you remove the primary photo, the next one
           becomes primary automatically.
         </p>
-        <p className="text-[14px] text-[#6B6B68]">
+        <p className="text-14px text-[#6B6B68]">
           You need at least two photos for the hover change to work on the shop. One photo is allowed, but
           nothing will swap on hover.
         </p>
@@ -252,7 +252,7 @@ export function ProductUploadGuide() {
           Need a size that is not in the list (for example One Size)? Click{" "}
           <strong>+ Add size</strong> and type the size name in the Size box.
         </p>
-        <div className="rounded-sm bg-amber-50 px-4 py-3 text-[14px] leading-relaxed text-amber-950">
+        <div className="rounded-sm bg-amber-50 px-4 py-3 text-14px leading-relaxed text-amber-950">
           You must keep at least one size row. Do not delete the last row.
         </div>
       </Step>
@@ -361,7 +361,7 @@ export function ProductUploadGuide() {
           </li>
           <li>
             Open a new browser tab and go to the shop. Search for the product name, or open{" "}
-            <code className="rounded-sm bg-[#F5F5F3] px-1 text-[13px]">prudentgabriel.com/shop/</code>{" "}
+            <code className="rounded-sm bg-[#F5F5F3] px-1 text-13px">prudentgabriel.com/shop/</code>{" "}
             plus the slug shown under the name box.
           </li>
         </ol>
@@ -377,11 +377,11 @@ export function ProductUploadGuide() {
 
       <section className="rounded-sm border border-sand bg-canvas p-6 print:break-inside-avoid">
         <h2 className="font-display text-xl text-gold">Put it in a collection</h2>
-        <p className="mt-3 text-[15px] leading-relaxed text-charcoal">
+        <p className="mt-3 text-15px leading-relaxed text-charcoal">
           Publishing does not automatically put the product in a collection page (for example a named
           launch). Do this after the product exists:
         </p>
-        <ol className="mt-3 list-decimal space-y-2 pl-5 text-[15px] leading-relaxed text-charcoal">
+        <ol className="mt-3 list-decimal space-y-2 pl-5 text-15px leading-relaxed text-charcoal">
           <li>
             Left menu: <strong>Shop</strong> → <strong>Collections</strong>.
           </li>
@@ -393,7 +393,7 @@ export function ProductUploadGuide() {
           </li>
           <li>Save the collection.</li>
         </ol>
-        <p className="mt-3 text-[14px] text-[#6B6B68]">
+        <p className="mt-3 text-14px text-[#6B6B68]">
           If the collection has an auto-tag, you can instead put that same tag on the product (step 7)
           and skip the manual search — but the product must be published for auto-tag to pick it up.
         </p>
@@ -401,16 +401,16 @@ export function ProductUploadGuide() {
 
       <section className="rounded-sm border border-sand bg-canvas p-6 print:break-inside-avoid">
         <h2 className="font-display text-xl text-gold">Change an existing product</h2>
-        <ol className="mt-3 list-decimal space-y-2 pl-5 text-[15px] leading-relaxed text-charcoal">
+        <ol className="mt-3 list-decimal space-y-2 pl-5 text-15px leading-relaxed text-charcoal">
           <li>Go to Products.</li>
           <li>Use the search box to find the name.</li>
           <li>Click the product name.</li>
           <li>Change what you need. Click Save draft or Publish when finished.</li>
         </ol>
-        <p className="mt-3 text-[15px] leading-relaxed text-charcoal">
+        <p className="mt-3 text-15px leading-relaxed text-charcoal">
           On the Products list you can also:
         </p>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-[15px] leading-relaxed text-charcoal">
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-15px leading-relaxed text-charcoal">
           <li>Turn Published on or off with the switch.</li>
           <li>Turn Featured or New on or off with the switches.</li>
           <li>
@@ -418,7 +418,7 @@ export function ProductUploadGuide() {
             sizes, click the name and edit each size row.
           </li>
         </ul>
-        <p className="mt-3 text-[14px] text-[#6B6B68]">
+        <p className="mt-3 text-14px text-[#6B6B68]">
           Do not click Delete unless you are sure. Deleted products cannot be brought back. Hide with
           Unpublish instead.
         </p>
@@ -426,7 +426,7 @@ export function ProductUploadGuide() {
 
       <section className="rounded-sm border border-sand bg-canvas p-6 print:break-inside-avoid">
         <h2 className="font-display text-xl text-gold">If something goes wrong</h2>
-        <dl className="mt-4 space-y-4 text-[15px] leading-relaxed text-charcoal">
+        <dl className="mt-4 space-y-4 text-15px leading-relaxed text-charcoal">
           <div>
             <dt className="font-medium">The page says the name or web address is too short / invalid</dt>
             <dd className="mt-1 text-[#6B6B68]">
@@ -477,8 +477,8 @@ export function ProductUploadGuide() {
 
       <section className="rounded-sm border border-wine/30 bg-wine/5 p-6 print:break-inside-avoid">
         <h2 className="font-display text-xl text-wine">Printable checklist</h2>
-        <p className="mt-2 text-[14px] text-[#6B6B68]">Tick these before you click Publish.</p>
-        <ul className="mt-4 space-y-2 text-[15px] text-charcoal">
+        <p className="mt-2 text-14px text-[#6B6B68]">Tick these before you click Publish.</p>
+        <ul className="mt-4 space-y-2 text-15px text-charcoal">
           {[
             "Name is spelled correctly",
             "Web address was left alone (filled itself)",

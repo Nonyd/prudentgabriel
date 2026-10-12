@@ -191,7 +191,7 @@ export function ErrorLogClient() {
                   )}
                 </div>
                 {expanded === row.id && row.stack ? (
-                  <pre className="overflow-x-auto bg-choc/5 px-4 py-3 font-mono text-[11px] text-text-mid">
+                  <pre className="overflow-x-auto bg-choc/5 px-4 py-3 font-mono text-11px text-text-mid">
                     {row.stack}
                   </pre>
                 ) : null}

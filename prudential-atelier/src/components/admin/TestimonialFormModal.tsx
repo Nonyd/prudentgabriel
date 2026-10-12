@@ -205,7 +205,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
         <Dialog.Overlay className="fixed inset-0 z-[120] bg-black/40" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[121] max-h-[90vh] w-[min(96vw,560px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto glass-3 glass-panel p-6">
           <div className="flex items-start justify-between gap-4">
-            <Dialog.Title className="font-display text-[22px] text-ink">
+            <Dialog.Title className="font-display text-22px text-ink">
               {isEdit ? "Update Testimonial" : "Add Testimonial"}
             </Dialog.Title>
             <Dialog.Close className="text-charcoal" aria-label="Close">
@@ -215,7 +215,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
 
           <div className="mt-6 space-y-6">
             <fieldset>
-              <legend className="font-label text-[10px] uppercase tracking-wide text-[#A8A8A4]">Client</legend>
+              <legend className="font-label text-10px uppercase tracking-wide text-[#A8A8A4]">Client</legend>
               <div className="mt-2 flex flex-wrap gap-4">
                 <label className="flex cursor-pointer items-center gap-2 font-body text-sm text-charcoal">
                   <input
@@ -316,7 +316,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
             </fieldset>
 
             <div>
-              <p className="font-label text-[10px] uppercase tracking-wide text-[#A8A8A4]">Rating</p>
+              <p className="font-label text-10px uppercase tracking-wide text-[#A8A8A4]">Rating</p>
               <StarRating
                 rating={rating}
                 size="lg"
@@ -328,7 +328,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
             </div>
 
             <div>
-              <label className="font-label text-[10px] uppercase tracking-wide text-[#A8A8A4]">Testimonial</label>
+              <label className="font-label text-10px uppercase tracking-wide text-[#A8A8A4]">Testimonial</label>
               <textarea
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
@@ -363,7 +363,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
             </div>
 
             <div>
-              <p className="font-label text-[10px] uppercase tracking-wide text-[#A8A8A4]">Photo (optional)</p>
+              <p className="font-label text-10px uppercase tracking-wide text-[#A8A8A4]">Photo (optional)</p>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <label className="cursor-pointer border border-sand px-3 py-2 font-body text-xs text-charcoal hover:bg-[#FAFAFA]">
                   {uploading ? "Uploading…" : "Upload photo"}
@@ -389,7 +389,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
             </div>
 
             <div className="space-y-3 border-t border-sand pt-4">
-              <p className="font-label text-[10px] uppercase tracking-wide text-[#A8A8A4]">Status</p>
+              <p className="font-label text-10px uppercase tracking-wide text-[#A8A8A4]">Status</p>
               <div className="flex items-center justify-between gap-4">
                 <span className="font-body text-sm text-charcoal">Approved</span>
                 <Toggle checked={isApproved} srLabel="Approved" onChange={setIsApproved} />
@@ -414,7 +414,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
               type="button"
               disabled={saving}
               onClick={() => void submit()}
-              className="rounded-[3px] bg-choc px-5 py-2.5 font-label text-[11px] font-semibold uppercase tracking-wide text-cream disabled:opacity-50"
+              className="rounded-[3px] bg-choc px-5 py-2.5 font-label text-11px font-semibold uppercase tracking-wide text-cream disabled:opacity-50"
             >
               {saving ? "Saving…" : isEdit ? "Update Testimonial" : "Save Testimonial"}
             </button>

@@ -10,7 +10,7 @@ interface KPICardProps {
 export function KPICard({ label, value, hint, className }: KPICardProps) {
   return (
     <div className={cn("card-surface p-5", className)}>
-      <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
+      <p className="font-sans text-10px font-semibold uppercase tracking-[0.16em] text-text-light">
         {label}
       </p>
       <p className="mt-3 font-serif text-3xl font-medium text-choc">{value}</p>

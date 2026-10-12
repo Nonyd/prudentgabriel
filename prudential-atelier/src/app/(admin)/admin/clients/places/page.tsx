@@ -31,7 +31,7 @@ export default async function ClientPlacesPage() {
           {country.name === NOT_RECORDED ? null : (
             <table className="mt-4 w-full font-sans text-sm">
               <thead>
-                <tr className="text-left text-[10px] uppercase tracking-wide text-text-light">
+                <tr className="text-left text-10px uppercase tracking-wide text-text-light">
                   <th className="pb-2 font-medium">State</th>
                   <th className="pb-2 font-medium">Cities</th>
                   <th className="pb-2 text-right font-medium">Clients</th>

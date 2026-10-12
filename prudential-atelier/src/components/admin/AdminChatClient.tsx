@@ -261,7 +261,7 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
   return (
     <div>
       <ChatSettings />
-      <div className="mt-4 flex flex-wrap items-center gap-2 font-body text-[11px]">
+      <div className="mt-4 flex flex-wrap items-center gap-2 font-body text-11px">
         <input
           className="min-w-[220px] flex-1 border border-sand px-3 py-1.5 text-sm"
           value={query}
@@ -299,9 +299,9 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
               >
                 <span className="flex justify-between gap-2">
                   <strong className="text-ink">{c.visitorName}</strong>
-                  <span className="text-[10px] text-[#6B6B68]">{new Date(c.lastMessageAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span>
+                  <span className="text-10px text-[#6B6B68]">{new Date(c.lastMessageAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span>
                 </span>
-                <span className="block text-[11px] uppercase tracking-[0.06em] text-[#6B6B68]">
+                <span className="block text-11px uppercase tracking-[0.06em] text-[#6B6B68]">
                   {c.contextKind === "ATELIER" ? "Atelier" : c.contextLabel ?? c.contextPath}
                 </span>
                 {c.last ? <span className="mt-1 block truncate text-xs text-[#6B6B68]">{c.last.body}</span> : null}
@@ -355,7 +355,7 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
                     )}
                   >
                     {m.body}
-                    {m.emailedAt ? <span className="mt-1 block text-[10px] opacity-70">Also emailed</span> : null}
+                    {m.emailedAt ? <span className="mt-1 block text-10px opacity-70">Also emailed</span> : null}
                   </div>
                 ))}
               </div>

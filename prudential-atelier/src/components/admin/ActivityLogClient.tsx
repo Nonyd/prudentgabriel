@@ -143,7 +143,7 @@ export function ActivityLogClient() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[800px] text-left">
               <thead>
-                <tr className="border-b border-sand bg-bg/50 font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-light">
+                <tr className="border-b border-sand bg-bg/50 font-sans text-10px font-semibold uppercase tracking-[0.12em] text-text-light">
                   <th className="px-4 py-3">Time</th>
                   <th className="px-4 py-3">User</th>
                   <th className="px-4 py-3">Viewed as</th>
@@ -161,7 +161,7 @@ export function ActivityLogClient() {
                     <td className="px-4 py-3">
                       <p className="font-sans text-xs">{row.userEmail ?? "—"}</p>
                       {row.userRole ? (
-                        <p className="font-sans text-[10px] uppercase text-text-light">{row.userRole}</p>
+                        <p className="font-sans text-10px uppercase text-text-light">{row.userRole}</p>
                       ) : null}
                     </td>
                     <td className="px-4 py-3 font-sans text-xs text-text-mid">
@@ -178,7 +178,7 @@ export function ActivityLogClient() {
                       {row.snapshot ? (
                         <details className="mt-1">
                           <summary className="cursor-pointer text-xs text-olive">Snapshot</summary>
-                          <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap font-mono text-[10px] text-text-mid">
+                          <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap font-mono text-10px text-text-mid">
                             {JSON.stringify(row.snapshot, null, 2)}
                           </pre>
                         </details>

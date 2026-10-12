@@ -103,7 +103,7 @@ export function CronJobsClient() {
     <div className="mt-8 overflow-x-auto border border-sand">
       <table className="w-full min-w-[960px] border-collapse font-body text-xs">
         <thead>
-          <tr className="bg-[#37392d] text-left text-[10px] font-medium uppercase tracking-[0.1em] text-white">
+          <tr className="bg-[#37392d] text-left text-10px font-medium uppercase tracking-[0.1em] text-white">
             <th className="px-3 py-2">Job</th>
             <th className="px-3 py-2">Schedule</th>
             <th className="px-3 py-2">Last run</th>
@@ -120,32 +120,32 @@ export function CronJobsClient() {
                 <div className="font-medium text-ink">{job.name}</div>
                 <div className="mt-0.5 text-[#6B6B68]">{job.description}</div>
                 {!job.migrated ? (
-                  <div className="mt-1 text-[10px] uppercase tracking-wide text-[#98755B]">
+                  <div className="mt-1 text-10px uppercase tracking-wide text-[#98755B]">
                     Legacy handler
                   </div>
                 ) : null}
                 {job.stale ? (
-                  <div className="mt-1 text-[10px] font-medium uppercase tracking-wide text-amber-800">
+                  <div className="mt-1 text-10px font-medium uppercase tracking-wide text-amber-800">
                     Stale — last OK older than 2× interval
                   </div>
                 ) : null}
               </td>
-              <td className="px-3 py-3 font-mono text-[11px] text-olive">{job.schedule}</td>
+              <td className="px-3 py-3 font-mono text-11px text-olive">{job.schedule}</td>
               <td className="px-3 py-3 text-ink">
                 {formatWhen(job.lastRun?.startedAt)}
                 {job.lastRun?.host ? (
-                  <div className="text-[10px] text-[#6B6B68]">{job.lastRun.host}</div>
+                  <div className="text-10px text-[#6B6B68]">{job.lastRun.host}</div>
                 ) : null}
               </td>
               <td className={`px-3 py-3 font-medium ${statusClass(job.lastRun?.status, job.stale)}`}>
                 {job.lastRun?.status ?? "never"}
                 {job.lastRun?.hasMore && job.lastRun.status === "OK" ? (
-                  <div className="mt-1 font-normal text-[10px] text-olive">
+                  <div className="mt-1 font-normal text-10px text-olive">
                     Backlog remains (time budget)
                   </div>
                 ) : null}
                 {job.lastRun?.error ? (
-                  <div className="mt-1 max-w-[220px] font-normal text-[10px] text-red-700">
+                  <div className="mt-1 max-w-[220px] font-normal text-10px text-red-700">
                     {job.lastRun.error}
                   </div>
                 ) : null}
@@ -163,7 +163,7 @@ export function CronJobsClient() {
                   type="button"
                   disabled={running === job.name}
                   onClick={() => void runNow(job.name)}
-                  className="rounded-sm border border-sand bg-white px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-ink hover:border-olive disabled:opacity-50"
+                  className="rounded-sm border border-sand bg-white px-3 py-1.5 text-11px font-medium uppercase tracking-[0.08em] text-ink hover:border-olive disabled:opacity-50"
                 >
                   {running === job.name ? "Running…" : "Run now"}
                 </button>

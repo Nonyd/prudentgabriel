@@ -72,7 +72,7 @@ export function CareersApplicationsAdminClient({
 
       <div className="overflow-x-auto rounded-sm border border-sand bg-canvas">
         <table className="w-full min-w-[900px] text-left text-sm">
-          <thead className="border-b border-sand font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">
+          <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-[#A8A8A4]">
             <tr>
               <th className="p-3">Applicant</th>
               <th className="p-3">Position</th>
@@ -94,7 +94,7 @@ export function CareersApplicationsAdminClient({
                   {format(new Date(a.createdAt), "MMM d, yyyy")}
                 </td>
                 <td className="p-3">
-                  <span className={`rounded-sm px-2 py-0.5 font-label text-[9px] uppercase ${STATUS_COLORS[a.status]}`}>
+                  <span className={`rounded-sm px-2 py-0.5 font-label text-9px uppercase ${STATUS_COLORS[a.status]}`}>
                     {a.status}
                   </span>
                 </td>

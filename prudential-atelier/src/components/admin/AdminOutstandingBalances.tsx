@@ -34,7 +34,7 @@ export async function AdminOutstandingBalances() {
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse font-body text-sm">
           <thead>
-            <tr className="border-b border-sand bg-[#FAFAFA] text-left text-[10px] font-medium uppercase tracking-wide text-[#6B6B68]">
+            <tr className="border-b border-sand bg-[#FAFAFA] text-left text-10px font-medium uppercase tracking-wide text-[#6B6B68]">
               <th className="px-4 py-3">Client</th>
               <th className="px-4 py-3">Order</th>
               <th className="px-4 py-3 text-right">Total</th>

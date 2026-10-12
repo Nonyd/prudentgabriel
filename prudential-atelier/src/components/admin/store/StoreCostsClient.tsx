@@ -117,7 +117,7 @@ export function StoreCostsClient() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-text-light">Store</p>
+        <p className="font-sans text-11px font-medium uppercase tracking-[0.14em] text-text-light">Store</p>
         <h1 className="font-display text-2xl text-ink">Cost of production</h1>
         <p className="mt-1 max-w-2xl font-sans text-sm text-text-mid">
           Tailor figure and materials for a paid order — not payroll. Approve before raising a requisition.
@@ -129,7 +129,7 @@ export function StoreCostsClient() {
       <section className="border border-sand bg-bg-card p-6">
         <h2 className="font-display text-lg text-ink">New draft</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <label className="block font-sans text-[11px] uppercase tracking-wide text-text-light">
+          <label className="block font-sans text-11px uppercase tracking-wide text-text-light">
             Commission
             <select className={`${STORE_FIELD} mt-1`} value={bespokeOrderId} onChange={(e) => setBespokeOrderId(e.target.value)}>
               <option value="">—</option>
@@ -140,7 +140,7 @@ export function StoreCostsClient() {
               ))}
             </select>
           </label>
-          <label className="block font-sans text-[11px] uppercase tracking-wide text-text-light">
+          <label className="block font-sans text-11px uppercase tracking-wide text-text-light">
             Shop order
             <select className={`${STORE_FIELD} mt-1`} value={orderId} onChange={(e) => setOrderId(e.target.value)}>
               <option value="">—</option>
@@ -151,11 +151,11 @@ export function StoreCostsClient() {
               ))}
             </select>
           </label>
-          <label className="block font-sans text-[11px] uppercase tracking-wide text-text-light">
+          <label className="block font-sans text-11px uppercase tracking-wide text-text-light">
             Tailor cost (₦)
             <input className={`${STORE_FIELD} mt-1`} value={tailorCostNGN} onChange={(e) => setTailorCostNGN(e.target.value)} />
           </label>
-          <label className="block font-sans text-[11px] uppercase tracking-wide text-text-light">
+          <label className="block font-sans text-11px uppercase tracking-wide text-text-light">
             Notes
             <input className={`${STORE_FIELD} mt-1`} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </label>

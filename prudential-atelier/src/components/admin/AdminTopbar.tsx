@@ -57,7 +57,7 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
           target="_blank"
           rel="noopener noreferrer"
           title="View live site"
-          className="inline-flex items-center gap-1.5 font-sans text-[11px] font-medium text-text-mid transition-colors hover:text-choc"
+          className="inline-flex items-center gap-1.5 font-sans text-11px font-medium text-text-mid transition-colors hover:text-choc"
         >
           <ExternalLink className="h-4 w-4 shrink-0" strokeWidth={1.5} />
           <span className="hidden sm:inline">Homepage</span>
@@ -65,7 +65,7 @@ export function AdminTopbar({ onOpenNav }: { onOpenNav?: () => void }) {
         {isExecutive ? (
           <Link
             href="/admin/reports"
-            className="hidden items-center gap-2 rounded-sm bg-gold/20 px-4 py-2 font-sans text-[11px] font-semibold uppercase tracking-[0.1em] text-choc sm:inline-flex"
+            className="hidden items-center gap-2 rounded-sm bg-gold/20 px-4 py-2 font-sans text-11px font-semibold uppercase tracking-[0.1em] text-choc sm:inline-flex"
           >
             <Download className="h-3.5 w-3.5" />
             Weekly report

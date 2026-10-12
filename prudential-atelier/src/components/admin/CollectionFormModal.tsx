@@ -332,51 +332,51 @@ export function CollectionFormModal({
               <div className="grid gap-0 pb-4 md:grid-cols-[3fr_2fr]">
             <div className="space-y-6 border-b border-sand p-6 md:border-b-0 md:border-r">
               <div>
-                <label className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">
+                <label className="font-body text-11px font-medium uppercase tracking-wide text-[#6B6B68]">
                   Collection name *
                 </label>
                 <input
                   {...form.register("name")}
                   onBlur={onNameBlur}
-                  className="mt-1 w-full border border-sand px-3 py-2 text-[13px]"
+                  className="mt-1 w-full border border-sand px-3 py-2 text-13px"
                 />
                 {form.formState.errors.name ? (
-                  <p className="mt-1 text-[11px] text-red-700">{form.formState.errors.name.message}</p>
+                  <p className="mt-1 text-11px text-red-700">{form.formState.errors.name.message}</p>
                 ) : null}
               </div>
 
               <div>
-                <label className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">
+                <label className="font-body text-11px font-medium uppercase tracking-wide text-[#6B6B68]">
                   Slug
                 </label>
-                <input {...form.register("slug")} className="mt-1 w-full border border-sand px-3 py-2 font-mono text-[12px]" />
-                <p className="mt-1 text-[11px] text-[#8A8A86]">prudentgabriel.com/collections/{slugPreview}</p>
+                <input {...form.register("slug")} className="mt-1 w-full border border-sand px-3 py-2 font-mono text-12px" />
+                <p className="mt-1 text-11px text-[#8A8A86]">prudentgabriel.com/collections/{slugPreview}</p>
                 {form.formState.errors.slug ? (
-                  <p className="mt-1 text-[11px] text-red-700">{form.formState.errors.slug.message}</p>
+                  <p className="mt-1 text-11px text-red-700">{form.formState.errors.slug.message}</p>
                 ) : null}
               </div>
 
               <div>
-                <label className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">
+                <label className="font-body text-11px font-medium uppercase tracking-wide text-[#6B6B68]">
                   Tagline / excerpt
                 </label>
-                <input {...form.register("excerpt")} maxLength={200} className="mt-1 w-full border border-sand px-3 py-2 text-[13px]" />
+                <input {...form.register("excerpt")} maxLength={200} className="mt-1 w-full border border-sand px-3 py-2 text-13px" />
               </div>
 
               <div>
-                <label className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">
+                <label className="font-body text-11px font-medium uppercase tracking-wide text-[#6B6B68]">
                   Description
                 </label>
-                <textarea {...form.register("description")} rows={4} maxLength={2000} className="mt-1 w-full border border-sand px-3 py-2 text-[13px]" />
+                <textarea {...form.register("description")} rows={4} maxLength={2000} className="mt-1 w-full border border-sand px-3 py-2 text-13px" />
               </div>
 
               <div className="flex flex-wrap gap-4">
                 <div className="min-w-[100px] flex-1">
-                  <label className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">Season</label>
-                  <input {...form.register("season")} maxLength={40} className="mt-1 w-full border border-sand px-3 py-2 text-[13px]" />
+                  <label className="font-body text-11px font-medium uppercase tracking-wide text-[#6B6B68]">Season</label>
+                  <input {...form.register("season")} maxLength={40} className="mt-1 w-full border border-sand px-3 py-2 text-13px" />
                 </div>
                 <div className="w-28">
-                  <label className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">Year</label>
+                  <label className="font-body text-11px font-medium uppercase tracking-wide text-[#6B6B68]">Year</label>
                   <input
                     type="number"
                     {...form.register("year", {
@@ -386,26 +386,26 @@ export function CollectionFormModal({
                         return Number.isFinite(n) ? n : null;
                       },
                     })}
-                    className="mt-1 w-full border border-sand px-3 py-2 text-[13px]"
+                    className="mt-1 w-full border border-sand px-3 py-2 text-13px"
                   />
                 </div>
               </div>
 
               <div>
-                <p className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">Auto-tag</p>
-                <input {...form.register("autoTag")} className="mt-1 w-full border border-sand px-3 py-2 text-[13px]" placeholder="e.g. rich-regal" />
-                <p className="mt-1 text-[11px] text-[#8A8A86]">All products with this tag are automatically included.</p>
+                <p className="font-body text-11px font-medium uppercase tracking-wide text-[#6B6B68]">Auto-tag</p>
+                <input {...form.register("autoTag")} className="mt-1 w-full border border-sand px-3 py-2 text-13px" placeholder="e.g. rich-regal" />
+                <p className="mt-1 text-11px text-[#8A8A86]">All products with this tag are automatically included.</p>
                 {tagMatchCount !== null ? (
-                  <p className="mt-1 font-body text-[12px] text-olive">Currently matches {tagMatchCount} published products</p>
+                  <p className="mt-1 font-body text-12px text-olive">Currently matches {tagMatchCount} published products</p>
                 ) : null}
               </div>
 
               <div>
-                <p className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">Also include these products</p>
+                <p className="font-body text-11px font-medium uppercase tracking-wide text-[#6B6B68]">Also include these products</p>
                 <input
                   value={searchQ}
                   onChange={(e) => setSearchQ(e.target.value)}
-                  className="mt-1 w-full border border-sand px-3 py-2 text-[13px]"
+                  className="mt-1 w-full border border-sand px-3 py-2 text-13px"
                   placeholder="Search products…"
                 />
                 {searchHits.length > 0 ? (
@@ -415,7 +415,7 @@ export function CollectionFormModal({
                         <button
                           type="button"
                           onClick={() => addManual(p)}
-                          className="flex w-full items-center gap-2 px-2 py-2 text-left text-[12px] hover:bg-bg-card"
+                          className="flex w-full items-center gap-2 px-2 py-2 text-left text-12px hover:bg-bg-card"
                         >
                           {p.images[0]?.url ? (
                             <span className="relative h-10 w-8 shrink-0 overflow-hidden bg-[#EEE]">
@@ -434,7 +434,7 @@ export function CollectionFormModal({
                     return (
                       <span
                         key={id}
-                        className="inline-flex items-center gap-1 border border-sand bg-[#FAFAFA] px-2 py-1 text-[11px]"
+                        className="inline-flex items-center gap-1 border border-sand bg-[#FAFAFA] px-2 py-1 text-11px"
                       >
                         {pr?.name ?? id}
                         <button type="button" className="text-red-700" onClick={() => removeManual(id)} aria-label="Remove">
@@ -444,19 +444,19 @@ export function CollectionFormModal({
                     );
                   })}
                 </div>
-                <p className="mt-2 text-[11px] text-[#8A8A86]">Manually added products appear before auto-tagged ones (max 100).</p>
+                <p className="mt-2 text-11px text-[#8A8A86]">Manually added products appear before auto-tagged ones (max 100).</p>
               </div>
             </div>
 
             <div className="flex flex-col gap-6 p-6">
               <div>
-                <p className="font-body text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">Cover image</p>
+                <p className="font-body text-11px font-medium uppercase tracking-wide text-[#6B6B68]">Cover image</p>
                 <div className="relative mt-2 aspect-[3/4] w-full max-w-[220px] bg-[#F2F2F0]">
                   {watchCover ? (
                     <Image src={watchCover} alt="" fill className="object-cover" sizes="220px" />
                   ) : null}
                 </div>
-                <label className="mt-2 inline-block cursor-pointer border border-[#37392d] px-3 py-1.5 font-body text-[11px] uppercase tracking-wide text-[#37392d]">
+                <label className="mt-2 inline-block cursor-pointer border border-[#37392d] px-3 py-1.5 font-body text-11px uppercase tracking-wide text-[#37392d]">
                   {uploading ? "Uploading…" : "Upload image"}
                   <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp,.jpg,.jpeg,.png,.webp" className="hidden" onChange={onPickFile} />
                 </label>
@@ -467,36 +467,36 @@ export function CollectionFormModal({
                   {...form.register("coverImage")}
                   aria-invalid={form.formState.errors.coverImage ? true : undefined}
                   className={cn(
-                    "mt-2 w-full border px-2 py-1 font-mono text-[11px]",
+                    "mt-2 w-full border px-2 py-1 font-mono text-11px",
                     form.formState.errors.coverImage ? "border-[var(--error)]" : "border-sand",
                   )}
                   placeholder="Or paste image URL"
                 />
                 {form.formState.errors.coverImage ? (
-                  <p className="mt-1 text-[11px] text-red-700">{form.formState.errors.coverImage.message}</p>
+                  <p className="mt-1 text-11px text-red-700">{form.formState.errors.coverImage.message}</p>
                 ) : null}
-                <input {...form.register("coverImageAlt")} className="mt-2 w-full border border-sand px-2 py-1 text-[12px]" placeholder="Alt text" />
-                <p className="mt-1 text-[10px] text-[#8A8A86]">Portrait editorial (3:4) works best.</p>
+                <input {...form.register("coverImageAlt")} className="mt-2 w-full border border-sand px-2 py-1 text-12px" placeholder="Alt text" />
+                <p className="mt-1 text-10px text-[#8A8A86]">Portrait editorial (3:4) works best.</p>
                 <div className="mt-2 max-w-[220px]">
                   <UploadProgressBar value={uploadProgress} />
                 </div>
               </div>
 
               <div className="space-y-3 border-t border-sand pt-4">
-                <label className="flex items-center gap-2 font-body text-[13px]">
+                <label className="flex items-center gap-2 font-body text-13px">
                   <input type="checkbox" {...form.register("isPublished")} className="accent-olive" />
                   Published
                 </label>
-                <p className="font-body text-[11px] text-[#8A8A86]">
+                <p className="font-body text-11px text-[#8A8A86]">
                   Leave unchecked until launch. Unpublishing asks you to confirm before hiding products,
                   including pieces that also sit in other collections.
                 </p>
-                <label className="flex items-center gap-2 font-body text-[13px]">
+                <label className="flex items-center gap-2 font-body text-13px">
                   <input type="checkbox" {...form.register("isFeatured")} className="accent-olive" />
                   Featured on homepage
                 </label>
                 <div>
-                  <label className="font-body text-[11px] uppercase text-[#6B6B68]">Display order</label>
+                  <label className="font-body text-11px uppercase text-[#6B6B68]">Display order</label>
                   <input
                     type="number"
                     {...form.register("displayOrder", {
@@ -515,18 +515,18 @@ export function CollectionFormModal({
                 <button
                   type="button"
                   onClick={() => setSeoOpen((v) => !v)}
-                  className="font-body text-[11px] font-medium uppercase tracking-wide text-olive"
+                  className="font-body text-11px font-medium uppercase tracking-wide text-olive"
                 >
                   SEO {seoOpen ? "−" : "+"}
                 </button>
                 {seoOpen ? (
                   <div className="mt-3 space-y-2">
-                    <input {...form.register("metaTitle")} maxLength={60} className="w-full border border-sand px-2 py-1 text-[12px]" placeholder="Meta title" />
+                    <input {...form.register("metaTitle")} maxLength={60} className="w-full border border-sand px-2 py-1 text-12px" placeholder="Meta title" />
                     <textarea
                       {...form.register("metaDescription")}
                       maxLength={160}
                       rows={3}
-                      className="max-h-40 min-h-[4.5rem] w-full resize-y border border-sand px-2 py-1 text-[12px]"
+                      className="max-h-40 min-h-[4.5rem] w-full resize-y border border-sand px-2 py-1 text-12px"
                       placeholder="Meta description"
                     />
                   </div>
@@ -538,14 +538,14 @@ export function CollectionFormModal({
 
             <div className="relative z-20 flex shrink-0 justify-end gap-3 border-t border-sand bg-bg-card px-6 py-4">
               <Dialog.Close asChild>
-                <button type="button" className="border border-sand px-4 py-2 font-body text-[12px]">
+                <button type="button" className="border border-sand px-4 py-2 font-body text-12px">
                   Cancel
                 </button>
               </Dialog.Close>
               <button
                 type="submit"
                 disabled={isEdit && editLoading}
-                className="bg-[#37392d] px-5 py-2 font-body text-[12px] font-medium uppercase tracking-wide text-white disabled:opacity-50"
+                className="bg-[#37392d] px-5 py-2 font-body text-12px font-medium uppercase tracking-wide text-white disabled:opacity-50"
               >
                 Save collection
               </button>

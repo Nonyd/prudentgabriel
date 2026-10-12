@@ -80,7 +80,7 @@ export function SocialSettingsForm({ rows, onSaved }: { rows: Row[]; onSaved: ()
 
   return (
     <div className="rounded-sm border border-sand bg-canvas p-6">
-      <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">Instagram Handles</h2>
+      <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">Instagram Handles</h2>
       <div className="mt-6 space-y-5">
         {FIELDS.map((field) => (
           <div key={field.key}>
@@ -101,7 +101,7 @@ export function SocialSettingsForm({ rows, onSaved }: { rows: Row[]; onSaved: ()
         type="button"
         onClick={() => void save()}
         disabled={saving}
-        className="mt-8 h-10 w-full bg-[#37392d] font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
+        className="mt-8 h-10 w-full bg-[#37392d] font-body text-11px font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save Social"}
       </button>

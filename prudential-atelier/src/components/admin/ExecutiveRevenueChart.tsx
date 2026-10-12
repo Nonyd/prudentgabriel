@@ -35,7 +35,7 @@ export function ExecutiveRevenueChart({
         <p className="panel-title font-sans font-semibold uppercase text-text-light">
           Revenue · Last 7 days
         </p>
-        <span className="rounded-full bg-sand/50 px-3 py-1 font-sans text-[11px] text-choc">
+        <span className="rounded-full bg-sand/50 px-3 py-1 font-sans text-11px text-choc">
           {formatNGN(total)} total
         </span>
       </div>
@@ -64,7 +64,7 @@ export function ExecutiveRevenueChart({
           return (
             <div key={item.key} className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: item.color }} />
-              <span className="font-sans text-[12px] text-text-mid">
+              <span className="font-sans text-12px text-text-mid">
                 {item.label} · {formatNGN(sum)}
               </span>
             </div>

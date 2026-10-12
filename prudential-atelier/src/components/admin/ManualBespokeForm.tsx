@@ -159,7 +159,7 @@ export function ManualBespokeForm() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-4 border border-[#37392d] bg-[#37392d] px-4 py-2 font-body text-[11px] font-medium uppercase tracking-wide text-white"
+        className="mt-4 border border-[#37392d] bg-[#37392d] px-4 py-2 font-body text-11px font-medium uppercase tracking-wide text-white"
       >
         + Add manual request
       </button>
@@ -170,7 +170,7 @@ export function ManualBespokeForm() {
           <Dialog.Content className="fixed left-1/2 top-1/2 z-[121] max-h-[92vh] w-[min(96vw,640px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto glass-3 glass-panel p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <Dialog.Title className="font-display text-[22px] text-ink">Add manual bespoke request</Dialog.Title>
+                <Dialog.Title className="font-display text-22px text-ink">Add manual bespoke request</Dialog.Title>
                 <p className="mt-1 font-body text-xs text-[#6B6B68]">For clients who placed orders offline or by phone.</p>
               </div>
               <Dialog.Close className="text-charcoal" aria-label="Close">
@@ -179,7 +179,7 @@ export function ManualBespokeForm() {
             </div>
 
             <div className="mt-6 space-y-4 font-body text-sm">
-              <p className="text-[11px] font-medium uppercase text-[#6B6B68]">Client</p>
+              <p className="text-11px font-medium uppercase text-[#6B6B68]">Client</p>
               <input className="w-full border border-sand px-3 py-2" placeholder="Full name *" value={name} onChange={(e) => setName(e.target.value)} />
               <input className="w-full border border-sand px-3 py-2" placeholder="Phone *" value={phone} onChange={(e) => setPhone(e.target.value)} />
               <input
@@ -198,7 +198,7 @@ export function ManualBespokeForm() {
                 ))}
               </select>
 
-              <p className="pt-2 text-[11px] font-medium uppercase text-[#6B6B68]">Order</p>
+              <p className="pt-2 text-11px font-medium uppercase text-[#6B6B68]">Order</p>
               <select className="w-full border border-sand px-3 py-2" value={occasion} onChange={(e) => setOccasion(e.target.value)}>
                 {["White Wedding", "Traditional Wedding", "Corporate Event", "Birthday", "Other"].map((o) => (
                   <option key={o}>{o}</option>
@@ -223,7 +223,7 @@ export function ManualBespokeForm() {
                 <option>3+ months</option>
               </select>
 
-              <p className="pt-2 text-[11px] font-medium uppercase text-[#6B6B68]">Pricing</p>
+              <p className="pt-2 text-11px font-medium uppercase text-[#6B6B68]">Pricing</p>
               <input className="w-full border border-sand px-3 py-2" placeholder="Agreed price (₦) *" value={agreedPrice} onChange={(e) => setAgreedPrice(e.target.value)} />
               <select className="w-full border border-sand px-3 py-2" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                 {["Cash", "Bank Transfer", "POS", "Online Payment", "Paid Online", "Pending"].map((o) => (
@@ -242,17 +242,17 @@ export function ManualBespokeForm() {
                 {Math.max(0, (parseFloat(agreedPrice) || 0) - (parseFloat(depositPaid) || 0)).toLocaleString("en-NG")}
               </p>
 
-              <p className="pt-2 text-[11px] font-medium uppercase text-[#6B6B68]">Sketches / refs</p>
+              <p className="pt-2 text-11px font-medium uppercase text-[#6B6B68]">Sketches / refs</p>
               <input type="file" multiple accept="image/*,application/pdf" className="text-xs" onChange={(e) => void onSketches(e.target.files)} />
               <input type="file" multiple accept="image/*" className="text-xs" onChange={(e) => void onRefs(e.target.files)} />
               <UploadProgressBar value={uploadProgress} />
-              <p className="text-[11px] text-[#6B6B68]">{sketches.length} sketch files · {refs.length} reference images</p>
+              <p className="text-11px text-[#6B6B68]">{sketches.length} sketch files · {refs.length} reference images</p>
               {(sketches.length > 0 || refs.length > 0) && (
                 <div className="flex flex-wrap gap-2">
                   {sketches.map((s) => (
                     <div
                       key={`sk-${s.url}`}
-                      className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-sm border border-sand bg-[#FAFAFA] text-[9px] text-[#6B6B68]"
+                      className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-sm border border-sand bg-[#FAFAFA] text-9px text-[#6B6B68]"
                       title={s.name}
                     >
                       {s.isPdf ? (

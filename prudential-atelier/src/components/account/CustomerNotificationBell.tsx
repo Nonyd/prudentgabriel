@@ -157,7 +157,7 @@ export function CustomerNotificationBell() {
               animate={{ scale: pulse ? [1, 1.15, 1] : 1 }}
               exit={{ scale: 0.6 }}
               transition={{ duration: 0.35 }}
-              className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-danger px-0.5 font-sans text-[9px] font-semibold text-white"
+              className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-choc px-0.5 font-sans text-[9px] font-semibold text-ivory ring-2 ring-ivory"
             >
               {badge}
             </motion.span>

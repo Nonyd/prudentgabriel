@@ -7,7 +7,7 @@ export default function AdminContentMediaPage() {
       <div>
         <Link
           href="/admin/content"
-          className="mb-4 inline-block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-light hover:text-choc"
+          className="mb-4 inline-block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-light hover:text-choc"
         >
           ← Content
         </Link>

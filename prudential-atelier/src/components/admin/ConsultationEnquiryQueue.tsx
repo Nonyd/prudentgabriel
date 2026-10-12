@@ -140,14 +140,14 @@ function DecisionForm({
         <button
           type="button"
           onClick={() => setMode("approve")}
-          className="rounded-sm bg-[#37392d] px-4 py-2 font-sans text-[11px] uppercase tracking-[0.1em] text-white"
+          className="rounded-sm bg-[#37392d] px-4 py-2 font-sans text-11px uppercase tracking-[0.1em] text-white"
         >
           Approve
         </button>
         <button
           type="button"
           onClick={() => setMode("decline")}
-          className="rounded-sm border border-sand px-4 py-2 font-sans text-[11px] uppercase tracking-[0.1em] text-ink"
+          className="rounded-sm border border-sand px-4 py-2 font-sans text-11px uppercase tracking-[0.1em] text-ink"
         >
           Decline
         </button>
@@ -184,7 +184,7 @@ function DecisionForm({
         <button
           type="submit"
           disabled={busy || reason.trim().length < 3}
-          className="rounded-sm bg-[#37392d] px-4 py-2 font-sans text-[11px] uppercase tracking-[0.1em] text-white disabled:opacity-50"
+          className="rounded-sm bg-[#37392d] px-4 py-2 font-sans text-11px uppercase tracking-[0.1em] text-white disabled:opacity-50"
         >
           {mode === "approve" ? "Approve and email the link" : "Decline"}
         </button>
@@ -223,7 +223,7 @@ export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) 
 
   return (
     <div className="mt-4">
-      <div className="flex flex-wrap gap-2 font-body text-[11px]">
+      <div className="flex flex-wrap gap-2 font-body text-11px">
         {TABS.map((t) => (
           <button
             key={t.status}
@@ -259,7 +259,7 @@ export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) 
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-mono text-[11px] text-olive">{e.enquiryNumber}</p>
+                    <p className="font-mono text-11px text-olive">{e.enquiryNumber}</p>
                     <p className="mt-1 text-base font-medium text-ink">{e.clientName}</p>
                     <p className="text-xs text-[#6B6B68]">
                       <a href={`tel:${e.clientPhone}`} className="underline">
@@ -268,7 +268,7 @@ export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) 
                       · {e.clientEmail}
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.08em]">
+                  <div className="flex flex-wrap gap-2 text-10px uppercase tracking-[0.08em]">
                     {e.shortNotice ? (
                       <span className="rounded-full bg-red-100 px-2.5 py-1 text-red-800">Short notice — call her</span>
                     ) : null}

@@ -78,7 +78,7 @@ export function PaymentsSettingsClient() {
       </p>
 
       <section className="space-y-3">
-        <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+        <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
           Checkout gateways
         </h2>
         <ul className="space-y-3">
@@ -153,7 +153,7 @@ function SettingsCommercialCard({ rows, onSaved }: { rows: Row[]; onSaved: () =>
 
   return (
     <div className="border border-sand bg-canvas p-6">
-      <h2 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+      <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
         Commercial
       </h2>
       <div className="mt-6 space-y-5">
@@ -170,7 +170,7 @@ function SettingsCommercialCard({ rows, onSaved }: { rows: Row[]; onSaved: () =>
         type="button"
         disabled={saving}
         onClick={() => void save()}
-        className="mt-8 h-10 w-full bg-[#37392d] font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
+        className="mt-8 h-10 w-full bg-[#37392d] font-body text-11px font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save payments"}
       </button>

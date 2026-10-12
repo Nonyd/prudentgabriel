@@ -418,7 +418,7 @@ export default function StaffTimePage() {
 
       <section>
 
-        <h2 className="mb-2 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-mid">
+        <h2 className="mb-2 font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-mid">
 
           Last 30 days
 

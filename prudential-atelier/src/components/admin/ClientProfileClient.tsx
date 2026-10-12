@@ -203,7 +203,7 @@ export function ClientProfileClient({ clientId }: { clientId: string }) {
           <div>
             <Link
               href="/admin/clients"
-              className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light hover:text-nut"
+              className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light hover:text-nut"
             >
               ← Clients
             </Link>
@@ -249,7 +249,7 @@ export function ClientProfileClient({ clientId }: { clientId: string }) {
           <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             {measurementFields.map(([label, value]) => (
               <div key={label}>
-                <p className="font-sans text-[10px] uppercase text-text-light">{label}</p>
+                <p className="font-sans text-10px uppercase text-text-light">{label}</p>
                 <p className="font-sans text-sm text-ink">{value ?? "—"}</p>
               </div>
             ))}
@@ -260,7 +260,7 @@ export function ClientProfileClient({ clientId }: { clientId: string }) {
       <Section title="Bespoke Orders" empty={item.bespokeOrders.length === 0}>
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-sand font-sans text-[10px] uppercase text-text-light">
+            <tr className="border-b border-sand font-sans text-10px uppercase text-text-light">
               <th className="py-2">Ref</th>
               <th className="py-2">Stage</th>
               <th className="py-2">Status</th>
@@ -289,7 +289,7 @@ export function ClientProfileClient({ clientId }: { clientId: string }) {
       <Section title="RTW Orders" empty={item.user.orders.length === 0}>
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-sand font-sans text-[10px] uppercase text-text-light">
+            <tr className="border-b border-sand font-sans text-10px uppercase text-text-light">
               <th className="py-2">Order</th>
               <th className="py-2">Status</th>
               <th className="py-2">Total</th>
@@ -312,7 +312,7 @@ export function ClientProfileClient({ clientId }: { clientId: string }) {
       <Section title="Payments" empty={(item.payments ?? []).length === 0}>
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-sand font-sans text-[10px] uppercase text-text-light">
+            <tr className="border-b border-sand font-sans text-10px uppercase text-text-light">
               <th className="py-2">Date</th>
               <th className="py-2">Purpose</th>
               <th className="py-2">Reference</th>
@@ -369,7 +369,7 @@ export function ClientProfileClient({ clientId }: { clientId: string }) {
           {item.adminNotes.map((n) => (
             <li key={n.id} className="rounded border border-sand/60 bg-bg/50 p-3">
               <p className="font-sans text-sm text-text-mid">{n.note}</p>
-              <p className="mt-2 font-sans text-[10px] text-text-light">
+              <p className="mt-2 font-sans text-10px text-text-light">
                 {n.addedByName ?? "Admin"} · {formatDate(n.createdAt)}
               </p>
             </li>

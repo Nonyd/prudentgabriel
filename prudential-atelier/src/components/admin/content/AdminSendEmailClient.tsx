@@ -249,7 +249,7 @@ export function AdminSendEmailClient({
       <div className="space-y-6 rounded-sm border border-sand bg-[#FAFAFA] p-6">
         <div>
           <p className="font-label text-xs uppercase tracking-widest text-gold">To</p>
-          <p className="mt-1 font-body text-[12px] text-[#6B6B68]">
+          <p className="mt-1 font-body text-12px text-[#6B6B68]">
             Combine lists — duplicates and unsubscribed or bounced addresses are removed.
           </p>
           <div className="mt-3 space-y-2">
@@ -328,7 +328,7 @@ export function AdminSendEmailClient({
               ))}
             </select>
           </label>
-          <p className="mt-1 text-[11px] text-[#6B6B68]">
+          <p className="mt-1 text-11px text-[#6B6B68]">
             Required for a collection launch template or the “buyers of a collection” list.
           </p>
         </div>
@@ -362,7 +362,7 @@ export function AdminSendEmailClient({
             <EmailRichTextEditor value={body} onChange={setBody} />
           </>
         ) : (
-          <p className="font-body text-[13px] text-[#6B6B68]">
+          <p className="font-body text-13px text-[#6B6B68]">
             Collection launch copy is edited under Content → Email Templates. This send uses that
             template with the selected collection’s cover and products.
           </p>
@@ -372,14 +372,14 @@ export function AdminSendEmailClient({
           <button
             type="button"
             onClick={() => void preview()}
-            className="border border-sand px-4 py-2 font-body text-[12px] uppercase tracking-wide"
+            className="border border-sand px-4 py-2 font-body text-12px uppercase tracking-wide"
           >
             Preview
           </button>
           <button
             type="button"
             onClick={() => void testSend()}
-            className="border border-sand px-4 py-2 font-body text-[12px] uppercase tracking-wide"
+            className="border border-sand px-4 py-2 font-body text-12px uppercase tracking-wide"
           >
             Send test to myself
           </button>
@@ -387,14 +387,14 @@ export function AdminSendEmailClient({
             type="button"
             disabled={sending || recipientCount < 1}
             onClick={() => setConfirmOpen(true)}
-            className="bg-[#37392d] px-4 py-2 font-body text-[12px] uppercase tracking-wide text-white disabled:opacity-40"
+            className="bg-[#37392d] px-4 py-2 font-body text-12px uppercase tracking-wide text-white disabled:opacity-40"
           >
             {sending ? "Queueing…" : `Send to ${recipientCount} recipients`}
           </button>
         </div>
 
         {jobId ? (
-          <p className="font-body text-[13px] text-[#6B6B68]">
+          <p className="font-body text-13px text-[#6B6B68]">
             Queued. Drain sends in the background
             {progress ? ` — ${progress.sent} of ${progress.total} delivered` : null}.{" "}
             <Link href={`/admin/system/emails?relatedId=${jobId}`} className="text-olive underline">
@@ -407,8 +407,8 @@ export function AdminSendEmailClient({
       {previewHtml ? (
         <div className="mt-6 border border-sand bg-white">
           <div className="flex justify-between border-b border-sand px-3 py-2">
-            <p className="font-body text-[12px] uppercase text-[#6B6B68]">Preview</p>
-            <button type="button" className="text-[12px] text-olive" onClick={() => setPreviewHtml(null)}>
+            <p className="font-body text-12px uppercase text-[#6B6B68]">Preview</p>
+            <button type="button" className="text-12px text-olive" onClick={() => setPreviewHtml(null)}>
               Close
             </button>
           </div>

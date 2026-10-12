@@ -170,7 +170,7 @@ export function StoreRequisitionDetailClient({ id }: { id: string }) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-text-light">Requisition</p>
+          <p className="font-sans text-11px font-medium uppercase tracking-[0.14em] text-text-light">Requisition</p>
           <h1 className="font-display text-2xl text-ink">{item.ref}</h1>
           <p className="mt-1 font-sans text-sm text-text-mid">
             {item.statusLabel}
@@ -197,30 +197,30 @@ export function StoreRequisitionDetailClient({ id }: { id: string }) {
           </p>
           <dl className="mt-4 grid gap-3 sm:grid-cols-2 font-sans text-sm">
             <div>
-              <dt className="text-[10px] uppercase tracking-wide text-text-light">Client / order</dt>
+              <dt className="text-10px uppercase tracking-wide text-text-light">Client / order</dt>
               <dd className="font-medium text-ink">
                 {item.client ?? "—"}
                 {item.orderRef ? ` · ${item.orderRef}` : ""}
               </dd>
             </div>
             <div>
-              <dt className="text-[10px] uppercase tracking-wide text-text-light">Stock check approved by</dt>
+              <dt className="text-10px uppercase tracking-wide text-text-light">Stock check approved by</dt>
               <dd className="font-medium text-ink">{item.stockCheckedByName ?? "—"}</dd>
             </div>
             <div>
-              <dt className="text-[10px] uppercase tracking-wide text-text-light">Total to fund</dt>
+              <dt className="text-10px uppercase tracking-wide text-text-light">Total to fund</dt>
               <dd className="font-display text-2xl text-ink">₦{item.totalNGN.toLocaleString("en-NG")}</dd>
             </div>
             {item.tailorCostNGN != null ? (
               <div>
-                <dt className="text-[10px] uppercase tracking-wide text-text-light">Tailor figure (not funded here)</dt>
+                <dt className="text-10px uppercase tracking-wide text-text-light">Tailor figure (not funded here)</dt>
                 <dd>₦{item.tailorCostNGN.toLocaleString("en-NG")}</dd>
               </div>
             ) : null}
           </dl>
           <table className="mt-6 w-full border-collapse font-sans text-sm">
             <thead>
-              <tr className="border-b border-sand text-left text-[10px] uppercase tracking-wide text-text-light">
+              <tr className="border-b border-sand text-left text-10px uppercase tracking-wide text-text-light">
                 <th className="py-2">Material</th>
                 <th className="py-2 text-right">Qty</th>
                 <th className="py-2 text-right">Est. ₦</th>
@@ -255,7 +255,7 @@ export function StoreRequisitionDetailClient({ id }: { id: string }) {
         <h2 className="font-display text-lg text-ink">Lines</h2>
         <table className="mt-3 w-full border-collapse font-sans text-sm">
           <thead>
-            <tr className="border-b border-sand text-left text-[10px] uppercase tracking-wide text-text-light">
+            <tr className="border-b border-sand text-left text-10px uppercase tracking-wide text-text-light">
               <th className="py-2">Material</th>
               <th className="py-2 text-right">Qty</th>
               <th className="py-2 text-right">Est. ₦</th>
@@ -271,10 +271,10 @@ export function StoreRequisitionDetailClient({ id }: { id: string }) {
                   <td className="py-2">
                     {l.name}
                     {l.coveredByStock ? (
-                      <span className="ml-2 text-[10px] uppercase text-text-light">covered by stock</span>
+                      <span className="ml-2 text-10px uppercase text-text-light">covered by stock</span>
                     ) : null}
                     {l.shortfallQuantity != null && l.shortfallQuantity > 0 ? (
-                      <span className="ml-2 text-[10px] uppercase text-[#C45E0A]">
+                      <span className="ml-2 text-10px uppercase text-[#C45E0A]">
                         short {l.shortfallQuantity}
                       </span>
                     ) : null}
@@ -351,7 +351,7 @@ export function StoreRequisitionDetailClient({ id }: { id: string }) {
               </span>
               <span className="text-text-mid"> · {e.actorName}</span>
               {e.sameActorAsPrevious ? (
-                <span className="ml-2 text-[10px] uppercase tracking-wide text-[#C45E0A]">same person as previous</span>
+                <span className="ml-2 text-10px uppercase tracking-wide text-[#C45E0A]">same person as previous</span>
               ) : null}
               {e.note ? <p className="text-xs text-text-light">{e.note}</p> : null}
             </li>

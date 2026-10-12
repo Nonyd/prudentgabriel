@@ -113,7 +113,7 @@ export function StoreItemsClient() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-text-light">Store</p>
+        <p className="font-sans text-11px font-medium uppercase tracking-[0.14em] text-text-light">Store</p>
         <h1 className="font-display text-2xl text-ink">Catalogue</h1>
         <p className="mt-1 max-w-2xl font-sans text-sm text-text-mid">
           Categories are rows, not a deploy. Unit is free text per item — yard first. Stock line is Shared until
@@ -217,7 +217,7 @@ export function StoreItemsClient() {
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse font-sans text-sm">
             <thead>
-              <tr className="border-b border-sand text-left text-[10px] uppercase tracking-wide text-text-light">
+              <tr className="border-b border-sand text-left text-10px uppercase tracking-wide text-text-light">
                 <th className="py-2 pr-3">Item</th>
                 <th className="py-2 pr-3">Category</th>
                 <th className="py-2 pr-3 text-right">On hand</th>
@@ -232,7 +232,7 @@ export function StoreItemsClient() {
                     {item.name}
                     <span className="ml-2 text-xs text-text-light">{item.unit}</span>
                     {!item.isActive ? (
-                      <span className="ml-2 text-[10px] uppercase tracking-wide text-text-light">Inactive</span>
+                      <span className="ml-2 text-10px uppercase tracking-wide text-text-light">Inactive</span>
                     ) : null}
                   </td>
                   <td className="py-2 pr-3 text-text-mid">{item.categoryName}</td>

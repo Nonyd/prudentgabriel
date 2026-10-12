@@ -24,7 +24,7 @@ function SourcePill({ source }: { source: string }) {
   const isClient = source === "CLIENT";
   return (
     <span
-      className="inline-block rounded-sm px-2 py-0.5 font-label text-[9px] uppercase tracking-wide"
+      className="inline-block rounded-sm px-2 py-0.5 font-label text-9px uppercase tracking-wide"
       style={
         isClient
           ? { background: "rgba(34,197,94,0.1)", color: "#166534" }
@@ -110,7 +110,7 @@ export function TestimonialsAdminClient({ testimonials }: { testimonials: Testim
         <button
           type="button"
           onClick={openCreate}
-          className="rounded-[3px] bg-choc px-5 py-2.5 font-label text-[11px] font-semibold uppercase tracking-wide text-cream"
+          className="rounded-[3px] bg-choc px-5 py-2.5 font-label text-11px font-semibold uppercase tracking-wide text-cream"
         >
           + Add Testimonial
         </button>
@@ -127,7 +127,7 @@ export function TestimonialsAdminClient({ testimonials }: { testimonials: Testim
 
       <div className="-mx-4 overflow-x-auto rounded-sm border border-sand bg-canvas px-4 md:mx-0 md:px-0">
         <table className="w-full min-w-[1100px] text-left text-sm text-charcoal">
-          <thead className="border-b border-sand font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">
+          <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-[#A8A8A4]">
             <tr>
               <th className="p-3">Client</th>
               <th className="p-3">Source</th>

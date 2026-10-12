@@ -51,7 +51,7 @@ function KpiCard({ label, value, change }: { label: string; value: number; chang
   const up = change >= 0;
   return (
     <div className="card-surface p-5">
-      <p className="font-sans text-[10px] uppercase tracking-wider text-text-light">{label}</p>
+      <p className="font-sans text-10px uppercase tracking-wider text-text-light">{label}</p>
       <p className="mt-2 font-display text-2xl text-choc">
         {label.includes("Revenue") || label.includes("RTW") || label.includes("Bespoke")
           ? formatNGN(value)
@@ -136,10 +136,10 @@ export function ReportsDashboardClient() {
         ))}
         {data ? (
           <>
-            <button type="button" onClick={exportCsv} className="btn-ghost-light ml-auto text-[10px]">
+            <button type="button" onClick={exportCsv} className="btn-ghost-light ml-auto text-10px">
               Export CSV
             </button>
-            <button type="button" onClick={() => void exportPdf()} className="btn-primary text-[10px]">
+            <button type="button" onClick={() => void exportPdf()} className="btn-primary text-10px">
               Download PDF
             </button>
           </>
@@ -302,7 +302,7 @@ export function ReportsDashboardClient() {
                       <td className="py-2">
                         {s.name}
                         {i === 0 ? (
-                          <span className="ml-2 font-sans text-[10px] uppercase text-gold">Top</span>
+                          <span className="ml-2 font-sans text-10px uppercase text-gold">Top</span>
                         ) : null}
                       </td>
                       <td className="py-2 text-right">{s.completed}</td>

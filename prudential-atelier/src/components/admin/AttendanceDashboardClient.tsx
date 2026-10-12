@@ -160,7 +160,7 @@ export function AttendanceDashboardClient() {
           { label: "Freelancers", value: today?.summary.freelancers ?? 0 },
         ].map((kpi) => (
           <div key={kpi.label} className="card-surface p-5">
-            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
+            <p className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light">
               {kpi.label}
             </p>
             <p className="mt-2 font-display text-3xl text-choc">{kpi.value}</p>
@@ -208,7 +208,7 @@ export function AttendanceDashboardClient() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-sans text-sm font-medium text-ink">{member.name}</p>
-                    <p className="font-sans text-[10px] uppercase text-text-light">
+                    <p className="font-sans text-10px uppercase text-text-light">
                       {member.department.replace(/_/g, " ")}
                     </p>
                   </div>
@@ -235,7 +235,7 @@ export function AttendanceDashboardClient() {
         </p>
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <div>
-            <label className="font-sans text-[10px] uppercase text-text-light">Resumption time</label>
+            <label className="font-sans text-10px uppercase text-text-light">Resumption time</label>
             <input
               type="time"
               value={resumptionTime}
@@ -256,7 +256,7 @@ export function AttendanceDashboardClient() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left">
             <thead>
-              <tr className="border-b border-sand bg-bg/50 font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-light">
+              <tr className="border-b border-sand bg-bg/50 font-sans text-10px font-semibold uppercase tracking-[0.12em] text-text-light">
                 <th className="px-4 py-3">Staff</th>
                 <th className="px-4 py-3">Date</th>
                 <th className="px-4 py-3">Clock In</th>

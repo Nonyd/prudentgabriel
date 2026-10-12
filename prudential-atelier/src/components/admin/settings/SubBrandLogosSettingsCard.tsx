@@ -41,7 +41,7 @@ function BrandLogoPair({
 }) {
   return (
     <div className="rounded-sm border border-sand bg-canvas p-6">
-      <h3 className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+      <h3 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
         {brand.title}
       </h3>
       <div className="mt-6 grid gap-8 md:grid-cols-2">
@@ -174,7 +174,7 @@ export function SubBrandLogosSettingsCard({
         type="button"
         disabled={saving}
         onClick={() => void save()}
-        className="h-10 w-full bg-[#37392d] font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
+        className="h-10 w-full bg-[#37392d] font-body text-11px font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save all logos"}
       </button>

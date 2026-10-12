@@ -117,15 +117,15 @@ export function LedgerReportClient() {
         <>
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="glass-opaque p-4">
-              <p className="font-sans text-[10px] uppercase tracking-wider text-[#6B6B68]">Ready-to-wear cash</p>
+              <p className="font-sans text-10px uppercase tracking-wider text-[#6B6B68]">Ready-to-wear cash</p>
               <p className="mt-1 font-display text-xl">{naira(data.rtw.cashNGN)}</p>
             </div>
             <div className="glass-opaque p-4">
-              <p className="font-sans text-[10px] uppercase tracking-wider text-[#6B6B68]">Atelier cash</p>
+              <p className="font-sans text-10px uppercase tracking-wider text-[#6B6B68]">Atelier cash</p>
               <p className="mt-1 font-display text-xl">{naira(data.atelier.cashNGN)}</p>
             </div>
             <div className="glass-opaque p-4">
-              <p className="font-sans text-[10px] uppercase tracking-wider text-[#6B6B68]">Together</p>
+              <p className="font-sans text-10px uppercase tracking-wider text-[#6B6B68]">Together</p>
               <p className="mt-1 font-display text-xl">{naira(data.combined.cashNGN)}</p>
             </div>
           </div>
@@ -155,7 +155,7 @@ export function LedgerReportClient() {
           ) : null}
           <div className="overflow-x-auto glass-opaque">
             <table className="min-w-[1100px] w-full text-left text-sm">
-              <thead className="bg-ivory font-sans text-[10px] uppercase tracking-wider text-[#6B6B68]">
+              <thead className="bg-ivory font-sans text-10px uppercase tracking-wider text-[#6B6B68]">
                 <tr>
                   {["Date", "NGN", "Original", "VAT", "Sales", "Cash", "Points", "Ship", "Owed back", "Method", "Purpose", "Line", "Document", "Customer", "Confirmed by"].map(
                     (h) => (

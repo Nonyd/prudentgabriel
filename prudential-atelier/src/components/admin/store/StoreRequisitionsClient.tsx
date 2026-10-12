@@ -62,7 +62,7 @@ export function StoreRequisitionsClient() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-text-light">Store</p>
+        <p className="font-sans text-11px font-medium uppercase tracking-[0.14em] text-text-light">Store</p>
         <h1 className="font-display text-2xl text-ink">{fundOnly ? "Awaiting funds" : "Requisitions"}</h1>
         <p className="mt-1 max-w-2xl font-sans text-sm text-text-mid">
           {fundOnly
@@ -110,7 +110,7 @@ export function StoreRequisitionsClient() {
                 </div>
                 <Link
                   href={`/admin/store/requisitions/${r.id}/print`}
-                  className="text-[11px] uppercase tracking-wide text-text-mid underline"
+                  className="text-11px uppercase tracking-wide text-text-mid underline"
                 >
                   Print
                 </Link>

@@ -138,7 +138,7 @@ export function ClientMeasurementsPanel({
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
             {FIELDS.filter((f) => form[f.key] != null).map((f) => (
               <div key={f.key}>
-                <dt className="font-sans text-[11px] text-text-light">{f.label}</dt>
+                <dt className="font-sans text-11px text-text-light">{f.label}</dt>
                 <dd className="font-sans text-sm text-choc">
                   {form[f.key]}
                   {unitLabel}

@@ -268,7 +268,7 @@ export function AdminSidebar({
     >
       <div className="border-b border-[var(--glass-edge)] px-5 py-6">
         <Logo size="sm" href="/admin" />
-        <p className="mt-2 font-sans text-[9px] font-semibold uppercase tracking-[0.2em] text-text-light">
+        <p className="mt-2 font-sans text-9px font-semibold uppercase tracking-[0.2em] text-text-light">
           Atelier · Operations
         </p>
       </div>
@@ -303,14 +303,14 @@ export function AdminSidebar({
             placeholder="Search menu"
             aria-label="Search menu"
             autoComplete="off"
-            className="input-field w-full py-1.5 pl-8 pr-2 font-sans text-[12px] [&::-webkit-search-cancel-button]:hidden"
+            className="input-field w-full py-1.5 pl-8 pr-2 font-sans text-12px [&::-webkit-search-cancel-button]:hidden"
           />
         </label>
       </div>
 
       <nav className="admin-sidebar-nav min-h-0 flex-1 px-3 py-4">
         {filtering && filteredSections.length === 0 && !accountMatches ? (
-          <p className="px-2 py-3 font-sans text-[12px] text-text-light">No menu items match.</p>
+          <p className="px-2 py-3 font-sans text-12px text-text-light">No menu items match.</p>
         ) : null}
         {filteredSections.map((section) => {
           const expanded = filtering || open[section.id] !== false;
@@ -353,7 +353,7 @@ export function AdminSidebar({
                           onClick={() => goToItem()}
                           aria-current={active ? "page" : undefined}
                           className={cn(
-                            "admin-nav-item flex items-center gap-2.5 rounded-none px-2 py-2 font-sans text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc",
+                            "admin-nav-item flex items-center gap-2.5 rounded-none px-2 py-2 font-sans text-13px transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc",
                             active
                               ? "border-r-2 border-choc bg-sand/25 text-text-primary"
                               : "border-r-2 border-transparent text-text-mid hover:bg-sand/15 hover:text-text-primary",
@@ -362,7 +362,7 @@ export function AdminSidebar({
                           <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
                           <span className="flex-1 truncate">{item.label}</span>
                           {badge ? (
-                            <span className="rounded-full border border-[var(--glass-edge)] px-1.5 py-0.5 font-sans text-[9px] font-semibold text-text-primary">
+                            <span className="rounded-full border border-[var(--glass-edge)] px-1.5 py-0.5 font-sans text-9px font-semibold text-text-primary">
                               {badge}
                             </span>
                           ) : null}
@@ -379,7 +379,7 @@ export function AdminSidebar({
 
       <div className="border-t border-[var(--glass-edge)] p-4">
         <div className="flex items-center gap-3 px-2 py-2">
-          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sand/40 font-sans text-[11px] font-medium text-text-primary">
+          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sand/40 font-sans text-11px font-medium text-text-primary">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
@@ -388,8 +388,8 @@ export function AdminSidebar({
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-sans text-[13px] text-text-primary">{displayName}</p>
-            <p className="mt-0.5 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
+            <p className="truncate font-sans text-13px text-text-primary">{displayName}</p>
+            <p className="mt-0.5 font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light">
               {previewRole ? `As ${roleLabel(role)}` : roleLabel(realRole)}
             </p>
           </div>
@@ -399,7 +399,7 @@ export function AdminSidebar({
             href="/admin/account-settings"
             onClick={() => goToItem()}
             className={cn(
-              "admin-nav-item mt-1 flex items-center gap-2 rounded-none px-2 py-2 font-sans text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc",
+              "admin-nav-item mt-1 flex items-center gap-2 rounded-none px-2 py-2 font-sans text-13px transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc",
               pathname.startsWith("/admin/account-settings")
                 ? "border-l-2 border-[var(--choc-deep)] bg-sand/25 text-text-primary"
                 : "border-l-2 border-transparent text-text-mid hover:bg-sand/15 hover:text-text-primary",
@@ -412,7 +412,7 @@ export function AdminSidebar({
         <button
           type="button"
           onClick={() => void signOut({ callbackUrl: "/login?tab=admin" })}
-          className="admin-nav-item mt-2 flex w-full items-center gap-2 rounded-none px-2 py-2 font-sans text-[13px] text-text-mid transition-colors hover:bg-sand/15 hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc"
+          className="admin-nav-item mt-2 flex w-full items-center gap-2 rounded-none px-2 py-2 font-sans text-13px text-text-mid transition-colors hover:bg-sand/15 hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-choc"
         >
           <LogOut className="h-4 w-4" strokeWidth={1.5} />
           Sign out

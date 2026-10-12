@@ -55,7 +55,7 @@ export function StaffShell({
       >
         <div className="border-b border-lightbr/20 p-5">
           <Logo variant="white" size="sm" themeAdaptive={false} href="/staff" showSubline={false} />
-          <p className="mt-2 font-sans text-[9px] font-semibold uppercase tracking-[0.24em] text-lightbr/80">
+          <p className="mt-2 font-sans text-9px font-semibold uppercase tracking-[0.24em] text-lightbr/80">
             Staff Portal
           </p>
         </div>
@@ -69,7 +69,7 @@ export function StaffShell({
                 href={item.href}
                 onClick={() => setMobileNav(false)}
                 className={cn(
-                  "flex items-center gap-3 rounded-sm px-3 py-2.5 font-sans text-[13px] transition-colors",
+                  "flex items-center gap-3 rounded-sm px-3 py-2.5 font-sans text-13px transition-colors",
                   active
                     ? "border-r-2 border-lightbr bg-[rgba(152,117,91,0.18)] text-cream"
                     : "text-[rgba(226,209,194,0.65)] hover:bg-lightbr/10 hover:text-cream",
@@ -84,7 +84,7 @@ export function StaffShell({
 
         <div className="border-t border-lightbr/20 p-4">
           <div className="flex items-center gap-3 px-2 py-2">
-            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-lightbr/20 font-sans text-[11px] font-medium text-cream">
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-lightbr/20 font-sans text-11px font-medium text-cream">
               {avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
@@ -93,8 +93,8 @@ export function StaffShell({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-sans text-[13px] text-cream">{name}</p>
-              <p className="mt-0.5 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-lightbr/70">
+              <p className="truncate font-sans text-13px text-cream">{name}</p>
+              <p className="mt-0.5 font-sans text-10px font-semibold uppercase tracking-[0.14em] text-lightbr/70">
                 Staff
               </p>
             </div>
@@ -103,7 +103,7 @@ export function StaffShell({
             href="/staff/settings"
             onClick={() => setMobileNav(false)}
             className={cn(
-              "mt-1 flex items-center gap-2 rounded-sm px-2 py-2 font-sans text-[13px] transition-colors",
+              "mt-1 flex items-center gap-2 rounded-sm px-2 py-2 font-sans text-13px transition-colors",
               pathname.startsWith("/staff/settings")
                 ? "border-r-2 border-lightbr bg-[rgba(152,117,91,0.18)] text-cream"
                 : "text-[rgba(226,209,194,0.65)] hover:bg-lightbr/10 hover:text-cream",
@@ -115,7 +115,7 @@ export function StaffShell({
           <button
             type="button"
             onClick={() => void signOut({ callbackUrl: "/login?tab=staff" })}
-            className="mt-2 flex w-full items-center gap-2 px-2 py-2 font-sans text-[13px] text-[rgba(226,209,194,0.65)] transition-colors hover:text-cream"
+            className="mt-2 flex w-full items-center gap-2 px-2 py-2 font-sans text-13px text-[rgba(226,209,194,0.65)] transition-colors hover:text-cream"
           >
             <LogOut className="h-4 w-4" strokeWidth={1.5} />
             Sign out
@@ -142,7 +142,7 @@ export function StaffShell({
                   <Link
                     href={item.href}
                     className={cn(
-                      "flex flex-col items-center gap-0.5 px-3 py-1.5 font-sans text-[9px] uppercase tracking-wide",
+                      "flex flex-col items-center gap-0.5 px-3 py-1.5 font-sans text-9px uppercase tracking-wide",
                       active ? "text-choc" : "text-text-mid",
                     )}
                   >

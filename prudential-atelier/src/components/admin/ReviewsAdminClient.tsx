@@ -123,7 +123,7 @@ export function ReviewsAdminClient({ reviews, variant }: ReviewsAdminClientProps
 
       <div className="-mx-4 overflow-x-auto rounded-sm border border-sand bg-canvas px-4 md:mx-0 md:px-0">
         <table className="w-full min-w-[960px] text-left text-sm text-charcoal">
-          <thead className="border-b border-sand font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">
+          <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-[#A8A8A4]">
             <tr>
               <th className="p-3">Client</th>
               {variant === "product" ? <th className="p-3">Product</th> : <th className="p-3">Consultation type</th>}

@@ -91,9 +91,9 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
   return (
     <div>
       <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">Consultations</h1>
-      <p className="mt-1 font-body text-[13px] text-[#6B6B68]">Prudential Atelier</p>
+      <p className="mt-1 font-body text-13px text-[#6B6B68]">Prudential Atelier</p>
 
-      <div className="mt-4 flex flex-wrap gap-2 font-body text-[11px]">
+      <div className="mt-4 flex flex-wrap gap-2 font-body text-11px">
         <Link
           href="/admin/consultations"
           className={`admin-chip glass-1 glass-pill uppercase tracking-[0.08em] ${
@@ -146,7 +146,7 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
       <div className="mt-8 overflow-x-auto border border-sand">
         <table className="w-full min-w-[860px] border-collapse font-body text-xs">
           <thead>
-            <tr className="bg-[#37392d] text-left text-[10px] font-medium uppercase tracking-[0.1em] text-white">
+            <tr className="bg-[#37392d] text-left text-10px font-medium uppercase tracking-[0.1em] text-white">
               <th className="px-3 py-2">Booking</th>
               <th className="px-3 py-2">Client</th>
               <th className="px-3 py-2">Type</th>
@@ -163,7 +163,7 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
                 isVirtualDelivery(b.offering.deliveryMode);
               return (
                 <tr key={b.id} className="border-t border-sand">
-                  <td className="px-3 py-2 font-mono text-[11px] text-olive">{b.bookingNumber}</td>
+                  <td className="px-3 py-2 font-mono text-11px text-olive">{b.bookingNumber}</td>
                   <td className="px-3 py-2">
                     <div className="font-medium text-ink">{b.clientName}</div>
                     <div className="text-[#6B6B68]">{b.clientEmail}</div>

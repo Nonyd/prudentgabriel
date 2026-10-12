@@ -443,7 +443,7 @@ export function BespokeOrderDetailClient({
 
   return (
     <div className="space-y-8">
-      <Link href="/admin/bespoke" className="font-sans text-[11px] uppercase text-text-light hover:text-nut">
+      <Link href="/admin/bespoke" className="font-sans text-11px uppercase text-text-light hover:text-nut">
         ← Orders pipeline
       </Link>
 
@@ -462,11 +462,11 @@ export function BespokeOrderDetailClient({
         </div>
         <div className="flex flex-col items-end gap-2">
           {isArchived ? (
-            <span className="rounded-full bg-sand px-3 py-1 font-sans text-[10px] font-semibold uppercase tracking-wide text-text-mid">
+            <span className="rounded-full bg-sand px-3 py-1 font-sans text-10px font-semibold uppercase tracking-wide text-text-mid">
               Archived
             </span>
           ) : deliveryComplete ? (
-            <span className="rounded-full bg-lightbr/15 px-3 py-1 font-sans text-[10px] font-semibold uppercase tracking-wide text-nut">
+            <span className="rounded-full bg-lightbr/15 px-3 py-1 font-sans text-10px font-semibold uppercase tracking-wide text-nut">
               Delivered
             </span>
           ) : null}
@@ -502,7 +502,7 @@ export function BespokeOrderDetailClient({
                     <div className="flex flex-col items-center">
                       <div
                         className={cn(
-                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-[11px] font-semibold",
+                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-11px font-semibold",
                           done && "border-lightbr bg-lightbr text-cream",
                           active && !done && "border-nut bg-nut text-cream animate-pulse",
                           !done && !active && "border-sand bg-bg-card text-text-light",
@@ -521,7 +521,7 @@ export function BespokeOrderDetailClient({
                       {order.assignments
                         .filter((a) => a.stage === stage)
                         .map((a) => (
-                          <p key={a.id} className="mt-1 font-sans text-[11px] text-text-light">
+                          <p key={a.id} className="mt-1 font-sans text-11px text-text-light">
                             {a.staffProfile.user.name ?? a.staffProfile.user.email}
                             {a.role ? ` · ${a.role}` : ""}
                           </p>
@@ -542,7 +542,7 @@ export function BespokeOrderDetailClient({
                 {order.stageHistory.map((h) => (
                   <li key={h.id} className="border-b border-sand pb-4 last:border-0">
                     <p className="font-sans text-sm font-medium text-ink">{STAGE_LABELS[h.stage]}</p>
-                    <p className="mt-1 font-sans text-[11px] text-text-light">
+                    <p className="mt-1 font-sans text-11px text-text-light">
                       {formatDate(h.completedAt)} · {h.completedByName ?? "Admin"}
                     </p>
                     {h.notes ? (
@@ -597,7 +597,7 @@ export function BespokeOrderDetailClient({
               Complete current stage — {STAGE_LABELS[order.currentStage]}
             </h2>
             <div className="mt-4">
-              <p className="font-sans text-[11px] font-semibold uppercase tracking-wider text-text-light">
+              <p className="font-sans text-11px font-semibold uppercase tracking-wider text-text-light">
                 Assign staff to this stage
               </p>
               {stageAssignments.length > 0 ? (
@@ -683,7 +683,7 @@ export function BespokeOrderDetailClient({
             />
             {order.currentStage === "CONSULTATION_SESSION" && !order.measurementsHidden ? (
               <div className="mt-4">
-                <p className="font-sans text-[11px] text-text-mid">
+                <p className="font-sans text-11px text-text-mid">
                   Capture measurements now to save a trip later (optional)
                 </p>
                 <ClientMeasurementsPanel
@@ -750,11 +750,11 @@ export function BespokeOrderDetailClient({
               ) : null}
             </div>
             {!roleMayWorkStage ? (
-              <p className="mt-2 font-sans text-[11px] text-text-light">
+              <p className="mt-2 font-sans text-11px text-text-light">
                 Your role can follow this commission but not complete its stages.
               </p>
             ) : !canComplete ? (
-              <p className="mt-2 font-sans text-[11px] text-text-light">
+              <p className="mt-2 font-sans text-11px text-text-light">
                 Complete the checklist above. The server will still refuse if anything is missing.
               </p>
             ) : null}
@@ -844,7 +844,7 @@ export function BespokeOrderDetailClient({
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[520px] border-collapse font-sans text-xs">
                 <thead>
-                  <tr className="border-b border-sand text-left text-[10px] font-medium uppercase tracking-wide text-text-light">
+                  <tr className="border-b border-sand text-left text-10px font-medium uppercase tracking-wide text-text-light">
                     <th className="py-2 pr-2">Date</th>
                     <th className="py-2 pr-2 text-right">Amount</th>
                     <th className="py-2 pr-2">Method</th>
@@ -906,7 +906,7 @@ export function BespokeOrderDetailClient({
                   {m.quantity ? ` · ${m.quantity}` : ""}
                   {m.unitCost != null ? ` · ₦${m.unitCost}` : ""}
                   {m.storeMovementId ? (
-                    <span className="ml-2 text-[10px] uppercase tracking-wide text-text-light">Issued</span>
+                    <span className="ml-2 text-10px uppercase tracking-wide text-text-light">Issued</span>
                   ) : null}
                 </li>
               ))}
@@ -1050,7 +1050,7 @@ export function BespokeOrderDetailClient({
 
 function BadgeStage({ stage }: { stage: BespokeStage }) {
   return (
-    <span className="rounded-full bg-nut/10 px-3 py-1 font-sans text-[10px] font-semibold uppercase tracking-wide text-nut">
+    <span className="rounded-full bg-nut/10 px-3 py-1 font-sans text-10px font-semibold uppercase tracking-wide text-nut">
       Stage {getStageProgress(stage)}/13
     </span>
   );

@@ -74,7 +74,7 @@ function Traffic({ rows, note }: { rows: TrafficRow[]; note: string }) {
       ) : (
         <table className="mt-4 w-full font-sans text-sm">
           <thead>
-            <tr className="border-b border-sand text-left text-[10px] uppercase tracking-wider text-[#6B6B68]">
+            <tr className="border-b border-sand text-left text-10px uppercase tracking-wider text-[#6B6B68]">
               <th className="py-2 font-medium">Source</th>
               <th className="py-2 font-medium">Landings</th>
               <th className="py-2 font-medium">Orders</th>
@@ -165,7 +165,7 @@ export function HouseNumbersPanel({ data }: { data: HouseNumbers }) {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map((k) => (
           <div key={k.label} className="glass-opaque p-5">
-            <p className="font-sans text-[10px] uppercase tracking-wider text-[#6B6B68]">{k.label}</p>
+            <p className="font-sans text-10px uppercase tracking-wider text-[#6B6B68]">{k.label}</p>
             <p className="mt-2 font-display text-2xl text-choc">{k.value}</p>
             <p className="mt-1 font-sans text-xs text-[#6B6B68]">{k.prev}</p>
           </div>
@@ -217,7 +217,7 @@ export function HouseNumbersPanel({ data }: { data: HouseNumbers }) {
           )}
         </div>
       </div>
-      <p className="font-sans text-[11px] text-[#6B6B68]">
+      <p className="font-sans text-11px text-[#6B6B68]">
         Page counts are first-party totals, not people. Daily detail is kept {data.retentionDays} days, then monthly
         totals. No visitor id is stored.
       </p>

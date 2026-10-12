@@ -65,7 +65,7 @@ export function ClientsListClient() {
         header: "Client",
         cell: (row) => (
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-choc/10 font-sans text-[10px] font-medium text-choc">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-choc/10 font-sans text-10px font-medium text-choc">
               {getInitials(row.user.name ?? row.user.email)}
             </div>
             <div>

@@ -356,7 +356,7 @@ function ViewAsClientButton({ clientId }: { clientId: string }) {
       >
         {busy ? "Opening her account…" : "View as client"}
       </button>
-      <p className="max-w-[18rem] text-right font-sans text-[11px] text-text-mid">
+      <p className="max-w-[18rem] text-right font-sans text-11px text-text-mid">
         {error ?? "Opens her account as her, for up to an hour. Everything you do is recorded in the activity log."}
       </p>
     </div>
@@ -392,7 +392,7 @@ function FileSection<T>({
 }
 
 function SubHead({ children }: { children: React.ReactNode }) {
-  return <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.12em] text-text-light">{children}</p>;
+  return <p className="font-sans text-11px font-semibold uppercase tracking-[0.12em] text-text-light">{children}</p>;
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
@@ -491,7 +491,7 @@ function MeasureGrid({ rows }: { rows: MeasureRow[] }) {
     <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
       {rows.map((r) => (
         <div key={r.key}>
-          <p className="font-sans text-[10px] uppercase text-text-light">{r.label}</p>
+          <p className="font-sans text-10px uppercase text-text-light">{r.label}</p>
           <p className="font-sans text-sm text-ink">
             {r.value} {r.unit}
           </p>
@@ -572,7 +572,7 @@ function PaymentsView({ data }: { data: Payments }) {
                 ] as const
               ).map(([label, value]) => (
                 <div key={label}>
-                  <dt className="text-[10px] uppercase text-text-light">{label}</dt>
+                  <dt className="text-10px uppercase text-text-light">{label}</dt>
                   <dd className="text-ink">{money(value, "NGN")}</dd>
                 </div>
               ))}

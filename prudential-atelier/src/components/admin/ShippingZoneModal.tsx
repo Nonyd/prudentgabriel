@@ -129,7 +129,7 @@ export function ShippingZoneModal({
                 {!form.allStatesInNigeria ? (
                   <div className="grid grid-cols-3 gap-1 border border-sand p-2">
                     {NIGERIAN_STATES.map((state) => (
-                      <label key={state} className="flex items-center gap-1 font-body text-[11px]">
+                      <label key={state} className="flex items-center gap-1 font-body text-11px">
                         <input
                           type="checkbox"
                           checked={form.states.includes(state)}

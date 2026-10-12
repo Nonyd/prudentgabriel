@@ -192,14 +192,14 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
   return (
     <div className="mt-8 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="font-body text-[13px] text-[#6B6B68]">{collections.length} collections</p>
+        <p className="font-body text-13px text-[#6B6B68]">{collections.length} collections</p>
         <button
           type="button"
           onClick={() => {
             setEditing(null);
             setModalOpen(true);
           }}
-          className="bg-[#37392d] px-4 py-2 font-body text-[11px] font-medium uppercase tracking-wide text-white"
+          className="bg-[#37392d] px-4 py-2 font-body text-11px font-medium uppercase tracking-wide text-white"
         >
           + Create collection
         </button>
@@ -225,9 +225,9 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
       ) : null}
 
       <div className="overflow-x-auto border border-sand bg-bg-card">
-        <table className="w-full min-w-[900px] border-collapse text-left font-body text-[13px]">
+        <table className="w-full min-w-[900px] border-collapse text-left font-body text-13px">
           <thead>
-            <tr className="border-b border-sand bg-[#FAFAFA] text-[11px] font-medium uppercase tracking-wide text-[#6B6B68]">
+            <tr className="border-b border-sand bg-[#FAFAFA] text-11px font-medium uppercase tracking-wide text-[#6B6B68]">
               <th className="w-10 px-3 py-3">
                 <input type="checkbox" checked={allSortedSelected} onChange={toggleSelectAllSorted} aria-label="Select all" />
               </th>
@@ -298,12 +298,12 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
                 </td>
                 <td className="px-3 py-2 align-middle">
                   <p className="font-medium text-ink">{row.name}</p>
-                  <p className="text-[11px] text-[#8A8A86]">/{row.slug}</p>
+                  <p className="text-11px text-[#8A8A86]">/{row.slug}</p>
                 </td>
                 <td className="px-3 py-2 align-middle text-[#6B6B68]">{row.productCount}</td>
                 <td className="px-3 py-2 align-middle">
                   {row.autoTag ? (
-                    <span className="inline-block bg-olive/10 px-2 py-0.5 font-body text-[11px] text-olive">{row.autoTag}</span>
+                    <span className="inline-block bg-olive/10 px-2 py-0.5 font-body text-11px text-olive">{row.autoTag}</span>
                   ) : (
                     "—"
                   )}
@@ -340,7 +340,7 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
                   <input
                     type="number"
                     defaultValue={row.displayOrder}
-                    className="w-14 border border-sand bg-bg-card px-2 py-1 text-[12px]"
+                    className="w-14 border border-sand bg-bg-card px-2 py-1 text-12px"
                     onBlur={(e) => {
                       const v = Number(e.target.value);
                       if (!Number.isFinite(v) || v < 0) return;
@@ -371,7 +371,7 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
                     </button>
                     <a
                       href={`/admin/collections/${row.id}`}
-                      className="ml-1 self-center font-body text-[11px] uppercase tracking-wide text-olive hover:underline"
+                      className="ml-1 self-center font-body text-11px uppercase tracking-wide text-olive hover:underline"
                       onClick={(e) => e.stopPropagation()}
                     >
                       Detail

@@ -28,7 +28,7 @@ export default async function AdminBespokeIntakeDetailPage({
 
   return (
     <div>
-      <Link href="/admin/bespoke/intake" className="font-sans text-[11px] uppercase text-text-light hover:text-nut">
+      <Link href="/admin/bespoke/intake" className="font-sans text-11px uppercase text-text-light hover:text-nut">
         ← Intake requests
       </Link>
       <h1 className="mt-4 font-display text-2xl text-ink">{row.requestNumber}</h1>
@@ -38,7 +38,7 @@ export default async function AdminBespokeIntakeDetailPage({
       {showGenerate ? <GenerateInvoiceButton bespokeId={row.id} /> : null}
       {agreed != null ? (
         <div className="card-surface mt-8 p-6">
-          <p className="font-sans text-[11px] font-medium uppercase text-text-light">Pricing</p>
+          <p className="font-sans text-11px font-medium uppercase text-text-light">Pricing</p>
           <dl className="mt-4 grid gap-2 font-sans text-sm sm:grid-cols-2">
             <div>
               <dt className="text-text-light">Agreed price</dt>

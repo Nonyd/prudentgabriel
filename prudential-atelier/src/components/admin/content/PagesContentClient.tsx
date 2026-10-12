@@ -351,7 +351,7 @@ export function PagesContentClient() {
       <div>
         <Link
           href="/admin/content"
-          className="mb-4 inline-block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-light hover:text-choc"
+          className="mb-4 inline-block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-light hover:text-choc"
         >
           ← Content
         </Link>
@@ -363,7 +363,7 @@ export function PagesContentClient() {
       </div>
 
       <div className="rounded-lg border border-sand/80 bg-bg-card px-4 py-3">
-        <p className="font-sans text-[13px] leading-relaxed text-text-mid">
+        <p className="font-sans text-13px leading-relaxed text-text-mid">
           Page-specific images are edited here. Global logos and fallback hero images are in{" "}
           <Link href="/admin/settings/appearance" className="text-choc hover:underline">
             Appearance settings
@@ -380,7 +380,7 @@ export function PagesContentClient() {
         <nav className="space-y-5" aria-label="Pages">
           {CMS_PAGE_GROUPS.map((group) => (
             <div key={group.id}>
-              <p className="mb-1.5 px-3 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
+              <p className="mb-1.5 px-3 font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light">
                 {group.label}
               </p>
               <ul className="space-y-0.5">

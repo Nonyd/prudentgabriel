@@ -125,7 +125,7 @@ export function CollectionDetailAdmin({
     <div className="mt-6 space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link href="/admin/collections" className="font-body text-[12px] text-olive hover:underline">
+          <Link href="/admin/collections" className="font-body text-12px text-olive hover:underline">
             ← Collections
           </Link>
           <h1 className="mt-2 font-display text-2xl text-ink">{collection.name}</h1>
@@ -134,7 +134,7 @@ export function CollectionDetailAdmin({
           <button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="border border-[#37392d] px-4 py-2 font-body text-[11px] font-medium uppercase tracking-wide text-[#37392d]"
+            className="border border-[#37392d] px-4 py-2 font-body text-11px font-medium uppercase tracking-wide text-[#37392d]"
           >
             Edit collection
           </button>
@@ -142,7 +142,7 @@ export function CollectionDetailAdmin({
             href={`/collections/${collection.slug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-[#37392d] px-4 py-2 font-body text-[11px] font-medium uppercase tracking-wide text-white"
+            className="bg-[#37392d] px-4 py-2 font-body text-11px font-medium uppercase tracking-wide text-white"
           >
             View on site ↗
           </a>
@@ -151,7 +151,7 @@ export function CollectionDetailAdmin({
 
       <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
         <div>
-          <div className="flex gap-4 border-b border-sand font-body text-[12px]">
+          <div className="flex gap-4 border-b border-sand font-body text-12px">
             {(
               [
                 ["manual", `Manual (${manualOrder.length})`],
@@ -171,9 +171,9 @@ export function CollectionDetailAdmin({
           </div>
 
           {tab === "auto" && !collection.autoTag ? (
-            <p className="mt-6 font-body text-[13px] text-[#6B6B68]">No auto-tag set. Edit collection to add one.</p>
+            <p className="mt-6 font-body text-13px text-[#6B6B68]">No auto-tag set. Edit collection to add one.</p>
           ) : tab === "auto" && collection.autoTag ? (
-            <p className="mt-4 font-body text-[12px] text-[#6B6B68]">
+            <p className="mt-4 font-body text-12px text-[#6B6B68]">
               {autoProducts.length} products auto-included via tag: <span className="text-olive">{collection.autoTag}</span>
             </p>
           ) : null}
@@ -197,8 +197,8 @@ export function CollectionDetailAdmin({
                   ) : null}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-body text-[13px] font-medium text-ink">{p.name}</p>
-                  <p className="font-body text-[11px] text-[#6B6B68]">
+                  <p className="truncate font-body text-13px font-medium text-ink">{p.name}</p>
+                  <p className="font-body text-11px text-[#6B6B68]">
                     From ₦{Math.round(p.variants.length ? derivedCatalogMinNGN(p.variants, p.isOnSale) : p.basePriceNGN).toLocaleString()}
                   </p>
                 </div>
@@ -206,7 +206,7 @@ export function CollectionDetailAdmin({
                   <button
                     type="button"
                     onClick={() => void removeManual(p.id)}
-                    className="shrink-0 font-body text-[11px] uppercase text-red-700 hover:underline"
+                    className="shrink-0 font-body text-11px uppercase text-red-700 hover:underline"
                   >
                     Remove
                   </button>
@@ -218,28 +218,28 @@ export function CollectionDetailAdmin({
 
         <aside className="space-y-4 border border-sand bg-[#FAFAFA] p-4">
           <div>
-            <p className="font-body text-[11px] uppercase text-[#6B6B68]">Total products</p>
+            <p className="font-body text-11px uppercase text-[#6B6B68]">Total products</p>
             <p className="font-display text-2xl text-ink">{totalUnique}</p>
           </div>
           <div>
-            <p className="font-body text-[11px] uppercase text-[#6B6B68]">Published manual</p>
-            <p className="text-[13px]">{publishedManual}</p>
-            <p className="mt-2 font-body text-[11px] uppercase text-[#6B6B68]">Draft / unpubl. manual</p>
-            <p className="text-[13px]">{draftManual}</p>
+            <p className="font-body text-11px uppercase text-[#6B6B68]">Published manual</p>
+            <p className="text-13px">{publishedManual}</p>
+            <p className="mt-2 font-body text-11px uppercase text-[#6B6B68]">Draft / unpubl. manual</p>
+            <p className="text-13px">{draftManual}</p>
           </div>
           <div>
-            <p className="font-body text-[11px] uppercase text-[#6B6B68]">Cover</p>
+            <p className="font-body text-11px uppercase text-[#6B6B68]">Cover</p>
             <div className="relative mt-2 aspect-[3/4] w-full bg-[#EEE]">
               {collection.coverImage ? (
                 <Image src={optimizeImageUrl(collection.coverImage, 400)} alt="" fill className="object-cover" sizes="280px" />
               ) : null}
             </div>
-            <button type="button" onClick={() => setModalOpen(true)} className="mt-2 font-body text-[11px] text-olive hover:underline">
+            <button type="button" onClick={() => setModalOpen(true)} className="mt-2 font-body text-11px text-olive hover:underline">
               Edit cover
             </button>
           </div>
-          <p className="text-[11px] text-[#6B6B68]">Created {new Date(collection.createdAt).toLocaleDateString()}</p>
-          <p className="text-[11px] text-[#6B6B68]">Updated {new Date(collection.updatedAt).toLocaleDateString()}</p>
+          <p className="text-11px text-[#6B6B68]">Created {new Date(collection.createdAt).toLocaleDateString()}</p>
+          <p className="text-11px text-[#6B6B68]">Updated {new Date(collection.updatedAt).toLocaleDateString()}</p>
         </aside>
       </div>
 

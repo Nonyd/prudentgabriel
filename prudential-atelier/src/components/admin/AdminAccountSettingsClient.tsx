@@ -126,7 +126,7 @@ export function AdminAccountSettingsClient({ initial, canChangeEmail = false }: 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr">Account</p>
+        <p className="font-sans text-10px font-semibold uppercase tracking-[0.2em] text-lightbr">Account</p>
         <h1 className="mt-2 font-serif text-3xl font-normal text-choc">Account Settings</h1>
         <p className="mt-2 font-body text-sm text-text-mid">Manage your personal profile and sign-in credentials.</p>
       </div>
@@ -172,7 +172,7 @@ export function AdminAccountSettingsClient({ initial, canChangeEmail = false }: 
           <p className="mt-1 font-sans text-xs text-text-mid">Your display name appears in the sidebar and daily report greeting.</p>
         </div>
         <label className="block">
-          <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+          <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">
             Full name
           </span>
           <input
@@ -183,7 +183,7 @@ export function AdminAccountSettingsClient({ initial, canChangeEmail = false }: 
           />
         </label>
         <label className="block">
-          <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+          <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">
             Email
           </span>
           <input
@@ -200,14 +200,14 @@ export function AdminAccountSettingsClient({ initial, canChangeEmail = false }: 
             required
           />
           {canChangeEmail ? (
-            <p className="mt-1.5 font-sans text-[11px] text-text-mid">
+            <p className="mt-1.5 font-sans text-11px text-text-mid">
               Changing this email updates how you sign in. Confirm with your current password below.
             </p>
           ) : null}
         </label>
         {canChangeEmail && email.trim().toLowerCase() !== savedEmail.toLowerCase() ? (
           <label className="block">
-            <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+            <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">
               Current password
             </span>
             <PasswordField
@@ -230,7 +230,7 @@ export function AdminAccountSettingsClient({ initial, canChangeEmail = false }: 
           <p className="mt-1 font-sans text-xs text-text-mid">Minimum 8 characters. Use a unique password for this account.</p>
         </div>
         <label className="block">
-          <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+          <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">
             Current password
           </span>
           <PasswordField
@@ -242,7 +242,7 @@ export function AdminAccountSettingsClient({ initial, canChangeEmail = false }: 
           />
         </label>
         <label className="block">
-          <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+          <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">
             New password
           </span>
           <PasswordField
@@ -255,7 +255,7 @@ export function AdminAccountSettingsClient({ initial, canChangeEmail = false }: 
           />
         </label>
         <label className="block">
-          <span className="mb-2 block font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-text-mid">
+          <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">
             Confirm new password
           </span>
           <PasswordField

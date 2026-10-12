@@ -64,7 +64,7 @@ export function AdminCustomerPointsForm({ userId, currentBalance }: { userId: st
         type="button"
         disabled={saving}
         onClick={() => void submit()}
-        className="mt-4 h-10 bg-[#37392d] px-5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
+        className="mt-4 h-10 bg-[#37392d] px-5 font-body text-11px font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
       >
         {saving ? "Saving…" : "Record adjustment"}
       </button>

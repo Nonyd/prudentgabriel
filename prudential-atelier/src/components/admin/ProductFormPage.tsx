@@ -213,7 +213,7 @@ const defaultCreate = (custom?: {
 
 const fieldClass =
   "mt-2 w-full min-h-[44px] rounded-xl border border-sand bg-cream px-4 py-3 font-body text-base text-choc";
-const labelClass = "mt-5 block font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-choc/70";
+const labelClass = "mt-5 block font-sans text-11px font-medium uppercase tracking-[0.14em] text-choc/70";
 const sectionClass = "glass-opaque p-5 md:p-6";
 const btnPrimary =
   "inline-flex min-h-[44px] items-center justify-center rounded-full bg-choc px-5 font-sans text-xs uppercase tracking-[0.14em] text-cream hover:bg-choc/90 disabled:opacity-30";
@@ -807,7 +807,7 @@ export function ProductFormPage({
                     <img src={im.url} alt="" className="h-36 w-full rounded-sm object-cover" />
                     {isLegacyWordPressImageUrl(im.url) && (
                       <div className="mt-1 space-y-1">
-                        <p className="text-[10px] text-amber-700">Hosted on the old server — upload a replacement.</p>
+                        <p className="text-10px text-amber-700">Hosted on the old server — upload a replacement.</p>
                       </div>
                     )}
                     <div className="mt-2 flex min-h-[44px] items-center justify-between gap-1">
@@ -1058,7 +1058,7 @@ export function ProductFormPage({
                       </label>
                     )}
                   />
-                  <p className="text-[11px] text-[#A8A8A4]">Leave returnable off. A custom garment cannot be worn by anyone else.</p>
+                  <p className="text-11px text-[#A8A8A4]">Leave returnable off. A custom garment cannot be worn by anyone else.</p>
                   <p className="text-xs uppercase text-[#A8A8A4]">Fields for this piece</p>
                   <ul className="space-y-2">
                     {libraryFields.map((f) => {
@@ -1179,7 +1179,7 @@ export function ProductFormPage({
                     <label className="flex justify-between gap-2">
                       <span>
                         Show on the homepage
-                        <span className="block text-[11px] text-[#A8A8A4]">You choose this. It is not updated from sales.</span>
+                        <span className="block text-11px text-[#A8A8A4]">You choose this. It is not updated from sales.</span>
                       </span>
                       <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
                     </label>
@@ -1211,7 +1211,7 @@ export function ProductFormPage({
                           field.onChange(raw ? new Date(`${raw}T12:00:00`) : null);
                         }}
                       />
-                      <span className="mt-1 block text-[11px] text-[#A8A8A4]">
+                      <span className="mt-1 block text-11px text-[#A8A8A4]">
                         Defaults to the day you first publish. Backdating only moves the piece under Newest
                         first (Recent) — Curated order on /rtw stays where you dragged it. Future dates are
                         not accepted yet.
@@ -1283,7 +1283,7 @@ export function ProductFormPage({
                             </div>
                             <div className="min-w-0">
                               <div className="truncate text-charcoal">{p.name}</div>
-                              <div className="text-[11px] text-gold/80">{p.category.replace(/_/g, " ")}</div>
+                              <div className="text-11px text-gold/80">{p.category.replace(/_/g, " ")}</div>
                             </div>
                           </button>
                         );

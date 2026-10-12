@@ -94,7 +94,7 @@ export function StaffProfileClient({ staffId }: { staffId: string }) {
           <div>
             <Link
               href="/admin/staff"
-              className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light hover:text-nut"
+              className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light hover:text-nut"
             >
               ← Staff directory
             </Link>
@@ -118,7 +118,7 @@ export function StaffProfileClient({ staffId }: { staffId: string }) {
 
       {item.skillTags.length > 0 ? (
         <section className="card-surface p-6">
-          <h2 className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
+          <h2 className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light">
             Skills
           </h2>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -145,7 +145,7 @@ export function StaffProfileClient({ staffId }: { staffId: string }) {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left">
               <thead>
-                <tr className="border-b border-sand bg-bg/50 font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-light">
+                <tr className="border-b border-sand bg-bg/50 font-sans text-10px font-semibold uppercase tracking-[0.12em] text-text-light">
                   <th className="px-4 py-3">Order</th>
                   <th className="px-4 py-3">Client</th>
                   <th className="px-4 py-3">Role</th>
@@ -209,7 +209,7 @@ export function StaffProfileClient({ staffId }: { staffId: string }) {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] text-left">
               <thead>
-                <tr className="border-b border-sand bg-bg/50 font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-text-light">
+                <tr className="border-b border-sand bg-bg/50 font-sans text-10px font-semibold uppercase tracking-[0.12em] text-text-light">
                   <th className="px-4 py-3">Date</th>
                   <th className="px-4 py-3">Clock In</th>
                   <th className="px-4 py-3">Clock Out</th>

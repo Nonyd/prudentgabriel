@@ -35,36 +35,36 @@ export default async function StoreIssuePrintPage({
 
   return (
     <div className="mx-auto max-w-2xl bg-white p-8 text-ink print:p-0">
-      <p className="font-sans text-[11px] uppercase tracking-[0.14em] text-text-light">Prudential Atelier</p>
+      <p className="font-sans text-11px uppercase tracking-[0.14em] text-text-light">Prudential Atelier</p>
       <h1 className="font-display text-2xl">Material issue slip</h1>
       <p className="mt-1 font-sans text-sm text-text-mid">{ref}</p>
 
       <dl className="mt-6 grid grid-cols-2 gap-3 font-sans text-sm">
         <div>
-          <dt className="text-[10px] uppercase tracking-wide text-text-light">Client</dt>
+          <dt className="text-10px uppercase tracking-wide text-text-light">Client</dt>
           <dd>{client}</dd>
         </div>
         <div>
-          <dt className="text-[10px] uppercase tracking-wide text-text-light">Order</dt>
+          <dt className="text-10px uppercase tracking-wide text-text-light">Order</dt>
           <dd>{orderRef}</dd>
         </div>
         <div>
-          <dt className="text-[10px] uppercase tracking-wide text-text-light">Taken by</dt>
+          <dt className="text-10px uppercase tracking-wide text-text-light">Taken by</dt>
           <dd>{taken}</dd>
         </div>
         <div>
-          <dt className="text-[10px] uppercase tracking-wide text-text-light">Supervisor</dt>
+          <dt className="text-10px uppercase tracking-wide text-text-light">Supervisor</dt>
           <dd>{approved}</dd>
         </div>
         <div>
-          <dt className="text-[10px] uppercase tracking-wide text-text-light">Date</dt>
+          <dt className="text-10px uppercase tracking-wide text-text-light">Date</dt>
           <dd>{when}</dd>
         </div>
       </dl>
 
       <table className="mt-8 w-full border-collapse font-sans text-sm">
         <thead>
-          <tr className="border-b border-sand text-left text-[10px] uppercase tracking-wide text-text-light">
+          <tr className="border-b border-sand text-left text-10px uppercase tracking-wide text-text-light">
             <th className="py-2">Material</th>
             <th className="py-2 text-right">Issued</th>
             <th className="py-2 text-right">Returned</th>

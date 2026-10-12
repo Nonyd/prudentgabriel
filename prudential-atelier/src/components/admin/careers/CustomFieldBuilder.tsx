@@ -82,7 +82,7 @@ export function CustomFieldBuilder({
               <button type="button" className="font-body text-xs text-charcoal-mid" onClick={() => moveField(field.id, 1)}>
                 ↓
               </button>
-              <span className="font-label text-[10px] uppercase tracking-wide text-[#A8A8A4]">
+              <span className="font-label text-10px uppercase tracking-wide text-[#A8A8A4]">
                 {FIELD_TYPES.find((t) => t.type === field.type)?.label ?? field.type}
               </span>
             </div>

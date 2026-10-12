@@ -83,7 +83,7 @@ export function ApplicationDetailClient({ application }: { application: Applicat
     <div className="mt-6 space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-sm border border-sand bg-canvas p-5">
-          <p className="font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">Applicant</p>
+          <p className="font-label text-11px uppercase tracking-wide text-[#A8A8A4]">Applicant</p>
           <p className="mt-2 font-display text-xl text-ink">{application.fullName}</p>
           <p className="font-body text-sm text-charcoal-mid">{application.email}</p>
           <p className="font-body text-sm text-charcoal-mid">{application.phone}</p>
@@ -105,7 +105,7 @@ export function ApplicationDetailClient({ application }: { application: Applicat
 
         <div className="rounded-sm border border-sand bg-canvas p-5 space-y-4">
           <div>
-            <label className="font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">Status</label>
+            <label className="font-label text-11px uppercase tracking-wide text-[#A8A8A4]">Status</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as ApplicationStatus)}
@@ -123,7 +123,7 @@ export function ApplicationDetailClient({ application }: { application: Applicat
             </label>
           </div>
           <div>
-            <label className="font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">Admin notes</label>
+            <label className="font-label text-11px uppercase tracking-wide text-[#A8A8A4]">Admin notes</label>
             <textarea
               value={adminNotes}
               onChange={(e) => setAdminNotes(e.target.value)}
@@ -140,7 +140,7 @@ export function ApplicationDetailClient({ application }: { application: Applicat
             </button>
           </div>
           <div>
-            <p className="font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">Send email</p>
+            <p className="font-label text-11px uppercase tracking-wide text-[#A8A8A4]">Send email</p>
             <input
               value={emailSubject}
               onChange={(e) => setEmailSubject(e.target.value)}
@@ -168,13 +168,13 @@ export function ApplicationDetailClient({ application }: { application: Applicat
 
       {application.coverLetter ? (
         <section className="rounded-sm border border-sand bg-canvas p-5">
-          <p className="font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">Cover letter</p>
+          <p className="font-label text-11px uppercase tracking-wide text-[#A8A8A4]">Cover letter</p>
           <p className="mt-2 whitespace-pre-wrap font-body text-sm text-charcoal">{application.coverLetter}</p>
         </section>
       ) : null}
 
       <section className="rounded-sm border border-sand bg-canvas p-5">
-        <p className="font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">Documents</p>
+        <p className="font-label text-11px uppercase tracking-wide text-[#A8A8A4]">Documents</p>
         <div className="mt-3 flex flex-wrap gap-4">
           {application.cvUrl ? (
             <a href={application.cvUrl} target="_blank" rel="noreferrer" className="font-body text-sm text-olive hover:underline">
@@ -201,7 +201,7 @@ export function ApplicationDetailClient({ application }: { application: Applicat
 
       {customFields.length > 0 ? (
         <section className="rounded-sm border border-sand bg-canvas p-5">
-          <p className="font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">Custom field responses</p>
+          <p className="font-label text-11px uppercase tracking-wide text-[#A8A8A4]">Custom field responses</p>
           <dl className="mt-3 space-y-2">
             {customFields
               .filter((f) => f.type !== "section_heading")
@@ -221,7 +221,7 @@ export function ApplicationDetailClient({ application }: { application: Applicat
 
       {application.emailsSent.length > 0 ? (
         <section className="rounded-sm border border-sand bg-canvas p-5">
-          <p className="font-label text-[11px] uppercase tracking-wide text-[#A8A8A4]">Email log</p>
+          <p className="font-label text-11px uppercase tracking-wide text-[#A8A8A4]">Email log</p>
           <ul className="mt-3 space-y-2">
             {application.emailsSent.map((e) => (
               <li key={e.id} className="font-body text-xs text-charcoal-mid">

@@ -24,7 +24,7 @@ export function StoreSubnav() {
             key={link.href}
             href={link.href}
             className={cn(
-              "rounded-[3px] border px-3 py-1.5 font-sans text-[11px] font-medium uppercase tracking-[0.12em]",
+              "rounded-[3px] border px-3 py-1.5 font-sans text-11px font-medium uppercase tracking-[0.12em]",
               active
                 ? "border-nut bg-nut/10 text-choc"
                 : "border-sand text-text-mid hover:border-nut hover:text-choc",

@@ -89,7 +89,7 @@ export function ContentSettingsForm() {
           <Accordion.Header>
             <Accordion.Trigger className="flex w-full items-center justify-between py-4 font-body text-xs font-medium uppercase tracking-[0.12em] text-ink">
               {sec.title}
-              <span className="text-[11px] font-normal normal-case tracking-normal text-[#6B6B68]">
+              <span className="text-11px font-normal normal-case tracking-normal text-[#6B6B68]">
                 {list.length} field{list.length === 1 ? "" : "s"}
               </span>
             </Accordion.Trigger>
@@ -98,7 +98,7 @@ export function ContentSettingsForm() {
             <div className="space-y-5">
               {list.map((row) => (
                 <div key={row.key}>
-                  <label className="font-body text-[11px] font-medium uppercase tracking-[0.1em] text-[#6B6B68]">
+                  <label className="font-body text-11px font-medium uppercase tracking-[0.1em] text-[#6B6B68]">
                     {row.label}
                   </label>
                   <div className="mt-1.5">
@@ -128,7 +128,7 @@ export function ContentSettingsForm() {
         type="button"
         disabled={saving}
         onClick={() => void saveAll()}
-        className="sticky bottom-4 z-10 w-full bg-[#37392d] py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
+        className="sticky bottom-4 z-10 w-full bg-[#37392d] py-3.5 font-body text-11px font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save all content"}
       </button>

@@ -75,7 +75,7 @@ export function InvoiceSettingsPageClient() {
         <SettingsGroupCard title="Business identity" group="INVOICE" rows={filterKeys(rows, BUSINESS_KEYS)} onSaved={load} />
         <div className="border border-sand bg-canvas p-5">
           <p className="font-body text-sm font-medium text-ink">Bank details</p>
-          <p className="mt-1 font-body text-[13px] text-[#6B6B68]">
+          <p className="mt-1 font-body text-13px text-[#6B6B68]">
             Atelier accounts (including EUR for European invoices) are managed as records, not settings keys.
           </p>
           <Link

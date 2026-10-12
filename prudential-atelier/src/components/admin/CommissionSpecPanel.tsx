@@ -154,7 +154,7 @@ export function CommissionSpecPanel({
           {!library ? <p className="font-sans text-sm text-text-mid">Loading the library…</p> : null}
           {groups.map(([group, features]) => (
             <div key={group}>
-              <p className="font-sans text-[10px] uppercase tracking-wide text-text-light">{group}</p>
+              <p className="font-sans text-10px uppercase tracking-wide text-text-light">{group}</p>
               <ul className="mt-1 space-y-2">
                 {features.map((f) => {
                   const on = f.id in draft;
