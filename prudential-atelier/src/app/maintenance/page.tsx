@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { InstagramIcon } from "@/components/icons/SocialIcons";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Prudent Gabriel",
+};
 
 async function getMaintenanceMessage(): Promise<string> {
   try {
@@ -31,7 +36,7 @@ export default async function MaintenancePage() {
       >
         <Image
           src="/images/pg-mark.png"
-          alt="Prudential Atelier"
+          alt="Prudent Gabriel"
           width={88}
           height={88}
           priority
@@ -45,13 +50,7 @@ export default async function MaintenancePage() {
           className="font-serif text-2xl font-normal tracking-wide"
           style={{ color: "#e2d1c2", fontFamily: "var(--font-cormorant), Cormorant Garamond, serif" }}
         >
-          PRUDENTIAL
-        </p>
-        <p
-          className="mt-0.5 font-sans text-[9px] font-medium uppercase tracking-[0.35em]"
-          style={{ color: "#98755b", fontFamily: "var(--font-jost), Jost, sans-serif" }}
-        >
-          / ATELIER
+          PRUDENT GABRIEL
         </p>
       </div>
 
