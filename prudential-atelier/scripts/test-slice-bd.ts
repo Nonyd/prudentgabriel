@@ -326,11 +326,12 @@ async function db(fx: Fixture) {
   const { fileWorkLog, workroomDay } = await import("../src/lib/atelier/work-log");
   const { commissionCost } = await import("../src/lib/atelier/commission-cost");
 
-  const session = (u: { id: string; email: string; role: Role }) =>
-    ({ user: { id: u.id, email: u.email, role: u.role }, expires: "" }) as unknown as Session;
+  // Grants travel in the session (filled from UserPermission at sign-in), as in test-bespoke-access.
+  const session = (u: { id: string; email: string; role: Role }, grants: string[] = []) =>
+    ({ user: { id: u.id, email: u.email, role: u.role, permissionGrants: grants, permissionRevokes: [] }, expires: "" }) as unknown as Session;
 
   // ── Maju's facts on the real session path ──
-  const maju = await bespokeFacts(session(fx.majuUser), { orderId: fx.order.id });
+  const maju = await bespokeFacts(session(fx.majuUser, ["bespoke.specification"]), { orderId: fx.order.id });
   assert(bespokeAllows("spec", maju.facts) && bespokeAllows("specEdit", maju.facts), "Maju's grant: specification, read and edit");
   assert(!bespokeAllows("storeCost", maju.facts) && !bespokeAllows("cost", maju.facts), "Maju's grant: no cost");
 
