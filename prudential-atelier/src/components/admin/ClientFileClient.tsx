@@ -1,20 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/Badge";
-import { formatDate, formatPrice } from "@/lib/utils";
+import toast from "react-hot-toast";
+import { formatDate, formatPrice, formatNGN } from "@/lib/utils";
 
 /**
  * Slice BC1 — the client file. Everything about her gown on one page, in the
  * order Mrs. Prudent described it. What each viewer gets is decided by the API
  * (GET /api/clients/:id/file); a section that is not theirs arrives as a reason,
  * never as data, and is shown as such rather than left blank.
+ *
+ * Slice BD3 — the sections as the house named them on 12 October.
  */
 
 type Hidden = { visible: false; reason: string };
 type Shown<T> = { visible: true; data: T };
 type Section<T> = Hidden | Shown<T>;
+
+type FileNote = { sectionLabel: string; body: string; authorName: string; createdAt: string; corrected: boolean; correction: boolean };
 
 type Booking = {
   id: string;
@@ -44,17 +48,23 @@ type Consultation = {
   }[];
   moodboards: { id: string; title: string; images: string[]; notes: string | null; createdAt: string }[];
   briefs: { orderRef: string; occasion: string | null; brief: string | null; moodboardImages: string[] }[];
+  notes?: FileNote[];
 };
 type MeasureRow = { key: string; label: string; value: number; unit: string };
 type Measurements = {
   profile: { rows: MeasureRow[]; notes: string | null; firstRecordedAt: string | null; lastUpdatedAt: string | null } | null;
   orderLines: { orderNumber: string; product: string; takenAt: string | null; rows: MeasureRow[] }[];
+  commissions?: { orderRef: string; source: "commission" | "client" | "none"; takenAt: string | null }[];
 };
-type Spec = {
+type About = {
   orderRef: string;
+  occasion: string | null;
+  garment: string | null;
   description: string | null;
   features: { key: string; label: string; group: string | null; note: string | null }[];
+  notes: FileNote[];
 }[];
+type Brief = { orderRef: string; brief: string | null; notes: FileNote[] }[];
 type Quote = {
   orderRefs: string[];
   quoteRef: string;
@@ -67,7 +77,21 @@ type Quote = {
   agreedAt: string | null;
   expectedDeliveryDate: string | null;
 }[];
-type Payments = {
+type Invoices = {
+  orderRef: string;
+  invoices: {
+    invoiceNumber: string;
+    status: string;
+    currency: string;
+    total: number;
+    depositRequired: number;
+    balanceDue: number;
+    dueDate: string | null;
+    paidAt: string | null;
+    raisedAt: string | null;
+  }[];
+}[];
+type Balance = {
   orderRef: string;
   totalNGN: number;
   paidNGN: number;
@@ -82,10 +106,23 @@ type Payments = {
     createdAt: string | null;
   }[];
 }[];
+type SpecItem = { id: string; name: string; quantity: string | null; notes: string | null; images: string[]; kindLabel: string; issued: boolean };
+type Spec = { orderRef: string; items: SpecItem[]; notes: FileNote[] }[];
 type Illustrations = {
+  houseMoodboards: { id: string; title: string; images: string[]; notes: string | null; createdAt: string | null }[];
+  commissions: {
+    orderRef: string;
+    herUploads: string[];
+    sessionMoodboard: string[];
+    sketches: { id: string; url: string; kind: string; uploadedAt: string | null }[];
+    designApproval: { status: string; requestedAt?: string | null; respondedAt?: string | null; clientComment?: string | null };
+  }[];
+};
+type Fitting = {
   orderRef: string;
-  sketches: { id: string; url: string; kind: string; uploadedAt: string | null }[];
-  designApproval: { status: string; requestedAt?: string | null; respondedAt?: string | null; clientComment?: string | null };
+  stages: { stage: string; label: string | null; doneAt: string | null; history: { notes: string | null; at: string | null; by: string | null; images: string[] }[] }[];
+  alterationRequests: { description: string; reason: string; status: string; at: string | null }[];
+  notes: FileNote[];
 }[];
 type Making = {
   orderRef: string;
@@ -99,6 +136,17 @@ type Delivery = {
   receiptConfirmedAt: string | null;
   confirmation: "RECEIPT_CONFIRMED" | "DELIVERED_AWAITING_CLIENT" | "DATE_SET" | "NO_DATE";
   address: { saved: string | null; clientLocation: string | null; eventLocation: string | null } | null;
+  notes?: FileNote[];
+}[];
+type Cost = {
+  orderRef: string;
+  cost: {
+    materials: { totalNGN: number; unpriced: number };
+    sheet: { status: string; labourNGN?: number; labour?: { id: string; role: string; person: string | null; amountNGN: number }[] } | null;
+    costOfProductionNGN?: number;
+    agreedPriceNGN?: number;
+    marginNGN?: number;
+  } | null;
 }[];
 
 type ClientFile = {
@@ -107,16 +155,22 @@ type ClientFile = {
   contactHidden: boolean;
   /** Decided on the server by canPreviewClientDashboard, the same check as the preview page. */
   canViewAs: boolean;
-  commissions: { id: string; orderRef: string; currentStageLabel: string | null; status: string; createdAt: string }[];
+  commissions: { id: string; orderRef: string; title: string; currentStageLabel: string | null; status: string; createdAt: string }[];
   sections: {
     consultation: Section<Consultation>;
     measurements: Section<Measurements>;
-    specification: Section<Spec>;
+    about: Section<About>;
+    brief: Section<Brief>;
     quotation: Section<Quote>;
-    payments: Section<Payments>;
+    invoice: Section<Invoices>;
+    balance: Section<Balance>;
+    beads: Section<Spec>;
+    fabric: Section<Spec>;
     illustrations: Section<Illustrations>;
+    fitting: Section<Fitting>;
     making: Section<Making>;
     delivery: Section<Delivery>;
+    cost: Section<Cost>;
   };
 };
 
@@ -155,21 +209,18 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
   const [file, setFile] = useState<ClientFile | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let live = true;
-    void (async () => {
-      const res = await fetch(`/api/clients/${clientId}/file`);
-      if (!live) return;
-      if (!res.ok) {
-        setError(res.status === 403 ? "This client's file is not open to you." : "Could not load the client file.");
-        return;
-      }
-      setFile((await res.json()) as ClientFile);
-    })();
-    return () => {
-      live = false;
-    };
+  const load = useCallback(async () => {
+    const res = await fetch(`/api/clients/${clientId}/file`);
+    if (!res.ok) {
+      setError(res.status === 403 ? "This client's file is not open to you." : "Could not load the client file.");
+      return;
+    }
+    setFile((await res.json()) as ClientFile);
   }, [clientId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   if (error) return <p className="card-surface p-6 font-sans text-sm text-text-mid">{error}</p>;
   if (!file) return <p className="font-sans text-sm text-text-mid">Loading the client file…</p>;
@@ -191,15 +242,17 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
             {[file.client.email, file.client.phone].filter(Boolean).join(" · ")}
           </p>
         )}
-        <div className="mt-3 flex flex-wrap gap-2">
+        {/* BD6: one header, every job she has commissioned, each its own file. */}
+        <div className="mt-3 space-y-2">
           {file.commissions.length === 0 ? (
             <span className="font-sans text-xs text-text-mid">No commissions yet.</span>
           ) : (
             file.commissions.map((c) => (
-              <Link key={c.id} href={orderHref(c.id)} className="hover:opacity-80">
-                <Badge variant="outline-gold">
+              <Link key={c.id} href={orderHref(c.id)} className="glass-opaque block px-4 py-3 hover:opacity-90">
+                <span className="font-sans text-base font-semibold text-ink">{c.title}</span>
+                <span className="ml-2 font-sans text-xs text-text-mid">
                   {c.orderRef} · {c.currentStageLabel}
-                </Badge>
+                </span>
               </Link>
             ))
           )}
@@ -214,16 +267,15 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
         {(d) => <MeasurementsView data={d} />}
       </FileSection>
 
-      <FileSection title="The gown" section={s.specification}>
+      <FileSection title="About the dress" section={s.about}>
         {(d) => (
-          <div className="space-y-5">
-            {d.length === 0 ? <Empty>No commission yet.</Empty> : null}
-            {d.map((g) => (
-              <div key={g.orderRef}>
-                <SubHead>{g.orderRef}</SubHead>
-                {g.features.length === 0 ? (
-                  <Empty>No specification ticked yet.</Empty>
-                ) : (
+          <PerCommission rows={d}>
+            {(g) => (
+              <>
+                <p className="font-sans text-sm text-ink">
+                  {[g.occasion, g.garment].filter(Boolean).join(" · ") || "Occasion not recorded"}
+                </p>
+                {g.features.length ? (
                   <ul className="mt-2 flex flex-wrap gap-2">
                     {g.features.map((f) => (
                       <li key={f.key} className="border border-sand px-3 py-1.5 font-sans text-sm text-ink">
@@ -232,97 +284,418 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
                       </li>
                     ))}
                   </ul>
-                )}
-                {g.description ? <p className="mt-2 font-sans text-sm text-text-mid">{g.description}</p> : null}
-              </div>
-            ))}
-          </div>
+                ) : null}
+                {g.description ? <p className="mt-2 whitespace-pre-line font-sans text-sm text-text-mid">{g.description}</p> : null}
+                <Notes notes={g.notes} />
+              </>
+            )}
+          </PerCommission>
         )}
       </FileSection>
+
+      <FileSection title="Production brief" section={s.brief}>
+        {(d) => (
+          <PerCommission rows={d}>
+            {(g) => (
+              <>
+                {g.brief ? <p className="whitespace-pre-line font-sans text-sm text-ink">{g.brief}</p> : <Empty>No brief written yet.</Empty>}
+                <Notes notes={g.notes} />
+              </>
+            )}
+          </PerCommission>
+        )}
+      </FileSection>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <FileSection title="Quotation — what was agreed" section={s.quotation}>
           {(d) => <QuotationView data={d} />}
         </FileSection>
-        <FileSection title="Payments" section={s.payments}>
-          {(d) => <PaymentsView data={d} />}
+        <FileSection title="Invoice" section={s.invoice}>
+          {(d) => <InvoiceView data={d} />}
         </FileSection>
       </div>
 
-      <FileSection title="Illustrations" section={s.illustrations}>
-        {(d) => (
-          <div className="space-y-5">
-            {d.map((g) => (
-              <div key={g.orderRef}>
-                <SubHead>
-                  {g.orderRef} · {APPROVAL_LABEL[g.designApproval.status] ?? g.designApproval.status}
-                  {g.designApproval.respondedAt ? ` (${date(g.designApproval.respondedAt)})` : ""}
-                </SubHead>
-                {g.designApproval.clientComment ? (
-                  <p className="mt-1 font-sans text-sm italic text-text-mid">“{g.designApproval.clientComment}”</p>
-                ) : null}
-                <Gallery urls={g.sketches.map((m) => m.url)} empty="No sketches uploaded at Sketching yet." />
-              </div>
-            ))}
-            {d.length === 0 ? <Empty>No commission yet.</Empty> : null}
-          </div>
-        )}
+      <FileSection title="Balance" section={s.balance}>
+        {(d) => <BalanceView data={d} />}
+      </FileSection>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <FileSection title="Beads needed" section={s.beads}>
+          {(d) => <SpecView data={d} empty="No beads specified yet." />}
+        </FileSection>
+        <FileSection title="Fabric type" section={s.fabric}>
+          {(d) => <SpecView data={d} empty="No fabric specified yet." />}
+        </FileSection>
+      </div>
+
+      <FileSection title="Illustration and mood board" section={s.illustrations}>
+        {(d) => <IllustrationsView data={d} clientId={clientId} canAdd={portal === "admin" && file.scope === "house"} onAdded={() => void load()} />}
+      </FileSection>
+
+      <FileSection title="Fitting and alteration" section={s.fitting}>
+        {(d) => <FittingView data={d} />}
       </FileSection>
 
       <FileSection title="Who is making it" section={s.making}>
         {(d) => (
-          <div className="space-y-4">
-            {d.map((g) => (
-              <div key={g.orderRef}>
-                <SubHead>
-                  {g.orderRef} · now at {g.currentStageLabel}
-                </SubHead>
-                {g.people.length === 0 ? (
-                  <Empty>Nobody assigned yet.</Empty>
-                ) : (
-                  <ul className="mt-2 space-y-1 font-sans text-sm">
-                    {g.people.map((p, i) => (
-                      <li key={`${p.name}-${i}`}>
-                        <span className="text-ink">{p.name}</span>{" "}
-                        <span className="text-text-mid">
-                          — {p.roleLabel}, on {p.stageLabel ?? "—"}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-            {d.length === 0 ? <Empty>No commission yet.</Empty> : null}
-          </div>
+          <PerCommission rows={d} head={(g) => `${g.orderRef} · now at ${g.currentStageLabel}`}>
+            {(g) =>
+              g.people.length === 0 ? (
+                <Empty>Nobody assigned yet.</Empty>
+              ) : (
+                <ul className="space-y-1 font-sans text-sm">
+                  {g.people.map((p, i) => (
+                    <li key={`${p.name}-${i}`}>
+                      <span className="text-ink">{p.name}</span>{" "}
+                      <span className="text-text-mid">
+                        — {p.roleLabel}, on {p.stageLabel ?? "—"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )
+            }
+          </PerCommission>
         )}
       </FileSection>
 
       <FileSection title="Delivery" section={s.delivery}>
         {(d) => (
-          <div className="space-y-4">
-            {d.map((g) => (
-              <div key={g.orderRef} className="font-sans text-sm">
-                <SubHead>
-                  {g.orderRef} · {g.expectedDate ? date(g.expectedDate) : "no date"}
-                </SubHead>
-                <p className="mt-1 text-text-mid">{CONFIRMATION_LABEL[g.confirmation]}</p>
+          <PerCommission rows={d} head={(g) => `${g.orderRef} · ${g.expectedDate ? date(g.expectedDate) : "no date"}`}>
+            {(g) => (
+              <div className="font-sans text-sm">
+                <p className="text-text-mid">{CONFIRMATION_LABEL[g.confirmation]}</p>
                 {g.address ? (
                   <p className="mt-1 text-ink">
                     {g.address.saved ?? g.address.clientLocation ?? "No address on file"}
-                    {g.address.eventLocation ? (
-                      <span className="text-text-mid"> · Event: {g.address.eventLocation}</span>
-                    ) : null}
+                    {g.address.eventLocation ? <span className="text-text-mid"> · Event: {g.address.eventLocation}</span> : null}
                   </p>
                 ) : (
                   <p className="mt-1 text-xs text-text-light">The address is kept for the client desk.</p>
                 )}
+                <Notes notes={g.notes ?? []} />
               </div>
-            ))}
-            {d.length === 0 ? <Empty>No commission yet.</Empty> : null}
-          </div>
+            )}
+          </PerCommission>
         )}
       </FileSection>
+
+      <FileSection title="Cost of production" section={s.cost}>
+        {(d) => <CostView data={d} />}
+      </FileSection>
     </div>
+  );
+}
+
+/** Each commission under its own subhead, in the order she commissioned them. */
+function PerCommission<T extends { orderRef?: string }>({
+  rows,
+  head,
+  children,
+}: {
+  rows: T[];
+  head?: (row: T) => string;
+  children: (row: T) => React.ReactNode;
+}) {
+  if (rows.length === 0) return <Empty>No commission yet.</Empty>;
+  return (
+    <div className="space-y-5">
+      {rows.map((r, i) => (
+        <div key={r.orderRef ?? i}>
+          <SubHead>{head ? head(r) : r.orderRef}</SubHead>
+          <div className="mt-1">{children(r)}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** BD2: notes under the record they belong to. A corrected note stays, struck through. */
+function Notes({ notes }: { notes: FileNote[] }) {
+  if (!notes.length) return null;
+  return (
+    <ol className="mt-3 space-y-2 border-l-2 border-sand pl-3">
+      {notes.map((n, i) => (
+        <li key={`${n.createdAt}-${i}`} className={n.corrected ? "opacity-60" : undefined}>
+          <p className="font-sans text-10px uppercase tracking-wide text-text-light">
+            Note · {n.authorName} · {formatDate(n.createdAt, "d MMM yyyy, HH:mm")}
+            {n.correction ? " · correction" : ""}
+          </p>
+          <p className={`whitespace-pre-wrap font-sans text-sm text-ink ${n.corrected ? "line-through" : ""}`}>{n.body}</p>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function InvoiceView({ data }: { data: Invoices }) {
+  return (
+    <PerCommission rows={data}>
+      {(g) =>
+        g.invoices.length === 0 ? (
+          <Empty>No invoice raised yet.</Empty>
+        ) : (
+          <ul className="space-y-1 font-sans text-sm">
+            {g.invoices.map((i) => (
+              <li key={i.invoiceNumber}>
+                <span className="text-ink">{i.invoiceNumber}</span>{" "}
+                <span className="text-text-mid">
+                  · {i.status.toLowerCase().replace(/_/g, " ")} · {money(i.total, i.currency)} · deposit{" "}
+                  {money(i.depositRequired, i.currency)} · raised {date(i.raisedAt)}
+                  {i.paidAt ? ` · paid ${date(i.paidAt)}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </PerCommission>
+  );
+}
+
+function SpecView({ data, empty }: { data: Spec; empty: string }) {
+  return (
+    <PerCommission rows={data}>
+      {(g) => (
+        <>
+          {g.items.length === 0 ? (
+            <Empty>{empty}</Empty>
+          ) : (
+            <ul className="space-y-2 font-sans text-sm">
+              {g.items.map((m) => (
+                <li key={m.id}>
+                  <span className="font-medium text-ink">{m.name}</span>
+                  {m.quantity ? <span className="text-text-mid"> · {m.quantity}</span> : null}
+                  {m.issued ? <span className="ml-2 text-10px uppercase tracking-wide text-text-light">Issued</span> : null}
+                  {m.notes ? <p className="text-text-mid">{m.notes}</p> : null}
+                  <Gallery urls={m.images} />
+                </li>
+              ))}
+            </ul>
+          )}
+          <Notes notes={g.notes} />
+        </>
+      )}
+    </PerCommission>
+  );
+}
+
+function IllustrationsView({
+  data,
+  clientId,
+  canAdd,
+  onAdded,
+}: {
+  data: Illustrations;
+  clientId: string;
+  canAdd: boolean;
+  onAdded: () => void;
+}) {
+  return (
+    <div className="space-y-6">
+      <PerCommission
+        rows={data.commissions}
+        head={(g) =>
+          `${g.orderRef} · ${APPROVAL_LABEL[g.designApproval.status] ?? g.designApproval.status}${
+            g.designApproval.respondedAt ? ` (${date(g.designApproval.respondedAt)})` : ""
+          }`
+        }
+      >
+        {(g) => (
+          <div className="space-y-3">
+            {g.designApproval.clientComment ? (
+              <p className="font-sans text-sm italic text-text-mid">“{g.designApproval.clientComment}”</p>
+            ) : null}
+            <div>
+              <p className="font-sans text-xs uppercase tracking-wide text-text-light">Illustrations</p>
+              <Gallery urls={g.sketches.map((m) => m.url)} empty="No sketches uploaded at Sketching yet." />
+            </div>
+            {g.herUploads.length ? (
+              <div>
+                <p className="font-sans text-xs uppercase tracking-wide text-text-light">Her mood board (from her forms)</p>
+                <Gallery urls={g.herUploads} />
+              </div>
+            ) : null}
+            {g.sessionMoodboard.length ? (
+              <div>
+                <p className="font-sans text-xs uppercase tracking-wide text-text-light">Mood board from the session</p>
+                <Gallery urls={g.sessionMoodboard} />
+              </div>
+            ) : null}
+          </div>
+        )}
+      </PerCommission>
+      <div>
+        <SubHead>Mood boards made by the house</SubHead>
+        {data.houseMoodboards.length === 0 ? <Empty>None yet.</Empty> : null}
+        {data.houseMoodboards.map((m) => (
+          <div key={m.id} className="mt-2">
+            <p className="font-sans text-sm text-ink">{m.title}</p>
+            <Gallery urls={m.images} />
+            {m.notes ? <p className="mt-1 font-sans text-sm text-text-mid">{m.notes}</p> : null}
+          </div>
+        ))}
+        {canAdd ? <AddHouseMoodboard clientId={clientId} onAdded={onAdded} /> : null}
+      </div>
+    </div>
+  );
+}
+
+function AddHouseMoodboard({ clientId, onAdded }: { clientId: string; onAdded: () => void }) {
+  const [title, setTitle] = useState("");
+  const [images, setImages] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  async function upload(file: File) {
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      const res = await fetch("/api/admin/consultations/upload", { method: "POST", body: fd });
+      const j = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !j.url) throw new Error(j.error ?? "Upload failed");
+      setImages((prev) => [...prev, j.url!]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function save() {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/moodboards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId, title, images }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(j.error ?? "Could not save");
+      toast.success("Mood board added");
+      setTitle("");
+      setImages([]);
+      onAdded();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 space-y-2 border-t border-sand pt-3">
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Name this mood board"
+        className="w-full rounded border border-sand px-3 py-2 font-sans text-sm"
+      />
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="cursor-pointer font-sans text-xs">
+          <span className="inline-flex rounded border border-sand px-3 py-2">{busy ? "Working…" : "Add a picture"}</span>
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void upload(f);
+              e.target.value = "";
+            }}
+          />
+        </label>
+        {images.length ? <span className="font-sans text-xs text-text-mid">{images.length} picture(s)</span> : null}
+        <button
+          type="button"
+          disabled={busy || !title.trim() || images.length === 0}
+          onClick={() => void save()}
+          className="border border-sand px-3 py-2 font-sans text-xs uppercase tracking-[0.12em] text-ink disabled:opacity-50"
+        >
+          Add house mood board
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function FittingView({ data }: { data: Fitting }) {
+  return (
+    <PerCommission rows={data}>
+      {(g) => (
+        <div className="space-y-3 font-sans text-sm">
+          {g.stages.map((st) => (
+            <div key={st.stage}>
+              <p className="text-ink">
+                {st.label}
+                <span className="text-text-mid"> · {st.doneAt ? `done ${date(st.doneAt)}` : "not yet"}</span>
+              </p>
+              {st.history.map((h, i) =>
+                h.notes ? (
+                  <p key={i} className="whitespace-pre-line text-text-mid">
+                    {h.notes} <span className="text-xs text-text-light">— {h.by ?? "the house"}, {date(h.at)}</span>
+                  </p>
+                ) : null,
+              )}
+            </div>
+          ))}
+          {g.alterationRequests.length ? (
+            <div>
+              <p className="text-xs uppercase tracking-wide text-text-light">Alterations she asked for after delivery</p>
+              <ul className="space-y-1">
+                {g.alterationRequests.map((a, i) => (
+                  <li key={i} className="text-ink">
+                    {a.description} <span className="text-text-mid">· {a.reason.toLowerCase()} · {a.status.toLowerCase()} · {date(a.at)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          <Notes notes={g.notes} />
+        </div>
+      )}
+    </PerCommission>
+  );
+}
+
+function CostView({ data }: { data: Cost }) {
+  return (
+    <PerCommission rows={data}>
+      {(g) =>
+        !g.cost ? (
+          <Empty>Nothing recorded.</Empty>
+        ) : (
+          <dl className="grid max-w-md grid-cols-[1fr_auto] gap-x-6 gap-y-1 font-sans text-sm">
+            <dt className="text-text-mid">Materials taken</dt>
+            <dd className="text-right">{formatNGN(g.cost.materials.totalNGN)}</dd>
+            {g.cost.sheet?.labour?.map((l) => (
+              <div key={l.id} className="contents">
+                <dt className="text-text-mid">{l.person ?? l.role.toLowerCase()} · {l.role.toLowerCase().replace(/_/g, " ")}</dt>
+                <dd className="text-right">{formatNGN(l.amountNGN)}</dd>
+              </div>
+            ))}
+            {g.cost.costOfProductionNGN != null ? (
+              <>
+                <dt className="font-medium text-ink">Cost of production</dt>
+                <dd className="text-right font-medium">{formatNGN(g.cost.costOfProductionNGN)}</dd>
+              </>
+            ) : null}
+            {g.cost.agreedPriceNGN != null ? (
+              <>
+                <dt className="text-text-mid">Price agreed</dt>
+                <dd className="text-right">{formatNGN(g.cost.agreedPriceNGN)}</dd>
+                <dt className="font-medium text-nut">Left after cost</dt>
+                <dd className="text-right font-medium text-nut">{formatNGN(g.cost.marginNGN ?? 0)}</dd>
+              </>
+            ) : null}
+            {!g.cost.sheet ? <dd className="col-span-2 text-xs text-text-light">No cost sheet yet — labour not counted.</dd> : null}
+            {g.cost.materials.unpriced ? (
+              <dd className="col-span-2 text-xs text-[#C45E0A]">{g.cost.materials.unpriced} material(s) have no cost recorded.</dd>
+            ) : null}
+          </dl>
+        )
+      }
+    </PerCommission>
   );
 }
 
@@ -413,10 +786,11 @@ function Gallery({ urls, empty }: { urls: string[]; empty?: string }) {
   );
 }
 
+
 function ConsultationView({ data }: { data: Consultation }) {
   const nothing =
     data.bookings.length + data.enquiries.length + data.moodboards.length + data.briefs.length === 0;
-  if (nothing) return <Empty>No consultation on record.</Empty>;
+  if (nothing && !data.notes?.length) return <Empty>No consultation on record.</Empty>;
   return (
     <div className="space-y-6 font-sans text-sm">
       {data.briefs.map((b) => (
@@ -475,13 +849,12 @@ function ConsultationView({ data }: { data: Consultation }) {
           <Gallery urls={e.moodboardImages} />
         </div>
       ))}
-      {data.moodboards.map((m) => (
-        <div key={m.id}>
-          <SubHead>Moodboard · {m.title}</SubHead>
-          <Gallery urls={m.images} />
-          {m.notes ? <p className="mt-1 text-text-mid">{m.notes}</p> : null}
+      {data.notes?.length ? (
+        <div>
+          <SubHead>Notes since the session</SubHead>
+          <Notes notes={data.notes} />
         </div>
-      ))}
+      ) : null}
     </div>
   );
 }
@@ -501,14 +874,35 @@ function MeasureGrid({ rows }: { rows: MeasureRow[] }) {
   );
 }
 
+const MEASURE_SOURCE: Record<"commission" | "client" | "none", string> = {
+  commission: "taken for this commission",
+  client: "not yet taken for this commission — her last set would be used",
+  none: "none on record",
+};
+
 function MeasurementsView({ data }: { data: Measurements }) {
-  if (!data.profile && data.orderLines.length === 0) return <Empty>No measurements recorded.</Empty>;
+  if (!data.profile && data.orderLines.length === 0 && !data.commissions?.length) {
+    return <Empty>No measurements recorded.</Empty>;
+  }
   return (
     <div className="space-y-5">
+      {data.commissions?.length ? (
+        <ul className="space-y-1 font-sans text-sm">
+          {data.commissions.map((c) => (
+            <li key={c.orderRef}>
+              <span className="text-ink">{c.orderRef}</span>{" "}
+              <span className={c.source === "client" ? "text-[#C45E0A]" : "text-text-mid"}>
+                · {MEASURE_SOURCE[c.source]}
+                {c.source === "commission" && c.takenAt ? `, ${date(c.takenAt)}` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {data.profile ? (
         <div>
           <SubHead>
-            Her profile · first taken {date(data.profile.firstRecordedAt)} · last updated {date(data.profile.lastUpdatedAt)}
+            Her latest set · first taken {date(data.profile.firstRecordedAt)} · last updated {date(data.profile.lastUpdatedAt)}
           </SubHead>
           <MeasureGrid rows={data.profile.rows} />
           {data.profile.notes ? <p className="mt-2 font-sans text-sm text-text-mid">{data.profile.notes}</p> : null}
@@ -555,7 +949,7 @@ function QuotationView({ data }: { data: Quote }) {
   );
 }
 
-function PaymentsView({ data }: { data: Payments }) {
+function BalanceView({ data }: { data: Balance }) {
   if (data.length === 0) return <Empty>No commission yet.</Empty>;
   return (
     <div className="space-y-4 font-sans text-sm">

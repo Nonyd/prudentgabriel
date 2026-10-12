@@ -1,29 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import type { BespokeOrder, BespokeStage, OrderStatus, StageApproval } from "@prisma/client";
-import { BulkSelectTable, type BulkColumn } from "@/components/ui/BulkSelectTable";
+import type { BespokeStage, OrderStatus } from "@prisma/client";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
-import {
-  STAGE_LABELS,
-  getDeliveryUrgency,
-  getOrderTrackStatus,
-  getStageProgress,
-} from "@/lib/bespoke-stages";
-import { pipelineBlockFor } from "@/lib/atelier/stage-requirements";
+import { STAGE_LABELS, getDeliveryUrgency, getOrderTrackStatus } from "@/lib/bespoke-stages";
+import type { CommissionRow } from "@/lib/atelier/commission-list";
 import { useHasPermission } from "@/hooks/useHasPermission";
 import { cn, formatDate } from "@/lib/utils";
-
-type OrderRow = BespokeOrder & {
-  stageApprovals?: Pick<StageApproval, "id" | "stage" | "status">[];
-  /** Slice BC2: ticked construction features. */
-  features?: { featureId: string; feature: { key: string; label: string } }[];
-};
 
 type LibraryFeature = { id: string; key: string; label: string };
 
@@ -35,78 +23,140 @@ function StageBadge({ stage }: { stage: BespokeStage }) {
   );
 }
 
-function ProgressBar({ stage }: { stage: BespokeStage }) {
-  const progress = getStageProgress(stage);
+function Progress({ progress }: { progress: number }) {
   const pct = Math.round((progress / 13) * 100);
   return (
-    <div className="min-w-[100px]">
-      <div className="mb-1 font-sans text-10px text-text-light">
-        {progress}/13
-      </div>
+    <div className="w-28" title={`Stage ${progress} of 13`}>
+      <div className="mb-1 font-sans text-10px text-text-light">{progress}/13</div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-sand/40">
-        <div
-          className="h-full rounded-full bg-lightbr transition-all"
-          style={{ width: `${pct}%` }}
-        />
+        <div className="h-full rounded-full bg-lightbr" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
 }
 
-function DeliveryDate({ date }: { date: Date | string | null }) {
-  if (!date) return <span className="text-text-light">—</span>;
-  const d = new Date(date);
-  const urgency = getDeliveryUrgency(d);
+function DeliveryDate({ date }: { date: string | null }) {
+  if (!date) return <span className="font-sans text-sm text-text-light">No delivery date</span>;
+  const urgency = getDeliveryUrgency(new Date(date));
   return (
     <span
       className={cn(
-        "font-sans text-xs",
+        "font-sans text-sm",
         urgency === "overdue" && "font-semibold text-red-700",
         urgency === "soon" && "font-medium text-amber-700",
-        urgency === "ok" && "text-text-mid",
+        urgency === "ok" && "text-ink",
       )}
     >
-      {formatDate(d)}
+      Delivery {formatDate(date, "d MMM yyyy")}
     </span>
   );
 }
 
-function TrackStatusPill({ order }: { order: OrderRow }) {
-  if (order.status === "ARCHIVED") {
-    return <Badge variant="grey">Archived</Badge>;
-  }
-  if (order.currentStage === "DELIVERY") {
-    return <Badge variant="success">DELIVERED</Badge>;
-  }
-  const pendingApproval = (order.stageApprovals ?? []).some(
-    (a) => a.stage === order.currentStage && a.status === "PENDING",
-  );
-  const block = pipelineBlockFor({
-    currentStage: order.currentStage,
-    pendingApproval,
-    balance: order.balance,
-  });
-  if (block === "CLIENT_APPROVAL") {
-    return <Badge variant="gold">Awaiting client approval</Badge>;
-  }
-  if (block === "OUTSTANDING_BALANCE") {
-    return <Badge variant="wine">Awaiting balance</Badge>;
-  }
-  const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
-  const status = getOrderTrackStatus(deliveryDate, order.currentStage);
-  const variant =
-    status === "Urgent" ? "wine" : status === "Watch" ? "gold" : "success";
-  return <Badge variant={variant}>{status}</Badge>;
+function TrackStatusPill({ row }: { row: CommissionRow }) {
+  if (row.status === "ARCHIVED") return <Badge variant="grey">Archived</Badge>;
+  if (row.currentStage === "DELIVERY") return <Badge variant="success">DELIVERED</Badge>;
+  if (row.block === "CLIENT_APPROVAL") return <Badge variant="gold">Awaiting client approval</Badge>;
+  if (row.block === "OUTSTANDING_BALANCE") return <Badge variant="wine">Awaiting balance</Badge>;
+  const status = getOrderTrackStatus(row.deliveryDate ? new Date(row.deliveryDate) : null, row.currentStage);
+  return <Badge variant={status === "Urgent" ? "wine" : status === "Watch" ? "gold" : "success"}>{status}</Badge>;
 }
 
-export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
+/** BD1: one framed row per commission — title first, readable across a room. */
+function CommissionCard({ row, canOpenClients }: { row: CommissionRow; canOpenClients: boolean }) {
+  return (
+    <li className="glass-opaque p-4 sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <Link
+            href={`/admin/bespoke/${row.id}`}
+            className="block font-sans text-lg font-semibold leading-snug text-ink hover:underline"
+          >
+            {row.title.text}
+          </Link>
+          <p className="mt-0.5 font-mono text-11px text-text-light">
+            {row.orderRef}
+            {row.title.partial ? " · no occasion recorded — add a title on the commission" : ""}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {row.fabricPending ? <Badge variant="wine">No fabric yet</Badge> : null}
+          <TrackStatusPill row={row} />
+        </div>
+      </div>
+
+      <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1 font-sans text-sm">
+        <div>
+          <dt className="sr-only">Client</dt>
+          <dd>
+            {row.clientProfileId && canOpenClients ? (
+              <Link href={`/admin/clients/${row.clientProfileId}`} className="text-ink hover:underline">
+                {row.clientName}
+              </Link>
+            ) : (
+              <span className="text-ink">{row.clientName}</span>
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt className="sr-only">Phone</dt>
+          <dd>
+            {row.phone ? (
+              <a href={`tel:${row.phone}`} className="text-ink underline decoration-sand underline-offset-2">
+                {row.phone}
+              </a>
+            ) : (
+              <span className="text-text-light">No phone</span>
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt className="sr-only">Place</dt>
+          <dd className={row.place ? "text-ink" : "text-text-light"}>{row.place ?? "Place not recorded"}</dd>
+        </div>
+        {row.garment ? (
+          <div>
+            <dt className="sr-only">Garment</dt>
+            <dd className="text-nut">{row.garment.label}</dd>
+          </div>
+        ) : null}
+      </dl>
+
+      <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+        <div className="space-y-0.5">
+          <DeliveryDate date={row.deliveryDate} />
+          {row.eventDate ? (
+            <p className="font-sans text-xs text-text-mid">Her event {formatDate(row.eventDate, "d MMM yyyy")}</p>
+          ) : null}
+          {row.features.length ? (
+            <p className="font-sans text-xs text-nut">{row.features.map((f) => f.label).join(" · ")}</p>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-4">
+          <StageBadge stage={row.currentStage} />
+          <Progress progress={row.progress} />
+        </div>
+      </div>
+    </li>
+  );
+}
+
+export function BespokePipelineClient({
+  initial,
+  initialFabricPending,
+}: {
+  initial: CommissionRow[];
+  initialFabricPending: number;
+}) {
   const router = useRouter();
   const [items, setItems] = useState(initial);
+  const [fabricCount, setFabricCount] = useState(initialFabricPending);
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showArchived, setShowArchived] = useState(false);
   const [awaitingReceipt, setAwaitingReceipt] = useState(false);
+  /** BD5: open commissions that have not passed fabric sourcing. */
+  const [fabricPending, setFabricPending] = useState(false);
   /** BC3: "show me May's orders" — a Lagos calendar month, "YYYY-MM". */
   const [deliveryMonth, setDeliveryMonth] = useState("");
   /** BC2: commissions carrying this construction feature. */
@@ -132,14 +182,16 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
     if (statusFilter !== "all") params.set("status", statusFilter);
     if (showArchived) params.set("showArchived", "1");
     if (awaitingReceipt) params.set("awaitingReceipt", "1");
+    if (fabricPending) params.set("fabric", "pending");
     if (deliveryMonth) params.set("deliveryMonth", deliveryMonth);
     if (featureFilter) params.set("feature", featureFilter);
     const res = await fetch(`/api/bespoke?${params}`);
     if (res.ok) {
-      const data = (await res.json()) as { items: OrderRow[] };
+      const data = (await res.json()) as { items: CommissionRow[]; counts: { fabricPending: number } };
       setItems(data.items);
+      setFabricCount(data.counts.fabricPending);
     }
-  }, [search, stageFilter, statusFilter, showArchived, awaitingReceipt, deliveryMonth, featureFilter]);
+  }, [search, stageFilter, statusFilter, showArchived, awaitingReceipt, fabricPending, deliveryMonth, featureFilter]);
 
   useEffect(() => {
     void fetch("/api/bespoke/construction-features")
@@ -152,79 +204,7 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
     return () => clearTimeout(t);
   }, [refresh]);
 
-  const columns: BulkColumn<OrderRow>[] = useMemo(
-    () => [
-      {
-        key: "ref",
-        header: "Order Ref",
-        cell: (row) => (
-          <Link
-            href={`/admin/bespoke/${row.id}`}
-            className="font-sans text-sm font-medium text-nut hover:underline"
-          >
-            {row.orderRef}
-          </Link>
-        ),
-      },
-      {
-        key: "client",
-        header: "Client",
-        cell: (row) => (
-          <div>
-            {row.clientProfileId && canOpenClients ? (
-              <Link href={`/admin/clients/${row.clientProfileId}`} className="font-sans text-sm text-ink hover:underline">
-                {row.clientName}
-              </Link>
-            ) : (
-              <p className="font-sans text-sm text-ink">{row.clientName}</p>
-            )}
-            <p className="font-sans text-11px text-text-light">{row.clientEmail}</p>
-            {row.features?.length ? (
-              <p className="font-sans text-11px text-nut">{row.features.map((f) => f.feature.label).join(" · ")}</p>
-            ) : null}
-          </div>
-        ),
-      },
-      {
-        key: "stage",
-        header: "Stage",
-        cell: (row) => <StageBadge stage={row.currentStage} />,
-      },
-      {
-        key: "progress",
-        header: "Progress",
-        cell: (row) => <ProgressBar stage={row.currentStage} />,
-      },
-      {
-        key: "delivery",
-        header: "Delivery",
-        cell: (row) => <DeliveryDate date={row.deliveryDate} />,
-      },
-      {
-        key: "track",
-        header: "Status",
-        cell: (row) => <TrackStatusPill order={row} />,
-      },
-      {
-        key: "actions",
-        header: "",
-        cell: (row) => (
-          <div className="flex gap-2">
-            <Button size="sm" variant="ghost" onClick={() => router.push(`/admin/bespoke/${row.id}`)}>
-              View
-            </Button>
-          </div>
-        ),
-      },
-    ],
-    [router, canOpenClients],
-  );
-
-  const handleBulkDelete = async (ids: string[]) => {
-    await Promise.all(ids.map((id) => fetch(`/api/bespoke/${id}`, { method: "DELETE" })));
-    toast.success(`Deleted ${ids.length} order(s)`);
-    await refresh();
-  };
+  const noPlace = items.filter((r) => !r.place).length;
 
   const createOrder = async () => {
     setCreating(true);
@@ -238,7 +218,7 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
         }),
       });
       if (!res.ok) throw new Error("Failed to create order");
-      const data = (await res.json()) as { item: OrderRow };
+      const data = (await res.json()) as { item: { id: string } };
       toast.success("Order created");
       setModalOpen(false);
       router.push(`/admin/bespoke/${data.item.id}`);
@@ -264,6 +244,17 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
       <DueSoon onPickMonth={setDeliveryMonth} activeMonth={deliveryMonth} />
 
       <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          aria-pressed={fabricPending}
+          onClick={() => setFabricPending((v) => !v)}
+          className={cn(
+            "rounded border px-3 py-2 font-sans text-sm",
+            fabricPending ? "border-choc bg-choc text-ivory" : "border-sand bg-bg-card text-ink",
+          )}
+        >
+          No fabric yet · {fabricCount}
+        </button>
         <input
           type="search"
           placeholder="Search ref, client…"
@@ -316,10 +307,10 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
         <select
           value={featureFilter}
           onChange={(e) => setFeatureFilter(e.target.value)}
-          aria-label="Gown feature"
+          aria-label="Construction feature"
           className="rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         >
-          <option value="">Any gown</option>
+          <option value="">Any construction</option>
           {library.map((f) => (
             <option key={f.id} value={f.key}>
               With {f.label.toLowerCase()}
@@ -342,23 +333,30 @@ export function BespokePipelineClient({ initial }: { initial: OrderRow[] }) {
         </label>
       </div>
 
+      {noPlace > 0 ? (
+        <p className="font-sans text-xs text-text-mid">
+          Place fills itself for commissions converted from an enquiry; {noPlace} of these {items.length} have none
+          recorded (made before the enquiry asked, or entered by hand). Add it on the commission.
+        </p>
+      ) : null}
+
       {items.length === 0 ? (
         <div className="card-surface flex flex-col items-center justify-center px-6 py-16 text-center">
-          <p className="font-display text-xl text-ink">No atelier orders yet</p>
-          <p className="mt-2 max-w-sm font-sans text-sm text-text-mid">
-            Create your first production order to start the 13-stage pipeline.
+          <p className="font-display text-xl text-ink">
+            {fabricPending ? "Every open commission has its fabric" : "No atelier orders match"}
           </p>
-          <Button className="mt-6" onClick={() => setModalOpen(true)}>
-            New Atelier Order
-          </Button>
+          {!fabricPending ? (
+            <Button className="mt-6" onClick={() => setModalOpen(true)}>
+              New Atelier Order
+            </Button>
+          ) : null}
         </div>
       ) : (
-        <BulkSelectTable
-          columns={columns}
-          data={items}
-          onBulkDelete={handleBulkDelete}
-          emptyMessage="No orders match your filters."
-        />
+        <ul className="space-y-3">
+          {items.map((row) => (
+            <CommissionCard key={row.id} row={row} canOpenClients={canOpenClients} />
+          ))}
+        </ul>
       )}
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New Atelier Order">

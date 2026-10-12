@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { BESPOKE_MANAGER_ROLES, sessionHasRole } from "@/lib/bespoke-roles";
+import { balanceIsCleared } from "@/lib/money";
 
 /**
  * Slice AZ8 — who may read a client's measurements and payment receipts,
@@ -74,21 +75,56 @@ export function stripOrderReceipt<T extends WithOrderReceipt>(order: T): T {
   };
 }
 
-type WithPayments = { payments?: unknown[] } & WithOrderReceipt;
+type WithPayments = {
+  payments?: unknown[];
+  totalAmount?: number | null;
+  amountPaid?: number | null;
+  balance?: number | null;
+  quotation?: (Record<string, unknown> & { id: string }) | null;
+  materials?: ({ unitCost?: number | null; totalCost?: number | null } & Record<string, unknown>)[];
+} & WithOrderReceipt;
 type WithClientMeasurements = { clientProfile?: ({ measurements?: unknown } & Record<string, unknown>) | null };
+
+/** Quotation fields that are not money: who, when, which version. */
+const QUOTE_SAFE_KEYS = ["id", "quoteRef", "version", "status", "sentAt", "approvedAt", "expectedDeliveryDate", "currency"];
 
 /**
  * Strip what the caller may not see from a bespoke order payload.
  * Hidden fields become empty (not absent) so existing screens keep rendering,
  * and the `…Hidden` flags let a screen say why.
+ *
+ * BD4 (closing the BC leftover): without money the cached total, paid and
+ * balance go too, and the quotation keeps only its reference and dates.
+ * Material unit and total costs need `materialCost` (store or cost of production).
  */
 export function redactBespokeOrder<T extends WithPayments & WithClientMeasurements>(
   order: T,
-  access: { payments: boolean; measurements: boolean },
-): T & { paymentsHidden: boolean; measurementsHidden: boolean } {
+  access: { payments: boolean; measurements: boolean; materialCost?: boolean },
+): T & { paymentsHidden: boolean; measurementsHidden: boolean; materialCostHidden: boolean; balanceCleared?: boolean } {
   const base = access.payments ? order : stripOrderReceipt(order);
-  const out = { ...base } as T & { paymentsHidden: boolean; measurementsHidden: boolean };
-  if (!access.payments && "payments" in out) out.payments = [];
+  const out = { ...base } as T & {
+    paymentsHidden: boolean;
+    measurementsHidden: boolean;
+    materialCostHidden: boolean;
+    balanceCleared?: boolean;
+  };
+  // Whether it is cleared is what the pipeline already shows ("Awaiting balance"); the figure is not.
+  if (typeof order.balance === "number") out.balanceCleared = balanceIsCleared(order.balance);
+  if (!access.payments) {
+    if ("payments" in out) out.payments = [];
+    if ("totalAmount" in out) out.totalAmount = null;
+    if ("amountPaid" in out) out.amountPaid = null;
+    if ("balance" in out) out.balance = null;
+    if (out.quotation) {
+      const q = out.quotation;
+      out.quotation = Object.fromEntries(QUOTE_SAFE_KEYS.filter((k) => k in q).map((k) => [k, q[k]])) as typeof q;
+    }
+  }
+  const materialCost = access.materialCost ?? false;
+  if (!materialCost && Array.isArray(out.materials)) {
+    out.materials = out.materials.map((m) => ({ ...m, unitCost: null, totalCost: null }));
+  }
+  out.materialCostHidden = !materialCost;
   if (!access.measurements && out.clientProfile) {
     out.clientProfile = { ...out.clientProfile, measurements: null };
   }

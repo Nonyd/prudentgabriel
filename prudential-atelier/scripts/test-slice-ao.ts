@@ -186,7 +186,7 @@ function runPure() {
   assert(!completeInArchived.includes("Mark Stage Complete"), "archived branch does not offer Complete");
 
   const pipeline = readFileSync(resolve("src/components/admin/BespokePipelineClient.tsx"), "utf8");
-  assert(pipeline.includes('order.status === "ARCHIVED"'), "pipeline checks ARCHIVED status");
+  assert(pipeline.includes('row.status === "ARCHIVED"'), "pipeline checks ARCHIVED status");
   assert(pipeline.includes(">Archived<"), "pipeline labels Archived");
 
   const receiptRoute = readFileSync(resolve("src/app/api/receipt/[token]/confirm/route.ts"), "utf8");

@@ -30,6 +30,7 @@ export const ALL_ADMIN_PERMISSIONS: readonly AdminPermission[] = [
   "settings.developer",
   "store",
   "production.cost",
+  "bespoke.specification",
   "requisition.approve",
   "requisition.fund",
   "requisition.buy",
@@ -201,6 +202,12 @@ export const ADMIN_PERMISSION_CATALOG: readonly PermissionCatalogEntry[] = [
     group: "Daily work",
     label: "Cost of production",
     description: "Draft and approve what a piece will cost to make — tailor figure and materials — before a requisition.",
+  },
+  {
+    key: "bespoke.specification",
+    group: "Daily work",
+    label: "Beads and fabric",
+    description: "Say what beads, fabric and lining a gown needs, with pictures. Never what they cost or what the gown is priced at.",
   },
   {
     key: "requisition.approve",

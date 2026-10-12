@@ -4,6 +4,9 @@ import type { ConsultationStatus, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AdminConsultationDetail } from "@/components/admin/AdminConsultationDetail";
 import { measurementFromRecord } from "@/lib/measurements";
+import { auth } from "@/auth";
+import { canSeeClientMeasurements } from "@/lib/bespoke-data-access";
+import { resolveSessionAccess } from "@/lib/admin-auth";
 
 function toIso(value: Date | string | null | undefined): string | null {
   if (value == null) return null;
@@ -44,6 +47,15 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
         include: { measurements: true },
       })
     : null;
+
+  // AZ8 (closing the BC leftover): measurements are for managers and whoever cuts her
+  // gown, not everyone who holds the consultations desk.
+  const session = await auth();
+  const viewerRole = session?.user ? (await resolveSessionAccess(session)).role : null;
+  const mayMeasure =
+    clientProfile && session?.user
+      ? await canSeeClientMeasurements({ id: session.user.id, role: viewerRole, email: session.user.email }, clientProfile.id)
+      : false;
 
   const payload = {
     id: booking.id,
@@ -121,7 +133,8 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
         key={payload.updatedAt}
         booking={payload}
         clientId={clientProfile?.id ?? null}
-        measurements={measurementFromRecord(clientProfile?.measurements ?? null)}
+        measurements={mayMeasure ? measurementFromRecord(clientProfile?.measurements ?? null) : null}
+        measurementsHidden={!mayMeasure}
         quotation={booking.quotations[0] ?? null}
       />
     </div>

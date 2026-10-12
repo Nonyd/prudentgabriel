@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { commissionSearch } from "@/lib/atelier/commission-search";
-import { specificationInclude } from "@/lib/atelier/construction-features";
-import { stripOrderReceipt } from "@/lib/bespoke-data-access";
+import { commissionListSelect, commissionRow, fabricPendingWhere } from "@/lib/atelier/commission-list";
 import { logActivity } from "@/lib/logger";
 import { bespokeFacts, requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { generateBespokeOrderRef } from "@/lib/bespoke-stages";
@@ -21,23 +20,18 @@ export async function GET(req: NextRequest) {
   const query = commissionSearch(new URL(req.url).searchParams);
   if (!query.ok) return NextResponse.json({ error: query.error }, { status: 400 });
 
-  const items = await prisma.bespokeOrder.findMany({
-    where: query.where,
-    orderBy: query.orderBy,
-    take: 200,
-    include: {
-      stageHistory: { orderBy: { completedAt: "desc" }, take: 1 },
-      assignments: { include: { staffProfile: { include: { user: { select: { name: true } } } } } },
-      stageApprovals: {
-        where: { status: "PENDING" },
-        select: { id: true, stage: true, status: true },
-      },
-      ...specificationInclude,
-    },
-  });
+  const [items, fabricPending] = await Promise.all([
+    prisma.bespokeOrder.findMany({
+      where: query.where,
+      orderBy: query.orderBy,
+      take: 200,
+      select: commissionListSelect,
+    }),
+    prisma.bespokeOrder.count({ where: fabricPendingWhere() }),
+  ]);
 
-  // Slice AZ8: the order row carries the last transfer receipt and its reference.
-  return NextResponse.json({ items: gate.facts.money ? items : items.map(stripOrderReceipt) });
+  // BD1/BD4: rows carry no email, receipt, total, paid or balance — whoever holds the key.
+  return NextResponse.json({ items: items.map(commissionRow), counts: { fabricPending } });
 }
 
 export async function POST(req: NextRequest) {

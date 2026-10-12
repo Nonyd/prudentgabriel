@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminApi, resolveSessionAccess } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { jsonError } from "@/lib/store/http";
+import { bespokeFacts } from "@/lib/atelier/bespoke-access";
 import {
   RequisitionError,
   advanceRequisition,
@@ -30,7 +31,8 @@ const DETAIL_INCLUDE = {
   },
 } as const;
 
-function serialize(r: Awaited<ReturnType<typeof load>>) {
+/** BD4: the tailor figure is labour — for `production.cost`, not the store or the buyer. */
+function serialize(r: Awaited<ReturnType<typeof load>>, seesLabour: boolean) {
   if (!r) return null;
   const buyLines = r.lines.filter((l) => !l.coveredByStock);
   const stockCheckEvent = [...r.events].reverse().find((e) => e.toStatus === "STOCK_CHECKED");
@@ -48,7 +50,7 @@ function serialize(r: Awaited<ReturnType<typeof load>>) {
     orderRef: r.bespokeOrder?.orderRef ?? r.order?.orderNumber ?? null,
     orderId: r.orderId,
     bespokeOrderId: r.bespokeOrderId,
-    tailorCostNGN: r.costOfProduction ? Number(r.costOfProduction.tailorCostNGN) : null,
+    tailorCostNGN: r.costOfProduction && seesLabour ? Number(r.costOfProduction.tailorCostNGN) : null,
     stockCheckedByName: stockCheckEvent
       ? stockCheckEvent.actor.name || stockCheckEvent.actor.email
       : null,
@@ -95,7 +97,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const r = await load(id);
   if (!r) return jsonError("Not found", 404);
   const coverage = r.status === "RAISED" ? await suggestStockCoverage(id) : [];
-  return NextResponse.json({ item: serialize(r), coverage });
+  const seesLabour = Boolean((await bespokeFacts(gate.session)).facts.cost);
+  return NextResponse.json({ item: serialize(r, seesLabour), coverage });
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
@@ -149,7 +152,8 @@ export async function POST(req: NextRequest, { params }: Params) {
       });
     }
     const r = await load(id);
-    return NextResponse.json({ item: serialize(r) });
+    const seesLabour = Boolean((await bespokeFacts(gate.session)).facts.cost);
+    return NextResponse.json({ item: serialize(r, seesLabour) });
   } catch (e) {
     if (e instanceof RequisitionError) {
       return jsonError(e.message, e.status);

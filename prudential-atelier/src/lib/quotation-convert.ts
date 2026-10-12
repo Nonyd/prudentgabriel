@@ -20,6 +20,8 @@ import {
   lockedFxFromAtelier,
 } from "@/lib/atelier-fx";
 import { INTAKE_STAGES, intakeStageNotes } from "@/lib/atelier/intake-stages";
+import { carriedFromEnquiry } from "@/lib/atelier/commission-list";
+import { snapshotFrom } from "@/lib/atelier/commission-measurements";
 import { quotationCurrencySendable } from "@/lib/atelier-quote-currency";
 import {
   CAPABILITY_TTL_MS,
@@ -134,6 +136,7 @@ export async function convertQuotationToOrder(
 
   const clientProfile = await prisma.clientProfile.findFirst({
     where: { user: { email: quote.clientEmail } },
+    include: { measurements: true },
   });
 
   const depositPercent = clampDepositPercent(
@@ -175,8 +178,14 @@ export async function convertQuotationToOrder(
   const consultation = quote.consultationId
     ? await prisma.consultationBooking.findUnique({
         where: { id: quote.consultationId },
+        include: { enquiry: true },
       })
     : null;
+  const carried = carriedFromEnquiry(consultation?.enquiry ?? null);
+  // BD6: her set becomes this commission's only if it was taken during this consultation.
+  const profileSet = clientProfile?.measurements ?? null;
+  const measuredForThis =
+    profileSet && consultation && profileSet.updatedAt >= consultation.createdAt ? profileSet : null;
 
   let fx = lockedFxFromAtelier(quote);
   if (!quote.fxRateLocked && (currency === "USD" || currency === "GBP")) {
@@ -248,8 +257,18 @@ export async function convertQuotationToOrder(
         deliveryDate: quote.expectedDeliveryDate ?? null,
         sessionNotes: consultation?.sessionNotes ?? null,
         moodboardImages: consultation?.moodboardImages ?? [],
-        occasionDetails: consultation?.occasion ?? null,
+        // BD1: her own words for the occasion, and the enquiry's dates and places.
+        occasionDetails: carried.occasionDetails ?? consultation?.occasion ?? null,
+        eventDate: carried.eventDate,
+        eventLocation: carried.eventLocation,
+        clientLocation: carried.clientLocation,
         outfitBrief: consultation?.sessionNotes ?? null,
+        ...(measuredForThis
+          ? {
+              measurementsSnapshot: snapshotFrom(measuredForThis) as Prisma.InputJsonValue,
+              measurementsTakenAt: measuredForThis.updatedAt,
+            }
+          : {}),
         currency,
         ...fxPersist,
         totalAmount: totalNGN,

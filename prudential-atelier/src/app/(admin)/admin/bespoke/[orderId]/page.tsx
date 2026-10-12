@@ -7,8 +7,9 @@ import { maybeArchiveBespokeOrder } from "@/lib/bespoke-archive";
 import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { canSeeOrderMeasurements, redactBespokeOrder } from "@/lib/bespoke-data-access";
-import { bespokeFacts } from "@/lib/atelier/bespoke-access";
+import { bespokeFacts, bespokeView } from "@/lib/atelier/bespoke-access";
 import { specificationInclude } from "@/lib/atelier/construction-features";
+import { commissionTitle } from "@/lib/atelier/commission-list";
 
 export default async function AdminBespokeOrderPage({
   params,
@@ -57,8 +58,10 @@ export default async function AdminBespokeOrderPage({
   // but payments stay with money roles and measurements with managers and cutters.
   const viewer = session?.user ?? {};
   const access = session?.user?.id ? await bespokeFacts(session, { orderId: order.id }) : null;
+  const view = access ? bespokeView(access.facts) : null;
   const shown = redactBespokeOrder(order, {
-    payments: access?.facts.money ?? false,
+    payments: view?.money ?? false,
+    materialCost: view?.materialCost ?? false,
     measurements: await canSeeOrderMeasurements(viewer, order.id),
   });
 
@@ -68,7 +71,10 @@ export default async function AdminBespokeOrderPage({
       actorRole={access?.role ?? null}
       access={{
         manage: access?.facts.house ?? false,
-        money: access?.facts.money ?? false,
+        money: view?.money ?? false,
+        materialCost: view?.materialCost ?? false,
+        labourCost: view?.labourCost ?? false,
+        specEdit: view?.specEdit ?? false,
         admin: access?.facts.admin ?? false,
       }}
       actorUserId={session?.user?.id ?? null}
@@ -80,6 +86,10 @@ export default async function AdminBespokeOrderPage({
         activeOrders: s.assignments.length,
       }))}
       trackingUrl={`${baseUrl}/track/${trackingRaw}`}
+      title={{
+        text: commissionTitle(order).text,
+        composed: commissionTitle({ ...order, title: null }).text,
+      }}
     />
   );
 }

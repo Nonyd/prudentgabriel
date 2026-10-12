@@ -1,6 +1,7 @@
 import { BespokeStage, OrderStatus, Prisma } from "@prisma/client";
 import { commissionHasFeaturesWhere, parseFeatureKeys } from "@/lib/atelier/construction-features";
 import { deliveryMonthWhere, parseDeliveryMonth } from "@/lib/atelier/delivery-month";
+import { fabricPendingWhere } from "@/lib/atelier/commission-list";
 
 /**
  * The commission list's filters (GET /api/bespoke), in one place so tests run
@@ -9,6 +10,7 @@ import { deliveryMonthWhere, parseDeliveryMonth } from "@/lib/atelier/delivery-m
  *   stage, status, search, from/to (created), showArchived=1, awaitingReceipt=1
  *   feature=cup_corset,train   BC2: commissions carrying every listed feature
  *   deliveryMonth=2026-05      BC3: expected delivery in that Lagos month
+ *   fabric=pending             BD5: open, fabric sourcing not passed; soonest delivery first
  */
 export type CommissionSearch =
   | {
@@ -31,6 +33,7 @@ export function commissionSearch(params: URLSearchParams): CommissionSearch {
   const awaitingReceipt = params.get("awaitingReceipt") === "1";
   const monthRaw = params.get("deliveryMonth");
   const featureKeys = parseFeatureKeys(params.get("feature"));
+  const fabricPending = params.get("fabric") === "pending";
 
   const where: Prisma.BespokeOrderWhereInput = {};
   if (stage && stage !== "all" && STAGES.has(stage)) where.currentStage = stage as BespokeStage;
@@ -67,6 +70,11 @@ export function commissionSearch(params: URLSearchParams): CommissionSearch {
     and.push(deliveryMonthWhere(month));
     // A month's deliveries read soonest first.
     orderBy = [{ deliveryDate: "asc" }, { createdAt: "asc" }];
+  }
+  if (fabricPending) {
+    and.push(fabricPendingWhere());
+    // A gown due in three weeks with no fabric is the one to see first.
+    orderBy = [{ deliveryDate: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }];
   }
   if (and.length) where.AND = and;
 

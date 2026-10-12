@@ -61,6 +61,18 @@ export async function patchClientMeasurements(clientId: string, form: Measuremen
   if (!res.ok) throw new Error(j.error ?? "Save failed");
 }
 
+/** BD6: save a commission's own set (and her latest with it). */
+export async function patchCommissionMeasurements(orderId: string, form: MeasurementData) {
+  const unit = form.unit === "cm" ? "cm" : "inches";
+  const res = await fetch(`/api/bespoke/${orderId}/measurements`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...form, unit }),
+  });
+  const j = (await res.json()) as { error?: string };
+  if (!res.ok) throw new Error(j.error ?? "Save failed");
+}
+
 export function ClientMeasurementsPanel({
   clientId,
   clientName,
@@ -68,6 +80,10 @@ export function ClientMeasurementsPanel({
   compact = false,
   onSaved,
   onDraftChange,
+  saveUrl,
+  title = "Client Measurements",
+  savedMessage,
+  caption,
 }: {
   clientId: string | null;
   clientName: string;
@@ -75,6 +91,12 @@ export function ClientMeasurementsPanel({
   compact?: boolean;
   onSaved?: () => void;
   onDraftChange?: (draft: MeasurementData | null) => void;
+  /** BD6: where the set is saved. Default: her client profile. */
+  saveUrl?: string;
+  title?: string;
+  savedMessage?: string;
+  /** A line under the title, e.g. whose set this is and when it was taken. */
+  caption?: React.ReactNode;
 }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -106,15 +128,16 @@ export function ClientMeasurementsPanel({
   async function save() {
     setSaving(true);
     try {
-      const res = await fetch(`/api/clients/${clientId}/measurements`, {
+      const res = await fetch(saveUrl ?? `/api/clients/${clientId}/measurements`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, unit }),
       });
-      const j = (await res.json()) as { error?: string; item?: MeasurementData };
+      const j = (await res.json()) as { error?: string; item?: MeasurementData | { data: MeasurementData | null } };
       if (!res.ok) throw new Error(j.error ?? "Save failed");
-      if (j.item) setForm(j.item);
-      toast.success(`Measurements saved to ${clientName}'s profile`);
+      const saved = j.item && "data" in j.item ? j.item.data : (j.item as MeasurementData | undefined);
+      if (saved) setForm(saved);
+      toast.success(savedMessage ?? `Measurements saved to ${clientName}'s profile`);
       setEditing(false);
       onSaved?.();
     } catch (e) {
@@ -126,7 +149,8 @@ export function ClientMeasurementsPanel({
 
   return (
     <section className={compact ? "mt-4 rounded border border-sand bg-ivory/50 p-4" : "card-surface p-6"}>
-      <h2 className="panel-title font-sans font-semibold uppercase text-text-light">Client Measurements</h2>
+      <h2 className="panel-title font-sans font-semibold uppercase text-text-light">{title}</h2>
+      {caption ? <div className="mt-1 font-sans text-xs text-text-mid">{caption}</div> : null}
 
       {!editing && hasData ? (
         <>

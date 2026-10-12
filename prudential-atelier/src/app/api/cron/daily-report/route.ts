@@ -10,6 +10,12 @@ import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { listRefundRequiredOrders, oversellReportHtml } from "@/lib/oversell-report";
 import { getSetting } from "@/lib/settings";
 import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
+import { workroomDay } from "@/lib/atelier/work-log";
+
+/** Staff write the work log; it reaches the email as text, never as markup. */
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
 
 function startOfToday() {
   const d = new Date();
@@ -72,6 +78,9 @@ export async function POST(req: NextRequest) {
     const revenue = (rtwRev._sum.total ?? 0) + (bespokePaid._sum.amountPaid ?? 0);
 
     const oversellHtml = oversellReportHtml(refundRequired);
+    // BD7: the day's work on each gown, and who with open work has not filed.
+    // Cron fires 23:00 UTC, which is already 00:00 in Lagos: report the Lagos day just ended.
+    const workroom = await workroomDay(new Date(Date.now() - 60 * 60 * 1000));
 
     const dateLabel = from.toLocaleDateString("en-GB");
     const html = reportEmailHtml(
@@ -103,6 +112,27 @@ export async function POST(req: NextRequest) {
                     (a) =>
                       `<li>${a.staff.user.name ?? "Staff"} — ${a.clockIn ? "Clocked in" : "Absent"}</li>`,
                   )
+                  .join("")}</ul>`,
+        },
+        {
+          heading: "Workroom — today's work",
+          html:
+            workroom.entries.length === 0
+              ? "<p>No end-of-day entries filed.</p>"
+              : `<ul>${workroom.entries
+                  .map(
+                    (e) =>
+                      `<li><strong>${escapeHtml(e.orderRef)}</strong> — ${escapeHtml(e.who)} (${escapeHtml(e.role.toLowerCase().replace(/_/g, " "))}): ${escapeHtml(e.done)} · ${e.partDone ? "her part is done" : `${e.progress}%`}${e.blocker ? ` · <em>Blocked: ${escapeHtml(e.blocker)}</em>` : ""}</li>`,
+                  )
+                  .join("")}</ul>`,
+        },
+        {
+          heading: "Not filed today",
+          html:
+            workroom.notFiled.length === 0
+              ? "<p>Everyone with open work has filed.</p>"
+              : `<ul>${workroom.notFiled
+                  .map((n) => `<li>${escapeHtml(n.who)} — ${n.orderRefs.map(escapeHtml).join(", ")}</li>`)
                   .join("")}</ul>`,
         },
         {

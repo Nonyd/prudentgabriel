@@ -17,7 +17,8 @@ type LineDraft = {
 type CostRow = {
   id: string;
   status: "DRAFT" | "APPROVED";
-  tailorCostNGN: number;
+  /** Null for the store: labour is for cost of production (BD4). */
+  tailorCostNGN: number | null;
   materialsCostNGN: number;
   client: string | null;
   orderRef: string | null;
@@ -253,7 +254,8 @@ export function StoreCostsClient() {
                     {r.client ?? "—"} {r.orderRef ? `· ${r.orderRef}` : ""}
                   </p>
                   <p className="text-xs text-text-light">
-                    {r.status} · tailor ₦{r.tailorCostNGN.toLocaleString("en-NG")} · materials ₦
+                    {r.status}
+                    {r.tailorCostNGN != null ? ` · labour ₦${r.tailorCostNGN.toLocaleString("en-NG")}` : ""} · materials ₦
                     {r.materialsCostNGN.toLocaleString("en-NG")}
                     {r.approvedByName ? ` · approved by ${r.approvedByName}` : ` · drafted by ${r.draftedByName}`}
                   </p>

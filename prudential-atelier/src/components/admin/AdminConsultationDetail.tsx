@@ -15,6 +15,7 @@ import {
 } from "@/lib/consultation-types";
 import { isVirtualDelivery } from "@/lib/consultation";
 import { ClientMeasurementsPanel } from "@/components/admin/ClientMeasurementsPanel";
+import { NotesStream } from "@/components/admin/NotesStream";
 import { ConsultationDeleteControl } from "@/components/admin/ConsultationDeleteControl";
 import { adminReceiptSrc } from "@/lib/media/admin-receipt-src";
 import type { MeasurementData } from "@/lib/measurements";
@@ -61,6 +62,8 @@ type Booking = {
   sessionNotes: string | null;
   moodboardImages: string[];
   moodboardNotes: string | null;
+  /** BD2: after this, the session notes are the record and changes are notes. */
+  completedAt?: string | null;
   consultant: { id: string; name: string; title: string; image: string | null };
   offering: { durationMinutes: number; deliveryMode: string; sessionType?: string };
 };
@@ -123,11 +126,14 @@ export function AdminConsultationDetail({
   booking,
   clientId,
   measurements,
+  measurementsHidden = false,
   quotation,
 }: {
   booking: Booking;
   clientId: string | null;
   measurements?: MeasurementData | null;
+  /** AZ8: this viewer may not see measurements. */
+  measurementsHidden?: boolean;
   quotation?: LinkedQuotation | null;
 }) {
   const router = useRouter();
@@ -457,9 +463,15 @@ export function AdminConsultationDetail({
               <textarea
                 value={sessionNotes}
                 onChange={(e) => setSessionNotes(e.target.value)}
+                readOnly={Boolean(booking.completedAt)}
                 rows={4}
-                className="mt-1 w-full rounded-sm border border-sand px-3 py-2 text-sm text-ink"
+                className="mt-1 w-full rounded-sm border border-sand px-3 py-2 text-sm text-ink read-only:bg-sand/20"
               />
+              {booking.completedAt ? (
+                <span className="mt-1 block">
+                  The record of the session. Changes since go in the notes below.
+                </span>
+              ) : null}
             </label>
             <div>
               <p className="text-xs text-[#6B6B68]">Moodboard / reference images</p>
@@ -539,7 +551,25 @@ export function AdminConsultationDetail({
         </button>
       </div>
 
-      <ClientMeasurementsPanel clientId={clientId} clientName={booking.clientName} initial={measurements} />
+      {measurementsHidden ? (
+        <div className="glass-opaque border-dashed p-5">
+          <h3 className="font-label text-gold">Measurements</h3>
+          <p className="mt-2 text-sm text-[#6B6B68]">
+            Measurements are kept for managers and the tailor or pattern cutter on her gown.
+          </p>
+        </div>
+      ) : (
+        <ClientMeasurementsPanel clientId={clientId} clientName={booking.clientName} initial={measurements} />
+      )}
+
+      <NotesStream
+        endpoint={`/api/admin/consultations/${booking.id}/notes`}
+        sections={["consultation", "about_dress", "brief"]}
+        defaultSection="consultation"
+        canAdd
+        title="Notes since the session"
+        intro="A call summary or a change she asks for goes here. The session notes above are not rewritten."
+      />
 
       <div className="glass-opaque p-5">
         <h3 className="font-label text-gold">Actions</h3>

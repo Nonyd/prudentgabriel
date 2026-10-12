@@ -117,13 +117,15 @@ async function main() {
   assert(migration.includes("ON DELETE RESTRICT"), "movements restrict on delete");
   assert(!/INSERT INTO "User"/.test(migration), "migration does not seed a storekeeper person");
 
-  const form = src("components/admin/BespokeOrderDetailClient.tsx");
+  // Slice BD3 moved the material form into the specification panel.
+  const form = src("components/admin/CommissionFilePanels.tsx");
   assert(form.includes("quantity"), "atelier material form collects quantity");
   assert(form.includes("unitCost"), "atelier material form collects cost");
-  assert(form.includes("isArchived"), "atelier material form is hidden on archived commissions");
+  assert(form.includes("archived"), "atelier material form is hidden on archived commissions");
   assert(form.includes("Issue from store") || form.includes("storeItemId"), "add material can issue from the store");
 
-  const patch = src("app/api/bespoke/[orderId]/route.ts");
+  // Slice BD3: one writer for materials, used by PATCH and POST /materials.
+  const patch = src("lib/atelier/commission-materials.ts");
   assert(patch.includes("appendMovement"), "atelier add-material writes an ISSUE");
   assert(patch.includes("ARCHIVED"), "archived commissions cannot take materials");
 

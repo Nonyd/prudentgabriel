@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
+import { bespokeView, requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { actorFromSession, completeOrderStage } from "@/lib/atelier/stage-actions";
 import { bespokeAdminDetailInclude } from "@/lib/atelier/can-complete-stage";
-import { canSeeOrderMeasurements, canSeePaymentDetails, redactBespokeOrder } from "@/lib/bespoke-data-access";
+import { canSeeOrderMeasurements, redactBespokeOrder } from "@/lib/bespoke-data-access";
 
 type Params = { params: Promise<{ orderId: string }> };
 
@@ -44,8 +44,10 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!updated) return NextResponse.json({ item: null });
 
   // Slice AZ8: STAFF complete stages too; what comes back is redacted like GET.
+  const view = bespokeView(gate.facts);
   const access = {
-    payments: canSeePaymentDetails(gate.session.user),
+    payments: view.money,
+    materialCost: view.materialCost,
     measurements: await canSeeOrderMeasurements(gate.session.user, orderId),
   };
   return NextResponse.json({ item: redactBespokeOrder(updated, access) });

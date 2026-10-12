@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { EndOfDayCard } from "@/components/staff/EndOfDayCard";
 
 type DashboardData = {
   clockStatus: {
@@ -108,6 +109,8 @@ export default function StaffDashboardPage() {
       </div>
 
       {clockBanner}
+
+      <EndOfDayCard />
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:hidden">{summaryCards}</section>
 

@@ -91,3 +91,49 @@ export function measurementPlausibilityError(
   }
   return null;
 }
+
+/** The fixed measurement columns, in the order the house reads them. */
+export const MEASUREMENT_COLUMNS = [
+  "bust",
+  "waist",
+  "hips",
+  "shoulderWidth",
+  "sleeveLength",
+  "dressLength",
+  "thigh",
+  "inseam",
+  "neck",
+  "armhole",
+] as const;
+type MeasurementColumn = (typeof MEASUREMENT_COLUMNS)[number];
+
+function optionalFloat(value: unknown): number | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * A measurements PATCH body → the fields it sets (absent keys untouched), or
+ * the plausibility error. Shared by the client's set and a commission's own (BD6).
+ */
+export function cleanMeasurementInput(
+  body: unknown,
+): { ok: true; data: Partial<Record<MeasurementColumn, number | null>> & { unit?: string; notes?: string | null } } | { ok: false; error: string } {
+  const b = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
+  const data: Partial<Record<MeasurementColumn, number | null>> & { unit?: string; notes?: string | null } = {};
+  for (const key of MEASUREMENT_COLUMNS) {
+    const v = optionalFloat(b[key]);
+    if (v !== undefined) data[key] = v;
+  }
+  if (typeof b.unit === "string") data.unit = b.unit;
+  if (b.notes !== undefined) data.notes = typeof b.notes === "string" ? b.notes.trim() || null : null;
+  const error = measurementPlausibilityError({
+    bust: typeof data.bust === "number" ? data.bust : null,
+    waist: typeof data.waist === "number" ? data.waist : null,
+    hips: typeof data.hips === "number" ? data.hips : null,
+    unit: data.unit ?? "inches",
+  });
+  return error ? { ok: false, error } : { ok: true, data };
+}

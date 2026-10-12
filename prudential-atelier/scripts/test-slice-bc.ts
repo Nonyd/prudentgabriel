@@ -83,26 +83,27 @@ function unit() {
 
   const kemi = row("Kemi (RTW_MANAGER + atelier grant)");
   assert(!kemi.admitted, "Kemi has no clients key, so the file is not open to her (as /admin/clients today)");
-  assert(!kemi.sections.payments && !kemi.sections.measurements, "Kemi never gets payments or measurements");
+  assert(!kemi.sections.balance && !kemi.sections.measurements, "Kemi never gets payments or measurements");
 
   const bmSeed = row("Bespoke manager (seed: clients.view)");
   assert(!bmSeed.admitted, "a bespoke manager on the seed set cannot open /admin/clients, so not the file");
   const bm = row("Bespoke manager (+ T3 clients)");
-  assert(bm.admitted && bm.sections.measurements && bm.sections.payments, "bespoke manager with clients: measurements + payments");
+  assert(bm.admitted && bm.sections.measurements && bm.sections.balance, "bespoke manager with clients: measurements + payments");
   assert(bm.sections.consultation, "bespoke manager holds consultations");
   assert(bm.sections.quotation, "bespoke manager is a money role, so the quotation shows");
 
   const tailor = row("Assigned tailor (STAFF)");
   assert(tailor.admitted && tailor.scope === "workroom", "tailor reaches the file for the gown she is on");
   assert(tailor.sections.measurements, "AZ8: the tailor sees measurements");
-  assert(!tailor.sections.payments, "AZ8: STAFF are refused payments");
+  assert(!tailor.sections.balance, "AZ8: STAFF are refused payments");
   assert(!tailor.sections.quotation, "STAFF do not get the quotation");
   assert(!tailor.contact, "STAFF get her first name, not her contact details");
 
   const beader = row("Assigned beader (STAFF)");
   assert(beader.admitted && !beader.sections.measurements, "AZ8: a beader is refused measurements");
-  assert(!beader.sections.payments, "AZ8: a beader is refused payments");
-  assert(beader.sections.specification && beader.sections.illustrations, "the workroom sees the gown and the sketches");
+  assert(!beader.sections.balance, "AZ8: a beader is refused payments");
+  assert(beader.sections.about && beader.sections.beads && beader.sections.illustrations, "the workroom sees the gown, the beads and the sketches");
+  assert(!beader.sections.cost && !tailor.sections.cost, "BD4: the workroom never sees what a gown costs");
 
   const store = row("Store manager");
   assert(!store.admitted, "a store manager does not reach client files");
@@ -149,9 +150,12 @@ function unit() {
       opens: m.admitted ? m.scope : "no (403)",
       consult: m.sections.consultation ? "yes" : "-",
       measure: m.sections.measurements ? "yes" : "-",
-      gown: m.sections.specification ? "yes" : "-",
+      about: m.sections.about ? "yes" : "-",
+      beads: m.sections.beads ? "yes" : "-",
       quote: m.sections.quotation ? "yes" : "-",
-      pay: m.sections.payments ? "yes" : "-",
+      invoice: m.sections.invoice ? "yes" : "-",
+      balance: m.sections.balance ? "yes" : "-",
+      cost: m.sections.cost ? "yes" : "-",
       sketch: m.sections.illustrations ? "yes" : "-",
       making: m.sections.making ? "yes" : "-",
       delivery: m.sections.delivery ? (m.contact ? "yes+address" : "date only") : "-",
@@ -348,7 +352,7 @@ async function db() {
 
     // ── STAFF are refused payments ──
     for (const who of [tailor, beader]) {
-      const pay = await composeClientFile(as(who.user.id, "STAFF"), client.id, "payments");
+      const pay = await composeClientFile(as(who.user.id, "STAFF"), client.id, "balance");
       assert(pay.status === 403, `STAFF payments → 403 (got ${pay.status})`);
       const full = JSON.stringify((await composeClientFile(as(who.user.id, "STAFF"), client.id)).body);
       assert(!full.includes("receipt-do-not-leak"), "no receipt URL reaches STAFF");
@@ -372,7 +376,7 @@ async function db() {
     const adminJson = JSON.stringify(adminFile.body);
     assert(adminJson.includes("91.7") && adminJson.includes(june.orderRef), "Mrs. Prudent sees measurements and both gowns");
     assert(adminJson.includes("Lekki") && adminJson.includes("Cutting & sewing"), "address and the house's words");
-    const adminPay = await composeClientFile(as(clientUser.id, "ADMIN"), client.id, "payments");
+    const adminPay = await composeClientFile(as(clientUser.id, "ADMIN"), client.id, "balance");
     assert(adminPay.status === 200, "Mrs. Prudent sees payments");
     console.log("ok db: client file per viewer");
 

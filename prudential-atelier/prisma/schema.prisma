@@ -198,6 +198,8 @@ model ConsultationBooking {
   reviews  Review[]
   quotations  Quotation[]
   bespokeOrders BespokeOrder[]
+  /// BD2: notes added after the session. The fields above are never rewritten by a note.
+  commissionNotes CommissionNote[]
   payments Payment[]
 
   reviewRequestSent Boolean @default(false)
@@ -2102,6 +2104,17 @@ model BespokeOrder {
   clientLocation    String?
   deliveryDate      DateTime?
   notes             String?  @db.Text
+  /// BD1: the house's own title when the composed one reads badly. Null = composed.
+  title             String?
+  /// BD1: what is being made (wedding dress, traditional outfit, dress …).
+  garmentTypeId     String?
+  garmentType       GarmentType? @relation(fields: [garmentTypeId], references: [id], onDelete: SetNull)
+  /// BD1: the day of her event, from the enquiry. Not the delivery date.
+  eventDate         DateTime? @db.Date
+  /// BD6: the measurements this commission is cut to (Measurement's shape).
+  /// Starts from the client's latest set at create; edits here update both.
+  measurementsSnapshot Json?
+  measurementsTakenAt  DateTime?
 
   currentStage BespokeStage @default(CONSULTATION_BOOKING)
   stageHistory     StageUpdate[]
@@ -2113,6 +2126,10 @@ model BespokeOrder {
   /// BC2: what the gown is — construction features ticked from the house library.
   features     CommissionFeature[]
   materials    Material[]
+  /// BD2: append-only notes against this commission (the brief anchor).
+  commissionNotes CommissionNote[]
+  /// BD7: the workroom's end-of-day entries.
+  workLogs     WorkLog[]
 
   quotationId String?
   quotation   Quotation? @relation(fields: [quotationId], references: [id])
@@ -2191,6 +2208,7 @@ model BespokeOrder {
   @@index([balance, balanceReminderSentAt, deliveryDate])
   @@index([deliveredAt, receiptConfirmedAt])
   @@index([deliveryDate])
+  @@index([garmentTypeId])
 }
 
 enum AlterationReason {
@@ -2363,7 +2381,10 @@ model OrderAssignment {
   role        String
   stage       BespokeStage?
   assignedAt  DateTime  @default(now())
+  /// BD7: written when the person files that her part is done.
   completedAt DateTime?
+  labourLines CostOfProductionLabour[]
+  workLogs    WorkLog[]
 
   @@index([orderId])
   @@index([staffProfileId])
@@ -2416,6 +2437,11 @@ model Material {
   totalCost Float?
   supplier  String?
   notes     String?
+  /// BD3: BEADS, FABRIC, LINING or OTHER. Null on rows made before BD.
+  kind      String?
+  /// BD3: pictures of the beads or fabric (specification, not cost).
+  images    String[] @default([])
+  addedById String?
 
   /// Optional link to the store catalogue. The gown note stays free text.
   storeItemId String?
@@ -2493,6 +2519,7 @@ model StaffProfile {
 
   attendanceLogs     AttendanceLog[]
   assignments        OrderAssignment[]
+  workLogs           WorkLog[]
   tasks              StaffTask[]
   performanceRecords PerformanceRecord[]
 
@@ -3102,6 +3129,9 @@ model CostOfProduction {
   approvedBy     User?                  @relation("CostOfProductionApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
   approvedAt     DateTime?
   items          CostOfProductionItem[]
+  /// BD4: tailor, beader … one line each, pointing at the assignment it pays.
+  /// When lines exist, tailorCostNGN is their sum (written together).
+  labour         CostOfProductionLabour[]
   requisitions   Requisition[]
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
@@ -3311,4 +3341,85 @@ model ChatMessage {
   createdAt      DateTime         @default(now())
 
   @@index([conversationId, createdAt])
+}
+
+/// BD1: what kind of garment a commission is. The three Mrs. Prudent named on
+/// 12 October are seeded; the house adds more from the admin, like BC2's features.
+model GarmentType {
+  id          String         @id @default(cuid())
+  key         String         @unique
+  label       String
+  sortOrder   Int            @default(0)
+  archivedAt  DateTime?
+  commissions BespokeOrder[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([archivedAt, sortOrder])
+}
+
+/// BD2: a note on a consultation or a commission. Append-only (trigger): a
+/// correction is a new row whose supersedesId points at the one it corrects,
+/// and both stay visible. A note never rewrites the record it sits under.
+model CommissionNote {
+  id             String               @id @default(cuid())
+  orderId        String?
+  order          BespokeOrder?        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  consultationId String?
+  consultation   ConsultationBooking? @relation(fields: [consultationId], references: [id], onDelete: Restrict)
+  /// Which part of the file: consultation, about_dress, brief, beads, fabric, fitting, delivery.
+  section        String
+  body           String               @db.Text
+  authorId       String
+  authorName     String?
+  supersedesId   String?              @unique
+  supersedes     CommissionNote?      @relation("NoteCorrection", fields: [supersedesId], references: [id], onDelete: Restrict)
+  correctedBy    CommissionNote?      @relation("NoteCorrection")
+  createdAt      DateTime             @default(now())
+
+  @@index([orderId, createdAt])
+  @@index([consultationId, createdAt])
+}
+
+/// BD4: one person's fee on a cost-of-production sheet.
+model CostOfProductionLabour {
+  id                 String           @id @default(cuid())
+  costOfProductionId String
+  costOfProduction   CostOfProduction @relation(fields: [costOfProductionId], references: [id], onDelete: Cascade)
+  assignmentId       String?
+  assignment         OrderAssignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  /// TAILOR, BEADER … copied from the assignment so the line still reads after it is removed.
+  role               String
+  description        String?
+  amountNGN          Decimal          @db.Decimal(12, 2)
+  createdAt          DateTime         @default(now())
+
+  @@index([costOfProductionId])
+  @@index([assignmentId])
+}
+
+/// BD7: what one person did on one commission on one Lagos day.
+model WorkLog {
+  id             String          @id @default(cuid())
+  assignmentId   String
+  assignment     OrderAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  orderId        String
+  order          BespokeOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  staffProfileId String
+  staffProfile   StaffProfile    @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+  /// Lagos calendar day the entry is for.
+  day            DateTime        @db.Date
+  done           String          @db.Text
+  /// How far her part has got, 0–100.
+  progress       Int
+  blocker        String?         @db.Text
+  images         String[]        @default([])
+  /// She says her part is done: OrderAssignment.completedAt is written with it.
+  partDone       Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@unique([assignmentId, day])
+  @@index([day])
+  @@index([orderId])
 }

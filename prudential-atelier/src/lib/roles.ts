@@ -36,6 +36,7 @@ export type AdminPermission =
   | "settings.developer"
   | "store"
   | "production.cost"
+  | "bespoke.specification"
   | "requisition.approve"
   | "requisition.fund"
   | "requisition.buy";
@@ -70,6 +71,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
     "settings",
     "store",
     "production.cost",
+    "bespoke.specification",
     "requisition.approve",
     "requisition.fund",
   ],
@@ -89,10 +91,11 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
     "content",
     "store",
     "production.cost",
+    "bespoke.specification",
     "requisition.approve",
   ],
 
-  BESPOKE_MANAGER: ["bespoke", "consultations", "clients.view", "production.cost", "requisition.approve"],
+  BESPOKE_MANAGER: ["bespoke", "consultations", "clients.view", "production.cost", "bespoke.specification", "requisition.approve"],
   RTW_MANAGER: ["shop.products", "shop.orders"],
   CONTENT_MANAGER: ["content.blog", "content.pages"],
   FINANCE_MANAGER: ["invoices", "quotations", "finance", "payments", "reports", "settings.bank-accounts"],

@@ -32,6 +32,8 @@ export const UI_UPLOAD_FOLDERS = [
   "prudent-gabriel/bespoke-refs",
   "bespoke-stages",
   "bespoke-videos",
+  /** BD3: pictures of the beads and fabric a gown needs. */
+  "bespoke-specification",
 ] as const;
 
 export type UploadFolderGate = AdminPermission | readonly AdminPermission[] | "portal";
@@ -57,6 +59,8 @@ export function permissionForUploadFolder(folder: string): UploadFolderGate | nu
   ) {
     return "bespoke";
   }
+  // BD3: Maju's grant says what beads a gown needs, pictures included.
+  if (f === "bespoke-specification") return ["bespoke", "bespoke.specification"];
   if (f.includes("/consultations")) return "consultations";
   if (f.includes("/careers")) return "staff";
   if (

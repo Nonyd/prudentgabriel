@@ -196,7 +196,7 @@ async function live(base: string, fx: Fixture) {
   assert(s === 200, `beader reads her own gown → 200 (got ${s})`);
   s = await call("GET", `/api/clients/${fx.client.id}/file?section=measurements`, b);
   assert(s === 403, `beader measurements on the client file → 403 (got ${s})`);
-  s = await call("GET", `/api/clients/${fx.client.id}/file?section=payments`, b);
+  s = await call("GET", `/api/clients/${fx.client.id}/file?section=balance`, b);
   assert(s === 403, `STAFF payments on the client file → 403 (got ${s})`);
 
   const k = fx.kemi;

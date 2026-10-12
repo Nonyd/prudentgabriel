@@ -37,6 +37,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!booking) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const d = parsed.data;
+  // BD2: once the session is complete its notes are the record of what she said
+  // on the day. Later changes are notes (/notes), not a rewrite of this one.
+  if (booking.completedAt && d.sessionNotes !== undefined && d.sessionNotes !== (booking.sessionNotes ?? "")) {
+    return NextResponse.json(
+      { error: "The session notes are the record of the day. Add a note instead." },
+      { status: 409 },
+    );
+  }
   const completing = d.status === ConsultationStatus.COMPLETED && booking.status !== ConsultationStatus.COMPLETED;
 
   if (completing) {

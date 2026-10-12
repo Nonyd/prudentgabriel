@@ -6,9 +6,15 @@ import { resolveSessionAccess } from "@/lib/admin-auth";
 import { hasPermission, type AdminPermission } from "@/lib/roles";
 import { BESPOKE_ADMIN_ROLES, sessionHasRole } from "@/lib/bespoke-roles";
 import { canSeePaymentDetails } from "@/lib/bespoke-data-access";
-import { bespokeAllows, type BespokeFacts, type BespokeLevel } from "@/lib/atelier/bespoke-access-rules";
+import {
+  bespokeAllows,
+  bespokeView,
+  type BespokeFacts,
+  type BespokeLevel,
+  type BespokeView,
+} from "@/lib/atelier/bespoke-access-rules";
 
-export { bespokeAllows, type BespokeFacts, type BespokeLevel };
+export { bespokeAllows, bespokeView, type BespokeFacts, type BespokeLevel, type BespokeView };
 
 /** Session + database side of the atelier gate. The rule itself: bespoke-access-rules.ts. */
 export type BespokeGate =
@@ -40,6 +46,9 @@ export async function bespokeFacts(
       money: canSeePaymentDetails({ role, email }),
       admin: sessionHasRole(role, email, BESPOKE_ADMIN_ROLES),
       assigned,
+      spec: hasPermission(role, "bespoke.specification", actor),
+      store: hasPermission(role, "store", actor),
+      cost: hasPermission(role, "production.cost", actor),
     },
   };
 }

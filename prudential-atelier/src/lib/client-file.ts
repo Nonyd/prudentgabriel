@@ -7,6 +7,11 @@ import { parseSnapshot } from "@/lib/custom-size";
 import { enquiryAnswerLines } from "@/lib/consultation-enquiry-shared";
 import { specificationInclude, specificationRows } from "@/lib/atelier/construction-features";
 import type { AdminPermission } from "@/lib/roles";
+import { commissionTitle, occasionPhrase } from "@/lib/atelier/commission-list";
+import { materialView, splitSpecification } from "@/lib/atelier/commission-materials";
+import { commissionMeasurements } from "@/lib/atelier/commission-measurements";
+import { commissionCost } from "@/lib/atelier/commission-cost";
+import { NOTE_SECTION_LABELS, isNoteSection, type NoteSection } from "@/lib/atelier/commission-notes-shared";
 
 /**
  * Slice BC1 — the client file: everything about her gown on one page.
@@ -23,17 +28,29 @@ import type { AdminPermission } from "@/lib/roles";
  *   - the quotation: the `quotations` key, or a money role.
  * A section the viewer may not see is sent as `{ visible: false, reason }` —
  * never its data — so the page can say it exists and is not theirs.
+ *
+ * Slice BD3 — the sections as the house named them on 12 October, in her order:
+ * consultation, measurement, about the dress, production brief, quotation,
+ * invoice, balance, beads needed, fabric type, illustration and mood board,
+ * fitting and alteration, delivery. Plus who is making it, and what it costs
+ * (the cost of production key only; never the workroom, never the client).
  */
 
 export const FILE_SECTIONS = [
   "consultation",
   "measurements",
-  "specification",
+  "about",
+  "brief",
   "quotation",
-  "payments",
+  "invoice",
+  "balance",
+  "beads",
+  "fabric",
   "illustrations",
+  "fitting",
   "making",
   "delivery",
+  "cost",
 ] as const;
 export type FileSection = (typeof FILE_SECTIONS)[number];
 
@@ -64,12 +81,18 @@ export type FileAccess = {
 export const HIDDEN_REASONS: Record<FileSection, string> = {
   consultation: "Consultation notes are kept for the consultations desk.",
   measurements: "Measurements are kept for managers and the tailor or pattern cutter on this gown.",
-  specification: "The specification is kept for the house and the workroom on this gown.",
+  about: "What she asked for is kept for the house and the workroom on this gown.",
+  brief: "The production brief is kept for the house and the workroom on this gown.",
   quotation: "The quotation is kept for those who hold quotations or handle money.",
-  payments: "Payments and receipts are kept for managers and finance.",
+  invoice: "Invoices are kept for those who hold invoices or handle money.",
+  balance: "Payments and the balance are kept for managers and finance.",
+  beads: "The beads are kept for the house and the workroom on this gown.",
+  fabric: "The fabric is kept for the house and the workroom on this gown.",
   illustrations: "Illustrations are kept for the house and the workroom on this gown.",
+  fitting: "Fittings are kept for the house and the workroom on this gown.",
   making: "The workroom list is kept for the house and the workroom on this gown.",
   delivery: "Delivery is kept for the house and the workroom on this gown.",
+  cost: "What the gown costs to make is kept for cost of production.",
 };
 
 /** Pure: who sees which section. Mirrors AZ8 and Slice T; adds nothing. */
@@ -89,12 +112,18 @@ export function clientFileAccess(v: FileViewer): FileAccess {
       // Workroom: the brief and moodboard copied onto her commission, as the staff portal shows today.
       consultation: admitted && (house ? v.allows("consultations") : true),
       measurements: admitted && (manager || cutter),
-      specification: admitted,
+      about: admitted,
+      brief: admitted,
       quotation: house && (v.allows("quotations") || money),
-      payments: admitted && money,
+      invoice: house && (v.allows("invoices") || money),
+      balance: admitted && money,
+      beads: admitted,
+      fabric: admitted,
       illustrations: admitted,
+      fitting: admitted,
       making: admitted,
       delivery: admitted,
+      cost: house && v.allows("production.cost"),
     },
   };
 }
@@ -208,10 +237,17 @@ export async function composeClientFile(
       createdAt: true,
       consultationId: true,
       quotationId: true,
+      clientName: true,
+      title: true,
+      occasionType: true,
+      occasionDetails: true,
+      deliveryDate: true,
     },
   });
   const orderIds = commissions.map((c) => c.id);
   const refOf = new Map(commissions.map((c) => [c.id, c.orderRef]));
+  // BD2: notes sit beside the record they belong to, by section, oldest first.
+  const notesBySection = await loadNotes(commissions);
 
   const sections: Partial<Record<FileSection, SectionPayload<unknown>>> = {};
   for (const s of FILE_SECTIONS) {
@@ -219,26 +255,72 @@ export async function composeClientFile(
   }
 
   if (wanted("consultation")) {
-    sections.consultation = { visible: true, data: await loadConsultation(access.scope, client, orderIds, refOf) };
+    const data = await loadConsultation(access.scope, client, orderIds, refOf);
+    sections.consultation = {
+      visible: true,
+      data: { ...data, notes: commissions.flatMap((c) => notesBySection(c.id, "consultation")) },
+    };
   }
   if (wanted("measurements")) {
-    sections.measurements = { visible: true, data: await loadMeasurements(client.id, client.userId) };
+    const [base, perCommission] = await Promise.all([
+      loadMeasurements(client.id, client.userId),
+      prisma.bespokeOrder.findMany({
+        where: { id: { in: orderIds } },
+        orderBy: { createdAt: "asc" },
+        select: { id: true, measurementsSnapshot: true, measurementsTakenAt: true },
+      }),
+    ]);
+    const profileRow = await prisma.measurement.findUnique({ where: { clientId: client.id } });
+    sections.measurements = {
+      visible: true,
+      data: {
+        ...base,
+        // BD6: what each commission is cut to; "client" means not yet taken for it.
+        commissions: perCommission.map((o) => {
+          const m = commissionMeasurements(o, profileRow);
+          return { orderRef: refOf.get(o.id), source: m.source, takenAt: m.takenAt };
+        }),
+      },
+    };
   }
-  if (wanted("specification")) {
+  if (wanted("about") || wanted("brief")) {
     const rows = await prisma.bespokeOrder.findMany({
       where: { id: { in: orderIds } },
       orderBy: { createdAt: "asc" },
-      select: { id: true, outfitDescription: true, ...specificationInclude },
+      select: {
+        id: true,
+        outfitDescription: true,
+        outfitBrief: true,
+        sessionNotes: true,
+        occasionType: true,
+        occasionDetails: true,
+        garmentType: { select: { label: true } },
+        ...specificationInclude,
+      },
     });
-    sections.specification = {
-      visible: true,
-      data: rows.map((r) => ({
-        orderId: r.id,
-        orderRef: refOf.get(r.id),
-        description: r.outfitDescription,
-        features: specificationRows(r.features),
-      })),
-    };
+    if (wanted("about")) {
+      sections.about = {
+        visible: true,
+        data: rows.map((r) => ({
+          orderRef: refOf.get(r.id),
+          occasion: occasionPhrase(r),
+          garment: r.garmentType?.label ?? null,
+          description: r.outfitDescription,
+          features: specificationRows(r.features),
+          notes: notesBySection(r.id, "about_dress"),
+        })),
+      };
+    }
+    if (wanted("brief")) {
+      sections.brief = {
+        visible: true,
+        data: rows.map((r) => ({
+          orderRef: refOf.get(r.id),
+          brief: r.outfitBrief ?? r.sessionNotes,
+          notes: notesBySection(r.id, "brief"),
+        })),
+      };
+    }
   }
   if (wanted("quotation")) {
     const quotes = await prisma.quotation.findMany({
@@ -280,7 +362,48 @@ export async function composeClientFile(
       })),
     };
   }
-  if (wanted("payments")) {
+  if (wanted("invoice")) {
+    const quoteIds = commissions.map((c) => c.quotationId).filter((v): v is string => Boolean(v));
+    const invoices = quoteIds.length
+      ? await prisma.invoice.findMany({
+          where: { quotationId: { in: quoteIds } },
+          orderBy: { createdAt: "asc" },
+          select: {
+            invoiceNumber: true,
+            status: true,
+            currency: true,
+            total: true,
+            depositRequired: true,
+            balanceDue: true,
+            dueDate: true,
+            paidAt: true,
+            createdAt: true,
+            quotationId: true,
+          },
+        })
+      : [];
+    // Every commission is listed: one with no invoice says so in words (BD: "No invoice raised yet").
+    sections.invoice = {
+      visible: true,
+      data: commissions.map((c) => ({
+        orderRef: c.orderRef,
+        invoices: invoices
+          .filter((i) => i.quotationId && i.quotationId === c.quotationId)
+          .map((i) => ({
+            invoiceNumber: i.invoiceNumber,
+            status: i.status,
+            currency: i.currency,
+            total: i.total,
+            depositRequired: i.depositRequired,
+            balanceDue: i.balanceDue,
+            dueDate: iso(i.dueDate),
+            paidAt: iso(i.paidAt),
+            raisedAt: iso(i.createdAt),
+          })),
+      })),
+    };
+  }
+  if (wanted("balance")) {
     const rows = await prisma.bespokeOrder.findMany({
       where: { id: { in: orderIds } },
       orderBy: { createdAt: "asc" },
@@ -305,7 +428,7 @@ export async function composeClientFile(
         },
       },
     });
-    sections.payments = {
+    sections.balance = {
       visible: true,
       data: rows.map((r) => ({
         orderRef: refOf.get(r.id),
@@ -331,6 +454,8 @@ export async function composeClientFile(
       orderBy: { createdAt: "asc" },
       select: {
         id: true,
+        moodboardImages: true,
+        consultation: { select: { referenceImages: true, enquiry: { select: { moodboardImages: true } } } },
         stageMedia: {
           where: { stage: "SKETCHING_CONCEPT" },
           orderBy: { createdAt: "asc" },
@@ -344,12 +469,26 @@ export async function composeClientFile(
         },
       },
     });
+    // BD3: illustration and mood board are one section, two sources — what she
+    // uploaded with her enquiry and booking, and boards the house made itself.
+    const houseBoards = await prisma.moodboard.findMany({
+      where: { clientId: client.id },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, title: true, images: true, notes: true, createdAt: true },
+    });
     sections.illustrations = {
       visible: true,
-      data: rows.map((r) => {
+      data: {
+        houseMoodboards: houseBoards.map((m) => ({ ...m, createdAt: iso(m.createdAt) })),
+        commissions: rows.map((r) => {
         const approval = r.stageApprovals[0];
+        const hers = Array.from(
+          new Set([...(r.consultation?.enquiry?.moodboardImages ?? []), ...(r.consultation?.referenceImages ?? [])]),
+        );
         return {
           orderRef: refOf.get(r.id),
+          herUploads: hers,
+          sessionMoodboard: r.moodboardImages,
           sketches: r.stageMedia.map((m) => ({ id: m.id, url: m.url, kind: m.kind, uploadedAt: iso(m.createdAt) })),
           designApproval: approval
             ? {
@@ -360,8 +499,80 @@ export async function composeClientFile(
               }
             : { status: "NOT_REQUESTED" as const },
         };
-      }),
+        }),
+      },
     };
+  }
+  if (wanted("beads") || wanted("fabric")) {
+    const rows = await prisma.material.findMany({ where: { orderId: { in: orderIds } }, orderBy: { createdAt: "asc" } });
+    const byOrder = (id: string) =>
+      splitSpecification(rows.filter((m) => m.orderId === id).map((m) => materialView(m, false)));
+    if (wanted("beads")) {
+      sections.beads = {
+        visible: true,
+        data: commissions.map((c) => ({ orderRef: c.orderRef, items: byOrder(c.id).beads, notes: notesBySection(c.id, "beads") })),
+      };
+    }
+    if (wanted("fabric")) {
+      sections.fabric = {
+        visible: true,
+        data: commissions.map((c) => ({ orderRef: c.orderRef, items: byOrder(c.id).fabric, notes: notesBySection(c.id, "fabric") })),
+      };
+    }
+  }
+  if (wanted("fitting")) {
+    const FITTING_STAGES: BespokeStage[] = ["FIRST_FITTING", "ALTERATIONS", "FINAL_FITTING"];
+    const rows = await prisma.bespokeOrder.findMany({
+      where: { id: { in: orderIds } },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        stageCompletions: { where: { stage: { in: FITTING_STAGES }, revertedAt: null }, select: { stage: true, completedAt: true } },
+        stageHistory: {
+          where: { stage: { in: FITTING_STAGES } },
+          orderBy: { completedAt: "asc" },
+          select: { stage: true, notes: true, completedAt: true, completedByName: true, images: true },
+        },
+        alterationRequests: {
+          orderBy: { createdAt: "asc" },
+          select: { description: true, reason: true, status: true, createdAt: true },
+        },
+      },
+    });
+    sections.fitting = {
+      visible: true,
+      data: rows.map((r) => ({
+        orderRef: refOf.get(r.id),
+        stages: FITTING_STAGES.map((stage) => {
+          const done = r.stageCompletions.find((c) => c.stage === stage);
+          return {
+            stage,
+            label: workroomStageLabel(stage),
+            doneAt: iso(done?.completedAt),
+            history: r.stageHistory
+              .filter((h) => h.stage === stage)
+              .map((h) => ({ notes: h.notes, at: iso(h.completedAt), by: h.completedByName, images: h.images })),
+          };
+        }),
+        alterationRequests: r.alterationRequests.map((a) => ({
+          description: a.description,
+          reason: a.reason,
+          status: a.status,
+          at: iso(a.createdAt),
+        })),
+        notes: notesBySection(r.id, "fitting"),
+      })),
+    };
+  }
+  if (wanted("cost")) {
+    const money = canSeePaymentDetails({ role: viewer.role, email: viewer.email });
+    const costs = await Promise.all(
+      commissions.map(async (c) => ({
+        orderRef: c.orderRef,
+        cost: await commissionCost(c.id, { money, materialCost: true, labourCost: true }),
+      })),
+    );
+    sections.cost = { visible: true, data: costs };
   }
   if (wanted("making")) {
     const rows = await prisma.orderAssignment.findMany({
@@ -426,6 +637,7 @@ export async function composeClientFile(
         deliveredAt: iso(r.deliveredAt),
         receiptConfirmedAt: iso(r.receiptConfirmedAt),
         confirmation: deliveryConfirmation(r),
+        notes: notesBySection(r.id, "delivery"),
         address: access.contact
           ? {
               saved: address
@@ -458,6 +670,7 @@ export async function composeClientFile(
       commissions: commissions.map((c) => ({
         id: c.id,
         orderRef: c.orderRef,
+        title: commissionTitle(c).text,
         currentStage: c.currentStage,
         currentStageLabel: workroomStageLabel(c.currentStage),
         status: c.status,
@@ -465,6 +678,52 @@ export async function composeClientFile(
       })),
       sections,
     },
+  };
+}
+
+type FileNote = { section: NoteSection; sectionLabel: string; body: string; authorName: string; createdAt: string; corrected: boolean; correction: boolean };
+
+/**
+ * BD2: one query for every note on these commissions and the consultations
+ * they came from; returns a lookup by commission and section.
+ */
+async function loadNotes(commissions: { id: string; consultationId: string | null }[]) {
+  const orderIds = commissions.map((c) => c.id);
+  const consultationIds = commissions.map((c) => c.consultationId).filter((v): v is string => Boolean(v));
+  const rows = orderIds.length
+    ? await prisma.commissionNote.findMany({
+        where: {
+          OR: [
+            { orderId: { in: orderIds } },
+            ...(consultationIds.length ? [{ consultationId: { in: consultationIds }, orderId: null }] : []),
+          ],
+        },
+        orderBy: { createdAt: "asc" },
+        select: {
+          orderId: true,
+          consultationId: true,
+          section: true,
+          body: true,
+          authorName: true,
+          createdAt: true,
+          supersedesId: true,
+          correctedBy: { select: { id: true } },
+        },
+      })
+    : [];
+  return (orderId: string, section: NoteSection): FileNote[] => {
+    const consultationId = commissions.find((c) => c.id === orderId)?.consultationId ?? null;
+    return rows
+      .filter((n) => (n.orderId === orderId || (n.orderId === null && consultationId && n.consultationId === consultationId)) && n.section === section)
+      .map((n) => ({
+        section: isNoteSection(n.section) ? n.section : section,
+        sectionLabel: NOTE_SECTION_LABELS[section],
+        body: n.body,
+        authorName: n.authorName ?? "The house",
+        createdAt: n.createdAt.toISOString(),
+        corrected: Boolean(n.correctedBy),
+        correction: Boolean(n.supersedesId),
+      }));
   };
 }
 

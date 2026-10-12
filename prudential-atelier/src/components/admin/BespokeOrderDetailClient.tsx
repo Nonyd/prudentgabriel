@@ -3,14 +3,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import {
   ClientMeasurementsPanel,
-  patchClientMeasurements,
+  patchCommissionMeasurements,
   type MeasurementData,
 } from "@/components/admin/ClientMeasurementsPanel";
 import { measurementFromRecord } from "@/lib/measurements";
+import {
+  CommissionIdentityPanel,
+  CommissionMeasurementsCard,
+  CostPanel,
+  LockedSection,
+  SpecificationPanel,
+} from "@/components/admin/CommissionFilePanels";
+import { NotesStream } from "@/components/admin/NotesStream";
+import { NOTE_SECTIONS } from "@/lib/atelier/commission-notes-shared";
 import { formatNgnKobo } from "@/lib/money";
 import type {
   BespokeOrder,
@@ -79,6 +87,8 @@ type OrderWithRelations = BespokeOrder & {
   /** Slice AZ8: set by the API when this viewer may not see payments / measurements. */
   paymentsHidden?: boolean;
   measurementsHidden?: boolean;
+  /** BD4: the balance itself is hidden from non-money viewers; this says whether it is cleared. */
+  balanceCleared?: boolean;
 };
 
 function ledgerAmount(p: LedgerPayment): number {
@@ -94,16 +104,25 @@ export function BespokeOrderDetailClient({
   actorRole,
   actorUserId,
   access,
+  title,
 }: {
   order: OrderWithRelations;
   staffList: StaffOption[];
   trackingUrl: string;
   actorRole?: string | null;
   actorUserId?: string | null;
-  /** What this viewer's APIs allow — the same facts they gate on. */
-  access?: { manage: boolean; money: boolean; admin: boolean };
+  /** What this viewer's APIs allow — the same facts they gate on (bespokeView). */
+  access?: {
+    manage: boolean;
+    money: boolean;
+    admin: boolean;
+    materialCost?: boolean;
+    labourCost?: boolean;
+    specEdit?: boolean;
+  };
+  /** BD1: composed on the server ("Mrs. Prudent — 60th birthday outfit — 25 November"). */
+  title?: { text: string; composed: string };
 }) {
-  const router = useRouter();
   const [order, setOrder] = useState(initial);
   const [notes, setNotes] = useState(() => notesDraftForStage(initial.stageDrafts, initial.currentStage));
   const savedNotesRef = useRef(notes);
@@ -114,15 +133,6 @@ export function BespokeOrderDetailClient({
   const [uploading, setUploading] = useState(false);
   const [assignRole, setAssignRole] = useState("TAILOR");
   const [assignStaffId, setAssignStaffId] = useState("");
-  const [materialForm, setMaterialForm] = useState({
-    name: "",
-    quantity: "",
-    unitCost: "",
-    storeItemId: "",
-    takenById: "",
-    approvedById: "",
-  });
-  const [storeItems, setStoreItems] = useState<{ id: string; name: string; unit: string }[]>([]);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [measurementsDraft, setMeasurementsDraft] = useState<MeasurementData | null>(null);
   const [requestingApproval, setRequestingApproval] = useState(false);
@@ -148,7 +158,8 @@ export function BespokeOrderDetailClient({
       mediaCount: stageMedia.length,
       latestApprovalStatus: latestApproval?.status,
       productionUnlockedAt: order.productionUnlockedAt,
-      balance: order.balance,
+      // Non-money viewers get no figure, only whether it is cleared (BD4).
+      balance: order.balance ?? (order.balanceCleared ? 0 : Number.POSITIVE_INFINITY),
     }),
   );
   const unmet = checklist.filter((c) => c.required && !c.met);
@@ -223,15 +234,6 @@ export function BespokeOrderDetailClient({
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [notes]);
 
-  useEffect(() => {
-    void fetch("/api/admin/store/items")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { items?: { id: string; name: string; unit: string }[] } | null) => {
-        if (data?.items) setStoreItems(data.items);
-      })
-      .catch(() => undefined);
-  }, []);
-
   const handleUpload = async (files: FileList | null, type: "images" | "videos") => {
     if (!files?.length) return;
     setUploading(true);
@@ -266,8 +268,9 @@ export function BespokeOrderDetailClient({
   const completeStage = async () => {
     setCompleting(true);
     try {
-      if (order.currentStage === "CONSULTATION_SESSION" && order.clientProfileId && measurementsDraft) {
-        await patchClientMeasurements(order.clientProfileId, measurementsDraft);
+      // BD6: taken at the session, these are this commission's measurements (and her latest).
+      if (order.currentStage === "CONSULTATION_SESSION" && measurementsDraft) {
+        await patchCommissionMeasurements(order.id, measurementsDraft);
       }
       const res = await fetch(`/api/bespoke/${order.id}/complete-stage`, {
         method: "POST",
@@ -405,42 +408,6 @@ export function BespokeOrderDetailClient({
     toast.success("Payment recorded");
   };
 
-  const addMaterial = async () => {
-    if (!materialForm.name.trim() && !materialForm.storeItemId) return;
-    const unitCost = materialForm.unitCost ? parseFloat(materialForm.unitCost) : null;
-    const selected = storeItems.find((s) => s.id === materialForm.storeItemId);
-    const res = await fetch(`/api/bespoke/${order.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        material: {
-          name: materialForm.name.trim() || selected?.name,
-          quantity: materialForm.quantity || null,
-          unitCost,
-          totalCost: unitCost,
-          storeItemId: materialForm.storeItemId || null,
-          takenById: materialForm.takenById || actorUserId || null,
-          approvedById: materialForm.approvedById || null,
-        },
-      }),
-    });
-    if (res.ok) {
-      toast.success(materialForm.storeItemId ? "Issued from the store" : "Material noted");
-      setMaterialForm({
-        name: "",
-        quantity: "",
-        unitCost: "",
-        storeItemId: "",
-        takenById: materialForm.takenById,
-        approvedById: materialForm.approvedById,
-      });
-      router.refresh();
-    } else {
-      const data = (await res.json()) as { error?: string };
-      toast.error(data.error ?? "Could not add material");
-    }
-  };
-
   return (
     <div className="space-y-8">
       <Link href="/admin/bespoke" className="font-sans text-11px uppercase text-text-light hover:text-nut">
@@ -449,8 +416,10 @@ export function BespokeOrderDetailClient({
 
       <div className="flex flex-wrap items-start justify-between gap-4 glass-1 glass-panel px-5 py-4">
         <div>
-          <h1 className="font-display text-2xl text-ink">{order.orderRef}</h1>
-          <p className="mt-1 font-sans text-sm text-text-mid">{order.clientName}</p>
+          <h1 className="font-display text-2xl text-ink">{title?.text ?? order.orderRef}</h1>
+          <p className="mt-1 font-sans text-sm text-text-mid">
+            {order.orderRef} · {order.clientName}
+          </p>
           <a
             href={trackingUrl}
             target="_blank"
@@ -489,6 +458,15 @@ export function BespokeOrderDetailClient({
 
       <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
         <div className="space-y-8">
+          <NotesStream
+            endpoint={`/api/bespoke/${order.id}/notes`}
+            sections={[...NOTE_SECTIONS]}
+            defaultSection="brief"
+            canAdd={canManage && !isArchived}
+            title="Notes"
+            intro="Call summaries and changes she asks for. The consultation record and the brief are never rewritten by a note."
+          />
+
           <section className="card-surface p-6">
             <h2 className="font-sans text-xs font-semibold uppercase tracking-wider text-text-light">
               Production stages
@@ -764,6 +742,26 @@ export function BespokeOrderDetailClient({
         </div>
 
         <div className="space-y-6">
+          <CommissionIdentityPanel
+            orderId={order.id}
+            composedTitle={title?.composed ?? order.orderRef}
+            canEdit={canManage && !isArchived}
+            initial={{
+              title: order.title ?? null,
+              garmentTypeId: order.garmentTypeId ?? null,
+              occasionDetails: order.occasionDetails ?? null,
+              eventDate: order.eventDate ? new Date(order.eventDate).toISOString() : null,
+              clientLocation: order.clientLocation ?? null,
+              eventLocation: order.eventLocation ?? null,
+            }}
+          />
+
+          {order.measurementsHidden ? (
+            <LockedSection title="Measurements" reason="Measurements are kept for managers and the tailor or pattern cutter on this gown." />
+          ) : (
+            <CommissionMeasurementsCard orderId={order.id} clientId={order.clientProfileId} clientName={order.clientName} />
+          )}
+
           <section className="card-surface p-6">
             <h2 className="font-sans text-xs font-semibold uppercase tracking-wider text-text-light">Client</h2>
             <dl className="mt-4 space-y-2 font-sans text-sm">
@@ -817,6 +815,9 @@ export function BespokeOrderDetailClient({
             </ul>
           </section>
 
+          {!canRecordMoney && order.paymentsHidden ? (
+            <LockedSection title="Price and balance" reason="The price agreed, payments and the balance are kept for managers and finance." />
+          ) : (
           <section className="card-surface p-6">
             <h2 className="font-sans text-xs font-semibold uppercase tracking-wider text-text-light">Payment</h2>
             <dl className="mt-3 space-y-1 font-sans text-sm">
@@ -897,97 +898,27 @@ export function BespokeOrderDetailClient({
             ) : null}
           </section>
 
-          <section className="card-surface p-6">
-            <h2 className="font-sans text-xs font-semibold uppercase tracking-wider text-text-light">Materials</h2>
-            <ul className="mt-2 space-y-1 font-sans text-sm">
-              {order.materials.map((m) => (
-                <li key={m.id}>
-                  {m.name}
-                  {m.quantity ? ` · ${m.quantity}` : ""}
-                  {m.unitCost != null ? ` · ₦${m.unitCost}` : ""}
-                  {m.storeMovementId ? (
-                    <span className="ml-2 text-10px uppercase tracking-wide text-text-light">Issued</span>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-            {isArchived ? (
-              <p className="mt-3 font-sans text-xs text-text-light">Archived commissions cannot take materials.</p>
-            ) : (
-              <div className="mt-3 space-y-2">
-                <select
-                  value={materialForm.storeItemId}
-                  onChange={(e) => {
-                    const next = e.target.value;
-                    const selected = storeItems.find((s) => s.id === next);
-                    setMaterialForm((f) => ({
-                      ...f,
-                      storeItemId: next,
-                      name: selected ? selected.name : f.name,
-                    }));
-                  }}
-                  className="w-full rounded border border-sand px-2 py-2 font-sans text-sm"
-                >
-                  <option value="">Store item (issues from the book)…</option>
-                  {storeItems.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} · {s.unit}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  placeholder="Name (if not in the catalogue)"
-                  value={materialForm.name}
-                  onChange={(e) => setMaterialForm((f) => ({ ...f, name: e.target.value }))}
-                  className="w-full rounded border border-sand px-2 py-2 font-sans text-sm"
-                />
-                <input
-                  placeholder="Quantity"
-                  value={materialForm.quantity}
-                  onChange={(e) => setMaterialForm((f) => ({ ...f, quantity: e.target.value }))}
-                  className="w-full rounded border border-sand px-2 py-2 font-sans text-sm"
-                />
-                <input
-                  placeholder="Unit cost"
-                  type="number"
-                  value={materialForm.unitCost}
-                  onChange={(e) => setMaterialForm((f) => ({ ...f, unitCost: e.target.value }))}
-                  className="w-full rounded border border-sand px-2 py-2 font-sans text-sm"
-                />
-                {materialForm.storeItemId ? (
-                  <>
-                    <select
-                      value={materialForm.takenById}
-                      onChange={(e) => setMaterialForm((f) => ({ ...f, takenById: e.target.value }))}
-                      className="w-full rounded border border-sand px-2 py-2 font-sans text-sm"
-                    >
-                      <option value="">Who is taking it…</option>
-                      {staffList.map((s) => (
-                        <option key={s.userId} value={s.userId}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={materialForm.approvedById}
-                      onChange={(e) => setMaterialForm((f) => ({ ...f, approvedById: e.target.value }))}
-                      className="w-full rounded border border-sand px-2 py-2 font-sans text-sm"
-                    >
-                      <option value="">Supervisor who approved…</option>
-                      {staffList.map((s) => (
-                        <option key={`ap-${s.userId}`} value={s.userId}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
-                  </>
-                ) : null}
-                <Button size="sm" variant="secondary" onClick={() => void addMaterial()}>
-                  {materialForm.storeItemId ? "Issue from store" : "Add material"}
-                </Button>
-              </div>
-            )}
-          </section>
+          )}
+
+          <SpecificationPanel
+            orderId={order.id}
+            mayIssue={canManage}
+            staffList={staffList.map((st) => ({ userId: st.userId, name: st.name }))}
+            actorUserId={actorUserId ?? null}
+            archived={isArchived}
+          />
+
+          {access?.materialCost || access?.labourCost ? (
+            <CostPanel
+              orderId={order.id}
+              canDraftLabour={Boolean(access?.labourCost)}
+              assignments={order.assignments.map((a) => ({
+                id: a.id,
+                role: a.role,
+                name: a.staffProfile.user.name ?? a.staffProfile.user.email ?? "Staff",
+              }))}
+            />
+          ) : null}
         </div>
       </div>
 

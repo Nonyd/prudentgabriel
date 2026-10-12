@@ -5,6 +5,7 @@ import { useEffect, useState, use } from "react";
 import { format } from "date-fns";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPanel";
+import { SpecificationPanel } from "@/components/admin/CommissionFilePanels";
 
 type OrderDetail = {
   orderRef: string;
@@ -133,22 +134,8 @@ export default function StaffOrderDetailPage(props: { params: Promise<{ orderId:
         </section>
       ) : null}
 
-      {order.materials.length > 0 ? (
-        <section className="rounded-lg border border-sand bg-bg-card p-4">
-          <h2 className="mb-3 font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-mid">
-            Materials
-          </h2>
-          <ul className="space-y-2 font-sans text-sm">
-            {order.materials.map((m, i) => (
-              <li key={`${m.name}-${i}`}>
-                <span className="font-medium text-ink">{m.name}</span>
-                {m.quantity ? <span className="text-text-mid"> · {m.quantity}</span> : null}
-                {m.notes ? <p className="text-xs text-text-light">{m.notes}</p> : null}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      {/* BD3/BD4: beads and fabric for her own job; Maju's grant may add to them. Never their cost. */}
+      <SpecificationPanel orderId={params.orderId} mayIssue={false} staffList={[]} actorUserId={null} archived={false} />
 
       {order.stageNotes.length > 0 ? (
         <section className="rounded-lg border border-sand bg-bg-card p-4">
