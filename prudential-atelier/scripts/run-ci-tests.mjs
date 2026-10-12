@@ -9,6 +9,7 @@
 import { spawnSync } from "node:child_process";
 
 const TESTS = [
+  "test-db-guard-wiring",
   "test-bespoke-balance-bind",
   "test-bespoke-access",
   "test-token-rate-limits",
@@ -51,7 +52,7 @@ for (const name of TESTS) {
   console.log(`\n▶ ${name}`);
   const r = spawnSync(
     "npx",
-    ["tsx", "--tsconfig", "tsconfig.scripts.json", `scripts/${name}.ts`],
+    ["tsx", "--tsconfig", "tsconfig.scripts.json", "--import", "./scripts/test-db-guard.ts", `scripts/${name}.ts`],
     { stdio: "inherit", shell: process.platform === "win32" },
   );
   if (r.status !== 0) failed.push(name);

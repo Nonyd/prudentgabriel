@@ -22,13 +22,31 @@ export function databaseUrlHost(url: string | undefined): string {
   }
 }
 
+/**
+ * Database names on the VPS (deploy/.env.*). Matched as well as the host, so a
+ * tunnel (localhost:5433 to the staging container) is still recognised.
+ */
+export const PRODUCTION_DB_NAMES = ["prudentgabriel"];
+export const STAGING_DB_NAMES = ["prudentgabriel_staging"];
+
+export function databaseUrlName(url: string | undefined): string {
+  if (!url) return "";
+  try {
+    return new URL(url.replace(/^prisma\+/, "")).pathname.replace(/^\//, "").toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
 export function looksLikeProductionDatabase(url = process.env.DATABASE_URL ?? process.env.DIRECT_URL): boolean {
+  if (PRODUCTION_DB_NAMES.includes(databaseUrlName(url))) return true;
   const host = databaseUrlHost(url);
   if (!host) return false;
   return PRODUCTION_DB_HOST_MARKERS.some((marker) => host.includes(marker.toLowerCase()));
 }
 
 export function looksLikeStagingDatabase(url = process.env.DATABASE_URL ?? process.env.DIRECT_URL): boolean {
+  if (STAGING_DB_NAMES.includes(databaseUrlName(url))) return true;
   const host = databaseUrlHost(url);
   if (!host) return false;
   return STAGING_DB_HOST_MARKERS.some((marker) => host.includes(marker.toLowerCase()));
