@@ -112,7 +112,7 @@ export function JournalListClient({
               ) : null}
               <div className="flex flex-col justify-center p-8 md:p-10 lg:p-12">
                 {featured.category ? (
-                  <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-lightbr">
+                  <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
                     {featured.category}
                   </span>
                 ) : null}
@@ -153,7 +153,7 @@ export function JournalListClient({
                 )}
                 <div className="p-5">
                   {post.category ? (
-                    <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.14em] text-lightbr">
+                    <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.14em] text-text-light">
                       {post.category}
                     </span>
                   ) : null}

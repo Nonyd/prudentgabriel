@@ -108,7 +108,7 @@ export function ClockInClient({ qrCode, expiresAt, initialStatus }: ClockInClien
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col bg-bg px-4 py-8">
       <div className="text-center">
-        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr">
+        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-text-light">
           Prudent Gabriel
         </p>
         <h1 className="mt-2 font-serif text-3xl font-medium text-choc">Staff Clock-In</h1>

@@ -63,7 +63,7 @@ export default function StaffTasksPage() {
                 className="flex items-center justify-between staff-card px-4 py-3"
               >
                 <div>
-                  <p className="font-sans text-xs text-lightbr">{item.orderRef}</p>
+                  <p className="font-sans text-xs text-text-light">{item.orderRef}</p>
                   <p className="font-sans text-sm text-ink">{item.outfitDescription ?? "Order"}</p>
                   <p className="font-sans text-xs text-text-mid">
                     {item.role} · Assigned {format(new Date(item.assignedAt), "d MMM")}

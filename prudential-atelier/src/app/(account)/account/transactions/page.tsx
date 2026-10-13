@@ -64,7 +64,7 @@ export default async function AccountTransactionsPage() {
                   <div>
                     <p className="font-sans text-sm font-medium text-choc dark:text-cream">
                       {tx.href ? (
-                        <Link href={tx.href} className="hover:text-lightbr hover:underline">
+                        <Link href={tx.href} className="hover:text-text-light hover:underline">
                           {tx.label}
                         </Link>
                       ) : (

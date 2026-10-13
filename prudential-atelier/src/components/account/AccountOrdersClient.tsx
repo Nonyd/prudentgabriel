@@ -74,7 +74,7 @@ export function AccountOrdersClient({
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="font-sans text-[10px] uppercase tracking-wider text-lightbr">{o.orderRef}</p>
+                      <p className="font-sans text-[10px] uppercase tracking-wider text-text-light">{o.orderRef}</p>
                       <p className="mt-1 font-display text-lg text-choc">
                         {o.outfitDescription?.slice(0, 80) ?? "Atelier order"}
                       </p>
@@ -157,7 +157,7 @@ export function AccountOrdersClient({
                 className="flex w-full items-center justify-between border border-sand/60 bg-ivory p-4 text-left transition hover:border-nut/30"
               >
                 <div>
-                  <p className="font-sans text-xs text-lightbr">{o.orderNumber}</p>
+                  <p className="font-sans text-xs text-text-light">{o.orderNumber}</p>
                   <p className="font-sans text-sm text-choc">{formatDate(o.createdAt)}</p>
                   <p className="font-sans text-xs text-text-mid">
                     {o.items.length} item{o.items.length !== 1 ? "s" : ""}
@@ -166,7 +166,7 @@ export function AccountOrdersClient({
                 </div>
                 <div className="text-right">
                   <p className="font-sans text-sm text-choc">{formatPrice(o.total, "NGN")}</p>
-                  <span className="font-sans text-[10px] uppercase text-lightbr">{o.status}</span>
+                  <span className="font-sans text-[10px] uppercase text-text-light">{o.status}</span>
                 </div>
               </button>
             </li>

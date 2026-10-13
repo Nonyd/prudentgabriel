@@ -88,6 +88,14 @@ body {
   --accent-soft: #fff3dc;
   --hero-bg: #2d1b69;
   --cta-bg: #e8a838;
+  /* The amber as text: deep enough to read on the ivory page. */
+  --accent-text: #8a5a0e;
+}
+
+/* Dark: the soft amber panels carry light text, so they deepen; the accent stays warm. */
+[data-theme="dark"] .kids-theme {
+  --accent-soft: #3a2810;
+  --accent-text: #e8a838;
 }
 
 @layer base {
@@ -1064,6 +1072,11 @@ a.admin-cta {
   background: rgb(255 255 255 / 0.08);
   color: var(--ivory-deep);
   border-color: var(--ivory-deep);
+}
+
+/* --sand is a border/fill tone in dark; as text (labels on chocolate panels) it needs the light tan. */
+[data-theme="dark"] .text-sand {
+  color: var(--text-light);
 }
 
 /* Nut as a fill (export buttons) keeps its light-theme depth under ivory text. */

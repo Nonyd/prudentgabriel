@@ -100,7 +100,7 @@ export function ReviewSubmitClient({ context }: { context: ProductContext | Cons
     return (
       <form onSubmit={(e) => void handleSubmit(e)} className="mx-auto max-w-xl space-y-8">
         <div>
-          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr">
+          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-text-light">
             How was your consultation?
           </p>
           <h1 className="mt-2 font-display text-[32px] text-choc">Share your experience</h1>
@@ -153,7 +153,7 @@ export function ReviewSubmitClient({ context }: { context: ProductContext | Cons
 
         <div className="space-y-6">
           <div>
-            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr">Your review</p>
+            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-text-light">Your review</p>
             <h1 className="mt-2 font-display text-[32px] text-choc">{context.productName}</h1>
           </div>
 

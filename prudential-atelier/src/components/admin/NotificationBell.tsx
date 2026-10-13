@@ -28,7 +28,7 @@ function iconFor(type: AdminNotificationType) {
     case "CONSULTATION_COMPLETED":
     case "CONSULTATION_BOOKED_PRUDENT":
     case "QUOTE_AWAITING":
-      return wrap(<Calendar className="h-4 w-4 text-lightbr" strokeWidth={1.5} />, "bg-lightbr/20");
+      return wrap(<Calendar className="h-4 w-4 text-text-light" strokeWidth={1.5} />, "bg-lightbr/20");
     case "PAYMENT_FAILED":
       return wrap(<CreditCard className="h-4 w-4 text-danger" strokeWidth={1.5} />, "bg-danger/10");
     case "FABRIC_UNAVAILABLE":

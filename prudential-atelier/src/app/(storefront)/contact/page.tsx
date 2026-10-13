@@ -212,19 +212,19 @@ export default async function ContactPage(
             <div className="mt-2 h-px w-full bg-sand" />
             <ul className="mt-6 space-y-3">
               <li className="flex items-center gap-3">
-                <InstagramIcon size={16} className="text-lightbr" />
+                <InstagramIcon size={16} className="text-text-light" />
                 <span style={{ fontFamily: "var(--font-body)", fontSize: "14px", color: "var(--text-mid)" }}>
                   {instagram}
                 </span>
               </li>
               <li className="flex items-center gap-3">
-                <TikTokIcon size={16} className="text-lightbr" />
+                <TikTokIcon size={16} className="text-text-light" />
                 <span style={{ fontFamily: "var(--font-body)", fontSize: "14px", color: "var(--text-mid)" }}>
                   {tiktok}
                 </span>
               </li>
               <li className="flex items-center gap-3">
-                <FacebookIcon size={16} className="text-lightbr" />
+                <FacebookIcon size={16} className="text-text-light" />
                 <span style={{ fontFamily: "var(--font-body)", fontSize: "14px", color: "var(--text-mid)" }}>
                   {facebook}
                 </span>

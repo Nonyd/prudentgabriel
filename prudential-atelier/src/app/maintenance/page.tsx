@@ -73,7 +73,7 @@ export default async function MaintenancePage() {
       <div className="mt-12 space-y-2">
         <p
           className="font-sans text-[11px] uppercase tracking-[0.12em]"
-          style={{ color: "#a08060", fontFamily: "var(--font-jost), Jost, sans-serif" }}
+          style={{ color: "#c9a88a", fontFamily: "var(--font-jost), Jost, sans-serif" }}
         >
           Instagram
         </p>
@@ -82,7 +82,7 @@ export default async function MaintenancePage() {
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 font-sans text-sm transition-colors hover:opacity-90"
-          style={{ color: "#98755b" }}
+          style={{ color: "#d4bbac" }}
         >
           <InstagramIcon size={16} className="shrink-0" />
           @prudentgabriel
@@ -92,14 +92,14 @@ export default async function MaintenancePage() {
       <div className="mt-12 space-y-2">
         <p
           className="font-sans text-[11px]"
-          style={{ color: "#a08060", fontFamily: "var(--font-jost), Jost, sans-serif" }}
+          style={{ color: "#c9a88a", fontFamily: "var(--font-jost), Jost, sans-serif" }}
         >
           Already have an account?
         </p>
         <Link
           href="/login"
           className="font-sans text-sm font-medium transition-colors hover:opacity-90"
-          style={{ color: "#98755b" }}
+          style={{ color: "#d4bbac" }}
         >
           Staff and client login
         </Link>

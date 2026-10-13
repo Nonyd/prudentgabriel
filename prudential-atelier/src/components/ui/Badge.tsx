@@ -16,7 +16,7 @@ const variantClasses: Record<BadgeVariant, string> = {
   success: "bg-success text-bg-page",
   "outline-gold": "border border-gold bg-transparent text-gold",
   "outline-wine": "border border-olive bg-transparent text-olive",
-  grey: "bg-charcoal/10 text-charcoal-mid",
+  grey: "bg-sand/30 text-text-mid",
   accent: "border border-lightbr/40 bg-[#442913]/80 font-sans text-9px font-semibold uppercase tracking-[0.14em] text-[#f7f2ec]",
 };
 

@@ -73,7 +73,7 @@ export function BespokeApprovalClient({
 
   return (
     <section className="mt-8 rounded-sm border border-sand bg-ivory p-6">
-      <p className="font-sans text-[10px] uppercase tracking-wider text-lightbr">{orderRef}</p>
+      <p className="font-sans text-[10px] uppercase tracking-wider text-text-light">{orderRef}</p>
       <h2 className="mt-1 font-display text-2xl text-choc">
         Review {STAGE_SHORT_LABELS[pending.stage]}
       </h2>

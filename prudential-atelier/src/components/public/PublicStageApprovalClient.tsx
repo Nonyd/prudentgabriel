@@ -47,10 +47,10 @@ export function PublicStageApprovalClient({
 
   return (
     <main className="mx-auto min-h-screen max-w-lg bg-bg px-4 py-16">
-      <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr">
+      <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-text-light">
         Prudential Atelier
       </p>
-      <p className="mt-4 font-sans text-[10px] uppercase tracking-wider text-lightbr">{view.orderRef}</p>
+      <p className="mt-4 font-sans text-[10px] uppercase tracking-wider text-text-light">{view.orderRef}</p>
       <h1 className="mt-1 font-display text-3xl text-choc">Review {view.stageLabel}</h1>
 
       {!pending ? (

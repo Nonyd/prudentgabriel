@@ -53,12 +53,14 @@
   --off-white: var(--bg-page);
   --light-grey: #f2f2f0;
   --mid-grey: #e8e8e4;
-  --dark-grey: #8a8a85;
+  --dark-grey: #80603f;
   --wine: #6b1c2a;
   --wine-hover: var(--olive-hover);
   --gold: #c9a84c;
   --gold-hover: #b8923f;
   --bride-accent: #c8a97a;
+  /* The bridal champagne as text on the ivory page. */
+  --bride-accent-text: #7d5f34;
   --bride-bg: #faf7f4;
   --bride-dark: #2a1f1a;
 
@@ -164,11 +166,12 @@
   --off-white: var(--bg-page);
   --light-grey: #2a1a0e;
   --mid-grey: #6b4c35;
-  --dark-grey: #98755b;
+  --dark-grey: #c9a88a;
   --wine: #8b3040;
   --wine-hover: var(--olive-hover);
   --gold: #d4b85c;
   --gold-hover: #c9a84c;
+  --bride-accent-text: #c8a97a;
 
   --glass-edge: rgb(255 255 255 / 0.14);
   --glass-edge-bright: rgb(255 255 255 / 0.32);

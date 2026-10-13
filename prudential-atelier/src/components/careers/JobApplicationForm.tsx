@@ -124,35 +124,35 @@ export function JobApplicationForm({ job }: { job: JobPosting }) {
           {pfaInfo?.valid ? (
             <div className="space-y-4 border-t border-sand pt-4">
               <div>
-                <label className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">University</label>
+                <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">University</label>
                 <input className={inputClass} value={universityName} onChange={(e) => setUniversityName(e.target.value)} />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">IT duration</label>
+                  <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">IT duration</label>
                   <input className={inputClass} value={itDuration} onChange={(e) => setItDuration(e.target.value)} placeholder="6 months" />
                 </div>
                 <div>
-                  <label className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">IT start date</label>
+                  <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">IT start date</label>
                   <input type="date" className={inputClass} value={itStartDate} onChange={(e) => setItStartDate(e.target.value)} />
                 </div>
               </div>
               <div>
-                <label className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">Supervisor name</label>
+                <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">Supervisor name</label>
                 <input className={inputClass} value={supervisorName} onChange={(e) => setSupervisorName(e.target.value)} />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">Supervisor email</label>
+                  <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">Supervisor email</label>
                   <input type="email" className={inputClass} value={supervisorEmail} onChange={(e) => setSupervisorEmail(e.target.value)} />
                 </div>
                 <div>
-                  <label className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">Supervisor phone</label>
+                  <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">Supervisor phone</label>
                   <input className={inputClass} value={supervisorPhone} onChange={(e) => setSupervisorPhone(e.target.value)} />
                 </div>
               </div>
               <div>
-                <label className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">School IT letter (PDF)</label>
+                <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">School IT letter (PDF)</label>
                 <input
                   type="file"
                   accept="application/pdf"
@@ -165,7 +165,7 @@ export function JobApplicationForm({ job }: { job: JobPosting }) {
                 />
               </div>
               <div>
-                <label className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">School ID card (PDF/image)</label>
+                <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">School ID card (PDF/image)</label>
                 <input
                   type="file"
                   accept="application/pdf,image/jpeg,image/png"
@@ -183,20 +183,20 @@ export function JobApplicationForm({ job }: { job: JobPosting }) {
       ) : null}
 
       <div>
-        <label className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">Full Name *</label>
+        <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">Full Name *</label>
         <input required className={inputClass} value={fullName} onChange={(e) => setFullName(e.target.value)} />
       </div>
       <div>
-        <label className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">Email Address *</label>
+        <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">Email Address *</label>
         <input required type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} />
       </div>
       <div>
-        <label className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">Phone Number *</label>
+        <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">Phone Number *</label>
         <input required className={inputClass} value={phone} onChange={(e) => setPhone(e.target.value)} />
       </div>
 
       <div>
-        <p className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">Years of Experience</p>
+        <p className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">Years of Experience</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {EXP_OPTIONS.map((opt) => (
             <button
@@ -214,7 +214,7 @@ export function JobApplicationForm({ job }: { job: JobPosting }) {
       </div>
 
       <div>
-        <label className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">CV / Resume *</label>
+        <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">CV / Resume *</label>
         <input
           type="file"
           accept="application/pdf"
@@ -235,7 +235,7 @@ export function JobApplicationForm({ job }: { job: JobPosting }) {
       </div>
 
       <div>
-        <label className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">Portfolio (optional)</label>
+        <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">Portfolio (optional)</label>
         <input
           type="file"
           accept="application/pdf"
@@ -255,7 +255,7 @@ export function JobApplicationForm({ job }: { job: JobPosting }) {
       </div>
 
       <div>
-        <label className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">How did you hear about us?</label>
+        <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">How did you hear about us?</label>
         <select className={inputClass} value={heardFrom} onChange={(e) => setHeardFrom(e.target.value)}>
           <option value="">Select…</option>
           {HEARD_FROM.map((h) => (
@@ -267,7 +267,7 @@ export function JobApplicationForm({ job }: { job: JobPosting }) {
       </div>
 
       <div>
-        <label className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">Cover Letter</label>
+        <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">Cover Letter</label>
         <textarea
           className={inputClass}
           rows={4}

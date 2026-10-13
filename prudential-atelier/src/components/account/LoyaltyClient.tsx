@@ -29,10 +29,10 @@ export function LoyaltyClient(props: Props) {
   return (
     <div className="mx-auto max-w-4xl">
       <section className="rounded-lg bg-choc p-8 text-cream">
-        <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-lightbr">{props.tierLabel}</p>
+        <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-text-light">{props.tierLabel}</p>
         <p className="mt-4 font-display text-[56px] leading-none">{props.pointsBalance.toLocaleString()}</p>
         <p className="font-sans text-sm text-cream/80">Prudent Points</p>
-        <p className="mt-2 font-sans text-sm text-lightbr">
+        <p className="mt-2 font-sans text-sm text-text-light">
           Worth ₦{Math.round(props.pointsValueNGN).toLocaleString("en-NG")} at ₦{props.rateNGN} per point
         </p>
         {props.nextTier ? (

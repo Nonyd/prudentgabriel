@@ -70,7 +70,7 @@ export default async function CareerJobPage({
           </h1>
 
           <section className="mt-8 border-t border-sand pt-6">
-            <h2 className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">About this role</h2>
+            <h2 className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">About this role</h2>
             <div
               className="prose prose-sm mt-3 max-w-none font-body text-choc"
               dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(job.description) }}
@@ -78,7 +78,7 @@ export default async function CareerJobPage({
           </section>
 
           <section className="mt-8 border-t border-sand pt-6">
-            <h2 className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">What we&apos;re looking for</h2>
+            <h2 className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">What we&apos;re looking for</h2>
             <div
               className="prose prose-sm mt-3 max-w-none font-body text-choc"
               dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(job.requirements) }}
@@ -87,7 +87,7 @@ export default async function CareerJobPage({
 
           {job.benefits ? (
             <section className="mt-8 border-t border-sand pt-6">
-              <h2 className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">What we offer</h2>
+              <h2 className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">What we offer</h2>
               <div
                 className="prose prose-sm mt-3 max-w-none font-body text-choc"
                 dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(job.benefits) }}
@@ -107,7 +107,7 @@ export default async function CareerJobPage({
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-[3px] border border-sand bg-bg-card p-6 shadow-sm">
-            <h2 className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">Apply for this role</h2>
+            <h2 className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">Apply for this role</h2>
             {applied === "1" ? (
               <p className="mt-4 rounded-sm bg-success-soft p-4 font-body text-sm text-success">
                 Thank you — your application has been received. Check your email for confirmation.

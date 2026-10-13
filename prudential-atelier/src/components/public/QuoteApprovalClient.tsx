@@ -93,7 +93,7 @@ export function QuoteApprovalClient({ quote }: { quote: QuoteApprovalData }) {
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
       <div className="text-center">
-        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr">
+        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-text-light">
           Prudent Gabriel
         </p>
         <h1 className="mt-3 font-serif text-4xl font-medium text-choc">Your Quotation</h1>

@@ -82,7 +82,7 @@ export default async function AccountConsultationsPage() {
                   </div>
                 )}
                 <div>
-                  <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-lightbr">
+                  <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
                     {b.bookingNumber}
                   </p>
                   <p className="font-serif text-lg text-choc">{b.consultant.name}</p>

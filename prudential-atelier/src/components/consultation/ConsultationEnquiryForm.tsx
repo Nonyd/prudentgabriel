@@ -147,7 +147,7 @@ export function ConsultationEnquiryForm({
   if (done) {
     return (
       <div className="mx-auto max-w-xl glass-2 glass-panel px-8 py-10 text-center" role="status">
-        <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-lightbr">Enquiry {done.enquiryNumber}</p>
+        <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-text-light">Enquiry {done.enquiryNumber}</p>
         <h2 className="mt-3 font-serif text-[30px] text-choc">Thank you. We have it.</h2>
         <p className="mt-4 font-body text-[15px] leading-relaxed text-text-mid">
           The atelier reads every enquiry and will reply by email. Nothing is booked or charged yet.

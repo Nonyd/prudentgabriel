@@ -30,7 +30,7 @@ export function LoyaltyStrip() {
               transition={{ duration: 0.6, delay: index * 0.1 }}
               viewport={{ once: true, margin: "-80px" }}
             >
-              <Icon className="mx-auto h-5 w-5 text-lightbr" strokeWidth={1.5} />
+              <Icon className="mx-auto h-5 w-5 text-text-light" strokeWidth={1.5} />
               <p className="mt-4 font-serif text-xl font-medium text-choc">{tier.name}</p>
               <p className="mt-2 font-sans text-xs font-light leading-relaxed text-text-mid">
                 {tier.perk}

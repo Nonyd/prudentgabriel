@@ -33,7 +33,7 @@ export function ReferralsClient({
       </p>
 
       <div className="mt-8 rounded-lg bg-choc p-8 text-cream">
-        <p className="font-sans text-[10px] uppercase tracking-wider text-lightbr">Your referral link</p>
+        <p className="font-sans text-[10px] uppercase tracking-wider text-text-light">Your referral link</p>
         <p className="mt-2 break-all font-mono text-sm">{link}</p>
         <CopyReferralClient link={link} />
         <div className="mt-4 flex gap-3">
@@ -46,7 +46,7 @@ export function ReferralsClient({
               void navigator.clipboard.writeText(link);
               toast.success("Link copied");
             }}
-            className="font-sans text-xs text-lightbr underline"
+            className="font-sans text-xs text-text-light underline"
           >
             Copy link
           </button>

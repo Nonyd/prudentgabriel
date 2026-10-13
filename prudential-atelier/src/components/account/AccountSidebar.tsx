@@ -153,7 +153,7 @@ export function AccountSidebar({
             <p className="mt-3 truncate font-display text-lg text-choc">{name}</p>
             <span
               className={clsx(
-                "mt-2 inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-[0.12em]",
+                "mt-2 inline-flex items-center gap-1 rounded-full border bg-[#2a1a0e] px-2.5 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-[0.12em]",
                 TIER_BADGE_STYLES[tier],
               )}
             >

@@ -19,7 +19,7 @@ export default async function CareersPage() {
   return (
     <div className="pb-24 pt-16">
       <div className="mx-auto max-w-site px-4 lg:px-6">
-        <p className="text-center font-label text-[10px] uppercase tracking-[0.2em] text-lightbr">Careers</p>
+        <p className="text-center font-label text-[10px] uppercase tracking-[0.2em] text-text-light">Careers</p>
         <h1
           className="mt-3 text-center text-choc"
           style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2.5rem, 6vw, 56px)" }}

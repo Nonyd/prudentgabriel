@@ -202,7 +202,7 @@ export function SettingsClient({
         </button>
       </section>
 
-      <section className="rounded-lg border border-red-200 bg-red-50/50 p-6">
+      <section className="rounded-lg border border-error/30 bg-error-soft p-6">
         <h2 className="font-display text-xl text-error">Danger Zone</h2>
         <p className="mt-2 font-sans text-sm text-error">
           Permanently deactivate your account. This cannot be undone.

@@ -133,7 +133,7 @@ export default function StaffDashboardPage() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="font-sans text-xs font-semibold uppercase tracking-wide text-lightbr">
+                      <p className="font-sans text-xs font-semibold uppercase tracking-wide text-text-light">
                         {a.orderRef}
                       </p>
                       <p className="mt-1 font-display text-lg text-choc">

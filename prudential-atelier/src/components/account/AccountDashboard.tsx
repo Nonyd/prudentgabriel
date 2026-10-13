@@ -281,7 +281,7 @@ function LoyaltyPanel({
   return (
     <Card className="overflow-hidden">
       <div className="bg-[#442913] px-5 py-6 text-cream md:px-6">
-        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-lightbr">
+        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
           ✦ {TIER_LABELS[tier]} Member
         </p>
         <p className="mt-4 font-display text-[48px] leading-none">{points.toLocaleString()}</p>
@@ -312,7 +312,7 @@ function LoyaltyPanel({
             return (
               <li key={b.label} className="flex items-center gap-2.5 font-sans text-xs">
                 {unlocked ? (
-                  <Check className="h-3.5 w-3.5 shrink-0 text-lightbr" strokeWidth={2} aria-hidden />
+                  <Check className="h-3.5 w-3.5 shrink-0 text-text-light" strokeWidth={2} aria-hidden />
                 ) : (
                   <Lock className="h-3.5 w-3.5 shrink-0 text-text-light" strokeWidth={1.75} aria-hidden />
                 )}
@@ -522,7 +522,7 @@ export function AccountDashboard({
       <header className="rounded-md border border-sand bg-ivory px-5 py-6 dark:border-sand/40 dark:bg-bg-card md:px-8 md:py-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr">
+            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-text-light">
               Your atelier portal
             </p>
             <h1 className="mt-3 font-display text-[32px] font-normal leading-tight text-choc dark:text-cream md:text-[42px]">
@@ -530,7 +530,7 @@ export function AccountDashboard({
             </h1>
             <p className="mt-2 font-sans text-xs font-light text-text-light">{today}</p>
             <p className="mt-4 font-sans text-xs text-text-mid">
-              <span className="text-lightbr">✦</span> {TIER_LABELS[tier]} Member ·{" "}
+              <span className="text-text-light">✦</span> {TIER_LABELS[tier]} Member ·{" "}
               {points.toLocaleString()} points
             </p>
           </div>
@@ -601,7 +601,7 @@ export function AccountDashboard({
 
       {dashboardState === "has_consultation" && upcomingConsultation ? (
         <section className="mt-8 rounded-md bg-[#442913] px-6 py-8 text-cream md:px-10">
-          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-lightbr">
+          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
             Your upcoming consultation
           </p>
           <p className="mt-4 font-display text-[28px] leading-tight">{sessionLabel(upcomingConsultation)}</p>
@@ -754,7 +754,7 @@ export function AccountDashboard({
                     <p className="font-display text-2xl text-choc dark:text-cream">
                       {activeBespoke.outfitDescription ?? "Bespoke commission"}
                     </p>
-                    <p className="mt-1 font-sans text-xs uppercase tracking-[0.12em] text-lightbr">
+                    <p className="mt-1 font-sans text-xs uppercase tracking-[0.12em] text-text-light">
                       {activeBespoke.orderRef}
                     </p>
                     {activeBespoke.deliveryDate ? (
@@ -842,7 +842,7 @@ export function AccountDashboard({
                             {img ? (
                               <Image src={img} alt="" fill className="object-cover object-top" unoptimized />
                             ) : (
-                              <span className="flex h-full w-full items-center justify-center text-lightbr">
+                              <span className="flex h-full w-full items-center justify-center text-text-light">
                                 <Package className="h-4 w-4" strokeWidth={1.5} aria-hidden />
                               </span>
                             )}
@@ -855,7 +855,7 @@ export function AccountDashboard({
                               {formatDate(o.createdAt)}
                             </p>
                           </div>
-                          <span className="rounded-sm bg-bg px-2 py-1 font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-lightbr dark:bg-bg-page">
+                          <span className="rounded-sm bg-bg px-2 py-1 font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-light dark:bg-bg-page">
                             {o.status.replace(/_/g, " ")}
                           </span>
                         </Link>
@@ -883,7 +883,7 @@ export function AccountDashboard({
 
       {showPicks && personalizedPicks.length > 0 ? (
         <section className="mt-10">
-          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr">
+          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-text-light">
             Picked for you
           </p>
           <h2 className="mt-2 font-display text-2xl text-choc dark:text-cream">

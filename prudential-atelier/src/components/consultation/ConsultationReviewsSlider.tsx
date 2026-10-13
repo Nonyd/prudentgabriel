@@ -45,7 +45,7 @@ export function ConsultationReviewsSlider({ items }: { items: ConsultationReview
 
   return (
     <section className="mt-12 bg-ivory py-12">
-      <p className="text-center font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr">
+      <p className="text-center font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-text-light">
         What our clients say
       </p>
 

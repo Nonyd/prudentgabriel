@@ -88,7 +88,7 @@ export function CollectionsPage({ collections }: { collections: CollectionListIt
         <p className="font-body text-[9px] font-medium uppercase tracking-[0.25em] text-dark-grey">
           Ready to Wear
         </p>
-        <h1 className="mt-2 text-center font-display text-[32px] font-normal italic leading-[0.95] text-black md:text-[56px]">
+        <h1 className="mt-2 text-center font-display text-[32px] font-normal italic leading-[0.95] text-ink md:text-[56px]">
           Collections
         </h1>
         <p className="mx-auto mt-3 max-w-lg text-center font-body text-sm font-light text-dark-grey">
@@ -103,7 +103,7 @@ export function CollectionsPage({ collections }: { collections: CollectionListIt
               {collections.length} {collections.length === 1 ? "collection" : "collections"}
             </p>
             {totalPieces > 0 ? (
-              <p className="mt-1 font-body text-[11px] text-dark-grey/70">
+              <p className="mt-1 font-body text-[11px] text-text-mid">
                 {totalPieces} ready-to-wear {totalPieces === 1 ? "piece" : "pieces"} across the edit
               </p>
             ) : null}

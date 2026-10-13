@@ -67,7 +67,7 @@ export function WishlistButton({ productId, className }: WishlistButtonProps) {
       <Heart
         className={cn(
           "h-4 w-4 transition-colors",
-          inList ? "fill-choc text-choc" : "text-charcoal/50 hover:text-choc",
+          inList ? "fill-choc text-choc" : "text-text-light hover:text-choc",
         )}
         strokeWidth={inList ? 0 : 1.5}
       />

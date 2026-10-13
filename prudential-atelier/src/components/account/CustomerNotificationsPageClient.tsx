@@ -31,7 +31,7 @@ function iconFor(type: CustomerNotificationType) {
     case "CONSULTATION_CONFIRMED":
     case "MEETING_LINK_SENT":
     case "EVENT_REMINDER":
-      return <Calendar size={16} className="text-lightbr" />;
+      return <Calendar size={16} className="text-text-light" />;
     case "ORDER_SHIPPED":
       return <Truck size={16} className="text-nut" />;
     case "ORDER_DELIVERED":

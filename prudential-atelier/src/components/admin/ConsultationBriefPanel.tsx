@@ -36,7 +36,7 @@ export function ConsultationBriefPanel({
         className="rounded-md border border-sand p-5 md:px-6 md:py-5"
         style={{ background: "rgba(152,117,91,0.06)" }}
       >
-        <h2 className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-lightbr">
+        <h2 className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light">
           {heading}
         </h2>
 
@@ -62,7 +62,7 @@ export function ConsultationBriefPanel({
 
         {brief.outfitBrief ? (
           <div className="mt-4">
-            <p className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-lightbr">
+            <p className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light">
               {variant === "client" ? "What you shared with us" : "Outfit brief"}
             </p>
             <p className="mt-2 font-serif text-sm italic leading-relaxed text-text-mid">
@@ -73,7 +73,7 @@ export function ConsultationBriefPanel({
 
         {brief.moodboardImages.length > 0 ? (
           <div className="mt-4">
-            <p className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-lightbr">
+            <p className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light">
               {variant === "client" ? "Your moodboard" : "Moodboard reference"}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">

@@ -29,7 +29,7 @@ export function PaymentFailedClient() {
       <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
         <Link
           href={retryHref}
-          className="inline-block bg-[var(--choc)] px-6 py-3 font-body text-[11px] uppercase tracking-wide text-[var(--cream)]"
+          className="inline-block bg-[var(--choc-deep)] px-6 py-3 font-body text-[11px] uppercase tracking-wide text-[var(--cream)]"
         >
           Try again
         </Link>

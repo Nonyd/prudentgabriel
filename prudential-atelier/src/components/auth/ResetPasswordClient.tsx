@@ -113,7 +113,7 @@ export function ResetPasswordClient() {
         <button
           type="submit"
           disabled={busy}
-          className="mt-2 w-full bg-[var(--choc)] py-3 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--cream)] transition hover:opacity-90 disabled:opacity-50"
+          className="mt-2 w-full bg-[var(--choc-deep)] py-3 font-body text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--cream)] transition hover:opacity-90 disabled:opacity-50"
         >
           {busy ? "Saving…" : "Set password →"}
         </button>

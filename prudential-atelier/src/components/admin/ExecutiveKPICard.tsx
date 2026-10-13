@@ -25,7 +25,7 @@ export function ExecutiveKPICard({
       <div className="flex items-start justify-between gap-3">
         <p className="kpi-label font-sans font-semibold uppercase text-text-light">{label}</p>
         <div className={cn("flex h-8 w-8 items-center justify-center rounded-sm", iconBg)}>
-          <Icon className="h-4 w-4 text-choc/70" strokeWidth={1.5} />
+          <Icon className="h-4 w-4 text-text-mid" strokeWidth={1.5} />
         </div>
       </div>
       <p className="kpi-value mt-3 leading-none tabular-nums text-choc">{value}</p>

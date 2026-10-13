@@ -46,7 +46,7 @@ function iconFor(type: AdminNotificationType) {
     case "CONSULTATION_COMPLETED":
     case "CONSULTATION_BOOKED_PRUDENT":
     case "QUOTE_AWAITING":
-      return <Calendar size={16} className="text-lightbr" />;
+      return <Calendar size={16} className="text-text-light" />;
     case "REVIEW_PENDING":
     case "TESTIMONIAL_SUBMITTED":
       return <Star size={16} className="text-warning" />;

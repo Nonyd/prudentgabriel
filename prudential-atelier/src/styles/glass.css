@@ -145,6 +145,21 @@
   animation: field-drift 52s var(--ease-in-out, ease-in-out) infinite;
 }
 
+/* The body is transparent under the storefront, so the field carries the page
+   colour; without it the page fell through to white (and dark mode was light
+   text on white). */
+.storefront-field {
+  background-color: var(--bg-page);
+}
+
+[data-theme="dark"] .storefront-field::before {
+  background:
+    radial-gradient(ellipse 55% 45% at 18% 28%, rgb(68 41 19 / 0.55), transparent 62%),
+    radial-gradient(ellipse 48% 52% at 82% 18%, rgb(201 168 76 / 0.1), transparent 58%),
+    radial-gradient(ellipse 58% 42% at 68% 82%, rgb(15 8 4 / 0.6), transparent 60%),
+    radial-gradient(ellipse 40% 38% at 8% 78%, rgb(68 41 19 / 0.4), transparent 55%);
+}
+
 .admin-field::before {
   /* Quieter than the storefront field. No drift. */
   opacity: 0.22;

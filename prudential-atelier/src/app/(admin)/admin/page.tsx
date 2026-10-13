@@ -243,7 +243,7 @@ export default async function AdminDashboardPage() {
           <Link
             href="/admin/reports"
             className="inline-flex shrink-0 items-center justify-center rounded-sm border px-6 py-3 font-sans text-11px font-semibold uppercase tracking-[0.12em] transition-colors hover:bg-gold/10"
-            style={{ borderColor: "rgba(201,168,76,0.6)", color: "rgba(201,168,76,0.9)" }}
+            style={{ borderColor: "rgba(201,168,76,0.6)", color: "#E8C96A" }}
           >
             ↓ Download report
           </Link>

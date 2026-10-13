@@ -162,7 +162,7 @@ function PieceStatus({
   duplicateOf: number | null;
 }) {
   const flag = "inline-block border px-1.5 py-0.5 text-10px uppercase tracking-[0.08em]";
-  const needs = "border-[#E0B872] bg-[#FFF6E5] text-warning";
+  const needs = "border-warning/40 bg-warning-soft text-warning";
   return (
     <div className="flex flex-wrap gap-1 font-body" data-piece-status>
       <span className={cn(flag, "border-sand text-text-mid")}>#{position}</span>

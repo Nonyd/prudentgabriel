@@ -88,7 +88,7 @@ export function FeaturedCollections({
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <SectionLabel>Collections</SectionLabel>
-            <h2 className="mt-2 font-display text-[40px] font-normal italic leading-none text-black md:text-[52px]">
+            <h2 className="mt-2 font-display text-[40px] font-normal italic leading-none text-ink md:text-[52px]">
               The Edit.
             </h2>
             <p className="mt-3 max-w-md font-body text-[14px] font-light text-dark-grey">

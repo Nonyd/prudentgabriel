@@ -81,13 +81,13 @@ export default async function AccountConsultationDetailPage({
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link href="/account/consultations" className="font-sans text-sm text-lightbr hover:underline">
+      <Link href="/account/consultations" className="font-sans text-sm text-text-light hover:underline">
         ← Consultations
       </Link>
 
       <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-lightbr">
+          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
             {booking.bookingNumber}
           </p>
           <h1 className="mt-2 font-display text-3xl text-choc">{booking.consultant.name}</h1>
@@ -221,7 +221,7 @@ export default async function AccountConsultationDetailPage({
       />
 
       <a
-        className="mt-8 inline-block font-sans text-sm text-lightbr hover:underline"
+        className="mt-8 inline-block font-sans text-sm text-text-light hover:underline"
         href={`mailto:hello@prudentgabriel.com?subject=Consultation%20${encodeURIComponent(booking.bookingNumber)}`}
       >
         Questions about this booking?

@@ -39,7 +39,7 @@ export function PrudentPointsPayOption({
         <button
           type="button"
           onClick={() => openLogin("/checkout")}
-          className="text-choc underline underline-offset-4 hover:text-choc/80"
+          className="text-choc underline underline-offset-4 hover:text-text-mid"
         >
           Sign in
         </button>{" "}

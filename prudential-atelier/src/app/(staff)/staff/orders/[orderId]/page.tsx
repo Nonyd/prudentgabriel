@@ -64,7 +64,7 @@ export default function StaffOrderDetailPage(props: { params: Promise<{ orderId:
       </Link>
 
       <div>
-        <p className="font-sans text-xs uppercase tracking-wide text-lightbr">{order.orderRef}</p>
+        <p className="font-sans text-xs uppercase tracking-wide text-text-light">{order.orderRef}</p>
         <h1 className="font-display text-2xl text-ink">
           {order.outfitDescription ?? "Atelier order"}
         </h1>
@@ -145,7 +145,7 @@ export default function StaffOrderDetailPage(props: { params: Promise<{ orderId:
           <ul className="space-y-3">
             {order.stageNotes.map((n) => (
               <li key={n.completedAt} className="font-sans text-sm">
-                <p className="text-xs uppercase text-lightbr">{n.stage.replace(/_/g, " ")}</p>
+                <p className="text-xs uppercase text-text-light">{n.stage.replace(/_/g, " ")}</p>
                 <p className="text-text-mid">{n.notes}</p>
               </li>
             ))}

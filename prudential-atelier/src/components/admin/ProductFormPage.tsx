@@ -213,7 +213,7 @@ const defaultCreate = (custom?: {
 
 const fieldClass =
   "mt-2 w-full min-h-[44px] rounded-xl border border-sand bg-cream px-4 py-3 font-body text-base text-choc";
-const labelClass = "mt-5 block font-sans text-11px font-medium uppercase tracking-[0.14em] text-choc/70";
+const labelClass = "mt-5 block font-sans text-11px font-medium uppercase tracking-[0.14em] text-text-mid";
 const sectionClass = "glass-opaque p-5 md:p-6";
 const btnPrimary =
   "inline-flex min-h-[44px] items-center justify-center rounded-full bg-choc px-5 font-sans text-xs uppercase tracking-[0.14em] text-cream hover:bg-choc/90 disabled:opacity-30";
@@ -695,18 +695,18 @@ export function ProductFormPage({
     <div className="mx-auto max-w-4xl space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Link href="/admin/products" className="font-body text-sm text-choc/60 hover:text-choc">
+          <Link href="/admin/products" className="font-body text-sm text-text-light hover:text-choc">
             ← Products
           </Link>
           <h1 className="mt-2 font-display text-3xl text-choc">
             {mode === "create" ? "Add a piece" : product?.name}
           </h1>
           {wizard ? (
-            <p className="mt-1 max-w-xl font-body text-sm text-choc/70">
+            <p className="mt-1 max-w-xl font-body text-sm text-text-mid">
               Photos first. A draft only needs a name.
             </p>
           ) : (
-            <p className="mt-1 font-body text-sm text-choc/60">Change one thing and save. No walkthrough.</p>
+            <p className="mt-1 font-body text-sm text-text-light">Change one thing and save. No walkthrough.</p>
           )}
           <div className="mt-3 flex flex-wrap items-center gap-4">
             <Link href="/admin/products/guide" className="font-sans text-xs uppercase tracking-wide text-gold hover:underline">
@@ -715,7 +715,7 @@ export function ProductFormPage({
             {wizard && (savedId ?? product?.id) ? (
               <Link
                 href={`/admin/products/${savedId ?? product?.id}/edit`}
-                className="font-sans text-xs uppercase tracking-wide text-choc/70 hover:text-choc"
+                className="font-sans text-xs uppercase tracking-wide text-text-mid hover:text-choc"
               >
                 Open the full form
               </Link>
@@ -723,12 +723,12 @@ export function ProductFormPage({
             {!wizard && product?.id ? (
               <Link
                 href={`/admin/products/${product.id}/edit?wizard=1`}
-                className="font-sans text-xs uppercase tracking-wide text-choc/70 hover:text-choc"
+                className="font-sans text-xs uppercase tracking-wide text-text-mid hover:text-choc"
               >
                 Use the guided view
               </Link>
             ) : null}
-            {draftStatus ? <span className="font-body text-xs text-choc/50">{draftStatus}</span> : null}
+            {draftStatus ? <span className="font-body text-xs text-text-light">{draftStatus}</span> : null}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -779,11 +779,11 @@ export function ProductFormPage({
                 Photos
                 <Req />
               </h2>
-              <p className="mt-2 font-body text-sm text-choc/60">
+              <p className="mt-2 font-body text-sm text-text-light">
                 This is the piece. At least one photo before you publish. A draft can wait. JPEG, PNG, or
                 WebP only, under 5MB — iPhone HEIC photos will be refused.
               </p>
-              <label className="mt-4 flex min-h-[120px] cursor-pointer flex-col items-center justify-center rounded-[26px] border border-dashed border-[var(--glass-edge)] bg-[var(--glass-1-solid)] px-6 py-8 font-body text-base text-choc/60 hover:border-choc/40">
+              <label className="mt-4 flex min-h-[120px] cursor-pointer flex-col items-center justify-center rounded-[26px] border border-dashed border-[var(--glass-edge)] bg-[var(--glass-1-solid)] px-6 py-8 font-body text-base text-text-light hover:border-choc/40">
                 <input
                   type="file"
                   accept="image/*"
@@ -814,7 +814,7 @@ export function ProductFormPage({
                       <button
                         type="button"
                         onClick={() => setPrimary(idx)}
-                        className={cn("min-h-[44px] text-sm", im.isPrimary ? "text-gold" : "text-choc/50")}
+                        className={cn("min-h-[44px] text-sm", im.isPrimary ? "text-gold" : "text-text-light")}
                       >
                         {im.isPrimary ? "Primary" : "Set as primary"}
                       </button>
@@ -851,7 +851,7 @@ export function ProductFormPage({
                 <Opt />
                 <textarea {...form.register("description")} maxLength={200} rows={3} className={fieldClass} />
               </label>
-              <p className="mt-1 font-body text-xs text-choc/50">One or two sentences. Max 200 characters.</p>
+              <p className="mt-1 font-body text-xs text-text-light">One or two sentences. Max 200 characters.</p>
               <label className={labelClass}>
                 Full description
                 <Opt />
@@ -864,7 +864,7 @@ export function ProductFormPage({
                   <Opt />
                   <input {...form.register("slug")} className={`${fieldClass} font-mono text-sm`} />
                 </label>
-                <p className="mt-1 font-body text-xs text-choc/50">
+                <p className="mt-1 font-body text-xs text-text-light">
                   {getPublicAppUrl().replace(/^https?:\/\//, "")}/shop/{slugWatch || "from-the-name"}
                 </p>
               </details>
@@ -1112,7 +1112,7 @@ export function ProductFormPage({
 
             <details className={sectionClass}>
               <summary className="cursor-pointer font-display text-2xl text-choc">Delivery details</summary>
-              <p className="mt-2 font-body text-sm text-choc/60">Most pieces use the store default box. Fill this only if this garment packs differently.</p>
+              <p className="mt-2 font-body text-sm text-text-light">Most pieces use the store default box. Fill this only if this garment packs differently.</p>
               <div className="mt-4 grid gap-4 sm:grid-cols-4">
                 <label className="text-xs uppercase text-text-light">
                   Weight kg
@@ -1139,7 +1139,7 @@ export function ProductFormPage({
           <>
             <section className={sectionClass}>
               <h2 className="font-display text-2xl text-choc">Publishing</h2>
-              <p className="mt-2 font-body text-sm text-choc/60">
+              <p className="mt-2 font-body text-sm text-text-light">
                 Drafts stay off the shop. Collections are chosen on the collection page.
               </p>
               <div className={labelClass}>

@@ -278,7 +278,7 @@ export function ConsultationInvitationFlow({
     <div className="px-4 py-12 md:py-16">
       <div className="mx-auto max-w-5xl">
         <header className="mb-10 text-center">
-          <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-lightbr">
+          <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-text-light">
             Invitation {invitation.enquiryNumber}
           </p>
           <h1 className="mt-3 font-serif text-[40px] font-normal leading-tight text-choc md:text-[52px]">
@@ -315,7 +315,7 @@ export function ConsultationInvitationFlow({
                     <span className="absolute left-4 top-4 rounded-full bg-gold px-2.5 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-[#2a1a0e]">
                       {cfg.formatLabel}
                     </span>
-                    <p className="mt-6 font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">
+                    <p className="mt-6 font-sans text-[10px] uppercase tracking-[0.14em] text-text-light">
                       {cfg.isVirtual ? "Virtual" : "In-person"}
                       {cfg.location ? ` · ${cfg.location}` : ""}
                     </p>
@@ -342,7 +342,7 @@ export function ConsultationInvitationFlow({
 
             {showVirtualPlatform ? (
               <div className="mx-auto mt-8 max-w-xl glass-2 glass-panel p-6">
-                <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Choose your platform</p>
+                <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-text-light">Choose your platform</p>
                 <div className="mt-4 space-y-3">
                   {VIRTUAL_PLATFORMS.map((p) => (
                     <label
@@ -420,7 +420,7 @@ export function ConsultationInvitationFlow({
         {step === 3 && consultant && offering && selectedType && typeConfig && (
           <div className="mx-auto max-w-2xl space-y-8">
             <div className="glass-opaque p-6">
-              <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Booking summary</p>
+              <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-text-light">Booking summary</p>
               <h3 className="mt-2 font-serif text-xl text-choc">{typeConfig.title}</h3>
               <p className="mt-2 font-body text-sm text-text-mid">
                 {[pref1, pref2, pref3].map(formatPrefYmd).join(" · ")}
@@ -457,7 +457,7 @@ export function ConsultationInvitationFlow({
             </div>
 
             <div className="glass-opaque p-6">
-              <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">Currency</p>
+              <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-text-light">Currency</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {(["NGN", "USD", "GBP"] as ShopCur[]).map((c) => (
                   <button

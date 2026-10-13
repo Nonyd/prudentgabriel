@@ -86,7 +86,7 @@ export function KidsGalleryPage({
             fontFamily: "var(--font-ui)",
             fontSize: "10px",
             letterSpacing: "0.15em",
-            color: "var(--accent)",
+            color: "var(--accent-text)",
           }}
         >
           @prudential_kids ↗
@@ -144,7 +144,7 @@ export function KidsGalleryPage({
       <section className="px-6 py-20" style={{ backgroundColor: "var(--accent-soft)" }}>
         <div className="mx-auto grid max-w-4xl gap-4 md:grid-cols-2">
           <div className="border border-[var(--border-color)] bg-[var(--bg-card)] p-8 text-center">
-            <div className="mx-auto mb-4 flex h-8 w-8 items-center justify-center" style={{ color: "var(--accent)" }}>
+            <div className="mx-auto mb-4 flex h-8 w-8 items-center justify-center" style={{ color: "var(--accent-text)" }}>
               ✂
             </div>
             <h3 className="font-display text-[24px]">Bespoke for Little Ones</h3>
@@ -154,13 +154,13 @@ export function KidsGalleryPage({
             <Link
               href="/bespoke"
               className="mt-4 inline-block border px-6 py-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.12em]"
-              style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
+              style={{ borderColor: "var(--accent)", color: "var(--accent-text)" }}
             >
               Book bespoke
             </Link>
           </div>
           <div className="border border-[var(--border-color)] bg-[var(--bg-card)] p-8 text-center">
-            <div className="mx-auto mb-4 flex h-8 w-8 items-center justify-center" style={{ color: "var(--accent)" }}>
+            <div className="mx-auto mb-4 flex h-8 w-8 items-center justify-center" style={{ color: "var(--accent-text)" }}>
               ⌁
             </div>
             <h3 className="font-display text-[24px]">Ready to Wear</h3>

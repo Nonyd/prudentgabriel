@@ -258,8 +258,8 @@ function LoginForm() {
           disabled={isSubmitting}
           className="w-full uppercase transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{
-            background: "var(--choc)",
-            color: "var(--cream)",
+            background: "var(--choc-deep)",
+            color: "var(--ivory-deep)",
             fontFamily: "var(--font-ui)",
             fontSize: "10px",
             fontWeight: 600,
@@ -500,8 +500,8 @@ function RegisterForm() {
           disabled={isSubmitting}
           className="w-full uppercase transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{
-            background: "var(--choc)",
-            color: "var(--cream)",
+            background: "var(--choc-deep)",
+            color: "var(--ivory-deep)",
             fontFamily: "var(--font-ui)",
             fontSize: "10px",
             fontWeight: 600,

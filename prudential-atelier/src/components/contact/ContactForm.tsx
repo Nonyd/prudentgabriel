@@ -243,8 +243,8 @@ export function ContactForm({
           className="w-full rounded-[3px] transition-opacity disabled:opacity-50"
           style={{
             height: "52px",
-            backgroundColor: "var(--choc)",
-            color: "var(--cream)",
+            backgroundColor: "var(--choc-deep)",
+            color: "var(--ivory-deep)",
             fontFamily: "var(--font-ui)",
             fontSize: "11px",
             fontWeight: 600,

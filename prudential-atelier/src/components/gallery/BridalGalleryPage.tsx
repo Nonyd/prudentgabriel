@@ -45,8 +45,8 @@ export function BridalGalleryPage({
   return (
     <div>
       <section className="px-6 pb-16 pt-20 text-center">
-        <h1 className="font-display text-[44px] italic leading-[0.9] text-[#2A1F1A] md:text-[80px]">{heroHeadline}</h1>
-        <p className="mx-auto mt-4 max-w-sm font-body text-[14px] font-light text-charcoal/60">
+        <h1 className="font-display text-[44px] italic leading-[0.9] text-ink md:text-[80px]">{heroHeadline}</h1>
+        <p className="mx-auto mt-4 max-w-sm font-body text-[14px] font-light text-text-light">
           {pageDescription ?? heroSubtext}
         </p>
         <div className="mx-auto mt-8 flex w-[120px] items-center justify-center gap-2 text-[#C8A97A]/40">
@@ -57,12 +57,12 @@ export function BridalGalleryPage({
       </section>
 
       <section className="mx-auto flex max-w-[1200px] items-center justify-between px-6 pb-4">
-        <p className="font-body text-[10px] uppercase tracking-[0.15em] text-charcoal/40">{initialTotal} works</p>
+        <p className="font-body text-[10px] uppercase tracking-[0.15em] text-text-light">{initialTotal} works</p>
         <a
           href="https://instagram.com/prudential_bridal"
           target="_blank"
           rel="noopener noreferrer"
-          className="font-body text-[10px] uppercase tracking-[0.15em] text-[#C8A97A]"
+          className="font-body text-[10px] uppercase tracking-[0.15em] text-[var(--bride-accent-text)]"
         >
           @prudential_bridal ↗
         </a>
@@ -99,15 +99,15 @@ export function BridalGalleryPage({
               {loading ? "Loading…" : "View more"}
             </button>
           ) : (
-            <p className="font-body text-[10px] text-charcoal/30">— {images.length} works —</p>
+            <p className="font-body text-[10px] text-text-light">— {images.length} works —</p>
           )}
         </div>
       </section>
 
       <section className="border-t border-[#C8A97A]/20 px-6 py-20 text-center">
         <div className="mx-auto max-w-xl">
-          <h2 className="font-display text-[32px] italic text-[#2A1F1A] md:text-[48px]">Begin Your Bridal Journey.</h2>
-          <p className="mx-auto mt-4 max-w-md font-body text-[14px] font-light text-charcoal/60">
+          <h2 className="font-display text-[32px] italic text-ink md:text-[48px]">Begin Your Bridal Journey.</h2>
+          <p className="mx-auto mt-4 max-w-md font-body text-[14px] font-light text-text-light">
             Each Prudential Bride gown is created exclusively for you, in our Lagos atelier.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">

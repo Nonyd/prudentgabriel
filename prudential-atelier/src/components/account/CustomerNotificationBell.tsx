@@ -20,7 +20,7 @@ function iconFor(type: CustomerNotificationType) {
     case "CONSULTATION_CONFIRMED":
     case "MEETING_LINK_SENT":
     case "EVENT_REMINDER":
-      return wrap(<Calendar className="h-4 w-4 text-lightbr" strokeWidth={1.5} />, "bg-lightbr/20");
+      return wrap(<Calendar className="h-4 w-4 text-text-light" strokeWidth={1.5} />, "bg-lightbr/20");
     case "ORDER_SHIPPED":
       return wrap(<Truck className="h-4 w-4 text-nut" strokeWidth={1.5} />, "bg-sand/50");
     case "ORDER_DELIVERED":

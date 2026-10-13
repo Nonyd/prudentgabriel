@@ -126,7 +126,7 @@ export function AdminAccountSettingsClient({ initial, canChangeEmail = false }: 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <p className="font-sans text-10px font-semibold uppercase tracking-[0.2em] text-lightbr">Account</p>
+        <p className="font-sans text-10px font-semibold uppercase tracking-[0.2em] text-text-light">Account</p>
         <h1 className="mt-2 font-serif text-3xl font-normal text-choc">Account Settings</h1>
         <p className="mt-2 font-body text-sm text-text-mid">Manage your personal profile and sign-in credentials.</p>
       </div>

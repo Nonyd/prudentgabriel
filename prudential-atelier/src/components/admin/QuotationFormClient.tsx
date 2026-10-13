@@ -370,7 +370,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
         ) : null}
 
         {linkedConsultation ? (
-          <div className="inline-flex items-center gap-2 rounded-full bg-lightbr/15 px-3 py-1 font-sans text-10px font-semibold uppercase tracking-wide text-lightbr">
+          <div className="inline-flex items-center gap-2 rounded-full bg-lightbr/15 px-3 py-1 font-sans text-10px font-semibold uppercase tracking-wide text-text-light">
             Linked to consultation {linkedConsultation.bookingNumber}
           </div>
         ) : null}

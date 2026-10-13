@@ -80,7 +80,7 @@ export function TestimonialSubmitClient({ firstName }: { firstName: string }) {
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="mx-auto max-w-xl space-y-8">
       <div>
-        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr">Your story</p>
+        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-text-light">Your story</p>
         <h1 className="mt-2 font-display text-[32px] text-choc">Share your experience</h1>
       </div>
 

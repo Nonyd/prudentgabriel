@@ -63,7 +63,7 @@ export function BridalGalleryClient({
         >
           Bridal.
         </h1>
-        <p className="mt-4 max-w-md font-body text-sm font-light text-charcoal/70">
+        <p className="mt-4 max-w-md font-body text-sm font-light text-text-mid">
           Every bride is a masterpiece. Every gown, a legacy.
         </p>
       </section>
@@ -121,7 +121,7 @@ export function BridalGalleryClient({
         <h2 className="font-display text-[32px] font-normal italic md:text-[40px]" style={{ color: "var(--bride-dark)" }}>
           Begin Your Bridal Journey.
         </h2>
-        <p className="mx-auto mt-4 max-w-md font-body text-sm font-light text-charcoal/70">
+        <p className="mx-auto mt-4 max-w-md font-body text-sm font-light text-text-mid">
           Each Prudential Bride gown is created exclusively for you.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-4">

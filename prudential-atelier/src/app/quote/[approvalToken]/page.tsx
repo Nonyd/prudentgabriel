@@ -41,7 +41,7 @@ export default async function QuoteApprovalPage({ params }: Props) {
     }
     return (
       <div className="mx-auto flex min-h-screen max-w-lg flex-col justify-center bg-bg px-4 py-16 text-center">
-        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-lightbr">
+        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-text-light">
           Prudential Atelier
         </p>
         <h1 className="mt-4 font-serif text-3xl text-choc">This quotation was revised</h1>

@@ -58,7 +58,7 @@ function ForgotPasswordForm() {
         <div className="mx-auto w-full max-w-sm">
           <Link href="/" className="font-serif text-xl tracking-[0.12em]">
             <span className="text-choc">Prudent</span>{" "}
-            <span className="text-lightbr">Gabriel</span>
+            <span className="text-text-light">Gabriel</span>
           </Link>
           <h2 className="mt-10 font-serif text-3xl font-medium text-choc">Forgot password</h2>
           <p className="mt-2 font-sans text-sm font-light text-text-mid">

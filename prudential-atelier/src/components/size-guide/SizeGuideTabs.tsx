@@ -9,7 +9,7 @@ function WomenTable({ rows }: { rows: SizeGuideWomenRow[] }) {
     <div className="overflow-x-auto">
       <table className="w-full min-w-[560px] border-collapse text-left" style={{ border: "0.5px solid var(--sand)" }}>
         <thead>
-          <tr style={{ backgroundColor: "var(--choc)", color: "var(--cream)" }}>
+          <tr style={{ backgroundColor: "var(--choc-deep)", color: "var(--ivory-deep)" }}>
             {["UK SIZE", "BUST", "WAIST", "HIPS", "LENGTH"].map((h) => (
               <th
                 key={h}
@@ -32,7 +32,7 @@ function WomenTable({ rows }: { rows: SizeGuideWomenRow[] }) {
             <tr
               key={row.size}
               className="transition-colors hover:bg-[rgba(152,117,91,0.08)]"
-              style={{ backgroundColor: i % 2 === 0 ? "var(--ivory)" : "white" }}
+              style={{ backgroundColor: i % 2 === 0 ? "var(--bg-page)" : "var(--bg-card)" }}
             >
               <td
                 className="px-4 py-3"
@@ -71,7 +71,7 @@ function KidsTable({ rows }: { rows: SizeGuideKidsRow[] }) {
     <div className="overflow-x-auto">
       <table className="w-full min-w-[480px] border-collapse text-left" style={{ border: "0.5px solid var(--sand)" }}>
         <thead>
-          <tr style={{ backgroundColor: "var(--choc)", color: "var(--cream)" }}>
+          <tr style={{ backgroundColor: "var(--choc-deep)", color: "var(--ivory-deep)" }}>
             {["AGE", "HEIGHT (cm)", "CHEST (cm)", "WAIST (cm)"].map((h) => (
               <th
                 key={h}
@@ -94,7 +94,7 @@ function KidsTable({ rows }: { rows: SizeGuideKidsRow[] }) {
             <tr
               key={row.age}
               className="transition-colors hover:bg-[rgba(152,117,91,0.08)]"
-              style={{ backgroundColor: i % 2 === 0 ? "var(--ivory)" : "white" }}
+              style={{ backgroundColor: i % 2 === 0 ? "var(--bg-page)" : "var(--bg-card)" }}
             >
               {[row.age, row.height, row.chest, row.waist].map((v) => (
                 <td
@@ -266,8 +266,8 @@ export function SizeGuideTabs({ women, kids, bridalIntro, bridalNotes, sizeTip, 
             href="/consultation"
             className="mt-6 inline-flex items-center justify-center rounded-[3px] px-8 py-3 uppercase transition-opacity hover:opacity-90"
             style={{
-              backgroundColor: "var(--choc)",
-              color: "var(--cream)",
+              backgroundColor: "var(--choc-deep)",
+              color: "var(--ivory-deep)",
               fontFamily: "var(--font-ui)",
               fontSize: "11px",
               fontWeight: 600,

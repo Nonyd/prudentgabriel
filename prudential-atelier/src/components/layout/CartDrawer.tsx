@@ -94,7 +94,7 @@ export function CartDrawer() {
               {items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <svg
-                    className="mb-4 h-16 w-16 text-choc/80"
+                    className="mb-4 h-16 w-16 text-text-mid"
                     viewBox="0 0 64 64"
                     fill="none"
                     stroke="currentColor"

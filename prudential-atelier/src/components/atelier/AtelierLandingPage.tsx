@@ -129,7 +129,7 @@ export function AtelierLandingPage({
                   style={{ fontFamily: "var(--font-body)", fontSize: "14px", color: "var(--text-mid)" }}
                 >
                   <p className="italic">&ldquo;{r.body}&rdquo;</p>
-                  <footer className="mt-4 text-[12px] text-lightbr">
+                  <footer className="mt-4 text-[12px] text-text-light">
                     — {r.clientName}
                     {r.title ? `, ${r.title}` : ""}
                   </footer>

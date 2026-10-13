@@ -189,7 +189,7 @@ export function ProductCategoryField({
               type="button"
               disabled={busy}
               onClick={() => setConfirmRemove(false)}
-              className="font-sans text-11px font-medium uppercase tracking-[0.14em] text-choc/70 hover:underline"
+              className="font-sans text-11px font-medium uppercase tracking-[0.14em] text-text-mid hover:underline"
             >
               Keep it
             </button>

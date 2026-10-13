@@ -30,7 +30,7 @@ export function CustomFieldsRenderer({ fields, values, onChange, disabled }: Pro
           return (
             <p
               key={field.id}
-              className="border-t border-sand pt-4 font-label text-[10px] uppercase tracking-[0.16em] text-lightbr"
+              className="border-t border-sand pt-4 font-label text-[10px] uppercase tracking-[0.16em] text-text-light"
             >
               {field.label}
             </p>
@@ -39,7 +39,7 @@ export function CustomFieldsRenderer({ fields, values, onChange, disabled }: Pro
 
         const value = values[field.id];
         const label = (
-          <label className="block font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">
+          <label className="block font-label text-[10px] uppercase tracking-[0.16em] text-text-light">
             {field.label}
             {field.required ? " *" : ""}
           </label>

@@ -178,7 +178,7 @@ export function PaymentMethodSelector({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-body text-base text-choc">Direct Bank Transfer</p>
-                      <span className="font-sans text-[10px] uppercase text-lightbr">{currency}</span>
+                      <span className="font-sans text-[10px] uppercase text-text-light">{currency}</span>
                     </div>
                     <p className="mt-0.5 font-body text-sm text-text-light">Upload proof of payment</p>
                   </div>
@@ -268,7 +268,7 @@ export function PaymentMethodSelector({
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-body text-base text-choc">{meta.title}</p>
                   {badge ? (
-                    <span className="font-sans text-[10px] uppercase text-lightbr">{badge}</span>
+                    <span className="font-sans text-[10px] uppercase text-text-light">{badge}</span>
                   ) : null}
                 </div>
                 <p className="mt-0.5 font-body text-sm text-text-light">{subtitle}</p>
