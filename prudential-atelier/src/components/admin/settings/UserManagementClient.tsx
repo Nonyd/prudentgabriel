@@ -705,7 +705,7 @@ export function UserManagementClient({ embedded = false }: { embedded?: boolean 
               disabled={row.isProtected}
               title={row.isProtected ? "This account is protected" : undefined}
               className={cn(
-                "rounded p-1.5 text-text-mid hover:bg-bg/80 hover:text-red-700",
+                "rounded p-1.5 text-text-mid hover:bg-bg/80 hover:text-error",
                 row.isProtected && "cursor-not-allowed opacity-40",
               )}
               aria-label={`Delete ${row.email}`}

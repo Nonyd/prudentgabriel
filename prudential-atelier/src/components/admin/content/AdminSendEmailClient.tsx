@@ -246,10 +246,10 @@ export function AdminSendEmailClient({
 
   return (
     <div className="mx-auto mt-8 max-w-[720px]">
-      <div className="space-y-6 rounded-sm border border-sand bg-[#FAFAFA] p-6">
+      <div className="space-y-6 rounded-sm border border-sand bg-bg-page p-6">
         <div>
           <p className="font-label text-xs uppercase tracking-widest text-gold">To</p>
-          <p className="mt-1 font-body text-12px text-[#6B6B68]">
+          <p className="mt-1 font-body text-12px text-text-mid">
             Combine lists — duplicates and unsubscribed or bounced addresses are removed.
           </p>
           <div className="mt-3 space-y-2">
@@ -267,7 +267,7 @@ export function AdminSendEmailClient({
           <p className="mt-3 font-body text-sm text-ink">
             Send to <strong>{recipientCount}</strong> recipients
             {suppressed > 0 ? (
-              <span className="text-[#6B6B68]"> ({suppressed} suppressed)</span>
+              <span className="text-text-mid"> ({suppressed} suppressed)</span>
             ) : null}
           </p>
         </div>
@@ -294,7 +294,7 @@ export function AdminSendEmailClient({
                       className="w-full px-3 py-2 text-left text-sm hover:bg-sand/40"
                     >
                       <span className="font-medium">{c.name}</span>
-                      <span className="ml-2 text-[#6B6B68]">{c.email}</span>
+                      <span className="ml-2 text-text-mid">{c.email}</span>
                     </button>
                   </li>
                 ))}
@@ -313,7 +313,7 @@ export function AdminSendEmailClient({
         ) : null}
 
         <div>
-          <label className="block text-xs text-[#6B6B68]">
+          <label className="block text-xs text-text-mid">
             Collection
             <select
               value={collectionId}
@@ -328,13 +328,13 @@ export function AdminSendEmailClient({
               ))}
             </select>
           </label>
-          <p className="mt-1 text-11px text-[#6B6B68]">
+          <p className="mt-1 text-11px text-text-mid">
             Required for a collection launch template or the “buyers of a collection” list.
           </p>
         </div>
 
         <div>
-          <label className="block text-xs text-[#6B6B68]">
+          <label className="block text-xs text-text-mid">
             Template (optional)
             <select
               value={templateKey}
@@ -362,7 +362,7 @@ export function AdminSendEmailClient({
             <EmailRichTextEditor value={body} onChange={setBody} />
           </>
         ) : (
-          <p className="font-body text-13px text-[#6B6B68]">
+          <p className="font-body text-13px text-text-mid">
             Collection launch copy is edited under Content → Email Templates. This send uses that
             template with the selected collection’s cover and products.
           </p>
@@ -394,7 +394,7 @@ export function AdminSendEmailClient({
         </div>
 
         {jobId ? (
-          <p className="font-body text-13px text-[#6B6B68]">
+          <p className="font-body text-13px text-text-mid">
             Queued. Drain sends in the background
             {progress ? ` — ${progress.sent} of ${progress.total} delivered` : null}.{" "}
             <Link href={`/admin/system/emails?relatedId=${jobId}`} className="text-olive underline">
@@ -407,7 +407,7 @@ export function AdminSendEmailClient({
       {previewHtml ? (
         <div className="mt-6 border border-sand bg-white">
           <div className="flex justify-between border-b border-sand px-3 py-2">
-            <p className="font-body text-12px uppercase text-[#6B6B68]">Preview</p>
+            <p className="font-body text-12px uppercase text-text-mid">Preview</p>
             <button type="button" className="text-12px text-olive" onClick={() => setPreviewHtml(null)}>
               Close
             </button>

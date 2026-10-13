@@ -215,7 +215,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
 
           <div className="mt-6 space-y-6">
             <fieldset>
-              <legend className="font-label text-10px uppercase tracking-wide text-[#A8A8A4]">Client</legend>
+              <legend className="font-label text-10px uppercase tracking-wide text-text-light">Client</legend>
               <div className="mt-2 flex flex-wrap gap-4">
                 <label className="flex cursor-pointer items-center gap-2 font-body text-sm text-charcoal">
                   <input
@@ -271,7 +271,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
                               setClientQuery("");
                               setClientResults([]);
                             }}
-                            className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-[#FAFAFA]"
+                            className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-bg-page"
                           >
                             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-lightbr font-label text-xs text-choc">
                               {getInitials(c.name ?? c.email ?? "?")}
@@ -316,7 +316,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
             </fieldset>
 
             <div>
-              <p className="font-label text-10px uppercase tracking-wide text-[#A8A8A4]">Rating</p>
+              <p className="font-label text-10px uppercase tracking-wide text-text-light">Rating</p>
               <StarRating
                 rating={rating}
                 size="lg"
@@ -328,7 +328,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
             </div>
 
             <div>
-              <label className="font-label text-10px uppercase tracking-wide text-[#A8A8A4]">Testimonial</label>
+              <label className="font-label text-10px uppercase tracking-wide text-text-light">Testimonial</label>
               <textarea
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
@@ -363,9 +363,9 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
             </div>
 
             <div>
-              <p className="font-label text-10px uppercase tracking-wide text-[#A8A8A4]">Photo (optional)</p>
+              <p className="font-label text-10px uppercase tracking-wide text-text-light">Photo (optional)</p>
               <div className="mt-2 flex flex-wrap items-center gap-3">
-                <label className="cursor-pointer border border-sand px-3 py-2 font-body text-xs text-charcoal hover:bg-[#FAFAFA]">
+                <label className="cursor-pointer border border-sand px-3 py-2 font-body text-xs text-charcoal hover:bg-bg-page">
                   {uploading ? "Uploading…" : "Upload photo"}
                   <input
                     type="file"
@@ -389,7 +389,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
             </div>
 
             <div className="space-y-3 border-t border-sand pt-4">
-              <p className="font-label text-10px uppercase tracking-wide text-[#A8A8A4]">Status</p>
+              <p className="font-label text-10px uppercase tracking-wide text-text-light">Status</p>
               <div className="flex items-center justify-between gap-4">
                 <span className="font-body text-sm text-charcoal">Approved</span>
                 <Toggle checked={isApproved} srLabel="Approved" onChange={setIsApproved} />

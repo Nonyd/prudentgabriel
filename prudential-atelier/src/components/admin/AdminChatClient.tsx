@@ -80,7 +80,7 @@ function ChatSettings() {
         Settings — chat is <strong>{s.enabled ? "on" : "off"}</strong>
       </summary>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <fieldset className="block text-xs text-[#6B6B68]">
+        <fieldset className="block text-xs text-text-mid">
           <legend>How long conversations are kept — a decision is required before chat can be switched on</legend>
           <label className="mt-2 flex items-center gap-2 text-sm text-ink">
             <input type="radio" name="chat-retention" checked={mode === "keep"} onChange={() => setMode("keep")} />
@@ -100,9 +100,9 @@ function ChatSettings() {
             />
             days
           </label>
-          {mode === "unset" ? <p className="mt-1 text-amber-800">Not decided yet.</p> : null}
+          {mode === "unset" ? <p className="mt-1 text-warning">Not decided yet.</p> : null}
         </fieldset>
-        <label className="block text-xs text-[#6B6B68]">
+        <label className="block text-xs text-text-mid">
           Who answers and when (shown to visitors)
           <input
             className="mt-1 w-full border border-sand px-3 py-2 text-sm text-ink"
@@ -153,14 +153,14 @@ function EraseControl({ id, email, onDone }: { id: string; email: string; onDone
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="text-xs text-red-800 underline">
+      <button type="button" onClick={() => setOpen(true)} className="text-xs text-error underline">
         Erase…
       </button>
     );
   }
   return (
     <div className="mt-2 space-y-2 border border-red-200 p-3 text-xs">
-      <p className="text-red-900">Erase permanently. This cannot be undone; the activity log keeps who and how many, not the words.</p>
+      <p className="text-error">Erase permanently. This cannot be undone; the activity log keeps who and how many, not the words.</p>
       <label className="flex items-center gap-2">
         <input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} />
         Every conversation with {email}
@@ -289,22 +289,22 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-[320px_1fr]">
         <ul className="max-h-[70vh] space-y-2 overflow-y-auto">
-          {items.length === 0 ? <li className="font-body text-sm text-[#6B6B68]">No conversations.</li> : null}
+          {items.length === 0 ? <li className="font-body text-sm text-text-mid">No conversations.</li> : null}
           {items.map((c) => (
             <li key={c.id}>
               <button
                 type="button"
                 onClick={() => setSelected(c.id)}
-                className={clsx("w-full border p-3 text-left font-body text-sm", selected === c.id ? "border-ink" : "border-sand", c.unread && "bg-amber-50")}
+                className={clsx("w-full border p-3 text-left font-body text-sm", selected === c.id ? "border-ink" : "border-sand", c.unread && "bg-warning-soft")}
               >
                 <span className="flex justify-between gap-2">
                   <strong className="text-ink">{c.visitorName}</strong>
-                  <span className="text-10px text-[#6B6B68]">{new Date(c.lastMessageAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span>
+                  <span className="text-10px text-text-mid">{new Date(c.lastMessageAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span>
                 </span>
-                <span className="block text-11px uppercase tracking-[0.06em] text-[#6B6B68]">
+                <span className="block text-11px uppercase tracking-[0.06em] text-text-mid">
                   {c.contextKind === "ATELIER" ? "Atelier" : c.contextLabel ?? c.contextPath}
                 </span>
-                {c.last ? <span className="mt-1 block truncate text-xs text-[#6B6B68]">{c.last.body}</span> : null}
+                {c.last ? <span className="mt-1 block truncate text-xs text-text-mid">{c.last.body}</span> : null}
               </button>
             </li>
           ))}
@@ -318,18 +318,18 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
         </ul>
         <div className="glass-1 min-h-[50vh] p-4">
           {!thread ? (
-            <p className="font-body text-sm text-[#6B6B68]">Choose a conversation.</p>
+            <p className="font-body text-sm text-text-mid">Choose a conversation.</p>
           ) : (
             <div className="flex h-full flex-col">
               <div className="border-b border-sand pb-3 font-body text-sm">
                 <p className="text-ink">
                   <strong>{thread.visitorName}</strong> · {thread.visitorEmail}
                 </p>
-                <p className="mt-1 text-xs text-[#6B6B68]">
+                <p className="mt-1 text-xs text-text-mid">
                   Started on <code>{thread.contextPath}</code>
                   {thread.contextLabel ? ` · ${thread.contextLabel}` : ""}
                 </p>
-                <p className={clsx("mt-2 text-xs", thread.contextKind === "ATELIER" ? "font-medium text-red-800" : "text-[#6B6B68]")}>
+                <p className={clsx("mt-2 text-xs", thread.contextKind === "ATELIER" ? "font-medium text-error" : "text-text-mid")}>
                   {CONTEXT_HINT[thread.contextKind]}
                 </p>
                 {isSuperAdmin ? (
@@ -351,7 +351,7 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
                     key={m.id}
                     className={clsx(
                       "max-w-[80%] whitespace-pre-line rounded-sm px-3 py-2 font-body text-sm",
-                      m.author === "STAFF" ? "ml-auto bg-[#37392d] text-white" : m.author === "SYSTEM" ? "mx-auto bg-transparent text-xs italic text-[#6B6B68]" : "bg-sand/40 text-ink",
+                      m.author === "STAFF" ? "ml-auto bg-[#37392d] text-white" : m.author === "SYSTEM" ? "mx-auto bg-transparent text-xs italic text-text-mid" : "bg-sand/40 text-ink",
                     )}
                   >
                     {m.body}

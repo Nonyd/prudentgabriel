@@ -15,7 +15,7 @@ export default async function AdminEmailTemplatesPage() {
   return (
     <div>
       <h1 className="font-display text-2xl text-ink">Email Templates</h1>
-      <p className="mt-1 font-body text-sm text-[#6B6B68]">
+      <p className="mt-1 font-body text-sm text-text-mid">
         Ready-to-wear, made-to-order stage mail, consultations, and account copy. Saving a template changes what
         customers actually receive.
       </p>

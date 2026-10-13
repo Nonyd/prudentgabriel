@@ -73,7 +73,7 @@ export function ConsultationDeleteControl({ id, bookingNumber, afterDeleteHref }
 
   return (
     <>
-      <button type="button" className="text-red-400 hover:underline" onClick={() => void openDelete()}>
+      <button type="button" className="text-error hover:underline" onClick={() => void openDelete()}>
         Delete
       </button>
       <CascadeConfirmDialog

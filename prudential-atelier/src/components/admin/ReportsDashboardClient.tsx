@@ -57,7 +57,7 @@ function KpiCard({ label, value, change }: { label: string; value: number; chang
           ? formatNGN(value)
           : value}
       </p>
-      <p className={`mt-1 font-sans text-xs ${up ? "text-green-600" : "text-red-600"}`}>
+      <p className={`mt-1 font-sans text-xs ${up ? "text-success" : "text-error"}`}>
         {up ? "↑" : "↓"} {Math.abs(change)}% vs prior period
       </p>
     </div>

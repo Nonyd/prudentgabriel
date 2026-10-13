@@ -171,7 +171,7 @@ export function ManualBespokeForm() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <Dialog.Title className="font-display text-22px text-ink">Add manual bespoke request</Dialog.Title>
-                <p className="mt-1 font-body text-xs text-[#6B6B68]">For clients who placed orders offline or by phone.</p>
+                <p className="mt-1 font-body text-xs text-text-mid">For clients who placed orders offline or by phone.</p>
               </div>
               <Dialog.Close className="text-charcoal" aria-label="Close">
                 <X size={20} />
@@ -179,7 +179,7 @@ export function ManualBespokeForm() {
             </div>
 
             <div className="mt-6 space-y-4 font-body text-sm">
-              <p className="text-11px font-medium uppercase text-[#6B6B68]">Client</p>
+              <p className="text-11px font-medium uppercase text-text-mid">Client</p>
               <input className="w-full border border-sand px-3 py-2" placeholder="Full name *" value={name} onChange={(e) => setName(e.target.value)} />
               <input className="w-full border border-sand px-3 py-2" placeholder="Phone *" value={phone} onChange={(e) => setPhone(e.target.value)} />
               <input
@@ -198,7 +198,7 @@ export function ManualBespokeForm() {
                 ))}
               </select>
 
-              <p className="pt-2 text-11px font-medium uppercase text-[#6B6B68]">Order</p>
+              <p className="pt-2 text-11px font-medium uppercase text-text-mid">Order</p>
               <select className="w-full border border-sand px-3 py-2" value={occasion} onChange={(e) => setOccasion(e.target.value)}>
                 {["White Wedding", "Traditional Wedding", "Corporate Event", "Birthday", "Other"].map((o) => (
                   <option key={o}>{o}</option>
@@ -223,7 +223,7 @@ export function ManualBespokeForm() {
                 <option>3+ months</option>
               </select>
 
-              <p className="pt-2 text-11px font-medium uppercase text-[#6B6B68]">Pricing</p>
+              <p className="pt-2 text-11px font-medium uppercase text-text-mid">Pricing</p>
               <input className="w-full border border-sand px-3 py-2" placeholder="Agreed price (₦) *" value={agreedPrice} onChange={(e) => setAgreedPrice(e.target.value)} />
               <select className="w-full border border-sand px-3 py-2" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                 {["Cash", "Bank Transfer", "POS", "Online Payment", "Paid Online", "Pending"].map((o) => (
@@ -231,28 +231,28 @@ export function ManualBespokeForm() {
                 ))}
               </select>
               {isOnlinePayment ? (
-                <p className="text-xs text-[#6B6B68]">
+                <p className="text-xs text-text-mid">
                   We email the client a secure Paystack checkout link for the outstanding balance (agreed price minus
                   deposit). Paystack must be configured on the server.
                 </p>
               ) : null}
               <input className="w-full border border-sand px-3 py-2" placeholder="Deposit paid (₦)" value={depositPaid} onChange={(e) => setDepositPaid(e.target.value)} />
-              <p className="text-xs text-[#37392d]">
+              <p className="text-xs text-ink">
                 Balance: ₦
                 {Math.max(0, (parseFloat(agreedPrice) || 0) - (parseFloat(depositPaid) || 0)).toLocaleString("en-NG")}
               </p>
 
-              <p className="pt-2 text-11px font-medium uppercase text-[#6B6B68]">Sketches / refs</p>
+              <p className="pt-2 text-11px font-medium uppercase text-text-mid">Sketches / refs</p>
               <input type="file" multiple accept="image/*,application/pdf" className="text-xs" onChange={(e) => void onSketches(e.target.files)} />
               <input type="file" multiple accept="image/*" className="text-xs" onChange={(e) => void onRefs(e.target.files)} />
               <UploadProgressBar value={uploadProgress} />
-              <p className="text-11px text-[#6B6B68]">{sketches.length} sketch files · {refs.length} reference images</p>
+              <p className="text-11px text-text-mid">{sketches.length} sketch files · {refs.length} reference images</p>
               {(sketches.length > 0 || refs.length > 0) && (
                 <div className="flex flex-wrap gap-2">
                   {sketches.map((s) => (
                     <div
                       key={`sk-${s.url}`}
-                      className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-sm border border-sand bg-[#FAFAFA] text-9px text-[#6B6B68]"
+                      className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-sm border border-sand bg-bg-page text-9px text-text-mid"
                       title={s.name}
                     >
                       {s.isPdf ? (

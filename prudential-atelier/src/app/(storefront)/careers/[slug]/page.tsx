@@ -56,7 +56,7 @@ export default async function CareerJobPage({
               {job.location}
             </span>
             {job.isPFAPosition ? (
-              <span className="rounded-sm bg-amber-100 px-2 py-0.5 font-label text-[9px] uppercase tracking-wide text-amber-900">
+              <span className="rounded-sm bg-warning-soft px-2 py-0.5 font-label text-[9px] uppercase tracking-wide text-warning">
                 PFA Students
               </span>
             ) : null}
@@ -109,7 +109,7 @@ export default async function CareerJobPage({
           <div className="rounded-[3px] border border-sand bg-bg-card p-6 shadow-sm">
             <h2 className="font-label text-[10px] uppercase tracking-[0.16em] text-lightbr">Apply for this role</h2>
             {applied === "1" ? (
-              <p className="mt-4 rounded-sm bg-green-50 p-4 font-body text-sm text-green-800">
+              <p className="mt-4 rounded-sm bg-success-soft p-4 font-body text-sm text-success">
                 Thank you — your application has been received. Check your email for confirmation.
               </p>
             ) : (

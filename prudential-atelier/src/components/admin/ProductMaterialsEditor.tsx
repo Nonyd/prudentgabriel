@@ -88,12 +88,12 @@ export function ProductMaterialsEditor({
     toast.success(lines.length === 0 ? "No material list — piece still sells" : "Material list saved");
   };
 
-  if (!loaded) return <p className="mt-4 text-xs text-[#A8A8A4]">Loading materials…</p>;
+  if (!loaded) return <p className="mt-4 text-xs text-text-light">Loading materials…</p>;
 
   return (
-    <div className="mt-8 border-t border-[#E8E4DC] pt-6">
+    <div className="mt-8 border-t border-border pt-6">
       <h3 className="font-display text-xl text-choc">Material list</h3>
-      <p className="mt-1 text-xs text-[#A8A8A4]">
+      <p className="mt-1 text-xs text-text-light">
         Optional. Four metres of a fabric, one zip — so forty-eight orders become a yardage figure. A piece with no
         list still sells; it simply does not forecast.
       </p>
@@ -101,7 +101,7 @@ export function ProductMaterialsEditor({
         {lines.map((line, i) => (
           <div key={i} className="grid gap-2 sm:grid-cols-5">
             <select
-              className="rounded-[3px] border border-[#E8E4DC] bg-white px-2 py-2 text-sm"
+              className="rounded-[3px] border border-border bg-white px-2 py-2 text-sm"
               value={line.itemId}
               onChange={(e) => {
                 const next = [...lines];
@@ -118,7 +118,7 @@ export function ProductMaterialsEditor({
               ))}
             </select>
             <select
-              className="rounded-[3px] border border-[#E8E4DC] bg-white px-2 py-2 text-sm"
+              className="rounded-[3px] border border-border bg-white px-2 py-2 text-sm"
               value={line.productOptionId}
               onChange={(e) => {
                 const next = [...lines];
@@ -134,7 +134,7 @@ export function ProductMaterialsEditor({
               ))}
             </select>
             <input
-              className="rounded-[3px] border border-[#E8E4DC] bg-white px-2 py-2 text-sm"
+              className="rounded-[3px] border border-border bg-white px-2 py-2 text-sm"
               placeholder="Qty / unit"
               value={line.quantityPerUnit}
               onChange={(e) => {
@@ -144,7 +144,7 @@ export function ProductMaterialsEditor({
               }}
             />
             <input
-              className="rounded-[3px] border border-[#E8E4DC] bg-white px-2 py-2 text-sm"
+              className="rounded-[3px] border border-border bg-white px-2 py-2 text-sm"
               placeholder="Unit"
               value={line.unit}
               onChange={(e) => {

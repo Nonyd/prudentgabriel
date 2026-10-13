@@ -44,7 +44,7 @@ export default async function AdminAbandonedCheckoutsPage() {
   return (
     <div>
       <h1 className="font-display text-2xl text-charcoal">Abandoned checkouts</h1>
-      <p className="mt-1 max-w-2xl font-body text-13px text-[#6B6B68]">
+      <p className="mt-1 max-w-2xl font-body text-13px text-text-mid">
         Email captured at checkout step 1. High value first. Two automatic reminders, then stop.
         No discount codes.
       </p>

@@ -340,7 +340,7 @@ export function AdminConsultationDetail({
           <a href={`mailto:${booking.clientEmail}`} className="text-sm text-olive underline">
             {booking.clientEmail}
           </a>
-          <p className="text-sm text-[#6B6B68]">{booking.clientPhone}</p>
+          <p className="text-sm text-text-mid">{booking.clientPhone}</p>
           {clientId ? (
             <Link href={`/admin/customers/${booking.userId}`} className="text-xs text-olive underline">
               View client profile →
@@ -349,7 +349,7 @@ export function AdminConsultationDetail({
           <div className="border-t border-sand pt-4">
             <p className="font-label text-xs text-gold">Occasion</p>
             <p className="mt-1 text-sm text-ink">{booking.occasion}</p>
-            <p className="mt-2 text-sm text-[#6B6B68]">{booking.description}</p>
+            <p className="mt-2 text-sm text-text-mid">{booking.description}</p>
           </div>
         </div>
 
@@ -359,7 +359,7 @@ export function AdminConsultationDetail({
             {typeIcon} {typeLabel}
           </p>
           {isVirtual && platformLabel ? (
-            <p className="text-sm text-[#6B6B68]">Platform: {platformLabel}</p>
+            <p className="text-sm text-text-mid">Platform: {platformLabel}</p>
           ) : null}
           <p className="text-sm text-ink">
             {booking.confirmedDate ? "Confirmed date" : "Preferred date"}:{" "}
@@ -368,7 +368,7 @@ export function AdminConsultationDetail({
           {booking.confirmedTime ? (
             <p className="text-sm text-ink">Time: {booking.confirmedTime} WAT</p>
           ) : (
-            <p className="text-sm text-[#6B6B68]">Time: pending confirmation</p>
+            <p className="text-sm text-text-mid">Time: pending confirmation</p>
           )}
           {status === ConsultationStatus.PENDING_CONFIRMATION ? (
             <button
@@ -379,7 +379,7 @@ export function AdminConsultationDetail({
               Confirm date & time →
             </button>
           ) : null}
-          <p className="text-sm text-[#6B6B68]">
+          <p className="text-sm text-text-mid">
             Duration: up to {booking.offering?.durationMinutes ?? 45} minutes
           </p>
           <div className="border-t border-sand pt-4">
@@ -387,12 +387,12 @@ export function AdminConsultationDetail({
             <p className="mt-1 text-sm text-ink">
               ₦{(Number(booking.feeNGN) || 0).toLocaleString("en-NG")}
             </p>
-            <p className="text-sm text-[#6B6B68]">
+            <p className="text-sm text-text-mid">
               {booking.paymentStatus}
               {booking.paymentGateway ? ` · ${booking.paymentGateway}` : ""}
             </p>
             {booking.paidAt ? (
-              <p className="text-xs text-[#6B6B68]">Paid {formatWatDate(booking.paidAt)}</p>
+              <p className="text-xs text-text-mid">Paid {formatWatDate(booking.paidAt)}</p>
             ) : null}
           </div>
         </div>
@@ -410,7 +410,7 @@ export function AdminConsultationDetail({
             </p>
           ) : null}
           {booking.termsText ? (
-            <p className="mt-2 text-sm text-[#6B6B68]">
+            <p className="mt-2 text-sm text-text-mid">
               Acknowledged {booking.termsAcknowledgedAt ? formatWatDateTime(booking.termsAcknowledgedAt) : ""}
               {booking.legalTermsVersion ? ` (terms ${booking.legalTermsVersion.slice(0, 10)})` : ""}: “{booking.termsText}”
             </p>
@@ -423,7 +423,7 @@ export function AdminConsultationDetail({
           <h3 className="font-label text-gold">Virtual meeting link</h3>
           {booking.meetingLinkSentAt ? (
             <div className="mt-3 space-y-2">
-              <p className="text-sm text-emerald-800">
+              <p className="text-sm text-success">
                 ✓ Link sent on {formatWatDateTime(booking.meetingLinkSentAt)}
               </p>
               <a href={booking.meetingLink ?? "#"} className="break-all text-sm text-olive underline">
@@ -431,7 +431,7 @@ export function AdminConsultationDetail({
               </a>
             </div>
           ) : null}
-          <label className="mt-4 block text-xs text-[#6B6B68]">
+          <label className="mt-4 block text-xs text-text-mid">
             Paste meeting link
             <input
               value={linkInput}
@@ -448,17 +448,17 @@ export function AdminConsultationDetail({
           >
             {sendingLink ? "Sending…" : "Send link to client →"}
           </button>
-          <p className="mt-2 text-xs text-[#6B6B68]">This will email the link to {booking.clientEmail}</p>
+          <p className="mt-2 text-xs text-text-mid">This will email the link to {booking.clientEmail}</p>
         </div>
       ) : null}
 
       <div className="glass-opaque p-5">
         <h3 className="font-label text-gold">Session notes & moodboard</h3>
         {!canEditSession ? (
-          <p className="mt-3 text-sm text-[#6B6B68]">Complete after the consultation session.</p>
+          <p className="mt-3 text-sm text-text-mid">Complete after the consultation session.</p>
         ) : (
           <div className="mt-4 space-y-4">
-            <label className="block text-xs text-[#6B6B68]">
+            <label className="block text-xs text-text-mid">
               Session notes
               <textarea
                 value={sessionNotes}
@@ -474,7 +474,7 @@ export function AdminConsultationDetail({
               ) : null}
             </label>
             <div>
-              <p className="text-xs text-[#6B6B68]">Moodboard / reference images</p>
+              <p className="text-xs text-text-mid">Moodboard / reference images</p>
               <input
                 type="file"
                 accept="image/*"
@@ -503,7 +503,7 @@ export function AdminConsultationDetail({
                 </div>
               ) : null}
             </div>
-            <label className="block text-xs text-[#6B6B68]">
+            <label className="block text-xs text-text-mid">
               Moodboard notes
               <textarea
                 value={moodboardNotes}
@@ -554,7 +554,7 @@ export function AdminConsultationDetail({
       {measurementsHidden ? (
         <div className="glass-opaque border-dashed p-5">
           <h3 className="font-label text-gold">Measurements</h3>
-          <p className="mt-2 text-sm text-[#6B6B68]">
+          <p className="mt-2 text-sm text-text-mid">
             Measurements are kept for managers and the tailor or pattern cutter on her gown.
           </p>
         </div>
@@ -593,7 +593,7 @@ export function AdminConsultationDetail({
               </Link>
             </p>
           ) : (
-            <p className="font-sans text-sm text-[#6B6B68]">
+            <p className="font-sans text-sm text-text-mid">
               Mark the consultation as completed to create a quotation.
             </p>
           )}
@@ -610,12 +610,12 @@ export function AdminConsultationDetail({
             <h3 id="confirm-consultation-title" className="font-display text-lg text-ink">
               Confirm consultation
             </h3>
-            <p className="mt-2 text-sm text-[#6B6B68]">
+            <p className="mt-2 text-sm text-text-mid">
               Set the final date and time for {booking.clientName}. A confirmation email will be sent.
             </p>
             {booking.preferredDate1 ? (
               <div className="mt-3">
-                <p className="text-xs text-[#6B6B68]">She proposed — pick one against Mrs. Prudent&apos;s diary:</p>
+                <p className="text-xs text-text-mid">She proposed — pick one against Mrs. Prudent&apos;s diary:</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {[booking.preferredDate1, booking.preferredDate2, booking.preferredDate3]
                     .filter((d): d is NonNullable<typeof d> => Boolean(d))
@@ -638,7 +638,7 @@ export function AdminConsultationDetail({
               </div>
             ) : null}
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <label className="block text-xs text-[#6B6B68]">
+              <label className="block text-xs text-text-mid">
                 Date (WAT)
                 <input
                   type="date"
@@ -647,7 +647,7 @@ export function AdminConsultationDetail({
                   className="mt-1 w-full rounded-sm border border-sand px-3 py-2 text-sm text-ink"
                 />
               </label>
-              <label className="block text-xs text-[#6B6B68]">
+              <label className="block text-xs text-text-mid">
                 Time (WAT)
                 <input
                   type="time"

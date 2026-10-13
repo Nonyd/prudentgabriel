@@ -26,11 +26,11 @@ export function UnsubscribeClient({
 
   return (
     <main className="mx-auto max-w-lg px-6 py-20">
-      <p className="font-body text-[10px] uppercase tracking-[0.2em] text-[#6B6B68]">Prudential Atelier</p>
+      <p className="font-body text-[10px] uppercase tracking-[0.2em] text-text-mid">Prudential Atelier</p>
       {state === "invalid" ? (
         <>
           <h1 className="mt-4 font-display text-3xl text-ink">Link not found</h1>
-          <p className="mt-4 font-body text-[15px] text-[#6B6B68]">
+          <p className="mt-4 font-body text-[15px] text-text-mid">
             This unsubscribe link is invalid or has expired. You can write to hello@prudentgabriel.com
             and we will remove you from the list.
           </p>
@@ -38,7 +38,7 @@ export function UnsubscribeClient({
       ) : state === "done" ? (
         <>
           <h1 className="mt-4 font-display text-3xl text-ink">You are unsubscribed</h1>
-          <p className="mt-4 font-body text-[15px] text-[#6B6B68]">
+          <p className="mt-4 font-body text-[15px] text-text-mid">
             {email ? `${email} will` : "You will"} no longer receive collection announcements or other
             marketing email. Order confirmations and account messages will still be sent when needed.
           </p>
@@ -46,7 +46,7 @@ export function UnsubscribeClient({
       ) : (
         <>
           <h1 className="mt-4 font-display text-3xl text-ink">Unsubscribe</h1>
-          <p className="mt-4 font-body text-[15px] text-[#6B6B68]">
+          <p className="mt-4 font-body text-[15px] text-text-mid">
             Stop marketing email{email ? ` to ${email}` : ""}. Transactional mail (orders, bookings)
             is not affected.
           </p>

@@ -14,6 +14,25 @@ const named = (size: string, lineHeight: string): [string, { lineHeight: string 
 /** `text-11px` = the old `text-[11px]`, scaled. Shared with cn() (src/lib/type-scale.ts). */
 const PX_SIZES = PX_TEXT_SIZES;
 
+/**
+ * Theme colours are CSS variables, which Tailwind cannot split into channels, so
+ * `bg-choc/10` or `border-sand/70` used to compile to nothing. Each colour
+ * becomes a function: opacity variants mix the variable with transparent.
+ */
+type ColorFn = (o: { opacityValue?: string }) => string;
+type ColorTree = { [k: string]: string | ColorTree };
+const alpha = (value: string): ColorFn => ({ opacityValue }) =>
+  // Plain `bg-choc` arrives with var(--tw-bg-opacity): keep the bare variable there.
+  opacityValue === undefined || String(opacityValue) === "1" || String(opacityValue).startsWith("var(")
+    ? value
+    : `color-mix(in srgb, ${value} calc(${opacityValue} * 100%), transparent)`;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Tailwind accepts colour functions; its types do not say so.
+function withAlpha(tree: ColorTree): any {
+  return Object.fromEntries(
+    Object.entries(tree).map(([k, v]) => [k, typeof v === "string" ? (v.startsWith("var(") ? alpha(v) : v) : withAlpha(v)]),
+  );
+}
+
 const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -23,7 +42,7 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
+      colors: withAlpha({
         choc: "var(--choc)",
         nut: "var(--nut)",
         lightbr: "var(--lightbr)",
@@ -69,6 +88,10 @@ const config: Config = {
         warning: "var(--warning)",
         danger: "var(--danger)",
         info: "var(--info)",
+        "error-soft": "var(--error-soft)",
+        "success-soft": "var(--success-soft)",
+        "warning-soft": "var(--warning-soft)",
+        "info-soft": "var(--info-soft)",
         wine: {
           DEFAULT: "var(--wine)",
           hover: "var(--wine-hover)",
@@ -79,7 +102,7 @@ const config: Config = {
         },
         "footer-dark": "var(--footer-bg)",
         "dark-nut": "#3a1f0c",
-      },
+      }),
       fontFamily: {
         display: ["var(--font-cormorant)", "Cormorant Garamond", "serif"],
         label: ["var(--font-jost)", "Jost", "sans-serif"],

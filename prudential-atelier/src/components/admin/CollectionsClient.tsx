@@ -192,7 +192,7 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
   return (
     <div className="mt-8 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="font-body text-13px text-[#6B6B68]">{collections.length} collections</p>
+        <p className="font-body text-13px text-text-mid">{collections.length} collections</p>
         <button
           type="button"
           onClick={() => {
@@ -227,7 +227,7 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
       <div className="overflow-x-auto border border-sand bg-bg-card">
         <table className="pill-rows w-full min-w-[900px] border-collapse text-left font-body text-13px">
           <thead>
-            <tr className="border-b border-sand bg-[#FAFAFA] text-11px font-medium uppercase tracking-wide text-[#6B6B68]">
+            <tr className="border-b border-sand bg-bg-page text-11px font-medium uppercase tracking-wide text-text-mid">
               <th className="w-10 px-3 py-3">
                 <input type="checkbox" checked={allSortedSelected} onChange={toggleSelectAllSorted} aria-label="Select all" />
               </th>
@@ -247,7 +247,7 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
             {sorted.map((row, idx) => (
               <tr
                 key={row.id}
-                className="cursor-pointer border-b border-sand last:border-0 hover:bg-[#FAFAFA]"
+                className="cursor-pointer border-b border-sand last:border-0 hover:bg-bg-page"
                 onClick={() => {
                   setEditing(row);
                   setModalOpen(true);
@@ -266,7 +266,7 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
                     <button
                       type="button"
                       aria-label="Move up"
-                      className="text-[#6B6B68] hover:text-ink disabled:opacity-30"
+                      className="text-text-mid hover:text-ink disabled:opacity-30"
                       disabled={idx === 0}
                       onClick={() => moveRow(row, "up")}
                     >
@@ -275,7 +275,7 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
                     <button
                       type="button"
                       aria-label="Move down"
-                      className="text-[#6B6B68] hover:text-ink disabled:opacity-30"
+                      className="text-text-mid hover:text-ink disabled:opacity-30"
                       disabled={idx === sorted.length - 1}
                       onClick={() => moveRow(row, "down")}
                     >
@@ -298,9 +298,9 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
                 </td>
                 <td className="px-3 py-2 align-middle">
                   <p className="font-medium text-ink">{row.name}</p>
-                  <p className="text-11px text-[#8A8A86]">/{row.slug}</p>
+                  <p className="text-11px text-text-light">/{row.slug}</p>
                 </td>
-                <td className="px-3 py-2 align-middle text-[#6B6B68]">{row.productCount}</td>
+                <td className="px-3 py-2 align-middle text-text-mid">{row.productCount}</td>
                 <td className="px-3 py-2 align-middle">
                   {row.autoTag ? (
                     <span className="inline-block bg-olive/10 px-2 py-0.5 font-body text-11px text-olive">{row.autoTag}</span>
@@ -308,7 +308,7 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
                     "—"
                   )}
                 </td>
-                <td className="px-3 py-2 align-middle text-[#6B6B68]">
+                <td className="px-3 py-2 align-middle text-text-mid">
                   {row.season || row.year ? (
                     <>
                       {row.season ?? ""} {row.year ?? ""}
@@ -352,7 +352,7 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      className="p-1 text-[#6B6B68] hover:text-olive"
+                      className="p-1 text-text-mid hover:text-olive"
                       aria-label="Edit"
                       onClick={() => {
                         setEditing(row);
@@ -363,7 +363,7 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
                     </button>
                     <button
                       type="button"
-                      className="p-1 text-[#6B6B68] hover:text-red-700"
+                      className="p-1 text-text-mid hover:text-error"
                       aria-label="Delete"
                       onClick={() => setDeleteState({ mode: "single", row })}
                     >

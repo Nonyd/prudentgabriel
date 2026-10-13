@@ -205,7 +205,7 @@ export function Navbar() {
                       key={s.href + s.label}
                       href={s.href}
                       role="menuitem"
-                      className="block px-5 py-2.5 font-body text-[12px] text-charcoal transition-colors hover:bg-[#FAFAFA] hover:text-olive"
+                      className="block px-5 py-2.5 font-body text-[12px] text-charcoal transition-colors hover:bg-bg-page hover:text-olive"
                     >
                       {s.label}
                     </Link>
@@ -234,7 +234,7 @@ export function Navbar() {
                       key={s.href + s.label}
                       href={s.href}
                       role="menuitem"
-                      className="block px-5 py-2.5 font-body text-[12px] text-charcoal transition-colors hover:bg-[#FAFAFA] hover:text-olive"
+                      className="block px-5 py-2.5 font-body text-[12px] text-charcoal transition-colors hover:bg-bg-page hover:text-olive"
                     >
                       {s.label}
                     </Link>

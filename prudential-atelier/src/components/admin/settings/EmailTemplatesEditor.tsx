@@ -98,8 +98,8 @@ export function EmailTemplatesEditor({
 
   return (
     <div className="glass-opaque p-6">
-      <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">Email templates</h2>
-      <p className="mt-2 font-body text-xs text-[#6B6B68]">
+      <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-text-mid">Email templates</h2>
+      <p className="mt-2 font-body text-xs text-text-mid">
         Customise transactional emails. If not customised here, the app uses its built-in defaults. Variables such as{" "}
         <code className="text-11px">{"{{firstName}}"}</code>, <code className="text-11px">{"{{orderNumber}}"}</code> may be
         used where supported.

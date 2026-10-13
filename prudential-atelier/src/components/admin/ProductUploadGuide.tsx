@@ -11,7 +11,7 @@ function Must() {
 
 function Skip() {
   return (
-    <span className="ml-2 inline-block rounded-sm border border-sand px-1.5 py-0.5 align-middle text-10px uppercase tracking-wide text-[#A8A8A4]">
+    <span className="ml-2 inline-block rounded-sm border border-sand px-1.5 py-0.5 align-middle text-10px uppercase tracking-wide text-text-light">
       Skip if unsure
     </span>
   );
@@ -36,11 +36,11 @@ export function ProductUploadGuide() {
     <article className="mx-auto max-w-3xl space-y-8 pb-16">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link href="/admin/products" className="text-sm text-[#A8A8A4] hover:text-gold print:hidden">
+          <Link href="/admin/products" className="text-sm text-text-light hover:text-gold print:hidden">
             ← Products
           </Link>
           <h1 className="mt-2 font-display text-3xl text-charcoal">How to upload a new product</h1>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#6B6B68]">
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-text-mid">
             Follow this page from top to bottom. You do not need to be technical. If a box says
             “Skip if unsure”, leave it empty.
           </p>
@@ -81,12 +81,12 @@ export function ProductUploadGuide() {
             A short sentence about the piece, plus fabric and care notes if you have them.
           </li>
         </ul>
-        <div className="mt-4 rounded-sm bg-amber-50 px-4 py-3 text-14px leading-relaxed text-amber-950">
+        <div className="mt-4 rounded-sm bg-warning-soft px-4 py-3 text-14px leading-relaxed text-warning">
           <strong>iPhone photos:</strong> the website does <em>not</em> accept HEIC files. Save or export as
           JPG or PNG first. On iPhone: Settings → Camera → Formats → Most Compatible. Or AirDrop / share
           the photo and choose JPG.
         </div>
-        <p className="mt-3 text-14px text-[#6B6B68]">
+        <p className="mt-3 text-14px text-text-mid">
           Allowed photo types: JPG, JPEG, PNG, or WebP. Each photo must be under 5 MB. Do not upload PDF,
           Word, GIF, or video here.
         </p>
@@ -105,12 +105,12 @@ export function ProductUploadGuide() {
               <li>Change the name, photos, and price.</li>
               <li>Save draft, check, then Publish.</li>
             </ol>
-            <p className="mt-2 text-13px text-[#6B6B68]">
+            <p className="mt-2 text-13px text-text-mid">
               Duplicate makes an unpublished copy. Customers cannot see it until you publish.
             </p>
           </div>
           <div className="rounded-sm border border-sand p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#A8A8A4]">From scratch</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-light">From scratch</p>
             <p className="mt-2 font-display text-lg text-charcoal">Start with a blank form</p>
             <p className="mt-2 text-14px leading-relaxed text-charcoal">
               Use this when there is no similar product to copy. The form has four stages: the piece,
@@ -137,7 +137,7 @@ export function ProductUploadGuide() {
             Click the wine-coloured <strong>+ Add product</strong> button at the top right.
           </li>
         </ol>
-        <p className="text-14px text-[#6B6B68]">
+        <p className="text-14px text-text-mid">
           Only use staging.prudentgabriel.com if your manager told you to practise there. The live shop
           is prudentgabriel.com.
         </p>
@@ -195,7 +195,7 @@ export function ProductUploadGuide() {
           To delete a photo, click <strong>Remove</strong>. If you remove the primary photo, the next one
           becomes primary automatically.
         </p>
-        <p className="text-14px text-[#6B6B68]">
+        <p className="text-14px text-text-mid">
           You need at least two photos for the hover change to work on the shop. One photo is allowed, but
           nothing will swap on hover.
         </p>
@@ -252,7 +252,7 @@ export function ProductUploadGuide() {
           Need a size that is not in the list (for example One Size)? Click{" "}
           <strong>+ Add size</strong> and type the size name in the Size box.
         </p>
-        <div className="rounded-sm bg-amber-50 px-4 py-3 text-14px leading-relaxed text-amber-950">
+        <div className="rounded-sm bg-warning-soft px-4 py-3 text-14px leading-relaxed text-warning">
           You must keep at least one size row. Do not delete the last row.
         </div>
       </Step>
@@ -361,7 +361,7 @@ export function ProductUploadGuide() {
           </li>
           <li>
             Open a new browser tab and go to the shop. Search for the product name, or open{" "}
-            <code className="rounded-sm bg-[#F5F5F3] px-1 text-13px">prudentgabriel.com/shop/</code>{" "}
+            <code className="rounded-sm bg-bg-page px-1 text-13px">prudentgabriel.com/shop/</code>{" "}
             plus the slug shown under the name box.
           </li>
         </ol>
@@ -393,7 +393,7 @@ export function ProductUploadGuide() {
           </li>
           <li>Save the collection.</li>
         </ol>
-        <p className="mt-3 text-14px text-[#6B6B68]">
+        <p className="mt-3 text-14px text-text-mid">
           If the collection has an auto-tag, you can instead put that same tag on the product (step 7)
           and skip the manual search — but the product must be published for auto-tag to pick it up.
         </p>
@@ -418,7 +418,7 @@ export function ProductUploadGuide() {
             sizes, click the name and edit each size row.
           </li>
         </ul>
-        <p className="mt-3 text-14px text-[#6B6B68]">
+        <p className="mt-3 text-14px text-text-mid">
           Do not click Delete unless you are sure. Deleted products cannot be brought back. Hide with
           Unpublish instead.
         </p>
@@ -429,46 +429,46 @@ export function ProductUploadGuide() {
         <dl className="mt-4 space-y-4 text-15px leading-relaxed text-charcoal">
           <div>
             <dt className="font-medium">The page says the name or web address is too short / invalid</dt>
-            <dd className="mt-1 text-[#6B6B68]">
+            <dd className="mt-1 text-text-mid">
               Name needs at least 2 characters. The web address should be lowercase letters, numbers, and hyphens
               only — click outside the name box and let it fill itself.
             </dd>
           </div>
           <div>
             <dt className="font-medium">Upload failed / file is too large / only JPEG PNG or WebP</dt>
-            <dd className="mt-1 text-[#6B6B68]">
+            <dd className="mt-1 text-text-mid">
               Convert HEIC or GIF to JPG. Make sure the file is under 5 MB. Try one photo at a time.
             </dd>
           </div>
           <div>
             <dt className="font-medium">I cannot click Publish / I see a red note about variants</dt>
-            <dd className="mt-1 text-[#6B6B68]">
+            <dd className="mt-1 text-text-mid">
               Every size row needs a size name and a price of at least 1.
               The naira price cannot be 0.
             </dd>
           </div>
           <div>
             <dt className="font-medium">The product is not on the shop</dt>
-            <dd className="mt-1 text-[#6B6B68]">
+            <dd className="mt-1 text-text-mid">
               It is still a draft. Click Publish. Also check you are looking at prudentgabriel.com, not
               staging.
             </dd>
           </div>
           <div>
             <dt className="font-medium">Hover does not change the photo</dt>
-            <dd className="mt-1 text-[#6B6B68]">
+            <dd className="mt-1 text-text-mid">
               Upload a second photo. The second photo is the hover image.
             </dd>
           </div>
           <div>
             <dt className="font-medium">A photo shows “Hosted on old server”</dt>
-            <dd className="mt-1 text-[#6B6B68]">
+            <dd className="mt-1 text-text-mid">
               Open the product (Edit) and click “Re-upload to Cloudinary”. Wait until it finishes.
             </dd>
           </div>
           <div>
             <dt className="font-medium">Sale price is filled but customers still see the old price</dt>
-            <dd className="mt-1 text-[#6B6B68]">
+            <dd className="mt-1 text-text-mid">
               Tick “Product is on sale”, then Publish / save again.
             </dd>
           </div>
@@ -477,7 +477,7 @@ export function ProductUploadGuide() {
 
       <section className="rounded-sm border border-wine/30 bg-wine/5 p-6 print:break-inside-avoid">
         <h2 className="font-display text-xl text-wine">Printable checklist</h2>
-        <p className="mt-2 text-14px text-[#6B6B68]">Tick these before you click Publish.</p>
+        <p className="mt-2 text-14px text-text-mid">Tick these before you click Publish.</p>
         <ul className="mt-4 space-y-2 text-15px text-charcoal">
           {[
             "Name is spelled correctly",
@@ -502,7 +502,7 @@ export function ProductUploadGuide() {
         </ul>
       </section>
 
-      <p className="text-center text-sm text-[#A8A8A4] print:hidden">
+      <p className="text-center text-sm text-text-light print:hidden">
         Stuck? Ask your manager before deleting anything.{" "}
         <Link href="/admin/products/new" className="text-gold underline">
           Add a product now

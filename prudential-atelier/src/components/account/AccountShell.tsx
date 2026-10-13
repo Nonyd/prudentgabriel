@@ -49,7 +49,7 @@ export function AccountShell({
               <button
                 type="button"
                 onClick={() => void signOut({ callbackUrl: "/" })}
-                className="inline-flex items-center gap-1.5 rounded-sm p-1.5 font-sans text-[12px] font-medium text-[#5c3422] transition-colors hover:text-[#7a2418] sm:px-2"
+                className="inline-flex items-center gap-1.5 rounded-sm p-1.5 font-sans text-[12px] font-medium text-nut transition-colors hover:text-[#7a2418] sm:px-2"
                 aria-label="Logout"
               >
                 <LogOut className="h-4 w-4" strokeWidth={1.75} />
@@ -58,14 +58,14 @@ export function AccountShell({
               <div className="hidden items-center gap-5 border-l border-sand pl-5 lg:flex">
                 <Link
                   href="/cart"
-                  className="inline-flex items-center gap-1.5 font-sans text-[12px] font-medium text-[#5c3422] transition-colors hover:text-[#442913]"
+                  className="inline-flex items-center gap-1.5 font-sans text-[12px] font-medium text-nut transition-colors hover:text-ink"
                   aria-label="View cart"
                 >
                   <ShoppingCart className="h-4 w-4" strokeWidth={1.75} />
                 </Link>
                 <Link
                   href="/rtw"
-                  className="inline-flex items-center gap-1.5 font-sans text-[12px] font-medium text-[#5c3422] transition-colors hover:text-[#442913]"
+                  className="inline-flex items-center gap-1.5 font-sans text-[12px] font-medium text-nut transition-colors hover:text-ink"
                 >
                   <ShoppingBag className="h-4 w-4" strokeWidth={1.75} />
                   Back to shop

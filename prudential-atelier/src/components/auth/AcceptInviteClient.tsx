@@ -83,14 +83,14 @@ export function AcceptInviteClient({
         <div className="w-full max-w-md">
           <h2 className="font-display text-[30px] text-ink">Create Your Admin Account</h2>
           <div className="mt-5 space-y-3">
-            <input value={email} disabled className="w-full border border-[#EBEBEA] bg-[#FAFAFA] px-3 py-2 font-body text-sm text-[#6B6B68]" />
-            <input value={role} disabled className="w-full border border-[#EBEBEA] bg-[#FAFAFA] px-3 py-2 font-body text-sm text-[#6B6B68]" />
-            <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First Name" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
-            <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last Name" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
-            <PasswordField value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password: 8+ characters, a capital letter and a number" autoComplete="new-password" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
-            <PasswordField value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm Password" autoComplete="new-password" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
+            <input value={email} disabled className="w-full border border-border bg-bg-page px-3 py-2 font-body text-sm text-text-mid" />
+            <input value={role} disabled className="w-full border border-border bg-bg-page px-3 py-2 font-body text-sm text-text-mid" />
+            <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First Name" className="w-full border border-border px-3 py-2 font-body text-sm" />
+            <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last Name" className="w-full border border-border px-3 py-2 font-body text-sm" />
+            <PasswordField value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password: 8+ characters, a capital letter and a number" autoComplete="new-password" className="w-full border border-border px-3 py-2 font-body text-sm" />
+            <PasswordField value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm Password" autoComplete="new-password" className="w-full border border-border px-3 py-2 font-body text-sm" />
             {error ? (
-              <p className="font-body text-xs text-red-600" role="alert">
+              <p className="font-body text-xs text-error" role="alert">
                 {error}
                 {created ? (
                   <>

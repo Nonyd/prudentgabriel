@@ -50,17 +50,17 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
-      <Link href="/admin/orders" className="text-sm text-[#A8A8A4] hover:text-gold">
+      <Link href="/admin/orders" className="text-sm text-text-light hover:text-gold">
         ← Orders
       </Link>
       <div className="glass-1 glass-panel px-5 py-4">
         <h1 className="font-display text-3xl text-wine">{order.orderNumber}</h1>
-        <p className="mt-1 text-sm text-[#A8A8A4]">
+        <p className="mt-1 text-sm text-text-light">
           {order.paymentStatus} · {order.status} · {order.paymentGateway ?? "—"}
           {order.fulfilmentKind !== "STOCK" ? " · Made to order" : ""}
         </p>
         {order.guestCustom ? (
-          <p className="mt-3 border border-[#E8D5B0] bg-[#FFF8E7] px-3 py-2 text-sm text-[#92660A]">
+          <p className="mt-3 border border-border bg-warning-soft px-3 py-2 text-sm text-warning">
             Guest custom order — call before cutting. No account, no measurement history.
           </p>
         ) : null}
@@ -136,7 +136,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
       <div className="overflow-x-auto glass-opaque p-6">
         <table className="w-full text-left text-sm">
-          <thead className="text-[#A8A8A4]">
+          <thead className="text-text-light">
             <tr>
               <th className="pb-2">Item</th>
               <th className="pb-2">Variant</th>
@@ -155,7 +155,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                     ) : null}
                     <span className="text-charcoal">{it.product.name}</span>
                   </td>
-                  <td className="py-3 text-xs text-[#A8A8A4]">
+                  <td className="py-3 text-xs text-text-light">
                     {formatChoiceShort({
                       optionLabel: it.optionLabel,
                       size: it.sizeMode === "CUSTOM" ? null : it.size ?? it.variant?.size,
@@ -197,17 +197,17 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           ) : order.pointsUsed > 0 ? (
             <p className="mt-2 text-sm text-choc">Paid with Prudent Points — no points earned on this order.</p>
           ) : null}
-          {order.paymentRef ? <p className="mt-3 text-xs text-[#6B6B68]">Payment ref: {order.paymentRef}</p> : null}
+          {order.paymentRef ? <p className="mt-3 text-xs text-text-mid">Payment ref: {order.paymentRef}</p> : null}
           {order.fxRateLocked != null ? (
-            <p className="mt-1 text-xs text-[#6B6B68]">
+            <p className="mt-1 text-xs text-text-mid">
               FX locked: ₦1 = ${order.fxRateLocked.toFixed(6)}
               {order.fxRateStale ? " (stale — feed unavailable at checkout)" : ""}
               {order.fxRateSource ? ` · ${order.fxRateSource}` : ""}
             </p>
           ) : null}
-          {order.collectionCode ? <p className="mt-1 text-xs text-[#6B6B68]">Collection code: {order.collectionCode}</p> : null}
+          {order.collectionCode ? <p className="mt-1 text-xs text-text-mid">Collection code: {order.collectionCode}</p> : null}
           {order.balance > 0.01 ? (
-            <p className="mt-2 text-xs text-[#92660A]">Balance owing ₦{Math.round(order.balance).toLocaleString("en-NG")}</p>
+            <p className="mt-2 text-xs text-warning">Balance owing ₦{Math.round(order.balance).toLocaleString("en-NG")}</p>
           ) : null}
         </div>
         <div className="rounded-sm border border-sand bg-canvas p-6 text-sm text-charcoal">
@@ -218,7 +218,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               <p>{order.user.email}</p>
               <p>{order.user.phone}</p>
               {order.preferredContactMethod ? (
-                <p className="mt-1 text-xs text-[#6B6B68]">Reach via {order.preferredContactMethod.toLowerCase()}</p>
+                <p className="mt-1 text-xs text-text-mid">Reach via {order.preferredContactMethod.toLowerCase()}</p>
               ) : null}
               {wa ? (
                 <a href={wa} target="_blank" rel="noreferrer" className="mt-2 inline-block text-gold hover:underline">
@@ -234,7 +234,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               <p className="mt-2">Guest · {order.guestEmail}</p>
               {order.guestPhone ? <p>{order.guestPhone}</p> : null}
               {order.preferredContactMethod ? (
-                <p className="mt-1 text-xs text-[#6B6B68]">Reach via {order.preferredContactMethod.toLowerCase()}</p>
+                <p className="mt-1 text-xs text-text-mid">Reach via {order.preferredContactMethod.toLowerCase()}</p>
               ) : null}
               {wa ? (
                 <a href={wa} target="_blank" rel="noreferrer" className="mt-2 inline-block text-gold hover:underline">

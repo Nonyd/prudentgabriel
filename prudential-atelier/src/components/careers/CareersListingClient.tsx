@@ -43,7 +43,7 @@ export function CareersListingClient({ jobs }: { jobs: JobPosting[] }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="font-display text-2xl text-choc">{job.title}</h2>
                     {job.isPFAPosition ? (
-                      <span className="rounded-sm bg-amber-100 px-2 py-0.5 font-label text-[9px] uppercase tracking-wide text-amber-900">
+                      <span className="rounded-sm bg-warning-soft px-2 py-0.5 font-label text-[9px] uppercase tracking-wide text-warning">
                         PFA Students
                       </span>
                     ) : null}

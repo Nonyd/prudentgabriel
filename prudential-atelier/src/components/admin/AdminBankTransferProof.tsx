@@ -93,8 +93,8 @@ export function AdminBankTransferProof({
   }
 
   return (
-    <section className="rounded-sm border-2 border-[#C45E0A]/40 bg-[#FFF8F0] p-6">
-      <p className="font-sans text-11px font-semibold uppercase tracking-[0.14em] text-[#C45E0A]">
+    <section className="rounded-sm border-2 border-[#C45E0A]/40 bg-warning-soft p-6">
+      <p className="font-sans text-11px font-semibold uppercase tracking-[0.14em] text-warning">
         Bank transfer
       </p>
       <h2 className="mt-1 font-display text-2xl text-choc">Proof of payment</h2>
@@ -104,19 +104,19 @@ export function AdminBankTransferProof({
       </p>
 
       {pending && !receiptUrl ? (
-        <p className="mt-4 border border-[#E8D5B0] bg-white px-4 py-3 font-body text-base text-[#92660A]">
+        <p className="mt-4 border border-border bg-white px-4 py-3 font-body text-base text-warning">
           The customer has not uploaded a receipt yet. This order stays unpaid until they do.
         </p>
       ) : null}
 
       {failed ? (
-        <p className="mt-4 border border-red-200 bg-white px-4 py-3 font-body text-base text-red-800">
+        <p className="mt-4 border border-red-200 bg-white px-4 py-3 font-body text-base text-error">
           This receipt was rejected. The customer needs to pay again or upload a new proof.
         </p>
       ) : null}
 
       {paid ? (
-        <p className="mt-4 border border-[#1B5E20]/20 bg-white px-4 py-3 font-body text-base text-[#1B5E20]">
+        <p className="mt-4 border border-[#1B5E20]/20 bg-white px-4 py-3 font-body text-base text-success">
           Payment is approved. Keep the receipt on file below.
         </p>
       ) : null}
@@ -181,7 +181,7 @@ export function AdminBankTransferProof({
                   type="button"
                   disabled={busy}
                   onClick={() => setRejectOpen(true)}
-                  className="w-full border border-red-300 px-4 py-3 font-sans text-sm uppercase tracking-wider text-red-800 disabled:opacity-50"
+                  className="w-full border border-red-300 px-4 py-3 font-sans text-sm uppercase tracking-wider text-error disabled:opacity-50"
                 >
                   Reject receipt
                 </button>

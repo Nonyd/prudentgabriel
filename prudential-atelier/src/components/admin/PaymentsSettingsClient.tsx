@@ -64,12 +64,12 @@ export function PaymentsSettingsClient() {
   const extra = rows.filter((r) => !COMMERCIAL_ORDER.includes(r.key) && !r.key.startsWith("bank_"));
 
   if (loading) {
-    return <p className="font-body text-sm text-[#6B6B68]">Loading…</p>;
+    return <p className="font-body text-sm text-text-mid">Loading…</p>;
   }
 
   return (
     <div className="space-y-8">
-      <p className="font-body text-sm text-[#6B6B68]">
+      <p className="font-body text-sm text-text-mid">
         Turn gateways on or off, set deposit and currency overrides. API keys live on{" "}
         <Link href="/admin/settings/developer" className="underline">
           Developer settings
@@ -78,7 +78,7 @@ export function PaymentsSettingsClient() {
       </p>
 
       <section className="space-y-3">
-        <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+        <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-text-mid">
           Checkout gateways
         </h2>
         <ul className="space-y-3">
@@ -88,7 +88,7 @@ export function PaymentsSettingsClient() {
               <li key={gw.id} className="border border-sand bg-canvas px-4 py-3">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <p className="font-body text-sm font-medium text-ink">{gw.label}</p>
-                  <p className="font-body text-xs uppercase tracking-wider text-[#6B6B68]">
+                  <p className="font-body text-xs uppercase tracking-wider text-text-mid">
                     {checkoutShows
                       ? "Appears at checkout"
                       : gw.enabled
@@ -102,9 +102,9 @@ export function PaymentsSettingsClient() {
                     settings — toggling this on will not take payments until those are set.
                   </p>
                 ) : gw.enabled ? (
-                  <p className="mt-2 font-body text-sm text-[#6B6B68]">Credentials present.</p>
+                  <p className="mt-2 font-body text-sm text-text-mid">Credentials present.</p>
                 ) : (
-                  <p className="mt-2 font-body text-sm text-[#6B6B68]">
+                  <p className="mt-2 font-body text-sm text-text-mid">
                     Credentials present. Turn the gateway on below if you want it at checkout.
                   </p>
                 )}
@@ -114,7 +114,7 @@ export function PaymentsSettingsClient() {
         </ul>
       </section>
 
-      <p className="font-body text-sm text-[#6B6B68]">
+      <p className="font-body text-sm text-text-mid">
         Bank transfer accounts, fee bearer, and tolerance:{" "}
         <Link href="/admin/settings/bank-accounts" className="underline">
           Bank accounts
@@ -153,7 +153,7 @@ function SettingsCommercialCard({ rows, onSaved }: { rows: Row[]; onSaved: () =>
 
   return (
     <div className="border border-sand bg-canvas p-6">
-      <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+      <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-text-mid">
         Commercial
       </h2>
       <div className="mt-6 space-y-5">

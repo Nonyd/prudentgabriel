@@ -64,7 +64,7 @@ export function LoyaltySettingsClient() {
   }, [load]);
 
   if (!data) {
-    return <p className="font-body text-sm text-[#6B6B68]">Loading…</p>;
+    return <p className="font-body text-sm text-text-mid">Loading…</p>;
   }
 
   const nextRate = Number.parseFloat(rate);
@@ -104,11 +104,11 @@ export function LoyaltySettingsClient() {
   return (
     <div className="space-y-8">
       <div className="rounded-sm border border-sand bg-canvas p-6">
-        <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+        <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-text-mid">
           Prudent Points liability
         </h2>
         <p className="mt-3 font-display text-3xl text-choc">{naira(data.liabilityNGN)}</p>
-        <p className="mt-1 font-body text-sm text-[#6B6B68]">
+        <p className="mt-1 font-body text-sm text-text-mid">
           {data.outstandingPoints.toLocaleString()} points outstanding × {naira(data.rateNGN)} each. This is a
           balance-sheet liability. Each award expires after {data.expiryMonths} months.
         </p>
@@ -116,7 +116,7 @@ export function LoyaltySettingsClient() {
       </div>
 
       <div className="rounded-sm border border-sand bg-canvas p-6">
-        <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+        <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-text-mid">
           Point value
         </h2>
         <label className="mt-4 block font-body text-xs text-charcoal">Naira worth of one point</label>
@@ -140,7 +140,7 @@ export function LoyaltySettingsClient() {
               what every customer can spend. Past orders keep the rate locked at redemption.
             </p>
             {confirmRate ? (
-              <p className="mt-2 text-[#92660A]">Press Save again to record this change.</p>
+              <p className="mt-2 text-warning">Press Save again to record this change.</p>
             ) : null}
           </div>
         ) : null}
@@ -154,7 +154,7 @@ export function LoyaltySettingsClient() {
           onChange={(e) => setMinRedemption(e.target.value)}
           className="mt-1.5 w-full max-w-xs border border-sand bg-ivory px-3 py-2 font-body text-sm"
         />
-        <p className="mt-1 font-body text-12px text-[#6B6B68]">
+        <p className="mt-1 font-body text-12px text-text-mid">
           Stops small checkouts. Points still cannot cover shipping. There is no maximum — points may cover 100% of
           the garment.
         </p>
@@ -171,10 +171,10 @@ export function LoyaltySettingsClient() {
       </div>
 
       <div className="rounded-sm border border-sand bg-canvas p-6">
-        <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+        <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-text-mid">
           Earning — what the rules cost in garments
         </h2>
-        <p className="mt-2 font-body text-sm text-[#6B6B68]">
+        <p className="mt-2 font-body text-sm text-text-mid">
           Unlimited redemption means every earning rule is a commitment of inventory. A {naira(data.sampleGarmentNGN)}{" "}
           dress at the current rate:
         </p>
@@ -183,7 +183,7 @@ export function LoyaltySettingsClient() {
             <div key={r.action} className="border-t border-sand pt-4 first:border-0 first:pt-0">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-body text-sm text-choc">{r.label}</p>
-                <label className="flex items-center gap-2 font-body text-xs text-[#6B6B68]">
+                <label className="flex items-center gap-2 font-body text-xs text-text-mid">
                   <input
                     type="checkbox"
                     checked={r.isActive}
@@ -214,13 +214,13 @@ export function LoyaltySettingsClient() {
                     className="mt-1 block w-28 border border-sand bg-ivory px-3 py-2 font-body text-sm"
                   />
                 </div>
-                <p className="mb-2 font-body text-sm text-[#6B6B68]">
+                <p className="mb-2 font-body text-sm text-text-mid">
                   = {naira(r.nairaEach)}
                   {r.referralsForSample != null
                     ? ` · ${r.referralsForSample} first paid referrals for a ${naira(data.sampleGarmentNGN)} dress`
                     : ""}
                 </p>
-                {r.spendNote ? <p className="font-body text-xs text-[#6B6B68]">{r.spendNote}</p> : null}
+                {r.spendNote ? <p className="font-body text-xs text-text-mid">{r.spendNote}</p> : null}
               </div>
             </div>
           ))}
@@ -238,7 +238,7 @@ export function LoyaltySettingsClient() {
 
       {data.history.length > 0 ? (
         <div className="rounded-sm border border-sand bg-canvas p-6">
-          <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+          <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-text-mid">
             Rate history
           </h2>
           <ul className="mt-4 space-y-2 font-body text-sm text-charcoal">
@@ -247,7 +247,7 @@ export function LoyaltySettingsClient() {
                 <span>
                   {naira(h.previousRateNGN ?? 0)} → {naira(h.rateNGN)} · {h.changedBy}
                 </span>
-                <span className="text-[#6B6B68]">
+                <span className="text-text-mid">
                   {new Date(h.createdAt).toLocaleString()} · liability {naira(h.liabilityNGN)}
                 </span>
               </li>

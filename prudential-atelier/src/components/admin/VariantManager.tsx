@@ -110,9 +110,9 @@ export function VariantManager({
         ) : null}
       </div>
 
-      <div className="rounded-sm border border-sand bg-[#FAFAFA] p-3">
-        <p className="text-xs uppercase tracking-wide text-[#A8A8A4]">Copy this price onto every size</p>
-        <p className="mt-1 text-11px text-[#6B6B68]">Replaces each size’s naira price. There is no undo.</p>
+      <div className="rounded-sm border border-sand bg-bg-page p-3">
+        <p className="text-xs uppercase tracking-wide text-text-light">Copy this price onto every size</p>
+        <p className="mt-1 text-11px text-text-mid">Replaces each size’s naira price. There is no undo.</p>
         <button
           type="button"
           onClick={() => setCopyOpen(true)}
@@ -151,7 +151,7 @@ export function VariantManager({
 
       <div className="rounded-sm border border-sand">
         <table className="w-full text-left text-xs text-charcoal">
-          <thead className="border-b border-sand bg-[#FAFAFA] font-label uppercase tracking-wide text-[#A8A8A4]">
+          <thead className="border-b border-sand bg-bg-page font-label uppercase tracking-wide text-text-light">
             <tr>
               <th className="p-2">Size</th>
               <th className="p-2">Price in naira</th>
@@ -162,7 +162,7 @@ export function VariantManager({
           <tbody>
             {variants.length === 0 ? (
               <tr>
-                <td colSpan={cols.sale ? 4 : 3} className="p-3 text-[#A8A8A4]">
+                <td colSpan={cols.sale ? 4 : 3} className="p-3 text-text-light">
                   Add at least one size. Tick 6–22 and click “Add these sizes”.
                 </td>
               </tr>
@@ -172,7 +172,7 @@ export function VariantManager({
                 .sort((a, b) => compareSizeLabels(a.v.size, b.v.size))
                 .map(({ v, i }) => (
                 <Fragment key={v.id ?? `new-${i}`}>
-                  <tr className="border-b border-[#F5F5F3]">
+                  <tr className="border-b border-border">
                     <td className="p-1">
                       <input
                         className={cell}
@@ -212,7 +212,7 @@ export function VariantManager({
                         type="button"
                         disabled={variants.length <= 1}
                         onClick={() => removeRow(i)}
-                        className="text-red-400 disabled:opacity-30"
+                        className="text-error disabled:opacity-30"
                         aria-label="Remove size"
                       >
                         ×
@@ -220,10 +220,10 @@ export function VariantManager({
                     </td>
                   </tr>
                   {advanced ? (
-                    <tr className="border-b border-[#F5F5F3] bg-[#FAFAFA]">
+                    <tr className="border-b border-border bg-bg-page">
                       <td colSpan={cols.sale ? 4 : 3} className="p-2">
                         <div className="grid gap-2 sm:grid-cols-2">
-                          <label className="text-11px uppercase text-[#A8A8A4]">
+                          <label className="text-11px uppercase text-text-light">
                             Stock code
                             <input
                               className={`${cell} mt-0.5 font-mono text-11px`}
@@ -234,7 +234,7 @@ export function VariantManager({
                               }
                             />
                           </label>
-                          <label className="text-11px uppercase text-[#A8A8A4]">
+                          <label className="text-11px uppercase text-text-light">
                             Price in dollars
                             <input
                               type="number"
@@ -247,7 +247,7 @@ export function VariantManager({
                               }
                             />
                           </label>
-                          <label className="text-11px uppercase text-[#A8A8A4]">
+                          <label className="text-11px uppercase text-text-light">
                             Price in pounds
                             <input
                               type="number"
@@ -260,7 +260,7 @@ export function VariantManager({
                               }
                             />
                           </label>
-                          <label className="text-11px uppercase text-[#A8A8A4]">
+                          <label className="text-11px uppercase text-text-light">
                             Packed weight kg
                             <input
                               type="number"
@@ -273,7 +273,7 @@ export function VariantManager({
                             />
                           </label>
                           <div className="grid grid-cols-3 gap-1">
-                            <label className="text-11px uppercase text-[#A8A8A4]">
+                            <label className="text-11px uppercase text-text-light">
                               Box L
                               <input
                                 type="number"
@@ -287,7 +287,7 @@ export function VariantManager({
                                 }
                               />
                             </label>
-                            <label className="text-11px uppercase text-[#A8A8A4]">
+                            <label className="text-11px uppercase text-text-light">
                               Box W
                               <input
                                 type="number"
@@ -301,7 +301,7 @@ export function VariantManager({
                                 }
                               />
                             </label>
-                            <label className="text-11px uppercase text-[#A8A8A4]">
+                            <label className="text-11px uppercase text-text-light">
                               Box H
                               <input
                                 type="number"

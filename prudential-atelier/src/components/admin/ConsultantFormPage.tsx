@@ -117,43 +117,43 @@ export function ConsultantFormPage({ consultantId }: { consultantId: string }) {
   }
 
   if (loading || !form) {
-    return <p className="p-6 text-[#eaeaea]">Loading…</p>;
+    return <p className="p-6 text-ink">Loading…</p>;
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6 text-[#eaeaea]">
-      <Link href="/admin/consultants" className="text-sm text-gold underline">
+    <div className="mx-auto max-w-3xl space-y-6 p-6 text-ink">
+      <Link href="/admin/consultants" className="text-sm text-nut underline">
         ← Consultants
       </Link>
-      <div className="space-y-3 rounded-sm border border-sand bg-[#FAFAFA] p-4">
-        <label className="block text-xs text-[#aaa]">
+      <div className="space-y-3 rounded-sm border border-sand bg-bg-page p-4">
+        <label className="block text-xs text-text-mid">
           Name
           <input
-            className="mt-1 w-full rounded-sm border border-[#444] bg-[#1e1e1e] px-2 py-2 text-sm"
+            className="mt-1 w-full rounded-sm border border-input-border bg-input-bg text-ink px-2 py-2 text-sm"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </label>
-        <label className="block text-xs text-[#aaa]">
+        <label className="block text-xs text-text-mid">
           Title
           <input
-            className="mt-1 w-full rounded-sm border border-[#444] bg-[#1e1e1e] px-2 py-2 text-sm"
+            className="mt-1 w-full rounded-sm border border-input-border bg-input-bg text-ink px-2 py-2 text-sm"
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
           />
         </label>
-        <label className="block text-xs text-[#aaa]">
+        <label className="block text-xs text-text-mid">
           Bio
           <textarea
-            className="mt-1 min-h-[120px] w-full rounded-sm border border-[#444] bg-[#1e1e1e] px-2 py-2 text-sm"
+            className="mt-1 min-h-[120px] w-full rounded-sm border border-input-border bg-input-bg text-ink px-2 py-2 text-sm"
             value={form.bio}
             onChange={(e) => setForm({ ...form, bio: e.target.value })}
           />
         </label>
-        <label className="block text-xs text-[#aaa]">
+        <label className="block text-xs text-text-mid">
           Image URL
           <input
-            className="mt-1 w-full rounded-sm border border-[#444] bg-[#1e1e1e] px-2 py-2 text-sm"
+            className="mt-1 w-full rounded-sm border border-input-border bg-input-bg text-ink px-2 py-2 text-sm"
             value={form.image ?? ""}
             onChange={(e) => setForm({ ...form, image: e.target.value || null })}
           />
@@ -174,24 +174,24 @@ export function ConsultantFormPage({ consultantId }: { consultantId: string }) {
           />
           Flagship (manual confirmation)
         </label>
-        <label className="block text-xs text-[#aaa]">
+        <label className="block text-xs text-text-mid">
           Display order
           <input
             type="number"
-            className="mt-1 w-full rounded-sm border border-[#444] bg-[#1e1e1e] px-2 py-2 text-sm"
+            className="mt-1 w-full rounded-sm border border-input-border bg-input-bg text-ink px-2 py-2 text-sm"
             value={form.displayOrder}
             onChange={(e) => setForm({ ...form, displayOrder: Number(e.target.value) })}
           />
         </label>
       </div>
 
-      <div className="rounded-sm border border-sand bg-[#FAFAFA] p-4">
-        <h2 className="font-label text-gold">Offerings</h2>
+      <div className="rounded-sm border border-sand bg-bg-page p-4">
+        <h2 className="font-label text-nut">Offerings</h2>
         <div className="mt-3 space-y-3">
           {form.offerings.map((o, idx) => (
             <div key={o.id ?? idx} className="grid gap-2 border-b border-[#333] pb-3 sm:grid-cols-2">
               <select
-                className="rounded-sm border border-[#444] bg-[#1e1e1e] px-2 py-2 text-xs"
+                className="rounded-sm border border-input-border bg-input-bg text-ink px-2 py-2 text-xs"
                 value={o.sessionType}
                 onChange={(e) => {
                   const next = [...form.offerings];
@@ -206,7 +206,7 @@ export function ConsultantFormPage({ consultantId }: { consultantId: string }) {
                 ))}
               </select>
               <select
-                className="rounded-sm border border-[#444] bg-[#1e1e1e] px-2 py-2 text-xs"
+                className="rounded-sm border border-input-border bg-input-bg text-ink px-2 py-2 text-xs"
                 value={o.deliveryMode}
                 onChange={(e) => {
                   const next = [...form.offerings];
@@ -222,7 +222,7 @@ export function ConsultantFormPage({ consultantId }: { consultantId: string }) {
               </select>
               <input
                 type="number"
-                className="rounded-sm border border-[#444] bg-[#1e1e1e] px-2 py-2 text-xs"
+                className="rounded-sm border border-input-border bg-input-bg text-ink px-2 py-2 text-xs"
                 placeholder="Duration"
                 value={o.durationMinutes}
                 onChange={(e) => {
@@ -233,7 +233,7 @@ export function ConsultantFormPage({ consultantId }: { consultantId: string }) {
               />
               <input
                 type="number"
-                className="rounded-sm border border-[#444] bg-[#1e1e1e] px-2 py-2 text-xs"
+                className="rounded-sm border border-input-border bg-input-bg text-ink px-2 py-2 text-xs"
                 placeholder="Fee NGN"
                 value={o.feeNGN}
                 onChange={(e) => {
@@ -247,8 +247,8 @@ export function ConsultantFormPage({ consultantId }: { consultantId: string }) {
         </div>
       </div>
 
-      <div className="rounded-sm border border-sand bg-[#FAFAFA] p-4">
-        <h2 className="font-label text-gold">Weekly availability</h2>
+      <div className="rounded-sm border border-sand bg-bg-page p-4">
+        <h2 className="font-label text-nut">Weekly availability</h2>
         <div className="mt-3 space-y-2">
           {form.availability.map((a, idx) => (
             <div key={a.dayOfWeek} className="flex flex-wrap items-center gap-2 text-xs">
@@ -266,7 +266,7 @@ export function ConsultantFormPage({ consultantId }: { consultantId: string }) {
                 On
               </label>
               <input
-                className="w-24 rounded-sm border border-[#444] bg-[#1e1e1e] px-1 py-1"
+                className="w-24 rounded-sm border border-input-border bg-input-bg text-ink px-1 py-1"
                 value={a.startTime}
                 onChange={(e) => {
                   const next = [...form.availability];
@@ -275,7 +275,7 @@ export function ConsultantFormPage({ consultantId }: { consultantId: string }) {
                 }}
               />
               <input
-                className="w-24 rounded-sm border border-[#444] bg-[#1e1e1e] px-1 py-1"
+                className="w-24 rounded-sm border border-input-border bg-input-bg text-ink px-1 py-1"
                 value={a.endTime}
                 onChange={(e) => {
                   const next = [...form.availability];
@@ -292,7 +292,7 @@ export function ConsultantFormPage({ consultantId }: { consultantId: string }) {
         type="button"
         disabled={saving}
         onClick={() => void save()}
-        className="rounded-sm bg-wine px-6 py-3 text-sm font-medium text-charcoal disabled:opacity-50"
+        className="rounded-sm bg-choc px-6 py-3 text-sm font-medium text-ivory disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save changes"}
       </button>

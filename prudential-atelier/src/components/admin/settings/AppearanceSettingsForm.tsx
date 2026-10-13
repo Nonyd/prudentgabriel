@@ -41,7 +41,7 @@ export function AppearanceSettingsForm({
   return (
     <div className="space-y-10">
       <div className="rounded-lg border border-sand/80 bg-bg-card px-4 py-3">
-        <p className="font-body text-13px leading-relaxed text-[#6B6B68]">
+        <p className="font-body text-13px leading-relaxed text-text-mid">
           Global brand assets and fallback images used when a page has no specific image set.
           Page-specific copy and hero images are edited in{" "}
           <Link href="/admin/content/pages" className="text-choc hover:underline">
@@ -56,10 +56,10 @@ export function AppearanceSettingsForm({
       </div>
 
       <div>
-        <h2 className="font-body text-xs font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+        <h2 className="font-body text-xs font-medium uppercase tracking-[0.14em] text-text-mid">
           Brand logos
         </h2>
-        <p className="mt-2 max-w-xl font-body text-13px leading-relaxed text-[#6B6B68]">
+        <p className="mt-2 max-w-xl font-body text-13px leading-relaxed text-text-mid">
           Upload logos for the main brand and each sub-brand. Dark logo appears on light backgrounds;
           white logo on dark backgrounds.
         </p>
@@ -69,10 +69,10 @@ export function AppearanceSettingsForm({
       </div>
 
       <div>
-        <h2 className="font-body text-xs font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+        <h2 className="font-body text-xs font-medium uppercase tracking-[0.14em] text-text-mid">
           Site images
         </h2>
-        <p className="mt-2 max-w-xl font-body text-13px leading-relaxed text-[#6B6B68]">
+        <p className="mt-2 max-w-xl font-body text-13px leading-relaxed text-text-mid">
           These images appear throughout the website. Click Upload to replace any image, or paste a CDN URL.
         </p>
       </div>

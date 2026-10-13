@@ -47,10 +47,10 @@ function Three({
 }) {
   const cell = (label: string, value: number, was: number | null) => (
     <div>
-      <p className="font-sans text-10px uppercase tracking-wider text-[#6B6B68]">{label}</p>
+      <p className="font-sans text-10px uppercase tracking-wider text-text-mid">{label}</p>
       <p className="mt-1 font-display text-2xl text-choc">{naira(value)}</p>
       {was != null ? (
-        <p className="mt-1 font-sans text-xs text-[#6B6B68]">Before: {naira(was)}</p>
+        <p className="mt-1 font-sans text-xs text-text-mid">Before: {naira(was)}</p>
       ) : null}
     </div>
   );
@@ -63,7 +63,7 @@ function Three({
         {cell("Outstanding", now.liabilityNGN, prev?.liabilityNGN ?? null)}
       </div>
       {now.pointsNGN > 0 || now.shippingCollectedNGN > 0 ? (
-        <p className="mt-4 font-sans text-xs text-[#6B6B68]">
+        <p className="mt-4 font-sans text-xs text-text-mid">
           Points redeemed {naira(now.pointsNGN)} · Shipping collected {naira(now.shippingCollectedNGN)} (not in sales)
         </p>
       ) : null}
@@ -94,7 +94,7 @@ export function HowWeAreDoingClient() {
     <div className="space-y-6">
       <div>
         <h1 className="admin-heading-pill glass-1 glass-pill font-display text-3xl text-choc">How we are doing</h1>
-        <p className="mt-1 font-sans text-sm text-[#6B6B68]">
+        <p className="mt-1 font-sans text-sm text-text-mid">
           Ready-to-wear and Atelier, side by side. Detail lives in{" "}
           <Link href="/admin/reports/ledger" className="text-choc underline">
             Accounts
@@ -110,7 +110,7 @@ export function HowWeAreDoingClient() {
             type="button"
             onClick={() => setKind(k.id)}
             className={`admin-chip glass-1 glass-pill min-h-[44px] font-sans text-xs uppercase tracking-wider ${
-              kind === k.id ? "border-[var(--glass-edge-bright)] text-choc" : "text-[#6B6B68]"
+              kind === k.id ? "border-[var(--glass-edge-bright)] text-choc" : "text-text-mid"
             }`}
           >
             {k.label}
@@ -118,12 +118,12 @@ export function HowWeAreDoingClient() {
         ))}
       </div>
       {loading ? (
-        <p className="font-sans text-sm text-[#6B6B68]">Loading…</p>
+        <p className="font-sans text-sm text-text-mid">Loading…</p>
       ) : !data ? (
-        <p className="font-sans text-sm text-[#6B6B68]">Could not load this period.</p>
+        <p className="font-sans text-sm text-text-mid">Could not load this period.</p>
       ) : (
         <>
-          <p className="font-sans text-xs uppercase tracking-wider text-[#6B6B68]">
+          <p className="font-sans text-xs uppercase tracking-wider text-text-mid">
             {data.range.label}
             {data.range.prevLabel ? ` · previous ${data.range.prevLabel}` : ""}
           </p>
@@ -134,7 +134,7 @@ export function HowWeAreDoingClient() {
             <Three title="Atelier" now={data.current.atelier} prev={data.previous?.atelier ?? null} />
           </div>
           {data.whatsSelling ? <WhatsSellingPanel data={data.whatsSelling} /> : null}
-          <p className="font-sans text-xs text-[#6B6B68]">
+          <p className="font-sans text-xs text-text-mid">
             Points still owing: {naira(data.outstanding.pointsNGN)} ({data.outstanding.points.toLocaleString()} points ×{" "}
             {naira(data.outstanding.rateNGN)} each) as of {new Date(data.outstanding.asOf).toLocaleString("en-GB")}.
             Paid-and-cancelled waiting for a refund: {naira(data.outstanding.oversellNGN)}.

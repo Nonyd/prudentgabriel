@@ -43,7 +43,7 @@ export function AdminCustomerPointsForm({ userId, currentBalance }: { userId: st
   return (
     <div className="rounded-sm border border-sand bg-canvas p-6">
       <h2 className="font-display text-lg text-gold">Grant or deduct points</h2>
-      <p className="mt-1 font-body text-xs text-[#6B6B68]">Current balance {currentBalance.toLocaleString()} pts. Reason is recorded on the ledger.</p>
+      <p className="mt-1 font-body text-xs text-text-mid">Current balance {currentBalance.toLocaleString()} pts. Reason is recorded on the ledger.</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <input
           type="number"

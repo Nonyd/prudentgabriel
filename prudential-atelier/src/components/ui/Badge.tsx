@@ -13,11 +13,11 @@ interface BadgeProps {
 const variantClasses: Record<BadgeVariant, string> = {
   wine: "bg-olive text-white",
   gold: "bg-charcoal text-white",
-  success: "bg-success text-white",
+  success: "bg-success text-bg-page",
   "outline-gold": "border border-gold bg-transparent text-gold",
   "outline-wine": "border border-olive bg-transparent text-olive",
   grey: "bg-charcoal/10 text-charcoal-mid",
-  accent: "border border-lightbr/40 bg-choc/80 font-sans text-9px font-semibold uppercase tracking-[0.14em] text-cream",
+  accent: "border border-lightbr/40 bg-[#442913]/80 font-sans text-9px font-semibold uppercase tracking-[0.14em] text-[#f7f2ec]",
 };
 
 const sizeClasses: Record<BadgeSize, string> = {

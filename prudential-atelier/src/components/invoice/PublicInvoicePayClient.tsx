@@ -125,8 +125,8 @@ export function PublicInvoicePayClient({
   }
 
   return (
-    <div className="mt-10 border border-[#EBEBEA] bg-[#FAFAF8] p-5">
-      <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-[#6B6B68]">
+    <div className="mt-10 border border-border bg-bg-page p-5">
+      <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-text-mid">
         Pay this invoice
       </p>
       <p className="mt-2 font-body text-sm text-ink">
@@ -134,13 +134,13 @@ export function PublicInvoicePayClient({
         {pay.orderRef ? ` · ${pay.orderRef}` : ""}
       </p>
       {invoiceCurrency !== "NGN" && payCurrency === "NGN" ? (
-        <p className="mt-2 font-body text-sm text-[#6B6B68]">
+        <p className="mt-2 font-body text-sm text-text-mid">
           Agreed amount is in {invoiceCurrency}. Card payment is collected in naira at the rate locked on this
           commission.
         </p>
       ) : null}
       {pay.createsAccount ? (
-        <p className="mt-2 font-body text-sm text-[#6B6B68]">
+        <p className="mt-2 font-body text-sm text-text-mid">
           Paying creates a client account so you can track this commission and confirm receipt later.
           Design approval is sent as its own email link — no login required. We email a temporary
           password to this invoice address.
@@ -149,7 +149,7 @@ export function PublicInvoicePayClient({
 
       <div className="mt-4 space-y-2">
         {figures.showDeposit ? (
-          <label className="flex cursor-pointer items-start gap-3 rounded-sm border border-[#EBEBEA] bg-white p-3">
+          <label className="flex cursor-pointer items-start gap-3 rounded-sm border border-border bg-white p-3">
             <input
               type="radio"
               name="inv-pay"
@@ -163,7 +163,7 @@ export function PublicInvoicePayClient({
                 {formatInvoiceCurrency(display(depositNGN, payCurrency), asFormatCur(payCurrency))}
               </span>
               {payCurrency === "NGN" && invoiceCurrency !== "NGN" ? (
-                <span className="mt-1 block font-body text-xs text-[#6B6B68]">
+                <span className="mt-1 block font-body text-xs text-text-mid">
                   Agreed {formatInvoiceCurrency(pay.remainingDepositDocument, invoiceCurrency as InvoiceCurrency)}{" "}
                   at the locked rate
                 </span>
@@ -171,7 +171,7 @@ export function PublicInvoicePayClient({
             </span>
           </label>
         ) : null}
-        <label className="flex cursor-pointer items-start gap-3 rounded-sm border border-[#EBEBEA] bg-white p-3">
+        <label className="flex cursor-pointer items-start gap-3 rounded-sm border border-border bg-white p-3">
           <input
             type="radio"
             name="inv-pay"
@@ -185,7 +185,7 @@ export function PublicInvoicePayClient({
               {formatInvoiceCurrency(display(balanceNGN, payCurrency), asFormatCur(payCurrency))}
             </span>
             {payCurrency === "NGN" && invoiceCurrency !== "NGN" ? (
-              <span className="mt-1 block font-body text-xs text-[#6B6B68]">
+              <span className="mt-1 block font-body text-xs text-text-mid">
                 Agreed {formatInvoiceCurrency(pay.remainingBalanceDocument, invoiceCurrency as InvoiceCurrency)} at
                 the locked rate
               </span>
@@ -202,7 +202,7 @@ export function PublicInvoicePayClient({
               type="button"
               onClick={() => setPayCurrency(c)}
               className={`px-3 py-1 font-body text-[10px] uppercase tracking-wide ${
-                payCurrency === c ? "bg-[#37392d] text-white" : "border border-[#EBEBEA]"
+                payCurrency === c ? "bg-[#37392d] text-white" : "border border-border"
               }`}
             >
               {c}
@@ -210,7 +210,7 @@ export function PublicInvoicePayClient({
           ))}
         </div>
       ) : available.length === 1 ? (
-        <p className="mt-4 font-body text-xs uppercase tracking-wide text-[#6B6B68]">Paying in {available[0]}</p>
+        <p className="mt-4 font-body text-xs uppercase tracking-wide text-text-mid">Paying in {available[0]}</p>
       ) : (
         <p className="mt-4 font-body text-sm text-ink">
           No payment method is configured for this invoice. Please contact the atelier.

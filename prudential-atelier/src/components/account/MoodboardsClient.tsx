@@ -142,7 +142,7 @@ export function MoodboardsClient({
             <button
               type="button"
               onClick={() => deleteBoard(selected.id)}
-              className="mt-6 font-sans text-xs text-red-600 underline"
+              className="mt-6 font-sans text-xs text-error underline"
             >
               Delete moodboard
             </button>

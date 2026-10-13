@@ -30,10 +30,10 @@ function formatWhen(iso: string | null | undefined): string {
 }
 
 function statusClass(status: string): string {
-  if (status === "SENT") return "text-emerald-800";
-  if (status === "DEAD") return "text-red-800";
-  if (status === "FAILED" || status === "SENDING") return "text-amber-800";
-  return "text-[#6B6B68]";
+  if (status === "SENT") return "text-success";
+  if (status === "DEAD") return "text-error";
+  if (status === "FAILED" || status === "SENDING") return "text-warning";
+  return "text-text-mid";
 }
 
 export function EmailOutboxClient() {
@@ -101,14 +101,14 @@ export function EmailOutboxClient() {
       <div className="mb-4 flex flex-wrap items-end gap-3">
         <p className="font-body text-13px text-ink">
           DEAD{" "}
-          <span className="ml-1 inline-flex min-w-[1.5rem] justify-center rounded-full bg-red-100 px-2 py-0.5 text-12px text-red-800">
+          <span className="ml-1 inline-flex min-w-[1.5rem] justify-center rounded-full bg-error-soft px-2 py-0.5 text-12px text-error">
             {deadCount}
           </span>
         </p>
-        <label className="font-body text-12px text-[#6B6B68]">
+        <label className="font-body text-12px text-text-mid">
           Status
           <select
-            className="ml-2 border border-[#E2D1C2] bg-white px-2 py-1 text-13px"
+            className="ml-2 border border-border bg-white px-2 py-1 text-13px"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
@@ -120,18 +120,18 @@ export function EmailOutboxClient() {
             ))}
           </select>
         </label>
-        <label className="font-body text-12px text-[#6B6B68]">
+        <label className="font-body text-12px text-text-mid">
           Template
           <input
-            className="ml-2 border border-[#E2D1C2] px-2 py-1 text-13px"
+            className="ml-2 border border-border px-2 py-1 text-13px"
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
           />
         </label>
-        <label className="font-body text-12px text-[#6B6B68]">
+        <label className="font-body text-12px text-text-mid">
           Recipient
           <input
-            className="ml-2 border border-[#E2D1C2] px-2 py-1 text-13px"
+            className="ml-2 border border-border px-2 py-1 text-13px"
             value={to}
             onChange={(e) => setTo(e.target.value)}
           />
@@ -139,12 +139,12 @@ export function EmailOutboxClient() {
       </div>
 
       {loading ? (
-        <p className="font-body text-13px text-[#6B6B68]">Loading…</p>
+        <p className="font-body text-13px text-text-mid">Loading…</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="pill-rows w-full min-w-[720px] text-left font-body text-13px">
             <thead>
-              <tr className="border-b border-[#E2D1C2] text-[#6B6B68]">
+              <tr className="border-b border-border text-text-mid">
                 <th className="py-2 pr-3 font-medium">Status</th>
                 <th className="py-2 pr-3 font-medium">To</th>
                 <th className="py-2 pr-3 font-medium">Template</th>
@@ -178,7 +178,7 @@ export function EmailOutboxClient() {
                       Resend
                     </button>
                     {row.lastError ? (
-                      <p className="mt-1 max-w-xs text-11px text-red-800">{row.lastError}</p>
+                      <p className="mt-1 max-w-xs text-11px text-error">{row.lastError}</p>
                     ) : null}
                   </td>
                 </tr>
@@ -192,7 +192,7 @@ export function EmailOutboxClient() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setPreview(null)}>
           <div className="max-h-[90vh] w-full max-w-2xl overflow-auto bg-white p-4" onClick={(e) => e.stopPropagation()}>
             <p className="mb-3 font-display text-lg">{preview.subject}</p>
-            <iframe title="Email preview" className="h-[70vh] w-full border border-[#E2D1C2]" srcDoc={preview.html} />
+            <iframe title="Email preview" className="h-[70vh] w-full border border-border" srcDoc={preview.html} />
             <button className="mt-3 text-13px underline" type="button" onClick={() => setPreview(null)}>
               Close
             </button>

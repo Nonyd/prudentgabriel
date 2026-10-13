@@ -168,7 +168,7 @@ export function ReviewsSection({
                     <div className="flex flex-wrap items-center gap-2">
                       <StarRating rating={r.rating} size="sm" variant="gold" />
                       {r.isVerified && (
-                        <span className="rounded-full bg-[#E8F5E9] px-2 py-0.5 font-body text-[10px] text-[#1B5E20]">
+                        <span className="rounded-full bg-success-soft px-2 py-0.5 font-body text-[10px] text-success">
                           Verified purchase
                         </span>
                       )}

@@ -338,7 +338,7 @@ export function ProductsTable({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search name or slug…"
-          className="min-w-[200px] flex-1 rounded-sm border border-sand bg-canvas px-3 py-2 text-sm text-charcoal placeholder:text-[#A8A8A4]"
+          className="min-w-[200px] flex-1 rounded-sm border border-sand bg-canvas px-3 py-2 text-sm text-charcoal placeholder:text-text-light"
         />
         <select
           value={category}
@@ -417,20 +417,20 @@ export function ProductsTable({
       </div>
 
       {reorderMode ? (
-        <p className="font-body text-sm text-[#6B6B68]">
+        <p className="font-body text-sm text-text-mid">
           Drag rows to set the curated order on /rtw. Featured pieces still pin to the top; this order decides everything
           beneath them. Collections keep their own order.
         </p>
       ) : null}
 
       {!canReorder ? (
-        <p className="font-body text-xs text-[#A8A8A4]">
+        <p className="font-body text-xs text-text-light">
           Filter to Ready to wear (/rtw) or a category to drag-reorder what customers see.
         </p>
       ) : null}
 
       {published === "false" ? (
-        <div className="rounded-sm border border-amber-300 bg-amber-50 px-4 py-3 font-body text-13px text-amber-900">
+        <div className="rounded-sm border border-amber-300 bg-warning-soft px-4 py-3 font-body text-13px text-warning">
           These products were imported and are awaiting review. Set images, check prices, then publish.
         </div>
       ) : null}
@@ -471,7 +471,7 @@ export function ProductsTable({
 
       <div className="-mx-4 overflow-x-auto glass-opaque px-4 md:mx-0 md:px-0">
         <table className="pill-rows w-full min-w-[700px] text-left text-sm text-charcoal">
-          <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-[#A8A8A4]">
+          <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-text-light">
             <tr>
               <th className="w-10 p-3">
                 <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} aria-label="Select all on page" />
@@ -507,7 +507,7 @@ export function ProductsTable({
                 }}
                 onDragEnd={() => setDragId(null)}
                 className={cn(
-                  "border-b border-[#F5F5F3] transition-colors hover:bg-[#FAFAFA]",
+                  "border-b border-border transition-colors hover:bg-bg-page",
                   pending && "opacity-60",
                   reorderMode && "cursor-grab active:cursor-grabbing",
                   dragId === p.id && "bg-sand/50",
@@ -516,7 +516,7 @@ export function ProductsTable({
               >
                 <td className="p-2">
                   {reorderMode ? (
-                    <span className="font-mono text-10px text-[#A8A8A4]" aria-hidden>
+                    <span className="font-mono text-10px text-text-light" aria-hidden>
                       ∷
                     </span>
                   ) : (
@@ -540,7 +540,7 @@ export function ProductsTable({
                     </span>
                   ) : null}
                   {!p.isPublished && p.basePriceNGN === 0 ? (
-                    <span className="mt-1 inline-block rounded-sm bg-amber-100 px-2 py-0.5 text-10px text-amber-900">
+                    <span className="mt-1 inline-block rounded-sm bg-warning-soft px-2 py-0.5 text-10px text-warning">
                       ⚠ Price needed
                     </span>
                   ) : null}
@@ -568,7 +568,7 @@ export function ProductsTable({
                         }
                       }}
                       placeholder="₦ Set price"
-                      className="w-28 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-charcoal placeholder:text-amber-500"
+                      className="w-28 rounded-sm border border-amber-300 bg-warning-soft px-2 py-1 text-xs text-charcoal placeholder:text-amber-500"
                     />
                   ) : (
                     <span>{formatNGN(p.minPriceNGN)}</span>
@@ -630,7 +630,7 @@ export function ProductsTable({
                   </button>
                   <button
                     type="button"
-                    className="ml-3 text-red-400 hover:underline"
+                    className="ml-3 text-error hover:underline"
                     onClick={() => void openDelete({ mode: "single", id: p.id, name: p.name })}
                   >
                     Delete
@@ -642,7 +642,7 @@ export function ProductsTable({
         </table>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-[#A8A8A4]">
+      <div className="flex items-center justify-between text-sm text-text-light">
         <span>
           Page {page} of {totalPages} · {total} products
         </span>

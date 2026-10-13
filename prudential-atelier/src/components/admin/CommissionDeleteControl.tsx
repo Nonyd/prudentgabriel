@@ -58,7 +58,7 @@ export function CommissionDeleteControl({ orderId, orderRef }: { orderId: string
 
   return (
     <>
-      <button type="button" className="font-sans text-xs text-red-700 hover:underline" onClick={() => void openDelete()}>
+      <button type="button" className="font-sans text-xs text-error hover:underline" onClick={() => void openDelete()}>
         Delete commission
       </button>
       <CascadeConfirmDialog

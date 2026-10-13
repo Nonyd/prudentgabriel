@@ -20,7 +20,7 @@ export function OrderMeasurementsBlock({
               <dl className="mt-2 grid grid-cols-2 gap-2 text-sm md:grid-cols-3">
                 {snap.map((e) => (
                   <div key={e.key}>
-                    <dt className="text-11px uppercase tracking-wide text-[#A8A8A4]">{e.label}</dt>
+                    <dt className="text-11px uppercase tracking-wide text-text-light">{e.label}</dt>
                     <dd className="font-medium text-choc">
                       {e.valueCm} cm
                       {e.typedUnit !== "cm" ? ` · typed ${e.typedValue} ${e.typedUnit}` : ""}

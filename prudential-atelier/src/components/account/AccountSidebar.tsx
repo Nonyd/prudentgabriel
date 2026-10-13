@@ -95,7 +95,7 @@ function NavSection({
               <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
               <span className="flex-1 tracking-wide">{label}</span>
               {badge != null && badge > 0 ? (
-                <span className="rounded-full bg-[#c9a84c] px-1.5 py-0.5 font-sans text-[10px] font-semibold text-[#442913]">
+                <span className="rounded-full bg-[#c9a84c] px-1.5 py-0.5 font-sans text-[10px] font-semibold text-[#2a1a0e]">
                   {badge}
                 </span>
               ) : null}
@@ -147,7 +147,7 @@ export function AccountSidebar({
 
         <div className="border-b border-[var(--glass-edge)] px-6 py-6">
           <div className="flex flex-col items-center text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#c9a84c] font-display text-xl text-[#442913]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#c9a84c] font-display text-xl text-[#2a1a0e]">
               {initials}
             </div>
             <p className="mt-3 truncate font-display text-lg text-choc">{name}</p>

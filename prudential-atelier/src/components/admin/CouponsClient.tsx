@@ -132,7 +132,7 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
   return (
     <div className="mt-8 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="font-body text-13px text-[#6B6B68]">{coupons.filter((c) => c.isActive).length} active coupons</p>
+        <p className="font-body text-13px text-text-mid">{coupons.filter((c) => c.isActive).length} active coupons</p>
         <button
           type="button"
           onClick={() => {
@@ -147,19 +147,19 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="border border-sand bg-canvas p-4">
-          <p className="font-body text-11px uppercase text-[#6B6B68]">Active</p>
+          <p className="font-body text-11px uppercase text-text-mid">Active</p>
           <p className="mt-1 font-display text-2xl">{coupons.filter((c) => c.isActive).length}</p>
         </div>
         <div className="border border-sand bg-canvas p-4">
-          <p className="font-body text-11px uppercase text-[#6B6B68]">Total uses</p>
+          <p className="font-body text-11px uppercase text-text-mid">Total uses</p>
           <p className="mt-1 font-display text-2xl">{totalUses}</p>
         </div>
         <div className="border border-sand bg-canvas p-4">
-          <p className="font-body text-11px uppercase text-[#6B6B68]">Revenue saved</p>
+          <p className="font-body text-11px uppercase text-text-mid">Revenue saved</p>
           <p className="mt-1 font-display text-2xl">—</p>
         </div>
         <div className="border border-sand bg-canvas p-4">
-          <p className="font-body text-11px uppercase text-[#6B6B68]">Expiring soon</p>
+          <p className="font-body text-11px uppercase text-text-mid">Expiring soon</p>
           <p className="mt-1 font-display text-2xl">
             {
               coupons.filter(
@@ -220,7 +220,7 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
 
       <div className="overflow-x-auto border border-sand bg-canvas">
         <table className="pill-rows w-full min-w-[720px] text-left text-sm">
-          <thead className="font-body text-11px uppercase text-[#A8A8A4]">
+          <thead className="font-body text-11px uppercase text-text-light">
             <tr>
               <th className="w-10 p-3">
                 <input
@@ -246,7 +246,7 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
                 <td className="p-3">
                   <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleRowSelect(c.id)} aria-label={`Select ${c.code}`} />
                 </td>
-                <td className="p-3 font-mono text-sm font-semibold text-[#37392d]">{c.code}</td>
+                <td className="p-3 font-mono text-sm font-semibold text-ink">{c.code}</td>
                 <td className="p-3 text-xs">{c.type}</td>
                 <td className="p-3">{c.type === "FREE_SHIPPING" ? "—" : c.value}</td>
                 <td className="p-3 text-xs">{c.minOrderNGN ?? "—"}</td>
@@ -272,7 +272,7 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
                     </button>
                     <AlertDialog.Root>
                       <AlertDialog.Trigger asChild>
-                        <button type="button" className="text-red-700" aria-label="Delete">
+                        <button type="button" className="text-error" aria-label="Delete">
                           <Trash2 size={16} />
                         </button>
                       </AlertDialog.Trigger>

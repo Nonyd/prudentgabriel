@@ -56,7 +56,7 @@ export function LedgerReportClient() {
     <div className="space-y-6">
       <div>
         <h1 className="admin-heading-pill glass-1 glass-pill font-display text-3xl text-choc">Accounts</h1>
-        <p className="mt-1 font-sans text-sm text-[#6B6B68]">
+        <p className="mt-1 font-sans text-sm text-text-mid">
           Every confirmed ledger row.{" "}
           <Link href="/admin/reports" className="text-choc underline">
             How we are doing
@@ -72,7 +72,7 @@ export function LedgerReportClient() {
           void load();
         }}
       >
-        <label className="font-sans text-xs text-[#6B6B68]">
+        <label className="font-sans text-xs text-text-mid">
           From
           <input
             type="date"
@@ -81,7 +81,7 @@ export function LedgerReportClient() {
             className="mt-1 block min-h-[44px] border border-sand px-2"
           />
         </label>
-        <label className="font-sans text-xs text-[#6B6B68]">
+        <label className="font-sans text-xs text-text-mid">
           To
           <input
             type="date"
@@ -90,7 +90,7 @@ export function LedgerReportClient() {
             className="mt-1 block min-h-[44px] border border-sand px-2"
           />
         </label>
-        <label className="font-sans text-xs text-[#6B6B68]">
+        <label className="font-sans text-xs text-text-mid">
           Line
           <select
             value={line}
@@ -110,39 +110,39 @@ export function LedgerReportClient() {
         </a>
       </form>
       {loading ? (
-        <p className="font-sans text-sm text-[#6B6B68]">Loading…</p>
+        <p className="font-sans text-sm text-text-mid">Loading…</p>
       ) : !data ? (
-        <p className="font-sans text-sm text-[#6B6B68]">Could not load this range.</p>
+        <p className="font-sans text-sm text-text-mid">Could not load this range.</p>
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="glass-opaque p-4">
-              <p className="font-sans text-10px uppercase tracking-wider text-[#6B6B68]">Ready-to-wear cash</p>
+              <p className="font-sans text-10px uppercase tracking-wider text-text-mid">Ready-to-wear cash</p>
               <p className="mt-1 font-display text-xl">{naira(data.rtw.cashNGN)}</p>
             </div>
             <div className="glass-opaque p-4">
-              <p className="font-sans text-10px uppercase tracking-wider text-[#6B6B68]">Atelier cash</p>
+              <p className="font-sans text-10px uppercase tracking-wider text-text-mid">Atelier cash</p>
               <p className="mt-1 font-display text-xl">{naira(data.atelier.cashNGN)}</p>
             </div>
             <div className="glass-opaque p-4">
-              <p className="font-sans text-10px uppercase tracking-wider text-[#6B6B68]">Together</p>
+              <p className="font-sans text-10px uppercase tracking-wider text-text-mid">Together</p>
               <p className="mt-1 font-display text-xl">{naira(data.combined.cashNGN)}</p>
             </div>
           </div>
-          <p className="font-sans text-xs text-[#6B6B68]">
+          <p className="font-sans text-xs text-text-mid">
             Sales {naira(data.combined.salesNGN)} · Points {naira(data.combined.pointsNGN)} · Shipping collected{" "}
             {naira(data.combined.shippingCollectedNGN)} · Shipping paid not on the ledger yet · VAT {naira(data.combined.vatNGN)} ·
             Paid-and-cancelled still owing {naira(data.combined.liabilityNGN)} · Points outstanding {naira(data.pointsLiabilityNGN)} as of{" "}
             {new Date(data.asOf).toLocaleString("en-GB")}.
           </p>
           {data.unassigned.length > 0 ? (
-            <p className="border border-red-200 bg-red-50 px-3 py-2 font-sans text-sm text-red-800">
+            <p className="border border-red-200 bg-error-soft px-3 py-2 font-sans text-sm text-error">
               {data.unassigned.length} row{data.unassigned.length === 1 ? "" : "s"} resolve to neither line or to both. They are listed
               and kept out of Ready-to-wear + Atelier.
             </p>
           ) : null}
           {(data.deletions?.paymentCount ?? 0) > 0 ? (
-            <p className="border border-amber-200 bg-amber-50 px-3 py-2 font-sans text-sm text-amber-950">
+            <p className="border border-amber-200 bg-warning-soft px-3 py-2 font-sans text-sm text-warning">
               {data.deletions!.paymentCount} {data.deletions!.paymentCount === 1 ? "record was" : "records were"} deleted from this
               period.{" "}
               <Link
@@ -155,7 +155,7 @@ export function LedgerReportClient() {
           ) : null}
           <div className="overflow-x-auto glass-opaque">
             <table className="min-w-[1100px] w-full text-left text-sm">
-              <thead className="bg-ivory font-sans text-10px uppercase tracking-wider text-[#6B6B68]">
+              <thead className="bg-ivory font-sans text-10px uppercase tracking-wider text-text-mid">
                 <tr>
                   {["Date", "NGN", "Original", "VAT", "Sales", "Cash", "Points", "Ship", "Owed back", "Method", "Purpose", "Line", "Document", "Customer", "Confirmed by"].map(
                     (h) => (
@@ -196,12 +196,12 @@ export function LedgerReportClient() {
               </tbody>
             </table>
             {data.lines.length === 0 ? (
-              <p className="px-3 py-6 font-sans text-sm text-[#6B6B68]">No ledger rows in this range.</p>
+              <p className="px-3 py-6 font-sans text-sm text-text-mid">No ledger rows in this range.</p>
             ) : null}
           </div>
           <div className="border border-sand p-4">
             <h2 className="font-display text-lg text-choc">Against the statement</h2>
-            <p className="mt-1 font-sans text-xs text-[#6B6B68]">What the ledger says arrived, grouped the way the house banks it.</p>
+            <p className="mt-1 font-sans text-xs text-text-mid">What the ledger says arrived, grouped the way the house banks it.</p>
             <ul className="mt-3 space-y-1 font-sans text-sm">
               {data.bank.length === 0 ? <li>No cash in this range.</li> : null}
               {data.bank.map((b) => (

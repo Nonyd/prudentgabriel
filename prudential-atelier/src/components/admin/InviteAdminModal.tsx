@@ -72,17 +72,17 @@ export function InviteAdminModal({
               </label>
             </div>
             {error ? (
-              <p className="font-body text-xs text-red-700" role="alert">
+              <p className="font-body text-xs text-error" role="alert">
                 {error}
               </p>
             ) : null}
             <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={300} placeholder="Add a personal note to the invitation email..." className="h-20 w-full border border-sand px-3 py-2 font-body text-sm" />
-            <div className="border border-sand bg-[#FAFAF8] p-4">
-              <p className="mb-2 font-body text-xs text-[#6B6B68]">The invitation email will look like this:</p>
-              <div className="border border-sand bg-bg-card p-3 font-body text-xs text-[#4A4A47]">
+            <div className="border border-sand bg-bg-page p-4">
+              <p className="mb-2 font-body text-xs text-text-mid">The invitation email will look like this:</p>
+              <div className="border border-sand bg-bg-card p-3 font-body text-xs text-text-mid">
                 You&apos;ve been invited to join Prudent Gabriel Admin Portal as {role}.
                 {message ? <p className="mt-2">{message}</p> : null}
-                <p className="mt-2 text-[#37392d]">[Accept Invitation →]</p>
+                <p className="mt-2 text-ink">[Accept Invitation →]</p>
                 <p className="mt-1">Link expires in 72 hours.</p>
               </div>
             </div>

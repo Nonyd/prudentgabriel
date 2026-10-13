@@ -312,7 +312,7 @@ export function ConsultationInvitationFlow({
                         : "border-[0.5px] border-sand transition-shadow hover:border-nut/40",
                     )}
                   >
-                    <span className="absolute left-4 top-4 rounded-full bg-gold px-2.5 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-white">
+                    <span className="absolute left-4 top-4 rounded-full bg-gold px-2.5 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-[#2a1a0e]">
                       {cfg.formatLabel}
                     </span>
                     <p className="mt-6 font-sans text-[10px] uppercase tracking-[0.14em] text-lightbr">

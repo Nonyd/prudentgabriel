@@ -57,7 +57,7 @@ export function ConsultationBookingActions({
           <button
             type="button"
             onClick={() => setShowCancel(true)}
-            className="btn-ghost-light text-[10px] text-red-800"
+            className="btn-ghost-light text-[10px] text-error"
           >
             Cancel booking
           </button>

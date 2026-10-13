@@ -50,7 +50,7 @@ export function CustomMeasurementsForm({
         </p>
       </div>
       {!returnable ? (
-        <p className="border border-[#E8D5B0] bg-white px-3 py-2.5 font-body text-base leading-6 text-choc">
+        <p className="border border-border bg-white px-3 py-2.5 font-body text-base leading-6 text-choc">
           {CUSTOM_RETURNS_COPY}
         </p>
       ) : null}

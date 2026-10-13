@@ -41,13 +41,13 @@ function Funnel({ title, steps }: { title: string; steps: FunnelStep[] }) {
   return (
     <div className="glass-opaque p-5">
       <h2 className="font-display text-lg text-choc">{title}</h2>
-      {note ? <p className="mt-1 font-sans text-xs text-[#6B6B68]">{note}</p> : null}
+      {note ? <p className="mt-1 font-sans text-xs text-text-mid">{note}</p> : null}
       <ol className="mt-4 space-y-3">
         {steps.map((step) => (
           <li key={step.id}>
             <div className="flex items-baseline justify-between gap-3">
               <p className="font-sans text-sm text-choc">{step.label}</p>
-              <p className="font-sans text-xs text-[#6B6B68]">
+              <p className="font-sans text-xs text-text-mid">
                 {step.count.toLocaleString("en-NG")} · {vsPrev(step.count, step.prevCount, "number")}
               </p>
             </div>
@@ -65,16 +65,16 @@ function Traffic({ rows, note }: { rows: TrafficRow[]; note: string }) {
   return (
     <div className="glass-opaque p-5">
       <h2 className="font-display text-lg text-choc">Where they came from</h2>
-      <p className="mt-1 font-sans text-xs text-[#6B6B68]">
+      <p className="mt-1 font-sans text-xs text-text-mid">
         Same-session purchases only. A tag dies with the tab — return visits tomorrow show as direct.
       </p>
-      <p className="mt-2 max-w-2xl whitespace-pre-line font-sans text-xs leading-relaxed text-[#6B6B68]">{note}</p>
+      <p className="mt-2 max-w-2xl whitespace-pre-line font-sans text-xs leading-relaxed text-text-mid">{note}</p>
       {rows.length === 0 ? (
-        <p className="mt-4 font-sans text-sm text-[#6B6B68]">No tagged landings or attributed orders in this period.</p>
+        <p className="mt-4 font-sans text-sm text-text-mid">No tagged landings or attributed orders in this period.</p>
       ) : (
         <table className="mt-4 w-full font-sans text-sm">
           <thead>
-            <tr className="border-b border-sand text-left text-10px uppercase tracking-wider text-[#6B6B68]">
+            <tr className="border-b border-sand text-left text-10px uppercase tracking-wider text-text-mid">
               <th className="py-2 font-medium">Source</th>
               <th className="py-2 font-medium">Landings</th>
               <th className="py-2 font-medium">Orders</th>
@@ -85,9 +85,9 @@ function Traffic({ rows, note }: { rows: TrafficRow[]; note: string }) {
             {rows.map((row) => (
               <tr key={`${row.source}-${row.campaign}-${row.content}`} className="border-b border-sand/60">
                 <td className="py-2 text-choc">{row.label}</td>
-                <td className="py-2 text-[#6B6B68]">{row.landings.toLocaleString("en-NG")}</td>
-                <td className="py-2 text-[#6B6B68]">{row.orders.toLocaleString("en-NG")}</td>
-                <td className="py-2 text-[#6B6B68]">{naira(row.revenueNGN)}</td>
+                <td className="py-2 text-text-mid">{row.landings.toLocaleString("en-NG")}</td>
+                <td className="py-2 text-text-mid">{row.orders.toLocaleString("en-NG")}</td>
+                <td className="py-2 text-text-mid">{naira(row.revenueNGN)}</td>
               </tr>
             ))}
           </tbody>
@@ -101,17 +101,17 @@ function Looked({ rows }: { rows: LookedRow[] }) {
   return (
     <div className="glass-opaque p-5">
       <h2 className="font-display text-lg text-choc">Looked at, not bought</h2>
-      <p className="mt-1 font-sans text-xs text-[#6B6B68]">
+      <p className="mt-1 font-sans text-xs text-text-mid">
         Pieces opened this period with no paid order. Nothing else on this screen tells you that.
       </p>
       {rows.length === 0 ? (
-        <p className="mt-4 font-sans text-sm text-[#6B6B68]">No product views without a sale in this period.</p>
+        <p className="mt-4 font-sans text-sm text-text-mid">No product views without a sale in this period.</p>
       ) : (
         <ol className="mt-4 space-y-2">
           {rows.map((row) => (
             <li key={row.productId} className="flex items-baseline justify-between gap-3 border-b border-sand/60 py-2">
               <span className="font-sans text-sm text-choc">{row.name}</span>
-              <span className="shrink-0 font-sans text-xs text-[#6B6B68]">{row.views.toLocaleString("en-NG")} views</span>
+              <span className="shrink-0 font-sans text-xs text-text-mid">{row.views.toLocaleString("en-NG")} views</span>
             </li>
           ))}
         </ol>
@@ -124,12 +124,12 @@ function Rising({ rows }: { rows: RisingRow[] }) {
   return (
     <div className="glass-opaque p-5">
       <h2 className="font-display text-lg text-choc">Rising</h2>
-      <p className="mt-1 font-sans text-xs text-[#6B6B68]">
+      <p className="mt-1 font-sans text-xs text-text-mid">
         Grew most against the previous period — views or paid orders. A steady seller stays quiet; a piece that went
         from none to a few is the story.
       </p>
       {rows.length === 0 ? (
-        <p className="mt-4 font-sans text-sm text-[#6B6B68]">Nothing rising against the previous period yet.</p>
+        <p className="mt-4 font-sans text-sm text-text-mid">Nothing rising against the previous period yet.</p>
       ) : (
         <ol className="mt-4 space-y-2">
           {rows.map((row) => {
@@ -140,7 +140,7 @@ function Rising({ rows }: { rows: RisingRow[] }) {
             return (
               <li key={row.productId} className="flex items-baseline justify-between gap-3 border-b border-sand/60 py-2">
                 <span className="font-sans text-sm text-choc">{row.name}</span>
-                <span className="shrink-0 font-sans text-xs text-[#6B6B68]">
+                <span className="shrink-0 font-sans text-xs text-text-mid">
                   +{row.rise.toLocaleString("en-NG")} · {detail}
                 </span>
               </li>
@@ -165,9 +165,9 @@ export function HouseNumbersPanel({ data }: { data: HouseNumbers }) {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map((k) => (
           <div key={k.label} className="glass-opaque p-5">
-            <p className="font-sans text-10px uppercase tracking-wider text-[#6B6B68]">{k.label}</p>
+            <p className="font-sans text-10px uppercase tracking-wider text-text-mid">{k.label}</p>
             <p className="mt-2 font-display text-2xl text-choc">{k.value}</p>
-            <p className="mt-1 font-sans text-xs text-[#6B6B68]">{k.prev}</p>
+            <p className="mt-1 font-sans text-xs text-text-mid">{k.prev}</p>
           </div>
         ))}
       </div>
@@ -186,7 +186,7 @@ export function HouseNumbersPanel({ data }: { data: HouseNumbers }) {
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="glass-opaque p-5">
           <h2 className="font-display text-lg text-choc">Already on the books</h2>
-          <ul className="mt-3 space-y-2 font-sans text-sm text-[#6B6B68]">
+          <ul className="mt-3 space-y-2 font-sans text-sm text-text-mid">
             <li>
               Abandoned checkouts: {data.abandoned.sessions.toLocaleString("en-NG")} open, {naira(data.abandoned.valueNGN)}
             </li>
@@ -202,13 +202,13 @@ export function HouseNumbersPanel({ data }: { data: HouseNumbers }) {
         <div className="glass-opaque p-5">
           <h2 className="font-display text-lg text-choc">Where gowns sit</h2>
           {data.atelierStages.length === 0 ? (
-            <p className="mt-3 font-sans text-sm text-[#6B6B68]">No live commissions.</p>
+            <p className="mt-3 font-sans text-sm text-text-mid">No live commissions.</p>
           ) : (
             <ul className="mt-3 space-y-2 font-sans text-sm">
               {data.atelierStages.map((s) => (
                 <li key={s.stage} className="flex items-baseline justify-between gap-3">
                   <span className="capitalize text-choc">{s.stage}</span>
-                  <span className="text-[#6B6B68]">
+                  <span className="text-text-mid">
                     {s.count} · {s.avgDays} days
                   </span>
                 </li>
@@ -217,7 +217,7 @@ export function HouseNumbersPanel({ data }: { data: HouseNumbers }) {
           )}
         </div>
       </div>
-      <p className="font-sans text-11px text-[#6B6B68]">
+      <p className="font-sans text-11px text-text-mid">
         Page counts are first-party totals, not people. Daily detail is kept {data.retentionDays} days, then monthly
         totals. No visitor id is stored.
       </p>

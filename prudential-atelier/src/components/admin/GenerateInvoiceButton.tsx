@@ -9,7 +9,7 @@ export function GenerateInvoiceButton({ bespokeId }: { bespokeId: string }) {
   return (
     <button
       type="button"
-      className="mt-4 border border-[#37392d] px-4 py-2 font-body text-11px font-medium uppercase tracking-[0.1em] text-[#37392d]"
+      className="mt-4 border border-[#37392d] px-4 py-2 font-body text-11px font-medium uppercase tracking-[0.1em] text-ink"
       onClick={async () => {
         const res = await fetch("/api/admin/invoices", {
           method: "POST",

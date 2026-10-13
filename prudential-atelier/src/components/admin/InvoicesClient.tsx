@@ -269,7 +269,7 @@ export function InvoicesClient() {
                           PDF
                         </a>
                         {r.status === "DRAFT" ? (
-                          <button type="button" className="rounded-none text-red-700 underline" onClick={() => void del(r.id)}>
+                          <button type="button" className="rounded-none text-error underline" onClick={() => void del(r.id)}>
                             Delete
                           </button>
                         ) : null}

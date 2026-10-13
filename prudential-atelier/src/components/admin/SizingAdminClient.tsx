@@ -93,7 +93,7 @@ export function SizingAdminClient() {
         </p>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="text-[#A8A8A4]">
+            <thead className="text-text-light">
               <tr>
                 <th className="pb-2">Size</th>
                 <th className="pb-2">Bust cm</th>
@@ -140,9 +140,9 @@ export function SizingAdminClient() {
         <ul className="mt-4 space-y-4">
           {fields.map((f) => (
             <li key={f.id} className="border-t border-sand pt-4">
-              <p className="font-mono text-xs text-[#A8A8A4]">{f.key}</p>
+              <p className="font-mono text-xs text-text-light">{f.key}</p>
               <div className="mt-2 grid gap-3 md:grid-cols-2">
-                <label className="text-xs uppercase text-[#A8A8A4]">
+                <label className="text-xs uppercase text-text-light">
                   Label
                   <input
                     value={f.label}
@@ -152,7 +152,7 @@ export function SizingAdminClient() {
                     className="mt-1 w-full border border-sand bg-canvas px-2 py-1 text-sm text-charcoal"
                   />
                 </label>
-                <label className="text-xs uppercase text-[#A8A8A4]">
+                <label className="text-xs uppercase text-text-light">
                   Min–max cm
                   <span className="mt-1 flex gap-2">
                     <input
@@ -177,7 +177,7 @@ export function SizingAdminClient() {
                     />
                   </span>
                 </label>
-                <label className="text-xs uppercase text-[#A8A8A4] md:col-span-2">
+                <label className="text-xs uppercase text-text-light md:col-span-2">
                   Help text
                   <textarea
                     value={f.helpText ?? ""}

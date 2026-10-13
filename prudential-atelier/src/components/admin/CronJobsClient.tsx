@@ -36,11 +36,11 @@ function formatWhen(iso: string | null | undefined): string {
 }
 
 function statusClass(status: string | undefined, stale: boolean): string {
-  if (stale) return "text-amber-800";
-  if (status === "OK") return "text-emerald-800";
-  if (status === "FAILED" || status === "TIMED_OUT") return "text-red-800";
+  if (stale) return "text-warning";
+  if (status === "OK") return "text-success";
+  if (status === "FAILED" || status === "TIMED_OUT") return "text-error";
   if (status === "RUNNING") return "text-olive";
-  return "text-[#6B6B68]";
+  return "text-text-mid";
 }
 
 export function CronJobsClient() {
@@ -96,7 +96,7 @@ export function CronJobsClient() {
   }
 
   if (loading) {
-    return <p className="mt-6 font-body text-sm text-[#6B6B68]">Loading jobs…</p>;
+    return <p className="mt-6 font-body text-sm text-text-mid">Loading jobs…</p>;
   }
 
   return (
@@ -118,14 +118,14 @@ export function CronJobsClient() {
             <tr key={job.name} className="border-t border-sand align-top">
               <td className="px-3 py-3">
                 <div className="font-medium text-ink">{job.name}</div>
-                <div className="mt-0.5 text-[#6B6B68]">{job.description}</div>
+                <div className="mt-0.5 text-text-mid">{job.description}</div>
                 {!job.migrated ? (
                   <div className="mt-1 text-10px uppercase tracking-wide text-[#98755B]">
                     Legacy handler
                   </div>
                 ) : null}
                 {job.stale ? (
-                  <div className="mt-1 text-10px font-medium uppercase tracking-wide text-amber-800">
+                  <div className="mt-1 text-10px font-medium uppercase tracking-wide text-warning">
                     Stale — last OK older than 2× interval
                   </div>
                 ) : null}
@@ -134,7 +134,7 @@ export function CronJobsClient() {
               <td className="px-3 py-3 text-ink">
                 {formatWhen(job.lastRun?.startedAt)}
                 {job.lastRun?.host ? (
-                  <div className="text-10px text-[#6B6B68]">{job.lastRun.host}</div>
+                  <div className="text-10px text-text-mid">{job.lastRun.host}</div>
                 ) : null}
               </td>
               <td className={`px-3 py-3 font-medium ${statusClass(job.lastRun?.status, job.stale)}`}>
@@ -145,7 +145,7 @@ export function CronJobsClient() {
                   </div>
                 ) : null}
                 {job.lastRun?.error ? (
-                  <div className="mt-1 max-w-[220px] font-normal text-10px text-red-700">
+                  <div className="mt-1 max-w-[220px] font-normal text-10px text-error">
                     {job.lastRun.error}
                   </div>
                 ) : null}
@@ -155,7 +155,7 @@ export function CronJobsClient() {
                   ? `${job.lastRun.processed}${job.lastRun.failed ? ` / ${job.lastRun.failed} fail` : ""}`
                   : "—"}
               </td>
-              <td className="px-3 py-3 text-[#6B6B68]">
+              <td className="px-3 py-3 text-text-mid">
                 {job.lastRun?.durationMs != null ? `${job.lastRun.durationMs} ms` : "—"}
               </td>
               <td className="px-3 py-3">

@@ -98,7 +98,7 @@ export function ShippingZoneModal({
             <input value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="Zone Name" className="w-full border border-sand px-3 py-2 font-body text-sm" />
 
             <div>
-              <p className="mb-2 font-body text-xs text-[#6B6B68]">Countries</p>
+              <p className="mb-2 font-body text-xs text-text-mid">Countries</p>
               <div className="grid grid-cols-2 gap-2">
                 {COUNTRY_OPTIONS.map((country) => (
                   <label key={country.code} className="flex items-center gap-2 border border-sand px-2 py-1.5 font-body text-xs">

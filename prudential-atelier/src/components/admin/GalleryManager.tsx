@@ -162,16 +162,16 @@ function PieceStatus({
   duplicateOf: number | null;
 }) {
   const flag = "inline-block border px-1.5 py-0.5 text-10px uppercase tracking-[0.08em]";
-  const needs = "border-[#E0B872] bg-[#FFF6E5] text-[#8A5A00]";
+  const needs = "border-[#E0B872] bg-[#FFF6E5] text-warning";
   return (
     <div className="flex flex-wrap gap-1 font-body" data-piece-status>
-      <span className={cn(flag, "border-sand text-[#6B6B68]")}>#{position}</span>
+      <span className={cn(flag, "border-sand text-text-mid")}>#{position}</span>
       {frameOf ? (
-        <span className={cn(flag, "border-sand normal-case tracking-normal text-[#6B6B68]")}>Photo of {frameOf}</span>
+        <span className={cn(flag, "border-sand normal-case tracking-normal text-text-mid")}>Photo of {frameOf}</span>
       ) : (
         <>
           {frameCount > 0 ? (
-            <span className={cn(flag, "border-sand text-[#6B6B68]")}>Piece · {frameCount + 1} photos</span>
+            <span className={cn(flag, "border-sand text-text-mid")}>Piece · {frameCount + 1} photos</span>
           ) : null}
           {gaps.placeholder ? (
             <span
@@ -189,7 +189,7 @@ function PieceStatus({
         </>
       )}
       {duplicateOf ? (
-        <span className={cn(flag, "border-[#E3A5A5] bg-[#FDEEEE] text-[#9B2C2C]")}>Same file as #{duplicateOf}</span>
+        <span className={cn(flag, "border-[#E3A5A5] bg-[#FDEEEE] text-error")}>Same file as #{duplicateOf}</span>
       ) : null}
     </div>
   );
@@ -210,13 +210,13 @@ function PriceGuideFields({
   const preview = priceGuideText({ priceFloorNGN: nairaOrNull(floor), priceCeilingNGN: nairaOrNull(ceiling) });
   return (
     <>
-      <p className="mt-6 font-body text-11px uppercase text-[#6B6B68]">Price guide (display only)</p>
-      <p className="mt-1 font-body text-xs text-[#6B6B68]">
+      <p className="mt-6 font-body text-11px uppercase text-text-mid">Price guide (display only)</p>
+      <p className="mt-1 font-body text-xs text-text-mid">
         Shown beside the photograph as a reference, never charged. A floor alone is recommended; add a ceiling only if
         you want a range.
       </p>
       <div className="mt-2 grid grid-cols-2 gap-3">
-        <label className="font-body text-11px uppercase text-[#6B6B68]">
+        <label className="font-body text-11px uppercase text-text-mid">
           From (₦)
           <input
             inputMode="numeric"
@@ -226,7 +226,7 @@ function PriceGuideFields({
             placeholder="3,000,000"
           />
         </label>
-        <label className="font-body text-11px uppercase text-[#6B6B68]">
+        <label className="font-body text-11px uppercase text-text-mid">
           Up to (₦, optional)
           <input
             inputMode="numeric"
@@ -236,7 +236,7 @@ function PriceGuideFields({
           />
         </label>
       </div>
-      {preview ? <p className="mt-2 font-body text-xs italic text-[#6B6B68]">Shows as: {preview}</p> : null}
+      {preview ? <p className="mt-2 font-body text-xs italic text-text-mid">Shows as: {preview}</p> : null}
     </>
   );
 }
@@ -541,7 +541,7 @@ export function GalleryManager() {
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <span className="font-body text-xs text-[#6B6B68]">
+          <span className="font-body text-xs text-text-mid">
             {photoCount} {photoCount === 1 ? "look" : "looks"}
             {videoCount > 0 ? ` · ${videoCount} ${videoCount === 1 ? "film" : "films"}` : ""}
             {hiddenCount > 0 ? ` · ${hiddenCount} hidden` : ""}
@@ -615,7 +615,7 @@ export function GalleryManager() {
                   <AlertDialog.Title className="font-body text-sm font-medium">
                     Delete {selectedIds.length} {selectedIds.length === 1 ? "item" : "items"}?
                   </AlertDialog.Title>
-                  <p className="mt-2 font-body text-xs text-[#6B6B68]">This cannot be undone.</p>
+                  <p className="mt-2 font-body text-xs text-text-mid">This cannot be undone.</p>
                   <div className="mt-6 flex justify-end gap-2">
                     <AlertDialog.Cancel asChild>
                       <button type="button" className="border border-sand px-4 py-2 text-xs uppercase">
@@ -685,24 +685,24 @@ export function GalleryManager() {
       </div>
 
       {reorder ? (
-        <p className="font-body text-xs text-[#6B6B68]">
+        <p className="font-body text-xs text-text-mid">
           Drag a tile, or use the arrows, to set the public order. Films span two columns so they sit as film, not as
           postage stamps.
         </p>
       ) : filter !== "all" ? (
-        <p className="font-body text-xs text-[#6B6B68]">Show all to reorder.</p>
+        <p className="font-body text-xs text-text-mid">Show all to reorder.</p>
       ) : null}
 
       {truncated ? (
-        <p className="font-body text-xs text-[#6B6B68]">
+        <p className="font-body text-xs text-text-mid">
           Showing the first {items.length} of {total}. Reorder after trimming this gallery.
         </p>
       ) : null}
 
       {loading ? (
-        <p className="font-body text-sm text-[#6B6B68]">Loading gallery…</p>
+        <p className="font-body text-sm text-text-mid">Loading gallery…</p>
       ) : visible.length === 0 ? (
-        <p className="border border-dashed border-sand px-6 py-16 text-center font-body text-sm text-[#6B6B68]">
+        <p className="border border-dashed border-sand px-6 py-16 text-center font-body text-sm text-text-mid">
           {items.length === 0
             ? "No looks in this gallery yet. Upload photographs or film."
             : "Nothing matches this filter."}
@@ -811,11 +811,11 @@ export function GalleryManager() {
                     <p className="min-w-0 flex-1 font-body text-12px leading-snug text-ink">
                       {mediaCaption(img)}
                       {!img.caption?.trim() && !img.alt?.trim() && !(pieceMode && img.pieceOfId) ? (
-                        <span className="block text-11px text-[#A8A8A4]">Add a caption</span>
+                        <span className="block text-11px text-text-light">Add a caption</span>
                       ) : null}
                     </p>
                     {canDrag ? (
-                      <span className="mt-0.5 shrink-0 text-[#A8A8A4]" aria-hidden>
+                      <span className="mt-0.5 shrink-0 text-text-light" aria-hidden>
                         <GripVertical size={14} />
                       </span>
                     ) : null}
@@ -829,7 +829,7 @@ export function GalleryManager() {
                       duplicateOf={duplicates.has(img.id) ? (positionOf.get(duplicates.get(img.id)!) ?? null) : null}
                     />
                   ) : duplicates.has(img.id) ? (
-                    <span className="font-body text-11px text-[#9B2C2C]">
+                    <span className="font-body text-11px text-error">
                       Same file as #{positionOf.get(duplicates.get(img.id)!)}
                     </span>
                   ) : null}
@@ -877,7 +877,7 @@ export function GalleryManager() {
                       </button>
                       <AlertDialog.Root>
                         <AlertDialog.Trigger asChild>
-                          <button type="button" className="border border-sand p-1 text-red-700" aria-label="Delete">
+                          <button type="button" className="border border-sand p-1 text-error" aria-label="Delete">
                             <Trash2 size={14} />
                           </button>
                         </AlertDialog.Trigger>
@@ -929,11 +929,11 @@ export function GalleryManager() {
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/40" />
           <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] max-h-[min(90vh,640px)] w-[min(90vw,520px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto glass-3 glass-panel p-6">
             <Dialog.Title className="font-display text-xl text-ink">Upload images or video</Dialog.Title>
-            <p className="mt-2 font-body text-xs text-[#6B6B68]">
+            <p className="mt-2 font-body text-xs text-text-mid">
               Uploading to: {CATEGORY_LABEL[tab]}. Photos up to 5MB; MP4 or WebM up to 20MB.
             </p>
             <label
-              className="mt-6 flex cursor-pointer flex-col items-center justify-center border border-dashed border-sand bg-[#fafafa] px-6 py-12 transition-colors hover:border-[#37392d]/40"
+              className="mt-6 flex cursor-pointer flex-col items-center justify-center border border-dashed border-sand bg-bg-page px-6 py-12 transition-colors hover:border-[#37392d]/40"
               onDragOver={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -967,18 +967,18 @@ export function GalleryManager() {
                     <div className="flex items-center justify-between gap-2">
                       <span className="min-w-0 flex-1 truncate text-charcoal">{job.name}</span>
                       {job.status === "uploading" ? (
-                        <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-[#37392d]" aria-hidden />
+                        <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-ink" aria-hidden />
                       ) : null}
                       {job.status === "done" ? (
-                        <span className="shrink-0 text-[#1B5E20]">Done</span>
+                        <span className="shrink-0 text-success">Done</span>
                       ) : null}
                       {job.status === "error" ? (
-                        <span className="shrink-0 text-red-700" title={job.error}>
+                        <span className="shrink-0 text-error" title={job.error}>
                           Error
                         </span>
                       ) : null}
                       {job.status === "queued" ? (
-                        <span className="shrink-0 text-[#A8A8A4]">Queued</span>
+                        <span className="shrink-0 text-text-light">Queued</span>
                       ) : null}
                     </div>
                     <div className="mt-1.5 h-1.5 w-full overflow-hidden bg-[#EBEBEA]">
@@ -1032,7 +1032,7 @@ export function GalleryManager() {
                 )}
               </div>
             ) : null}
-            <label className="mt-4 font-body text-11px uppercase text-[#6B6B68]">Gallery</label>
+            <label className="mt-4 font-body text-11px uppercase text-text-mid">Gallery</label>
             <select
               className="mt-1 border border-sand bg-white px-3 py-2 text-sm"
               value={editCategory}
@@ -1044,13 +1044,13 @@ export function GalleryManager() {
                 </option>
               ))}
             </select>
-            <label className="mt-4 font-body text-11px uppercase text-[#6B6B68]">Alt</label>
+            <label className="mt-4 font-body text-11px uppercase text-text-mid">Alt</label>
             <input
               className="mt-1 border border-sand px-3 py-2 text-sm"
               value={editAlt}
               onChange={(e) => setEditAlt(e.target.value)}
             />
-            <label className="mt-4 font-body text-11px uppercase text-[#6B6B68]">
+            <label className="mt-4 font-body text-11px uppercase text-text-mid">
               {pieceMode && !editIsFrame ? "Title (what the piece is called)" : "Caption"}
             </label>
             <textarea
@@ -1077,7 +1077,7 @@ export function GalleryManager() {
             ) : null}
             {pieceMode && editing && editCategory === "ATELIER" ? (
               <>
-                <label className="mt-4 font-body text-11px uppercase text-[#6B6B68]">Piece</label>
+                <label className="mt-4 font-body text-11px uppercase text-text-mid">Piece</label>
                 <select
                   className="mt-1 border border-sand bg-white px-3 py-2 text-sm"
                   value={editPieceOf}
@@ -1092,14 +1092,14 @@ export function GalleryManager() {
                       </option>
                     ))}
                 </select>
-                <p className="mt-1 font-body text-xs text-[#6B6B68]">
+                <p className="mt-1 font-body text-xs text-text-mid">
                   Several photographs of one gown are one piece. Choose the gown&apos;s main photograph here and they
                   show together on /atelier.
                 </p>
               </>
             ) : null}
             {editIsFrame ? (
-              <p className="mt-6 font-body text-xs text-[#6B6B68]">
+              <p className="mt-6 font-body text-xs text-text-mid">
                 The description and price guide are set on the piece&apos;s main photograph ({headLabel(editPieceOf)}).
                 Anything this photograph had moves there when you save, if the piece has none.
               </p>
@@ -1107,7 +1107,7 @@ export function GalleryManager() {
               <>
                 {pieceMode ? (
                   <>
-                    <label className="mt-4 font-body text-11px uppercase text-[#6B6B68]">Description</label>
+                    <label className="mt-4 font-body text-11px uppercase text-text-mid">Description</label>
                     <textarea
                       className="mt-1 min-h-[110px] resize-y border border-sand px-3 py-2 text-sm"
                       value={editDescription}

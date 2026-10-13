@@ -21,16 +21,16 @@ export function UnsubscribesClient() {
   }, []);
 
   if (loading) {
-    return <p className="mt-8 font-body text-sm text-[#6B6B68]">Loading…</p>;
+    return <p className="mt-8 font-body text-sm text-text-mid">Loading…</p>;
   }
 
   if (items.length === 0) {
-    return <p className="mt-8 font-body text-sm text-[#6B6B68]">No unsubscribes yet.</p>;
+    return <p className="mt-8 font-body text-sm text-text-mid">No unsubscribes yet.</p>;
   }
 
   return (
-    <table className="pill-rows mt-8 w-full border border-sand bg-[#FAFAFA] text-left text-sm">
-      <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-[#6B6B68]">
+    <table className="pill-rows mt-8 w-full border border-sand bg-bg-page text-left text-sm">
+      <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-text-mid">
         <tr>
           <th className="p-3">Email</th>
           <th className="p-3">Unsubscribed</th>
@@ -41,7 +41,7 @@ export function UnsubscribesClient() {
         {items.map((row) => (
           <tr key={row.email} className="border-b border-sand/60">
             <td className="p-3 font-body text-ink">{row.email}</td>
-            <td className="p-3 font-body text-[#6B6B68]">
+            <td className="p-3 font-body text-text-mid">
               {row.unsubscribedAt
                 ? new Date(row.unsubscribedAt).toLocaleString("en-GB", {
                     day: "numeric",
@@ -52,7 +52,7 @@ export function UnsubscribesClient() {
                   })
                 : "—"}
             </td>
-            <td className="p-3 font-body text-[#6B6B68]">{row.wasNewsletter ? "Yes" : "—"}</td>
+            <td className="p-3 font-body text-text-mid">{row.wasNewsletter ? "Yes" : "—"}</td>
           </tr>
         ))}
       </tbody>

@@ -123,7 +123,7 @@ export function ReviewsAdminClient({ reviews, variant }: ReviewsAdminClientProps
 
       <div className="-mx-4 overflow-x-auto rounded-sm border border-sand bg-canvas px-4 md:mx-0 md:px-0">
         <table className="pill-rows w-full min-w-[960px] text-left text-sm text-charcoal">
-          <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-[#A8A8A4]">
+          <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-text-light">
             <tr>
               <th className="p-3">Client</th>
               {variant === "product" ? <th className="p-3">Product</th> : <th className="p-3">Consultation type</th>}
@@ -149,7 +149,7 @@ export function ReviewsAdminClient({ reviews, variant }: ReviewsAdminClientProps
                   ? getDeliveryModeLabel(r.consultation.offering.deliveryMode)
                   : "—";
                 return (
-                  <tr key={r.id} className="border-b border-[#F5F5F3] hover:bg-[#FAFAFA]">
+                  <tr key={r.id} className="border-b border-border hover:bg-bg-page">
                     <td className="p-3 font-body text-sm">{r.user.name ?? "—"}</td>
                     <td className="p-3">
                       {variant === "product" && r.product ? (
@@ -199,7 +199,7 @@ export function ReviewsAdminClient({ reviews, variant }: ReviewsAdminClientProps
                         type="button"
                         disabled={disabled}
                         onClick={() => void deleteReview(r.id)}
-                        className="font-body text-xs text-red-700 hover:underline disabled:opacity-50"
+                        className="font-body text-xs text-error hover:underline disabled:opacity-50"
                       >
                         Delete
                       </button>

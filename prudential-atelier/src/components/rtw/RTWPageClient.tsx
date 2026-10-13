@@ -175,7 +175,7 @@ export function RTWPageClient({
                   <Select.Viewport className="p-0">
                     <Select.Item
                       value="all"
-                      className="cursor-pointer px-5 py-2.5 font-body text-[12px] text-charcoal outline-none hover:bg-[#FAFAFA] hover:text-olive"
+                      className="cursor-pointer px-5 py-2.5 font-body text-[12px] text-charcoal outline-none hover:bg-bg-page hover:text-olive"
                     >
                       All collections
                     </Select.Item>
@@ -183,7 +183,7 @@ export function RTWPageClient({
                       <Select.Item
                         key={c.slug}
                         value={c.slug}
-                        className="cursor-pointer px-5 py-2.5 font-body text-[12px] text-charcoal outline-none hover:bg-[#FAFAFA] hover:text-olive"
+                        className="cursor-pointer px-5 py-2.5 font-body text-[12px] text-charcoal outline-none hover:bg-bg-page hover:text-olive"
                       >
                         {c.name}
                       </Select.Item>
@@ -218,7 +218,7 @@ export function RTWPageClient({
                     <Select.Item
                       key={value}
                       value={value}
-                      className="cursor-pointer px-5 py-2.5 font-body text-[12px] text-charcoal outline-none hover:bg-[#FAFAFA] hover:text-olive"
+                      className="cursor-pointer px-5 py-2.5 font-body text-[12px] text-charcoal outline-none hover:bg-bg-page hover:text-olive"
                     >
                       {label}
                     </Select.Item>

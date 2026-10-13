@@ -75,7 +75,7 @@ function LoginField({
         ) : null}
       </div>
       {error ? (
-        <p className="mt-1.5 font-sans text-[11px] text-[#8B2020]" role="alert">
+        <p className="mt-1.5 font-sans text-[11px] text-error" role="alert">
           {error}
         </p>
       ) : null}
@@ -246,13 +246,13 @@ export function PortalLoginClient() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
           {searchParams.get("reason") === PASSWORD_CHANGED_REASON && !errors.root ? (
-            <p className="mb-4 rounded-[4px] px-3.5 py-2.5 font-sans text-xs text-[#37392d]" role="status">
+            <p className="mb-4 rounded-[4px] px-3.5 py-2.5 font-sans text-xs text-ink" role="status">
               Your password was changed. Please sign in with your new password.
             </p>
           ) : null}
           {errors.root ? (
             <p
-              className="mb-4 rounded-[4px] px-3.5 py-2.5 font-sans text-xs text-[#8B2020]"
+              className="mb-4 rounded-[4px] px-3.5 py-2.5 font-sans text-xs text-error"
               style={{ background: "rgba(139,32,32,0.06)" }}
               role="alert"
             >

@@ -9,10 +9,10 @@ type JobRow = JobPosting & { _count: { applications: number } };
 
 function statusFor(job: JobRow): { label: string; className: string } {
   if (job.deadline && job.deadline < new Date()) {
-    return { label: "Expired", className: "text-amber-800" };
+    return { label: "Expired", className: "text-warning" };
   }
   if (job.isPublished) {
-    return { label: "Live", className: "text-green-800" };
+    return { label: "Live", className: "text-success" };
   }
   return { label: "Draft", className: "text-charcoal-mid" };
 }
@@ -21,7 +21,7 @@ export function CareersJobsAdminClient({ jobs }: { jobs: JobRow[] }) {
   return (
     <div className="mt-6 overflow-x-auto rounded-sm border border-sand bg-canvas">
       <table className="pill-rows w-full min-w-[900px] text-left text-sm">
-        <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-[#A8A8A4]">
+        <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-text-light">
           <tr>
             <th className="p-3">Title</th>
             <th className="p-3">Dept</th>
@@ -42,7 +42,7 @@ export function CareersJobsAdminClient({ jobs }: { jobs: JobRow[] }) {
             jobs.map((job) => {
               const status = statusFor(job);
               return (
-                <tr key={job.id} className="border-b border-[#F5F5F3]">
+                <tr key={job.id} className="border-b border-border">
                   <td className="p-3 font-body">{job.title}</td>
                   <td className="p-3 font-body text-charcoal-mid">{job.department}</td>
                   <td className="p-3 font-body text-charcoal-mid">{JOB_TYPE_LABELS[job.type]}</td>

@@ -74,7 +74,7 @@ function Req() {
 }
 
 function Opt() {
-  return <span className="ml-1 font-normal normal-case tracking-normal text-[#A8A8A4]">Optional</span>;
+  return <span className="ml-1 font-normal normal-case tracking-normal text-text-light">Optional</span>;
 }
 
 function mapProductToForm(p: FullProduct): ProductAdminInput {
@@ -807,7 +807,7 @@ export function ProductFormPage({
                     <img src={im.url} alt="" className="h-36 w-full rounded-sm object-cover" />
                     {isLegacyWordPressImageUrl(im.url) && (
                       <div className="mt-1 space-y-1">
-                        <p className="text-10px text-amber-700">Hosted on the old server — upload a replacement.</p>
+                        <p className="text-10px text-warning">Hosted on the old server — upload a replacement.</p>
                       </div>
                     )}
                     <div className="mt-2 flex min-h-[44px] items-center justify-between gap-1">
@@ -923,14 +923,14 @@ export function ProductFormPage({
                 className={fieldClass}
               />
             </label>
-            <p className="mt-1 text-xs text-[#A8A8A4]">Copied onto each new size. Then change a size if it costs more.</p>
+            <p className="mt-1 text-xs text-text-light">Copied onto each new size. Then change a size if it costs more.</p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <label className="text-xs uppercase text-[#A8A8A4]">
+              <label className="text-xs uppercase text-text-light">
                 Price in dollars
                 <Opt />
                 <input type="number" step="any" {...form.register("basePriceUSD")} className={fieldClass} />
               </label>
-              <label className="text-xs uppercase text-[#A8A8A4]">
+              <label className="text-xs uppercase text-text-light">
                 Price in pounds
                 <Opt />
                 <input type="number" step="any" {...form.register("basePriceGBP")} className={fieldClass} />
@@ -949,11 +949,11 @@ export function ProductFormPage({
               />
             </div>
             {saleFigureIsDormant(Boolean(isOnSaleWatch), variantsWatch ?? []) ? (
-              <p className="mt-3 text-xs text-amber-800">
+              <p className="mt-3 text-xs text-warning">
                 A sale price is filled, but “On sale” is off. Shoppers pay the regular price until you tick it.
               </p>
             ) : null}
-            <p className="mt-4 text-xs uppercase tracking-wide text-[#A8A8A4]">
+            <p className="mt-4 text-xs uppercase tracking-wide text-text-light">
               Sizes
               {categoryNeedsSizes(form.watch("category")) ? <Req /> : <Opt />}
             </p>
@@ -987,19 +987,19 @@ export function ProductFormPage({
                 options={(product?.optionGroup?.options ?? []).map((o) => ({ id: o.id, label: o.label }))}
               />
             ) : (
-              <p className="mt-6 text-xs text-[#A8A8A4]">
+              <p className="mt-6 text-xs text-text-light">
                 Save the piece first to attach an optional material list. Without one it still sells.
               </p>
             )}
             {form.formState.errors.variants && (
-              <p className="mt-2 text-xs text-red-400">
+              <p className="mt-2 text-xs text-error">
                 {categoryNeedsSizes(form.getValues("category"))
                   ? "Add at least one size with a price."
                   : "Enter a price before publishing."}
               </p>
             )}
             {form.formState.errors.basePriceNGN && (
-              <p className="mt-2 text-xs text-red-400">Enter a naira price.</p>
+              <p className="mt-2 text-xs text-error">Enter a naira price.</p>
             )}
           </section>
         ) : null}
@@ -1008,7 +1008,7 @@ export function ProductFormPage({
           <>
             <details className={sectionClass}>
               <summary className="cursor-pointer font-display text-2xl text-choc">Custom measurements</summary>
-              <p className="mt-1 text-xs text-[#A8A8A4]">Cut to the measurements she enters. Made to order.</p>
+              <p className="mt-1 text-xs text-text-light">Cut to the measurements she enters. Made to order.</p>
               <Controller
                 control={form.control}
                 name="customOffered"
@@ -1021,7 +1021,7 @@ export function ProductFormPage({
               />
               {customOfferedWatch ? (
                 <div className="mt-4 space-y-3 text-sm text-charcoal">
-                  <label className="block text-xs uppercase text-[#A8A8A4]">
+                  <label className="block text-xs uppercase text-text-light">
                     Surcharge
                     <select {...form.register("customSurchargeKind")} className={fieldClass}>
                       <option value="">Use store default</option>
@@ -1030,11 +1030,11 @@ export function ProductFormPage({
                       <option value="FLAT">Flat ₦</option>
                     </select>
                   </label>
-                  <label className="block text-xs uppercase text-[#A8A8A4]">
+                  <label className="block text-xs uppercase text-text-light">
                     Surcharge value
                     <input type="number" step="0.01" {...form.register("customSurchargeValue")} className={fieldClass} />
                   </label>
-                  <label className="block text-xs uppercase text-[#A8A8A4]">
+                  <label className="block text-xs uppercase text-text-light">
                     Lead time (days)
                     <input
                       type="number"
@@ -1043,7 +1043,7 @@ export function ProductFormPage({
                       placeholder={`Store default (${storeDefaultLead})`}
                     />
                   </label>
-                  <p className="text-xs text-[#A8A8A4]">Leave blank to use the store default of {storeDefaultLead} days.</p>
+                  <p className="text-xs text-text-light">Leave blank to use the store default of {storeDefaultLead} days.</p>
                   <Controller
                     control={form.control}
                     name="customReturnable"
@@ -1058,8 +1058,8 @@ export function ProductFormPage({
                       </label>
                     )}
                   />
-                  <p className="text-11px text-[#A8A8A4]">Leave returnable off. A custom garment cannot be worn by anyone else.</p>
-                  <p className="text-xs uppercase text-[#A8A8A4]">Fields for this piece</p>
+                  <p className="text-11px text-text-light">Leave returnable off. A custom garment cannot be worn by anyone else.</p>
+                  <p className="text-xs uppercase text-text-light">Fields for this piece</p>
                   <ul className="space-y-2">
                     {libraryFields.map((f) => {
                       const selected = measurementIds.find((m) => m.fieldId === f.id);
@@ -1114,19 +1114,19 @@ export function ProductFormPage({
               <summary className="cursor-pointer font-display text-2xl text-choc">Delivery details</summary>
               <p className="mt-2 font-body text-sm text-choc/60">Most pieces use the store default box. Fill this only if this garment packs differently.</p>
               <div className="mt-4 grid gap-4 sm:grid-cols-4">
-                <label className="text-xs uppercase text-[#A8A8A4]">
+                <label className="text-xs uppercase text-text-light">
                   Weight kg
                   <input type="number" step="0.01" {...form.register("defaultWeightKg")} className={fieldClass} />
                 </label>
-                <label className="text-xs uppercase text-[#A8A8A4]">
+                <label className="text-xs uppercase text-text-light">
                   Box size when packed — length
                   <input type="number" step="0.1" {...form.register("defaultLengthCm")} className={fieldClass} />
                 </label>
-                <label className="text-xs uppercase text-[#A8A8A4]">
+                <label className="text-xs uppercase text-text-light">
                   Width
                   <input type="number" step="0.1" {...form.register("defaultWidthCm")} className={fieldClass} />
                 </label>
-                <label className="text-xs uppercase text-[#A8A8A4]">
+                <label className="text-xs uppercase text-text-light">
                   Height
                   <input type="number" step="0.1" {...form.register("defaultHeightCm")} className={fieldClass} />
                 </label>
@@ -1150,7 +1150,7 @@ export function ProductFormPage({
                 />
               </div>
               <fieldset className="mt-4 text-sm text-charcoal">
-                <legend className="text-xs uppercase text-[#A8A8A4]">Ready to wear or bespoke</legend>
+                <legend className="text-xs uppercase text-text-light">Ready to wear or bespoke</legend>
                 <label className="mr-4 mt-2 inline-flex items-center gap-2">
                   <input
                     type="radio"
@@ -1167,7 +1167,7 @@ export function ProductFormPage({
                   />
                   Bespoke
                 </label>
-                <p className="mt-1 text-xs text-[#A8A8A4]">
+                <p className="mt-1 text-xs text-text-light">
                   Ready to wear is made to order. Bespoke shows an atelier consultation on the product page.
                 </p>
               </fieldset>
@@ -1179,7 +1179,7 @@ export function ProductFormPage({
                     <label className="flex justify-between gap-2">
                       <span>
                         Show on the homepage
-                        <span className="block text-11px text-[#A8A8A4]">You choose this. It is not updated from sales.</span>
+                        <span className="block text-11px text-text-light">You choose this. It is not updated from sales.</span>
                       </span>
                       <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
                     </label>
@@ -1200,7 +1200,7 @@ export function ProductFormPage({
                   name="publishedAt"
                   render={({ field }) => (
                     <label className="block">
-                      <span className="text-xs uppercase text-[#A8A8A4]">Publish date</span>
+                      <span className="text-xs uppercase text-text-light">Publish date</span>
                       <input
                         type="date"
                         max={publishedAtInputValue(new Date())}
@@ -1211,7 +1211,7 @@ export function ProductFormPage({
                           field.onChange(raw ? new Date(`${raw}T12:00:00`) : null);
                         }}
                       />
-                      <span className="mt-1 block text-11px text-[#A8A8A4]">
+                      <span className="mt-1 block text-11px text-text-light">
                         Defaults to the day you first publish. Backdating only moves the piece under Newest
                         first (Recent) — Curated order on /rtw stays where you dragged it. Future dates are
                         not accepted yet.
@@ -1243,7 +1243,7 @@ export function ProductFormPage({
                 />
               </label>
               {product && (
-                <p className="mt-4 text-xs text-[#A8A8A4]">Updated {new Date(product.updatedAt).toLocaleString()}</p>
+                <p className="mt-4 text-xs text-text-light">Updated {new Date(product.updatedAt).toLocaleString()}</p>
               )}
             </section>
 
@@ -1252,21 +1252,21 @@ export function ProductFormPage({
                 Complete the Look
                 <Opt />
               </h2>
-              <p className="mt-2 text-xs text-[#A8A8A4]">Link up to 4 published pieces shoppers may add alongside this product.</p>
+              <p className="mt-2 text-xs text-text-light">Link up to 4 published pieces shoppers may add alongside this product.</p>
               <div className="relative mt-4">
                 <input
                   value={bundleSearch}
                   onChange={(e) => setBundleSearch(e.target.value)}
                   disabled={bundleIds.length >= 4}
                   placeholder={bundleIds.length >= 4 ? "Maximum 4 products" : "Search published products…"}
-                  className="w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-sm text-charcoal placeholder:text-[#A8A8A4] disabled:opacity-50"
+                  className="w-full rounded-sm border border-sand bg-canvas px-3 py-2 text-sm text-charcoal placeholder:text-text-light disabled:opacity-50"
                 />
                 {bundleSearch.trim().length >= 2 && bundleIds.length < 4 ? (
-                  <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-sm border border-[#E8E8E4] bg-[#FAFAFA] py-1 shadow-lg">
+                  <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-sm border border-[#E8E8E4] bg-bg-page py-1 shadow-lg">
                     {bundleSearching ? (
-                      <p className="px-3 py-2 text-xs text-[#A8A8A4]">Searching…</p>
+                      <p className="px-3 py-2 text-xs text-text-light">Searching…</p>
                     ) : bundleResults.length === 0 ? (
-                      <p className="px-3 py-2 text-xs text-[#A8A8A4]">No matches</p>
+                      <p className="px-3 py-2 text-xs text-text-light">No matches</p>
                     ) : (
                       bundleResults.map((p) => {
                         const img = p.images.find((i) => i.isPrimary) ?? p.images[0];
@@ -1306,7 +1306,7 @@ export function ProductFormPage({
                         </span>
                       ) : null}
                       <span className="max-w-[140px] truncate">{meta.name}</span>
-                      <button type="button" className="text-red-400 hover:underline" onClick={() => removeBundle(bid)} aria-label={`Remove ${meta.name}`}>
+                      <button type="button" className="text-error hover:underline" onClick={() => removeBundle(bid)} aria-label={`Remove ${meta.name}`}>
                         ×
                       </button>
                     </span>
@@ -1317,12 +1317,12 @@ export function ProductFormPage({
 
             <details className={sectionClass}>
               <summary className="cursor-pointer font-display text-2xl text-choc">How this looks on Google</summary>
-              <p className="mt-2 text-xs text-[#A8A8A4]">Leave blank to use the product name and short description.</p>
-              <label className="mt-3 block text-xs uppercase text-[#A8A8A4]">
+              <p className="mt-2 text-xs text-text-light">Leave blank to use the product name and short description.</p>
+              <label className="mt-3 block text-xs uppercase text-text-light">
                 Title
                 <input {...form.register("metaTitle")} maxLength={60} className={fieldClass} />
               </label>
-              <label className="mt-3 block text-xs uppercase text-[#A8A8A4]">
+              <label className="mt-3 block text-xs uppercase text-text-light">
                 Description
                 <textarea {...form.register("metaDescription")} maxLength={160} rows={3} className={fieldClass} />
               </label>

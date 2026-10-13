@@ -359,6 +359,8 @@ table.pill-rows > thead > tr,
 table.pill-rows > thead > tr > th {
   background: transparent;
   border: 0;
+  /* Headers that were white on a dark band read as labels on the page now. */
+  color: var(--text-light);
 }
 /* Glass, as the chips: translucent fill over a blur, a bright top edge. Flat on the
    light page (a drop read as a grey band under each pill); a soft drop only in dark. */

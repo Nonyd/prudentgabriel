@@ -136,7 +136,7 @@ export function AdminEmailTemplatesClient({ templates, adminEmail }: Props) {
                               className={`w-full border-l-2 px-3 py-2 text-left font-body text-xs ${
                                 selectedKey === item.key
                                   ? "border-choc bg-[rgba(68,41,19,0.08)] text-choc"
-                                  : "border-transparent text-[#6B6B68] hover:bg-sand/40"
+                                  : "border-transparent text-text-mid hover:bg-sand/40"
                               }`}
                             >
                               {item.label}
@@ -167,7 +167,7 @@ export function AdminEmailTemplatesClient({ templates, adminEmail }: Props) {
                       className={`w-full border-l-2 px-3 py-2 text-left font-body text-xs ${
                         selectedKey === item.key
                           ? "border-choc bg-[rgba(68,41,19,0.08)] text-choc"
-                          : "border-transparent text-[#6B6B68] hover:bg-sand/40"
+                          : "border-transparent text-text-mid hover:bg-sand/40"
                       }`}
                     >
                       {item.label}
@@ -186,13 +186,13 @@ export function AdminEmailTemplatesClient({ templates, adminEmail }: Props) {
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sand pb-4">
               <div>
                 <h2 className="font-display text-lg text-ink">{selected.label}</h2>
-                <p className="mt-1 text-xs text-[#6B6B68]">
+                <p className="mt-1 text-xs text-text-mid">
                   Copy saved here is what customers actually receive. Structured details (order lines, tracking,
                   bank details) stay in the layout.
                 </p>
               </div>
               {selected.lastEdited ? (
-                <p className="text-xs text-[#6B6B68]">
+                <p className="text-xs text-text-mid">
                   Last edited: {new Date(selected.lastEdited).toLocaleDateString("en-GB")}
                 </p>
               ) : null}
@@ -200,7 +200,7 @@ export function AdminEmailTemplatesClient({ templates, adminEmail }: Props) {
 
             <div className="mt-6 space-y-4">
               <Field label="Subject line" value={subject} onChange={setSubject} />
-              <p className="text-xs text-[#6B6B68]">
+              <p className="text-xs text-text-mid">
                 Variables: {"{{firstName}} {{lastName}} {{email}} {{orderRef}} {{outfitName}} {{amount}} {{date}} {{link}} {{stageName}} {{collectionCode}} {{pickupName}} {{pickupAddress}} {{pickupHours}} {{size}} {{notes}}"}
               </p>
               <Field label="Heading" value={heading} onChange={setHeading} />
@@ -214,7 +214,7 @@ export function AdminEmailTemplatesClient({ templates, adminEmail }: Props) {
             <div className="mt-8 border-t border-sand pt-6">
               <p className="font-label text-xs uppercase tracking-widest text-gold">Send test email</p>
               <div className="mt-3 flex flex-wrap items-end gap-3">
-                <label className="block flex-1 text-xs text-[#6B6B68]">
+                <label className="block flex-1 text-xs text-text-mid">
                   To
                   <input
                     type="email"
@@ -259,7 +259,7 @@ function Field({
   onChange: (v: string) => void;
 }) {
   return (
-    <label className="block text-xs text-[#6B6B68]">
+    <label className="block text-xs text-text-mid">
       {label}
       <input
         value={value}
@@ -282,7 +282,7 @@ function TextArea({
   rows?: number;
 }) {
   return (
-    <label className="block text-xs text-[#6B6B68]">
+    <label className="block text-xs text-text-mid">
       {label}
       <textarea
         rows={rows}

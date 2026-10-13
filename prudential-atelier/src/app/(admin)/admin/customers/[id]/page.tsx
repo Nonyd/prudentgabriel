@@ -27,12 +27,12 @@ export default async function AdminCustomerDetailPage({ params }: { params: Prom
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
-      <Link href="/admin/clients" className="text-sm text-[#A8A8A4] hover:text-gold">
+      <Link href="/admin/clients" className="text-sm text-text-light hover:text-gold">
         ← Clients
       </Link>
       <div>
         <h1 className="font-display text-2xl text-charcoal">{user.name}</h1>
-        <p className="text-sm text-[#A8A8A4]">{user.email}</p>
+        <p className="text-sm text-text-light">{user.email}</p>
         <p className="mt-2 text-sm text-charcoal-mid">
           Points: {user.pointsBalance.toLocaleString()} ({"₦"}
           {Math.round(pointsToNaira(user.pointsBalance, rateNGN)).toLocaleString("en-NG")}) · Orders:{" "}

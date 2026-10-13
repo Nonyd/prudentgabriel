@@ -9,7 +9,7 @@ import { fittingModeLabel, wearerLabel } from "@/lib/consultation-enquiry-shared
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="inline text-[#6B6B68]">{label}: </dt>
+      <dt className="inline text-text-mid">{label}: </dt>
       <dd className="inline text-ink">{value}</dd>
     </div>
   );
@@ -116,7 +116,7 @@ function DecisionForm({
 
   if (enquiry.status === "APPROVED") {
     return (
-      <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-[#6B6B68]">
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-text-mid">
         <span>
           Link valid until{" "}
           {enquiry.publicTokenExpiresAt ? new Date(enquiry.publicTokenExpiresAt).toLocaleDateString("en-GB") : "—"}
@@ -163,7 +163,7 @@ function DecisionForm({
         void send(mode === "approve" ? { action: "approve", reason } : { action: "decline", reason, notifyClient });
       }}
     >
-      <label className="block text-xs text-[#6B6B68]">
+      <label className="block text-xs text-text-mid">
         {mode === "approve" ? "Why approve? (recorded, not sent)" : "Why decline? (recorded, not sent to her)"}
         <textarea
           className="input-field mt-1 min-h-[70px] w-full text-sm"
@@ -175,7 +175,7 @@ function DecisionForm({
         />
       </label>
       {mode === "decline" ? (
-        <label className="flex items-center gap-2 text-xs text-[#6B6B68]">
+        <label className="flex items-center gap-2 text-xs text-text-mid">
           <input type="checkbox" checked={notifyClient} onChange={(e) => setNotifyClient(e.target.checked)} />
           Send her the courteous decline email
         </label>
@@ -240,9 +240,9 @@ export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) 
       </div>
 
       {loading ? (
-        <p className="mt-6 font-body text-sm text-[#6B6B68]">Loading…</p>
+        <p className="mt-6 font-body text-sm text-text-mid">Loading…</p>
       ) : items.length === 0 ? (
-        <p className="mt-6 font-body text-sm text-[#6B6B68]">Nothing here.</p>
+        <p className="mt-6 font-body text-sm text-text-mid">Nothing here.</p>
       ) : (
         <ul className="mt-6 space-y-4">
           {items.map((e) => {
@@ -261,7 +261,7 @@ export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) 
                   <div>
                     <p className="font-mono text-11px text-olive">{e.enquiryNumber}</p>
                     <p className="mt-1 text-base font-medium text-ink">{e.clientName}</p>
-                    <p className="text-xs text-[#6B6B68]">
+                    <p className="text-xs text-text-mid">
                       <a href={`tel:${e.clientPhone}`} className="underline">
                         {e.clientPhone}
                       </a>{" "}
@@ -270,13 +270,13 @@ export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) 
                   </div>
                   <div className="flex flex-wrap gap-2 text-10px uppercase tracking-[0.08em]">
                     {e.shortNotice ? (
-                      <span className="rounded-full bg-red-100 px-2.5 py-1 text-red-800">Short notice — call her</span>
+                      <span className="rounded-full bg-error-soft px-2.5 py-1 text-error">Short notice — call her</span>
                     ) : null}
                     {e.status === "PENDING" ? (
                       <span
                         className={clsx(
                           "rounded-full px-2.5 py-1",
-                          overdue ? "bg-amber-100 text-amber-900" : "bg-[#f1ede6] text-[#6B6B68]",
+                          overdue ? "bg-warning-soft text-warning" : "bg-[#f1ede6] text-text-mid",
                         )}
                       >
                         {waitingLabel(h)}
@@ -287,7 +287,7 @@ export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) 
 
                 <dl className="mt-4 grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2">
                   <div>
-                    <dt className="inline text-[#6B6B68]">Event: </dt>
+                    <dt className="inline text-text-mid">Event: </dt>
                     <dd className="inline text-ink">
                       {e.eventType}
                       {e.occasionDetails ? ` (${e.occasionDetails})` : ""}, {eventLabel(e.eventDate)}
@@ -309,7 +309,7 @@ export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) 
                   {e.wearer ? <Fact label="Wearer" value={wearerLabel(e.wearer)} /> : null}
                   {e.outfitType ? <Fact label="Outfit" value={e.outfitType} /> : null}
                   <div>
-                    <dt className="inline text-[#6B6B68]">Received: </dt>
+                    <dt className="inline text-text-mid">Received: </dt>
                     <dd className="inline text-ink">{new Date(e.createdAt).toLocaleString("en-GB")}</dd>
                   </div>
                 </dl>
@@ -326,7 +326,7 @@ export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) 
                 ) : null}
 
                 {e.decisionReason ? (
-                  <p className="mt-3 text-xs text-[#6B6B68]">
+                  <p className="mt-3 text-xs text-text-mid">
                     {e.status === "DECLINED" ? "Declined" : "Approved"} by {e.decidedBy ?? "—"}
                     {e.decidedAt ? ` on ${new Date(e.decidedAt).toLocaleDateString("en-GB")}` : ""}: {e.decisionReason}
                   </p>

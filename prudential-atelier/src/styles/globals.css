@@ -111,8 +111,8 @@ body {
     left: 1rem;
     top: -100px;
     z-index: 200;
-    background: var(--choc);
-    color: var(--cream);
+    background: var(--choc-deep);
+    color: var(--ivory-deep);
     padding: 0.5rem 1rem;
     font-family: var(--font-ui);
     font-size: 11px;
@@ -795,8 +795,8 @@ body {
   display: inline-flex;
   align-items: center;
   border-radius: var(--glass-radius-pill);
-  background: color-mix(in srgb, var(--choc) 82%, transparent);
-  color: var(--cream);
+  background: color-mix(in srgb, var(--choc-deep) 82%, transparent);
+  color: var(--ivory-deep);
 }
 
 /* Circular glass chevrons on every product card. Equal sides + pill radius. */
@@ -1050,6 +1050,41 @@ a.admin-cta {
   background-color: var(--choc-deep);
 }
 
+/* Near-black fills (charcoal, ink) carry light text; in dark they would turn cream under it. */
+[data-theme="dark"] .bg-charcoal,
+[data-theme="dark"] .bg-ink,
+[data-theme="dark"] .hover\:bg-charcoal:hover,
+[data-theme="dark"] .hover\:bg-ink:hover {
+  background-color: var(--choc-deep);
+}
+
+/* The account rail's active/hover link is chocolate on a white wash; in dark it is ivory on a faint one. */
+[data-theme="dark"] .account-rail-link:hover,
+[data-theme="dark"] .account-rail-link-active {
+  background: rgb(255 255 255 / 0.08);
+  color: var(--ivory-deep);
+  border-color: var(--ivory-deep);
+}
+
+/* Nut as a fill (export buttons) keeps its light-theme depth under ivory text. */
+[data-theme="dark"] .bg-nut {
+  background-color: #5c3422;
+}
+
+/* Wine as a fill stays deep (the dashboard hero, active tabs); as text it lifts to the dark error tone. */
+[data-theme="dark"] .bg-wine {
+  background-color: #6b1c2a;
+}
+
+[data-theme="dark"] .text-wine {
+  color: var(--error);
+}
+
+/* Faded olive text (text-olive/80 …) mixes from the dark olive fill; lift it like .text-olive. */
+[data-theme="dark"] [class*="text-olive/"] {
+  color: #d4d6c4;
+}
+
 [data-theme="dark"] .text-ivory {
   color: var(--ivory-deep);
 }
@@ -1065,6 +1100,11 @@ a.admin-cta {
 
 [data-theme="dark"] .bg-white {
   background-color: var(--bg-card);
+}
+
+/* --cream is a text colour in dark; as a fill it becomes the dark surface. */
+[data-theme="dark"] .bg-cream {
+  background-color: var(--bg-surface);
 }
 
 [data-theme="dark"] .text-\[\#6B6B68\],

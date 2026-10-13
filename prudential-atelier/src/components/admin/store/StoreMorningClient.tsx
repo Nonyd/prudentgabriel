@@ -122,7 +122,7 @@ export function StoreMorningClient() {
                                 </span>
                               </td>
                               <td
-                                className={`py-2 pr-3 text-right tabular-nums ${item.onHand < 0 ? "text-[#C45E0A]" : ""}`}
+                                className={`py-2 pr-3 text-right tabular-nums ${item.onHand < 0 ? "text-warning" : ""}`}
                               >
                                 {formatQty(item.onHand, item.unit)}
                               </td>

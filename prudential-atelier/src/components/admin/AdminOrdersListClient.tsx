@@ -26,17 +26,17 @@ export type AdminOrderListRow = {
 function gatewayBadgeClass(g: PaymentGateway | null): string {
   switch (g) {
     case "PAYSTACK":
-      return "bg-[#E8F5E9] text-[#1B5E20]";
+      return "bg-success-soft text-success";
     case "FLUTTERWAVE":
-      return "bg-[#E8F0FF] text-[#1A3FAD]";
+      return "bg-[#E8F0FF] text-info";
     case "STRIPE":
-      return "bg-[#F0E8FF] text-[#6B3FAD]";
+      return "bg-info-soft text-info";
     case "MONNIFY":
-      return "bg-[#FFF3E0] text-[#C45E0A]";
+      return "bg-warning-soft text-warning";
     case "BANK_TRANSFER":
-      return "bg-[#F5F0E8] text-[#442913]";
+      return "bg-[#F5F0E8] text-ink";
     default:
-      return "bg-[#FAFAFA] text-[#A8A8A4]";
+      return "bg-bg-page text-text-light";
   }
 }
 
@@ -190,7 +190,7 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
 
       <div className="-mx-4 overflow-x-auto glass-opaque px-4 md:mx-0 md:px-0">
         <table className="pill-rows w-full min-w-[700px] text-left text-sm text-charcoal">
-          <thead className="border-b border-sand text-11px uppercase text-[#A8A8A4]">
+          <thead className="border-b border-sand text-11px uppercase text-text-light">
             <tr>
               <th className="w-10 p-3">
                 <input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="Select all on page" />
@@ -214,12 +214,12 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                 key={o.id}
                 className={
                   o.status === "ABANDONED"
-                    ? "border-b border-[#F5F5F3] bg-[#FAFAFA] text-[#8A8A86] hover:bg-[#F5F5F3]"
+                    ? "border-b border-border bg-bg-page text-text-light hover:bg-bg-page"
                     : o.paymentStatus === "PAID" && o.status === "CANCELLED"
-                      ? "border-b border-[#F5F5F3] bg-[#F8F1E8] hover:bg-[#F3E6D8]"
+                      ? "border-b border-border bg-[#F8F1E8] hover:bg-[#F3E6D8]"
                       : o.paymentGateway === "BANK_TRANSFER" && o.paymentStatus === "PENDING"
-                        ? "border-b border-[#F5F5F3] bg-[#FFF8F0] hover:bg-[#FFF1E4]"
-                        : "border-b border-[#F5F5F3] hover:bg-[#FAFAFA]"
+                        ? "border-b border-border bg-warning-soft hover:bg-[#FFF1E4]"
+                        : "border-b border-border hover:bg-bg-page"
                 }
               >
                 <td className="p-3">
@@ -228,9 +228,9 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                 <td className="p-3 font-body text-11px font-medium text-olive">{o.orderNumber}</td>
                 <td className="p-3">
                   <div className="font-medium text-ink">{o.customerName}</div>
-                  <div className="text-xs text-[#A8A8A4]">{o.customerEmail}</div>
+                  <div className="text-xs text-text-light">{o.customerEmail}</div>
                 </td>
-                <td className="hidden p-3 text-xs text-[#6B6B68] md:table-cell">
+                <td className="hidden p-3 text-xs text-text-mid md:table-cell">
                   {o.itemCount} · {o.firstItemName}
                 </td>
                 <td className="p-3 font-body text-13px text-ink">₦{Math.round(o.total).toLocaleString("en-NG")}</td>
@@ -246,14 +246,14 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                   {o.paymentStatus === "PAID" && o.status === "CANCELLED" ? (
                     <span className="font-medium text-choc">Refund required</span>
                   ) : o.status === "ABANDONED" ? (
-                    <span className="font-medium text-[#8A8A86]">Abandoned</span>
+                    <span className="font-medium text-text-light">Abandoned</span>
                   ) : o.status === "PENDING" && o.paymentStatus !== "PAID" ? (
-                    <span className="text-[#6B6B68]">Pending payment</span>
+                    <span className="text-text-mid">Pending payment</span>
                   ) : (
                     o.status
                   )}
                 </td>
-                <td className="p-3 text-xs text-[#A8A8A4]">{new Date(o.createdAt).toLocaleDateString("en-NG")}</td>
+                <td className="p-3 text-xs text-text-light">{new Date(o.createdAt).toLocaleDateString("en-NG")}</td>
                 <td className="p-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Link href={`/admin/orders/${o.id}`} className="font-body text-11px text-olive hover:underline">
@@ -273,7 +273,7 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                     ) : null}
                     <button
                       type="button"
-                      className="font-body text-11px text-red-600 hover:underline"
+                      className="font-body text-11px text-error hover:underline"
                       onClick={() => setDeleteState({ mode: "single", id: o.id, orderNumber: o.orderNumber })}
                     >
                       Delete

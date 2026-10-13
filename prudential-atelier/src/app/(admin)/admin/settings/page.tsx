@@ -180,19 +180,19 @@ function SettingCardLink({
         className="group flex rounded-[26px] glass-1 glass-panel p-6 transition-colors hover:border-[var(--glass-edge-bright)]"
     >
       <div className="flex min-w-0 flex-1 gap-4">
-        <Icon className="h-8 w-8 shrink-0 text-[#37392d]" strokeWidth={1.25} aria-hidden />
+        <Icon className="h-8 w-8 shrink-0 text-ink" strokeWidth={1.25} aria-hidden />
         <div className="min-w-0 flex-1">
           <p className="font-body text-sm font-medium text-ink">{card.title}</p>
-          <p className="mt-1 font-body text-13px leading-snug text-[#6B6B68]">{card.description}</p>
+          <p className="mt-1 font-body text-13px leading-snug text-text-mid">{card.description}</p>
         </div>
       </div>
       <div className="flex shrink-0 flex-col items-end justify-between gap-2 pl-2">
         {count > 0 ? (
-          <span className="whitespace-nowrap font-body text-11px text-[#6B6B68]">
+          <span className="whitespace-nowrap font-body text-11px text-text-mid">
             {count} {countLabel}
           </span>
         ) : null}
-        <span className="font-body text-sm text-[#37392d] transition-transform group-hover:translate-x-0.5">
+        <span className="font-body text-sm text-ink transition-transform group-hover:translate-x-0.5">
           →
         </span>
       </div>

@@ -73,7 +73,7 @@ export function CustomFieldBuilder({
       </div>
 
       {fields.map((field, index) => (
-        <div key={field.id} className="rounded-sm border border-sand bg-[#FAFAFA] p-4">
+        <div key={field.id} className="rounded-sm border border-sand bg-bg-page p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2">
               <button type="button" className="font-body text-xs text-charcoal-mid" onClick={() => moveField(field.id, -1)}>
@@ -82,7 +82,7 @@ export function CustomFieldBuilder({
               <button type="button" className="font-body text-xs text-charcoal-mid" onClick={() => moveField(field.id, 1)}>
                 ↓
               </button>
-              <span className="font-label text-10px uppercase tracking-wide text-[#A8A8A4]">
+              <span className="font-label text-10px uppercase tracking-wide text-text-light">
                 {FIELD_TYPES.find((t) => t.type === field.type)?.label ?? field.type}
               </span>
             </div>

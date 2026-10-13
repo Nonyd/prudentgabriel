@@ -91,7 +91,7 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
   return (
     <div>
       <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">Consultations</h1>
-      <p className="mt-1 font-body text-13px text-[#6B6B68]">Prudential Atelier</p>
+      <p className="mt-1 font-body text-13px text-text-mid">Prudential Atelier</p>
 
       <div className="mt-4 flex flex-wrap gap-2 font-body text-11px">
         <Link
@@ -117,7 +117,7 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
       </div>
 
       {unsentVirtual.length > 0 && alertBooking && !awaitingQuote ? (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-amber-300 bg-warning-soft px-4 py-3 text-sm text-warning">
           <span>
             ⚠ {unsentVirtual.length} virtual consultation{unsentVirtual.length > 1 ? "s" : ""} within 2 hours —
             meeting link not sent
@@ -129,7 +129,7 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
       ) : null}
 
       {awaitingQuoteCount > 0 && !awaitingQuote ? (
-        <p className="mt-4 font-body text-sm text-amber-800">
+        <p className="mt-4 font-body text-sm text-warning">
           {awaitingQuoteCount} completed consultation(s) awaiting a quotation (48h+) —{" "}
           <Link href="/admin/consultations?awaitingQuote=1" className="underline">
             view filter
@@ -138,7 +138,7 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
       ) : null}
 
       {pendingConfirm > 0 && !awaitingQuote ? (
-        <p className="mt-4 font-body text-sm text-amber-800">
+        <p className="mt-4 font-body text-sm text-warning">
           {pendingConfirm} booking(s) awaiting manual confirmation
         </p>
       ) : null}
@@ -166,12 +166,12 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
                   <td className="px-3 py-2 font-mono text-11px text-olive">{b.bookingNumber}</td>
                   <td className="px-3 py-2">
                     <div className="font-medium text-ink">{b.clientName}</div>
-                    <div className="text-[#6B6B68]">{b.clientEmail}</div>
+                    <div className="text-text-mid">{b.clientEmail}</div>
                   </td>
                   <td className="px-3 py-2 text-ink">
                     {getOfferingTypeIcon(b.offeringType)} {getOfferingTypeLabel(b.offeringType)}
                   </td>
-                  <td className="px-3 py-2 text-[#6B6B68]">
+                  <td className="px-3 py-2 text-text-mid">
                     {isVirtual ? getVirtualPlatformLabel(b.virtualPlatform) || "—" : "—"}
                   </td>
                   <td className="px-3 py-2 text-ink">{formatStatus(b.status)}</td>

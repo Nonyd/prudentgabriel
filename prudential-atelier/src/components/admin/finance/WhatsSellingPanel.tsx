@@ -75,7 +75,7 @@ type Ranked = {
 
 function RankedBars({ rows, sort }: { rows: Ranked[]; sort: SellingSort }) {
   if (rows.length === 0) {
-    return <p className="mt-3 font-sans text-sm text-[#6B6B68]">{NO_SALES_COPY}</p>;
+    return <p className="mt-3 font-sans text-sm text-text-mid">{NO_SALES_COPY}</p>;
   }
   const max = Math.max(...rows.map((r) => metricNow(sort, r)), 0);
   return (
@@ -88,14 +88,14 @@ function RankedBars({ rows, sort }: { rows: Ranked[]; sort: SellingSort }) {
             {row.thumbnailUrl !== undefined ? <Thumb url={row.thumbnailUrl} name={row.name} /> : null}
             <div className="min-w-0 flex-1">
               <p className="truncate font-sans text-sm text-choc">{row.name}</p>
-              <p className="mt-0.5 font-sans text-xs text-[#6B6B68]">
+              <p className="mt-0.5 font-sans text-xs text-text-mid">
                 {row.unitsSold} sold · {naira(row.revenueNGN)}
                 {row.orderedToMeasure > 0 ? ` · ${row.orderedToMeasure} to measure` : ""}
                 {" · "}
                 {changeText(metricNow(sort, row), metricPrev(sort, row), metricKind(sort))}
               </p>
               {row.materialsLine ? (
-                <p className="mt-0.5 font-sans text-11px text-[#8A8A86]">Ate: {row.materialsLine}</p>
+                <p className="mt-0.5 font-sans text-11px text-text-light">Ate: {row.materialsLine}</p>
               ) : null}
               <div className="mt-1.5 h-2 w-full bg-sand/70">
                 <div className="h-2 bg-[var(--choc-deep)]" style={{ width: `${width}%` }} />
@@ -183,7 +183,7 @@ export function WhatsSellingPanel({ data }: { data: WhatsSellingReport }) {
             type="button"
             onClick={() => setSort(s.id)}
             className={`admin-chip glass-1 glass-pill min-h-[44px] font-sans text-xs uppercase tracking-wider ${
-              sort === s.id ? "border-[var(--glass-edge-bright)] text-choc" : "text-[#6B6B68]"
+              sort === s.id ? "border-[var(--glass-edge-bright)] text-choc" : "text-text-mid"
             }`}
           >
             {s.label}
@@ -195,8 +195,8 @@ export function WhatsSellingPanel({ data }: { data: WhatsSellingReport }) {
           </button>
         ) : null}
       </div>
-      <p className="font-sans text-sm text-[#6B6B68]">{DEMAND_COPY}</p>
-      <p className="font-sans text-sm text-[#6B6B68]">{HOMEPAGE_BESTSELLERS_ADMIN_NOTE}</p>
+      <p className="font-sans text-sm text-text-mid">{DEMAND_COPY}</p>
+      <p className="font-sans text-sm text-text-mid">{HOMEPAGE_BESTSELLERS_ADMIN_NOTE}</p>
 
       <section className="card-surface p-5">
         <h2 className="font-display text-lg text-choc">By piece</h2>
@@ -206,10 +206,10 @@ export function WhatsSellingPanel({ data }: { data: WhatsSellingReport }) {
       <section className="card-surface p-5">
         <h2 className="font-display text-lg text-choc">By collection</h2>
         {!data.collectionsAssigned ? (
-          <p className="mt-3 font-sans text-sm text-[#6B6B68]">{NO_COLLECTION_ASSIGNMENTS_COPY}</p>
+          <p className="mt-3 font-sans text-sm text-text-mid">{NO_COLLECTION_ASSIGNMENTS_COPY}</p>
         ) : (
           <>
-            <p className="mt-1 font-sans text-xs text-[#6B6B68]">{COLLECTION_DOUBLE_COUNT_COPY}</p>
+            <p className="mt-1 font-sans text-xs text-text-mid">{COLLECTION_DOUBLE_COUNT_COPY}</p>
             <RankedBars rows={collections.map(toCollectionRow)} sort={sort} />
           </>
         )}
@@ -217,11 +217,11 @@ export function WhatsSellingPanel({ data }: { data: WhatsSellingReport }) {
 
       <section className="card-surface p-5">
         <h2 className="font-display text-lg text-choc">By size</h2>
-        <p className="mt-1 font-sans text-xs text-[#6B6B68]">
+        <p className="mt-1 font-sans text-xs text-text-mid">
           Standard sizes ordered this period. Made-to-measure sits on the piece row, not here.
         </p>
         {sizePieces.length === 0 ? (
-          <p className="mt-3 font-sans text-sm text-[#6B6B68]">{NO_SALES_COPY}</p>
+          <p className="mt-3 font-sans text-sm text-text-mid">{NO_SALES_COPY}</p>
         ) : (
           <div className="mt-4 space-y-5">
             {sizePieces.map((p) => {
@@ -232,11 +232,11 @@ export function WhatsSellingPanel({ data }: { data: WhatsSellingReport }) {
                   <ul className="mt-2 space-y-1.5">
                     {p.sizes.map((s) => (
                       <li key={s.size} className="grid grid-cols-[3rem_1fr_auto] items-center gap-2 font-sans text-xs">
-                        <span className="text-[#6B6B68]">{s.size}</span>
+                        <span className="text-text-mid">{s.size}</span>
                         <div className="flex h-2 overflow-hidden bg-sand/70">
                           <span className="h-2 bg-[var(--choc-deep)]" style={{ width: `${(s.sold / maxSold) * 100}%` }} />
                         </div>
-                        <span className="text-[#6B6B68]">{s.sold} ordered</span>
+                        <span className="text-text-mid">{s.sold} ordered</span>
                       </li>
                     ))}
                   </ul>
@@ -249,11 +249,11 @@ export function WhatsSellingPanel({ data }: { data: WhatsSellingReport }) {
 
       <section className="card-surface p-5">
         <h2 className="font-display text-lg text-choc">By option</h2>
-        <p className="mt-1 font-sans text-xs text-[#6B6B68]">
+        <p className="mt-1 font-sans text-xs text-text-mid">
           Trousers versus skirt, jacket or none — which version she actually ordered.
         </p>
         {optionPieces.length === 0 ? (
-          <p className="mt-3 font-sans text-sm text-[#6B6B68]">{NO_SALES_COPY}</p>
+          <p className="mt-3 font-sans text-sm text-text-mid">{NO_SALES_COPY}</p>
         ) : (
           <div className="mt-4 space-y-5">
             {optionPieces.map((p) => {
@@ -264,11 +264,11 @@ export function WhatsSellingPanel({ data }: { data: WhatsSellingReport }) {
                   <ul className="mt-2 space-y-1.5">
                     {p.options.map((o) => (
                       <li key={o.option} className="grid grid-cols-[6rem_1fr_auto] items-center gap-2 font-sans text-xs">
-                        <span className="truncate text-[#6B6B68]">{o.option}</span>
+                        <span className="truncate text-text-mid">{o.option}</span>
                         <div className="flex h-2 overflow-hidden bg-sand/70">
                           <span className="h-2 bg-[var(--choc-deep)]" style={{ width: `${(o.sold / maxSold) * 100}%` }} />
                         </div>
-                        <span className="text-[#6B6B68]">{o.sold} ordered</span>
+                        <span className="text-text-mid">{o.sold} ordered</span>
                       </li>
                     ))}
                   </ul>
@@ -281,9 +281,9 @@ export function WhatsSellingPanel({ data }: { data: WhatsSellingReport }) {
 
       <section className="card-surface p-5">
         <h2 className="font-display text-lg text-choc">No orders this period</h2>
-        <p className="mt-1 font-sans text-xs text-[#6B6B68]">{NO_ORDERS_COPY}</p>
+        <p className="mt-1 font-sans text-xs text-text-mid">{NO_ORDERS_COPY}</p>
         {data.notSelling.length === 0 ? (
-          <p className="mt-3 font-sans text-sm text-[#6B6B68]">
+          <p className="mt-3 font-sans text-sm text-text-mid">
             {data.pieces.length === 0 ? NO_SALES_COPY : "Every published piece had an order this period."}
           </p>
         ) : (

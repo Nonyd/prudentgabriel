@@ -62,7 +62,7 @@ export function MediaLibraryTab() {
   return (
     <div className="rounded-sm border border-sand bg-canvas p-6">
       <p className="font-body text-sm text-charcoal">Media library</p>
-      <p className="mt-1 font-body text-xs text-[#6B6B68]">
+      <p className="mt-1 font-body text-xs text-text-mid">
         {data?.total ?? 0} files stored. Select items to delete in bulk.
       </p>
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -80,12 +80,12 @@ export function MediaLibraryTab() {
                 onChange={() => toggle(m.id)}
               />
               <div
-                className="aspect-square w-full bg-[#F5F5F3] bg-cover bg-center"
+                className="aspect-square w-full bg-bg-page bg-cover bg-center"
                 style={{ backgroundImage: `url(${m.url})` }}
                 role="img"
                 aria-label={m.filename}
               />
-              <p className="mt-1 truncate font-body text-10px text-[#6B6B68]">{m.filename}</p>
+              <p className="mt-1 truncate font-body text-10px text-text-mid">{m.filename}</p>
             </label>
           );
         })}
@@ -114,7 +114,7 @@ export function MediaLibraryTab() {
               type="button"
               disabled={deleting}
               onClick={() => void bulkDelete()}
-              className="font-medium text-red-700 underline disabled:opacity-50"
+              className="font-medium text-error underline disabled:opacity-50"
             >
               {deleting ? "Deleting…" : "Delete selected"}
             </button>

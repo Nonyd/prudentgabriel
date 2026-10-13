@@ -43,18 +43,18 @@ function ModeRadios({
 function BandStatusNote({ band }: { band: BandAdminStatus }) {
   if (band.misconfigured) {
     return (
-      <p className="mt-2 border border-[#E8D5B0] bg-[#FFF8E7] px-3 py-2 font-body text-xs text-[#92660A]">
+      <p className="mt-2 border border-border bg-warning-soft px-3 py-2 font-body text-xs text-warning">
         Set to LIVE but credentials are not configured. Checkout still takes the personal-quote path until the account
         is added — this is not the same as choosing Manual.
       </p>
     );
   }
   if (band.mode === "LIVE" && band.configured) {
-    return <p className="mt-2 font-body text-xs text-[#6B6B68]">Credentials present. Checkout will request a live rate.</p>;
+    return <p className="mt-2 font-body text-xs text-text-mid">Credentials present. Checkout will request a live rate.</p>;
   }
   if (band.mode === "MANUAL") {
     return (
-      <p className="mt-2 font-body text-xs text-[#6B6B68]">
+      <p className="mt-2 font-body text-xs text-text-mid">
         Checkout offers personal arrangement. A LIVE failure still falls back to this path.
       </p>
     );
@@ -154,7 +154,7 @@ export function ShippingAdminClient({
     <div className="mt-6 space-y-10">
       <div>
         <h1 className="font-display text-24px text-ink">Shipping</h1>
-        <p className="mt-1 max-w-2xl font-body text-13px text-[#6B6B68]">
+        <p className="mt-1 max-w-2xl font-body text-13px text-text-mid">
           Lagos is automatic. Nigeria and international can run as a personal quote until GIG and DHL accounts are live
           — flip each band on its own, so Lekki never waits for a phone call. Carrier API keys are set in{" "}
           <Link href="/admin/settings/developer" className="underline">
@@ -166,20 +166,20 @@ export function ShippingAdminClient({
 
       <section className="border border-sand bg-bg-card p-6">
         <h2 className="font-display text-xl text-ink">Mode by destination</h2>
-        <p className="mt-1 font-body text-xs text-[#6B6B68]">
+        <p className="mt-1 font-body text-xs text-text-mid">
           One control per band. Mode is the intent; a LIVE timeout still falls back to the personal-quote path.
         </p>
 
-        <div className="mt-6 border-t border-[#F5F5F3] pt-4">
+        <div className="mt-6 border-t border-border pt-4">
           <p className="font-body text-sm text-ink">Lagos</p>
-          <p className="mt-1 font-body text-xs uppercase tracking-wide text-[#A8A8A4]">Automatic only</p>
-          <p className="mt-2 font-body text-xs text-[#6B6B68]">
+          <p className="mt-1 font-body text-xs uppercase tracking-wide text-text-light">Automatic only</p>
+          <p className="mt-2 font-body text-xs text-text-mid">
             Pickup locations and flat rates. No carrier account, and no manual toggle — flipping a global switch would
             put a phone call in front of every Lekki delivery.
           </p>
         </div>
 
-        <div className="mt-6 border-t border-[#F5F5F3] pt-4">
+        <div className="mt-6 border-t border-border pt-4">
           <p className="font-body text-sm text-ink">Nigeria (GIG)</p>
           <ModeRadios
             value={status.nigeria.mode === "LIVE" ? "LIVE" : "MANUAL"}
@@ -188,7 +188,7 @@ export function ShippingAdminClient({
           <BandStatusNote band={status.nigeria} />
         </div>
 
-        <div className="mt-6 border-t border-[#F5F5F3] pt-4">
+        <div className="mt-6 border-t border-border pt-4">
           <p className="font-body text-sm text-ink">International (DHL)</p>
           <ModeRadios
             value={status.international.mode === "LIVE" ? "LIVE" : "MANUAL"}
@@ -200,11 +200,11 @@ export function ShippingAdminClient({
 
       <section className="border border-sand bg-bg-card p-6">
         <h2 className="font-display text-xl text-ink">Checkout wording</h2>
-        <p className="mt-1 font-body text-xs text-[#6B6B68]">
+        <p className="mt-1 font-body text-xs text-text-mid">
           Two strings, because a couture house arranging delivery is a service, not a failure. The wording shown is the
           wording stored on the order. Nony to confirm.
         </p>
-        <label className="mt-4 block font-body text-xs text-[#6B6B68]">
+        <label className="mt-4 block font-body text-xs text-text-mid">
           Manual mode
           <textarea
             rows={4}
@@ -217,7 +217,7 @@ export function ShippingAdminClient({
             }}
           />
         </label>
-        <label className="mt-4 block font-body text-xs text-[#6B6B68]">
+        <label className="mt-4 block font-body text-xs text-text-mid">
           Live mode — when the carrier cannot quote
           <textarea
             rows={4}
@@ -236,13 +236,13 @@ export function ShippingAdminClient({
 
       <section className="border border-sand bg-bg-card p-6">
         <h2 className="font-display text-xl text-ink">Lagos delivery</h2>
-        <p className="mt-1 font-body text-xs text-[#6B6B68]">
+        <p className="mt-1 font-body text-xs text-text-mid">
           Each row is a neighbourhood or area the customer picks at checkout. Inactive rows stay on file but do not
           appear.
         </p>
         <div className="mt-4 overflow-x-auto">
           <table className="pill-rows w-full text-left text-sm">
-            <thead className="font-sans text-10px uppercase tracking-wide text-[#A8A8A4]">
+            <thead className="font-sans text-10px uppercase tracking-wide text-text-light">
               <tr>
                 <th className="pb-2">Area</th>
                 <th className="pb-2">Price (₦)</th>
@@ -253,7 +253,7 @@ export function ShippingAdminClient({
             </thead>
             <tbody>
               {(local?.lagosLocations ?? []).map((loc) => (
-                <tr key={loc.id} className="border-t border-[#F5F5F3]">
+                <tr key={loc.id} className="border-t border-border">
                   <td className="py-3">
                     <input
                       defaultValue={loc.name}
@@ -342,12 +342,12 @@ export function ShippingAdminClient({
 
       <section className="border border-sand bg-bg-card p-6">
         <h2 className="font-display text-xl text-ink">Store pickup</h2>
-        <p className="mt-1 font-body text-xs text-[#6B6B68]">Address, hours, and handover instructions shown to the customer.</p>
+        <p className="mt-1 font-body text-xs text-text-mid">Address, hours, and handover instructions shown to the customer.</p>
         {(pickup?.pickupLocations ?? []).map((loc) => (
-          <div key={loc.id} className="mt-4 border-t border-[#F5F5F3] pt-4">
+          <div key={loc.id} className="mt-4 border-t border-border pt-4">
             <p className="font-body text-sm text-ink">{loc.name}</p>
-            <p className="font-body text-xs text-[#6B6B68]">{loc.address}</p>
-            <p className="font-body text-xs text-[#6B6B68]">{loc.hours}</p>
+            <p className="font-body text-xs text-text-mid">{loc.address}</p>
+            <p className="font-body text-xs text-text-mid">{loc.hours}</p>
           </div>
         ))}
         <div className="mt-4 grid gap-2">
@@ -381,14 +381,14 @@ export function ShippingAdminClient({
 
       <section className="border border-sand bg-bg-card p-6">
         <h2 className="font-display text-xl text-ink">Carriers</h2>
-        <p className="mt-1 font-body text-xs text-[#6B6B68]">
+        <p className="mt-1 font-body text-xs text-text-mid">
           Markup applies when a band is LIVE and the carrier returns a rate. DHL may add fuel and remote-area charges
           after quoting.
         </p>
         {[gig, dhl].filter(Boolean).map((m) => (
-          <div key={m!.id} className="mt-4 flex flex-wrap items-end gap-3 border-t border-[#F5F5F3] pt-4">
+          <div key={m!.id} className="mt-4 flex flex-wrap items-end gap-3 border-t border-border pt-4">
             <p className="w-40 font-body text-sm text-ink">{m!.name}</p>
-            <label className="text-xs text-[#6B6B68]">
+            <label className="text-xs text-text-mid">
               Markup
               <select
                 className="ml-2 border border-sand bg-canvas px-2 py-1"
@@ -405,7 +405,7 @@ export function ShippingAdminClient({
               className="w-24 border border-sand bg-canvas px-2 py-1 text-sm"
               onBlur={(e) => void patchLagos(m!.id, { markupValue: Number(e.target.value) })}
             />
-            <label className="inline-flex items-center gap-1 text-xs text-[#6B6B68]">
+            <label className="inline-flex items-center gap-1 text-xs text-text-mid">
               <input
                 type="checkbox"
                 checked={m!.isActive}

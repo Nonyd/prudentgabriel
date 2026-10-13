@@ -92,7 +92,7 @@ export function AccountOrdersList({ orders }: { orders: AccountOrderRow[] }) {
               {o.canDelete ? (
                 <button
                   type="button"
-                  className="text-xs text-red-700 underline hover:no-underline"
+                  className="text-xs text-error underline hover:no-underline"
                   onClick={(e) => {
                     e.preventDefault();
                     setPendingId(o.id);

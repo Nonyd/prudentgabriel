@@ -26,7 +26,7 @@ export async function AdminOutstandingBalances() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-display text-lg text-ink">Outstanding balances</h2>
-          <p className="mt-1 font-body text-sm text-[#6B6B68]">
+          <p className="mt-1 font-body text-sm text-text-mid">
             Bespoke orders with balance due · Total {formatPrice(totalOutstanding, "NGN")}
           </p>
         </div>
@@ -34,7 +34,7 @@ export async function AdminOutstandingBalances() {
       <div className="mt-4 overflow-x-auto">
         <table className="pill-rows w-full min-w-[640px] border-collapse font-body text-sm">
           <thead>
-            <tr className="border-b border-sand bg-[#FAFAFA] text-left text-10px font-medium uppercase tracking-wide text-[#6B6B68]">
+            <tr className="border-b border-sand bg-bg-page text-left text-10px font-medium uppercase tracking-wide text-text-mid">
               <th className="px-4 py-3">Client</th>
               <th className="px-4 py-3">Order</th>
               <th className="px-4 py-3 text-right">Total</th>
@@ -50,10 +50,10 @@ export async function AdminOutstandingBalances() {
                 <td className="px-4 py-3 font-medium">{o.orderRef}</td>
                 <td className="px-4 py-3 text-right tabular-nums">{formatPrice(o.totalAmount, "NGN")}</td>
                 <td className="px-4 py-3 text-right tabular-nums">{formatPrice(o.amountPaid, "NGN")}</td>
-                <td className="px-4 py-3 text-right tabular-nums font-medium text-[#C45E0A]">
+                <td className="px-4 py-3 text-right tabular-nums font-medium text-warning">
                   {formatPrice(o.balance, "NGN")}
                 </td>
-                <td className="px-4 py-3 text-xs text-[#6B6B68]">
+                <td className="px-4 py-3 text-xs text-text-mid">
                   {o.deliveryDate
                     ? o.deliveryDate.toLocaleDateString("en-GB", { dateStyle: "medium" })
                     : "—"}

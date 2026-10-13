@@ -41,7 +41,7 @@ function BrandLogoPair({
 }) {
   return (
     <div className="rounded-sm border border-sand bg-canvas p-6">
-      <h3 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+      <h3 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-text-mid">
         {brand.title}
       </h3>
       <div className="mt-6 grid gap-8 md:grid-cols-2">
@@ -157,7 +157,7 @@ export function SubBrandLogosSettingsCard({
 
   return (
     <div className="space-y-6">
-      <p className="font-body text-xs text-[#6B6B68]">
+      <p className="font-body text-xs text-text-mid">
         If a sub-brand logo is not set, the main brand logo will be used on that section&apos;s pages.
       </p>
       {brands.map((brand) => (

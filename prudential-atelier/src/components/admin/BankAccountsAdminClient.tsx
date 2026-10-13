@@ -78,7 +78,7 @@ function Field({
   textarea?: boolean;
 }) {
   return (
-    <label className="block font-body text-xs text-[#6B6B68]">
+    <label className="block font-body text-xs text-text-mid">
       {label}
       {textarea ? (
         <textarea
@@ -213,7 +213,7 @@ export function BankAccountsAdminClient({ initialSlots }: { initialSlots: Slot[]
     <div className="mt-6 space-y-8">
       <div>
         <h1 className="font-display text-24px text-ink">Bank accounts</h1>
-        <p className="mt-1 max-w-2xl font-body text-13px text-[#6B6B68]">
+        <p className="mt-1 max-w-2xl font-body text-13px text-text-mid">
           One account per currency and business line. Bank transfer only appears when an active account matches the
           cart. EUR is for quotations and invoices — it is not a storefront checkout currency.
         </p>
@@ -222,7 +222,7 @@ export function BankAccountsAdminClient({ initialSlots }: { initialSlots: Slot[]
       {BUSINESS_LINES.map((line) => (
         <section key={line} className="border border-sand bg-bg-card p-6">
           <h2 className="font-display text-xl text-ink">{line === "RTW" ? "Ready-to-Wear" : "Atelier"}</h2>
-          <p className="mt-1 font-body text-xs text-[#6B6B68]">
+          <p className="mt-1 font-body text-xs text-text-mid">
             {line === "RTW"
               ? "Checkout and shipping top-ups on shop orders."
               : "Consultations, quotations, invoices, and bespoke deposits. Configurable even while bookings are closed."}
@@ -232,12 +232,12 @@ export function BankAccountsAdminClient({ initialSlots }: { initialSlots: Slot[]
               const slot = slots.find((s) => s.currency === currency && s.businessLine === line);
               const account = slot?.account ?? null;
               return (
-                <div key={`${line}-${currency}`} className="border border-[#F5F5F3] p-4">
+                <div key={`${line}-${currency}`} className="border border-border p-4">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-body text-sm text-ink">
                       {currency}
                       {currency === "EUR" ? (
-                        <span className="ml-2 font-body text-10px uppercase tracking-wide text-[#A8A8A4]">
+                        <span className="ml-2 font-body text-10px uppercase tracking-wide text-text-light">
                           invoices only
                         </span>
                       ) : null}
@@ -245,30 +245,30 @@ export function BankAccountsAdminClient({ initialSlots }: { initialSlots: Slot[]
                     {account ? (
                       <span
                         className={`font-body text-10px uppercase tracking-wide ${
-                          account.isActive ? "text-[#1B5E20]" : "text-[#A8A8A4]"
+                          account.isActive ? "text-success" : "text-text-light"
                         }`}
                       >
                         {account.isActive ? "Active" : "Retired"}
                       </span>
                     ) : (
-                      <span className="font-body text-10px uppercase tracking-wide text-[#A8A8A4]">Empty</span>
+                      <span className="font-body text-10px uppercase tracking-wide text-text-light">Empty</span>
                     )}
                   </div>
                   {account ? (
                     <>
-                      <p className="mt-2 font-body text-xs text-[#6B6B68]">{account.bankName}</p>
+                      <p className="mt-2 font-body text-xs text-text-mid">{account.bankName}</p>
                       <p className="font-body text-sm text-ink">{account.accountNumber}</p>
-                      <p className="font-body text-xs text-[#6B6B68]">{account.accountName}</p>
+                      <p className="font-body text-xs text-text-mid">{account.accountName}</p>
                     </>
                   ) : (
-                    <p className="mt-2 font-body text-xs text-[#6B6B68]">
+                    <p className="mt-2 font-body text-xs text-text-mid">
                       No account. Bank transfer will not be offered.
                     </p>
                   )}
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      className="text-xs uppercase text-[#37392d] underline"
+                      className="text-xs uppercase text-ink underline"
                       onClick={() => open(slot ?? { currency, businessLine: line, account: null })}
                     >
                       {account ? "Edit" : "Add"}
@@ -277,7 +277,7 @@ export function BankAccountsAdminClient({ initialSlots }: { initialSlots: Slot[]
                       <button
                         type="button"
                         disabled={busy}
-                        className="text-xs uppercase text-red-700 underline disabled:opacity-50"
+                        className="text-xs uppercase text-error underline disabled:opacity-50"
                         onClick={() => void retire(account.id)}
                       >
                         Retire
@@ -287,7 +287,7 @@ export function BankAccountsAdminClient({ initialSlots }: { initialSlots: Slot[]
                       <button
                         type="button"
                         disabled={busy}
-                        className="text-xs uppercase text-[#37392d] underline disabled:opacity-50"
+                        className="text-xs uppercase text-ink underline disabled:opacity-50"
                         onClick={() => void activate(account.id)}
                       >
                         Activate
@@ -343,7 +343,7 @@ export function BankAccountsAdminClient({ initialSlots }: { initialSlots: Slot[]
                 onChange={(v) => setForm((f) => ({ ...f, instructions: v }))}
                 textarea
               />
-              <label className="block font-body text-xs text-[#6B6B68]">
+              <label className="block font-body text-xs text-text-mid">
                 Who bears wire fees
                 <select
                   className="mt-1 w-full border border-sand bg-bg-card px-3 py-2 font-body text-sm text-ink"

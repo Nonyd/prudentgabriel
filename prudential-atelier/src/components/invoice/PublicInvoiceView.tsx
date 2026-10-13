@@ -62,13 +62,13 @@ export function PublicInvoiceView({ token }: { token: string }) {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center px-6">
         <h1 className="font-display text-2xl text-ink">Invoice not found</h1>
-        <p className="mt-2 font-body text-sm text-[#6B6B68]">This link may be invalid or expired.</p>
+        <p className="mt-2 font-body text-sm text-text-mid">This link may be invalid or expired.</p>
       </div>
     );
   }
 
   if (!data) {
-    return <p className="p-12 text-center font-body text-sm text-[#6B6B68]">Loading…</p>;
+    return <p className="p-12 text-center font-body text-sm text-text-mid">Loading…</p>;
   }
 
   const cur = asCurrency(data.currency);
@@ -103,7 +103,7 @@ export function PublicInvoiceView({ token }: { token: string }) {
               </div>
             ) : null}
             <p className="mt-4 font-display text-xl text-ink">{b.businessName}</p>
-            <p className="font-body text-xs text-[#6B6B68]">{b.tagline}</p>
+            <p className="font-body text-xs text-text-mid">{b.tagline}</p>
           </div>
           <div className="text-right">
             <p className="font-display text-4xl italic text-ink">Invoice</p>
@@ -113,44 +113,44 @@ export function PublicInvoiceView({ token }: { token: string }) {
         <div className="mt-6 h-0.5 bg-olive" />
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
           <div>
-            <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-[#6B6B68]">Date issued</p>
+            <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-text-mid">Date issued</p>
             <p className="mt-1 font-body text-sm text-ink">{new Date(data.createdAt).toLocaleDateString("en-GB")}</p>
           </div>
           <div>
-            <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-[#6B6B68]">Valid until</p>
+            <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-text-mid">Valid until</p>
             <p className="mt-1 font-body text-sm font-medium text-ink">
               {data.expiresAt ? new Date(data.expiresAt).toLocaleDateString("en-GB") : "—"}
             </p>
           </div>
           <div>
-            <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-[#6B6B68]">Due date</p>
+            <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-text-mid">Due date</p>
             <p className="mt-1 font-body text-sm font-medium text-ink">
               {data.dueDate ? new Date(data.dueDate).toLocaleDateString("en-GB") : "—"}
             </p>
           </div>
           <div>
-            <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-[#6B6B68]">Invoice #</p>
+            <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-text-mid">Invoice #</p>
             <p className="mt-1 font-body text-sm text-olive">{data.invoiceNumber}</p>
           </div>
         </div>
 
         <div className="mt-10 grid gap-8 sm:grid-cols-2">
           <div>
-            <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-[#6B6B68]">From</p>
+            <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-text-mid">From</p>
             <p className="mt-2 font-body text-sm font-medium text-ink">{b.businessName}</p>
-            <p className="font-body text-xs text-[#6B6B68]">{b.addressLine1}</p>
-            <p className="font-body text-xs text-[#6B6B68]">{b.addressLine2}</p>
-            <p className="font-body text-xs text-[#6B6B68]">{b.city}</p>
-            <p className="font-body text-xs text-[#6B6B68]">{b.phone}</p>
+            <p className="font-body text-xs text-text-mid">{b.addressLine1}</p>
+            <p className="font-body text-xs text-text-mid">{b.addressLine2}</p>
+            <p className="font-body text-xs text-text-mid">{b.city}</p>
+            <p className="font-body text-xs text-text-mid">{b.phone}</p>
             <p className="font-body text-xs text-olive">{b.email}</p>
           </div>
           <div>
-            <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-[#6B6B68]">Bill to</p>
+            <p className="font-body text-[10px] font-medium uppercase tracking-[0.12em] text-text-mid">Bill to</p>
             <p className="mt-2 font-body text-sm font-medium text-ink">{data.addresseeName}</p>
           </div>
         </div>
 
-        <div className="mt-10 overflow-x-auto rounded-sm border border-[#EBEBEA]">
+        <div className="mt-10 overflow-x-auto rounded-sm border border-border">
           <table className="w-full min-w-[500px] border-collapse font-body text-sm">
             <thead>
               <tr className="bg-[#37392d] text-left text-[10px] font-medium uppercase tracking-[0.08em] text-white">
@@ -162,10 +162,10 @@ export function PublicInvoiceView({ token }: { token: string }) {
             </thead>
             <tbody>
               {data.lineItems.map((li) => (
-                <tr key={li.id} className="border-t border-[#EBEBEA]">
+                <tr key={li.id} className="border-t border-border">
                   <td className="px-3 py-2">
                     <div className="font-medium">{li.description}</div>
-                    {li.details ? <div className="text-xs italic text-[#8A8A85]">{li.details}</div> : null}
+                    {li.details ? <div className="text-xs italic text-text-light">{li.details}</div> : null}
                   </td>
                   <td className="px-3 py-2 text-center">{li.quantity}</td>
                   <td className="px-3 py-2 text-right">{formatInvoiceCurrency(li.unitPrice, cur)}</td>
@@ -205,7 +205,7 @@ export function PublicInvoiceView({ token }: { token: string }) {
               </div>
               <div className="flex justify-end gap-8">
                 <span>Balance due</span>
-                <span className={data.balanceDue > 0 ? "text-red-800" : "text-green-800"}>
+                <span className={data.balanceDue > 0 ? "text-error" : "text-success"}>
                   {formatInvoiceCurrency(data.balanceDue, cur)}
                 </span>
               </div>
@@ -214,72 +214,72 @@ export function PublicInvoiceView({ token }: { token: string }) {
         </div>
 
         {data.payInstruction ? (
-          <div className="mt-8 border border-[#EBEBEA] bg-[#FAFAF8] p-5">
-            <p className="font-body text-[10px] font-medium uppercase text-[#6B6B68]">Kindly pay</p>
+          <div className="mt-8 border border-border bg-bg-page p-5">
+            <p className="font-body text-[10px] font-medium uppercase text-text-mid">Kindly pay</p>
             <p className="mt-2 font-body text-sm text-ink">{data.payInstruction}</p>
           </div>
         ) : null}
 
         {data.paymentTerms ? (
-          <div className="mt-8 border border-[#EBEBEA] bg-[#FAFAF8] p-5">
-            <p className="font-body text-[10px] font-medium uppercase text-[#6B6B68]">Payment terms</p>
-            <p className="mt-2 font-body text-sm text-[#6B6B68]">{data.paymentTerms}</p>
+          <div className="mt-8 border border-border bg-bg-page p-5">
+            <p className="font-body text-[10px] font-medium uppercase text-text-mid">Payment terms</p>
+            <p className="mt-2 font-body text-sm text-text-mid">{data.paymentTerms}</p>
           </div>
         ) : null}
 
         {bank.accountNumber ? (
         <div className="mt-6 font-body text-sm">
-          <p className="text-[10px] font-medium uppercase text-[#6B6B68]">Payment details ({bank.currency})</p>
-          <p className="mt-2 text-[#6B6B68]">{bank.bankName}</p>
-          <p className="text-[#6B6B68]">{bank.accountName}</p>
+          <p className="text-[10px] font-medium uppercase text-text-mid">Payment details ({bank.currency})</p>
+          <p className="mt-2 text-text-mid">{bank.bankName}</p>
+          <p className="text-text-mid">{bank.accountName}</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <span className="font-mono text-lg text-olive">{bank.accountNumber}</span>
             <button type="button" className="text-xs text-olive underline" onClick={() => void copyAcct(bank.accountNumber)}>
               Copy
             </button>
           </div>
-          {bank.sortCode ? <p className="mt-1 text-xs text-[#6B6B68]">Sort code: {bank.sortCode}</p> : null}
-          {bank.iban ? <p className="mt-1 text-xs text-[#6B6B68]">IBAN: {bank.iban}</p> : null}
-          {bank.swiftBic ? <p className="mt-1 text-xs text-[#6B6B68]">SWIFT / BIC: {bank.swiftBic}</p> : null}
+          {bank.sortCode ? <p className="mt-1 text-xs text-text-mid">Sort code: {bank.sortCode}</p> : null}
+          {bank.iban ? <p className="mt-1 text-xs text-text-mid">IBAN: {bank.iban}</p> : null}
+          {bank.swiftBic ? <p className="mt-1 text-xs text-text-mid">SWIFT / BIC: {bank.swiftBic}</p> : null}
           {bank.routingNumber ? (
-            <p className="mt-1 text-xs text-[#6B6B68]">Routing number: {bank.routingNumber}</p>
+            <p className="mt-1 text-xs text-text-mid">Routing number: {bank.routingNumber}</p>
           ) : null}
           {bank.intermediaryBank ? (
-            <p className="mt-1 whitespace-pre-wrap text-xs text-[#6B6B68]">{bank.intermediaryBank}</p>
+            <p className="mt-1 whitespace-pre-wrap text-xs text-text-mid">{bank.intermediaryBank}</p>
           ) : null}
           {bank.instructions ? (
-            <p className="mt-2 whitespace-pre-wrap text-xs text-[#6B6B68]">{bank.instructions}</p>
+            <p className="mt-2 whitespace-pre-wrap text-xs text-text-mid">{bank.instructions}</p>
           ) : null}
         </div>
         ) : null}
 
         {data.houseTerms?.length ? (
-          <div className="mt-8 border border-[#EBEBEA] bg-[#FAFAF8] p-5">
-            <p className="font-body text-[10px] font-medium uppercase text-[#6B6B68]">Terms</p>
+          <div className="mt-8 border border-border bg-bg-page p-5">
+            <p className="font-body text-[10px] font-medium uppercase text-text-mid">Terms</p>
             <ul className="mt-3 space-y-3">
               {data.houseTerms.map((term) => (
                 <li key={term.key}>
                   <p className="font-body text-sm font-medium text-ink">{term.title}</p>
-                  <p className="mt-1 font-body text-sm text-[#6B6B68]">{term.body}</p>
+                  <p className="mt-1 font-body text-sm text-text-mid">{term.body}</p>
                 </li>
               ))}
             </ul>
           </div>
         ) : null}
 
-        {data.clientNote ? <p className="mt-6 font-body text-sm italic text-[#6B6B68]">{data.clientNote}</p> : null}
+        {data.clientNote ? <p className="mt-6 font-body text-sm italic text-text-mid">{data.clientNote}</p> : null}
 
         <PublicInvoicePayClient token={token} pay={data.pay} currency={data.currency} />
 
         {b.footerNote ? (
-          <p className="mt-10 text-center font-display text-lg italic text-[#6B6B68]">{b.footerNote}</p>
+          <p className="mt-10 text-center font-display text-lg italic text-text-mid">{b.footerNote}</p>
         ) : null}
         {b.footerHandle ? (
-          <p className="mt-2 text-center font-body text-xs tracking-[0.12em] text-[#6B6B68]">{b.footerHandle}</p>
+          <p className="mt-2 text-center font-body text-xs tracking-[0.12em] text-text-mid">{b.footerHandle}</p>
         ) : null}
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 flex flex-wrap items-center justify-between gap-3 border-t border-[#EBEBEA] bg-bg-card px-6 py-4">
+      <div className="fixed bottom-0 left-0 right-0 flex flex-wrap items-center justify-between gap-3 border-t border-border bg-bg-card px-6 py-4">
         <a
           href={`/api/invoice/${token}/pdf`}
           className="inline-flex items-center bg-[#37392d] px-4 py-2 font-body text-[11px] font-medium uppercase tracking-[0.1em] text-white"
@@ -288,7 +288,7 @@ export function PublicInvoiceView({ token }: { token: string }) {
         </a>
         <button
           type="button"
-          className="border border-[#37392d] px-4 py-2 font-body text-[11px] uppercase text-[#37392d]"
+          className="border border-[#37392d] px-4 py-2 font-body text-[11px] uppercase text-ink"
           onClick={async () => {
             const res = await fetch(`/api/invoice/${token}/email-copy`, { method: "POST" });
             if (!res.ok) toast.error("Could not send");
@@ -297,7 +297,7 @@ export function PublicInvoiceView({ token }: { token: string }) {
         >
           Email me a copy
         </button>
-        <span className="hidden text-xs text-[#A8A8A4] sm:inline">Secured by Prudential Atelier</span>
+        <span className="hidden text-xs text-text-light sm:inline">Secured by Prudential Atelier</span>
       </div>
     </div>
   );

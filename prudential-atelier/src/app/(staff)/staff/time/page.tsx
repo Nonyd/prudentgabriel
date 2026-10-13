@@ -308,7 +308,7 @@ export default function StaffTimePage() {
 
           <div className="flex items-start gap-3">
 
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600" aria-hidden />
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" aria-hidden />
 
             <div>
 
@@ -348,15 +348,15 @@ export default function StaffTimePage() {
 
             <div
 
-              className="flex items-center gap-3 rounded-md border border-green-200 bg-green-50 p-4"
+              className="flex items-center gap-3 rounded-md border border-green-200 bg-success-soft p-4"
 
               role="status"
 
             >
 
-              <CheckCircle2 className="h-6 w-6 shrink-0 text-green-600" aria-hidden />
+              <CheckCircle2 className="h-6 w-6 shrink-0 text-success" aria-hidden />
 
-              <p className="font-sans text-sm font-medium text-green-900">
+              <p className="font-sans text-sm font-medium text-success">
 
                 Clocked in at {format(clockInSuccessAt, "h:mm a")}
 

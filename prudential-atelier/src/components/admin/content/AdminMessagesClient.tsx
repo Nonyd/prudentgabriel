@@ -142,7 +142,7 @@ export function AdminMessagesClient() {
               type="button"
               onClick={() => setFilter(f)}
               className={`rounded-sm px-3 py-1 text-xs capitalize ${
-                filter === f ? "bg-choc text-cream" : "border border-sand text-[#6B6B68]"
+                filter === f ? "bg-choc text-cream" : "border border-sand text-text-mid"
               }`}
             >
               {f}
@@ -159,17 +159,17 @@ export function AdminMessagesClient() {
 
         <div className="mt-4 divide-y divide-sand border border-sand bg-white">
           {loading ? (
-            <p className="p-4 text-sm text-[#6B6B68]">Loading…</p>
+            <p className="p-4 text-sm text-text-mid">Loading…</p>
           ) : items.length === 0 ? (
-            <p className="p-4 text-sm text-[#6B6B68]">No messages yet.</p>
+            <p className="p-4 text-sm text-text-mid">No messages yet.</p>
           ) : (
             items.map((m) => (
               <button
                 key={m.id}
                 type="button"
                 onClick={() => void openMessage(m.id)}
-                className={`w-full px-4 py-3 text-left hover:bg-[#FAFAFA] ${
-                  selectedId === m.id ? "bg-[#FAFAFA]" : ""
+                className={`w-full px-4 py-3 text-left hover:bg-bg-page ${
+                  selectedId === m.id ? "bg-bg-page" : ""
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -179,28 +179,28 @@ export function AdminMessagesClient() {
                       {m.name}
                     </span>
                   </div>
-                  <span className="shrink-0 text-xs text-[#6B6B68]">
+                  <span className="shrink-0 text-xs text-text-mid">
                     {new Date(m.createdAt).toLocaleDateString("en-GB")}
                   </span>
                 </div>
                 <p className="mt-1 text-xs font-medium text-gold">{m.subject}</p>
-                <p className="mt-1 line-clamp-2 text-xs text-[#6B6B68]">{m.message}</p>
+                <p className="mt-1 line-clamp-2 text-xs text-text-mid">{m.message}</p>
               </button>
             ))
           )}
         </div>
       </div>
 
-      <div className="rounded-sm border border-sand bg-[#FAFAFA] p-5">
+      <div className="rounded-sm border border-sand bg-bg-page p-5">
         {!detail ? (
-          <p className="text-sm text-[#6B6B68]">Select a message to view details.</p>
+          <p className="text-sm text-text-mid">Select a message to view details.</p>
         ) : (
           <>
             <div className="border-b border-sand pb-4">
               <h2 className="font-display text-lg text-ink">{detail.name}</h2>
-              <p className="text-sm text-[#6B6B68]">{detail.email}</p>
-              {detail.phone ? <p className="text-sm text-[#6B6B68]">{detail.phone}</p> : null}
-              <p className="mt-2 text-xs text-[#6B6B68]">
+              <p className="text-sm text-text-mid">{detail.email}</p>
+              {detail.phone ? <p className="text-sm text-text-mid">{detail.phone}</p> : null}
+              <p className="mt-2 text-xs text-text-mid">
                 {new Date(detail.createdAt).toLocaleString("en-GB", { timeZone: "Africa/Lagos" })}
               </p>
               <p className="mt-4 font-label text-xs text-gold">Subject</p>
@@ -257,7 +257,7 @@ export function AdminMessagesClient() {
                     body: JSON.stringify({ isRead: false }),
                   }).then(() => void openMessage(detail.id))
                 }
-                className="text-xs text-[#6B6B68] underline"
+                className="text-xs text-text-mid underline"
               >
                 Mark as unread
               </button>

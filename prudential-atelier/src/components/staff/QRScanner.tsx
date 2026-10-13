@@ -69,7 +69,7 @@ export function QRScanner({ onScan, active = true }: QRScannerProps) {
         className="min-h-[220px] overflow-hidden rounded-md border border-sand bg-black/5 [&_video]:rounded-md"
       />
       {error ? (
-        <p className="font-sans text-xs text-red-600">{error}</p>
+        <p className="font-sans text-xs text-error">{error}</p>
       ) : (
         <p className="font-sans text-xs text-text-light">Point your camera at the workstation QR code</p>
       )}

@@ -42,8 +42,8 @@ function DeliveryDate({ date }: { date: string | null }) {
     <span
       className={cn(
         "font-sans text-sm",
-        urgency === "overdue" && "font-semibold text-red-700",
-        urgency === "soon" && "font-medium text-amber-700",
+        urgency === "overdue" && "font-semibold text-error",
+        urgency === "soon" && "font-medium text-warning",
         urgency === "ok" && "text-ink",
       )}
     >
@@ -441,7 +441,7 @@ function DueSoon({ onPickMonth, activeMonth }: { onPickMonth: (m: string) => voi
                   <Link href={`/admin/bespoke/${o.id}`} className="truncate text-ink hover:underline">
                     {o.orderRef} · {o.clientName}
                   </Link>
-                  <span className={cn("shrink-0", o.overdue ? "text-red-700" : "text-text-mid")}>
+                  <span className={cn("shrink-0", o.overdue ? "text-error" : "text-text-mid")}>
                     {o.deliveredAt ? "delivered" : o.deliveryDate ? formatDate(o.deliveryDate, "d MMM") : ""}
                     {o.overdue ? " · overdue" : ""}
                   </span>

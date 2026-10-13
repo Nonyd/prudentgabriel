@@ -315,7 +315,7 @@ export function CollectionDetailPage({
                     <Select.Item
                       key={value}
                       value={value}
-                      className="cursor-pointer px-5 py-2.5 font-body text-[12px] text-charcoal outline-none hover:bg-[#FAFAFA] hover:text-olive"
+                      className="cursor-pointer px-5 py-2.5 font-body text-[12px] text-charcoal outline-none hover:bg-bg-page hover:text-olive"
                     >
                       {label}
                     </Select.Item>

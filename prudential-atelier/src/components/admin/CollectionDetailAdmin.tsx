@@ -134,7 +134,7 @@ export function CollectionDetailAdmin({
           <button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="border border-[#37392d] px-4 py-2 font-body text-11px font-medium uppercase tracking-wide text-[#37392d]"
+            className="border border-[#37392d] px-4 py-2 font-body text-11px font-medium uppercase tracking-wide text-ink"
           >
             Edit collection
           </button>
@@ -163,7 +163,7 @@ export function CollectionDetailAdmin({
                 key={k}
                 type="button"
                 onClick={() => setTab(k)}
-                className={`-mb-px border-b-2 pb-2 ${tab === k ? "border-olive text-ink" : "border-transparent text-[#6B6B68]"}`}
+                className={`-mb-px border-b-2 pb-2 ${tab === k ? "border-olive text-ink" : "border-transparent text-text-mid"}`}
               >
                 {label}
               </button>
@@ -171,9 +171,9 @@ export function CollectionDetailAdmin({
           </div>
 
           {tab === "auto" && !collection.autoTag ? (
-            <p className="mt-6 font-body text-13px text-[#6B6B68]">No auto-tag set. Edit collection to add one.</p>
+            <p className="mt-6 font-body text-13px text-text-mid">No auto-tag set. Edit collection to add one.</p>
           ) : tab === "auto" && collection.autoTag ? (
-            <p className="mt-4 font-body text-12px text-[#6B6B68]">
+            <p className="mt-4 font-body text-12px text-text-mid">
               {autoProducts.length} products auto-included via tag: <span className="text-olive">{collection.autoTag}</span>
             </p>
           ) : null}
@@ -183,10 +183,10 @@ export function CollectionDetailAdmin({
               <li key={p.id} className="flex items-center gap-3 px-3 py-3">
                 {tab === "manual" ? (
                   <div className="flex shrink-0 flex-col gap-0.5">
-                    <button type="button" className="text-[#6B6B68] hover:text-ink" aria-label="Up" onClick={() => moveManual(p.id, "up")}>
+                    <button type="button" className="text-text-mid hover:text-ink" aria-label="Up" onClick={() => moveManual(p.id, "up")}>
                       ↑
                     </button>
-                    <button type="button" className="text-[#6B6B68] hover:text-ink" aria-label="Down" onClick={() => moveManual(p.id, "down")}>
+                    <button type="button" className="text-text-mid hover:text-ink" aria-label="Down" onClick={() => moveManual(p.id, "down")}>
                       ↓
                     </button>
                   </div>
@@ -198,7 +198,7 @@ export function CollectionDetailAdmin({
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-body text-13px font-medium text-ink">{p.name}</p>
-                  <p className="font-body text-11px text-[#6B6B68]">
+                  <p className="font-body text-11px text-text-mid">
                     From ₦{Math.round(p.variants.length ? derivedCatalogMinNGN(p.variants, p.isOnSale) : p.basePriceNGN).toLocaleString()}
                   </p>
                 </div>
@@ -206,7 +206,7 @@ export function CollectionDetailAdmin({
                   <button
                     type="button"
                     onClick={() => void removeManual(p.id)}
-                    className="shrink-0 font-body text-11px uppercase text-red-700 hover:underline"
+                    className="shrink-0 font-body text-11px uppercase text-error hover:underline"
                   >
                     Remove
                   </button>
@@ -216,19 +216,19 @@ export function CollectionDetailAdmin({
           </ul>
         </div>
 
-        <aside className="space-y-4 border border-sand bg-[#FAFAFA] p-4">
+        <aside className="space-y-4 border border-sand bg-bg-page p-4">
           <div>
-            <p className="font-body text-11px uppercase text-[#6B6B68]">Total products</p>
+            <p className="font-body text-11px uppercase text-text-mid">Total products</p>
             <p className="font-display text-2xl text-ink">{totalUnique}</p>
           </div>
           <div>
-            <p className="font-body text-11px uppercase text-[#6B6B68]">Published manual</p>
+            <p className="font-body text-11px uppercase text-text-mid">Published manual</p>
             <p className="text-13px">{publishedManual}</p>
-            <p className="mt-2 font-body text-11px uppercase text-[#6B6B68]">Draft / unpubl. manual</p>
+            <p className="mt-2 font-body text-11px uppercase text-text-mid">Draft / unpubl. manual</p>
             <p className="text-13px">{draftManual}</p>
           </div>
           <div>
-            <p className="font-body text-11px uppercase text-[#6B6B68]">Cover</p>
+            <p className="font-body text-11px uppercase text-text-mid">Cover</p>
             <div className="relative mt-2 aspect-[3/4] w-full bg-[#EEE]">
               {collection.coverImage ? (
                 <Image src={optimizeImageUrl(collection.coverImage, 400)} alt="" fill className="object-cover" sizes="280px" />
@@ -238,8 +238,8 @@ export function CollectionDetailAdmin({
               Edit cover
             </button>
           </div>
-          <p className="text-11px text-[#6B6B68]">Created {new Date(collection.createdAt).toLocaleDateString()}</p>
-          <p className="text-11px text-[#6B6B68]">Updated {new Date(collection.updatedAt).toLocaleDateString()}</p>
+          <p className="text-11px text-text-mid">Created {new Date(collection.createdAt).toLocaleDateString()}</p>
+          <p className="text-11px text-text-mid">Updated {new Date(collection.updatedAt).toLocaleDateString()}</p>
         </aside>
       </div>
 

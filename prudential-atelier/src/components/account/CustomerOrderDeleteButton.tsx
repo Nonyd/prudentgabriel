@@ -49,7 +49,7 @@ export function CustomerOrderDeleteButton({
         onConfirm={runDelete}
         loading={busy}
       />
-      <button type="button" className="mt-6 text-sm text-red-700 underline hover:no-underline" onClick={() => setOpen(true)}>
+      <button type="button" className="mt-6 text-sm text-error underline hover:no-underline" onClick={() => setOpen(true)}>
         Remove unpaid order from my account
       </button>
     </>

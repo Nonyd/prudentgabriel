@@ -274,7 +274,7 @@ export function StoreRequisitionDetailClient({ id }: { id: string }) {
                       <span className="ml-2 text-10px uppercase text-text-light">covered by stock</span>
                     ) : null}
                     {l.shortfallQuantity != null && l.shortfallQuantity > 0 ? (
-                      <span className="ml-2 text-10px uppercase text-[#C45E0A]">
+                      <span className="ml-2 text-10px uppercase text-warning">
                         short {l.shortfallQuantity}
                       </span>
                     ) : null}
@@ -351,7 +351,7 @@ export function StoreRequisitionDetailClient({ id }: { id: string }) {
               </span>
               <span className="text-text-mid"> · {e.actorName}</span>
               {e.sameActorAsPrevious ? (
-                <span className="ml-2 text-10px uppercase tracking-wide text-[#C45E0A]">same person as previous</span>
+                <span className="ml-2 text-10px uppercase tracking-wide text-warning">same person as previous</span>
               ) : null}
               {e.note ? <p className="text-xs text-text-light">{e.note}</p> : null}
             </li>

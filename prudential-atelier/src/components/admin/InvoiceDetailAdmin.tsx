@@ -64,13 +64,13 @@ export function InvoiceDetailAdmin({ initial }: { initial: InvoiceDetailInitial 
 
   return (
     <div>
-      <Link href="/admin/invoices" className="font-body text-11px uppercase text-[#6B6B68] hover:text-ink">
+      <Link href="/admin/invoices" className="font-body text-11px uppercase text-text-mid hover:text-ink">
         ← Invoices
       </Link>
       <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl text-olive">{inv.invoiceNumber}</h1>
-          <p className="mt-1 font-body text-sm text-[#6B6B68]">{inv.clientName}</p>
+          <p className="mt-1 font-body text-sm text-text-mid">{inv.clientName}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/admin/invoices/${inv.id}/edit`} className="border border-sand px-3 py-2 font-body text-11px uppercase">
@@ -96,7 +96,7 @@ export function InvoiceDetailAdmin({ initial }: { initial: InvoiceDetailInitial 
             </button>
           ) : null}
           {inv.status === "DRAFT" || inv.status === "SENT" || inv.status === "VIEWED" ? (
-            <button type="button" className="text-xs text-red-800 underline" onClick={() => void cancelInv()}>
+            <button type="button" className="text-xs text-error underline" onClick={() => void cancelInv()}>
               Cancel
             </button>
           ) : null}
@@ -105,7 +105,7 @@ export function InvoiceDetailAdmin({ initial }: { initial: InvoiceDetailInitial 
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="border border-sand bg-canvas p-6 font-body text-sm">
-          <p className="text-11px uppercase text-[#6B6B68]">Totals</p>
+          <p className="text-11px uppercase text-text-mid">Totals</p>
           <dl className="mt-4 space-y-2">
             <div className="flex justify-between">
               <dt>Total</dt>
@@ -113,7 +113,7 @@ export function InvoiceDetailAdmin({ initial }: { initial: InvoiceDetailInitial 
             </div>
             <div className="flex justify-between">
               <dt>Balance due</dt>
-              <dd className={inv.balanceDue > 0 ? "font-medium text-red-800" : ""}>{formatInvoiceCurrency(inv.balanceDue, cur)}</dd>
+              <dd className={inv.balanceDue > 0 ? "font-medium text-error" : ""}>{formatInvoiceCurrency(inv.balanceDue, cur)}</dd>
             </div>
             <div className="flex justify-between">
               <dt>Status</dt>
@@ -122,7 +122,7 @@ export function InvoiceDetailAdmin({ initial }: { initial: InvoiceDetailInitial 
           </dl>
         </div>
         <div className="border border-sand bg-canvas p-6">
-          <p className="font-body text-11px uppercase text-[#6B6B68]">Payments</p>
+          <p className="font-body text-11px uppercase text-text-mid">Payments</p>
           <ul className="mt-3 space-y-2 font-body text-xs">
             {history.length === 0 ? <li>No payments recorded.</li> : null}
             {history.map((h, i) => (
@@ -136,8 +136,8 @@ export function InvoiceDetailAdmin({ initial }: { initial: InvoiceDetailInitial 
       </div>
 
       {inv.bespokeRequest ? (
-        <div className="mt-6 border border-sand bg-[#FAFAF8] p-6">
-          <p className="font-body text-11px uppercase text-[#6B6B68]">Order</p>
+        <div className="mt-6 border border-sand bg-bg-page p-6">
+          <p className="font-body text-11px uppercase text-text-mid">Order</p>
           {inv.bespokeOrder ? (
             <Link className="mt-2 inline-block text-olive underline" href={`/admin/bespoke/${inv.bespokeOrder.id}`}>
               {inv.bespokeOrder.orderRef} — {inv.bespokeRequest.occasion}

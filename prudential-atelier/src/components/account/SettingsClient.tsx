@@ -203,14 +203,14 @@ export function SettingsClient({
       </section>
 
       <section className="rounded-lg border border-red-200 bg-red-50/50 p-6">
-        <h2 className="font-display text-xl text-red-800">Danger Zone</h2>
-        <p className="mt-2 font-sans text-sm text-red-700">
+        <h2 className="font-display text-xl text-error">Danger Zone</h2>
+        <p className="mt-2 font-sans text-sm text-error">
           Permanently deactivate your account. This cannot be undone.
         </p>
         <button
           type="button"
           onClick={() => setDeleteOpen(true)}
-          className="mt-4 border border-red-600 px-4 py-2 font-sans text-xs text-red-600"
+          className="mt-4 border border-red-600 px-4 py-2 font-sans text-xs text-error"
         >
           Delete my account
         </button>
@@ -233,7 +233,7 @@ export function SettingsClient({
                 type="button"
                 disabled={deleteConfirm !== "DELETE"}
                 onClick={deleteAccount}
-                className="border border-red-600 px-4 py-2 text-red-600"
+                className="border border-red-600 px-4 py-2 text-error"
               >
                 Delete account
               </button>

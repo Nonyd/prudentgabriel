@@ -418,7 +418,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
             ))}
           </div>
           {currency === "EUR" ? (
-            <p className="mt-2 font-body text-xs text-[#6B6B68]">
+            <p className="mt-2 font-body text-xs text-text-mid">
               Euro quotations aren&apos;t supported yet; use GBP, USD or naira. There is no locked euro rate, so a euro figure would be booked as naira.
             </p>
           ) : null}

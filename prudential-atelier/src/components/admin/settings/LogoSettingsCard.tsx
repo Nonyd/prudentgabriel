@@ -54,10 +54,10 @@ export function LogoSettingsCard({
 
   return (
     <div className="rounded-sm border border-sand bg-canvas p-6">
-      <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">
+      <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-text-mid">
         Brand logos
       </h2>
-      <p className="mt-2 font-body text-xs text-[#6B6B68]">
+      <p className="mt-2 font-body text-xs text-text-mid">
         Upload dark and light logo variants for Cloudinary. Dark logo appears on ivory backgrounds; white logo on chocolate backgrounds.
       </p>
       <div className="mt-6 grid gap-8 md:grid-cols-2">

@@ -231,7 +231,7 @@ export function JobApplicationForm({ job }: { job: JobPosting }) {
           }}
         />
         <p className="mt-1 font-body text-xs text-text-light">Max 5MB · PDF only</p>
-        {cvUrl ? <p className="font-body text-xs text-green-800">CV uploaded ✓</p> : null}
+        {cvUrl ? <p className="font-body text-xs text-success">CV uploaded ✓</p> : null}
       </div>
 
       <div>

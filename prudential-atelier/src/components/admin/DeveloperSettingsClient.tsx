@@ -117,7 +117,7 @@ function CredentialInput({
   return (
     <div>
       {row.source === "environment" ? (
-        <p className="mb-2 rounded-md border border-nut/40 bg-[#FFF8F0] px-3 py-2 font-sans text-xs text-text-dark">
+        <p className="mb-2 rounded-md border border-nut/40 bg-warning-soft px-3 py-2 font-sans text-xs text-text-dark">
           {ENV_SOURCE_LABEL}. Mail and payments will not use it until it is saved here.
         </p>
       ) : null}
@@ -299,7 +299,7 @@ export function DeveloperSettingsClient() {
       </div>
 
       {envOnlyCount > 0 ? (
-        <div className="border border-nut/40 bg-[#FFF8F0] px-4 py-3">
+        <div className="border border-nut/40 bg-warning-soft px-4 py-3">
           <p className="font-sans text-sm text-text-dark">
             {envOnlyCount} credential{envOnlyCount === 1 ? " is" : "s are"} set on the server and empty in the
             dashboard. That used to send mail and take payments while this page looked blank.

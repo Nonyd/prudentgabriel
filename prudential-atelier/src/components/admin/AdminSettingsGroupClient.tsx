@@ -52,7 +52,7 @@ export function AdminSettingsGroupClient({ groupSlug }: { groupSlug: AdminSettin
       return <PaymentsSettingsClient />;
     }
 
-    if (!settings) return <p className="p-6 font-body text-sm text-[#6B6B68]">Loading…</p>;
+    if (!settings) return <p className="p-6 font-body text-sm text-text-mid">Loading…</p>;
 
     if (groupSlug === "store") {
       return <SettingsGroupCard title="Store" group="STORE" rows={rowsFor("STORE")} onSaved={load} />;
@@ -69,7 +69,7 @@ export function AdminSettingsGroupClient({ groupSlug }: { groupSlug: AdminSettin
     if (groupSlug === "notifications") {
       return (
         <div className="space-y-4">
-          <p className="font-body text-sm text-[#6B6B68]">
+          <p className="font-body text-sm text-text-mid">
             Slack webhook is a credential — set it in{" "}
             <Link href="/admin/settings/developer" className="underline">
               Developer settings
@@ -96,7 +96,7 @@ export function AdminSettingsGroupClient({ groupSlug }: { groupSlug: AdminSettin
     if (groupSlug === "email") {
       return (
         <div className="space-y-6">
-          <p className="font-body text-sm text-[#6B6B68]">
+          <p className="font-body text-sm text-text-mid">
             API keys, SMTP password, and provider order are on{" "}
             <Link href="/admin/settings/developer" className="underline">
               Developer settings

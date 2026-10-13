@@ -127,7 +127,7 @@ export function TestimonialsAdminClient({ testimonials }: { testimonials: Testim
 
       <div className="-mx-4 overflow-x-auto rounded-sm border border-sand bg-canvas px-4 md:mx-0 md:px-0">
         <table className="pill-rows w-full min-w-[1100px] text-left text-sm text-charcoal">
-          <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-[#A8A8A4]">
+          <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-text-light">
             <tr>
               <th className="p-3">Client</th>
               <th className="p-3">Source</th>
@@ -163,7 +163,7 @@ export function TestimonialsAdminClient({ testimonials }: { testimonials: Testim
                   );
 
                 return (
-                  <tr key={t.id} className="border-b border-[#F5F5F3] hover:bg-[#FAFAFA]">
+                  <tr key={t.id} className="border-b border-border hover:bg-bg-page">
                     <td className="p-3 font-body text-sm">{t.user?.name ?? t.displayName ?? "—"}</td>
                     <td className="p-3">
                       <SourcePill source={t.source} />
@@ -211,7 +211,7 @@ export function TestimonialsAdminClient({ testimonials }: { testimonials: Testim
                         type="button"
                         disabled={disabled}
                         onClick={() => void deleteTestimonial(t.id)}
-                        className="block font-body text-xs text-red-700 hover:underline disabled:opacity-50"
+                        className="block font-body text-xs text-error hover:underline disabled:opacity-50"
                       >
                         Delete
                       </button>

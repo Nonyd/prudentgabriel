@@ -64,19 +64,19 @@ export function ShippingQuotePanel({
 
   return (
     <div className="glass-opaque p-6">
-      <p className="font-label text-xs uppercase text-[#A8A8A4]">Shipping quote</p>
+      <p className="font-label text-xs uppercase text-text-light">Shipping quote</p>
       {packed ? (
         <p className="mt-1 font-body text-sm text-ink">
           The piece is in processing — agree the courier and cost with the client, then save.
         </p>
       ) : (
-        <p className="mt-1 font-body text-sm text-[#6B6B68]">
+        <p className="mt-1 font-body text-sm text-text-mid">
           The house usually agrees shipping after the piece is packed. You can quote now if you have already spoken to
           the client.
         </p>
       )}
       {contactLabel ? (
-        <p className="mt-2 font-body text-xs text-[#6B6B68]">
+        <p className="mt-2 font-body text-xs text-text-mid">
           Preferred contact: {contactLabel}
           {whatsappUrl ? (
             <>
@@ -90,7 +90,7 @@ export function ShippingQuotePanel({
         </p>
       ) : null}
       <div className="mt-3 flex flex-wrap items-end gap-2">
-        <label className="text-xs text-[#A8A8A4]">
+        <label className="text-xs text-text-light">
           Amount (₦)
           <input
             type="number"
@@ -100,7 +100,7 @@ export function ShippingQuotePanel({
             className="mt-1 block border border-sand bg-canvas px-3 py-2 text-sm text-charcoal"
           />
         </label>
-        <label className="text-xs text-[#A8A8A4]">
+        <label className="text-xs text-text-light">
           Carrier
           <input
             list="quote-carriers"
@@ -115,7 +115,7 @@ export function ShippingQuotePanel({
             ))}
           </datalist>
         </label>
-        <label className="min-w-[220px] flex-1 text-xs text-[#A8A8A4]">
+        <label className="min-w-[220px] flex-1 text-xs text-text-light">
           Note
           <input
             value={note}

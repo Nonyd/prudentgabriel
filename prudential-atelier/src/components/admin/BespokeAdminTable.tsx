@@ -47,7 +47,7 @@ export function BespokeAdminTable({ initial }: { initial: BespokeRequest[] }) {
             type="button"
             onClick={() => setTab(t)}
             className={`rounded-sm px-3 py-1 text-xs uppercase ${
-              tab === t ? "bg-wine text-gold" : "text-[#A8A8A4] hover:text-charcoal"
+              tab === t ? "bg-choc text-ivory" : "text-text-mid hover:text-ink"
             }`}
           >
             {t}
@@ -56,7 +56,7 @@ export function BespokeAdminTable({ initial }: { initial: BespokeRequest[] }) {
       </div>
       <div className="-mx-4 overflow-x-auto rounded-sm border border-sand bg-canvas px-4 md:mx-0 md:px-0">
         <table className="pill-rows w-full min-w-[700px] text-left text-sm text-charcoal">
-          <thead className="text-11px uppercase text-[#A8A8A4]">
+          <thead className="text-11px uppercase text-text-light">
             <tr>
               <th className="p-3">#</th>
               <th className="p-3">Client</th>
@@ -78,13 +78,13 @@ export function BespokeAdminTable({ initial }: { initial: BespokeRequest[] }) {
                 </td>
                 <td className="p-3">
                   <div>{r.name}</div>
-                  <div className="text-xs text-[#A8A8A4]">{r.email}</div>
+                  <div className="text-xs text-text-light">{r.email}</div>
                 </td>
                 <td className="p-3 max-w-[200px] truncate">{r.occasion}</td>
                 <td className="hidden max-w-[120px] truncate p-3 text-xs md:table-cell">{r.budgetRange ?? r.budget ?? "—"}</td>
                 <td className="hidden max-w-[100px] truncate p-3 text-xs md:table-cell">{r.timeline ?? "—"}</td>
                 <td className="p-3 text-xs">{r.status}</td>
-                <td className="p-3 text-xs text-[#A8A8A4]">{r.createdAt.toLocaleDateString("en-NG")}</td>
+                <td className="p-3 text-xs text-text-light">{r.createdAt.toLocaleDateString("en-NG")}</td>
                 <td className="p-3">
                   <select
                     className="rounded-sm border border-sand bg-canvas px-2 py-1 text-xs text-charcoal"

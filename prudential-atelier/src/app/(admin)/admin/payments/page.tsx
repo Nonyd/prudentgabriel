@@ -24,27 +24,27 @@ type UnifiedRow = {
 function gatewayClass(g: PaymentGateway | null): string {
   switch (g) {
     case "PAYSTACK":
-      return "bg-[#E8F5E9] text-[#1B5E20]";
+      return "bg-success-soft text-success";
     case "FLUTTERWAVE":
-      return "bg-[#E8F0FF] text-[#1A3FAD]";
+      return "bg-info-soft text-info";
     case "STRIPE":
-      return "bg-[#F0E8FF] text-[#6B3FAD]";
+      return "bg-info-soft text-info";
     case "MONNIFY":
-      return "bg-[#FFF3E0] text-[#C45E0A]";
+      return "bg-warning-soft text-warning";
     case "BANK_TRANSFER":
-      return "bg-[#F5F0E8] text-[#442913]";
+      return "bg-sand/30 text-ink";
     default:
-      return "bg-[#FAFAFA] text-[#A8A8A4]";
+      return "bg-bg-page text-text-light";
   }
 }
 
 function statusTextClass(label: string): string {
   const u = label.toUpperCase();
-  if (u.includes("PAID")) return "text-[#1B5E20]";
-  if (u.includes("PENDING")) return "text-[#C45E0A]";
-  if (u.includes("FAILED")) return "text-red-700";
-  if (u.includes("REFUND")) return "text-[#6B6B68]";
-  return "text-[#6B6B68]";
+  if (u.includes("PAID")) return "text-success";
+  if (u.includes("PENDING")) return "text-warning";
+  if (u.includes("FAILED")) return "text-error";
+  if (u.includes("REFUND")) return "text-text-mid";
+  return "text-text-mid";
 }
 
 export default async function AdminPaymentsPage() {
@@ -196,7 +196,7 @@ export default async function AdminPaymentsPage() {
   return (
     <div>
       <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">Payments</h1>
-      <p className="mt-2 max-w-2xl font-body text-sm text-[#6B6B68]">
+      <p className="mt-2 max-w-2xl font-body text-sm text-text-mid">
         Recent checkout and fee activity. Bank transfer receipts can be approved here or on the order
         itself — open the order number to see the proof.
       </p>
@@ -207,31 +207,31 @@ export default async function AdminPaymentsPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-4">
         <div className="glass-opaque p-4">
-          <p className="font-body text-11px uppercase tracking-[0.08em] text-[#6B6B68]">Total Revenue</p>
+          <p className="font-body text-11px uppercase tracking-[0.08em] text-text-mid">Total Revenue</p>
           <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(totalRevenue).toLocaleString("en-NG")}</p>
         </div>
         <div className="glass-opaque p-4">
-          <p className="font-body text-11px uppercase tracking-[0.08em] text-[#6B6B68]">Revenue This Month</p>
+          <p className="font-body text-11px uppercase tracking-[0.08em] text-text-mid">Revenue This Month</p>
           <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(monthRevenue).toLocaleString("en-NG")}</p>
         </div>
         <div className="glass-opaque p-4">
-          <p className="font-body text-11px uppercase tracking-[0.08em] text-[#6B6B68]">Avg Order Value</p>
+          <p className="font-body text-11px uppercase tracking-[0.08em] text-text-mid">Avg Order Value</p>
           <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(avgOrderValue).toLocaleString("en-NG")}</p>
         </div>
         <div className="glass-opaque p-4">
-          <p className="font-body text-11px uppercase tracking-[0.08em] text-[#6B6B68]">Refunds Issued</p>
+          <p className="font-body text-11px uppercase tracking-[0.08em] text-text-mid">Refunds Issued</p>
           <p className="mt-2 font-display text-2xl text-ink">₦{Math.round(refundsIssued).toLocaleString("en-NG")}</p>
         </div>
       </div>
 
       <div className="mt-5 glass-opaque p-4">
-        <p className="mb-3 font-body text-11px uppercase tracking-[0.08em] text-[#6B6B68]">Gateway Breakdown</p>
+        <p className="mb-3 font-body text-11px uppercase tracking-[0.08em] text-text-mid">Gateway Breakdown</p>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
           {gatewaySummary.map((item) => (
             <div key={item.gateway} className="border border-[#F0F0EE] px-3 py-2">
-              <p className="font-body text-xs text-[#6B6B68]">{item.gateway}</p>
+              <p className="font-body text-xs text-text-mid">{item.gateway}</p>
               <p className="font-body text-sm font-medium text-ink">{item.count} transactions</p>
-              <p className="font-body text-xs text-[#37392d]">₦{Math.round(item.total).toLocaleString("en-NG")}</p>
+              <p className="font-body text-xs text-ink">₦{Math.round(item.total).toLocaleString("en-NG")}</p>
             </div>
           ))}
         </div>
@@ -240,7 +240,7 @@ export default async function AdminPaymentsPage() {
       <div className="mt-8 overflow-x-auto border border-sand">
         <table className="pill-rows w-full min-w-[720px] border-collapse font-body text-sm">
           <thead>
-            <tr className="border-b border-sand bg-[#FAFAFA] text-left text-10px font-medium uppercase tracking-wide text-[#6B6B68]">
+            <tr className="border-b border-sand bg-bg-page text-left text-10px font-medium uppercase tracking-wide text-text-mid">
               <th className="px-4 py-3">Type</th>
               <th className="px-4 py-3">Reference</th>
               <th className="px-4 py-3">Customer</th>
@@ -253,10 +253,10 @@ export default async function AdminPaymentsPage() {
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={`${r.kind}-${r.id}`} className="border-b border-sand last:border-0 hover:bg-[#FAFAFA]">
+              <tr key={`${r.kind}-${r.id}`} className="border-b border-sand last:border-0 hover:bg-bg-page">
                 <td className="px-4 py-3 text-xs">{kindLabel(r.kind)}</td>
                 <td className="px-4 py-3 font-medium text-ink">{r.ref}</td>
-                <td className="max-w-[240px] truncate px-4 py-3 text-xs text-[#6B6B68]">{r.customer}</td>
+                <td className="max-w-[240px] truncate px-4 py-3 text-xs text-text-mid">{r.customer}</td>
                 <td className="px-4 py-3 text-right tabular-nums">{Math.round(r.amountNGN).toLocaleString("en-NG")}</td>
                 <td className={`px-4 py-3 text-xs font-medium ${statusTextClass(r.statusLabel)}`}>{r.statusLabel}</td>
                 <td className="px-4 py-3">
@@ -265,14 +265,14 @@ export default async function AdminPaymentsPage() {
                       {r.gateway}
                     </span>
                   ) : (
-                    <span className="text-[#A8A8A4]">—</span>
+                    <span className="text-text-light">—</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-xs text-[#6B6B68]">
+                <td className="px-4 py-3 text-xs text-text-mid">
                   {r.createdAt.toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" })}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <Link href={r.href} className="text-xs uppercase text-[#37392d] underline-offset-2 hover:underline">
+                  <Link href={r.href} className="text-xs uppercase text-ink underline-offset-2 hover:underline">
                     View
                   </Link>
                 </td>
@@ -283,7 +283,7 @@ export default async function AdminPaymentsPage() {
       </div>
 
       {rows.length === 0 ? (
-        <p className="mt-6 font-body text-sm text-[#6B6B68]">No payment records yet.</p>
+        <p className="mt-6 font-body text-sm text-text-mid">No payment records yet.</p>
       ) : null}
     </div>
   );

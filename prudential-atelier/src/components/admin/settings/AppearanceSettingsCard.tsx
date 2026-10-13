@@ -61,8 +61,8 @@ export function AppearanceSettingsCard({
 
   return (
     <div className="rounded-sm border border-sand bg-canvas p-6">
-      <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-[#6B6B68]">Site images</h2>
-      <p className="mt-2 font-body text-xs text-[#6B6B68]">
+      <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-text-mid">Site images</h2>
+      <p className="mt-2 font-body text-xs text-text-mid">
         Replace static images across the site. Upload fills the URL automatically; you can still paste a CDN URL manually.
       </p>
       <div className="mt-6 space-y-6">

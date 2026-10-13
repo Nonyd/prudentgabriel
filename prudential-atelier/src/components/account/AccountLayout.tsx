@@ -116,7 +116,7 @@ export function AccountLayout({
           <button
             type="button"
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="flex w-full items-center justify-center gap-2 rounded-sm border border-charcoal-mid py-2 text-sm text-ivory/60 hover:bg-red-50 hover:text-red-400"
+            className="flex w-full items-center justify-center gap-2 rounded-sm border border-charcoal-mid py-2 text-sm text-ivory/60 hover:bg-error-soft hover:text-error"
           >
             <LogOut className="h-4 w-4" />
             Logout
@@ -151,7 +151,7 @@ export function AccountLayout({
             <button
               type="button"
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="inline-flex items-center gap-1 font-body text-[12px] text-[#6B6B68] hover:text-red-600"
+              className="inline-flex items-center gap-1 font-body text-[12px] text-text-mid hover:text-error"
             >
               <LogOut size={14} />
               Logout

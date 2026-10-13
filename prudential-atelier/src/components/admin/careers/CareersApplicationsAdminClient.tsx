@@ -19,10 +19,10 @@ const STATUSES: ApplicationStatus[] = [
 const STATUS_COLORS: Record<ApplicationStatus, string> = {
   NEW: "bg-blue-50 text-blue-900",
   REVIEWED: "bg-slate-100 text-slate-800",
-  SHORTLISTED: "bg-green-50 text-green-900",
+  SHORTLISTED: "bg-success-soft text-success",
   INTERVIEWED: "bg-purple-50 text-purple-900",
-  REJECTED: "bg-red-50 text-red-900",
-  HIRED: "bg-emerald-100 text-emerald-900",
+  REJECTED: "bg-error-soft text-error",
+  HIRED: "bg-emerald-100 text-success",
 };
 
 export function CareersApplicationsAdminClient({
@@ -72,7 +72,7 @@ export function CareersApplicationsAdminClient({
 
       <div className="overflow-x-auto rounded-sm border border-sand bg-canvas">
         <table className="pill-rows w-full min-w-[900px] text-left text-sm">
-          <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-[#A8A8A4]">
+          <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-text-light">
             <tr>
               <th className="p-3">Applicant</th>
               <th className="p-3">Position</th>
@@ -84,7 +84,7 @@ export function CareersApplicationsAdminClient({
           </thead>
           <tbody>
             {filtered.map((a) => (
-              <tr key={a.id} className="border-b border-[#F5F5F3]">
+              <tr key={a.id} className="border-b border-border">
                 <td className="p-3">
                   <p className="font-body">{a.fullName}</p>
                   <p className="font-body text-xs text-charcoal-mid">{a.email}</p>

@@ -12,7 +12,7 @@ export default async function AdminMessagesPage() {
   return (
     <div>
       <h1 className="font-display text-2xl text-ink">Messages</h1>
-      <p className="mt-1 font-body text-sm text-[#6B6B68]">Contact form submissions</p>
+      <p className="mt-1 font-body text-sm text-text-mid">Contact form submissions</p>
       <AdminMessagesClient />
     </div>
   );

@@ -218,7 +218,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
       </form>
 
       {attention === ABANDONED_ATTEMPTS_ATTENTION ? (
-        <p className="mt-4 max-w-2xl font-body text-sm text-[#6B6B68]">
+        <p className="mt-4 max-w-2xl font-body text-sm text-text-mid">
           Unpaid checkout attempts. Live holds still say Pending; after the reservation window (24 hours for cards,
           7 days for bank transfer) they are marked Abandoned so an old attempt does not look like one from five
           minutes ago.
@@ -229,7 +229,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
         <AdminOrdersListClient orders={listRows} />
       </div>
 
-      <p className="mt-4 text-sm text-[#A8A8A4]">
+      <p className="mt-4 text-sm text-text-light">
         {total} orders · page {page} of {Math.max(1, Math.ceil(total / PAGE))}
         {attention !== ABANDONED_ATTEMPTS_ATTENTION && abandonedAttemptsCount > 0
           ? ` · ${abandonedAttemptsCount} abandoned attempt${abandonedAttemptsCount === 1 ? "" : "s"} hidden`

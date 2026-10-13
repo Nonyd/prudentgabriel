@@ -74,51 +74,51 @@ function statusBadgeClass(status: OrderStatus): string {
   switch (status) {
     case "DELIVERED":
     case "COLLECTED":
-      return "bg-[#E8F5E9] text-[#1B5E20]";
+      return "bg-success-soft text-success";
     case "SHIPPED":
     case "READY_FOR_COLLECTION":
-      return "bg-[#F0E8FF] text-[#6B3FAD]";
+      return "bg-info-soft text-info";
     case "PROCESSING":
-      return "bg-[#FFF3E0] text-[#C45E0A]";
+      return "bg-warning-soft text-warning";
     case "CONFIRMED":
       return "bg-[#E8F4FF] text-[#1A5FAD]";
     case "PENDING":
-      return "bg-[#FFF8E7] text-[#92660A]";
+      return "bg-warning-soft text-warning";
     case "CANCELLED":
     case "REFUNDED":
-      return "bg-[#FDECEA] text-[#8B1A1A]";
+      return "bg-[#FDECEA] text-error";
     default:
-      return "bg-[#FAFAFA] text-[#A8A8A4]";
+      return "bg-bg-page text-text-light";
   }
 }
 
 function paymentBadgeClass(s: PaymentStatus): string {
   switch (s) {
     case "PAID":
-      return "bg-[#E8F5E9] text-[#1B5E20]";
+      return "bg-success-soft text-success";
     case "PENDING":
-      return "bg-[#FFF8E7] text-[#92660A]";
+      return "bg-warning-soft text-warning";
     case "FAILED":
-      return "bg-[#FDECEA] text-[#8B1A1A]";
+      return "bg-[#FDECEA] text-error";
     case "REFUNDED":
-      return "bg-[#F0E8FF] text-[#6B3FAD]";
+      return "bg-info-soft text-info";
     default:
-      return "bg-[#FAFAFA] text-[#A8A8A4]";
+      return "bg-bg-page text-text-light";
   }
 }
 
 function gatewayBadgeClass(g: PaymentGateway | null): string {
   switch (g) {
     case "PAYSTACK":
-      return "bg-[#E8F5E9] text-[#1B5E20]";
+      return "bg-success-soft text-success";
     case "FLUTTERWAVE":
-      return "bg-[#E8F0FF] text-[#1A3FAD]";
+      return "bg-[#E8F0FF] text-info";
     case "STRIPE":
-      return "bg-[#F0E8FF] text-[#6B3FAD]";
+      return "bg-info-soft text-info";
     case "MONNIFY":
-      return "bg-[#FFF3E0] text-[#C45E0A]";
+      return "bg-warning-soft text-warning";
     default:
-      return "bg-[#FAFAFA] text-[#A8A8A4]";
+      return "bg-bg-page text-text-light";
   }
 }
 
@@ -156,9 +156,9 @@ export function AnalyticsDashboard({
       <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-display text-28px text-ink">Dashboard</h1>
-          <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">{todayLabel}</p>
+          <p className="mt-1 font-body text-xs font-light text-text-mid">{todayLabel}</p>
         </div>
-        <span className="inline-flex w-fit border border-sand px-3 py-1 font-body text-11px text-[#6B6B68]">
+        <span className="inline-flex w-fit border border-sand px-3 py-1 font-body text-11px text-text-mid">
           Last 30 days
         </span>
       </header>
@@ -166,43 +166,43 @@ export function AnalyticsDashboard({
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="relative border border-sand bg-canvas p-6">
           <div className="flex items-start justify-between">
-            <p className="font-body text-10px font-medium uppercase tracking-wide text-[#A8A8A4]">Revenue (30 days)</p>
-            <TrendingUp className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
+            <p className="font-body text-10px font-medium uppercase tracking-wide text-text-light">Revenue (30 days)</p>
+            <TrendingUp className="h-4 w-4 shrink-0 text-text-light" aria-hidden />
           </div>
           <p className="mt-2 font-display text-32px text-ink">{formatNGN(revenue30)}</p>
-          <p className={cn("mt-1 font-body text-xs font-light", growth >= 0 ? "text-olive" : "text-[#8B1A1A]")}>
+          <p className={cn("mt-1 font-body text-xs font-light", growth >= 0 ? "text-olive" : "text-error")}>
             {growth >= 0 ? "+" : ""}
             {growth.toFixed(1)}% vs prev 30 days
           </p>
         </div>
         <div className="border border-sand bg-canvas p-6">
           <div className="flex items-start justify-between">
-            <p className="font-body text-10px font-medium uppercase tracking-wide text-[#A8A8A4]">Total orders (30 days)</p>
-            <ShoppingBag className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
+            <p className="font-body text-10px font-medium uppercase tracking-wide text-text-light">Total orders (30 days)</p>
+            <ShoppingBag className="h-4 w-4 shrink-0 text-text-light" aria-hidden />
           </div>
           <p className="mt-2 font-display text-32px text-ink">{orders30Count}</p>
-          <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">{ordersPendingPayment} pending payment</p>
+          <p className="mt-1 font-body text-xs font-light text-text-mid">{ordersPendingPayment} pending payment</p>
         </div>
         <div className="border border-sand bg-canvas p-6">
           <div className="flex items-start justify-between">
-            <p className="font-body text-10px font-medium uppercase tracking-wide text-[#A8A8A4]">New customers (30 days)</p>
-            <Users className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
+            <p className="font-body text-10px font-medium uppercase tracking-wide text-text-light">New customers (30 days)</p>
+            <Users className="h-4 w-4 shrink-0 text-text-light" aria-hidden />
           </div>
           <p className="mt-2 font-display text-32px text-ink">{newCustomers30}</p>
-          <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">{newCustomersReferral30} via referral</p>
+          <p className="mt-1 font-body text-xs font-light text-text-mid">{newCustomersReferral30} via referral</p>
         </div>
         <Link
           href={urgentHref}
-          className="block border border-sand bg-canvas p-6 transition-colors hover:bg-[#FAFAFA]"
+          className="block border border-sand bg-canvas p-6 transition-colors hover:bg-bg-page"
         >
           <div className="flex items-start justify-between">
-            <p className="font-body text-10px font-medium uppercase tracking-wide text-[#A8A8A4]">Pending actions</p>
-            <AlertCircle className="h-4 w-4 shrink-0 text-[#A8A8A4]" aria-hidden />
+            <p className="font-body text-10px font-medium uppercase tracking-wide text-text-light">Pending actions</p>
+            <AlertCircle className="h-4 w-4 shrink-0 text-text-light" aria-hidden />
           </div>
-          <p className={cn("mt-2 font-display text-32px", pendingActions > 0 ? "text-[#8B1A1A]" : "text-ink")}>
+          <p className={cn("mt-2 font-display text-32px", pendingActions > 0 ? "text-error" : "text-ink")}>
             {pendingActions}
           </p>
-          <p className="mt-1 font-body text-xs font-light text-[#6B6B68]">
+          <p className="mt-1 font-body text-xs font-light text-text-mid">
             {pendingBespoke} atelier · {pendingReviews} reviews · {pendingOrdersFulfilment} orders
           </p>
         </Link>
@@ -271,7 +271,7 @@ export function AnalyticsDashboard({
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead>
-              <tr className="border-b border-sand bg-[#FAFAFA] font-body text-10px font-medium uppercase tracking-wide text-[#A8A8A4]">
+              <tr className="border-b border-sand bg-bg-page font-body text-10px font-medium uppercase tracking-wide text-text-light">
                 <th className="px-6 py-2.5">Order #</th>
                 <th className="px-6 py-2.5">Customer</th>
                 <th className="px-6 py-2.5">Items</th>
@@ -283,14 +283,14 @@ export function AnalyticsDashboard({
             </thead>
             <tbody>
               {recentOrders.map((o) => (
-                <tr key={o.id} className="border-b border-[#F5F5F3] transition-colors hover:bg-[#FAFAFA]">
+                <tr key={o.id} className="border-b border-border transition-colors hover:bg-bg-page">
                   <td className="px-6 py-3.5">
                     <Link href={`/admin/orders/${o.id}`} className="font-body text-11px font-medium text-olive hover:underline">
                       #{o.orderNumber}
                     </Link>
                   </td>
                   <td className="max-w-[180px] truncate px-6 py-3.5 font-body text-13px text-ink">{o.customerLabel}</td>
-                  <td className="max-w-[200px] truncate px-6 py-3.5 font-body text-13px text-[#6B6B68]">{o.itemSummary}</td>
+                  <td className="max-w-[200px] truncate px-6 py-3.5 font-body text-13px text-text-mid">{o.itemSummary}</td>
                   <td className="px-6 py-3.5 font-body text-13px text-ink">{formatNGN(o.total)}</td>
                   <td className="px-6 py-3.5">
                     <span
@@ -320,7 +320,7 @@ export function AnalyticsDashboard({
                       {o.paymentStatus}
                     </span>
                   </td>
-                  <td className="px-6 py-3.5 font-body text-13px text-[#A8A8A4]" title={new Date(o.createdAt).toISOString()}>
+                  <td className="px-6 py-3.5 font-body text-13px text-text-light" title={new Date(o.createdAt).toISOString()}>
                     {formatDistanceToNow(new Date(o.createdAt), { addSuffix: true })}
                   </td>
                 </tr>
@@ -335,14 +335,14 @@ export function AnalyticsDashboard({
           <div className="flex items-center justify-between">
             <h3 className="font-body text-11px font-medium uppercase tracking-wide text-ink">Atelier requests</h3>
             {bespokePendingList.length > 0 ? (
-              <span className="bg-[#FFF8E7] px-2 py-0.5 font-body text-9px text-[#92660A]">{bespokePendingList.length}</span>
+              <span className="bg-warning-soft px-2 py-0.5 font-body text-9px text-warning">{bespokePendingList.length}</span>
             ) : null}
           </div>
           <ul className="mt-4 divide-y divide-[#F5F5F3]">
             {bespokePendingList.slice(0, 5).map((b) => (
               <li key={b.id} className="py-3 font-body text-xs text-ink">
                 <span className="font-medium text-olive">#{b.requestNumber}</span> · {b.name} · {b.occasion}
-                <span className="mt-1 block font-body text-11px text-[#6B6B68]">
+                <span className="mt-1 block font-body text-11px text-text-mid">
                   {formatDistanceToNow(new Date(b.createdAt), { addSuffix: true })}
                 </span>
               </li>
@@ -354,10 +354,10 @@ export function AnalyticsDashboard({
         </div>
         <div className="border border-sand bg-canvas p-5">
           <h3 className="font-body text-11px font-medium uppercase tracking-wide text-ink">Coupons expiring soon</h3>
-          <p className="mt-1 font-body text-11px text-[#6B6B68]">Within 7 days</p>
+          <p className="mt-1 font-body text-11px text-text-mid">Within 7 days</p>
           <ul className="mt-4 divide-y divide-[#F5F5F3]">
             {expiringCoupons.length === 0 ? (
-              <li className="py-3 font-body text-xs text-[#1B5E20]">No coupons expiring soon ✓</li>
+              <li className="py-3 font-body text-xs text-success">No coupons expiring soon ✓</li>
             ) : (
               expiringCoupons.map((c) => (
                 <li key={c.id} className="py-3 font-body text-xs text-ink">

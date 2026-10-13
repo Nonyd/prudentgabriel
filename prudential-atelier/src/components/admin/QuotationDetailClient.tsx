@@ -111,7 +111,7 @@ export function QuotationDetailClient() {
   }
 
   if (loading || !item) {
-    return <p className="mt-8 font-body text-sm text-[#6B6B68]">Loading…</p>;
+    return <p className="mt-8 font-body text-sm text-text-mid">Loading…</p>;
   }
 
   const canRevise =
@@ -125,16 +125,16 @@ export function QuotationDetailClient() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link href="/admin/quotations" className="font-body text-11px uppercase tracking-[0.1em] text-[#6B6B68]">
+          <Link href="/admin/quotations" className="font-body text-11px uppercase tracking-[0.1em] text-text-mid">
             ← Quotations
           </Link>
           <h1 className="mt-2 font-display text-2xl text-ink">{item.quoteRef}</h1>
-          <p className="mt-1 font-body text-sm text-[#6B6B68]">
+          <p className="mt-1 font-body text-sm text-text-mid">
             {item.clientName} · {item.clientEmail}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Badge variant="gold">{item.status}</Badge>
-            <span className="font-body text-xs text-[#6B6B68]">v{item.version}</span>
+            <span className="font-body text-xs text-text-mid">v{item.version}</span>
             <span className="font-body text-sm text-ink">
               {formatInvoiceCurrency(item.total, asInvoiceCurrency(item.currency ?? "NGN"))}
             </span>
@@ -164,7 +164,7 @@ export function QuotationDetailClient() {
 
       <section>
         <h2 className="font-display text-lg text-ink">Version history</h2>
-        <p className="mt-1 font-body text-13px text-[#6B6B68]">
+        <p className="mt-1 font-body text-13px text-text-mid">
           Who revised, when, and the total delta between versions.
         </p>
         <div className="mt-4 overflow-x-auto border border-sand">
@@ -210,7 +210,7 @@ export function QuotationDetailClient() {
       {item.notes ? (
         <section>
           <h2 className="font-display text-lg text-ink">Notes</h2>
-          <p className="mt-2 whitespace-pre-wrap font-body text-sm text-[#6B6B68]">{item.notes}</p>
+          <p className="mt-2 whitespace-pre-wrap font-body text-sm text-text-mid">{item.notes}</p>
         </section>
       ) : null}
     </div>

@@ -103,7 +103,7 @@ export function TeamClient({
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-24px text-ink">Team</h1>
-          <p className="font-body text-13px text-[#6B6B68]">{members.length} members</p>
+          <p className="font-body text-13px text-text-mid">{members.length} members</p>
         </div>
         <button type="button" onClick={() => setInviteOpen(true)} className="bg-[#37392d] px-4 py-2 font-body text-xs uppercase tracking-[0.08em] text-white">
           + Invite Admin
@@ -112,11 +112,11 @@ export function TeamClient({
 
       <div className="mb-6 border border-sand bg-bg-card">
         <div className="border-b border-sand px-4 py-3">
-          <p className="font-body text-11px uppercase tracking-[0.08em] text-[#6B6B68]">Active Members</p>
+          <p className="font-body text-11px uppercase tracking-[0.08em] text-text-mid">Active Members</p>
         </div>
         <table className="pill-rows w-full min-w-[840px]">
-          <thead className="border-b border-sand bg-[#FAFAFA]">
-            <tr className="font-body text-10px uppercase tracking-[0.08em] text-[#6B6B68]">
+          <thead className="border-b border-sand bg-bg-page">
+            <tr className="font-body text-10px uppercase tracking-[0.08em] text-text-mid">
               <th className="px-3 py-2 text-left">Avatar</th>
               <th className="px-3 py-2 text-left">Name + Email</th>
               <th className="px-3 py-2 text-left">Role</th>
@@ -126,7 +126,7 @@ export function TeamClient({
           </thead>
           <tbody>
             {members.map((member) => (
-              <tr key={member.id} className="border-b border-[#F5F5F3]">
+              <tr key={member.id} className="border-b border-border">
                 <td className="px-3 py-3">
                   {member.image ? (
                     <img src={member.image} alt="" className="h-8 w-8 rounded-full object-cover" />
@@ -138,14 +138,14 @@ export function TeamClient({
                 </td>
                 <td className="px-3 py-3">
                   <p className="font-body text-sm text-ink">{member.name || "—"}</p>
-                  <p className="font-body text-xs text-[#6B6B68]">{member.email}</p>
+                  <p className="font-body text-xs text-text-mid">{member.email}</p>
                 </td>
                 <td className="px-3 py-3">
-                  <span className={`px-2 py-0.5 font-body text-10px uppercase ${member.role === "SUPER_ADMIN" ? "bg-[#37392d] text-white" : "bg-[#F0E8FF] text-[#6B3FAD]"}`}>
+                  <span className={`px-2 py-0.5 font-body text-10px uppercase ${member.role === "SUPER_ADMIN" ? "bg-[#37392d] text-white" : "bg-info-soft text-info"}`}>
                     {member.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}
                   </span>
                 </td>
-                <td className="px-3 py-3 font-body text-xs text-[#6B6B68]">{new Date(member.createdAt).toLocaleDateString("en-GB")}</td>
+                <td className="px-3 py-3 font-body text-xs text-text-mid">{new Date(member.createdAt).toLocaleDateString("en-GB")}</td>
                 <td className="px-3 py-3 text-right">
                   <select value={member.role} onChange={(e) => void changeRole(member, e.target.value as Role)} className="mr-3 border border-sand px-2 py-1 font-body text-xs">
                     <option value="ADMIN">ADMIN</option>
@@ -155,7 +155,7 @@ export function TeamClient({
                     type="button"
                     disabled={member.role === "SUPER_ADMIN" && superAdminCount <= 1}
                     onClick={() => void removeMember(member)}
-                    className="font-body text-xs text-red-600 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                    className="font-body text-xs text-error hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Remove
                   </button>
@@ -169,11 +169,11 @@ export function TeamClient({
       {invitations.length > 0 ? (
         <div className="border border-sand bg-bg-card">
           <div className="border-b border-sand px-4 py-3">
-            <p className="font-body text-11px uppercase tracking-[0.08em] text-[#6B6B68]">Pending Invitations</p>
+            <p className="font-body text-11px uppercase tracking-[0.08em] text-text-mid">Pending Invitations</p>
           </div>
           <table className="pill-rows w-full min-w-[840px]">
-            <thead className="border-b border-sand bg-[#FAFAFA]">
-              <tr className="font-body text-10px uppercase tracking-[0.08em] text-[#6B6B68]">
+            <thead className="border-b border-sand bg-bg-page">
+              <tr className="font-body text-10px uppercase tracking-[0.08em] text-text-mid">
                 <th className="px-3 py-2 text-left">Email</th>
                 <th className="px-3 py-2 text-left">Role</th>
                 <th className="px-3 py-2 text-left">Invited By</th>
@@ -183,16 +183,16 @@ export function TeamClient({
             </thead>
             <tbody>
               {invitations.map((invitation) => (
-                <tr key={invitation.id} className="border-b border-[#F5F5F3]">
+                <tr key={invitation.id} className="border-b border-border">
                   <td className="px-3 py-3 font-body text-sm text-ink">{invitation.email}</td>
-                  <td className="px-3 py-3 font-body text-xs text-[#6B6B68]">{invitation.role}</td>
-                  <td className="px-3 py-3 font-body text-xs text-[#6B6B68]">{invitation.invitedBy}</td>
-                  <td className="px-3 py-3 font-body text-xs text-[#6B6B68]">{new Date(invitation.expiresAt).toLocaleString("en-GB")}</td>
+                  <td className="px-3 py-3 font-body text-xs text-text-mid">{invitation.role}</td>
+                  <td className="px-3 py-3 font-body text-xs text-text-mid">{invitation.invitedBy}</td>
+                  <td className="px-3 py-3 font-body text-xs text-text-mid">{new Date(invitation.expiresAt).toLocaleString("en-GB")}</td>
                   <td className="px-3 py-3 text-right">
-                    <button type="button" onClick={() => void resendInvite(invitation.id)} className="mr-3 font-body text-xs text-[#37392d] hover:underline">
+                    <button type="button" onClick={() => void resendInvite(invitation.id)} className="mr-3 font-body text-xs text-ink hover:underline">
                       Resend
                     </button>
-                    <button type="button" onClick={() => void cancelInvite(invitation.id)} className="font-body text-xs text-red-600 hover:underline">
+                    <button type="button" onClick={() => void cancelInvite(invitation.id)} className="font-body text-xs text-error hover:underline">
                       Cancel
                     </button>
                   </td>

@@ -45,7 +45,7 @@ export function ProductOptionGroupEditor({
   return (
     <div className="mt-8 border-t border-sand pt-6">
       <h3 className="font-display text-xl text-choc">A choice on this piece</h3>
-      <p className="mt-1 text-xs text-[#A8A8A4]">
+      <p className="mt-1 text-xs text-text-light">
         Trousers or a skirt, a jacket or none. One adjustment on top of every size — not a second size chart.
       </p>
       <label className="mt-3 flex items-center justify-between gap-2 text-sm text-charcoal">
@@ -73,7 +73,7 @@ export function ProductOptionGroupEditor({
       </label>
       {enabled && group ? (
         <div className="mt-4 space-y-4">
-          <label className="block text-xs uppercase text-[#A8A8A4]">
+          <label className="block text-xs uppercase text-text-light">
             What she is choosing
             <input
               value={group.label}
@@ -109,7 +109,7 @@ export function ProductOptionGroupEditor({
               </label>
             )}
           />
-          <p className="text-11px text-[#A8A8A4]">
+          <p className="text-11px text-text-light">
             The workroom needs to know which version to cut. Size code stays as it is; the choice is appended, e.g. PA-ALLUR-12-SKIRT.
           </p>
           <ul className="space-y-4">
@@ -120,14 +120,14 @@ export function ProductOptionGroupEditor({
               return (
                 <li key={field.id} className="rounded-xl border border-sand bg-cream/60 p-4">
                   <div className="flex flex-wrap items-end gap-3">
-                    <label className="min-w-[140px] flex-1 text-xs uppercase text-[#A8A8A4]">
+                    <label className="min-w-[140px] flex-1 text-xs uppercase text-text-light">
                       Choice
                       <input
                         {...control.register(`optionGroup.options.${i}.label`)}
                         className="mt-1 w-full min-h-[44px] rounded-xl border border-sand bg-cream px-3 py-2 font-body text-sm text-choc"
                       />
                     </label>
-                    <label className="w-36 text-xs uppercase text-[#A8A8A4]">
+                    <label className="w-36 text-xs uppercase text-text-light">
                       Adjustment ₦
                       <input
                         type="number"
@@ -167,10 +167,10 @@ export function ProductOptionGroupEditor({
                   </div>
                   {libraryFields.length > 0 ? (
                     <details className="mt-3">
-                      <summary className="cursor-pointer text-xs uppercase tracking-wide text-[#A8A8A4]">
+                      <summary className="cursor-pointer text-xs uppercase tracking-wide text-text-light">
                         Measurements for this choice
                       </summary>
-                      <p className="mt-1 text-11px text-[#A8A8A4]">
+                      <p className="mt-1 text-11px text-text-light">
                         Leave empty to use the piece&apos;s usual fields. Tick a set here and made-to-measure asks only those.
                       </p>
                       <ul className="mt-2 space-y-2">

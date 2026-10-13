@@ -161,9 +161,9 @@ export function CustomerProfileDrawer({
             exit={{ x: 360 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
           >
-            <div className="flex items-center justify-between border-b border-[#EBEBEA] px-6 py-4">
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
               <h3 className="font-display text-[20px] text-ink">Account</h3>
-              <button type="button" onClick={onClose} className="text-[#6B6B68] hover:text-ink">
+              <button type="button" onClick={onClose} className="text-text-mid hover:text-ink">
                 <X size={18} />
               </button>
             </div>
@@ -181,50 +181,50 @@ export function CustomerProfileDrawer({
                   const file = event.target.files?.[0];
                   if (file) void uploadAvatar(file);
                 }} />
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="mt-2 font-body text-[11px] text-[#6B6B68]">Change Photo</button>
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="mt-2 font-body text-[11px] text-text-mid">Change Photo</button>
                 <div className="mt-2 w-full max-w-[200px]">
                   <UploadProgressBar value={avatarProgress} />
                 </div>
                 <p className="mt-2 font-display text-[18px] text-ink">{name}</p>
-                <p className="font-body text-xs text-[#6B6B68]">{email}</p>
+                <p className="font-body text-xs text-text-mid">{email}</p>
                 <span className="mt-1 bg-[#37392d] px-2 py-0.5 font-body text-[10px] text-white">{pointsBalance} pts</span>
               </div>
 
               <div className="space-y-2">
-                <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First Name" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
-                <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last Name" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" className="w-full border border-[#EBEBEA] px-3 py-2 font-body text-sm" />
+                <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First Name" className="w-full border border-border px-3 py-2 font-body text-sm" />
+                <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last Name" className="w-full border border-border px-3 py-2 font-body text-sm" />
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" className="w-full border border-border px-3 py-2 font-body text-sm" />
                 <button type="button" onClick={() => void saveProfile()} className="w-full bg-[#37392d] px-3 py-2 font-body text-[12px] uppercase tracking-[0.08em] text-white">
                   Save Changes
                 </button>
               </div>
 
-              <div className="my-5 border-t border-[#EBEBEA]" />
-              <p className="mb-2 font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Payment Preferences</p>
+              <div className="my-5 border-t border-border" />
+              <p className="mb-2 font-body text-[11px] uppercase tracking-[0.08em] text-text-mid">Payment Preferences</p>
               <div className="space-y-2">
                 {(["PAYSTACK", "FLUTTERWAVE", "STRIPE", "MONNIFY"] as PaymentGateway[]).map((gateway) => (
-                  <label key={gateway} className="flex items-center justify-between border border-[#EBEBEA] px-3 py-2 font-body text-sm">
+                  <label key={gateway} className="flex items-center justify-between border border-border px-3 py-2 font-body text-sm">
                     <span>{gateway}</span>
                     <input type="radio" checked={preferredGateway === gateway} onChange={() => setPreferredGateway(gateway)} />
                   </label>
                 ))}
-                <button type="button" onClick={() => void savePreferredGateway()} className="w-full border border-[#37392d] px-3 py-2 font-body text-[11px] uppercase tracking-[0.08em] text-[#37392d]">
+                <button type="button" onClick={() => void savePreferredGateway()} className="w-full border border-[#37392d] px-3 py-2 font-body text-[11px] uppercase tracking-[0.08em] text-ink">
                   Save Preference
                 </button>
               </div>
 
               <div className="mt-5">
-                <p className="mb-2 font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Saved Cards</p>
+                <p className="mb-2 font-body text-[11px] uppercase tracking-[0.08em] text-text-mid">Saved Cards</p>
                 <div className="space-y-2">
                   {methods.map((method) => (
-                    <div key={method.id} className="border border-[#EBEBEA] px-3 py-2">
+                    <div key={method.id} className="border border-border px-3 py-2">
                       <p className="font-body text-sm text-ink">{method.cardBrand || "Card"} •••• {method.cardLast4 || "****"}</p>
-                      <p className="font-body text-[11px] text-[#6B6B68]">{method.cardExpiry || "N/A"} · {method.gateway}</p>
+                      <p className="font-body text-[11px] text-text-mid">{method.cardExpiry || "N/A"} · {method.gateway}</p>
                       <div className="mt-1 flex items-center gap-3">
-                        <button type="button" onClick={() => void makeDefault(method.id)} className="font-body text-[11px] text-[#37392d] hover:underline">
+                        <button type="button" onClick={() => void makeDefault(method.id)} className="font-body text-[11px] text-ink hover:underline">
                           {method.isDefault ? "Default" : "Set Default"}
                         </button>
-                        <button type="button" onClick={() => void removeMethod(method.id)} className="font-body text-[11px] text-red-600 hover:underline">
+                        <button type="button" onClick={() => void removeMethod(method.id)} className="font-body text-[11px] text-error hover:underline">
                           Remove
                         </button>
                       </div>
@@ -232,23 +232,23 @@ export function CustomerProfileDrawer({
                   ))}
                 </div>
                 <div className="mt-2 flex gap-2">
-                  <button type="button" onClick={() => void addQuickMethod("PAYSTACK")} className="flex-1 border border-[#EBEBEA] px-2 py-2 font-body text-[11px]">+ Add Paystack</button>
-                  <button type="button" onClick={() => void addQuickMethod("STRIPE")} className="flex-1 border border-[#EBEBEA] px-2 py-2 font-body text-[11px]">+ Add Stripe</button>
+                  <button type="button" onClick={() => void addQuickMethod("PAYSTACK")} className="flex-1 border border-border px-2 py-2 font-body text-[11px]">+ Add Paystack</button>
+                  <button type="button" onClick={() => void addQuickMethod("STRIPE")} className="flex-1 border border-border px-2 py-2 font-body text-[11px]">+ Add Stripe</button>
                 </div>
               </div>
 
-              <div className="my-5 border-t border-[#EBEBEA]" />
+              <div className="my-5 border-t border-border" />
               <div className="flex items-center justify-between">
-                <p className="font-body text-[11px] uppercase tracking-[0.08em] text-[#6B6B68]">Display Preferences</p>
+                <p className="font-body text-[11px] uppercase tracking-[0.08em] text-text-mid">Display Preferences</p>
                 <DarkModeToggle />
               </div>
             </div>
 
-            <div className="border-t border-[#EBEBEA] px-6 py-4">
+            <div className="border-t border-border px-6 py-4">
               <button
                 type="button"
                 onClick={() => void signOut({ callbackUrl: "/" })}
-                className="flex w-full items-center justify-center gap-2 border border-[#EBEBEA] px-3 py-2 font-body text-xs text-[#37392d] hover:text-red-600"
+                className="flex w-full items-center justify-center gap-2 border border-border px-3 py-2 font-body text-xs text-ink hover:text-error"
               >
                 <LogOut size={14} />
                 Logout

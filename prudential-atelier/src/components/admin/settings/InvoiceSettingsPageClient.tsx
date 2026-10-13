@@ -66,7 +66,7 @@ export function InvoiceSettingsPageClient() {
   }, [load]);
 
   if (!rows.length) {
-    return <p className="font-body text-sm text-[#6B6B68]">Loading…</p>;
+    return <p className="font-body text-sm text-text-mid">Loading…</p>;
   }
 
   return (
@@ -75,12 +75,12 @@ export function InvoiceSettingsPageClient() {
         <SettingsGroupCard title="Business identity" group="INVOICE" rows={filterKeys(rows, BUSINESS_KEYS)} onSaved={load} />
         <div className="border border-sand bg-canvas p-5">
           <p className="font-body text-sm font-medium text-ink">Bank details</p>
-          <p className="mt-1 font-body text-13px text-[#6B6B68]">
+          <p className="mt-1 font-body text-13px text-text-mid">
             Atelier accounts (including EUR for European invoices) are managed as records, not settings keys.
           </p>
           <Link
             href="/admin/settings/bank-accounts"
-            className="mt-3 inline-block font-body text-sm text-[#37392d] underline"
+            className="mt-3 inline-block font-body text-sm text-ink underline"
           >
             Open bank accounts →
           </Link>
@@ -88,8 +88,8 @@ export function InvoiceSettingsPageClient() {
         <SettingsGroupCard title="Invoice defaults" group="INVOICE" rows={filterKeys(rows, DEFAULT_KEYS)} onSaved={load} />
         <SettingsGroupCard title="House terms (quotation and invoice)" group="INVOICE" rows={filterKeys(rows, TERM_KEYS)} onSaved={load} />
       </div>
-      <aside className="h-fit border border-sand bg-[#FAFAF8] p-5 font-body text-xs text-[#6B6B68]">
-        <p className="font-medium uppercase tracking-[0.1em] text-[#37392d]">Preview</p>
+      <aside className="h-fit border border-sand bg-bg-page p-5 font-body text-xs text-text-mid">
+        <p className="font-medium uppercase tracking-[0.1em] text-ink">Preview</p>
         <p className="mt-3">
           Header preview uses <span className="text-ink">{rows.find((r) => r.key === "invoice_business_name")?.value}</span>
           {rows.find((r) => r.key === "invoice_tagline")?.value ? (

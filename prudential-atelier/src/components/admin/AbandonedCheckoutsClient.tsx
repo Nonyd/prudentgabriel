@@ -46,13 +46,13 @@ export function AbandonedCheckoutsClient({ rows }: { rows: Row[] }) {
   }
 
   if (rows.length === 0) {
-    return <p className="mt-8 font-body text-sm text-[#6B6B68]">No captured checkouts yet.</p>;
+    return <p className="mt-8 font-body text-sm text-text-mid">No captured checkouts yet.</p>;
   }
 
   return (
     <div className="-mx-4 mt-8 overflow-x-auto rounded-sm border border-sand bg-canvas px-4 md:mx-0 md:px-0">
       <table className="pill-rows w-full min-w-[960px] text-left text-sm text-charcoal">
-        <thead className="text-[#A8A8A4]">
+        <thead className="text-text-light">
           <tr>
             <th className="p-3">Email</th>
             <th className="p-3">Items</th>
@@ -91,7 +91,7 @@ export function AbandonedCheckoutsClient({ rows }: { rows: Row[] }) {
                   </button>
                 </div>
                 {r.recentWarning && r.remindersSent < 2 && !r.recovered ? (
-                  <p className="mt-1 text-11px text-[#6B6B68]">Automatic reminder was recent.</p>
+                  <p className="mt-1 text-11px text-text-mid">Automatic reminder was recent.</p>
                 ) : null}
               </td>
             </tr>

@@ -47,11 +47,11 @@ export function AdminReviewsHub({
           </p>
         </div>
         {pendingCount > 0 ? (
-          <span className="rounded-sm bg-amber-50 px-3 py-1 font-body text-xs text-amber-900">
+          <span className="rounded-sm bg-warning-soft px-3 py-1 font-body text-xs text-warning">
             {pendingCount} pending approval
           </span>
         ) : (
-          <span className="font-body text-xs text-[#1B5E20]">All moderated ✓</span>
+          <span className="font-body text-xs text-success">All moderated ✓</span>
         )}
       </div>
 

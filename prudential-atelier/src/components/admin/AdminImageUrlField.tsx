@@ -56,12 +56,12 @@ export function AdminImageUrlField({
     <div>
       <label className="font-body text-xs text-charcoal">{label}</label>
       <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start">
-        <div className="relative h-28 w-full max-w-[220px] shrink-0 overflow-hidden rounded-sm border border-sand bg-[#F5F5F3]">
+        <div className="relative h-28 w-full max-w-[220px] shrink-0 overflow-hidden rounded-sm border border-sand bg-bg-page">
           {canPreview && !broken ? (
             // eslint-disable-next-line @next/next/no-img-element -- arbitrary CDN / user URLs
             <img src={url} alt="" className="h-full w-full object-contain" onError={() => setBroken(true)} />
           ) : (
-            <div className="flex h-full items-center justify-center px-2 text-center font-body text-10px leading-snug text-[#A8A8A4]">
+            <div className="flex h-full items-center justify-center px-2 text-center font-body text-10px leading-snug text-text-light">
               {canPreview && broken ? "Could not load preview" : "No preview yet"}
             </div>
           )}
@@ -102,7 +102,7 @@ export function AdminImageUrlField({
                   <Dialog.Overlay className="fixed inset-0 z-[90] bg-black/50" />
                   <Dialog.Content className="fixed left-1/2 top-1/2 z-[91] max-h-[90vh] w-[min(92vw,720px)] -translate-x-1/2 -translate-y-1/2 overflow-auto glass-3 glass-panel p-5">
                     <Dialog.Title className="font-body text-sm font-medium text-charcoal">Preview</Dialog.Title>
-                    <div className="relative mx-auto mt-4 flex min-h-[200px] max-h-[70vh] w-full items-center justify-center bg-[#F5F5F3] p-2">
+                    <div className="relative mx-auto mt-4 flex min-h-[200px] max-h-[70vh] w-full items-center justify-center bg-bg-page p-2">
                       {canPreview && !broken ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={url} alt="" className="max-h-[65vh] w-auto max-w-full object-contain" />

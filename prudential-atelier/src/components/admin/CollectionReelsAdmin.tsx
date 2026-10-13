@@ -202,8 +202,8 @@ export function CollectionReelsAdmin({
   return (
     <section className="mt-10">
       <h2 className="font-display text-xl text-ink">Reels</h2>
-      <p className="mt-1 font-body text-12px text-[#6B6B68]">{COLLECTION_REEL_GUIDE}</p>
-      <p className="mt-1 font-body text-12px text-[#6B6B68]">
+      <p className="mt-1 font-body text-12px text-text-mid">{COLLECTION_REEL_GUIDE}</p>
+      <p className="mt-1 font-body text-12px text-text-mid">
         Stored as H.264 MP4 under {MAX_COLLECTION_REEL_MB}MB, at most 1080×1920. A poster is taken from the first frame.
       </p>
 
@@ -245,7 +245,7 @@ export function CollectionReelsAdmin({
 
         <ul className="divide-y divide-[#EBEBEA] border border-sand">
           {items.length === 0 ? (
-            <li className="px-3 py-4 font-body text-13px text-[#6B6B68]">No reels yet.</li>
+            <li className="px-3 py-4 font-body text-13px text-text-mid">No reels yet.</li>
           ) : (
             items.map((row) => (
               <li
@@ -277,12 +277,12 @@ export function CollectionReelsAdmin({
                     {row.position === 0 ? "Hero" : `After piece ${row.position}`}
                     {row.product?.name ? ` · ${row.product.name}` : ""}
                   </p>
-                  <p className="font-body text-11px text-[#6B6B68]">{row.isActive ? "Active" : "Hidden"}</p>
+                  <p className="font-body text-11px text-text-mid">{row.isActive ? "Active" : "Hidden"}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => void remove(row.id)}
-                  className="font-body text-11px uppercase text-red-700"
+                  className="font-body text-11px uppercase text-error"
                 >
                   Remove
                 </button>

@@ -405,7 +405,7 @@ export function CommissionMeasurementsCard({
       clientName={clientName}
       initial={state.data}
       title="Measurements for this commission"
-      caption={<span className={state.source === "client" ? "text-[#C45E0A]" : undefined}>{caption}</span>}
+      caption={<span className={state.source === "client" ? "text-warning" : undefined}>{caption}</span>}
       saveUrl={`/api/bespoke/${orderId}/measurements`}
       savedMessage="Saved to this commission and to her latest set"
       onSaved={() => void load()}
@@ -474,7 +474,7 @@ export function CostPanel({
           <dd>{formatNGN(cost.materials.totalNGN)}</dd>
         </div>
         {cost.materials.unpriced ? (
-          <p className="text-xs text-[#C45E0A]">{cost.materials.unpriced} material(s) have no cost recorded yet.</p>
+          <p className="text-xs text-warning">{cost.materials.unpriced} material(s) have no cost recorded yet.</p>
         ) : null}
         {cost.sheet ? (
           <div className="flex justify-between text-text-mid">

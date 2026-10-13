@@ -84,7 +84,7 @@ function ToolbarButton({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-sm px-2 py-1 text-xs ${active ? "bg-[rgba(68,41,19,0.12)] text-choc" : "text-[#6B6B68] hover:bg-sand/60"}`}
+      className={`rounded-sm px-2 py-1 text-xs ${active ? "bg-[rgba(68,41,19,0.12)] text-choc" : "text-text-mid hover:bg-sand/60"}`}
     >
       {label}
     </button>

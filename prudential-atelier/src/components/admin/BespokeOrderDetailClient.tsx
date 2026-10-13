@@ -645,7 +645,7 @@ export function BespokeOrderDetailClient({
                       ? "text-text-light"
                       : item.tone === "done"
                         ? "text-ink"
-                        : "text-[#C45E0A]",
+                        : "text-warning",
                   )}
                 >
                   <span aria-hidden>{item.mark === "tick" ? "✓" : item.mark === "open" ? "○" : "–"}</span>
@@ -841,7 +841,7 @@ export function BespokeOrderDetailClient({
                   <dd>{formatDate(order.productionUnlockedAt)}</dd>
                 </div>
               ) : (
-                <div className="pt-1 text-xs text-[#C45E0A]">Deposit not yet satisfied — production locked</div>
+                <div className="pt-1 text-xs text-warning">Deposit not yet satisfied — production locked</div>
               )}
             </dl>
             <div className="mt-4 overflow-x-auto">

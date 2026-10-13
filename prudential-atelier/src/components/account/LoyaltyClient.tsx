@@ -124,7 +124,7 @@ export function LoyaltyClient(props: Props) {
                     </>
                   ) : null}
                 </td>
-                <td className={`py-2 text-right ${tx.amount >= 0 ? "text-nut" : "text-red-600"}`}>
+                <td className={`py-2 text-right ${tx.amount >= 0 ? "text-nut" : "text-error"}`}>
                   {tx.amount >= 0 ? "+" : ""}
                   {tx.amount}
                 </td>

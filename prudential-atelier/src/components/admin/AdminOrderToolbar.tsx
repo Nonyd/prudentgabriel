@@ -206,11 +206,11 @@ export function AdminOrderToolbar({
           >
             <div className="flex items-start justify-between gap-4">
               <Dialog.Title className="font-display text-xl text-ink">Issue Refund — #{order.orderNumber}</Dialog.Title>
-              <Dialog.Close className="rounded-sm p-1 text-[#A8A8A4] hover:text-charcoal" aria-label="Close refund dialog">
+              <Dialog.Close className="rounded-sm p-1 text-text-light hover:text-charcoal" aria-label="Close refund dialog">
                 <X className="h-5 w-5" />
               </Dialog.Close>
             </div>
-            <Dialog.Description className="mt-2 text-sm text-[#6B6B68]">
+            <Dialog.Description className="mt-2 text-sm text-text-mid">
               Refunds are processed manually in your payment gateway dashboard.
             </Dialog.Description>
             <div className="mt-4 space-y-3 text-sm">
@@ -231,7 +231,7 @@ export function AdminOrderToolbar({
                   className="mt-1 w-full border border-sand bg-canvas px-3 py-2 text-charcoal"
                 />
               ) : null}
-              <label className="block text-xs uppercase text-[#A8A8A4]">
+              <label className="block text-xs uppercase text-text-light">
                 Reason (required)
                 <textarea
                   value={refundReason}
@@ -241,7 +241,7 @@ export function AdminOrderToolbar({
                 />
               </label>
             </div>
-            <div className="mt-4 border border-[#FFF8E7] bg-[#FFF8E7] p-3 text-xs text-[#92660A]">
+            <div className="mt-4 border border-[#FFF8E7] bg-warning-soft p-3 text-xs text-warning">
               This records the refund in Prudential Atelier. You must also issue the refund in your {gatewayLabel(order.paymentGateway)}{" "}
               dashboard separately.
             </div>
@@ -273,11 +273,11 @@ export function AdminOrderToolbar({
           >
             <div className="flex items-start justify-between gap-4">
               <Dialog.Title className="font-display text-xl text-ink">Cancel #{order.orderNumber}?</Dialog.Title>
-              <Dialog.Close className="rounded-sm p-1 text-[#A8A8A4] hover:text-charcoal" aria-label="Close cancel dialog">
+              <Dialog.Close className="rounded-sm p-1 text-text-light hover:text-charcoal" aria-label="Close cancel dialog">
                 <X className="h-5 w-5" />
               </Dialog.Close>
             </div>
-            <Dialog.Description className="mt-2 text-sm text-[#6B6B68]">
+            <Dialog.Description className="mt-2 text-sm text-text-mid">
               {unpaid
                 ? "This order was never paid."
                 : "Cancelling a paid order puts it on the refund-required queue until you record the refund."}
@@ -316,11 +316,11 @@ export function AdminOrderToolbar({
           >
             <div className="flex items-start justify-between gap-4">
               <Dialog.Title className="font-display text-xl text-ink">Fabric unavailable — #{order.orderNumber}</Dialog.Title>
-              <Dialog.Close className="rounded-sm p-1 text-[#A8A8A4] hover:text-charcoal" aria-label="Close fabric dialog">
+              <Dialog.Close className="rounded-sm p-1 text-text-light hover:text-charcoal" aria-label="Close fabric dialog">
                 <X className="h-5 w-5" />
               </Dialog.Close>
             </div>
-            <Dialog.Description className="mt-2 text-sm text-[#6B6B68]">
+            <Dialog.Description className="mt-2 text-sm text-text-mid">
               Offer an alternative or a refund within {fabricPromiseHours} hours. This does not block the sale.
             </Dialog.Description>
             <div className="mt-4 space-y-3 text-sm">
@@ -340,7 +340,7 @@ export function AdminOrderToolbar({
                 />
                 {FABRIC_CHOICE_LABEL.REFUNDED}
               </label>
-              <label className="block text-xs uppercase text-[#A8A8A4]">
+              <label className="block text-xs uppercase text-text-light">
                 Note
                 <textarea
                   value={fabricNote}
@@ -386,14 +386,14 @@ export function AdminOrderToolbar({
         loading={deleteBusy}
       />
 
-      <p className="font-label text-xs uppercase text-[#A8A8A4]">Admin</p>
+      <p className="font-label text-xs uppercase text-text-light">Admin</p>
       {unpaid ? (
-        <p className="mt-2 font-body text-sm text-[#C45E0A]">
+        <p className="mt-2 font-body text-sm text-warning">
           Payment is not approved yet. Use Proof of payment above before production or shipping.
         </p>
       ) : null}
       {fabricAt ? (
-        <p className={`mt-2 font-body text-sm ${fabricOverdue ? "text-wine" : "text-[#92660A]"}`}>
+        <p className={`mt-2 font-body text-sm ${fabricOverdue ? "text-wine" : "text-warning"}`}>
           Fabric unavailable · {Math.floor(fabricHours)}h of {fabricPromiseHours}h
           {order.fabricUnavailableChoice
             ? ` · ${FABRIC_CHOICE_LABEL[order.fabricUnavailableChoice]}`
@@ -403,7 +403,7 @@ export function AdminOrderToolbar({
         </p>
       ) : null}
       {outstanding ? (
-        <p className="mt-2 font-body text-sm text-[#92660A]">Balance outstanding — cannot ship or release for collection.</p>
+        <p className="mt-2 font-body text-sm text-warning">Balance outstanding — cannot ship or release for collection.</p>
       ) : null}
       {order.collectionCode ? (
         <p className="mt-2 font-body text-sm text-ink">Collection code: {order.collectionCode}</p>
@@ -463,7 +463,7 @@ export function AdminOrderToolbar({
         <button
           type="button"
           disabled={busy}
-          className="rounded-sm border border-red-500/40 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10"
+          className="rounded-sm border border-error/40 px-3 py-2 text-xs text-error hover:bg-error-soft"
           onClick={() => {
             setCancelOpen(true);
           }}
@@ -474,7 +474,7 @@ export function AdminOrderToolbar({
           <button
             type="button"
             disabled={busy}
-            className="border border-sand px-3 py-2 text-xs text-olive hover:bg-[#FAFAFA]"
+            className="border border-sand px-3 py-2 text-xs text-olive hover:bg-bg-page"
             onClick={() => setRefundOpen(true)}
           >
             Issue Refund
@@ -483,7 +483,7 @@ export function AdminOrderToolbar({
         <button
           type="button"
           disabled={busy}
-          className="border border-sand px-3 py-2 text-xs text-olive hover:bg-[#FAFAFA]"
+          className="border border-sand px-3 py-2 text-xs text-olive hover:bg-bg-page"
           onClick={() => {
             setFabricChoice(order.fabricUnavailableChoice ?? "ALTERNATIVE_OFFERED");
             setFabricNote(order.fabricUnavailableNote ?? "");
@@ -493,7 +493,7 @@ export function AdminOrderToolbar({
           Fabric unavailable
         </button>
       </div>
-      <label className="mt-4 block text-xs text-[#6B6B68]">
+      <label className="mt-4 block text-xs text-text-mid">
         Internal notes
         <textarea
           value={notes}
@@ -511,7 +511,7 @@ export function AdminOrderToolbar({
         <button
           type="button"
           disabled={busy || deleteBusy}
-          className="mt-2 rounded-sm border border-red-500/50 px-3 py-2 text-xs text-red-600 hover:bg-red-500/10 disabled:opacity-50"
+          className="mt-2 rounded-sm border border-red-500/50 px-3 py-2 text-xs text-error hover:bg-error-soft disabled:opacity-50"
           onClick={() => setDeleteOpen(true)}
         >
           Delete order permanently

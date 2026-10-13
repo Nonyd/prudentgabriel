@@ -13,7 +13,7 @@ export default async function AdminConsultationEnquiriesPage({
   return (
     <div>
       <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">Consultation enquiries</h1>
-      <p className="mt-1 font-body text-13px text-[#6B6B68]">
+      <p className="mt-1 font-body text-13px text-text-mid">
         Every consultation starts here. Approving emails the client a booking link;{" "}
         <Link href="/admin/consultations" className="underline">
           bookings

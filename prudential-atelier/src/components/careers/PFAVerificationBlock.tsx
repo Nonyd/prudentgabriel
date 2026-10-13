@@ -47,7 +47,7 @@ export function PFAVerificationBlock({
 
   return (
     <div className="rounded-[3px] border border-amber-200 bg-amber-50/50 p-5">
-      <p className="font-label text-[10px] uppercase tracking-[0.16em] text-amber-900">PFA Student Verification</p>
+      <p className="font-label text-[10px] uppercase tracking-[0.16em] text-warning">PFA Student Verification</p>
       <p className="mt-2 font-body text-sm text-choc">
         This position is open to PFA students applying for Industrial Training (IT).
       </p>
@@ -74,7 +74,7 @@ export function PFAVerificationBlock({
         </button>
       </div>
       {verified?.valid ? (
-        <p className="mt-3 font-body text-sm text-green-800">
+        <p className="mt-3 font-body text-sm text-success">
           ✓ Verified: {verified.name}
           <br />
           <span className="text-text-light">
@@ -82,7 +82,7 @@ export function PFAVerificationBlock({
           </span>
         </p>
       ) : null}
-      {error ? <p className="mt-3 font-body text-sm text-red-700">✗ {error}</p> : null}
+      {error ? <p className="mt-3 font-body text-sm text-error">✗ {error}</p> : null}
     </div>
   );
 }

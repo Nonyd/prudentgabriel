@@ -12,7 +12,7 @@
   --ivory: #f7f2ec;
   --text-primary: #2a1a0e;
   --text-mid: #6b4c35;
-  --text-light: #a08060;
+  --text-light: #80603f;
   --border-color: rgba(212, 187, 172, 0.6);
   --input-bg: #ffffff;
   --input-border: var(--sand);
@@ -32,6 +32,11 @@
   --warning: #8a5220;
   --danger: var(--error);
   --info: #3d4a52;
+  /* Soft status fills behind status text: the same hue, quiet. */
+  --error-soft: rgb(122 36 24 / 0.08);
+  --success-soft: rgb(47 94 61 / 0.09);
+  --warning-soft: rgb(138 82 32 / 0.1);
+  --info-soft: rgb(61 74 82 / 0.08);
   --ivory-dark: #ebe3d8;
 
   /* Storefront / admin compatibility (Tailwind: olive, charcoal, canvas, etc.) */
@@ -140,6 +145,10 @@
   --warning: #e0b060;
   --danger: var(--error);
   --info: #c4b5a5;
+  --error-soft: rgb(232 180 168 / 0.12);
+  --success-soft: rgb(143 191 154 / 0.12);
+  --warning-soft: rgb(224 176 96 / 0.12);
+  --info-soft: rgb(196 181 165 / 0.1);
   --ivory-dark: #221408;
 
   --olive: #5a5d4a;

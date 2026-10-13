@@ -10,7 +10,7 @@ export function UploadProgressBar({ value, label }: { value: number | null; labe
           style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
         />
       </div>
-      <p className="font-body text-10px text-[#6B6B68]">
+      <p className="font-body text-10px text-text-mid">
         {label ? `${label} · ${value}%` : `${value}%`}
       </p>
     </div>

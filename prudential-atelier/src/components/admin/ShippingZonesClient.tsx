@@ -39,7 +39,7 @@ export function ShippingZonesClient({ initialZones }: { initialZones: ShippingZo
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-24px text-ink">Shipping Zones</h1>
-          <p className="font-body text-13px text-[#6B6B68]">{zones.length} zones configured</p>
+          <p className="font-body text-13px text-text-mid">{zones.length} zones configured</p>
         </div>
         <button
           type="button"
@@ -56,32 +56,32 @@ export function ShippingZonesClient({ initialZones }: { initialZones: ShippingZo
       <div className="border border-sand bg-bg-card">
         {zones.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="font-body text-sm text-[#6B6B68]">No shipping zones configured yet. Add your first zone.</p>
+            <p className="font-body text-sm text-text-mid">No shipping zones configured yet. Add your first zone.</p>
           </div>
         ) : (
           zones.map((zone) => (
-            <div key={zone.id} className="flex flex-wrap items-start justify-between gap-4 border-b border-[#F5F5F3] px-6 py-5 last:border-b-0">
+            <div key={zone.id} className="flex flex-wrap items-start justify-between gap-4 border-b border-border px-6 py-5 last:border-b-0">
               <div>
                 <p className="font-body text-sm font-medium text-ink">{zone.name}</p>
-                <p className="font-body text-xs text-[#6B6B68]">{zone.countries.join(", ")}</p>
+                <p className="font-body text-xs text-text-mid">{zone.countries.join(", ")}</p>
                 {zone.countries.includes("NG") ? (
-                  <p className="font-body text-11px text-[#6B6B68]">{zone.states.length ? zone.states.join(", ") : "All states"}</p>
+                  <p className="font-body text-11px text-text-mid">{zone.states.length ? zone.states.join(", ") : "All states"}</p>
                 ) : null}
               </div>
               <div>
                 <p className="font-body text-sm text-ink">₦{Math.round(zone.flatRateNGN).toLocaleString("en-NG")}</p>
-                {zone.perKgNGN > 0 ? <p className="font-body text-xs text-[#6B6B68]">+ ₦{Math.round(zone.perKgNGN).toLocaleString("en-NG")}/kg</p> : null}
-                {zone.freeAboveNGN ? <p className="font-body text-xs text-[#37392d]">Free above ₦{Math.round(zone.freeAboveNGN).toLocaleString("en-NG")}</p> : null}
+                {zone.perKgNGN > 0 ? <p className="font-body text-xs text-text-mid">+ ₦{Math.round(zone.perKgNGN).toLocaleString("en-NG")}/kg</p> : null}
+                {zone.freeAboveNGN ? <p className="font-body text-xs text-ink">Free above ₦{Math.round(zone.freeAboveNGN).toLocaleString("en-NG")}</p> : null}
               </div>
               <div className="text-right">
-                <p className="font-body text-xs text-[#6B6B68]">{zone.estimatedDays}</p>
-                <label className="mt-1 inline-flex items-center gap-1 font-body text-xs text-[#6B6B68]">
+                <p className="font-body text-xs text-text-mid">{zone.estimatedDays}</p>
+                <label className="mt-1 inline-flex items-center gap-1 font-body text-xs text-text-mid">
                   <input type="checkbox" checked={zone.isActive} onChange={() => void toggle(zone)} />
                   Active
                 </label>
                 <div className="mt-2 flex justify-end gap-2">
-                  <button type="button" onClick={() => { setEditing(zone); setOpen(true); }} className="font-body text-11px text-[#37392d] hover:underline">Edit</button>
-                  <button type="button" onClick={() => void remove(zone.id)} className="font-body text-11px text-red-600 hover:underline">Delete</button>
+                  <button type="button" onClick={() => { setEditing(zone); setOpen(true); }} className="font-body text-11px text-ink hover:underline">Edit</button>
+                  <button type="button" onClick={() => void remove(zone.id)} className="font-body text-11px text-error hover:underline">Delete</button>
                 </div>
               </div>
             </div>

@@ -280,7 +280,7 @@ export function JobEditorClient({ job }: { job?: JobPosting }) {
       </div>
 
       <div>
-        <p className="font-label text-11px uppercase tracking-wide text-[#A8A8A4]">Custom Fields</p>
+        <p className="font-label text-11px uppercase tracking-wide text-text-light">Custom Fields</p>
         <div className="mt-3">
           <CustomFieldBuilder fields={customFields} onChange={setCustomFields} />
         </div>

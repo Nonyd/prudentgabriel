@@ -29,7 +29,7 @@ export function ProductWizardRail({ step, onStep, snapshot }: Props) {
                 onClick={() => onStep(i)}
                 className={cn(
                   "flex min-h-[44px] w-full items-center gap-2 px-3 text-left",
-                  current ? "bg-cream text-choc" : "border border-sand bg-transparent text-choc/70 hover:border-choc/40",
+                  current ? "bg-choc text-ivory" : "border border-sand bg-transparent text-choc/70 hover:border-choc/40",
                 )}
               >
                 <span
@@ -38,7 +38,7 @@ export function ProductWizardRail({ step, onStep, snapshot }: Props) {
                     done
                       ? "border-choc bg-choc text-cream"
                       : current
-                        ? "border-choc text-choc"
+                        ? "border-ivory text-ivory"
                         : "border-sand text-choc/50",
                   )}
                   aria-hidden
