@@ -360,9 +360,10 @@ table.pill-rows > thead > tr > th {
   background: transparent;
   border: 0;
 }
-/* Glass, as the chips: translucent fill over a blur, a bright top edge, a soft drop. */
+/* Glass, as the chips: translucent fill over a blur, a bright top edge. Flat on the
+   light page (a drop read as a grey band under each pill); a soft drop only in dark. */
 table.pill-rows > tbody > tr {
-  filter: drop-shadow(0 6px 14px rgb(68 41 19 / 0.08));
+  filter: none;
   transition: transform 200ms var(--ease-glass, ease), filter 200ms var(--ease-glass, ease);
 }
 table.pill-rows > tbody > tr > td {
@@ -390,8 +391,13 @@ table.pill-rows > tbody > tr:hover > td {
 @media (hover: hover) and (pointer: fine) {
   table.pill-rows > tbody > tr.pill-clickable:hover {
     transform: translateY(-1px);
-    filter: drop-shadow(0 10px 18px rgb(68 41 19 / 0.14));
   }
+  [data-theme="dark"] table.pill-rows > tbody > tr.pill-clickable:hover {
+    filter: drop-shadow(0 10px 18px rgb(0 0 0 / 0.32));
+  }
+}
+[data-theme="dark"] table.pill-rows > tbody > tr {
+  filter: drop-shadow(0 6px 14px rgb(0 0 0 / 0.25));
 }
 table.pill-rows > tbody > tr.pill-clickable:focus-visible {
   outline: none;

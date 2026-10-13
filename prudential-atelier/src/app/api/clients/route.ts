@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { logError } from "@/lib/logger";
 import { PROTECTED_ACCOUNTS } from "@/lib/roles";
-import { commissionTitle } from "@/lib/atelier/commission-list";
+import { commissionTitle, occasionPhrase, titleDate } from "@/lib/atelier/commission-list";
 
 const TIERS = new Set<string>(Object.values(LoyaltyTier));
 
@@ -74,12 +74,19 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // The row reads like the pipeline: "Mrs Azazi — Birthday dress — 15 October" from her latest commission.
+    // The row reads like the pipeline, in three columns: "Mrs Azazi | Birthday dress | 15 October",
+    // from her latest commission.
     return NextResponse.json({
       items: items.map((c) => {
         const latest = c.bespokeOrders[0];
         const name = c.user.name?.trim() || latest?.clientName || c.user.email;
-        return { ...c, preview: latest ? commissionTitle({ ...latest, clientName: name }).text : name };
+        return {
+          ...c,
+          name,
+          latestTitle: latest ? latest.title?.trim() || occasionPhrase(latest) || latest.orderRef : null,
+          latestDelivery: latest ? titleDate(latest.deliveryDate) : null,
+          preview: latest ? commissionTitle({ ...latest, clientName: name }).text : name,
+        };
       }),
     });
   } catch (e) {

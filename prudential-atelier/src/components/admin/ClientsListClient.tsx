@@ -6,8 +6,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import type { LoyaltyTier } from "@prisma/client";
 import { BulkSelectTable, type BulkColumn } from "@/components/ui/BulkSelectTable";
-import { Badge } from "@/components/ui/Badge";
-import { formatDate, getInitials } from "@/lib/utils";
+import { getInitials } from "@/lib/utils";
 
 type ClientRow = {
   id: string;
@@ -16,19 +15,14 @@ type ClientRow = {
   user: { name: string | null; email: string; phone: string | null };
   bespokeOrders: { createdAt: string; orderRef: string }[];
   _count: { bespokeOrders: number };
-  /** "Mrs Azazi — Birthday dress — 15 October": her name, latest commission, its delivery date. */
+  name: string;
+  /** Her latest commission: "Birthday dress" (or the house's own title). */
+  latestTitle: string | null;
+  /** Its delivery date: "15 October". */
+  latestDelivery: string | null;
+  /** "Mrs Azazi — Birthday dress — 15 October": the three columns as one line. */
   preview: string;
 };
-
-function tierBadge(tier: LoyaltyTier) {
-  const map: Record<LoyaltyTier, "grey" | "gold" | "success" | "outline-gold"> = {
-    BRONZE: "grey",
-    SILVER: "grey",
-    GOLD: "gold",
-    PLATINUM: "outline-gold",
-  };
-  return <Badge variant={map[tier]}>{tier}</Badge>;
-}
 
 export function ClientsListClient() {
   const router = useRouter();
@@ -70,51 +64,33 @@ export function ClientsListClient() {
         cell: (row) => (
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-choc/10 font-sans text-10px font-medium text-choc">
-              {getInitials(row.user.name ?? row.user.email)}
+              {getInitials(row.name)}
             </div>
-            <div>
-              <Link
-                href={`/admin/clients/${row.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="font-sans text-base font-semibold text-ink hover:underline"
-              >
-                {row.preview}
-              </Link>
-              {row.bespokeOrders[0] ? (
-                <p className="font-sans text-xs text-text-light">{row.bespokeOrders[0].orderRef}</p>
-              ) : (
-                <p className="font-sans text-xs text-text-light">No commission yet</p>
-              )}
-            </div>
+            <Link
+              href={`/admin/clients/${row.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="font-sans text-base font-semibold text-ink hover:underline"
+            >
+              {row.name}
+            </Link>
           </div>
         ),
       },
       {
-        key: "phone",
-        header: "Phone",
-        cell: (row) => (
-          <span className="font-sans text-xs text-text-mid">{row.user.phone ?? "—"}</span>
-        ),
+        key: "order",
+        header: "Recent order",
+        cell: (row) =>
+          row.latestTitle ? (
+            <span className="font-sans text-sm text-text-dark">{row.latestTitle}</span>
+          ) : (
+            <span className="font-sans text-sm text-text-light">No commission yet</span>
+          ),
       },
       {
-        key: "orders",
-        header: "Orders",
+        key: "delivery",
+        header: "Delivery",
         cell: (row) => (
-          <span className="font-sans text-sm">{row._count.bespokeOrders}</span>
-        ),
-      },
-      {
-        key: "tier",
-        header: "Tier",
-        cell: (row) => tierBadge(row.loyaltyTier),
-      },
-      {
-        key: "last",
-        header: "Last Order",
-        cell: (row) => (
-          <span className="font-sans text-xs text-text-mid">
-            {row.bespokeOrders[0] ? formatDate(row.bespokeOrders[0].createdAt) : "—"}
-          </span>
+          <span className="font-sans text-sm text-text-mid">{row.latestDelivery ?? "—"}</span>
         ),
       },
     ],
