@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import type { LoyaltyTier } from "@prisma/client";
 import { BulkSelectTable, type BulkColumn } from "@/components/ui/BulkSelectTable";
@@ -13,8 +14,10 @@ type ClientRow = {
   loyaltyTier: LoyaltyTier;
   totalSpend: number;
   user: { name: string | null; email: string; phone: string | null };
-  bespokeOrders: { createdAt: string }[];
+  bespokeOrders: { createdAt: string; orderRef: string }[];
   _count: { bespokeOrders: number };
+  /** "Mrs Azazi — Birthday dress — 15 October": her name, latest commission, its delivery date. */
+  preview: string;
 };
 
 function tierBadge(tier: LoyaltyTier) {
@@ -28,6 +31,7 @@ function tierBadge(tier: LoyaltyTier) {
 }
 
 export function ClientsListClient() {
+  const router = useRouter();
   const [items, setItems] = useState<ClientRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -71,11 +75,16 @@ export function ClientsListClient() {
             <div>
               <Link
                 href={`/admin/clients/${row.id}`}
-                className="font-sans text-sm font-medium text-nut hover:underline"
+                onClick={(e) => e.stopPropagation()}
+                className="font-sans text-base font-semibold text-ink hover:underline"
               >
-                {row.user.name ?? row.user.email}
+                {row.preview}
               </Link>
-              <p className="font-sans text-xs text-text-light">{row.user.email}</p>
+              {row.bespokeOrders[0] ? (
+                <p className="font-sans text-xs text-text-light">{row.bespokeOrders[0].orderRef}</p>
+              ) : (
+                <p className="font-sans text-xs text-text-light">No commission yet</p>
+              )}
             </div>
           </div>
         ),
@@ -176,6 +185,8 @@ export function ClientsListClient() {
           columns={columns}
           data={items}
           onBulkDelete={handleBulkDelete}
+          onRowClick={(row) => router.push(`/admin/clients/${row.id}`)}
+          rowLabel={(row) => `Open ${row.preview}`}
           emptyMessage="No clients found."
         />
       )}

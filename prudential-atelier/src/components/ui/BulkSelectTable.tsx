@@ -15,7 +15,10 @@ interface BulkSelectTableProps<T extends { id: string }> {
   columns: BulkColumn<T>[];
   data: T[];
   onBulkDelete: (ids: string[]) => Promise<void> | void;
+  /** The whole pill opens the item (mouse, Enter or Space); the checkbox stays separate. */
   onRowClick?: (row: T) => void;
+  /** Accessible name for a clickable row. */
+  rowLabel?: (row: T) => string;
   emptyMessage?: string;
 }
 
@@ -24,6 +27,7 @@ export function BulkSelectTable<T extends { id: string }>({
   data,
   onBulkDelete,
   onRowClick,
+  rowLabel,
   emptyMessage = "No records found.",
 }: BulkSelectTableProps<T>) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -95,9 +99,23 @@ export function BulkSelectTable<T extends { id: string }>({
                     key={row.id}
                     className={cn(
                       "border-b border-sand/70 font-sans text-xs text-text-dark",
-                      onRowClick && "cursor-pointer hover:bg-bg/40",
+                      onRowClick && "pill-clickable cursor-pointer",
                     )}
                     onClick={() => onRowClick?.(row)}
+                    {...(onRowClick
+                      ? {
+                          tabIndex: 0,
+                          role: "link",
+                          "aria-label": rowLabel?.(row),
+                          onKeyDown: (e: React.KeyboardEvent) => {
+                            if (e.target !== e.currentTarget) return;
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              onRowClick(row);
+                            }
+                          },
+                        }
+                      : {})}
                   >
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <input

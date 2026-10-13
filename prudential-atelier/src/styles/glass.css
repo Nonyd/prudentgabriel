@@ -360,14 +360,21 @@ table.pill-rows > thead > tr > th {
   background: transparent;
   border: 0;
 }
+/* Glass, as the chips: translucent fill over a blur, a bright top edge, a soft drop. */
+table.pill-rows > tbody > tr {
+  filter: drop-shadow(0 6px 14px rgb(68 41 19 / 0.08));
+  transition: transform 200ms var(--ease-glass, ease), filter 200ms var(--ease-glass, ease);
+}
 table.pill-rows > tbody > tr > td {
-  background: var(--glass-1-solid);
-  border-top: 1px solid var(--glass-edge);
+  background: var(--glass-1-fill);
+  backdrop-filter: blur(var(--glass-1-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-1-blur)) saturate(var(--glass-saturate));
+  border-top: 1px solid var(--glass-edge-bright);
   border-bottom: 1px solid var(--glass-edge);
   transition: background-color 150ms var(--ease-glass, ease);
 }
 table.pill-rows > tbody > tr > td:first-child {
-  border-left: 1px solid var(--glass-edge);
+  border-left: 1px solid var(--glass-edge-bright);
   border-radius: var(--glass-radius-pill) 0 0 var(--glass-radius-pill);
   padding-left: 1.25rem;
 }
@@ -377,7 +384,24 @@ table.pill-rows > tbody > tr > td:last-child {
   padding-right: 1.25rem;
 }
 table.pill-rows > tbody > tr:hover > td {
-  background: var(--glass-1-fill);
+  background: var(--glass-2-fill, var(--glass-1-fill));
+}
+/* A pill that opens something lifts under the pointer and shows focus from the keyboard. */
+@media (hover: hover) and (pointer: fine) {
+  table.pill-rows > tbody > tr.pill-clickable:hover {
+    transform: translateY(-1px);
+    filter: drop-shadow(0 10px 18px rgb(68 41 19 / 0.14));
+  }
+}
+table.pill-rows > tbody > tr.pill-clickable:focus-visible {
+  outline: none;
+}
+table.pill-rows > tbody > tr.pill-clickable:focus-visible > td {
+  border-color: var(--nut);
+}
+@media (prefers-reduced-motion: reduce) {
+  table.pill-rows > tbody > tr { transition: none; }
+  table.pill-rows > tbody > tr.pill-clickable:hover { transform: none; }
 }
 /* The frame around a pill list steps back: the rows are the frames now. */
 .card-surface:has(> table.pill-rows),
@@ -390,8 +414,10 @@ table.pill-rows > tbody > tr:hover > td {
 
 /* The same frame for list items that are cards rather than table rows (the pipeline). */
 .pill-card {
-  background: var(--glass-1-solid);
-  border: 1px solid var(--glass-edge);
+  background: var(--glass-1-fill);
+  backdrop-filter: blur(var(--glass-1-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-1-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-edge-bright);
   border-radius: var(--glass-radius-pill);
   box-shadow: var(--glass-highlight), var(--glass-shadow);
 }

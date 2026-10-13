@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { logError } from "@/lib/logger";
 import { PROTECTED_ACCOUNTS } from "@/lib/roles";
+import { commissionTitle } from "@/lib/atelier/commission-list";
 
 const TIERS = new Set<string>(Object.values(LoyaltyTier));
 
@@ -54,7 +55,18 @@ export async function GET(req: NextRequest) {
       include: {
         user: { select: { id: true, name: true, email: true, phone: true, createdAt: true } },
         bespokeOrders: {
-          select: { id: true, orderRef: true, currentStage: true, status: true, createdAt: true },
+          select: {
+            id: true,
+            orderRef: true,
+            currentStage: true,
+            status: true,
+            createdAt: true,
+            clientName: true,
+            title: true,
+            occasionType: true,
+            occasionDetails: true,
+            deliveryDate: true,
+          },
           orderBy: { createdAt: "desc" },
           take: 1,
         },
@@ -62,7 +74,14 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ items });
+    // The row reads like the pipeline: "Mrs Azazi — Birthday dress — 15 October" from her latest commission.
+    return NextResponse.json({
+      items: items.map((c) => {
+        const latest = c.bespokeOrders[0];
+        const name = c.user.name?.trim() || latest?.clientName || c.user.email;
+        return { ...c, preview: latest ? commissionTitle({ ...latest, clientName: name }).text : name };
+      }),
+    });
   } catch (e) {
     await logError({
       severity: "WARNING",
