@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import nextDynamic from "next/dynamic";
-import { Cormorant_Garamond, Jost, Lora } from "next/font/google";
+import localFont from "next/font/local";
 import "@/styles/globals.css";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { getLogoSettings } from "@/lib/logos";
@@ -16,27 +16,34 @@ const SmoothScroll = nextDynamic(
 
 const themeInitScript = `(function(){try{var t=localStorage.getItem("pg-theme");var theme="light";if(t==="dark"||t==="light")theme=t;else if(t){try{var p=JSON.parse(t);if(p&&p.state&&p.state.isDark)theme="dark";}catch(e){}}document.documentElement.setAttribute("data-theme",theme);}catch(e){}})();`;
 
-const cormorantGaramond = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  style: ["normal", "italic"],
+// The house fonts ship with the app (src/app/fonts, SIL OFL — licences beside them),
+// so a build never depends on reaching Google Fonts. Latin variable files from
+// Fontsource; the weight ranges cover every weight the site uses.
+const cormorantGaramond = localFont({
+  src: [
+    { path: "./fonts/cormorant-garamond-latin-wght-normal.woff2", weight: "300 700", style: "normal" },
+    { path: "./fonts/cormorant-garamond-latin-wght-italic.woff2", weight: "300 700", style: "italic" },
+  ],
   variable: "--font-cormorant",
   display: "swap",
+  fallback: ["Cormorant Garamond", "Georgia", "serif"],
 });
 
-const lora = Lora({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  style: ["normal", "italic"],
+const lora = localFont({
+  src: [
+    { path: "./fonts/lora-latin-wght-normal.woff2", weight: "400 700", style: "normal" },
+    { path: "./fonts/lora-latin-wght-italic.woff2", weight: "400 700", style: "italic" },
+  ],
   variable: "--font-lora",
   display: "swap",
+  fallback: ["Lora", "Georgia", "serif"],
 });
 
-const jost = Jost({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+const jost = localFont({
+  src: [{ path: "./fonts/jost-latin-wght-normal.woff2", weight: "100 900", style: "normal" }],
   variable: "--font-jost",
   display: "swap",
+  fallback: ["Jost", "system-ui", "sans-serif"],
 });
 
 const siteUrl = getPublicAppUrl();
