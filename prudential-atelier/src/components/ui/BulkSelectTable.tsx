@@ -15,6 +15,12 @@ interface BulkSelectTableProps<T extends { id: string }> {
   columns: BulkColumn<T>[];
   data: T[];
   onBulkDelete: (ids: string[]) => Promise<void> | void;
+  /**
+   * Optional: the caller shows its own confirmation (e.g. a cascade preview).
+   * "Delete Selected" then calls this instead of opening the generic confirm;
+   * call `clearSelection` once the delete has gone through.
+   */
+  onBulkDeleteRequest?: (ids: string[], clearSelection: () => void) => void;
   /** The whole pill opens the item (mouse, Enter or Space); the checkbox stays separate. */
   onRowClick?: (row: T) => void;
   /** Accessible name for a clickable row. */
@@ -26,6 +32,7 @@ export function BulkSelectTable<T extends { id: string }>({
   columns,
   data,
   onBulkDelete,
+  onBulkDeleteRequest,
   onRowClick,
   rowLabel,
   emptyMessage = "No records found.",
@@ -141,7 +148,12 @@ export function BulkSelectTable<T extends { id: string }>({
       {selected.size > 0 ? (
         <div className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-4 rounded-lg border border-sand bg-ivory px-5 py-3 shadow-lg">
           <span className="font-sans text-xs text-text-mid">{selected.size} selected</span>
-          <Button type="button" variant="danger" size="sm" onClick={() => setConfirmOpen(true)}>
+          <Button type="button" variant="danger" size="sm" onClick={() =>
+              onBulkDeleteRequest
+                ? onBulkDeleteRequest(ids, () => setSelected(new Set()))
+                : setConfirmOpen(true)
+            }
+          >
             Delete Selected
           </Button>
           <button
