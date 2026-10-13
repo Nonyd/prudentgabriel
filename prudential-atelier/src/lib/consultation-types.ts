@@ -123,11 +123,12 @@ export function getOfferingTypeConfig(key: OfferingTypeKey, cms: Record<string, 
 }
 
 export function isOfferingTypeVirtual(key: OfferingTypeKey): boolean {
-  return DEFAULT_UI[key].isVirtual;
+  // Bookings can carry a key retired since (BA3); unknown keys are not virtual.
+  return DEFAULT_UI[key]?.isVirtual ?? false;
 }
 
 export function isOfferingTypeManual(key: OfferingTypeKey): boolean {
-  return DEFAULT_UI[key].includesPrudent;
+  return DEFAULT_UI[key]?.includesPrudent ?? false;
 }
 
 export function offeringTypeMatches(
