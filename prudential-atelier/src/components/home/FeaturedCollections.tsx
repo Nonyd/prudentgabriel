@@ -29,7 +29,7 @@ function CollectionCard({
   const src = item.coverImage ? optimizeImageUrl(item.coverImage, 900) : PRODUCT_IMAGE_PLACEHOLDER;
   return (
     <Link href={`/collections/${item.slug}`} className={cn("group relative block overflow-hidden", className ?? "")}>
-      <div className={cn("relative w-full overflow-hidden bg-[#E8E8E6]", aspectClass)}>
+      <div className={cn("relative w-full overflow-hidden bg-bg-page", aspectClass)}>
         <Image
           src={src}
           alt={item.coverImageAlt || item.name}

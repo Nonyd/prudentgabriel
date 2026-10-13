@@ -136,13 +136,13 @@ export function LedgerReportClient() {
             {new Date(data.asOf).toLocaleString("en-GB")}.
           </p>
           {data.unassigned.length > 0 ? (
-            <p className="border border-red-200 bg-error-soft px-3 py-2 font-sans text-sm text-error">
+            <p className="border border-error/30 bg-error-soft px-3 py-2 font-sans text-sm text-error">
               {data.unassigned.length} row{data.unassigned.length === 1 ? "" : "s"} resolve to neither line or to both. They are listed
               and kept out of Ready-to-wear + Atelier.
             </p>
           ) : null}
           {(data.deletions?.paymentCount ?? 0) > 0 ? (
-            <p className="border border-amber-200 bg-warning-soft px-3 py-2 font-sans text-sm text-warning">
+            <p className="border border-warning/40 bg-warning-soft px-3 py-2 font-sans text-sm text-warning">
               {data.deletions!.paymentCount} {data.deletions!.paymentCount === 1 ? "record was" : "records were"} deleted from this
               period.{" "}
               <Link

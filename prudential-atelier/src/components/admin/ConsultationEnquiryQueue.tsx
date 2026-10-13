@@ -254,7 +254,7 @@ export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) 
                 id={`enquiry-${e.id}`}
                 className={clsx(
                   "glass-1 border p-5 font-body text-sm",
-                  openId === e.id ? "border-choc" : overdue ? "border-amber-400" : "border-sand",
+                  openId === e.id ? "border-choc" : overdue ? "border-warning/40" : "border-sand",
                 )}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -276,7 +276,7 @@ export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) 
                       <span
                         className={clsx(
                           "rounded-full px-2.5 py-1",
-                          overdue ? "bg-warning-soft text-warning" : "bg-[#f1ede6] text-text-mid",
+                          overdue ? "bg-warning-soft text-warning" : "bg-bg-page text-text-mid",
                         )}
                       >
                         {waitingLabel(h)}

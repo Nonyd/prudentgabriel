@@ -201,11 +201,11 @@ export function PortalLoginClient() {
   return (
     <div className="relative flex min-h-screen items-center justify-center px-6 py-12">
       <div className="admin-field" aria-hidden="true" />
-      <div className="glass-2 glass-panel relative z-[1] w-[420px] max-w-full px-10 py-12">
+      <div className="glass-2 glass-panel glass-on-dark relative z-[1] w-[420px] max-w-full px-10 py-12">
         <div className="flex flex-col items-center text-center">
           <Logo variant="dark" size="xl" href={undefined} />
           <div className="mx-auto my-4 h-px w-10 bg-[#C9A84C]" aria-hidden />
-          <p className="mb-6 font-sans text-[9px] font-semibold uppercase tracking-[0.24em] text-[var(--lightbr)]">
+          <p className="mb-6 font-sans text-[9px] font-semibold uppercase tracking-[0.24em] text-[var(--text-mid)]">
             {copy.badge}
           </p>
         </div>

@@ -348,7 +348,7 @@ export default function StaffTimePage() {
 
             <div
 
-              className="flex items-center gap-3 rounded-md border border-green-200 bg-success-soft p-4"
+              className="flex items-center gap-3 rounded-md border border-success/30 bg-success-soft p-4"
 
               role="status"
 

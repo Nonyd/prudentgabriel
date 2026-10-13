@@ -78,15 +78,15 @@ export function ProfileFormClient({
     </form>
 
     <div className="mt-8 rounded-sm border border-border bg-cream p-5">
-      <p className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-dark-grey">Display preferences</p>
+      <p className="font-body text-[11px] font-medium uppercase tracking-[0.14em] text-text-mid">Display preferences</p>
       <div className="mt-4 flex items-start justify-between gap-4">
         <div>
           <p className="font-body text-sm text-charcoal">Dark mode</p>
-          <p className="mt-0.5 font-body text-xs text-dark-grey">Switch between light and dark appearance</p>
+          <p className="mt-0.5 font-body text-xs text-text-mid">Switch between light and dark appearance</p>
         </div>
         <DarkModeToggle />
       </div>
-      <p className="mt-4 font-body text-[11px] text-dark-grey">Your preference is saved automatically.</p>
+      <p className="mt-4 font-body text-[11px] text-text-mid">Your preference is saved automatically.</p>
     </div>
     </>
   );

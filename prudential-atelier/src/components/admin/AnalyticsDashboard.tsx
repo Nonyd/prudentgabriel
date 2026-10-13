@@ -81,12 +81,12 @@ function statusBadgeClass(status: OrderStatus): string {
     case "PROCESSING":
       return "bg-warning-soft text-warning";
     case "CONFIRMED":
-      return "bg-[#E8F4FF] text-[#1A5FAD]";
+      return "bg-info-soft text-[#1A5FAD]";
     case "PENDING":
       return "bg-warning-soft text-warning";
     case "CANCELLED":
     case "REFUNDED":
-      return "bg-[#FDECEA] text-error";
+      return "bg-error-soft text-error";
     default:
       return "bg-bg-page text-text-light";
   }
@@ -99,7 +99,7 @@ function paymentBadgeClass(s: PaymentStatus): string {
     case "PENDING":
       return "bg-warning-soft text-warning";
     case "FAILED":
-      return "bg-[#FDECEA] text-error";
+      return "bg-error-soft text-error";
     case "REFUNDED":
       return "bg-info-soft text-info";
     default:
@@ -112,7 +112,7 @@ function gatewayBadgeClass(g: PaymentGateway | null): string {
     case "PAYSTACK":
       return "bg-success-soft text-success";
     case "FLUTTERWAVE":
-      return "bg-[#E8F0FF] text-info";
+      return "bg-info-soft text-info";
     case "STRIPE":
       return "bg-info-soft text-info";
     case "MONNIFY":

@@ -25,7 +25,7 @@ function CollectionCard({ item, index }: { item: CollectionListItem; index: numb
   const card = (
     <Link
       href={`/collections/${item.slug}`}
-      className="group relative block cursor-pointer overflow-hidden bg-[#F8F8F6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-olive"
+      className="group relative block cursor-pointer overflow-hidden bg-bg-page focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-olive"
       aria-label={`${item.name}, ${item.productCount} ${item.productCount === 1 ? "piece" : "pieces"}`}
     >
       <div className="relative aspect-[3/4] w-full overflow-hidden">

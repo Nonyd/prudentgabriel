@@ -46,7 +46,7 @@ export function PFAVerificationBlock({
   }
 
   return (
-    <div className="rounded-[3px] border border-amber-200 bg-amber-50/50 p-5">
+    <div className="rounded-[3px] border border-warning/40 bg-amber-50/50 p-5">
       <p className="font-label text-[10px] uppercase tracking-[0.16em] text-warning">PFA Student Verification</p>
       <p className="mt-2 font-body text-sm text-choc">
         This position is open to PFA students applying for Industrial Training (IT).

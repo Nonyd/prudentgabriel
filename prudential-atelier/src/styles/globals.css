@@ -1093,6 +1093,11 @@ a.admin-cta {
   color: var(--error);
 }
 
+/* Faded ivory text sits on dark panels; in dark --ivory is the page colour, so mix from ivory-deep. */
+[data-theme="dark"] [class*="text-ivory/"] {
+  color: rgb(247 242 236 / 0.7);
+}
+
 /* Faded olive text (text-olive/80 …) mixes from the dark olive fill; lift it like .text-olive. */
 [data-theme="dark"] [class*="text-olive/"] {
   color: #d4d6c4;

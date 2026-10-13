@@ -430,7 +430,7 @@ export function ProductsTable({
       ) : null}
 
       {published === "false" ? (
-        <div className="rounded-sm border border-amber-300 bg-warning-soft px-4 py-3 font-body text-13px text-warning">
+        <div className="rounded-sm border border-warning/40 bg-warning-soft px-4 py-3 font-body text-13px text-warning">
           These products were imported and are awaiting review. Set images, check prices, then publish.
         </div>
       ) : null}
@@ -461,7 +461,7 @@ export function ProductsTable({
           </button>
           <button
             type="button"
-            className="rounded-sm border border-red-300/60 bg-red-900/30 px-3 py-1 text-xs font-medium text-white hover:bg-red-900/50"
+            className="rounded-sm border border-error/60 bg-red-900/30 px-3 py-1 text-xs font-medium text-white hover:bg-red-900/50"
             onClick={() => void openDelete({ mode: "bulk", ids: Array.from(selected) })}
           >
             Delete selected
@@ -511,7 +511,7 @@ export function ProductsTable({
                   pending && "opacity-60",
                   reorderMode && "cursor-grab active:cursor-grabbing",
                   dragId === p.id && "bg-sand/50",
-                  p.isFeatured && reorderMode && "bg-[#F8F1E8]/40",
+                  p.isFeatured && reorderMode && "bg-bg-page/40",
                 )}
               >
                 <td className="p-2">
@@ -568,7 +568,7 @@ export function ProductsTable({
                         }
                       }}
                       placeholder="₦ Set price"
-                      className="w-28 rounded-sm border border-amber-300 bg-warning-soft px-2 py-1 text-xs text-charcoal placeholder:text-amber-500"
+                      className="w-28 rounded-sm border border-warning/40 bg-warning-soft px-2 py-1 text-xs text-charcoal placeholder:text-warning"
                     />
                   ) : (
                     <span>{formatNGN(p.minPriceNGN)}</span>
@@ -646,7 +646,7 @@ export function ProductsTable({
         <span>
           Page {page} of {totalPages} · {total} products
         </span>
-        {needsPrice === "true" ? <span className="text-amber-500">Needs Price filter active</span> : null}
+        {needsPrice === "true" ? <span className="text-warning">Needs Price filter active</span> : null}
         <div className="flex gap-2">
           <button
             type="button"

@@ -110,7 +110,7 @@ export function AdminBankTransferProof({
       ) : null}
 
       {failed ? (
-        <p className="mt-4 border border-red-200 bg-white px-4 py-3 font-body text-base text-error">
+        <p className="mt-4 border border-error/30 bg-white px-4 py-3 font-body text-base text-error">
           This receipt was rejected. The customer needs to pay again or upload a new proof.
         </p>
       ) : null}
@@ -181,7 +181,7 @@ export function AdminBankTransferProof({
                   type="button"
                   disabled={busy}
                   onClick={() => setRejectOpen(true)}
-                  className="w-full border border-red-300 px-4 py-3 font-sans text-sm uppercase tracking-wider text-error disabled:opacity-50"
+                  className="w-full border border-error/30 px-4 py-3 font-sans text-sm uppercase tracking-wider text-error disabled:opacity-50"
                 >
                   Reject receipt
                 </button>

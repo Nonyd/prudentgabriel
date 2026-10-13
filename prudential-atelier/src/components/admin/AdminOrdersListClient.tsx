@@ -28,13 +28,13 @@ function gatewayBadgeClass(g: PaymentGateway | null): string {
     case "PAYSTACK":
       return "bg-success-soft text-success";
     case "FLUTTERWAVE":
-      return "bg-[#E8F0FF] text-info";
+      return "bg-info-soft text-info";
     case "STRIPE":
       return "bg-info-soft text-info";
     case "MONNIFY":
       return "bg-warning-soft text-warning";
     case "BANK_TRANSFER":
-      return "bg-[#F5F0E8] text-ink";
+      return "bg-sand/30 text-ink";
     default:
       return "bg-bg-page text-text-light";
   }
@@ -216,9 +216,9 @@ export function AdminOrdersListClient({ orders }: { orders: AdminOrderListRow[] 
                   o.status === "ABANDONED"
                     ? "border-b border-border bg-bg-page text-text-light hover:bg-bg-page"
                     : o.paymentStatus === "PAID" && o.status === "CANCELLED"
-                      ? "border-b border-border bg-[#F8F1E8] hover:bg-[#F3E6D8]"
+                      ? "border-b border-border bg-error-soft hover:bg-error-soft"
                       : o.paymentGateway === "BANK_TRANSFER" && o.paymentStatus === "PENDING"
-                        ? "border-b border-border bg-warning-soft hover:bg-[#FFF1E4]"
+                        ? "border-b border-border bg-warning-soft hover:bg-warning-soft"
                         : "border-b border-border hover:bg-bg-page"
                 }
               >

@@ -294,7 +294,7 @@ export function AdminSettingsClient() {
     if (tab === "payments") {
       return (
         <div className="space-y-4">
-          <div className="rounded-sm border border-amber-200 bg-warning-soft px-4 py-3 font-body text-xs text-warning">
+          <div className="rounded-sm border border-warning/40 bg-warning-soft px-4 py-3 font-body text-xs text-warning">
             Payment keys are encrypted in the database and never sent in full to the browser. Changes apply to API routes that
             read from settings.
           </div>

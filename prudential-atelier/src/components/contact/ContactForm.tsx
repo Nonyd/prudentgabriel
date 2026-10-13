@@ -66,7 +66,7 @@ export function ContactForm({
     fontSize: "10px",
     fontWeight: 600 as const,
     letterSpacing: "0.16em",
-    color: "var(--lightbr)",
+    color: "var(--text-light)",
     textTransform: "uppercase" as const,
   };
 

@@ -120,7 +120,7 @@ export function CronJobsClient() {
                 <div className="font-medium text-ink">{job.name}</div>
                 <div className="mt-0.5 text-text-mid">{job.description}</div>
                 {!job.migrated ? (
-                  <div className="mt-1 text-10px uppercase tracking-wide text-[#98755B]">
+                  <div className="mt-1 text-10px uppercase tracking-wide text-text-light">
                     Legacy handler
                   </div>
                 ) : null}

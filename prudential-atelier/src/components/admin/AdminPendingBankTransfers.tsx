@@ -226,7 +226,7 @@ export function AdminPendingBankTransfers() {
                       <button
                         type="button"
                         disabled={busyId === item.id}
-                        className="border border-red-200 px-3 py-1 text-10px uppercase text-error disabled:opacity-50"
+                        className="border border-error/30 px-3 py-1 text-10px uppercase text-error disabled:opacity-50"
                         onClick={() => {
                           setRejectId(item.id);
                           setRejectReason("");

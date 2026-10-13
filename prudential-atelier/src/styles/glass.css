@@ -357,6 +357,13 @@ body:has(.storefront-shell) {
   z-index: 1;
 }
 
+/* Over a dark hero band (or the dark login backdrop) the light glass read as taupe
+   under brown text; carry more ivory. */
+:root:not([data-theme="dark"]) .hero-copy-panel.glass-1,
+:root:not([data-theme="dark"]) .glass-on-dark {
+  background: rgb(255 255 255 / 0.84);
+}
+
 /*
  * Listed items as pills — one pattern for every list in the admin and staff
  * portals (clients, orders, products, consultations, staff …), the same shape

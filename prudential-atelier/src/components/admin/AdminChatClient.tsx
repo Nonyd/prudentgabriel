@@ -159,7 +159,7 @@ function EraseControl({ id, email, onDone }: { id: string; email: string; onDone
     );
   }
   return (
-    <div className="mt-2 space-y-2 border border-red-200 p-3 text-xs">
+    <div className="mt-2 space-y-2 border border-error/30 p-3 text-xs">
       <p className="text-error">Erase permanently. This cannot be undone; the activity log keeps who and how many, not the words.</p>
       <label className="flex items-center gap-2">
         <input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} />

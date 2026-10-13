@@ -45,8 +45,8 @@
   --olive-light: rgba(55, 57, 45, 0.1);
   --olive-mid: #5a5d4a;
   --charcoal: var(--text-primary);
-  --charcoal-mid: #6b6b68;
-  --charcoal-light: #a8a8a4;
+  --charcoal-mid: #6b4c35;
+  --charcoal-light: #80603f;
   --canvas: var(--bg-card);
   --ink: var(--text-primary);
   --white: #ffffff;
@@ -159,7 +159,7 @@
   --olive-mid: #6b6e58;
   --charcoal: var(--text-primary);
   --charcoal-mid: #d4bbac;
-  --charcoal-light: #98755b;
+  --charcoal-light: #c9a88a;
   --canvas: var(--bg-card);
   --ink: var(--text-primary);
   --white: #ffffff;

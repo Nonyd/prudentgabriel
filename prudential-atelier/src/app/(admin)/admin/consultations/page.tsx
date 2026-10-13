@@ -117,7 +117,7 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
       </div>
 
       {unsentVirtual.length > 0 && alertBooking && !awaitingQuote ? (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-amber-300 bg-warning-soft px-4 py-3 text-sm text-warning">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-warning/40 bg-warning-soft px-4 py-3 text-sm text-warning">
           <span>
             ⚠ {unsentVirtual.length} virtual consultation{unsentVirtual.length > 1 ? "s" : ""} within 2 hours —
             meeting link not sent

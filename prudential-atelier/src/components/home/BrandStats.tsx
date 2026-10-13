@@ -12,25 +12,25 @@ export function BrandStats() {
           <p className="font-display text-[40px] font-normal italic leading-none text-white md:text-[56px]">
             {inView ? <CountUp end={5000} duration={2} separator="," suffix="+" /> : "0"}
           </p>
-          <p className="mt-3 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/50">Designers Trained</p>
+          <p className="mt-3 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/70">Designers Trained</p>
         </div>
         <div className="text-center">
           <p className="font-display text-[40px] font-normal italic leading-none text-white md:text-[56px]">
             {inView ? <CountUp start={2010} end={2019} duration={1.5} useEasing={false} /> : "0"}
           </p>
-          <p className="mt-3 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/50">Est. in Lagos</p>
+          <p className="mt-3 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/70">Est. in Lagos</p>
         </div>
         <div className="text-center">
           <p className="font-display text-[40px] font-normal italic leading-none text-white md:text-[56px]">
             {inView ? <CountUp end={85} duration={2} suffix="+" /> : "0"}
           </p>
-          <p className="mt-3 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/50">Team Members</p>
+          <p className="mt-3 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/70">Team Members</p>
         </div>
         <div className="text-center">
           <p className="font-display text-[40px] font-normal italic leading-none text-white md:text-[56px]">
             {inView ? <CountUp end={4} duration={2} /> : "0"}
           </p>
-          <p className="mt-3 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/50">Continents Served</p>
+          <p className="mt-3 font-body text-[10px] font-medium uppercase tracking-[0.2em] text-white/70">Continents Served</p>
         </div>
       </div>
     </section>

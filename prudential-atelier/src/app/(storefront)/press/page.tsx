@@ -78,13 +78,13 @@ export default function PressPage() {
                 "glass-2 glass-panel glass-lift p-6",
               )}
             >
-              <p className="font-label text-[11px] uppercase tracking-wider text-gold">{item.publication}</p>
+              <p className="font-label text-[11px] uppercase tracking-wider text-nut">{item.publication}</p>
               <h2 className="mt-2 font-display text-xl font-semibold leading-snug text-charcoal line-clamp-2">{item.headline}</h2>
               <p className="mt-2 font-body text-sm leading-relaxed text-charcoal-mid line-clamp-3">{item.excerpt}</p>
               <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-charcoal-light">
                 <span>{item.date}</span>
                 {item.url !== "#" ? (
-                  <Link href={item.url} className="font-label text-gold hover:underline" target="_blank" rel="noopener noreferrer">
+                  <Link href={item.url} className="font-label text-nut hover:underline" target="_blank" rel="noopener noreferrer">
                     Read Article →
                   </Link>
                 ) : null}

@@ -507,7 +507,7 @@ export function AdminOrderToolbar({
         />
       </label>
       <div className="mt-6 border-t border-sand pt-4">
-        <p className="font-label text-xs uppercase text-red-600/90">Danger zone</p>
+        <p className="font-label text-xs uppercase text-error">Danger zone</p>
         <button
           type="button"
           disabled={busy || deleteBusy}

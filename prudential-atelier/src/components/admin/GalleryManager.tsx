@@ -189,7 +189,7 @@ function PieceStatus({
         </>
       )}
       {duplicateOf ? (
-        <span className={cn(flag, "border-[#E3A5A5] bg-[#FDEEEE] text-error")}>Same file as #{duplicateOf}</span>
+        <span className={cn(flag, "border-[#E3A5A5] bg-error-soft text-error")}>Same file as #{duplicateOf}</span>
       ) : null}
     </div>
   );
@@ -1059,7 +1059,7 @@ export function GalleryManager() {
               onChange={(e) => setEditCaption(e.target.value)}
             />
             {editing?.placeholder ? (
-              <div className="mt-4 border border-[#C53030] bg-[#FDEEEE] p-3 font-body text-xs leading-relaxed text-[#7B1E1E]">
+              <div className="mt-4 border border-[#C53030] bg-error-soft p-3 font-body text-xs leading-relaxed text-[#7B1E1E]">
                 <p className="font-medium uppercase tracking-[0.08em]">Placeholder: invented for review</p>
                 <p className="mt-1">
                   The title, description and price on this piece were made up so the page could be judged. None of

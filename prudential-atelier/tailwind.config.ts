@@ -34,6 +34,9 @@ function withAlpha(tree: ColorTree): any {
 }
 
 const config: Config = {
+  // dark: follows the site theme (html[data-theme]), not the device setting: a phone in
+  // dark mode on the light site was getting cream-on-cream text.
+  darkMode: ["selector", '[data-theme="dark"]'],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
