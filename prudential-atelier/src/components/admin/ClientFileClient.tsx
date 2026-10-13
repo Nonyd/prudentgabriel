@@ -18,7 +18,16 @@ type Hidden = { visible: false; reason: string };
 type Shown<T> = { visible: true; data: T };
 type Section<T> = Hidden | Shown<T>;
 
-type FileNote = { sectionLabel: string; body: string; authorName: string; createdAt: string; corrected: boolean; correction: boolean };
+type FileNote = {
+  sectionLabel: string;
+  body: string;
+  authorName: string;
+  createdAt: string;
+  corrected: boolean;
+  correction: boolean;
+  /** Left at a pipeline step; sectionLabel names the step. */
+  stage?: boolean;
+};
 
 type Booking = {
   id: string;
@@ -64,7 +73,7 @@ type About = {
   features: { key: string; label: string; group: string | null; note: string | null }[];
   notes: FileNote[];
 }[];
-type Brief = { orderRef: string; brief: string | null; notes: FileNote[] }[];
+type Brief = { orderId: string; orderRef: string; brief: string | null; notes: FileNote[] }[];
 type Quote = {
   orderRefs: string[];
   quoteRef: string;
@@ -263,6 +272,21 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
         {(d) => <ConsultationView data={d} />}
       </FileSection>
 
+      {/* The brief sits under the consultation: what she asked for, then everything since. */}
+      <FileSection title="Production brief" section={s.brief}>
+        {(d) => (
+          <PerCommission rows={d}>
+            {(g) => (
+              <>
+                {g.brief ? <p className="whitespace-pre-line font-sans text-sm text-ink">{g.brief}</p> : <Empty>No brief written yet.</Empty>}
+                <Notes notes={g.notes} />
+                {portal === "admin" ? <AddBriefNote orderId={g.orderId} onAdded={() => void load()} /> : null}
+              </>
+            )}
+          </PerCommission>
+        )}
+      </FileSection>
+
       <FileSection title="Measurements" section={s.measurements}>
         {(d) => <MeasurementsView data={d} />}
       </FileSection>
@@ -286,19 +310,6 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
                   </ul>
                 ) : null}
                 {g.description ? <p className="mt-2 whitespace-pre-line font-sans text-sm text-text-mid">{g.description}</p> : null}
-                <Notes notes={g.notes} />
-              </>
-            )}
-          </PerCommission>
-        )}
-      </FileSection>
-
-      <FileSection title="Production brief" section={s.brief}>
-        {(d) => (
-          <PerCommission rows={d}>
-            {(g) => (
-              <>
-                {g.brief ? <p className="whitespace-pre-line font-sans text-sm text-ink">{g.brief}</p> : <Empty>No brief written yet.</Empty>}
                 <Notes notes={g.notes} />
               </>
             )}
@@ -418,13 +429,62 @@ function Notes({ notes }: { notes: FileNote[] }) {
       {notes.map((n, i) => (
         <li key={`${n.createdAt}-${i}`} className={n.corrected ? "opacity-60" : undefined}>
           <p className="font-sans text-10px uppercase tracking-wide text-text-light">
-            Note · {n.authorName} · {formatDate(n.createdAt, "d MMM yyyy, HH:mm")}
+            {n.stage ? `Step · ${n.sectionLabel}` : "Note"} · {n.authorName} · {formatDate(n.createdAt, "d MMM yyyy, HH:mm")}
             {n.correction ? " · correction" : ""}
           </p>
           <p className={`whitespace-pre-wrap font-sans text-sm text-ink ${n.corrected ? "line-through" : ""}`}>{n.body}</p>
         </li>
       ))}
     </ol>
+  );
+}
+
+/** "Add note" under the brief: appended with its author and time, never an edit (BD2). */
+function AddBriefNote({ orderId, onAdded }: { orderId: string; onAdded: () => void }) {
+  const [body, setBody] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    if (!body.trim() || saving) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/bespoke/${orderId}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ section: "brief", body }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(res.status === 403 ? "You cannot add notes to this commission." : (j.error ?? "Could not add the note"));
+      setBody("");
+      toast.success("Note added — the team has been told");
+      onAdded();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not add the note");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 space-y-2">
+      <textarea
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+        rows={2}
+        maxLength={4000}
+        placeholder="Add a note to the brief — a change she asked for, a call, a decision…"
+        aria-label="Add a note to the production brief"
+        className="input-field min-h-[4rem] rounded-xl text-sm"
+      />
+      <button
+        type="button"
+        disabled={!body.trim() || saving}
+        onClick={() => void save()}
+        className="admin-chip glass-1 glass-pill font-sans text-xs uppercase tracking-[0.12em] text-ink disabled:opacity-50"
+      >
+        {saving ? "Adding…" : "Add note"}
+      </button>
+    </div>
   );
 }
 
@@ -690,7 +750,7 @@ function CostView({ data }: { data: Cost }) {
             ) : null}
             {!g.cost.sheet ? <dd className="col-span-2 text-xs text-text-light">No cost sheet yet — labour not counted.</dd> : null}
             {g.cost.materials.unpriced ? (
-              <dd className="col-span-2 text-xs text-[#C45E0A]">{g.cost.materials.unpriced} material(s) have no cost recorded.</dd>
+              <dd className="col-span-2 text-xs text-warning">{g.cost.materials.unpriced} material(s) have no cost recorded.</dd>
             ) : null}
           </dl>
         )
@@ -891,7 +951,7 @@ function MeasurementsView({ data }: { data: Measurements }) {
           {data.commissions.map((c) => (
             <li key={c.orderRef}>
               <span className="text-ink">{c.orderRef}</span>{" "}
-              <span className={c.source === "client" ? "text-[#C45E0A]" : "text-text-mid"}>
+              <span className={c.source === "client" ? "text-warning" : "text-text-mid"}>
                 · {MEASURE_SOURCE[c.source]}
                 {c.source === "commission" && c.takenAt ? `, ${date(c.takenAt)}` : ""}
               </span>

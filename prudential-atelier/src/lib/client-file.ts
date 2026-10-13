@@ -312,13 +312,37 @@ export async function composeClientFile(
       };
     }
     if (wanted("brief")) {
+      // The brief is the running story of the gown: notes added to it, and the
+      // note left at every pipeline step, in the order they happened.
+      const stageNotes = await prisma.stageUpdate.findMany({
+        where: { orderId: { in: orderIds }, notes: { not: null } },
+        orderBy: { completedAt: "asc" },
+        select: { orderId: true, stage: true, notes: true, completedAt: true, completedByName: true },
+      });
       sections.brief = {
         visible: true,
-        data: rows.map((r) => ({
-          orderRef: refOf.get(r.id),
-          brief: r.outfitBrief ?? r.sessionNotes,
-          notes: notesBySection(r.id, "brief"),
-        })),
+        data: rows.map((r) => {
+          const fromStages: FileNote[] = stageNotes
+            .filter((s) => s.orderId === r.id && s.notes?.trim())
+            .map((s) => ({
+              section: "brief",
+              sectionLabel: workroomStageLabel(s.stage) ?? s.stage,
+              body: s.notes!.trim(),
+              authorName: s.completedByName ?? "The house",
+              createdAt: s.completedAt.toISOString(),
+              corrected: false,
+              correction: false,
+              stage: true,
+            }));
+          return {
+            orderId: r.id,
+            orderRef: refOf.get(r.id),
+            brief: r.outfitBrief ?? r.sessionNotes,
+            notes: [...notesBySection(r.id, "brief"), ...fromStages].sort((a, b) =>
+              a.createdAt.localeCompare(b.createdAt),
+            ),
+          };
+        }),
       };
     }
   }
@@ -681,7 +705,17 @@ export async function composeClientFile(
   };
 }
 
-type FileNote = { section: NoteSection; sectionLabel: string; body: string; authorName: string; createdAt: string; corrected: boolean; correction: boolean };
+type FileNote = {
+  section: NoteSection;
+  sectionLabel: string;
+  body: string;
+  authorName: string;
+  createdAt: string;
+  corrected: boolean;
+  correction: boolean;
+  /** Left when a pipeline step was completed; sectionLabel names the step. */
+  stage?: boolean;
+};
 
 /**
  * BD2: one query for every note on these commissions and the consultations
