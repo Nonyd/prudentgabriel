@@ -131,7 +131,7 @@ export function AdminPendingBankTransfers() {
           Pending bank transfers ({items.length})
         </p>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[960px] border-collapse font-body text-sm">
+          <table className="pill-rows w-full min-w-[960px] border-collapse font-body text-sm">
             <thead>
               <tr className="border-b border-sand text-left text-10px uppercase tracking-wide text-[#6B6B68]">
                 <th className="px-2 py-2">Type</th>

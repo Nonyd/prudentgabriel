@@ -192,7 +192,7 @@ export function InvoicesClient() {
       </div>
 
       <div className="mt-6 overflow-x-auto border border-sand">
-        <table className="w-full min-w-[900px] border-collapse font-body text-xs">
+        <table className="pill-rows w-full min-w-[900px] border-collapse font-body text-xs">
           <thead>
             <tr className="bg-[var(--choc-deep)] text-left text-10px font-medium uppercase tracking-[0.1em] text-[var(--ivory-deep)]">
               <th className="px-3 py-2">Invoice #</th>

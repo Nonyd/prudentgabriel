@@ -106,6 +106,7 @@
     "test:signin-errors": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-signin-errors.ts",
     "test:ci": "node scripts/run-ci-tests.mjs",
     "test:db-guard": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-db-guard-wiring.ts",
+    "test:type-scale": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-type-scale.ts",
     "test:rtw-launch": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-rtw-launch.ts",
     "test:authz": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-authz.ts",
     "email:dev": "email dev src/emails --port 3001",

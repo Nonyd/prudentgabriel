@@ -241,7 +241,7 @@ export function ShippingAdminClient({
           appear.
         </p>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="pill-rows w-full text-left text-sm">
             <thead className="font-sans text-10px uppercase tracking-wide text-[#A8A8A4]">
               <tr>
                 <th className="pb-2">Area</th>

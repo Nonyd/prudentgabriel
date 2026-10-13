@@ -32,7 +32,7 @@ export async function AdminOutstandingBalances() {
         </div>
       </div>
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[640px] border-collapse font-body text-sm">
+        <table className="pill-rows w-full min-w-[640px] border-collapse font-body text-sm">
           <thead>
             <tr className="border-b border-sand bg-[#FAFAFA] text-left text-10px font-medium uppercase tracking-wide text-[#6B6B68]">
               <th className="px-4 py-3">Client</th>

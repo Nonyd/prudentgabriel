@@ -20,7 +20,7 @@ function statusFor(job: JobRow): { label: string; className: string } {
 export function CareersJobsAdminClient({ jobs }: { jobs: JobRow[] }) {
   return (
     <div className="mt-6 overflow-x-auto rounded-sm border border-sand bg-canvas">
-      <table className="w-full min-w-[900px] text-left text-sm">
+      <table className="pill-rows w-full min-w-[900px] text-left text-sm">
         <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-[#A8A8A4]">
           <tr>
             <th className="p-3">Title</th>

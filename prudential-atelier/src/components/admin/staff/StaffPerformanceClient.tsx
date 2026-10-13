@@ -46,7 +46,7 @@ export function StaffPerformanceClient() {
         <Loader2 className="h-6 w-6 animate-spin text-choc" />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-sand bg-bg-card">
-          <table className="w-full min-w-[720px] text-left font-sans text-sm">
+          <table className="pill-rows w-full min-w-[720px] text-left font-sans text-sm">
             <thead>
               <tr className="border-b border-sand text-xs uppercase text-text-light">
                 <th className="px-4 py-3">Staff</th>

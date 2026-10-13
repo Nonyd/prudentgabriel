@@ -141,7 +141,7 @@ export function ActivityLogClient() {
           <p className="p-6 font-sans text-sm text-text-mid">Loading…</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px] text-left">
+            <table className="pill-rows w-full min-w-[800px] text-left">
               <thead>
                 <tr className="border-b border-sand bg-bg/50 font-sans text-10px font-semibold uppercase tracking-[0.12em] text-text-light">
                   <th className="px-4 py-3">Time</th>

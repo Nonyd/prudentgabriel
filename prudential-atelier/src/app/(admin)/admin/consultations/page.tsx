@@ -144,7 +144,7 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
       ) : null}
 
       <div className="mt-8 overflow-x-auto border border-sand">
-        <table className="w-full min-w-[860px] border-collapse font-body text-xs">
+        <table className="pill-rows w-full min-w-[860px] border-collapse font-body text-xs">
           <thead>
             <tr className="bg-[#37392d] text-left text-10px font-medium uppercase tracking-[0.1em] text-white">
               <th className="px-3 py-2">Booking</th>

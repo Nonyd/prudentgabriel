@@ -114,7 +114,7 @@ export function TeamClient({
         <div className="border-b border-sand px-4 py-3">
           <p className="font-body text-11px uppercase tracking-[0.08em] text-[#6B6B68]">Active Members</p>
         </div>
-        <table className="w-full min-w-[840px]">
+        <table className="pill-rows w-full min-w-[840px]">
           <thead className="border-b border-sand bg-[#FAFAFA]">
             <tr className="font-body text-10px uppercase tracking-[0.08em] text-[#6B6B68]">
               <th className="px-3 py-2 text-left">Avatar</th>
@@ -171,7 +171,7 @@ export function TeamClient({
           <div className="border-b border-sand px-4 py-3">
             <p className="font-body text-11px uppercase tracking-[0.08em] text-[#6B6B68]">Pending Invitations</p>
           </div>
-          <table className="w-full min-w-[840px]">
+          <table className="pill-rows w-full min-w-[840px]">
             <thead className="border-b border-sand bg-[#FAFAFA]">
               <tr className="font-body text-10px uppercase tracking-[0.08em] text-[#6B6B68]">
                 <th className="px-3 py-2 text-left">Email</th>

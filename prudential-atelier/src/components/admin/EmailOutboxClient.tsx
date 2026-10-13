@@ -142,7 +142,7 @@ export function EmailOutboxClient() {
         <p className="font-body text-13px text-[#6B6B68]">Loading…</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left font-body text-13px">
+          <table className="pill-rows w-full min-w-[720px] text-left font-body text-13px">
             <thead>
               <tr className="border-b border-[#E2D1C2] text-[#6B6B68]">
                 <th className="py-2 pr-3 font-medium">Status</th>

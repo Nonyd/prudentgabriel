@@ -215,7 +215,7 @@ export function StoreItemsClient() {
       <section className="border border-sand bg-bg-card p-6">
         <h2 className="font-display text-lg text-ink">Items</h2>
         <div className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse font-sans text-sm">
+          <table className="pill-rows w-full min-w-[640px] border-collapse font-sans text-sm">
             <thead>
               <tr className="border-b border-sand text-left text-10px uppercase tracking-wide text-text-light">
                 <th className="py-2 pr-3">Item</th>

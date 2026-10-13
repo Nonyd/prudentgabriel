@@ -64,7 +64,7 @@ function TrackStatusPill({ row }: { row: CommissionRow }) {
 /** BD1: one framed row per commission — title first, readable across a room. */
 function CommissionCard({ row, canOpenClients }: { row: CommissionRow; canOpenClients: boolean }) {
   return (
-    <li className="glass-opaque p-4 sm:p-5">
+    <li className="pill-card px-6 py-4 sm:px-8 sm:py-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <Link

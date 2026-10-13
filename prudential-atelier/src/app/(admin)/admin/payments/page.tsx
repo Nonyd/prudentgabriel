@@ -238,7 +238,7 @@ export default async function AdminPaymentsPage() {
       </div>
 
       <div className="mt-8 overflow-x-auto border border-sand">
-        <table className="w-full min-w-[720px] border-collapse font-body text-sm">
+        <table className="pill-rows w-full min-w-[720px] border-collapse font-body text-sm">
           <thead>
             <tr className="border-b border-sand bg-[#FAFAFA] text-left text-10px font-medium uppercase tracking-wide text-[#6B6B68]">
               <th className="px-4 py-3">Type</th>

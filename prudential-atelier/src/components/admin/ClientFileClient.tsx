@@ -248,7 +248,7 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
             <span className="font-sans text-xs text-text-mid">No commissions yet.</span>
           ) : (
             file.commissions.map((c) => (
-              <Link key={c.id} href={orderHref(c.id)} className="glass-opaque block px-4 py-3 hover:opacity-90">
+              <Link key={c.id} href={orderHref(c.id)} className="pill-card block px-6 py-3 hover:opacity-90">
                 <span className="font-sans text-base font-semibold text-ink">{c.title}</span>
                 <span className="ml-2 font-sans text-xs text-text-mid">
                   {c.orderRef} · {c.currentStageLabel}

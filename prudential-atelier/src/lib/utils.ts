@@ -1,9 +1,16 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+import { PX_TEXT_SIZES } from "@/lib/type-scale";
 import slugify from "slugify";
 import { format as formatDateFns } from "date-fns";
 
 // ── Class merging utility ──
+// text-9px … text-40px are font sizes (BD8), not colours: without this, `text-10px`
+// would knock out `text-cream` beside it.
+const twMerge = extendTailwindMerge({
+  extend: { classGroups: { "font-size": [{ text: PX_TEXT_SIZES.map((n) => `${n}px`) }] } },
+});
+
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }

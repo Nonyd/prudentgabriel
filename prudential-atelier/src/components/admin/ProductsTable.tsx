@@ -470,7 +470,7 @@ export function ProductsTable({
       ) : null}
 
       <div className="-mx-4 overflow-x-auto glass-opaque px-4 md:mx-0 md:px-0">
-        <table className="w-full min-w-[700px] text-left text-sm text-charcoal">
+        <table className="pill-rows w-full min-w-[700px] text-left text-sm text-charcoal">
           <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-[#A8A8A4]">
             <tr>
               <th className="w-10 p-3">

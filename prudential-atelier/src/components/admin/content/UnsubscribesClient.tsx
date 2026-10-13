@@ -29,7 +29,7 @@ export function UnsubscribesClient() {
   }
 
   return (
-    <table className="mt-8 w-full border border-sand bg-[#FAFAFA] text-left text-sm">
+    <table className="pill-rows mt-8 w-full border border-sand bg-[#FAFAFA] text-left text-sm">
       <thead className="border-b border-sand font-label text-11px uppercase tracking-wide text-[#6B6B68]">
         <tr>
           <th className="p-3">Email</th>

@@ -341,3 +341,57 @@ body:has(.storefront-shell) {
   position: relative;
   z-index: 1;
 }
+
+/*
+ * Listed items as pills — one pattern for every list in the admin and staff
+ * portals (clients, orders, products, consultations, staff …), the same shape
+ * as the filter chips above them. Add `pill-rows` to the <table>; the panel
+ * around it steps back so each row is its own frame.
+ * Not for data grids: print pages, the ledger, reports and line items keep rules.
+ */
+table.pill-rows {
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+  background: transparent;
+  border: 0;
+}
+table.pill-rows > thead > tr,
+table.pill-rows > thead > tr > th {
+  background: transparent;
+  border: 0;
+}
+table.pill-rows > tbody > tr > td {
+  background: var(--glass-1-solid);
+  border-top: 1px solid var(--glass-edge);
+  border-bottom: 1px solid var(--glass-edge);
+  transition: background-color 150ms var(--ease-glass, ease);
+}
+table.pill-rows > tbody > tr > td:first-child {
+  border-left: 1px solid var(--glass-edge);
+  border-radius: var(--glass-radius-pill) 0 0 var(--glass-radius-pill);
+  padding-left: 1.25rem;
+}
+table.pill-rows > tbody > tr > td:last-child {
+  border-right: 1px solid var(--glass-edge);
+  border-radius: 0 var(--glass-radius-pill) var(--glass-radius-pill) 0;
+  padding-right: 1.25rem;
+}
+table.pill-rows > tbody > tr:hover > td {
+  background: var(--glass-1-fill);
+}
+/* The frame around a pill list steps back: the rows are the frames now. */
+.card-surface:has(> table.pill-rows),
+.card-surface:has(> .overflow-x-auto > table.pill-rows),
+.overflow-x-auto:has(> table.pill-rows) {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* The same frame for list items that are cards rather than table rows (the pipeline). */
+.pill-card {
+  background: var(--glass-1-solid);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--glass-radius-pill);
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
+}

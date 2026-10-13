@@ -61,7 +61,7 @@ export function BulkSelectTable<T extends { id: string }>({
     <>
       <div className="card-surface overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left">
+          <table className="pill-rows w-full min-w-[640px] text-left">
             <thead>
               <tr className="border-b border-sand bg-bg/50 font-sans text-10px font-semibold uppercase tracking-[0.12em] text-text-light">
                 <th className="w-10 px-4 py-3">

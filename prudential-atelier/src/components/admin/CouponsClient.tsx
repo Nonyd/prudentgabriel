@@ -219,7 +219,7 @@ export function CouponsClient({ coupons }: { coupons: Row[] }) {
       ) : null}
 
       <div className="overflow-x-auto border border-sand bg-canvas">
-        <table className="w-full min-w-[720px] text-left text-sm">
+        <table className="pill-rows w-full min-w-[720px] text-left text-sm">
           <thead className="font-body text-11px uppercase text-[#A8A8A4]">
             <tr>
               <th className="w-10 p-3">

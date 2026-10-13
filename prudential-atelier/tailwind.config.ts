@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { PX_TEXT_SIZES } from "./src/lib/type-scale";
 
 /**
  * Type sizes scale with --type-scale (default 1), not with the root font size.
@@ -10,8 +11,8 @@ const named = (size: string, lineHeight: string): [string, { lineHeight: string 
   scaled(size),
   { lineHeight: scaled(lineHeight) },
 ];
-/** `text-11px` = the old `text-[11px]`, scaled. */
-const PX_SIZES = [9, 10, 11, 12, 13, 14, 15, 20, 22, 24, 28, 32, 36, 40];
+/** `text-11px` = the old `text-[11px]`, scaled. Shared with cn() (src/lib/type-scale.ts). */
+const PX_SIZES = PX_TEXT_SIZES;
 
 const config: Config = {
   content: [

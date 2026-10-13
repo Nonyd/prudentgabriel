@@ -225,7 +225,7 @@ export function CollectionsClient({ collections }: { collections: AdminCollectio
       ) : null}
 
       <div className="overflow-x-auto border border-sand bg-bg-card">
-        <table className="w-full min-w-[900px] border-collapse text-left font-body text-13px">
+        <table className="pill-rows w-full min-w-[900px] border-collapse text-left font-body text-13px">
           <thead>
             <tr className="border-b border-sand bg-[#FAFAFA] text-11px font-medium uppercase tracking-wide text-[#6B6B68]">
               <th className="w-10 px-3 py-3">

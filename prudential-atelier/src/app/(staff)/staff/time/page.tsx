@@ -426,7 +426,7 @@ export default function StaffTimePage() {
 
         <div className="overflow-x-auto rounded-lg border border-sand bg-bg-card">
 
-          <table className="w-full min-w-[320px] text-left font-sans text-xs">
+          <table className="pill-rows w-full min-w-[320px] text-left font-sans text-xs">
 
             <thead>
 
