@@ -145,7 +145,14 @@ export async function POST(req: NextRequest) {
           bookingNumber: generateBookingNumber(),
           offeringId: offering.id,
           consultantId: offering.consultantId,
-          userId: session?.user?.id ?? null,
+          // Attach the signed-in account only when it is hers. A booking link opened in a
+          // browser signed in as staff (or anyone else) must not file her booking under them;
+          // payment onboards her by her own email instead.
+          userId:
+            session?.user?.id &&
+            session.user.email?.trim().toLowerCase() === enquiry.clientEmail.trim().toLowerCase()
+              ? session.user.id
+              : null,
           clientName: enquiry.clientName,
           clientEmail: enquiry.clientEmail,
           clientPhone: data.clientPhone?.trim() || enquiry.clientPhone,
