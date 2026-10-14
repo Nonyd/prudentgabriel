@@ -12,10 +12,10 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ key: string
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   const gate = await gatePrivateMediaKey(key);
-  if (!gate.ok) return gate.response;
-  return streamMediaKey(key, {
-    allowPrivate: true,
-    cache: "private",
-    range: req.headers.get("range"),
-  });
+  // Per-person answers: never let a proxy keep one (see src/app/media/[...key]/route.ts).
+  const res = gate.ok
+    ? await streamMediaKey(key, { allowPrivate: true, cache: "private", range: req.headers.get("range") })
+    : gate.response;
+  res.headers.set("Cache-Control", "private, no-store");
+  return res;
 }
