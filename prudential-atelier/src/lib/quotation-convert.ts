@@ -135,7 +135,7 @@ export async function convertQuotationToOrder(
   }
 
   const clientProfile = await prisma.clientProfile.findFirst({
-    where: { user: { email: quote.clientEmail } },
+    where: { user: { email: { equals: quote.clientEmail.trim(), mode: "insensitive" } } },
     include: { measurements: true },
   });
 

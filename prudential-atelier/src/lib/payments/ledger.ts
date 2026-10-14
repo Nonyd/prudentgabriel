@@ -276,6 +276,27 @@ async function syncProductionUnlock(
 }
 
 /**
+ * Once money is confirmed on a commission she is a client: give her an account
+ * and client profile and attach the commission, whichever path the payment took
+ * (gateway callback, webhook, invoice bank transfer, admin confirm).
+ */
+async function ensureCommissionClient(bespokeOrderId: string): Promise<void> {
+  const order = await prisma.bespokeOrder.findUnique({
+    where: { id: bespokeOrderId },
+    select: { id: true, clientProfileId: true, clientName: true, clientEmail: true, clientPhone: true },
+  });
+  if (!order || order.clientProfileId || !order.clientEmail?.trim()) return;
+  const { autoOnboardClient } = await import("@/lib/client-onboarding");
+  await autoOnboardClient({
+    name: order.clientName,
+    email: order.clientEmail,
+    phone: order.clientPhone ?? undefined,
+    source: "BESPOKE_ORDER",
+    sourceId: order.id,
+  });
+}
+
+/**
  * Only writer allowed to set BespokeOrder.amountPaid / balance (denormalised cache).
  * Also sets / clears productionUnlockedAt when depositSatisfied changes.
  */
@@ -292,6 +313,7 @@ export async function recomputeOrderTotals(bespokeOrderId: string): Promise<Paym
   });
   await syncProductionUnlock(bespokeOrderId, summary);
   await syncIntakeStageNotes(bespokeOrderId, summary.depositSatisfied).catch(() => undefined);
+  if (summary.confirmed.gt(ZERO)) await ensureCommissionClient(bespokeOrderId).catch(() => undefined);
   if (summary.isFullyPaid || toNumber(summary.balance) <= 0.01) {
     const { maybeArchiveBespokeOrder } = await import("@/lib/bespoke-archive");
     await maybeArchiveBespokeOrder(bespokeOrderId).catch(() => undefined);

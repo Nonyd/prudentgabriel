@@ -9,6 +9,7 @@ import { unusablePasswordHash } from "@/lib/temp-password";
 import { issuePasswordResetToken, passwordLinkUrl } from "@/lib/password-reset";
 import { CAPABILITY_TTL_MS } from "@/lib/capability-token";
 import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
+import { getOrCreateClientProfile } from "@/lib/account-helpers";
 
 export type OnboardSource = "CONSULTATION" | "RTW_ORDER" | "BESPOKE_ORDER";
 
@@ -40,22 +41,21 @@ export async function autoOnboardClient(params: {
         where: { id: params.sourceId, userId: null },
         data: { userId: existing.id },
       });
+      // A paid consultation makes her a client, as it does for a new account below.
+      await getOrCreateClientProfile(existing.id);
     } else if (params.source === "BESPOKE_ORDER") {
       const order = await prisma.bespokeOrder.findUnique({
         where: { id: params.sourceId },
         select: { clientProfileId: true },
       });
       if (order && !order.clientProfileId) {
-        const profile = await prisma.clientProfile.findUnique({
-          where: { userId: existing.id },
-          select: { id: true },
+        // An account without a client profile (made before profiles, or by the house) still
+        // becomes a client the moment she commissions: create it rather than skip her.
+        const profile = await getOrCreateClientProfile(existing.id);
+        await prisma.bespokeOrder.update({
+          where: { id: params.sourceId },
+          data: { clientProfileId: profile.id },
         });
-        if (profile) {
-          await prisma.bespokeOrder.update({
-            where: { id: params.sourceId },
-            data: { clientProfileId: profile.id },
-          });
-        }
       }
     }
     return { userId: existing.id, isNew: false };
