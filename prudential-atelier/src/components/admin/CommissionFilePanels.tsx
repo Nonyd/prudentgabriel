@@ -376,10 +376,17 @@ export function CommissionMeasurementsCard({
   orderId,
   clientId,
   clientName,
+  compact = false,
+  title = "Measurements for this commission",
+  onSaved,
 }: {
   orderId: string;
   clientId: string | null;
   clientName: string;
+  /** Inside another card, e.g. the client file. */
+  compact?: boolean;
+  title?: string;
+  onSaved?: () => void;
 }) {
   const [state, setState] = useState<CommissionMeasurements | null>(null);
   const load = useCallback(async () => {
@@ -404,11 +411,15 @@ export function CommissionMeasurementsCard({
       clientId={clientId ?? orderId}
       clientName={clientName}
       initial={state.data}
-      title="Measurements for this commission"
+      title={title}
+      compact={compact}
       caption={<span className={state.source === "client" ? "text-warning" : undefined}>{caption}</span>}
       saveUrl={`/api/bespoke/${orderId}/measurements`}
       savedMessage="Saved to this commission and to her latest set"
-      onSaved={() => void load()}
+      onSaved={() => {
+        void load();
+        onSaved?.();
+      }}
     />
   );
 }

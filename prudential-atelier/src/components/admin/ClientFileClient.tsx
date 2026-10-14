@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { formatDate, formatPrice, formatNGN } from "@/lib/utils";
+import { ClientMeasurementsPanel, type MeasurementData } from "@/components/admin/ClientMeasurementsPanel";
+import { CommissionMeasurementsCard } from "@/components/admin/CommissionFilePanels";
 
 /**
  * Slice BC1 — the client file. Everything about her gown on one page, in the
@@ -288,7 +290,20 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
       </FileSection>
 
       <FileSection title="Measurements" section={s.measurements}>
-        {(d) => <MeasurementsView data={d} />}
+        {(d) => (
+          <>
+            <MeasurementsView data={d} />
+            {portal === "admin" ? (
+              <MeasurementsEntry
+                clientId={file.client.id}
+                clientName={file.client.name ?? file.client.firstName ?? "the client"}
+                commissions={file.commissions}
+                profile={d.profile}
+                onSaved={() => void load()}
+              />
+            ) : null}
+          </>
+        )}
       </FileSection>
 
       <FileSection title="About the dress" section={s.about}>
@@ -939,6 +954,59 @@ const MEASURE_SOURCE: Record<"commission" | "client" | "none", string> = {
   client: "not yet taken for this commission — her last set would be used",
   none: "none on record",
 };
+
+/**
+ * Take or correct measurements from the file itself: per commission (which
+ * also updates her latest set), or straight onto her profile if she has none.
+ */
+function MeasurementsEntry({
+  clientId,
+  clientName,
+  commissions,
+  profile,
+  onSaved,
+}: {
+  clientId: string;
+  clientName: string;
+  commissions: ClientFile["commissions"];
+  profile: Measurements["profile"];
+  onSaved: () => void;
+}) {
+  if (commissions.length > 0) {
+    return (
+      <div className="mt-5 space-y-3">
+        {commissions.map((c) => (
+          <CommissionMeasurementsCard
+            key={c.id}
+            orderId={c.id}
+            clientId={clientId}
+            clientName={clientName}
+            compact
+            title={`${c.orderRef} · ${c.title}`}
+            onSaved={onSaved}
+          />
+        ))}
+      </div>
+    );
+  }
+  const initial: MeasurementData | null = profile
+    ? ({
+        ...Object.fromEntries(profile.rows.map((r) => [r.key, r.value])),
+        unit: profile.rows[0]?.unit === "cm" ? "cm" : "inches",
+        notes: profile.notes ?? "",
+      } as MeasurementData)
+    : null;
+  return (
+    <ClientMeasurementsPanel
+      clientId={clientId}
+      clientName={clientName}
+      initial={initial}
+      compact
+      title="Her measurements"
+      onSaved={onSaved}
+    />
+  );
+}
 
 function MeasurementsView({ data }: { data: Measurements }) {
   if (!data.profile && data.orderLines.length === 0 && !data.commissions?.length) {
