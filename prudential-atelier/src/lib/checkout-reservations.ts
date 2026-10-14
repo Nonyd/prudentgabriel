@@ -73,6 +73,8 @@ async function loadStaleUnpaidOrders(
         paymentStatus: unpaid,
         paymentGateway: PaymentGateway.BANK_TRANSFER,
         createdAt: { lte: bankCutoff },
+        // Proof of payment uploaded: the order waits for the house to check it, however long that takes.
+        paymentReceiptUrl: null,
       },
       select,
       orderBy: { createdAt: "asc" },
@@ -228,6 +230,7 @@ async function markOrderAbandoned(orderId: string, db: ReservationsDb): Promise<
       id: orderId,
       status: OrderStatus.PENDING,
       paymentStatus: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
+      paymentReceiptUrl: null,
     },
     data: {
       status: OrderStatus.ABANDONED,
@@ -251,6 +254,7 @@ export async function expireStaleCheckoutReservationsForActor(
     where: {
       status: OrderStatus.PENDING,
       paymentStatus: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
+      paymentReceiptUrl: null,
       OR: or,
     },
     select: { id: true, createdAt: true, paymentGateway: true, paymentStatus: true },
