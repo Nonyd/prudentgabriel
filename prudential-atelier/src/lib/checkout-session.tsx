@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { publishedProductIds } from "@/lib/product-visibility";
 import { ensureRestoreRaw } from "@/lib/capability-token-lookup";
 import { queueEmail } from "@/lib/email-outbox";
-import { getPublicAppUrl } from "@/lib/app-url";
+import { absolutePublicUrl, getPublicAppUrl } from "@/lib/app-url";
 import { primeEmailBranding } from "@/lib/email-branding";
 import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import AbandonedCheckoutEmail from "@/emails/AbandonedCheckoutEmail";
@@ -232,7 +232,8 @@ export async function sendAbandonedCheckoutReminder(params: {
       lines={snap.lines.map((l) => ({
         name: l.productName,
         quantity: l.quantity,
-        imageUrl: l.imageUrl || null,
+        // Stored as /media/public/...; a mail client needs the full address.
+        imageUrl: l.imageUrl ? absolutePublicUrl(l.imageUrl) : null,
         priceLabel: formatPriceLabel(l.priceNGN, session.currency),
         size: l.size,
         color: l.color,

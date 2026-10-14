@@ -29,7 +29,7 @@ import ReceiptReminderEmail from "@/emails/ReceiptReminderEmail";
 import { getAlterationWarrantyDays } from "@/lib/alterations/policy";
 import type { LoyaltyTier } from "@prisma/client";
 import { getPublicAppUrl, absolutePublicUrl } from "@/lib/app-url";
-import { emailSafeReceiptUrl } from "@/lib/media/receipt-src";
+import { emailSafeReceiptUrl, MOODBOARD_EMAIL_TTL_SEC } from "@/lib/media/receipt-src";
 import { CUSTOMER_HOUSE_NAME, EMAIL_LOGO_PX, customerLoginUrl } from "@/lib/customer-email";
 import { HOUSE_ADDRESS_ONE_LINE, resolvePickupAddress, resolvePickupName } from "@/lib/house-address";
 import { catalogCopy, sendUsingCatalog } from "@/lib/catalog-email";
@@ -1237,7 +1237,8 @@ export async function sendConsultationSessionSummaryEmail(params: {
     <ConsultationSessionSummaryEmail
       firstName={params.firstName}
       sessionNotes={params.sessionNotes}
-      moodboardImages={params.moodboardImages}
+      // Moodboards are private uploads: sign them, or Gmail shows broken images.
+      moodboardImages={params.moodboardImages?.map((u) => emailSafeReceiptUrl(u, MOODBOARD_EMAIL_TTL_SEC))}
       moodboardUrl={params.moodboardUrl}
       commissionUrl={params.commissionUrl}
       showCommissionCta={params.showCommissionCta}
