@@ -46,6 +46,74 @@ type QuoteDetail = {
   bespokeOrders: Array<{ id: string; orderRef: string }>;
 };
 
+type ChangeRequestRow = {
+  id: string;
+  message: string;
+  createdAt: string;
+  response: string | null;
+  respondedAt: string | null;
+  respondedBy: string | null;
+  quotation: { id: string; quoteRef: string };
+};
+
+/** One request from the client, with the reply box while it is open. */
+function ChangeRequestItem({ row, onReplied }: { row: ChangeRequestRow; onReplied: () => void }) {
+  const [reply, setReply] = useState("");
+  const [sending, setSending] = useState(false);
+
+  async function send() {
+    setSending(true);
+    try {
+      const res = await fetch(`/api/quotations/${row.quotation.id}/change-requests/${row.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ response: reply }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        toast.error(j.error ?? "Could not send the reply");
+        return;
+      }
+      toast.success("Reply sent to the client");
+      onReplied();
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <li className={`border p-4 ${row.response ? "border-sand" : "border-warning/50 bg-warning-soft/30"}`}>
+      <p className="font-body text-xs text-text-mid">
+        {row.quotation.quoteRef} · {formatDate(row.createdAt)}
+        {row.response ? "" : " · waiting for a reply"}
+      </p>
+      <p className="mt-1 whitespace-pre-line font-body text-sm text-ink">{row.message}</p>
+      {row.response ? (
+        <div className="mt-3 border-l-2 border-gold/60 pl-3">
+          <p className="font-body text-xs text-text-mid">
+            Replied by {row.respondedBy ?? "the house"}
+            {row.respondedAt ? ` · ${formatDate(row.respondedAt)}` : ""}
+          </p>
+          <p className="mt-1 whitespace-pre-line font-body text-sm text-ink">{row.response}</p>
+        </div>
+      ) : (
+        <div className="mt-3 space-y-2">
+          <textarea
+            className="input-field min-h-[80px] w-full text-sm"
+            placeholder="Your reply. It is emailed to her and shown on her quote page."
+            value={reply}
+            onChange={(e) => setReply(e.target.value)}
+            maxLength={4000}
+          />
+          <Button size="sm" loading={sending} disabled={reply.trim().length < 2} onClick={() => void send()}>
+            Send reply
+          </Button>
+        </div>
+      )}
+    </li>
+  );
+}
+
 function actorLabel(v: VersionRow): string {
   const u = v.revisedByUser ?? v.createdByUser;
   if (!u) return "—";
@@ -58,6 +126,7 @@ export function QuotationDetailClient() {
   const id = params.id;
   const [item, setItem] = useState<QuoteDetail | null>(null);
   const [history, setHistory] = useState<VersionRow[]>([]);
+  const [changeRequests, setChangeRequests] = useState<ChangeRequestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -68,9 +137,14 @@ export function QuotationDetailClient() {
       setLoading(false);
       return;
     }
-    const data = (await res.json()) as { item: QuoteDetail; versionHistory: VersionRow[] };
+    const data = (await res.json()) as {
+      item: QuoteDetail;
+      versionHistory: VersionRow[];
+      changeRequests?: ChangeRequestRow[];
+    };
     setItem(data.item);
     setHistory(data.versionHistory);
+    setChangeRequests(data.changeRequests ?? []);
     setLoading(false);
   }, [id]);
 
@@ -161,6 +235,21 @@ export function QuotationDetailClient() {
           ) : null}
         </div>
       </div>
+
+      {changeRequests.length > 0 ? (
+        <section>
+          <h2 className="font-display text-lg text-ink">Change requests from the client</h2>
+          <p className="mt-1 font-body text-13px text-text-mid">
+            Reply here to answer her, or revise the quotation and send the new version first, then reply so her
+            email links to it.
+          </p>
+          <ul className="mt-4 space-y-3">
+            {[...changeRequests].reverse().map((r) => (
+              <ChangeRequestItem key={r.id} row={r} onReplied={() => void load()} />
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section>
         <h2 className="font-display text-lg text-ink">Version history</h2>

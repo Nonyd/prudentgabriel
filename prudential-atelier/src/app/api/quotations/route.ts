@@ -71,6 +71,7 @@ export async function GET(req: NextRequest) {
       where,
       orderBy: { createdAt: "desc" },
       take: 200,
+      include: { _count: { select: { changeRequests: { where: { response: null } } } } },
     });
 
     return NextResponse.json({ items });

@@ -9,6 +9,7 @@ import {
 import { findLatestQuotationVersion } from "@/lib/quotation-versioning";
 import { getHouseDocumentTerms } from "@/lib/invoice-terms";
 import { tokenRouteMetadata } from "@/lib/seo";
+import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
 import {
   ensureQuoteApprovalRaw,
@@ -69,7 +70,15 @@ export default async function QuoteApprovalPage({ params }: Props) {
     ? (quote.lineItems as QuoteApprovalData["lineItems"])
     : [];
 
-  const houseTerms = await getHouseDocumentTerms();
+  const [houseTerms, changeRequests] = await Promise.all([
+    getHouseDocumentTerms(),
+    // Every version shares the conversation: a revision answers what she asked on the last one.
+    prisma.quotationChangeRequest.findMany({
+      where: { quotation: { baseQuoteRef: quote.baseQuoteRef } },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, message: true, createdAt: true, response: true, respondedAt: true },
+    }),
+  ]);
 
   const data: QuoteApprovalData = {
     id: quote.id,
@@ -88,6 +97,13 @@ export default async function QuoteApprovalPage({ params }: Props) {
     currency: quote.currency || "NGN",
     depositPercent: quote.depositPercent,
     houseTerms,
+    changeRequests: changeRequests.map((r) => ({
+      id: r.id,
+      message: r.message,
+      createdAt: r.createdAt.toISOString(),
+      response: r.response,
+      respondedAt: r.respondedAt?.toISOString() ?? null,
+    })),
   };
 
   return (

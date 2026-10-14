@@ -98,9 +98,25 @@ export async function GET(_req: NextRequest, { params }: Params) {
       };
     });
 
+    // The conversation spans versions: a revision answers what she asked on the last one.
+    const changeRequests = await prisma.quotationChangeRequest.findMany({
+      where: { quotation: { baseQuoteRef: item.baseQuoteRef } },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        message: true,
+        createdAt: true,
+        response: true,
+        respondedAt: true,
+        respondedBy: true,
+        quotation: { select: { id: true, quoteRef: true } },
+      },
+    });
+
     return NextResponse.json({
       item: { ...item, approvalToken: approvalRaw, approvalUrl },
       versionHistory,
+      changeRequests,
     });
   } catch (e) {
     await logError({

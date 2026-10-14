@@ -1091,6 +1091,37 @@ export async function sendAdminNotificationEmail(
   });
 }
 
+/** The house's answer to a change request on a quotation. */
+export async function sendQuoteChangeReplyEmail(params: {
+  to: string;
+  clientName: string;
+  quoteRef: string;
+  request: string;
+  response: string;
+  quoteUrl: string;
+  requestId: string;
+}): Promise<void> {
+  await primeEmailBranding();
+  const firstName = params.clientName.split(/\s+/)[0] || "there";
+  const inner = `
+<p style="margin:0 0 16px;font-size:16px;">Dear ${escapeHtml(firstName)},</p>
+<p style="margin:0 0 16px;">Thank you for your note on quotation <strong>${escapeHtml(params.quoteRef)}</strong>. Here is our answer.</p>
+<p style="margin:0 0 6px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#8a6d4f;">You asked</p>
+<p style="margin:0 0 18px;padding-left:12px;border-left:2px solid #e2d1c2;color:#6b5847;white-space:pre-line;">${escapeHtml(params.request)}</p>
+<p style="margin:0 0 6px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#8a6d4f;">Our answer</p>
+<p style="margin:0 0 22px;white-space:pre-line;">${escapeHtml(params.response)}</p>
+<p style="margin:0;"><a href="${params.quoteUrl}" style="display:inline-block;background:#442913;color:#fffdf9;padding:12px 26px;text-decoration:none;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;">View your quotation</a></p>`;
+  await sendEmail({
+    to: params.to,
+    subject: `Re: your quotation ${params.quoteRef}`,
+    html: wrapHtml(CUSTOMER_HOUSE_NAME, inner, "relationship"),
+    template: "quote-change-reply",
+    idempotencyKey: `quote-change-reply:${params.requestId}`,
+    relatedType: "Quotation",
+    relatedId: params.quoteRef,
+  });
+}
+
 export async function sendConsultationPendingEmail(params: {
   to: string;
   clientName: string;

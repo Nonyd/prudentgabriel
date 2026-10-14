@@ -31,6 +31,7 @@ export const ADMIN_NOTIFICATION_TARGETS: Record<AdminNotificationType, readonly 
   CONSULTATION_COMPLETED: ["consultations"],
   CONSULTATION_BOOKED_PRUDENT: ["consultations"],
   QUOTE_AWAITING: ["quotations"],
+  QUOTE_CHANGES_REQUESTED: ["quotations"],
   REVIEW_PENDING: CMS_ADMIN_PERMISSIONS,
   TESTIMONIAL_SUBMITTED: CMS_ADMIN_PERMISSIONS,
   NEW_CUSTOMER: ["clients", "clients.view"],

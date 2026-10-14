@@ -37,6 +37,7 @@ function iconFor(type: AdminNotificationType) {
       return <Banknote size={16} className="text-nut" />;
     case "NEW_BESPOKE":
     case "QUOTE_APPROVED":
+    case "QUOTE_CHANGES_REQUESTED":
     case "STAGE_COMPLETED":
     case "PRODUCTION_UNLOCKED":
     case "PRODUCTION_RELOCKED":
@@ -71,6 +72,7 @@ function matchesFilter(row: AdminNotificationRow, filter: FilterType): boolean {
     return (
       row.type === "NEW_BESPOKE" ||
       row.type === "QUOTE_APPROVED" ||
+      row.type === "QUOTE_CHANGES_REQUESTED" ||
       row.type === "STAGE_COMPLETED" ||
       row.type === "PRODUCTION_UNLOCKED" ||
       row.type === "PRODUCTION_RELOCKED" ||

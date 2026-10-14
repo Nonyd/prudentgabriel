@@ -35,6 +35,16 @@ export type QuoteApprovalData = {
   currency: string;
   depositPercent: number;
   houseTerms: HouseDocumentTerm[];
+  /** Her change requests on this quotation (any version) and the house replies. */
+  changeRequests: QuoteChangeRequest[];
+};
+
+export type QuoteChangeRequest = {
+  id: string;
+  message: string;
+  createdAt: string;
+  response: string | null;
+  respondedAt: string | null;
 };
 
 export function QuoteApprovalClient({ quote }: { quote: QuoteApprovalData }) {
@@ -42,6 +52,8 @@ export function QuoteApprovalClient({ quote }: { quote: QuoteApprovalData }) {
   const [approving, setApproving] = useState(false);
   const [changesOpen, setChangesOpen] = useState(false);
   const [changeMessage, setChangeMessage] = useState("");
+  const [sendingChanges, setSendingChanges] = useState(false);
+  const [requests, setRequests] = useState<QuoteChangeRequest[]>(quote.changeRequests ?? []);
 
   const money = (n: number) => formatInvoiceCurrency(n, asInvoiceCurrency(quote.currency));
   const expired = quote.expiresAt ? new Date(quote.expiresAt) < new Date() : false;
@@ -79,15 +91,31 @@ export function QuoteApprovalClient({ quote }: { quote: QuoteApprovalData }) {
     }
   }
 
-  function requestChanges() {
-    const subject = encodeURIComponent(`Quote change request — ${quote.quoteRef}`);
-    const body = encodeURIComponent(
-      changeMessage ||
-        `Hi,\n\nI would like to request changes to quotation ${quote.quoteRef}.\n\n`,
-    );
-    window.location.href = `mailto:orders@prudentgabriel.com?subject=${subject}&body=${body}`;
-    setChangesOpen(false);
-    toast.success("Opening email client");
+  async function requestChanges() {
+    if (changeMessage.trim().length < 3) {
+      toast.error("Please tell us what you would like changed.");
+      return;
+    }
+    setSendingChanges(true);
+    try {
+      const res = await fetch(`/api/quotations/${quote.id}/request-changes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ approvalToken: quote.approvalToken, message: changeMessage.trim() }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; request?: QuoteChangeRequest };
+      if (!res.ok || !data.request) {
+        toast.error(data.error ?? "Could not send your request");
+        return;
+      }
+      const sent = data.request;
+      setRequests((r) => [...r, sent]);
+      setChangeMessage("");
+      setChangesOpen(false);
+      toast.success("Sent. The atelier will reply by email.");
+    } finally {
+      setSendingChanges(false);
+    }
   }
 
   return (
@@ -208,11 +236,42 @@ export function QuoteApprovalClient({ quote }: { quote: QuoteApprovalData }) {
         </div>
       </div>
 
+      {requests.length > 0 ? (
+        <section className="mt-8 card-surface px-6 py-5" aria-label="Your requests">
+          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
+            Your requests
+          </p>
+          <ul className="mt-4 space-y-5">
+            {requests.map((r) => (
+              <li key={r.id} className="space-y-3">
+                <div>
+                  <p className="font-sans text-xs text-text-light">You · {formatDate(r.createdAt)}</p>
+                  <p className="mt-1 whitespace-pre-line font-sans text-sm text-ink">{r.message}</p>
+                </div>
+                {r.response ? (
+                  <div className="border-l-2 border-gold/60 pl-4">
+                    <p className="font-sans text-xs text-text-light">
+                      The atelier{r.respondedAt ? ` · ${formatDate(r.respondedAt)}` : ""}
+                    </p>
+                    <p className="mt-1 whitespace-pre-line font-sans text-sm text-ink">{r.response}</p>
+                  </div>
+                ) : (
+                  <p className="font-sans text-xs italic text-text-mid">
+                    Received. The atelier will reply by email and here.
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <Modal open={changesOpen} onClose={() => setChangesOpen(false)} title="Request changes">
         <textarea
           rows={4}
           value={changeMessage}
           onChange={(e) => setChangeMessage(e.target.value)}
+          maxLength={2000}
           placeholder="Describe the changes you need…"
           className="mt-4 w-full rounded border border-sand px-3 py-2 font-sans text-sm"
         />
@@ -220,7 +279,9 @@ export function QuoteApprovalClient({ quote }: { quote: QuoteApprovalData }) {
           <Button variant="ghost" onClick={() => setChangesOpen(false)}>
             Cancel
           </Button>
-          <Button onClick={requestChanges}>Send Request</Button>
+          <Button loading={sendingChanges} onClick={() => void requestChanges()}>
+            Send Request
+          </Button>
         </div>
       </Modal>
     </div>

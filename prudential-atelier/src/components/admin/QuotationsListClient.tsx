@@ -21,6 +21,8 @@ type QuoteRow = {
   status: QuoteStatus;
   version?: number;
   createdAt: string;
+  /** Change requests on this version still waiting for a reply. */
+  _count?: { changeRequests: number };
 };
 
 function quoteBadge(status: QuoteStatus) {
@@ -110,9 +112,16 @@ export function QuotationsListClient() {
         key: "ref",
         header: "Quote Ref",
         cell: (row) => (
-          <Link href={`/admin/quotations/${row.id}`} className="font-sans text-sm font-medium text-nut underline">
-            {row.quoteRef}
-          </Link>
+          <div>
+            <Link href={`/admin/quotations/${row.id}`} className="font-sans text-sm font-medium text-nut underline">
+              {row.quoteRef}
+            </Link>
+            {row._count?.changeRequests ? (
+              <p className="mt-0.5 font-sans text-[10px] uppercase tracking-[0.08em] text-warning">
+                Changes requested · reply
+              </p>
+            ) : null}
+          </div>
         ),
       },
       {

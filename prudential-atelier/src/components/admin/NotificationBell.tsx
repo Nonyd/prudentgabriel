@@ -38,6 +38,7 @@ function iconFor(type: AdminNotificationType) {
       return wrap(<CreditCard className="h-4 w-4 text-success" strokeWidth={1.5} />, "bg-success/15");
     case "NEW_BESPOKE":
     case "QUOTE_APPROVED":
+    case "QUOTE_CHANGES_REQUESTED":
     case "STAGE_COMPLETED":
     case "PRODUCTION_UNLOCKED":
     case "PRODUCTION_RELOCKED":

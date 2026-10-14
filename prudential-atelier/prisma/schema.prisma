@@ -1567,6 +1567,7 @@ enum AdminNotificationType {
   STAGE_APPROVAL_RESPONSE
   PRODUCTION_RELOCKED
   QUOTE_AWAITING
+  QUOTE_CHANGES_REQUESTED
   EMAIL_DEAD
   EMAIL_PROVIDER_AUTH
   /// Requisition waiting on a desk (targets set per transition).
@@ -2647,6 +2648,7 @@ model Quotation {
   bespokeOrders BespokeOrder[]
   invoices      Invoice[]
   alterationRequests AlterationRequest[]
+  changeRequests     QuotationChangeRequest[]
 
   createdBy String?
   /// User id who created this revision (null for original v1).
@@ -2660,6 +2662,21 @@ model Quotation {
   @@index([consultationId])
   @@index([baseQuoteRef, version])
   @@index([parentQuotationId])
+}
+
+/// The client asks for changes from the quote page; the house answers here and by email.
+model QuotationChangeRequest {
+  id          String    @id @default(cuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  message     String    @db.Text
+  createdAt   DateTime  @default(now())
+  /// The house reply, emailed to the client. Null while the request is open.
+  response    String?   @db.Text
+  respondedAt DateTime?
+  respondedBy String?
+
+  @@index([quotationId, createdAt])
 }
 
 /// Monotonic per-year counters for financial document numbers (never reuse after delete).
