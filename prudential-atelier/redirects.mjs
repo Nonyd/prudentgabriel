@@ -4,6 +4,8 @@
  * a page-level `redirect()` for these (that is a 200 shell with a 307 digest).
  */
 export const PERMANENT_REDIRECTS = [
+  // One consultant (Mrs. Prudent) and one team: the roster page was retired.
+  { source: "/admin/consultants/:path*", destination: "/admin/consultations/enquiries", permanent: true },
   { source: "/legal/privacy", destination: "/privacy-policy", permanent: true },
   { source: "/legal/terms", destination: "/terms-and-conditions", permanent: true },
   { source: "/legal/returns", destination: "/returns-policy", permanent: true },

@@ -5,6 +5,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import toast from "react-hot-toast";
 import { fittingModeLabel, wearerLabel } from "@/lib/consultation-enquiry-shared";
+import { adminReceiptSrc } from "@/lib/media/admin-receipt-src";
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
@@ -164,13 +165,13 @@ function DecisionForm({
       }}
     >
       <label className="block text-xs text-text-mid">
-        {mode === "approve" ? "Why approve? (recorded, not sent)" : "Why decline? (recorded, not sent to her)"}
+        {mode === "approve" ? "Note (optional, recorded, not sent)" : "Why decline? (recorded, not sent to her)"}
         <textarea
           className="input-field mt-1 min-h-[70px] w-full text-sm"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          required
-          minLength={3}
+          required={mode === "decline"}
+          minLength={mode === "decline" ? 3 : undefined}
           maxLength={1000}
         />
       </label>
@@ -183,7 +184,7 @@ function DecisionForm({
       <div className="flex gap-2">
         <button
           type="submit"
-          disabled={busy || reason.trim().length < 3}
+          disabled={busy || (mode === "decline" && reason.trim().length < 3)}
           className="rounded-sm bg-[#37392d] px-4 py-2 font-sans text-11px uppercase tracking-[0.1em] text-white disabled:opacity-50"
         >
           {mode === "approve" ? "Approve and email the link" : "Decline"}
@@ -305,7 +306,22 @@ export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) 
                       value={`${fittingModeLabel(e.fittingMode)}${e.fittingNote ? ` · ${e.fittingNote}` : ""}`}
                     />
                   ) : null}
-                  {e.colourPalette ? <Fact label="Colour palette" value={e.colourPalette} /> : null}
+                  {e.colourPalette ? (
+                    <div>
+                      <dt className="inline text-text-mid">Colour palette: </dt>
+                      <dd className="inline text-ink">
+                        {(e.colourPalette.match(/#[0-9a-f]{6}\b/gi) ?? []).map((hex, i) => (
+                          <span
+                            key={i}
+                            title={hex}
+                            className="mr-1 inline-block h-3.5 w-3.5 rounded-full border border-sand align-[-2px]"
+                            style={{ backgroundColor: hex }}
+                          />
+                        ))}
+                        {e.colourPalette}
+                      </dd>
+                    </div>
+                  ) : null}
                   {e.wearer ? <Fact label="Wearer" value={wearerLabel(e.wearer)} /> : null}
                   {e.outfitType ? <Fact label="Outfit" value={e.outfitType} /> : null}
                   <div>
@@ -317,9 +333,9 @@ export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) 
                 {e.moodboardImages.length ? (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {e.moodboardImages.map((src) => (
-                      <a key={src} href={src} target="_blank" rel="noreferrer">
+                      <a key={src} href={adminReceiptSrc(src)} target="_blank" rel="noreferrer">
                         {/* eslint-disable-next-line @next/next/no-img-element -- private media, served by our own route */}
-                        <img src={src} alt="" className="h-20 w-20 rounded-sm object-cover" />
+                        <img src={adminReceiptSrc(src)} alt="" className="h-20 w-20 rounded-sm border border-sand object-cover" />
                       </a>
                     ))}
                   </div>

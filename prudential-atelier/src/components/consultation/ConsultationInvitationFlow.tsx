@@ -276,7 +276,7 @@ export function ConsultationInvitationFlow({
 
   return (
     <div className="px-4 py-12 md:py-16">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-4xl">
         <header className="mb-10 text-center">
           <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-text-light">
             Invitation {invitation.enquiryNumber}
@@ -285,9 +285,8 @@ export function ConsultationInvitationFlow({
             Book your consultation
           </h1>
           <p className="mx-auto mt-4 max-w-[520px] font-body text-[15px] leading-relaxed text-text-mid">
-            For {invitation.clientName.split(/\s+/)[0]}&apos;s {invitation.eventType.toLowerCase()} on{" "}
-            {invitation.eventDateLabel}. Choose how you would like to meet, then propose three dates. We confirm one
-            against Mrs. Prudent&apos;s diary.
+            Welcome, {invitation.clientName.split(/\s+/)[0]}. For your occasion on {invitation.eventDateLabel}, choose
+            how you would like to meet, then propose three dates. We confirm one against Mrs. Prudent&apos;s diary.
           </p>
         </header>
 
@@ -295,47 +294,80 @@ export function ConsultationInvitationFlow({
 
         {step === 1 && (
           <div>
-            <div className="grid gap-5 md:grid-cols-2">
-              {OFFERING_TYPES.map((key) => {
-                const cfg = getOfferingTypeConfig(key, cms);
-                if (!cfg.enabled || !resolveOfferingType(consultants, key)) return null;
-                const selected = selectedType === key;
+            <div className="space-y-10">
+              {[
+                { virtual: false, heading: "In person", sub: "At our Lagos atelier" },
+                { virtual: true, heading: "Virtual", sub: "From wherever you are" },
+              ].map((group) => {
+                const keys = OFFERING_TYPES.filter((key) => {
+                  const cfg = getOfferingTypeConfig(key, cms);
+                  return (
+                    cfg.isVirtual === group.virtual && cfg.enabled && Boolean(resolveOfferingType(consultants, key))
+                  );
+                });
+                if (keys.length === 0) return null;
                 return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => selectType(key)}
-                    className={clsx(
-                      "relative glass-2 glass-panel p-8 text-left",
-                      selected
-                        ? "border-[1.5px] border-choc shadow-[0_4px_24px_rgba(68,41,19,0.08)] transition-shadow"
-                        : "border-[0.5px] border-sand transition-shadow hover:border-nut/40",
-                    )}
-                  >
-                    <span className="absolute left-4 top-4 rounded-full bg-gold px-2.5 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-[#2a1a0e]">
-                      {cfg.formatLabel}
-                    </span>
-                    <p className="mt-6 font-sans text-[10px] uppercase tracking-[0.14em] text-text-light">
-                      {cfg.isVirtual ? "Virtual" : "In-person"}
-                      {cfg.location ? ` · ${cfg.location}` : ""}
-                    </p>
-                    <h3 className="mt-2 font-serif text-[22px] leading-snug text-choc md:text-[26px]">{cfg.title}</h3>
-                    <p className="mt-3 font-body text-[13px] leading-relaxed text-text-mid">{cfg.description}</p>
-                    <ul className="mt-5 space-y-2">
-                      {cfg.features.map((f) => (
-                        <li key={f} className="flex items-start gap-2 font-body text-[13px] text-text-mid">
-                          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-nut" strokeWidth={2.5} />
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="mt-6 flex items-end justify-between">
-                      <p className="font-serif text-[28px] text-choc">{formatPrice(fees[key].NGN, "NGN")}</p>
-                      <span className="font-sans text-[10px] uppercase tracking-[0.14em] text-text-light">
-                        {selected ? "SELECTED" : "SELECT"}
-                      </span>
+                  <section key={group.heading}>
+                    <div className="mb-4 flex items-baseline justify-between gap-4 border-b border-sand/70 pb-3">
+                      <h2 className="font-serif text-[24px] text-choc">{group.heading}</h2>
+                      <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-text-light">{group.sub}</p>
                     </div>
-                  </button>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {keys.map((key) => {
+                        const cfg = getOfferingTypeConfig(key, cms);
+                        const selected = selectedType === key;
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => selectType(key)}
+                            aria-pressed={selected}
+                            className={clsx(
+                              "glass-opaque glass-panel flex h-full flex-col p-6 text-left transition-[border-color,box-shadow] md:p-7",
+                              selected
+                                ? "!border-choc shadow-[0_0_0_1px_var(--choc),0_8px_28px_rgba(68,41,19,0.10)]"
+                                : "hover:!border-nut/50",
+                            )}
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <h3 className="font-serif text-[22px] leading-snug text-choc">{cfg.title}</h3>
+                              <span
+                                aria-hidden
+                                className={clsx(
+                                  "mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+                                  selected ? "border-choc bg-choc text-cream" : "border-sand",
+                                )}
+                              >
+                                {selected ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
+                              </span>
+                            </div>
+                            <p className="mt-2 font-body text-[14px] leading-relaxed text-text-mid">{cfg.description}</p>
+                            <ul className="mb-6 mt-4 space-y-1.5">
+                              {cfg.features.map((f) => (
+                                <li key={f} className="flex items-start gap-2 font-body text-[13px] text-text-mid">
+                                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-nut" strokeWidth={2.5} />
+                                  {f}
+                                </li>
+                              ))}
+                            </ul>
+                            <div className="mt-auto flex items-end justify-between gap-4 border-t border-sand/60 pt-4">
+                              <p className="font-serif text-[26px] leading-none text-choc">
+                                {formatPrice(fees[key].NGN, "NGN")}
+                              </p>
+                              <span
+                                className={clsx(
+                                  "font-sans text-[10px] uppercase tracking-[0.14em]",
+                                  selected ? "font-semibold text-choc" : "text-text-light",
+                                )}
+                              >
+                                {selected ? "Selected" : "Select"}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
                 );
               })}
             </div>
@@ -375,8 +407,8 @@ export function ConsultationInvitationFlow({
                 disabled={!stepValid}
                 onClick={() => setStep(2)}
                 className={clsx(
-                  "rounded-sm px-12 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-cream transition-colors disabled:cursor-not-allowed disabled:opacity-60",
-                  stepValid ? "bg-nut hover:bg-choc" : "bg-sand text-text-mid",
+                  "rounded-sm px-12 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors disabled:cursor-not-allowed",
+                  stepValid ? "bg-choc text-cream hover:bg-nut" : "border border-sand bg-transparent text-text-light",
                 )}
               >
                 Continue to dates →

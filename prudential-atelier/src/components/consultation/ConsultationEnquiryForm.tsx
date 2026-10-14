@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import toast from "react-hot-toast";
 import {
@@ -13,6 +13,7 @@ import { getWatYmd } from "@/lib/consultation";
 import { cmsGet } from "@/lib/cms-helpers";
 
 const MAX_IMAGES = 5;
+const MAX_SWATCHES = 6;
 
 /**
  * BA2: the atelier application, asking the house's questions (30 September
@@ -53,6 +54,8 @@ export function ConsultationEnquiryForm({
   const [fittingNote, setFittingNote] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
   const [colourPalette, setColourPalette] = useState("");
+  const [swatches, setSwatches] = useState<string[]>([]);
+  const addColourRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -68,6 +71,19 @@ export function ConsultationEnquiryForm({
       /* storage blocked: she types it here */
     }
   }, [initial.occasion]);
+
+  // React's onChange on a colour input fires on every drag; add one swatch when the picker closes.
+  const canAddColour = swatches.length < MAX_SWATCHES;
+  useEffect(() => {
+    const el = addColourRef.current;
+    if (!el) return;
+    const add = () => {
+      const picked = el.value.toUpperCase();
+      setSwatches((s) => (s.length < MAX_SWATCHES ? [...s, picked] : s));
+    };
+    el.addEventListener("change", add);
+    return () => el.removeEventListener("change", add);
+  }, [canAddColour]);
 
   const dresses = Number(dressCount);
   const valid =
@@ -127,7 +143,7 @@ export function ConsultationEnquiryForm({
           fittingMode,
           fittingNote: fittingNote || undefined,
           deliveryDate,
-          colourPalette: colourPalette || undefined,
+          colourPalette: [swatches.join(", "), colourPalette.trim()].filter(Boolean).join(" · ") || undefined,
           moodboardImages: images,
         }),
       });
@@ -348,16 +364,50 @@ export function ConsultationEnquiryForm({
             maxLength={500}
           />
         </fieldset>
-        <label className="block">
-          <span className={label}>Colour palette (optional)</span>
+        <fieldset>
+          <legend className={label}>Colour palette (optional)</legend>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {swatches.map((hex, i) => (
+              <span key={i} className="group relative">
+                <label
+                  className="block h-10 w-10 cursor-pointer rounded-full border border-sand shadow-sm"
+                  style={{ backgroundColor: hex }}
+                  title={hex}
+                >
+                  <input
+                    type="color"
+                    value={hex}
+                    onChange={(e) => setSwatches((s) => s.map((c, j) => (j === i ? e.target.value : c)))}
+                    className="sr-only"
+                    aria-label={`Colour ${i + 1}`}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setSwatches((s) => s.filter((_, j) => j !== i))}
+                  className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-choc text-[10px] leading-none text-cream"
+                  aria-label={`Remove colour ${i + 1}`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            {swatches.length < MAX_SWATCHES ? (
+              <label className="flex h-10 cursor-pointer items-center gap-2 rounded-full border border-dashed border-sand px-4 font-body text-xs text-text-mid transition-colors hover:border-choc">
+                <span aria-hidden>+</span> Pick a colour
+                <input ref={addColourRef} type="color" defaultValue="#E8D8C3" className="sr-only" />
+              </label>
+            ) : null}
+          </div>
           <input
-            className="input-field mt-2 w-full"
+            className="input-field mt-3 w-full"
+            aria-label="Describe your colours (optional)"
             value={colourPalette}
             onChange={(e) => setColourPalette(e.target.value)}
-            placeholder="e.g. ivory and champagne gold, or not sure yet"
-            maxLength={500}
+            placeholder="Or describe them, e.g. ivory and champagne gold, or not sure yet"
+            maxLength={400}
           />
-        </label>
+        </fieldset>
         <div>
           <p className={label}>Pictorial inspiration (up to {MAX_IMAGES}, optional)</p>
           <input

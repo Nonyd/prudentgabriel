@@ -95,7 +95,6 @@ const PATH_RULES: PathRule[] = [
 
   { prefix: "/admin/bespoke", gate: perm("bespoke") },
   { prefix: "/admin/consultations", gate: perm("consultations") },
-  { prefix: "/admin/consultants", gate: perm("consultations") },
   // BC4: counts by place only — the CRM or the reports desk. Same gate as its API.
   { prefix: "/admin/clients/places", gate: perm(["clients", "reports"]) },
   { prefix: "/admin/clients", gate: perm("clients") },
@@ -260,7 +259,6 @@ export const ADMIN_PAGE_OWNERS: readonly {
   { path: "/admin/consultations/enquiries", owns: "Consultation enquiries (BA2 queue)", linksTo: "Nav" },
   { path: "/admin/chat", owns: "Live chat (BA5)", linksTo: "Nav" },
   { path: "/admin/consultations", owns: "Consultation bookings", linksTo: "Nav" },
-  { path: "/admin/consultants", owns: "Consultant roster", linksTo: "Nav" },
   { path: "/admin/bespoke", owns: "Atelier pipeline", linksTo: "Nav" },
   { path: "/admin/quotations", owns: "Quotations", linksTo: "Nav" },
   { path: "/admin/invoices", owns: "Invoices", linksTo: "Nav" },
@@ -400,7 +398,6 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
     items: [
       { href: "/admin/consultations/enquiries", label: "Enquiries", icon: "enquiries", badgeKey: "enquiries" },
       { href: "/admin/consultations", label: "Bookings", icon: "consultations", badgeKey: "consultations" },
-      { href: "/admin/consultants", label: "Consultants", icon: "consultants" },
     ],
   },
   {

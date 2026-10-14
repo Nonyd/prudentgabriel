@@ -10,7 +10,16 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { logActivity } from "@/lib/logger";
 
 const bodySchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("approve"), reason: z.string().trim().min(3).max(1000) }),
+  /** The approval note is optional; a decline still records why. */
+  z.object({
+    action: z.literal("approve"),
+    reason: z
+      .string()
+      .trim()
+      .max(1000)
+      .optional()
+      .transform((r) => r || null),
+  }),
   z.object({
     action: z.literal("decline"),
     reason: z.string().trim().min(3).max(1000),
@@ -116,7 +125,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     description:
       input.action === "resend"
         ? `Re-sent booking link for enquiry ${enquiry.enquiryNumber}`
-        : `${input.action === "approve" ? "Approved" : "Declined"} enquiry ${enquiry.enquiryNumber}: ${input.reason}`,
+        : `${input.action === "approve" ? "Approved" : "Declined"} enquiry ${enquiry.enquiryNumber}${input.reason ? `: ${input.reason}` : ""}`,
     recordId: id,
     recordType: "ConsultationEnquiry",
   }).catch(() => {});
