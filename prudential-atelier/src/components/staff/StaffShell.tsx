@@ -8,6 +8,7 @@ import { useState } from "react";
 import { ClipboardList, Clock, Home, LogOut, Settings, UserRoundCog } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { StaffTopbar } from "@/components/staff/StaffTopbar";
+import { PortalImageLightbox } from "@/components/ui/ImageLightbox";
 import { cn, getInitials } from "@/lib/utils";
 
 const NAV = [
@@ -132,6 +133,7 @@ export function StaffShell({
         >
           <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
+        <PortalImageLightbox />
 
         <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-sand bg-ivory px-2 pb-[env(safe-area-inset-bottom,0px)] pt-2 md:hidden">
           <ul className="flex items-center justify-around">

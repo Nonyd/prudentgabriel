@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Modal } from "@/components/ui/Modal";
+import { ImageLightbox } from "@/components/ui/ImageLightbox";
 
 export type ConsultationBriefData = {
   bookingNumber: string;
@@ -21,7 +21,7 @@ export function ConsultationBriefPanel({
   brief: ConsultationBriefData;
   variant?: "admin" | "staff" | "client";
 }) {
-  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<number | null>(null);
 
   if (!brief.outfitBrief && !brief.occasion && brief.moodboardImages.length === 0) {
     return null;
@@ -77,12 +77,13 @@ export function ConsultationBriefPanel({
               {variant === "client" ? "Your moodboard" : "Moodboard reference"}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              {brief.moodboardImages.map((url) => (
+              {brief.moodboardImages.map((url, i) => (
                 <button
                   key={url}
                   type="button"
-                  onClick={() => setLightbox(url)}
-                  className="relative h-20 w-20 shrink-0 overflow-hidden rounded border border-sand"
+                  data-lightbox
+                  onClick={() => setLightbox(i)}
+                  className="relative h-20 w-20 shrink-0 overflow-hidden !rounded-sm border border-sand"
                 >
                   <Image src={url} alt="" fill className="object-cover" sizes="80px" unoptimized />
                 </button>
@@ -100,13 +101,12 @@ export function ConsultationBriefPanel({
         ) : null}
       </section>
 
-      <Modal open={!!lightbox} onClose={() => setLightbox(null)} title="Reference image">
-        {lightbox ? (
-          <div className="relative mx-auto aspect-square max-h-[70vh] w-full max-w-lg">
-            <Image src={lightbox} alt="" fill className="object-contain" unoptimized />
-          </div>
-        ) : null}
-      </Modal>
+      <ImageLightbox
+        images={brief.moodboardImages}
+        index={lightbox}
+        onClose={() => setLightbox(null)}
+        onIndex={setLightbox}
+      />
     </>
   );
 }

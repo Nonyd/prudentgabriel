@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi, requireAdminPortalApi } from "@/lib/admin-auth";
-import { folderFromMediaKey, isValidMediaKey } from "@/lib/media/keys";
-import { permissionForUploadFolder } from "@/lib/admin-upload-folder";
+import { isValidMediaKey } from "@/lib/media/keys";
+import { gatePrivateMediaKey } from "@/lib/media/admin-media-gate";
 import { streamMediaKey } from "@/lib/media/stream";
 
 export const dynamic = "force-dynamic";
@@ -12,15 +11,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ key: string
   if (!isValidMediaKey(key)) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  const folder = folderFromMediaKey(key);
-  const needed = permissionForUploadFolder(folder);
-  const gate = !needed
-    ? await requireAdminPortalApi()
-    : needed === "portal"
-    ? await requireAdminPortalApi()
-    : needed === "workroom"
-    ? await requireAdminApi("bespoke")
-    : await requireAdminApi(needed);
+  const gate = await gatePrivateMediaKey(key);
   if (!gate.ok) return gate.response;
   return streamMediaKey(key, {
     allowPrivate: true,

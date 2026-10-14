@@ -7,6 +7,7 @@ import { AdminMaintenanceBanner } from "./AdminMaintenanceBanner";
 import { AdminPreviewBanner } from "./AdminPreviewBanner";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopbar } from "./AdminTopbar";
+import { PortalImageLightbox } from "@/components/ui/ImageLightbox";
 import type { AccessActor } from "@/lib/roles";
 import type { ImpersonationPayload } from "@/lib/admin-impersonate";
 
@@ -78,6 +79,7 @@ export function AdminShell({
         <AdminMaintenanceBanner isMaintenanceOn={isMaintenanceOn} />
         <AdminTopbar onOpenNav={() => setMobileNav(true)} />
         <main className="admin-shell min-h-0 flex-1 overflow-y-auto bg-transparent p-4 print:overflow-visible print:p-0 md:p-8">{children}</main>
+        <PortalImageLightbox />
       </div>
     </div>
   );
