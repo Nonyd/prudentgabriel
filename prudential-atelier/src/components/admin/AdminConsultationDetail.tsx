@@ -17,6 +17,7 @@ import { isVirtualDelivery } from "@/lib/consultation";
 import { ClientMeasurementsPanel } from "@/components/admin/ClientMeasurementsPanel";
 import { NotesStream } from "@/components/admin/NotesStream";
 import { ConsultationDeleteControl } from "@/components/admin/ConsultationDeleteControl";
+import { ConsultationPaymentControl } from "@/components/admin/ConsultationPaymentControl";
 import { adminReceiptSrc } from "@/lib/media/admin-receipt-src";
 import type { MeasurementData } from "@/lib/measurements";
 
@@ -57,6 +58,7 @@ type Booking = {
   paymentStatus: string;
   paymentGateway: string | null;
   paymentRef: string | null;
+  paymentReceiptUrl: string | null;
   paidAt: string | null;
   adminNotes: string | null;
   sessionNotes: string | null;
@@ -393,6 +395,14 @@ export function AdminConsultationDetail({
             </p>
             {booking.paidAt ? (
               <p className="text-xs text-text-mid">Paid {formatWatDate(booking.paidAt)}</p>
+            ) : null}
+            {booking.paymentGateway === "BANK_TRANSFER" && booking.paymentStatus === "PENDING" ? (
+              <ConsultationPaymentControl
+                id={booking.id}
+                bookingNumber={booking.bookingNumber}
+                feeNGN={Number(booking.feeNGN) || 0}
+                receiptUrl={booking.paymentReceiptUrl}
+              />
             ) : null}
           </div>
         </div>

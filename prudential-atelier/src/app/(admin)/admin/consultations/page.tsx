@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { ConsultationStatus, QuoteStatus } from "@prisma/client";
+import { ConsultationStatus, PaymentGateway, PaymentStatus, QuoteStatus } from "@prisma/client";
 import { ConsultationDeleteControl } from "@/components/admin/ConsultationDeleteControl";
+import { ConsultationPaymentControl } from "@/components/admin/ConsultationPaymentControl";
 import {
   getOfferingTypeIcon,
   getOfferingTypeLabel,
@@ -187,6 +188,17 @@ export default async function AdminConsultationsPage({ searchParams }: PageProps
                     </Link>
                     <span className="mx-2 text-sand">·</span>
                     <ConsultationDeleteControl id={b.id} bookingNumber={b.bookingNumber} />
+                    {b.paymentGateway === PaymentGateway.BANK_TRANSFER && b.paymentStatus === PaymentStatus.PENDING ? (
+                      <div className="mt-1">
+                        <ConsultationPaymentControl
+                          id={b.id}
+                          bookingNumber={b.bookingNumber}
+                          feeNGN={Number(b.feeNGN) || 0}
+                          receiptUrl={b.paymentReceiptUrl}
+                          compact
+                        />
+                      </div>
+                    ) : null}
                   </td>
                 </tr>
               );

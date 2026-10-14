@@ -91,6 +91,7 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
     paymentStatus: booking.paymentStatus as PaymentStatus,
     paymentGateway: booking.paymentGateway,
     paymentRef: booking.paymentRef,
+    paymentReceiptUrl: booking.paymentReceiptUrl,
     paidAt: toIso(booking.paidAt),
     createdAt: toIso(booking.createdAt) ?? new Date().toISOString(),
     updatedAt: toIso(booking.updatedAt) ?? new Date().toISOString(),
