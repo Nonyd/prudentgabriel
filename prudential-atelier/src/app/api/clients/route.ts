@@ -8,6 +8,31 @@ import { commissionTitle, occasionPhrase, titleDate } from "@/lib/atelier/commis
 
 const TIERS = new Set<string>(Object.values(LoyaltyTier));
 
+/** A shop order that is over, or never became one. */
+const RTW_CLOSED: OrderStatus[] = [
+  OrderStatus.DELIVERED,
+  OrderStatus.COLLECTED,
+  OrderStatus.CANCELLED,
+  OrderStatus.REFUNDED,
+  OrderStatus.ABANDONED,
+];
+
+/** Emails on guest shop orders (no account attached), lower-cased: every order, and the open ones. */
+async function loadGuestOrderEmails(): Promise<{ any: string[]; active: string[] }> {
+  const rows = await prisma.order.findMany({
+    where: { userId: null, guestEmail: { not: null }, status: { not: OrderStatus.ABANDONED } },
+    select: { guestEmail: true, status: true },
+  });
+  const any = new Set<string>();
+  const active = new Set<string>();
+  for (const r of rows) {
+    const e = r.guestEmail!.trim().toLowerCase();
+    any.add(e);
+    if (!RTW_CLOSED.includes(r.status)) active.add(e);
+  }
+  return { any: Array.from(any), active: Array.from(active) };
+}
+
 /** Where a ready-to-wear order stands, for the Delivery column (it has no delivery date). */
 const SHOP_STATUS_LABEL: Partial<Record<OrderStatus, string>> = {
   PENDING: "Awaiting payment",
@@ -37,15 +62,39 @@ export async function GET(req: NextRequest) {
     if (tier && tier !== "all" && TIERS.has(tier)) {
       where.loyaltyTier = tier as LoyaltyTier;
     }
+    // Atelier = has a commission. Ready-to-wear = has a shop order, on her account or, for a
+    // guest checkout made before she signed up, under her email. A client can be both.
+    const atelierClient: Prisma.ClientProfileWhereInput = { bespokeOrders: { some: {} } };
+    const rtwClient = (active: boolean): Prisma.ClientProfileWhereInput => {
+      const orderWhere: Prisma.OrderWhereInput = {
+        status: { notIn: active ? RTW_CLOSED : [OrderStatus.ABANDONED] },
+      };
+      return {
+        user: {
+          OR: [
+            { orders: { some: orderWhere } },
+            { email: { in: active ? guestEmails.active : guestEmails.any, mode: "insensitive" } },
+          ],
+        },
+      };
+    };
+    const needsGuests = filter === "rtw" || filter === "active_orders" || filter === "no_orders";
+    const guestEmails = needsGuests ? await loadGuestOrderEmails() : { any: [], active: [] };
+    const and: Prisma.ClientProfileWhereInput[] = [];
     if (filter === "vip") {
       where.loyaltyTier = { in: [LoyaltyTier.GOLD, LoyaltyTier.PLATINUM] };
+    } else if (filter === "atelier") {
+      and.push(atelierClient);
+    } else if (filter === "rtw") {
+      and.push(rtwClient(false));
     } else if (filter === "active_orders") {
-      where.bespokeOrders = {
-        some: { status: { notIn: ["DELIVERED", "CANCELLED"] } },
-      };
+      and.push({
+        OR: [{ bespokeOrders: { some: { status: { notIn: ["DELIVERED", "CANCELLED"] } } } }, rtwClient(true)],
+      });
     } else if (filter === "no_orders") {
-      where.bespokeOrders = { none: {} };
+      and.push({ NOT: atelierClient }, { NOT: rtwClient(false) });
     }
+    if (and.length) where.AND = and;
     const userWhere: Prisma.UserWhereInput = {
       role: Role.CUSTOMER,
       ...(PROTECTED_ACCOUNTS.length
@@ -124,6 +173,7 @@ export async function GET(req: NextRequest) {
         const shop = latestShopFor(c.user.id, c.user.email);
         const name = c.user.name?.trim() || latest?.clientName || c.user.email;
         const shopIsNewer = shop && (!latest || shop.createdAt > latest.createdAt);
+        const kinds = { atelier: c._count.bespokeOrders > 0, rtw: Boolean(shop) };
         if (shop && shopIsNewer) {
           const names = shop.items.map((i) => i.product.name);
           const more = shop._count.items - names.length;
@@ -131,6 +181,7 @@ export async function GET(req: NextRequest) {
           return {
             ...c,
             name,
+            kinds,
             latestKind: "rtw" as const,
             latestTitle: `${what || shop.orderNumber} · Ready-to-wear`,
             latestDelivery: SHOP_STATUS_LABEL[shop.status] ?? shop.status.toLowerCase(),
@@ -140,6 +191,7 @@ export async function GET(req: NextRequest) {
         return {
           ...c,
           name,
+          kinds,
           latestKind: latest ? ("atelier" as const) : null,
           latestTitle: latest ? latest.title?.trim() || occasionPhrase(latest) || latest.orderRef : null,
           latestDelivery: latest ? titleDate(latest.deliveryDate) : null,

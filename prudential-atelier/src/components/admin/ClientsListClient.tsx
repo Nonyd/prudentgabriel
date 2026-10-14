@@ -22,9 +22,11 @@ type ClientRow = {
   bespokeOrders: { createdAt: string; orderRef: string }[];
   _count: { bespokeOrders: number };
   name: string;
-  /** Her latest commission: "Birthday dress" (or the house's own title). */
+  /** What she has ordered: a commission (atelier), a shop order (ready-to-wear), or both. */
+  kinds: { atelier: boolean; rtw: boolean };
+  /** Her latest order of either kind: "Birthday dress", or "Delphinium · Ready-to-wear". */
   latestTitle: string | null;
-  /** Its delivery date: "15 October". */
+  /** A commission's delivery date ("15 October"), or where a shop order stands ("Shipped"). */
   latestDelivery: string | null;
   /** "Mrs Azazi — Birthday dress — 15 October": the three columns as one line. */
   preview: string;
@@ -152,6 +154,8 @@ export function ClientsListClient() {
             >
               {row.name}
             </Link>
+            {row.kinds?.atelier ? <KindTag>Atelier</KindTag> : null}
+            {row.kinds?.rtw ? <KindTag>RTW</KindTag> : null}
           </div>
         ),
       },
@@ -162,7 +166,7 @@ export function ClientsListClient() {
           row.latestTitle ? (
             <span className="font-sans text-sm text-text-dark">{row.latestTitle}</span>
           ) : (
-            <span className="font-sans text-sm text-text-light">No commission yet</span>
+            <span className="font-sans text-sm text-text-light">No orders yet</span>
           ),
       },
       {
@@ -192,6 +196,8 @@ export function ClientsListClient() {
       <div className="flex flex-wrap gap-2">
         {[
           { id: "all", label: "All clients" },
+          { id: "atelier", label: "Atelier" },
+          { id: "rtw", label: "Ready-to-wear" },
           { id: "vip", label: "VIP (Gold+)" },
           { id: "active_orders", label: "Active orders" },
           { id: "no_orders", label: "No orders yet" },
@@ -259,5 +265,14 @@ export function ClientsListClient() {
         onConfirm={(confirmation) => void runBulkDelete(confirmation)}
       />
     </div>
+  );
+}
+
+/** Atelier (has a commission) or RTW (has a shop order); a client can carry both. */
+function KindTag({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-full border border-sand px-2 py-0.5 font-sans text-10px font-semibold uppercase tracking-[0.12em] text-text-mid">
+      {children}
+    </span>
   );
 }
