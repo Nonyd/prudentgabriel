@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getOrCreateClientProfile } from "@/lib/account-helpers";
 import { AccountOrdersClient } from "@/components/account/AccountOrdersClient";
 import { liveCompletionStages, clientStageHistory } from "@/lib/atelier/live-stages";
+import { clientMediaSrcs } from "@/lib/media/client-media-src";
 
 export default async function AccountOrdersPage() {
   const session = await auth();
@@ -36,6 +37,7 @@ export default async function AccountOrdersPage() {
     <AccountOrdersClient
       bespokeOrders={bespokeOrders.map((o) => ({
         ...o,
+        moodboardImages: clientMediaSrcs(o.moodboardImages),
         stageHistory: clientStageHistory(
           o.stageHistory,
           liveCompletionStages(o.stageCompletions),

@@ -10,6 +10,7 @@ import {
   isVirtualDelivery,
 } from "@/lib/consultation";
 import { ConsultationBookingActions } from "@/components/account/ConsultationBookingActions";
+import { clientMediaSrcs } from "@/lib/media/client-media-src";
 
 function statusLabel(status: ConsultationStatus) {
   switch (status) {
@@ -66,10 +67,17 @@ export default async function AccountConsultationDetailPage({
     include: {
       consultant: { select: { name: true, title: true, image: true } },
       offering: { select: { sessionType: true, deliveryMode: true, durationMinutes: true } },
+      enquiry: { select: { moodboardImages: true } },
     },
   });
 
   if (!booking) notFound();
+
+  // The booking is hers (matched above), so her private pictures are signed for her.
+  const referenceImages = clientMediaSrcs([
+    ...new Set([...(booking.enquiry?.moodboardImages ?? []), ...booking.referenceImages]),
+  ]);
+  const moodboardImages = clientMediaSrcs(booking.moodboardImages);
 
   const isVirtual = isVirtualDelivery(booking.offering.deliveryMode);
   const when =
@@ -186,13 +194,13 @@ export default async function AccountConsultationDetailPage({
           </div>
         ) : null}
 
-        {booking.moodboardImages.length > 0 ? (
+        {referenceImages.length > 0 ? (
           <div className="border-t border-sand/50 pt-6">
             <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
-              Session moodboard
+              Your reference pictures
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {booking.moodboardImages.map((url) => (
+              {referenceImages.map((url) => (
                 <a
                   key={url}
                   href={url}
@@ -200,7 +208,28 @@ export default async function AccountConsultationDetailPage({
                   rel="noopener noreferrer"
                   className="relative aspect-[4/5] overflow-hidden rounded-sm border border-sand"
                 >
-                  <Image src={url} alt="" fill className="object-cover" sizes="200px" />
+                  <Image src={url} alt="" fill className="object-cover" sizes="200px" unoptimized />
+                </a>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {moodboardImages.length > 0 ? (
+          <div className="border-t border-sand/50 pt-6">
+            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-text-light">
+              Session moodboard
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {moodboardImages.map((url) => (
+                <a
+                  key={url}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative aspect-[4/5] overflow-hidden rounded-sm border border-sand"
+                >
+                  <Image src={url} alt="" fill className="object-cover" sizes="200px" unoptimized />
                 </a>
               ))}
             </div>

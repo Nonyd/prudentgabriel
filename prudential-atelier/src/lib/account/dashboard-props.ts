@@ -17,6 +17,7 @@ import { liveCompletionStages, clientStageHistory } from "@/lib/atelier/live-sta
 import { isBespokeCommissionActive } from "@/lib/bespoke-archive";
 import { getAlterationWarrantyDays } from "@/lib/alterations/policy";
 import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
+import { clientMediaSrcs } from "@/lib/media/client-media-src";
 
 export type AccountDashboardProps = ComponentProps<typeof AccountDashboard>;
 
@@ -154,6 +155,7 @@ export async function loadAccountDashboardProps(params: {
     ? {
         ...activeBespokeRaw,
         trackingToken: await ensureTrackingRaw(activeBespokeRaw),
+        moodboardImages: clientMediaSrcs(activeBespokeRaw.moodboardImages),
         stageHistory: clientStageHistory(
           activeBespokeRaw.stageHistory,
           liveCompletionStages(activeBespokeRaw.stageCompletions),
@@ -277,7 +279,11 @@ export async function loadAccountDashboardProps(params: {
     activeBespoke,
     upcomingConsultation: upcomingConsultation ?? null,
     consultations,
-    consultationMoodboards,
+    // Her own bookings (userId above), so her private pictures are signed for her.
+    consultationMoodboards: consultationMoodboards.map((b) => ({
+      ...b,
+      moodboardImages: clientMediaSrcs(b.moodboardImages),
+    })),
     measurements,
     eventDates,
     personalizedPicks: personalizedPicks.map(mapProductToListItem),

@@ -647,7 +647,7 @@ export function AccountDashboard({
                     rel="noopener noreferrer"
                     className="relative aspect-[4/5] overflow-hidden rounded-sm border border-sand"
                   >
-                    <Image src={url} alt="" fill className="object-cover" sizes="(max-width:640px) 50vw, 200px" />
+                    <Image src={url} alt="" fill className="object-cover" sizes="(max-width:640px) 50vw, 200px" unoptimized />
                   </a>
                 ))}
               </div>
