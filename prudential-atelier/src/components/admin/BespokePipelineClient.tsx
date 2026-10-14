@@ -360,7 +360,7 @@ export function BespokePipelineClient({
       )}
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New Atelier Order">
-        <div className="space-y-3">
+        <div className="mt-5 space-y-3">
           {(
             [
               ["clientName", "Client name", "text"],

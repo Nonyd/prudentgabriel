@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 interface ModalProps {
@@ -13,6 +14,11 @@ interface ModalProps {
 }
 
 export function Modal({ open, onClose, title, description, children, className }: ModalProps) {
+  // Portalled to <body>: page content sits in its own stacking layer, which
+  // would otherwise leave the header and admin sidebar above the backdrop.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -22,13 +28,13 @@ export function Modal({ open, onClose, title, description, children, className }
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-choc/50"
+        className="absolute inset-0 rounded-none bg-choc/40 backdrop-blur-[2px]"
         aria-label="Close modal"
         onClick={onClose}
       />
@@ -36,7 +42,10 @@ export function Modal({ open, onClose, title, description, children, className }
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className={cn("relative z-10 w-full max-w-md glass-3 glass-panel p-6", className)}
+        className={cn(
+          "relative z-10 max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto glass-3 glass-panel p-6",
+          className,
+        )}
       >
         <h2 id="modal-title" className="font-serif text-xl font-medium text-choc">
           {title}
@@ -46,6 +55,7 @@ export function Modal({ open, onClose, title, description, children, className }
         ) : null}
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

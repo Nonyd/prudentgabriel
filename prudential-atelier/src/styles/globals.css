@@ -836,8 +836,10 @@ body {
 /* Buttons and CTA links share the pill radius. Inputs stay squared.
    Nav links must stay rectangular — pill radius + a right border was
    drawing a white crescent off the admin sidebar. A button that is a
-   card (.glass-panel) keeps the panel radius, or it draws as an oval. */
-button:not(.rounded-none):not(.admin-nav-item):not(.admin-nav-section-label):not(.glass-panel),
+   card (.glass-panel) keeps the panel radius, or it draws as an oval. A
+   full-cover button (a modal's click-to-close backdrop, a tap layer over a
+   video) stays square, or the backdrop shows as a giant oval behind the dialog. */
+button:not(.rounded-none):not(.admin-nav-item):not(.admin-nav-section-label):not(.glass-panel):not(.inset-0),
 input[type="button"]:not(.rounded-none),
 input[type="submit"]:not(.rounded-none),
 input[type="reset"]:not(.rounded-none),
