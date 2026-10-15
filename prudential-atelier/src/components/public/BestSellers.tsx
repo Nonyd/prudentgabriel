@@ -16,24 +16,25 @@ function toListItem(p: CollectionListProduct): ProductListItem {
   return mapProductToListItem(p);
 }
 
-async function featuredFallback(): Promise<ProductListItem[]> {
+async function featuredFallback(excludeIds: string[], take: number): Promise<ProductListItem[]> {
   const rows = await prisma.product.findMany({
     where: {
       isPublished: true,
       isFeatured: true,
       type: ProductType.RTW,
       category: { notIn: [...RTW_EXCLUDED_CATEGORIES] },
+      ...(excludeIds.length ? { id: { notIn: excludeIds } } : {}),
     },
     include: collectionListProductInclude,
     orderBy: { updatedAt: "desc" },
-    take: TAKE,
+    take,
   });
   return rows.map(toListItem);
 }
 
 export async function BestSellers() {
   let products: ProductListItem[] = [];
-  let source: "sales" | "featured" = "sales";
+  let source: "sales" | "featured" | "sales+featured" = "sales";
 
   try {
     if (!isSkipDbBuild()) {
@@ -51,9 +52,14 @@ export async function BestSellers() {
           .slice(0, TAKE);
         products = list.map(toListItem);
       }
-      if (products.length === 0) {
-        products = await featuredFallback();
-        source = "featured";
+      // Sales lead; Featured pieces fill the row until enough pieces have sold.
+      if (products.length < TAKE) {
+        const topUp = await featuredFallback(
+          products.map((p) => p.id),
+          TAKE - products.length,
+        );
+        if (topUp.length > 0) source = products.length === 0 ? "featured" : "sales+featured";
+        products = [...products, ...topUp];
       }
     }
   } catch {
