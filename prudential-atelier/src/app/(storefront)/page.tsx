@@ -9,6 +9,8 @@ import { BrandQuoteSection } from "@/components/public/BrandQuoteSection";
 import { PFACrosslinkBanner } from "@/components/public/PFACrosslinkBanner";
 import { BlogPreview } from "@/components/public/BlogPreview";
 import { cmsRouteMetadata } from "@/lib/seo";
+import { HouseFaq } from "@/components/seo/HouseFaq";
+import { HOME_FAQ } from "@/lib/seo-copy";
 
 export const revalidate = 300;
 
@@ -28,6 +30,12 @@ export default async function HomePage() {
       <BrandQuoteSection />
       <PFACrosslinkBanner />
       <BlogPreview />
+      <HouseFaq
+        eyebrow="Questions"
+        heading="A Nigerian fashion house, made in Lagos"
+        intro="Ready-to-wear, bespoke couture and bridal from the Prudent Gabriel atelier in Ajah. What clients ask most often."
+        items={HOME_FAQ}
+      />
     </>
   );
 }

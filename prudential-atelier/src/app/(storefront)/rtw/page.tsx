@@ -10,6 +10,8 @@ import { cmsRouteMetadata, flattenSearchParams, rtwCanonicalPath } from "@/lib/s
 import { rtwHeroCopy, rtwHeroLooks, rtwHeroSideLooks } from "@/lib/rtw-hero";
 import { isSkipDbBuild } from "@/lib/skip-db-build";
 import { warmHeroWebmMp4 } from "@/lib/transcode-webm-mp4";
+import { HouseFaq } from "@/components/seo/HouseFaq";
+import { RTW_FAQ } from "@/lib/seo-copy";
 import { withHeroVideoVariants } from "@/lib/hero-video-variants";
 
 export async function generateMetadata(
@@ -109,20 +111,26 @@ export default async function RTWPage(
   for (const item of heroItems) if (item.type === "video") warmHeroWebmMp4(item.url);
 
   return (
-    <RTWPageClient
-      initialProducts={products}
-      total={total}
-      page={page}
-      totalPages={totalPages}
-      hasNext={hasNext}
-      collections={collections}
-      heroItems={heroItems}
-      heroLooks={heroLooks}
-      heroSideLooks={heroSideLooks}
-      heroHeadline={copy.headline}
-      heroSubline={copy.subline}
-      heroCta={copy.cta}
-      promiseBand={copy.promise}
-    />
+    <>
+      <RTWPageClient
+        initialProducts={products}
+        total={total}
+        page={page}
+        totalPages={totalPages}
+        hasNext={hasNext}
+        collections={collections}
+        heroItems={heroItems}
+        heroLooks={heroLooks}
+        heroSideLooks={heroSideLooks}
+        heroHeadline={copy.headline}
+        heroSubline={copy.subline}
+        heroCta={copy.cta}
+        promiseBand={copy.promise}
+      />
+      {/* First page only, so page 2 and search results are not copies of it. */}
+      {page <= 1 && !u.get("search") ? (
+        <HouseFaq eyebrow="Ready-to-wear" heading="Ready-to-wear in Lagos, made to order" items={RTW_FAQ} />
+      ) : null}
+    </>
   );
 }

@@ -1,6 +1,12 @@
 import { absolutePublicUrl, getPublicAppUrl } from "@/lib/app-url";
-import { HOUSE_ADDRESS_LINE_1, HOUSE_ADDRESS_LINE_2 } from "@/lib/house-address";
-import { HOUSE_NAME } from "@/lib/seo-copy";
+import { HOUSE_ADDRESS_LINE_1, HOUSE_ADDRESS_LINE_2, HOUSE_MAPS_LINK } from "@/lib/house-address";
+import {
+  HOUSE_ALT_NAMES,
+  HOUSE_DESCRIPTION,
+  HOUSE_FOUNDER,
+  HOUSE_KNOWS_ABOUT,
+  HOUSE_NAME,
+} from "@/lib/seo-copy";
 import { instagramHandleToUrl } from "@/lib/sub-brand";
 
 export type JsonLd = Record<string, unknown>;
@@ -26,12 +32,20 @@ export function organizationJsonLd(input: {
     "https://instagram.com/prudential_kids",
   ];
   const logo = input.logo?.trim() ? absolutePublicUrl(input.logo) : undefined;
+  const url = getPublicAppUrl();
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": `${url}/#organization`,
     name: HOUSE_NAME,
-    url: getPublicAppUrl(),
+    alternateName: [...HOUSE_ALT_NAMES],
+    description: HOUSE_DESCRIPTION,
+    url,
     ...(logo ? { logo } : {}),
+    founder: { "@type": "Person", name: HOUSE_FOUNDER, jobTitle: "Creative Director" },
+    foundingLocation: { "@type": "Place", name: "Lagos, Nigeria" },
+    areaServed: ["Lagos", "Nigeria", "Worldwide"],
+    knowsAbout: [...HOUSE_KNOWS_ABOUT],
     address: {
       "@type": "PostalAddress",
       streetAddress: HOUSE_ADDRESS_LINE_1,
@@ -64,6 +78,72 @@ export function organizationJsonLd(input: {
           },
         }
       : {}),
+  };
+}
+
+/**
+ * The atelier as a place: what Google Maps and "fashion brands in Lagos" answers
+ * read. Same house as the Organization (parentOrganization), a separate node.
+ */
+export function storeJsonLd(input: { logo?: string | null; image?: string | null }): JsonLd {
+  const url = getPublicAppUrl();
+  const logo = input.logo?.trim() ? absolutePublicUrl(input.logo) : undefined;
+  const image = input.image?.trim() ? absolutePublicUrl(input.image) : logo;
+  return {
+    "@context": "https://schema.org",
+    "@type": "ClothingStore",
+    "@id": `${url}/#store`,
+    name: HOUSE_NAME,
+    alternateName: [...HOUSE_ALT_NAMES],
+    description: HOUSE_DESCRIPTION,
+    url,
+    ...(image ? { image } : {}),
+    ...(logo ? { logo } : {}),
+    parentOrganization: { "@id": `${url}/#organization` },
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: HOUSE_ADDRESS_LINE_1,
+      addressLocality: "Ajah",
+      addressRegion: "Lagos",
+      addressCountry: "NG",
+    },
+    hasMap: HOUSE_MAPS_LINK,
+    areaServed: ["Lagos", "Nigeria", "Worldwide"],
+    currenciesAccepted: "NGN, USD, GBP",
+    keywords: HOUSE_KNOWS_ABOUT.join(", "),
+  };
+}
+
+/** Lets Google show "Prudent Gabriel" as the site name and offer a sitelinks search box. */
+export function websiteJsonLd(): JsonLd {
+  const url = getPublicAppUrl();
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${url}/#website`,
+    name: "Prudent Gabriel",
+    alternateName: [HOUSE_NAME, "prudentgabriel.com"],
+    url,
+    inLanguage: "en-NG",
+    publisher: { "@id": `${url}/#organization` },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: { "@type": "EntryPoint", urlTemplate: `${url}/rtw?search={search_term_string}` },
+      "query-input": "required name=search_term_string",
+    },
+  };
+}
+
+/** Questions answered on the page itself; the JSON-LD must match what is visible. */
+export function faqJsonLd(items: { question: string; answer: string }[]): JsonLd {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
   };
 }
 

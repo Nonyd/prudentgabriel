@@ -32,6 +32,10 @@ const nextConfig = {
   outputFileTracingRoot: dirname(fileURLToPath(import.meta.url)),
   // instrumentation.ts is on by default from Next 15.
   serverExternalPackages: ["sharp"],
+  // Next streams <title>/<meta> into the body for browsers it does not list as
+  // bots. Most AI crawlers and link unfurlers are not on its list and read only
+  // the <head>, so every response renders metadata in the head.
+  htmlLimitedBots: /.*/,
   async redirects() {
     return PERMANENT_REDIRECTS;
   },

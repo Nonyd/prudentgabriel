@@ -9,7 +9,7 @@ import { ANNOUNCEMENT_SPEED_MS, cmsBool, cmsGet, cmsJson } from "@/lib/cms";
 import { getLogoSettingsSafe } from "@/lib/logos";
 import { getProductionCopy, productionLeadRangeFromCopy } from "@/lib/production-time";
 import { getFabricPromiseHours } from "@/lib/fabric-promise";
-import { organizationJsonLd } from "@/lib/seo-jsonld";
+import { organizationJsonLd, storeJsonLd, websiteJsonLd } from "@/lib/seo-jsonld";
 import { getSetting } from "@/lib/settings";
 import { Suspense } from "react";
 import { ChatWidgetLazy } from "@/components/chat/ChatWidgetLazy";
@@ -44,7 +44,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
       getSetting("social_tiktok"),
       getSetting("social_facebook"),
       getProductionCopy(),
-    ]).then(([logos, instagram, tiktok, facebook, copy]) =>
+    ]).then(([logos, instagram, tiktok, facebook, copy]) => [
       organizationJsonLd({
         logo: logos.logoDark || logos.logoWhite,
         instagram,
@@ -52,7 +52,9 @@ export default async function StorefrontLayout({ children }: { children: React.R
         facebook,
         handlingDays: productionLeadRangeFromCopy(copy),
       }),
-    ),
+      storeJsonLd({ logo: logos.logoDark || logos.logoWhite }),
+      websiteJsonLd(),
+    ]),
     getFabricPromiseHours(),
     // BA5: only when switched on with a retention period set.
     isChatOpen().catch(() => false),

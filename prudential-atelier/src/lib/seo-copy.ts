@@ -2,6 +2,32 @@
 
 export const HOUSE_NAME = "Prudential Atelier";
 
+/** Other names people search for the house by. */
+export const HOUSE_ALT_NAMES = ["Prudent Gabriel", "Prudential Atelier Lagos", "Prudential Bride", "Prudential Kids"] as const;
+
+export const HOUSE_FOUNDER = "Prudent Gabriel-Okopi";
+
+/** One paragraph a search engine or AI assistant can quote about the house. */
+export const HOUSE_DESCRIPTION =
+  "Prudent Gabriel (Prudential Atelier) is a Nigerian luxury fashion house in Lagos, founded by Mrs. Prudent Gabriel-Okopi. " +
+  "It makes women's ready-to-wear, bespoke couture, bridal gowns and children's occasion wear, each piece made to order " +
+  "in its Ajah, Lagos atelier in 7–12 days and delivered across Nigeria and worldwide.";
+
+/** Topics the house is an authority on: schema.org knowsAbout and store keywords. */
+export const HOUSE_KNOWS_ABOUT = [
+  "Ready-to-wear in Lagos",
+  "Nigerian fashion",
+  "Luxury fashion brand in Nigeria",
+  "Women's dresses",
+  "Evening gowns",
+  "Owambe and occasion dresses",
+  "Asoebi styles",
+  "Bespoke couture",
+  "Made-to-measure tailoring",
+  "Bridal gowns and wedding dresses",
+  "Children's occasion wear",
+] as const;
+
 export type PageSeoFallback = {
   title: string;
   description: string;
@@ -9,54 +35,54 @@ export type PageSeoFallback = {
 
 export const PAGE_SEO_FALLBACKS: Record<string, PageSeoFallback> = {
   home: {
-    title: "Prudential Atelier — couture and ready-to-wear, made to order in Lagos",
+    title: "Prudent Gabriel — Luxury Nigerian Fashion Brand in Lagos",
     description:
-      "Bespoke couture and ready-to-wear by Mrs. Prudent Gabriel-Okopi. Cut in Lagos, made to order in 7–12 days, shipped worldwide.",
+      "Prudent Gabriel is a Lagos fashion house: women's ready-to-wear, bespoke couture and bridal gowns by Mrs. Prudent Gabriel-Okopi. Made to order in 7–12 days, shipped across Nigeria and worldwide.",
   },
   shop: {
-    title: "Shop Prudent Gabriel — ready-to-wear, bridal and kids from Prudential Atelier",
+    title: "Shop Nigerian Designer Clothing Online — Prudent Gabriel",
     description:
-      "Everything Prudent Gabriel sells: ready-to-wear, bridal, kids and accessories. Made to order in Lagos in 7–12 days.",
+      "Shop women's dresses, bridal, kids and accessories from a Lagos fashion brand. Every Prudent Gabriel piece is made to order in 7–12 days and delivered across Nigeria and worldwide.",
   },
   rtw: {
-    title: "Ready-to-wear from Prudential Atelier — cut in Lagos, made to order",
+    title: "Ready-to-Wear in Lagos — Women's Dresses by Prudent Gabriel",
     description:
-      "Evening, formal and everyday pieces from the Lagos atelier. Each garment is made to order and leaves in 7–12 days.",
+      "Ready-to-wear from a Lagos fashion brand: evening gowns, owambe and occasion dresses, workwear and everyday pieces. Made to order in 7–12 days, delivered across Nigeria and worldwide.",
   },
   atelier: {
-    title: "The Atelier — a private commission with Prudent Gabriel in Lagos",
+    title: "Bespoke Couture in Lagos — Made to Measure by Prudent Gabriel",
     description:
-      "Every commission begins with a conversation. Bespoke couture designed around you at the Prudential Atelier in Ajah, Lagos.",
+      "Bespoke and made-to-measure couture in Lagos. Every commission starts with a conversation with Prudent Gabriel and is cut and fitted at the atelier in Ajah.",
   },
   bridal: {
-    title: "Prudential Bride — gowns for the day itself, made in Lagos",
+    title: "Wedding Dresses in Lagos — Bridal Gowns by Prudent Gabriel",
     description:
-      "Bridal commissions and ceremony pieces from Prudential Atelier. Made to order, fitted in Lagos, worn around the world.",
+      "Bridal gowns, reception dresses and traditional wedding looks from Prudential Bride in Lagos. Made to order, fitted in Ajah, worn by brides across Nigeria and the world.",
   },
   kids: {
-    title: "Prudential Kids — occasion wear for the smallest of the Prudent Gabriel family",
+    title: "Kids' Occasion Wear in Lagos — Prudential Kids by Prudent Gabriel",
     description:
-      "Occasion and everyday pieces for children, cut in the same Lagos atelier as the women's house.",
+      "Children's party, owambe and occasion outfits from Prudential Kids, cut in the same Lagos atelier as the Prudent Gabriel women's house. Made to order, shipped worldwide.",
   },
   collections: {
-    title: "Collections — house edits from Prudential Atelier",
+    title: "Collections — Nigerian Fashion Edits by Prudent Gabriel",
     description:
-      "Curated ready-to-wear edits from the Lagos atelier, each with its own mood, silhouette and story.",
+      "Ready-to-wear edits from the Prudent Gabriel atelier in Lagos, each with its own mood, silhouette and story.",
   },
   journal: {
-    title: "The Journal — stories from the Prudential Atelier",
+    title: "The Journal — Nigerian Fashion and Style Notes from Lagos",
     description:
-      "Styling notes, work from the beading room, and the making of a Lagos house. Written for the women who wear it.",
+      "Styling notes, work from the beading room and the making of a Lagos fashion house. From Prudent Gabriel, for the women who wear it.",
   },
   about: {
-    title: "The house of Prudent Gabriel — a Lagos atelier",
+    title: "About Prudent Gabriel — Nigerian Fashion Designer in Lagos",
     description:
-      "Founded in Lagos by Mrs. Prudent Gabriel-Okopi. Couture and ready-to-wear made to order, finished by hand.",
+      "Prudent Gabriel is a Lagos fashion house founded by Mrs. Prudent Gabriel-Okopi: ready-to-wear, couture and bridal, made to order and finished by hand in Ajah.",
   },
   contact: {
-    title: "Visit or write — Prudential Atelier in Ajah, Lagos",
+    title: "Contact Prudent Gabriel — Fashion Atelier in Ajah, Lagos",
     description:
-      "The atelier is at No. 4 Akinwale Shitu Divine Homes, Thomas Estates, Ajah. Book a sitting or send a note.",
+      "Visit the Prudent Gabriel atelier at No. 4 Akinwale Shitu Divine Homes, Thomas Estates, Ajah, Lagos. Book a fitting, ask about an order or send a note.",
   },
   "our-story": {
     title: "Our story — from the first stitch in Lagos",
@@ -79,9 +105,9 @@ export const PAGE_SEO_FALLBACKS: Record<string, PageSeoFallback> = {
       "Open roles in the atelier, the workroom and Prudent Gabriel. Pattern, beading, bridal and the floor that ships it.",
   },
   consultation: {
-    title: "Book a consultation at the Lagos atelier",
+    title: "Book a Fashion Design Consultation in Lagos — Prudent Gabriel",
     description:
-      "Sit with Mrs. Prudent Gabriel-Okopi or the creative team — in Ajah or on a call — and begin a commission.",
+      "Sit with Mrs. Prudent Gabriel-Okopi or the creative team, in Ajah, Lagos or on a call, and begin a bespoke dress, bridal gown or made-to-measure commission.",
   },
   privacy: {
     title: "Privacy Policy · Prudential Atelier",
@@ -127,3 +153,70 @@ export const PAGE_SEO_CMS: Record<string, { prefix: string; title: string; descr
 export function uniqueFallbackTitles(): string[] {
   return Object.values(PAGE_SEO_FALLBACKS).map((row) => row.title);
 }
+
+export type FaqItem = { question: string; answer: string };
+
+/**
+ * Questions people put to Google and AI assistants, answered on the page.
+ * Each answer must stay true to how the house works; FAQPage JSON-LD repeats them.
+ */
+export const HOME_FAQ: FaqItem[] = [
+  {
+    question: "What is Prudent Gabriel?",
+    answer:
+      "Prudent Gabriel, also known as Prudential Atelier, is a Nigerian luxury fashion brand based in Lagos. Founded by Mrs. Prudent Gabriel-Okopi, the house makes women's ready-to-wear, bespoke couture, bridal gowns and children's occasion wear.",
+  },
+  {
+    question: "Where is the Prudent Gabriel atelier in Lagos?",
+    answer:
+      "The atelier is at No. 4 Akinwale Shitu Divine Homes, Thomas Estates, Ajah, Lagos, Nigeria. You can book a consultation to visit, or sit with the team on a call.",
+  },
+  {
+    question: "Does Prudent Gabriel sell ready-to-wear in Lagos?",
+    answer:
+      "Yes. The ready-to-wear line includes evening gowns, owambe and occasion dresses, workwear and everyday pieces, all cut in the Lagos atelier. Order online and choose delivery in Lagos, anywhere in Nigeria or abroad.",
+  },
+  {
+    question: "How long does an order take?",
+    answer:
+      "Every piece is made to order after you buy it. Ready-to-wear is made in 7–12 days, then shipped. Bespoke and bridal commissions follow their own timeline, agreed at your consultation.",
+  },
+  {
+    question: "Can I get a dress made to my measurements?",
+    answer:
+      "Yes. Most ready-to-wear pieces can be made to measure from the measurements you enter on the product page, and the atelier takes full bespoke commissions, from first sketch to final fitting.",
+  },
+  {
+    question: "Does Prudent Gabriel make wedding dresses?",
+    answer:
+      "Yes. Prudential Bride designs bridal gowns, reception dresses and traditional wedding looks in Lagos, made to order and fitted for brides in Nigeria and around the world.",
+  },
+  {
+    question: "Do you ship outside Nigeria?",
+    answer:
+      "Yes. Prudent Gabriel ships worldwide, and prices can be shown in naira, US dollars or pounds. Delivery within Lagos and across Nigeria is also available.",
+  },
+];
+
+export const RTW_FAQ: FaqItem[] = [
+  {
+    question: "Where can I buy ready-to-wear in Lagos?",
+    answer:
+      "Prudent Gabriel's ready-to-wear is sold here online and made in the house's atelier in Ajah, Lagos. Pick your size, or have the piece made to your measurements, and choose delivery in Lagos, across Nigeria or worldwide.",
+  },
+  {
+    question: "What kind of ready-to-wear does Prudent Gabriel make?",
+    answer:
+      "Evening gowns, owambe and party dresses, occasion and wedding-guest looks, workwear and everyday pieces for women, in standard sizes or made to your measurements.",
+  },
+  {
+    question: "How long does ready-to-wear take to arrive?",
+    answer:
+      "Each piece is made to order in 7–12 days, then shipped. Delivery time depends on where you are, and is shown at checkout.",
+  },
+  {
+    question: "What if my size is between two sizes?",
+    answer:
+      "Take the larger size, or choose made to measure and enter your measurements so the piece is cut to fit you. The size guide on each product shows bust, waist, hip and length.",
+  },
+];
