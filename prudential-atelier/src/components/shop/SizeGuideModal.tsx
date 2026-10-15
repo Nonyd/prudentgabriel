@@ -129,7 +129,8 @@ export function SizeGuideModal({
               The house chart is being updated. Choose made to measure, or ask us in the chat and we will size you.
             </p>
           ) : (
-            <div className="mt-3 overflow-x-auto">
+            // glass-opaque: figures sit on a solid ground, never on frosted glass (slice AD2).
+            <div className="glass-opaque mt-3 overflow-x-auto px-2 py-1 sm:px-4">
               <table className="w-full border-collapse text-left">
                 <caption className="sr-only">Size chart in {unit === "cm" ? "centimetres" : "inches"}</caption>
                 <thead>
