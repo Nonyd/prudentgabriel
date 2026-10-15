@@ -73,12 +73,12 @@ export function ProductOptionGroupEditor({
       </label>
       {enabled && group ? (
         <div className="mt-4 space-y-4">
-          <label className="block text-xs uppercase text-text-light">
+          <label className="block text-xs font-medium uppercase tracking-wide text-text-mid">
             What she is choosing
             <input
               value={group.label}
               onChange={(e) => setValue("optionGroup.label", e.target.value, { shouldDirty: true })}
-              className="mt-2 w-full min-h-[44px] rounded-xl border border-sand bg-cream px-4 py-3 font-body text-base text-choc"
+              className="mt-2 w-full min-h-[44px] rounded-xl border border-input-border bg-input-bg px-4 py-3 font-body text-base text-text-dark"
             />
           </label>
           <Controller
@@ -109,7 +109,7 @@ export function ProductOptionGroupEditor({
               </label>
             )}
           />
-          <p className="text-11px text-text-light">
+          <p className="text-11px text-text-mid">
             The workroom needs to know which version to cut. Size code stays as it is; the choice is appended, e.g. PA-ALLUR-12-SKIRT.
           </p>
           <ul className="space-y-4">
@@ -118,21 +118,21 @@ export function ProductOptionGroupEditor({
               const resulting = cheapestSize ? effectiveUnitNGN(cheapestSize, isOnSale, adj) : adj;
               const ticks = watch(`optionGroup.options.${i}.measurementFieldIds`) ?? [];
               return (
-                <li key={field.id} className="rounded-xl border border-sand bg-cream/60 p-4">
+                <li key={field.id} className="rounded-xl border border-sand bg-bg-surface p-4">
                   <div className="flex flex-wrap items-end gap-3">
-                    <label className="min-w-[140px] flex-1 text-xs uppercase text-text-light">
+                    <label className="min-w-[140px] flex-1 text-xs font-medium uppercase tracking-wide text-text-mid">
                       Choice
                       <input
                         {...control.register(`optionGroup.options.${i}.label`)}
-                        className="mt-1 w-full min-h-[44px] rounded-xl border border-sand bg-cream px-3 py-2 font-body text-sm text-choc"
+                        className="mt-1 w-full min-h-[44px] rounded-xl border border-input-border bg-input-bg px-3 py-2 font-body text-sm text-text-dark"
                       />
                     </label>
-                    <label className="w-36 text-xs uppercase text-text-light">
+                    <label className="w-36 text-xs font-medium uppercase tracking-wide text-text-mid">
                       Adjustment ₦
                       <input
                         type="number"
                         {...control.register(`optionGroup.options.${i}.priceAdjustmentNGN`, { valueAsNumber: true })}
-                        className="mt-1 w-full min-h-[44px] rounded-xl border border-sand bg-cream px-3 py-2 font-body text-sm text-choc"
+                        className="mt-1 w-full min-h-[44px] rounded-xl border border-input-border bg-input-bg px-3 py-2 font-body text-sm text-text-dark"
                       />
                     </label>
                     <p className="pb-2 text-sm text-charcoal">
@@ -167,10 +167,10 @@ export function ProductOptionGroupEditor({
                   </div>
                   {libraryFields.length > 0 ? (
                     <details className="mt-3">
-                      <summary className="cursor-pointer text-xs uppercase tracking-wide text-text-light">
+                      <summary className="cursor-pointer text-xs font-medium uppercase tracking-wide text-text-mid">
                         Measurements for this choice
                       </summary>
-                      <p className="mt-1 text-11px text-text-light">
+                      <p className="mt-1 text-11px text-text-mid">
                         Leave empty to use the piece&apos;s usual fields. Tick a set here and made-to-measure asks only those.
                       </p>
                       <ul className="mt-2 space-y-2">

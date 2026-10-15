@@ -15,7 +15,7 @@ const TONES = {
   portal: {
     label: "block text-sm font-medium text-ink",
     hint: "mt-1 text-xs text-text-mid",
-    select: "rounded-sm border border-sand bg-white/60 px-3 py-2 text-sm text-ink",
+    select: "rounded-sm border border-input-border bg-input-bg px-3 py-2 text-sm text-ink",
     save: "rounded-sm bg-wine px-4 py-2 text-sm text-white disabled:opacity-50",
     clear: "text-xs text-text-mid underline",
   },

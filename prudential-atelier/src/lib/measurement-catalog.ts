@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { MEASURE_HOW } from "@/lib/measurement-guide";
 
 export type CustomMeasurementDef = {
   key: string;
@@ -15,7 +16,7 @@ export const CUSTOM_MEASUREMENT_FIELDS: CustomMeasurementDef[] = [
   {
     key: "shoulder",
     label: "Shoulder",
-    helpText: "Measure across the back from the end of one shoulder to the other.",
+    helpText: MEASURE_HOW.shoulder,
     minCm: 30,
     maxCm: 60,
     aliases: ["shoulder_width"],
@@ -23,7 +24,7 @@ export const CUSTOM_MEASUREMENT_FIELDS: CustomMeasurementDef[] = [
   {
     key: "bust",
     label: "Bust",
-    helpText: "Measure around the fullest part of the bust, keeping the tape level.",
+    helpText: MEASURE_HOW.bust,
     minCm: 70,
     maxCm: 150,
     aliases: [],
@@ -31,7 +32,7 @@ export const CUSTOM_MEASUREMENT_FIELDS: CustomMeasurementDef[] = [
   {
     key: "waist",
     label: "Waist",
-    helpText: "Measure around the natural waist, where the body bends.",
+    helpText: MEASURE_HOW.waist,
     minCm: 60,
     maxCm: 140,
     aliases: [],
@@ -39,7 +40,7 @@ export const CUSTOM_MEASUREMENT_FIELDS: CustomMeasurementDef[] = [
   {
     key: "hip",
     label: "Hip",
-    helpText: "Measure around the fullest part of the hips.",
+    helpText: MEASURE_HOW.hip,
     minCm: 80,
     maxCm: 160,
     aliases: ["hips"],
@@ -47,7 +48,7 @@ export const CUSTOM_MEASUREMENT_FIELDS: CustomMeasurementDef[] = [
   {
     key: "shoulder_to_waist",
     label: "Back neck to waist",
-    helpText: "From the bone at the base of the neck down to the natural waist.",
+    helpText: MEASURE_HOW.shoulder_to_waist,
     minCm: 30,
     maxCm: 60,
     aliases: ["nape_to_waist", "neck_to_waist"],
@@ -55,7 +56,7 @@ export const CUSTOM_MEASUREMENT_FIELDS: CustomMeasurementDef[] = [
   {
     key: "skirt_length",
     label: "Skirt length",
-    helpText: "From the waist to the desired hem of the skirt.",
+    helpText: MEASURE_HOW.skirt_length,
     minCm: 40,
     maxCm: 130,
     aliases: [],
@@ -63,7 +64,7 @@ export const CUSTOM_MEASUREMENT_FIELDS: CustomMeasurementDef[] = [
   {
     key: "pant_length",
     label: "Pant length",
-    helpText: "From the waist to the desired hem of the trouser, along the outside leg.",
+    helpText: MEASURE_HOW.pant_length,
     minCm: 60,
     maxCm: 130,
     aliases: ["inseam"],
@@ -71,7 +72,7 @@ export const CUSTOM_MEASUREMENT_FIELDS: CustomMeasurementDef[] = [
   {
     key: "biceps",
     label: "Biceps",
-    helpText: "Measure around the fullest part of the upper arm.",
+    helpText: MEASURE_HOW.biceps,
     minCm: 20,
     maxCm: 60,
     aliases: ["bicep"],
@@ -79,7 +80,7 @@ export const CUSTOM_MEASUREMENT_FIELDS: CustomMeasurementDef[] = [
   {
     key: "sleeve_length",
     label: "Sleeve length",
-    helpText: "From the shoulder seam to the wrist, with the arm slightly bent.",
+    helpText: MEASURE_HOW.sleeve_length,
     minCm: 20,
     maxCm: 80,
     aliases: [],
@@ -87,7 +88,7 @@ export const CUSTOM_MEASUREMENT_FIELDS: CustomMeasurementDef[] = [
   {
     key: "blouse_length",
     label: "Blouse length",
-    helpText: "From the shoulder to the desired hem of the blouse.",
+    helpText: MEASURE_HOW.blouse_length,
     minCm: 40,
     maxCm: 80,
     aliases: [],
@@ -95,7 +96,7 @@ export const CUSTOM_MEASUREMENT_FIELDS: CustomMeasurementDef[] = [
   {
     key: "dress_length",
     label: "Dress length",
-    helpText: "From the shoulder to the desired hem of the dress.",
+    helpText: MEASURE_HOW.dress_length,
     minCm: 80,
     maxCm: 180,
     aliases: ["total_length", "length"],

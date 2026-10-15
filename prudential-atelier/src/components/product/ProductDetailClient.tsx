@@ -116,6 +116,7 @@ export function ProductDetailClient({
   const [fitMode, setFitMode] = useState<"standard" | "custom">(PDP_INITIAL_FIT_MODE);
   const [measureUnit, setMeasureUnit] = useState<TypedUnit>("cm");
   const [measureValues, setMeasureValues] = useState<Record<string, string>>({});
+  const [measureErrors, setMeasureErrors] = useState<Record<string, string>>({});
   const { addToBag } = useBagActions();
   const rates = useCurrencyStore((s) => s.rates);
   const currency = useCurrencyStore((s) => s.currency);
@@ -206,9 +207,24 @@ export function ProductDetailClient({
       const typed = typedFromForm(activeCustomFields, measureValues, measureUnit);
       const checked = validateCustomMeasurements(activeCustomFields, typed);
       if (!checked.ok) {
-        setBagError(checked.errors[0]?.message ?? "Check your measurements");
+        const byKey: Record<string, string> = {};
+        for (const e of checked.errors) byKey[e.key] ??= e.message;
+        setMeasureErrors(byKey);
+        const n = checked.errors.length;
+        setBagError(
+          n === 1
+            ? checked.errors[0]!.message
+            : `Please check the ${n} measurements marked above. First: ${checked.errors[0]!.message}.`,
+        );
+        const first = activeCustomFields.find((f) => byKey[f.key]);
+        if (first) {
+          const el = document.getElementById(`cm-${first.key}`);
+          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+          el?.focus({ preventScroll: true });
+        }
         return;
       }
+      setMeasureErrors({});
       setBagError(null);
       setSubmitting(true);
       try {
@@ -413,7 +429,7 @@ export function ProductDetailClient({
                   }}
                   className={cn(
                     "rounded-none min-h-12 flex-1 px-3 py-3 text-center font-sans text-[13px] font-semibold leading-snug sm:px-4 sm:text-[14px]",
-                    fitMode === "standard" ? "bg-choc text-cream" : "bg-white text-charcoal",
+                    fitMode === "standard" ? "bg-choc text-cream" : "bg-bg-card text-charcoal",
                   )}
                 >
                   Standard size
@@ -433,7 +449,7 @@ export function ProductDetailClient({
                   }}
                   className={cn(
                     "rounded-none min-h-12 flex-1 px-3 py-3 text-center font-sans text-[13px] font-semibold leading-snug sm:px-4 sm:text-[14px]",
-                    fitMode === "custom" ? "bg-choc text-cream" : "bg-[#f7f2ec] text-charcoal",
+                    fitMode === "custom" ? "bg-choc text-cream" : "bg-bg-card text-charcoal",
                   )}
                 >
                   Made to measure
@@ -484,7 +500,17 @@ export function ProductDetailClient({
               unit={measureUnit}
               onUnitChange={setMeasureUnit}
               values={measureValues}
-              onChange={(key, value) => setMeasureValues((p) => ({ ...p, [key]: value }))}
+              errors={measureErrors}
+              onChange={(key, value) => {
+                setMeasureValues((p) => ({ ...p, [key]: value }));
+                if (measureErrors[key]) {
+                  setMeasureErrors((prev) => {
+                    const next = { ...prev };
+                    delete next[key];
+                    return next;
+                  });
+                }
+              }}
             />
           ) : null}
           {fitMode === "standard" ? (
@@ -546,7 +572,10 @@ export function ProductDetailClient({
             {bagError ?? (submitting ? "Adding to bag" : "")}
           </p>
           {bagError ? (
-            <p className="mt-3 font-body text-[12px] leading-5 text-choc" role="alert">
+            <p
+              className="mt-3 rounded-sm border border-error/40 bg-error-soft px-3 py-2.5 font-body text-[13px] leading-5 text-error"
+              role="alert"
+            >
               {bagError}
             </p>
           ) : null}

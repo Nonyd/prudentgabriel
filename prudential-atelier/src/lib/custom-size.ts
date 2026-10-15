@@ -1,4 +1,5 @@
 import type { CustomSurchargeKind, OrderFulfilmentKind, SizeMode } from "@prisma/client";
+import { rangePhrase } from "@/lib/measurement-guide";
 import { isStandardSizeLabel, isTypedUnit, sortBySize, toCanonicalCm, type TypedUnit } from "@/lib/sizing";
 
 export const CUSTOM_CART_SIZE = "Custom";
@@ -52,12 +53,16 @@ export function validateCustomMeasurements(
 
   for (const field of [...fields].sort((a, b) => a.sortOrder - b.sortOrder)) {
     const row = byKey.get(field.key);
-    if (!row || !Number.isFinite(row.value)) {
+    if (row && !Number.isFinite(row.value)) {
+      errors.push({ code: "INVALID", key: field.key, message: `${field.label}: please enter a number, e.g. 92.5` });
+      continue;
+    }
+    if (!row) {
       if (field.required) {
         errors.push({
           code: "REQUIRED",
           key: field.key,
-          message: `${field.label} is required`,
+          message: `${field.label} is required for this piece`,
         });
       }
       continue;
@@ -71,20 +76,17 @@ export function validateCustomMeasurements(
       errors.push({ code: "INVALID", key: field.key, message: `${field.label} must be greater than zero` });
       continue;
     }
-    if (field.minCm != null && valueCm < field.minCm) {
-      errors.push({
-        code: "RANGE",
-        key: field.key,
-        message: `${field.label} looks too small — please check the tape`,
-      });
-      continue;
-    }
-    if (field.maxCm != null && valueCm > field.maxCm) {
-      errors.push({
-        code: "RANGE",
-        key: field.key,
-        message: `${field.label} looks too large — please check the tape`,
-      });
+    const outOfRange =
+      (field.minCm != null && valueCm < field.minCm) || (field.maxCm != null && valueCm > field.maxCm);
+    if (outOfRange) {
+      // Say the range, in the unit she typed, so she knows what the tape should read.
+      const message =
+        field.minCm != null && field.maxCm != null
+          ? `${field.label} must be ${rangePhrase(field.minCm, field.maxCm, row.unit)}`
+          : field.minCm != null && valueCm < field.minCm
+            ? `${field.label} looks too small — please check the tape`
+            : `${field.label} looks too large — please check the tape`;
+      errors.push({ code: "RANGE", key: field.key, message });
       continue;
     }
     snapshot.push({

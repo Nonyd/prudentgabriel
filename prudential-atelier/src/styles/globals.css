@@ -1169,6 +1169,42 @@ a.admin-cta {
   background-color: var(--choc-deep);
 }
 
+/* "How to measure": tips beside the diagram only when the panel itself is wide enough
+   (the product page column is narrow even on a desktop). */
+.measure-guide-body {
+  container-type: inline-size;
+}
+
+@container (min-width: 30rem) {
+  .measure-guide-grid {
+    grid-template-columns: minmax(0, 1fr) 9rem;
+  }
+}
+
+/* Native controls (number spinners, select menus, date pickers, radios) follow the theme. */
+:root {
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] select option,
+[data-theme="dark"] select optgroup {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* Storefront and account fields: autofill keeps the dark field, not a pale yellow slab. */
+[data-theme="dark"] input:-webkit-autofill,
+[data-theme="dark"] textarea:-webkit-autofill,
+[data-theme="dark"] select:-webkit-autofill {
+  -webkit-text-fill-color: var(--text-primary);
+  box-shadow: 0 0 0 1000px var(--bg-card) inset;
+  caret-color: var(--text-primary);
+}
+
 [data-theme="dark"] .text-red-800,
 [data-theme="dark"] .text-red-700,
 [data-theme="dark"] .text-red-600 {

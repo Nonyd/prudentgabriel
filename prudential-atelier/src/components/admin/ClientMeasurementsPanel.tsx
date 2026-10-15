@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { formatDate } from "@/lib/utils";
-import type { MeasurementData } from "@/lib/measurements";
+import { profileMeasurementProblems, type MeasurementData } from "@/lib/measurements";
+import { PROFILE_MEASUREMENT_GUIDE, readableApiError } from "@/lib/measurement-guide";
+import { FieldError, FormErrorSummary } from "@/components/measurements/MeasureGuide";
 
 export type { MeasurementData } from "@/lib/measurements";
 
@@ -19,6 +21,10 @@ type MeasurementFieldKey =
   | "inseam"
   | "neck"
   | "armhole";
+
+const HOW: Record<MeasurementFieldKey, string> = Object.fromEntries(
+  PROFILE_MEASUREMENT_GUIDE.map((g) => [g.key, g.how]),
+) as Record<MeasurementFieldKey, string>;
 
 const FIELDS: { key: MeasurementFieldKey; label: string }[] = [
   { key: "bust", label: "Bust" },
@@ -57,8 +63,8 @@ export async function patchClientMeasurements(clientId: string, form: Measuremen
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...form, unit }),
   });
-  const j = (await res.json()) as { error?: string };
-  if (!res.ok) throw new Error(j.error ?? "Save failed");
+  const j = (await res.json().catch(() => null)) as unknown;
+  if (!res.ok) throw new Error(readableApiError(j, `Measurements could not be saved (error ${res.status}).`));
 }
 
 /** BD6: save a commission's own set (and her latest with it). */
@@ -69,8 +75,8 @@ export async function patchCommissionMeasurements(orderId: string, form: Measure
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...form, unit }),
   });
-  const j = (await res.json()) as { error?: string };
-  if (!res.ok) throw new Error(j.error ?? "Save failed");
+  const j = (await res.json().catch(() => null)) as unknown;
+  if (!res.ok) throw new Error(readableApiError(j, `Measurements could not be saved (error ${res.status}).`));
 }
 
 export function ClientMeasurementsPanel({
@@ -104,6 +110,8 @@ export function ClientMeasurementsPanel({
     initial?.unit === "cm" ? "cm" : "inches",
   );
   const [form, setForm] = useState<MeasurementData>(initial ?? emptyForm("inches"));
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!onDraftChange || !clientId) return;
@@ -126,22 +134,44 @@ export function ClientMeasurementsPanel({
   const unitLabel = unit === "cm" ? "cm" : '"';
 
   async function save() {
+    const problems = profileMeasurementProblems({ ...form, unit });
+    if (problems) {
+      setFieldErrors(problems.fieldErrors as Record<string, string>);
+      setFormError(problems.error);
+      return;
+    }
+    setFieldErrors({});
+    setFormError(null);
     setSaving(true);
     try {
-      const res = await fetch(saveUrl ?? `/api/clients/${clientId}/measurements`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, unit }),
-      });
-      const j = (await res.json()) as { error?: string; item?: MeasurementData | { data: MeasurementData | null } };
-      if (!res.ok) throw new Error(j.error ?? "Save failed");
+      let res: Response;
+      try {
+        res = await fetch(saveUrl ?? `/api/clients/${clientId}/measurements`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...form, unit }),
+        });
+      } catch {
+        throw new Error("Could not reach the server — check the connection and try again.");
+      }
+      const j = (await res.json().catch(() => null)) as {
+        error?: unknown;
+        fieldErrors?: Record<string, string>;
+        item?: MeasurementData | { data: MeasurementData | null };
+      } | null;
+      if (!res.ok || !j) {
+        setFieldErrors(j?.fieldErrors ?? {});
+        throw new Error(readableApiError(j, `Measurements could not be saved (error ${res.status}).`));
+      }
       const saved = j.item && "data" in j.item ? j.item.data : (j.item as MeasurementData | undefined);
       if (saved) setForm(saved);
       toast.success(savedMessage ?? `Measurements saved to ${clientName}'s profile`);
       setEditing(false);
       onSaved?.();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save measurements");
+      const message = e instanceof Error ? e.message : "Could not save measurements";
+      setFormError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -215,23 +245,43 @@ export function ClientMeasurementsPanel({
             </label>
           </fieldset>
           <div className="grid gap-3 sm:grid-cols-2">
-            {FIELDS.map((f) => (
-              <label key={f.key} className="block font-sans text-xs text-text-mid">
-                {f.label}
-                <input
-                  type="number"
-                  step="0.1"
-                  value={form[f.key] ?? ""}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      [f.key]: e.target.value === "" ? null : Number(e.target.value),
-                    }))
-                  }
-                  className="input-field mt-1"
-                />
-              </label>
-            ))}
+            {FIELDS.map((f) => {
+              const err = fieldErrors[f.key];
+              const id = `cmp-${clientId}-${f.key}`;
+              return (
+                <div key={f.key}>
+                  <label htmlFor={id} className="block font-sans text-xs text-text-mid">
+                    {f.label}
+                  </label>
+                  <input
+                    id={id}
+                    type="number"
+                    step="0.1"
+                    value={form[f.key] ?? ""}
+                    aria-invalid={err ? true : undefined}
+                    aria-describedby={err ? `${id}-error ${id}-hint` : `${id}-hint`}
+                    onChange={(e) => {
+                      setForm((prev) => ({
+                        ...prev,
+                        [f.key]: e.target.value === "" ? null : Number(e.target.value),
+                      }));
+                      if (err) {
+                        setFieldErrors((prev) => {
+                          const next = { ...prev };
+                          delete next[f.key];
+                          return next;
+                        });
+                      }
+                    }}
+                    className={`input-field mt-1${err ? " !border-error" : ""}`}
+                  />
+                  <FieldError id={`${id}-error`} message={err} />
+                  <span id={`${id}-hint`} className="mt-0.5 block font-sans text-[11px] leading-4 text-text-light">
+                    {HOW[f.key]}
+                  </span>
+                </div>
+              );
+            })}
           </div>
           <label className="block font-sans text-xs text-text-mid">
             Notes
@@ -242,6 +292,7 @@ export function ClientMeasurementsPanel({
               className="input-field mt-1"
             />
           </label>
+          <FormErrorSummary message={formError} />
           <div className="flex flex-wrap gap-2">
             <Button type="button" disabled={saving} onClick={() => void save()}>
               {saving ? "Saving…" : "Save Measurements"}

@@ -389,7 +389,7 @@ export function AdminConsultationDetail({
           ) : null}
           {isVirtual ? (
             // Right under the date and time: send the Zoom or Google Meet link from here.
-            <div id="meeting-link" className="scroll-mt-24 rounded-sm border border-sand bg-white/40 p-3">
+            <div id="meeting-link" className="scroll-mt-24 rounded-sm border border-sand bg-bg-surface p-3">
               <p className="font-label text-xs text-gold">Meeting link</p>
               {booking.meetingLinkSentAt ? (
                 <div className="mt-2 space-y-1">

@@ -43,7 +43,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!g.ok) return g.response;
 
   const cleaned = cleanMeasurementInput(await req.json().catch(() => null));
-  if (!cleaned.ok) return NextResponse.json({ error: cleaned.error }, { status: 400 });
+  if (!cleaned.ok) {
+    return NextResponse.json({ error: cleaned.error, fieldErrors: cleaned.fieldErrors }, { status: 400 });
+  }
 
   const order = await prisma.bespokeOrder.findUnique({
     where: { id: orderId },

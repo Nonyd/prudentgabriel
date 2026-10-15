@@ -25,7 +25,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
   const cleanedInput = cleanMeasurementInput(body);
-  if (!cleanedInput.ok) return NextResponse.json({ error: cleanedInput.error }, { status: 400 });
+  if (!cleanedInput.ok) {
+    return NextResponse.json({ error: cleanedInput.error, fieldErrors: cleanedInput.fieldErrors }, { status: 400 });
+  }
   const cleaned = cleanedInput.data;
 
   try {
