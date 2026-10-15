@@ -16,17 +16,19 @@ export const CSP_REPORT_PATH = "/api/csp-report";
 
 /** Only Stripe injects third-party script and frames; the other gateways redirect. */
 const STRIPE = ["https://js.stripe.com", "https://*.js.stripe.com"];
+/** Cloudflare Turnstile (spam check on the consultation enquiry). */
+const TURNSTILE = "https://challenges.cloudflare.com";
 
 export const CSP_REPORT_ONLY = [
   "default-src 'self'",
   // Next.js App Router hydrates with inline scripts; nonces are a later step.
-  `script-src 'self' 'unsafe-inline' ${STRIPE.join(" ")}`,
+  `script-src 'self' 'unsafe-inline' ${STRIPE.join(" ")} ${TURNSTILE}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data: https://fonts.gstatic.com",
   "media-src 'self' blob: data:",
-  "connect-src 'self' https://api.stripe.com https://maps.googleapis.com",
-  `frame-src 'self' ${STRIPE.join(" ")} https://hooks.stripe.com https://maps.google.com https://www.google.com`,
+  `connect-src 'self' https://api.stripe.com https://maps.googleapis.com ${TURNSTILE}`,
+  `frame-src 'self' ${STRIPE.join(" ")} ${TURNSTILE} https://hooks.stripe.com https://maps.google.com https://www.google.com`,
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",

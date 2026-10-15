@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { turnstileSiteKey } from "@/lib/turnstile";
 import { ConsultationEnquiryForm, type EnquiryPrefill } from "@/components/consultation/ConsultationEnquiryForm";
 import { ENQUIRY_OCCASIONS } from "@/lib/consultation-enquiry-shared";
 import { ConsultationReviewsSlider } from "@/components/consultation/ConsultationReviewsSlider";
@@ -57,7 +58,7 @@ export default async function ConsultationPage({
           </p>
         </header>
         {open ? (
-          <ConsultationEnquiryForm cms={cms} initial={initial} />
+          <ConsultationEnquiryForm cms={cms} initial={initial} turnstileSiteKey={turnstileSiteKey()} />
         ) : (
           <div className="mx-auto max-w-xl glass-2 glass-panel px-6 py-8 text-center" role="status">
             <p className="font-body text-[15px] leading-relaxed text-text-mid">

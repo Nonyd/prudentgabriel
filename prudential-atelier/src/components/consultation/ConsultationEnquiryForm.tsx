@@ -15,6 +15,7 @@ import { getWatYmd } from "@/lib/consultation";
 import { cmsGet } from "@/lib/cms-helpers";
 import { xhrPostFormData } from "@/lib/admin-upload-xhr";
 import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
+import { TurnstileWidget, type TurnstileHandle } from "@/components/common/TurnstileWidget";
 
 const MAX_IMAGES = 5;
 const MAX_SWATCHES = 6;
@@ -38,11 +39,17 @@ function firstError(error: unknown): string | null {
 export function ConsultationEnquiryForm({
   cms = {},
   initial = {},
+  turnstileSiteKey = null,
 }: {
   cms?: Record<string, string>;
   /** Answers carried from the atelier page's first question. */
   initial?: EnquiryPrefill;
+  /** Cloudflare Turnstile spam check; null when the keys are not set. */
+  turnstileSiteKey?: string | null;
 }) {
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileHandle>(null);
+  const awaitingCheck = Boolean(turnstileSiteKey) && !turnstileToken;
   const [occasion, setOccasion] = useState(initial.occasion ?? "");
   const [occasionDetails, setOccasionDetails] = useState(initial.occasionDetails ?? "");
   const [eventDate, setEventDate] = useState(initial.eventDate ?? "");
@@ -152,10 +159,13 @@ export function ConsultationEnquiryForm({
           deliveryDate,
           colourPalette: [swatches.join(", "), colourPalette.trim()].filter(Boolean).join(" · ") || undefined,
           moodboardImages: images,
+          turnstileToken: turnstileToken ?? undefined,
         }),
       });
       const j = (await res.json()) as { enquiryNumber?: string; shortNotice?: boolean; error?: unknown };
       if (!res.ok || !j.enquiryNumber) {
+        // A token is single use: get a fresh one for the next try.
+        turnstileRef.current?.reset();
         throw new Error(firstError(j.error) ?? "Please check the form and try again.");
       }
       setDone({ enquiryNumber: j.enquiryNumber, shortNotice: Boolean(j.shortNotice) });
@@ -442,12 +452,17 @@ export function ConsultationEnquiryForm({
       </section>
 
       <div className="text-center">
+        {turnstileSiteKey ? (
+          <div className="mb-4 flex justify-center">
+            <TurnstileWidget ref={turnstileRef} siteKey={turnstileSiteKey} onToken={setTurnstileToken} />
+          </div>
+        ) : null}
         <button
           type="submit"
-          disabled={!valid || submitting || uploading}
+          disabled={!valid || submitting || uploading || awaitingCheck}
           className="rounded-sm bg-nut px-12 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-cream transition-colors hover:bg-choc disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {submitting ? "Sending…" : "Send enquiry"}
+          {submitting ? "Sending…" : valid && awaitingCheck ? "Checking…" : "Send enquiry"}
         </button>
         <p className="mx-auto mt-4 max-w-md font-body text-xs leading-relaxed text-text-light">
           Nothing is booked or charged yet. If Prudent Gabriel can take your commission, we email you a link to choose a

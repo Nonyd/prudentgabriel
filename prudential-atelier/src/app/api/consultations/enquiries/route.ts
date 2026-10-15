@@ -19,6 +19,7 @@ import { EMAIL_TEMPLATE_KEYS } from "@/lib/admin-email-catalog";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { logServerError } from "@/lib/logger";
 import { rejectIfAtelierClosed } from "@/lib/atelier-bookings";
+import { turnstileErrorMessage, verifyTurnstile } from "@/lib/turnstile";
 
 /** Per address (shared Wi-Fi, carrier NAT) and per inbox, like the BA1 limits. */
 const ADDRESS_LIMIT = 20;
@@ -68,6 +69,14 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
   const address = await checkRateLimit(`enquiry-address:${ip}`, ADDRESS_LIMIT, AUTH_WINDOW_MS);
   if (!address.ok) return tooMany(address.retryAfterSec);
+  // Spam check (Cloudflare Turnstile); a no-op until the keys are set.
+  const human = await verifyTurnstile((body as { turnstileToken?: unknown }).turnstileToken, ip);
+  if (!human.ok) {
+    return NextResponse.json(
+      { error: turnstileErrorMessage(human.reason) },
+      { status: human.reason === "unavailable" ? 503 : 400 },
+    );
+  }
   const inbox = await checkRateLimit(`enquiry-inbox:${accountKey(email)}`, INBOX_LIMIT, AUTH_WINDOW_MS);
   if (!inbox.ok) return tooMany(inbox.retryAfterSec);
 
