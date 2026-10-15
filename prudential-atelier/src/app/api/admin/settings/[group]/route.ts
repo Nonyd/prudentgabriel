@@ -21,6 +21,8 @@ import { hasPermission } from "@/lib/roles";
 import type { SettingGroup } from "@prisma/client";
 import { LEGAL_SIGNIFICANT_SETTING_KEYS } from "@/lib/legal-token-syntax";
 import { logLegallySignificantChange } from "@/lib/legal-tokens";
+import { clearExchangeRateCache, FX_USE_LIVE_SETTING, resolveExchangeRates } from "@/lib/currency";
+import { getDashboardSecret } from "@/lib/credential-catalog";
 
 const GROUPS = new Set<string>([
   "STORE",
@@ -103,12 +105,26 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ group: s
   }));
 
   if (group === "PAYMENTS") {
-    const gateways = await getGatewayAdminStatus();
-    return NextResponse.json({ items, gateways });
+    const [gateways, resolved, appId] = await Promise.all([
+      getGatewayAdminStatus(),
+      resolveExchangeRates(),
+      getDashboardSecret("open_exchange_rates_app_id"),
+    ]);
+    // What the shop is pricing with right now, so the switch shows its effect.
+    const fx = {
+      appIdSet: Boolean(appId),
+      source: resolved.source,
+      ngnPerUsd: resolved.rates.USD > 0 ? Math.round(1 / resolved.rates.USD) : null,
+      ngnPerGbp: resolved.rates.GBP > 0 ? Math.round(1 / resolved.rates.GBP) : null,
+      fetchedAt: resolved.fetchedAt.toISOString(),
+    };
+    return NextResponse.json({ items, gateways, fx });
   }
 
   return NextResponse.json({ items });
 }
+
+const FX_SETTING_KEYS = new Set([FX_USE_LIVE_SETTING, "exchange_rate_usd", "exchange_rate_gbp", "open_exchange_rates_app_id"]);
 
 export async function PATCH(req: NextRequest, props: { params: Promise<{ group: string }> }) {
   const params = await props.params;
@@ -205,6 +221,8 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ group: 
   }
 
   await revalidateSettings();
+  // A changed rate or rate mode applies from the next request, not after the hour's cache.
+  if (parsed.data.updates.some((u) => FX_SETTING_KEYS.has(u.key))) clearExchangeRateCache();
 
   return NextResponse.json({
     success: true,

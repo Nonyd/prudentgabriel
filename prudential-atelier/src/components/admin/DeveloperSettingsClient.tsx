@@ -393,7 +393,7 @@ export function DeveloperSettingsClient() {
       <section className="card-surface p-6">
         <h2 className="font-serif text-lg font-medium text-choc">Live exchange rates</h2>
         <p className="mt-1 font-sans text-xs text-text-mid">
-          Open Exchange Rates app ID. Manual ₦ overlay rates stay on{" "}
+          Open Exchange Rates app ID. Choose live or manual rates on{" "}
           <Link href="/admin/settings/payments" className="underline">
             Payments
           </Link>

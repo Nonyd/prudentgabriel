@@ -61,6 +61,7 @@ export const COMMERCIAL_PAYMENTS_KEYS = new Set<string>([
   "legal_company_name",
   "legal_company_rc",
   "privacy_contact_email",
+  "fx_use_live_rates",
   "exchange_rate_usd",
   "exchange_rate_gbp",
 ]);

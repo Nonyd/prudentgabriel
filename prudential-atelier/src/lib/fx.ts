@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import {
   convertFromNGN,
-  getExchangeRates,
+  resolveExchangeRates,
   type ExchangeRatesNGN,
   type ShopCurrency,
 } from "@/lib/currency";
@@ -54,16 +54,14 @@ export async function getLockedFx(): Promise<LockedFx> {
   if (testFx) return testFx;
 
   try {
-    const rates = await getExchangeRates();
-    const { getDashboardSecret } = await import("@/lib/credential-catalog");
-    const oxr = await getDashboardSecret("open_exchange_rates_app_id");
-    const source = oxr ? "openexchangerates" : "site_setting_or_fallback";
-    const stale = source === "site_setting_or_fallback" && !oxr;
+    // The source is the one actually used, never inferred from whether a key is saved.
+    const { rates, source, fetchedAt } = await resolveExchangeRates();
+    const stale = source === "hardcoded_fallback";
     await persistSnapshot(rates, source, stale);
     return {
       rate: rates.USD,
       source,
-      fetchedAt: new Date(),
+      fetchedAt,
       stale,
       gbpRate: rates.GBP,
     };

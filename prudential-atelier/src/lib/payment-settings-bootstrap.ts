@@ -39,6 +39,8 @@ const PAYMENT_SETTING_DEFS: {
   { key: "consultation_fee_virtual_prudent", value: "200000", label: "Consultation fee (₦): virtual, with Mrs. Prudent", type: SettingType.NUMBER, isPublic: false, sortOrder: 22 },
   { key: "consultation_fee_virtual_team", value: "180000", label: "Consultation fee (₦): virtual, with the creative team", type: SettingType.NUMBER, isPublic: false, sortOrder: 23 },
   { key: "consultation_short_notice_days", value: "30", label: "Consultation enquiry: flag for a call when the event is within (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 29 },
+  // Off by default: the manual rates below stay in charge until the house switches to live.
+  { key: "fx_use_live_rates", value: "false", label: "Use live exchange rates (Open Exchange Rates)", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 37 },
   { key: "exchange_rate_usd", value: "0.00065", label: "USD Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 30 },
   { key: "exchange_rate_gbp", value: "0.00052", label: "GBP Rate (per ₦1)", type: SettingType.NUMBER, isPublic: false, sortOrder: 31 },
   {
