@@ -74,7 +74,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     // The login email is the account: changing it hands over the account, so it
     // is Super Admin work, never on a protected or non-staff account.
-    const userUpdate: { name?: string; email?: string; phone?: string | null } = {};
+    const userUpdate: { name?: string; email?: string; emailVerified?: null; phone?: string | null } = {};
     if (typeof body.name === "string") userUpdate.name = body.name.trim();
     const nextEmail = typeof body.email === "string" ? body.email.trim().toLowerCase() : null;
     if (nextEmail && nextEmail !== existing.user.email.toLowerCase()) {
@@ -91,6 +91,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       });
       if (dup) return NextResponse.json({ error: "Email already in use" }, { status: 409 });
       userUpdate.email = email;
+      userUpdate.emailVerified = null;
     }
     if (typeof body.phone === "string") userUpdate.phone = body.phone.trim() || null;
 

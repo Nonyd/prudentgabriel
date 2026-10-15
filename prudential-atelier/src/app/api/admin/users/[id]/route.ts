@@ -146,7 +146,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       ...(parsed.data.name !== undefined ? { name: parsed.data.name.trim() } : {}),
       ...(parsed.data.role !== undefined ? { role: parsed.data.role as Role } : {}),
       ...(parsed.data.isActive !== undefined ? { isActive: parsed.data.isActive } : {}),
-      ...(emailChanged && nextEmail ? { email: nextEmail } : {}),
+      // A new address is unproven until its owner confirms it.
+      ...(emailChanged && nextEmail ? { email: nextEmail, emailVerified: null } : {}),
       ...(nextPhone !== undefined ? { phone: nextPhone } : {}),
     },
     select: USER_SELECT,

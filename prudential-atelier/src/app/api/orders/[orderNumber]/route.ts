@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { toPublicRtwOrderDto } from "@/lib/public-pii-dtos";
 import { canViewRtwTracker } from "@/lib/rtw-tracker";
 import { rateLimitOr429 } from "@/lib/rate-limit";
+import { provenEmail } from "@/lib/email-verification";
 
 export async function GET(
   req: NextRequest,
@@ -60,7 +61,8 @@ export async function GET(
     },
     {
       userId: session?.user?.id,
-      email: emailParam || session?.user?.email,
+      // Typed with the order number, an email is a lookup; from the session it must be proven.
+      email: emailParam || (await provenEmail(session?.user?.id)),
     },
   );
 

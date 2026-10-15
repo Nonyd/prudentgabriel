@@ -7,6 +7,7 @@ import { toPublicConsultationDto } from "@/lib/public-pii-dtos";
 import { rateLimitOr429 } from "@/lib/rate-limit";
 import { sendConsultationCancelledEmail } from "@/lib/email";
 import { notifyConsultationCancelledByClient } from "@/lib/notifications";
+import { provenEmail } from "@/lib/email-verification";
 
 function isBookingNumber(id: string): boolean {
   return id.startsWith("CB-");
@@ -58,9 +59,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const email = session.user.email?.toLowerCase();
+  // A booking made under her email before she signed up is hers once she has proven it.
+  const email = await provenEmail(session.user.id);
   const ok =
-    booking.userId === session.user.id || (email && booking.clientEmail.toLowerCase() === email);
+    booking.userId === session.user.id || (email !== null && booking.clientEmail.toLowerCase() === email);
   if (!ok) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -69,7 +71,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
 const patchBodySchema = z.object({
   status: z.literal(ConsultationStatus.CANCELLED_BY_CLIENT).optional(),
-  guestEmail: z.string().email().optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -98,11 +99,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const email = session?.user?.email?.toLowerCase();
-  const guestOk =
-    parsed.data.guestEmail && parsed.data.guestEmail.toLowerCase() === booking.clientEmail.toLowerCase();
-  const userOk = session?.user?.id && (booking.userId === session.user.id || email === booking.clientEmail.toLowerCase());
-  if (!userOk && !guestOk) {
+  // Signed in only: knowing a booking id and the client email is not enough to cancel.
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const email = await provenEmail(session.user.id);
+  const userOk = booking.userId === session.user.id || (email !== null && email === booking.clientEmail.toLowerCase());
+  if (!userOk) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

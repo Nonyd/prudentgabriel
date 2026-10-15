@@ -1,3 +1,4 @@
+import { provenEmail } from "@/lib/email-verification";
 import {
   AlterationPricing,
   AlterationReason,
@@ -53,8 +54,7 @@ export async function createAlterationRequest(params: {
 
   const owns =
     order.clientProfileId === profile.id ||
-    (await prisma.user.findUnique({ where: { id: params.clientUserId } }))?.email?.toLowerCase() ===
-      order.clientEmail.toLowerCase();
+    (await provenEmail(params.clientUserId)) === order.clientEmail.trim().toLowerCase();
   if (!owns) throw new Error("FORBIDDEN");
 
   return prisma.alterationRequest.create({

@@ -6,6 +6,7 @@ import {
   getClientTransactions,
 } from "@/lib/client-transactions";
 import { formatPrice } from "@/lib/utils";
+import { provenEmail } from "@/lib/email-verification";
 
 function formatWhen(date: Date): string {
   return date.toLocaleString("en-GB", {
@@ -21,7 +22,7 @@ function formatWhen(date: Date): string {
 export default async function AccountTransactionsPage() {
   const session = await auth();
   const userId = session!.user!.id!;
-  const email = session!.user!.email!;
+  const email = await provenEmail(userId);
 
   const transactions = await getClientTransactions(userId, email);
 

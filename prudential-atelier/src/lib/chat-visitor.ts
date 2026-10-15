@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { findChatByToken } from "@/lib/chat";
 import { CHAT_COOKIE } from "@/lib/chat-shared";
+import { provenEmail } from "@/lib/email-verification";
 
 export type ChatVisitor = {
   conversation: ChatConversation | null;
@@ -37,9 +38,11 @@ export async function resolveChatVisitor(req: NextRequest): Promise<ChatVisitor>
   // An admin "viewing as" a client never writes into her chat.
   if (!id || !email || session.user.viewAs) return { conversation: id ? null : cookieConvo, user: null };
 
-  await mergeGuestChats(id, email);
+  // Threads left under her email join her account only once she has proven the address.
+  const proven = await provenEmail(id);
+  if (proven) await mergeGuestChats(id, proven);
   const user = { id, name: session.user.name ?? null, email };
-  if (cookieConvo && (cookieConvo.userId === id || cookieConvo.visitorEmail?.toLowerCase() === email.toLowerCase())) {
+  if (cookieConvo && (cookieConvo.userId === id || (proven && cookieConvo.visitorEmail?.toLowerCase() === proven))) {
     const mine =
       cookieConvo.userId === id
         ? cookieConvo

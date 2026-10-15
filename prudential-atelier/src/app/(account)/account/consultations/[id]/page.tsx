@@ -11,6 +11,7 @@ import {
 } from "@/lib/consultation";
 import { ConsultationBookingActions } from "@/components/account/ConsultationBookingActions";
 import { clientMediaSrcs } from "@/lib/media/client-media-src";
+import { provenEmail } from "@/lib/email-verification";
 
 function statusLabel(status: ConsultationStatus) {
   switch (status) {
@@ -57,12 +58,12 @@ export default async function AccountConsultationDetailPage({
   const { id } = await params;
   const session = await auth();
   const userId = session!.user!.id!;
-  const email = session!.user!.email!.toLowerCase();
+  const email = await provenEmail(userId);
 
   const booking = await prisma.consultationBooking.findFirst({
     where: {
       id,
-      OR: [{ userId }, { clientEmail: email }],
+      OR: [{ userId }, ...(email ? [{ clientEmail: email }] : [])],
     },
     include: {
       consultant: { select: { name: true, title: true, image: true } },

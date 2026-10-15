@@ -61,7 +61,7 @@ function minuteBucket(): string {
   return new Date().toISOString().slice(0, 16);
 }
 
-async function renderBrandedEmail(
+export async function renderBrandedEmail(
   element: ReactElement,
   brand: EmailBrand = "main",
   /** Client mail signs off warmly; staff mail passes null. */

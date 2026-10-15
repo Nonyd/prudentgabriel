@@ -11,6 +11,7 @@ import { AUTH_ADDRESS_LIMIT, AUTH_WINDOW_MS, FORGOT_ACCOUNT_LIMIT, accountKey, n
 import { logServerError } from "@/lib/logger";
 import { notifyNewCustomer } from "@/lib/notifications";
 import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
+import { sendVerifyEmail } from "@/lib/email-verification";
 
 function tooMany(retryAfterSec: number) {
   return NextResponse.json(
@@ -122,6 +123,12 @@ export async function POST(request: Request) {
   }
 
   void sendWelcomeEmail(emailNorm, firstName, pointsBalance, createdUser?.referralCode ?? "");
+  // Until she clicks it, nothing filed under this email before she signed up is hers.
+  if (createdUser) {
+    void sendVerifyEmail({ userId: createdUser.id, email: emailNorm, firstName }).catch((error) =>
+      logServerError({ errorType: "VERIFY_EMAIL_SEND", error }),
+    );
+  }
 
   return NextResponse.json({ success: true });
 }

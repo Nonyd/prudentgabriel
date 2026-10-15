@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { passwordPolicySchema } from "@/lib/password-policy";
 import { applyPasswordHash, hashResetToken } from "@/lib/password-reset";
+import { markEmailVerified } from "@/lib/email-verification";
 import { loginPathForUser } from "@/lib/login-paths";
 import { checkRateLimit, getClientIp, refundRateLimit } from "@/lib/rate-limit";
 import { AUTH_ADDRESS_LIMIT, AUTH_WINDOW_MS, noteAddressCapHit } from "@/lib/auth-limits";
@@ -86,6 +87,8 @@ async function resetPassword(req: NextRequest): Promise<NextResponse> {
         },
       });
       await applyPasswordHash(row.userId, hashed);
+      // The link reached her inbox, so the address is hers.
+      await markEmailVerified(row.userId);
       const grants = (user?.userPermissions ?? [])
         .filter((p) => p.mode === "GRANT")
         .map((p) => p.permission);

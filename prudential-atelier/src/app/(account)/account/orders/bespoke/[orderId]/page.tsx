@@ -11,6 +11,7 @@ import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { formatBespokeBook } from "@/lib/atelier-fx";
 import { liveCompletionStages, clientStageHistory } from "@/lib/atelier/live-stages";
 import { maybeArchiveBespokeOrder } from "@/lib/bespoke-archive";
+import { provenEmail } from "@/lib/email-verification";
 import {
   alterationWindowClosesAt,
   getAlterationWarrantyDays,
@@ -26,11 +27,16 @@ export default async function AccountBespokeOrderPage({
   const session = await auth();
   const userId = session!.user!.id!;
   const profile = await getOrCreateClientProfile(userId);
+  // A commission staff filed under her email opens once she has proven the address.
+  const email = await provenEmail(userId);
 
   const order = await prisma.bespokeOrder.findFirst({
     where: {
       id: orderId,
-      OR: [{ clientProfileId: profile.id }, { clientEmail: session!.user!.email ?? "" }],
+      OR: [
+        { clientProfileId: profile.id },
+        ...(email ? [{ clientEmail: { equals: email, mode: "insensitive" as const } }] : []),
+      ],
     },
     include: {
       stageHistory: { orderBy: { completedAt: "asc" } },

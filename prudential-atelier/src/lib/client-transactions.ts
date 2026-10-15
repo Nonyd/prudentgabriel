@@ -32,10 +32,11 @@ const PAID_STATUSES: PaymentStatus[] = [
 
 export async function getClientTransactions(
   userId: string,
-  email: string,
+  /** A proven email (see provenEmail), or null: bookings under it are hers. */
+  email: string | null,
 ): Promise<ClientTransaction[]> {
   const profile = await getOrCreateClientProfile(userId);
-  const emailLower = email.toLowerCase();
+  const emailLower = email?.toLowerCase() ?? null;
 
   const [rtwOrders, consultations, bespokeOrders, bespokeRequests, ledgerPayments] = await Promise.all([
     prisma.order.findMany({
@@ -60,7 +61,7 @@ export async function getClientTransactions(
     prisma.consultationBooking.findMany({
       where: {
         paymentStatus: { in: PAID_STATUSES },
-        OR: [{ userId }, { clientEmail: emailLower }],
+        OR: [{ userId }, ...(emailLower ? [{ clientEmail: emailLower }] : [])],
       },
       select: {
         id: true,
@@ -95,7 +96,7 @@ export async function getClientTransactions(
     prisma.bespokeRequest.findMany({
       where: {
         AND: [
-          { OR: [{ userId }, { email: emailLower }] },
+          { OR: [{ userId }, ...(emailLower ? [{ email: emailLower }] : [])] },
           {
             OR: [
               { depositPaid: { gt: 0 } },

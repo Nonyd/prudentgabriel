@@ -1,3 +1,4 @@
+import { provenEmail } from "@/lib/email-verification";
 import {
   BespokeStage,
   OrderStatus,
@@ -733,8 +734,9 @@ export async function respondToStageApproval(params: {
   });
   if (!approval) return { ok: false, status: 404, error: "Approval not found." };
 
-  const emailMatch =
-    approval.order.clientEmail.trim().toLowerCase() === params.clientEmail.trim().toLowerCase();
+  // Her email counts only once she has proven it; the session email alone does not.
+  const proven = await provenEmail(params.clientUserId);
+  const emailMatch = proven !== null && approval.order.clientEmail.trim().toLowerCase() === proven;
   const profile = approval.order.clientProfileId
     ? await prisma.clientProfile.findUnique({
         where: { id: approval.order.clientProfileId },

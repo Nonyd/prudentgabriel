@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { provenEmail } from "@/lib/email-verification";
 
 export async function GET() {
   const session = await auth();
@@ -8,10 +9,10 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const email = session.user.email.toLowerCase();
+  const email = await provenEmail(session.user.id);
   const bookings = await prisma.consultationBooking.findMany({
     where: {
-      OR: [{ userId: session.user.id }, { clientEmail: email }],
+      OR: [{ userId: session.user.id }, ...(email ? [{ clientEmail: email }] : [])],
     },
     orderBy: { createdAt: "desc" },
     include: {

@@ -2,6 +2,7 @@ import { OrderStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { maybeSendBespokeReviewRequest } from "@/lib/bespoke-review";
 import { actorOwnsBespokeOrder } from "@/lib/public-pii-dtos";
+import { provenEmail } from "@/lib/email-verification";
 import {
   alterationWindowClosesAt,
   getAlterationWarrantyDays,
@@ -92,7 +93,8 @@ export async function confirmBespokeReceipt(params: {
       : null;
     const owns = actorOwnsBespokeOrder({
       actorId: params.actor.id,
-      actorEmail: params.actor.email,
+      // Her email counts only once proven.
+      actorEmail: await provenEmail(params.actor.id),
       clientEmail: order.clientEmail,
       profileUserId: profile?.userId,
     });

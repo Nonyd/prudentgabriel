@@ -8,6 +8,7 @@ import { enforcePublicMaintenance } from "@/lib/maintenance";
 import { Suspense } from "react";
 import { ChatWidgetLazy } from "@/components/chat/ChatWidgetLazy";
 import { isChatOpen } from "@/lib/chat";
+import { VerifyEmailBanner } from "@/components/account/VerifyEmailBanner";
 
 export default async function AccountGroupLayout({ children }: { children: React.ReactNode }) {
   const session = await authOrNull();
@@ -45,7 +46,7 @@ export default async function AccountGroupLayout({ children }: { children: React
     prisma.wishlistItem.count({ where: { userId, product: PUBLIC_PRODUCT_WHERE } }),
     prisma.user.findUnique({
       where: { id: userId },
-      select: { pointsBalance: true },
+      select: { pointsBalance: true, email: true, emailVerified: true },
     }),
     isChatOpen().catch(() => false),
   ]);
@@ -58,6 +59,10 @@ export default async function AccountGroupLayout({ children }: { children: React
       activeOrders={rtwActive + bespokeActive}
       wishlistCount={wishlistCount}
     >
+      {/* Not while an admin is viewing as her: the banner and its resend are hers. */}
+      {userPoints && !userPoints.emailVerified && !session.user.viewAs ? (
+        <VerifyEmailBanner email={userPoints.email} />
+      ) : null}
       {children}
       {/* BF4: the same conversation as on the storefront, not a second one. */}
       {chatOpen ? (

@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ConsultationStatus } from "@prisma/client";
 import { getDeliveryModeLabel, getSessionTypeLabel } from "@/lib/consultation";
+import { provenEmail } from "@/lib/email-verification";
 
 function statusLabel(status: ConsultationStatus) {
   switch (status) {
@@ -29,10 +30,11 @@ function statusLabel(status: ConsultationStatus) {
 
 export default async function AccountConsultationsPage() {
   const session = await auth();
-  const email = session!.user!.email!.toLowerCase();
+  // Bookings made under her email before she signed up show once she has proven it.
+  const email = await provenEmail(session!.user!.id!);
   const bookings = await prisma.consultationBooking.findMany({
     where: {
-      OR: [{ userId: session!.user!.id! }, { clientEmail: email }],
+      OR: [{ userId: session!.user!.id! }, ...(email ? [{ clientEmail: email }] : [])],
     },
     orderBy: { createdAt: "desc" },
     include: {

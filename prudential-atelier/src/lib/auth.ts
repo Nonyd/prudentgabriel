@@ -288,10 +288,18 @@ const nextAuth = NextAuth({
   },
   events: {
     // BF4: chats she started as a guest under this email join her account the moment she signs in.
-    async signIn({ user }) {
+    async signIn({ user, account, profile }) {
       if (!user?.id || !user.email) return;
+      const { markEmailVerified, provenEmail } = await import("@/lib/email-verification");
+      // Google has already checked the address belongs to her.
+      if (account?.provider === "google" && (profile as { email_verified?: boolean } | undefined)?.email_verified) {
+        await markEmailVerified(user.id).catch((error) => logServerError({ errorType: "EMAIL_VERIFY_GOOGLE", error }));
+      }
+      // Guest chats join only an account that has proven the email they were left under.
+      const email = await provenEmail(user.id);
+      if (!email) return;
       const { mergeGuestChats } = await import("@/lib/chat-visitor");
-      await mergeGuestChats(user.id, user.email).catch((error) => logServerError({ errorType: "CHAT_MERGE", error }));
+      await mergeGuestChats(user.id, email).catch((error) => logServerError({ errorType: "CHAT_MERGE", error }));
     },
   },
 });
