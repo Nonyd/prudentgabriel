@@ -210,6 +210,75 @@ function DecisionForm({
   );
 }
 
+/** Delete an enquiry that never became a booking. Who did it goes to the activity log. */
+function DeleteEnquiry({ enquiry, onDone }: { enquiry: Enquiry; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  if (enquiry.bookingId) return null;
+
+  async function remove() {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/consultations/enquiries/${enquiry.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reason.trim() || undefined }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(j.error ?? "Could not delete");
+      toast.success(`Enquiry ${enquiry.enquiryNumber} deleted`);
+      onDone();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not delete");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-xs text-error underline underline-offset-2 hover:opacity-80"
+      >
+        Delete enquiry
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-3 w-full border border-error/30 bg-error-soft p-3">
+      <p className="text-xs text-ink">
+        Delete {enquiry.enquiryNumber} and its inspiration pictures for good? This cannot be undone. Your name is
+        recorded in the activity log.
+      </p>
+      <input
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        maxLength={500}
+        placeholder="Reason (optional), e.g. spam, duplicate, client asked"
+        className="mt-2 w-full border border-input-border bg-input-bg px-3 py-2 text-xs text-ink"
+      />
+      <div className="mt-2 flex gap-3">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void remove()}
+          className="bg-error px-3 py-1.5 text-xs text-white disabled:opacity-50"
+        >
+          {busy ? "Deleting…" : "Delete permanently"}
+        </button>
+        <button type="button" disabled={busy} onClick={() => setOpen(false)} className="px-3 text-xs underline">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) {
   const [status, setStatus] = useState<Status>("PENDING");
   const [items, setItems] = useState<Enquiry[]>([]);
@@ -370,6 +439,9 @@ export function ConsultationEnquiryQueue({ openId }: { openId: string | null }) 
                 ) : null}
 
                 <DecisionForm enquiry={e} onDone={() => void load()} />
+                <div className="mt-3 flex justify-end">
+                  <DeleteEnquiry enquiry={e} onDone={() => void load()} />
+                </div>
               </li>
             );
           })}

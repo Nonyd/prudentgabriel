@@ -8,6 +8,8 @@ import { sendUsingCatalog } from "@/lib/catalog-email";
 import { EMAIL_TEMPLATE_KEYS } from "@/lib/admin-email-catalog";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { logActivity } from "@/lib/logger";
+import { getClientIp } from "@/lib/rate-limit";
+import { deleteFilesOfDeletedRows } from "@/lib/cron/jobs/data-retention";
 
 const bodySchema = z.discriminatedUnion("action", [
   /** The approval note is optional; a decline still records why. */
@@ -140,4 +142,63 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     select: { id: true, status: true, decisionReason: true, decidedAt: true, decidedBy: true, publicTokenExpiresAt: true },
   });
   return NextResponse.json({ enquiry: updated, linkExpiresAt: expiresAt });
+}
+
+const deleteSchema = z.object({
+  /** Optional note kept in the activity log with who deleted it. */
+  reason: z.string().trim().max(500).optional(),
+});
+
+/**
+ * Delete an enquiry (spam, duplicates, a client's request). Who deleted it is
+ * kept in the activity log with the enquiry number and status, not the
+ * client's details. An enquiry that became a booking is part of that client's
+ * record and is refused (409).
+ */
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const gate = await requireAdminApi("consultations");
+  if (!gate.ok) return gate.response;
+  const { id } = await params;
+
+  let reason: string | undefined;
+  try {
+    const parsed = deleteSchema.safeParse(await req.json());
+    if (parsed.success) reason = parsed.data.reason || undefined;
+  } catch {
+    reason = undefined;
+  }
+
+  const enquiry = await prisma.consultationEnquiry.findUnique({
+    where: { id },
+    select: { id: true, enquiryNumber: true, status: true, eventType: true, bookingId: true, moodboardImages: true },
+  });
+  if (!enquiry) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (enquiry.bookingId || enquiry.status === ConsultationEnquiryStatus.BOOKED) {
+    return NextResponse.json(
+      { error: "This enquiry became a booking, so it stays with that client's record. Cancel the booking instead." },
+      { status: 409 },
+    );
+  }
+
+  await prisma.consultationEnquiry.delete({ where: { id } });
+
+  // Her inspiration pictures go too, unless the same file is still used elsewhere.
+  if (enquiry.moodboardImages.length) {
+    void deleteFilesOfDeletedRows(enquiry.moodboardImages).catch(() => {});
+  }
+
+  const user = gate.session.user;
+  await logActivity({
+    userId: user.id,
+    userEmail: user.email ?? undefined,
+    userRole: user.role,
+    action: "DELETE",
+    module: "consultations",
+    description: `Deleted enquiry ${enquiry.enquiryNumber} (${enquiry.status.toLowerCase()}, ${enquiry.eventType})${reason ? `: ${reason}` : ""}`,
+    recordId: id,
+    recordType: "ConsultationEnquiry",
+    ipAddress: getClientIp(req),
+  }).catch(() => {});
+
+  return NextResponse.json({ ok: true });
 }

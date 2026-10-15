@@ -177,7 +177,7 @@ const DIGEST_IN_KEY = /([0-9a-f]{32})\.[a-z0-9]+$/;
  * file is deleted only when its digest appears nowhere in the database any more.
  * Anything missed here is picked up by orphan-uploads.
  */
-async function deleteFilesOfDeletedRows(urls: string[]): Promise<{ deleted: number; kept: number; failed: number }> {
+export async function deleteFilesOfDeletedRows(urls: string[]): Promise<{ deleted: number; kept: number; failed: number }> {
   const unique = Array.from(new Set(urls.filter((u) => typeof u === "string" && u.trim())));
   if (unique.length === 0) return { deleted: 0, kept: 0, failed: 0 };
   const digestOf = new Map<string, string>();
