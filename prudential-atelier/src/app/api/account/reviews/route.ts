@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getLoyaltyRulePoints } from "@/lib/loyalty";
 import { awardReviewPoints } from "@/lib/points";
 import { notifyConsultationReviewSubmitted, notifyReviewSubmitted } from "@/lib/notifications";
+import { reviewableConsultationWhere } from "@/lib/consultation-review";
 
 const productSchema = z.object({
   kind: z.literal("product"),
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest) {
   const { consultationId, rating, body } = parsed.data;
 
   const booking = await prisma.consultationBooking.findFirst({
-    where: { id: consultationId, userId, status: "COMPLETED" },
+    where: await reviewableConsultationWhere(userId, consultationId),
   });
   if (!booking) {
     return NextResponse.json({ error: "Consultation not found or not completed" }, { status: 403 });

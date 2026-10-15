@@ -185,7 +185,7 @@ export default auth(async function middleware(request) {
   if (pathname.startsWith("/account")) {
     if (!session) {
       return NextResponse.redirect(
-        new URL(`/auth/login?callbackUrl=${encodeURIComponent(pathname)}`, request.url),
+        new URL(`/auth/login?callbackUrl=${encodeURIComponent(pathname + request.nextUrl.search)}`, request.url),
       );
     }
     // Her pending password reset is hers to do, not the admin's viewing as her.

@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getDeliveryModeLabel, getSessionTypeLabel } from "@/lib/consultation";
 import { ReviewSubmitClient } from "@/components/account/ReviewSubmitClient";
+import { reviewableConsultationWhere } from "@/lib/consultation-review";
 
 type Props = { searchParams: Promise<{ product?: string; order?: string; consultation?: string }> };
 
@@ -16,7 +17,7 @@ export default async function NewReviewPage({ searchParams }: Props) {
 
   if (consultationId) {
     const booking = await prisma.consultationBooking.findFirst({
-      where: { id: consultationId, userId, status: "COMPLETED" },
+      where: await reviewableConsultationWhere(userId, consultationId),
       include: {
         consultant: { select: { name: true } },
         offering: { select: { sessionType: true, deliveryMode: true } },
