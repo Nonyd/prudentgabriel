@@ -344,11 +344,7 @@ export function ShippingAdminClient({
         <h2 className="font-display text-xl text-ink">Store pickup</h2>
         <p className="mt-1 font-body text-xs text-text-mid">Address, hours, and handover instructions shown to the customer.</p>
         {(pickup?.pickupLocations ?? []).map((loc) => (
-          <div key={loc.id} className="mt-4 border-t border-border pt-4">
-            <p className="font-body text-sm text-ink">{loc.name}</p>
-            <p className="font-body text-xs text-text-mid">{loc.address}</p>
-            <p className="font-body text-xs text-text-mid">{loc.hours}</p>
-          </div>
+          <PickupLocationRow key={loc.id} loc={loc} onChanged={reload} />
         ))}
         <div className="mt-4 grid gap-2">
           <input
@@ -416,6 +412,156 @@ export function ShippingAdminClient({
           </div>
         ))}
       </section>
+    </div>
+  );
+}
+
+function PickupLocationRow({ loc, onChanged }: { loc: PickupLocation; onChanged: () => Promise<void> }) {
+  const [editing, setEditing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    name: loc.name,
+    address: loc.address,
+    hours: loc.hours,
+    instructions: loc.instructions ?? "",
+  });
+
+  function startEdit() {
+    setForm({ name: loc.name, address: loc.address, hours: loc.hours, instructions: loc.instructions ?? "" });
+    setError(null);
+    setEditing(true);
+  }
+
+  async function save() {
+    if (form.name.trim().length < 2 || form.address.trim().length < 3 || !form.hours.trim()) {
+      setError("Name, address and hours are required.");
+      return;
+    }
+    setBusy(true);
+    const res = await fetch(`/api/admin/shipping/pickup/${loc.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    setBusy(false);
+    if (!res.ok) {
+      setError("Could not save. Please try again.");
+      return;
+    }
+    setEditing(false);
+    await onChanged();
+  }
+
+  async function setActive(isActive: boolean) {
+    setBusy(true);
+    await fetch(`/api/admin/shipping/pickup/${loc.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isActive }),
+    });
+    setBusy(false);
+    await onChanged();
+  }
+
+  async function remove() {
+    if (!window.confirm(`Delete “${loc.name}”?`)) return;
+    setBusy(true);
+    const res = await fetch(`/api/admin/shipping/pickup/${loc.id}`, { method: "DELETE" });
+    setBusy(false);
+    if (!res.ok) {
+      setError("Could not delete. Please try again.");
+      return;
+    }
+    const data = (await res.json()) as { deleted: boolean; orders?: number };
+    if (!data.deleted) {
+      window.alert(
+        `“${loc.name}” is on ${data.orders} past order${data.orders === 1 ? "" : "s"}, so it has been hidden from checkout instead of deleted.`,
+      );
+    }
+    await onChanged();
+  }
+
+  const actionClass = "font-body text-xs uppercase tracking-[0.08em] text-text-mid underline-offset-4 hover:text-ink hover:underline disabled:opacity-50";
+
+  if (editing) {
+    return (
+      <div className="mt-4 grid gap-2 border-t border-border pt-4">
+        <input
+          placeholder="Location name"
+          className="border border-sand bg-canvas px-3 py-2 text-sm"
+          value={form.name}
+          onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+        />
+        <input
+          placeholder="Address"
+          className="border border-sand bg-canvas px-3 py-2 text-sm"
+          value={form.address}
+          onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
+        />
+        <input
+          placeholder="Hours"
+          className="border border-sand bg-canvas px-3 py-2 text-sm"
+          value={form.hours}
+          onChange={(e) => setForm((p) => ({ ...p, hours: e.target.value }))}
+        />
+        <textarea
+          placeholder="Handover instructions (optional)"
+          rows={2}
+          className="border border-sand bg-canvas px-3 py-2 text-sm"
+          value={form.instructions}
+          onChange={(e) => setForm((p) => ({ ...p, instructions: e.target.value }))}
+        />
+        {error ? <p className="font-body text-xs text-red-700">{error}</p> : null}
+        <div className="flex gap-3">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void save()}
+            className="w-fit bg-[#37392d] px-4 py-2 font-body text-xs uppercase tracking-[0.08em] text-white disabled:opacity-50"
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => setEditing(false)}
+            className="w-fit border border-sand px-4 py-2 font-body text-xs uppercase tracking-[0.08em] text-ink"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 flex flex-wrap items-start justify-between gap-3 border-t border-border pt-4">
+      <div className={loc.isActive ? "" : "opacity-60"}>
+        <p className="font-body text-sm text-ink">
+          {loc.name}
+          {!loc.isActive ? (
+            <span className="ml-2 font-body text-[10px] uppercase tracking-wide text-text-light">Hidden from checkout</span>
+          ) : null}
+        </p>
+        <p className="font-body text-xs text-text-mid">{loc.address}</p>
+        <p className="font-body text-xs text-text-mid">{loc.hours}</p>
+        {loc.instructions ? <p className="mt-1 font-body text-xs italic text-text-mid">{loc.instructions}</p> : null}
+        {error ? <p className="mt-1 font-body text-xs text-red-700">{error}</p> : null}
+      </div>
+      <div className="flex gap-4">
+        <button type="button" disabled={busy} onClick={startEdit} className={actionClass}>
+          Edit
+        </button>
+        {!loc.isActive ? (
+          <button type="button" disabled={busy} onClick={() => void setActive(true)} className={actionClass}>
+            Show at checkout
+          </button>
+        ) : null}
+        <button type="button" disabled={busy} onClick={() => void remove()} className={`${actionClass} text-red-700`}>
+          Delete
+        </button>
+      </div>
     </div>
   );
 }
