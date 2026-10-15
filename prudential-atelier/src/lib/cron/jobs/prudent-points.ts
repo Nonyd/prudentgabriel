@@ -1,19 +1,9 @@
 import type { CronJobContext, JobResult } from "@/lib/cron/types";
 import { prisma } from "@/lib/prisma";
-import { awardBirthdayPoints, expireOverduePoints } from "@/lib/points";
+import { expireOverduePoints } from "@/lib/points";
 import { sendPointsExpiryEmail } from "@/lib/email";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-
-export function birthdayMatches(dob: Date, now: Date): boolean {
-  const month = dob.getUTCMonth();
-  const day = dob.getUTCDate();
-  if (month === 1 && day === 29) {
-    const leap = new Date(Date.UTC(now.getUTCFullYear(), 1, 29)).getUTCMonth() === 1;
-    if (!leap) return now.getUTCMonth() === 1 && now.getUTCDate() === 28;
-  }
-  return now.getUTCMonth() === month && now.getUTCDate() === day;
-}
 
 export async function run(ctx: CronJobContext): Promise<JobResult> {
   const now = ctx.now;
@@ -77,24 +67,6 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
     }
   }
 
-  const profiles = await prisma.clientProfile.findMany({
-    where: { dateOfBirth: { not: null } },
-    select: { userId: true, dateOfBirth: true },
-  });
-  const year = now.getUTCFullYear();
-  for (const profile of profiles) {
-    if (ctx.isBudgetExhausted()) {
-      return { processed, failed, hasMore: true };
-    }
-    if (!profile.dateOfBirth || !birthdayMatches(profile.dateOfBirth, now)) continue;
-    try {
-      const awarded = await awardBirthdayPoints(profile.userId, year);
-      if (awarded > 0) processed += 1;
-    } catch (e) {
-      console.warn("[prudent-points] birthday", profile.userId, e);
-      failed += 1;
-    }
-  }
-
+  // Birthday points now go out with the birthday wish (jobs/birthday-wishes.ts).
   return { processed, failed };
 }

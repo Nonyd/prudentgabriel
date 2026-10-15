@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { uploadAccountImage } from "@/lib/admin-upload-xhr";
 import { getInitials } from "@/lib/utils";
+import { BirthdayField } from "@/components/common/BirthdayField";
 
 type Props = {
   initial: { name: string; email: string; image: string; jobTitle?: string; department?: string };
@@ -184,6 +185,10 @@ export function StaffAccountSettingsClient({ initial }: Props) {
           Save changes
         </Button>
       </form>
+
+      <section className="staff-card p-6">
+        <BirthdayField tone="portal" hint="Day and month only. The team will be sent a little birthday wish on the day." />
+      </section>
 
       <form onSubmit={savePassword} className="staff-card space-y-5 p-6">
         <div>

@@ -12,6 +12,7 @@ import { run as runAbandonedCart } from "@/lib/cron/jobs/abandoned-cart";
 import { run as runAbandonedCheckout } from "@/lib/cron/jobs/abandoned-checkout";
 import { run as runUncollectedPickup } from "@/lib/cron/jobs/uncollected-pickup";
 import { run as runPrudentPoints } from "@/lib/cron/jobs/prudent-points";
+import { run as runBirthdayWishes } from "@/lib/cron/jobs/birthday-wishes";
 import { run as runCheckoutReservations } from "@/lib/cron/jobs/checkout-reservations";
 import { run as runMeetingLinkReminders } from "@/lib/cron/jobs/meeting-link-reminders";
 import { run as runAnalyticsRollup } from "@/lib/cron/jobs/analytics-rollup";
@@ -34,6 +35,7 @@ const HANDLERS: Record<string, CronJobHandler> = {
   "archive-expired-warranty": runArchiveExpiredWarranty,
   "uncollected-pickup": runUncollectedPickup,
   "prudent-points": runPrudentPoints,
+  "birthday-wishes": runBirthdayWishes,
   "checkout-reservations": runCheckoutReservations,
   "meeting-link-reminders": runMeetingLinkReminders,
   "email-outbox": runEmailOutbox,

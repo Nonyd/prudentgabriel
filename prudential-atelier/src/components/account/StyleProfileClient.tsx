@@ -7,6 +7,7 @@ import type { ClientProfile } from "@prisma/client";
 import { ProductCardGrid } from "@/components/common/ProductCardGrid";
 import type { ProductListItem } from "@/types/product";
 import { styleProfileComplete } from "@/lib/account-helpers";
+import { BirthdayField } from "@/components/common/BirthdayField";
 
 const SILHOUETTES = ["A-line", "Fitted", "Flowy", "Structured", "Wrap", "Oversized"];
 const COLORS = ["Neutrals", "Earth tones", "Bold & Bright", "Pastels", "Monochrome", "Metallics"];
@@ -25,9 +26,6 @@ export function StyleProfileClient({
   const [colors, setColors] = useState<string[]>(profile.preferredColors);
   const [occasions, setOccasions] = useState<string[]>(profile.occasions);
   const [budget, setBudget] = useState(profile.budgetRange ?? "");
-  const [dob, setDob] = useState(
-    profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().slice(0, 10) : "",
-  );
   const [editing, setEditing] = useState(!styleProfileComplete(profile));
   const [saving, setSaving] = useState(false);
 
@@ -46,7 +44,6 @@ export function StyleProfileClient({
           preferredColors: colors,
           occasions,
           budgetRange: budget || null,
-          dateOfBirth: dob || null,
         }),
       });
       if (!res.ok) throw new Error();
@@ -186,16 +183,12 @@ export function StyleProfileClient({
               </label>
             ))}
           </div>
-          <label className="mt-8 block font-sans text-sm text-choc">
-            Birthday
-            <input
-              type="date"
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-              className="mt-2 block w-full border border-sand bg-ivory px-3 py-2"
+          <div className="mt-8">
+            <BirthdayField
+              tone="storefront"
+              hint="Optional. Day and month only: a birthday wish and 2,500 Prudent Points each year."
             />
-          </label>
-          <p className="mt-2 font-sans text-xs text-text-mid">Optional. 2,500 Prudent Points each year.</p>
+          </div>
           <button
             type="button"
             onClick={save}

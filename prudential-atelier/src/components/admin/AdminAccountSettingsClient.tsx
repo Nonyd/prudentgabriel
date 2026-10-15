@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
 import { getInitials } from "@/lib/utils";
+import { BirthdayField } from "@/components/common/BirthdayField";
 
 type Props = {
   initial: { name: string; email: string; image: string };
@@ -223,6 +224,10 @@ export function AdminAccountSettingsClient({ initial, canChangeEmail = false }: 
           Save changes
         </Button>
       </form>
+
+      <section className="card-surface p-6">
+        <BirthdayField tone="portal" hint="Day and month only. The team will be sent a little birthday wish on the day." />
+      </section>
 
       <form onSubmit={savePassword} className="card-surface space-y-5 p-6">
         <div>

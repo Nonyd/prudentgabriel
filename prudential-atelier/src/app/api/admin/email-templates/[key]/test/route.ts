@@ -41,10 +41,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ key
     demoTemplateVariables(),
     undefined,
     emailBrandForKey(key as EmailTemplateKey),
-    EMAIL_TEMPLATE_BY_KEY[key as EmailTemplateKey].group === "client"
-      ? (EMAIL_TEMPLATE_BY_KEY[key as EmailTemplateKey].signOff ??
-          brandSignOff(emailBrandForKey(key as EmailTemplateKey)))
-      : null,
+    EMAIL_TEMPLATE_BY_KEY[key as EmailTemplateKey].signOff ??
+      (EMAIL_TEMPLATE_BY_KEY[key as EmailTemplateKey].group === "client"
+        ? brandSignOff(emailBrandForKey(key as EmailTemplateKey))
+        : null),
   );
   await sendEmail({
     to: parsed.data.to,

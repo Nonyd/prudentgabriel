@@ -142,7 +142,14 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
   {
     name: "prudent-points",
     schedule: "0 9 * * *",
-    description: "Expire Prudent Points, send 30-day lapse reminders, award birthdays",
+    description: "Expire Prudent Points and send 30-day lapse reminders",
+    migrated: true,
+  },
+  {
+    name: "birthday-wishes",
+    // 08:00 in Lagos.
+    schedule: "0 7 * * *",
+    description: "Send birthday wishes (and client birthday Prudent Points) to everyone whose birthday is today",
     migrated: true,
   },
   {

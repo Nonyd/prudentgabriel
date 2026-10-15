@@ -48,8 +48,9 @@ export async function sendUsingCatalog(params: {
       params.vars,
       params.extraHtml,
       brand,
-      // Client mail closes warmly; staff and admin alerts do not.
-      meta.group === "client" ? (meta.signOff ?? brandSignOff(brand)) : null,
+      // Client mail closes warmly; staff and admin alerts do not, unless the template says so.
+      // A template's own closing wins (the team birthday wish has one).
+      meta.signOff ?? (meta.group === "client" ? brandSignOff(brand) : null),
     );
     const queued = await queueEmail({
       to: params.to,

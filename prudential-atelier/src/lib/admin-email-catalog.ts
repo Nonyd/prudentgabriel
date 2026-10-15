@@ -78,6 +78,8 @@ export const EMAIL_TEMPLATE_KEYS = {
   CONSULTATION_ENQUIRY_DECLINED: "consultation_enquiry_declined",
   CONSULTATION_DAY_BEFORE: "consultation_day_before",
   CHAT_REPLY: "chat_reply",
+  BIRTHDAY_WISH: "birthday_wish",
+  TEAM_BIRTHDAY_WISH: "team_birthday_wish",
 } as const;
 
 export type EmailTemplateKey = (typeof EMAIL_TEMPLATE_KEYS)[keyof typeof EMAIL_TEMPLATE_KEYS];
@@ -1102,6 +1104,25 @@ const CLIENT_TEMPLATES: EmailTemplateMeta[] = [
       footer_note: "",
     },
   },
+  {
+    key: EMAIL_TEMPLATE_KEYS.BIRTHDAY_WISH,
+    label: "Birthday wish (clients)",
+    group: "client",
+    lane: "account",
+    sortOrder: 60,
+    defaults: {
+      subject: "Happy birthday, {{firstName}}!",
+      heading: "Happy birthday, {{firstName}}",
+      // {{pointsLine}} is the birthday Prudent Points sentence, or empty when none were added.
+      body_1:
+        "Dear {{firstName}},\n\nToday is all about you, and everyone at Prudent Gabriel is celebrating with you. Thank you for letting us be part of your story. It is a joy to dress you for the moments that matter.",
+      body_2:
+        "{{pointsLine}}\n\nWe hope the year ahead is filled with love, laughter and beautiful moments worth dressing up for.",
+      cta_label: "Treat yourself",
+      cta_link: "{{shopLink}}",
+      footer_note: "",
+    },
+  },
 ];
 
 const ADMIN_TEMPLATES: EmailTemplateMeta[] = [
@@ -1273,6 +1294,23 @@ const STAFF_TEMPLATES: EmailTemplateMeta[] = [
       footer_note: "",
     },
   },
+  {
+    key: EMAIL_TEMPLATE_KEYS.TEAM_BIRTHDAY_WISH,
+    label: "Birthday wish (team)",
+    group: "staff",
+    sortOrder: 60,
+    signOff: { line: "With love,", team: "Everyone at Prudent Gabriel" },
+    defaults: {
+      subject: "Happy birthday, {{firstName}}!",
+      heading: "Happy birthday, {{firstName}}",
+      body_1:
+        "Dear {{firstName}},\n\nHappy birthday from all of us at Prudent Gabriel! Thank you for the care, talent and heart you bring to the atelier every day.",
+      body_2: "We hope today is as special as the pieces you help create. Enjoy every moment!",
+      cta_label: "",
+      cta_link: "",
+      footer_note: "",
+    },
+  },
 ];
 
 export const EMAIL_TEMPLATE_CATALOG: EmailTemplateMeta[] = [
@@ -1364,5 +1402,7 @@ export function demoTemplateVariables(): Record<string, string> {
     pickupHours: "Monday–Friday 9:00–18:00, Saturday 10:00–16:00",
     size: "M",
     notes: "Please raise the hem by 2cm and soften the neckline.",
+    pointsLine: "As a small gift from us, we have added 2,500 Prudent Points to your account.",
+    shopLink: `${getPublicAppUrl()}/shop`,
   };
 }

@@ -24,7 +24,6 @@ const patchSchema = z.object({
   preferredColors: z.array(z.string()).optional(),
   occasions: z.array(z.string()).optional(),
   budgetRange: z.string().nullable().optional(),
-  dateOfBirth: z.string().nullable().optional(),
   notificationPrefs: z
     .object({
       orderStage: z.boolean().optional(),
@@ -124,9 +123,6 @@ export async function PATCH(req: NextRequest) {
     if (data.preferredColors) profileUpdate.preferredColors = data.preferredColors;
     if (data.occasions) profileUpdate.occasions = data.occasions;
     if (data.budgetRange !== undefined) profileUpdate.budgetRange = data.budgetRange;
-    if (data.dateOfBirth !== undefined) {
-      profileUpdate.dateOfBirth = data.dateOfBirth ? new Date(`${data.dateOfBirth}T00:00:00.000Z`) : null;
-    }
 
     let updatedProfile = profile;
     if (Object.keys(profileUpdate).length > 0) {

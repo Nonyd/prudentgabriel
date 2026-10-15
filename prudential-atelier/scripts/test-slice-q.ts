@@ -24,7 +24,7 @@ import {
   redeemPoints,
   returnRedeemedPoints,
 } from "../src/lib/points";
-import { birthdayMatches } from "../src/lib/cron/jobs/prudent-points";
+import { isBirthdayToday } from "../src/lib/birthday";
 import type { LockedFx } from "../src/lib/fx";
 
 function assert(cond: unknown, message: string): asserts cond {
@@ -89,9 +89,11 @@ function runPure() {
   assert(emailRoot("a+spam@gmail.com") === emailRoot("a@gmail.com"), "gmail plus-addressing collapses");
   assert(emailRoot("Ada.Eze@gmail.com") === emailRoot("adaeze@gmail.com"), "gmail dots collapse");
 
-  const feb29 = new Date(Date.UTC(2000, 1, 29));
-  const nonLeap = new Date(Date.UTC(2026, 1, 28));
-  assert(birthdayMatches(feb29, nonLeap), "29 Feb awards on 28 Feb in a non-leap year");
+  const nonLeap = new Date(Date.UTC(2026, 1, 28, 9));
+  assert(isBirthdayToday({ day: 29, month: 2 }, nonLeap), "29 Feb is celebrated on 28 Feb in a non-leap year");
+  assert(!isBirthdayToday({ day: 29, month: 2 }, new Date(Date.UTC(2028, 1, 28, 9))), "but on 29 Feb in a leap year");
+  // 23:30 UTC on 13 October is already 14 October in Lagos.
+  assert(isBirthdayToday({ day: 14, month: 10 }, new Date(Date.UTC(2026, 9, 13, 23, 30))), "the day is judged in Lagos time");
 
   const pastOrder = { pointsUsed: 10_000, pointsRateLocked: 1, pointsDiscountNGN: 10_000 };
   const laterRate = 0.5;

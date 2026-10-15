@@ -5,6 +5,7 @@ import { signOut } from "next-auth/react";
 import { NETWORK_ERROR_MESSAGE, authResponseMessage, submitPasswordChange } from "@/lib/client-auth";
 import toast from "react-hot-toast";
 import { PasswordField } from "@/components/ui/PasswordField";
+import { BirthdayField } from "@/components/common/BirthdayField";
 
 type Prefs = {
   orderStage: boolean;
@@ -144,6 +145,10 @@ export function SettingsClient({
         <button type="button" onClick={saveProfile} className="btn-primary mt-6">
           Save
         </button>
+      </section>
+
+      <section className="card-surface p-6">
+        <BirthdayField tone="storefront" />
       </section>
 
       <section className="card-surface p-6">
