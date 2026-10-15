@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PointsType, PaymentStatus, ShippingQuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi, requireSuperAdminApi } from "@/lib/admin-auth";
 import {
   assertCanMarkReadyForCollection,
   assertCanMarkShipped,
@@ -21,7 +21,10 @@ import {
 } from "@/lib/email";
 import { logServerError } from "@/lib/logger";
 import { notifyOrderDelivered, notifyOrderShipped } from "@/lib/customer-notifications";
-import { deleteOrdersByIds } from "@/lib/order-delete";
+import { executeOrderCascade, loadOrderPlan } from "@/lib/order-cascade-delete";
+import { ProductCascadeError } from "@/lib/product-cascade-delete";
+import { destroyStoredMedia } from "@/lib/media/destroy";
+import { getClientIp } from "@/lib/rate-limit";
 import { rtwHasOutstandingBalance } from "@/lib/payments/rtw-totals";
 import { isFabricUnavailableChoice } from "@/lib/fabric-unavailable";
 import { notifyFabricUnavailable } from "@/lib/notifications";
@@ -357,23 +360,53 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 }
 
-export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi("shop.orders");
   if (!gate.ok) return gate.response;
   const { id } = await ctx.params;
 
+  let confirmation: string | undefined;
   try {
-    const deleted = await deleteOrdersByIds([id]);
-    if (deleted === 0) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const json = (await req.json()) as { confirmation?: unknown };
+    if (typeof json.confirmation === "string") confirmation = json.confirmation;
+  } catch {
+    confirmation = undefined;
+  }
+
+  try {
+    const plan = await loadOrderPlan(id);
+    if (plan.loud) {
+      const superGate = await requireSuperAdminApi();
+      if (!superGate.ok) {
+        return NextResponse.json(
+          { error: "Only a Super Admin can delete an order with payment records. Cancel it instead." },
+          { status: 403 },
+        );
+      }
     }
-    return NextResponse.json({ ok: true, deleted });
+    const result = await executeOrderCascade({
+      id,
+      confirmation,
+      actor: {
+        userId: gate.session.user.id!,
+        email: gate.session.user.email ?? null,
+        role: gate.session.user.role ?? "",
+        ip: getClientIp(req),
+      },
+    });
+    await Promise.all(
+      result.mediaUrls.map((url) =>
+        destroyStoredMedia(url).catch((err) => {
+          void logServerError({ errorType: "ORDER_CASCADE_MEDIA", error: err, url });
+        }),
+      ),
+    );
+    return NextResponse.json({ ok: true, logId: result.logId, deleted: 1 });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Delete failed";
-    if (msg.includes("payment records")) {
-      return NextResponse.json({ error: msg }, { status: 409 });
+    if (e instanceof ProductCascadeError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
     }
     await logServerError({ errorType: "ADMIN_ORDER_DELETE", error: e, orderId: id });
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: "Delete failed; nothing was removed" }, { status: 500 });
   }
 }

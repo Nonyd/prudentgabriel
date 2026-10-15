@@ -6,7 +6,8 @@ import type { OrderStatus, PaymentGateway, PaymentStatus } from "@prisma/client"
 import toast from "react-hot-toast";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import { AlertDialog } from "@/components/ui/AlertDialog";
+import { CascadeConfirmDialog } from "@/components/admin/ProductCascadeDialog";
+import { orderDialogCopy, type OrderCascadePreview } from "@/lib/order-cascade-copy";
 import {
   FABRIC_CHOICE_LABEL,
   fabricQueueOverdue,
@@ -102,6 +103,9 @@ export function AdminOrderToolbar({
   const [busy, setBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deletePreview, setDeletePreview] = useState<OrderCascadePreview | null>(null);
+  const [deleteChecking, setDeleteChecking] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const patch = async (body: Record<string, unknown>) => {
     setBusy(true);
@@ -160,18 +164,47 @@ export function AdminOrderToolbar({
     }
   };
 
-  const confirmDeleteOrder = async () => {
-    setDeleteBusy(true);
+  const openDeleteOrder = async () => {
+    setDeleteOpen(true);
+    setDeletePreview(null);
+    setDeleteError(null);
+    setDeleteChecking(true);
     try {
-      const res = await fetch(`/api/admin/orders/${order.id}`, { method: "DELETE", credentials: "include" });
+      const res = await fetch(`/api/admin/orders/${order.id}/delete-preview`, { credentials: "include" });
+      const data = (await res.json()) as OrderCascadePreview & { error?: string };
+      if (!res.ok) {
+        setDeleteError(data.error ?? "Could not check what is attached");
+        return;
+      }
+      setDeletePreview(data);
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : "Could not check what is attached");
+    } finally {
+      setDeleteChecking(false);
+    }
+  };
+
+  const confirmDeleteOrder = async (confirmation?: string) => {
+    setDeleteBusy(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ confirmation }),
+      });
       const data = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Delete failed");
-      toast.success("Order deleted");
+      if (!res.ok) {
+        setDeleteError(data.error ?? "Delete failed");
+        return;
+      }
+      toast.success(`${order.orderNumber} deleted`);
       setDeleteOpen(false);
       router.push("/admin/orders");
       router.refresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error");
+      setDeleteError(e instanceof Error ? e.message : "Delete failed");
     } finally {
       setDeleteBusy(false);
     }
@@ -375,15 +408,20 @@ export function AdminOrderToolbar({
         </Dialog.Portal>
       </Dialog.Root>
 
-      <AlertDialog
+      <CascadeConfirmDialog
         open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        title="Delete this order?"
-        description={`Permanently remove order ${order.orderNumber} and its line items from the database. This cannot be undone.`}
-        variant="danger"
-        confirmLabel="Delete order"
-        onConfirm={confirmDeleteOrder}
-        loading={deleteBusy}
+        copy={deletePreview ? orderDialogCopy(deletePreview) : null}
+        loadingPreview={deleteChecking}
+        submitting={deleteBusy}
+        error={deleteError}
+        onOpenChange={(o) => {
+          if (!o) {
+            setDeleteOpen(false);
+            setDeletePreview(null);
+            setDeleteError(null);
+          }
+        }}
+        onConfirm={(confirmation) => void confirmDeleteOrder(confirmation)}
       />
 
       <p className="font-label text-xs uppercase text-text-light">Admin</p>
@@ -512,7 +550,7 @@ export function AdminOrderToolbar({
           type="button"
           disabled={busy || deleteBusy}
           className="mt-2 rounded-sm border border-red-500/50 px-3 py-2 text-xs text-error hover:bg-error-soft disabled:opacity-50"
-          onClick={() => setDeleteOpen(true)}
+          onClick={() => void openDeleteOrder()}
         >
           Delete order permanently
         </button>
