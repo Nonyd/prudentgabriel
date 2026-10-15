@@ -8,6 +8,8 @@ import type { PFAStudentInfo } from "@/lib/pfa-verify";
 import { parseCustomFields, type CustomResponses } from "@/lib/job-custom-fields";
 import { PFAVerificationBlock } from "@/components/careers/PFAVerificationBlock";
 import { CustomFieldsRenderer } from "@/components/careers/CustomFieldsRenderer";
+import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
+import { xhrPostFormData, type UploadProgressHandler } from "@/lib/admin-upload-xhr";
 
 const EXP_OPTIONS = [
   { label: "0–1", value: 0 },
@@ -19,19 +21,33 @@ const EXP_OPTIONS = [
 
 const HEARD_FROM = ["Instagram", "TikTok", "Referral", "LinkedIn", "Job board", "Other"];
 
-async function uploadFile(file: File): Promise<string> {
+async function uploadFile(file: File, onProgress?: UploadProgressHandler): Promise<string> {
   const form = new FormData();
   form.append("file", file);
-  const res = await fetch("/api/careers/upload", { method: "POST", body: form });
-  const data = (await res.json()) as { url?: string; error?: string };
-  if (!res.ok || !data.url) throw new Error(data.error || "Upload failed");
+  const data = (await xhrPostFormData("/api/careers/upload", form, { onProgress, credentials: true })) as {
+    url?: string;
+    error?: string;
+  };
+  if (!data.url) throw new Error(data.error || "Upload failed");
   return data.url;
 }
+
+type UploadSlot = "itLetter" | "idCard" | "cv" | "portfolio";
 
 export function JobApplicationForm({ job }: { job: JobPosting }) {
   const router = useRouter();
   const customFields = parseCustomFields(job.customFields);
   const [submitting, setSubmitting] = useState(false);
+  const [progress, setProgress] = useState<Partial<Record<UploadSlot, number | null>>>({});
+
+  async function uploadWithProgress(slot: UploadSlot, file: File): Promise<string> {
+    setProgress((p) => ({ ...p, [slot]: 0 }));
+    try {
+      return await uploadFile(file, (pct) => setProgress((p) => ({ ...p, [slot]: pct })));
+    } finally {
+      setProgress((p) => ({ ...p, [slot]: null }));
+    }
+  }
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -160,9 +176,10 @@ export function JobApplicationForm({ job }: { job: JobPosting }) {
                   onChange={async (e) => {
                     const f = e.target.files?.[0];
                     if (!f) return;
-                    setSchoolItLetter(await uploadFile(f));
+                    setSchoolItLetter(await uploadWithProgress("itLetter", f));
                   }}
                 />
+                <UploadProgressBar value={progress.itLetter ?? null} tone="storefront" className="mt-2" />
               </div>
               <div>
                 <label className="font-label text-[10px] uppercase tracking-[0.16em] text-text-light">School ID card (PDF/image)</label>
@@ -173,9 +190,10 @@ export function JobApplicationForm({ job }: { job: JobPosting }) {
                   onChange={async (e) => {
                     const f = e.target.files?.[0];
                     if (!f) return;
-                    setSchoolIdCard(await uploadFile(f));
+                    setSchoolIdCard(await uploadWithProgress("idCard", f));
                   }}
                 />
+                <UploadProgressBar value={progress.idCard ?? null} tone="storefront" className="mt-2" />
               </div>
             </div>
           ) : null}
@@ -224,12 +242,13 @@ export function JobApplicationForm({ job }: { job: JobPosting }) {
             const f = e.target.files?.[0];
             if (!f) return;
             try {
-              setCvUrl(await uploadFile(f));
+              setCvUrl(await uploadWithProgress("cv", f));
             } catch {
               toast.error("CV upload failed");
             }
           }}
         />
+        <UploadProgressBar value={progress.cv ?? null} label="CV" tone="storefront" className="mt-2" />
         <p className="mt-1 font-body text-xs text-text-light">Max 5MB · PDF only</p>
         {cvUrl ? <p className="font-body text-xs text-success">CV uploaded ✓</p> : null}
       </div>
@@ -243,9 +262,10 @@ export function JobApplicationForm({ job }: { job: JobPosting }) {
           onChange={async (e) => {
             const f = e.target.files?.[0];
             if (!f) return;
-            setPortfolioFile(await uploadFile(f));
+            setPortfolioFile(await uploadWithProgress("portfolio", f));
           }}
         />
+        <UploadProgressBar value={progress.portfolio ?? null} label="Portfolio" tone="storefront" className="mt-2" />
         <input
           className={`${inputClass} mt-2`}
           placeholder="Or paste URL"

@@ -19,6 +19,8 @@ import { NotesStream } from "@/components/admin/NotesStream";
 import { ConsultationDeleteControl } from "@/components/admin/ConsultationDeleteControl";
 import { ConsultationPaymentControl } from "@/components/admin/ConsultationPaymentControl";
 import { adminReceiptSrc } from "@/lib/media/admin-receipt-src";
+import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
+import { xhrPostFormData } from "@/lib/admin-upload-xhr";
 import type { MeasurementData } from "@/lib/measurements";
 
 type LinkedQuotation = {
@@ -146,6 +148,7 @@ export function AdminConsultationDetail({
   const [moodboardImages, setMoodboardImages] = useState<string[]>(booking.moodboardImages ?? []);
   const [adminNotes, setAdminNotes] = useState(booking.adminNotes ?? "");
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [sendingLink, setSendingLink] = useState(false);
   const [savingSession, setSavingSession] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -212,17 +215,20 @@ export function AdminConsultationDetail({
 
   async function uploadMoodboard(file: File) {
     setUploading(true);
+    setUploadProgress(0);
     try {
       const fd = new FormData();
       fd.set("file", file);
-      const res = await fetch("/api/admin/consultations/upload", { method: "POST", body: fd });
-      const j = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok) throw new Error(j.error ?? "Upload failed");
+      const j = (await xhrPostFormData("/api/admin/consultations/upload", fd, {
+        onProgress: setUploadProgress,
+        credentials: true,
+      })) as { url?: string; error?: string };
       if (j.url) setMoodboardImages((prev) => [...prev, j.url!]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   }
 
@@ -498,6 +504,7 @@ export function AdminConsultationDetail({
                   e.target.value = "";
                 }}
               />
+              <UploadProgressBar value={uploadProgress} tone="admin" className="mt-2" />
               {moodboardImages.length > 0 ? (
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   {moodboardImages.map((url) => (

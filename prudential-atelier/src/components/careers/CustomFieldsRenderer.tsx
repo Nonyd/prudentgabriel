@@ -1,13 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import type { CustomField, CustomResponses, FieldType } from "@/lib/job-custom-fields";
+import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
+import { xhrPostFormData, type UploadProgressHandler } from "@/lib/admin-upload-xhr";
 
-async function uploadCareerFile(file: File): Promise<string> {
+async function uploadCareerFile(file: File, onProgress?: UploadProgressHandler): Promise<string> {
   const form = new FormData();
   form.append("file", file);
-  const res = await fetch("/api/careers/upload", { method: "POST", body: form });
-  const data = (await res.json()) as { url?: string; error?: string };
-  if (!res.ok || !data.url) throw new Error(data.error || "Upload failed");
+  const data = (await xhrPostFormData("/api/careers/upload", form, { onProgress, credentials: true })) as {
+    url?: string;
+    error?: string;
+  };
+  if (!data.url) throw new Error(data.error || "Upload failed");
   return data.url;
 }
 
@@ -77,8 +82,9 @@ function FieldInput({
   value: CustomResponses[string] | undefined;
   disabled?: boolean;
   onChange: (v: CustomResponses[string]) => void;
-  onUpload: (file: File) => Promise<string>;
+  onUpload: (file: File, onProgress?: UploadProgressHandler) => Promise<string>;
 }) {
+  const [progress, setProgress] = useState<number | null>(null);
   const inputClass =
     "mt-2 w-full rounded-[3px] border border-sand bg-input-bg px-3 py-2 font-body text-sm text-choc outline-none focus:border-lightbr";
 
@@ -189,12 +195,18 @@ function FieldInput({
           onChange={async (e) => {
             const f = e.target.files?.[0];
             if (!f) return;
-            const url = await onUpload(f);
-            onChange(url);
+            setProgress(0);
+            try {
+              const url = await onUpload(f, setProgress);
+              onChange(url);
+            } finally {
+              setProgress(null);
+            }
             e.target.value = "";
           }}
           className="font-body text-sm text-choc"
         />
+        <UploadProgressBar value={progress} tone="storefront" className="mt-2" />
         {typeof value === "string" && value ? (
           <p className="mt-1 font-body text-xs text-text-light">Uploaded ✓</p>
         ) : null}

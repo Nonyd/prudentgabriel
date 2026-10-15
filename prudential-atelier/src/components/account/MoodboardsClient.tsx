@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import type { Moodboard } from "@prisma/client";
 import { Modal } from "@/components/ui/Modal";
 import { formatDate } from "@/lib/utils";
+import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
+import { xhrPostFormData } from "@/lib/admin-upload-xhr";
 
 type BespokeOption = { id: string; orderRef: string };
 
@@ -24,18 +26,22 @@ export function MoodboardsClient({
   const [images, setImages] = useState<string[]>([]);
   const [bespokeOrderId, setBespokeOrderId] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState<{ value: number; index: number; total: number } | null>(null);
 
   async function uploadFiles(files: FileList | null) {
     if (!files?.length) return;
     setUploading(true);
     try {
       const urls: string[] = [];
-      for (const file of Array.from(files).slice(0, 12 - images.length)) {
+      const batch = Array.from(files).slice(0, 12 - images.length);
+      for (const [i, file] of batch.entries()) {
         const fd = new FormData();
         fd.append("file", file);
-        const res = await fetch("/api/account/upload", { method: "POST", body: fd });
-        if (!res.ok) throw new Error("Upload failed");
-        const json = (await res.json()) as { url: string };
+        setProgress({ value: 0, index: i + 1, total: batch.length });
+        const json = (await xhrPostFormData("/api/account/upload", fd, {
+          onProgress: (value) => setProgress({ value, index: i + 1, total: batch.length }),
+          credentials: true,
+        })) as { url: string };
         urls.push(json.url);
       }
       setImages((prev) => [...prev, ...urls].slice(0, 12));
@@ -43,6 +49,7 @@ export function MoodboardsClient({
       toast.error("Image upload failed");
     } finally {
       setUploading(false);
+      setProgress(null);
     }
   }
 
@@ -171,10 +178,16 @@ export function MoodboardsClient({
               type="file"
               accept="image/*"
               multiple
+              disabled={uploading}
               onChange={(e) => uploadFiles(e.target.files)}
               className="mt-3 w-full font-sans text-sm"
             />
-            {uploading ? <p className="mt-2 text-xs text-text-light">Uploading…</p> : null}
+            <UploadProgressBar
+              value={progress?.value ?? null}
+              label={progress && progress.total > 1 ? `${progress.index} of ${progress.total}` : undefined}
+              tone="storefront"
+              className="mt-2"
+            />
             {bespokeOrders.length > 0 ? (
               <select
                 value={bespokeOrderId}

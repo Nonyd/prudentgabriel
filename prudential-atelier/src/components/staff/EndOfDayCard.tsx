@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import type { WorkdayItem } from "@/lib/atelier/work-log";
 import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
+import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 
 /**
  * Slice BD7 — the day's entry, one per commission she is on. The portal asks
@@ -24,18 +25,21 @@ function EntryForm({ item, onFiled }: { item: WorkdayItem; onFiled: (w: Workday)
   const [partDone, setPartDone] = useState(item.entry?.partDone ?? false);
   const [images, setImages] = useState<string[]>(item.entry?.images ?? []);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
 
   async function addPicture(file: File) {
     setUploading(true);
+    setUploadProgress(0);
     try {
       // Same upload route, store and size limits as the house; the workroom folder.
-      const url = await uploadAdminAsset(file, "bespoke-workroom");
+      const url = await uploadAdminAsset(file, "bespoke-workroom", (p) => setUploadProgress(p));
       setImages((prev) => [...prev, url].slice(0, 6));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   }
 
@@ -108,6 +112,7 @@ function EntryForm({ item, onFiled }: { item: WorkdayItem; onFiled: (w: Workday)
           <img key={u} src={u} alt="" className="h-12 w-12 object-cover" />
         ))}
       </div>
+      <UploadProgressBar value={uploadProgress} className="max-w-xs" />
       <label className="flex items-center gap-2 font-sans text-sm text-ink">
         <input type="checkbox" checked={partDone} onChange={(e) => setPartDone(e.target.checked)} />
         My part on this gown is finished

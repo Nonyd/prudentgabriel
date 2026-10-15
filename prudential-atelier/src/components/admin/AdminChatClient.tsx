@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 import { FileText, Paperclip } from "lucide-react";
 import { AdminChatSettings } from "@/components/admin/AdminChatSettings";
 import { CHAT_ATTACHMENT_ACCEPT } from "@/lib/chat-shared";
+import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
+import { xhrPostFormData } from "@/lib/admin-upload-xhr";
 
 type Holder = { id: string; name: string } | null;
 type Item = {
@@ -165,6 +167,7 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
   const [mode, setMode] = useState<"stream" | "poll" | null>(null);
   const [editing, setEditing] = useState<{ id: string; text: string } | null>(null);
   const [editWindowSec, setEditWindowSec] = useState(30);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const lastTyping = useRef(0);
   const lastActive = useRef(0);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -392,17 +395,20 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
   async function upload(file: File) {
     if (!selected) return;
     setBusy(true);
+    setUploadProgress(0);
     try {
       const fd = new FormData();
       fd.set("file", file);
-      const r = await fetch(`/api/admin/chat/${selected}/attachments`, { method: "POST", body: fd });
-      const j = (await r.json().catch(() => ({}))) as { error?: string };
-      if (!r.ok) throw new Error(j.error ?? "Could not send the file");
+      await xhrPostFormData(`/api/admin/chat/${selected}/attachments`, fd, {
+        onProgress: setUploadProgress,
+        credentials: true,
+      });
       await loadThread();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not send the file");
     } finally {
       setBusy(false);
+      setUploadProgress(null);
       if (fileRef.current) fileRef.current.value = "";
     }
   }
@@ -660,6 +666,7 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
                   </div>
                 </form>
               )}
+              <UploadProgressBar value={uploadProgress} label="Sending file" tone="admin" />
             </div>
           )}
         </div>

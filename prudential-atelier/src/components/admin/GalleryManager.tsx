@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { isGalleryVideoUrl, galleryPlaybackUrl } from "@/lib/gallery-media";
 import { cn } from "@/lib/utils";
+import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
+import { xhrPostFormData } from "@/lib/admin-upload-xhr";
 
 type UploadJob = {
   id: string;
@@ -46,29 +48,15 @@ function newJobId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
-function uploadGalleryFile(
+async function uploadGalleryFile(
   file: File,
   category: GalleryCategory,
   onProgress: (pct: number) => void,
 ): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/admin/gallery");
-    xhr.withCredentials = true;
-    xhr.upload.onprogress = (ev) => {
-      if (!ev.lengthComputable) return;
-      onProgress(Math.min(100, Math.round((ev.loaded / ev.total) * 100)));
-    };
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) resolve();
-      else reject(new Error(xhr.responseText || "Upload failed"));
-    };
-    xhr.onerror = () => reject(new Error("Network error"));
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("category", category);
-    xhr.send(fd);
-  });
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("category", category);
+  await xhrPostFormData("/api/admin/gallery", fd, { onProgress, credentials: true });
 }
 
 async function fetchGallery(category: GalleryCategory) {
@@ -959,6 +947,15 @@ export function GalleryManager() {
               />
               <span className="font-body text-sm text-charcoal">Drop files or click to select</span>
             </label>
+
+            {uploadInFlight && uploadJobs.length > 1 ? (
+              <UploadProgressBar
+                className="mt-6"
+                tone="admin"
+                value={uploadJobs.reduce((sum, j) => sum + (j.status === "done" || j.status === "error" ? 100 : j.progress), 0) / uploadJobs.length}
+                label={`${uploadJobs.filter((j) => j.status === "done" || j.status === "error").length} of ${uploadJobs.length}`}
+              />
+            ) : null}
 
             {uploadJobs.length > 0 ? (
               <ul className="mt-6 space-y-3 border-t border-sand pt-4">

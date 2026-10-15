@@ -11,6 +11,8 @@ import type { BusinessLineCode, PublicBankAccount } from "@/lib/payments/bank-ac
 import { BankTransferDetails } from "@/components/payment/BankTransferDetails";
 import { GatewayPaymentMarks } from "@/components/icons/PaymentMarks";
 import { paystackFeeCopy } from "@/lib/payments/paystack-fee";
+import { xhrPostFormData } from "@/lib/admin-upload-xhr";
+import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
 type Props = {
   currency: PaymentCurrency;
   businessLine: BusinessLineCode;
@@ -65,6 +67,7 @@ export function PaymentMethodSelector({
   const { status } = useSession();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
   const [gateways, setGateways] = useState<PaymentGatewayType[]>([]);
   const [bank, setBank] = useState<PublicBankAccount | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -102,9 +105,12 @@ export function PaymentMethodSelector({
       const fd = new FormData();
       fd.set("file", file);
       if (receiptUploadUrl) {
-        const res = await fetch(receiptUploadUrl, { method: "POST", body: fd });
-        const j = (await res.json()) as { url?: string; error?: string };
-        if (!res.ok || !j.url) throw new Error(j.error ?? "Upload failed");
+        setProgress(0);
+        const j = (await xhrPostFormData(receiptUploadUrl, fd, { onProgress: setProgress, credentials: true })) as {
+          url?: string;
+          error?: string;
+        };
+        if (!j.url) throw new Error(j.error ?? "Upload failed");
         onReceiptUploaded(j.url);
         toast.success("Receipt uploaded");
         return;
@@ -123,15 +129,19 @@ export function PaymentMethodSelector({
         fd.set("ticket", tj.ticket);
         fd.set("exp", String(tj.exp));
       }
-      const res = await fetch("/api/upload/receipt", { method: "POST", body: fd });
-      const j = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !j.url) throw new Error(j.error ?? "Upload failed");
+      setProgress(0);
+      const j = (await xhrPostFormData("/api/upload/receipt", fd, { onProgress: setProgress, credentials: true })) as {
+        url?: string;
+        error?: string;
+      };
+      if (!j.url) throw new Error(j.error ?? "Upload failed");
       onReceiptUploaded(j.url);
       toast.success("Receipt uploaded");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setUploading(false);
+      setProgress(null);
     }
   }
 
@@ -212,6 +222,7 @@ export function PaymentMethodSelector({
                       <Upload className="h-3.5 w-3.5" />
                       {uploading ? "Uploading…" : receiptUrl ? "Replace receipt" : "Upload payment receipt"}
                     </button>
+                    <UploadProgressBar value={progress} label="Receipt" tone="storefront" className="mt-3 max-w-xs" />
                     <p className="mt-2 font-sans text-[10px] text-text-light">
                       A photo from your phone is fine, including iPhone photos. PDF also works. Max 5MB.
                     </p>

@@ -13,6 +13,8 @@ import {
 } from "@/lib/consultation-enquiry-shared";
 import { getWatYmd } from "@/lib/consultation";
 import { cmsGet } from "@/lib/cms-helpers";
+import { xhrPostFormData } from "@/lib/admin-upload-xhr";
+import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
 
 const MAX_IMAGES = 5;
 const MAX_SWATCHES = 6;
@@ -59,6 +61,7 @@ export function ConsultationEnquiryForm({
   const addColourRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ enquiryNumber: string; shortNotice: boolean } | null>(null);
   const today = getWatYmd();
@@ -107,17 +110,21 @@ export function ConsultationEnquiryForm({
   async function upload(file: File) {
     if (images.length >= MAX_IMAGES) return;
     setUploading(true);
+    setProgress(0);
     try {
       const fd = new FormData();
       fd.set("file", file);
-      const res = await fetch("/api/consultations/upload", { method: "POST", body: fd });
-      const j = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !j.url) throw new Error(j.error ?? "Upload failed");
+      const j = (await xhrPostFormData("/api/consultations/upload", fd, {
+        onProgress: setProgress,
+        credentials: true,
+      })) as { url?: string; error?: string };
+      if (!j.url) throw new Error(j.error ?? "Upload failed");
       setImages((prev) => [...prev, j.url!]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setUploading(false);
+      setProgress(null);
     }
   }
 
@@ -422,6 +429,7 @@ export function ConsultationEnquiryForm({
               e.target.value = "";
             }}
           />
+          <UploadProgressBar value={progress} label="Picture" tone="storefront" className="mt-2 max-w-xs" />
           {images.length ? (
             <p className="mt-2 font-body text-xs text-text-light">
               {images.length} picture{images.length === 1 ? "" : "s"} added

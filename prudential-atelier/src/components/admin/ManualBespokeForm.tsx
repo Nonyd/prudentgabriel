@@ -34,6 +34,7 @@ export function ManualBespokeForm() {
   const [adminNotes, setAdminNotes] = useState("");
   const [status, setStatus] = useState<BespokeStatus>("CONFIRMED");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadLabel, setUploadLabel] = useState<string | undefined>(undefined);
 
   async function uploadFile(file: File, folder: string): Promise<UploadItem> {
     const url = await uploadAdminAsset(file, folder, (p) => setUploadProgress(p));
@@ -42,8 +43,11 @@ export function ManualBespokeForm() {
 
   const onSketches = async (files: FileList | null) => {
     if (!files?.length) return;
-    for (const f of Array.from(files).slice(0, 10)) {
+    const list = Array.from(files).slice(0, 10);
+    for (let i = 0; i < list.length; i++) {
+      const f = list[i];
       setUploadProgress(0);
+      setUploadLabel(list.length > 1 ? `${i + 1} of ${list.length}` : undefined);
       try {
         const u = await uploadFile(f, "prudent-gabriel/bespoke-sketches");
         setSketches((s) => [...s, u]);
@@ -51,14 +55,18 @@ export function ManualBespokeForm() {
         toast.error(e instanceof Error ? e.message : "Upload failed");
       } finally {
         setUploadProgress(null);
+        setUploadLabel(undefined);
       }
     }
   };
 
   const onRefs = async (files: FileList | null) => {
     if (!files?.length) return;
-    for (const f of Array.from(files).slice(0, 5)) {
+    const list = Array.from(files).slice(0, 5);
+    for (let i = 0; i < list.length; i++) {
+      const f = list[i];
       setUploadProgress(0);
+      setUploadLabel(list.length > 1 ? `${i + 1} of ${list.length}` : undefined);
       try {
         const u = await uploadFile(f, "prudent-gabriel/bespoke-refs");
         setRefs((s) => [...s, u]);
@@ -66,6 +74,7 @@ export function ManualBespokeForm() {
         toast.error(e instanceof Error ? e.message : "Upload failed");
       } finally {
         setUploadProgress(null);
+        setUploadLabel(undefined);
       }
     }
   };
@@ -245,7 +254,7 @@ export function ManualBespokeForm() {
               <p className="pt-2 text-11px font-medium uppercase text-text-mid">Sketches / refs</p>
               <input type="file" multiple accept="image/*,application/pdf" className="text-xs" onChange={(e) => void onSketches(e.target.files)} />
               <input type="file" multiple accept="image/*" className="text-xs" onChange={(e) => void onRefs(e.target.files)} />
-              <UploadProgressBar value={uploadProgress} />
+              <UploadProgressBar value={uploadProgress} label={uploadLabel} />
               <p className="text-11px text-text-mid">{sketches.length} sketch files · {refs.length} reference images</p>
               {(sketches.length > 0 || refs.length > 0) && (
                 <div className="flex flex-wrap gap-2">

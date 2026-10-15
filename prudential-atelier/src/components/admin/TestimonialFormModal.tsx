@@ -12,6 +12,8 @@ import { Toggle } from "@/components/ui/Toggle";
 import { TIER_LABELS } from "@/lib/loyalty";
 import { getInitials } from "@/lib/utils";
 import type { TestimonialAdminRow } from "@/components/admin/TestimonialsAdminClient";
+import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
+import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
 
 type ClientSearchResult = {
   id: string;
@@ -52,6 +54,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
   const [isApproved, setIsApproved] = useState(true);
   const [showOnHomepage, setShowOnHomepage] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const resetForm = useCallback(() => {
     if (testimonial) {
@@ -132,19 +135,15 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
       return;
     }
     setUploading(true);
+    setUploadProgress(0);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("folder", "prudential-atelier/testimonials");
-      const res = await fetch("/api/admin/upload", { method: "POST", body: form, credentials: "include" });
-      const data = (await res.json()) as { url?: string };
-      if (!res.ok || !data.url) {
-        toast.error("Upload failed");
-        return;
-      }
-      setAdminImage(data.url);
+      const url = await uploadAdminAsset(file, "prudential-atelier/testimonials", setUploadProgress);
+      setAdminImage(url);
+    } catch {
+      toast.error("Upload failed");
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   }
 
@@ -381,6 +380,7 @@ export function TestimonialFormModal({ open, onOpenChange, testimonial }: Testim
                 </label>
                 <span className="font-body text-xs text-charcoal-mid">JPG, PNG · Max 5MB</span>
               </div>
+              <UploadProgressBar value={uploadProgress} tone="admin" className="mt-2" />
               {adminImage ? (
                 <div className="relative mt-3 h-20 w-20 overflow-hidden rounded-sm">
                   <Image src={adminImage} alt="" fill className="object-cover" sizes="80px" />

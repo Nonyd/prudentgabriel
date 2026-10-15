@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import { formatDate, formatPrice, formatNGN } from "@/lib/utils";
 import { ClientMeasurementsPanel, type MeasurementData } from "@/components/admin/ClientMeasurementsPanel";
 import { CommissionMeasurementsCard } from "@/components/admin/CommissionFilePanels";
+import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
+import { xhrPostFormData } from "@/lib/admin-upload-xhr";
 
 /**
  * Slice BC1 — the client file. Everything about her gown on one page, in the
@@ -620,20 +622,25 @@ function AddHouseMoodboard({ clientId, onAdded }: { clientId: string; onAdded: (
   const [title, setTitle] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   async function upload(file: File) {
     setBusy(true);
+    setUploadProgress(0);
     try {
       const fd = new FormData();
       fd.set("file", file);
-      const res = await fetch("/api/admin/consultations/upload", { method: "POST", body: fd });
-      const j = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !j.url) throw new Error(j.error ?? "Upload failed");
+      const j = (await xhrPostFormData("/api/admin/consultations/upload", fd, {
+        onProgress: setUploadProgress,
+        credentials: true,
+      })) as { url?: string; error?: string };
+      if (!j.url) throw new Error(j.error ?? "Upload failed");
       setImages((prev) => [...prev, j.url!]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setBusy(false);
+      setUploadProgress(null);
     }
   }
 
@@ -690,6 +697,7 @@ function AddHouseMoodboard({ clientId, onAdded }: { clientId: string; onAdded: (
           Add house mood board
         </button>
       </div>
+      <UploadProgressBar value={uploadProgress} tone="admin" />
     </div>
   );
 }

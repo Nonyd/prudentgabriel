@@ -15,6 +15,7 @@ import {
 import type { CommissionCost } from "@/lib/atelier/commission-cost";
 import type { CommissionMeasurements } from "@/lib/atelier/commission-measurements";
 import { uploadAdminAsset } from "@/lib/admin-upload-xhr";
+import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 import { formatNGN, formatDate } from "@/lib/utils";
 
 const H2 = "font-sans text-xs font-semibold uppercase tracking-wider text-text-light";
@@ -209,6 +210,7 @@ export function SpecificationPanel({
   });
   const [images, setImages] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     const r = await fetch(`/api/bespoke/${orderId}/materials`);
@@ -233,13 +235,15 @@ export function SpecificationPanel({
 
   async function addPicture(file: File) {
     setBusy(true);
+    setUploadProgress(0);
     try {
-      const url = await uploadAdminAsset(file, "bespoke-specification");
+      const url = await uploadAdminAsset(file, "bespoke-specification", (p) => setUploadProgress(p));
       setImages((prev) => [...prev, url]);
     } catch {
       toast.error("Upload failed");
     } finally {
       setBusy(false);
+      setUploadProgress(null);
     }
   }
 
@@ -364,6 +368,7 @@ export function SpecificationPanel({
               {form.storeItemId ? "Issue from store" : "Add"}
             </Button>
           </div>
+          <UploadProgressBar value={uploadProgress} className="max-w-xs" />
         </div>
       ) : null}
     </section>

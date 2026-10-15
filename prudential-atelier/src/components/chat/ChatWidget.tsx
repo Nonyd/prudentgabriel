@@ -13,6 +13,8 @@ import {
   type ChatMessageView,
   type ChatStatusView,
 } from "@/lib/chat-shared";
+import { xhrPostFormData } from "@/lib/admin-upload-xhr";
+import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
 
 /** Only when the live stream cannot be opened. */
 const POLL_MS = 4000;
@@ -126,6 +128,7 @@ export function ChatWidget() {
   const [contact, setContact] = useState("");
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [greeting, setGreeting] = useState(false);
   const [staffTyping, setStaffTyping] = useState<string | null>(null);
@@ -384,17 +387,17 @@ export function ChatWidget() {
   async function upload(file: File) {
     setBusy(true);
     setError(null);
+    setUploadProgress(0);
     try {
       const fd = new FormData();
       fd.set("file", file);
-      const res = await fetch("/api/chat/attachments", { method: "POST", body: fd });
-      const j = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) throw new Error(j.error ?? "Could not send the file");
+      await xhrPostFormData("/api/chat/attachments", fd, { onProgress: setUploadProgress, credentials: true });
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send the file");
     } finally {
       setBusy(false);
+      setUploadProgress(null);
       if (fileRef.current) fileRef.current.value = "";
     }
   }
@@ -533,38 +536,45 @@ export function ChatWidget() {
                   </button>
                 </form>
               ) : (
-                <form onSubmit={send} className="flex gap-2 border-t border-sand p-3">
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept={CHAT_ATTACHMENT_ACCEPT}
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) void upload(f);
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current?.click()}
-                    disabled={busy}
-                    aria-label="Send a photo or PDF"
-                    className="px-1 text-text-mid disabled:opacity-50"
-                  >
-                    <Paperclip className="h-4 w-4" />
-                  </button>
-                  <input
-                    className="input-field flex-1 text-sm"
-                    value={draft}
-                    onChange={(e) => signalTyping(e.target.value)}
-                    maxLength={CHAT_MESSAGE_MAX}
-                    placeholder={thread.away?.reason === "hours" ? "Add to your message" : "Write a message"}
-                    aria-label="Message"
-                  />
-                  <button type="submit" disabled={busy || !draft.trim()} className="rounded-sm bg-nut px-3 text-xs text-cream disabled:opacity-50">
-                    Send
-                  </button>
-                </form>
+                <>
+                  {uploadProgress !== null ? (
+                    <div className="px-3 pt-2">
+                      <UploadProgressBar value={uploadProgress} label="Attachment" tone="storefront" />
+                    </div>
+                  ) : null}
+                  <form onSubmit={send} className="flex gap-2 border-t border-sand p-3">
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept={CHAT_ATTACHMENT_ACCEPT}
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) void upload(f);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      disabled={busy}
+                      aria-label="Send a photo or PDF"
+                      className="px-1 text-text-mid disabled:opacity-50"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                    </button>
+                    <input
+                      className="input-field flex-1 text-sm"
+                      value={draft}
+                      onChange={(e) => signalTyping(e.target.value)}
+                      maxLength={CHAT_MESSAGE_MAX}
+                      placeholder={thread.away?.reason === "hours" ? "Add to your message" : "Write a message"}
+                      aria-label="Message"
+                    />
+                    <button type="submit" disabled={busy || !draft.trim()} className="rounded-sm bg-nut px-3 text-xs text-cream disabled:opacity-50">
+                      Send
+                    </button>
+                  </form>
+                </>
               )}
             </>
           ) : (

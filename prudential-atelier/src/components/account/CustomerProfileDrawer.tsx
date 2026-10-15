@@ -183,7 +183,7 @@ export function CustomerProfileDrawer({
                 }} />
                 <button type="button" onClick={() => fileInputRef.current?.click()} className="mt-2 font-body text-[11px] text-text-mid">Change Photo</button>
                 <div className="mt-2 w-full max-w-[200px]">
-                  <UploadProgressBar value={avatarProgress} />
+                  <UploadProgressBar value={avatarProgress} tone="storefront" />
                 </div>
                 <p className="mt-2 font-display text-[18px] text-ink">{name}</p>
                 <p className="font-body text-xs text-text-mid">{email}</p>

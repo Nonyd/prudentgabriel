@@ -6,6 +6,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { StarRating } from "@/components/ui/StarRating";
+import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
+import { xhrPostFormData } from "@/lib/admin-upload-xhr";
 
 export function TestimonialSubmitClient({ firstName }: { firstName: string }) {
   const router = useRouter();
@@ -14,23 +16,30 @@ export function TestimonialSubmitClient({ firstName }: { firstName: string }) {
   const [body, setBody] = useState("");
   const [clientImage, setClientImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
 
   async function handleUpload(file: File) {
     setUploading(true);
+    setProgress(0);
     try {
       const form = new FormData();
       form.append("file", file);
-      const res = await fetch("/api/account/upload", { method: "POST", body: form });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !data.url) {
+      const data = (await xhrPostFormData("/api/account/upload", form, {
+        onProgress: setProgress,
+        credentials: true,
+      })) as { url?: string; error?: string };
+      if (!data.url) {
         toast.error(data.error ?? "Upload failed");
         return;
       }
       setClientImage(data.url);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setUploading(false);
+      setProgress(null);
     }
   }
 
@@ -119,7 +128,7 @@ export function TestimonialSubmitClient({ firstName }: { firstName: string }) {
         <p className="mt-1 font-body text-xs text-text-light">
           Accepted: JPG, PNG · Max 5MB. Your photo helps other women connect with your story.
         </p>
-        {uploading ? <p className="mt-2 font-body text-xs text-text-mid">Uploading…</p> : null}
+        <UploadProgressBar value={progress} label="Photo" tone="storefront" className="mt-2 max-w-xs" />
         {clientImage ? (
           <div className="relative mt-3 h-[120px] w-[120px] overflow-hidden rounded-md">
             <Image src={clientImage} alt="Your photo" fill className="object-cover" sizes="120px" />

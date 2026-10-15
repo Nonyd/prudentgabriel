@@ -267,7 +267,9 @@ export function ProductFormPage({
   const [libraryFields, setLibraryFields] = useState<{ id: string; key: string; label: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadLabel, setUploadLabel] = useState<string | undefined>(undefined);
   const [colorUploading, setColorUploading] = useState<number | null>(null);
+  const [colorProgress, setColorProgress] = useState<number | null>(null);
   const [bundleSearch, setBundleSearch] = useState("");
   const [bundleResults, setBundleResults] = useState<ProductListItem[]>([]);
   const [bundleSearching, setBundleSearching] = useState(false);
@@ -436,6 +438,7 @@ export function ProductFormPage({
       }
       let done = 0;
       for (const file of list) {
+        if (list.length > 1) setUploadLabel(`${done + 1} of ${list.length}`);
         const url = await uploadAdminAsset(file, "prudential-atelier/products", (p) => {
           const slice = 100 / list.length;
           setUploadProgress(Math.round(done * slice + (p / 100) * slice));
@@ -453,6 +456,7 @@ export function ProductFormPage({
     } finally {
       setUploading(false);
       setUploadProgress(null);
+      setUploadLabel(undefined);
     }
   };
 
@@ -464,14 +468,16 @@ export function ProductFormPage({
       return;
     }
     setColorUploading(index);
+    setColorProgress(0);
     try {
-      const url = await uploadAdminAsset(file, "prudential-atelier/products");
+      const url = await uploadAdminAsset(file, "prudential-atelier/products", (p) => setColorProgress(p));
       form.setValue(`colors.${index}.imageUrl`, url);
       toast.success("Colour photo uploaded");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setColorUploading(null);
+      setColorProgress(null);
     }
   };
 
@@ -795,7 +801,7 @@ export function ProductFormPage({
                 {uploading ? "Uploading…" : "Drop photographs here, or tap to choose"}
               </label>
               <div className="mt-2 max-w-md">
-                <UploadProgressBar value={uploadProgress} />
+                <UploadProgressBar value={uploadProgress} label={uploadLabel} />
               </div>
               {form.formState.errors.images && (
                 <p className="mt-2 font-body text-sm text-wine">{String(form.formState.errors.images.message ?? "")}</p>
@@ -904,6 +910,9 @@ export function ProductFormPage({
                     <button type="button" className="min-h-[44px] min-w-[44px] text-wine" onClick={() => removeColor(i)}>
                       ×
                     </button>
+                    {colorUploading === i ? (
+                      <UploadProgressBar value={colorProgress} className="basis-full" />
+                    ) : null}
                   </div>
                 ))}
               </div>

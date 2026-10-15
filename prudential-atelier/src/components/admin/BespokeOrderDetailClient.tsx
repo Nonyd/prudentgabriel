@@ -57,6 +57,7 @@ import {
 } from "@/lib/atelier/stage-checklist";
 import { cn, formatDate } from "@/lib/utils";
 import { uploadAdminAsset, uploadAdminVideo } from "@/lib/admin-upload-xhr";
+import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 
 type LedgerPayment = Payment & {
   confirmedBy?: Pick<User, "id" | "name" | "email"> | null;
@@ -132,6 +133,8 @@ export function BespokeOrderDetailClient({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadLabel, setUploadLabel] = useState<string | undefined>(undefined);
   const [assignRole, setAssignRole] = useState("TAILOR");
   const [assignStaffId, setAssignStaffId] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
@@ -238,14 +241,20 @@ export function BespokeOrderDetailClient({
   const handleUpload = async (files: FileList | null, type: "images" | "videos") => {
     if (!files?.length) return;
     setUploading(true);
+    setUploadProgress(0);
     try {
       const urls: string[] = [];
-      for (const file of Array.from(files)) {
+      const list = Array.from(files);
+      for (let i = 0; i < list.length; i++) {
+        const file = list[i];
         const folder = type === "videos" ? "bespoke-videos" : "bespoke-stages";
+        setUploadLabel(list.length > 1 ? `${i + 1} of ${list.length}` : undefined);
+        setUploadProgress(0);
+        const onProgress = (p: number) => setUploadProgress(p);
         urls.push(
           type === "videos"
-            ? await uploadAdminVideo(file, folder)
-            : await uploadAdminAsset(file, folder),
+            ? await uploadAdminVideo(file, folder, onProgress)
+            : await uploadAdminAsset(file, folder, onProgress),
         );
       }
       const mediaRes = await fetch(`/api/bespoke/${order.id}/stage-media`, {
@@ -263,6 +272,8 @@ export function BespokeOrderDetailClient({
       toast.error("Upload failed");
     } finally {
       setUploading(false);
+      setUploadProgress(null);
+      setUploadLabel(undefined);
     }
   };
 
@@ -701,6 +712,7 @@ export function BespokeOrderDetailClient({
                 />
               </label>
             </div>
+            <UploadProgressBar value={uploadProgress} label={uploadLabel} className="mt-2 max-w-xs" />
             {(images.length > 0 || videos.length > 0) && (
               <p className="mt-2 font-sans text-xs text-text-light">
                 {images.length} image(s), {videos.length} video(s) attached

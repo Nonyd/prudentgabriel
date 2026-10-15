@@ -6,6 +6,8 @@ import { NETWORK_ERROR_MESSAGE, authResponseMessage, submitPasswordChange } from
 import toast from "react-hot-toast";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { BirthdayField } from "@/components/common/BirthdayField";
+import { UploadProgressBar } from "@/components/ui/UploadProgressBar";
+import { xhrPostFormData } from "@/lib/admin-upload-xhr";
 
 type Prefs = {
   orderStage: boolean;
@@ -36,6 +38,7 @@ export function SettingsClient({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [photoProgress, setPhotoProgress] = useState<number | null>(null);
 
   async function saveProfile() {
     const res = await fetch("/api/account/profile", {
@@ -91,10 +94,18 @@ export function SettingsClient({
   async function uploadPhoto(file: File) {
     const fd = new FormData();
     fd.append("file", file);
-    const res = await fetch("/api/account/upload", { method: "POST", body: fd });
-    if (!res.ok) return toast.error("Upload failed");
-    const j = (await res.json()) as { url: string };
-    setImage(j.url);
+    setPhotoProgress(0);
+    try {
+      const j = (await xhrPostFormData("/api/account/upload", fd, {
+        onProgress: setPhotoProgress,
+        credentials: true,
+      })) as { url: string };
+      setImage(j.url);
+    } catch {
+      toast.error("Upload failed");
+    } finally {
+      setPhotoProgress(null);
+    }
   }
 
   return (
@@ -132,15 +143,19 @@ export function SettingsClient({
               className="mt-1 w-full border border-sand px-3 py-2"
             />
           </label>
-          <label className="block font-sans text-sm sm:col-span-2">
-            Profile photo
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
-              className="mt-1 w-full font-sans text-sm"
-            />
-          </label>
+          <div className="sm:col-span-2">
+            <label className="block font-sans text-sm">
+              Profile photo
+              <input
+                type="file"
+                accept="image/*"
+                disabled={photoProgress !== null}
+                onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
+                className="mt-1 w-full font-sans text-sm"
+              />
+            </label>
+            <UploadProgressBar value={photoProgress} label="Photo" tone="storefront" className="mt-2" />
+          </div>
         </div>
         <button type="button" onClick={saveProfile} className="btn-primary mt-6">
           Save

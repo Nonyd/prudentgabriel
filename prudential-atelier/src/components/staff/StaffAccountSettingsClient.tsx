@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { uploadAccountImage } from "@/lib/admin-upload-xhr";
+import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 import { getInitials } from "@/lib/utils";
 import { BirthdayField } from "@/components/common/BirthdayField";
 
@@ -23,6 +24,7 @@ export function StaffAccountSettingsClient({ initial }: Props) {
   const [image, setImage] = useState(initial.image);
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [currentPassword, setCurrentPassword] = useState("");
@@ -62,8 +64,9 @@ export function StaffAccountSettingsClient({ initial }: Props) {
 
   async function onAvatarPick(file: File) {
     setUploading(true);
+    setUploadProgress(0);
     try {
-      const url = await uploadAccountImage(file);
+      const url = await uploadAccountImage(file, (p) => setUploadProgress(p));
       const res = await fetch("/api/account/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -77,6 +80,7 @@ export function StaffAccountSettingsClient({ initial }: Props) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   }
 
@@ -155,6 +159,7 @@ export function StaffAccountSettingsClient({ initial }: Props) {
             >
               {uploading ? "Uploading…" : "Upload photo"}
             </Button>
+            <UploadProgressBar value={uploadProgress} className="mt-2 w-48" />
           </div>
         </div>
       </section>
