@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { PaymentStatus } from "@prisma/client";
+import { PaymentStatus, PointsType } from "@prisma/client";
 import { getLoyaltyRulePoints } from "@/lib/loyalty";
 import { awardReviewPoints } from "@/lib/points";
 import { notifyReviewPending } from "@/lib/notifications";
@@ -34,14 +34,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
-  const duplicate = await prisma.review.findFirst({
-    where: { userId, productId },
-    select: { id: true },
-  });
-  if (duplicate) {
-    return NextResponse.json({ error: "You have already reviewed this product" }, { status: 409 });
-  }
-
   const orderItem = await prisma.orderItem.findFirst({
     where: {
       productId,
@@ -60,7 +52,16 @@ export async function POST(req: NextRequest) {
   const pointsAward = await getLoyaltyRulePoints("REVIEW");
 
   let pointsGranted = 0;
+  // Serialize this user's review submissions (advisory lock held until commit)
+  // so parallel POSTs cannot each pass the duplicate check and each earn points.
   const review = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`review:${userId}`}))`;
+    const duplicate = await tx.review.findFirst({
+      where: { userId, productId },
+      select: { id: true },
+    });
+    if (duplicate) return null;
+
     const r = await tx.review.create({
       data: {
         userId,
@@ -74,11 +75,19 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    if (pointsAward > 0) {
+    // Points once per (user, product), even if an earlier review was deleted.
+    const alreadyAwarded = await tx.pointsTransaction.findFirst({
+      where: { userId, type: PointsType.EARNED_REVIEW, description: { contains: `(${productId})` } },
+      select: { id: true },
+    });
+    if (pointsAward > 0 && !alreadyAwarded) {
       pointsGranted = await awardReviewPoints(userId, pointsAward, productId, tx);
     }
     return r;
   });
+  if (!review) {
+    return NextResponse.json({ error: "You have already reviewed this product" }, { status: 409 });
+  }
 
   void notifyReviewPending(review, product.name);
 

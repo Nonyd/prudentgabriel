@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { BESPOKE_ROLES, requireRoles } from "@/lib/api-auth";
+import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { logError } from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
-  const gate = await requireRoles(BESPOKE_ROLES);
+  // Every staff member's email and workload: the assign-staff screen's, so manage-level only.
+  const gate = await requireBespokeAccess("manage");
   if (!gate.ok) return gate.response;
 
   const { searchParams } = new URL(req.url);

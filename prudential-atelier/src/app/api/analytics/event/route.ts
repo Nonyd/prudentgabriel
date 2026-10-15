@@ -3,6 +3,7 @@ import { z } from "zod";
 import { recordAnalyticsEvent } from "@/lib/analytics/record";
 import { sanitizeAttribution, visitAttributionSchema } from "@/lib/analytics/attribution";
 import { ADMIN_IMPERSONATE_COOKIE } from "@/lib/admin-impersonate";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
   path: z.string().max(200).optional(),
@@ -13,6 +14,10 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  // Silent drop over the limit (beacon traffic): nothing is recorded.
+  const rl = await checkRateLimit(`analytics-event:${getClientIp(req)}`, 60, 60 * 1000);
+  if (!rl.ok) return new NextResponse(null, { status: 204 });
+
   const impersonating = Boolean(req.cookies.get(ADMIN_IMPERSONATE_COOKIE)?.value);
   let json: unknown;
   try {

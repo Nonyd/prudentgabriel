@@ -11,6 +11,7 @@ import {
   expectedAmountInPspUnits,
   PaymentBindError,
 } from "@/lib/payment-bind";
+import { timingSafeEqualString } from "@/lib/crypto-compare";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -56,7 +57,15 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    await markRtwOrderPaymentFailed(orderId);
+    // Same identity binding as the success path: a reference that is not this
+    // order's charge must not fail (and release the holds of) someone's order.
+    const pspRef = result.paymentReference.trim();
+    const stored = order.paymentRef?.trim() ?? "";
+    const metaOk = pspRef === order.orderNumber;
+    const refOk = Boolean(stored && timingSafeEqualString(stored, pspRef));
+    if (metaOk || refOk) {
+      await markRtwOrderPaymentFailed(order.id);
+    }
   } catch (e) {
     if (e instanceof PaymentBindError) {
       return NextResponse.redirect(`${appUrl}/checkout?error=payment-failed`);

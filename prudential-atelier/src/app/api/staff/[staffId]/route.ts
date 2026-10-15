@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { EmploymentType, StaffDepartment } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi, requireSuperAdminApi } from "@/lib/admin-auth";
+import { isProtectedAccount } from "@/lib/roles";
+import { forceSignOutUser } from "@/lib/password-reset";
 import { logActivity, logError } from "@/lib/logger";
 
 type Params = { params: Promise<{ staffId: string }> };
@@ -70,10 +72,20 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+    // The login email is the account: changing it hands over the account, so it
+    // is Super Admin work, never on a protected or non-staff account.
     const userUpdate: { name?: string; email?: string; phone?: string | null } = {};
     if (typeof body.name === "string") userUpdate.name = body.name.trim();
-    if (typeof body.email === "string") {
-      const email = body.email.trim().toLowerCase();
+    const nextEmail = typeof body.email === "string" ? body.email.trim().toLowerCase() : null;
+    if (nextEmail && nextEmail !== existing.user.email.toLowerCase()) {
+      const superGate = await requireSuperAdminApi();
+      if (!superGate.ok) {
+        return NextResponse.json({ error: "Only a Super Admin can change a staff login email." }, { status: 403 });
+      }
+      if (existing.user.role !== "STAFF" || isProtectedAccount(existing.user.email) || isProtectedAccount(nextEmail)) {
+        return NextResponse.json({ error: "This account's email can only be changed from Team settings." }, { status: 403 });
+      }
+      const email = nextEmail;
       const dup = await prisma.user.findFirst({
         where: { email, NOT: { id: existing.userId } },
       });
@@ -100,6 +112,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
     if (typeof body.isActive === "boolean") staffUpdate.isActive = body.isActive;
 
+    const emailChanged = userUpdate.email !== undefined;
     const item = await prisma.$transaction(async (tx) => {
       if (Object.keys(userUpdate).length > 0) {
         await tx.user.update({ where: { id: existing.userId }, data: userUpdate });
@@ -112,6 +125,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         },
       });
     });
+
+    // Anyone signed in as the old address is signed out.
+    if (emailChanged) await forceSignOutUser(existing.userId);
 
     await logActivity({
       userId: gate.session.user.id,
@@ -136,14 +152,26 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const gate = await requireAdminApi("staff");
-  if (!gate.ok) return gate.response;
+  // Removing a login is Super Admin work (as in Team settings); HR deactivates instead.
+  const gate = await requireSuperAdminApi();
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: "Only a Super Admin can delete a staff account. Mark the profile inactive instead." },
+      { status: 403 },
+    );
+  }
 
   const { staffId } = await params;
 
   try {
-    const existing = await prisma.staffProfile.findUnique({ where: { id: staffId } });
+    const existing = await prisma.staffProfile.findUnique({
+      where: { id: staffId },
+      include: { user: { select: { email: true, role: true } } },
+    });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (existing.user.role !== "STAFF" || isProtectedAccount(existing.user.email)) {
+      return NextResponse.json({ error: "This account can only be removed from Team settings." }, { status: 403 });
+    }
 
     await prisma.user.delete({ where: { id: existing.userId } });
 

@@ -123,14 +123,62 @@ export async function validateCoupon(
   };
 }
 
+/** Thrown inside a transaction when a coupon can no longer be held (limit reached, gone). */
+export class CouponUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CouponUnavailableError";
+  }
+}
+
+/**
+ * Atomically take one use of the coupon and check the per-customer limit.
+ *
+ * The conditional increment only succeeds while `usedCount < maxUsesTotal` (or there
+ * is no total limit), so parallel checkouts cannot overshoot. It also row-locks the
+ * coupon until the transaction ends, which serialises the per-customer count below:
+ * a concurrent hold on the same coupon waits here, then sees the committed usage.
+ */
+async function takeCouponUse(
+  db: CouponDb,
+  params: { couponId: string; email: string; excludeUsageId?: string },
+): Promise<void> {
+  const taken = await db.coupon.updateMany({
+    where: {
+      id: params.couponId,
+      OR: [{ maxUsesTotal: null }, { usedCount: { lt: db.coupon.fields.maxUsesTotal } }],
+    },
+    data: { usedCount: { increment: 1 } },
+  });
+  if (taken.count === 0) {
+    const exists = await db.coupon.findUnique({ where: { id: params.couponId }, select: { id: true } });
+    throw new CouponUnavailableError(
+      exists ? "This coupon has reached its usage limit" : "This coupon is no longer available",
+    );
+  }
+
+  const coupon = await db.coupon.findUnique({
+    where: { id: params.couponId },
+    select: { maxUsesPerUser: true },
+  });
+  const held = await db.couponUsage.count({
+    where: {
+      couponId: params.couponId,
+      email: params.email.trim().toLowerCase(),
+      status: { in: [CouponUsageStatus.PENDING, CouponUsageStatus.COMMITTED] },
+      ...(params.excludeUsageId ? { id: { not: params.excludeUsageId } } : {}),
+    },
+  });
+  if (coupon && held >= coupon.maxUsesPerUser) {
+    throw new CouponUnavailableError("You have already used this coupon");
+  }
+}
+
 export async function reserveCouponUsage(
   db: CouponDb,
   params: { couponId: string; userId: string | null; email: string; orderId: string },
 ): Promise<void> {
-  await db.coupon.update({
-    where: { id: params.couponId },
-    data: { usedCount: { increment: 1 } },
-  });
+  await takeCouponUse(db, { couponId: params.couponId, email: params.email });
   await db.couponUsage.create({
     data: {
       couponId: params.couponId,
@@ -180,18 +228,7 @@ export async function rereserveCouponUsage(
     return;
   }
 
-  const coupon = await db.coupon.findUnique({ where: { id: params.couponId } });
-  if (!coupon) {
-    throw new Error("This coupon is no longer available");
-  }
-  if (coupon.maxUsesTotal != null && coupon.usedCount >= coupon.maxUsesTotal) {
-    throw new Error("This coupon has reached its usage limit");
-  }
-
-  await db.coupon.update({
-    where: { id: params.couponId },
-    data: { usedCount: { increment: 1 } },
-  });
+  await takeCouponUse(db, { couponId: params.couponId, email: params.email, excludeUsageId: usage.id });
   await db.couponUsage.update({
     where: { id: usage.id },
     data: { status: CouponUsageStatus.PENDING, releasedAt: null },

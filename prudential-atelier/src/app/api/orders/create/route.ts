@@ -3,7 +3,7 @@ import { PaymentGateway, PaymentStatus, Prisma, ShippingQuoteStatus } from "@pri
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
-import { reserveCouponUsage, validateCoupon } from "@/lib/coupon";
+import { CouponUnavailableError, reserveCouponUsage, validateCoupon } from "@/lib/coupon";
 import { expireStaleCheckoutReservationsForActor } from "@/lib/checkout-reservations";
 import { generateOrderNumber } from "@/lib/order-number";
 import {
@@ -721,6 +721,9 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     if (e instanceof InsufficientPointsError) {
       return NextResponse.json({ error: "Insufficient points" }, { status: 400 });
+    }
+    if (e instanceof CouponUnavailableError) {
+      return NextResponse.json({ error: e.message }, { status: 400 });
     }
     await logServerError({ errorType: "ORDER_CREATE", error: e });
     return NextResponse.json({ error: "Could not create order" }, { status: 500 });

@@ -11,6 +11,7 @@ import { generateBespokeNumber } from "@/lib/order-number";
 import { sendBespokeConfirmationEmail, sendAdminNotificationEmail } from "@/lib/email";
 import { notifyNewBespoke } from "@/lib/notifications";
 import { CAPABILITY_TTL_MS, generateCapabilityToken } from "@/lib/capability-token";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
   // The whole list is the pipeline page's: the `bespoke` key. STAFF use the staff portal.
@@ -38,6 +39,10 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   // Whoever holds the pipeline's key creates commissions here; everyone else is the public form.
   const isAdmin = session?.user?.id ? (await bespokeFacts(session)).facts.house : false;
+  if (!isAdmin) {
+    const limited = await rateLimitOr429(req, "bespoke-request", 5, 60 * 60 * 1000);
+    if (limited) return limited;
+  }
 
   let body: unknown;
   try {
@@ -156,8 +161,13 @@ export async function POST(req: NextRequest) {
   );
   void sendAdminNotificationEmail(
     `New bespoke request ${requestNumber}`,
-    `<p>${d.name} — ${d.email}</p><p>${d.description}</p>`,
+    // Visitor text: escaped, since admins preview this mail in the outbox.
+    `<p>${escapeHtml(d.name)} — ${escapeHtml(d.email)}</p><p>${escapeHtml(d.description)}</p>`,
   );
 
   return NextResponse.json({ success: true, requestNumber });
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }

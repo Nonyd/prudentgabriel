@@ -182,7 +182,7 @@ function LoginForm() {
         hardNavigate("/reset-password?required=true");
         return;
       }
-      hardNavigate(destinationAfterCustomerSignIn(session.user, callbackUrl?.startsWith("/") ? callbackUrl : "/account"));
+      hardNavigate(destinationAfterCustomerSignIn(session.user, callbackUrl ?? "/account"));
     } catch {
       setError("root", { message: "We could not reach the server. Please check your connection and try again." });
     }

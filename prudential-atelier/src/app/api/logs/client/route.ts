@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  // Silent drop over the limit: the client fires and forgets, a 429 helps no one.
+  const rl = await checkRateLimit(`client-log:${getClientIp(req)}`, 60, 60 * 1000);
+  if (!rl.ok) return NextResponse.json({ ok: true });
+
   let body: unknown;
   try {
     body = await req.json();

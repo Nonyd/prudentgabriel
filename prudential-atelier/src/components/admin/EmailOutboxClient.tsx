@@ -192,7 +192,13 @@ export function EmailOutboxClient() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setPreview(null)}>
           <div className="max-h-[90vh] w-full max-w-2xl overflow-auto bg-white p-4" onClick={(e) => e.stopPropagation()}>
             <p className="mb-3 font-display text-lg">{preview.subject}</p>
-            <iframe title="Email preview" className="h-[70vh] w-full border border-border" srcDoc={preview.html} />
+            <iframe
+              title="Email preview"
+              // Stored mail can carry text from public forms: render it with no script and no same-origin access.
+              sandbox=""
+              className="h-[70vh] w-full border border-border"
+              srcDoc={preview.html}
+            />
             <button className="mt-3 text-13px underline" type="button" onClick={() => setPreview(null)}>
               Close
             </button>

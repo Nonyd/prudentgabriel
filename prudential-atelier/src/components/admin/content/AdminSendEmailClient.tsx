@@ -412,7 +412,7 @@ export function AdminSendEmailClient({
               Close
             </button>
           </div>
-          <iframe title="Email preview" className="h-[640px] w-full" srcDoc={previewHtml} />
+          <iframe title="Email preview" sandbox="" className="h-[640px] w-full" srcDoc={previewHtml} />
         </div>
       ) : null}
 

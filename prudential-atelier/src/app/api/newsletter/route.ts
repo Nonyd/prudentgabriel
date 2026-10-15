@@ -3,12 +3,16 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { ensureEmailPreference, normalizeEmail } from "@/lib/email-consent";
 import { awardNewsletterPoints } from "@/lib/points";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
   email: z.string().email(),
 });
 
 export async function POST(req: NextRequest) {
+  const limited = await rateLimitOr429(req, "newsletter", 10, 60 * 60 * 1000);
+  if (limited) return limited;
+
   const json = await req.json().catch(() => null);
   const parsed = bodySchema.safeParse(json);
   if (!parsed.success) {
@@ -18,16 +22,17 @@ export async function POST(req: NextRequest) {
   const email = normalizeEmail(parsed.data.email);
 
   try {
-    await prisma.newsletterSubscriber.upsert({
+    // An anonymous POST must not undo someone's unsubscribe (anyone can type
+    // any address). Existing rows are left as they are; the reply is the same.
+    const existing = await prisma.newsletterSubscriber.findUnique({
       where: { email },
-      create: { email },
-      update: { unsubscribedAt: null },
+      select: { unsubscribedAt: true },
     });
+    if (existing?.unsubscribedAt) return NextResponse.json({ success: true });
+    if (!existing) {
+      await prisma.newsletterSubscriber.upsert({ where: { email }, create: { email }, update: {} });
+    }
     await ensureEmailPreference(email);
-    await prisma.emailPreference.updateMany({
-      where: { email, unsubscribedAt: { not: null } },
-      data: { unsubscribedAt: null },
-    });
     const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
     if (user) await awardNewsletterPoints(user.id);
   } catch {

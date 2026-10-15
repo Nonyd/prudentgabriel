@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PaymentGateway, PaymentPurpose, PaymentStatus } from "@prisma/client";
+import { PaymentGateway, PaymentPurpose, PaymentStatus, Prisma } from "@prisma/client";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { fulfillPaidOrder } from "@/lib/order-payment";
@@ -18,7 +18,6 @@ import {
   toNumber,
 } from "@/lib/payments/ledger";
 import { rtwHasOutstandingBalance } from "@/lib/payments/rtw-totals";
-import { generatePaymentReference } from "@/lib/payments/index";
 import { feeShortfallWithinTolerance, resolveBankAccount, type BusinessLineCode } from "@/lib/payments/bank-account";
 import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
 
@@ -204,31 +203,57 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     });
     if (blocked) return blocked;
     const followUp = rtwHasOutstandingBalance(order);
-    const ref = followUp ? generatePaymentReference("BAL") : order.paymentRef ?? order.orderNumber;
-    await fulfillPaidOrder({
-      orderId: order.id,
-      paymentRef: ref,
-      gateway: PaymentGateway.BANK_TRANSFER,
-    });
+    // Deterministic per balance being settled: two concurrent confirms of the same
+    // balance share one reference, so the second hits the existing/unique path instead
+    // of recording the money twice. amountPaid moves once it lands, so a later balance
+    // (e.g. a new shipping quote) gets a fresh reference.
+    const ref = followUp
+      ? `PA-BAL-${order.orderNumber}-${Math.round((order.amountPaid ?? 0) * 100)}`
+      : order.paymentRef ?? order.orderNumber;
 
-    const clientId = await resolveClientId({
-      userId: order.userId,
-      email: order.guestEmail,
-    });
-    const existingLedger = await prisma.payment.findUnique({ where: { reference: ref } });
-    if (!existingLedger) {
-      await appendPayment({
-        reference: ref,
-        amount: order.total,
-        method: gatewayToPaymentMethod(PaymentGateway.BANK_TRANSFER),
-        status: PaymentStatus.CONFIRMED,
-        purpose: PaymentPurpose.RTW_ORDER,
-        receiptUrl: order.paymentReceiptUrl,
+    try {
+      const fulfilled = await fulfillPaidOrder({
         orderId: order.id,
-        clientId,
-        confirmedById: adminId,
-        confirmedAt: new Date(),
+        paymentRef: ref,
+        gateway: PaymentGateway.BANK_TRANSFER,
       });
+      if (!fulfilled) {
+        return NextResponse.json(
+          {
+            error:
+              "This order could not be marked paid — it is no longer awaiting payment (it may have expired, failed or been cancelled). Nothing was recorded and the client was not emailed.",
+          },
+          { status: 409 },
+        );
+      }
+
+      const clientId = await resolveClientId({
+        userId: order.userId,
+        email: order.guestEmail,
+      });
+      const existingLedger = await prisma.payment.findUnique({ where: { reference: ref } });
+      if (!existingLedger) {
+        await appendPayment({
+          reference: ref,
+          amount: order.total,
+          method: gatewayToPaymentMethod(PaymentGateway.BANK_TRANSFER),
+          status: PaymentStatus.CONFIRMED,
+          purpose: PaymentPurpose.RTW_ORDER,
+          receiptUrl: order.paymentReceiptUrl,
+          orderId: order.id,
+          clientId,
+          confirmedById: adminId,
+          confirmedAt: new Date(),
+        });
+      }
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        return NextResponse.json(
+          { error: "This payment has already been confirmed." },
+          { status: 409 },
+        );
+      }
+      throw e;
     }
 
     const email = order.guestEmail ?? (await prisma.user.findUnique({ where: { id: order.userId ?? "" }, select: { email: true } }))?.email;

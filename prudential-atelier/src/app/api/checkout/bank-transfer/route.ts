@@ -13,6 +13,7 @@ import { canAcceptRtwPayment } from "@/lib/payments/rtw-totals";
 import { prepareRtwPaymentAttempt } from "@/lib/checkout-reservations";
 import { receiptMediaUrlSchema } from "@/lib/media/stored-url";
 import { rtwGatewayEmail, rtwGatewayName } from "@/lib/payments/payer-email";
+import { rateLimitOr429 } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
   orderId: z.string().min(1),
@@ -21,6 +22,9 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const limited = await rateLimitOr429(req, "bank-transfer-receipt", 10, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const session = await auth();
   let body: unknown;
   try {
@@ -44,19 +48,8 @@ export async function POST(req: NextRequest) {
   if (!order) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
-  if (order.paymentGateway !== PaymentGateway.BANK_TRANSFER) {
-    await prisma.order.update({
-      where: { id: order.id },
-      data: { paymentGateway: PaymentGateway.BANK_TRANSFER },
-    });
-  }
-  if (!canAcceptRtwPayment(order)) {
-    return NextResponse.json({ error: "Order is not awaiting payment" }, { status: 400 });
-  }
 
-  const prep = await prepareRtwPaymentAttempt(order.id);
-  if (prep.error) return NextResponse.json({ error: prep.error }, { status: 400 });
-
+  // Ownership first: nothing about the order changes until we know it is hers.
   if (order.userId) {
     if (session?.user?.id !== order.userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -67,6 +60,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
   }
+
+  if (!canAcceptRtwPayment(order)) {
+    return NextResponse.json({ error: "Order is not awaiting payment" }, { status: 400 });
+  }
+  if (order.paymentGateway !== PaymentGateway.BANK_TRANSFER) {
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { paymentGateway: PaymentGateway.BANK_TRANSFER },
+    });
+  }
+
+  const prep = await prepareRtwPaymentAttempt(order.id);
+  if (prep.error) return NextResponse.json({ error: prep.error }, { status: 400 });
 
   await prisma.order.update({
     where: { id: order.id },

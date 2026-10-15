@@ -12,6 +12,7 @@ import { sendPaymentConfirmedEmail } from "@/lib/email";
 import { logActivity } from "@/lib/logger";
 import { getStripeSecret } from "@/lib/payments/config";
 import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
+import { atelierChargeAmountForeign, asShopPayCurrency, lockedFxFromAtelier } from "@/lib/atelier-fx";
 
 function redirectSuccess(appUrl: string, orderId: string, reference: string) {
   return NextResponse.redirect(
@@ -73,6 +74,26 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ orderId: st
 
   const stored = parseBespokePaymentRef(order.paymentRef);
   const amountNGN = stored.amountNGN ?? order.balance;
+  // Only the payment this order last started can settle it. Without a stored
+  // reference there is nothing to match, so nothing is credited.
+  if (!stored.reference) return redirectFailed(appUrl, orderId, "");
+
+  /** The PSP's charge must cover what this payment was started for, in its own currency. */
+  const coversCharge = (currency: string, paid: number): boolean => {
+    const cur = currency.trim().toUpperCase();
+    if (cur === "NGN") return paid + 0.01 >= amountNGN;
+    const shop = asShopPayCurrency(cur);
+    if (!shop || shop === "NGN") return false;
+    const expected = atelierChargeAmountForeign({
+      amountNGN,
+      totalNGN: order.totalAmount,
+      currency: shop,
+      fx: lockedFxFromAtelier(order),
+      fxUsdAmountLocked: order.fxUsdAmountLocked,
+      fxGbpAmountLocked: order.fxGbpAmountLocked,
+    });
+    return paid + 0.01 >= expected;
+  };
 
   try {
     if (gateway === "PAYSTACK") {
@@ -85,29 +106,15 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ orderId: st
         if (metaId && metaId !== orderId) {
           return redirectFailed(appUrl, orderId, reference);
         }
-        if (stored.reference && stored.reference !== result.reference) {
+        if (stored.reference !== result.reference || !coversCharge(result.currency, result.amount / 100)) {
           return redirectFailed(appUrl, orderId, reference);
         }
-        const pspCur = result.currency.trim().toUpperCase();
-        if (pspCur === "NGN") {
-          const paidNGN = result.amount / 100;
-          if (paidNGN + 0.01 < amountNGN) {
-            return redirectFailed(appUrl, orderId, reference);
-          }
-          await completeBespokePayment({
-            orderId,
-            paymentRef: reference,
-            amountNGN: Math.min(paidNGN, amountNGN),
-            gateway: PaymentGateway.PAYSTACK,
-          });
-        } else {
-          await completeBespokePayment({
-            orderId,
-            paymentRef: reference,
-            amountNGN,
-            gateway: PaymentGateway.PAYSTACK,
-          });
-        }
+        await completeBespokePayment({
+          orderId,
+          paymentRef: result.reference,
+          amountNGN,
+          gateway: PaymentGateway.PAYSTACK,
+        });
         return redirectSuccess(appUrl, orderId, reference);
       }
       return redirectFailed(appUrl, orderId, reference);
@@ -122,14 +129,13 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ orderId: st
         if (result.meta?.orderId && result.meta.orderId !== orderId) {
           return redirectFailed(appUrl, orderId, result.txRef);
         }
-        const paid = result.amount;
-        if (result.currency.toUpperCase() === "NGN" && paid + 0.01 < amountNGN) {
+        if (result.txRef !== stored.reference || !coversCharge(result.currency, result.amount)) {
           return redirectFailed(appUrl, orderId, result.txRef);
         }
         await completeBespokePayment({
           orderId,
           paymentRef: result.txRef,
-          amountNGN: result.currency.toUpperCase() === "NGN" ? Math.min(paid, amountNGN) : amountNGN,
+          amountNGN,
           gateway: PaymentGateway.FLUTTERWAVE,
         });
         return redirectSuccess(appUrl, orderId, result.txRef);
@@ -143,16 +149,17 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ orderId: st
 
       const result = await verifyMonnify(reference);
       if (result.status === "PAID" || result.status === "OVERPAID" || result.status === "PAID_FULL") {
-        if (stored.reference && stored.reference !== result.paymentReference && stored.reference !== reference) {
+        // The reference asked about must be this order's, not merely one the PSP echoes back.
+        if (reference !== stored.reference || result.paymentReference !== stored.reference) {
           return redirectFailed(appUrl, orderId, reference);
         }
-        if (result.amountPaid + 0.01 < amountNGN) {
+        if (!coversCharge("NGN", result.amountPaid)) {
           return redirectFailed(appUrl, orderId, reference);
         }
         await completeBespokePayment({
           orderId,
           paymentRef: reference,
-          amountNGN: Math.min(result.amountPaid, amountNGN),
+          amountNGN,
           gateway: PaymentGateway.MONNIFY,
         });
         return redirectSuccess(appUrl, orderId, reference);
@@ -167,7 +174,12 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ orderId: st
 
       const stripe = new Stripe(key);
       const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
-      if (intent.status === "succeeded") {
+      const intentOk =
+        intent.status === "succeeded" &&
+        intent.id === stored.reference &&
+        intent.metadata?.bespokeOrderId === orderId &&
+        coversCharge(intent.currency, (intent.amount_received ?? 0) / 100);
+      if (intentOk) {
         await completeBespokePayment({
           orderId,
           paymentRef: paymentIntentId,

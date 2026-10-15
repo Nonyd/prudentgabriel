@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { PaymentStatus } from "@prisma/client";
+import { PaymentStatus, PointsType } from "@prisma/client";
 import { z } from "zod";
 import { getSetting } from "@/lib/settings";
 import { awardReviewPoints } from "@/lib/points";
@@ -69,14 +69,6 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ slug: stri
 
   const { rating, title, body } = parsed.data;
 
-  const duplicate = await prisma.review.findFirst({
-    where: { userId, productId: product.id },
-    select: { id: true },
-  });
-  if (duplicate) {
-    return NextResponse.json({ error: "You have already reviewed this product" }, { status: 409 });
-  }
-
   const orderItem = await prisma.orderItem.findFirst({
     where: {
       productId: product.id,
@@ -94,7 +86,16 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ slug: stri
   const pointsAward = Math.max(0, parseInt(pointsRaw ?? "50", 10) || 0);
 
   let pointsGranted = 0;
+  // Serialize this user's review submissions (advisory lock held until commit)
+  // so parallel POSTs cannot each pass the duplicate check and each earn points.
   const review = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`review:${userId}`}))`;
+    const duplicate = await tx.review.findFirst({
+      where: { userId, productId: product.id },
+      select: { id: true },
+    });
+    if (duplicate) return null;
+
     const r = await tx.review.create({
       data: {
         userId,
@@ -108,11 +109,19 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ slug: stri
       },
     });
 
-    if (pointsAward > 0) {
+    // Points once per (user, product), even if an earlier review was deleted.
+    const alreadyAwarded = await tx.pointsTransaction.findFirst({
+      where: { userId, type: PointsType.EARNED_REVIEW, description: { contains: `(${product.id})` } },
+      select: { id: true },
+    });
+    if (pointsAward > 0 && !alreadyAwarded) {
       pointsGranted = await awardReviewPoints(userId, pointsAward, product.id, tx);
     }
     return r;
   });
+  if (!review) {
+    return NextResponse.json({ error: "You have already reviewed this product" }, { status: 409 });
+  }
 
   notifyReviewSubmitted({
     reviewId: review.id,

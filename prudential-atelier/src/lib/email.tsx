@@ -1493,8 +1493,8 @@ export async function sendAdminConsultationNotification(params: {
       : "";
   const inner = `
     <p><strong>#${params.bookingNumber}</strong>${tag}</p>
-    <p>Client: ${params.clientName} &lt;${params.clientEmail}&gt;</p>
-    <p>Consultant: ${params.consultantName}</p>
+    <p>Client: ${escapeHtml(params.clientName)} &lt;${escapeHtml(params.clientEmail)}&gt;</p>
+    <p>Consultant: ${escapeHtml(params.consultantName)}</p>
     <p>${params.sessionTypeLabel} · ${params.deliveryModeLabel}</p>
     ${pref}
     <p><a href="${getPublicAppUrl()}/admin/consultations">Open admin</a></p>
@@ -1617,10 +1617,10 @@ export async function sendJobApplicationAdminEmail(params: {
     `New application: ${params.jobTitle} — ${params.name}`,
     `
       <p><strong>New job application received.</strong></p>
-      <p><strong>Position:</strong> ${params.jobTitle}</p>
-      <p><strong>Applicant:</strong> ${params.name}</p>
-      <p><strong>Email:</strong> ${params.email}</p>
-      <p><strong>Phone:</strong> ${params.phone}</p>
+      <p><strong>Position:</strong> ${escapeHtml(params.jobTitle)}</p>
+      <p><strong>Applicant:</strong> ${escapeHtml(params.name)}</p>
+      <p><strong>Email:</strong> ${escapeHtml(params.email)}</p>
+      <p><strong>Phone:</strong> ${escapeHtml(params.phone)}</p>
       <p><strong>Experience:</strong> ${exp}</p>
       <p><a href="${reviewUrl}">Review application</a></p>
     `,

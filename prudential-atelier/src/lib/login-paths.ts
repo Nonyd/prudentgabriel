@@ -33,6 +33,25 @@ export function safeLoginNext(value: unknown, fallback = "/auth/login"): string 
   return typeof value === "string" && LOGIN_AFTER_RESET.has(value) ? value : fallback;
 }
 
+/**
+ * A `callbackUrl` is followed with window.location after sign-in, so only a path
+ * on this site is allowed: never `javascript:`, another host, or `//host`.
+ */
+export function safeCallbackPath(value: unknown, fallback = "/account"): string {
+  if (typeof value !== "string") return fallback;
+  const v = value.trim();
+  if (!v.startsWith("/") || v.startsWith("//") || v.startsWith("/\\")) return fallback;
+  // Control characters and backslashes can be normalised by browsers into "//host".
+  if (/[\u0000-\u001f\u007f\\]/.test(v)) return fallback;
+  try {
+    const url = new URL(v, "https://same.origin");
+    if (url.origin !== "https://same.origin") return fallback;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return fallback;
+  }
+}
+
 function isDefaultCustomerHome(path: string): boolean {
   return path === "/account" || path === "/account/";
 }
@@ -45,7 +64,7 @@ export function destinationAfterCustomerSignIn(
   user: LoginPathUser | null | undefined,
   callbackUrl: string,
 ): string {
-  const trimmed = callbackUrl.trim() || "/account";
+  const trimmed = safeCallbackPath(callbackUrl);
   if (userHasAdminAccess(user) && isDefaultCustomerHome(trimmed)) return "/admin";
   if (
     (user?.isStaff === true || user?.role === "STAFF") &&
