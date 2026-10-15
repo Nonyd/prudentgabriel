@@ -24,7 +24,7 @@ export default async function CareersPage() {
           className="mt-3 text-center text-choc"
           style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2.5rem, 6vw, 56px)" }}
         >
-          Join the house
+          Join Prudent Gabriel
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-center font-body text-base italic text-text-light">
           We are always looking for exceptional people who love what they do.

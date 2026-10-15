@@ -23,7 +23,7 @@ function main() {
   assert(RTW_EXCLUDE_CATEGORY_QUERY.includes("KIDDIES"), "RTW listing excludes kids");
   assert(RTW_EXCLUDE_CATEGORY_QUERY.includes("BRIDAL"), "RTW listing excludes bridal");
   assert(
-    SHOP_HERO_SUBTITLE.includes("Everything the house sells"),
+    SHOP_HERO_SUBTITLE.includes("Everything Prudent Gabriel sells"),
     "shop hero says it is the whole house, not a second RTW aisle",
   );
   assert(SHOP_HERO_SUBTITLE.includes("accessories"), "shop copy names accessories with the rest of the house");

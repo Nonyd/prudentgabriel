@@ -15,13 +15,14 @@ export default function PasswordResetEmail({ resetUrl }: PasswordResetEmailProps
         Reset your password
       </Heading>
       <Text style={{ fontSize: 16, color: "#2C241C" }}>
-        We received a request to reset your {CUSTOMER_HOUSE_NAME} password.
+        We received a request to reset your {CUSTOMER_HOUSE_NAME} password. You can choose a new one using the
+        button below.
       </Text>
       <EmailButton href={resetUrl}>Reset password</EmailButton>
       <Text style={{ marginTop: 24, fontSize: 14, color: "#444" }}>This link expires in 1 hour.</Text>
-      <Text style={{ fontSize: 14, color: "#444" }}>If you didn&apos;t request this, you can safely ignore this email.</Text>
+      <Text style={{ fontSize: 14, color: "#444" }}>If you did not request this, you can safely ignore this email.</Text>
       <Text style={{ marginTop: 16, fontSize: 13, color: "#666" }}>
-        For your security, never share this link with anyone.
+        For your security, please never share this link with anyone.
       </Text>
     </EmailLayout>
   );

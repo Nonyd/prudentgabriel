@@ -11,7 +11,7 @@ import { getCMSContent } from "@/lib/cms";
 import { getPageFieldKeys } from "@/lib/cms-config";
 import { sanitizeAttribution } from "@/lib/analytics/attribution";
 import { getOfferingTypeConfig, isOfferingTypeVirtual, type OfferingTypeKey } from "@/lib/consultation-types";
-import { findBookableEnquiry } from "@/lib/consultation-enquiry";
+import { RESUMABLE_BOOKING_WHERE, findBookableEnquiry } from "@/lib/consultation-enquiry";
 import { INVITATION_ONLY_MESSAGE, consultationTermsText, enquiryAnswerLines } from "@/lib/consultation-enquiry-shared";
 import { createLegalTermsSnapshot } from "@/lib/legal-tokens";
 import { rateLimitOr429 } from "@/lib/rate-limit";
@@ -138,53 +138,70 @@ export async function POST(req: NextRequest) {
   const referenceImages = Array.from(new Set([...enquiry.moodboardImages, ...data.referenceImages])).slice(0, 10);
 
   let booking;
+  let resumed = false;
   try {
-    booking = await prisma.$transaction(async (tx) => {
-      const created = await tx.consultationBooking.create({
-        data: {
-          bookingNumber: generateBookingNumber(),
-          offeringId: offering.id,
-          consultantId: offering.consultantId,
-          // Attach the signed-in account only when it is hers. A booking link opened in a
-          // browser signed in as staff (or anyone else) must not file her booking under them;
-          // payment onboards her by her own email instead.
-          userId:
-            session?.user?.id &&
-            session.user.email?.trim().toLowerCase() === enquiry.clientEmail.trim().toLowerCase()
-              ? session.user.id
-              : null,
-          clientName: enquiry.clientName,
-          clientEmail: enquiry.clientEmail,
-          clientPhone: data.clientPhone?.trim() || enquiry.clientPhone,
-          clientCountry: data.clientCountry,
-          clientInstagram: data.clientInstagram?.trim() || null,
-          occasion: enquiry.eventType,
-          description,
-          referenceImages,
-          preferredDate1: data.preferredDate1,
-          preferredDate2: data.preferredDate2,
-          preferredDate3: data.preferredDate3,
-          confirmedDate: null,
-          confirmedTime: null,
-          offeringType: data.offeringType,
-          virtualPlatform: data.virtualPlatform ?? null,
-          meetingPlatform: data.virtualPlatform
-            ? data.virtualPlatform.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+    ({ booking, resumed } = await prisma.$transaction(async (tx) => {
+      // The fields chosen on this visit. A resumed booking takes them over in full.
+      const fields = {
+        offeringId: offering.id,
+        consultantId: offering.consultantId,
+        // Attach the signed-in account only when it is hers. A booking link opened in a
+        // browser signed in as staff (or anyone else) must not file her booking under them;
+        // payment onboards her by her own email instead.
+        userId:
+          session?.user?.id &&
+          session.user.email?.trim().toLowerCase() === enquiry.clientEmail.trim().toLowerCase()
+            ? session.user.id
             : null,
-          // Frozen here: payment, invoices and reports read this, never the live price.
-          feeNGN,
-          ...charge.data,
-          currency: data.currency,
-          paymentGateway,
-          paymentRef: paymentRef ?? null,
-          paymentStatus: PaymentStatus.PENDING,
-          status: ConsultationStatus.PENDING_PAYMENT,
-          attribution: sanitizeAttribution(data.attribution) ?? undefined,
-          termsAcknowledgedAt: now,
-          termsText,
-          legalTermsVersion: legalTerms.version,
-          legalTermsSnapshot: legalTerms as unknown as Prisma.InputJsonValue,
-        },
+        clientName: enquiry.clientName,
+        clientEmail: enquiry.clientEmail,
+        clientPhone: data.clientPhone?.trim() || enquiry.clientPhone,
+        clientCountry: data.clientCountry,
+        clientInstagram: data.clientInstagram?.trim() || null,
+        occasion: enquiry.eventType,
+        description,
+        referenceImages,
+        preferredDate1: data.preferredDate1,
+        preferredDate2: data.preferredDate2,
+        preferredDate3: data.preferredDate3,
+        confirmedDate: null,
+        confirmedTime: null,
+        offeringType: data.offeringType,
+        virtualPlatform: data.virtualPlatform ?? null,
+        meetingPlatform: data.virtualPlatform
+          ? data.virtualPlatform.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+          : null,
+        // Frozen here: payment, invoices and reports read this, never the live price.
+        feeNGN,
+        ...charge.data,
+        currency: data.currency,
+        paymentGateway,
+        paymentRef: paymentRef ?? null,
+        paymentStatus: PaymentStatus.PENDING,
+        status: ConsultationStatus.PENDING_PAYMENT,
+        attribution: sanitizeAttribution(data.attribution) ?? undefined,
+        termsAcknowledgedAt: now,
+        termsText,
+        legalTermsVersion: legalTerms.version,
+        legalTermsSnapshot: legalTerms as unknown as Prisma.InputJsonValue,
+      } satisfies Omit<Prisma.ConsultationBookingUncheckedCreateInput, "bookingNumber">;
+
+      if (enquiry.bookingId) {
+        // The client came back after leaving payment halfway: same booking, new choices,
+        // new payment method. Re-checked here so a payment landing meanwhile wins.
+        const took = await tx.consultationBooking.updateMany({
+          where: { id: enquiry.bookingId, ...RESUMABLE_BOOKING_WHERE },
+          data: fields,
+        });
+        if (took.count !== 1) throw new Error("ENQUIRY_ALREADY_BOOKED");
+        return {
+          booking: await tx.consultationBooking.findUniqueOrThrow({ where: { id: enquiry.bookingId } }),
+          resumed: true,
+        };
+      }
+
+      const created = await tx.consultationBooking.create({
+        data: { bookingNumber: generateBookingNumber(), ...fields },
       });
       // One booking per invitation, even if the link is submitted twice at once.
       const claimed = await tx.consultationEnquiry.updateMany({
@@ -192,8 +209,8 @@ export async function POST(req: NextRequest) {
         data: { status: ConsultationEnquiryStatus.BOOKED, bookingId: created.id },
       });
       if (claimed.count !== 1) throw new Error("ENQUIRY_ALREADY_BOOKED");
-      return created;
-    });
+      return { booking: created, resumed: false };
+    }));
   } catch (e) {
     if (e instanceof Error && e.message === "ENQUIRY_ALREADY_BOOKED") {
       return NextResponse.json({ error: "This booking link has already been used." }, { status: 409 });
@@ -201,7 +218,8 @@ export async function POST(req: NextRequest) {
     throw e;
   }
 
-  void notifyNewConsultation(booking);
+  // A resumed booking was already announced the first time round.
+  if (!resumed) void notifyNewConsultation(booking);
 
   return NextResponse.json({
     bookingId: booking.id,

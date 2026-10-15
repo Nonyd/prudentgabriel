@@ -51,8 +51,9 @@ export function notifyStaffStageAssigned(params: {
       orderRef: params.orderRef,
       outfitName: params.outfitName,
       deliveryDate: params.deliveryDate,
-    }).catch(() => {});
-  })().catch(() => {});
+      orderPath: `/staff/orders/${params.orderId}`,
+    }).catch((e) => console.warn("[notify] stage assignment email", e));
+  })().catch((e) => console.warn("[notify] stage assigned", e));
 }
 
 export function notifyStaffOrderUpdate(params: {
@@ -69,5 +70,5 @@ export function notifyStaffOrderUpdate(params: {
     message: params.message,
     link: `/staff/orders/${params.orderId}`,
     entityId: params.orderId,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] staff order update", e));
 }

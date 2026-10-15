@@ -42,6 +42,9 @@ export type PublicConsultationDto = {
   consultantName: string | null;
   confirmedDate: string | null;
   confirmedTime: string | null;
+  /** For the "how to prepare" notes: in the atelier or on a call, and how long. */
+  isVirtual: boolean;
+  durationMinutes: number;
 };
 
 export function toPublicConsultationDto(booking: {
@@ -51,10 +54,17 @@ export function toPublicConsultationDto(booking: {
   clientName: string;
   confirmedDate: Date | null;
   confirmedTime: string | null;
-  offering?: { sessionType?: string | null } | null;
+  offeringType?: string | null;
+  offering?: { sessionType?: string | null; deliveryMode?: string | null; durationMinutes?: number | null } | null;
   consultant?: { name?: string | null } | null;
 }): PublicConsultationDto {
+  // Offering types and delivery modes both name the virtual ones VIRTUAL_*.
+  const isVirtual = Boolean(
+    booking.offeringType?.startsWith("VIRTUAL") || booking.offering?.deliveryMode?.startsWith("VIRTUAL"),
+  );
   return {
+    isVirtual,
+    durationMinutes: booking.offering?.durationMinutes ?? 90,
     bookingNumber: booking.bookingNumber,
     status: booking.status,
     paymentStatus: booking.paymentStatus,

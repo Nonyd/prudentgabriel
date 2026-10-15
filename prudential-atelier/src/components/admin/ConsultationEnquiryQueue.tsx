@@ -48,7 +48,12 @@ type Enquiry = {
   decidedBy: string | null;
   publicTokenExpiresAt: string | null;
   bookingId: string | null;
-  booking: { bookingNumber: string } | null;
+  booking: {
+    bookingNumber: string;
+    status: string;
+    paymentStatus: string;
+    paymentReceiptUrl: string | null;
+  } | null;
   createdAt: string;
 };
 
@@ -115,9 +120,17 @@ function DecisionForm({
     }
   }
 
-  if (enquiry.status === "APPROVED") {
+  // Same rule as RESUMABLE_BOOKING_WHERE: booked from the link but never paid.
+  const unpaidBooking =
+    enquiry.status === "BOOKED" &&
+    enquiry.booking?.status === "PENDING_PAYMENT" &&
+    (enquiry.booking.paymentStatus === "PENDING" || enquiry.booking.paymentStatus === "FAILED") &&
+    !enquiry.booking.paymentReceiptUrl;
+
+  if (enquiry.status === "APPROVED" || unpaidBooking) {
     return (
       <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-text-mid">
+        {unpaidBooking ? <span className="text-ink">Not paid yet — the client can reopen the link and pay another way.</span> : null}
         <span>
           Link valid until{" "}
           {enquiry.publicTokenExpiresAt ? new Date(enquiry.publicTokenExpiresAt).toLocaleDateString("en-GB") : "—"}

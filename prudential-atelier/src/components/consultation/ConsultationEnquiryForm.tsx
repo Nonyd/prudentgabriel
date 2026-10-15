@@ -5,6 +5,8 @@ import clsx from "clsx";
 import toast from "react-hot-toast";
 import {
   ENQUIRY_FITTING_MODES,
+  FITTING_IN_PERSON_GUIDANCE,
+  FITTING_MODEL_NOTE,
   ENQUIRY_OCCASIONS,
   MAX_DRESSES,
   OCCASION_DETAILS_KEY,
@@ -51,7 +53,6 @@ export function ConsultationEnquiryForm({
   const [presentCountry, setPresentCountry] = useState("");
   const [dressCount, setDressCount] = useState("1");
   const [fittingMode, setFittingMode] = useState("");
-  const [fittingNote, setFittingNote] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
   const [colourPalette, setColourPalette] = useState("");
   const [swatches, setSwatches] = useState<string[]>([]);
@@ -141,7 +142,6 @@ export function ConsultationEnquiryForm({
           presentState: presentState || undefined,
           presentCountry,
           fittingMode,
-          fittingNote: fittingNote || undefined,
           deliveryDate,
           colourPalette: [swatches.join(", "), colourPalette.trim()].filter(Boolean).join(" · ") || undefined,
           moodboardImages: images,
@@ -339,7 +339,11 @@ export function ConsultationEnquiryForm({
         </div>
         <fieldset>
           <legend className={label}>Fitting availability</legend>
-          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <p className="mt-2 font-body text-sm leading-6 text-text-mid">
+            Kindly confirm your availability to attend your fittings physically by selecting Yes or No.
+          </p>
+          <p className="mt-2 font-body text-sm leading-6 text-text-mid">{FITTING_IN_PERSON_GUIDANCE}</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
             {ENQUIRY_FITTING_MODES.map((m) => (
               <label key={m.id} className={choice(fittingMode === m.id)}>
                 <input
@@ -351,18 +355,15 @@ export function ConsultationEnquiryForm({
                   className="accent-choc"
                   required
                 />
-                <span className="font-body text-sm text-text-mid">{m.label}</span>
+                <span className="font-body text-sm text-text-mid">{m.answer}</span>
               </label>
             ))}
           </div>
-          <input
-            className="input-field mt-3 w-full"
-            aria-label="When you are available for fittings (optional)"
-            placeholder="When you are available (optional), e.g. weekends in Lagos until December"
-            value={fittingNote}
-            onChange={(e) => setFittingNote(e.target.value)}
-            maxLength={500}
-          />
+          {fittingMode === "MODEL" ? (
+            <p className="mt-3 border-l-2 border-gold pl-3 font-body text-sm leading-6 text-text-mid" role="status">
+              {FITTING_MODEL_NOTE}
+            </p>
+          ) : null}
         </fieldset>
         <fieldset>
           <legend className={label}>Colour palette (optional)</legend>
@@ -441,7 +442,7 @@ export function ConsultationEnquiryForm({
           {submitting ? "Sending…" : "Send enquiry"}
         </button>
         <p className="mx-auto mt-4 max-w-md font-body text-xs leading-relaxed text-text-light">
-          Nothing is booked or charged yet. If the house can take your commission, we email you a link to choose a
+          Nothing is booked or charged yet. If Prudent Gabriel can take your commission, we email you a link to choose a
           consultation and propose dates.
         </p>
       </div>

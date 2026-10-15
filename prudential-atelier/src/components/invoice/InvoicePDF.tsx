@@ -260,7 +260,7 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfModel }) {
             <Text style={styles.termsText}>
               The quoted price on this invoice expired on{" "}
               {data.expiresAt ? data.expiresAt.toLocaleDateString("en-GB") : "the stated date"}. Payment is still
-              accepted; the house may honour or revise the figure.
+              accepted; Prudent Gabriel may honour or revise the figure.
             </Text>
           </View>
         ) : null}

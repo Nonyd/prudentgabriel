@@ -381,6 +381,42 @@ export function AdminConsultationDetail({
               Confirm date & time →
             </button>
           ) : null}
+          {isVirtual ? (
+            // Right under the date and time: send the Zoom or Google Meet link from here.
+            <div id="meeting-link" className="scroll-mt-24 rounded-sm border border-sand bg-white/40 p-3">
+              <p className="font-label text-xs text-gold">Meeting link</p>
+              {booking.meetingLinkSentAt ? (
+                <div className="mt-2 space-y-1">
+                  <p className="text-sm text-success">✓ Sent to the client on {formatWatDateTime(booking.meetingLinkSentAt)}</p>
+                  <a href={booking.meetingLink ?? "#"} className="break-all text-sm text-olive underline">
+                    {booking.meetingLink}
+                  </a>
+                </div>
+              ) : booking.confirmedTime ? (
+                <p className="mt-1 text-xs text-text-mid">
+                  Not sent yet. You will be reminded about an hour before the session.
+                </p>
+              ) : null}
+              <label className="mt-3 block text-xs text-text-mid">
+                Google Meet or Zoom link
+                <input
+                  value={linkInput}
+                  onChange={(e) => setLinkInput(e.target.value)}
+                  placeholder="https://meet.google.com/… or https://zoom.us/j/…"
+                  className="mt-1 w-full rounded-sm border border-sand px-3 py-2 text-sm text-ink"
+                />
+              </label>
+              <button
+                type="button"
+                disabled={sendingLink}
+                onClick={() => void sendLink()}
+                className="mt-3 rounded-sm bg-wine px-4 py-2 text-sm text-white disabled:opacity-50"
+              >
+                {sendingLink ? "Sending…" : booking.meetingLinkSentAt ? "Send updated link →" : "Send link to client →"}
+              </button>
+              <p className="mt-2 text-xs text-text-mid">Emails the link to {booking.clientEmail} straight away.</p>
+            </div>
+          ) : null}
           <p className="text-sm text-text-mid">
             Duration: up to {booking.offering?.durationMinutes ?? 45} minutes
           </p>
@@ -425,40 +461,6 @@ export function AdminConsultationDetail({
               {booking.legalTermsVersion ? ` (terms ${booking.legalTermsVersion.slice(0, 10)})` : ""}: “{booking.termsText}”
             </p>
           ) : null}
-        </div>
-      ) : null}
-
-      {isVirtual ? (
-        <div className="glass-opaque p-5">
-          <h3 className="font-label text-gold">Virtual meeting link</h3>
-          {booking.meetingLinkSentAt ? (
-            <div className="mt-3 space-y-2">
-              <p className="text-sm text-success">
-                ✓ Link sent on {formatWatDateTime(booking.meetingLinkSentAt)}
-              </p>
-              <a href={booking.meetingLink ?? "#"} className="break-all text-sm text-olive underline">
-                {booking.meetingLink}
-              </a>
-            </div>
-          ) : null}
-          <label className="mt-4 block text-xs text-text-mid">
-            Paste meeting link
-            <input
-              value={linkInput}
-              onChange={(e) => setLinkInput(e.target.value)}
-              placeholder="https://zoom.us/j/..."
-              className="mt-1 w-full rounded-sm border border-sand px-3 py-2 text-sm text-ink"
-            />
-          </label>
-          <button
-            type="button"
-            disabled={sendingLink}
-            onClick={() => void sendLink()}
-            className="mt-3 rounded-sm bg-wine px-4 py-2 text-sm text-white disabled:opacity-50"
-          >
-            {sendingLink ? "Sending…" : "Send link to client →"}
-          </button>
-          <p className="mt-2 text-xs text-text-mid">This will email the link to {booking.clientEmail}</p>
         </div>
       ) : null}
 

@@ -18,8 +18,11 @@ export default function LoyaltyTierUpgradeEmail({ firstName, newTier, perks }: L
   const tierLabel = TIER_LABELS[newTier];
 
   return (
-    <EmailLayout family="relationship" previewText={`You've reached ${tierLabel} status — ${CUSTOMER_HOUSE_NAME}`}>
-      <Text style={{ fontSize: 16, color: "#333" }}>Congratulations, {firstName}!</Text>
+    <EmailLayout family="relationship" previewText={`You have reached ${tierLabel} status — ${CUSTOMER_HOUSE_NAME}`}>
+      <Text style={{ fontSize: 16, color: "#333" }}>
+        Congratulations, {firstName}! Thank you for being such a treasured part of our story. We are delighted to
+        welcome you to your new tier.
+      </Text>
       <Heading
         as="h1"
         style={{

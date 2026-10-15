@@ -6,6 +6,7 @@ import { fulfillPaidOrder } from "@/lib/order-payment";
 import { notifyPaymentFailed } from "@/lib/notifications";
 import { fulfillPaidConsultationBooking } from "@/lib/consultation-payment";
 import { fulfillPaidBespokeBalance } from "@/lib/bespoke-payment";
+import { notifyBespokeBalancePaid } from "@/lib/bespoke-balance-notify";
 import { markRtwOrderPaymentFailed } from "@/lib/checkout-reservations";
 import {
   expectedPaystackConsultationBind,
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
           );
         }
         if (verified.status === "success") {
-          await fulfillPaidBespokeBalance({
+          const claimed = await fulfillPaidBespokeBalance({
             bespokeRequestId,
             gateway: PaymentGateway.PAYSTACK,
             charge: {
@@ -68,6 +69,12 @@ export async function POST(req: NextRequest) {
               currency: verified.currency,
             },
           });
+          if (claimed) {
+            await notifyBespokeBalancePaid({
+              bespokeRequestId,
+              paymentRef: verified.reference,
+            }).catch((e) => console.warn("[paystack webhook] bespoke notify", e));
+          }
         }
       } else if (isConsultation && bookingId) {
         const booking = await prisma.consultationBooking.findUnique({ where: { id: bookingId } });

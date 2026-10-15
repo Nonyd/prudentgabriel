@@ -13,13 +13,13 @@ export type PointsExpiryEmailProps = {
 
 export default function PointsExpiryEmail({ firstName, points, expiryLabel }: PointsExpiryEmailProps) {
   return (
-    <EmailLayout family="relationship" previewText="Prudent Points expiring soon">
+    <EmailLayout family="relationship" previewText="Some of your Prudent Points expire soon">
       <Heading as="h1" style={{ fontSize: 28, fontWeight: 400, color: "#442913", margin: "0 0 12px" }}>
-        {firstName}, some Prudent Points lapse soon.
+        {firstName}, some of your Prudent Points expire soon.
       </Heading>
       <Text style={{ fontSize: 16, color: "#333", lineHeight: 1.6 }}>
         {points.toLocaleString()} Prudent Points will expire on {expiryLabel}. Every point is worth ₦1 towards a
-        future piece.
+        future piece, and we would love to see you put them towards something special.
       </Text>
       <EmailButton href={`${APP}/account/loyalty`}>View your Prudent Points</EmailButton>
     </EmailLayout>

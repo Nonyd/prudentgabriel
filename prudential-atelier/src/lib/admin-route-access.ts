@@ -265,7 +265,7 @@ export const ADMIN_PAGE_OWNERS: readonly {
   { path: "/admin/alterations", owns: "Alteration tickets", linksTo: "Nav" },
   { path: "/admin/payments", owns: "Payment ledger and transfer confirmation", linksTo: "Nav" },
   { path: "/admin/settings/bank-accounts", owns: "House bank accounts (up to eight)", linksTo: "Nav + Settings hub" },
-  { path: "/admin/reports", owns: "How the house is doing", linksTo: "Nav" },
+  { path: "/admin/reports", owns: "How Prudent Gabriel is doing", linksTo: "Nav" },
   { path: "/admin/reports/ledger", owns: "Accountant ledger", linksTo: "Nav" },
   { path: "/admin/clients", owns: "Client CRM", linksTo: "Nav" },
   { path: "/admin/customers", owns: "Redirect to Clients", linksTo: "/admin/clients" },

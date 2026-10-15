@@ -8,29 +8,32 @@ export const CATALOG_PAGE_SIZE = 16;
 export const RTW_EXCLUDED_CATEGORIES = ["BRIDAL", "KIDDIES", "ACCESSORIES"] as const;
 export const RTW_EXCLUDE_CATEGORY_QUERY = RTW_EXCLUDED_CATEGORIES.join(",");
 
-export const SHOP_HERO_EYEBROW = "THE HOUSE";
+export const SHOP_HERO_EYEBROW = "PRUDENT GABRIEL";
 export const SHOP_HERO_TITLE = "Shop";
 export const SHOP_HERO_SUBTITLE =
-  "Everything the house sells — ready-to-wear, bridal, kids, and accessories.";
+  "Everything Prudent Gabriel sells — ready-to-wear, bridal, kids, and accessories.";
 
-const PREVIOUS_SHOP_HERO_EYEBROW = "THE COLLECTION";
+// Earlier defaults a CMS row may still hold; they upgrade to the current copy.
+const PREVIOUS_SHOP_HERO_EYEBROWS = ["THE COLLECTION", "THE HOUSE"];
 const PREVIOUS_SHOP_HERO_TITLE = "Prudent Gabriel";
 const PREVIOUS_SHOP_HERO_SUBTITLES = [
   "Ready-to-wear, bridal, and atelier couture.",
   "Everything the house sells — ready-to-wear, bridal, and kids. Tap a category to find a dress.",
+  "Everything Prudent Gabriel sells — ready-to-wear, bridal, and kids. Tap a category to find a dress.",
+  "Everything the house sells — ready-to-wear, bridal, kids, and accessories.",
 ];
 
 /** Use new house copy unless CMS was deliberately rewritten. */
 export function shopHeroCopy(stored: { eyebrow?: string; title?: string; subtitle?: string }) {
-  const pick = (value: string | undefined, previous: string, next: string) => {
+  const pick = (value: string | undefined, previous: string[], next: string) => {
     const v = value?.trim();
-    if (!v || v === previous) return next;
+    if (!v || previous.includes(v)) return next;
     return v;
   };
   const storedSubtitle = stored.subtitle?.trim();
   return {
-    eyebrow: pick(stored.eyebrow, PREVIOUS_SHOP_HERO_EYEBROW, SHOP_HERO_EYEBROW),
-    title: pick(stored.title, PREVIOUS_SHOP_HERO_TITLE, SHOP_HERO_TITLE),
+    eyebrow: pick(stored.eyebrow, PREVIOUS_SHOP_HERO_EYEBROWS, SHOP_HERO_EYEBROW),
+    title: pick(stored.title, [PREVIOUS_SHOP_HERO_TITLE], SHOP_HERO_TITLE),
     subtitle:
       !storedSubtitle || PREVIOUS_SHOP_HERO_SUBTITLES.includes(storedSubtitle)
         ? SHOP_HERO_SUBTITLE

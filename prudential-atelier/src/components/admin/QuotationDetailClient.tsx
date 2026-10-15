@@ -91,7 +91,7 @@ function ChangeRequestItem({ row, onReplied }: { row: ChangeRequestRow; onReplie
       {row.response ? (
         <div className="mt-3 border-l-2 border-gold/60 pl-3">
           <p className="font-body text-xs text-text-mid">
-            Replied by {row.respondedBy ?? "the house"}
+            Replied by {row.respondedBy ?? "Prudent Gabriel"}
             {row.respondedAt ? ` · ${formatDate(row.respondedAt)}` : ""}
           </p>
           <p className="mt-1 whitespace-pre-line font-body text-sm text-ink">{row.response}</p>

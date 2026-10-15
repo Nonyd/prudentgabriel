@@ -107,7 +107,7 @@ export default async function AboutPage() {
     [
       ...["about_hero_media_1", "about_hero_media_2", "about_hero_media_3"].map((key) => ({
         url: cmsGet(cms, key, ""),
-        alt: "The house",
+        alt: "Prudent Gabriel",
       })),
       ...galleryLooks,
       { url: storyImage, alt: "The Lagos atelier" },

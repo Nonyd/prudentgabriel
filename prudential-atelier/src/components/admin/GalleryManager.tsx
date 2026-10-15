@@ -176,7 +176,7 @@ function PieceStatus({
           {gaps.placeholder ? (
             <span
               className={cn(flag, "border-[#C53030] bg-[#C53030] text-white")}
-              title="The title, description and price on this piece were invented for review. Replace them with the house's own."
+              title="The title, description and price on this piece were invented for review. Replace them with Prudent Gabriel's own."
             >
               Placeholder · invented, replace
             </span>
@@ -1063,7 +1063,7 @@ export function GalleryManager() {
                 <p className="font-medium uppercase tracking-[0.08em]">Placeholder: invented for review</p>
                 <p className="mt-1">
                   The title, description and price on this piece were made up so the page could be judged. None of
-                  it came from the house. Write the real ones and save: that clears this mark.
+                  it came from Prudent Gabriel. Write the real ones and save: that clears this mark.
                 </p>
                 <label className="mt-2 flex items-center gap-2">
                   <input

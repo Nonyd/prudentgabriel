@@ -67,6 +67,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/scripts/migrate-cloudinary-media.
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/preload-test-env.ts ./scripts/preload-test-env.ts
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/upgrade-capability-tokens.ts ./scripts/upgrade-capability-tokens.ts
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/reencrypt-secrets.ts ./scripts/reencrypt-secrets.ts
+# Copy refreshes for text saved in SiteSetting ("the house" rename, warmer email templates).
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/rename-the-house.ts ./scripts/rename-the-house.ts
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/refresh-email-templates.ts ./scripts/refresh-email-templates.ts
 # Staging only (the entrypoint checks the host): placeholder atelier content.
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/seed-atelier-demo.ts ./scripts/seed-atelier-demo.ts
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/fixture-guard.ts ./scripts/fixture-guard.ts

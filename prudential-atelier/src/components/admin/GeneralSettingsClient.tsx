@@ -259,7 +259,7 @@ export function GeneralSettingsClient() {
             <div className="min-w-0 flex-1">
               <p className="font-sans text-sm font-medium text-ink">Accept new commission enquiries</p>
               <p className="mt-1 font-sans text-xs leading-relaxed text-text-mid">
-                When off, the consultation page says the house isn&apos;t taking new commissions at present
+                When off, the consultation page says Prudent Gabriel isn&apos;t taking new commissions at present
                 and offers the contact page. Booking links already sent keep working, and existing
                 bookings remain viewable and payable. Use it when the diary is full or Mrs. Prudent is away.
               </p>

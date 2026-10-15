@@ -5,6 +5,8 @@ import { createClientNotification } from "@/lib/customer-notifications";
 import { sendLoyaltyTierUpgradeEmail, sendReferralRewardEmail } from "@/lib/email";
 import { getLoyaltyRulePoints, getTierPerks, getTierThresholds, tierFromPoints, TIER_LABELS } from "@/lib/loyalty";
 import { getSetting } from "@/lib/settings";
+import { INTERACTIVE_TX } from "@/lib/prisma-tx";
+import type { LoyaltyTier } from "@prisma/client";
 import {
   addCalendarMonths,
   cashSpendNGN,
@@ -113,7 +115,32 @@ async function maybeUpgradeLoyaltyTier(userId: string, newPointsBalance: number,
     data: { loyaltyTier: newTier, loyaltyPoints: newPointsBalance },
   });
 
-  const user = await db.user.findUnique({
+  // Redeeming or expiring points can drop a tier; that is not news to celebrate.
+  if (TIER_RANK[newTier] <= TIER_RANK[oldTier]) return;
+
+  if (db === prisma) {
+    await announceTierUpgrade(userId, newTier);
+    return;
+  }
+  // Inside a transaction: announce only once it has committed, i.e. the new tier is
+  // visible outside it. A rollback leaves the old tier and nothing is sent.
+  const timer = setTimeout(() => {
+    void (async () => {
+      const committed = await prisma.clientProfile.findUnique({
+        where: { userId },
+        select: { loyaltyTier: true },
+      });
+      if (committed?.loyaltyTier === newTier) await announceTierUpgrade(userId, newTier);
+    })().catch((e) => console.warn("[loyalty] tier upgrade notice", e));
+  }, INTERACTIVE_TX.timeout + 1_000);
+  // Never hold a script or test process open for this.
+  timer.unref?.();
+}
+
+const TIER_RANK: Record<LoyaltyTier, number> = { BRONZE: 0, SILVER: 1, GOLD: 2, PLATINUM: 3 };
+
+async function announceTierUpgrade(userId: string, newTier: LoyaltyTier): Promise<void> {
+  const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { email: true, name: true },
   });
@@ -127,7 +154,7 @@ async function maybeUpgradeLoyaltyTier(userId: string, newPointsBalance: number,
     firstName,
     newTier,
     perks,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[loyalty] tier email", e));
 
   void createClientNotification({
     userId,
@@ -135,7 +162,7 @@ async function maybeUpgradeLoyaltyTier(userId: string, newPointsBalance: number,
     title: `You've reached ${TIER_LABELS[newTier]} status!`,
     message: `Congratulations — you are now a ${TIER_LABELS[newTier]} member.`,
     link: "/account/loyalty",
-  }).catch(() => {});
+  }).catch((e) => console.warn("[loyalty] tier notification", e));
 }
 
 /** Conditional increment. The only writer of User.pointsBalance besides redeem/adjust/expire. */

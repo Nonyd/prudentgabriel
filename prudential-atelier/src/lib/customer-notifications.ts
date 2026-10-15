@@ -84,7 +84,7 @@ export function notifyClientBespokeStageComplete(params: {
       link: `/track/${params.trackingToken}`,
       entityId: params.orderId,
     });
-  })().catch(() => {});
+  })().catch((e) => console.warn("[notify] customer", e));
 }
 
 export function notifyConsultationConfirmed(params: {
@@ -104,7 +104,7 @@ export function notifyConsultationConfirmed(params: {
       link: `/account/consultations`,
       entityId: params.bookingId,
     });
-  })().catch(() => {});
+  })().catch((e) => console.warn("[notify] customer", e));
 }
 
 export function notifyMeetingLinkSent(params: {
@@ -124,7 +124,7 @@ export function notifyMeetingLinkSent(params: {
       link: `/account/consultations`,
       entityId: params.bookingId,
     });
-  })().catch(() => {});
+  })().catch((e) => console.warn("[notify] customer", e));
 }
 
 export function notifyMoodboardReady(params: {
@@ -144,7 +144,7 @@ export function notifyMoodboardReady(params: {
       link: `/account/consultations`,
       entityId: params.bookingId,
     });
-  })().catch(() => {});
+  })().catch((e) => console.warn("[notify] customer", e));
 }
 
 export function notifyInvoiceIssued(params: {
@@ -164,7 +164,7 @@ export function notifyInvoiceIssued(params: {
       link: `/invoice/${params.publicToken}`,
       entityId: params.invoiceId,
     });
-  })().catch(() => {});
+  })().catch((e) => console.warn("[notify] customer", e));
 }
 
 export function notifyQuoteReady(params: {
@@ -184,7 +184,7 @@ export function notifyQuoteReady(params: {
       link: `/quote/${params.approvalToken}`,
       entityId: params.quoteId,
     });
-  })().catch(() => {});
+  })().catch((e) => console.warn("[notify] customer", e));
 }
 
 export function notifyPaymentConfirmed(params: {
@@ -205,7 +205,7 @@ export function notifyPaymentConfirmed(params: {
       link: params.link,
       entityId: params.entityId,
     });
-  })().catch(() => {});
+  })().catch((e) => console.warn("[notify] customer", e));
 }
 
 export function notifyBankTransferConfirmed(params: {
@@ -226,7 +226,7 @@ export function notifyBankTransferConfirmed(params: {
       link: params.link,
       entityId: params.entityId,
     });
-  })().catch(() => {});
+  })().catch((e) => console.warn("[notify] customer", e));
 }
 
 export function notifyOrderConfirmed(params: {
@@ -241,7 +241,7 @@ export function notifyOrderConfirmed(params: {
     message: `Your order #${params.orderNumber} is confirmed.`,
     link: "/account/orders",
     entityId: params.orderId,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] customer", e));
 }
 
 export function notifyOrderShipped(params: {
@@ -256,7 +256,7 @@ export function notifyOrderShipped(params: {
     message: `Order #${params.orderNumber} is on its way.`,
     link: "/account/orders",
     entityId: params.orderId,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] customer", e));
 }
 
 export function notifyOrderDelivered(params: {
@@ -271,7 +271,7 @@ export function notifyOrderDelivered(params: {
     message: `Order #${params.orderNumber} has been delivered.`,
     link: "/account/orders",
     entityId: params.orderId,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] customer", e));
 }
 
 export function notifyReviewRequest(params: {
@@ -286,7 +286,7 @@ export function notifyReviewRequest(params: {
     message: `How was your ${params.productName}? Leave a quick review.`,
     link: "/account/orders",
     entityId: params.orderId,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] customer", e));
 }
 
 export function notifyBalanceReminder(params: {
@@ -308,7 +308,7 @@ export function notifyBalanceReminder(params: {
       link: params.payPath,
       entityId: params.orderId,
     });
-  })().catch(() => {});
+  })().catch((e) => console.warn("[notify] customer", e));
 }
 
 export function notifyEventReminder(params: {
@@ -324,7 +324,7 @@ export function notifyEventReminder(params: {
     message: "It's a great time to begin your commission or browse our collection.",
     link: "/consultation",
     entityId: params.eventId,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] customer", e));
 }
 
 export async function hasRecentBalanceReminder(orderId: string, withinDays = 7): Promise<boolean> {

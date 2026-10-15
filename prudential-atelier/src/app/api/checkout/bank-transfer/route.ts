@@ -81,6 +81,8 @@ export async function POST(req: NextRequest) {
       clientName,
       ref: order.orderNumber,
       amountNGN: order.total,
+      brand: "main",
+      receiptUrl,
     });
   }
   void sendBankTransferAdminNotification({

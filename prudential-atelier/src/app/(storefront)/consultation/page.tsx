@@ -52,7 +52,7 @@ export default async function ConsultationPage({
             {cmsGet(
               cms,
               "consultation_enquiry_subtitle",
-              "Every commission begins with a conversation. Tell us about the occasion; the house reads every enquiry and replies with an invitation to book.",
+              "Every commission begins with a conversation. Tell us about the occasion; Prudent Gabriel reads every enquiry and replies with an invitation to book.",
             )}
           </p>
         </header>
@@ -67,7 +67,7 @@ export default async function ConsultationPage({
               href={ATELIER_CONTACT_HREF}
               className="mt-5 inline-flex rounded-sm bg-nut px-8 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-cream transition-colors hover:bg-choc"
             >
-              Write to the house
+              Write to Prudent Gabriel
             </Link>
           </div>
         )}

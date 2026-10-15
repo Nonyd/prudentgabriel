@@ -15,11 +15,11 @@ export function consultationSuccessView(dto: PublicConsultationDto) {
         ? new Date(dto.confirmedDate).toLocaleDateString("en-GB", { timeZone: "Africa/Lagos" })
         : null,
     timeLabel: confirmed ? dto.confirmedTime : null,
-    heading: confirmed ? "Consultation confirmed" : pending ? "Request submitted" : "Thank you",
+    heading: confirmed ? "Consultation confirmed" : "Thank you for choosing Prudent Gabriel",
     subcopy: confirmed
       ? "Your session is booked. A confirmation is on its way."
       : pending
-        ? "We will confirm your slot within 24–48 hours."
+        ? "Your payment is confirmed. We will confirm one of your proposed dates within 24–48 hours."
         : `Status: ${dto.status}`,
   };
 }

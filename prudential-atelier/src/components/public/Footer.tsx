@@ -195,7 +195,7 @@ export function Footer({
         >
           <div className="min-w-0">
             <p className="mb-4" style={headingStyle}>
-              The house
+              Prudent Gabriel
             </p>
             <FooterLinks links={houseLinks} />
           </div>

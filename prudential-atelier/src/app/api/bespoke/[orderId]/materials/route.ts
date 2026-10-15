@@ -33,7 +33,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const parsed = parseMaterialInput(await req.json().catch(() => null), view.materialCost);
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
   if (parsed.input.storeItemId && !(gate.facts.house || bespokeAllows("storeCost", gate.facts))) {
-    return NextResponse.json({ error: "Taking it out of the store is for the house or the store." }, { status: 403 });
+    return NextResponse.json({ error: "Taking it out of the store is for Prudent Gabriel or the store." }, { status: 403 });
   }
 
   const result = await addCommissionMaterial(orderId, parsed.input, { id: gate.session.user.id! });

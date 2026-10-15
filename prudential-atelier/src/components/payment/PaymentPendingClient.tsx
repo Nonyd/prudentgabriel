@@ -6,6 +6,8 @@ import { useSearchParams } from "next/navigation";
 import { Clock3 } from "lucide-react";
 import type { PublicBankAccount } from "@/lib/payments/bank-account";
 import { BankTransferDetails } from "@/components/payment/BankTransferDetails";
+import { ConsultationPrepNotes } from "@/components/consultation/ConsultationPrepNotes";
+import type { PublicConsultationDto } from "@/lib/public-pii-dtos";
 
 export function PaymentPendingClient() {
   const searchParams = useSearchParams();
@@ -14,6 +16,15 @@ export function PaymentPendingClient() {
   const orderId = searchParams.get("orderId");
   const line = type === "order" ? "RTW" : "ATELIER";
   const [bank, setBank] = useState<PublicBankAccount | null>(null);
+  const [consultation, setConsultation] = useState<PublicConsultationDto | null>(null);
+
+  useEffect(() => {
+    if (type !== "consultation" || !reference) return;
+    void fetch(`/api/account/consultations/${encodeURIComponent(reference)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { booking?: PublicConsultationDto } | null) => setConsultation(data?.booking ?? null))
+      .catch(() => undefined);
+  }, [type, reference]);
 
   useEffect(() => {
     void fetch(`/api/payments/public-config?line=${line}`)
@@ -26,10 +37,12 @@ export function PaymentPendingClient() {
   }, [line]);
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-20">
+    <div className={`mx-auto ${type === "consultation" ? "max-w-xl" : "max-w-lg"} px-4 py-20`}>
       <div className="text-center">
         <Clock3 className="mx-auto h-14 w-14 text-[var(--gold)]" strokeWidth={1.25} />
-        <h1 className="mt-6 font-display text-3xl text-[var(--chocolate)]">Payment pending</h1>
+        <h1 className="mt-6 font-display text-3xl text-[var(--chocolate)]">
+          {type === "consultation" ? "Thank you — we have your receipt" : "Payment pending"}
+        </h1>
         <p className="mt-3 font-body text-base leading-7 text-[var(--text-mid)]">
           We received your bank transfer details{reference ? ` for ${reference}` : ""}. Confirmation usually takes
           2–4 hours on business days.
@@ -43,6 +56,14 @@ export function PaymentPendingClient() {
             <BankTransferDetails bank={bank} paymentReference={reference || null} />
           </div>
         </div>
+      ) : null}
+
+      {type === "consultation" ? (
+        <ConsultationPrepNotes
+          isVirtual={consultation?.isVirtual ?? false}
+          durationMinutes={consultation?.durationMinutes ?? 90}
+          receiptOnly
+        />
       ) : null}
 
       {type === "bespoke" && orderId ? (

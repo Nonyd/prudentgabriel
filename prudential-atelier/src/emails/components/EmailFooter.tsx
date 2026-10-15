@@ -16,9 +16,10 @@ import {
 type EmailFooterProps = {
   family: EmailFamily;
   unsubscribeUrl?: string;
+  houseName?: string;
 };
 
-export default function EmailFooter({ family, unsubscribeUrl }: EmailFooterProps) {
+export default function EmailFooter({ family, unsubscribeUrl, houseName = CUSTOMER_HOUSE_NAME }: EmailFooterProps) {
   const showUnsub = family === "marketing";
   const unsub = unsubscribeUrl || UNSUBSCRIBE_URL_PLACEHOLDER;
   const quiet = "rgba(226,209,194,0.62)";
@@ -64,7 +65,7 @@ export default function EmailFooter({ family, unsubscribeUrl }: EmailFooterProps
                 lineHeight: "18px",
               }}
             >
-              {CUSTOMER_HOUSE_NAME}
+              {houseName}
             </Text>
             <Text
               style={{
@@ -92,7 +93,7 @@ export default function EmailFooter({ family, unsubscribeUrl }: EmailFooterProps
                   lineHeight: "18px",
                 }}
               >
-                You received this because you subscribed or have shopped with the house.
+                You received this because you subscribed or have shopped with Prudent Gabriel.
                 <br />
                 <Link href={unsub} style={{ color: EMAIL_GOLD, textDecoration: "underline" }}>
                   Unsubscribe

@@ -1,6 +1,7 @@
 import type { CronJobContext, JobResult } from "@/lib/cron/types";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { renderBrandedBodyHtml } from "@/lib/admin-email-render";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { notifyBalanceReminder } from "@/lib/customer-notifications";
 import { logServerError } from "@/lib/logger";
@@ -19,7 +20,7 @@ function balanceReminderHtml(params: {
   payUrl: string;
 }): string {
   return `
-    <div style="font-family:Georgia,serif;background:#F7F2EC;padding:24px;color:#442913">
+    <div style="font-family:Georgia,serif;color:#442913">
       <h1 style="color:#442913;margin:0 0 8px">A reminder about your outstanding balance</h1>
       <p>Hi ${params.firstName},</p>
       <p>You have an outstanding balance of <strong>${params.balanceLabel}</strong> on your commission.</p>
@@ -28,7 +29,6 @@ function balanceReminderHtml(params: {
       <strong>Outstanding:</strong> ${params.balanceLabel}<br/>
       <strong>Delivery:</strong> ${params.deliveryDate}</p>
       <p><a href="${params.payUrl}" style="display:inline-block;background:#442913;color:#E2D1C2;padding:12px 24px;text-decoration:none">Pay outstanding balance</a></p>
-      <p style="margin-top:32px;font-size:12px;color:#98755B">Prudential Atelier · prudentgabriel.com</p>
     </div>
   `;
 }
@@ -93,14 +93,17 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
       await sendEmail({
         to: order.clientEmail,
         subject: `Outstanding balance reminder — ${order.orderRef}`,
-        html: balanceReminderHtml({
-          firstName,
-          outfitName,
-          orderRef: order.orderRef,
-          balanceLabel,
-          deliveryDate,
-          payUrl,
-        }),
+        html: await renderBrandedBodyHtml(
+          balanceReminderHtml({
+            firstName,
+            outfitName,
+            orderRef: order.orderRef,
+            balanceLabel,
+            deliveryDate,
+            payUrl,
+          }),
+          { brand: "atelier", previewText: `Outstanding balance on ${order.orderRef}` },
+        ),
         template: "balance-reminder",
         idempotencyKey: `balance-reminder:${order.id}:${ctx.now.toISOString().slice(0, 10)}`,
         relatedType: "BespokeOrder",

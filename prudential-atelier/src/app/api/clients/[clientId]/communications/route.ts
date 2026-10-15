@@ -4,6 +4,7 @@ import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { prisma } from "@/lib/prisma";
 import { logActivity, logError } from "@/lib/logger";
 import { sendEmail } from "@/lib/email";
+import { renderBrandedBodyHtml } from "@/lib/admin-email-render";
 
 type Params = { params: Promise<{ clientId: string }> };
 
@@ -75,7 +76,11 @@ export async function POST(req: NextRequest, { params }: Params) {
     await sendEmail({
       to: profile.user.email,
       subject: parsed.data.subject,
-      html: parsed.data.body,
+      html: await renderBrandedBodyHtml(parsed.data.body, {
+        brand: "atelier",
+        previewText: parsed.data.subject,
+        signOff: false, // The admin writes the whole message.
+      }),
       template: "client-communication",
       idempotencyKey: `client-comm:${clientId}:${Date.now()}`,
       relatedType: "ClientProfile",

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { PublicConsultationDto } from "@/lib/public-pii-dtos";
 import { consultationSuccessView } from "@/lib/consultation-success-view";
+import { ConsultationPrepNotes } from "@/components/consultation/ConsultationPrepNotes";
 
 function Inner() {
   const router = useRouter();
@@ -53,7 +54,7 @@ function Inner() {
 
   return (
     <div className="min-h-screen px-4 py-16">
-      <div className="mx-auto max-w-lg text-center">
+      <div className="mx-auto max-w-xl text-center">
         <p className="font-label text-gold">#{view.bookingNumber}</p>
         <h1 className="mt-2 font-display text-3xl text-choc">{view.heading}</h1>
         <p className="mt-2 text-sm text-charcoal-mid">{view.subcopy}</p>
@@ -67,6 +68,10 @@ function Inner() {
             </p>
           ) : null}
         </div>
+
+        {booking.paymentStatus === "PAID" ? (
+          <ConsultationPrepNotes isVirtual={booking.isVirtual} durationMinutes={booking.durationMinutes} />
+        ) : null}
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link

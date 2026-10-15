@@ -45,7 +45,7 @@ export function SizeGuideModal({
           {rows == null ? (
             <p className="text-sm text-charcoal-mid">Loading…</p>
           ) : shown.length === 0 ? (
-            <p className="text-sm leading-6 text-charcoal">This piece is not on the house chart.</p>
+            <p className="text-sm leading-6 text-charcoal">This piece is not on the Prudent Gabriel size chart.</p>
           ) : (
             <table className="glass-opaque w-full border-collapse text-left text-sm">
               <thead>

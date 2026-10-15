@@ -11,7 +11,7 @@ export function KidsGalleryPage({
   initialTotal,
   initialHasMore,
   heroHeadline = "Dressed for little royals",
-  heroSubtext = "Occasion wear and everyday elegance for the smallest members of the house.",
+  heroSubtext = "Occasion wear and everyday elegance for the smallest members of the Prudent Gabriel family.",
   heroCtaLabel = "Shop Kids",
   pageDescription,
 }: {

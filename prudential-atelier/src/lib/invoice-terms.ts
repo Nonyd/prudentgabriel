@@ -10,7 +10,7 @@ export const DEFAULT_HOUSE_DOCUMENT_TERMS: HouseDocumentTerm[] = [
   {
     key: "delivery",
     title: "Delivery",
-    body: "The house is responsible for producing and delivering the agreed design, in good and useable condition, by the agreed date.",
+    body: "Prudent Gabriel is responsible for producing and delivering the agreed design, in good and useable condition, by the agreed date.",
   },
   {
     key: "changes",
@@ -25,7 +25,7 @@ export const DEFAULT_HOUSE_DOCUMENT_TERMS: HouseDocumentTerm[] = [
   {
     key: "refunds",
     title: "Refunds",
-    body: "Payments are refundable only where the house fails to meet the agreement and cannot offer a reasonable solution.",
+    body: "Payments are refundable only where Prudent Gabriel fails to meet the agreement and cannot offer a reasonable solution.",
   },
 ];
 

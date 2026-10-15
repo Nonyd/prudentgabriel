@@ -1,5 +1,5 @@
 import { randomInt } from "node:crypto";
-import { ConsultationEnquiryStatus } from "@prisma/client";
+import { ConsultationEnquiryStatus, ConsultationStatus, PaymentStatus, type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSetting } from "@/lib/settings";
 import {
@@ -50,9 +50,21 @@ export function issueBookingLink(now = new Date()) {
 }
 
 /**
+ * A booking made from the link but never paid: the gateway was left halfway
+ * and no receipt was uploaded. The link stays open and resumes this booking, so the client
+ * can come back and pay another way.
+ */
+export const RESUMABLE_BOOKING_WHERE = {
+  status: ConsultationStatus.PENDING_PAYMENT,
+  paymentStatus: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
+  paymentReceiptUrl: null,
+} satisfies Prisma.ConsultationBookingWhereInput;
+
+/**
  * The booking step opens only for an APPROVED, unexpired enquiry that has not
- * booked yet. A pending or declined enquiry, a random database default, a
- * legacy-shaped string and an expired link all look the same: missing.
+ * booked yet, or whose booking was abandoned before payment. A pending or
+ * declined enquiry, a random database default, a legacy-shaped string, an
+ * expired link and a paid booking all look the same: missing.
  */
 export async function findBookableEnquiry(raw: string, now = new Date()) {
   const t = raw.trim();
@@ -60,8 +72,13 @@ export async function findBookableEnquiry(raw: string, now = new Date()) {
   const hash = hashCapabilityToken(t);
   const enquiry = await prisma.consultationEnquiry.findUnique({ where: { publicToken: hash } });
   if (!enquiry || !capabilityHashesEqual(enquiry.publicToken, hash)) return null;
-  if (enquiry.status !== ConsultationEnquiryStatus.APPROVED) return null;
-  if (enquiry.bookingId) return null;
   if (!enquiry.publicTokenExpiresAt || enquiry.publicTokenExpiresAt.getTime() < now.getTime()) return null;
-  return enquiry;
+  if (enquiry.status === ConsultationEnquiryStatus.APPROVED && !enquiry.bookingId) return enquiry;
+  if (enquiry.status === ConsultationEnquiryStatus.BOOKED && enquiry.bookingId) {
+    const unpaid = await prisma.consultationBooking.count({
+      where: { id: enquiry.bookingId, ...RESUMABLE_BOOKING_WHERE },
+    });
+    if (unpaid === 1) return enquiry;
+  }
+  return null;
 }

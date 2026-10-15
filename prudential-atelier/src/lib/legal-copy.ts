@@ -121,7 +121,7 @@ export function extractLegalToc(html: string): LegalTocItem[] {
 
 export const PRIVACY_POLICY_MD = `## Who we are
 
-Prudential Atelier is the trading name of the fashion house of Prudent Gabriel-Okopi. The house is in Lagos, Nigeria. We decide why personal data is collected on this website and how it is used. In the language of the Nigeria Data Protection Act 2023 (NDPA), we are the data controller.
+Prudential Atelier is the trading name of the fashion house of Prudent Gabriel-Okopi. Prudent Gabriel is in Lagos, Nigeria. We decide why personal data is collected on this website and how it is used. In the language of the Nigeria Data Protection Act 2023 (NDPA), we are the data controller.
 
 {{#contact_address}}Write to us at:
 
@@ -153,7 +153,7 @@ We collect only what the work needs. Here it is grouped by that need.
 
 **When you leave a review.** Rating, words, and any picture you attach. It is not public until the house approves it.
 
-We also keep technical records the site needs to work: the cart in your browser (which can include measurements you typed), your currency choice, a session cookie when you are logged in, and, for the house, activity logs and error logs.
+We also keep technical records the site needs to work: the cart in your browser (which can include measurements you typed), your currency choice, a session cookie when you are logged in, and, for Prudent Gabriel, activity logs and error logs.
 
 ## Body measurements
 
@@ -169,13 +169,13 @@ They are used to cut your garment. They are not used for marketing, not shown on
 
 Who can see them: you, in your account (including a PDF of your profile measurements); staff assigned to the commission; and house roles that manage clients and the workroom (atelier staff and managers, not the whole company). A Super Admin who is viewing the site as you can see what you would see. That visit is logged against both identities.
 
-We do not encrypt the numbers in a separate vault. They sit in the database with the rest of the order, on a server the house controls, and travel over HTTPS. There is no automatic deletion date in the system. They stay with the order and the profile until you ask us to remove them and the law lets us, or until the house deletes the record by hand.
+We do not encrypt the numbers in a separate vault. They sit in the database with the rest of the order, on a server Prudent Gabriel controls, and travel over HTTPS. There is no automatic deletion date in the system. They stay with the order and the profile until you ask us to remove them and the law lets us, or until Prudent Gabriel deletes the record by hand.
 
 ## Bank transfer receipts
 
 If you pay by transfer you upload a picture of your banking app. That picture often shows your account name, account number, and sometimes a balance. Treat it as a bank document, not a fashion photo.
 
-The file is stored as private media on the house's own disk, in a receipts folder. The public website will not serve it. Staff who handle payments (finance and the admins who confirm transfers) can open it in the admin. When we email a copy around inside the house, the link is signed and dies after {{receipt_link_days}} days. The file itself is not deleted on a timer. There is no coded retention period.
+The file is stored as private media on Prudent Gabriel's own disk, in a receipts folder. The public website will not serve it. Staff who handle payments (finance and the admins who confirm transfers) can open it in the admin. When we email a copy around inside Prudent Gabriel, the link is signed and dies after {{receipt_link_days}} days. The file itself is not deleted on a timer. There is no coded retention period.
 
 Do not upload a receipt to a public gallery or a product image field. The careers and consultation folders are also private. Product and lookbook images are not.
 
@@ -193,9 +193,9 @@ We keep your points balance and a ledger of every credit and debit: what it was 
 
 ## Consultation enquiries
 
-A consultation starts with an enquiry. We collect your name, email and phone, the date and kind of event, who the piece is for and what kind of outfit, any notes, and any inspiration pictures you upload. The house uses it to decide whether it can take the commission and to prepare for you.
+A consultation starts with an enquiry. We collect your name, email and phone, the date and kind of event, who the piece is for and what kind of outfit, any notes, and any inspiration pictures you upload. Prudent Gabriel uses it to decide whether it can take the commission and to prepare for you.
 
-The house staff who handle consultations see it in the admin. If the house declines, the reason is recorded for the house and is not sent to you. If it approves, you receive a personal booking link by email; the link stops working after a fortnight, once you have booked, or if the house sends a fresh one.
+Prudent Gabriel staff who handle consultations see it in the admin. If Prudent Gabriel declines, the reason is recorded for Prudent Gabriel and is not sent to you. If it approves, you receive a personal booking link by email; the link stops working after a fortnight, once you have booked, or if Prudent Gabriel sends a fresh one.
 
 When you book, we keep the exact wording of the consultation terms you accepted, with the fee, alongside the booking.
 
@@ -203,13 +203,13 @@ When you book, we keep the exact wording of the consultation terms you accepted,
 
 If you start a chat, we collect your name and email (asked before the conversation starts, so we can reply if you leave), your messages, and our replies. We also keep where the conversation started: the page you opened it on, and the piece or order it is about. We do not record the other pages you visit.
 
-The chat is run by the house on its own servers. No chat company receives it, and no chat script from another company loads on the site. House staff who answer chat read it in the admin. If you leave before we reply, the reply is also sent to your email, through the mail provider named below.
+The chat is run by Prudent Gabriel on its own servers. No chat company receives it, and no chat script from another company loads on the site. House staff who answer chat read it in the admin. If you leave before we reply, the reply is also sent to your email, through the mail provider named below.
 
 Starting a chat sets one cookie that keeps the conversation open on this browser; see the [Cookie Policy](/cookie-policy).
 
-{{#chat_retention_keep}}The house keeps chat conversations indefinitely, so it can look back at what was said about an order or a piece. They are not deleted on a timer.{{/chat_retention_keep}}{{#chat_retention_days}}Conversations are deleted {{chat_retention_days}} days after the last message.{{/chat_retention_days}}
+{{#chat_retention_keep}}Prudent Gabriel keeps chat conversations indefinitely, so it can look back at what was said about an order or a piece. They are not deleted on a timer.{{/chat_retention_keep}}{{#chat_retention_days}}Conversations are deleted {{chat_retention_days}} days after the last message.{{/chat_retention_days}}
 
-To have a conversation removed, write to us (see How to write to us below) with "Chat" in the subject and the email you used. The house will erase every conversation held under that email and tell you when it is done.
+To have a conversation removed, write to us (see How to write to us below) with "Chat" in the subject and the email you used. Prudent Gabriel will erase every conversation held under that email and tell you when it is done.
 
 ## Who else receives your data
 
@@ -229,7 +229,7 @@ We do not sell your information. These companies receive what they need to do th
 
 **WhatsApp.** If you tap a WhatsApp link, the conversation is on Meta's system. We do not send your message through a WhatsApp business API from this website.
 
-Pictures you upload for a consultation or a receipt are stored on the house's own disk, not on Cloudinary, for new uploads. Older images may still live on Cloudinary (a US company) until they are migrated.
+Pictures you upload for a consultation or a receipt are stored on Prudent Gabriel's own disk, not on Cloudinary, for new uploads. Older images may still live on Cloudinary (a US company) until they are migrated.
 
 **Contabo.** The website and the customer database run on servers the house rents from Contabo GmbH, in Germany. Everything you give the site (your account, orders, measurements, receipts, consultation enquiries and chat) is stored there, so it leaves Nigeria. Contabo provides the servers. The house controls the application and the database, and both are reached over encrypted connections.
 
@@ -247,15 +247,15 @@ The code does not delete personal data on a calendar, except as follows.
 
 Financial records (orders, invoices, the payment ledger, gateway references) are kept for the statutory period Nigerian companies must keep them.
 
-Measurements, receipts, CVs, consultation enquiries, consultation notes and stage photographs stay until you ask us to delete them and the law lets us, or until the house deletes the record by hand.
+Measurements, receipts, CVs, consultation enquiries, consultation notes and stage photographs stay until you ask us to delete them and the law lets us, or until Prudent Gabriel deletes the record by hand.
 
 {{#chat_retention_keep}}Chat conversations are kept indefinitely, until you ask us to erase them.{{/chat_retention_keep}}{{#chat_retention_days}}Chat conversations are deleted {{chat_retention_days}} days after the last message.{{/chat_retention_days}}
 
-Server error logs and activity logs (including impersonation) are kept until an admin clears or the house decides otherwise. There is no coded purge.
+Server error logs and activity logs (including impersonation) are kept until an admin clears or Prudent Gabriel decides otherwise. There is no coded purge.
 
 ## Guest accounts
 
-You can check out as a guest. When payment succeeds on a shop order, a consultation, or a commission (including paying an invoice that belongs to a commission), the house opens an account for that email if one does not already exist. You receive a welcome email with a link to choose your password; the link works once, for seven days, and after that Forgot password does the same. That is the same account you would have created yourself.
+You can check out as a guest. When payment succeeds on a shop order, a consultation, or a commission (including paying an invoice that belongs to a commission), Prudent Gabriel opens an account for that email if one does not already exist. You receive a welcome email with a link to choose your password; the link works once, for seven days, and after that Forgot password does the same. That is the same account you would have created yourself.
 
 If you already have an account, the order is attached to it. Older guest payments stay filed under the email they were made with. They still show in your payment history.
 
@@ -304,7 +304,7 @@ export const TERMS_MD = `## Agreement
 
 By using prudentgabriel.com, placing an order, booking a consultation, or paying an invoice, you agree to these terms. The four house terms printed on your quotation and invoice are part of the agreement. This page must not contradict them.
 
-## The house
+## Prudent Gabriel
 
 Prudential Atelier is the fashion house of Prudent Gabriel-Okopi, Lagos, Nigeria. We make ready-to-wear, made-to-measure pieces from the shop, atelier commissions, bridal, and children's clothes.
 
@@ -322,7 +322,7 @@ Nothing is held in stock. Every piece is cut when you order it. A size on the pr
 
 ## The four house terms
 
-These are the terms already agreed and printed on the quotation and the invoice. They apply to commissions and, where they speak to delivery, changes, shipping and refunds, they are the house's position on shop orders too.
+These are the terms already agreed and printed on the quotation and the invoice. They apply to commissions and, where they speak to delivery, changes, shipping and refunds, they are Prudent Gabriel's position on shop orders too.
 
 {{#house_term_delivery}}**Delivery.** {{house_term_delivery}}{{/house_term_delivery}}
 
@@ -336,13 +336,13 @@ These are the terms already agreed and printed on the quotation and the invoice.
 
 **Standard size**
 
-Cut to the house chart in your size. Returnable because another woman can wear a standard size.
+Cut to the Prudent Gabriel size chart in your size. Returnable because another woman can wear a standard size.
 
 **Made to measure**
 
 Cut to the measurements you entered. It cannot be returned for a change of mind, because a piece made to your body cannot be worn by someone else.
 
-A cash refund of what you paid is still only given where the house failed, as the refunds term says. A standard-size return for a change of mind is an exchange or a credit to your account, not cash, unless the house failed.
+A cash refund of what you paid is still only given where Prudent Gabriel failed, as the refunds term says. A standard-size return for a change of mind is an exchange or a credit to your account, not cash, unless Prudent Gabriel failed.
 
 ## Fabric
 
@@ -350,15 +350,15 @@ A cash refund of what you paid is still only given where the house failed, as th
 
 ## Price and currency
 
-Prices are set in Nigerian naira. Dollar and sterling figures are conversions at a rate locked when you check out (from the house's rate settings, or from Open Exchange Rates, or a fallback the software keeps). The naira amount on the order is the amount that matters. International card charges from your bank are yours.
+Prices are set in Nigerian naira. Dollar and sterling figures are conversions at a rate locked when you check out (from Prudent Gabriel's rate settings, or from Open Exchange Rates, or a fallback the software keeps). The naira amount on the order is the amount that matters. International card charges from your bank are yours.
 
 VAT appears only when an invoice turns it on. Shop prices are as shown.
 
 ## Payment
 
-We accept Paystack, Flutterwave, Stripe, Monnify, and bank transfer to the house accounts shown at checkout. A transfer is not paid until the house confirms the receipt.
+We accept Paystack, Flutterwave, Stripe, Monnify, and bank transfer to the Prudent Gabriel accounts shown at checkout. A transfer is not paid until Prudent Gabriel confirms the receipt.
 
-{{#currencies_offered}}Bank transfer is offered in {{currencies_offered}} for the accounts the house currently publishes.{{/currencies_offered}}
+{{#currencies_offered}}Bank transfer is offered in {{currencies_offered}} for the accounts Prudent Gabriel currently publishes.{{/currencies_offered}}
 
 An atelier commission needs the deposit agreed on that quotation before production starts. The percentage is set on the quotation itself, and is stated there. It is not a single house-wide figure on this page. Production does not start until that deposit is recorded. The balance must be clear before delivery.
 
@@ -378,9 +378,9 @@ See the [Shipping Policy](/shipping-policy). International orders are delivered 
 
 {{#points_expiry_months}}Points are valid for {{points_expiry_months}} months from the credit.{{/points_expiry_months}} {{#points_min_redemption}}The minimum redemption is {{points_min_redemption}} points.{{/points_min_redemption}}
 
-The house may change the naira-per-point rate. Changing the rate revalues every outstanding balance at the new rate. Points already spent on an order keep the rate locked on that order. We will not rewrite that history.
+Prudent Gabriel may change the naira-per-point rate. Changing the rate revalues every outstanding balance at the new rate. Points already spent on an order keep the rate locked on that order. We will not rewrite that history.
 
-A piece paid with points is not returned for cash. If the house accepts a return or cancels the order, the points go back to your balance. They are not paid out as money.
+A piece paid with points is not returned for cash. If Prudent Gabriel accepts a return or cancels the order, the points go back to your balance. They are not paid out as money.
 
 Points cannot be used for shipping.
 
@@ -404,19 +404,19 @@ A commission follows thirteen stages:
 
 Production (sketching onward) does not start until the deposit on that commission is recorded. You must approve the design, and the final fitting, before those stages can close. The balance must be paid before delivery.
 
-{{#alteration_warranty_days}}After you confirm receipt, an alteration window of {{alteration_warranty_days}} days opens. Inside that window, fit and workmanship are complimentary unless the house records a reason to charge. A change you request, or damage, is chargeable. Complimentary work is still an alteration of the agreed piece, not a new commission.{{/alteration_warranty_days}}
+{{#alteration_warranty_days}}After you confirm receipt, an alteration window of {{alteration_warranty_days}} days opens. Inside that window, fit and workmanship are complimentary unless Prudent Gabriel records a reason to charge. A change you request, or damage, is chargeable. Complimentary work is still an alteration of the agreed piece, not a new commission.{{/alteration_warranty_days}}
 
 ## Consultations
 
-A consultation is booked and paid through the site. The fee, duration and whether it is virtual or in the atelier are as shown on the offering you chose. Meeting links are sent by email. The refunds house term applies: a refund only where the house fails and cannot offer a reasonable solution, not because you changed your mind after the sitting was reserved.
+A consultation is booked and paid through the site. The fee, duration and whether it is virtual or in the atelier are as shown on the offering you chose. Meeting links are sent by email. The refunds house term applies: a refund only where Prudent Gabriel fails and cannot offer a reasonable solution, not because you changed your mind after the sitting was reserved.
 
 ## Intellectual property
 
-Sketches, patterns, photographs, text and marks on this site belong to the house. You may not copy them to make garments elsewhere. Photographs of your own commission in your client area are for you; they are not a licence to reproduce the design commercially.
+Sketches, patterns, photographs, text and marks on this site belong to Prudent Gabriel. You may not copy them to make garments elsewhere. Photographs of your own commission in your client area are for you; they are not a licence to reproduce the design commercially.
 
 ## If something goes wrong
 
-To the extent Nigerian law allows, the house is not liable for indirect loss (for example a missed event after a delay you were told about, or a duty you did not budget for). Nothing here limits liability for death, personal injury, or fraud, or any duty the FCCPA does not allow us to exclude.
+To the extent Nigerian law allows, Prudent Gabriel is not liable for indirect loss (for example a missed event after a delay you were told about, or a duty you did not budget for). Nothing here limits liability for death, personal injury, or fraud, or any duty the FCCPA does not allow us to exclude.
 
 ## Disputes
 
@@ -432,7 +432,7 @@ This is the list of what the site actually sets. It matches the banner:
 
 {{cookie_banner_notice}}
 
-The button on that banner is {{cookie_banner_acknowledge}}. There is no Reject Non-Essential, no Accept All, and no settings panel for analytics or marketing. The house does not run Meta or Google advertising on this site, and will not.
+The button on that banner is {{cookie_banner_acknowledge}}. There is no Reject Non-Essential, no Accept All, and no settings panel for analytics or marketing. Prudent Gabriel does not run Meta or Google advertising on this site, and will not.
 
 ## Essential
 
@@ -441,7 +441,7 @@ Needed for the shop to work. They are not optional.
 - **Signed-in session.** When you log in, Auth.js sets a session cookie (the name is the Auth.js default, typically \`authjs.session-token\`, or a secure variant on HTTPS). It holds a login token, not your password. It is required to stay logged in.
 - **Your bag** (\`{{cookie_cart_key}}\`). Local storage. Includes any measurements you typed for a made-to-measure line. Essential: without it the bag empties when you change page.
 - **Your currency** (\`{{cookie_currency_key}}\`). Local storage. Naira, dollar or sterling, and a cached rate. Essential: without it the price you saw would not be the price at checkout.
-- **Chat** (\`pg_chat\`). Set only if you start a chat. A random token that reopens your conversation on this browser; it holds no name, email or message, and page scripts cannot read it. It lasts up to 30 days{{#chat_retention_days}}, and never longer than conversations are kept ({{chat_retention_days}} days){{/chat_retention_days}}. The conversation itself is kept on the house's servers as the privacy policy describes, not in the cookie.
+- **Chat** (\`pg_chat\`). Set only if you start a chat. A random token that reopens your conversation on this browser; it holds no name, email or message, and page scripts cannot read it. It lasts up to 30 days{{#chat_retention_days}}, and never longer than conversations are kept ({{chat_retention_days}} days){{/chat_retention_days}}. The conversation itself is kept on Prudent Gabriel's servers as the privacy policy describes, not in the cookie.
 - {{#impersonation_minutes}}**Admin only.** If a Super Admin views the site as you, a cookie named \`pg_admin_impersonate\` lasts {{impersonation_minutes}} minutes. A role-preview cookie named \`pg_admin_preview_role\` lasts one hour. Ordinary customers never receive these.{{/impersonation_minutes}}
 
 ## Other essential browser storage
@@ -456,7 +456,7 @@ These also live in local storage and are written because the site uses them. The
 
 ## Visit tags (sessionStorage, not a cookie)
 
-The banner says nothing else is stored as a cookie. Campaign tags from a shared link (\`utm_source\` and friends) are held in **sessionStorage** under \`pa-visit-attribution\` for that browser tab only. They are not a cookie, they are not written to local storage, and they disappear when the tab closes. The house uses them only if you order or book in the same visit, so a report can show which post led to that sale. Closing the tab and coming back tomorrow is recorded as a direct visit.
+The banner says nothing else is stored as a cookie. Campaign tags from a shared link (\`utm_source\` and friends) are held in **sessionStorage** under \`pa-visit-attribution\` for that browser tab only. They are not a cookie, they are not written to local storage, and they disappear when the tab closes. Prudent Gabriel uses them only if you order or book in the same visit, so a report can show which post led to that sale. Closing the tab and coming back tomorrow is recorded as a direct visit.
 
 Admin screens may also remember whether the sidebar is collapsed.
 
@@ -474,13 +474,13 @@ Clearing your browser storage forgets the bag, the currency and the acknowledgem
 
 export const RETURNS_MD = `## How returns work in this house
 
-Every piece is cut when you order it. What you can send back depends on whether it was cut to a house size or to your body, and on whether the house met the agreement. This page, the [Terms](/terms-and-conditions), the four terms on your invoice, and the words on the product page are meant to say the same thing.
+Every piece is cut when you order it. What you can send back depends on whether it was cut to a house size or to your body, and on whether Prudent Gabriel met the agreement. This page, the [Terms](/terms-and-conditions), the four terms on your invoice, and the words on the product page are meant to say the same thing.
 
 ## Standard size
 
-Cut to the house chart in your size. Returnable because another woman can wear a standard size.
+Cut to the Prudent Gabriel size chart in your size. Returnable because another woman can wear a standard size.
 
-{{#contact_email}}Write to [{{contact_email}}](mailto:{{contact_email}}) with the order number.{{/contact_email}} The piece should be unworn, unwashed, unaltered, with tags. A change-of-mind return of a standard size is an exchange or a credit to your account. A cash refund of the payment is only given where the house failed, as the invoice says.
+{{#contact_email}}Write to [{{contact_email}}](mailto:{{contact_email}}) with the order number.{{/contact_email}} The piece should be unworn, unwashed, unaltered, with tags. A change-of-mind return of a standard size is an exchange or a credit to your account. A cash refund of the payment is only given where Prudent Gabriel failed, as the invoice says.
 
 ## Made to measure
 
@@ -492,7 +492,7 @@ That includes shop made-to-measure and atelier commissions. Another woman cannot
 
 {{#fabric_promise_hours}}If the fabric for your piece is unavailable, we will offer an alternative or a refund within {{fabric_promise_hours}} hours.{{/fabric_promise_hours}}
 
-## When the house fails
+## When Prudent Gabriel fails
 
 {{#house_term_refunds}}{{house_term_refunds}}{{/house_term_refunds}}
 
@@ -502,7 +502,7 @@ That is the fourth house term on your invoice. It covers a piece not produced, n
 
 ## Atelier after delivery
 
-{{#alteration_warranty_days}}After you confirm receipt, you have {{alteration_warranty_days}} days to ask for a fit or workmanship alteration. That is complimentary unless the house records a reason to charge. A change you request later is a new, chargeable instruction, not a return.{{/alteration_warranty_days}}
+{{#alteration_warranty_days}}After you confirm receipt, you have {{alteration_warranty_days}} days to ask for a fit or workmanship alteration. That is complimentary unless Prudent Gabriel records a reason to charge. A change you request later is a new, chargeable instruction, not a return.{{/alteration_warranty_days}}
 
 ## Prudent Points
 
@@ -526,7 +526,7 @@ Atelier delivery dates are the dates agreed on the commission, tracked through t
 
 {{#house_term_shipping}}{{house_term_shipping}}{{/house_term_shipping}}
 
-That is the shipping term on your invoice. Sometimes a rate is available at checkout. Sometimes the house confirms the courier and the cost after the piece is packed, especially when the destination cannot be quoted automatically. You will have agreed the wording shown at checkout. We do not dispatch until that charge is paid.
+That is the shipping term on your invoice. Sometimes a rate is available at checkout. Sometimes Prudent Gabriel confirms the courier and the cost after the piece is packed, especially when the destination cannot be quoted automatically. You will have agreed the wording shown at checkout. We do not dispatch until that charge is paid.
 
 Partners we quote with are DHL (international and some domestic) and GIG Logistics (Nigeria). Collection from the Ajah factory is also offered when that method is on.
 
@@ -538,7 +538,7 @@ Partners we quote with are DHL (international and some domestic) and GIG Logisti
 
 {{#shipping_ddu}}{{shipping_ddu}}{{/shipping_ddu}}
 
-That is DDU: delivered duty unpaid. Budget for it. The house does not collect those duties at checkout.
+That is DDU: delivered duty unpaid. Budget for it. Prudent Gabriel does not collect those duties at checkout.
 
 ## Collection
 
@@ -546,7 +546,7 @@ If you collect, we give you a collection code when the piece is ready. {{#shippi
 
 ## Tracking
 
-Shop orders receive a carrier tracking number by email when we have one. Commissions are tracked on the house's own stage page.
+Shop orders receive a carrier tracking number by email when we have one. Commissions are tracked on Prudent Gabriel's own stage page.
 
 ## Contact
 

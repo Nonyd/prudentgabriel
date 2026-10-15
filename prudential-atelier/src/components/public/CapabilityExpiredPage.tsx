@@ -15,7 +15,7 @@ export function CapabilityExpiredPage(props?: { homeHref?: string }) {
         href={home}
         className="mt-10 inline-flex items-center justify-center self-center rounded-sm bg-choc px-6 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] text-cream"
       >
-        Back to the house
+        Back to Prudent Gabriel
       </Link>
     </main>
   );

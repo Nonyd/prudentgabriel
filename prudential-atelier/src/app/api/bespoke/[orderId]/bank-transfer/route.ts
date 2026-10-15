@@ -117,6 +117,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ orderId: s
     clientName: order.clientName,
     ref: order.orderRef,
     amountNGN: payAmountNGN,
+    brand: "atelier",
+    receiptUrl: parsed.data.receiptUrl,
   });
   void sendBankTransferAdminNotification({
     ref: order.orderRef,

@@ -80,6 +80,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       moodboardImages: moodboardImages.length > 0 ? moodboardImages : undefined,
       moodboardUrl: `${appUrl}/account/consultations`,
       commissionUrl: `${appUrl}/atelier`,
+      bookingId: updated.id,
     });
 
     if (moodboardImages.length > 0) {

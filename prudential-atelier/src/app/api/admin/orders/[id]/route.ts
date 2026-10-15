@@ -12,7 +12,13 @@ import {
 import { generateCollectionCode, normalizeCollectionCode } from "@/lib/shipping/collection";
 import { awardPurchasePoints, returnRedeemedPoints } from "@/lib/points";
 import { releaseUnpaidCheckoutReservations } from "@/lib/checkout-reservations";
-import { sendOrderProductionStartedEmail, sendOrderShippedEmail, sendPickupReadyEmail, sendRtwOrderDeliveredEmail } from "@/lib/email";
+import {
+  sendOrderProductionStartedEmail,
+  sendOrderShippedEmail,
+  sendPickupReadyEmail,
+  sendRtwFulfilmentRefusedEmails,
+  sendRtwOrderDeliveredEmail,
+} from "@/lib/email";
 import { logServerError } from "@/lib/logger";
 import { notifyOrderDelivered, notifyOrderShipped } from "@/lib/customer-notifications";
 import { deleteOrdersByIds } from "@/lib/order-delete";
@@ -132,7 +138,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const fabricTry = fabricUnavailableSchema.safeParse(body);
   if (fabricTry.success) {
-    const order = await prisma.order.findUnique({ where: { id } });
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: { user: { select: { email: true, name: true } } },
+    });
     if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
     const choice = fabricTry.data.fabricUnavailable.choice;
     if (!isFabricUnavailableChoice(choice)) {
@@ -157,6 +166,18 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       },
     });
     notifyFabricUnavailable({ id: updated.id, orderNumber: updated.orderNumber });
+    // The client hears it from us, not from her bank statement.
+    const clientEmail = order.guestEmail ?? order.user?.email;
+    if (choice === "REFUNDED" && order.fabricUnavailableChoice !== "REFUNDED" && clientEmail) {
+      const name = order.guestName ?? order.user?.name ?? "";
+      void sendRtwFulfilmentRefusedEmails({
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        to: clientEmail,
+        firstName: name.split(/\s+/)[0] || "there",
+        amountNGN: order.total,
+      });
+    }
     return NextResponse.json(updated);
   }
 

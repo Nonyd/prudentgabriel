@@ -28,7 +28,7 @@ export default function AbandonedCheckoutEmail({
   const greeting = firstName?.trim() ? firstName.trim() : "there";
 
   return (
-    <EmailLayout family="marketing" previewText="Your pieces are still in the bag">
+    <EmailLayout family="marketing" previewText="Your pieces are still waiting for you">
       <Heading
         as="h1"
         style={{
@@ -40,7 +40,7 @@ export default function AbandonedCheckoutEmail({
           lineHeight: "34px",
         }}
       >
-        Still in your bag
+        Still waiting for you
       </Heading>
       <Text
         style={{
@@ -51,7 +51,8 @@ export default function AbandonedCheckoutEmail({
           color: EMAIL_INK,
         }}
       >
-        {greeting}, you left these waiting. Stock moves. The bag is as you left it.
+        {greeting}, the pieces you chose are still in your bag, exactly as you left them. Stock does move, so we
+        wanted to let you know they are still here for you.
       </Text>
       <table width="100%" border={0} cellPadding={0} cellSpacing={0} role="presentation">
         <tbody>
@@ -151,7 +152,8 @@ export default function AbandonedCheckoutEmail({
           lineHeight: "20px",
         }}
       >
-        No code, no rush email after this. Open the link and the bag refills from what you chose.
+        This is our only reminder, and there is no code to enter. Simply open the link and your bag will be filled
+        again with everything you chose.
       </Text>
     </EmailLayout>
   );

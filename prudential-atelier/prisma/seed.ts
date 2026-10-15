@@ -419,7 +419,7 @@ async function upsertSiteSettings() {
     {
       key: "shipping_quote_manual_consent",
       value:
-        "We arrange delivery personally. Once your piece is ready, a member of the house will contact you to confirm the courier and cost before it ships.",
+        "We arrange delivery personally. Once your piece is ready, a member of the Prudent Gabriel team will contact you to confirm the courier and cost before it ships.",
       group: SettingGroup.SHIPPING,
       label: "Manual mode — consent wording",
       type: SettingType.TEXTAREA,
@@ -548,10 +548,10 @@ async function upsertSiteSettings() {
     { key: "post_delivery_fault_hours", value: "48", group: SettingGroup.PAYMENTS, label: "Faulty or damaged piece: report within (hours of delivery)", type: SettingType.NUMBER, isPublic: false, sortOrder: 28 },
     { key: "invoice_logo_url", value: "/images/atelier-logo.png", group: SettingGroup.INVOICE, label: "Invoice Logo URL", type: SettingType.IMAGE, isPublic: false, sortOrder: 45 },
     { key: "invoice_prefix", value: "PA-INV", group: SettingGroup.INVOICE, label: "Invoice Number Prefix", type: SettingType.TEXT, isPublic: false, sortOrder: 46 },
-    { key: "invoice_term_delivery", value: "The house is responsible for producing and delivering the agreed design, in good and useable condition, by the agreed date.", group: SettingGroup.INVOICE, label: "Term 1 — Delivery", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 50 },
+    { key: "invoice_term_delivery", value: "Prudent Gabriel is responsible for producing and delivering the agreed design, in good and useable condition, by the agreed date.", group: SettingGroup.INVOICE, label: "Term 1 — Delivery", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 50 },
     { key: "invoice_term_changes", value: "Modifications to the agreed design may be refused, or accepted at a fee, at the designer's discretion.", group: SettingGroup.INVOICE, label: "Term 2 — Changes", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 51 },
     { key: "invoice_term_shipping", value: "Delivery and DHL charges are paid separately once ascertained, just before shipping, and shipping proceeds only on payment confirmation.", group: SettingGroup.INVOICE, label: "Term 3 — Shipping", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 52 },
-    { key: "invoice_term_refunds", value: "Payments are refundable only where the house fails to meet the agreement and cannot offer a reasonable solution.", group: SettingGroup.INVOICE, label: "Term 4 — Refunds", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 53 },
+    { key: "invoice_term_refunds", value: "Payments are refundable only where Prudent Gabriel fails to meet the agreement and cannot offer a reasonable solution.", group: SettingGroup.INVOICE, label: "Term 4 — Refunds", type: SettingType.TEXTAREA, isPublic: false, sortOrder: 53 },
   ];
   for (const s of invoiceSettings) {
     await prisma.siteSetting.upsert({

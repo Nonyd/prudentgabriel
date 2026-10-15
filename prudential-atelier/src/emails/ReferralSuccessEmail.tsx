@@ -19,12 +19,13 @@ export default function ReferralSuccessEmail({
   newBalance,
 }: ReferralSuccessEmailProps) {
   return (
-    <EmailLayout family="relationship" previewText={`You earned ${pointsEarned} points`}>
+    <EmailLayout family="relationship" previewText={`You have earned ${pointsEarned} points`}>
       <Heading as="h1" style={{ fontSize: 28, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
-        You just earned {pointsEarned} points!
+        You have just earned {pointsEarned} points!
       </Heading>
       <Text style={{ fontSize: 16, color: "#2d2d2d" }}>
-        Hi {referrerName}, {friendFirstName} signed up using your referral link.
+        Dear {referrerName}, {friendFirstName} has joined us using your referral link. Thank you so much for
+        introducing them to us.
       </Text>
       <Section
         style={{

@@ -52,6 +52,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
         orderRef: row.order.orderRef,
         stageLabel: STAGE_SHORT_LABELS[row.stage],
         approveUrl,
+        approvalId: row.id,
       });
 
       const userId =

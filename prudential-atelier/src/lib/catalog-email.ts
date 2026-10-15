@@ -2,8 +2,11 @@ import { queueEmail } from "@/lib/email-outbox";
 import { logError } from "@/lib/logger";
 import { renderTemplateEmailHtml } from "@/lib/admin-email-render";
 import { getEmailTemplate } from "@/lib/admin-email-template-store";
+import type { EmailBrand } from "@/lib/email-branding";
+import { brandSignOff } from "@/lib/email-sign-off";
 import {
   EMAIL_TEMPLATE_BY_KEY,
+  emailBrandForKey,
   interpolateTemplateText,
   type EmailTemplateKey,
 } from "@/lib/admin-email-catalog";
@@ -32,11 +35,22 @@ export async function sendUsingCatalog(params: {
   relatedId?: string;
   extraHtml?: string;
   priority?: number;
+  /** Only for templates shared by both houses (payments, bank transfers). Otherwise the key decides. */
+  brand?: EmailBrand;
 }): Promise<{ created: boolean }> {
   try {
     const stored = await getEmailTemplate(params.key);
-    const fields = stored ?? EMAIL_TEMPLATE_BY_KEY[params.key].defaults;
-    const { subject, html } = await renderTemplateEmailHtml(fields, params.vars, params.extraHtml);
+    const meta = EMAIL_TEMPLATE_BY_KEY[params.key];
+    const fields = stored ?? meta.defaults;
+    const brand = params.brand ?? emailBrandForKey(params.key);
+    const { subject, html } = await renderTemplateEmailHtml(
+      fields,
+      params.vars,
+      params.extraHtml,
+      brand,
+      // Client mail closes warmly; staff and admin alerts do not.
+      meta.group === "client" ? (meta.signOff ?? brandSignOff(brand)) : null,
+    );
     const queued = await queueEmail({
       to: params.to,
       subject,

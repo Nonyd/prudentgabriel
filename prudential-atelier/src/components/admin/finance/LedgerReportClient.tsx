@@ -201,7 +201,7 @@ export function LedgerReportClient() {
           </div>
           <div className="border border-sand p-4">
             <h2 className="font-display text-lg text-choc">Against the statement</h2>
-            <p className="mt-1 font-sans text-xs text-text-mid">What the ledger says arrived, grouped the way the house banks it.</p>
+            <p className="mt-1 font-sans text-xs text-text-mid">What the ledger says arrived, grouped the way Prudent Gabriel banks it.</p>
             <ul className="mt-3 space-y-1 font-sans text-sm">
               {data.bank.length === 0 ? <li>No cash in this range.</li> : null}
               {data.bank.map((b) => (

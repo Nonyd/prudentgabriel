@@ -8,6 +8,7 @@ import {
   sendBankTransferReceiptReceivedEmail,
 } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { notifyBankTransferReceipt } from "@/lib/notifications";
 import { receiptMediaUrlSchema } from "@/lib/media/stored-url";
 
 const bodySchema = z.object({
@@ -61,6 +62,8 @@ export async function POST(req: NextRequest) {
     clientName: booking.clientName,
     ref: booking.bookingNumber,
     amountNGN: booking.feeNGN,
+    brand: "atelier",
+    receiptUrl: receiptUrl,
   });
   void sendBankTransferAdminNotification({
     ref: booking.bookingNumber,
@@ -68,6 +71,13 @@ export async function POST(req: NextRequest) {
     amountNGN: booking.feeNGN,
     receiptUrl,
     adminPath: `/admin/consultations/${booking.id}`,
+  });
+  notifyBankTransferReceipt({
+    ref: booking.bookingNumber,
+    clientName: booking.clientName,
+    amountNGN: booking.feeNGN,
+    link: `/admin/consultations/${booking.id}`,
+    entityId: booking.id,
   });
 
   return NextResponse.json({

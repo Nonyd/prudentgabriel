@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireGeneralAdminApi } from "@/lib/admin-auth";
-import { EMAIL_TEMPLATE_BY_KEY, type EmailTemplateKey } from "@/lib/admin-email-catalog";
+import {
+  EMAIL_TEMPLATE_BY_KEY,
+  demoTemplateVariables,
+  emailBrandForKey,
+  type EmailTemplateKey,
+} from "@/lib/admin-email-catalog";
 import { getEmailTemplate } from "@/lib/admin-email-template-store";
 import { renderTemplateEmailHtml } from "@/lib/admin-email-render";
+import { brandSignOff } from "@/lib/email-sign-off";
 import { sendEmail } from "@/lib/email";
 
 const bodySchema = z.object({
@@ -30,7 +36,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ key
     return NextResponse.json({ error: "Template not found" }, { status: 404 });
   }
 
-  const { subject, html } = await renderTemplateEmailHtml(template);
+  const { subject, html } = await renderTemplateEmailHtml(
+    template,
+    demoTemplateVariables(),
+    undefined,
+    emailBrandForKey(key as EmailTemplateKey),
+    EMAIL_TEMPLATE_BY_KEY[key as EmailTemplateKey].group === "client"
+      ? (EMAIL_TEMPLATE_BY_KEY[key as EmailTemplateKey].signOff ??
+          brandSignOff(emailBrandForKey(key as EmailTemplateKey)))
+      : null,
+  );
   await sendEmail({
     to: parsed.data.to,
     subject: `[TEST] ${subject}`,

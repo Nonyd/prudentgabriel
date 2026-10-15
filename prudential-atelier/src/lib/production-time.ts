@@ -6,7 +6,7 @@ export const DEFAULT_PRODUCTION_COPY = "7-12 days";
 export const DEFAULT_PRODUCTION_LEAD_DAYS = 12;
 
 export const STANDARD_SIZE_COPY =
-  "Cut to the house chart in your size. Returnable because another woman can wear a standard size.";
+  "Cut to the Prudent Gabriel size chart in your size. Returnable because another woman can wear a standard size.";
 
 export const MADE_TO_MEASURE_REASON =
   "Cut to the measurements you entered. It cannot be returned for a change of mind, because a piece made to your body cannot be worn by someone else.";

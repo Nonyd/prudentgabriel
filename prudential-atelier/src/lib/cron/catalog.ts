@@ -100,7 +100,7 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
   {
     name: "chat-retention",
     schedule: "45 2 * * *",
-    description: "BA5: delete chat conversations older than the house's retention period",
+    description: "BA5: delete chat conversations older than Prudent Gabriel's retention period",
     migrated: true,
   },
   {
@@ -148,7 +148,7 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
   {
     name: "meeting-link-reminders",
     schedule: "*/15 * * * *",
-    description: "Email the Zoom link about an hour before a virtual consultation",
+    description: "About an hour before a virtual consultation: email the client the saved link, or remind admin to send one",
     migrated: true,
     budgetMs: 50_000,
   },

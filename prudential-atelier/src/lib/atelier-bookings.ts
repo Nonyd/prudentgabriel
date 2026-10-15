@@ -14,9 +14,9 @@ export const ATELIER_CONTACT_HREF = "/contact";
 
 /** Public copy on /consultation when the atelier is closed. */
 export const ATELIER_CLOSED_COPY =
-  "The house isn't taking new commissions at present. If you would like to write to us, the contact page reaches the atelier.";
+  "Prudent Gabriel isn't taking new commissions at present. If you would like to write to us, the contact page reaches the atelier.";
 
-export const ATELIER_CLOSED_MESSAGE = "The house isn't taking new commissions at present.";
+export const ATELIER_CLOSED_MESSAGE = "Prudent Gabriel isn't taking new commissions at present.";
 
 export async function isAtelierOpenForEnquiries(): Promise<boolean> {
   return (await getSetting(ATELIER_BOOKINGS_SETTING_KEY)) === "true";

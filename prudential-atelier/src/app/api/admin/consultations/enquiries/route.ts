@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
       decidedBy: true,
       publicTokenExpiresAt: true,
       bookingId: true,
-      booking: { select: { bookingNumber: true } },
+      booking: { select: { bookingNumber: true, status: true, paymentStatus: true, paymentReceiptUrl: true } },
       createdAt: true,
     },
   });

@@ -221,7 +221,7 @@ const CMS_PAGES_BASE: CmsPageDef[] = [
         fields: [
           { key: "home_pfa_enabled", label: "Enabled", type: "toggle", default: "true" },
           { key: "home_pfa_eyebrow", label: "Eyebrow", type: "text", default: "PRUDENTIAL FASHION ACADEMY" },
-          { key: "home_pfa_headline", label: "Headline", type: "text", default: "Learn the craft from the house" },
+          { key: "home_pfa_headline", label: "Headline", type: "text", default: "Learn the craft from Prudent Gabriel" },
           {
             key: "home_pfa_body",
             label: "Body text",
@@ -376,14 +376,14 @@ const CMS_PAGES_BASE: CmsPageDef[] = [
             key: "kids_hero_subtext",
             label: "Hero subtext",
             type: "textarea",
-            default: "Occasion wear and everyday elegance for the smallest members of the house.",
+            default: "Occasion wear and everyday elegance for the smallest members of the Prudent Gabriel family.",
           },
           { key: "kids_hero_cta_label", label: "Hero CTA label", type: "text", default: "Shop Kids" },
           {
             key: "kids_page_description",
             label: "Page description",
             type: "textarea",
-            default: "Occasion wear and everyday elegance for the smallest members of the house.",
+            default: "Occasion wear and everyday elegance for the smallest members of the Prudent Gabriel family.",
           },
         ],
       },
@@ -790,13 +790,13 @@ const CMS_PAGES_BASE: CmsPageDef[] = [
         id: "main",
         label: "Page Header",
         fields: [
-          { key: "shop_page_eyebrow", label: "Page eyebrow", type: "text", default: "THE HOUSE" },
+          { key: "shop_page_eyebrow", label: "Page eyebrow", type: "text", default: "PRUDENT GABRIEL" },
           { key: "shop_page_title", label: "Page title", type: "text", default: "Shop" },
           {
             key: "shop_page_subtitle",
             label: "Page subtitle",
             type: "text",
-            default: "Everything the house sells — ready-to-wear, bridal, kids, and accessories.",
+            default: "Everything Prudent Gabriel sells — ready-to-wear, bridal, kids, and accessories.",
           },
         ],
       },
@@ -917,7 +917,7 @@ const CMS_PAGES_BASE: CmsPageDef[] = [
           },
           {
             key: "footer_house_links",
-            label: "THE HOUSE column links",
+            label: "PRUDENT GABRIEL column links",
             type: "links",
             default: JSON.stringify([
               { label: "The atelier", url: "/atelier" },

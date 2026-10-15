@@ -2,7 +2,8 @@ import { render } from "@react-email/render";
 import BrandedHtmlEmail from "@/emails/BrandedHtmlEmail";
 import CollectionCampaignEmail, { type CampaignProduct } from "@/emails/CollectionCampaignEmail";
 import ComposableTemplateEmail from "@/emails/ComposableTemplateEmail";
-import { primeEmailBranding } from "@/lib/email-branding";
+import { primeEmailBranding, type EmailBrand } from "@/lib/email-branding";
+import { brandSignOff, renderInEmailScope, type EmailSignOff } from "@/emails/components/email-brand";
 import {
   demoTemplateVariables,
   interpolateTemplateText,
@@ -16,6 +17,8 @@ export async function renderTemplateEmailHtml(
   template: EmailTemplateFields,
   vars: Record<string, string> = demoTemplateVariables(),
   extraHtml?: string,
+  brand: EmailBrand = "main",
+  signOff: EmailSignOff | null = null,
 ): Promise<{ subject: string; html: string }> {
   await primeEmailBranding();
 
@@ -27,19 +30,33 @@ export async function renderTemplateEmailHtml(
   const ctaLink = template.cta_link ? interpolateTemplateText(template.cta_link, vars) : "";
   const footerNote = template.footer_note ? interpolateTemplateText(template.footer_note, vars) : "";
 
-  const html = await render(
-    <ComposableTemplateEmail
-      heading={heading}
-      body1={body1}
-      body2={body2 || undefined}
-      ctaLabel={ctaLabel || undefined}
-      ctaLink={ctaLink || undefined}
-      footerNote={footerNote || undefined}
-      extraHtml={extraHtml}
-    />,
+  const html = await renderInEmailScope({ brand, signOff }, () =>
+    render(
+      <ComposableTemplateEmail
+        heading={heading}
+        body1={body1}
+        body2={body2 || undefined}
+        ctaLabel={ctaLabel || undefined}
+        ctaLink={ctaLink || undefined}
+        footerNote={footerNote || undefined}
+        extraHtml={extraHtml}
+      />
+    ),
   );
 
   return { subject, html };
+}
+
+/** Hand-built body HTML inside the house layout, under the given brand. Not marketing mail. */
+export async function renderBrandedBodyHtml(
+  bodyHtml: string,
+  opts: { brand: EmailBrand; previewText: string; signOff?: boolean },
+): Promise<string> {
+  await primeEmailBranding();
+  return renderInEmailScope(
+    { brand: opts.brand, signOff: opts.signOff === false ? null : brandSignOff(opts.brand) },
+    () => render(<BrandedHtmlEmail previewText={opts.previewText} bodyHtml={bodyHtml} family="relationship" />),
+  );
 }
 
 export async function renderCustomEmailHtml(subject: string, bodyHtml: string): Promise<string> {

@@ -322,7 +322,7 @@ export function AboutHousePage({
               </Link>
             </div>
             <p className="mt-8 font-body text-sm font-light text-text-mid">
-              Interested in joining the house?{" "}
+              Interested in joining Prudent Gabriel?{" "}
               <Link href="/careers" className="underline underline-offset-4 hover:text-choc">
                 View open positions
               </Link>

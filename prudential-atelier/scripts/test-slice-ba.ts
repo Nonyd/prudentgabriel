@@ -88,7 +88,7 @@ function unit() {
     eventLocation: "Eko Hotel, Lagos",
     presentCity: "Lekki",
     presentCountry: "Nigeria",
-    fittingMode: "BOTH",
+    fittingMode: "MODEL",
     deliveryDate: "2026-11-28",
   };
   const ok = (v: object) => consultationEnquirySchema.safeParse(v).success;

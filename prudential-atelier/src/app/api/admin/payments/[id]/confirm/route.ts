@@ -58,6 +58,84 @@ async function rejectIfShortOfTolerance(params: {
   );
 }
 
+/** A manually recorded payment the admin has just confirmed: tell the client. */
+async function notifyLedgerPaymentConfirmed(paymentId: string, appUrl: string): Promise<void> {
+  const p = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    select: {
+      reference: true,
+      amount: true,
+      order: { select: { id: true, orderNumber: true, guestEmail: true, userId: true, user: { select: { email: true } } } },
+      consultation: { select: { id: true, bookingNumber: true, clientEmail: true, userId: true } },
+      bespokeOrder: {
+        select: {
+          id: true,
+          orderRef: true,
+          clientEmail: true,
+          trackingToken: true,
+          trackingTokenEnc: true,
+          trackingTokenExpiresAt: true,
+        },
+      },
+    },
+  });
+  if (!p) return;
+  const amountNGN = toNumber(p.amount);
+  if (p.order) {
+    const to = p.order.guestEmail ?? p.order.user?.email;
+    if (!to) return;
+    void sendPaymentConfirmedEmail({
+      to,
+      ref: p.order.orderNumber,
+      amountNGN,
+      kind: "order",
+      trackUrl: `${appUrl}${rtwOrderSuccessPath(p.order.orderNumber, to)}`,
+      paymentRef: p.reference,
+    });
+    notifyPaymentConfirmed({
+      userId: p.order.userId,
+      clientEmail: to,
+      ref: p.order.orderNumber,
+      link: `${appUrl}/account/orders`,
+      entityId: p.order.id,
+    });
+  } else if (p.consultation) {
+    void sendPaymentConfirmedEmail({
+      to: p.consultation.clientEmail,
+      ref: p.consultation.bookingNumber,
+      amountNGN,
+      kind: "consultation",
+      trackUrl: `${appUrl}/consultation/${encodeURIComponent(p.consultation.bookingNumber)}`,
+      paymentRef: p.reference,
+    });
+    notifyPaymentConfirmed({
+      userId: p.consultation.userId,
+      clientEmail: p.consultation.clientEmail,
+      ref: p.consultation.bookingNumber,
+      link: `${appUrl}/account/consultations`,
+      entityId: p.consultation.id,
+    });
+  } else if (p.bespokeOrder) {
+    const trackingRaw = await ensureTrackingRaw(p.bespokeOrder);
+    const trackUrl = `${appUrl}/track/${encodeURIComponent(trackingRaw)}`;
+    void sendPaymentConfirmedEmail({
+      to: p.bespokeOrder.clientEmail,
+      ref: p.bespokeOrder.orderRef,
+      amountNGN,
+      kind: "bespoke",
+      trackUrl,
+      paymentRef: p.reference,
+    });
+    notifyPaymentConfirmed({
+      userId: null,
+      clientEmail: p.bespokeOrder.clientEmail,
+      ref: p.bespokeOrder.orderRef,
+      link: trackUrl,
+      entityId: p.bespokeOrder.id,
+    });
+  }
+}
+
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const gate = await requireAdminApi("payments");
   if (!gate.ok) return gate.response;
@@ -97,6 +175,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       paymentId: parsed.recordId,
       confirmedById: adminId,
     });
+    if (existing && existing.status !== PaymentStatus.CONFIRMED) {
+      await notifyLedgerPaymentConfirmed(payment.id, appUrl);
+    }
     void logActivity({
       userId: adminId,
       userEmail: adminEmail,
@@ -158,14 +239,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         amountNGN: order.total,
         kind: "order",
         trackUrl: `${appUrl}${rtwOrderSuccessPath(order.orderNumber, email)}`,
+        paymentRef: ref,
       });
-      notifyPaymentConfirmed({
-        userId: order.userId,
-        clientEmail: email,
-        ref: order.orderNumber,
-        link: `${appUrl}/account/orders`,
-        entityId: order.id,
-      });
+      // fulfillPaidOrder already posted "Payment confirmed" and "Order confirmed".
       notifyBankTransferConfirmed({
         userId: order.userId,
         clientEmail: email,
@@ -226,20 +302,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       });
     }
 
-    void sendPaymentConfirmedEmail({
-      to: booking.clientEmail,
-      ref: booking.bookingNumber,
-      amountNGN: booking.feeNGN,
-      kind: "consultation",
-      trackUrl: `${appUrl}/consultation/${encodeURIComponent(booking.bookingNumber)}`,
-    });
-    notifyPaymentConfirmed({
-      userId: booking.userId,
-      clientEmail: booking.clientEmail,
-      ref: booking.bookingNumber,
-      link: `${appUrl}/account/consultations`,
-      entityId: booking.id,
-    });
+    // fulfillPaidConsultationBooking already sent the "thank you, how to prepare" email.
+    // One in-app row per transfer: "Bank transfer confirmed" says it all.
     notifyBankTransferConfirmed({
       userId: booking.userId,
       clientEmail: booking.clientEmail,
@@ -305,13 +369,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     amountNGN: payAmount,
     kind: "bespoke",
     trackUrl: trackPath,
-  });
-  notifyPaymentConfirmed({
-    userId: null,
-    clientEmail: bespoke.clientEmail,
-    ref: bespoke.orderRef,
-    link: trackPath,
-    entityId: bespoke.id,
+    paymentRef,
   });
   notifyBankTransferConfirmed({
     userId: null,

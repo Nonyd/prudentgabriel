@@ -1,4 +1,5 @@
 import { render } from "@react-email/render";
+import { createHash } from "node:crypto";
 import React, { type ReactElement } from "react";
 import WelcomeCredentialsEmail from "@/emails/WelcomeCredentialsEmail";
 import OrderConfirmationEmail from "@/emails/OrderConfirmationEmail";
@@ -26,6 +27,7 @@ import PickupReadyEmail from "@/emails/PickupReadyEmail";
 import ShippingQuoteEmail from "@/emails/ShippingQuoteEmail";
 import BespokeDeliveredEmail from "@/emails/BespokeDeliveredEmail";
 import ReceiptReminderEmail from "@/emails/ReceiptReminderEmail";
+import BrandedHtmlEmail from "@/emails/BrandedHtmlEmail";
 import { getAlterationWarrantyDays } from "@/lib/alterations/policy";
 import type { LoyaltyTier } from "@prisma/client";
 import { getPublicAppUrl, absolutePublicUrl } from "@/lib/app-url";
@@ -34,7 +36,13 @@ import { CUSTOMER_HOUSE_NAME, EMAIL_LOGO_PX, customerLoginUrl } from "@/lib/cust
 import { HOUSE_ADDRESS_ONE_LINE, resolvePickupAddress, resolvePickupName } from "@/lib/house-address";
 import { catalogCopy, sendUsingCatalog } from "@/lib/catalog-email";
 import { EMAIL_TEMPLATE_KEYS } from "@/lib/admin-email-catalog";
-import { primeEmailBranding, emailLogoWhiteUrl, emailHouseAddress } from "@/lib/email-branding";
+import {
+  primeEmailBranding,
+  emailLogoWhiteUrl,
+  emailHouseAddress,
+  type EmailBrand,
+} from "@/lib/email-branding";
+import { brandSignOff, renderInEmailScope, type EmailSignOff } from "@/emails/components/email-brand";
 import { prisma } from "@/lib/prisma";
 import { queueEmail } from "@/lib/email-outbox";
 import { logError } from "@/lib/logger";
@@ -43,9 +51,29 @@ import { resolveAdminAlertEmail, resolveHrAlertEmail } from "@/lib/admin-alert-e
 import { UNSUBSCRIBE_URL_PLACEHOLDER, EMAIL_PRIORITY_MARKETING } from "@/lib/email-priority";
 import type { EmailFamily } from "@/emails/components/email-tokens";
 
-async function renderBrandedEmail(element: ReactElement) {
+/** Short stable token for a URL or note inside an outbox idempotency key. */
+function keyPart(value: string): string {
+  return createHash("sha256").update(value).digest("hex").slice(0, 12);
+}
+
+/** Same minute: a double click. A later resend is a new email. */
+function minuteBucket(): string {
+  return new Date().toISOString().slice(0, 16);
+}
+
+async function renderBrandedEmail(
+  element: ReactElement,
+  brand: EmailBrand = "main",
+  /** Client mail signs off warmly; staff mail passes null. */
+  signOff: EmailSignOff | null = brandSignOff(brand),
+) {
   await primeEmailBranding();
-  return render(element);
+  return renderInEmailScope({ brand, signOff }, () => render(element));
+}
+
+/** Bespoke, consultations and their invoices go out under the Prudential Atelier mark. */
+function renderAtelierEmail(element: ReactElement) {
+  return renderBrandedEmail(element, "atelier");
 }
 
 export async function getEmailLogo(): Promise<string | null> {
@@ -134,10 +162,15 @@ export async function sendBankTransferReceiptReceivedEmail(params: {
   clientName: string;
   ref: string;
   amountNGN: number;
+  /** Shop checkout is main; bespoke, consultations and invoices are atelier. */
+  brand: EmailBrand;
+  /** A re-upload after a rejection, or a second instalment, is a new receipt. */
+  receiptUrl: string;
 }): Promise<void> {
   const firstName = params.clientName.split(/\s+/)[0] ?? params.clientName;
   await sendUsingCatalog({
     key: EMAIL_TEMPLATE_KEYS.BANK_TRANSFER_RECEIVED,
+    brand: params.brand,
     to: params.to,
     vars: {
       firstName,
@@ -145,7 +178,7 @@ export async function sendBankTransferReceiptReceivedEmail(params: {
       amount: `₦${params.amountNGN.toLocaleString("en-NG")}`,
     },
     outboxTemplate: "bank-transfer-receipt",
-    idempotencyKey: `bank-receipt:${params.ref}`,
+    idempotencyKey: `bank-receipt:${params.ref}:${keyPart(params.receiptUrl)}`,
     relatedType: "Payment",
     relatedId: params.ref,
   });
@@ -179,7 +212,7 @@ export async function sendBankTransferAdminNotification(params: {
     },
     extraHtml: `<p><a href="${escapeHtml(receiptHref)}">View receipt</a>${adminLink}</p>`,
     outboxTemplate: "bank-transfer-admin",
-    idempotencyKey: `bank-receipt-admin:${params.ref}`,
+    idempotencyKey: `bank-receipt-admin:${params.ref}:${keyPart(params.receiptUrl)}`,
     relatedType: "Payment",
     relatedId: params.ref,
   });
@@ -191,9 +224,12 @@ export async function sendPaymentConfirmedEmail(params: {
   amountNGN: number;
   kind: "order" | "consultation" | "bespoke";
   trackUrl: string;
+  /** The payment's own reference; a deposit and a balance on one order are two emails. */
+  paymentRef: string;
 }): Promise<void> {
   await sendUsingCatalog({
     key: EMAIL_TEMPLATE_KEYS.PAYMENT_CONFIRMED,
+    brand: params.kind === "order" ? "main" : "atelier",
     to: params.to,
     vars: {
       firstName: "there",
@@ -202,7 +238,7 @@ export async function sendPaymentConfirmedEmail(params: {
       link: params.trackUrl,
     },
     outboxTemplate: "payment-confirmed",
-    idempotencyKey: `payment-confirmed:${params.kind}:${params.ref}`,
+    idempotencyKey: `payment-confirmed:${params.kind}:${params.ref}:${params.paymentRef}`,
     relatedType: "Payment",
     relatedId: params.ref,
   });
@@ -213,9 +249,13 @@ export async function sendPaymentRejectedEmail(params: {
   ref: string;
   amountNGN: number;
   reason: string;
+  brand: EmailBrand;
+  /** What was rejected (receipt URL or payment id), so a second rejection still emails. */
+  rejectedItem: string;
 }): Promise<void> {
   await sendUsingCatalog({
     key: EMAIL_TEMPLATE_KEYS.PAYMENT_REJECTED,
+    brand: params.brand,
     to: params.to,
     vars: {
       firstName: "there",
@@ -224,7 +264,7 @@ export async function sendPaymentRejectedEmail(params: {
     },
     extraHtml: `<p><strong>Reason:</strong> ${escapeHtml(params.reason)}</p>`,
     outboxTemplate: "payment-rejected",
-    idempotencyKey: `payment-rejected:${params.ref}`,
+    idempotencyKey: `payment-rejected:${params.ref}:${keyPart(params.rejectedItem)}`,
     relatedType: "Payment",
     relatedId: params.ref,
   });
@@ -384,7 +424,7 @@ export async function sendBespokeConfirmationEmail(
     orderRef: requestNumber,
     outfitName: occasion,
   });
-  const html = await renderBrandedEmail(
+  const html = await renderAtelierEmail(
     <BespokeConfirmationEmail
       name={name}
       requestNumber={requestNumber}
@@ -703,7 +743,7 @@ export async function sendBespokeDeliveredEmail(params: {
     link: params.confirmUrl,
     warrantyDays,
   });
-  const html = await renderBrandedEmail(
+  const html = await renderAtelierEmail(
     <BespokeDeliveredEmail
       firstName={params.firstName}
       orderRef={params.orderRef}
@@ -738,7 +778,7 @@ export async function sendReceiptReminderEmail(params: {
     link: params.confirmUrl,
     warrantyDays,
   });
-  const html = await renderBrandedEmail(
+  const html = await renderAtelierEmail(
     <ReceiptReminderEmail
       firstName={params.firstName}
       orderRef={params.orderRef}
@@ -771,7 +811,7 @@ export async function sendBespokeReviewRequestEmail(params: {
     outfitName: params.orderRef,
     link: params.reviewUrl,
   });
-  const html = await renderBrandedEmail(
+  const html = await renderAtelierEmail(
     <ReviewRequestEmail
       firstName={params.firstName}
       headline={copy.heading}
@@ -872,13 +912,15 @@ export async function sendStageAssignmentEmail(params: {
   orderRef: string;
   outfitName: string;
   deliveryDate?: string;
+  /** Staff portal page for the order; `/admin` bounces staff-only users. */
+  orderPath: string;
 }): Promise<void> {
   const copy = await catalogCopy(EMAIL_TEMPLATE_KEYS.STAGE_ASSIGNMENT, {
     firstName: params.firstName,
     orderRef: params.orderRef,
     outfitName: params.outfitName,
     stageName: params.stageName,
-    link: `${getPublicAppUrl()}/admin`,
+    link: `${getPublicAppUrl()}${params.orderPath}`,
   });
   const html = await renderBrandedEmail(
     <StageAssignmentEmail
@@ -888,6 +930,8 @@ export async function sendStageAssignmentEmail(params: {
       outfitName={params.outfitName}
       deliveryDate={params.deliveryDate}
     />,
+    "main",
+    null, // Staff mail: no client sign-off.
   );
   await sendEmail({
     to: params.to,
@@ -900,6 +944,7 @@ export async function sendStageAssignmentEmail(params: {
   });
 }
 
+/** Internal mail only: staff and admin alerts carry the main house mark. */
 function wrapHtml(title: string, inner: string, family: EmailFamily = "transactional"): string {
   const logoBlock = emailLogoWhiteUrl
     ? `<table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto;">
@@ -921,7 +966,7 @@ function wrapHtml(title: string, inner: string, family: EmailFamily = "transacti
       : "";
   const footerNote =
     family === "marketing"
-      ? `<p style="margin:14px 0 0;font-size:11px;line-height:18px;color:#6B5E52;">You received this because you subscribed or have shopped with the house.<br/><a href="${UNSUBSCRIBE_URL_PLACEHOLDER}" style="color:#C9A84C;text-decoration:underline;">Unsubscribe</a></p>`
+      ? `<p style="margin:14px 0 0;font-size:11px;line-height:18px;color:#6B5E52;">You received this because you subscribed or have shopped with Prudent Gabriel.<br/><a href="${UNSUBSCRIBE_URL_PLACEHOLDER}" style="color:#C9A84C;text-decoration:underline;">Unsubscribe</a></p>`
       : `<p style="margin:14px 0 0;font-size:10px;">This message is about an order or account. It is not marketing mail.</p>`;
   return `<!DOCTYPE html><html lang="en"><head>
 <meta charset="utf-8"/>
@@ -990,6 +1035,7 @@ export async function sendStageApprovalRequestEmail(params: {
   notes: string | null;
   imageUrls: string[];
   approveUrl: string;
+  approvalId: string;
 }): Promise<void> {
   const first = params.clientName.split(/\s+/)[0] ?? params.clientName;
   const notes = params.notes?.trim()
@@ -1013,7 +1059,7 @@ export async function sendStageApprovalRequestEmail(params: {
     },
     extraHtml: `${notes}${images ? `<div style="margin:16px 0;">${images}</div>` : ""}`,
     outboxTemplate: "stage-approval-request",
-    idempotencyKey: `stage-approval:${params.orderRef}:${params.stageLabel}`,
+    idempotencyKey: `stage-approval:${params.approvalId}`,
     relatedType: "BespokeOrder",
     relatedId: params.orderRef,
   });
@@ -1025,6 +1071,7 @@ export async function sendStageApprovalReminderEmail(params: {
   orderRef: string;
   stageLabel: string;
   approveUrl: string;
+  approvalId: string;
 }): Promise<void> {
   const first = params.clientName.split(/\s+/)[0] ?? params.clientName;
   await sendUsingCatalog({
@@ -1037,7 +1084,7 @@ export async function sendStageApprovalReminderEmail(params: {
       link: params.approveUrl,
     },
     outboxTemplate: "stage-approval-reminder",
-    idempotencyKey: `stage-approval-reminder:${params.orderRef}:${params.stageLabel}`,
+    idempotencyKey: `stage-approval-reminder:${params.approvalId}`,
     relatedType: "BespokeOrder",
     relatedId: params.orderRef,
   });
@@ -1050,6 +1097,7 @@ export async function sendStageChangesRequestedEmail(params: {
   stageLabel: string;
   comment: string;
   orderUrl: string;
+  approvalId: string;
 }): Promise<void> {
   await sendUsingCatalog({
     key: EMAIL_TEMPLATE_KEYS.STAGE_CHANGES_REQUESTED,
@@ -1063,7 +1111,7 @@ export async function sendStageChangesRequestedEmail(params: {
     },
     extraHtml: `<p style="margin:16px 0;font-size:15px;line-height:1.5;white-space:pre-wrap;">${escapeHtml(params.comment)}</p>`,
     outboxTemplate: "stage-changes-requested",
-    idempotencyKey: `stage-changes:${params.orderRef}:${params.stageLabel}`,
+    idempotencyKey: `stage-changes:${params.approvalId}:${params.to}`,
     relatedType: "BespokeOrder",
     relatedId: params.orderRef,
   });
@@ -1114,7 +1162,9 @@ export async function sendQuoteChangeReplyEmail(params: {
   await sendEmail({
     to: params.to,
     subject: `Re: your quotation ${params.quoteRef}`,
-    html: wrapHtml(CUSTOMER_HOUSE_NAME, inner, "relationship"),
+    html: await renderAtelierEmail(
+      <BrandedHtmlEmail previewText={`Our answer on quotation ${params.quoteRef}`} bodyHtml={inner} family="relationship" />,
+    ),
     template: "quote-change-reply",
     idempotencyKey: `quote-change-reply:${params.requestId}`,
     relatedType: "Quotation",
@@ -1127,26 +1177,27 @@ export async function sendConsultationPendingEmail(params: {
   clientName: string;
   bookingNumber: string;
   consultantName: string;
-  sessionTypeLabel: string;
-  deliveryModeLabel: string;
-  feeNGN: number;
+  isVirtual: boolean;
+  durationMinutes: number;
   preferredDate1?: Date;
   preferredDate2?: Date;
   preferredDate3?: Date;
 }): Promise<void> {
   const firstName = params.clientName.split(/\s+/)[0] ?? params.clientName;
-  const copy = await catalogCopy(EMAIL_TEMPLATE_KEYS.CONSULTATION_PENDING, {
+  const copy = await catalogCopy(
+    params.isVirtual ? EMAIL_TEMPLATE_KEYS.CONSULTATION_PENDING_VIRTUAL : EMAIL_TEMPLATE_KEYS.CONSULTATION_PENDING,
+    {
     firstName,
     orderRef: params.bookingNumber,
   });
-  const html = await renderBrandedEmail(
+  const html = await renderAtelierEmail(
     <ConsultationPendingEmail
-      clientName={params.clientName}
+      firstName={firstName}
       bookingNumber={params.bookingNumber}
-      consultantName={params.consultantName}
-      sessionTypeLabel={params.sessionTypeLabel}
-      deliveryModeLabel={params.deliveryModeLabel}
-      feeNGN={params.feeNGN}
+      isVirtual={params.isVirtual}
+      durationMinutes={params.durationMinutes}
+      intro={copy.body1}
+      closing={copy.body2}
       preferredDate1={params.preferredDate1?.toISOString()}
       preferredDate2={params.preferredDate2?.toISOString()}
       preferredDate3={params.preferredDate3?.toISOString()}
@@ -1193,7 +1244,7 @@ export async function sendConsultationConfirmedEmail(params: {
     orderRef: params.bookingNumber,
     date: dateLabel,
   });
-  const html = await renderBrandedEmail(
+  const html = await renderAtelierEmail(
     <ConsultationConfirmedEmail
       clientName={params.clientName}
       bookingNumber={params.bookingNumber}
@@ -1232,7 +1283,7 @@ export async function sendConsultationCancelledEmail(params: {
     firstName,
     orderRef: params.bookingNumber,
   });
-  const html = await renderBrandedEmail(
+  const html = await renderAtelierEmail(
     <ConsultationCancelledEmail
       clientName={params.clientName}
       bookingNumber={params.bookingNumber}
@@ -1259,12 +1310,13 @@ export async function sendConsultationSessionSummaryEmail(params: {
   moodboardUrl?: string;
   commissionUrl?: string;
   showCommissionCta?: boolean;
+  bookingId: string;
 }): Promise<void> {
   const copy = await catalogCopy(EMAIL_TEMPLATE_KEYS.SESSION_SUMMARY, {
     firstName: params.firstName,
     outfitName: "your consultation",
   });
-  const html = await renderBrandedEmail(
+  const html = await renderAtelierEmail(
     <ConsultationSessionSummaryEmail
       firstName={params.firstName}
       sessionNotes={params.sessionNotes}
@@ -1280,7 +1332,7 @@ export async function sendConsultationSessionSummaryEmail(params: {
     subject: copy.subject,
     html,
     template: "consultation-session-summary",
-    idempotencyKey: `consultation-summary:${params.to}:${params.moodboardUrl ?? "none"}`,
+    idempotencyKey: `consultation-summary:${params.bookingId}`,
   });
 }
 
@@ -1300,7 +1352,7 @@ export async function sendConsultationMeetingLinkEmail(params: {
     firstName,
     link: params.meetingLink,
   });
-  const html = await renderBrandedEmail(
+  const html = await renderAtelierEmail(
     <ConsultationMeetingLinkEmail
       clientName={params.clientName}
       platformLabel={params.platformLabel}
@@ -1339,7 +1391,7 @@ export async function sendConsultationRescheduleEmail(params: {
     firstName,
     orderRef: params.bookingNumber,
   });
-  const html = await renderBrandedEmail(
+  const html = await renderAtelierEmail(
     <ConsultationRescheduleEmail
       clientName={params.clientName}
       bookingNumber={params.bookingNumber}
@@ -1353,7 +1405,7 @@ export async function sendConsultationRescheduleEmail(params: {
     subject: copy.subject,
     html,
     template: "consultation-reschedule",
-    idempotencyKey: `consultation-reschedule:${params.bookingNumber}`,
+    idempotencyKey: `consultation-reschedule:${params.bookingNumber}:${keyPart(params.proposedDates.join("|") + (params.adminMessage ?? ""))}`,
     relatedType: "ConsultationBooking",
     relatedId: params.bookingNumber,
   });
@@ -1391,13 +1443,13 @@ export async function sendInvoiceEmail(params: {
     amount: params.total,
     link: params.publicLink,
   });
-  const html = await renderBrandedEmail(<InvoiceEmail {...props} />);
+  const html = await renderAtelierEmail(<InvoiceEmail {...props} />);
   await sendEmail({
     to: params.to,
     subject: copy.subject,
     html,
     template: "invoice",
-    idempotencyKey: `invoice:${params.invoiceNumber}`,
+    idempotencyKey: `invoice:${params.invoiceNumber}:${params.to}:${minuteBucket()}`,
     relatedType: "Invoice",
     relatedId: params.invoiceNumber,
   });
@@ -1478,7 +1530,7 @@ export async function sendConsultationReviewRequestEmail(params: {
     firstName: params.firstName,
     link: reviewUrl,
   });
-  const html = await renderBrandedEmail(
+  const html = await renderAtelierEmail(
     <ReviewRequestEmail
       firstName={params.firstName}
       headline={copy.heading}

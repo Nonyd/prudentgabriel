@@ -1,7 +1,7 @@
 import type { ApplicationStatus } from "@prisma/client";
 import { Heading, Text } from "@react-email/components";
 import EmailLayout from "./components/EmailLayout";
-import { EMAIL_CHOC, EMAIL_INK, EMAIL_MUTED, FONT_BODY } from "./components/email-tokens";
+import { EMAIL_CHOC, EMAIL_INK, FONT_BODY } from "./components/email-tokens";
 
 const STATUS_COPY: Record<
   ApplicationStatus,
@@ -10,24 +10,24 @@ const STATUS_COPY: Record<
   NEW: null,
   REVIEWED: null,
   SHORTLISTED: {
-    subject: "You've been shortlisted",
-    headline: "Congratulations — you've been shortlisted",
-    body: "Your application stood out to us. Our team will be in touch shortly with next steps.",
+    subject: "You have been shortlisted",
+    headline: "Congratulations, you have been shortlisted",
+    body: "Your application truly stood out to us, and we are delighted to share this news. Our team will be in touch shortly with the next steps.",
   },
   INTERVIEWED: {
-    subject: "Interview invitation",
-    headline: "We'd like to meet you",
-    body: "Thank you for your interest in joining Prudential Atelier. We would like to invite you for an interview. Our team will follow up with scheduling details.",
+    subject: "An invitation to interview",
+    headline: "We would love to meet you",
+    body: "Thank you for your interest in joining Prudent Gabriel. We would be delighted to invite you for an interview. Our team will follow up with scheduling details.",
   },
   REJECTED: {
     subject: "Thank you for applying",
     headline: "Thank you for your application",
-    body: "We appreciate the time you took to apply. After careful review, we will not be moving forward at this time. We wish you every success in your career.",
+    body: "Thank you sincerely for the time and care you gave to your application. After careful review, we will not be moving forward at this time. We wish you every success in your career.",
   },
   HIRED: {
-    subject: "Welcome to Prudential Atelier",
-    headline: "Welcome to the house",
-    body: "We are delighted to offer you a place on our team. Our HR team will reach out with onboarding details.",
+    subject: "Welcome to Prudent Gabriel",
+    headline: "Welcome to Prudent Gabriel",
+    body: "We are truly delighted to offer you a place on our team, and we cannot wait to welcome you. Our HR team will reach out with your onboarding details.",
   },
 };
 
@@ -55,14 +55,11 @@ export function JobApplicationStatusEmail({
       >
         {copy.headline}
       </Heading>
-      <Text style={{ color: EMAIL_INK, fontSize: 15, lineHeight: "24px", fontFamily: FONT_BODY }}>Hi {name},</Text>
+      <Text style={{ color: EMAIL_INK, fontSize: 15, lineHeight: "24px", fontFamily: FONT_BODY }}>Dear {name},</Text>
       <Text style={{ color: EMAIL_INK, fontSize: 15, lineHeight: "24px", fontFamily: FONT_BODY }}>
-        Re: your application for {jobTitle}.
+        We are writing about your application for the {jobTitle} position.
       </Text>
       <Text style={{ color: EMAIL_INK, fontSize: 15, lineHeight: "24px", fontFamily: FONT_BODY }}>{copy.body}</Text>
-      <Text style={{ color: EMAIL_MUTED, fontSize: 13, marginTop: 32, fontFamily: FONT_BODY }}>
-        The Prudential Atelier Team
-      </Text>
     </EmailLayout>
   );
 }

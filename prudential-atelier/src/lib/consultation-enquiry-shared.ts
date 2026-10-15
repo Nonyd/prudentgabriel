@@ -35,18 +35,32 @@ export function occasionPhrase(id: string): string {
   return OCCASION_PHRASES[id as EnquiryOccasion] ?? "event";
 }
 
-/** How she can attend fittings. */
+/**
+ * Can the client attend fittings in person? "No" means the dress is fitted on a
+ * model of a close size. The question is Yes/No; `label` is how admin reads it.
+ */
 export const ENQUIRY_FITTING_MODES = [
-  { id: "IN_PERSON", label: "In person, at the atelier" },
-  { id: "VIRTUAL", label: "Virtually" },
-  { id: "BOTH", label: "Either" },
+  { id: "IN_PERSON", answer: "Yes", label: "Yes, attends fittings in person" },
+  { id: "MODEL", answer: "No", label: "No, fit on a model of a close size" },
 ] as const;
 
 export type EnquiryFittingMode = (typeof ENQUIRY_FITTING_MODES)[number]["id"];
 
+/** Answers given before the Yes/No question, still on older enquiries. */
+const LEGACY_FITTING_LABELS: Record<string, string> = {
+  VIRTUAL: "Virtually (older enquiry)",
+  BOTH: "In person or virtually (older enquiry)",
+};
+
 export function fittingModeLabel(id: string | null | undefined): string {
-  return ENQUIRY_FITTING_MODES.find((m) => m.id === id)?.label ?? (id ?? "");
+  return ENQUIRY_FITTING_MODES.find((m) => m.id === id)?.label ?? LEGACY_FITTING_LABELS[id ?? ""] ?? (id ?? "");
 }
+
+export const FITTING_IN_PERSON_GUIDANCE =
+  "At Prudent Gabriel Atelier, we strongly recommend that every client attends their fittings in person. This is an essential part of our production process, as it allows us to assess the fit of your dress, make necessary adjustments, and ensure it is neither too loose nor too tight upon delivery.";
+
+export const FITTING_MODEL_NOTE =
+  "Thank you for letting us know. If you cannot attend, we will fit your dress on a model of a close size. We would still truly love to see you in person for your fittings, as it is the best way to make sure your dress fits you perfectly.";
 
 export const MAX_DRESSES = 20;
 
@@ -167,9 +181,9 @@ export function consultationTermsText(feeNGN: number): string {
   return (
     `The consultation fee of ${naira(feeNGN)} is non-refundable. ` +
     "It pays for the consultation only and is not credited towards the price of a commission. " +
-    "If the house has to cancel and cannot offer you another date, the fee is returned."
+    "If Prudent Gabriel has to cancel and cannot offer you another date, the fee is returned."
   );
 }
 
 export const INVITATION_ONLY_MESSAGE =
-  "Consultations are by invitation. Send an enquiry and the house will email you a booking link.";
+  "Consultations are by invitation. Send an enquiry and Prudent Gabriel will email you a booking link.";

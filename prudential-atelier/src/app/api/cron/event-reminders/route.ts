@@ -3,7 +3,8 @@ import { validateCronSecret } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import { logActivity, logError } from "@/lib/logger";
 import { sendEmail } from "@/lib/email";
-import { eventReminderEmailHtml } from "@/lib/email-templates/reports";
+import { renderBrandedBodyHtml } from "@/lib/admin-email-render";
+import { eventReminderEmailBody } from "@/lib/email-templates/reports";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { notifyEventReminder } from "@/lib/customer-notifications";
 import { customerAllowsPref } from "@/lib/account-helpers";
@@ -54,12 +55,15 @@ export async function POST(req: NextRequest) {
       await sendEmail({
         to: email,
         subject: `${ev.label} is coming up — time to get dressed?`,
-        html: eventReminderEmailHtml({
-          firstName,
-          eventLabel: ev.label,
-          weeksAway: weeksAway || 1,
-          appUrl,
-        }),
+        html: await renderBrandedBodyHtml(
+          eventReminderEmailBody({
+            firstName,
+            eventLabel: ev.label,
+            weeksAway: weeksAway || 1,
+            appUrl,
+          }),
+          { brand: "atelier", previewText: `${ev.label} is coming up` },
+        ),
         template: "event-reminder",
         idempotencyKey: `event-reminder:${ev.id}:${days}`,
         relatedType: "EventDate",

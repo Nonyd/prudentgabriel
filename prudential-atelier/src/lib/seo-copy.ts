@@ -14,9 +14,9 @@ export const PAGE_SEO_FALLBACKS: Record<string, PageSeoFallback> = {
       "Bespoke couture and ready-to-wear by Mrs. Prudent Gabriel-Okopi. Cut in Lagos, made to order in 7–12 days, shipped worldwide.",
   },
   shop: {
-    title: "Shop the house — ready-to-wear, bridal and kids from Prudential Atelier",
+    title: "Shop Prudent Gabriel — ready-to-wear, bridal and kids from Prudential Atelier",
     description:
-      "Everything the house sells: ready-to-wear, bridal, kids and accessories. Made to order in Lagos in 7–12 days.",
+      "Everything Prudent Gabriel sells: ready-to-wear, bridal, kids and accessories. Made to order in Lagos in 7–12 days.",
   },
   rtw: {
     title: "Ready-to-wear from Prudential Atelier — cut in Lagos, made to order",
@@ -34,7 +34,7 @@ export const PAGE_SEO_FALLBACKS: Record<string, PageSeoFallback> = {
       "Bridal commissions and ceremony pieces from Prudential Atelier. Made to order, fitted in Lagos, worn around the world.",
   },
   kids: {
-    title: "Prudential Kids — occasion wear for the smallest of the house",
+    title: "Prudential Kids — occasion wear for the smallest of the Prudent Gabriel family",
     description:
       "Occasion and everyday pieces for children, cut in the same Lagos atelier as the women's house.",
   },
@@ -76,7 +76,7 @@ export const PAGE_SEO_FALLBACKS: Record<string, PageSeoFallback> = {
   careers: {
     title: "Careers at Prudential Atelier — join the Lagos house",
     description:
-      "Open roles in the atelier, the workroom and the house. Pattern, beading, bridal and the floor that ships it.",
+      "Open roles in the atelier, the workroom and Prudent Gabriel. Pattern, beading, bridal and the floor that ships it.",
   },
   consultation: {
     title: "Book a consultation at the Lagos atelier",

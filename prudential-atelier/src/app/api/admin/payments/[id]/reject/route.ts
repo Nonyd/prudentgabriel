@@ -74,7 +74,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     await markRtwOrderPaymentFailed(order.id);
     const email = order.guestEmail ?? (await prisma.user.findUnique({ where: { id: order.userId ?? "" }, select: { email: true } }))?.email;
     if (email) {
-      void sendPaymentRejectedEmail({ to: email, ref: order.orderNumber, amountNGN: order.total, reason });
+      void sendPaymentRejectedEmail({ to: email, ref: order.orderNumber, amountNGN: order.total, reason, brand: "main", rejectedItem: order.paymentReceiptUrl ?? order.id });
     }
     void logActivity({
       userId: adminId,
@@ -103,6 +103,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       ref: booking.bookingNumber,
       amountNGN: booking.feeNGN,
       reason,
+      brand: "atelier",
+      rejectedItem: booking.paymentReceiptUrl ?? booking.id,
     });
     void logActivity({
       userId: adminId,
@@ -135,6 +137,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 
   const rejectAmount = pending ? toNumber(pending.amount) : bespoke.balance;
+  const rejectedItem = pending?.id ?? bespoke.paymentReceiptUrl ?? bespoke.id;
 
   await prisma.bespokeOrder.update({
     where: { id: bespoke.id },
@@ -145,6 +148,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     ref: bespoke.orderRef,
     amountNGN: rejectAmount,
     reason,
+    brand: "atelier",
+    rejectedItem,
   });
   void logActivity({
     userId: adminId,

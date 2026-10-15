@@ -32,10 +32,10 @@ export default function WelcomeCredentialsEmail({
         Welcome, {firstName}.
       </Heading>
       <Text style={{ fontFamily: FONT_BODY, fontSize: 15, lineHeight: "24px", color: EMAIL_INK }}>
-        Your account has been created so you can follow your {sourceLabel} with us — track the
-        commission, open invoices, and use the atelier portal. Paying an invoice, a consultation
-        or a shop order without signing up first is what opens this account. Design approval and receipt
-        confirmation each arrive as their own link in a separate email; you do not need an account for those.
+        We are so pleased to welcome you. Your account has been created so you can follow your {sourceLabel}
+        with us: track the commission, open invoices and use the atelier portal. This account opens when you pay
+        an invoice, a consultation or a shop order without signing up first. Design approval and receipt
+        confirmation each arrive as their own link in a separate email, and you do not need an account for those.
       </Text>
       <table
         width="100%"
@@ -84,7 +84,7 @@ export default function WelcomeCredentialsEmail({
       >
         Track your order (no login needed)
       </Text>
-      <Text style={{ fontFamily: FONT_BODY, fontSize: 14, color: EMAIL_INK }}>Follow your commission at any time:</Text>
+      <Text style={{ fontFamily: FONT_BODY, fontSize: 14, color: EMAIL_INK }}>Follow your commission whenever you like:</Text>
       <EmailButton href={trackUrl}>Track my order</EmailButton>
     </EmailLayout>
   );

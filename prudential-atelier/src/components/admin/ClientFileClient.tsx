@@ -601,7 +601,7 @@ function IllustrationsView({
         )}
       </PerCommission>
       <div>
-        <SubHead>Mood boards made by the house</SubHead>
+        <SubHead>Mood boards made by Prudent Gabriel</SubHead>
         {data.houseMoodboards.length === 0 ? <Empty>None yet.</Empty> : null}
         {data.houseMoodboards.map((m) => (
           <div key={m.id} className="mt-2">
@@ -708,7 +708,7 @@ function FittingView({ data }: { data: Fitting }) {
               {st.history.map((h, i) =>
                 h.notes ? (
                   <p key={i} className="whitespace-pre-line text-text-mid">
-                    {h.notes} <span className="text-xs text-text-light">— {h.by ?? "the house"}, {date(h.at)}</span>
+                    {h.notes} <span className="text-xs text-text-light">— {h.by ?? "Prudent Gabriel"}, {date(h.at)}</span>
                   </p>
                 ) : null,
               )}

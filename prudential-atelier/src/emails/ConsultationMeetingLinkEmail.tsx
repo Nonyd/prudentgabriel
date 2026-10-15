@@ -37,11 +37,12 @@ export default function ConsultationMeetingLinkEmail({
   return (
     <EmailLayout family="relationship" previewText={`Your consultation link — ${CUSTOMER_HOUSE_NAME}`}>
       <Heading as="h1" style={{ fontSize: 26, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
-        Your consultation link
+        Your consultation link is ready
       </Heading>
-      <Text style={{ fontSize: 16, color: "#333" }}>Hi {clientName},</Text>
+      <Text style={{ fontSize: 16, color: "#333" }}>Dear {clientName},</Text>
       <Text style={{ fontSize: 16, color: "#333", lineHeight: 1.6 }}>
-        Your {platformLabel} consultation is on {fmtDate(confirmedDate)} at {confirmedTime} WAT.
+        Your {platformLabel} consultation is on {fmtDate(confirmedDate)} at {confirmedTime} WAT, and your link is
+        ready below.
       </Text>
       <Section style={{ marginTop: 20, padding: 16, backgroundColor: "rgba(201,168,76,0.08)" }}>
         <Text style={{ margin: 0, fontSize: 15 }}>DATE: {fmtDate(confirmedDate)}</Text>
@@ -52,13 +53,11 @@ export default function ConsultationMeetingLinkEmail({
       </Section>
       <Text style={{ marginTop: 20, fontSize: 14, color: "#555", lineHeight: 1.6 }}>
         {isWhatsApp
-          ? "Click the button above to start the WhatsApp video call at your scheduled time."
-          : "Click the button above to join your consultation at the scheduled time."}
+          ? "Simply click the button above to start the WhatsApp video call at your scheduled time."
+          : "Simply click the button above to join your consultation at the scheduled time."}
       </Text>
       <Text style={{ marginTop: 24, fontSize: 14, color: "#666" }}>
-        See you soon,
-        <br />
-        — {CUSTOMER_HOUSE_NAME}
+        Everyone at {CUSTOMER_HOUSE_NAME} is so looking forward to seeing you.
       </Text>
     </EmailLayout>
   );

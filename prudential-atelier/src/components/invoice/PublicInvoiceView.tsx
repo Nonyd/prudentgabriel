@@ -90,7 +90,7 @@ export function PublicInvoiceView({ token }: { token: string }) {
         <div className="px-6 py-3 font-body text-sm" style={{ backgroundColor: "#FDECEA", color: "#8B1A1A" }}>
           This quoted price expired
           {data.expiresAt ? ` on ${new Date(data.expiresAt).toLocaleDateString("en-GB")}` : ""}. You can still pay;
-          the house may honour or revise the figure.
+          Prudent Gabriel may honour or revise the figure.
         </div>
       ) : null}
 

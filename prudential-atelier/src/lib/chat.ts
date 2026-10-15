@@ -166,10 +166,10 @@ export function openingLine(ctx: ResolvedChatContext, appUrl: string): string {
         "help with anything else here."
       );
     case ChatContextKind.PIECE:
-      return `You're asking about ${ctx.label}. Someone from the house will reply here.`;
+      return `You're asking about ${ctx.label}. Someone from Prudent Gabriel will reply here.`;
     case ChatContextKind.ORDER:
-      return `This conversation is about order ${ctx.orderRef}. Someone from the house will reply here.`;
+      return `This conversation is about order ${ctx.orderRef}. Someone from Prudent Gabriel will reply here.`;
     default:
-      return "Thank you for writing. Someone from the house will reply here.";
+      return "Thank you for writing. Someone from Prudent Gabriel will reply here.";
   }
 }

@@ -5,7 +5,14 @@ import {
   type StageEmailData,
 } from "@/lib/email-templates/bespoke-stages";
 import { sendEmail } from "@/lib/email";
-import { getLogoSettings } from "@/lib/logos";
+import { EMAIL_LOGO_PX } from "@/lib/customer-email";
+import {
+  EMAIL_ATELIER_LOGO_HEIGHT,
+  EMAIL_ATELIER_LOGO_WIDTH,
+  emailAtelierLogoDarkUrl,
+  emailLogoDarkUrl,
+  primeEmailBranding,
+} from "@/lib/email-branding";
 import { catalogCopy } from "@/lib/catalog-email";
 import {
   BESPOKE_STAGE_EMAIL_KEYS,
@@ -26,8 +33,13 @@ export async function sendBespokeStageEmail(
     stageName: data.stageName,
     link: data.trackingUrl,
   });
-  const { logoWhite } = await getLogoSettings();
-  const html = getBespokeStageEmail(stage, data, logoWhite || undefined, {
+  await primeEmailBranding();
+  const logo = emailAtelierLogoDarkUrl
+    ? { url: emailAtelierLogoDarkUrl, width: EMAIL_ATELIER_LOGO_WIDTH, height: EMAIL_ATELIER_LOGO_HEIGHT }
+    : emailLogoDarkUrl
+      ? { url: emailLogoDarkUrl, width: EMAIL_LOGO_PX, height: EMAIL_LOGO_PX }
+      : undefined;
+  const html = getBespokeStageEmail(stage, data, logo, {
     heading: copy.heading,
     intro: copy.body1,
     ctaLabel: copy.ctaLabel || "Track Your Order",

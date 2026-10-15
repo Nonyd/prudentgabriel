@@ -49,7 +49,7 @@ const DEFS: {
   {
     key: CUSTOM_SETTING_KEYS.leadTimeDays,
     value: "12",
-    label: "Made-to-measure — lead time in days (upper bound of the house production promise)",
+    label: "Made-to-measure — lead time in days (upper bound of Prudent Gabriel's production promise)",
     type: SettingType.NUMBER,
     sortOrder: 23,
   },

@@ -34,7 +34,8 @@ export function reportEmailHtml(title: string, sections: { heading: string; html
   return WRAPPER(title, body, `${appUrl}/admin/reports`, "View full report");
 }
 
-export function eventReminderEmailHtml(params: {
+/** Body only; the sender wraps it in the atelier layout. */
+export function eventReminderEmailBody(params: {
   firstName: string;
   eventLabel: string;
   weeksAway: number;
@@ -45,6 +46,9 @@ export function eventReminderEmailHtml(params: {
       Hi ${params.firstName}, your <strong>${params.eventLabel}</strong> is about ${params.weeksAway} week${params.weeksAway !== 1 ? "s" : ""} away.
       Whether you need an atelier commission or something from our collection, we'd love to dress you for the occasion.
     </p>`;
-  return WRAPPER(`${params.eventLabel} is coming up`, body, `${params.appUrl}/consultation`, "Book a Consultation");
+  return `
+    <h1 style="margin:0 0 24px;font-family:Georgia,serif;font-size:24px;font-weight:normal;color:#442913;">${params.eventLabel} is coming up</h1>
+    ${body}
+    <p style="margin-top:28px;"><a href="${params.appUrl}/consultation" style="display:inline-block;background:#5C3422;color:#E2D1C2;padding:12px 24px;text-decoration:none;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;">Book a Consultation</a></p>`;
 }
 

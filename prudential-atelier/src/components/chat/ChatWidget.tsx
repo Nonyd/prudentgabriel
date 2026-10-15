@@ -130,11 +130,11 @@ export function ChatWidget() {
         <div
           className="glass-3 glass-panel flex h-[min(520px,75vh)] w-[min(360px,calc(100vw-2rem))] flex-col overflow-hidden"
           role="dialog"
-          aria-label="Chat with the house"
+          aria-label="Chat with Prudent Gabriel"
         >
           <div className="flex items-center justify-between border-b border-sand px-4 py-3">
             <div>
-              <p className="font-serif text-lg text-choc">Chat with the house</p>
+              <p className="font-serif text-lg text-choc">Chat with Prudent Gabriel</p>
               {thread?.contextLabel ? <p className="font-body text-xs text-text-light">{thread.contextLabel}</p> : null}
             </div>
             <button type="button" onClick={() => setOpen(false)} aria-label="Close chat" className="p-1 text-text-mid">
@@ -217,7 +217,7 @@ export function ChatWidget() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="flex h-12 w-12 items-center justify-center rounded-full bg-choc text-cream shadow-lg"
-        aria-label={open ? "Close chat" : "Chat with the house"}
+        aria-label={open ? "Close chat" : "Chat with Prudent Gabriel"}
         aria-expanded={open}
       >
         {open ? <X className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />}

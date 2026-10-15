@@ -5,6 +5,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { logActivity, logError } from "@/lib/logger";
 import { sendEmail } from "@/lib/email";
+import { renderBrandedBodyHtml } from "@/lib/admin-email-render";
 import { notifyQuoteReady } from "@/lib/customer-notifications";
 import { getLockedFx, persistableFxFields } from "@/lib/fx";
 import { lockedDocumentTotal } from "@/lib/atelier-fx";
@@ -84,17 +85,20 @@ export async function POST(_req: NextRequest, { params }: Params) {
 
     // Queue the rendered HTML; transport is out of band. Quote is marked SENT
     // once the outbox row exists so a failed SMTP attempt is still visible.
-    const html = buildQuoteEmailHtml({
-      clientName: quote.clientName,
-      quoteRef: quote.quoteRef,
-      total: quote.total,
-      currency: quote.currency || "NGN",
-      approvalUrl,
-      pdfUrl: pdfPublicUrl,
-      lineItems: Array.isArray(lineItems) ? lineItems : [],
-      notes: quote.notes,
-      consultationSection,
-    });
+    const html = await renderBrandedBodyHtml(
+      buildQuoteEmailHtml({
+        clientName: quote.clientName,
+        quoteRef: quote.quoteRef,
+        total: quote.total,
+        currency: quote.currency || "NGN",
+        approvalUrl,
+        pdfUrl: pdfPublicUrl,
+        lineItems: Array.isArray(lineItems) ? lineItems : [],
+        notes: quote.notes,
+        consultationSection,
+      }),
+      { brand: "atelier", previewText: `Your quotation ${quote.quoteRef} is ready` },
+    );
     await sendEmail({
       to: quote.clientEmail,
       subject: `Your quote is ready — ${quote.quoteRef}`,

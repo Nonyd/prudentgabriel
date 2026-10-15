@@ -46,7 +46,7 @@ export function notifyNewOrder(
     message: `#${order.orderNumber} — ${formatNGN(order.total)} via ${gw}${guestNote}`,
     link: `/admin/orders/${order.id}`,
     entityId: order.id,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] admin", e));
 }
 
 export function notifyNewBespoke(request: Pick<BespokeRequest, "id" | "requestNumber" | "name">): void {
@@ -54,9 +54,9 @@ export function notifyNewBespoke(request: Pick<BespokeRequest, "id" | "requestNu
     type: "NEW_BESPOKE",
     title: "New bespoke request",
     message: `${request.requestNumber} — ${request.name}`,
-    link: `/admin/bespoke/${request.id}`,
+    link: `/admin/bespoke/intake/${request.id}`,
     entityId: request.id,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] admin", e));
 }
 
 /**
@@ -104,7 +104,7 @@ export function notifyNewConsultation(
     message: `${booking.bookingNumber} — ${booking.clientName}`,
     link: `/admin/consultations/${booking.id}`,
     entityId: booking.id,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] admin", e));
 
   if (
     booking.offeringType === "PHYSICAL_PRUDENT_TEAM" ||
@@ -116,8 +116,21 @@ export function notifyNewConsultation(
       message: `${booking.clientName} booked a ${booking.offeringType?.replace(/_/g, " ").toLowerCase()} consultation`,
       link: `/admin/consultations/${booking.id}`,
       entityId: booking.id,
-    }).catch(() => {});
+    }).catch((e) => console.warn("[notify] admin", e));
   }
+}
+
+/** The slot is free again; the consultations desk needs to know. */
+export function notifyConsultationCancelledByClient(
+  booking: Pick<ConsultationBooking, "id" | "bookingNumber" | "clientName">,
+): void {
+  void createNotification({
+    type: "NEW_CONSULTATION",
+    title: "Consultation cancelled by client",
+    message: `${booking.bookingNumber} — ${booking.clientName}`,
+    link: `/admin/consultations/${booking.id}`,
+    entityId: booking.id,
+  }).catch((e) => console.warn("[notify] admin", e));
 }
 
 export function notifyReviewPending(review: Pick<Review, "id" | "productId">, productName: string): void {
@@ -127,7 +140,7 @@ export function notifyReviewPending(review: Pick<Review, "id" | "productId">, pr
     message: `${productName} — review ${review.id.slice(0, 8)}…`,
     link: `/admin/reviews`,
     entityId: review.id,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] admin", e));
 }
 
 export function notifyReviewSubmitted(params: {
@@ -142,7 +155,7 @@ export function notifyReviewSubmitted(params: {
     message: `${params.userName} left a ${params.rating}-star review on ${params.productName}`,
     link: "/admin/reviews",
     entityId: params.reviewId,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] admin", e));
 }
 
 export function notifyConsultationReviewSubmitted(params: {
@@ -156,7 +169,7 @@ export function notifyConsultationReviewSubmitted(params: {
     message: `${params.userName} left a ${params.rating}-star consultation review`,
     link: "/admin/reviews?tab=consultation",
     entityId: params.reviewId,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] admin", e));
 }
 
 export function notifyTestimonialSubmitted(params: {
@@ -170,7 +183,7 @@ export function notifyTestimonialSubmitted(params: {
     message: `${params.userName} submitted a ${params.rating}-star testimonial`,
     link: "/admin/reviews?tab=testimonials",
     entityId: params.testimonialId,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] admin", e));
 }
 
 export function notifyFabricUnavailable(order: Pick<Order, "id" | "orderNumber">): void {
@@ -180,7 +193,7 @@ export function notifyFabricUnavailable(order: Pick<Order, "id" | "orderNumber">
     message: `Order #${order.orderNumber} — offer an alternative or refund within 48 hours`,
     link: `/admin/orders/${order.id}`,
     entityId: order.id,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] admin", e));
 }
 
 export function notifyPaymentFailed(order: Pick<Order, "id" | "orderNumber">): void {
@@ -190,7 +203,7 @@ export function notifyPaymentFailed(order: Pick<Order, "id" | "orderNumber">): v
     message: `Order #${order.orderNumber}`,
     link: `/admin/orders/${order.id}`,
     entityId: order.id,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] admin", e));
 }
 
 export function notifyNewCustomer(user: Pick<User, "id" | "name" | "email">): void {
@@ -200,7 +213,7 @@ export function notifyNewCustomer(user: Pick<User, "id" | "name" | "email">): vo
     message: `${user.name ?? "—"} — ${user.email}`,
     link: `/admin/customers`,
     entityId: user.id,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] admin", e));
 }
 
 export function notifyBankTransferReceipt(params: {
@@ -216,7 +229,7 @@ export function notifyBankTransferReceipt(params: {
     message: `${params.clientName} — ${params.ref} · ${formatNGN(params.amountNGN)}`,
     link: params.link,
     entityId: params.entityId,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] admin", e));
 }
 
 export function notifyQuoteApproved(quote: Pick<Quotation, "id" | "quoteRef" | "clientName" | "total">): void {
@@ -226,7 +239,7 @@ export function notifyQuoteApproved(quote: Pick<Quotation, "id" | "quoteRef" | "
     message: `${quote.quoteRef} — ${quote.clientName} · ${formatNGN(quote.total)}`,
     link: `/admin/quotations`,
     entityId: quote.id,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] admin", e));
 }
 
 export function notifyStageAdvanced(params: {
@@ -240,7 +253,7 @@ export function notifyStageAdvanced(params: {
     message: `${params.orderRef} — ${params.stage}`,
     link: `/admin/bespoke/${params.orderId}`,
     entityId: params.orderId,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] admin", e));
 }
 
 export function notifyJobApplication(params: {
@@ -254,5 +267,5 @@ export function notifyJobApplication(params: {
     message: `${params.name} applied for ${params.jobTitle}`,
     link: `/admin/careers/applications/${params.applicationId}`,
     entityId: params.applicationId,
-  }).catch(() => {});
+  }).catch((e) => console.warn("[notify] admin", e));
 }

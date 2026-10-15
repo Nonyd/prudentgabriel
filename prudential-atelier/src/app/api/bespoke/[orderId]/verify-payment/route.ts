@@ -47,6 +47,7 @@ async function completeBespokePayment(params: {
     ref: order.orderRef,
     amountNGN: params.amountNGN,
     kind: "bespoke",
+    paymentRef: params.paymentRef,
     trackUrl: `${getPublicAppUrl()}/track/${encodeURIComponent(await ensureTrackingRaw(order))}`,
   });
   void logActivity({

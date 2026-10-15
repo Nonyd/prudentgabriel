@@ -10,7 +10,7 @@ export const CASH_BASIS_COPY =
 export const VAT_TITLE = "VAT";
 
 export const VAT_COPY =
-  "Shop prices do not include VAT and VAT is not added at checkout. Atelier invoices may add VAT on top of the lines (exclusive). The house default is 0%. Nigeria's rate is 7.5% when an invoice turns VAT on. Where VAT applies it is broken out on every line and in the totals.";
+  "Shop prices do not include VAT and VAT is not added at checkout. Atelier invoices may add VAT on top of the lines (exclusive). The Prudent Gabriel default is 0%. Nigeria's rate is 7.5% when an invoice turns VAT on. Where VAT applies it is broken out on every line and in the totals.";
 
 export const CURRENCY_TITLE = "Reporting currency";
 

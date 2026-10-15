@@ -5,7 +5,7 @@ export const DEFAULT_UNAVAILABLE_QUOTE_CONSENT =
 export const DEFAULT_QUOTE_CONSENT = DEFAULT_UNAVAILABLE_QUOTE_CONSENT;
 
 export const DEFAULT_MANUAL_QUOTE_CONSENT =
-  "We arrange delivery personally. Once your piece is ready, a member of the house will contact you to confirm the courier and cost before it ships.";
+  "We arrange delivery personally. Once your piece is ready, a member of the Prudent Gabriel team will contact you to confirm the courier and cost before it ships.";
 
 export const DEFAULT_DDU_DISCLOSURE =
   "International orders may attract import duties and taxes on arrival, payable by the recipient. These are set by your country's customs authority and are not included in the price.";

@@ -36,13 +36,13 @@ export default async function KidsPage() {
         heroSubtext={cmsGet(
           cms,
           "kids_hero_subtext",
-          "Occasion wear and everyday elegance for the smallest members of the house.",
+          "Occasion wear and everyday elegance for the smallest members of the Prudent Gabriel family.",
         )}
         heroCtaLabel={cmsGet(cms, "kids_hero_cta_label", "Shop Kids")}
         pageDescription={cmsGet(
           cms,
           "kids_page_description",
-          "Occasion wear and everyday elegance for the smallest members of the house.",
+          "Occasion wear and everyday elegance for the smallest members of the Prudent Gabriel family.",
         )}
       />
     </main>

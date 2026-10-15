@@ -3,6 +3,7 @@ import { BespokeStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { sendEmail } from "@/lib/email";
+import { renderBrandedBodyHtml } from "@/lib/admin-email-render";
 import { z } from "zod";
 
 const patchSchema = z.object({
@@ -59,7 +60,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       void sendEmail({
         to: prev.email,
         subject,
-        html,
+        html: await renderBrandedBodyHtml(html, { brand: "atelier", previewText: subject }),
         template: "bespoke-request-status",
         idempotencyKey: `bespoke-request:${prev.id}:${parsed.data.status}`,
         relatedType: "BespokeRequest",

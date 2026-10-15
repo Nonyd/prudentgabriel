@@ -84,7 +84,7 @@ export function CommissionSpecPanel({
     setLibrary((l) => [...(l ?? []), data.item!]);
     setDraft((d) => ({ ...d, [data.item!.id]: "" }));
     setNewLabel("");
-    toast.success(`${data.item.label} added to the house library`);
+    toast.success(`${data.item.label} added to the Prudent Gabriel library`);
   }
 
   async function saveSpec() {
@@ -188,7 +188,7 @@ export function CommissionSpecPanel({
               type="text"
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
-              placeholder="Add a feature to the house library"
+              placeholder="Add a feature to the Prudent Gabriel library"
               className="min-w-0 flex-1 rounded border border-sand px-2 py-1 font-sans text-sm"
             />
             <Button size="sm" variant="ghost" onClick={() => void addFeature()}>

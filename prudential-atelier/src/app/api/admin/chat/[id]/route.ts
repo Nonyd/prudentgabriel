@@ -55,7 +55,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!convo) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const user = gate.session.user;
-  const staffName = user.name?.trim().split(/\s+/)[0] || "The house";
+  const staffName = user.name?.trim().split(/\s+/)[0] || "Prudent Gabriel";
   const now = new Date();
   const message = await prisma.chatMessage.create({
     data: { conversationId: id, author: ChatAuthor.STAFF, staffUserId: user.id, staffName, body: parsed.data.body },
@@ -76,6 +76,8 @@ export async function POST(req: NextRequest, { params }: Params) {
         staffName,
         link: `${getPublicAppUrl()}${convo.contextPath}`,
       },
+      // A chat opened on an atelier, bespoke or consultation page answers as the atelier.
+      brand: /^\/(atelier|bespoke|consultation)/.test(convo.contextPath) ? "atelier" : "main",
       outboxTemplate: "chat-reply",
       idempotencyKey: `chat-reply:${message.id}`,
       relatedType: "ChatConversation",

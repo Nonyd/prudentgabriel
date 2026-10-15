@@ -188,7 +188,7 @@ export function planDemoContent(rows: DemoRow[]): DemoPlan {
     }
     const written = Boolean(main.caption?.trim() || main.description?.trim() || main.priceFloorNGN != null);
     if (written) {
-      plan.skipped.push({ gown: gown.key, reason: "the house has already written this gown" });
+      plan.skipped.push({ gown: gown.key, reason: "Prudent Gabriel has already written this gown" });
       continue;
     }
     plan.fill.push({

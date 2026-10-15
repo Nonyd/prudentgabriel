@@ -27,7 +27,8 @@ export default function InvoiceEmail(props: InvoiceEmailProps) {
         Dear {props.clientName},
       </Text>
       <Text style={{ fontFamily: FONT_BODY, fontSize: 15, lineHeight: "24px", color: EMAIL_INK, margin: "0 0 20px" }}>
-        Please find your invoice below. You can view and download it securely using the link.
+        Thank you for the trust you have placed in us. Please find your invoice below. You can view and download
+        it securely using the link.
       </Text>
       <table
         width="100%"
@@ -77,7 +78,7 @@ export default function InvoiceEmail(props: InvoiceEmailProps) {
       ) : null}
       <EmailButton href={props.publicLink}>View invoice</EmailButton>
       <Text style={{ margin: "8px 0 0", fontFamily: FONT_BODY, fontSize: 13, color: EMAIL_MUTED }}>
-        You can also download the PDF from the page above.
+        You can also download the PDF from that page. If anything is unclear, we are always happy to help.
       </Text>
       {props.footerNote ? (
         <Text style={{ margin: "20px 0 0", fontFamily: FONT_BODY, fontSize: 13, color: EMAIL_MUTED, fontStyle: "italic" }}>

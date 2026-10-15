@@ -31,7 +31,8 @@ export default function ConsultationSessionSummaryEmail({
         Thank you for sitting with us, {firstName}.
       </Heading>
       <Text style={{ fontSize: 16, color: "#333", lineHeight: 1.6 }}>
-        It was a pleasure getting to know your vision.
+        It was a true pleasure getting to know you and your vision. We are so excited about what we will create
+        together.
       </Text>
 
       {moodboardImages.length > 0 ? (
@@ -77,7 +78,8 @@ export default function ConsultationSessionSummaryEmail({
             What happens next
           </Text>
           <Text style={{ fontSize: 15, color: "#333", lineHeight: 1.6 }}>
-            Your invoice will be prepared and sent to you shortly for your review and approval.
+            Your invoice will be prepared and sent to you shortly for your review and approval. We cannot wait
+            to begin this journey with you.
           </Text>
           <Section style={{ marginTop: 20, textAlign: "center" as const }}>
             <EmailButton href={commissionLink}>Begin your commission</EmailButton>

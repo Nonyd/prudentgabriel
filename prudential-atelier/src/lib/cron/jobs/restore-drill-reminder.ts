@@ -18,7 +18,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
     subject: `Restore drill due — ${quarter} | Prudent Gabriel`,
     html: [
       "<p>This quarter's backup restore drill is due.</p>",
-      "<p>Follow <strong>deploy/DEPLOY.md → Restore from backup</strong>: decrypt last night's production dump with the house's key, restore it into a scratch database, check the counts and the payment ledger total, and open one receipt from the media archive.</p>",
+      "<p>Follow <strong>deploy/DEPLOY.md → Restore from backup</strong>: decrypt last night's production dump with Prudent Gabriel's key, restore it into a scratch database, check the counts and the payment ledger total, and open one receipt from the media archive.</p>",
       "<p>Write down how long decrypt and restore took. If any step needed improvising, that step is the one to fix.</p>",
     ].join(""),
     template: "restore-drill-reminder",

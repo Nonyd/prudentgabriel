@@ -71,7 +71,7 @@ export function ShippingQuotePanel({
         </p>
       ) : (
         <p className="mt-1 font-body text-sm text-text-mid">
-          The house usually agrees shipping after the piece is packed. You can quote now if you have already spoken to
+          Prudent Gabriel usually agrees shipping after the piece is packed. You can quote now if you have already spoken to
           the client.
         </p>
       )}

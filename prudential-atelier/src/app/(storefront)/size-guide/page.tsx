@@ -81,7 +81,7 @@ export default async function SizeGuidePage() {
             color: "var(--text-mid)",
           }}
         >
-          Figures in centimetres and inches. This is the house chart — a size label means these measurements.
+          Figures in centimetres and inches. This is the Prudent Gabriel size chart — a size label means these measurements.
         </p>
       </header>
 

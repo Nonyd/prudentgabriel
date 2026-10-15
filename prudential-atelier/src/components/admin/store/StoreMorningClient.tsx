@@ -64,7 +64,7 @@ export function StoreMorningClient() {
         <h1 className="font-display text-2xl text-ink">This morning</h1>
         <p className="mt-1 max-w-2xl font-sans text-sm text-text-mid">
           What is on the shelf, what moved yesterday, and which orders need materials the store does not have.
-          Low-stock alerts are the wrong signal here — the house buys just in time.
+          Low-stock alerts are the wrong signal here — Prudent Gabriel buys just in time.
         </p>
       </div>
       <StoreSubnav />

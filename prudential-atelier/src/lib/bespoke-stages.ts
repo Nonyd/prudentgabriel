@@ -35,7 +35,7 @@ export const STAGE_LABELS: Record<BespokeStage, string> = {
 export const STAGE_DESCRIPTIONS: Record<BespokeStage, string> = {
   CONSULTATION_BOOKING: "Your consultation slot is reserved and confirmed.",
   CONSULTATION_SESSION: "We meet to understand your vision, occasion, and preferences.",
-  INVOICE_ISSUANCE: "Your quotation is approved and an invoice is prepared. You receive it when the house sends it.",
+  INVOICE_ISSUANCE: "Your quotation is approved and an invoice is prepared. You receive it when Prudent Gabriel sends it.",
   PAYMENT_CONFIRMATION: "Your consultation fee is recorded. The commission deposit is billed separately on the invoice.",
   SKETCHING_CONCEPT: "Initial sketches and design concepts are developed for review.",
   FABRIC_SOURCING: "Premium fabrics are selected and sourced for your commission.",

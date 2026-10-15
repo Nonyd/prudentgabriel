@@ -32,13 +32,14 @@ export default function ShippingQuoteEmail({
   payUrl,
 }: Props) {
   return (
-    <EmailLayout family="transactional" previewText={`Shipping for order #${orderNumber}`}>
+    <EmailLayout family="transactional" previewText={`Shipping for your order #${orderNumber}`}>
       <Heading as="h1" style={{ fontSize: 28, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
-        Shipping confirmed
+        Your shipping is confirmed
       </Heading>
-      <Text style={{ fontSize: 16, color: "#2d2d2d" }}>Hi {firstName},</Text>
+      <Text style={{ fontSize: 16, color: "#2d2d2d" }}>Dear {firstName},</Text>
       <Text style={{ fontSize: 15, color: "#444", lineHeight: 1.6 }}>
-        We have confirmed shipping for order #{orderNumber}. The amount due is {amountLabel}.
+        We are pleased to confirm shipping for your order #{orderNumber}. The amount due is {amountLabel}. We
+        cannot wait for your piece to reach you.
       </Text>
       <Text style={{ fontSize: 18, letterSpacing: 1, color: "#442913" }}>{paymentRef}</Text>
       {bank.accountNumber ? (
@@ -76,7 +77,7 @@ export default function ShippingQuoteEmail({
           </Text>
           {bank.instructions ? <Text style={{ fontSize: 13, color: "#666" }}>{bank.instructions}</Text> : null}
           <Text style={{ fontSize: 13, color: "#666" }}>
-            Use the reference above as the transfer narration so we can match your payment.
+            Please use the reference above as the transfer narration so we can match your payment.
           </Text>
         </>
       ) : null}

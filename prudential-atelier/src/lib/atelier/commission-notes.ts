@@ -54,7 +54,7 @@ function toRow(n: NoteSource): NoteRow {
     section,
     sectionLabel: NOTE_SECTION_LABELS[section],
     body: n.body,
-    authorName: n.authorName ?? "The house",
+    authorName: n.authorName ?? "Prudent Gabriel",
     createdAt: n.createdAt.toISOString(),
     supersedesId: n.supersedesId,
     correctedById: n.correctedBy?.id ?? null,
@@ -122,7 +122,7 @@ export async function addNote(
     if (prior.correctedBy) return { ok: false, status: 409, error: "That note has already been corrected." };
   }
 
-  const authorName = author.name?.trim() || author.email || "The house";
+  const authorName = author.name?.trim() || author.email || "Prudent Gabriel";
   const created = await prisma.commissionNote.create({
     data: {
       orderId,

@@ -7,12 +7,13 @@ type Props = { loginUrl: string };
 
 export default function AccountExistsEmail({ loginUrl }: Props) {
   return (
-    <EmailLayout family="transactional" previewText="You already have an account">
+    <EmailLayout family="transactional" previewText="You already have an account with us">
       <Heading as="h1" style={{ fontSize: 28, fontWeight: 400, color: EMAIL_CHOC, margin: "0 0 12px" }}>
         You already have an account
       </Heading>
       <Text style={{ fontSize: 16, color: EMAIL_INK, fontFamily: FONT_BODY }}>
-        Someone tried to register with this email. If that was you, sign in instead.
+        Someone tried to register with this email address. If that was you, you are already with us, so please
+        sign in instead.
       </Text>
       <EmailButton href={loginUrl}>Sign in</EmailButton>
     </EmailLayout>

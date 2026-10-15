@@ -32,7 +32,7 @@ export default function RtwOrderDeliveredEmail({
         fallbackBody={`We hope you love your new piece. Order #${orderNumber} is now with you.`}
       />
       <Text style={{ marginTop: 20, fontSize: 14, color: "#666" }}>
-        In a day or so we will invite you to share a quick review. Your feedback means a great deal to the house.
+        In a day or so we will invite you to share a quick review. Your feedback means a great deal to Prudent Gabriel.
       </Text>
       <EmailButton href={catalogCtaHref || `${APP}/account/orders`}>
         {catalogCtaLabel || "View your order"}

@@ -5,6 +5,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { toPublicConsultationDto } from "@/lib/public-pii-dtos";
 import { rateLimitOr429 } from "@/lib/rate-limit";
+import { sendConsultationCancelledEmail } from "@/lib/email";
+import { notifyConsultationCancelledByClient } from "@/lib/notifications";
 
 function isBookingNumber(id: string): boolean {
   return id.startsWith("CB-");
@@ -88,7 +90,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const booking = await prisma.consultationBooking.findUnique({ where: { id } });
+  const booking = await prisma.consultationBooking.findUnique({
+    where: { id },
+    include: { consultant: { select: { name: true } } },
+  });
   if (!booking) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -115,6 +120,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       where: { id },
       data: { status: ConsultationStatus.CANCELLED_BY_CLIENT },
     });
+    void sendConsultationCancelledEmail({
+      to: booking.clientEmail,
+      clientName: booking.clientName,
+      bookingNumber: booking.bookingNumber,
+      consultantName: booking.consultant.name,
+      reason: "You cancelled this booking.",
+    });
+    notifyConsultationCancelledByClient(booking);
     return NextResponse.json({ ok: true });
   }
 

@@ -1,5 +1,5 @@
 import type { BespokeStage } from "@prisma/client";
-import { CUSTOMER_HOUSE_NAME, EMAIL_LOGO_PX } from "@/lib/customer-email";
+import { ATELIER_HOUSE_NAME } from "@/lib/email-branding";
 import { HOUSE_ADDRESS_ONE_LINE } from "@/lib/house-address";
 import { STAGE_LABELS, STAGE_SHORT_LABELS, getStageProgress } from "@/lib/bespoke-stages";
 
@@ -16,7 +16,7 @@ export interface StageEmailData {
 }
 
 const STAGE_SUBJECTS: Record<BespokeStage, string> = {
-  CONSULTATION_BOOKING: `Your consultation is confirmed — ${CUSTOMER_HOUSE_NAME}`,
+  CONSULTATION_BOOKING: `Your consultation is confirmed — ${ATELIER_HOUSE_NAME}`,
   CONSULTATION_SESSION: "Your consultation summary — {orderRef}",
   INVOICE_ISSUANCE: "Your quote is ready for review — {orderRef}",
   PAYMENT_CONFIRMATION: "Payment received — your order begins now",
@@ -60,13 +60,16 @@ const STAGE_INTROS: Record<BespokeStage, string> = {
     "Your atelier outfit is ready! We cannot wait for you to experience the finished piece. Details for collection or delivery are below.",
 };
 
-function emailWrapper(content: string, logoUrl?: string): string {
-  const header = logoUrl
+/** The header here is white, so this is a dark mark with its real proportions. */
+export type StageEmailLogo = { url: string; width: number; height: number };
+
+function emailWrapper(content: string, logo?: StageEmailLogo): string {
+  const header = logo
     ? `<table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto;">
-<tr><td width="${EMAIL_LOGO_PX}" height="${EMAIL_LOGO_PX}" align="center" style="width:${EMAIL_LOGO_PX}px;height:${EMAIL_LOGO_PX}px;line-height:0;font-size:0;">
-<img src="${logoUrl}" alt="${CUSTOMER_HOUSE_NAME}" width="${EMAIL_LOGO_PX}" height="${EMAIL_LOGO_PX}" style="width:${EMAIL_LOGO_PX}px;height:${EMAIL_LOGO_PX}px;max-width:${EMAIL_LOGO_PX}px;max-height:${EMAIL_LOGO_PX}px;display:block;border:0;outline:none;" />
+<tr><td width="${logo.width}" height="${logo.height}" align="center" style="width:${logo.width}px;height:${logo.height}px;line-height:0;font-size:0;">
+<img src="${logo.url}" alt="${ATELIER_HOUSE_NAME}" width="${logo.width}" height="${logo.height}" style="width:${logo.width}px;height:${logo.height}px;max-width:${logo.width}px;max-height:${logo.height}px;display:block;border:0;outline:none;" />
 </td></tr></table>`
-    : `<p style="margin:0;font-size:13px;letter-spacing:0.28em;text-transform:uppercase;color:#442913;">${CUSTOMER_HOUSE_NAME}</p>`;
+    : `<p style="margin:0;font-size:13px;letter-spacing:0.28em;text-transform:uppercase;color:#442913;">${ATELIER_HOUSE_NAME}</p>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -82,7 +85,7 @@ function emailWrapper(content: string, logoUrl?: string): string {
         <tr><td style="padding:8px 40px 32px;">${content}</td></tr>
         <tr><td style="padding:24px 40px;background:#F7F2EC;border-top:1px solid #D4BBAC;text-align:center;">
           <p style="margin:0;font-size:11px;color:#98755B;line-height:1.6;">
-            ${CUSTOMER_HOUSE_NAME} · ${HOUSE_ADDRESS_ONE_LINE}
+            ${ATELIER_HOUSE_NAME} · ${HOUSE_ADDRESS_ONE_LINE}
           </p>
         </td></tr>
       </table>
@@ -121,7 +124,7 @@ export function getBespokeStageEmailSubject(stage: BespokeStage, orderRef: strin
 export function getBespokeStageEmail(
   stage: BespokeStage,
   data: StageEmailData,
-  logoUrl?: string,
+  logo?: StageEmailLogo,
   catalog?: { heading: string; intro: string; ctaLabel: string; ctaLink: string },
 ): string {
   const intro = catalog?.intro || STAGE_INTROS[stage];
@@ -149,7 +152,7 @@ export function getBespokeStageEmail(
     </p>
   `;
 
-  return emailWrapper(content, logoUrl);
+  return emailWrapper(content, logo);
 }
 
 export function buildStageEmailData(params: {

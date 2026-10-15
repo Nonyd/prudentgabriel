@@ -1,7 +1,17 @@
 import { Body, Head, Html, Img, Preview, Text } from "@react-email/components";
 import type { ReactNode } from "react";
-import { CUSTOMER_HOUSE_NAME, EMAIL_LOGO_PX } from "@/lib/customer-email";
-import { emailLogoDarkUrl, emailLogoWhiteUrl } from "@/lib/email-branding";
+import { EMAIL_LOGO_PX } from "@/lib/customer-email";
+import {
+  EMAIL_ATELIER_LOGO_HEIGHT,
+  EMAIL_ATELIER_LOGO_WIDTH,
+  emailAtelierLogoDarkUrl,
+  emailAtelierLogoWhiteUrl,
+  emailHouseName,
+  emailLogoDarkUrl,
+  emailLogoWhiteUrl,
+  type EmailBrand,
+} from "@/lib/email-branding";
+import { currentEmailScope } from "./email-brand";
 import EmailFooter from "./EmailFooter";
 import {
   EMAIL_CHOC,
@@ -15,16 +25,18 @@ import {
   type EmailFamily,
 } from "./email-tokens";
 
-const logoBox = {
-  width: `${EMAIL_LOGO_PX}px`,
-  height: `${EMAIL_LOGO_PX}px`,
-  maxWidth: `${EMAIL_LOGO_PX}px`,
-  maxHeight: `${EMAIL_LOGO_PX}px`,
-  display: "block" as const,
-  margin: "0 auto",
-  border: 0,
-  outline: "none",
-};
+function logoBox(w: number, h: number) {
+  return {
+    width: `${w}px`,
+    height: `${h}px`,
+    maxWidth: `${w}px`,
+    maxHeight: `${h}px`,
+    display: "block" as const,
+    margin: "0 auto",
+    border: 0,
+    outline: "none",
+  };
+}
 
 type EmailLayoutProps = {
   children: ReactNode;
@@ -32,6 +44,8 @@ type EmailLayoutProps = {
   logoUrl?: string;
   logoDarkUrl?: string;
   family?: EmailFamily;
+  /** Defaults to the brand set by the renderer (see `renderInEmailScope`). */
+  brand?: EmailBrand;
   /** Marketing only. Pass the placeholder; outbox replaces it per recipient. */
   unsubscribeUrl?: string;
 };
@@ -42,10 +56,24 @@ export default function EmailLayout({
   logoUrl,
   logoDarkUrl,
   family = "transactional",
+  brand: brandProp,
   unsubscribeUrl,
 }: EmailLayoutProps) {
-  const headerLogo = logoUrl ?? emailLogoWhiteUrl;
-  const darkLogo = logoDarkUrl ?? emailLogoDarkUrl;
+  const { brand: contextBrand, signOff } = currentEmailScope();
+  const brand = brandProp ?? contextBrand;
+  const atelier = brand === "atelier";
+  const houseName = emailHouseName(brand);
+  const logoW = atelier ? EMAIL_ATELIER_LOGO_WIDTH : EMAIL_LOGO_PX;
+  const logoH = atelier ? EMAIL_ATELIER_LOGO_HEIGHT : EMAIL_LOGO_PX;
+  const onChoc = logoUrl ?? (atelier ? emailAtelierLogoWhiteUrl : emailLogoWhiteUrl);
+  const onLight = logoDarkUrl ?? (atelier ? emailAtelierLogoDarkUrl : emailLogoDarkUrl);
+  // No light-on-dark atelier mark: put the dark wordmark on a light band instead of hiding it.
+  const lightHeader = !onChoc && Boolean(onLight);
+  const headerLogo = onChoc || onLight;
+  const darkLogo = lightHeader ? "" : onLight;
+  const headerBg = lightHeader ? "#FFFdf9" : EMAIL_CHOC;
+  // The atelier wordmark already spells the house; repeating it underneath is noise.
+  const showHouseLine = !atelier || !headerLogo;
   const pageBg = familyPageBg(family);
   const cardBg = familyCardBg(family);
   const pad = familyBodyPad(family);
@@ -66,10 +94,10 @@ export default function EmailLayout({
 :root { color-scheme: light dark; }
 @media (prefers-color-scheme: dark) {
   .logo-on-choc { display: none !important; }
-  .logo-on-invert { display: block !important; width: ${EMAIL_LOGO_PX}px !important; height: ${EMAIL_LOGO_PX}px !important; max-width: ${EMAIL_LOGO_PX}px !important; max-height: ${EMAIL_LOGO_PX}px !important; }
+  .logo-on-invert { display: block !important; width: ${logoW}px !important; height: ${logoH}px !important; max-width: ${logoW}px !important; max-height: ${logoH}px !important; }
 }
 [data-ogsc] .logo-on-choc { display: none !important; }
-[data-ogsc] .logo-on-invert { display: block !important; width: ${EMAIL_LOGO_PX}px !important; height: ${EMAIL_LOGO_PX}px !important; max-width: ${EMAIL_LOGO_PX}px !important; max-height: ${EMAIL_LOGO_PX}px !important; }
+[data-ogsc] .logo-on-invert { display: block !important; width: ${logoW}px !important; height: ${logoH}px !important; max-width: ${logoW}px !important; max-height: ${logoH}px !important; }
             `.trim(),
           }}
         />
@@ -108,9 +136,9 @@ export default function EmailLayout({
                   <tbody>
                     <tr>
                       <td
-                        {...({ bgcolor: EMAIL_CHOC } as Record<string, string>)}
+                        {...({ bgcolor: headerBg } as Record<string, string>)}
                         style={{
-                          backgroundColor: EMAIL_CHOC,
+                          backgroundColor: headerBg,
                           padding: family === "marketing" ? "28px 24px 24px" : "24px 24px 20px",
                           textAlign: "center",
                         }}
@@ -127,32 +155,32 @@ export default function EmailLayout({
                             <tbody>
                               <tr>
                                 <td
-                                  width={EMAIL_LOGO_PX}
-                                  height={EMAIL_LOGO_PX}
+                                  width={logoW}
+                                  height={logoH}
                                   align="center"
                                   style={{
-                                    width: `${EMAIL_LOGO_PX}px`,
-                                    height: `${EMAIL_LOGO_PX}px`,
+                                    width: `${logoW}px`,
+                                    height: `${logoH}px`,
                                     lineHeight: 0,
                                     fontSize: 0,
                                   }}
                                 >
                                   <Img
-                                    className="logo-on-choc"
+                                    className={lightHeader ? undefined : "logo-on-choc"}
                                     src={headerLogo}
-                                    alt={CUSTOMER_HOUSE_NAME}
-                                    width={EMAIL_LOGO_PX}
-                                    height={EMAIL_LOGO_PX}
-                                    style={logoBox}
+                                    alt={houseName}
+                                    width={logoW}
+                                    height={logoH}
+                                    style={logoBox(logoW, logoH)}
                                   />
                                   {darkLogo && darkLogo !== headerLogo ? (
                                     <Img
                                       className="logo-on-invert"
                                       src={darkLogo}
-                                      alt={CUSTOMER_HOUSE_NAME}
-                                      width={EMAIL_LOGO_PX}
-                                      height={EMAIL_LOGO_PX}
-                                      style={{ ...logoBox, display: "none" }}
+                                      alt={houseName}
+                                      width={logoW}
+                                      height={logoH}
+                                      style={{ ...logoBox(logoW, logoH), display: "none" }}
                                     />
                                   ) : null}
                                 </td>
@@ -160,6 +188,7 @@ export default function EmailLayout({
                             </tbody>
                           </table>
                         ) : null}
+                        {showHouseLine ? (
                         <Text
                           style={{
                             margin: headerLogo ? "14px 0 0" : 0,
@@ -171,8 +200,9 @@ export default function EmailLayout({
                             lineHeight: "16px",
                           }}
                         >
-                          {CUSTOMER_HOUSE_NAME}
+                          {houseName}
                         </Text>
+                        ) : null}
                         {family === "relationship" ? (
                           <table
                             border={0}
@@ -216,12 +246,30 @@ export default function EmailLayout({
                         }}
                       >
                         {children}
+                        {signOff ? (
+                          <Text
+                            style={{
+                              margin: "28px 0 0",
+                              fontFamily: FONT_BODY,
+                              fontSize: 15,
+                              lineHeight: "24px",
+                              color: "#2C241C",
+                            }}
+                          >
+                            {signOff.line}
+                            <br />
+                            <span style={{ fontFamily: FONT_DISPLAY, fontSize: 19, color: EMAIL_CHOC }}>
+                              {signOff.team}
+                            </span>
+                          </Text>
+                        ) : null}
                       </td>
                     </tr>
                     <tr>
                       <td style={{ padding: 0 }}>
                         <EmailFooter
                           family={showUnsub ? "marketing" : family}
+                          houseName={houseName}
                           unsubscribeUrl={unsubscribeUrl}
                         />
                       </td>

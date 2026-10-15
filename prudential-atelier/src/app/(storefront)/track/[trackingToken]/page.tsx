@@ -94,7 +94,7 @@ export default async function TrackOrderPage({ params }: Props) {
         <BespokeStageTracker currentStage={order.currentStage} stageHistory={stageHistory} />
 
         <p className="mt-8 text-center font-body text-[12px] text-text-light">
-          Photographs from each completed stage appear above as the house documents your commission.
+          Photographs from each completed stage appear above as Prudent Gabriel documents your commission.
         </p>
 
         <TrackOrderActions />

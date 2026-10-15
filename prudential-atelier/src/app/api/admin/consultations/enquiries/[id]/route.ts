@@ -3,7 +3,7 @@ import { ConsultationEnquiryStatus } from "@prisma/client";
 import { z } from "zod";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { bookingLinkPath, issueBookingLink } from "@/lib/consultation-enquiry";
+import { RESUMABLE_BOOKING_WHERE, bookingLinkPath, issueBookingLink } from "@/lib/consultation-enquiry";
 import { sendUsingCatalog } from "@/lib/catalog-email";
 import { EMAIL_TEMPLATE_KEYS } from "@/lib/admin-email-catalog";
 import { getPublicAppUrl } from "@/lib/app-url";
@@ -64,7 +64,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const now = new Date();
 
   if (input.action === "resend") {
-    if (enquiry.status !== ConsultationEnquiryStatus.APPROVED) {
+    // Booked but never paid (payment abandoned halfway) counts as unbooked here.
+    const unpaidBooking =
+      enquiry.status === ConsultationEnquiryStatus.BOOKED && enquiry.bookingId
+        ? (await prisma.consultationBooking.count({ where: { id: enquiry.bookingId, ...RESUMABLE_BOOKING_WHERE } })) === 1
+        : false;
+    if (enquiry.status !== ConsultationEnquiryStatus.APPROVED && !unpaidBooking) {
       return NextResponse.json({ error: "Only an approved, unbooked enquiry has a booking link." }, { status: 409 });
     }
   } else {

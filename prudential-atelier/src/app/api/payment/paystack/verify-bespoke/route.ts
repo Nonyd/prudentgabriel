@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { verifyTransaction } from "@/lib/payments/paystack";
 import { fulfillPaidBespokeBalance } from "@/lib/bespoke-payment";
+import { notifyBespokeBalancePaid } from "@/lib/bespoke-balance-notify";
 import { PaymentBindError } from "@/lib/payment-bind";
 
 export async function GET(req: NextRequest) {
@@ -38,6 +39,10 @@ export async function GET(req: NextRequest) {
           if (!ok) {
             return NextResponse.redirect(`${appUrl}/bespoke?error=payment-failed`);
           }
+          await notifyBespokeBalancePaid({
+            bespokeRequestId: bespoke.id,
+            paymentRef: result.reference,
+          }).catch((e) => console.warn("[verify-bespoke] notify", e));
         } catch (e) {
           if (e instanceof PaymentBindError) {
             return NextResponse.redirect(`${appUrl}/bespoke?error=payment-failed`);

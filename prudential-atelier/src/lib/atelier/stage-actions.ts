@@ -8,6 +8,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { logActivity, logServerError } from "@/lib/logger";
+import { userHasAdminAccess } from "@/lib/login-paths";
 import { getNextStage, STAGE_ORDER, STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { buildStageEmailData, sendBespokeStageEmail } from "@/lib/bespoke-email";
 import { notifyStageAdvanced, createNotification } from "@/lib/notifications";
@@ -544,6 +545,7 @@ export async function requestStageApproval(params: {
     notes: gate.snapshot.notes,
     imageUrls: media.map((m) => m.url),
     approveUrl,
+    approvalId: approval.id,
   }).catch((e) => {
     void logServerError({ errorType: "STAGE_APPROVAL_EMAIL", error: e });
   });
@@ -581,6 +583,23 @@ export async function requestStageApproval(params: {
   return { ok: true, approvalId: approval.id, approval };
 }
 
+type StaffContact = {
+  email: string | null;
+  name: string | null;
+  role: string;
+  userPermissions: { permission: string; mode: string }[];
+};
+
+/** Middleware bounces admin-access users out of /staff and staff-only users out of /admin. */
+function orderPathForStaff(user: StaffContact, orderId: string): string {
+  const hasAdmin = userHasAdminAccess({
+    role: user.role,
+    permissionGrants: user.userPermissions.filter((p) => p.mode === "GRANT").map((p) => p.permission),
+    permissionRevokes: user.userPermissions.filter((p) => p.mode === "REVOKE").map((p) => p.permission),
+  });
+  return hasAdmin ? `/admin/bespoke/${orderId}` : `/staff/orders/${orderId}`;
+}
+
 async function applyStageApprovalDecision(params: {
   approval: {
     id: string;
@@ -595,7 +614,7 @@ async function applyStageApprovalDecision(params: {
       assignments: {
         staffProfile: {
           userId: string;
-          user: { email: string | null; name: string | null };
+          user: StaffContact;
         };
       }[];
     };
@@ -628,12 +647,9 @@ async function applyStageApprovalDecision(params: {
   const stageLabel = STAGE_SHORT_LABELS[approval.stage];
 
   if (params.decision === "CHANGES_REQUESTED") {
-    const staffTargets = new Map<string, { email: string | null; name: string | null }>();
+    const staffTargets = new Map<string, StaffContact>();
     for (const a of approval.order.assignments) {
-      staffTargets.set(a.staffProfile.userId, {
-        email: a.staffProfile.user.email,
-        name: a.staffProfile.user.name,
-      });
+      staffTargets.set(a.staffProfile.userId, a.staffProfile.user);
     }
     for (const [userId, staff] of Array.from(staffTargets.entries())) {
       notifyStaffOrderUpdate({
@@ -650,8 +666,11 @@ async function applyStageApprovalDecision(params: {
           orderRef: approval.order.orderRef,
           stageLabel,
           comment: comment ?? "",
-          orderUrl: `${getPublicAppUrl()}/admin/bespoke/${approval.order.id}`,
-        }).catch(() => {});
+          orderUrl: `${getPublicAppUrl()}${orderPathForStaff(staff, approval.order.id)}`,
+          approvalId: approval.id,
+        }).catch((e) => {
+          void logServerError({ errorType: "STAGE_CHANGES_EMAIL", error: e });
+        });
       }
     }
     void createNotification({
@@ -682,7 +701,21 @@ const STAGE_APPROVAL_ORDER_SELECT = {
   currentStage: true,
   assignments: {
     where: { completedAt: null },
-    include: { staffProfile: { select: { userId: true, user: { select: { email: true, name: true } } } } },
+    include: {
+      staffProfile: {
+        select: {
+          userId: true,
+          user: {
+            select: {
+              email: true,
+              name: true,
+              role: true,
+              userPermissions: { select: { permission: true, mode: true } },
+            },
+          },
+        },
+      },
+    },
   },
 } as const;
 

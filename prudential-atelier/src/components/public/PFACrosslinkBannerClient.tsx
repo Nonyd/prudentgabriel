@@ -5,7 +5,7 @@ import Link from "next/link";
 import { cmsGet } from "@/lib/cms-helpers";
 
 export function PFACrosslinkBannerClient({ cms = {} }: { cms?: Record<string, string> }) {
-  const headline = cmsGet(cms, "home_pfa_headline", "Learn the craft from the house");
+  const headline = cmsGet(cms, "home_pfa_headline", "Learn the craft from Prudent Gabriel");
   const body = cmsGet(
     cms,
     "home_pfa_body",

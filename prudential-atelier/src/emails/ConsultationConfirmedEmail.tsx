@@ -49,11 +49,14 @@ export default function ConsultationConfirmedEmail({
   })();
 
   return (
-    <EmailLayout family="relationship" previewText={`Consultation confirmed ${bookingNumber}`}>
+    <EmailLayout family="relationship" previewText={`Your consultation is confirmed: ${bookingNumber}`}>
       <Heading as="h1" style={{ fontSize: 26, fontWeight: 400, color: "#2d2d2d", margin: "0 0 12px" }}>
         Your consultation is confirmed
       </Heading>
       <Text style={{ fontSize: 16, color: "#333" }}>Dear {clientName},</Text>
+      <Text style={{ fontSize: 15, color: "#333", marginTop: 12 }}>
+        We are truly delighted to confirm your consultation, and we cannot wait to begin this journey with you.
+      </Text>
       <Section
         style={{
           marginTop: 20,
@@ -79,25 +82,25 @@ export default function ConsultationConfirmedEmail({
             </Section>
           ) : (
             <Text style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6 }}>
-              This message does not include a meeting link. We will email the link when the house
-              sets it, and again about an hour before you join.
+              This message does not include a meeting link yet. We will email it to you as soon as Prudent
+              Gabriel sets it, and again about an hour before you join.
             </Text>
           )}
           <Text style={{ marginTop: 12, fontSize: 13, color: "#555" }}>
-            Please join 2–3 minutes before your scheduled time.
+            Please join 2–3 minutes before your scheduled time so we can begin together.
           </Text>
         </Section>
       ) : (
         <Text style={{ marginTop: 20, fontSize: 14, lineHeight: 1.7 }}>
           📍 {atelierAddress ?? "Our team will be in touch to confirm location details."}
           <br />
-          Please arrive 5 minutes early. Wear or bring any reference items you&apos;d like to discuss.
+          Please arrive 5 minutes early. Do wear or bring any reference pieces you would like to discuss.
         </Text>
       )}
       <Text style={{ marginTop: 20, fontSize: 14, color: "#333", lineHeight: 1.7 }}>
-        • Prepare reference images or inspiration boards.
+        • Gather any reference images or inspiration boards you love.
         <br />
-        • Note specific concerns or requirements.
+        • Note any specific concerns or requirements.
         {isVirtual ? (
           <>
             <br />• Ensure a stable internet connection.
@@ -105,7 +108,7 @@ export default function ConsultationConfirmedEmail({
         ) : null}
       </Text>
       <Text style={{ marginTop: 16, fontSize: 13, color: "#555" }}>
-        Need to reschedule? Contact hello@prudentgabriel.com at least 48 hours before your session.
+        Need to reschedule? Please contact hello@prudentgabriel.com at least 48 hours before your session.
       </Text>
       <EmailButton href={`${APP}/consultation/${encodeURIComponent(bookingNumber)}`}>View booking details</EmailButton>
     </EmailLayout>

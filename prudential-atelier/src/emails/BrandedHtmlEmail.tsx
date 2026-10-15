@@ -1,14 +1,22 @@
 import EmailLayout from "@/emails/components/EmailLayout";
+import type { EmailFamily } from "@/emails/components/email-tokens";
 
 type BrandedHtmlEmailProps = {
   previewText: string;
   bodyHtml: string;
   unsubscribeUrl?: string;
+  /** Campaigns and broadcasts are marketing; a one-off reply is not. */
+  family?: EmailFamily;
 };
 
-export default function BrandedHtmlEmail({ previewText, bodyHtml, unsubscribeUrl }: BrandedHtmlEmailProps) {
+export default function BrandedHtmlEmail({
+  previewText,
+  bodyHtml,
+  unsubscribeUrl,
+  family = "marketing",
+}: BrandedHtmlEmailProps) {
   return (
-    <EmailLayout family="marketing" previewText={previewText} unsubscribeUrl={unsubscribeUrl}>
+    <EmailLayout family={family} previewText={previewText} unsubscribeUrl={unsubscribeUrl}>
       <div
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: bodyHtml }}

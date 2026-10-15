@@ -22,7 +22,8 @@ export default function WelcomeEmail({ firstName, pointsBalance, referralCode }:
         Welcome, {firstName}.
       </Heading>
       <Text style={{ fontSize: 16, lineHeight: 1.6, color: "#2d2d2d" }}>
-        You&apos;ve joined one of Nigeria&apos;s most celebrated fashion houses.
+        We are truly delighted to welcome you to one of Nigeria&apos;s most celebrated fashion houses. We cannot
+        wait to be part of your journey.
       </Text>
       {pointsBalance > 0 ? (
         <Section
@@ -34,8 +35,8 @@ export default function WelcomeEmail({ firstName, pointsBalance, referralCode }:
           }}
         >
           <Text style={{ margin: 0, fontSize: 15, color: "#2d2d2d" }}>
-            You have {pointsBalance} Prudent Points waiting — worth ₦{Math.round(credit).toLocaleString("en-NG")}{" "}
-            store credit.
+            You have {pointsBalance} Prudent Points waiting for you, worth ₦{Math.round(credit).toLocaleString("en-NG")}{" "}
+            in store credit.
           </Text>
         </Section>
       ) : null}
@@ -43,7 +44,7 @@ export default function WelcomeEmail({ firstName, pointsBalance, referralCode }:
       <Text style={{ marginTop: 32, fontSize: 13, color: "#555" }}>
         Your referral code: <strong>{referralCode}</strong>
         <br />
-        Share it with friends to earn more points.
+        Share it with friends and earn more points as they join us.
       </Text>
     </EmailLayout>
   );

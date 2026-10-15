@@ -18,20 +18,23 @@ export async function GET() {
 
   const where = adminNotificationVisibleWhere(role, actor);
 
-  const [notifications, unreadCount] = await Promise.all([
+  const unreadWhere = adminNotificationUnreadWhere(userId, role, actor);
+  const [notifications, unreadCount, unreadByType] = await Promise.all([
     prisma.adminNotification.findMany({
       where,
       include: adminNotificationListInclude(userId),
       orderBy: { createdAt: "desc" },
       take: 50,
     }),
-    prisma.adminNotification.count({ where: adminNotificationUnreadWhere(userId, role, actor) }),
+    prisma.adminNotification.count({ where: unreadWhere }),
+    // Section badges count every unread row, not just the 50 in the list.
+    prisma.adminNotification.groupBy({ by: ["type"], where: unreadWhere, _count: { _all: true } }),
   ]);
 
   const rows = notifications.map(serializeAdminNotification);
 
-  const unreadOf = (t: AdminNotificationType) =>
-    rows.filter((n) => !n.isRead && !n.acknowledgedAt && n.type === t).length;
+  const unreadTotals = new Map(unreadByType.map((g) => [g.type, g._count._all]));
+  const unreadOf = (t: AdminNotificationType) => unreadTotals.get(t) ?? 0;
 
   return NextResponse.json({
     notifications: rows,
