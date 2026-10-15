@@ -25,6 +25,7 @@ const PAGES: { path: string; key: keyof typeof PAGE_SEO_FALLBACKS }[] = [
   { path: "/press", key: "press" },
   { path: "/journal", key: "journal" },
   { path: "/size-guide", key: "size-guide" },
+  { path: "/faqs", key: "faqs" },
   { path: "/contact", key: "contact" },
   { path: "/shipping-policy", key: "shipping" },
   { path: "/returns-policy", key: "returns" },

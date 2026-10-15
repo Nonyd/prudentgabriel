@@ -99,6 +99,11 @@ export const PAGE_SEO_FALLBACKS: Record<string, PageSeoFallback> = {
     description:
       "Women's, bridal and kids measurements, plus how we cut a custom piece. Made to order in Lagos in 7–12 days.",
   },
+  faqs: {
+    title: "FAQs — Ordering, Sizing, Delivery & Bespoke | Prudent Gabriel",
+    description:
+      "Answers from the Prudent Gabriel atelier in Lagos: made-to-order timings, sizes and made to measure, payment in naira, dollars or pounds, delivery, returns, bespoke and bridal commissions.",
+  },
   careers: {
     title: "Careers at Prudential Atelier — join the Lagos house",
     description:
