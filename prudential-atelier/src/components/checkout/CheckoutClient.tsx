@@ -1135,7 +1135,14 @@ export function CheckoutClient() {
                 )}>
                   <input type="radio" name="ship" checked={zoneId === z.zoneId} onChange={() => setZoneId(z.zoneId)} />
                   <span className="font-body text-base leading-6">
-                    {z.zoneName} — {z.isFree ? <span className="text-gold">FREE</span> : `₦${z.costNGN.toLocaleString()}`} · {z.estimatedDays}
+                    {/* A quoted option has no price yet; its 0 is a placeholder, not a cost. */}
+                    {z.kind === "QUOTE_PENDING" ? (
+                      <>{z.zoneName} · {z.estimatedDays}</>
+                    ) : (
+                      <>
+                        {z.zoneName} — {z.isFree ? <span className="text-gold">FREE</span> : `₦${z.costNGN.toLocaleString()}`} · {z.estimatedDays}
+                      </>
+                    )}
                     {z.requiresConsent ? <span className="mt-1 block text-sm text-charcoal-mid">{z.description}</span> : null}
                   </span>
                 </label>
