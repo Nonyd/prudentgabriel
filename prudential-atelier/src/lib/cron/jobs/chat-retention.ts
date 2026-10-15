@@ -1,6 +1,7 @@
 import type { CronJobContext, JobResult } from "@/lib/cron/types";
 import { prisma } from "@/lib/prisma";
 import { getChatRetention } from "@/lib/chat";
+import { chatFileKeys, deleteOrphanedChatFiles } from "@/lib/chat-files";
 
 /**
  * BA5: conversations are personal data. Delete any whose last message is older
@@ -20,6 +21,14 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
     select: { id: true },
     take: ctx.batchLimit,
   });
+  // BF7: their files go with them, from disk.
+  const keys = await chatFileKeys(old.map((c) => c.id));
   const { count } = await prisma.chatConversation.deleteMany({ where: { id: { in: old.map((c) => c.id) } } });
-  return { processed: count, failed: 0, hasMore: old.length >= ctx.batchLimit, detail: { retentionDays: days } };
+  const removed = await deleteOrphanedChatFiles(keys);
+  return {
+    processed: count,
+    failed: 0,
+    hasMore: old.length >= ctx.batchLimit,
+    detail: { retentionDays: days, filesDeleted: removed.length },
+  };
 }

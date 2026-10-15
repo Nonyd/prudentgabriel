@@ -98,6 +98,12 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     migrated: true,
   },
   {
+    name: "chat-unanswered",
+    schedule: "* * * * *",
+    description: "BF6: tell the recipients again about an unanswered chat, then tell her honestly that nobody is free",
+    migrated: true,
+  },
+  {
     name: "chat-retention",
     schedule: "45 2 * * *",
     description: "BA5: delete chat conversations older than Prudent Gabriel's retention period",

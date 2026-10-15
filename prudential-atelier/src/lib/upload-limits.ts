@@ -19,6 +19,7 @@ export const DAILY_UPLOAD_CAPS = {
   "receipt-upload": 200, // guest bank-transfer receipts
   "invoice-receipt-upload": 200,
   "receipt-ticket": 300,
+  "chat-upload": 300, // BF7: files in chat, from anyone with a conversation
 } as const;
 
 export type UploadRoute = keyof typeof DAILY_UPLOAD_CAPS;

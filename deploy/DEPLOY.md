@@ -152,6 +152,49 @@ DNS A/AAAA for those names must point at this server before Let's Encrypt can is
 
 ---
 
+## 4b. Live chat stream through Cloudflare (Slice BF) — one-time, Nony
+
+Chat's typing indicator and live messages travel over a server-sent event stream:
+`/api/chat/stream` (the visitor) and `/api/admin/chat/stream` (the inbox). A proxy
+that buffers or compresses the stream holds every event back until a buffer fills.
+
+What the repository already does (nothing to change on the server):
+
+- The app sends `Content-Type: text/event-stream`, `Cache-Control: no-cache, no-store, no-transform`
+  and `X-Accel-Buffering: no`. `no-transform` keeps Next's own gzip and Cloudflare's compression off it.
+- A comment line every 20 seconds keeps it inside Cloudflare's 100-second idle limit.
+- Traefik's `pg-gzip` already excludes `text/event-stream` (see `traefik/pg-compose-stacks.yaml`). Traefik does not buffer responses.
+
+What cannot be done from the repository: **Cloudflare is configured in its dashboard, not in code.**
+Production sits behind Cloudflare; staging does not. Before chat goes live on production:
+
+1. Cloudflare → `prudentgabriel.com` → **Caching → Cache Rules → Create rule**
+   - Name: `Chat streams: bypass`
+   - When: *URI Path* *starts with* `/api/chat/stream` **or** *URI Path* *starts with* `/api/admin/chat/stream`
+   - Then: **Cache eligibility → Bypass cache**. Deploy.
+2. Cloudflare → `prudentgabriel.com` → **Rules → Compression Rules → Create rule**
+   - Name: `Chat streams: no compression`, same two paths, action **Disable compression**. Deploy.
+3. Check it (needs a conversation cookie, so the inbox is easier): sign in to `/admin/chat` on
+   production and open a conversation. Beside the Open/Closed chips it says **Live** when the stream
+   works and **Refreshing every few seconds** when it fell back to polling. From a shell:
+
+   ```bash
+   curl -sN -H "Cookie: <your authjs.session-token cookie>" https://prudentgabriel.com/api/admin/chat/stream | head -5
+   ```
+
+   `event: ready` must arrive at once, not after a minute.
+
+If the rules are not added, chat still works: the widget and the inbox detect a stream that never
+opens and poll every few seconds instead (no typing indicator, messages up to ~5 s late).
+
+**Capacity.** Each open chat panel and each open inbox holds one connection to the single app
+container; it costs memory, not a database connection (events fan out in memory). Measured on the
+production build: see `prudential-atelier/docs/VERIFICATION_2026-10-BF.md`. If the site ever runs more
+than one app container, the in-memory fan-out (`src/lib/chat-bus.ts`) must move to Postgres
+LISTEN/NOTIFY first.
+
+---
+
 ## 5. First start
 
 Production:

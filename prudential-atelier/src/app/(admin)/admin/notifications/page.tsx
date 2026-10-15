@@ -20,7 +20,7 @@ export default async function AdminNotificationsPage() {
 
   const [notifications, unreadCount] = await Promise.all([
     prisma.adminNotification.findMany({
-      where: adminNotificationVisibleWhere(role, actor),
+      where: adminNotificationVisibleWhere(role, actor, userId),
       include: adminNotificationListInclude(userId),
       orderBy: { createdAt: "desc" },
       take: 500,

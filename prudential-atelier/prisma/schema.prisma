@@ -17,6 +17,9 @@ model User {
   image         String?
   phone         String?
   role          Role      @default(CUSTOMER)
+  /// BF5: the name a stranger sees in chat ("Jubilee has joined"). Unset means
+  /// the first name; staff surnames never go to visitors.
+  displayName   String?
 
   referralCode  String    @unique @default(cuid())
   referredById  String?
@@ -1461,6 +1464,9 @@ model AdminNotification {
   entityId  String?
   /// Permission keys that may see this row. `"*"` = every portal user (explicit broadcast).
   targetPermissions String[]      @default([])
+  /// BF9: named recipients. When set, only these users see the row, whatever
+  /// their permissions (chat recipients are chosen by name).
+  targetUserIds     String[]      @default([])
   acknowledgedAt    DateTime?
   acknowledgedById  String?
   acknowledgedBy    User?         @relation("AdminNotificationAck", fields: [acknowledgedById], references: [id], onDelete: SetNull)
@@ -1577,6 +1583,8 @@ enum AdminNotificationType {
   EMAIL_PROVIDER_AUTH
   /// Requisition waiting on a desk (targets set per transition).
   REQUISITION_PENDING
+  /// BF9: a chat that needs someone (new, or still unanswered).
+  CHAT
 }
 
 enum CustomerNotificationType {
@@ -3327,9 +3335,10 @@ model ChatConversation {
   /// httpOnly cookie. Random default opens nothing.
   publicToken   String          @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
   publicTokenExpiresAt DateTime?
-  /// Required before a conversation starts (the server refuses without them).
+  /// BF4: a name, plus one of email or phone (the server refuses without them).
   visitorName   String
-  visitorEmail  String
+  visitorEmail  String?
+  visitorPhone  String?
   userId        String?
   /// Where it started (path only, no query) and what it concerns.
   contextKind   ChatContextKind
@@ -3343,13 +3352,28 @@ model ChatConversation {
   visitorSeenAt DateTime        @default(now())
   staffSeenAt   DateTime?
   closedAt      DateTime?
+  /// BF5: who from the house is answering. Claiming controls who replies, never who reads.
+  handlerId     String?
+  handlerName   String?
+  claimedAt     DateTime?
+  /// The handler's last sign of life in the thread; past the idle period the claim lapses.
+  handlerActiveAt DateTime?
+  /// BF6/BF9: her oldest message still waiting for the house (null once answered).
+  awaitingSince DateTime?
+  /// 0 none, 1 recipients told again, 2 she was told nobody is free (email reply).
+  unansweredStage Int           @default(0)
+  /// BF2: it arrived, or was last written to, while the house was closed.
+  offHoursAt    DateTime?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
   messages      ChatMessage[]
+  attachments   ChatAttachment[]
 
   @@index([status, lastMessageAt])
   @@index([lastMessageAt])
+  @@index([userId])
+  @@index([awaitingSince])
 }
 
 model ChatMessage {
@@ -3359,12 +3383,51 @@ model ChatMessage {
   author         ChatAuthor
   staffUserId    String?
   staffName      String?
+  /// What was first sent. Never overwritten: an edit is a ChatMessageRevision (BF8).
   body           String           @db.Text
+  /// BF5: a line only the house sees (a takeover). Never sent to the visitor.
+  internal       Boolean          @default(false)
   /// Set when a staff reply was emailed because the visitor had left.
   emailedAt      DateTime?
   createdAt      DateTime         @default(now())
 
+  revisions      ChatMessageRevision[]
+  attachments    ChatAttachment[]
+
   @@index([conversationId, createdAt])
+}
+
+/// BF8: an edit inside the window, appended (Slice BD's shape). The message
+/// shows the latest; the house sees the original and every edit.
+model ChatMessageRevision {
+  id        String      @id @default(cuid())
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  body      String      @db.Text
+  createdAt DateTime    @default(now())
+
+  @@index([messageId, createdAt])
+}
+
+/// BF7: a file in a conversation, either direction. Reached only through the
+/// chat routes (her cookie, or the chat desk); the storage key never leaves the server.
+model ChatAttachment {
+  id             String           @id @default(cuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  messageId      String?
+  message        ChatMessage?     @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  author         ChatAuthor
+  staffUserId    String?
+  /// Private media store key (`private/prudential-atelier/chat/<digest>.<ext>`).
+  storageKey     String
+  mime           String
+  bytes          Int
+  originalName   String
+  createdAt      DateTime         @default(now())
+
+  @@index([conversationId])
+  @@index([storageKey])
 }
 
 /// BD1: what kind of garment a commission is. The three Mrs. Prudent named on

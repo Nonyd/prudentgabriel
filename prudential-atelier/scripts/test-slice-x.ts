@@ -254,14 +254,20 @@ async function run() {
       "src/app/api/admin/gallery/route.ts",
       "src/app/api/account/upload/route.ts",
       "src/app/api/admin/upload/route.ts",
-      "src/app/api/upload/receipt/route.ts",
       "src/app/api/careers/upload/route.ts",
       "src/app/api/consultations/upload/route.ts",
+      // BF7: the shared path for files from customers and strangers (receipts, chat).
+      "src/lib/media/private-upload.ts",
     ];
     for (const rel of uploadRoutes) {
       const src = await readFile(join(process.cwd(), rel), "utf8");
       assert(src.includes("mimeFromMagicBytes"), `${rel} must validate magic bytes`);
       assert(src.includes("getMediaStore"), `${rel} must go through MediaStore`);
+    }
+    // Receipts and chat attachments go through that one path, not a second one.
+    for (const rel of ["src/app/api/upload/receipt/route.ts", "src/app/api/chat/attachments/route.ts", "src/app/api/admin/chat/[id]/attachments/route.ts"]) {
+      const src = await readFile(join(process.cwd(), rel), "utf8");
+      assert(src.includes("storePrivateUpload("), `${rel} uploads through the shared private path`);
     }
     const galleryRoute = await readFile(join(process.cwd(), "src/app/api/admin/gallery/route.ts"), "utf8");
     assert(galleryRoute.includes("mimeFromVideoMagicBytes"), "gallery upload accepts MP4 and WebM");

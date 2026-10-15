@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest) {
 
   if (parsed.data.acknowledge && parsed.data.id) {
     const existing = await prisma.adminNotification.findFirst({
-      where: { id: parsed.data.id, ...adminNotificationVisibleWhere(role, actor) },
+      where: { id: parsed.data.id, ...adminNotificationVisibleWhere(role, actor, userId) },
       select: { id: true, acknowledgedAt: true },
     });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -47,7 +47,7 @@ export async function PATCH(req: NextRequest) {
     const unread = await prisma.adminNotification.findMany({
       where: {
         AND: [
-          adminNotificationVisibleWhere(role, actor),
+          adminNotificationVisibleWhere(role, actor, userId),
           { acknowledgedAt: null },
           { reads: { none: { userId } } },
         ],
@@ -65,7 +65,7 @@ export async function PATCH(req: NextRequest) {
 
   if (parsed.data.id) {
     const visible = await prisma.adminNotification.findFirst({
-      where: { id: parsed.data.id, ...adminNotificationVisibleWhere(role, actor) },
+      where: { id: parsed.data.id, ...adminNotificationVisibleWhere(role, actor, userId) },
       select: { id: true },
     });
     if (!visible) return NextResponse.json({ error: "Not found" }, { status: 404 });

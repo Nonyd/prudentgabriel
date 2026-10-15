@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { ChatStatus, type Prisma } from "@prisma/client";
 import { requireGeneralAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { getChatStaffing } from "@/lib/chat";
+import { activeHolder } from "@/lib/chat-claim";
 
 const CHAT_PAGE_SIZE = 50;
 
@@ -26,6 +28,7 @@ export async function GET(req: NextRequest) {
         OR: [
           { visitorName: { contains: q, mode: "insensitive" } },
           { visitorEmail: { contains: q, mode: "insensitive" } },
+          { visitorPhone: { contains: q.replace(/[^d+]/g, "") || q } },
           { orderRef: { contains: q, mode: "insensitive" } },
           { contextLabel: { contains: q, mode: "insensitive" } },
         ],
@@ -41,6 +44,7 @@ export async function GET(req: NextRequest) {
       id: true,
       visitorName: true,
       visitorEmail: true,
+      visitorPhone: true,
       contextKind: true,
       contextLabel: true,
       contextPath: true,
@@ -48,14 +52,25 @@ export async function GET(req: NextRequest) {
       status: true,
       lastMessageAt: true,
       staffSeenAt: true,
-      messages: { orderBy: { createdAt: "desc" }, take: 1, select: { author: true, body: true, createdAt: true } },
+      handlerId: true,
+      handlerName: true,
+      handlerActiveAt: true,
+      awaitingSince: true,
+      offHoursAt: true,
+      unansweredStage: true,
+      messages: { where: { internal: false }, orderBy: { createdAt: "desc" }, take: 1, select: { author: true, body: true, createdAt: true } },
     },
   });
   const hasMore = rows.length > CHAT_PAGE_SIZE;
-  const items = rows.slice(0, CHAT_PAGE_SIZE).map(({ messages, ...c }) => ({
+  const { claimIdleMin } = await getChatStaffing();
+  const now = new Date();
+  const items = rows.slice(0, CHAT_PAGE_SIZE).map(({ messages, handlerId, handlerName, handlerActiveAt, ...c }) => ({
     ...c,
+    // BF5: the inbox shows who holds each one (an idle claim has lapsed).
+    holder: activeHolder({ handlerId, handlerName, handlerActiveAt }, claimIdleMin, now),
     last: messages[0] ?? null,
-    unread: messages[0]?.author === "VISITOR" && (!c.staffSeenAt || c.staffSeenAt < messages[0].createdAt),
+    // Waiting on the house, and nobody has looked since she last wrote.
+    unread: Boolean(c.awaitingSince) && (!c.staffSeenAt || c.staffSeenAt < c.lastMessageAt),
   }));
   return NextResponse.json({ items, page, hasMore });
 }

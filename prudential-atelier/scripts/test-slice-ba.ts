@@ -485,10 +485,11 @@ async function live(base: string) {
       clearSettingCacheKey(feeKey);
     }
 
+    // Unpaid, the link resumes the same booking (she left payment halfway) — never a second one.
     const reuse = await fetch(`${base}/api/consultations/create`, json(booking));
-    assert(reuse.status === 404, `the link cannot book twice (${reuse.status})`);
-    const reusePage = await fetch(`${base}/consultation/book/${raw}`, { headers: { "x-forwarded-for": ip } });
-    assert(reusePage.status === 404, `a used link is 404 (${reusePage.status})`);
+    const reused = (await reuse.json()) as { bookingId?: string };
+    assert(reuse.status === 200 && reused.bookingId === bookingId, `an unpaid link resumes the same booking (${reuse.status})`);
+    assert((await prisma.consultationBooking.count({ where: { enquiry: { id: okRow.id } } })) === 1, "the link cannot book twice");
 
     // Downstream is the walked pipeline: paid → pending confirmation → the desk picks one of her dates.
     const { fulfillPaidConsultationBooking } = await import("../src/lib/consultation-payment");
@@ -496,6 +497,10 @@ async function live(base: string) {
     assert(paid, "payment fulfils the booking");
     const afterPay = await prisma.consultationBooking.findUniqueOrThrow({ where: { id: bookingId } });
     assert(afterPay.status === "PENDING_CONFIRMATION" && afterPay.paymentStatus === "PAID", "paid, waiting for a date");
+    const reusePaid = await fetch(`${base}/api/consultations/create`, json(booking));
+    assert(reusePaid.status === 404, `once paid, the link books nothing (${reusePaid.status})`);
+    const reusePage = await fetch(`${base}/consultation/book/${raw}`, { headers: { "x-forwarded-for": ip } });
+    assert(reusePage.status === 404, `a used link is 404 (${reusePage.status})`);
     const confirm = await fetch(
       `${base}/api/admin/consultations/${bookingId}`,
       patch({ status: "CONFIRMED", confirmedDate: afterPay.preferredDate2!.toISOString(), confirmedTime: "11:00" }, deskJar),
@@ -600,7 +605,7 @@ async function live(base: string) {
     const chatStaff = await prisma.user.create({
       data: { email: `ba-chat-staff-${stamp}@example.test`, name: "BA Staff", role: Role.STAFF, isStaff: true, password: hash },
     });
-    const chatKeys = ["chat_enabled", "chat_retention_days", "chat_hours_text"];
+    const chatKeys = ["chat_enabled", "chat_retention_days", "chat_hours_text", "chat_schedule", "chat_closed_dates"];
     const chatBefore = await prisma.siteSetting.findMany({ where: { key: { in: chatKeys } } });
     await prisma.siteSetting.deleteMany({ where: { key: { in: chatKeys } } });
     const erasureLogs: string[] = [];
@@ -629,7 +634,14 @@ async function live(base: string) {
       assert(offStart.status === 403, `chat that is off refuses to start (${offStart.status})`);
 
       // "Keep indefinitely" is a decision: it enables chat, and is recorded as such.
-      const keep = await settings({ enabled: true, retention: "keep", hoursText: "We answer 9-6 WAT." });
+      // BF2: hours fail closed, so the conversation checks below run inside a schedule open all day.
+      const allDay = { open: "00:00", close: "24:00" };
+      const keep = await settings({
+        enabled: true,
+        retention: "keep",
+        hoursText: "We answer 9-6 WAT.",
+        schedule: { sun: allDay, mon: allDay, tue: allDay, wed: allDay, thu: allDay, fri: allDay, sat: allDay },
+      });
       assert(keep.status === 200, `"keep indefinitely" enables chat (${keep.status})`);
       const keepView = (await keep.json()) as { enabled: boolean; retention: { mode: string } };
       assert(keepView.enabled && keepView.retention.mode === "keep", "and the setting records the decision");

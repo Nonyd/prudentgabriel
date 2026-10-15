@@ -36,6 +36,8 @@ export const ADMIN_NOTIFICATION_TARGETS: Record<AdminNotificationType, readonly 
   TESTIMONIAL_SUBMITTED: CMS_ADMIN_PERMISSIONS,
   NEW_CUSTOMER: ["clients", "clients.view"],
   CONTACT_FORM: CMS_ADMIN_PERMISSIONS,
+  /** BF9: until Prudent Gabriel names chat recipients, chat reaches the contact desk (BA5). */
+  CHAT: CMS_ADMIN_PERMISSIONS,
   JOB_APPLICATION: ["staff"],
   EMAIL_DEAD: [ADMIN_NOTIFICATION_EVERYONE],
   EMAIL_PROVIDER_AUTH: [ADMIN_NOTIFICATION_EVERYONE],
@@ -60,10 +62,7 @@ export function heldAdminPermissionKeys(role: string, actor?: AccessActor): stri
   return ALL_PERMISSIONS.filter((p) => permissionSetAllows(set, p));
 }
 
-export function adminNotificationVisibleWhere(
-  role: string,
-  actor?: AccessActor,
-): Prisma.AdminNotificationWhereInput {
+function permissionVisibleWhere(role: string, actor?: AccessActor): Prisma.AdminNotificationWhereInput {
   const keys = heldAdminPermissionKeys(role, actor);
   if (keys === "*") return {};
   if (keys.length === 0) {
@@ -77,6 +76,23 @@ export function adminNotificationVisibleWhere(
   };
 }
 
+/**
+ * A row names its people (BF9 chat recipients) or its desks. Named rows go to
+ * the named users only, whatever anyone's permissions; the rest by permission.
+ */
+export function adminNotificationVisibleWhere(
+  role: string,
+  actor: AccessActor | undefined,
+  userId: string,
+): Prisma.AdminNotificationWhereInput {
+  return {
+    OR: [
+      { AND: [{ targetUserIds: { isEmpty: true } }, permissionVisibleWhere(role, actor)] },
+      { targetUserIds: { has: userId } },
+    ],
+  };
+}
+
 export function adminNotificationUnreadWhere(
   userId: string,
   role: string,
@@ -84,7 +100,7 @@ export function adminNotificationUnreadWhere(
 ): Prisma.AdminNotificationWhereInput {
   return {
     AND: [
-      adminNotificationVisibleWhere(role, actor),
+      adminNotificationVisibleWhere(role, actor, userId),
       { acknowledgedAt: null },
       { reads: { none: { userId } } },
     ],

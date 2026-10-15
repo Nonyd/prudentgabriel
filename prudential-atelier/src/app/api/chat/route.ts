@@ -1,28 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ChatAuthor, ChatStatus } from "@prisma/client";
+import { ChatAuthor, ChatStatus, type ChatConversation } from "@prisma/client";
 import { z } from "zod";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { AUTH_WINDOW_MS, accountKey } from "@/lib/auth-limits";
 import {
+  CHAT_MESSAGE_INCLUDE,
   chatCookieMaxAgeSec,
   chatCookieOptions,
-  findChatByToken,
+  chatMessageView,
+  closedLine,
+  getChatAvailability,
   getChatHoursText,
-  isChatOpen,
+  getChatStaffing,
   issueChatToken,
   openingLine,
   resolveChatContext,
+  type ChatAvailability,
 } from "@/lib/chat";
-import { CHAT_CLOSED_MESSAGE, CHAT_COOKIE, CHAT_MESSAGE_MAX, type ChatMessageView } from "@/lib/chat-shared";
-import { createNotification } from "@/lib/notifications";
-import { sendAdminNotificationEmail } from "@/lib/email";
+import { CHAT_CLOSED_MESSAGE, CHAT_MESSAGE_MAX, parseChatContact } from "@/lib/chat-shared";
+import { resolveChatVisitor } from "@/lib/chat-visitor";
+import { notifyChat } from "@/lib/chat-notify";
+import { threadChanged } from "@/lib/chat-bus";
 import { getPublicAppUrl } from "@/lib/app-url";
 
+export const dynamic = "force-dynamic";
+
 const startSchema = z.object({
-  name: z.string().trim().min(2).max(100),
-  email: z.string().trim().email().max(200),
+  /** A guest's name. A signed-in client types nothing (BF4). */
+  name: z.string().trim().min(2).max(100).optional(),
+  /** BF4: one way to reply — an email or a phone number. */
+  contact: z.string().trim().max(200).optional(),
+  /** BA5's field; still accepted. */
+  email: z.string().trim().max(200).optional(),
   message: z.string().trim().min(1).max(CHAT_MESSAGE_MAX),
   /** The page she opened chat on. Path only is kept. */
   path: z.string().max(500).default("/"),
@@ -30,42 +40,74 @@ const startSchema = z.object({
   orderRef: z.string().max(60).optional(),
 });
 
-function view(m: { id: string; author: ChatAuthor; staffName: string | null; body: string; createdAt: Date }): ChatMessageView {
-  return { id: m.id, author: m.author, staffName: m.staffName, body: m.body, createdAt: m.createdAt.toISOString() };
-}
-
 function closed() {
   return NextResponse.json({ error: CHAT_CLOSED_MESSAGE }, { status: 403 });
 }
 
-/** The visitor's conversation (from her cookie), for the widget's polling. */
-export async function GET(req: NextRequest) {
-  if (!(await isChatOpen())) return closed();
-  const convo = await findChatByToken(req.cookies.get(CHAT_COOKIE)?.value);
-  if (!convo) return NextResponse.json({ error: "No conversation" }, { status: 404 });
-  await prisma.chatConversation.update({ where: { id: convo.id }, data: { visitorSeenAt: new Date() } });
+/** Out of hours (BF2), or open but nobody came (BF6): the panel says so and promises a reply. */
+function awayView(c: Pick<ChatConversation, "unansweredStage" | "awaitingSince">, a: ChatAvailability) {
+  if (!a.live) return { reason: "hours" as const, opensLabel: a.opensLabel };
+  if (c.unansweredStage >= 2 && c.awaitingSince) return { reason: "nobody" as const, opensLabel: null };
+  return null;
+}
+
+async function threadPayload(convo: ChatConversation, a: ChatAvailability) {
   const messages = await prisma.chatMessage.findMany({
-    where: { conversationId: convo.id },
+    where: { conversationId: convo.id, internal: false },
     orderBy: { createdAt: "asc" },
     take: 500,
+    include: CHAT_MESSAGE_INCLUDE,
   });
-  return NextResponse.json(
-    {
-      conversation: { contextKind: convo.contextKind, contextLabel: convo.contextLabel, status: convo.status },
-      messages: messages.map(view),
-      hours: await getChatHoursText(),
+  return {
+    conversation: {
+      contextKind: convo.contextKind,
+      contextLabel: convo.contextLabel,
+      status: convo.status,
+      away: awayView(convo, a),
+      contact: { email: convo.visitorEmail, phone: convo.visitorPhone },
     },
-    { headers: { "Cache-Control": "private, no-store" } },
-  );
+    messages: messages.map(chatMessageView),
+    hours: await getChatHoursText(),
+  };
+}
+
+/** Her conversation (her cookie, or her account), for the widget. */
+export async function GET(req: NextRequest) {
+  const a = await getChatAvailability();
+  if (!a.enabled) return closed();
+  const { conversation } = await resolveChatVisitor(req);
+  if (!conversation) return NextResponse.json({ error: "No conversation" }, { status: 404 });
+  await prisma.chatConversation.update({ where: { id: conversation.id }, data: { visitorSeenAt: new Date() } });
+  return NextResponse.json(await threadPayload(conversation, a), { headers: { "Cache-Control": "private, no-store" } });
+}
+
+/** The closed (or nobody-free) line, unless the thread already ends with one. */
+async function addAwayLine(conversationId: string, line: string, at: Date) {
+  const last = await prisma.chatMessage.findFirst({
+    where: { conversationId, internal: false },
+    orderBy: { createdAt: "desc" },
+    skip: 1, // her message, just written
+    select: { author: true, body: true },
+  });
+  if (last?.author === ChatAuthor.SYSTEM && last.body === line) return;
+  await prisma.chatMessage.create({ data: { conversationId, author: ChatAuthor.SYSTEM, body: line, createdAt: new Date(at.getTime() + 1) } });
 }
 
 /**
- * BA5: start a conversation. Name and email are required (400 without them);
- * chat must be switched on with a retention period (403 otherwise). On the
- * atelier journey the house's first line hands her the enquiry form.
+ * Start a conversation, or add to hers. Inside the schedule it is live (201).
+ * Outside it (BF2) the message is still taken (202 Accepted): it lands in the
+ * inbox like any other, and she is told plainly that the house is closed, when
+ * it opens next (computed from the schedule) and that the reply will come by
+ * email or phone. A closed widget is a lost lead.
+ *
+ * BF4: a guest gives her name and one of email or phone (400 without); a
+ * signed-in client types nothing.
  */
 export async function POST(req: NextRequest) {
-  if (!(await isChatOpen())) return closed();
+  const staffing = await getChatStaffing();
+  const now = new Date();
+  const a = await getChatAvailability(now, staffing);
+  if (!a.enabled) return closed();
 
   let body: unknown;
   try {
@@ -76,16 +118,36 @@ export async function POST(req: NextRequest) {
   const parsed = startSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Please give your name and email before starting a chat.", fields: parsed.error.flatten().fieldErrors },
+      { error: "Please give your name, and an email or phone number, before starting a chat.", fields: parsed.error.flatten().fieldErrors },
       { status: 400 },
     );
   }
   const data = parsed.data;
-  const email = data.email.toLowerCase();
+  const visitor = await resolveChatVisitor(req);
+
+  let name: string;
+  let email: string | null;
+  let phone: string | null;
+  if (visitor.user) {
+    name = visitor.user.name?.trim() || visitor.user.email.split("@")[0];
+    email = visitor.user.email.toLowerCase();
+    phone = null;
+  } else {
+    const contact = parseChatContact(data.contact ?? data.email);
+    if (!data.name || !contact) {
+      return NextResponse.json(
+        { error: "Please give your name, and an email or phone number, before starting a chat." },
+        { status: 400 },
+      );
+    }
+    name = data.name;
+    email = contact.email;
+    phone = contact.phone;
+  }
 
   const ip = getClientIp(req);
   const address = await checkRateLimit(`chat-start-address:${ip}`, 20, AUTH_WINDOW_MS);
-  const inbox = address.ok ? await checkRateLimit(`chat-start-inbox:${accountKey(email)}`, 5, AUTH_WINDOW_MS) : address;
+  const inbox = address.ok ? await checkRateLimit(`chat-start-inbox:${accountKey(email ?? phone ?? "")}`, 5, AUTH_WINDOW_MS) : address;
   if (!inbox.ok) {
     return NextResponse.json(
       { error: "Too many new chats. Please wait a little." },
@@ -93,58 +155,78 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const session = await auth();
-  const context = await resolveChatContext({ path: data.path, orderRef: data.orderRef, userId: session?.user?.id });
+  const status = a.live ? 201 : 202;
+  const away = a.live
+    ? {}
+    : { offHoursAt: now, unansweredStage: 2 }; // told now, so BF6 never tells her again
+
+  // She already has a conversation (cookie or account): this is another message in it.
+  if (visitor.conversation) {
+    const c = visitor.conversation;
+    await prisma.chatMessage.create({ data: { conversationId: c.id, author: ChatAuthor.VISITOR, body: data.message, createdAt: now } });
+    const updated = await prisma.chatConversation.update({
+      where: { id: c.id },
+      data: {
+        lastMessageAt: now,
+        visitorSeenAt: now,
+        status: ChatStatus.OPEN,
+        closedAt: null,
+        awaitingSince: c.awaitingSince ?? now,
+        // A fresh wait inside the schedule starts BF6's clock again; one out of hours is told at once.
+        ...(a.live ? (c.awaitingSince ? {} : { unansweredStage: 0, offHoursAt: null }) : away),
+      },
+    });
+    if (!a.live) await addAwayLine(c.id, closedLine(a.opensLabel, { email: c.visitorEmail, phone: c.visitorPhone }), now);
+    threadChanged(c.id, "message");
+    return NextResponse.json(await threadPayload(updated, a), { status });
+  }
+
+  const context = await resolveChatContext({ path: data.path, orderRef: data.orderRef, userId: visitor.user?.id });
   const maxAge = await chatCookieMaxAgeSec();
   const token = issueChatToken(maxAge);
   const appUrl = getPublicAppUrl();
-  const startedAt = new Date();
+  const houseLine = a.live ? openingLine(context, appUrl) : closedLine(a.opensLabel, { email, phone });
 
   const convo = await prisma.chatConversation.create({
     data: {
       ...token.data,
-      visitorName: data.name,
+      visitorName: name,
       visitorEmail: email,
-      userId: session?.user?.id ?? null,
+      visitorPhone: phone,
+      userId: visitor.user?.id ?? null,
       contextKind: context.kind,
       contextPath: context.path,
       contextLabel: context.label,
       productId: context.productId,
       orderRef: context.orderRef,
       status: ChatStatus.OPEN,
+      awaitingSince: now,
+      ...away,
       messages: {
-        // Explicit times: her message first, then the house's opening line.
+        // Explicit times: her message first, then the house's line.
         create: [
-          { author: ChatAuthor.VISITOR, body: data.message, createdAt: new Date(startedAt.getTime()) },
-          { author: ChatAuthor.SYSTEM, body: openingLine(context, appUrl), createdAt: new Date(startedAt.getTime() + 1) },
+          { author: ChatAuthor.VISITOR, body: data.message, createdAt: new Date(now.getTime()) },
+          { author: ChatAuthor.SYSTEM, body: houseLine, createdAt: new Date(now.getTime() + 1) },
+          // The atelier hand-off still applies out of hours.
+          ...(!a.live && context.kind === "ATELIER"
+            ? [{ author: ChatAuthor.SYSTEM, body: openingLine(context, appUrl), createdAt: new Date(now.getTime() + 2) }]
+            : []),
         ],
       },
     },
-    include: { messages: { orderBy: { createdAt: "asc" } } },
   });
 
-  await createNotification({
-    type: "CONTACT_FORM",
-    title: context.kind === "ATELIER" ? "New chat — atelier (send the enquiry form)" : "New chat",
-    message: `${data.name}${context.label ? ` — ${context.label}` : ""}: ${data.message.slice(0, 120)}`,
-    link: `/admin/chat?open=${convo.id}`,
-    entityId: convo.id,
-  }).catch(() => {});
-  await sendAdminNotificationEmail(
-    `New chat — ${data.name}`,
-    `<p><strong>${data.name.replace(/[<>&]/g, "")}</strong> started a chat${context.label ? ` about ${context.label.replace(/[<>&]/g, "")}` : ""}.</p>
-     <p><a href="${appUrl}/admin/chat?open=${convo.id}">Open the chat</a></p>`,
-    `chat-start:${convo.id}`,
-  ).catch(() => {});
+  // BF9: a new conversation tells everyone named (or BA5's desk until someone is named).
+  await notifyChat({
+    conversationId: convo.id,
+    reason: "new",
+    staffing,
+    title: `${a.live ? "New chat" : "New chat (out of hours)"}${context.kind === "ATELIER" ? " — atelier (send the enquiry form)" : ""} — ${name}`,
+    message: `${name}${context.label ? ` — ${context.label}` : ""}: ${data.message.slice(0, 160)}`,
+  });
+  threadChanged(convo.id, "message");
 
-  const res = NextResponse.json(
-    {
-      conversation: { contextKind: convo.contextKind, contextLabel: convo.contextLabel, status: convo.status },
-      messages: convo.messages.map(view),
-      hours: await getChatHoursText(),
-    },
-    { status: 201 },
-  );
+  const res = NextResponse.json(await threadPayload(convo, a), { status });
   res.cookies.set({ ...chatCookieOptions(maxAge), value: token.raw });
   return res;
 }

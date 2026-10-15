@@ -5,6 +5,9 @@ import { PUBLIC_PRODUCT_WHERE } from "@/lib/product-visibility";
 import { getOrCreateClientProfile, SessionUserMissingError } from "@/lib/account-helpers";
 import { AccountShell } from "@/components/account/AccountShell";
 import { enforcePublicMaintenance } from "@/lib/maintenance";
+import { Suspense } from "react";
+import { ChatWidgetLazy } from "@/components/chat/ChatWidgetLazy";
+import { isChatOpen } from "@/lib/chat";
 
 export default async function AccountGroupLayout({ children }: { children: React.ReactNode }) {
   const session = await authOrNull();
@@ -28,7 +31,7 @@ export default async function AccountGroupLayout({ children }: { children: React
     throw error;
   }
 
-  const [rtwActive, bespokeActive, wishlistCount, userPoints] = await Promise.all([
+  const [rtwActive, bespokeActive, wishlistCount, userPoints, chatOpen] = await Promise.all([
     prisma.order.count({
       where: { userId, status: { not: "DELIVERED" }, isBespoke: false },
     }),
@@ -44,6 +47,7 @@ export default async function AccountGroupLayout({ children }: { children: React
       where: { id: userId },
       select: { pointsBalance: true },
     }),
+    isChatOpen().catch(() => false),
   ]);
 
   return (
@@ -55,6 +59,14 @@ export default async function AccountGroupLayout({ children }: { children: React
       wishlistCount={wishlistCount}
     >
       {children}
+      {/* BF4: the same conversation as on the storefront, not a second one. */}
+      {chatOpen ? (
+        <div className="account-chat-offset">
+          <Suspense fallback={null}>
+            <ChatWidgetLazy />
+          </Suspense>
+        </div>
+      ) : null}
     </AccountShell>
   );
 }

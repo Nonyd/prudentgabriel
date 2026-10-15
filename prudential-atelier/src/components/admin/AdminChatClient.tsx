@@ -1,28 +1,58 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import clsx from "clsx";
 import toast from "react-hot-toast";
+import { FileText, Paperclip } from "lucide-react";
+import { AdminChatSettings } from "@/components/admin/AdminChatSettings";
+import { CHAT_ATTACHMENT_ACCEPT } from "@/lib/chat-shared";
 
+type Holder = { id: string; name: string } | null;
 type Item = {
   id: string;
   visitorName: string;
-  visitorEmail: string;
+  visitorEmail: string | null;
+  visitorPhone: string | null;
   contextKind: "PIECE" | "SHOP" | "ORDER" | "ATELIER" | "GENERAL";
   contextLabel: string | null;
   contextPath: string;
   lastMessageAt: string;
   unread: boolean;
+  holder: Holder;
+  awaitingSince: string | null;
+  offHoursAt: string | null;
+  unansweredStage: number;
   last: { author: string; body: string } | null;
 };
 
-type Message = { id: string; author: "VISITOR" | "STAFF" | "SYSTEM"; staffName: string | null; body: string; createdAt: string; emailedAt: string | null };
-type Thread = Item & { status: "OPEN" | "CLOSED"; orderRef: string | null; messages: Message[] };
-type Retention = { mode: "unset" } | { mode: "keep" } | { mode: "days"; days: number };
-type Settings = { enabled: boolean; retention: Retention; hoursText: string };
+type Attachment = { id: string; mime: string; name: string; bytes: number };
+type Message = {
+  id: string;
+  author: "VISITOR" | "STAFF" | "SYSTEM";
+  staffName: string | null;
+  staffUserId: string | null;
+  internal: boolean;
+  original: string;
+  body: string;
+  revisions: { id: string; body: string; createdAt: string }[];
+  attachments: Attachment[];
+  createdAt: string;
+  emailedAt: string | null;
+};
+type Thread = Omit<Item, "unread" | "last"> & {
+  status: "OPEN" | "CLOSED";
+  orderRef: string | null;
+  visitorOnline: boolean;
+  related: { id: string; contextLabel: string | null; contextPath: string; status: string; lastMessageAt: string }[];
+  messages: Message[];
+};
 
+/** Only when the live stream cannot be opened. */
 const POLL_MS = 5000;
+const TYPING_EVERY_MS = 2000;
+/** While she is active in the thread, the holder says "still here" this often. */
+const STILL_HERE_MS = 60_000;
 
 const CONTEXT_HINT: Record<Item["contextKind"], string> = {
   ATELIER: "Started on the atelier journey. Hand her the enquiry form; do not quote, take a brief or book here.",
@@ -32,100 +62,12 @@ const CONTEXT_HINT: Record<Item["contextKind"], string> = {
   GENERAL: "General question.",
 };
 
-function ChatSettings() {
-  const [s, setS] = useState<Settings | null>(null);
-  const [mode, setMode] = useState<"unset" | "keep" | "days">("unset");
-  const [days, setDays] = useState("");
-  const [hours, setHours] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    void fetch("/api/admin/chat/settings")
-      .then((r) => r.json())
-      .then((j: Settings) => {
-        setS(j);
-        setMode(j.retention.mode);
-        setDays(j.retention.mode === "days" ? String(j.retention.days) : "");
-        setHours(j.hoursText);
-      });
-  }, []);
-
-  async function save(enabled: boolean) {
-    setBusy(true);
-    try {
-      const res = await fetch("/api/admin/chat/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          enabled,
-          retention: mode === "keep" ? "keep" : mode === "days" && days.trim() ? Number(days) : null,
-          hoursText: hours,
-        }),
-      });
-      const j = (await res.json()) as Settings & { error?: unknown };
-      if (!res.ok) throw new Error(typeof j.error === "string" ? j.error : "Could not save");
-      setS(j);
-      toast.success(j.enabled ? "Chat is on" : "Saved — chat is off");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (!s) return null;
-  return (
-    <details className="mt-4 glass-1 p-4 font-body text-sm" open={!s.enabled}>
-      <summary className="cursor-pointer text-ink">
-        Settings — chat is <strong>{s.enabled ? "on" : "off"}</strong>
-      </summary>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <fieldset className="block text-xs text-text-mid">
-          <legend>How long conversations are kept — a decision is required before chat can be switched on</legend>
-          <label className="mt-2 flex items-center gap-2 text-sm text-ink">
-            <input type="radio" name="chat-retention" checked={mode === "keep"} onChange={() => setMode("keep")} />
-            Keep indefinitely (erase on request)
-          </label>
-          <label className="mt-1 flex items-center gap-2 text-sm text-ink">
-            <input type="radio" name="chat-retention" checked={mode === "days"} onChange={() => setMode("days")} />
-            Delete after
-            <input
-              inputMode="numeric"
-              className="w-20 border border-sand px-2 py-1 text-sm text-ink"
-              value={days}
-              onChange={(e) => {
-                setMode("days");
-                setDays(e.target.value.replace(/[^0-9]/g, ""));
-              }}
-            />
-            days
-          </label>
-          {mode === "unset" ? <p className="mt-1 text-warning">Not decided yet.</p> : null}
-        </fieldset>
-        <label className="block text-xs text-text-mid">
-          Who answers and when (shown to visitors)
-          <input
-            className="mt-1 w-full border border-sand px-3 py-2 text-sm text-ink"
-            value={hours}
-            onChange={(e) => setHours(e.target.value)}
-            maxLength={400}
-            placeholder="e.g. We answer Monday to Saturday, 9am–6pm WAT. Otherwise we reply by email."
-          />
-        </label>
-      </div>
-      <div className="mt-4 flex gap-2">
-        <button type="button" disabled={busy} onClick={() => void save(true)} className="rounded-sm bg-[#37392d] px-4 py-2 text-xs uppercase text-white disabled:opacity-50">
-          Save and switch on
-        </button>
-        <button type="button" disabled={busy} onClick={() => void save(false)} className="rounded-sm border border-sand px-4 py-2 text-xs uppercase text-ink">
-          Save, keep off
-        </button>
-      </div>
-    </details>
-  );
+function ago(iso: string): string {
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
+  return m < 60 ? `${m} min` : `${Math.round(m / 60)} h`;
 }
 
-function EraseControl({ id, email, onDone }: { id: string; email: string; onDone: () => void }) {
+function EraseControl({ id, contact, onDone }: { id: string; contact: string; onDone: () => void }) {
   const [open, setOpen] = useState(false);
   const [all, setAll] = useState(true);
   const [reason, setReason] = useState("Erasure request under the NDPA");
@@ -140,9 +82,11 @@ function EraseControl({ id, email, onDone }: { id: string; email: string; onDone
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ confirmation: confirm, allForVisitor: all, reason }),
       });
-      const j = (await r.json()) as { deleted?: number; error?: string };
+      const j = (await r.json()) as { deleted?: number; filesDeleted?: number; error?: string };
       if (!r.ok) throw new Error(j.error ?? "Could not erase");
-      toast.success(`Erased ${j.deleted} conversation${j.deleted === 1 ? "" : "s"}; logged`);
+      toast.success(
+        `Erased ${j.deleted} conversation${j.deleted === 1 ? "" : "s"}${j.filesDeleted ? ` and ${j.filesDeleted} file${j.filesDeleted === 1 ? "" : "s"}` : ""}; logged`,
+      );
       onDone();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not erase");
@@ -160,10 +104,13 @@ function EraseControl({ id, email, onDone }: { id: string; email: string; onDone
   }
   return (
     <div className="mt-2 space-y-2 border border-error/30 p-3 text-xs">
-      <p className="text-error">Erase permanently. This cannot be undone; the activity log keeps who and how many, not the words.</p>
+      <p className="text-error">
+        Erase permanently, with every file sent in it. This cannot be undone; the activity log keeps who and how many, not the
+        words.
+      </p>
       <label className="flex items-center gap-2">
         <input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} />
-        Every conversation with {email}
+        Every conversation with {contact}
       </label>
       <input className="w-full border border-sand px-2 py-1" value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Reason" />
       <input className="w-full border border-sand px-2 py-1" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Type DELETE" aria-label="Type DELETE" />
@@ -179,8 +126,29 @@ function EraseControl({ id, email, onDone }: { id: string; email: string; onDone
   );
 }
 
+function Files({ files }: { files: Attachment[] }) {
+  return (
+    <>
+      {files.map((a) =>
+        a.mime.startsWith("image/") ? (
+          <a key={a.id} href={`/api/admin/chat/attachments/${a.id}`} target="_blank" rel="noopener noreferrer" className="mb-1 block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`/api/admin/chat/attachments/${a.id}`} alt={a.name} className="max-h-56 w-auto rounded-sm" loading="lazy" />
+          </a>
+        ) : (
+          <a key={a.id} href={`/api/admin/chat/attachments/${a.id}`} className="mb-1 flex items-center gap-1.5 underline" download>
+            <FileText className="h-4 w-4 shrink-0" />
+            {a.name} <span className="opacity-70">({Math.ceil(a.bytes / 1024)} KB, downloads)</span>
+          </a>
+        ),
+      )}
+    </>
+  );
+}
+
 export function AdminChatClient({ openId }: { openId: string | null }) {
   const { data: session } = useSession();
+  const me = session?.user?.id ?? null;
   const isSuperAdmin = session?.user?.role === "SUPER_ADMIN";
   const [status, setStatus] = useState<"OPEN" | "CLOSED">("OPEN");
   const [query, setQuery] = useState("");
@@ -191,8 +159,17 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
   const [thread, setThread] = useState<Thread | null>(null);
   const [reply, setReply] = useState("");
   const [busy, setBusy] = useState(false);
+  const [visitorTyping, setVisitorTyping] = useState(false);
+  const [colleagueTyping, setColleagueTyping] = useState<string | null>(null);
+  const [visitorOnline, setVisitorOnline] = useState(false);
+  const [mode, setMode] = useState<"stream" | "poll" | null>(null);
+  const [editing, setEditing] = useState<{ id: string; text: string } | null>(null);
+  const [editWindowSec, setEditWindowSec] = useState(30);
+  const lastTyping = useRef(0);
+  const lastActive = useRef(0);
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  // Pages 1..page are kept on screen: "Load more" extends, polling refreshes the same span.
+  // Pages 1..page are kept on screen: "Load more" extends, live updates refresh the same span.
   const loadList = useCallback(async () => {
     const all: Item[] = [];
     let more = false;
@@ -213,18 +190,159 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
   const loadThread = useCallback(async () => {
     if (!selected) return setThread(null);
     const r = await fetch(`/api/admin/chat/${selected}`, { cache: "no-store" });
-    if (r.ok) setThread(((await r.json()) as { conversation: Thread }).conversation);
+    if (r.ok) {
+      const t = ((await r.json()) as { conversation: Thread }).conversation;
+      setThread(t);
+      setVisitorOnline(t.visitorOnline);
+    }
   }, [selected]);
 
   useEffect(() => {
+    void fetch("/api/admin/chat/settings")
+      .then((r) => r.json())
+      .then((j: { editWindowSec?: number }) => j.editWindowSec !== undefined && setEditWindowSec(j.editWindowSec))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     void loadList();
+  }, [loadList]);
+  useEffect(() => {
+    setEditing(null);
+    setVisitorTyping(false);
+    setColleagueTyping(null);
     void loadThread();
+  }, [loadThread]);
+
+  // BF1: one live line for the open conversation (and the inbox); polling if it cannot be opened.
+  const listRef = useRef(loadList);
+  const threadRef = useRef(loadThread);
+  listRef.current = loadList;
+  threadRef.current = loadThread;
+  useEffect(() => {
+    let es: EventSource | null = null;
+    let poll: number | null = null;
+    let opened = false;
+    let failures = 0;
+    let typingClear: number | null = null;
+    let colleagueClear: number | null = null;
+    const startPolling = () => {
+      es?.close();
+      es = null;
+      setMode("poll");
+      if (poll === null) {
+        poll = window.setInterval(() => {
+          void listRef.current();
+          void threadRef.current();
+        }, POLL_MS);
+      }
+    };
+    if (typeof EventSource === "undefined") startPolling();
+    else {
+      es = new EventSource(`/api/admin/chat/stream${selected ? `?c=${encodeURIComponent(selected)}` : ""}`);
+      const openTimer = window.setTimeout(() => !opened && startPolling(), 6000);
+      es.addEventListener("ready", () => {
+        opened = true;
+        failures = 0;
+        window.clearTimeout(openTimer);
+        setMode("stream");
+      });
+      es.addEventListener("inbox", () => void listRef.current());
+      es.addEventListener("thread", () => {
+        setVisitorTyping(false);
+        void threadRef.current();
+      });
+      es.addEventListener("presence", (ev) => {
+        setVisitorOnline((JSON.parse((ev as MessageEvent<string>).data) as { visitorOnline: boolean }).visitorOnline);
+      });
+      es.addEventListener("typing", (ev) => {
+        const e = JSON.parse((ev as MessageEvent<string>).data) as { who: string; name: string | null; ttlMs: number };
+        if (e.who === "visitor") {
+          if (typingClear !== null) window.clearTimeout(typingClear);
+          setVisitorTyping(e.ttlMs > 0);
+          if (e.ttlMs > 0) typingClear = window.setTimeout(() => setVisitorTyping(false), e.ttlMs);
+        } else if (e.name) {
+          if (colleagueClear !== null) window.clearTimeout(colleagueClear);
+          setColleagueTyping(e.ttlMs > 0 ? e.name : null);
+          if (e.ttlMs > 0) colleagueClear = window.setTimeout(() => setColleagueTyping(null), e.ttlMs);
+        }
+      });
+      es.onerror = () => {
+        failures += 1;
+        if (!opened || es?.readyState === EventSource.CLOSED || failures >= 3) {
+          window.clearTimeout(openTimer);
+          startPolling();
+        }
+      };
+    }
+    return () => {
+      es?.close();
+      if (poll !== null) window.clearInterval(poll);
+      if (typingClear !== null) window.clearTimeout(typingClear);
+      if (colleagueClear !== null) window.clearTimeout(colleagueClear);
+    };
+  }, [selected]);
+
+  const iHold = Boolean(thread?.holder && me && thread.holder.id === me);
+  const heldByOther = Boolean(thread?.holder && me && thread.holder.id !== me);
+
+  // BF5: while she is active in a thread she holds, keep the claim alive; idle, it lapses.
+  useEffect(() => {
+    if (!selected || !iHold) return;
+    const mark = () => {
+      lastActive.current = Date.now();
+    };
+    window.addEventListener("keydown", mark);
+    window.addEventListener("pointerdown", mark);
     const t = window.setInterval(() => {
-      void loadList();
-      void loadThread();
-    }, POLL_MS);
-    return () => window.clearInterval(t);
-  }, [loadList, loadThread]);
+      if (Date.now() - lastActive.current < STILL_HERE_MS) {
+        void fetch(`/api/admin/chat/${selected}/claim`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      }
+    }, STILL_HERE_MS);
+    return () => {
+      window.removeEventListener("keydown", mark);
+      window.removeEventListener("pointerdown", mark);
+      window.clearInterval(t);
+    };
+  }, [selected, iHold]);
+
+  async function claim(takeover = false): Promise<boolean> {
+    if (!selected) return false;
+    const r = await fetch(`/api/admin/chat/${selected}/claim`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ takeover }),
+    });
+    const j = (await r.json().catch(() => ({}))) as { error?: string };
+    if (!r.ok) {
+      toast.error(j.error ?? "Could not claim");
+      await loadThread();
+      return false;
+    }
+    lastActive.current = Date.now();
+    await loadThread();
+    return true;
+  }
+
+  async function release() {
+    if (!selected) return;
+    await fetch(`/api/admin/chat/${selected}/claim`, { method: "DELETE" });
+    await Promise.all([loadThread(), loadList()]);
+  }
+
+  function onReplyChange(v: string) {
+    setReply(v);
+    lastActive.current = Date.now();
+    const now = Date.now();
+    if (selected && v.trim() && now - lastTyping.current > TYPING_EVERY_MS) {
+      lastTyping.current = now;
+      void fetch(`/api/admin/chat/${selected}/typing`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ typing: true }),
+      });
+    }
+  }
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
@@ -236,15 +354,56 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ body: reply }),
       });
-      const j = (await r.json()) as { emailed?: boolean; error?: string };
+      const j = (await r.json()) as { emailed?: boolean; phoneOnly?: string | null; error?: string };
       if (!r.ok) throw new Error(j.error ?? "Could not send");
       if (j.emailed) toast.success("She had left, so the reply was also emailed");
+      if (j.phoneOnly) toast(`She has left and gave only a phone number: ${j.phoneOnly}`);
       setReply("");
       await loadThread();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not send");
+      await loadThread();
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selected || !editing?.text.trim()) return;
+    setBusy(true);
+    try {
+      const r = await fetch(`/api/admin/chat/${selected}/messages/${editing.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: editing.text }),
+      });
+      const j = (await r.json().catch(() => ({}))) as { error?: string };
+      if (!r.ok) throw new Error(j.error ?? "Could not edit");
+      setEditing(null);
+      await loadThread();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not edit");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function upload(file: File) {
+    if (!selected) return;
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      const r = await fetch(`/api/admin/chat/${selected}/attachments`, { method: "POST", body: fd });
+      const j = (await r.json().catch(() => ({}))) as { error?: string };
+      if (!r.ok) throw new Error(j.error ?? "Could not send the file");
+      await loadThread();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not send the file");
+    } finally {
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = "";
     }
   }
 
@@ -258,9 +417,17 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
     await Promise.all([loadList(), loadThread()]);
   }
 
+  function canEdit(m: Message, i: number): boolean {
+    if (!thread || m.author !== "STAFF" || m.staffUserId !== me) return false;
+    if (Date.now() - new Date(m.createdAt).getTime() > editWindowSec * 1000) return false;
+    return !thread.messages.slice(i + 1).some((x) => x.author === "VISITOR");
+  }
+
+  const contact = thread ? thread.visitorEmail ?? thread.visitorPhone ?? "" : "";
+
   return (
-    <div>
-      <ChatSettings />
+    <div data-chat-mode={mode ?? undefined}>
+      <AdminChatSettings />
       <div className="mt-4 flex flex-wrap items-center gap-2 font-body text-11px">
         <input
           className="min-w-[220px] flex-1 border border-sand px-3 py-1.5 text-sm"
@@ -269,7 +436,7 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
             setQuery(e.target.value);
             setPage(1);
           }}
-          placeholder="Search open and closed: name, email, order, piece"
+          placeholder="Search open and closed: name, email, phone, order, piece"
           aria-label="Search conversations"
         />
         {(["OPEN", "CLOSED"] as const).map((s) => (
@@ -286,6 +453,7 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
             {s === "OPEN" ? "Open" : "Closed"}
           </button>
         ))}
+        <span className="text-10px text-text-mid">{mode === "stream" ? "Live" : mode === "poll" ? "Refreshing every few seconds" : ""}</span>
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-[320px_1fr]">
         <ul className="max-h-[70vh] space-y-2 overflow-y-auto">
@@ -295,7 +463,7 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
               <button
                 type="button"
                 onClick={() => setSelected(c.id)}
-                className={clsx("w-full border p-3 text-left font-body text-sm", selected === c.id ? "border-ink" : "border-sand", c.unread && "bg-warning-soft")}
+                className={clsx("w-full rounded-none border p-3 text-left font-body text-sm", selected === c.id ? "border-ink" : "border-sand", c.unread && "bg-warning-soft")}
               >
                 <span className="flex justify-between gap-2">
                   <strong className="text-ink">{c.visitorName}</strong>
@@ -305,6 +473,15 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
                   {c.contextKind === "ATELIER" ? "Atelier" : c.contextLabel ?? c.contextPath}
                 </span>
                 {c.last ? <span className="mt-1 block truncate text-xs text-text-mid">{c.last.body}</span> : null}
+                <span className="mt-1 flex flex-wrap gap-x-2 text-10px">
+                  {c.holder ? <span className="text-choc">{c.holder.id === me ? "You are handling" : `${c.holder.name} is handling`}</span> : null}
+                  {c.awaitingSince ? (
+                    <span className={c.unansweredStage >= 1 ? "text-error" : "text-text-mid"}>
+                      Waiting {ago(c.awaitingSince)}
+                      {c.offHoursAt ? " · out of hours" : c.unansweredStage >= 2 ? " · told nobody is free" : ""}
+                    </span>
+                  ) : null}
+                </span>
               </button>
             </li>
           ))}
@@ -323,20 +500,54 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
             <div className="flex h-full flex-col">
               <div className="border-b border-sand pb-3 font-body text-sm">
                 <p className="text-ink">
-                  <strong>{thread.visitorName}</strong> · {thread.visitorEmail}
+                  <strong>{thread.visitorName}</strong>
+                  {thread.visitorEmail ? ` · ${thread.visitorEmail}` : ""}
+                  {thread.visitorPhone ? ` · ${thread.visitorPhone}` : ""}
+                  <span className={clsx("ml-2 text-xs", visitorOnline ? "text-success" : "text-text-mid")}>
+                    {visitorOnline ? "● Here now" : "○ Not on the page"}
+                  </span>
                 </p>
                 <p className="mt-1 text-xs text-text-mid">
                   Started on <code>{thread.contextPath}</code>
                   {thread.contextLabel ? ` · ${thread.contextLabel}` : ""}
+                  {!thread.visitorEmail ? " · No email: reply by phone or WhatsApp if she leaves" : ""}
                 </p>
                 <p className={clsx("mt-2 text-xs", thread.contextKind === "ATELIER" ? "font-medium text-error" : "text-text-mid")}>
                   {CONTEXT_HINT[thread.contextKind]}
                 </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs" data-chat-holder={thread.holder?.name ?? ""}>
+                  {thread.holder ? (
+                    <span className="text-choc">{iHold ? "You are handling this conversation." : `${thread.holder.name} is handling this conversation.`}</span>
+                  ) : (
+                    <span className="text-text-mid">Nobody is handling it. Starting a reply claims it.</span>
+                  )}
+                  {heldByOther ? (
+                    <button type="button" onClick={() => void claim(true)} className="rounded-sm border border-sand px-2 py-1 uppercase text-ink">
+                      Take over
+                    </button>
+                  ) : null}
+                  {iHold ? (
+                    <button type="button" onClick={() => void release()} className="rounded-sm border border-sand px-2 py-1 uppercase text-ink">
+                      Release
+                    </button>
+                  ) : null}
+                </div>
+                {thread.related.length ? (
+                  <p className="mt-2 text-xs text-text-mid">
+                    Her other conversations:{" "}
+                    {thread.related.map((r, i) => (
+                      <button key={r.id} type="button" className="underline" onClick={() => setSelected(r.id)}>
+                        {i ? ", " : ""}
+                        {r.contextLabel ?? r.contextPath} ({new Date(r.lastMessageAt).toLocaleDateString("en-GB")})
+                      </button>
+                    ))}
+                  </p>
+                ) : null}
                 {isSuperAdmin ? (
                   <div className="mt-2">
                     <EraseControl
                       id={thread.id}
-                      email={thread.visitorEmail}
+                      contact={contact}
                       onDone={() => {
                         setSelected(null);
                         void loadList();
@@ -346,34 +557,109 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
                 ) : null}
               </div>
               <div className="flex-1 space-y-2 overflow-y-auto py-3">
-                {thread.messages.map((m) => (
+                {thread.messages.map((m, i) => (
                   <div
                     key={m.id}
                     className={clsx(
-                      "max-w-[80%] whitespace-pre-line rounded-sm px-3 py-2 font-body text-sm",
-                      m.author === "STAFF" ? "ml-auto bg-[#37392d] text-white" : m.author === "SYSTEM" ? "mx-auto bg-transparent text-xs italic text-text-mid" : "bg-sand/40 text-ink",
+                      "max-w-[80%]",
+                      m.author === "STAFF" ? "ml-auto" : m.author === "SYSTEM" ? "mx-auto text-center" : "",
                     )}
                   >
-                    {m.body}
-                    {m.emailedAt ? <span className="mt-1 block text-10px opacity-70">Also emailed</span> : null}
+                    <div
+                      className={clsx(
+                        "whitespace-pre-line rounded-sm px-3 py-2 font-body text-sm",
+                        m.author === "STAFF"
+                          ? "bg-[#37392d] text-white"
+                          : m.author === "SYSTEM"
+                            ? clsx("bg-transparent text-xs italic text-text-mid", m.internal && "border border-dashed border-sand")
+                            : "bg-sand/40 text-ink",
+                      )}
+                    >
+                      {m.author === "STAFF" && m.staffName ? <span className="mb-0.5 block text-10px uppercase opacity-70">{m.staffName}</span> : null}
+                      {m.internal ? <span className="mr-1 not-italic">Only the house sees this:</span> : null}
+                      <Files files={m.attachments} />
+                      {m.body}
+                      {m.revisions.length ? (
+                        // BF8: the original and every edit, so nothing said is quietly changed.
+                        <span className="mt-1 block border-t border-current/20 pt-1 text-10px opacity-80" data-chat-edited>
+                          Edited {m.revisions.length === 1 ? "once" : `${m.revisions.length} times`}. Originally: &ldquo;{m.original}&rdquo;
+                          {m.revisions.slice(0, -1).map((r) => (
+                            <span key={r.id} className="block">
+                              then &ldquo;{r.body}&rdquo;
+                            </span>
+                          ))}
+                        </span>
+                      ) : null}
+                      {m.emailedAt ? <span className="mt-1 block text-10px opacity-70">Also emailed</span> : null}
+                    </div>
+                    {canEdit(m, i) && m.body ? (
+                      <button type="button" className="mt-0.5 block w-full text-right text-10px text-text-mid underline" onClick={() => setEditing({ id: m.id, text: m.body })}>
+                        Edit
+                      </button>
+                    ) : null}
                   </div>
                 ))}
+                {visitorTyping ? <p className="font-body text-xs italic text-text-mid" data-chat-typing>{thread.visitorName.split(/\s+/)[0]} is typing…</p> : null}
+                {colleagueTyping ? <p className="font-body text-xs italic text-text-mid">{colleagueTyping} is typing…</p> : null}
               </div>
-              <form onSubmit={send} className="flex gap-2 border-t border-sand pt-3">
-                <textarea className="input-field min-h-[60px] flex-1 text-sm" value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Reply" />
-                <div className="flex flex-col gap-2">
-                  <button type="submit" disabled={busy || !reply.trim()} className="rounded-sm bg-[#37392d] px-4 py-2 text-xs uppercase text-white disabled:opacity-50">
-                    Send
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void setThreadStatus(thread.status === "OPEN" ? "CLOSED" : "OPEN")}
-                    className="rounded-sm border border-sand px-4 py-2 text-xs uppercase text-ink"
-                  >
-                    {thread.status === "OPEN" ? "Close" : "Reopen"}
-                  </button>
-                </div>
-              </form>
+              {editing ? (
+                <form onSubmit={saveEdit} className="flex gap-2 border-t border-sand pt-3">
+                  <textarea className="input-field min-h-[60px] flex-1 text-sm" value={editing.text} onChange={(e) => setEditing({ ...editing, text: e.target.value })} aria-label="Edit message" />
+                  <div className="flex flex-col gap-2">
+                    <button type="submit" disabled={busy} className="rounded-sm bg-[#37392d] px-4 py-2 text-xs uppercase text-white disabled:opacity-50">
+                      Save edit
+                    </button>
+                    <button type="button" onClick={() => setEditing(null)} className="rounded-sm border border-sand px-4 py-2 text-xs uppercase text-ink">
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={send} className="flex gap-2 border-t border-sand pt-3">
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept={CHAT_ATTACHMENT_ACCEPT}
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void upload(f);
+                    }}
+                  />
+                  <textarea
+                    className="input-field min-h-[60px] flex-1 text-sm"
+                    value={reply}
+                    disabled={heldByOther}
+                    onFocus={() => {
+                      // BF5: opening a conversation to reply claims it.
+                      if (!iHold && !heldByOther) void claim(false);
+                    }}
+                    onChange={(e) => onReplyChange(e.target.value)}
+                    placeholder={heldByOther ? `${thread.holder?.name} is handling this. Take it over to reply.` : "Reply"}
+                    aria-label="Reply"
+                  />
+                  <div className="flex flex-col gap-2">
+                    <button type="submit" disabled={busy || !reply.trim() || heldByOther} className="rounded-sm bg-[#37392d] px-4 py-2 text-xs uppercase text-white disabled:opacity-50">
+                      Send
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy || heldByOther}
+                      onClick={() => fileRef.current?.click()}
+                      className="flex items-center justify-center gap-1 rounded-sm border border-sand px-4 py-2 text-xs uppercase text-ink disabled:opacity-50"
+                    >
+                      <Paperclip className="h-3.5 w-3.5" /> File
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void setThreadStatus(thread.status === "OPEN" ? "CLOSED" : "OPEN")}
+                      className="rounded-sm border border-sand px-4 py-2 text-xs uppercase text-ink"
+                    >
+                      {thread.status === "OPEN" ? "Close" : "Reopen"}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           )}
         </div>

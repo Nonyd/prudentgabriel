@@ -40,6 +40,7 @@ const TESTS = [
   "test-slice-ba",
   "test-slice-bb",
   "test-slice-bc",
+  "test-slice-bf",
   "test-slice-j",
   "test-slice-m",
   "test-slice-n",

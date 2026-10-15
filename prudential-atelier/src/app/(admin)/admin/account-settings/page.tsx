@@ -19,7 +19,7 @@ export default async function AdminAccountSettingsPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true, email: true, image: true },
+    select: { name: true, email: true, image: true, displayName: true },
   });
   if (!user) redirect("/login?tab=admin");
 
@@ -29,6 +29,7 @@ export default async function AdminAccountSettingsPage() {
         name: user.name ?? "",
         email: user.email,
         image: user.image ?? "",
+        displayName: user.displayName ?? "",
       }}
       canChangeEmail={session.user.role === "SUPER_ADMIN"}
     />

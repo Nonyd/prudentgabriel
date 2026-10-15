@@ -102,11 +102,11 @@ function runConverter() {
 }
 
 function runFacts() {
-  assert(LEGAL_COPY_REVISION === "ba-3", "revision stamp");
-  assert(DEFAULT_LEGAL_UPDATED.includes("September 2026"), "last-updated date is this slice");
+  assert(LEGAL_COPY_REVISION === "bf-1", "revision stamp");
+  assert(DEFAULT_LEGAL_UPDATED.includes("October 2026"), "last-updated date is this slice");
   const byPage = Object.fromEntries(LEGAL_SEED_ENTRIES.map((e) => [e.page, e.revision]));
-  // BA5/BA6: chat, enquiries and hosting in Germany republish privacy and cookie.
-  assert(byPage.cookie === "ba-2" && byPage.privacy === "ba-3", "privacy republishes for the token sweep (no emailed passwords); cookie stays at BA5");
+  // BF: chat takes a phone number and files (privacy), and the greeting keeps a tab-only flag (cookie).
+  assert(byPage.cookie === "bf-1" && byPage.privacy === "bf-1", "privacy and cookie republish for BF chat");
   assert(byPage.terms === "ar-5" && byPage.returns === "ar-5" && byPage.shipping === "ar-5", "other legal pages keep their lawyer revision");
 
   for (const term of DEFAULT_HOUSE_DOCUMENT_TERMS) {
@@ -324,7 +324,7 @@ function runPresentation() {
   assert(boot.includes("alreadyPublishedAtThisRevision"), "matching revision does not overwrite lawyer edits");
 
   const welcome = src("src/emails/WelcomeCredentialsEmail.tsx");
-  assert(welcome.includes("Paying an invoice"), "welcome email says paying opens the account");
+  assert(/opens when you pay\s+an invoice/.test(welcome), "welcome email says paying opens the account");
 
   const pkg = src("package.json");
   assert(pkg.includes("test:slice-ar"), "package.json exposes the slice AR script");

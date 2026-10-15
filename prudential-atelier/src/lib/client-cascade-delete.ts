@@ -54,6 +54,7 @@ import { CASCADE_CONFIRMATION, type CascadePaymentSnap } from "@/lib/cascade-cop
 import { enableLedgerBypass, ProductCascadeError, type CascadeActor } from "@/lib/product-cascade-delete";
 import { isProtectedAccount } from "@/lib/roles";
 import { logServerError } from "@/lib/logger";
+import { chatFileKeys, deleteOrphanedChatFiles } from "@/lib/chat-files";
 import {
   CLIENT_CASCADE_MODULE,
   CLIENT_CASCADE_RECORD_TYPE,
@@ -536,6 +537,14 @@ export async function executeClientCascade(opts: {
       continue;
     }
     try {
+      // BF7: chat files are read before the rows go, and removed from disk after.
+      const chatIds = (
+        await prisma.chatConversation.findMany({
+          where: { OR: [{ userId: plan.userId }, { visitorEmail: ci(plan.email) }] },
+          select: { id: true },
+        })
+      ).map((c) => c.id);
+      const chatKeys = await chatFileKeys(chatIds);
       const logId = await prisma.$transaction(
         async (tx) => {
           await enableLedgerBypass(tx);
@@ -544,6 +553,7 @@ export async function executeClientCascade(opts: {
         },
         { timeout: 60_000, maxWait: 15_000 },
       );
+      await deleteOrphanedChatFiles(chatKeys);
       results.push({ clientProfileId: plan.clientProfileId, name: plan.name, ok: true, logId });
       mediaUrls.push(...plan.mediaUrls);
     } catch (e) {

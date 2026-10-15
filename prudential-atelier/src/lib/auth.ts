@@ -286,6 +286,14 @@ const nextAuth = NextAuth({
       }
     },
   },
+  events: {
+    // BF4: chats she started as a guest under this email join her account the moment she signs in.
+    async signIn({ user }) {
+      if (!user?.id || !user.email) return;
+      const { mergeGuestChats } = await import("@/lib/chat-visitor");
+      await mergeGuestChats(user.id, user.email).catch((error) => logServerError({ errorType: "CHAT_MERGE", error }));
+    },
+  },
 });
 
 export const { handlers, auth, signIn, signOut } = nextAuth;

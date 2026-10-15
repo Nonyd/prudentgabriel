@@ -65,7 +65,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       }),
       prisma.contactMessage.count({ where: { isRead: false } }),
       prisma.consultationEnquiry.count({ where: { status: ConsultationEnquiryStatus.PENDING } }),
-      prisma.chatConversation.count({ where: { status: "OPEN" } }),
+      // BF6: conversations waiting on the house, not every open one.
+      prisma.chatConversation.count({ where: { status: "OPEN", awaitingSince: { not: null } } }),
     ]);
     badges = { bespoke, consultations, orders, messages, enquiries, chat };
   } catch {

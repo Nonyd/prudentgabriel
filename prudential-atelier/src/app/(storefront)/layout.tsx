@@ -12,7 +12,7 @@ import { getFabricPromiseHours } from "@/lib/fabric-promise";
 import { organizationJsonLd } from "@/lib/seo-jsonld";
 import { getSetting } from "@/lib/settings";
 import { Suspense } from "react";
-import { ChatWidget } from "@/components/chat/ChatWidget";
+import { ChatWidgetLazy } from "@/components/chat/ChatWidgetLazy";
 import { isChatOpen } from "@/lib/chat";
 import {
   STOREFRONT_CACHE_TAGS,
@@ -91,7 +91,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
         <PageBeacon />
         {chatOpen ? (
           <Suspense fallback={null}>
-            <ChatWidget />
+            <ChatWidgetLazy />
           </Suspense>
         ) : null}
       </div>

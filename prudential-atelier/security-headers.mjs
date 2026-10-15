@@ -67,6 +67,9 @@ export const TOKEN_ROUTE_SOURCES = [
   "/api/unsubscribe/:path*",
 ];
 
+export const CHAT_FILE_SOURCES = ["/api/chat/attachments/:path*", "/api/admin/chat/attachments/:path*"];
+export const CHAT_FILE_CSP = "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox";
+
 /** @returns {{ source: string; headers: { key: string; value: string }[] }[]} */
 export function securityHeaderRules() {
   return [
@@ -86,6 +89,12 @@ export function securityHeaderRules() {
     ...TOKEN_ROUTE_SOURCES.map((source) => ({
       source,
       headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+    })),
+    // BF7: files strangers send in chat. Nothing in them may run: no script, no
+    // plugins, a sandboxed document even if a browser renders it.
+    ...CHAT_FILE_SOURCES.map((source) => ({
+      source,
+      headers: [{ key: "Content-Security-Policy", value: CHAT_FILE_CSP }],
     })),
   ];
 }

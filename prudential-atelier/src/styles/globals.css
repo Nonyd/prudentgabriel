@@ -1188,3 +1188,32 @@ a.admin-cta {
     transition-duration: 0ms !important;
   }
 }
+
+/* BF3: the chat greeting slides in from the side, long after the first paint. */
+@keyframes chat-greeting-in {
+  from {
+    opacity: 0;
+    transform: translate3d(1.5rem, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.chat-greeting {
+  animation: chat-greeting-in 420ms var(--ease-glass, cubic-bezier(0.2, 0.8, 0.2, 1)) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-greeting {
+    animation: none;
+  }
+}
+/* BF4: on her dashboard the launcher clears the phone's bottom navigation. */
+.account-chat-offset {
+  --chat-extra-offset: 60px;
+}
+@media (min-width: 1024px) {
+  .account-chat-offset {
+    --chat-extra-offset: 0px;
+  }
+}

@@ -3,8 +3,8 @@
  *  LEGAL_COPY_REVISION is the newest of those page stamps. */
 
 
-export const LEGAL_COPY_REVISION = "ba-3";
-export const DEFAULT_LEGAL_UPDATED = "23 September 2026";
+export const LEGAL_COPY_REVISION = "bf-1";
+export const DEFAULT_LEGAL_UPDATED = "15 October 2026";
 
 export function slugifyHeading(text: string): string {
   return text
@@ -201,15 +201,15 @@ When you book, we keep the exact wording of the consultation terms you accepted,
 
 ## Live chat
 
-If you start a chat, we collect your name and email (asked before the conversation starts, so we can reply if you leave), your messages, and our replies. We also keep where the conversation started: the page you opened it on, and the piece or order it is about. We do not record the other pages you visit.
+If you start a chat, we collect your name and one way to reply to you, an email address or a phone number (asked before the conversation starts, so we can reply if you leave). If you are signed in, we use the name and email on your account instead, and the conversation is kept with your account; a chat you started as a guest under the same email joins your account when you sign in. We keep your messages, our replies, and any photo or PDF either side sends in the chat. We also keep where the conversation started: the page you opened it on, and the piece or order it is about. We do not record the other pages you visit, and we do not keep a record of when you were typing.
 
-The chat is run by Prudent Gabriel on its own servers. No chat company receives it, and no chat script from another company loads on the site. House staff who answer chat read it in the admin. If you leave before we reply, the reply is also sent to your email, through the mail provider named below.
+The chat is run by Prudent Gabriel on its own servers. No chat company receives it, and no chat script from another company loads on the site. House staff who answer chat read it in the admin; they appear to you by first name only. If you leave before we reply, or write while the house is closed, the reply is sent to your email through the mail provider named below, or, if you gave only a phone number, the house calls or messages you on it.
 
 Starting a chat sets one cookie that keeps the conversation open on this browser; see the [Cookie Policy](/cookie-policy).
 
 {{#chat_retention_keep}}Prudent Gabriel keeps chat conversations indefinitely, so it can look back at what was said about an order or a piece. They are not deleted on a timer.{{/chat_retention_keep}}{{#chat_retention_days}}Conversations are deleted {{chat_retention_days}} days after the last message.{{/chat_retention_days}}
 
-To have a conversation removed, write to us (see How to write to us below) with "Chat" in the subject and the email you used. Prudent Gabriel will erase every conversation held under that email and tell you when it is done.
+To have a conversation removed, write to us (see How to write to us below) with "Chat" in the subject and the email or phone number you used. Prudent Gabriel will erase every conversation held under it, with every photo and PDF sent in them, and tell you when it is done.
 
 ## Who else receives your data
 
@@ -451,6 +451,7 @@ These also live in local storage and are written because the site uses them. The
 - \`pa-wishlist\`: pieces you saved
 - \`pa-recently-viewed\`: recent products
 - \`pa-recent-searches\`: recent search words
+- \`pg_chat_greeting\`: sessionStorage, for this tab only. Set when you dismiss the chat greeting, so it does not appear again on the next page. It holds the word "dismissed" and nothing else, and disappears when the tab closes.
 - \`pg-theme\`: light or dark
 - \`{{cookie_consent_key}}\`: a single acknowledgement that you saw this notice (version {{cookie_consent_version}}). It does not store analytics or marketing flags.
 
@@ -578,9 +579,9 @@ export const LEGAL_SEED_ENTRIES: {
   md: string;
   revision: string;
 }[] = [
-  { page: "privacy", key: "legal_privacy_policy", label: "Privacy Policy", updatedKey: "legal_privacy_updated", md: PRIVACY_POLICY_MD, revision: "ba-3" },
+  { page: "privacy", key: "legal_privacy_policy", label: "Privacy Policy", updatedKey: "legal_privacy_updated", md: PRIVACY_POLICY_MD, revision: "bf-1" },
   { page: "terms", key: "legal_terms", label: "Terms & Conditions", updatedKey: "legal_terms_updated", md: TERMS_MD, revision: "ar-5" },
-  { page: "cookie", key: "legal_cookie_policy", label: "Cookie Policy", updatedKey: "legal_cookie_updated", md: COOKIE_MD, revision: "ba-2" },
+  { page: "cookie", key: "legal_cookie_policy", label: "Cookie Policy", updatedKey: "legal_cookie_updated", md: COOKIE_MD, revision: "bf-1" },
   { page: "returns", key: "legal_returns_policy", label: "Returns Policy", updatedKey: "legal_returns_updated", md: RETURNS_MD, revision: "ar-5" },
   { page: "shipping", key: "legal_shipping_policy", label: "Shipping Policy", updatedKey: "legal_shipping_updated", md: SHIPPING_MD, revision: "ar-5" },
 ];

@@ -22,6 +22,7 @@ import { run as runConsultationEnquiryAlerts } from "@/lib/cron/jobs/consultatio
 import { run as runConsultationDayBefore } from "@/lib/cron/jobs/consultation-day-before";
 import { run as runChatRetention } from "@/lib/cron/jobs/chat-retention";
 import { run as runChatAutoclose } from "@/lib/cron/jobs/chat-autoclose";
+import { run as runChatUnanswered } from "@/lib/cron/jobs/chat-unanswered";
 
 const HANDLERS: Record<string, CronJobHandler> = {
   "abandoned-cart": runAbandonedCart,
@@ -46,6 +47,7 @@ const HANDLERS: Record<string, CronJobHandler> = {
   "consultation-day-before": runConsultationDayBefore,
   "chat-retention": runChatRetention,
   "chat-autoclose": runChatAutoclose,
+  "chat-unanswered": runChatUnanswered,
 };
 
 /**

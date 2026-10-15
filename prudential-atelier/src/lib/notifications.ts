@@ -22,7 +22,10 @@ export async function createNotification(params: {
   entityId?: string;
   /** Override the type's default targets. Use `["*"]` for an explicit broadcast. */
   targetPermissions?: string[];
+  /** BF9: name the people instead of the desks; only they see the row. */
+  targetUserIds?: string[];
 }): Promise<void> {
+  const named = params.targetUserIds?.length ? params.targetUserIds : null;
   await prisma.adminNotification.create({
     data: {
       type: params.type,
@@ -30,7 +33,8 @@ export async function createNotification(params: {
       message: params.message,
       link: params.link ?? null,
       entityId: params.entityId ?? null,
-      targetPermissions: params.targetPermissions ?? targetsForAdminNotificationType(params.type),
+      targetPermissions: named ? [] : (params.targetPermissions ?? targetsForAdminNotificationType(params.type)),
+      targetUserIds: named ?? [],
     },
   });
 }

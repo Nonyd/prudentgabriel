@@ -12,13 +12,14 @@ import { getInitials } from "@/lib/utils";
 import { BirthdayField } from "@/components/common/BirthdayField";
 
 type Props = {
-  initial: { name: string; email: string; image: string };
+  initial: { name: string; email: string; image: string; displayName: string };
   canChangeEmail?: boolean;
 };
 
 export function AdminAccountSettingsClient({ initial, canChangeEmail = false }: Props) {
   const { update } = useSession();
   const [name, setName] = useState(initial.name);
+  const [displayName, setDisplayName] = useState(initial.displayName);
   const [email, setEmail] = useState(initial.email);
   const [savedEmail, setSavedEmail] = useState(initial.email);
   const [emailPassword, setEmailPassword] = useState("");
@@ -51,6 +52,7 @@ export function AdminAccountSettingsClient({ initial, canChangeEmail = false }: 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
+          displayName: displayName.trim(),
           ...(changingEmail
             ? { email: nextEmail, currentPassword: emailPassword }
             : {}),
@@ -182,6 +184,21 @@ export function AdminAccountSettingsClient({ initial, canChangeEmail = false }: 
             onChange={(e) => setName(e.target.value)}
             required
           />
+        </label>
+        <label className="block">
+          <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">
+            Name shown in chat
+          </span>
+          <input
+            className="input-field w-full"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            maxLength={40}
+            placeholder={name.trim().split(/\s+/)[0] || "Your first name"}
+          />
+          <span className="mt-1 block font-sans text-xs text-text-mid">
+            Visitors see &ldquo;{displayName.trim() || name.trim().split(/\s+/)[0] || "You"} has joined&rdquo;. Leave empty to use your first name; your surname is never shown.
+          </span>
         </label>
         <label className="block">
           <span className="mb-2 block font-sans text-11px font-medium uppercase tracking-[0.12em] text-text-mid">

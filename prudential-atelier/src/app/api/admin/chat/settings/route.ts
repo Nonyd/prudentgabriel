@@ -2,16 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { SettingGroup, SettingType } from "@prisma/client";
 import { z } from "zod";
 import { requireGeneralAdminApi } from "@/lib/admin-auth";
+import { getAdminImpersonation } from "@/lib/admin-impersonate";
 import { prisma } from "@/lib/prisma";
 import { clearSettingCacheKey, getSetting } from "@/lib/settings";
 import {
+  CHAT_CLAIM_IDLE_MIN_KEY,
+  CHAT_CLOSED_DATES_KEY,
+  CHAT_EDIT_WINDOW_KEY,
   CHAT_ENABLED_KEY,
+  CHAT_GIVEUP_MIN_KEY,
+  CHAT_GREETING_DELAY_KEY,
   CHAT_HOURS_KEY,
+  CHAT_NOTIFY_BELL_KEY,
+  CHAT_NOTIFY_EMAIL_KEY,
+  CHAT_RENOTIFY_MIN_KEY,
   CHAT_RETENTION_DAYS_KEY,
   CHAT_RETENTION_KEEP,
+  CHAT_SCHEDULE_KEY,
+  getChatAvailability,
   getChatRetention,
+  getChatStaffing,
   type ChatRetention,
 } from "@/lib/chat";
+import { isRealDate, scheduleError } from "@/lib/chat-hours";
+import { chatRecipientCandidates } from "@/lib/chat-notify";
 
 async function put(key: string, value: string, label: string, type: SettingType, updatedBy: string) {
   await prisma.siteSetting.upsert({
@@ -26,15 +40,43 @@ function retentionView(r: ChatRetention) {
   return r.kind === "days" ? { mode: "days" as const, days: r.days } : { mode: r.kind };
 }
 
-export async function GET() {
-  const gate = await requireGeneralAdminApi();
-  if (!gate.ok) return gate.response;
-  return NextResponse.json({
+async function view(isSuperAdmin: boolean) {
+  const s = await getChatStaffing();
+  const a = await getChatAvailability(new Date(), s);
+  return {
     enabled: (await getSetting(CHAT_ENABLED_KEY)) === "true",
     retention: retentionView(await getChatRetention()),
     hoursText: (await getSetting(CHAT_HOURS_KEY)) ?? "",
-  });
+    // BF2: null schedule = closed (fails closed); the admin shows that plainly.
+    schedule: s.schedule,
+    closedDates: s.closedDates,
+    live: a.live,
+    opensLabel: a.opensLabel,
+    greetingDelaySec: s.greetingDelaySec,
+    editWindowSec: s.editWindowSec,
+    renotifyMin: s.renotifyMin,
+    giveUpMin: s.giveUpMin,
+    claimIdleMin: s.claimIdleMin,
+    recipients: { email: s.notifyEmailUserIds, bell: s.notifyBellUserIds },
+    candidates: await chatRecipientCandidates(),
+    canChooseRecipients: isSuperAdmin,
+  };
 }
+
+/** Real SUPER_ADMIN (not viewing as someone): only she names who is told (BF9). */
+async function realSuperAdmin(session: { user: { role?: string | null; email?: string | null } }) {
+  if (session.user.role !== "SUPER_ADMIN") return false;
+  return !(await getAdminImpersonation(session.user.role, session.user.email));
+}
+
+export async function GET() {
+  const gate = await requireGeneralAdminApi();
+  if (!gate.ok) return gate.response;
+  return NextResponse.json(await view(await realSuperAdmin(gate.session)));
+}
+
+const dayHours = z.union([z.null(), z.object({ open: z.string(), close: z.string() })]);
+const userIdList = z.array(z.string().regex(/^[a-z0-9]{10,40}$/i)).max(50);
 
 const patchSchema = z.object({
   enabled: z.boolean().optional(),
@@ -44,12 +86,32 @@ const patchSchema = z.object({
    */
   retention: z.union([z.literal(CHAT_RETENTION_KEEP), z.number().int().min(1).max(3650), z.null()]).optional(),
   hoursText: z.string().max(400).optional(),
+  /** BF2: the weekly schedule (Lagos time), or null to clear it (= closed). */
+  schedule: z
+    .union([
+      z.null(),
+      z.object({ sun: dayHours, mon: dayHours, tue: dayHours, wed: dayHours, thu: dayHours, fri: dayHours, sat: dayHours }),
+    ])
+    .optional(),
+  closedDates: z.array(z.string()).max(400).optional(),
+  /** BF3: seconds, or null to switch the greeting off. */
+  greetingDelaySec: z.union([z.number().int().min(0).max(600), z.null()]).optional(),
+  editWindowSec: z.number().int().min(0).max(600).optional(),
+  renotifyMin: z.number().int().min(1).max(240).optional(),
+  giveUpMin: z.number().int().min(2).max(480).optional(),
+  claimIdleMin: z.number().int().min(1).max(240).optional(),
+  /** BF9: people, by user id — for email and for the bell. */
+  recipients: z.object({ email: userIdList.optional(), bell: userIdList.optional() }).optional(),
 });
 
 /**
  * BA5: chat cannot be switched on until the house has made a retention
  * decision. "Keep indefinitely" is such a decision and is recorded as one; an
  * untouched field is not (409).
+ *
+ * BF9: recipients are chosen by SUPER_ADMIN only, from the people who can open
+ * chat; an empty list refuses to save (400) — chats arriving with nobody told
+ * is the failure the setting exists to prevent.
  */
 export async function PATCH(req: NextRequest) {
   const gate = await requireGeneralAdminApi();
@@ -58,13 +120,48 @@ export async function PATCH(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   const d = parsed.data;
   const by = gate.session.user.email ?? gate.session.user.id ?? "admin";
+  const superAdmin = await realSuperAdmin(gate.session);
 
-  const current = await getChatRetention();
+  // ── Validate everything before writing anything ──
+  if (d.schedule) {
+    const err = scheduleError(d.schedule);
+    if (err) return NextResponse.json({ error: err }, { status: 400 });
+  }
+  const badDate = d.closedDates?.find((x) => !isRealDate(x));
+  if (badDate) return NextResponse.json({ error: `Not a date: ${badDate} (use YYYY-MM-DD)` }, { status: 400 });
+  const current = await getChatStaffing();
+  if ((d.renotifyMin ?? current.renotifyMin) >= (d.giveUpMin ?? current.giveUpMin)) {
+    return NextResponse.json(
+      { error: "Telling her nobody is free must come after telling the recipients again." },
+      { status: 400 },
+    );
+  }
+  if (d.recipients) {
+    if (!superAdmin) {
+      return NextResponse.json({ error: "Only the Super Admin chooses who is told about chats." }, { status: 403 });
+    }
+    const candidates = new Set((await chatRecipientCandidates()).map((c) => c.id));
+    for (const [channel, ids] of Object.entries(d.recipients) as ["email" | "bell", string[] | undefined][]) {
+      if (ids === undefined) continue;
+      if (ids.length === 0) {
+        return NextResponse.json(
+          { error: `Choose at least one person to be told by ${channel === "email" ? "email" : "the bell"}. Chats must never arrive with nobody told.` },
+          { status: 400 },
+        );
+      }
+      const stranger = ids.find((id) => !candidates.has(id));
+      if (stranger) {
+        return NextResponse.json({ error: "Recipients must be people who can open chat (an active admin)." }, { status: 400 });
+      }
+    }
+  }
+
+  const currentRetention = await getChatRetention();
   const nextRaw =
     d.retention === undefined
-      ? current.kind === "days"
-        ? String(current.days)
-        : current.kind === "keep"
+      ? currentRetention.kind === "days"
+        ? String(currentRetention.days)
+        : currentRetention.kind === "keep"
           ? CHAT_RETENTION_KEEP
           : ""
       : d.retention === null
@@ -85,12 +182,36 @@ export async function PATCH(req: NextRequest) {
   if (d.hoursText !== undefined) {
     await put(CHAT_HOURS_KEY, d.hoursText.trim(), "Chat: who answers and when (shown to visitors)", SettingType.TEXT, by);
   }
+  if (d.schedule !== undefined) {
+    await put(CHAT_SCHEDULE_KEY, d.schedule ? JSON.stringify(d.schedule) : "", "Chat: weekly hours (Lagos time)", SettingType.TEXT, by);
+  }
+  if (d.closedDates !== undefined) {
+    const dates = Array.from(new Set(d.closedDates)).sort();
+    await put(CHAT_CLOSED_DATES_KEY, JSON.stringify(dates), "Chat: dates the house is closed", SettingType.TEXT, by);
+  }
+  if (d.greetingDelaySec !== undefined) {
+    await put(CHAT_GREETING_DELAY_KEY, d.greetingDelaySec === null ? "off" : String(d.greetingDelaySec), "Chat: greeting delay (seconds, or off)", SettingType.TEXT, by);
+  }
+  if (d.editWindowSec !== undefined) {
+    await put(CHAT_EDIT_WINDOW_KEY, String(d.editWindowSec), "Chat: seconds a message may be edited", SettingType.NUMBER, by);
+  }
+  if (d.renotifyMin !== undefined) {
+    await put(CHAT_RENOTIFY_MIN_KEY, String(d.renotifyMin), "Chat: minutes unanswered before recipients are told again", SettingType.NUMBER, by);
+  }
+  if (d.giveUpMin !== undefined) {
+    await put(CHAT_GIVEUP_MIN_KEY, String(d.giveUpMin), "Chat: minutes unanswered before she is told nobody is free", SettingType.NUMBER, by);
+  }
+  if (d.claimIdleMin !== undefined) {
+    await put(CHAT_CLAIM_IDLE_MIN_KEY, String(d.claimIdleMin), "Chat: minutes idle before a claimed chat returns to the pool", SettingType.NUMBER, by);
+  }
+  if (d.recipients?.email) {
+    await put(CHAT_NOTIFY_EMAIL_KEY, JSON.stringify(d.recipients.email), "Chat: who is emailed (user ids)", SettingType.TEXT, by);
+  }
+  if (d.recipients?.bell) {
+    await put(CHAT_NOTIFY_BELL_KEY, JSON.stringify(d.recipients.bell), "Chat: who gets the bell (user ids)", SettingType.TEXT, by);
+  }
   // Clearing the decision switches chat off with it.
   await put(CHAT_ENABLED_KEY, enabled && decided ? "true" : "false", "Chat enabled", SettingType.BOOLEAN, by);
 
-  return NextResponse.json({
-    enabled: enabled && decided,
-    retention: retentionView(await getChatRetention()),
-    hoursText: (await getSetting(CHAT_HOURS_KEY)) ?? "",
-  });
+  return NextResponse.json(await view(superAdmin));
 }

@@ -16,7 +16,7 @@ export async function GET() {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { role, actor } = await resolveSessionAccess(gate.session);
 
-  const where = adminNotificationVisibleWhere(role, actor);
+  const where = adminNotificationVisibleWhere(role, actor, userId);
 
   const unreadWhere = adminNotificationUnreadWhere(userId, role, actor);
   const [notifications, unreadCount, unreadByType] = await Promise.all([

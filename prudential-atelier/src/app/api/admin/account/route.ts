@@ -8,6 +8,8 @@ import { emptyableStoredPublicMediaUrlSchema } from "@/lib/media/stored-url";
 
 const patchSchema = z.object({
   name: z.string().min(1).max(120).optional(),
+  /** BF5: what visitors see in chat. Empty means the first name. */
+  displayName: z.string().trim().max(40).optional(),
   image: emptyableStoredPublicMediaUrlSchema,
   email: z.string().email().optional(),
   currentPassword: z.string().min(1).optional(),
@@ -29,7 +31,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { name, image, email, currentPassword } = parsed.data;
+  const { name, displayName, image, email, currentPassword } = parsed.data;
   const nextEmail = email?.trim().toLowerCase();
   const changingEmail = Boolean(nextEmail && nextEmail !== gate.session.user.email?.toLowerCase());
 
@@ -58,6 +60,7 @@ export async function PATCH(req: NextRequest) {
       where: { id: gate.session.user.id! },
       data: {
         ...(name !== undefined ? { name: name.trim() } : {}),
+        ...(displayName !== undefined ? { displayName: displayName || null } : {}),
         ...(image !== undefined ? { image: image || null } : {}),
         ...(changingEmail && nextEmail ? { email: nextEmail } : {}),
       },

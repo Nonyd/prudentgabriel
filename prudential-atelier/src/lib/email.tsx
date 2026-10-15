@@ -1139,6 +1139,27 @@ export async function sendAdminNotificationEmail(
   });
 }
 
+/** BF9: the same admin notification, to one named member of the house. */
+export async function sendStaffNotificationEmail(params: {
+  to: string;
+  subject: string;
+  htmlInner: string;
+  idempotencyKey: string;
+  relatedType?: string;
+  relatedId?: string;
+}): Promise<void> {
+  await primeEmailBranding();
+  await sendEmail({
+    to: params.to,
+    subject: params.subject,
+    html: wrapHtml("Admin", params.htmlInner),
+    template: "admin-notification",
+    idempotencyKey: params.idempotencyKey,
+    relatedType: params.relatedType,
+    relatedId: params.relatedId,
+  });
+}
+
 /** The house's answer to a change request on a quotation. */
 export async function sendQuoteChangeReplyEmail(params: {
   to: string;
