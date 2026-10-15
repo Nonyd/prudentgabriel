@@ -4,8 +4,9 @@ import { z } from "zod";
 import { requireSuperAdminApi } from "@/lib/admin-auth";
 import { INVITE_ROLES, MANAGED_STAFF_ROLES, parseOptionalPhone } from "@/lib/admin-users";
 import { logActivity } from "@/lib/logger";
-import { forceSignOutUser } from "@/lib/password-reset";
 import { prisma } from "@/lib/prisma";
+import { changeUserEmail } from "@/lib/admin-email-change";
+import { getClientIp } from "@/lib/rate-limit";
 import { isProtectedAccount } from "@/lib/roles";
 
 const PROTECTED_MSG = "This account is protected and cannot be modified.";
@@ -130,14 +131,15 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const nextEmail = parsed.data.email?.trim().toLowerCase();
   const emailChanged = Boolean(nextEmail && nextEmail !== target.email.toLowerCase());
-  if (emailChanged && nextEmail) {
-    if (isProtectedAccount(nextEmail)) {
-      return NextResponse.json({ error: "That email is reserved" }, { status: 400 });
-    }
-    const taken = await prisma.user.findUnique({ where: { email: nextEmail }, select: { id: true } });
-    if (taken && taken.id !== id) {
-      return NextResponse.json({ error: "A user with this email already exists" }, { status: 409 });
-    }
+  if (emailChanged) {
+    // One rule for every screen: checks, sign-out, log and a notice to the old address.
+    const changed = await changeUserEmail({
+      targetUserId: id,
+      nextEmail,
+      actor: { id: gate.session.user.id!, email: gate.session.user.email, role: gate.session.user.role },
+      ip: getClientIp(req),
+    });
+    if (!changed.ok) return NextResponse.json({ error: changed.error }, { status: changed.status });
   }
 
   const updated = await prisma.user.update({
@@ -146,16 +148,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       ...(parsed.data.name !== undefined ? { name: parsed.data.name.trim() } : {}),
       ...(parsed.data.role !== undefined ? { role: parsed.data.role as Role } : {}),
       ...(parsed.data.isActive !== undefined ? { isActive: parsed.data.isActive } : {}),
-      // A new address is unproven until its owner confirms it.
-      ...(emailChanged && nextEmail ? { email: nextEmail, emailVerified: null } : {}),
       ...(nextPhone !== undefined ? { phone: nextPhone } : {}),
     },
     select: USER_SELECT,
   });
-
-  if (emailChanged) {
-    await forceSignOutUser(id);
-  }
 
   await logActivity({
     userId: gate.session.user.id,

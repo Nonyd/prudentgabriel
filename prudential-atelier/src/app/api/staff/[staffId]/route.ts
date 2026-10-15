@@ -3,7 +3,8 @@ import { EmploymentType, StaffDepartment } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi, requireSuperAdminApi } from "@/lib/admin-auth";
 import { isProtectedAccount } from "@/lib/roles";
-import { forceSignOutUser } from "@/lib/password-reset";
+import { changeUserEmail } from "@/lib/admin-email-change";
+import { getClientIp } from "@/lib/rate-limit";
 import { logActivity, logError } from "@/lib/logger";
 
 type Params = { params: Promise<{ staffId: string }> };
@@ -72,26 +73,19 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    // The login email is the account: changing it hands over the account, so it
-    // is Super Admin work, never on a protected or non-staff account.
-    const userUpdate: { name?: string; email?: string; emailVerified?: null; phone?: string | null } = {};
+    const userUpdate: { name?: string; phone?: string | null } = {};
     if (typeof body.name === "string") userUpdate.name = body.name.trim();
+    // The login email is the account: the shared rule makes it Super Admin work,
+    // signs her out, logs it and tells the old address.
     const nextEmail = typeof body.email === "string" ? body.email.trim().toLowerCase() : null;
     if (nextEmail && nextEmail !== existing.user.email.toLowerCase()) {
-      const superGate = await requireSuperAdminApi();
-      if (!superGate.ok) {
-        return NextResponse.json({ error: "Only a Super Admin can change a staff login email." }, { status: 403 });
-      }
-      if (existing.user.role !== "STAFF" || isProtectedAccount(existing.user.email) || isProtectedAccount(nextEmail)) {
-        return NextResponse.json({ error: "This account's email can only be changed from Team settings." }, { status: 403 });
-      }
-      const email = nextEmail;
-      const dup = await prisma.user.findFirst({
-        where: { email, NOT: { id: existing.userId } },
+      const changed = await changeUserEmail({
+        targetUserId: existing.userId,
+        nextEmail,
+        actor: { id: gate.session.user.id!, email: gate.session.user.email, role: gate.session.user.role },
+        ip: getClientIp(req),
       });
-      if (dup) return NextResponse.json({ error: "Email already in use" }, { status: 409 });
-      userUpdate.email = email;
-      userUpdate.emailVerified = null;
+      if (!changed.ok) return NextResponse.json({ error: changed.error }, { status: changed.status });
     }
     if (typeof body.phone === "string") userUpdate.phone = body.phone.trim() || null;
 
@@ -113,7 +107,6 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
     if (typeof body.isActive === "boolean") staffUpdate.isActive = body.isActive;
 
-    const emailChanged = userUpdate.email !== undefined;
     const item = await prisma.$transaction(async (tx) => {
       if (Object.keys(userUpdate).length > 0) {
         await tx.user.update({ where: { id: existing.userId }, data: userUpdate });
@@ -126,9 +119,6 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         },
       });
     });
-
-    // Anyone signed in as the old address is signed out.
-    if (emailChanged) await forceSignOutUser(existing.userId);
 
     await logActivity({
       userId: gate.session.user.id,

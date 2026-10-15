@@ -11,6 +11,7 @@ import { commissionTitle, occasionPhrase } from "@/lib/atelier/commission-list";
 import { materialView, splitSpecification } from "@/lib/atelier/commission-materials";
 import { commissionMeasurements } from "@/lib/atelier/commission-measurements";
 import { commissionCost } from "@/lib/atelier/commission-cost";
+import { isProtectedAccount } from "@/lib/roles";
 import { NOTE_SECTION_LABELS, isNoteSection, type NoteSection } from "@/lib/atelier/commission-notes-shared";
 
 /**
@@ -691,6 +692,9 @@ export async function composeClientFile(
       scope: access.scope,
       contactHidden: !access.contact,
       canViewAs: canViewAsClient(access, viewer.role),
+      // Super Admin only (decided 16 October 2026); the owner accounts change in server config.
+      canChangeEmail: viewer.role === "SUPER_ADMIN" && access.contact && !isProtectedAccount(client.user.email),
+      accountUserId: viewer.role === "SUPER_ADMIN" && access.contact ? client.userId : null,
       commissions: commissions.map((c) => ({
         id: c.id,
         orderRef: c.orderRef,

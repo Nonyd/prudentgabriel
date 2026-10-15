@@ -168,6 +168,8 @@ type ClientFile = {
   contactHidden: boolean;
   /** Decided on the server by canPreviewClientDashboard, the same check as the preview page. */
   canViewAs: boolean;
+  canChangeEmail?: boolean;
+  accountUserId?: string | null;
   commissions: { id: string; orderRef: string; title: string; currentStageLabel: string | null; status: string; createdAt: string }[];
   sections: {
     consultation: Section<Consultation>;
@@ -218,6 +220,71 @@ function date(value: string | null | undefined) {
   return value ? formatDate(value, "d MMM yyyy") : "—";
 }
 
+/** Super Admin only: change the client's sign-in email (signs her out, tells the old address). */
+function ChangeClientEmail({ userId, currentEmail, onDone }: { userId: string; currentEmail: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState(currentEmail);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function save() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { error?: string; changed?: boolean };
+      if (!res.ok) throw new Error(j.error ?? "Could not change the email");
+      toast.success(j.changed ? "Email changed. She has been signed out and told at her old address." : "No change");
+      setOpen(false);
+      onDone();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not change the email");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="mt-1 font-sans text-xs text-olive underline underline-offset-2">
+        Change sign-in email
+      </button>
+    );
+  }
+  return (
+    <div className="mt-2 max-w-md border border-sand bg-bg-surface p-3">
+      <label className="block font-sans text-11px uppercase tracking-[0.08em] text-text-mid" htmlFor="client-new-email">
+        New sign-in email
+      </label>
+      <input
+        id="client-new-email"
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        aria-invalid={error ? true : undefined}
+        aria-describedby="client-new-email-note"
+        className="mt-1 w-full border border-input-border bg-input-bg px-3 py-2 font-sans text-sm text-ink"
+      />
+      <p id="client-new-email-note" className="mt-1 font-sans text-xs text-text-mid">
+        She is signed out everywhere, must confirm the new address, and her old address is told about the change.
+      </p>
+      {error ? <p className="mt-1 font-sans text-xs text-error">{error}</p> : null}
+      <div className="mt-2 flex gap-3">
+        <button type="button" disabled={busy} onClick={() => void save()} className="bg-choc px-3 py-1.5 font-sans text-xs text-cream disabled:opacity-50">
+          {busy ? "Saving…" : "Change email"}
+        </button>
+        <button type="button" disabled={busy} onClick={() => setOpen(false)} className="px-2 font-sans text-xs underline">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function ClientFileClient({ clientId, portal = "admin" }: { clientId: string; portal?: "admin" | "staff" }) {
   const [file, setFile] = useState<ClientFile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -255,6 +322,9 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
             {[file.client.email, file.client.phone].filter(Boolean).join(" · ")}
           </p>
         )}
+        {portal === "admin" && file.canChangeEmail && file.accountUserId && file.client.email ? (
+          <ChangeClientEmail userId={file.accountUserId} currentEmail={file.client.email} onDone={() => void load()} />
+        ) : null}
         {/* BD6: one header, every job she has commissioned, each its own file. */}
         <div className="mt-3 space-y-2">
           {file.commissions.length === 0 ? (
