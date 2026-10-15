@@ -449,7 +449,7 @@ export function ProductDetailClient({
             <div id="product-sizes">
               <div className="mb-3 mt-1 flex min-w-0 items-baseline justify-between gap-3">
                 <p className="shrink-0 font-body text-sm font-normal text-charcoal">Size</p>
-                <SizeGuideModal offeredSizes={standardSizes.map((v) => v.size)}>
+                <SizeGuideModal offeredSizes={standardSizes.map((v) => v.size)} selectedSize={variantId ? variant?.size : null}>
                   <button
                     type="button"
                     className="inline-flex min-h-[44px] shrink-0 items-center whitespace-nowrap font-body text-sm text-choc underline underline-offset-4"
@@ -579,7 +579,7 @@ export function ProductDetailClient({
                 </Accordion.Trigger>
               </Accordion.Header>
               <Accordion.Content className="space-y-3 pb-4 text-sm text-charcoal-mid">
-                <SizeGuideModal offeredSizes={standardSizes.map((v) => v.size)}>
+                <SizeGuideModal offeredSizes={standardSizes.map((v) => v.size)} selectedSize={variantId ? variant?.size : null}>
                   <button type="button" className="font-body text-sm font-normal text-choc underline">
                     Size guide
                   </button>
