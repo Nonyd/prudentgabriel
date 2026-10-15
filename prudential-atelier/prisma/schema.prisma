@@ -60,6 +60,11 @@ model User {
   birthdayWishedYear Int?
   /// Set on password reset / change so JWTs issued earlier (`iat`) are rejected.
   passwordChangedAt DateTime?
+  /// Marketing email is opt-in only (NDPA 2023 / GDPR). Null = she has not opted in.
+  /// Set when she ticks the box (register, account, newsletter); cleared when she opts out.
+  marketingConsentAt     DateTime?
+  /// Where the consent was given: 'register' | 'account' | 'newsletter'.
+  marketingConsentSource String?
 
   jobRoleId  String?
   jobRole    JobRole? @relation("UserJobRole", fields: [jobRoleId], references: [id])
@@ -706,6 +711,9 @@ model NewsletterSubscriber {
   id             String    @id @default(cuid())
   email          String    @unique
   unsubscribedAt DateTime?
+  /// When the address was added with consent, and where ('newsletter' | 'register' | 'account').
+  consentAt      DateTime?
+  consentSource  String?
   createdAt      DateTime  @default(now())
 }
 

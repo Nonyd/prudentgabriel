@@ -18,6 +18,8 @@ const registerFieldsSchema = z.object({
   acceptTerms: z.boolean().refine((v) => v === true, {
     message: "You must accept the terms and conditions",
   }),
+  /** Optional, unticked by default: marketing email is opt-in only (NDPA / GDPR). */
+  marketingOptIn: z.boolean().optional(),
 });
 
 export const registerSchema = registerFieldsSchema.refine(

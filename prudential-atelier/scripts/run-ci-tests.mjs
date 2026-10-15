@@ -30,6 +30,7 @@ const TESTS = [
   "test-product-visibility",
   "test-signin-errors",
   "test-cron-registry",
+  "test-data-protection",
   "test-slice-ab",
   "test-slice-ad",
   "test-slice-ad2",

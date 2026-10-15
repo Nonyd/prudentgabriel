@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ensureEmailPreference, normalizeEmail } from "@/lib/email-consent";
 import { awardNewsletterPoints } from "@/lib/points";
@@ -29,12 +30,32 @@ export async function POST(req: NextRequest) {
       select: { unsubscribedAt: true },
     });
     if (existing?.unsubscribedAt) return NextResponse.json({ success: true });
+    const now = new Date();
     if (!existing) {
-      await prisma.newsletterSubscriber.upsert({ where: { email }, create: { email }, update: {} });
+      // The sign-up itself is the opt-in: record when and where.
+      await prisma.newsletterSubscriber.upsert({
+        where: { email },
+        create: { email, consentAt: now, consentSource: "newsletter" },
+        update: {},
+      });
     }
     await ensureEmailPreference(email);
-    const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
-    if (user) await awardNewsletterPoints(user.id);
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, marketingConsentAt: true },
+    });
+    if (user) {
+      await awardNewsletterPoints(user.id);
+      // Consent is written on the account only when the account holder herself
+      // signed up (anyone can type any address into the footer form).
+      const session = await auth().catch(() => null);
+      if (session?.user?.id === user.id && !session.user.viewAs && !user.marketingConsentAt) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { marketingConsentAt: now, marketingConsentSource: "newsletter" },
+        });
+      }
+    }
   } catch {
     return NextResponse.json({ success: true });
   }

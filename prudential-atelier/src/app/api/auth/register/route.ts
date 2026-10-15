@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { firstName, lastName, email, phone, password, referralCode } = parsed.data;
+  const { firstName, lastName, email, phone, password, referralCode, marketingOptIn } = parsed.data;
   const emailNorm = email.toLowerCase();
 
   const ip = getClientIp(request);
@@ -87,6 +87,10 @@ export async function POST(request: Request) {
         phone,
         password: hashedPassword,
         referredById: referrerId,
+        // Marketing is opt-in only: recorded only when she ticked the box.
+        ...(marketingOptIn === true
+          ? { marketingConsentAt: new Date(), marketingConsentSource: "register" }
+          : {}),
       },
     });
 

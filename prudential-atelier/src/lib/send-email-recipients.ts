@@ -7,6 +7,7 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { normalizeEmail, suppressedEmailSet } from "@/lib/email-consent";
+import { consentedEmailSet, isConsentGatedSource, keepConsented } from "@/lib/marketing-consent";
 
 export type SendEmailSource =
   | "newsletter"
@@ -25,6 +26,8 @@ export type SendEmailRecipientType = SendEmailSource;
 export type RecipientPreview = {
   count: number;
   suppressed: number;
+  /** Addresses on a promotional list that have not opted in to marketing (left out). */
+  notOptedIn: number;
   sample: { id: string; name: string; email: string }[];
 };
 
@@ -171,14 +174,30 @@ export async function resolveCampaignRecipients(params: {
   collectionId?: string;
   specificUserId?: string;
   customEmail?: string;
-}): Promise<{ emails: string[]; namesByEmail: Record<string, string>; suppressed: number }> {
-  const names = await collectFromSources(params);
+}): Promise<{ emails: string[]; namesByEmail: Record<string, string>; suppressed: number; notOptedIn: number }> {
+  // Marketing is opt-in only: promotional lists keep the addresses that opted in;
+  // service lists (her active order, her consultation, one named client) do not ask.
+  const gated = params.sources.filter((s) => isConsentGatedSource(s));
+  const service = params.sources.filter((s) => !isConsentGatedSource(s));
+  const names = new Map<string, string>();
+  let notOptedIn = 0;
+  if (gated.length) {
+    const fromGated = await collectFromSources({ ...params, sources: gated });
+    const all = Array.from(fromGated.keys());
+    const kept = new Set(keepConsented(all, await consentedEmailSet(all)));
+    for (const [e, n] of fromGated) if (kept.has(e)) names.set(e, n);
+    notOptedIn = all.length - kept.size;
+  }
+  if (service.length) {
+    const fromService = await collectFromSources({ ...params, sources: service });
+    for (const [e, n] of fromService) if (!names.has(e)) names.set(e, n);
+  }
   const raw = Array.from(names.keys());
   const blocked = await suppressedEmailSet(raw);
   const emails = raw.filter((e) => !blocked.has(e));
   const namesByEmail: Record<string, string> = {};
   for (const e of emails) namesByEmail[e] = names.get(e) ?? e;
-  return { emails, namesByEmail, suppressed: blocked.size };
+  return { emails, namesByEmail, suppressed: blocked.size, notOptedIn };
 }
 
 export async function resolveRecipientEmails(params: {
@@ -200,7 +219,7 @@ export async function previewRecipients(
   sources: SendEmailSource[],
   opts?: { specificUserId?: string; customEmail?: string; collectionId?: string },
 ): Promise<RecipientPreview> {
-  const { emails, namesByEmail, suppressed } = await resolveCampaignRecipients({
+  const { emails, namesByEmail, suppressed, notOptedIn } = await resolveCampaignRecipients({
     sources,
     specificUserId: opts?.specificUserId,
     customEmail: opts?.customEmail,
@@ -213,5 +232,5 @@ export async function previewRecipients(
     email,
   }));
 
-  return { count: emails.length, suppressed, sample };
+  return { count: emails.length, suppressed, notOptedIn, sample };
 }

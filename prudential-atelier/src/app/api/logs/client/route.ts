@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { redactErrorUrl, redactTokensInText } from "@/lib/report-client-error";
 
 export async function POST(req: NextRequest) {
   // Silent drop over the limit: the client fires and forgets, a 429 helps no one.
@@ -15,11 +16,13 @@ export async function POST(req: NextRequest) {
   }
 
   const rec = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
-  const message = typeof rec.message === "string" && rec.message.trim() ? rec.message.trim().slice(0, 2000) : "";
+  const message =
+    typeof rec.message === "string" && rec.message.trim() ? redactTokensInText(rec.message.trim().slice(0, 2000)) : "";
   if (!message) return NextResponse.json({ ok: true });
 
-  const stack = typeof rec.stack === "string" ? rec.stack.slice(0, 8000) : undefined;
-  const url = typeof rec.url === "string" ? rec.url.slice(0, 2000) : undefined;
+  // Defence in depth: an old or hostile client may still send a token URL.
+  const stack = typeof rec.stack === "string" ? redactTokensInText(rec.stack.slice(0, 8000)) : undefined;
+  const url = typeof rec.url === "string" ? redactErrorUrl(rec.url.slice(0, 2000)) || undefined : undefined;
   const digest = typeof rec.digest === "string" ? rec.digest.slice(0, 200) : undefined;
 
   await logError({

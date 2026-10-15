@@ -42,6 +42,7 @@ export function AdminSendEmailClient({
   const [sources, setSources] = useState<Set<SourceId>>(new Set<SourceId>(["newsletter"]));
   const [recipientCount, setRecipientCount] = useState(0);
   const [suppressed, setSuppressed] = useState(0);
+  const [notOptedIn, setNotOptedIn] = useState(0);
   const [clientQuery, setClientQuery] = useState("");
   const [clientResults, setClientResults] = useState<ClientResult[]>([]);
   const [selectedClient, setSelectedClient] = useState<ClientResult | null>(null);
@@ -75,6 +76,7 @@ export function AdminSendEmailClient({
     if (sources.size === 0) {
       setRecipientCount(0);
       setSuppressed(0);
+      setNotOptedIn(0);
       return;
     }
     if (sources.has("specific") && !selectedClient) {
@@ -93,9 +95,10 @@ export function AdminSendEmailClient({
     }
     const res = await fetch(`/api/admin/send-email/recipients?${params}`);
     if (!res.ok) return;
-    const j = (await res.json()) as { count: number; suppressed?: number };
+    const j = (await res.json()) as { count: number; suppressed?: number; notOptedIn?: number };
     setRecipientCount(j.count);
     setSuppressed(j.suppressed ?? 0);
+    setNotOptedIn(j.notOptedIn ?? 0);
   }, [sources, selectedClient, customEmail, collectionId, isCollectionTpl]);
 
   useEffect(() => {
@@ -250,7 +253,8 @@ export function AdminSendEmailClient({
         <div>
           <p className="font-label text-xs uppercase tracking-widest text-gold">To</p>
           <p className="mt-1 font-body text-12px text-text-mid">
-            Combine lists — duplicates and unsubscribed or bounced addresses are removed.
+            Combine lists — duplicates and unsubscribed or bounced addresses are removed. Marketing goes
+            only to clients who opted in.
           </p>
           <div className="mt-3 space-y-2">
             {SOURCE_OPTIONS.map((opt) => (
@@ -268,6 +272,9 @@ export function AdminSendEmailClient({
             Send to <strong>{recipientCount}</strong> recipients
             {suppressed > 0 ? (
               <span className="text-text-mid"> ({suppressed} suppressed)</span>
+            ) : null}
+            {notOptedIn > 0 ? (
+              <span className="text-text-mid"> ({notOptedIn} not opted in)</span>
             ) : null}
           </p>
         </div>

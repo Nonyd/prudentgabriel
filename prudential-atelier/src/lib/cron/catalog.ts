@@ -191,6 +191,13 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
     description: "Delete careers/consultation uploads older than 48h that no row in the database references (Slice AZ5)",
     migrated: true,
   },
+  {
+    name: "data-retention",
+    schedule: "0 4 * * *",
+    description:
+      "NDPA/GDPR retention: delete declined enquiries, rejected applications, old contact messages, error logs, abandoned checkouts, stored emails, routine activity and read notifications past their periods",
+    migrated: true,
+  },
 ];
 
 export function cronPath(name: string): string {

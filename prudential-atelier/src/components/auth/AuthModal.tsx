@@ -18,6 +18,7 @@ import { PasswordField } from "@/components/ui/PasswordField";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useGoogleAuthEnabled } from "@/hooks/useGoogleAuthEnabled";
 import { signInErrorMessage } from "@/lib/signin-errors";
+import { MARKETING_CONSENT_LABEL } from "@/lib/marketing-consent-copy";
 import {
   NETWORK_ERROR_MESSAGE,
   authResponseMessage,
@@ -327,7 +328,7 @@ function RegisterForm() {
     setError,
   } = useForm<RegisterModalInput>({
     resolver: zodResolver(registerModalSchema),
-    defaultValues: { acceptTerms: false, referralCode: "" },
+    defaultValues: { acceptTerms: false, marketingOptIn: false, referralCode: "" },
   });
 
   const onSubmit = async (data: RegisterModalInput) => {
@@ -343,6 +344,7 @@ function RegisterForm() {
       confirmPassword: data.confirmPassword,
       referralCode: data.referralCode,
       acceptTerms: data.acceptTerms,
+      marketingOptIn: data.marketingOptIn === true,
     };
 
     let res: Response;
@@ -494,6 +496,14 @@ function RegisterForm() {
         {errors.acceptTerms ? (
           <p className="font-sans text-xs text-danger">{errors.acceptTerms.message}</p>
         ) : null}
+
+        <label
+          className="flex items-start gap-2"
+          style={{ fontFamily: "var(--font-ui)", fontSize: "11px", color: "var(--text-mid)" }}
+        >
+          <input type="checkbox" className="mt-0.5" {...register("marketingOptIn")} />
+          <span>{MARKETING_CONSENT_LABEL}</span>
+        </label>
 
         <button
           type="submit"
