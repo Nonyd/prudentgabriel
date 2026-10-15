@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { hasAnalyticsConsent } from "@/lib/cookie-consent";
 
 /** Visit-scoped only. Not a cookie. Dies with the tab. */
 export const ATTRIBUTION_STORAGE_KEY = "pa-visit-attribution";
@@ -121,8 +122,13 @@ export function captureAttribution(input: {
   return { attribution, freshLanding: true };
 }
 
+/** Without analytics consent nothing is read, and anything still held is dropped. */
 export function readHeldAttribution(): VisitAttribution | null {
   if (typeof window === "undefined") return null;
+  if (!hasAnalyticsConsent()) {
+    clearHeldAttribution();
+    return null;
+  }
   try {
     const raw = sessionStorage.getItem(ATTRIBUTION_STORAGE_KEY);
     if (!raw) return null;
@@ -132,8 +138,19 @@ export function readHeldAttribution(): VisitAttribution | null {
   }
 }
 
+export function clearHeldAttribution(): void {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(ATTRIBUTION_STORAGE_KEY);
+  } catch {
+    /* private mode */
+  }
+}
+
+/** Written only after "Accept all" (cookie banner 3.0). */
 export function holdAttribution(value: VisitAttribution): void {
   if (typeof window === "undefined") return;
+  if (!hasAnalyticsConsent()) return;
   try {
     sessionStorage.setItem(ATTRIBUTION_STORAGE_KEY, JSON.stringify(value));
   } catch {

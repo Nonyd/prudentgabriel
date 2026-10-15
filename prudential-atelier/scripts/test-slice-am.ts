@@ -211,9 +211,11 @@ function run() {
     CUSTOM_RETURNS_COPY.includes("cannot be returned for a change of mind"),
     "site returns copy states why made-to-measure is not returnable",
   );
-  const legal = readFileSync(resolve("src/lib/legal-copy.ts"), "utf8");
-  assert(legal.includes("{{house_term_refunds}}"), "returns policy markdown uses the CMS refunds term");
-  assert(legal.includes("{{post_delivery_fault_hours}} hours of delivery"), "fault window (setting, default 48h) remains the house-failure path");
+  // ND-1: the returns policy text lives in src/lib/legal/returns-shipping-md.ts.
+  const legal = readFileSync(resolve("src/lib/legal/returns-shipping-md.ts"), "utf8");
+  const returnsMd = legal.slice(legal.indexOf("export const RETURNS_MD"), legal.indexOf("export const SHIPPING_MD"));
+  assert(returnsMd.includes("{{house_term_refunds}}"), "returns policy markdown uses the CMS refunds term");
+  assert(returnsMd.includes("{{post_delivery_fault_hours}} hours of delivery"), "fault window (setting, default 48h) remains the house-failure path");
 
   const formSrc = readFileSync(resolve("src/components/admin/QuotationFormClient.tsx"), "utf8");
   assert(formSrc.includes("depositPercent"), "admin sets the percentage on the quotation");

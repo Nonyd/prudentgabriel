@@ -57,6 +57,10 @@ export const COMMERCIAL_PAYMENTS_KEYS = new Set<string>([
   "alteration_warranty_days",
   "fabric_promise_hours",
   "post_delivery_fault_hours",
+  "return_window_days",
+  "legal_company_name",
+  "legal_company_rc",
+  "privacy_contact_email",
   "exchange_rate_usd",
   "exchange_rate_gbp",
 ]);

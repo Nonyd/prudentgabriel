@@ -3,7 +3,7 @@
  *
  *   pnpm test:legal-figures
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { RETURNS_MD, TERMS_MD, legalMdToHtml } from "../src/lib/legal-copy";
 import { renderLegalHtml } from "../src/lib/legal-tokens";
@@ -15,9 +15,25 @@ function assert(cond: unknown, message: string): asserts cond {
 
 function main() {
   const root = path.join(__dirname, "..");
-  const copy = readFileSync(path.join(root, "src/lib/legal-copy.ts"), "utf8");
-  assert(!/\b48[ -]hours?\b/i.test(copy), "no hardcoded 48-hour figure left in the legal copy");
+  // ND-1: the policy texts moved to src/lib/legal/*.ts; legal-copy.ts re-exports them.
+  const legalDir = path.join(root, "src/lib/legal");
+  const copy = [
+    readFileSync(path.join(root, "src/lib/legal-copy.ts"), "utf8"),
+    ...readdirSync(legalDir)
+      .filter((f) => f.endsWith(".ts"))
+      .map((f) => readFileSync(path.join(legalDir, f), "utf8")),
+  ].join("\n");
+  // The one fixed 48 hours the copy may name is the consultation cancellation cut-off,
+  // which the cancel route hard-codes; it must stay in step with that route.
+  const consultationCutoff = /\b48 hours before\b/gi;
+  if (consultationCutoff.test(copy)) {
+    const cancelRoute = readFileSync(path.join(root, "src/app/api/account/consultations/[id]/route.ts"), "utf8");
+    assert(cancelRoute.includes("48 * 60 * 60 * 1000"), "consultation cancellation cut-off in the terms matches the cancel route");
+  }
+  assert(!/\b48[ -]hours?\b/i.test(copy.replace(consultationCutoff, "")), "no hardcoded 48-hour figure left in the legal copy");
   assert(copy.includes("{{post_delivery_fault_hours}}"), "delivery-fault window is a token");
+  assert(RETURNS_MD.includes("{{post_delivery_fault_hours}} hours of delivery"), "returns policy states the fault window from the token");
+  assert(TERMS_MD.includes("{{post_delivery_fault_hours}}"), "terms state the fault window from the token");
   for (const t of ["fabric_promise_hours", "post_delivery_fault_hours"]) {
     assert((LEGAL_TOKEN_NAMES as readonly string[]).includes(t), `${t} is a known legal token`);
   }

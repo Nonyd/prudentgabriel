@@ -35,6 +35,10 @@ export const LEGAL_TOKEN_NAMES = [
   "cookie_consent_version",
   "cookie_cart_key",
   "cookie_currency_key",
+  "company_name",
+  "company_rc",
+  "privacy_email",
+  "return_window_days",
 ] as const;
 
 export type LegalTokenName = (typeof LEGAL_TOKEN_NAMES)[number];
@@ -93,6 +97,10 @@ export const LEGAL_SIGNIFICANT_SETTING_KEYS = new Set<string>([
   "bespoke_deposit_percent",
   "chat_retention_days",
   "chat_retention_keep",
+  "return_window_days",
+  "legal_company_name",
+  "legal_company_rc",
+  "privacy_contact_email",
 ]);
 
 export const LEGAL_PUBLIC_PATHS = [

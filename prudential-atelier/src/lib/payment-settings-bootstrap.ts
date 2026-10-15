@@ -28,6 +28,11 @@ const PAYMENT_SETTING_DEFS: {
   { key: "alteration_warranty_days", value: "30", label: "Alteration warranty (days)", type: SettingType.NUMBER, isPublic: false, sortOrder: 26 },
   { key: "fabric_promise_hours", value: "48", label: "Fabric unavailable: offer alternative or refund within (hours)", type: SettingType.NUMBER, isPublic: false, sortOrder: 27 },
   { key: "post_delivery_fault_hours", value: "48", label: "Faulty or damaged piece: report within (hours of delivery)", type: SettingType.NUMBER, isPublic: false, sortOrder: 28 },
+  // ND1: printed in the legal pages. The RC number shows only once entered.
+  { key: "return_window_days", value: "7", label: "Standard-size returns: window (days from delivery)", type: SettingType.NUMBER, isPublic: false, sortOrder: 33 },
+  { key: "legal_company_name", value: "Prudential Atelier Limited", label: "Registered company name (legal pages)", type: SettingType.TEXT, isPublic: false, sortOrder: 34 },
+  { key: "legal_company_rc", value: "", label: "CAC RC number (legal pages; blank hides it)", type: SettingType.TEXT, isPublic: false, sortOrder: 35 },
+  { key: "privacy_contact_email", value: "", label: "Data protection contact email (blank uses the invoice email)", type: SettingType.TEXT, isPublic: false, sortOrder: 36 },
   // BA3: consultation fees (₦), one per type. A booking freezes its fee; changing these never alters one made.
   { key: "consultation_fee_physical_prudent", value: "250000", label: "Consultation fee (₦): physical, with Mrs. Prudent", type: SettingType.NUMBER, isPublic: false, sortOrder: 20 },
   { key: "consultation_fee_physical_team", value: "200000", label: "Consultation fee (₦): physical, with the creative team", type: SettingType.NUMBER, isPublic: false, sortOrder: 21 },

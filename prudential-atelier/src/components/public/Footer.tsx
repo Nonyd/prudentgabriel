@@ -10,6 +10,7 @@ import { usePublicSettings, getSettingFromPublic } from "@/hooks/usePublicSettin
 import { cmsGet, cmsJson } from "@/lib/cms-helpers";
 import { instagramHandleToUrl } from "@/lib/sub-brand";
 import { filterStorefrontLinks } from "@/lib/atelier-storefront";
+import { COOKIE_SETTINGS_LABEL, openCookieSettings } from "@/lib/cookie-consent";
 
 type LinkItem = { label: string; url: string };
 
@@ -32,6 +33,7 @@ const DEFAULT_SHOP_LINKS: LinkItem[] = [
 
 const DEFAULT_CLIENT_LINKS: LinkItem[] = [
   { label: "Size guide", url: "/size-guide" },
+  { label: "FAQs", url: "/faqs" },
   { label: "Shipping and returns", url: "/returns-policy" },
   { label: "Book a consultation", url: "/consultation" },
   { label: "Contact", url: "/contact" },
@@ -154,7 +156,11 @@ export function Footer({
 
   const houseLinks = mapCmsLinks(cmsJson<LinkItem[]>(cms, "footer_house_links", DEFAULT_HOUSE_LINKS));
   const shopLinks = mapCmsLinks(cmsJson<LinkItem[]>(cms, "footer_shop_links", DEFAULT_SHOP_LINKS));
-  const clientLinks = mapCmsLinks(cmsJson<LinkItem[]>(cms, "footer_client_links", DEFAULT_CLIENT_LINKS));
+  const clientLinksBase = mapCmsLinks(cmsJson<LinkItem[]>(cms, "footer_client_links", DEFAULT_CLIENT_LINKS));
+  // The FAQs page stays one tap away even when a saved CMS list predates it.
+  const clientLinks = clientLinksBase.some((l) => l.href === "/faqs")
+    ? clientLinksBase
+    : [...clientLinksBase, { href: "/faqs", label: "FAQs", external: false }];
 
   const copyright = cmsGet(
     cms,
@@ -271,6 +277,11 @@ export function Footer({
                   </Link>
                 </span>
               ))}
+              {" · "}
+              {/* Reopens the cookie banner so a visitor can change or withdraw consent at any time. */}
+              <button type="button" onClick={openCookieSettings} className="transition-colors hover:text-choc">
+                {COOKIE_SETTINGS_LABEL}
+              </button>
             </p>
 
             <p

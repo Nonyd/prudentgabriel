@@ -1,10 +1,12 @@
 import { FacebookIcon, InstagramIcon, TikTokIcon } from "@/components/icons/SocialIcons";
 import { ContactForm } from "@/components/contact/ContactForm";
+import { ContactMap } from "@/components/contact/ContactMap";
 import { cmsGet, getCMSContent } from "@/lib/cms";
 import {
   HOUSE_ADDRESS_LINE_1,
   HOUSE_ADDRESS_LINE_2,
   HOUSE_MAPS_EMBED,
+  HOUSE_MAPS_LINK,
   resolveHouseAddressLine1,
   resolveHouseAddressLine2,
   resolveHouseMapsEmbed,
@@ -235,15 +237,7 @@ export default async function ContactPage(
       </div>
 
       <div className="mx-auto max-w-site px-6 pb-20 lg:px-10">
-        <iframe
-          title="Lagos Atelier location"
-          src={resolveHouseMapsEmbed(HOUSE_MAPS_EMBED)}
-          width="100%"
-          height={400}
-          loading="lazy"
-          className="rounded-lg border-0"
-          style={{ border: 0 }}
-        />
+        <ContactMap embedSrc={resolveHouseMapsEmbed(HOUSE_MAPS_EMBED)} mapsLink={HOUSE_MAPS_LINK} />
       </div>
     </div>
   );

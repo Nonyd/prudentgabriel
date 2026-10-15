@@ -54,6 +54,36 @@ function joinAddress(parts: Array<string | undefined>): string {
     .join("\n");
 }
 
+/** The registered company and the data-protection contact the policies name. */
+export const LEGAL_COMPANY_SETTING_KEYS = {
+  name: "legal_company_name",
+  rc: "legal_company_rc",
+  privacyEmail: "privacy_contact_email",
+  returnWindowDays: "return_window_days",
+} as const;
+
+export const DEFAULT_COMPANY_NAME = "Prudential Atelier Limited";
+export const DEFAULT_RETURN_WINDOW_DAYS = 7;
+
+async function companyTokens(contactEmail: string): Promise<
+  Pick<LegalTokenMap, "company_name" | "company_rc" | "privacy_email" | "return_window_days">
+> {
+  const [name, rc, privacy, windowRaw] = await Promise.all([
+    getSetting(LEGAL_COMPANY_SETTING_KEYS.name),
+    getSetting(LEGAL_COMPANY_SETTING_KEYS.rc),
+    getSetting(LEGAL_COMPANY_SETTING_KEYS.privacyEmail),
+    getSetting(LEGAL_COMPANY_SETTING_KEYS.returnWindowDays),
+  ]);
+  const days = Number(windowRaw);
+  return {
+    company_name: name?.trim() || DEFAULT_COMPANY_NAME,
+    // Printed only once the house enters it: never a placeholder number.
+    company_rc: rc?.trim().replace(/^RC\s*/i, "") || "",
+    privacy_email: privacy?.trim() || contactEmail,
+    return_window_days: String(Number.isFinite(days) && days > 0 ? Math.round(days) : DEFAULT_RETURN_WINDOW_DAYS),
+  };
+}
+
 export async function resolveLegalTokens(): Promise<LegalTokenMap> {
   const empty = Object.fromEntries(LEGAL_TOKEN_NAMES.map((k) => [k, ""])) as LegalTokenMap;
 
@@ -168,6 +198,7 @@ export async function resolveLegalTokens(): Promise<LegalTokenMap> {
     cookie_consent_version: CURRENT_CONSENT_VERSION,
     cookie_cart_key: ESSENTIAL_CART_STORAGE_KEY,
     cookie_currency_key: ESSENTIAL_CURRENCY_STORAGE_KEY,
+    ...(await companyTokens(invoice.email.trim())),
   };
 
   return tokens;

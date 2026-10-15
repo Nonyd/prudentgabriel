@@ -15,6 +15,7 @@ import {
 } from "@prisma/client";
 import { ProductCategory } from "../src/lib/shop-category-slug";
 import { COOKIE_BANNER_NOTICE } from "../src/lib/cookie-consent";
+import { COOKIE_MD } from "../src/lib/legal-copy";
 import {
   ATTRIBUTION_STORAGE_KEY,
   captureAttribution,
@@ -42,16 +43,30 @@ const stamp = `at-${Date.now()}`;
 const sept = new Date("2026-09-14T10:00:00+01:00");
 
 function runPure() {
+  // ND-1 (consent 3.0): essential storage always; anonymous counting and visit tags only with consent.
+  for (const [phrase, what] of [
+    ["keep you signed in", "sign-in"],
+    ["hold your bag", "the bag"],
+    ["remember your currency", "currency"],
+    ["if you start a chat, keep that conversation open", "chat"],
+    ["With your permission we also count visits anonymously", "anonymous counting only with permission"],
+    ["note which link brought you here", "visit tags"],
+    ["No advertising trackers.", "no advertising trackers"],
+  ] as const) {
+    assert(COOKIE_BANNER_NOTICE.includes(phrase), `cookie banner names exactly what is stored: ${what}`);
+  }
+  const cookieMd = COOKIE_MD;
   assert(
-    COOKIE_BANNER_NOTICE ===
-      "This site uses cookies to keep you signed in, hold your bag, remember your currency and, if you start a chat, keep that conversation open. Nothing else.",
-    "cookie banner names exactly what is stored (BA5 added chat)",
+    cookieMd.includes("**Essential only**") && cookieMd.includes("**Accept all**") && cookieMd.includes("## Analytics (only with your consent)"),
+    "cookie policy offers the analytics choice and says analytics runs only with consent",
   );
-  const cookieMd = src("src/lib/legal-copy.ts");
-  assert(cookieMd.includes("There is no Reject Non-Essential"), "cookie policy still has no analytics toggle");
-  assert(cookieMd.includes("does not load Google Analytics, Meta Pixel"), "cookie policy still names no third-party trackers");
-  assert(cookieMd.includes("sessionStorage"), "cookie policy names sessionStorage for visit tags");
+  assert(/If you choose \*\*Essential only\*\*, none of this happens/.test(cookieMd), "cookie policy says refusing stops analytics");
+  assert(cookieMd.includes("no Google Analytics, no Meta Pixel"), "cookie policy still names no third-party trackers");
+  assert(cookieMd.includes("session storage (**pa-visit-attribution**)"), "cookie policy names session storage for visit tags");
   assert(cookieMd.includes("pa-visit-attribution"), "cookie policy names the visit-tag key");
+  const beaconSrc = src("src/components/analytics/PageBeacon.tsx");
+  assert(beaconSrc.includes("hasAnalyticsConsent()"), "page counting waits for analytics consent");
+  assert(/if \(!hasAnalyticsConsent\(\)\)/.test(src("src/lib/analytics/attribution.ts")), "visit tags are held only with analytics consent");
 
   const recordSrc = src("src/lib/analytics/record.ts");
   assert(!/visitorId|clientId|anonymousId|distinct_id|hashedIp|salt/i.test(recordSrc), "record layer has no visitor id");

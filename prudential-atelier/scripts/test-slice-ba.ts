@@ -182,14 +182,31 @@ function unit() {
   assert(!/path|url|page/i.test(chatModel), "messages carry no page: context is the conversation's, never a trail");
   assert(/start a chat, keep that conversation open/.test(COOKIE_BANNER_NOTICE), "the banner says chat stores something");
   assert(COOKIE_MD.includes("pg_chat"), "the cookie policy lists the chat cookie");
-  assert(/## Live chat/.test(PRIVACY_POLICY_MD) && PRIVACY_POLICY_MD.includes("{{chat_retention_days}}"), "the privacy policy covers chat and its retention");
+  // ND-1: chat is covered under "Messages" (what we collect) and "**Live chat:**" (how long we keep it).
+  assert(
+    /in live chat \(your name, the email address or phone number/.test(PRIVACY_POLICY_MD) &&
+      /\*\*Live chat:\*\*[^\n]*\{\{chat_retention_days\}\}/.test(PRIVACY_POLICY_MD),
+    "the privacy policy covers chat and its retention",
+  );
   assert(/\{\{#chat_retention_keep\}\}[^{]*kept indefinitely/i.test(PRIVACY_POLICY_MD), "it says plainly when conversations are kept indefinitely");
-  assert(/To have a conversation removed, write to us/.test(PRIVACY_POLICY_MD), "and how to ask for one to be removed");
+  assert(
+    /\{\{#chat_retention_keep\}\}[^{]*until you ask us to erase it/.test(PRIVACY_POLICY_MD) &&
+      /\*\*Writing to us\.\*\* Email \[\{\{privacy_email\}\}\]/.test(PRIVACY_POLICY_MD) &&
+      /erases[^.]*\bchats\b/.test(PRIVACY_POLICY_MD),
+    "and how to ask for one to be removed",
+  );
   assert(parseChatRetention("keep").kind === "keep", "\"keep\" is a decision");
   assert(parseChatRetention("").kind === "unset" && parseChatRetention(null).kind === "unset", "an empty field is not");
   assert(parseChatRetention("90").kind === "days", "a day count is a period");
-  assert(/## Consultation enquiries/.test(PRIVACY_POLICY_MD), "and the enquiry form");
-  assert(/Contabo GmbH, in Germany/.test(PRIVACY_POLICY_MD), "and says the site and database are in Germany");
+  assert(
+    /\*\*Consultations and commissions\.\*\* Your enquiry \(/.test(PRIVACY_POLICY_MD) &&
+      /\*\*Consultation enquiries we cannot take:\*\*/.test(PRIVACY_POLICY_MD),
+    "and the enquiry form",
+  );
+  assert(
+    /Contabo GmbH,? (in )?Germany/.test(PRIVACY_POLICY_MD) && /website and database are hosted in Germany/.test(PRIVACY_POLICY_MD),
+    "and says the site and database are in Germany",
+  );
   assert(!/hosting regions can change/.test(PRIVACY_POLICY_MD), "the vague hosting line is gone");
   // CSP: chat is same-origin — no third-party script, socket or frame to allow.
   const widget = readFileSync(resolve(__dirname, "../src/components/chat/ChatWidget.tsx"), "utf8");
