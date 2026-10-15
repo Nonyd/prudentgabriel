@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 import { requireAdminPortalApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { emptyableStoredPublicMediaUrlSchema } from "@/lib/media/stored-url";
+import { changeUserEmail } from "@/lib/admin-email-change";
+import { getClientIp } from "@/lib/rate-limit";
 
 const patchSchema = z.object({
   name: z.string().min(1).max(120).optional(),
@@ -55,6 +57,18 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
+  if (changingEmail) {
+    // Same rule as every other email change: free address, logged, old address told.
+    const changed = await changeUserEmail({
+      targetUserId: gate.session.user.id!,
+      nextEmail,
+      actor: { id: gate.session.user.id!, email: gate.session.user.email, role: gate.session.user.role },
+      ip: getClientIp(req),
+      selfConfirmed: true,
+    });
+    if (!changed.ok) return NextResponse.json({ error: changed.error }, { status: changed.status });
+  }
+
   try {
     const updated = await prisma.user.update({
       where: { id: gate.session.user.id! },
@@ -62,7 +76,6 @@ export async function PATCH(req: NextRequest) {
         ...(name !== undefined ? { name: name.trim() } : {}),
         ...(displayName !== undefined ? { displayName: displayName || null } : {}),
         ...(image !== undefined ? { image: image || null } : {}),
-        ...(changingEmail && nextEmail ? { email: nextEmail } : {}),
       },
       select: { name: true, email: true, image: true },
     });

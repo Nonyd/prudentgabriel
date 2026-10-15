@@ -251,6 +251,7 @@ function EditUserModal({
   const [role, setRole] = useState<Role>("ADMIN");
   const [isActive, setIsActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const { data: session } = useSession();
 
   useEffect(() => {
     if (!user) return;
@@ -302,7 +303,22 @@ function EditUserModal({
 
   return (
     <Modal open={open} onClose={onClose} title="Edit User" className="max-w-lg">
-      {user.isProtected ? (
+      {session?.user?.id === user.id ? (
+        // Your own account changes in Account settings, where a new email needs your password.
+        <div className="mt-4 rounded-md border border-sand bg-bg/40 p-4">
+          <p className="font-sans text-sm font-medium text-text-dark">This is your own account</p>
+          <p className="mt-1 font-sans text-xs text-text-mid">
+            Change your name, photo and sign-in email in Account settings. A new email needs your current password, and
+            your old address is told about the change.
+          </p>
+          <a
+            href="/admin/account-settings"
+            className="mt-3 inline-block bg-choc px-4 py-2 font-sans text-xs uppercase tracking-[0.12em] text-cream"
+          >
+            Open Account settings
+          </a>
+        </div>
+      ) : user.isProtected ? (
         <div className="mt-4 flex items-start gap-3 rounded-md border border-sand bg-bg/40 p-4">
           <Lock className="mt-0.5 h-4 w-4 shrink-0 text-text-mid" strokeWidth={1.5} />
           <div>
@@ -390,7 +406,7 @@ function EditUserModal({
         <Button type="button" variant="ghost-light" onClick={onClose}>
           {user.isProtected ? "Close" : "Cancel"}
         </Button>
-        {!user.isProtected ? (
+        {!user.isProtected && session?.user?.id !== user.id ? (
           <Button type="button" loading={submitting} onClick={() => void submit()}>
             Save Changes
           </Button>

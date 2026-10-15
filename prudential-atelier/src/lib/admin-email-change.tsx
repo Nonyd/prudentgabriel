@@ -46,6 +46,8 @@ export async function changeUserEmail(params: {
   nextEmail: unknown;
   actor: EmailChangeActor;
   ip?: string;
+  /** Her own address, after she re-entered her password (Account settings). */
+  selfConfirmed?: boolean;
 }): Promise<EmailChangeResult> {
   if (params.actor.role !== "SUPER_ADMIN") {
     return { ok: false, status: 403, error: "Only a Super Admin can change a sign-in email." };
@@ -62,8 +64,9 @@ export async function changeUserEmail(params: {
   const oldEmail = target.email.trim().toLowerCase();
   if (newEmail === oldEmail) return { ok: true, changed: false, oldEmail, newEmail };
 
-  if (target.id === params.actor.id) {
-    return { ok: false, status: 400, error: "Change your own email from your account settings." };
+  const self = target.id === params.actor.id;
+  if (self && !params.selfConfirmed) {
+    return { ok: false, status: 400, error: "Change your own email from Account settings, with your password." };
   }
   // The owner accounts are named in the server's configuration; they change there.
   if (isProtectedAccount(target.email)) {
@@ -92,7 +95,9 @@ export async function changeUserEmail(params: {
     throw e;
   }
 
-  await forceSignOutUser(target.id);
+  // Someone else's change signs her out everywhere. Her own change (password just
+  // confirmed) keeps her signed in on this device.
+  if (!self) await forceSignOutUser(target.id);
 
   await logActivity({
     userId: params.actor.id,
@@ -100,7 +105,7 @@ export async function changeUserEmail(params: {
     userRole: params.actor.role ?? undefined,
     action: "UPDATE",
     module: "users",
-    description: `Changed sign-in email ${oldEmail} → ${newEmail}`,
+    description: `${self ? "Changed own sign-in email" : "Changed sign-in email"} ${oldEmail} → ${newEmail}`,
     recordId: target.id,
     recordType: "User",
     ipAddress: params.ip,
