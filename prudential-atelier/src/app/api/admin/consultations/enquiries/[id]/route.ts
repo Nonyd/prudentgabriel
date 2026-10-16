@@ -173,7 +173,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     select: { id: true, enquiryNumber: true, status: true, eventType: true, bookingId: true, moodboardImages: true },
   });
   if (!enquiry) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (enquiry.bookingId || enquiry.status === ConsultationEnquiryStatus.BOOKED) {
+  // Linked to a booking that still exists: it stays with that client's record.
+  // Once the booking itself is deleted (the link is cleared), a BOOKED enquiry can go.
+  const liveBooking = enquiry.bookingId
+    ? await prisma.consultationBooking.findUnique({ where: { id: enquiry.bookingId }, select: { id: true } })
+    : null;
+  if (liveBooking) {
     return NextResponse.json(
       { error: "This enquiry became a booking, so it stays with that client's record. Cancel the booking instead." },
       { status: 409 },
