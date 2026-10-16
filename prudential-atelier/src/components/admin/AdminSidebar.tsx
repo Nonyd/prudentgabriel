@@ -138,6 +138,8 @@ export function AdminSidebar({
   onNavigate,
   badges = {},
   accessRole,
+  accessEmail,
+  viewer = null,
   permissionGrants = [],
   permissionRevokes = [],
   rolePermissions,
@@ -147,6 +149,8 @@ export function AdminSidebar({
   onNavigate?: () => void;
   badges?: Record<string, number>;
   accessRole?: string;
+  accessEmail?: string | null;
+  viewer?: { name: string; role: string } | null;
   permissionGrants?: readonly string[];
   permissionRevokes?: readonly string[];
   rolePermissions?: readonly string[] | "*";
@@ -157,11 +161,13 @@ export function AdminSidebar({
   const searchParams = useSearchParams();
   const { data: liveSession } = useSession();
   const user = liveSession?.user ?? session.user;
-  const displayName = user?.name ?? user?.email ?? "Admin";
-  const avatarUrl = user?.image;
-  const realRole = user?.role ?? session.user?.role ?? "ADMIN";
+  // While viewing as someone, the card and the menu are theirs.
+  const displayName = viewer?.name ?? user?.name ?? user?.email ?? "Admin";
+  const avatarUrl = viewer ? null : user?.image;
+  const realRole = viewer?.role ?? user?.role ?? session.user?.role ?? "ADMIN";
   const role = accessRole ?? realRole;
-  const email = previewRole ? null : (user?.email ?? session.user?.email ?? null);
+  const email =
+    accessEmail !== undefined ? accessEmail : previewRole ? null : (user?.email ?? session.user?.email ?? null);
 
   const search = searchParams.toString();
   const [hash, setHash] = useState("");

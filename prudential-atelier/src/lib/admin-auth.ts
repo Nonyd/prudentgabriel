@@ -46,9 +46,17 @@ export function sessionAccessActor(
   };
 }
 
+/**
+ * Who the admin screens are for. While the Super Admin views as someone, this
+ * is that person: their id, name and email, so "assigned to me", "my alerts",
+ * the greeting and the account card are theirs, not hers.
+ */
+export type EffectiveAdminUser = { id: string; name: string; email: string | null };
+
 export async function resolveSessionAccess(session: Session): Promise<{
   role: string;
   actor: AccessActor;
+  user: EffectiveAdminUser;
   previewRole: string | null;
   impersonation: ImpersonationPayload | null;
 }> {
@@ -58,6 +66,8 @@ export async function resolveSessionAccess(session: Session): Promise<{
     const target = await prisma.user.findUnique({
       where: { id: impersonation.targetId },
       select: {
+        id: true,
+        name: true,
         email: true,
         role: true,
         isActive: true,
@@ -78,6 +88,7 @@ export async function resolveSessionAccess(session: Session): Promise<{
           revokes,
           ...cachedRoleActorPatch(target.role),
         },
+        user: { id: target.id, name: target.name?.trim() || target.email, email: target.email },
         previewRole: null,
         impersonation,
       };
@@ -86,7 +97,12 @@ export async function resolveSessionAccess(session: Session): Promise<{
 
   const previewRole = await getAdminPreviewRole(session.user?.role, session.user?.email);
   const { role, actor } = sessionAccessActor(session, previewRole);
-  return { role, actor, previewRole, impersonation: null };
+  const user: EffectiveAdminUser = {
+    id: session.user?.id ?? "",
+    name: session.user?.name?.trim() || session.user?.email || "",
+    email: session.user?.email ?? null,
+  };
+  return { role, actor, user, previewRole, impersonation: null };
 }
 
 type Gate = { ok: true; session: Session } | { ok: false; response: NextResponse };

@@ -51,10 +51,10 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
   // AZ8 (closing the BC leftover): measurements are for managers and whoever cuts her
   // gown, not everyone who holds the consultations desk.
   const session = await auth();
-  const viewerRole = session?.user ? (await resolveSessionAccess(session)).role : null;
+  const viewer = session?.user ? await resolveSessionAccess(session) : null;
   const mayMeasure =
-    clientProfile && session?.user
-      ? await canSeeClientMeasurements({ id: session.user.id, role: viewerRole, email: session.user.email }, clientProfile.id)
+    clientProfile && viewer
+      ? await canSeeClientMeasurements({ id: viewer.user.id, role: viewer.role, email: viewer.user.email }, clientProfile.id)
       : false;
 
   const payload = {

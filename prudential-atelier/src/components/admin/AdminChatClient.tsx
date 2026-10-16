@@ -151,7 +151,8 @@ function Files({ files }: { files: Attachment[] }) {
 export function AdminChatClient({ openId }: { openId: string | null }) {
   const { data: session } = useSession();
   const me = session?.user?.id ?? null;
-  const isSuperAdmin = session?.user?.role === "SUPER_ADMIN";
+  // The real Super Admin, not while she views as someone (the server says which).
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [status, setStatus] = useState<"OPEN" | "CLOSED">("OPEN");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -203,7 +204,10 @@ export function AdminChatClient({ openId }: { openId: string | null }) {
   useEffect(() => {
     void fetch("/api/admin/chat/settings")
       .then((r) => r.json())
-      .then((j: { editWindowSec?: number }) => j.editWindowSec !== undefined && setEditWindowSec(j.editWindowSec))
+      .then((j: { editWindowSec?: number; canChooseRecipients?: boolean }) => {
+        if (j.editWindowSec !== undefined) setEditWindowSec(j.editWindowSec);
+        setIsSuperAdmin(j.canChooseRecipients === true);
+      })
       .catch(() => {});
   }, []);
 

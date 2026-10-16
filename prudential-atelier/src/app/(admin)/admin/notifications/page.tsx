@@ -15,8 +15,8 @@ const PAGE_SIZE = 20;
 export default async function AdminNotificationsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  const { role, actor } = await resolveSessionAccess(session);
-  const userId = session.user.id;
+  const { role, actor, user } = await resolveSessionAccess(session);
+  const userId = user.id;
 
   const [notifications, unreadCount] = await Promise.all([
     prisma.adminNotification.findMany({

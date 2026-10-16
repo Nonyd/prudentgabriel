@@ -1,13 +1,15 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { isGeneralAdminRole } from "@/lib/admin-auth";
+import { isGeneralAdminRole, resolveSessionAccess } from "@/lib/admin-auth";
 import { AdminEmailTemplatesClient } from "@/components/admin/content/AdminEmailTemplatesClient";
 import { getAllEmailTemplates } from "@/lib/admin-email-template-store";
 import Link from "next/link";
 
 export default async function AdminEmailTemplatesPage() {
   const session = await auth();
-  if (!session?.user || !isGeneralAdminRole(session.user.role)) {
+  // The viewed-as role while the Super Admin views as someone, so she sees what they see.
+  const access = session?.user ? await resolveSessionAccess(session) : null;
+  if (!session?.user || !access || !isGeneralAdminRole(access.role)) {
     redirect("/admin");
   }
 
@@ -20,7 +22,7 @@ export default async function AdminEmailTemplatesPage() {
         Ready-to-wear, made-to-order stage mail, consultations, and account copy. Saving a template changes what
         customers actually receive.
       </p>
-      {session.user.role === "SUPER_ADMIN" ? (
+      {access.role === "SUPER_ADMIN" ? (
         <Link
           href="/admin/content/email-templates/founder-note"
           className="mt-4 block border border-sand bg-bg-surface px-4 py-3 font-body text-sm text-ink hover:border-choc"

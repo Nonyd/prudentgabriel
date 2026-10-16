@@ -12,13 +12,14 @@ export default async function AdminAccountSettingsPage() {
   if (!session?.user?.id) {
     redirect("/login?tab=admin");
   }
-  const { role, actor } = await resolveSessionAccess(session);
+  // While viewing as someone, their account (read-only: saving is refused).
+  const { role, actor, user: viewer } = await resolveSessionAccess(session);
   if (!hasAnyAdminPermission(role, actor)) {
     redirect("/login?tab=admin");
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: viewer.id },
     select: { name: true, email: true, image: true, displayName: true },
   });
   if (!user) redirect("/login?tab=admin");
@@ -31,7 +32,7 @@ export default async function AdminAccountSettingsPage() {
         image: user.image ?? "",
         displayName: user.displayName ?? "",
       }}
-      canChangeEmail={session.user.role === "SUPER_ADMIN"}
+      canChangeEmail={role === "SUPER_ADMIN"}
     />
   );
 }

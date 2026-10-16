@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BespokeStage, ConsultationStatus, EmploymentType, PaymentStatus } from "@prisma/client";
 import { CalendarDays, Coins, CreditCard, Scissors, TrendingUp } from "lucide-react";
 import { auth } from "@/auth";
+import { resolveSessionAccess } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { ExecutiveKPICard } from "@/components/admin/ExecutiveKPICard";
 import { ExecutiveRevenueChart, type RevenueChartPoint } from "@/components/admin/ExecutiveRevenueChart";
@@ -213,7 +214,9 @@ export default async function AdminDashboardPage() {
   const consultDelta = consultationsThisWeek - consultationsLastWeek;
   const chartTotal = revenueChart.reduce((a, d) => a + d.bespoke + d.rtw + d.consultations, 0);
   const greeting = greetingForHour(now.getHours());
-  const displayName = greetingDisplayName(session?.user?.name, session?.user?.email);
+  // While the Super Admin views as someone, greet that person.
+  const viewer = session?.user ? (await resolveSessionAccess(session)).user : null;
+  const displayName = greetingDisplayName(viewer?.name ?? session?.user?.name, viewer?.email ?? session?.user?.email);
   const dateLabel = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
 
   return (

@@ -379,6 +379,41 @@ async function main() {
   assert(kemiNav.some((s) => s.id === "atelier"), "Kemi nav shows Atelier after grant");
   assert(kemiNav.some((s) => s.id === "consultations"), "Kemi nav shows Consultations after grant");
   assert(!kemiNav.some((s) => s.id === "payments"), "Kemi nav hides Payments");
+  // View as: the screen is built for the viewed-as person's email, never the Super Admin's.
+  // SUPER_ADMIN_EMAIL alone counts as Super Admin, so passing her email would open everything.
+  {
+    const saved = process.env.SUPER_ADMIN_EMAIL;
+    process.env.SUPER_ADMIN_EMAIL = "owner@example.test";
+    assert(
+      roleMayAccessAdminPath("RTW_MANAGER", "/admin/payments", "owner@example.test", kemi),
+      "(the trap) the owner's email opens payments whatever the role",
+    );
+    assert(!roleMayAccessAdminPath("RTW_MANAGER", "/admin/payments", KEMI_EMAIL, kemi), "viewing as Kemi: payments stay closed");
+    assert(!roleMayAccessAdminPath("RTW_MANAGER", "/admin/payments", null, kemi), "previewing a role: payments stay closed");
+    const navAsKemi = visibleAdminNavSections("RTW_MANAGER", KEMI_EMAIL, { ...kemi, email: KEMI_EMAIL });
+    assert(!navAsKemi.some((s) => s.id === "payments"), "viewing as Kemi: the menu is Kemi's");
+    if (saved === undefined) delete process.env.SUPER_ADMIN_EMAIL;
+    else process.env.SUPER_ADMIN_EMAIL = saved;
+    const layoutSrc = readFileSync(join(process.cwd(), "src/app/(admin)/layout.tsx"), "utf8");
+    assert(!layoutSrc.includes("actor.email ?? session.user.email"), "layout never falls back to the real email");
+    const sidebarSrc = readFileSync(join(process.cwd(), "src/components/admin/AdminSidebar.tsx"), "utf8");
+    assert(sidebarSrc.includes("accessEmail !== undefined ? accessEmail"), "sidebar builds the menu for the viewed-as email");
+  }
+  // Live chat is a permission: Admins hold it by role; anyone else by a grant.
+  assert(!roleMayAccessAdminPath("RTW_MANAGER", "/admin/chat", KEMI_EMAIL, kemi), "Kemi has no chat until granted");
+  const kemiChat = { grants: ["bespoke", "consultations", "chat"] as const };
+  assert(roleMayAccessAdminPath("RTW_MANAGER", "/admin/chat", KEMI_EMAIL, kemiChat), "Kemi opens chat once granted");
+  assert(
+    visibleAdminNavSections("RTW_MANAGER", KEMI_EMAIL, kemiChat).some((s) => s.items.some((i) => i.href === "/admin/chat")),
+    "Kemi nav shows Chat once granted",
+  );
+  assert(roleMayAccessAdminPath("ADMIN", "/admin/chat"), "Admins keep chat by role");
+  assert(roleMayAccessAdminPath("SUPER_ADMIN", "/admin/chat"), "Super Admin keeps chat");
+  assert(!roleMayAccessAdminPath("CONTENT_MANAGER", "/admin/chat"), "content desk has no chat without a grant");
+  assert(
+    !roleMayAccessAdminPath("ADMIN", "/admin/chat", null, { revokes: ["chat"] }),
+    "an Admin can have chat revoked",
+  );
   assert(!kemiNav.some((s) => s.id === "settings"), "Kemi nav hides Settings");
   const kemiHidden = ADMIN_NAV_SECTIONS.flatMap((s) => s.items).filter(
     (item) =>

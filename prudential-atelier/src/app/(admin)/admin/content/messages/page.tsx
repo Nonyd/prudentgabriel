@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { isGeneralAdminRole } from "@/lib/admin-auth";
+import { isGeneralAdminRole, resolveSessionAccess } from "@/lib/admin-auth";
 import { AdminMessagesClient } from "@/components/admin/content/AdminMessagesClient";
 
 export default async function AdminMessagesPage() {
   const session = await auth();
-  if (!session?.user || !isGeneralAdminRole(session.user.role)) {
+  // The viewed-as role while the Super Admin views as someone, so she sees what they see.
+  const access = session?.user ? await resolveSessionAccess(session) : null;
+  if (!session?.user || !access || !isGeneralAdminRole(access.role)) {
     redirect("/admin");
   }
 

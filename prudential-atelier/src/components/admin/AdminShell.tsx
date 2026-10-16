@@ -19,6 +19,10 @@ type AdminShellProps = {
   previewRole?: string | null;
   impersonation?: ImpersonationPayload | null;
   accessRole?: string;
+  /** The email the menu is built for: the viewed-as person's, or null when previewing a role. */
+  accessEmail?: string | null;
+  /** While viewing as someone: who the account card shows. */
+  viewer?: { name: string; role: string } | null;
   permissionGrants?: readonly string[];
   permissionRevokes?: readonly string[];
   rolePermissions?: AccessActor["rolePermissions"];
@@ -32,6 +36,8 @@ export function AdminShell({
   previewRole = null,
   impersonation = null,
   accessRole,
+  accessEmail,
+  viewer = null,
   permissionGrants = [],
   permissionRevokes = [],
   rolePermissions,
@@ -66,6 +72,8 @@ export function AdminShell({
             badges={badges}
             onNavigate={() => setMobileNav(false)}
             accessRole={navRole}
+            accessEmail={accessEmail}
+            viewer={viewer}
             permissionGrants={permissionGrants}
             permissionRevokes={permissionRevokes}
             rolePermissions={rolePermissions}

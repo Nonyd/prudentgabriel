@@ -25,13 +25,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/login?tab=admin");
   }
 
-  const { role, actor, previewRole, impersonation } = await resolveSessionAccess(session);
+  const { role, actor, user, previewRole, impersonation } = await resolveSessionAccess(session);
   if (!hasAnyAdminPermission(role, actor) && !previewRole) {
     redirect("/login?tab=admin");
   }
 
   const pathname = (await headers()).get("x-pathname") ?? "/admin";
-  const denied = deniedAdminRedirect(role, pathname, actor.email ?? session.user.email, actor);
+  // actor.email is the viewed-as person's (or null when previewing a role). Never fall back to
+  // the real email: SUPER_ADMIN_EMAIL alone counts as Super Admin and would open every page.
+  const denied = deniedAdminRedirect(role, pathname, actor.email ?? null, actor);
   if (denied) redirect(denied);
 
   let badges: Record<string, number> = {};
@@ -81,6 +83,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       previewRole={previewRole}
       impersonation={impersonation}
       accessRole={role}
+      accessEmail={actor.email ?? null}
+      viewer={impersonation ? { name: user.name, role } : null}
       permissionGrants={actor.grants ?? []}
       permissionRevokes={actor.revokes ?? []}
       rolePermissions={actor.rolePermissions}

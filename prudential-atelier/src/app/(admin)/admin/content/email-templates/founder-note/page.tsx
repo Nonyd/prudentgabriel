@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { resolveSessionAccess } from "@/lib/admin-auth";
 import { FounderNoteEditor } from "@/components/admin/content/FounderNoteEditor";
 
 export default async function FounderNotePage() {
   const session = await auth();
-  if (session?.user?.role !== "SUPER_ADMIN") redirect("/admin/content/email-templates");
+  // Only the Super Admin herself; never while she views as someone else.
+  const access = session?.user ? await resolveSessionAccess(session) : null;
+  if (access?.role !== "SUPER_ADMIN") redirect("/admin/content/email-templates");
 
   return (
     <div>

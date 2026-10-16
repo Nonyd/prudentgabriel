@@ -28,13 +28,14 @@ export async function bespokeFacts(
   session: Session,
   opts: { orderId?: string; key?: AdminPermission } = {},
 ): Promise<{ facts: BespokeFacts; role: string }> {
-  const { role, actor } = await resolveSessionAccess(session);
+  const { role, actor, user } = await resolveSessionAccess(session);
   const email = actor.email ?? null;
+  // The person the screen is for (the viewed-as user while the Super Admin views as someone).
   const assigned =
-    opts.orderId && session.user.id
+    opts.orderId && user.id
       ? Boolean(
           await prisma.orderAssignment.findFirst({
-            where: { orderId: opts.orderId, staffProfile: { userId: session.user.id } },
+            where: { orderId: opts.orderId, staffProfile: { userId: user.id } },
             select: { id: true },
           }),
         )
