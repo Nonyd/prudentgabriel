@@ -10,7 +10,7 @@ import { isUndeliverableAlertAddress, resolveAdminAlertEmail, resolveHrAlertEmai
  * house alert, for email and for the bell separately (the BF9 chat pattern,
  * for everything else). Until she names anyone for a kind, its old routing
  * stands: the bell by permission, the email to the alert mailbox. A named
- * person who is no longer an active admin is skipped; if that leaves nobody,
+ * person who is no longer active (or is now Staff) is skipped; if that leaves nobody,
  * the old routing is used for that alert rather than telling no one.
  *
  * Staff work is not routed here: stage handovers, approvals, production
@@ -234,8 +234,10 @@ export async function readAlertRouting(): Promise<AlertRouting> {
 
 /**
  * `mailable` false: their address cannot receive mail (e.g. admin@), so email skips them.
- * `admin`: an Admin or the Super Admin, who may be named for any alert.
- * `chat`: holds Live chat (by role or a personal grant), so may be named for chat.
+ * `office`: anyone in Users & Roles except Staff (admins, managers, officers, and any
+ *   role added later), who may be named for any alert, chat included.
+ * `chat`: holds Live chat (by role or a personal grant); a Staff member with Live chat
+ *   may still be named for chat.
  */
 export type AlertCandidate = {
   id: string;
@@ -243,13 +245,13 @@ export type AlertCandidate = {
   email: string;
   role: string;
   mailable: boolean;
-  admin: boolean;
+  office: boolean;
   chat: boolean;
 };
 
 /**
- * People who may be named: active Admins and the Super Admin for every alert,
- * plus anyone else who holds Live chat (role or personal grant) for chat.
+ * People who may be named: every active portal user except Staff, for every alert,
+ * plus a Staff member who holds Live chat, for chat only.
  */
 export async function alertRecipientCandidates(): Promise<AlertCandidate[]> {
   await ensurePermissionCache();
@@ -266,7 +268,7 @@ export async function alertRecipientCandidates(): Promise<AlertCandidate[]> {
   });
   return users
     .map((u) => {
-      const admin = u.role === "ADMIN" || u.role === "SUPER_ADMIN";
+      const office = u.role !== "STAFF";
       const chat = hasPermission(u.role, "chat", {
         email: u.email,
         grants: u.userPermissions.filter((p) => p.mode === "GRANT").map((p) => p.permission),
@@ -279,16 +281,16 @@ export async function alertRecipientCandidates(): Promise<AlertCandidate[]> {
         email: u.email,
         role: u.role,
         mailable: !isUndeliverableAlertAddress(u.email),
-        admin,
+        office,
         chat,
       };
     })
-    .filter((u) => u.admin || u.chat);
+    .filter((u) => u.office || u.chat);
 }
 
 /** May this person be named for this kind of alert? */
 export function eligibleFor(kind: AlertKind, c: AlertCandidate): boolean {
-  return kind === "chat" ? c.chat : c.admin;
+  return c.office || (kind === "chat" && c.chat);
 }
 
 async function usable(kind: AlertKind, ids: string[] | null): Promise<AlertCandidate[]> {

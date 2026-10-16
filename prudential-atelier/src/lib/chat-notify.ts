@@ -1,4 +1,4 @@
-import { alertRecipientCandidates } from "@/lib/admin-alerts";
+import { alertRecipientCandidates, eligibleFor } from "@/lib/admin-alerts";
 import { createNotification } from "@/lib/notifications";
 import { isUndeliverableAlertAddress } from "@/lib/admin-alert-email";
 import { sendAdminNotificationEmail, sendStaffNotificationEmail } from "@/lib/email";
@@ -9,18 +9,18 @@ import { getChatStaffing, type ChatStaffing } from "@/lib/chat";
  * Slice BF9 — who is told about a chat. Prudent Gabriel's SUPER_ADMIN names the
  * people, for email and for the bell separately. Until she does, BA5's routing
  * stands (the contact desk and the admin alert address), so a chat never
- * arrives with nobody told. A named person who can no longer open chat
- * (deactivated, or no longer holding Live chat) is skipped; if that leaves nobody, the
+ * arrives with nobody told. A named person who is deactivated (or is now Staff
+ * without Live chat) is skipped; if that leaves nobody, the
  * BA5 routing is used for that message rather than telling no one.
  *
  * Per conversation, not per message: a new conversation tells everyone; after
  * that only BF6's unanswered clock tells them again.
  */
 
-/** People who may be named: active users who hold Live chat (the same check the inbox uses). */
+/** People who may be named: everyone in Users & Roles except Staff, plus Staff who hold Live chat. */
 export async function chatRecipientCandidates(): Promise<{ id: string; name: string; email: string; role: string }[]> {
   return (await alertRecipientCandidates())
-    .filter((c) => c.chat)
+    .filter((c) => eligibleFor("chat", c))
     .map((c) => ({ id: c.id, name: c.name, email: c.email, role: c.role }));
 }
 

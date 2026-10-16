@@ -15,6 +15,8 @@ import {
   CHAT_NOTIFY_EMAIL_KEY,
   alertKindForType,
   cleanIdList,
+  eligibleFor,
+  type AlertCandidate,
   isWhoIsToldSettingKey,
 } from "../src/lib/admin-alerts";
 import { CHAT_NOTIFY_BELL_KEY as CHAT_BELL, CHAT_NOTIFY_EMAIL_KEY as CHAT_EMAIL } from "../src/lib/chat";
@@ -112,4 +114,19 @@ console.log("test-who-is-told: ok");
   assert(src("src/lib/admin-notification-access.ts").includes('CHAT: ["chat"]'), "chat bells reach people with Live chat");
   assert(src("prisma/migrations/20261022_chat_permission/migration.sql").includes("'chat'"), "Admins are given Live chat");
   console.log("test-who-is-told: chat permission ok");
+}
+
+// Anyone in Users & Roles except Staff may be named, including roles added later.
+{
+  const person = (role: string, chat = false): AlertCandidate => ({
+    id: role, name: role, email: `${role}@x.test`, role, mailable: true, office: role !== "STAFF", chat,
+  });
+  for (const role of ["SUPER_ADMIN", "ADMIN", "RTW_MANAGER", "FINANCE_MANAGER", "PROCUREMENT_OFFICER", "SOME_FUTURE_ROLE"]) {
+    for (const k of ALERT_KINDS) assert(eligibleFor(k.id, person(role)), `${role} may be named for ${k.id}`);
+  }
+  for (const k of ALERT_KINDS) assert(!eligibleFor(k.id, person("STAFF")), `Staff are not named for ${k.id}`);
+  assert(eligibleFor("chat", person("STAFF", true)), "Staff with Live chat may be named for chat");
+  assert(!eligibleFor("orders", person("STAFF", true)), "but for nothing else");
+  assert(/role !== "STAFF"/.test(src("src/lib/admin-alerts.ts")), "only Staff are left out");
+  console.log("test-who-is-told: recipients ok");
 }

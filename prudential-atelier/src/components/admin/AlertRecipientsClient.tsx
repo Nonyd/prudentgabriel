@@ -11,7 +11,7 @@ type Candidate = {
   email: string;
   role: string;
   mailable: boolean;
-  admin: boolean;
+  office: boolean;
   chat: boolean;
 };
 type KindView = {
@@ -251,7 +251,7 @@ export function AlertRecipientsClient() {
         </Link>
         <h1 className="admin-heading-pill glass-1 glass-pill font-display text-3xl text-choc">Who is told</h1>
         <p className="mt-2 max-w-2xl font-sans text-sm text-text-mid">
-          Choose which admins receive each kind of alert, by email and on the bell. Until you choose, an alert follows
+          Choose who receives each kind of alert, by email and on the bell. Until you choose, an alert follows
           its default. If everyone you named leaves or is deactivated, the default takes over, so nothing arrives to
           nobody.
         </p>
@@ -281,7 +281,7 @@ export function AlertRecipientsClient() {
                       defaultLabel={
                         [k.emailDefaultNote, k.emailDefault ?? "no alert address is set"].filter(Boolean).join(" ")
                       }
-                      candidates={view.candidates.filter((c) => (k.id === "chat" ? c.chat : c.admin))}
+                      candidates={view.candidates.filter((c) => c.office || (k.id === "chat" && c.chat))}
                       onSaved={setView}
                     />
                   ) : null}
@@ -291,7 +291,7 @@ export function AlertRecipientsClient() {
                       channel="bell"
                       named={k.bell}
                       defaultLabel={k.bellDefault ?? "Everyone who handles it"}
-                      candidates={view.candidates.filter((c) => (k.id === "chat" ? c.chat : c.admin))}
+                      candidates={view.candidates.filter((c) => c.office || (k.id === "chat" && c.chat))}
                       onSaved={setView}
                     />
                   ) : null}
