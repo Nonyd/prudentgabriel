@@ -84,3 +84,71 @@ export function reportClientError(error: {
     keepalive: true,
   }).catch(() => undefined);
 }
+
+/**
+ * Errors that are not the site's: scripts Facebook/Instagram in-app browsers and
+ * wallet extensions inject, bots, and requests the visitor's connection dropped.
+ * Dropped in the browser and again on the server, so old tabs cannot fill the log.
+ */
+const OUTSIDE_SOURCES = [
+  "iabjs://", // Facebook / Instagram in-app browser scripts
+  "chrome-extension://",
+  "moz-extension://",
+  "safari-extension://",
+  "safari-web-extension://",
+  "ext:core/", // Deno-based crawlers
+];
+const OUTSIDE_MESSAGES = [
+  "java object is gone",
+  "window.webkit.messagehandlers",
+  "redefine property: ethereum",
+  "metamask",
+  "resizeobserver",
+  "script error",
+];
+/** A request the network dropped: the visitor's connection, not a bug. */
+const NETWORK_MESSAGES = new Set([
+  "failed to fetch",
+  "load failed",
+  "networkerror when attempting to fetch resource.",
+  "the network connection was lost.",
+  "the internet connection appears to be offline.",
+  "the operation was aborted.",
+  "the user aborted a request.",
+  "fetch is aborted",
+  "cancelled",
+]);
+
+export function isOutsideNoise(error: { message?: string | null; stack?: string | null }): boolean {
+  const message = (error.message ?? "").trim().toLowerCase();
+  const stack = (error.stack ?? "").toLowerCase();
+  if (!message) return true;
+  if (NETWORK_MESSAGES.has(message.replace(/^typeerror:\s*/, ""))) return true;
+  if (OUTSIDE_MESSAGES.some((m) => message.includes(m))) return true;
+  if (OUTSIDE_SOURCES.some((s) => message.includes(s) || stack.includes(s))) return true;
+  return false;
+}
+
+/** A page script from before the latest deploy is gone: reloading fetches the new one. */
+export function isStaleChunkError(message: string | null | undefined): boolean {
+  return /loading (css )?chunk [\w-]+ failed|chunkloaderror/i.test(message ?? "");
+}
+
+const CHUNK_RELOAD_KEY = "pg_chunk_reload_at";
+
+/**
+ * After a deploy, an open tab asks for scripts that no longer exist. Reload once
+ * (not more than once a minute, so a real failure still gets reported).
+ */
+export function reloadForStaleChunk(): boolean {
+  try {
+    const last = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY) ?? 0);
+    if (Date.now() - last < 60_000) return false;
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, String(Date.now()));
+  } catch {
+    return false;
+  }
+  window.location.reload();
+  return true;
+}
+

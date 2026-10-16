@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { redactErrorUrl, redactTokensInText } from "@/lib/report-client-error";
+import { isOutsideNoise, redactErrorUrl, redactTokensInText } from "@/lib/report-client-error";
 
 export async function POST(req: NextRequest) {
   // Silent drop over the limit: the client fires and forgets, a 429 helps no one.
@@ -19,6 +19,10 @@ export async function POST(req: NextRequest) {
   const message =
     typeof rec.message === "string" && rec.message.trim() ? redactTokensInText(rec.message.trim().slice(0, 2000)) : "";
   if (!message) return NextResponse.json({ ok: true });
+  // Old cached pages still send in-app-browser, extension and dropped-connection noise.
+  if (isOutsideNoise({ message, stack: typeof rec.stack === "string" ? rec.stack : null })) {
+    return NextResponse.json({ ok: true });
+  }
 
   // Defence in depth: an old or hostile client may still send a token URL.
   const stack = typeof rec.stack === "string" ? redactTokensInText(rec.stack.slice(0, 8000)) : undefined;

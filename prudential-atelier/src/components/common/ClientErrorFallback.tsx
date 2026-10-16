@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { reportClientError } from "@/lib/report-client-error";
+import { isOutsideNoise, isStaleChunkError, reloadForStaleChunk, reportClientError } from "@/lib/report-client-error";
 
 export function ClientErrorFallback({
   error,
@@ -11,6 +11,9 @@ export function ClientErrorFallback({
   reset: () => void;
 }) {
   useEffect(() => {
+    // A tab left open across a deploy: reload once for the new scripts instead of erroring.
+    if (isStaleChunkError(error.message) && reloadForStaleChunk()) return;
+    if (isOutsideNoise(error)) return;
     reportClientError({ message: error.message, stack: error.stack, digest: error.digest });
   }, [error]);
 

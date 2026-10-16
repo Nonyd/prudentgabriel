@@ -14,7 +14,7 @@ import {
   hasAnalyticsConsent,
   parseCookieConsent,
 } from "../src/lib/cookie-consent";
-import { redactErrorUrl, redactTokensInText } from "../src/lib/report-client-error";
+import { isOutsideNoise, isStaleChunkError, redactErrorUrl, redactTokensInText } from "../src/lib/report-client-error";
 import {
   AUDIT_ACTIVITY_ACTIONS,
   CHECKOUT_SESSION_RETENTION_DAYS,
@@ -93,6 +93,20 @@ function errorUrls() {
   assert(src("src/app/api/logs/client/route.ts").includes("checkRateLimit"), "rate limit kept");
 }
 
+function errorNoise() {
+  // Not the site: in-app browsers, extensions, dropped connections.
+  assert(isOutsideNoise({ message: "Uncaught Error: Error invoking postMessage: Java object is gone" }), "Instagram/Facebook Android noise dropped");
+  assert(isOutsideNoise({ message: "TypeError: undefined is not an object (evaluating 'window.webkit.messageHandlers')" }), "iOS in-app noise dropped");
+  assert(isOutsideNoise({ message: "Uncaught TypeError: Cannot redefine property: ethereum" }), "wallet extension dropped");
+  assert(isOutsideNoise({ message: "x", stack: "at chrome-extension://abc/inpage.js:1:1" }), "extension stack dropped");
+  assert(isOutsideNoise({ message: "Failed to fetch" }) && isOutsideNoise({ message: "Load failed" }), "dropped connections dropped");
+  // The site's own errors still reach the log.
+  assert(!isOutsideNoise({ message: "Cannot read properties of undefined (reading 'price')", stack: "at https://prudentgabriel.com/_next/static/chunks/app.js:1:1" }), "real errors kept");
+  assert(!isOutsideNoise({ message: "Minified React error #418" }), "React errors kept");
+  assert(isStaleChunkError("Loading chunk 46338 failed.") && isStaleChunkError("ChunkLoadError") && !isStaleChunkError("Failed to fetch"), "stale chunks recognised");
+  assert(src("src/app/api/logs/client/route.ts").includes("isOutsideNoise"), "server drops noise too");
+}
+
 function retention() {
   const now = new Date("2026-10-15T12:00:00.000Z");
   const c = retentionCutoffs(now);
@@ -125,5 +139,6 @@ function retention() {
 
 cookieChoice();
 errorUrls();
+errorNoise();
 retention();
 console.log("OK — cookie choice gates analytics, error URLs carry no tokens, retention rules hold");

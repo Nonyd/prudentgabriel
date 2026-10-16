@@ -108,13 +108,15 @@ function runConverter() {
 }
 
 function runFacts() {
-  // ND-1: every page was rewritten for NDPA 2023 + GDPR, so every page republishes at nd-1.
-  assert(LEGAL_COPY_REVISION === "nd-1", "revision stamp");
+  // ND-1: every page was rewritten for NDPA 2023 + GDPR. ND-2: the cookie list
+  // gained the stale-page reload marker. The copy stamp is the newest page stamp.
+  assert(LEGAL_COPY_REVISION === "nd-2", "revision stamp");
   assert(DEFAULT_LEGAL_UPDATED.includes("October 2026"), "last-updated date is this slice");
   const byPage = Object.fromEntries(LEGAL_SEED_ENTRIES.map((e) => [e.page, e.revision]));
   assert(
-    (["privacy", "terms", "cookie", "returns", "shipping"] as const).every((p) => byPage[p] === "nd-1"),
-    "every legal page republishes at the ND-1 rewrite",
+    (["privacy", "terms", "returns", "shipping"] as const).every((p) => byPage[p] === "nd-1") &&
+      byPage.cookie === "nd-2",
+    "every legal page carries the ND rewrite; the cookie list is at nd-2",
   );
 
   for (const term of DEFAULT_HOUSE_DOCUMENT_TERMS) {

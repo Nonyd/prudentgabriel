@@ -206,10 +206,14 @@ function CarouselMedia({
     const video = localRef.current;
     if (!video) return;
     armInlineMuted(video);
-    void video.play().then(() => {
-      setNeedsTap(false);
-      video.muted = mutedRef.current;
-    });
+    void video
+      .play()
+      .then(() => {
+        setNeedsTap(false);
+        video.muted = mutedRef.current;
+      })
+      // Low Power Mode or the browser can still refuse; the tap button simply stays.
+      .catch(() => setNeedsTap(true));
   };
 
   if (item.type === "video") {
