@@ -1,9 +1,15 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { sendNotFound } from "@/components/analytics/PageBeacon";
 
 export default function NotFound() {
+  useEffect(() => {
+    sendNotFound(window.location.pathname);
+  }, []);
+
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-wine px-4 text-center text-ivory">
       <span className="pointer-events-none absolute font-display text-[180px] italic leading-none text-gold/20 md:text-[280px]">

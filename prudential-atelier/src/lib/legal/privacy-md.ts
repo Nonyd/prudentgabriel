@@ -45,7 +45,7 @@ Questions, requests and complaints about your personal data go to our data prote
 
 **Job applications.** Your name, contact details, experience, cover letter, CV and portfolio. For industrial-training placements also your school, course, year, registration number, your supervisor's name and contact details, your school letter and your student identity card. Please send only what the application asks for.
 
-**Technical data.** When you use the site, our servers and Cloudflare (which protects and speeds up the site) process your IP address and browser details to deliver pages and stop abuse. We keep IP addresses only briefly, for rate limiting and in security and contact-form records. Error reports from your browser record the page address with any private link codes removed. If you accept analytics, we count page visits in aggregate (no IP address, no profile of you) and note which campaign link brought you to us, so we know which posts lead to an order. See the [Cookie Policy](/cookie-policy).
+**Technical data.** When you use the site, our servers and Cloudflare (which protects and speeds up the site) process your IP address and browser details to deliver pages and stop abuse. We keep IP addresses only briefly, for rate limiting and in security and contact-form records. Error reports from your browser record the page address with any private link codes removed. If you accept analytics, we count page visits in aggregate, with broad facts such as country, device type and whether it is a return visit (no IP address, no profile of you) and note which campaign link brought you to us, so we know which posts lead to an order. See the [Cookie Policy](/cookie-policy).
 
 ## Where it comes from
 

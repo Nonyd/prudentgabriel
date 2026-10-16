@@ -74,6 +74,7 @@ const PATH_RULES: PathRule[] = [
 
   { prefix: "/admin/logs", gate: perm("logs") },
   { prefix: "/admin/reports", gate: perm("reports") },
+  { prefix: "/admin/site-traffic", gate: perm("reports") },
 
   { prefix: "/admin/products", gate: perm("shop.products") },
   { prefix: "/admin/collections", gate: perm("shop.products") },
@@ -230,6 +231,7 @@ export const ADMIN_MATRIX_ROUTES: {
   { group: "Payments", path: "/admin/payments", api: "GET /api/admin/payments/pending" },
   { group: "Bank accounts", path: "/admin/settings/bank-accounts", api: "GET /api/admin/bank-accounts" },
   { group: "Reports", path: "/admin/reports", api: "GET /api/admin/reports" },
+  { group: "Site traffic", path: "/admin/site-traffic", api: "GET /api/admin/analytics/traffic" },
   { group: "Content", path: "/admin/content", api: "GET /api/admin/content/pages" },
   { group: "Blog", path: "/admin/content/blog", api: "GET /api/blog" },
   { group: "Messages", path: "/admin/content/messages", api: "GET /api/admin/messages" },
@@ -267,6 +269,7 @@ export const ADMIN_PAGE_OWNERS: readonly {
   { path: "/admin/settings/bank-accounts", owns: "House bank accounts (up to eight)", linksTo: "Nav + Settings hub" },
   { path: "/admin/reports", owns: "How Prudent Gabriel is doing", linksTo: "Nav" },
   { path: "/admin/reports/ledger", owns: "Accountant ledger", linksTo: "Nav" },
+  { path: "/admin/site-traffic", owns: "Site traffic (consented, anonymous counts)", linksTo: "Nav" },
   { path: "/admin/clients", owns: "Client CRM", linksTo: "Nav" },
   { path: "/admin/customers", owns: "Redirect to Clients", linksTo: "/admin/clients" },
   { path: "/admin/referrals", owns: "Referral analytics", linksTo: "Nav" },
@@ -366,7 +369,10 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
     id: "executive",
     label: "Executive",
     defaultOpen: true,
-    items: [{ href: "/admin", label: "Dashboard", icon: "dashboard" }],
+    items: [
+      { href: "/admin", label: "Dashboard", icon: "dashboard" },
+      { href: "/admin/site-traffic", label: "Site traffic", icon: "traffic" },
+    ],
   },
   {
     id: "orders",

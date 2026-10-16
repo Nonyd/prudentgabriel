@@ -86,6 +86,22 @@ export async function rollupAnalyticsDaily(now = new Date()): Promise<{ rolledDa
     });
   }
 
+  const oldDims = await prisma.analyticsDimDaily.findMany({
+    where: { day: { lt: firstOfCutoffMonth } },
+  });
+  for (const row of oldDims) {
+    const yearMonth = yearMonthOf(row.day);
+    await prisma.analyticsDimMonthly.upsert({
+      where: { yearMonth_dim_key: { yearMonth, dim: row.dim, key: row.key } },
+      create: { yearMonth, dim: row.dim, key: row.key, count: row.count },
+      update: { count: { increment: row.count } },
+    });
+  }
+  const deletedDims = await prisma.analyticsDimDaily.deleteMany({ where: { day: { lt: firstOfCutoffMonth } } });
+  const deletedMinutes = await prisma.analyticsMinute.deleteMany({
+    where: { minute: { lt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000) } },
+  });
+
   const deletedPages = await prisma.analyticsPageDaily.deleteMany({ where: { day: { lt: firstOfCutoffMonth } } });
   const deletedRefs = await prisma.analyticsReferralDaily.deleteMany({ where: { day: { lt: firstOfCutoffMonth } } });
   const deletedProducts = await prisma.analyticsProductDaily.deleteMany({
@@ -94,8 +110,14 @@ export async function rollupAnalyticsDaily(now = new Date()): Promise<{ rolledDa
   const deletedEvents = await prisma.analyticsEventDaily.deleteMany({ where: { day: { lt: firstOfCutoffMonth } } });
 
   return {
-    rolledDays: oldPages.length + oldRefs.length + oldProducts.length + oldEvents.length,
-    deleted: deletedPages.count + deletedRefs.count + deletedProducts.count + deletedEvents.count,
+    rolledDays: oldPages.length + oldRefs.length + oldProducts.length + oldEvents.length + oldDims.length,
+    deleted:
+      deletedPages.count +
+      deletedRefs.count +
+      deletedProducts.count +
+      deletedEvents.count +
+      deletedDims.count +
+      deletedMinutes.count,
   };
 }
 

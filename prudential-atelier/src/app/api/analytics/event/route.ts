@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { recordAnalyticsEvent } from "@/lib/analytics/record";
 import { sanitizeAttribution, visitAttributionSchema } from "@/lib/analytics/attribution";
+import { GAP_BUCKETS, SCREEN_BUCKETS } from "@/lib/analytics/visitor";
 import { ADMIN_IMPERSONATE_COOKIE } from "@/lib/admin-impersonate";
+import { isCloudflareIp, proxyPeerIp } from "@/lib/http/client-ip";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
@@ -11,7 +13,25 @@ const bodySchema = z.object({
   event: z.string().max(40).optional(),
   landing: z.boolean().optional(),
   referral: visitAttributionSchema,
+  visitor: z
+    .object({
+      kind: z.enum(["new", "returning"]),
+      gap: z.enum(GAP_BUCKETS),
+      screen: z.enum(SCREEN_BUCKETS),
+    })
+    .optional(),
+  engaged: z.boolean().optional(),
+  dwell: z.object({ path: z.string().max(200), s: z.number().min(0).max(86_400), first: z.boolean().optional() }).optional(),
+  missing: z.string().max(200).optional(),
 });
+
+/** Cloudflare's country code, only when the request really came through Cloudflare. */
+function countryOf(req: NextRequest): string {
+  if (!isCloudflareIp(proxyPeerIp(req.headers))) return "";
+  const cc = (req.headers.get("cf-ipcountry") ?? "").trim().toUpperCase();
+  if (!/^[A-Z][A-Z0-9]$/.test(cc) || cc === "XX") return "";
+  return cc;
+}
 
 export async function POST(req: NextRequest) {
   // Silent drop over the limit (beacon traffic): nothing is recorded.
@@ -40,6 +60,11 @@ export async function POST(req: NextRequest) {
     referral: sanitizeAttribution(parsed.data.referral),
     userAgent: ua,
     impersonating,
+    visitor: parsed.data.visitor ?? null,
+    engaged: parsed.data.engaged,
+    dwell: parsed.data.dwell ?? null,
+    missing: parsed.data.missing,
+    country: parsed.data.visitor ? countryOf(req) : "",
   });
 
   return new NextResponse(null, { status: 204 });

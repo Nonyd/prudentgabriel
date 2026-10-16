@@ -3047,6 +3047,35 @@ model AnalyticsEventMonthly {
   @@unique([yearMonth, name])
 }
 
+/// Site traffic: one counter per (day, dimension, key) — country, device,
+/// browser, hour, landing page, visitor kind and the like. No visitor id.
+model AnalyticsDimDaily {
+  id    String   @id @default(cuid())
+  day   DateTime @db.Date
+  dim   String
+  key   String
+  count Int      @default(0)
+
+  @@unique([day, dim, key])
+  @@index([day, dim])
+}
+
+model AnalyticsDimMonthly {
+  id        String @id @default(cuid())
+  yearMonth String
+  dim       String
+  key       String
+  count     Int    @default(0)
+
+  @@unique([yearMonth, dim, key])
+}
+
+/// Page views per minute for the "right now" card. Pruned after two days.
+model AnalyticsMinute {
+  minute DateTime @id
+  count  Int      @default(0)
+}
+
 /// Slice AQ — the store book. Categories are rows so the storekeeper can add
 /// "Hangers" without a deploy. Quantity on hand is SUM(StoreMovement.delta).
 enum StoreLine {

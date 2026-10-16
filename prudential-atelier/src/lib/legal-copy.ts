@@ -9,7 +9,7 @@ import { RETURNS_MD, SHIPPING_MD } from "./legal/returns-shipping-md";
  *  LEGAL_COPY_REVISION is the newest of those page stamps. */
 
 
-export const LEGAL_COPY_REVISION = "nd-2";
+export const LEGAL_COPY_REVISION = "nd-3";
 export const DEFAULT_LEGAL_UPDATED = "15 October 2026";
 
 export function slugifyHeading(text: string): string {
@@ -154,9 +154,9 @@ export const LEGAL_SEED_ENTRIES: {
   md: string;
   revision: string;
 }[] = [
-  { page: "privacy", key: "legal_privacy_policy", label: "Privacy Policy", updatedKey: "legal_privacy_updated", md: PRIVACY_POLICY_MD, revision: "nd-1" },
+  { page: "privacy", key: "legal_privacy_policy", label: "Privacy Policy", updatedKey: "legal_privacy_updated", md: PRIVACY_POLICY_MD, revision: "nd-3" },
   { page: "terms", key: "legal_terms", label: "Terms & Conditions", updatedKey: "legal_terms_updated", md: TERMS_MD, revision: "nd-1" },
-  { page: "cookie", key: "legal_cookie_policy", label: "Cookie Policy", updatedKey: "legal_cookie_updated", md: COOKIE_MD, revision: "nd-2" },
+  { page: "cookie", key: "legal_cookie_policy", label: "Cookie Policy", updatedKey: "legal_cookie_updated", md: COOKIE_MD, revision: "nd-3" },
   { page: "returns", key: "legal_returns_policy", label: "Returns Policy", updatedKey: "legal_returns_updated", md: RETURNS_MD, revision: "nd-1" },
   { page: "shipping", key: "legal_shipping_policy", label: "Shipping Policy", updatedKey: "legal_shipping_updated", md: SHIPPING_MD, revision: "nd-1" },
 ];

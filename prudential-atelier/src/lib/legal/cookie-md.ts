@@ -1,4 +1,4 @@
-/** Cookie Policy. Revision "nd-1", 15 October 2026. Checked against what the code sets. */
+/** Cookie Policy. Revision "nd-3", 16 October 2026. Checked against what the code sets. */
 export const COOKIE_MD = `## What this policy covers
 
 Cookies are small files a website stores in your browser. Sites also use similar browser storage ("local storage" and "session storage"). This policy lists everything prudentgabriel.com stores in your browser, why, and how you control it. It is part of our [Privacy Policy](/privacy-policy).
@@ -35,9 +35,11 @@ These are needed for the site to work and are not used to track you. The law doe
 If you choose **Accept all**:
 
 - We count page visits and "add to bag" actions. The count is anonymous: we store totals per page and day, with no IP address, no device identifier and no profile of you.
+- We also count, in the same anonymous totals, your country (as Cloudflare reports it, never your IP address), the kind of device, browser and screen size, the hour of the visit, how long a page stayed open, and whether this is a first or a return visit.
+- To tell a return visit from a first one without identifying you, your browser keeps only the date of its last visit (**pa-visitor**, local storage). Once a day it tells us "first visit" or "return visit" and roughly how long it has been. During a visit it also notes how many pages you have seen (**pa-visit**, session storage, this tab only).
 - If you arrived from a campaign link (for example one with utm_source in the address), we keep its tags, the site you came from and the page you landed on in session storage (**pa-visit-attribution**) for that browser tab only. If you place an order or book in the same visit, those tags are saved with it so we know which post led to it. Closing the tab clears them.
 
-If you choose **Essential only**, none of this happens. Withdrawing consent through Cookie settings stops it and clears the stored tags.
+If you choose **Essential only**, none of this happens. Withdrawing consent through Cookie settings stops it and clears the stored tags and visit dates.
 
 ## Third-party content
 

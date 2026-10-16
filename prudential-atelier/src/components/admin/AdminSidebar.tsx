@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
+  AreaChart,
   AlertTriangle,
   BarChart3,
   Briefcase,
@@ -71,6 +72,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   transfers: Wallet,
   bank: Wallet,
   reports: BarChart3,
+  traffic: AreaChart,
   clients: UserCircle,
   referrals: Users,
   staff: Users,
