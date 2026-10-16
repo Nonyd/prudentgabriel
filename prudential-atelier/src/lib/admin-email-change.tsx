@@ -68,8 +68,9 @@ export async function changeUserEmail(params: {
   if (self && !params.selfConfirmed) {
     return { ok: false, status: 400, error: "Change your own email from Account settings, with your password." };
   }
-  // The owner accounts are named in the server's configuration; they change there.
-  if (isProtectedAccount(target.email)) {
+  // The owner accounts are named in the server's configuration. Nobody else may
+  // change them; the owner may change her own, with her password.
+  if (isProtectedAccount(target.email) && !(self && params.selfConfirmed)) {
     return { ok: false, status: 403, error: "This owner account's email is set in the server configuration." };
   }
   if (isProtectedAccount(newEmail)) return { ok: false, status: 400, error: "That email is reserved." };

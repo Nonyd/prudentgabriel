@@ -30,7 +30,12 @@ export async function PATCH(req: NextRequest) {
 
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const issue = parsed.error.issues[0];
+    const field = issue?.path.join(".");
+    return NextResponse.json(
+      { error: issue ? `${field ? `${field}: ` : ""}${issue.message}` : "Invalid request" },
+      { status: 400 },
+    );
   }
 
   const { name, displayName, image, email, currentPassword } = parsed.data;
