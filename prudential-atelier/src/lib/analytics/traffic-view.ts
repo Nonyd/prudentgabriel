@@ -1,5 +1,5 @@
 /** Shapes the site-traffic page reads. Server-free so the client can import them. */
-export type TrafficRangeId = "today" | "7d" | "30d" | "90d" | "12m";
+export type TrafficRangeId = "today" | "7d" | "30d" | "90d" | "12m" | "all" | "custom";
 
 export type CountRow = { key: string; count: number };
 
@@ -28,9 +28,13 @@ export type TrafficReport = {
     label: string;
     from: string;
     to: string;
-    prevFrom: string;
-    prevTo: string;
+    /** Null when there is nothing to compare with (all time). */
+    prevFrom: string | null;
+    prevTo: string | null;
     monthly: boolean;
+    /** Earliest day with any counted page view; bounds the date picker. */
+    firstDay: string | null;
+    today: string;
   };
   generatedAt: string;
   totals: TrafficTotals;

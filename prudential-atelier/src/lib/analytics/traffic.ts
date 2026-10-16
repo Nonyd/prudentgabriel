@@ -13,16 +13,36 @@ const DAY_MS = 86_400_000;
 /** Lagos is UTC+1 all year. */
 const LAGOS_OFFSET_MS = 60 * 60 * 1000;
 
-export const TRAFFIC_RANGES: { id: TrafficRangeId; label: string; days: number }[] = [
+export const TRAFFIC_RANGES: { id: Exclude<TrafficRangeId, "custom">; label: string; days: number }[] = [
   { id: "today", label: "Today", days: 1 },
   { id: "7d", label: "7 days", days: 7 },
   { id: "30d", label: "30 days", days: 30 },
   { id: "90d", label: "90 days", days: 90 },
   { id: "12m", label: "12 months", days: 365 },
+  { id: "all", label: "All time", days: 0 },
 ];
 
-export function parseTrafficRange(raw: string | null): TrafficRangeId {
-  return TRAFFIC_RANGES.some((r) => r.id === raw) ? (raw as TrafficRangeId) : "30d";
+/** Longer than this and the chart groups by month. */
+const DAILY_MAX_DAYS = 120;
+/** A custom range may reach this far back. */
+const CUSTOM_MAX_DAYS = 5 * 366;
+
+export type TrafficRangeSpec = { id: TrafficRangeId; from?: string; to?: string };
+
+function parseIsoDay(raw: string | null | undefined): Date | null {
+  if (!raw || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  const d = new Date(`${raw}T00:00:00Z`);
+  return Number.isNaN(d.getTime()) || isoDay(d) !== raw ? null : d;
+}
+
+export function parseTrafficRange(params: URLSearchParams): TrafficRangeSpec {
+  const id = params.get("range");
+  if (id === "custom") {
+    const from = parseIsoDay(params.get("from"));
+    const to = parseIsoDay(params.get("to"));
+    if (from && to) return { id: "custom", from: isoDay(from), to: isoDay(to) };
+  }
+  return TRAFFIC_RANGES.some((r) => r.id === id) ? { id: id as TrafficRangeId } : { id: "30d" };
 }
 
 type Window = { fromDay: Date; toDay: Date; buckets: string[]; monthly: boolean };
@@ -35,23 +55,72 @@ function ym(d: Date) {
   return d.toISOString().slice(0, 7);
 }
 
-function windowFor(range: TrafficRangeId, now: Date, shift: number): Window {
-  const today = analyticsDayUtc(now);
-  if (range === "12m") {
-    const end = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 12 * shift, 1));
-    const buckets: string[] = [];
-    for (let i = 11; i >= 0; i--) buckets.push(ym(new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth() - i, 1))));
-    const fromDay = new Date(`${buckets[0]}-01T00:00:00Z`);
-    const toDay =
-      shift === 0 ? today : new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth() + 1, 0));
-    return { fromDay, toDay, buckets, monthly: true };
-  }
-  const days = TRAFFIC_RANGES.find((r) => r.id === range)!.days;
-  const toDay = new Date(today.getTime() - shift * days * DAY_MS);
-  const fromDay = new Date(toDay.getTime() - (days - 1) * DAY_MS);
+function spanDays(fromDay: Date, toDay: Date) {
+  return Math.round((toDay.getTime() - fromDay.getTime()) / DAY_MS) + 1;
+}
+
+function makeWindow(fromDay: Date, toDay: Date, monthly = spanDays(fromDay, toDay) > DAILY_MAX_DAYS): Window {
   const buckets: string[] = [];
-  for (let i = 0; i < days; i++) buckets.push(isoDay(new Date(fromDay.getTime() + i * DAY_MS)));
-  return { fromDay, toDay, buckets, monthly: false };
+  if (monthly) buckets.push(...monthsBetween(fromDay, toDay));
+  else for (let t = fromDay.getTime(); t <= toDay.getTime(); t += DAY_MS) buckets.push(isoDay(new Date(t)));
+  return { fromDay, toDay, buckets, monthly };
+}
+
+/** The same number of days, ending the day before. */
+function previousOf(w: Window): Window {
+  const days = spanDays(w.fromDay, w.toDay);
+  const toDay = new Date(w.fromDay.getTime() - DAY_MS);
+  return makeWindow(new Date(toDay.getTime() - (days - 1) * DAY_MS), toDay, w.monthly);
+}
+
+/** First day any page view was counted, daily or already rolled into a month. */
+async function firstDataDay(): Promise<Date | null> {
+  const [daily, monthly] = await Promise.all([
+    prisma.analyticsPageDaily.findFirst({ orderBy: { day: "asc" }, select: { day: true } }),
+    prisma.analyticsPageMonthly.findFirst({ orderBy: { yearMonth: "asc" }, select: { yearMonth: true } }),
+  ]);
+  const candidates = [daily?.day, monthly ? new Date(`${monthly.yearMonth}-01T00:00:00Z`) : undefined].filter(
+    (d): d is Date => d instanceof Date,
+  );
+  return candidates.length ? new Date(Math.min(...candidates.map((d) => d.getTime()))) : null;
+}
+
+async function resolveWindows(
+  spec: TrafficRangeSpec,
+  now: Date,
+): Promise<{ cur: Window; prev: Window | null; label: string; firstDay: string | null }> {
+  const today = analyticsDayUtc(now);
+  const first = await firstDataDay();
+  const firstDay = first ? isoDay(first) : null;
+
+  if (spec.id === "custom" && spec.from && spec.to) {
+    let fromDay = new Date(`${spec.from}T00:00:00Z`);
+    let toDay = new Date(`${spec.to}T00:00:00Z`);
+    if (fromDay > toDay) [fromDay, toDay] = [toDay, fromDay];
+    if (toDay > today) toDay = today;
+    if (fromDay > toDay) fromDay = toDay;
+    const earliest = new Date(today.getTime() - (CUSTOM_MAX_DAYS - 1) * DAY_MS);
+    if (fromDay < earliest) fromDay = earliest;
+    const cur = makeWindow(fromDay, toDay);
+    return { cur, prev: previousOf(cur), label: "Custom", firstDay };
+  }
+
+  if (spec.id === "all") {
+    const fromDay = first && first < today ? first : today;
+    return { cur: makeWindow(fromDay, today), prev: null, label: "All time", firstDay };
+  }
+
+  if (spec.id === "12m") {
+    const fromDay = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 11, 1));
+    const cur = makeWindow(fromDay, today, true);
+    const prevFrom = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 23, 1));
+    const prevTo = new Date(fromDay.getTime() - DAY_MS);
+    return { cur, prev: makeWindow(prevFrom, prevTo, true), label: "12 months", firstDay };
+  }
+
+  const preset = TRAFFIC_RANGES.find((r) => r.id === spec.id) ?? TRAFFIC_RANGES[2]!;
+  const cur = makeWindow(new Date(today.getTime() - (preset.days - 1) * DAY_MS), today, false);
+  return { cur, prev: previousOf(cur), label: preset.label, firstDay };
 }
 
 function monthsBetween(fromDay: Date, toDay: Date): string[] {
@@ -198,16 +267,17 @@ function bucketLabel(bucket: string, monthly: boolean): string {
   return new Intl.DateTimeFormat("en-GB", monthly ? { month: "short", year: "2-digit", timeZone: "UTC" } : { day: "numeric", month: "short", timeZone: "UTC" }).format(d);
 }
 
-export async function buildTrafficReport(range: TrafficRangeId, now = new Date()): Promise<TrafficReport> {
-  const cur = windowFor(range, now, 0);
-  const prev = windowFor(range, now, 1);
+const EMPTY_WINDOW_DATA = { dims: [] as Row[], pages: [], refs: [], products: [] };
+
+export async function buildTrafficReport(spec: TrafficRangeSpec, now = new Date()): Promise<TrafficReport> {
+  const { cur, prev, label, firstDay } = await resolveWindows(spec, now);
 
   const liveFrom = new Date(Math.floor(now.getTime() / 60_000) * 60_000 - 29 * 60_000);
   const [data, prevData, orders, prevOrders, minutes, retentionDays, firstVisitorDay] = await Promise.all([
     loadWindow(cur),
-    loadWindow(prev),
+    prev ? loadWindow(prev) : Promise.resolve(EMPTY_WINDOW_DATA),
     paidOrders(cur),
-    paidOrders(prev),
+    prev ? paidOrders(prev) : Promise.resolve([] as PaidOrder[]),
     prisma.analyticsMinute.findMany({ where: { minute: { gte: liveFrom } } }),
     getRetentionDays(),
     prisma.analyticsDimDaily.findFirst({
@@ -346,13 +416,15 @@ export async function buildTrafficReport(range: TrafficRangeId, now = new Date()
 
   return {
     range: {
-      id: range,
-      label: TRAFFIC_RANGES.find((r) => r.id === range)!.label,
+      id: spec.id,
+      label,
       from: isoDay(cur.fromDay),
       to: isoDay(cur.toDay),
-      prevFrom: isoDay(prev.fromDay),
-      prevTo: isoDay(prev.toDay),
+      prevFrom: prev ? isoDay(prev.fromDay) : null,
+      prevTo: prev ? isoDay(prev.toDay) : null,
       monthly: cur.monthly,
+      firstDay,
+      today: isoDay(analyticsDayUtc(now)),
     },
     generatedAt: now.toISOString(),
     totals,

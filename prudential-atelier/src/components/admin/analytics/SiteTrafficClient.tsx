@@ -1,17 +1,151 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CountRow, TrafficRangeId, TrafficReport, TrafficTotals } from "@/lib/analytics/traffic-view";
 
-const RANGES: { id: TrafficRangeId; label: string }[] = [
+const RANGES: { id: Exclude<TrafficRangeId, "custom">; label: string }[] = [
   { id: "today", label: "Today" },
   { id: "7d", label: "7 days" },
   { id: "30d", label: "30 days" },
   { id: "90d", label: "90 days" },
   { id: "12m", label: "12 months" },
+  { id: "all", label: "All time" },
 ];
+
+type RangeSpec = { id: TrafficRangeId; from?: string; to?: string };
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+function specToQuery(spec: RangeSpec) {
+  const q = new URLSearchParams({ range: spec.id });
+  if (spec.id === "custom" && spec.from && spec.to) {
+    q.set("from", spec.from);
+    q.set("to", spec.to);
+  }
+  return q.toString();
+}
+
+/** The page address carries the period, so a reload or a shared link opens the same view. */
+function specFromLocation(): RangeSpec {
+  if (typeof window === "undefined") return { id: "30d" };
+  const q = new URLSearchParams(window.location.search);
+  const id = q.get("range");
+  const from = q.get("from") ?? "";
+  const to = q.get("to") ?? "";
+  if (id === "custom" && ISO_DAY.test(from) && ISO_DAY.test(to)) return { id, from, to };
+  return RANGES.some((r) => r.id === id) ? { id: id as TrafficRangeId } : { id: "30d" };
+}
+
+const CHIP = "admin-chip glass-1 glass-pill min-h-[40px] font-sans text-xs uppercase tracking-wider transition-colors";
+const CHIP_ON = "!border-[var(--choc)] !bg-[var(--choc)] !text-[var(--bg-card)]";
+
+function RangePicker({
+  spec,
+  firstDay,
+  today,
+  onChange,
+}: {
+  spec: RangeSpec;
+  firstDay: string | null;
+  today: string | null;
+  onChange: (spec: RangeSpec) => void;
+}) {
+  const [open, setOpen] = useState(spec.id === "custom");
+  const [from, setFrom] = useState(spec.from ?? "");
+  const [to, setTo] = useState(spec.to ?? "");
+
+  useEffect(() => {
+    if (spec.id === "custom") {
+      setFrom(spec.from ?? "");
+      setTo(spec.to ?? "");
+    }
+  }, [spec]);
+
+  useEffect(() => {
+    if (!to && today) setTo(today);
+  }, [to, today]);
+
+  const valid = Boolean(from && to && from <= to);
+  const field = "min-h-[40px] rounded-full border border-sand bg-[var(--bg-card)] px-3 font-sans text-sm text-choc";
+
+  return (
+    <div className="flex flex-col gap-3 lg:items-end">
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Period">
+        {RANGES.map((r) => (
+          <button
+            key={r.id}
+            type="button"
+            role="tab"
+            aria-selected={spec.id === r.id}
+            onClick={() => {
+              setOpen(false);
+              onChange({ id: r.id });
+            }}
+            className={`${CHIP} ${spec.id === r.id ? CHIP_ON : "text-text-mid hover:text-choc"}`}
+          >
+            {r.label}
+          </button>
+        ))}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={spec.id === "custom"}
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className={`${CHIP} ${spec.id === "custom" ? CHIP_ON : "text-text-mid hover:text-choc"}`}
+        >
+          Custom
+        </button>
+      </div>
+      {open ? (
+        <form
+          className="glass-opaque flex flex-wrap items-end gap-3 p-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (valid) onChange({ id: "custom", from, to });
+          }}
+        >
+          <label className="flex flex-col gap-1 font-sans text-10px uppercase tracking-wider text-text-mid">
+            From
+            <input
+              type="date"
+              required
+              value={from}
+              min={firstDay ?? undefined}
+              max={to || today || undefined}
+              onChange={(e) => setFrom(e.target.value)}
+              className={field}
+            />
+          </label>
+          <label className="flex flex-col gap-1 font-sans text-10px uppercase tracking-wider text-text-mid">
+            To
+            <input
+              type="date"
+              required
+              value={to}
+              min={from || firstDay || undefined}
+              max={today ?? undefined}
+              onChange={(e) => setTo(e.target.value)}
+              className={field}
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={!valid}
+            className="min-h-[40px] rounded-full bg-[var(--choc)] px-5 font-sans text-xs uppercase tracking-wider text-[var(--bg-card)] disabled:opacity-40"
+          >
+            Show
+          </button>
+          {firstDay ? (
+            <p className="basis-full font-sans text-11px text-text-mid">Counting began {shortDate(firstDay)}.</p>
+          ) : null}
+        </form>
+      ) : null}
+    </div>
+  );
+}
 
 const TREND_METRICS = [
   { id: "pageviews", label: "Page views" },
@@ -449,6 +583,7 @@ function HeatPanel({ report }: { report: TrafficReport }) {
 
 function PagesPanel({ report }: { report: TrafficReport }) {
   const total = report.totals.pageviews;
+  const compare = report.range.prevFrom != null;
   return (
     <Panel title="Top pages" note="What people open most, and how long they stay. Entries are visits that started on that page.">
       {report.pages.length === 0 ? (
@@ -463,7 +598,7 @@ function PagesPanel({ report }: { report: TrafficReport }) {
                 <th className="hidden px-2 py-2 text-right font-medium sm:table-cell">Share</th>
                 <th className="hidden px-2 py-2 text-right font-medium sm:table-cell">Entries</th>
                 <th className="px-2 py-2 text-right font-medium">Avg time</th>
-                <th className="hidden px-2 py-2 text-right font-medium sm:table-cell">Change</th>
+                {compare ? <th className="hidden px-2 py-2 text-right font-medium sm:table-cell">Change</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -478,9 +613,11 @@ function PagesPanel({ report }: { report: TrafficReport }) {
                   <td className="hidden px-2 py-2 text-right tabular-nums text-text-mid sm:table-cell">{total > 0 ? pct(p.views / total) : "—"}</td>
                   <td className="hidden px-2 py-2 text-right tabular-nums text-text-mid sm:table-cell">{p.entries ? n(p.entries) : "—"}</td>
                   <td className="px-2 py-2 text-right tabular-nums text-text-mid">{duration(p.avgSeconds)}</td>
-                  <td className="hidden px-2 py-2 text-right text-11px sm:table-cell">
-                    <Delta now={p.views} was={p.prevViews} kind="count" />
-                  </td>
+                  {compare ? (
+                    <td className="hidden px-2 py-2 text-right text-11px sm:table-cell">
+                      <Delta now={p.views} was={p.prevViews} kind="count" />
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
@@ -586,7 +723,8 @@ function Skeleton() {
   );
 }
 
-function kpis(t: TrafficTotals, p: TrafficTotals, partialFrom: string | null) {
+function kpis(t: TrafficTotals, p: TrafficTotals, partialFrom: string | null, compare: boolean) {
+  const d = (node: React.ReactNode) => (compare ? node : undefined);
   const since = partialFrom
     ? `Since ${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${partialFrom}T00:00:00Z`))}`
     : null;
@@ -594,13 +732,13 @@ function kpis(t: TrafficTotals, p: TrafficTotals, partialFrom: string | null) {
     {
       label: "Visitors",
       value: n(t.visitors),
-      delta: <Delta now={t.visitors} was={p.visitors} kind="count" />,
+      delta: d(<Delta now={t.visitors} was={p.visitors} kind="count" />),
       hint: since ?? "One per browser per day",
     },
     {
       label: "Returning visitors",
       value: t.visitors > 0 ? pct(t.returningVisitors / t.visitors, 0) : "—",
-      delta: (
+      delta: d(
         <Delta
           now={t.visitors ? t.returningVisitors / t.visitors : 0}
           was={p.visitors ? p.returningVisitors / p.visitors : 0}
@@ -609,36 +747,36 @@ function kpis(t: TrafficTotals, p: TrafficTotals, partialFrom: string | null) {
       ),
       hint: since ?? `${n(t.returningVisitors)} came back`,
     },
-    { label: "Page views", value: n(t.pageviews), delta: <Delta now={t.pageviews} was={p.pageviews} kind="count" /> },
+    { label: "Page views", value: n(t.pageviews), delta: d(<Delta now={t.pageviews} was={p.pageviews} kind="count" />) },
     {
       label: "Visits",
       value: n(t.sessions),
-      delta: <Delta now={t.sessions} was={p.sessions} kind="count" />,
+      delta: d(<Delta now={t.sessions} was={p.sessions} kind="count" />),
       hint: `${t.pagesPerSession.toFixed(1)} pages per visit`,
     },
     {
       label: "Bounce rate",
       value: t.bounceRate == null ? "—" : pct(t.bounceRate, 0),
-      delta: t.bounceRate == null ? undefined : <Delta now={t.bounceRate} was={p.bounceRate ?? 0} kind="rate" lowerIsBetter />,
+      delta: t.bounceRate == null ? undefined : d(<Delta now={t.bounceRate} was={p.bounceRate ?? 0} kind="rate" lowerIsBetter />),
       hint: since ?? "Left after one page, under 10 s",
     },
     {
       label: "Avg time on page",
       value: duration(t.avgPageSeconds),
-      delta: <Delta now={t.avgPageSeconds} was={p.avgPageSeconds} kind="seconds" />,
+      delta: d(<Delta now={t.avgPageSeconds} was={p.avgPageSeconds} kind="seconds" />),
       hint: since ?? undefined,
     },
     {
       label: "Orders",
       value: n(t.orders),
-      delta: <Delta now={t.orders} was={p.orders} kind="count" />,
+      delta: d(<Delta now={t.orders} was={p.orders} kind="count" />),
       hint: t.revenueNGN ? `${naira(t.revenueNGN)} in sales` : undefined,
     },
     {
       label: "Visit to order",
       value: t.sessions > 0 ? pct(t.conversion, 2) : "—",
-      delta: <Delta now={t.conversion} was={p.conversion} kind="rate" />,
-      hint: `${n(t.countedOrders)} orders came from counted visits`,
+      delta: d(<Delta now={t.conversion} was={p.conversion} kind="rate" />),
+      hint: `${n(t.countedOrders)} ${t.countedOrders === 1 ? "order" : "orders"} came from counted visits`,
     },
   ];
 }
@@ -658,26 +796,46 @@ const SOURCE_TABS = [
 type SourceTab = (typeof SOURCE_TABS)[number]["id"];
 
 export function SiteTrafficClient() {
-  const [range, setRange] = useState<TrafficRangeId>("30d");
+  const [spec, setSpec] = useState<RangeSpec | null>(null);
   const [report, setReport] = useState<TrafficReport | null>(null);
   const [error, setError] = useState(false);
   const [deviceTab, setDeviceTab] = useState<DeviceTab>("devices");
   const [sourceTab, setSourceTab] = useState<SourceTab>("channels");
 
+  /** Only the newest request may land: a slow answer for the old period must not overwrite the new one. */
+  const latest = useRef(0);
+
   const load = useCallback(
     async (quiet = false) => {
+      if (!spec) return;
+      const ticket = ++latest.current;
       if (!quiet) setReport(null);
       try {
-        const res = await fetch(`/api/admin/analytics/traffic?range=${range}`, { cache: "no-store" });
+        const res = await fetch(`/api/admin/analytics/traffic?${specToQuery(spec)}`, { cache: "no-store" });
         if (!res.ok) throw new Error(String(res.status));
-        setReport((await res.json()) as TrafficReport);
+        const next = (await res.json()) as TrafficReport;
+        if (ticket !== latest.current) return;
+        setReport(next);
         setError(false);
       } catch {
-        if (!quiet) setError(true);
+        if (!quiet && ticket === latest.current) setError(true);
       }
     },
-    [range],
+    [spec],
   );
+
+  useEffect(() => {
+    setSpec(specFromLocation());
+  }, []);
+
+  const changeSpec = useCallback((next: RangeSpec) => {
+    setSpec(next);
+    try {
+      window.history.replaceState(window.history.state, "", `${window.location.pathname}?${specToQuery(next)}`);
+    } catch {
+      /* the address bar is a convenience */
+    }
+  }, []);
 
   useEffect(() => {
     void load();
@@ -691,7 +849,7 @@ export function SiteTrafficClient() {
     if (!report) return [];
     const since = report.visitorsSince;
     const partial = since == null || since > report.range.from ? (since ?? report.range.to) : null;
-    return kpis(report.totals, report.prevTotals, partial);
+    return kpis(report.totals, report.prevTotals, partial, report.range.prevFrom != null);
   }, [report]);
 
   return (
@@ -707,22 +865,14 @@ export function SiteTrafficClient() {
             .
           </p>
         </div>
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Period">
-          {RANGES.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              role="tab"
-              aria-selected={range === r.id}
-              onClick={() => setRange(r.id)}
-              className={`admin-chip glass-1 glass-pill min-h-[40px] font-sans text-xs uppercase tracking-wider ${
-                range === r.id ? "border-[var(--glass-edge-bright)] text-choc" : "text-text-mid"
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+        {spec ? (
+          <RangePicker
+            spec={spec}
+            firstDay={report?.range.firstDay ?? null}
+            today={report?.range.today ?? null}
+            onChange={changeSpec}
+          />
+        ) : null}
       </header>
 
       {error ? (
@@ -740,10 +890,13 @@ export function SiteTrafficClient() {
             {report.range.from === report.range.to
               ? shortDate(report.range.from)
               : `${shortDate(report.range.from)} – ${shortDate(report.range.to)}`}
-            {" · compared with "}
-            {report.range.prevFrom === report.range.prevTo
-              ? shortDate(report.range.prevFrom)
-              : `${shortDate(report.range.prevFrom)} – ${shortDate(report.range.prevTo)}`}
+            {report.range.prevFrom && report.range.prevTo
+              ? ` · compared with ${
+                  report.range.prevFrom === report.range.prevTo
+                    ? shortDate(report.range.prevFrom)
+                    : `${shortDate(report.range.prevFrom)} – ${shortDate(report.range.prevTo)}`
+                }`
+              : " · everything counted so far"}
           </p>
 
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
