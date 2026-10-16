@@ -5,6 +5,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import type { JobPosting, JobType } from "@prisma/client";
 import { JOB_TYPE_FILTERS, JOB_TYPE_LABELS } from "@/lib/job-custom-fields";
+import { applicationsClosed, effectiveDeadline } from "@/lib/job-deadline";
 
 export function CareersListingClient({ jobs }: { jobs: JobPosting[] }) {
   const [filter, setFilter] = useState<JobType | "ALL">("ALL");
@@ -33,7 +34,7 @@ export function CareersListingClient({ jobs }: { jobs: JobPosting[] }) {
           <p className="font-body text-sm text-text-light">No open positions in this category right now.</p>
         ) : (
           filtered.map((job) => {
-            const expired = job.deadline ? job.deadline < new Date() : false;
+            const expired = applicationsClosed(job);
             return (
               <article
                 key={job.id}
@@ -51,9 +52,9 @@ export function CareersListingClient({ jobs }: { jobs: JobPosting[] }) {
                   <p className="mt-1 font-body text-sm text-text-light">
                     {job.department} · {JOB_TYPE_LABELS[job.type]} · {job.location}
                   </p>
-                  {job.deadline ? (
+                  {effectiveDeadline(job) ? (
                     <p className="mt-1 font-body text-xs text-text-light">
-                      Application deadline: {format(new Date(job.deadline), "MMMM d, yyyy")}
+                      Application deadline: {format(effectiveDeadline(job)!, "MMMM d, yyyy")}
                       {expired ? " (closed)" : ""}
                     </p>
                   ) : null}

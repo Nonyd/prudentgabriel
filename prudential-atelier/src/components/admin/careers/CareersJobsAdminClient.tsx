@@ -4,11 +4,12 @@ import Link from "next/link";
 import { format } from "date-fns";
 import type { JobPosting } from "@prisma/client";
 import { JOB_TYPE_LABELS } from "@/lib/job-custom-fields";
+import { applicationsClosed } from "@/lib/job-deadline";
 
 type JobRow = JobPosting & { _count: { applications: number } };
 
 function statusFor(job: JobRow): { label: string; className: string } {
-  if (job.deadline && job.deadline < new Date()) {
+  if (applicationsClosed(job)) {
     return { label: "Expired", className: "text-warning" };
   }
   if (job.isPublished) {

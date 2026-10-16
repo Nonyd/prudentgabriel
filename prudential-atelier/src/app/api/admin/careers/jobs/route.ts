@@ -4,6 +4,7 @@ import { JobType, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireGeneralAdminApi } from "@/lib/admin-auth";
 import { uniqueJobSlug } from "@/lib/job-slug";
+import { jobTakesDeadline } from "@/lib/job-deadline";
 
 const richTextMin = (label: string) =>
   z
@@ -84,7 +85,9 @@ export async function POST(req: NextRequest) {
       requirements: parsed.data.requirements,
       benefits: parsed.data.benefits?.trim() || null,
       salaryRange: parsed.data.salaryRange?.trim() || null,
-      deadline: parsed.data.deadline ? new Date(parsed.data.deadline) : null,
+      // IT placements are open all year round: never a deadline.
+      deadline:
+        parsed.data.deadline && jobTakesDeadline(parsed.data.type) ? new Date(parsed.data.deadline) : null,
       isPublished: parsed.data.isPublished,
       isPFAPosition: parsed.data.isPFAPosition,
       slug,

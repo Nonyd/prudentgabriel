@@ -10,6 +10,7 @@ import {
 } from "@/lib/email";
 import { notifyJobApplication } from "@/lib/notifications";
 import { storedPrivateMediaUrlSchema, optionalStoredPrivateMediaUrlSchema } from "@/lib/media/stored-url";
+import { applicationsClosed } from "@/lib/job-deadline";
 
 const applySchema = z.object({
   fullName: z.string().min(2).max(120),
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ slug: stri
   if (!job) {
     return NextResponse.json({ error: "Job not found" }, { status: 404 });
   }
-  if (job.deadline && job.deadline < new Date()) {
+  if (applicationsClosed(job)) {
     return NextResponse.json({ error: "Applications for this role have closed" }, { status: 410 });
   }
 

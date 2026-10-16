@@ -6,6 +6,7 @@ import { JOB_TYPE_LABELS } from "@/lib/job-custom-fields";
 import { JobApplicationForm } from "@/components/careers/JobApplicationForm";
 import { sanitizeCmsHtml } from "@/lib/sanitize-html";
 import { pageMetadata, houseShareImage } from "@/lib/seo";
+import { effectiveDeadline } from "@/lib/job-deadline";
 
 export async function generateMetadata({
   params,
@@ -98,10 +99,12 @@ export default async function CareerJobPage({
           {job.salaryRange ? (
             <p className="mt-8 font-body text-sm text-choc">{job.salaryRange}</p>
           ) : null}
-          {job.deadline ? (
+          {effectiveDeadline(job) ? (
             <p className="mt-2 font-body text-sm text-text-light">
-              Apply before: {format(new Date(job.deadline), "MMMM d, yyyy")}
+              Apply before: {format(effectiveDeadline(job)!, "MMMM d, yyyy")}
             </p>
+          ) : job.type === "IT_PLACEMENT" ? (
+            <p className="mt-2 font-body text-sm text-text-light">Applications are open all year round.</p>
           ) : null}
         </div>
 

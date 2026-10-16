@@ -10,6 +10,7 @@ import { CustomFieldBuilder } from "@/components/admin/careers/CustomFieldBuilde
 import { parseCustomFields, type CustomField } from "@/lib/job-custom-fields";
 import { cn, slugifyText } from "@/lib/utils";
 import { apiErrorMessage, focusField, isEmptyRichText, plainTextFromHtml } from "@/lib/form-errors";
+import { jobTakesDeadline } from "@/lib/job-deadline";
 
 const JOB_TYPES: JobType[] = ["FULL_TIME", "PART_TIME", "FREELANCE", "INTERNSHIP", "IT_PLACEMENT"];
 
@@ -79,7 +80,7 @@ export function JobEditorClient({ job }: { job?: JobPosting }) {
         requirements,
         benefits: benefits || null,
         salaryRange: salaryRange.trim() || null,
-        deadline: deadline || null,
+        deadline: jobTakesDeadline(type) ? deadline || null : null,
         isPFAPosition,
         customFields,
         isPublished: publish ? true : isPublished,
@@ -200,18 +201,27 @@ export function JobEditorClient({ job }: { job?: JobPosting }) {
             onChange={(e) => setSalaryRange(e.target.value)}
           />
         </div>
-        <div>
-          <label htmlFor="job-deadline" className="font-body text-xs text-charcoal-mid">
-            Application Deadline
-          </label>
-          <input
-            id="job-deadline"
-            type="date"
-            className={inputClass}
-            value={deadline}
-            onChange={(e) => setDeadline(e.target.value)}
-          />
-        </div>
+        {jobTakesDeadline(type) ? (
+          <div>
+            <label htmlFor="job-deadline" className="font-body text-xs text-charcoal-mid">
+              Application Deadline
+            </label>
+            <input
+              id="job-deadline"
+              type="date"
+              className={inputClass}
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+            />
+          </div>
+        ) : (
+          <div>
+            <p className="font-body text-xs text-charcoal-mid">Application Deadline</p>
+            <p className="mt-2 font-body text-sm text-ink">
+              None. IT placements take applications all year round.
+            </p>
+          </div>
+        )}
         <div className="sm:col-span-2">
           <label htmlFor="job-slug" className="font-body text-xs text-charcoal-mid">
             Slug
