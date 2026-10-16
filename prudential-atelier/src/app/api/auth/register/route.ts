@@ -12,6 +12,7 @@ import { logServerError } from "@/lib/logger";
 import { notifyNewCustomer } from "@/lib/notifications";
 import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
 import { sendVerifyEmail } from "@/lib/email-verification";
+import { scheduleFounderNote } from "@/lib/founder-note";
 
 function tooMany(retryAfterSec: number) {
   return NextResponse.json(
@@ -129,6 +130,7 @@ export async function POST(request: Request) {
   void sendWelcomeEmail(emailNorm, firstName, pointsBalance, createdUser?.referralCode ?? "");
   // Until she clicks it, nothing filed under this email before she signed up is hers.
   if (createdUser) {
+    void scheduleFounderNote(createdUser);
     void sendVerifyEmail({ userId: createdUser.id, email: emailNorm, firstName }).catch((error) =>
       logServerError({ errorType: "VERIFY_EMAIL_SEND", error }),
     );

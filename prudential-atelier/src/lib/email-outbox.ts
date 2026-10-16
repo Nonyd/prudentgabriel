@@ -42,6 +42,8 @@ export type QueueEmailParams = {
   headers?: Record<string, string>;
   /** Skip fire-and-forget deliver; cron drain sends. Campaigns must set this. */
   defer?: boolean;
+  /** Hold until this time; the outbox drain sends it on its next run after. Implies defer. */
+  sendAt?: Date;
 };
 
 const STALE_SENDING_MS = 2 * 60_000;
@@ -96,7 +98,7 @@ export async function queueEmail(params: QueueEmailParams): Promise<{ id: string
   const fromAddress = await sanitizeFromAddress(
     params.fromAddress?.trim() || (await resolveFromAddress().catch(() => EMAIL_FROM)),
   );
-  const nextAttemptAt = new Date();
+  const nextAttemptAt = params.sendAt && params.sendAt.getTime() > Date.now() ? params.sendAt : new Date();
 
   try {
     const existing = await prisma.emailMessage.findUnique({
@@ -131,7 +133,7 @@ export async function queueEmail(params: QueueEmailParams): Promise<{ id: string
       select: { id: true },
     });
 
-    const defer = params.defer === true || skipImmediateDeliver;
+    const defer = params.defer === true || Boolean(params.sendAt) || skipImmediateDeliver;
     if (!isEmailCaptureEnabled() && !defer) {
       void deliverEmail(row.id).catch((e) => console.warn("[email-outbox] immediate deliver", e));
     }

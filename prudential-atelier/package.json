@@ -113,6 +113,7 @@
     "test:rtw-launch": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-rtw-launch.ts",
     "test:authz": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-authz.ts",
     "test:sanitize-html": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-sanitize-html.ts",
+    "test:founder-note": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-founder-note.ts",
     "test:email-verification": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-email-verification.ts",
     "email:dev": "email dev src/emails --port 3001",
     "bundle:import": "esbuild scripts/import-atelier-orders.ts --bundle --platform=node --target=node20 --format=cjs --tsconfig=tsconfig.json --external:@prisma/client --external:.prisma --external:dotenv --external:sharp --alias:next/cache=./scripts/cli-stubs/next-cache.ts --alias:next/headers=./scripts/cli-stubs/next-headers.ts --external:react --external:react-dom --outfile=scripts/dist/import-atelier-orders.cjs --log-level=warning"

@@ -287,6 +287,12 @@ const nextAuth = NextAuth({
     },
   },
   events: {
+    // A first Google sign-in creates her account: the founder's note follows ten minutes later.
+    async createUser({ user }) {
+      if (!user?.id || !user.email) return;
+      const { scheduleFounderNote } = await import("@/lib/founder-note");
+      await scheduleFounderNote({ id: user.id, email: user.email, name: user.name });
+    },
     // BF4: chats she started as a guest under this email join her account the moment she signs in.
     async signIn({ user, account, profile }) {
       if (!user?.id || !user.email) return;

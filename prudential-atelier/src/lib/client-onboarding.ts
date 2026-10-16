@@ -10,6 +10,7 @@ import { issuePasswordResetToken, passwordLinkUrl } from "@/lib/password-reset";
 import { CAPABILITY_TTL_MS } from "@/lib/capability-token";
 import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
 import { getOrCreateClientProfile } from "@/lib/account-helpers";
+import { scheduleFounderNote } from "@/lib/founder-note";
 
 export type OnboardSource = "CONSULTATION" | "RTW_ORDER" | "BESPOKE_ORDER";
 
@@ -155,6 +156,9 @@ export async function autoOnboardClient(params: {
     sourceLabel,
     trackUrl,
   }).catch((e) => console.warn("[autoOnboardClient] email", e));
+
+  // Ten minutes on: a personal note from Mrs Prudent Gabriel-Okopi.
+  void scheduleFounderNote({ id: user.id, email, name: params.name });
 
   return { userId: user.id, isNew: true };
 }

@@ -31,6 +31,7 @@ const TESTS = [
   "test-signin-errors",
   "test-cron-registry",
   "test-data-protection",
+  "test-founder-note",
   "test-slice-ab",
   "test-slice-ad",
   "test-slice-ad2",
