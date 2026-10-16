@@ -65,7 +65,7 @@ const PATH_RULES: PathRule[] = [
   { prefix: "/admin/system", gate: { type: "general_admin" } },
 
   { prefix: "/admin/content/messages", gate: { type: "general_admin" } },
-  { prefix: "/admin/chat", gate: { type: "general_admin" } },
+  { prefix: "/admin/chat", gate: perm("chat") },
   { prefix: "/admin/content/email-templates", gate: { type: "general_admin" } },
   { prefix: "/admin/content/send-email", gate: { type: "general_admin" } },
   { prefix: "/admin/content/unsubscribes", gate: { type: "general_admin" } },

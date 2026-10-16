@@ -36,8 +36,8 @@ export const ADMIN_NOTIFICATION_TARGETS: Record<AdminNotificationType, readonly 
   TESTIMONIAL_SUBMITTED: CMS_ADMIN_PERMISSIONS,
   NEW_CUSTOMER: ["clients", "clients.view"],
   CONTACT_FORM: CMS_ADMIN_PERMISSIONS,
-  /** BF9: until Prudent Gabriel names chat recipients, chat reaches the contact desk (BA5). */
-  CHAT: CMS_ADMIN_PERMISSIONS,
+  /** BF9: until Prudent Gabriel names chat recipients, chat reaches everyone who answers chat. */
+  CHAT: ["chat"],
   JOB_APPLICATION: ["staff"],
   EMAIL_DEAD: [ADMIN_NOTIFICATION_EVERYONE],
   EMAIL_PROVIDER_AUTH: [ADMIN_NOTIFICATION_EVERYONE],

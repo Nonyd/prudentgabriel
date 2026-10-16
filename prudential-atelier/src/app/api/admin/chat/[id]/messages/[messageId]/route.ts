@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { requireGeneralAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { editRefusal, getChatStaffing } from "@/lib/chat";
 import { CHAT_MESSAGE_MAX } from "@/lib/chat-shared";
@@ -14,7 +14,7 @@ const bodySchema = z.object({ body: z.string().trim().min(1).max(CHAT_MESSAGE_MA
  * has replied (409). The original stays; the inbox shows both.
  */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string; messageId: string }> }) {
-  const gate = await requireGeneralAdminApi();
+  const gate = await requireAdminApi("chat");
   if (!gate.ok) return gate.response;
   const { id, messageId } = await params;
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));

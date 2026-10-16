@@ -4,7 +4,7 @@
  *
  *   pnpm test:who-is-told
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { AdminNotificationType } from "@prisma/client";
@@ -89,3 +89,27 @@ assert(cleanIdList(["clabcdefghij", "clabcdefghij", 3, "x"])?.join() === "clabcd
 assert(cleanIdList([]) === null && cleanIdList("nope") === null, "empty or junk is the default");
 
 console.log("test-who-is-told: ok");
+
+// Live chat is a permission: chat APIs check it; saving chat settings stays with Admins.
+{
+
+  const walk = (dir: string): string[] =>
+    readdirSync(join(root, dir)).flatMap((f) => {
+      const rel = `${dir}/${f}`;
+      return statSync(join(root, rel)).isDirectory() ? walk(rel) : [rel];
+    });
+  for (const file of walk("src/app/api/admin/chat").filter((f) => f.endsWith("route.ts"))) {
+    const text = src(file);
+    if (file.endsWith("/erase/route.ts")) {
+      assert(text.includes("requireSuperAdminApi()"), "erasing a conversation stays with the Super Admin");
+    } else if (file.endsWith("chat/settings/route.ts")) {
+      assert(text.includes('requireAdminApi("chat")'), "chat settings are readable with Live chat");
+      assert(/PATCH[\s\S]*requireGeneralAdminApi\(\)/.test(text), "chat settings are saved by Admins only");
+    } else {
+      assert(text.includes('requireAdminApi("chat")') && !text.includes("requireGeneralAdminApi"), `${file} checks Live chat`);
+    }
+  }
+  assert(src("src/lib/admin-notification-access.ts").includes('CHAT: ["chat"]'), "chat bells reach people with Live chat");
+  assert(src("prisma/migrations/20261022_chat_permission/migration.sql").includes("'chat'"), "Admins are given Live chat");
+  console.log("test-who-is-told: chat permission ok");
+}

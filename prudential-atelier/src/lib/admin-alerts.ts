@@ -1,5 +1,7 @@
 import type { AdminNotificationType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { cachedRoleActorPatch, ensurePermissionCache } from "@/lib/permission-cache";
+import { hasPermission } from "@/lib/roles";
 import { getSetting } from "@/lib/settings";
 import { isUndeliverableAlertAddress, resolveAdminAlertEmail, resolveHrAlertEmail } from "@/lib/admin-alert-email";
 
@@ -73,7 +75,7 @@ export const ALERT_KINDS: readonly AlertKindDef[] = [
     bell: ["CHAT"],
     email: true,
     fallback: "operational",
-    bellDefault: "The content desk",
+    bellDefault: "Everyone who answers chat",
   },
   {
     id: "contact",
@@ -230,29 +232,69 @@ export async function readAlertRouting(): Promise<AlertRouting> {
   return out;
 }
 
-/** `mailable` false: their address cannot receive mail (e.g. admin@), so email skips them. */
-export type AlertCandidate = { id: string; name: string; email: string; role: string; mailable: boolean };
+/**
+ * `mailable` false: their address cannot receive mail (e.g. admin@), so email skips them.
+ * `admin`: an Admin or the Super Admin, who may be named for any alert.
+ * `chat`: holds Live chat (by role or a personal grant), so may be named for chat.
+ */
+export type AlertCandidate = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  mailable: boolean;
+  admin: boolean;
+  chat: boolean;
+};
 
-/** People who may be named: active admins (the same people chat allows). */
+/**
+ * People who may be named: active Admins and the Super Admin for every alert,
+ * plus anyone else who holds Live chat (role or personal grant) for chat.
+ */
 export async function alertRecipientCandidates(): Promise<AlertCandidate[]> {
+  await ensurePermissionCache();
   const users = await prisma.user.findMany({
-    where: { isActive: true, role: { in: ["ADMIN", "SUPER_ADMIN"] } },
-    select: { id: true, name: true, email: true, role: true },
+    where: { isActive: true, role: { not: "CUSTOMER" } },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      userPermissions: { select: { permission: true, mode: true } },
+    },
     orderBy: [{ name: "asc" }, { email: "asc" }],
   });
-  return users.map((u) => ({
-    id: u.id,
-    name: u.name?.trim() || u.email,
-    email: u.email,
-    role: u.role,
-    mailable: !isUndeliverableAlertAddress(u.email),
-  }));
+  return users
+    .map((u) => {
+      const admin = u.role === "ADMIN" || u.role === "SUPER_ADMIN";
+      const chat = hasPermission(u.role, "chat", {
+        email: u.email,
+        grants: u.userPermissions.filter((p) => p.mode === "GRANT").map((p) => p.permission),
+        revokes: u.userPermissions.filter((p) => p.mode === "REVOKE").map((p) => p.permission),
+        ...cachedRoleActorPatch(u.role),
+      });
+      return {
+        id: u.id,
+        name: u.name?.trim() || u.email,
+        email: u.email,
+        role: u.role,
+        mailable: !isUndeliverableAlertAddress(u.email),
+        admin,
+        chat,
+      };
+    })
+    .filter((u) => u.admin || u.chat);
 }
 
-async function usable(ids: string[] | null): Promise<AlertCandidate[]> {
+/** May this person be named for this kind of alert? */
+export function eligibleFor(kind: AlertKind, c: AlertCandidate): boolean {
+  return kind === "chat" ? c.chat : c.admin;
+}
+
+async function usable(kind: AlertKind, ids: string[] | null): Promise<AlertCandidate[]> {
   if (!ids?.length) return [];
   const users = await alertRecipientCandidates();
-  return users.filter((u) => ids.includes(u.id));
+  return users.filter((u) => ids.includes(u.id) && eligibleFor(kind, u));
 }
 
 export function alertKindForType(type: AdminNotificationType): AlertKindDef | null {
@@ -264,7 +306,7 @@ export async function alertBellUserIds(type: AdminNotificationType): Promise<str
   const kind = alertKindForType(type);
   if (!kind) return null;
   const routing = await readAlertRouting();
-  const named = await usable(routing[kind.id].bell);
+  const named = await usable(kind.id, routing[kind.id].bell);
   return named.length ? named.map((u) => u.id) : null;
 }
 
@@ -282,7 +324,7 @@ async function fallbackMailbox(fallback: Fallback): Promise<string | null> {
 export async function alertEmailTargets(kind: AlertKind, fallbackTo?: string | null): Promise<AlertEmailTarget[]> {
   const def = ALERT_KINDS.find((k) => k.id === kind)!;
   const routing = await readAlertRouting();
-  const named = (await usable(routing[kind].email)).filter((u) => u.mailable);
+  const named = (await usable(kind, routing[kind].email)).filter((u) => u.mailable);
   if (named.length) return named.map((u) => ({ to: u.email, userId: u.id }));
   const mailbox = fallbackTo?.trim() || (await fallbackMailbox(def.fallback));
   return mailbox ? [{ to: mailbox, userId: null }] : [];

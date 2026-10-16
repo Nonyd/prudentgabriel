@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SettingGroup, SettingType } from "@prisma/client";
 import { z } from "zod";
-import { requireGeneralAdminApi } from "@/lib/admin-auth";
+import { isGeneralAdminRole, requireAdminApi, requireGeneralAdminApi, resolveSessionAccess } from "@/lib/admin-auth";
 import { getAdminImpersonation } from "@/lib/admin-impersonate";
 import { prisma } from "@/lib/prisma";
 import { clearSettingCacheKey, getSetting } from "@/lib/settings";
@@ -40,7 +40,7 @@ function retentionView(r: ChatRetention) {
   return r.kind === "days" ? { mode: "days" as const, days: r.days } : { mode: r.kind };
 }
 
-async function view(isSuperAdmin: boolean) {
+async function view(isSuperAdmin: boolean, canEdit = true) {
   const s = await getChatStaffing();
   const a = await getChatAvailability(new Date(), s);
   return {
@@ -58,8 +58,9 @@ async function view(isSuperAdmin: boolean) {
     giveUpMin: s.giveUpMin,
     claimIdleMin: s.claimIdleMin,
     recipients: { email: s.notifyEmailUserIds, bell: s.notifyBellUserIds },
-    candidates: await chatRecipientCandidates(),
+    candidates: canEdit ? await chatRecipientCandidates() : [],
     canChooseRecipients: isSuperAdmin,
+    canEdit,
   };
 }
 
@@ -69,10 +70,12 @@ async function realSuperAdmin(session: { user: { role?: string | null; email?: s
   return !(await getAdminImpersonation(session.user.role, session.user.email));
 }
 
+/** Anyone with Live chat reads the state (the inbox needs the edit window); only Admins change it. */
 export async function GET() {
-  const gate = await requireGeneralAdminApi();
+  const gate = await requireAdminApi("chat");
   if (!gate.ok) return gate.response;
-  return NextResponse.json(await view(await realSuperAdmin(gate.session)));
+  const { role } = await resolveSessionAccess(gate.session);
+  return NextResponse.json(await view(await realSuperAdmin(gate.session), isGeneralAdminRole(role)));
 }
 
 const dayHours = z.union([z.null(), z.object({ open: z.string(), close: z.string() })]);

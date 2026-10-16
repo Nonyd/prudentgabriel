@@ -39,7 +39,9 @@ export type AdminPermission =
   | "bespoke.specification"
   | "requisition.approve"
   | "requisition.fund"
-  | "requisition.buy";
+  | "requisition.buy"
+  /** Live chat inbox: answer, claim and close conversations. */
+  | "chat";
 
 /** CMS surfaces: parent `content` plus CONTENT_MANAGER's dotted keys. */
 export const CMS_ADMIN_PERMISSIONS = [
@@ -74,6 +76,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
     "bespoke.specification",
     "requisition.approve",
     "requisition.fund",
+    "chat",
   ],
 
   STAFF_ADMIN: [
@@ -229,6 +232,7 @@ export const ALL_PERMISSIONS: readonly AdminPermission[] = [
   "requisition.approve",
   "requisition.fund",
   "requisition.buy",
+  "chat",
 ];
 
 /** Dotted children unlocked only because the parent key is on the role. */

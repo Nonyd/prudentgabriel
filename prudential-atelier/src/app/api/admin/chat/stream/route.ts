@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireGeneralAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { subscribeConversation, subscribeInbox, visitorConnected } from "@/lib/chat-bus";
 import { sseResponse } from "@/lib/http/sse";
@@ -13,7 +13,7 @@ export const runtime = "nodejs";
  * falls back to polling.
  */
 export async function GET(req: NextRequest) {
-  const gate = await requireGeneralAdminApi();
+  const gate = await requireAdminApi("chat");
   if (!gate.ok) return gate.response;
   const c = req.nextUrl.searchParams.get("c");
   const conversationId = c && (await prisma.chatConversation.findUnique({ where: { id: c }, select: { id: true } }))?.id;

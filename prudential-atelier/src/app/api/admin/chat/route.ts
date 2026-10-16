@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ChatStatus, type Prisma } from "@prisma/client";
-import { requireGeneralAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { getChatStaffing } from "@/lib/chat";
 import { activeHolder } from "@/lib/chat-claim";
@@ -16,7 +16,7 @@ const CHAT_PAGE_SIZE = 50;
  * - ?q=: search open AND closed by name, email, order reference or piece.
  */
 export async function GET(req: NextRequest) {
-  const gate = await requireGeneralAdminApi();
+  const gate = await requireAdminApi("chat");
   if (!gate.ok) return gate.response;
   const sp = new URL(req.url).searchParams;
   const q = sp.get("q")?.trim().slice(0, 100) ?? "";

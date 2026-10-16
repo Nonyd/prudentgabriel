@@ -1,5 +1,4 @@
-import { prisma } from "@/lib/prisma";
-import { isGeneralAdminRole } from "@/lib/admin-auth";
+import { alertRecipientCandidates } from "@/lib/admin-alerts";
 import { createNotification } from "@/lib/notifications";
 import { isUndeliverableAlertAddress } from "@/lib/admin-alert-email";
 import { sendAdminNotificationEmail, sendStaffNotificationEmail } from "@/lib/email";
@@ -11,23 +10,18 @@ import { getChatStaffing, type ChatStaffing } from "@/lib/chat";
  * people, for email and for the bell separately. Until she does, BA5's routing
  * stands (the contact desk and the admin alert address), so a chat never
  * arrives with nobody told. A named person who can no longer open chat
- * (deactivated, or no longer an admin) is skipped; if that leaves nobody, the
+ * (deactivated, or no longer holding Live chat) is skipped; if that leaves nobody, the
  * BA5 routing is used for that message rather than telling no one.
  *
  * Per conversation, not per message: a new conversation tells everyone; after
  * that only BF6's unanswered clock tells them again.
  */
 
-/** People who may be named: active users who pass the chat gate (the same check the inbox uses). */
+/** People who may be named: active users who hold Live chat (the same check the inbox uses). */
 export async function chatRecipientCandidates(): Promise<{ id: string; name: string; email: string; role: string }[]> {
-  const users = await prisma.user.findMany({
-    where: { isActive: true, role: { in: ["ADMIN", "SUPER_ADMIN"] } },
-    select: { id: true, name: true, email: true, role: true },
-    orderBy: [{ name: "asc" }, { email: "asc" }],
-  });
-  return users
-    .filter((u) => isGeneralAdminRole(u.role))
-    .map((u) => ({ id: u.id, name: u.name?.trim() || u.email, email: u.email, role: u.role }));
+  return (await alertRecipientCandidates())
+    .filter((c) => c.chat)
+    .map((c) => ({ id: c.id, name: c.name, email: c.email, role: c.role }));
 }
 
 async function usable(ids: string[] | null) {

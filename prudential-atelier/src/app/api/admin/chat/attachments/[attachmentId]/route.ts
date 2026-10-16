@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireGeneralAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { serveChatAttachment } from "@/lib/chat-files";
 
@@ -12,7 +12,7 @@ export const runtime = "nodejs";
  * and only images shown inline (a PDF downloads).
  */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ attachmentId: string }> }) {
-  const gate = await requireGeneralAdminApi();
+  const gate = await requireAdminApi("chat");
   if (!gate.ok) return gate.response;
   const { attachmentId } = await params;
   const att = await prisma.chatAttachment.findUnique({

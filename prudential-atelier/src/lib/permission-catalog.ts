@@ -34,6 +34,7 @@ export const ALL_ADMIN_PERMISSIONS: readonly AdminPermission[] = [
   "requisition.approve",
   "requisition.fund",
   "requisition.buy",
+  "chat",
 ] as const;
 
 export type PermissionCatalogEntry = {
@@ -69,6 +70,12 @@ export const ADMIN_PERMISSION_CATALOG: readonly PermissionCatalogEntry[] = [
     group: "Daily work",
     label: "Quotations",
     description: "Draft, send, and follow bespoke quotations.",
+  },
+  {
+    key: "chat",
+    group: "Daily work",
+    label: "Live chat",
+    description: "Answer the live chat: open, claim, reply to and close conversations. Chat hours and settings stay with Admins.",
   },
   {
     key: "invoices",

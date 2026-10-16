@@ -10,6 +10,7 @@ import {
   CHAT_NOTIFY_EMAIL_KEY,
   STAFF_ROUTED_ALERTS,
   alertRecipientCandidates,
+  eligibleFor,
   readAlertRouting,
   type AlertKind,
 } from "@/lib/admin-alerts";
@@ -92,8 +93,16 @@ export async function PUT(req: NextRequest) {
       );
     }
     const candidates = new Map((await alertRecipientCandidates()).map((c) => [c.id, c]));
-    if (ids.some((id) => !candidates.has(id))) {
-      return NextResponse.json({ error: "Recipients must be active admins." }, { status: 400 });
+    if (ids.some((id) => !candidates.has(id) || !eligibleFor(kind, candidates.get(id)!))) {
+      return NextResponse.json(
+        {
+          error:
+            kind === "chat"
+              ? "Chat recipients must be active people with Live chat."
+              : "Recipients must be active admins.",
+        },
+        { status: 400 },
+      );
     }
     const unmailable = channel === "email" ? ids.map((id) => candidates.get(id)!).find((c) => !c.mailable) : undefined;
     if (unmailable) {

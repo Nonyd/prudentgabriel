@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { requireGeneralAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { getClientIp } from "@/lib/rate-limit";
 import { claimConversation, releaseConversation } from "@/lib/chat-claim";
 
@@ -15,7 +15,7 @@ const bodySchema = z.object({ takeover: z.boolean().default(false) });
  * the holder just says "still here".
  */
 export async function POST(req: NextRequest, { params }: Params) {
-  const gate = await requireGeneralAdminApi();
+  const gate = await requireAdminApi("chat");
   if (!gate.ok) return gate.response;
   const { id } = await params;
   const parsed = bodySchema.safeParse((await req.json().catch(() => ({}))) ?? {});
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
 /** Release it back to the pool. Only the holder can. */
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const gate = await requireGeneralAdminApi();
+  const gate = await requireAdminApi("chat");
   if (!gate.ok) return gate.response;
   const { id } = await params;
   const released = await releaseConversation(id, gate.session.user.id!);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ChatAuthor, ChatStatus } from "@prisma/client";
-import { requireGeneralAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { getClientIp } from "@/lib/rate-limit";
 import { staffChatName } from "@/lib/chat";
@@ -15,7 +15,7 @@ import { threadChanged } from "@/lib/chat-bus";
  * upload path and allowlist as hers; sending claims the conversation like a reply.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const gate = await requireGeneralAdminApi();
+  const gate = await requireAdminApi("chat");
   if (!gate.ok) return gate.response;
   const { id } = await params;
   const user = gate.session.user;

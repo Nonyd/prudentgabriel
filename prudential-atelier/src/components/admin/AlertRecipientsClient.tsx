@@ -5,7 +5,15 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { Bell, Mail } from "lucide-react";
 
-type Candidate = { id: string; name: string; email: string; role: string; mailable: boolean };
+type Candidate = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  mailable: boolean;
+  admin: boolean;
+  chat: boolean;
+};
 type KindView = {
   id: string;
   label: string;
@@ -36,8 +44,22 @@ async function save(kind: string, channel: Channel, userIds: string[] | null): P
   return j;
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: "Super Admin",
+  ADMIN: "Admin",
+  STAFF_ADMIN: "Staff admin",
+  BESPOKE_MANAGER: "Atelier manager",
+  RTW_MANAGER: "Ready-to-wear manager",
+  CONTENT_MANAGER: "Content manager",
+  FINANCE_MANAGER: "Finance manager",
+  HR_MANAGER: "HR manager",
+  CONSULTATION_MANAGER: "Consultation manager",
+  STORE_MANAGER: "Store manager",
+  STAFF: "Staff",
+};
+
 function roleLabel(role: string) {
-  return role === "SUPER_ADMIN" ? "Super Admin" : "Admin";
+  return ROLE_LABELS[role] ?? role.replace(/_/g, " ").toLowerCase();
 }
 
 /** One channel of one alert: who is told now, and the means to change it. */
@@ -259,7 +281,7 @@ export function AlertRecipientsClient() {
                       defaultLabel={
                         [k.emailDefaultNote, k.emailDefault ?? "no alert address is set"].filter(Boolean).join(" ")
                       }
-                      candidates={view.candidates}
+                      candidates={view.candidates.filter((c) => (k.id === "chat" ? c.chat : c.admin))}
                       onSaved={setView}
                     />
                   ) : null}
@@ -269,7 +291,7 @@ export function AlertRecipientsClient() {
                       channel="bell"
                       named={k.bell}
                       defaultLabel={k.bellDefault ?? "Everyone who handles it"}
-                      candidates={view.candidates}
+                      candidates={view.candidates.filter((c) => (k.id === "chat" ? c.chat : c.admin))}
                       onSaved={setView}
                     />
                   ) : null}

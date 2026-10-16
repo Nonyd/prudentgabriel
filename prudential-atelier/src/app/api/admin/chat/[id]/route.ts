@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ChatAuthor, ChatStatus } from "@prisma/client";
 import { z } from "zod";
-import { requireGeneralAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { getClientIp } from "@/lib/rate-limit";
 import { CHAT_AWAY_MS, getChatStaffing, staffChatName } from "@/lib/chat";
@@ -20,7 +20,7 @@ type Params = { params: Promise<{ id: string }> };
  * and every correction (BF8); takeovers show as internal lines (BF5).
  */
 export async function GET(_req: NextRequest, { params }: Params) {
-  const gate = await requireGeneralAdminApi();
+  const gate = await requireAdminApi("chat");
   if (!gate.ok) return gate.response;
   const { id } = await params;
   // Everything but the capability token.
@@ -107,7 +107,7 @@ const replySchema = z.object({ body: z.string().trim().min(1).max(CHAT_MESSAGE_M
  * looked for a couple of minutes) the reply is also emailed.
  */
 export async function POST(req: NextRequest, { params }: Params) {
-  const gate = await requireGeneralAdminApi();
+  const gate = await requireAdminApi("chat");
   if (!gate.ok) return gate.response;
   const { id } = await params;
   const parsed = replySchema.safeParse(await req.json().catch(() => null));
@@ -176,7 +176,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 const patchSchema = z.object({ status: z.nativeEnum(ChatStatus) });
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const gate = await requireGeneralAdminApi();
+  const gate = await requireAdminApi("chat");
   if (!gate.ok) return gate.response;
   const { id } = await params;
   const parsed = patchSchema.safeParse(await req.json().catch(() => null));

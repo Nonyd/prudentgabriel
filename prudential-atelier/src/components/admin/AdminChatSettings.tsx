@@ -22,6 +22,8 @@ export type ChatSettingsView = {
   recipients: { email: string[] | null; bell: string[] | null };
   candidates: Candidate[];
   canChooseRecipients: boolean;
+  /** Admins and the Super Admin change chat settings; others with Live chat only answer. */
+  canEdit: boolean;
 };
 
 async function patch(body: unknown): Promise<ChatSettingsView> {
@@ -64,7 +66,9 @@ function RecipientList({
             onChange={(e) => onChange(e.target.checked ? [...value, c.id] : value.filter((v) => v !== c.id))}
           />
           {c.name}
-          <span className="text-xs text-text-mid">{c.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}</span>
+          <span className="text-xs text-text-mid">
+            {c.role === "SUPER_ADMIN" ? "Super Admin" : c.role === "ADMIN" ? "Admin" : c.role.replace(/_/g, " ").toLowerCase()}
+          </span>
         </label>
       ))}
     </fieldset>
@@ -158,6 +162,15 @@ export function AdminChatSettings() {
   }
 
   if (!s) return null;
+  // Chat answerers who are not Admins see the state, not the knobs.
+  if (!s.canEdit) {
+    return (
+      <p className="mt-4 glass-1 p-4 font-body text-sm text-ink">
+        Chat is <strong>{s.enabled ? "on" : "off"}</strong>
+        {s.enabled ? <> · {s.live ? "open now" : `closed now${s.opensLabel ? `, opens ${s.opensLabel}` : ""}`}</> : null}
+      </p>
+    );
+  }
   return (
     <details className="mt-4 glass-1 p-4 font-body text-sm" open={!s.enabled}>
       <summary className="cursor-pointer text-ink">
