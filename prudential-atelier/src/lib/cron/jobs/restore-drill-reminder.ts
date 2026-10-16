@@ -1,7 +1,6 @@
 import type { CronJobContext, JobResult } from "@/lib/cron/types";
 import { sendEmail } from "@/lib/email";
-import { getSetting } from "@/lib/settings";
-import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
+import { alertEmailTargets } from "@/lib/admin-alerts";
 
 /**
  * AZ10: a restore proved once is a restore nobody knows is broken next quarter.
@@ -10,10 +9,10 @@ import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
  * It only reminds; the drill itself is run by hand on the server.
  */
 export async function run(ctx: CronJobContext): Promise<JobResult> {
-  const to = await resolveAdminAlertEmail(getSetting);
-  if (!to) return { processed: 0, failed: 0, hasMore: false, detail: { skipped: "no alert address" } };
+  const targets = await alertEmailTargets("system");
+  if (targets.length === 0) return { processed: 0, failed: 0, hasMore: false, detail: { skipped: "no alert address" } };
   const quarter = `${ctx.now.getUTCFullYear()}-Q${Math.floor(ctx.now.getUTCMonth() / 3) + 1}`;
-  await sendEmail({
+  for (const { to } of targets) await sendEmail({
     to,
     subject: `Restore drill due — ${quarter} | Prudent Gabriel`,
     html: [
@@ -24,5 +23,5 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
     template: "restore-drill-reminder",
     idempotencyKey: `restore-drill-reminder:${quarter}:${to}`,
   });
-  return { processed: 1, failed: 0, hasMore: false, detail: { quarter } };
+  return { processed: targets.length, failed: 0, hasMore: false, detail: { quarter } };
 }

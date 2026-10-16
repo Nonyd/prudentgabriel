@@ -243,6 +243,10 @@ export default auth(async function middleware(request) {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
 
+    if (pathname.startsWith("/admin/settings/alert-recipients") && role !== "SUPER_ADMIN") {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+
     if (pathname.startsWith("/admin/settings/users") && role !== "SUPER_ADMIN") {
       return NextResponse.redirect(new URL("/admin", request.url));
     }

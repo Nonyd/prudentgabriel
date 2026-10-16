@@ -88,6 +88,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
         was completed on ${completedAt} and still has no quotation.</p>
         <p><a href="${adminUrl}">Open consultation</a></p>`,
         `unsent-quote-admin:${booking.id}`,
+        "quotations",
       );
 
       const staffUser = await resolveConsultantStaffUser(booking.consultant.name);

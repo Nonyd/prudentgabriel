@@ -7,8 +7,7 @@ import { sendEmail } from "@/lib/email";
 import { reportEmailHtml } from "@/lib/email-templates/reports";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
-import { getSetting } from "@/lib/settings";
-import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
+import { alertEmailTargets } from "@/lib/admin-alerts";
 import { takings } from "@/lib/finance/takings";
 
 export async function POST(req: NextRequest) {
@@ -112,8 +111,7 @@ export async function POST(req: NextRequest) {
       appUrl,
     );
 
-    const operational = await resolveAdminAlertEmail(getSetting);
-    const recipients = operational ? [operational] : [];
+    const recipients = (await alertEmailTargets("reports")).map((t) => t.to);
 
     for (const email of recipients) {
       await sendEmail({

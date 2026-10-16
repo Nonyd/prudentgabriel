@@ -3,13 +3,11 @@ import { rateLimitOr429 } from "@/lib/rate-limit";
 import { QuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logActivity, logError } from "@/lib/logger";
-import { sendEmail } from "@/lib/email";
+import { sendAdminNotificationEmail } from "@/lib/email";
 import { notifyQuoteApproved } from "@/lib/notifications";
 import { maybeAutoConvertApprovedQuote } from "@/lib/quotation-convert";
 import { findLatestQuotationVersion } from "@/lib/quotation-versioning";
 import { getPublicAppUrl } from "@/lib/app-url";
-import { getSetting } from "@/lib/settings";
-import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
 import {
   ensureQuoteApprovalRaw,
 } from "@/lib/capability-token-lookup";
@@ -96,18 +94,13 @@ export async function POST(req: NextRequest, { params }: Params) {
       userEmail: quote.clientEmail,
     });
 
-    const adminTo = await resolveAdminAlertEmail(getSetting);
-    if (adminTo) {
-      void sendEmail({
-        to: adminTo,
-        subject: `Quote approved — ${quote.quoteRef}`,
-        html: `<p>${quote.clientName} (${quote.clientEmail}) approved quotation ${quote.quoteRef}.</p>`,
-        template: "quote-approved-admin",
-        idempotencyKey: `quote-approved:${quote.id}`,
-        relatedType: "Quotation",
-        relatedId: quote.id,
-      }).catch(() => undefined);
-    }
+    void sendAdminNotificationEmail(
+      `Quote approved — ${quote.quoteRef}`,
+      `<p>${escapeHtml(quote.clientName)} (${escapeHtml(quote.clientEmail)}) approved quotation ${escapeHtml(quote.quoteRef)}.</p>`,
+      `quote-approved:${quote.id}`,
+      "quotations",
+      { relatedType: "Quotation", relatedId: quote.id },
+    ).catch(() => undefined);
 
     notifyQuoteApproved(quote);
     void maybeAutoConvertApprovedQuote(quote.id);
@@ -121,4 +114,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 }

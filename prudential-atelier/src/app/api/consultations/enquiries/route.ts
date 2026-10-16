@@ -131,6 +131,7 @@ export async function POST(req: NextRequest) {
        ${shortNotice ? "<p><strong>Short notice: call her about an express commission.</strong></p>" : ""}
        <p><a href="${getPublicAppUrl()}/admin/consultations/enquiries?open=${enquiry.id}">Open the enquiry queue</a></p>`,
       `consultation-enquiry-admin:${enquiry.id}`,
+      "consultations",
     );
     await sendUsingCatalog({
       key: EMAIL_TEMPLATE_KEYS.CONSULTATION_ENQUIRY_RECEIVED,

@@ -49,6 +49,7 @@ const TESTS = [
   "test-slice-s",
   "test-slice-x",
   "test-slice-z4",
+  "test-who-is-told",
 ];
 
 const failed = [];

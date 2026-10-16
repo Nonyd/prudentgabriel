@@ -1,6 +1,7 @@
 import { ChatContextKind, type ChatAuthor } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSetting } from "@/lib/settings";
+import { CHAT_NOTIFY_BELL_KEY, CHAT_NOTIFY_EMAIL_KEY } from "@/lib/admin-alerts";
 import { PUBLIC_PRODUCT_WHERE } from "@/lib/product-visibility";
 import { generateCapabilityToken, hashCapabilityToken, isLegacyCuidToken } from "@/lib/capability-token";
 import { CHAT_COOKIE, isAtelierPath, replyRoute, type ChatMessageView } from "@/lib/chat-shared";
@@ -197,8 +198,8 @@ export const CHAT_GIVEUP_MIN_KEY = "chat_unanswered_giveup_min";
 /** BF5: minutes without a sign from the handler before the conversation returns to the pool. */
 export const CHAT_CLAIM_IDLE_MIN_KEY = "chat_claim_idle_min";
 /** BF9: who is told, by user id (JSON lists), for email and the bell separately. */
-export const CHAT_NOTIFY_EMAIL_KEY = "chat_notify_email_user_ids";
-export const CHAT_NOTIFY_BELL_KEY = "chat_notify_bell_user_ids";
+/** Also read and written by Settings → Who is told (lib/admin-alerts). */
+export { CHAT_NOTIFY_EMAIL_KEY, CHAT_NOTIFY_BELL_KEY };
 
 /** Defaults used until the house changes them; every one is a setting, none a constant in the code paths. */
 export const CHAT_DEFAULTS = {

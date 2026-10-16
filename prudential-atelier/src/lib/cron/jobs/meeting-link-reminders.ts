@@ -55,6 +55,7 @@ async function remindAdminsWithoutLink(ctx: CronJobContext, horizon: Date, floor
 <p>Paste the Google Meet or Zoom link under the date and time on the booking and press <strong>Send link to client</strong>.</p>
 <p><a href="${getPublicAppUrl()}${path}">Open the booking</a></p>`,
       `meeting-link-admin-reminder:${booking.bookingNumber}`,
+      "consultations",
     );
     reminded += 1;
   }

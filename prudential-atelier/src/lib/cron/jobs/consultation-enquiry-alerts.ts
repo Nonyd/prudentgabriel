@@ -42,6 +42,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
         `<p>${enquiry.enquiryNumber} from <strong>${enquiry.clientName.replace(/[<>&]/g, "")}</strong> has waited over a day for a decision${enquiry.shortNotice ? " and her event is close" : ""}.</p>
          <p><a href="${getPublicAppUrl()}/admin/consultations/enquiries?open=${enquiry.id}">Open the enquiry queue</a></p>`,
         `consultation-enquiry-waiting:${enquiry.id}`,
+        "consultations",
       );
       processed += 1;
     } catch (e) {

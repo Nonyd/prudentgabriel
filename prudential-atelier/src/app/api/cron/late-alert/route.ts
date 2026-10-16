@@ -4,8 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { validateCronSecret } from "@/lib/api-auth";
 import { logError } from "@/lib/logger";
 import { sendEmail } from "@/lib/email";
-import { getSetting } from "@/lib/settings";
-import { resolveHrAlertEmail } from "@/lib/admin-alert-email";
+import { alertEmailTargets } from "@/lib/admin-alerts";
 
 function startOfToday(): Date {
   const d = new Date();
@@ -46,8 +45,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const hrEmail = await resolveHrAlertEmail(getSetting);
-    if (!hrEmail) {
+    const hrTargets = await alertEmailTargets("attendance");
+    if (hrTargets.length === 0) {
       return NextResponse.json({ ok: true, skipped: "no_hr_mailbox", absentCount: absent.length });
     }
 
@@ -58,17 +57,21 @@ export async function POST(req: NextRequest) {
       )
       .join("");
 
-    await sendEmail({
-      to: hrEmail,
-      subject: `[Prudential Atelier] Late resumption alert — ${absent.length} staff not clocked in`,
-      html: `
+    for (const t of hrTargets) {
+      await sendEmail({
+        to: t.to,
+        subject: `[Prudential Atelier] Late resumption alert — ${absent.length} staff not clocked in`,
+        html: `
         <p>The following staff members have not clocked in by ${resumptionTime} today:</p>
         <ul>${listHtml}</ul>
         <p>Date: ${today.toLocaleDateString("en-GB")}</p>
       `,
-      template: "late-alert",
-      idempotencyKey: `late-alert:${today.toISOString().slice(0, 10)}`,
-    });
+        template: "late-alert",
+        idempotencyKey: t.userId
+          ? `late-alert:${today.toISOString().slice(0, 10)}:${t.userId}`
+          : `late-alert:${today.toISOString().slice(0, 10)}`,
+      });
+    }
 
     return NextResponse.json({
       ok: true,

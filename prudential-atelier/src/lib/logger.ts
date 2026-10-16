@@ -1,6 +1,7 @@
 import { ActivityAction, ErrorSeverity } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { queueEmail } from "@/lib/email-outbox";
+import { alertEmailTargets } from "@/lib/admin-alerts";
 import { getAdminImpersonation } from "@/lib/admin-impersonate";
 
 export async function logActivity(params: {
@@ -68,14 +69,20 @@ export async function logError(params: {
   try {
     await prisma.errorLog.create({ data: params });
 
-    if (params.severity === "CRITICAL" && process.env.SUPER_ADMIN_EMAIL) {
-      await queueEmail({
-        to: process.env.SUPER_ADMIN_EMAIL,
-        subject: `[Prudential Atelier] Critical error: ${params.errorType}`,
-        html: `<p>${params.message}</p><pre>${params.stack ?? ""}</pre>`,
-        template: "critical-error",
-        idempotencyKey: `critical-error:${params.errorType}:${Date.now()}`,
-      }).catch(() => undefined);
+    if (params.severity === "CRITICAL") {
+      // The people named for system problems, else the Super Admin's own address (never the shop mailbox).
+      const envTo = process.env.SUPER_ADMIN_EMAIL?.trim() || null;
+      const targets = (await alertEmailTargets("system", envTo).catch(() => [])).filter((t) => t.userId || envTo);
+      const stamp = Date.now();
+      for (const t of targets) {
+        await queueEmail({
+          to: t.to,
+          subject: `[Prudential Atelier] Critical error: ${params.errorType}`,
+          html: `<p>${params.message}</p><pre>${params.stack ?? ""}</pre>`,
+          template: "critical-error",
+          idempotencyKey: `critical-error:${params.errorType}:${stamp}:${t.userId ?? "env"}`,
+        }).catch(() => undefined);
+      }
     }
   } catch (error) {
     console.error("[error-log]", params, error);

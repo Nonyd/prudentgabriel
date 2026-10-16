@@ -7,8 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { rateLimitOr429, getClientIp } from "@/lib/rate-limit";
-import { getSetting } from "@/lib/settings";
-import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
+import { alertEmailTargets } from "@/lib/admin-alerts";
 
 export async function POST(req: NextRequest) {
   const limited = await rateLimitOr429(req, "contact-form", 5, 15 * 60 * 1000);
@@ -36,7 +35,6 @@ export async function POST(req: NextRequest) {
   }
 
   const cmsInbox = cmsGet(cms, "contact_notification_email", "").trim();
-  const contactEmail = cmsInbox || (await resolveAdminAlertEmail(getSetting));
   const autoReplyMessage = cmsGet(
     cms,
     "contact_auto_reply_message",
@@ -67,22 +65,24 @@ export async function POST(req: NextRequest) {
     link: `/admin/content/messages`,
   }).catch(() => {});
 
-  if (contactEmail) {
+  // Named people (Settings → Who is told), else the contact inbox, else the alert mailbox.
+  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  for (const t of await alertEmailTargets("contact", cmsInbox)) {
     await sendEmail({
-      to: contactEmail,
+      to: t.to,
       subject: `New contact: ${subject} — ${name}`,
       html: `
       <h2>New Contact Form Submission</h2>
-      <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Email:</strong> ${email}</p>
-      <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
-      <p><strong>Subject:</strong> ${subject}</p>
+      <p><strong>Name:</strong> ${esc(name)}</p>
+      <p><strong>Email:</strong> ${esc(email)}</p>
+      <p><strong>Phone:</strong> ${phone ? esc(phone) : "Not provided"}</p>
+      <p><strong>Subject:</strong> ${esc(subject)}</p>
       <p><strong>Message:</strong></p>
       <p>${safeMessage}</p>
       <p><a href="${appUrl}/admin/content/messages">View in admin messages →</a></p>
     `,
       template: "contact-admin",
-      idempotencyKey: `contact-admin:${saved.id}`,
+      idempotencyKey: t.userId ? `contact-admin:${saved.id}:${t.userId}` : `contact-admin:${saved.id}`,
       relatedType: "ContactMessage",
       relatedId: saved.id,
     }).catch(() => {});

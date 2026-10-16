@@ -46,6 +46,7 @@ const PATH_RULES: PathRule[] = [
 
   { prefix: "/admin/settings/developer", gate: perm("settings.developer") },
   { prefix: "/admin/settings/users", gate: { type: "super_admin" } },
+  { prefix: "/admin/settings/alert-recipients", gate: { type: "super_admin" } },
   { prefix: "/admin/settings/roles", gate: { type: "general_admin" } },
   { prefix: "/admin/settings/bank-accounts", gate: perm(["settings", "settings.bank-accounts"]) },
   { prefix: "/admin/settings/invoice", gate: perm("settings") },
@@ -308,6 +309,7 @@ export const ADMIN_PAGE_OWNERS: readonly {
   { path: "/admin/settings/invoice", owns: "Business details, VAT, invoice numbering (not house banks)", linksTo: "Settings hub" },
   { path: "/admin/settings/email", owns: "From-name, reply-to, SMS flags (not API keys)", linksTo: "Settings hub + Nav" },
   { path: "/admin/settings/notifications", owns: "Notification flags", linksTo: "Nav" },
+  { path: "/admin/settings/alert-recipients", owns: "Who is told about each kind of alert (Super Admin)", linksTo: "Nav" },
   { path: "/admin/settings/developer", owns: "All credentials", linksTo: "Nav" },
   { path: "/admin/settings/users", owns: "Users, roles, impersonation, password reset links", linksTo: "Nav" },
   { path: "/admin/settings/roles", owns: "Job role templates", linksTo: "Nav" },
@@ -524,6 +526,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
       { href: "/admin/settings", label: "General", icon: "settings" },
       { href: "/admin/settings/email", label: "Email", icon: "email" },
       { href: "/admin/settings/notifications", label: "Notifications", icon: "notifications" },
+      { href: "/admin/settings/alert-recipients", label: "Who is told", icon: "notifications" },
       { href: "/admin/settings/developer", label: "Developer", icon: "developer" },
       { href: "/admin/settings/users", label: "Users & Roles", icon: "users" },
       { href: "/admin/settings/roles", label: "Job roles", icon: "roles" },

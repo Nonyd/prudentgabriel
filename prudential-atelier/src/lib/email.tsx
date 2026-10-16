@@ -46,8 +46,7 @@ import { brandSignOff, renderInEmailScope, type EmailSignOff } from "@/emails/co
 import { prisma } from "@/lib/prisma";
 import { queueEmail } from "@/lib/email-outbox";
 import { logError } from "@/lib/logger";
-import { getSetting } from "@/lib/settings";
-import { resolveAdminAlertEmail, resolveHrAlertEmail } from "@/lib/admin-alert-email";
+import { alertEmailTargets, type AlertKind } from "@/lib/admin-alerts";
 import { UNSUBSCRIBE_URL_PLACEHOLDER, EMAIL_PRIORITY_MARKETING } from "@/lib/email-priority";
 import type { EmailFamily } from "@/emails/components/email-tokens";
 
@@ -191,8 +190,8 @@ export async function sendBankTransferAdminNotification(params: {
   receiptUrl: string;
   adminPath?: string;
 }): Promise<void> {
-  const adminEmail = await resolveAdminAlertEmail(getSetting);
-  if (!adminEmail) {
+  const targets = await alertEmailTargets("payments");
+  if (targets.length === 0) {
     console.log("[EMAIL bank-transfer-admin] no operational mailbox configured");
     return;
   }
@@ -201,21 +200,24 @@ export async function sendBankTransferAdminNotification(params: {
   const adminLink = adminHref
     ? ` · <a href="${escapeHtml(adminHref)}">Open in admin</a>`
     : "";
-  await sendUsingCatalog({
-    key: EMAIL_TEMPLATE_KEYS.BANK_TRANSFER_ADMIN,
-    to: adminEmail,
-    vars: {
-      firstName: params.clientName,
-      orderRef: params.ref,
-      amount: `₦${params.amountNGN.toLocaleString("en-NG")}`,
-      link: adminHref || receiptHref,
-    },
-    extraHtml: `<p><a href="${escapeHtml(receiptHref)}">View receipt</a>${adminLink}</p>`,
-    outboxTemplate: "bank-transfer-admin",
-    idempotencyKey: `bank-receipt-admin:${params.ref}:${keyPart(params.receiptUrl)}`,
-    relatedType: "Payment",
-    relatedId: params.ref,
-  });
+  const key = `bank-receipt-admin:${params.ref}:${keyPart(params.receiptUrl)}`;
+  for (const t of targets) {
+    await sendUsingCatalog({
+      key: EMAIL_TEMPLATE_KEYS.BANK_TRANSFER_ADMIN,
+      to: t.to,
+      vars: {
+        firstName: params.clientName,
+        orderRef: params.ref,
+        amount: `₦${params.amountNGN.toLocaleString("en-NG")}`,
+        link: adminHref || receiptHref,
+      },
+      extraHtml: `<p><a href="${escapeHtml(receiptHref)}">View receipt</a>${adminLink}</p>`,
+      outboxTemplate: "bank-transfer-admin",
+      idempotencyKey: t.userId ? `${key}:${t.userId}` : key,
+      relatedType: "Payment",
+      relatedId: params.ref,
+    });
+  }
 }
 
 export async function sendPaymentConfirmedEmail(params: {
@@ -358,11 +360,11 @@ export async function sendRtwFulfilmentRefusedEmails(params: {
     relatedId: params.orderId,
   });
 
-  const adminTo = await resolveAdminAlertEmail(getSetting);
-  if (adminTo && adminTo.toLowerCase() !== params.to.toLowerCase()) {
+  for (const t of await alertEmailTargets("orders")) {
+    if (t.to.toLowerCase() === params.to.toLowerCase()) continue;
     await sendUsingCatalog({
       key: EMAIL_TEMPLATE_KEYS.RTW_FULFILMENT_REFUSED_ADMIN,
-      to: adminTo,
+      to: t.to,
       vars: {
         firstName: params.firstName,
         orderRef: params.orderNumber,
@@ -371,7 +373,9 @@ export async function sendRtwFulfilmentRefusedEmails(params: {
         link: `${getPublicAppUrl()}/admin/orders/${params.orderId}`,
       },
       outboxTemplate: "rtw-fulfilment-refused-admin",
-      idempotencyKey: `rtw-fulfil-refused-admin:${params.orderId}`,
+      idempotencyKey: t.userId
+        ? `rtw-fulfil-refused-admin:${params.orderId}:${t.userId}`
+        : `rtw-fulfil-refused-admin:${params.orderId}`,
       relatedType: "Order",
       relatedId: params.orderId,
     });
@@ -1117,26 +1121,35 @@ export async function sendStageChangesRequestedEmail(params: {
   });
 }
 
+/**
+ * A house alert. Goes to the people the Super Admin named for this kind
+ * (Settings → Who is told), else to the kind's mailbox, as before.
+ */
 export async function sendAdminNotificationEmail(
   subject: string,
   htmlInner: string,
-  idempotencyKey?: string,
-  mailbox: "operational" | "hr" = "operational",
+  idempotencyKey: string | undefined,
+  kind: AlertKind,
+  opts?: { fallbackTo?: string | null; relatedType?: string; relatedId?: string },
 ): Promise<void> {
-  const admin =
-    mailbox === "hr" ? await resolveHrAlertEmail(getSetting) : await resolveAdminAlertEmail(getSetting);
-  if (!admin) {
+  const targets = await alertEmailTargets(kind, opts?.fallbackTo);
+  if (targets.length === 0) {
     console.log("[EMAIL admin]", subject);
     return;
   }
   await primeEmailBranding();
-  await sendEmail({
-    to: admin,
-    subject,
-    html: wrapHtml("Admin", htmlInner),
-    template: "admin-notification",
-    idempotencyKey: idempotencyKey ?? `admin-notify:${subject}`,
-  });
+  const key = idempotencyKey ?? `admin-notify:${subject}`;
+  for (const t of targets) {
+    await sendEmail({
+      to: t.to,
+      subject,
+      html: wrapHtml("Admin", htmlInner),
+      template: "admin-notification",
+      idempotencyKey: t.userId ? `${key}:${t.userId}` : key,
+      relatedType: opts?.relatedType,
+      relatedId: opts?.relatedId,
+    });
+  }
 }
 
 /** BF9: the same admin notification, to one named member of the house. */
@@ -1503,6 +1516,7 @@ export async function sendAdminConsultationNotification(params: {
     `New Consultation Booking — #${params.bookingNumber}${tag}`,
     inner,
     `consultation-admin:${params.bookingNumber}`,
+    "consultations",
   );
 }
 
@@ -1625,7 +1639,7 @@ export async function sendJobApplicationAdminEmail(params: {
       <p><a href="${reviewUrl}">Review application</a></p>
     `,
     `job-application-admin:${params.applicationId}`,
-    "hr",
+    "careers",
   );
 }
 

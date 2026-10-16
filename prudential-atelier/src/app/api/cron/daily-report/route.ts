@@ -8,8 +8,7 @@ import { reportEmailHtml } from "@/lib/email-templates/reports";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { listRefundRequiredOrders, oversellReportHtml } from "@/lib/oversell-report";
-import { getSetting } from "@/lib/settings";
-import { resolveAdminAlertEmail } from "@/lib/admin-alert-email";
+import { alertEmailTargets } from "@/lib/admin-alerts";
 import { workroomDay } from "@/lib/atelier/work-log";
 import { takings } from "@/lib/finance/takings";
 import { financeRange } from "@/lib/finance/period";
@@ -164,8 +163,7 @@ export async function POST(req: NextRequest) {
       appUrl,
     );
 
-    const operational = await resolveAdminAlertEmail(getSetting);
-    const recipients = operational ? [operational] : [];
+    const recipients = (await alertEmailTargets("reports")).map((t) => t.to);
 
     for (const to of recipients) {
       await sendEmail({

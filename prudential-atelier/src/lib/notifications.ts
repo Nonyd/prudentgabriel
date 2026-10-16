@@ -9,6 +9,7 @@ import type {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { targetsForAdminNotificationType } from "@/lib/admin-notification-access";
+import { alertBellUserIds } from "@/lib/admin-alerts";
 
 function formatNGN(n: number): string {
   return `₦${Math.round(n).toLocaleString("en-NG")}`;
@@ -25,7 +26,14 @@ export async function createNotification(params: {
   /** BF9: name the people instead of the desks; only they see the row. */
   targetUserIds?: string[];
 }): Promise<void> {
-  const named = params.targetUserIds?.length ? params.targetUserIds : null;
+  // A caller that names its people or its desks keeps them (staff work, requisitions).
+  // Otherwise the Super Admin's choice for this kind of alert, if she made one.
+  const explicit = Boolean(params.targetUserIds?.length || params.targetPermissions?.length);
+  const named = params.targetUserIds?.length
+    ? params.targetUserIds
+    : explicit
+      ? null
+      : await alertBellUserIds(params.type).catch(() => null);
   await prisma.adminNotification.create({
     data: {
       type: params.type,

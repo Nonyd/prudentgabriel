@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { isGeneralAdminRole } from "@/lib/admin-auth";
 import { createNotification } from "@/lib/notifications";
+import { isUndeliverableAlertAddress } from "@/lib/admin-alert-email";
 import { sendAdminNotificationEmail, sendStaffNotificationEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { getChatStaffing, type ChatStaffing } from "@/lib/chat";
@@ -63,7 +64,7 @@ export async function notifyChat(params: {
   }).catch(() => {});
 
   const html = `<p>${esc(params.message)}</p><p><a href="${url}">Open the chat</a></p>`;
-  const emailTo = await usable(s.notifyEmailUserIds);
+  const emailTo = (await usable(s.notifyEmailUserIds)).filter((u) => !isUndeliverableAlertAddress(u.email));
   if (emailTo.length) {
     for (const u of emailTo) {
       await sendStaffNotificationEmail({
@@ -76,7 +77,7 @@ export async function notifyChat(params: {
       }).catch(() => {});
     }
   } else {
-    await sendAdminNotificationEmail(params.title, html, key).catch(() => {});
+    await sendAdminNotificationEmail(params.title, html, key, "chat").catch(() => {});
   }
   return { bell: bellTo.length ? "named" : "desk", email: emailTo.length ? "named" : "desk", emailed: emailTo.length };
 }

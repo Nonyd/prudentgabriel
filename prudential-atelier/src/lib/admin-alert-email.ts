@@ -5,6 +5,11 @@ const UNDELIVERABLE = new Set([
   "hello@prudentgabriel.com",
 ]);
 
+/** True for an address that cannot receive an alert (outbound-only or bouncing house mailboxes). */
+export function isUndeliverableAlertAddress(raw: string | null | undefined): boolean {
+  return usable(raw) === null;
+}
+
 function usable(raw: string | null | undefined): string | null {
   const email = raw?.trim().toLowerCase();
   if (!email || !email.includes("@")) return null;

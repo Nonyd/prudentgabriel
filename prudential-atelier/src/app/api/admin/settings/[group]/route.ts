@@ -1,3 +1,4 @@
+import { isWhoIsToldSettingKey } from "@/lib/admin-alerts";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { permissionForSettingsGroup, requireAdminApi, resolveSessionAccess } from "@/lib/admin-auth";
@@ -96,6 +97,7 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ group: s
   });
 
   const visible = redactSettingsForRole(rows).filter((r) => {
+    if (isWhoIsToldSettingKey(r.key)) return false;
     if (group === "PAYMENTS") return COMMERCIAL_PAYMENTS_KEYS.has(r.key);
     return true;
   });
@@ -160,6 +162,13 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ group: 
 
   const { role, actor } = await resolveSessionAccess(gate.session);
   const keys = parsed.data.updates.map((u) => u.key);
+  const whoIsTold = keys.find(isWhoIsToldSettingKey);
+  if (whoIsTold) {
+    return NextResponse.json(
+      { error: "Who is told about alerts is chosen by the Super Admin under Settings → Who is told." },
+      { status: 403 },
+    );
+  }
   const denied = deniedDeveloperWriteKey(role, keys, actor);
   if (denied) {
     if (isEmailTemplateSettingKey(denied)) {

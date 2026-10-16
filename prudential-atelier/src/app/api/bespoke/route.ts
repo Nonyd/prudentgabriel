@@ -163,6 +163,8 @@ export async function POST(req: NextRequest) {
     `New bespoke request ${requestNumber}`,
     // Visitor text: escaped, since admins preview this mail in the outbox.
     `<p>${escapeHtml(d.name)} — ${escapeHtml(d.email)}</p><p>${escapeHtml(d.description)}</p>`,
+    undefined,
+    "atelier",
   );
 
   return NextResponse.json({ success: true, requestNumber });

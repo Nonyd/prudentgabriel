@@ -1,3 +1,4 @@
+import { isWhoIsToldSettingKey } from "@/lib/admin-alerts";
 import { NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
@@ -30,7 +31,7 @@ export async function GET() {
   });
 
   const visible = redactSettingsForRole(rows).filter(
-    (r) => !isDeveloperSettingKey(r.key) && !isEmailTemplateSettingKey(r.key),
+    (r) => !isDeveloperSettingKey(r.key) && !isEmailTemplateSettingKey(r.key) && !isWhoIsToldSettingKey(r.key),
   );
 
   const settings: Partial<

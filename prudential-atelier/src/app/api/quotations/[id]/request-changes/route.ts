@@ -86,6 +86,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 <p style="padding-left:12px;border-left:2px solid #e2d1c2;white-space:pre-line;">${escapeHtml(message)}</p>
 <p><a href="${getPublicAppUrl()}${adminLink}">Open the quotation to reply or revise it</a></p>`,
       `quote-changes-requested:${request.id}`,
+      "quotations",
     ).catch(() => undefined);
 
     void logActivity({

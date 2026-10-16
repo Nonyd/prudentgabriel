@@ -47,5 +47,6 @@ export async function notifyBespokeBalancePaid(params: {
 <p>Reference: ${esc(params.paymentRef)}<br/>Agreed price: ${formatNGN(amountNGN)}</p>
 <p><a href="${appUrl}/admin/bespoke/intake/${request.id}">Open the request</a></p>`,
     `bespoke-balance-paid-admin:${params.paymentRef}`,
+    "payments",
   );
 }
