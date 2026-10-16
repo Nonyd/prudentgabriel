@@ -90,7 +90,10 @@ export const emptyableStoredPublicMediaUrlSchema = z
   .transform((val) => (val == null ? undefined : val.trim()))
   .refine((val) => val === undefined || val === "" || isStoredPublicMediaUrl(val), {
     message: "Invalid media URL",
-  });
+  })
+  // Zod 4: a union with a transform is required unless marked optional, so a
+  // save that left the field out (most of them) failed with "image: Invalid input".
+  .optional();
 
 export const optionalStoredPrivateMediaUrlSchema = z
   .union([z.string(), z.null(), z.undefined()])
@@ -101,4 +104,5 @@ export const optionalStoredPrivateMediaUrlSchema = z
   })
   .refine((val) => val === null || isStoredPrivateMediaUrl(val), {
     message: "Use a /media/ path or an https file URL",
-  });
+  })
+  .optional();

@@ -50,6 +50,7 @@
     "test:data-protection": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-data-protection.ts",
     "render:cron": "tsx --tsconfig tsconfig.scripts.json scripts/render-host-cron.ts",
     "test:email-outbox": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-email-outbox.ts",
+    "test:media-url-schemas": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-media-url-schemas.ts",
     "test:owner-email-change": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-owner-email-change.ts",
     "media:migrate": "tsx --tsconfig tsconfig.scripts.json scripts/migrate-cloudinary-media.ts",
     "test:slice-y": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-slice-y.ts",

@@ -50,6 +50,7 @@ const TESTS = [
   "test-slice-x",
   "test-slice-z4",
   "test-who-is-told",
+  "test-media-url-schemas",
 ];
 
 const failed = [];
