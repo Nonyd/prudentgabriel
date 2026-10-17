@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import type { LoyaltyTier } from "@prisma/client";
 
@@ -9,23 +9,6 @@ const LABEL: Record<LoyaltyTier, string> = { BRONZE: "Bronze", SILVER: "Silver",
 
 type TierRow = { tier: LoyaltyTier; label: string; minSpendNGN: number; pointsPer100: number; members: number };
 type PerkRow = { key: string; id?: string; label: string; tiers: LoyaltyTier[] };
-type Recipient = {
-  userId: string;
-  name: string;
-  email: string;
-  announcedTier: LoyaltyTier;
-  announcedOn: string;
-  correctTier: LoyaltyTier;
-  sentAt: string | null;
-};
-type Correction = {
-  subject: string;
-  defaultNote: string;
-  recipients: Recipient[];
-  previewFor: string | null;
-  previewHtml: string | null;
-};
-
 const input = "border border-sand bg-ivory px-3 py-2 font-body text-sm";
 const panel = "rounded-sm border border-sand bg-canvas p-6";
 const heading = "font-body text-11px font-medium uppercase tracking-[0.14em] text-text-mid";
@@ -255,154 +238,7 @@ export function LoyaltyTiersAdmin() {
         {saving ? "Saving…" : "Save tiers and perks"}
       </button>
 
-      <CorrectionPanel />
     </div>
   );
 }
 
-function CorrectionPanel() {
-  const [data, setData] = useState<Correction | null>(null);
-  const [note, setNote] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState(false);
-  const [sending, setSending] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const load = useCallback(async (n: string | null) => {
-    const q = n == null ? "" : `?note=${encodeURIComponent(n)}`;
-    const res = await fetch(`/api/admin/loyalty/correction${q}`);
-    if (!res.ok) return;
-    const j = (await res.json()) as Correction;
-    setData(j);
-    setNote((cur) => (cur == null ? j.defaultNote : cur));
-  }, []);
-
-  useEffect(() => {
-    void load(null);
-  }, [load]);
-
-  if (!data) return null;
-  if (data.recipients.length === 0) return null;
-
-  const unsent = data.recipients.filter((r) => !r.sentAt);
-
-  const onNote = (v: string) => {
-    setNote(v);
-    setConfirming(false);
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => void load(v), 500);
-  };
-
-  const send = async () => {
-    setSending(true);
-    try {
-      const res = await fetch("/api/admin/loyalty/correction", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ note: note?.trim() ? note.trim() : null, confirm: true }),
-      });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(typeof j.error === "string" ? j.error : "Send failed");
-      toast.success(`Sent ${j.sent} correction email(s)`);
-      setConfirming(false);
-      await load(note);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Send failed");
-    } finally {
-      setSending(false);
-    }
-  };
-
-  return (
-    <div className="rounded-sm border border-[#92660A] bg-[#92660A]/5 p-6">
-      <h2 className={heading}>Tier correction email</h2>
-      <p className="mt-2 max-w-2xl font-body text-sm text-text-mid">
-        These clients were told they had reached a tier under the old points rules. The email says that message was
-        sent in error and gives their correct tier. Each client can receive it once.
-      </p>
-
-      <div className="mt-5 overflow-x-auto">
-        <table className="w-full min-w-[560px] border-collapse font-body text-sm">
-          <thead>
-            <tr className="border-b border-sand text-left text-xs uppercase tracking-wide text-text-mid">
-              <th className="py-2 pr-3">Client</th>
-              <th className="py-2 pr-3">Told</th>
-              <th className="py-2 pr-3">Correct tier</th>
-              <th className="py-2 text-right">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.recipients.map((r) => (
-              <tr key={r.userId} className="border-b border-sand/60">
-                <td className="py-2 pr-3">
-                  <span className="text-choc">{r.name || r.email}</span>
-                  <span className="block text-xs text-text-mid">{r.email}</span>
-                </td>
-                <td className="py-2 pr-3">
-                  {LABEL[r.announcedTier]} <span className="text-xs text-text-mid">on {r.announcedOn}</span>
-                </td>
-                <td className="py-2 pr-3">{LABEL[r.correctTier]}</td>
-                <td className="py-2 text-right text-xs">
-                  {r.sentAt ? `Sent ${new Date(r.sentAt).toLocaleDateString("en-GB")}` : "Not sent"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {unsent.length > 0 ? (
-        <>
-          <label htmlFor="correction-note" className="mt-6 block font-body text-xs text-charcoal">
-            Extra paragraph (optional). Leave it empty to send the email as previewed.
-          </label>
-          <textarea
-            id="correction-note"
-            rows={3}
-            value={note ?? ""}
-            onChange={(e) => onNote(e.target.value)}
-            className={`${input} mt-1.5 w-full`}
-          />
-        </>
-      ) : null}
-
-      {data.previewHtml ? (
-        <div className="mt-6">
-          <p className="font-body text-xs text-text-mid">
-            Preview for {data.previewFor} · Subject: <span className="text-choc">{data.subject}</span>
-          </p>
-          <iframe
-            title="Correction email preview"
-            srcDoc={data.previewHtml}
-            sandbox=""
-            className="mt-2 h-[560px] w-full border border-sand bg-white"
-          />
-        </div>
-      ) : null}
-
-      {unsent.length > 0 ? (
-        confirming ? (
-          <div className="mt-6 border border-[#92660A] bg-white/60 p-4">
-            <p className="font-body text-sm text-choc">
-              Send this email to {unsent.length} client{unsent.length === 1 ? "" : "s"} now? This cannot be undone or
-              sent again.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-3">
-              <button type="button" disabled={sending} onClick={() => void send()} className={primary}>
-                {sending ? "Sending…" : `Yes, send to ${unsent.length}`}
-              </button>
-              <button type="button" disabled={sending} onClick={() => setConfirming(false)} className={ghost}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button type="button" onClick={() => setConfirming(true)} className={`${primary} mt-6`}>
-            Send correction to {unsent.length} client{unsent.length === 1 ? "" : "s"}
-          </button>
-        )
-      ) : (
-        <p className="mt-6 font-body text-sm text-text-mid">The correction has been sent to everyone listed.</p>
-      )}
-    </div>
-  );
-}
