@@ -22,6 +22,7 @@ const DOORS = [
     subtitle: "Commissions designed around you.",
     cta: "Commission",
     cmsKey: "home_doors_atelier_image",
+    textKey: "home_doors_atelier",
     appearanceKeys: ["img_atelier_portrait", "img_bespoke", "img_atelier_wide"] as const,
   },
   {
@@ -30,6 +31,7 @@ const DOORS = [
     subtitle: "Gowns for the day itself.",
     cta: "Bridal",
     cmsKey: "home_doors_bridal_image",
+    textKey: "home_doors_bridal",
     appearanceKeys: ["img_collection_bridal", "img_bride_portrait", "img_bride_hero"] as const,
   },
   {
@@ -38,6 +40,7 @@ const DOORS = [
     subtitle: "House signatures, cut when you order.",
     cta: "Shop",
     cmsKey: "home_doors_rtw_image",
+    textKey: "home_doors_rtw",
     appearanceKeys: ["img_collection_rtw"] as const,
   },
 ] as const;
@@ -45,6 +48,8 @@ const DOORS = [
 const SETTING_KEYS = [
   ...DOORS.map((d) => d.cmsKey),
   ...DOORS.flatMap((d) => d.appearanceKeys),
+  // Title, subtitle and link label are edited in Content → Homepage → House doors.
+  ...DOORS.flatMap((d) => [`${d.textKey}_title`, `${d.textKey}_subtitle`, `${d.textKey}_cta`]),
 ];
 
 function isUsableHouseImage(url: string | null | undefined): url is string {
@@ -66,13 +71,15 @@ function withImage(
   door: (typeof DOORS)[number],
   url: string | null,
   alt?: string | null,
+  cms: Record<string, string> = {},
 ): HouseDoorCard {
   const imageUrl = url ? optimizeImageUrl(url, 960) : null;
+  const text = (suffix: string, fallback: string) => cms[`${door.textKey}_${suffix}`]?.trim() || fallback;
   return {
     href: door.href,
-    title: door.title,
-    subtitle: door.subtitle,
-    cta: door.cta,
+    title: text("title", door.title),
+    subtitle: text("subtitle", door.subtitle),
+    cta: text("cta", door.cta),
     imageUrl,
     imageAlt: alt?.trim() || door.title,
   };
@@ -137,16 +144,19 @@ export async function getHouseDoors(): Promise<HouseDoorCard[]> {
         DOORS[0],
         firstUrl(cms[DOORS[0].cmsKey], ...DOORS[0].appearanceKeys.map((key) => cms[key]), atelierGallery?.url, atelierProduct?.url),
         atelierGallery?.alt || atelierProduct?.alt,
+        cms,
       ),
       withImage(
         DOORS[1],
         firstUrl(cms[DOORS[1].cmsKey], ...DOORS[1].appearanceKeys.map((key) => cms[key]), bridalGallery?.url, bridalProduct?.url),
         bridalGallery?.alt || bridalProduct?.alt,
+        cms,
       ),
       withImage(
         DOORS[2],
         firstUrl(cms[DOORS[2].cmsKey], ...DOORS[2].appearanceKeys.map((key) => cms[key]), rtwProduct?.url),
         rtwProduct?.alt,
+        cms,
       ),
     ];
   } catch {

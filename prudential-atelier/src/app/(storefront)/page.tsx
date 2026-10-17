@@ -3,6 +3,7 @@ import { HeroSection } from "@/components/public/HeroSection";
 import { CategoryGrid } from "@/components/public/CategoryGrid";
 import { BestSellers } from "@/components/public/BestSellers";
 import { HomeBridalBand } from "@/components/public/HomeBridalBand";
+import { HomeAtelierBand } from "@/components/public/HomeAtelierBand";
 import { BespokeJourney } from "@/components/public/BespokeJourney";
 import { HomeTestimonialsSection } from "@/components/home/HomeTestimonialsSection";
 import { BrandQuoteSection } from "@/components/public/BrandQuoteSection";
@@ -25,6 +26,7 @@ export default async function HomePage() {
       <CategoryGrid />
       <BestSellers />
       <HomeBridalBand />
+      <HomeAtelierBand />
       <BespokeJourney />
       <HomeTestimonialsSection />
       <BrandQuoteSection />

@@ -171,29 +171,24 @@ const CMS_PAGES_BASE: CmsPageDef[] = [
       {
         id: "doors",
         label: "House doors",
-        fields: [
+        fields: (
+          [
+            ["atelier", "Atelier", "The Atelier", "Commissions designed around you.", "Commission"],
+            ["bridal", "Bridal", "Bridal & Ceremony", "Gowns for the day itself.", "Bridal"],
+            ["rtw", "Ready-to-wear", "Ready-to-Wear", "House signatures, cut when you order.", "Shop"],
+          ] as const
+        ).flatMap(([id, name, title, subtitle, cta]) => [
           {
-            key: "home_doors_atelier_image",
-            label: "Atelier card image",
-            type: "image",
+            key: `home_doors_${id}_image`,
+            label: `${name} card image`,
+            type: "image" as const,
             default: "",
             uploadFolder: "prudent-gabriel/home",
           },
-          {
-            key: "home_doors_bridal_image",
-            label: "Bridal card image",
-            type: "image",
-            default: "",
-            uploadFolder: "prudent-gabriel/home",
-          },
-          {
-            key: "home_doors_rtw_image",
-            label: "Ready-to-wear card image",
-            type: "image",
-            default: "",
-            uploadFolder: "prudent-gabriel/home",
-          },
-        ],
+          { key: `home_doors_${id}_title`, label: `${name} card title`, type: "text" as const, default: title },
+          { key: `home_doors_${id}_subtitle`, label: `${name} card subtitle`, type: "text" as const, default: subtitle },
+          { key: `home_doors_${id}_cta`, label: `${name} card link label`, type: "text" as const, default: cta },
+        ]),
       },
       {
         id: "quote",
@@ -245,6 +240,28 @@ const CMS_PAGES_BASE: CmsPageDef[] = [
             default: "Gowns for the day itself.",
           },
           { key: "home_bridal_cta_label", label: "CTA label", type: "text", default: "See bridal" },
+        ],
+      },
+      {
+        id: "atelier",
+        label: "Atelier band",
+        fields: [
+          { key: "home_atelier_enabled", label: "Enabled", type: "toggle", default: "true" },
+          { key: "home_atelier_headline", label: "Headline", type: "text", default: "Atelier" },
+          {
+            key: "home_atelier_subtext",
+            label: "Subtext",
+            type: "textarea",
+            default: "Made to measure, made for you.",
+          },
+          { key: "home_atelier_cta_label", label: "CTA label", type: "text", default: "See atelier" },
+          ...[1, 2, 3, 4].map((n) => ({
+            key: `home_atelier_image_${n}`,
+            label: `Picture ${n} (empty: latest Atelier gallery photos)`,
+            type: "image" as const,
+            default: "",
+            uploadFolder: "prudent-gabriel/home",
+          })),
         ],
       },
       {
