@@ -81,6 +81,8 @@ export function permissionForUploadFolder(folder: string): UploadFolderGate | nu
     f.includes("/testimonials") ||
     f.includes("/uploads") ||
     f.includes("/hero") ||
+    f.includes("/home") ||
+    f.includes("/seo") ||
     f.includes("/general")
   ) {
     return CMS_ADMIN_PERMISSIONS;
