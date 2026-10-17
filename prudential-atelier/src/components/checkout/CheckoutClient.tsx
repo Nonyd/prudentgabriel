@@ -1196,7 +1196,7 @@ export function CheckoutClient() {
                   <Input
                     id="dispatch-office"
                     label="Which dispatch office will you collect from?"
-                    placeholder="e.g. GIG Logistics, Ring Road, Ibadan"
+                    hint="For example: GIG Logistics, Ring Road, Ibadan"
                     value={dispatchOffice}
                     error={errors.dispatchOffice}
                     onChange={(e) => {
