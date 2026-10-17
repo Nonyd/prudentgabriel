@@ -31,7 +31,7 @@ const panel = "rounded-sm border border-sand bg-canvas p-6";
 const heading = "font-body text-11px font-medium uppercase tracking-[0.14em] text-text-mid";
 const primary =
   "h-10 bg-[#37392d] px-5 font-body text-11px font-medium uppercase tracking-[0.12em] text-white disabled:opacity-50";
-const ghost = "h-9 border border-sand px-3 font-body text-xs text-choc hover:bg-sand/30 disabled:opacity-40";
+const ghost = "h-9 min-w-9 border border-sand px-2.5 font-body text-xs text-choc hover:bg-sand/30 disabled:opacity-40";
 
 let keySeq = 0;
 const newKey = () => `k${++keySeq}`;
@@ -174,33 +174,34 @@ export function LoyaltyTiersAdmin() {
           house will honour. The points rate is shown to clients automatically.
         </p>
         <div className="mt-5 overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse font-body text-sm">
+          <table className="w-full min-w-[600px] table-fixed border-collapse font-body text-sm">
             <thead>
               <tr className="border-b border-sand text-left text-xs uppercase tracking-wide text-text-mid">
                 <th className="py-2 pr-3">Perk</th>
                 {TIERS.map((t) => (
-                  <th key={t} className="px-2 py-2 text-center">
+                  <th key={t} className="w-[72px] px-1 py-2 text-center">
                     {LABEL[t]}
                   </th>
                 ))}
-                <th className="py-2" />
+                <th className="w-[128px] py-2" />
               </tr>
             </thead>
             <tbody>
               {perks.map((p, i) => (
                 <tr key={p.key} className="border-b border-sand/60">
                   <td className="py-2 pr-3">
-                    <input
+                    <textarea
                       id={`perk-${p.key}`}
                       aria-label="Perk"
+                      rows={1}
                       value={p.label}
                       onChange={(e) => setPerk(p.key, { label: e.target.value })}
                       placeholder="e.g. Free gift wrapping"
-                      className={`${input} w-full min-w-[220px]`}
+                      className={`${input} block w-full resize-none [field-sizing:content]`}
                     />
                   </td>
                   {TIERS.map((t) => (
-                    <td key={t} className="px-2 py-2 text-center">
+                    <td key={t} className="px-1 py-2 text-center">
                       <input
                         type="checkbox"
                         aria-label={`${LABEL[t]} gets this perk`}
@@ -230,8 +231,10 @@ export function LoyaltyTiersAdmin() {
                       type="button"
                       className={ghost}
                       onClick={() => setPerks((prev) => prev.filter((x) => x.key !== p.key))}
+                      aria-label={`Remove ${p.label || "this perk"}`}
+                      title="Remove"
                     >
-                      Remove
+                      ✕
                     </button>
                   </td>
                 </tr>

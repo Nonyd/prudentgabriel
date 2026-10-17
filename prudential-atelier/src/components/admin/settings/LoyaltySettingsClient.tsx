@@ -218,7 +218,7 @@ export function LoyaltySettingsClient() {
                   />
                 </div>
                 <p className="mb-2 font-body text-sm text-text-mid">
-                  = {naira(r.nairaEach)}
+                  = {r.action === "ATELIER_PER_100" ? `${r.points}% back` : naira(r.nairaEach)}
                   {r.referralsForSample != null
                     ? ` · ${r.referralsForSample} first paid referrals for a ${naira(data.sampleGarmentNGN)} dress`
                     : ""}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import type { LoyaltyTier } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { TIER_LABELS, TIER_ORDER } from "@/lib/loyalty";
 import { getTierConfigs, getTierPerks, recomputeAllClientTiers } from "@/lib/loyalty-tiers";
@@ -70,11 +71,15 @@ export async function PUT(req: NextRequest) {
   }
 
   const userId = gate.session.user!.id!;
-  const before = await getTierConfigs();
+  const [before, existingPerks] = await Promise.all([getTierConfigs(), getTierPerks()]);
+  const existingById = new Map(existingPerks.map((p) => [p.id, p]));
 
+  // Write only what changed, so a save stays a handful of statements.
   await prisma.$transaction(async (tx) => {
     for (const t of ordered) {
       const minSpendNGN = t!.tier === "BRONZE" ? 0 : t!.minSpendNGN;
+      const prev = before.find((b) => b.tier === t!.tier);
+      if (prev && prev.minSpendNGN === minSpendNGN && prev.pointsPer100 === t!.pointsPer100) continue;
       await tx.loyaltyTierConfig.upsert({
         where: { tier: t!.tier },
         create: { tier: t!.tier, minSpendNGN, pointsPer100: t!.pointsPer100, updatedBy: userId },
@@ -82,16 +87,22 @@ export async function PUT(req: NextRequest) {
       });
     }
     const keep = parsed.data.perks.map((p) => p.id).filter((id): id is string => Boolean(id));
-    await tx.loyaltyPerk.deleteMany({ where: { id: { notIn: keep } } });
+    if (existingPerks.some((p) => !keep.includes(p.id))) {
+      await tx.loyaltyPerk.deleteMany({ where: { id: { notIn: keep } } });
+    }
     for (const [i, p] of parsed.data.perks.entries()) {
       const tiers = TIER_ORDER.filter((t) => p.tiers.includes(t)) as LoyaltyTier[];
-      if (p.id) {
-        await tx.loyaltyPerk.update({ where: { id: p.id }, data: { label: p.label, tiers, sortOrder: i } });
+      const prev = p.id ? existingById.get(p.id) : undefined;
+      if (prev) {
+        const same = prev.label === p.label && prev.sortOrder === i && prev.tiers.join() === tiers.join();
+        if (!same) {
+          await tx.loyaltyPerk.update({ where: { id: prev.id }, data: { label: p.label, tiers, sortOrder: i } });
+        }
       } else {
         await tx.loyaltyPerk.create({ data: { label: p.label, tiers, sortOrder: i } });
       }
     }
-  });
+  }, INTERACTIVE_TX);
 
   for (const t of ordered) {
     const prev = before.find((b) => b.tier === t!.tier)!;
