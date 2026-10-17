@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
       } else if (isConsultation && bookingId) {
         const booking = await prisma.consultationBooking.findUnique({ where: { id: bookingId } });
         if (booking) {
-          const expected = await expectedPaystackConsultationBind(booking);
+          const expected = await expectedPaystackConsultationBind(booking, event.data.currency);
           assertPspChargeBinds(
             {
               id: booking.id,
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
       } else if (orderId) {
         const order = await prisma.order.findUnique({ where: { id: orderId } });
         if (order) {
-          const expected = expectedPaystackRtwBind(order);
+          const expected = expectedPaystackRtwBind(order, event.data.currency);
           assertPspChargeBinds(
             {
               id: order.id,

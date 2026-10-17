@@ -90,6 +90,18 @@ export function isUsableCredential(value: string | null | undefined): boolean {
   return true;
 }
 
+/**
+ * The currency Paystack actually charges for a payment in `currency`. Paystack
+ * rejects dollars or pounds ("Currency not supported") until it enables that
+ * currency on the account, so until the house switches it on the card is
+ * charged the naira equivalent and the client's bank converts it.
+ */
+export async function paystackChargeCurrency(currency: PaymentCurrency): Promise<PaymentCurrency> {
+  if (currency === "USD") return (await isEnabled("paystack_usd_enabled", false)) ? "USD" : "NGN";
+  if (currency === "GBP") return (await isEnabled("paystack_gbp_enabled", false)) ? "GBP" : "NGN";
+  return "NGN";
+}
+
 export async function getSupportedGateways(
   currency: PaymentCurrency,
   businessLine: BusinessLineCode = "RTW",
@@ -109,7 +121,6 @@ export async function getSupportedGateways(
     monnifySecret,
     monnifyContract,
     bankReady,
-    paystackForeignOn,
   ] = await Promise.all([
     isEnabled("paystack_enabled"),
     isEnabled("flutterwave_enabled"),
@@ -125,12 +136,6 @@ export async function getSupportedGateways(
     getMonnifySecret(),
     getMonnifyContractCode(),
     bankTransferAvailable(currency, businessLine),
-    // Paystack charges dollars or pounds only once it has enabled that currency on the account.
-    currency === "USD"
-      ? isEnabled("paystack_usd_enabled", false)
-      : currency === "GBP"
-        ? isEnabled("paystack_gbp_enabled", false)
-        : Promise.resolve(true),
   ]);
 
   const paystackReady = paystackOn && isUsableCredential(paystackSecret) && isUsableCredential(paystackPk);
@@ -150,7 +155,7 @@ export async function getSupportedGateways(
     if (monnifyReady) out.push("MONNIFY");
     if (bankReady) out.push("BANK_TRANSFER");
   } else if (currency === "USD" || currency === "GBP") {
-    if (paystackReady && paystackForeignOn) out.push("PAYSTACK");
+    if (paystackReady) out.push("PAYSTACK");
     if (flutterwaveReady) out.push("FLUTTERWAVE");
     if (stripeReady) out.push("STRIPE");
     if (bankReady) out.push("BANK_TRANSFER");
@@ -163,13 +168,15 @@ export async function getPublicPaymentConfig(businessLine: BusinessLineCode = "R
   bank: PublicBankAccount | null;
   accounts: Partial<Record<PaymentCurrency, PublicBankAccount>>;
   gateways: Record<PaymentCurrency, PaymentGatewayType[]>;
+  /** What Paystack charges for each checkout currency (NGN when it cannot charge that currency yet). */
+  paystackChargesIn: Record<PaymentCurrency, PaymentCurrency>;
   publicKeys: {
     paystack: string;
     flutterwave: string;
     stripe: string;
   };
 }> {
-  const [bankNgn, bankUsd, bankGbp, ngn, usd, gbp, paystackPk, flutterwavePk, stripePk] = await Promise.all([
+  const [bankNgn, bankUsd, bankGbp, ngn, usd, gbp, paystackPk, flutterwavePk, stripePk, paystackUsd, paystackGbp] = await Promise.all([
     resolvePublicBankAccount("NGN", businessLine),
     resolvePublicBankAccount("USD", businessLine),
     resolvePublicBankAccount("GBP", businessLine),
@@ -179,6 +186,8 @@ export async function getPublicPaymentConfig(businessLine: BusinessLineCode = "R
     getPaystackPublicKey(),
     getFlutterwavePublicKey(),
     getStripePublicKey(),
+    paystackChargeCurrency("USD"),
+    paystackChargeCurrency("GBP"),
   ]);
 
   const accounts: Partial<Record<PaymentCurrency, PublicBankAccount>> = {};
@@ -191,6 +200,7 @@ export async function getPublicPaymentConfig(businessLine: BusinessLineCode = "R
     bank: bankNgn,
     accounts,
     gateways: { NGN: ngn, USD: usd, GBP: gbp },
+    paystackChargesIn: { NGN: "NGN", USD: paystackUsd, GBP: paystackGbp },
     publicKeys: {
       paystack: isUsableCredential(paystackPk) ? paystackPk! : "",
       flutterwave: isUsableCredential(flutterwavePk) ? flutterwavePk! : "",

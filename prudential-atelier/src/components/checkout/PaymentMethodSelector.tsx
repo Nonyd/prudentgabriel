@@ -70,6 +70,7 @@ export function PaymentMethodSelector({
   const [progress, setProgress] = useState<number | null>(null);
   const [gateways, setGateways] = useState<PaymentGatewayType[]>([]);
   const [bank, setBank] = useState<PublicBankAccount | null>(null);
+  const [paystackChargesIn, setPaystackChargesIn] = useState<PaymentCurrency>(currency);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -80,10 +81,12 @@ export function PaymentMethodSelector({
       .then((data: {
         accounts?: Partial<Record<PaymentCurrency, PublicBankAccount>>;
         gateways?: Record<PaymentCurrency, PaymentGatewayType[]>;
+        paystackChargesIn?: Record<PaymentCurrency, PaymentCurrency>;
       }) => {
         if (cancelled) return;
         setBank(data.accounts?.[currency] ?? null);
         setGateways(data.gateways?.[currency] ?? []);
+        setPaystackChargesIn(data.paystackChargesIn?.[currency] ?? currency);
         setLoaded(true);
       })
       .catch(() => {
@@ -97,6 +100,8 @@ export function PaymentMethodSelector({
       cancelled = true;
     };
   }, [currency, businessLine]);
+
+  const paystackInNaira = currency !== "NGN" && paystackChargesIn === "NGN";
 
   async function uploadReceipt(file: File) {
     if (!onReceiptUploaded) return;
@@ -246,11 +251,17 @@ export function PaymentMethodSelector({
               ? currency === "GBP"
                 ? "GBP"
                 : "USD"
-              : gw === "FLUTTERWAVE" || gw === "PAYSTACK"
-                ? currency
-                : meta.badge;
+              : gw === "PAYSTACK"
+                ? paystackChargesIn
+                : gw === "FLUTTERWAVE"
+                  ? currency
+                  : meta.badge;
           const subtitle =
-            gw === "PAYSTACK" && currency !== "NGN" ? "Visa, Mastercard" : meta.subtitle;
+            gw === "PAYSTACK" && currency !== "NGN"
+              ? paystackInNaira
+                ? "Visa, Mastercard · charged in naira"
+                : "Visa, Mastercard"
+              : meta.subtitle;
 
           return (
             <button
@@ -299,7 +310,11 @@ export function PaymentMethodSelector({
         <p className="mt-4 font-body text-sm leading-6 text-charcoal-mid">
           {currency === "NGN"
             ? paystackFeeCopy(amountNGN ?? amount).sentence
-            : "Paystack may add its card fee on the next screen. We do not add a house fee."}
+            : paystackInNaira
+              ? `Card payments go through in naira: your card is charged ${
+                  amountNGN != null ? `₦${Math.round(amountNGN).toLocaleString("en-NG")}` : "the naira equivalent"
+                } at the rate locked on this order, and your bank converts it. Your bank may add a foreign transaction fee, and Paystack may add its card fee on the next screen. We do not add a house fee.`
+              : "Paystack may add its card fee on the next screen. We do not add a house fee."}
         </p>
       ) : null}
     </div>

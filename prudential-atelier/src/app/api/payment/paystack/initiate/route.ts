@@ -10,6 +10,7 @@ import { canAcceptRtwPayment } from "@/lib/payments/rtw-totals";
 import { generatePaymentReference } from "@/lib/payments/index";
 import { asPaystackCurrency, paystackRtwMajor, paystackSubunits } from "@/lib/payments/paystack-amount";
 import { catchPaymentInit } from "@/lib/payments/catch-init";
+import { paystackChargeCurrency } from "@/lib/payments/config";
 import { prepareRtwPaymentAttempt } from "@/lib/checkout-reservations";
 
 const bodySchema = z.object({
@@ -60,7 +61,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing email" }, { status: 400 });
     }
 
-    const currency = asPaystackCurrency(order.currency);
+    // Naira while Paystack cannot charge the order's currency; the bind accepts either.
+    const currency = await paystackChargeCurrency(asPaystackCurrency(order.currency));
     const chargeMajor = paystackRtwMajor(order, currency);
     const minCharge = currency === "NGN" ? 1 : 0.5;
     if (chargeMajor < minCharge) {

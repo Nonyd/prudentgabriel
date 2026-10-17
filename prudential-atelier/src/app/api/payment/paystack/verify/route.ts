@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (result.status === "success") {
-      const expected = expectedPaystackRtwBind(order);
+      const expected = expectedPaystackRtwBind(order, result.currency);
       assertPspChargeBinds(
         {
           id: order.id,

@@ -7,7 +7,7 @@ import { initializeTransaction as initPaystack } from "@/lib/payments/paystack";
 import { initializeTransaction as initFlutterwave } from "@/lib/payments/flutterwave";
 import { initializeTransaction as initMonnify } from "@/lib/payments/monnify";
 import { createBespokePaymentIntent } from "@/lib/payments/stripe";
-import { getStripePublicKey, getSupportedGateways } from "@/lib/payments/config";
+import { getStripePublicKey, getSupportedGateways, paystackChargeCurrency } from "@/lib/payments/config";
 import { encodeBespokePaymentRef } from "@/lib/bespoke-order-access";
 import { atelierChargeAmountForeign, asShopPayCurrency, lockedFxFromAtelier } from "@/lib/atelier-fx";
 import { roundToKobo } from "@/lib/money";
@@ -89,11 +89,13 @@ export async function initializeBespokeGatewayPayment(params: {
   const verifyBase = `${appUrl}/api/bespoke/${order.id}/verify-payment`;
 
   if (params.gateway === "PAYSTACK") {
-    const psAmount = currency === "NGN" ? payAmountNGN : chargeForeign;
+    // Naira while Paystack cannot charge the client's currency; verify-payment accepts a naira charge.
+    const psCurrency = await paystackChargeCurrency(currency);
+    const psAmount = psCurrency === "NGN" ? payAmountNGN : chargeForeign;
     const init = await initPaystack({
       email,
       amountKobo: Math.round(psAmount * 100),
-      currency,
+      currency: psCurrency,
       reference,
       callbackUrl: `${verifyBase}?gateway=PAYSTACK`,
       metadata: { bespokeOrderId: order.id, amountNGN: String(payAmountNGN) },

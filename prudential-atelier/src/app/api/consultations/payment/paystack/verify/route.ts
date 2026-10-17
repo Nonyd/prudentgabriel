@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (result.status === "success") {
-      const expected = await expectedPaystackConsultationBind(booking);
+      const expected = await expectedPaystackConsultationBind(booking, result.currency);
       assertPspChargeBinds(
         {
           id: booking.id,
