@@ -170,6 +170,16 @@ export function ChatWidget() {
   // BF3: once the page has settled, ask whether anyone is there (and the greeting delay).
   useEffect(() => whenSettled(() => void loadStatus()), [loadStatus]);
 
+  // A link with ?chat=open (the abandoned-checkout email) opens the panel once the page has settled.
+  useEffect(() => {
+    if (searchParams.get("chat") !== "open") return;
+    return whenSettled(() => {
+      setGreeting(false);
+      dismissGreetingForVisit();
+      setOpen(true);
+    });
+  }, [searchParams]);
+
   // The greeting: only when chat is live, once per visit, never while the panel is open.
   useEffect(() => {
     if (!status?.live || status.greetingDelaySec === null || open || readGreetingDismissed()) return;

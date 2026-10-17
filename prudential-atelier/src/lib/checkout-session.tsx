@@ -11,7 +11,7 @@ import { primeEmailBranding } from "@/lib/email-branding";
 import { CUSTOMER_HOUSE_NAME } from "@/lib/customer-email";
 import AbandonedCheckoutEmail from "@/emails/AbandonedCheckoutEmail";
 
-export const FIRST_REMINDER_MS = 4 * 60 * 60 * 1000;
+export const FIRST_REMINDER_MS = 1 * 60 * 60 * 1000;
 export const SECOND_REMINDER_MS = 24 * 60 * 60 * 1000;
 export const RECENT_MANUAL_WARN_MS = 4 * 60 * 60 * 1000;
 export const MAX_AUTOMATIC_REMINDERS = 2;
@@ -228,6 +228,7 @@ export async function sendAbandonedCheckoutReminder(params: {
     <AbandonedCheckoutEmail
       firstName={firstName}
       restoreUrl={restoreUrl}
+      chatUrl={absolutePublicUrl("/?chat=open")}
       currencyNote={formatPriceLabel(snap.subtotalNGN, session.currency)}
       lines={snap.lines.map((l) => ({
         name: l.productName,

@@ -1,4 +1,4 @@
-import { Heading, Img, Text } from "@react-email/components";
+import { Heading, Img, Link, Text } from "@react-email/components";
 import EmailLayout from "./components/EmailLayout";
 import EmailButton from "./components/EmailButton";
 import { EMAIL_CHOC, EMAIL_INK, EMAIL_MUTED, FONT_BODY, FONT_DISPLAY } from "./components/email-tokens";
@@ -16,6 +16,8 @@ type AbandonedCheckoutEmailProps = {
   firstName: string;
   lines: AbandonedCheckoutLine[];
   restoreUrl: string;
+  /** Opens the website's live chat. */
+  chatUrl?: string;
   currencyNote?: string;
 };
 
@@ -23,12 +25,34 @@ export default function AbandonedCheckoutEmail({
   firstName,
   lines,
   restoreUrl,
+  chatUrl,
   currencyNote,
 }: AbandonedCheckoutEmailProps) {
   const greeting = firstName?.trim() ? firstName.trim() : "there";
 
   return (
-    <EmailLayout family="marketing" previewText="Your pieces are still waiting for you">
+    <EmailLayout family="marketing" previewText="Need a hand checking out? We're on live chat.">
+      <Text
+        style={{
+          margin: "0 0 20px",
+          padding: "12px 16px",
+          backgroundColor: "#EDE4D4",
+          fontFamily: FONT_BODY,
+          fontSize: 14,
+          lineHeight: "22px",
+          color: EMAIL_INK,
+        }}
+      >
+        Need help checking out? Our team is on{" "}
+        {chatUrl ? (
+          <Link href={chatUrl} style={{ color: EMAIL_CHOC, textDecoration: "underline" }}>
+            live chat
+          </Link>
+        ) : (
+          "live chat"
+        )}{" "}
+        on our website and happy to help with sizing, payment or delivery.
+      </Text>
       <Heading
         as="h1"
         style={{
@@ -152,7 +176,7 @@ export default function AbandonedCheckoutEmail({
           lineHeight: "20px",
         }}
       >
-        This is our only reminder, and there is no code to enter. Simply open the link and your bag will be filled
+        There is no code to enter. Simply open the link and your bag will be filled
         again with everything you chose.
       </Text>
     </EmailLayout>
