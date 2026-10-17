@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { setSetting } from "@/lib/settings";
 import { ensurePaymentSettingKeys } from "@/lib/payment-settings-bootstrap";
 import { ensureShippingSettingKeys } from "@/lib/shipping-settings-bootstrap";
+import { ensureEmailSettingKeys } from "@/lib/email-settings-bootstrap";
 import { revalidateSettings } from "@/lib/revalidate";
 import {
   DEVELOPER_SETTING_KEYS,
@@ -32,7 +33,7 @@ export async function GET() {
   const gate = await requireAdminApi("settings.developer");
   if (!gate.ok) return gate.response;
 
-  await Promise.all([ensurePaymentSettingKeys(), ensureShippingSettingKeys()]);
+  await Promise.all([ensurePaymentSettingKeys(), ensureShippingSettingKeys(), ensureEmailSettingKeys()]);
 
   const rows = await prisma.siteSetting.findMany({
     where: { key: { in: Array.from(DEVELOPER_SETTING_KEYS) } },
@@ -88,7 +89,7 @@ export async function PATCH(req: NextRequest) {
   const gate = await requireAdminApi("settings.developer");
   if (!gate.ok) return gate.response;
 
-  await Promise.all([ensurePaymentSettingKeys(), ensureShippingSettingKeys()]);
+  await Promise.all([ensurePaymentSettingKeys(), ensureShippingSettingKeys(), ensureEmailSettingKeys()]);
 
   const json = await req.json().catch(() => null);
   const parsed = patchSchema.safeParse(json);

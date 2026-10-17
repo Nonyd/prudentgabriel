@@ -993,6 +993,7 @@ async function main() {
     { key: "email_provider", value: "resend", group: SettingGroup.EMAIL, label: "Email Provider", type: SettingType.SELECT, isPublic: false, sortOrder: 5 },
     { key: "brevo_api_key", value: "", group: SettingGroup.EMAIL, label: "Brevo API Key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 6 },
     { key: "resend_api_key", value: "", group: SettingGroup.EMAIL, label: "Resend API Key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 7 },
+    { key: "resend_webhook_secret", value: "", group: SettingGroup.EMAIL, label: "Resend webhook signing secret (whsec_…)", type: SettingType.PASSWORD, isPublic: false, sortOrder: 8 },
     { key: "smtp_host", value: "", group: SettingGroup.EMAIL, label: "SMTP Host", type: SettingType.TEXT, isPublic: false, sortOrder: 8 },
     { key: "smtp_port", value: "587", group: SettingGroup.EMAIL, label: "SMTP Port", type: SettingType.NUMBER, isPublic: false, sortOrder: 9 },
     { key: "smtp_username", value: "", group: SettingGroup.EMAIL, label: "SMTP Username", type: SettingType.TEXT, isPublic: false, sortOrder: 10 },

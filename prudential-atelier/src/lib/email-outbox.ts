@@ -181,7 +181,16 @@ async function markDead(id: string, lastError: string): Promise<void> {
     },
     select: { to: true, template: true, subject: true, lastError: true },
   });
-  if (lastErrorLooksLikeBounce(lastError)) {
+  await afterDead(id, row, lastError, lastErrorLooksLikeBounce(lastError));
+}
+
+async function afterDead(
+  id: string,
+  row: { to: string; template: string },
+  lastError: string,
+  suppressRecipient: boolean,
+): Promise<void> {
+  if (suppressRecipient) {
     await recordEmailBounce(row.to, lastError).catch((e) =>
       console.warn("[email-outbox] bounce record", e),
     );
@@ -193,6 +202,34 @@ async function markDead(id: string, lastError: string): Promise<void> {
     link: "/admin/system/emails",
     entityId: id,
   }).catch((e) => console.warn("[email-outbox] notify dead", e));
+}
+
+/**
+ * The provider accepted the message, then reported (by webhook) that it never reached the inbox.
+ * Only a SENT row moves to DEAD, so a replayed or duplicate event does not notify twice.
+ */
+export async function markProviderDeliveryFailure(opts: {
+  provider: string;
+  providerMessageId: string;
+  reason: string;
+  /** Permanent bounce: stop marketing mail to this address. */
+  suppressRecipient: boolean;
+}): Promise<{ updated: boolean }> {
+  const row = await prisma.emailMessage.findFirst({
+    where: { provider: opts.provider, providerMessageId: opts.providerMessageId },
+    select: { id: true, to: true, template: true },
+  });
+  if (!row) return { updated: false };
+
+  const lastError = opts.reason.slice(0, 2000);
+  const moved = await prisma.emailMessage.updateMany({
+    where: { id: row.id, status: EmailStatus.SENT },
+    data: { status: EmailStatus.DEAD, lastError, nextAttemptAt: null },
+  });
+  if (moved.count !== 1) return { updated: false };
+
+  await afterDead(row.id, row, lastError, opts.suppressRecipient);
+  return { updated: true };
 }
 
 async function alertAuth(provider: string, message: string): Promise<void> {

@@ -30,6 +30,7 @@ export const DEVELOPER_SETTING_KEYS = new Set<string>([
   "monnify_contract_code",
   "monnify_environment",
   "resend_api_key",
+  "resend_webhook_secret",
   "brevo_api_key",
   siteSettingKey("smtp", "host"),
   siteSettingKey("smtp", "port"),

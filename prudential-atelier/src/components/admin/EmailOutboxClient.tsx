@@ -36,6 +36,14 @@ function statusClass(status: string): string {
   return "text-text-mid";
 }
 
+/** Resend's webhook writes these prefixes when a sent message later fails to arrive. */
+function statusLabel(row: EmailRow): string {
+  if (row.status !== "DEAD" || !row.lastError) return row.status;
+  if (row.lastError.startsWith("Bounced")) return "BOUNCED";
+  if (row.lastError.startsWith("Suppressed")) return "SUPPRESSED";
+  return row.status;
+}
+
 export function EmailOutboxClient() {
   const searchParams = useSearchParams();
   const relatedId = searchParams.get("relatedId")?.trim() ?? "";
@@ -46,7 +54,9 @@ export function EmailOutboxClient() {
   const [template, setTemplate] = useState("");
   const [to, setTo] = useState("");
   const [preview, setPreview] = useState<{ html: string; subject: string } | null>(null);
-  const [resending, setResending] = useState<string | null>(null);
+  const [resendFor, setResendFor] = useState<EmailRow | null>(null);
+  const [resendTo, setResendTo] = useState("");
+  const [resending, setResending] = useState(false);
 
   const load = useCallback(async () => {
     const q = new URLSearchParams();
@@ -80,19 +90,31 @@ export function EmailOutboxClient() {
     setPreview({ html: j.item.html, subject: j.item.subject });
   }
 
-  async function resend(id: string) {
-    setResending(id);
+  function openResend(row: EmailRow) {
+    setResendFor(row);
+    setResendTo(row.to);
+  }
+
+  async function resend() {
+    if (!resendFor) return;
+    const to = resendTo.trim();
+    setResending(true);
     try {
-      const res = await fetch(`/api/admin/system/emails/${id}/resend`, { method: "POST" });
-      const j = (await res.json()) as { error?: string };
+      const res = await fetch(`/api/admin/system/emails/${resendFor.id}/resend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(to && to !== resendFor.to ? { to } : {}),
+      });
+      const j = (await res.json()) as { error?: string; to?: string };
       if (!res.ok) {
         toast.error(j.error ?? "Resend failed");
         return;
       }
-      toast.success("Queued a new message");
+      toast.success(`Queued a new message to ${j.to ?? to}`);
+      setResendFor(null);
       await load();
     } finally {
-      setResending(null);
+      setResending(false);
     }
   }
 
@@ -157,7 +179,7 @@ export function EmailOutboxClient() {
             <tbody>
               {items.map((row) => (
                 <tr key={row.id} className="border-b border-[#F0E6DC]">
-                  <td className={`py-2 pr-3 ${statusClass(row.status)}`}>{row.status}</td>
+                  <td className={`py-2 pr-3 ${statusClass(row.status)}`}>{statusLabel(row)}</td>
                   <td className="py-2 pr-3">{row.to}</td>
                   <td className="py-2 pr-3">{row.template}</td>
                   <td className="py-2 pr-3">
@@ -169,12 +191,7 @@ export function EmailOutboxClient() {
                     <button className="mr-2 text-olive underline" type="button" onClick={() => void openPreview(row.id)}>
                       Preview
                     </button>
-                    <button
-                      className="text-olive underline disabled:opacity-50"
-                      type="button"
-                      disabled={resending === row.id}
-                      onClick={() => void resend(row.id)}
-                    >
+                    <button className="text-olive underline" type="button" onClick={() => openResend(row)}>
                       Resend
                     </button>
                     {row.lastError ? (
@@ -187,6 +204,58 @@ export function EmailOutboxClient() {
           </table>
         </div>
       )}
+
+      {resendFor ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => !resending && setResendFor(null)}
+        >
+          <form
+            className="w-full max-w-md bg-white p-5 font-body text-13px"
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              void resend();
+            }}
+          >
+            <p className="font-display text-lg">Resend email</p>
+            <p className="mt-1 text-text-mid">{resendFor.subject}</p>
+            {resendFor.lastError ? (
+              <p className="mt-3 border-l-2 border-error pl-2 text-12px text-error">{resendFor.lastError}</p>
+            ) : null}
+            <label className="mt-4 block text-12px text-text-mid">
+              Recipient
+              <input
+                className="mt-1 block w-full border border-border px-2 py-1.5 text-13px text-ink"
+                value={resendTo}
+                onChange={(e) => setResendTo(e.target.value)}
+                autoFocus
+              />
+            </label>
+            <p className="mt-1 text-11px text-text-mid">
+              Fix a typo here before sending. Separate several addresses with commas. A bounced address
+              will usually bounce again unless it is corrected.
+            </p>
+            <div className="mt-4 flex justify-end gap-3">
+              <button
+                className="text-13px underline disabled:opacity-50"
+                type="button"
+                disabled={resending}
+                onClick={() => setResendFor(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-ink px-3 py-1.5 text-13px text-white disabled:opacity-50"
+                type="submit"
+                disabled={resending || !resendTo.trim()}
+              >
+                {resending ? "Sending…" : resendTo.trim() !== resendFor.to ? "Send to new address" : "Send again"}
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
 
       {preview ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setPreview(null)}>

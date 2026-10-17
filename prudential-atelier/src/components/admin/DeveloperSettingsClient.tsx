@@ -29,7 +29,9 @@ type EnvStatus = {
   googleOauth: boolean;
 };
 
-const WEBHOOK_BASE = `${(process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "")}/api/payment`;
+const APP_BASE = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+const WEBHOOK_BASE = `${APP_BASE}/api/payment`;
+const RESEND_WEBHOOK_URL = `${APP_BASE}/api/email/resend/webhook`;
 
 const GATEWAYS = [
   {
@@ -72,12 +74,10 @@ const GATEWAYS = [
   },
 ];
 
-function WebhookUrl({ gateway }: { gateway: string }) {
-  const url = `${WEBHOOK_BASE}/${gateway}/webhook`;
-
+function WebhookUrl({ url, label = "Webhook URL" }: { url: string; label?: string }) {
   return (
     <div className="mt-4">
-      <p className="font-sans text-xs text-text-mid">Webhook URL</p>
+      <p className="font-sans text-xs text-text-mid">{label}</p>
       <div className="mt-1 flex items-center gap-2">
         <code className="flex-1 truncate rounded-md border border-sand bg-bg/60 px-3 py-2 font-mono text-xs text-text-dark">
           {url}
@@ -272,6 +272,7 @@ export function DeveloperSettingsClient() {
     "email_provider",
     "email_provider_order",
     "resend_api_key",
+    "resend_webhook_secret",
     "brevo_api_key",
     "smtp_host",
     "smtp_port",
@@ -332,7 +333,7 @@ export function DeveloperSettingsClient() {
                   </div>
                 ))}
               </div>
-              <WebhookUrl gateway={gw.id} />
+              <WebhookUrl url={`${WEBHOOK_BASE}/${gw.id}/webhook`} />
               <div className="mt-4">
                 <Button
                   type="button"
@@ -369,6 +370,10 @@ export function DeveloperSettingsClient() {
             </div>
           ))}
         </div>
+        <WebhookUrl
+          url={RESEND_WEBHOOK_URL}
+          label="Resend webhook URL (events: email.bounced, email.failed, email.suppressed, email.complained)"
+        />
       </section>
 
       <section className="card-surface p-6">

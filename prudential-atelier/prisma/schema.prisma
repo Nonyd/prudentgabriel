@@ -2997,6 +2997,7 @@ model EmailMessage {
   @@index([relatedType, relatedId])
   @@index([template])
   @@index([priority, status, nextAttemptAt])
+  @@index([providerMessageId])
 }
 
 /// Slice AT: aggregate page views for one Lagos calendar day. No visitor id.
