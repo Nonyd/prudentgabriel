@@ -50,6 +50,8 @@ export const DEVELOPER_SETTING_KEYS = new Set<string>([
 
 export const COMMERCIAL_PAYMENTS_KEYS = new Set<string>([
   "paystack_enabled",
+  "paystack_usd_enabled",
+  "paystack_gbp_enabled",
   "flutterwave_enabled",
   "stripe_enabled",
   "monnify_enabled",

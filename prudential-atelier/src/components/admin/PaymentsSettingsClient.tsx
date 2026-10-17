@@ -41,6 +41,8 @@ const FX_KEYS = ["fx_use_live_rates", "exchange_rate_usd", "exchange_rate_gbp"];
 
 const COMMERCIAL_ORDER = [
   "paystack_enabled",
+  "paystack_usd_enabled",
+  "paystack_gbp_enabled",
   "flutterwave_enabled",
   "stripe_enabled",
   "monnify_enabled",

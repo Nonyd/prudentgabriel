@@ -12,6 +12,9 @@ const PAYMENT_SETTING_DEFS: {
   { key: "paystack_enabled", value: "true", label: "Paystack Enabled", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 0 },
   { key: "paystack_public_key", value: "", label: "Paystack Public Key", type: SettingType.TEXT, isPublic: true, sortOrder: 1 },
   { key: "paystack_secret_key", value: "", label: "Paystack Secret Key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 2 },
+  // Off until Paystack enables that currency on the live account; otherwise every charge fails "Currency not supported".
+  { key: "paystack_usd_enabled", value: "false", label: "Paystack can charge US dollars (only once Paystack has enabled USD on the account)", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 15 },
+  { key: "paystack_gbp_enabled", value: "false", label: "Paystack can charge pounds (only once Paystack has enabled GBP on the account)", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 16 },
   { key: "flutterwave_enabled", value: "true", label: "Flutterwave Enabled", type: SettingType.BOOLEAN, isPublic: false, sortOrder: 3 },
   { key: "flutterwave_public_key", value: "", label: "Flutterwave Public Key", type: SettingType.TEXT, isPublic: true, sortOrder: 4 },
   { key: "flutterwave_secret_key", value: "", label: "Flutterwave Secret Key", type: SettingType.PASSWORD, isPublic: false, sortOrder: 5 },

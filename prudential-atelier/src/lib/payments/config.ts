@@ -109,6 +109,7 @@ export async function getSupportedGateways(
     monnifySecret,
     monnifyContract,
     bankReady,
+    paystackForeignOn,
   ] = await Promise.all([
     isEnabled("paystack_enabled"),
     isEnabled("flutterwave_enabled"),
@@ -124,6 +125,12 @@ export async function getSupportedGateways(
     getMonnifySecret(),
     getMonnifyContractCode(),
     bankTransferAvailable(currency, businessLine),
+    // Paystack charges dollars or pounds only once it has enabled that currency on the account.
+    currency === "USD"
+      ? isEnabled("paystack_usd_enabled", false)
+      : currency === "GBP"
+        ? isEnabled("paystack_gbp_enabled", false)
+        : Promise.resolve(true),
   ]);
 
   const paystackReady = paystackOn && isUsableCredential(paystackSecret) && isUsableCredential(paystackPk);
@@ -143,7 +150,7 @@ export async function getSupportedGateways(
     if (monnifyReady) out.push("MONNIFY");
     if (bankReady) out.push("BANK_TRANSFER");
   } else if (currency === "USD" || currency === "GBP") {
-    if (paystackReady) out.push("PAYSTACK");
+    if (paystackReady && paystackForeignOn) out.push("PAYSTACK");
     if (flutterwaveReady) out.push("FLUTTERWAVE");
     if (stripeReady) out.push("STRIPE");
     if (bankReady) out.push("BANK_TRANSFER");
