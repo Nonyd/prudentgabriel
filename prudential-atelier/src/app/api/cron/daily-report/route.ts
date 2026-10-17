@@ -1,181 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PaymentStatus } from "@prisma/client";
 import { validateCronSecret } from "@/lib/api-auth";
-import { prisma } from "@/lib/prisma";
 import { logError } from "@/lib/logger";
 import { sendEmail } from "@/lib/email";
-import { reportEmailHtml } from "@/lib/email-templates/reports";
 import { getPublicAppUrl } from "@/lib/app-url";
-import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
-import { listRefundRequiredOrders, oversellReportHtml } from "@/lib/oversell-report";
 import { alertEmailTargets } from "@/lib/admin-alerts";
-import { workroomDay } from "@/lib/atelier/work-log";
-import { takings } from "@/lib/finance/takings";
-import { financeRange } from "@/lib/finance/period";
+import { dailyReportData, renderDailyReport } from "@/lib/reports/staff-reports";
 
-/** Staff write the work log; it reaches the email as text, never as markup. */
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-function startOfToday() {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function endOfToday() {
-  const d = startOfToday();
-  d.setHours(23, 59, 59, 999);
-  return d;
-}
-
+/** Fires 23:00 UTC (00:00 Lagos). Reports the Lagos day just ended to the "reports" recipients. */
 export async function POST(req: NextRequest) {
   if (!validateCronSecret(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const from = startOfToday();
-    const to = endOfToday();
-    const appUrl = getPublicAppUrl();
-
-    const [stageUpdates, staffToday, consultations, upcoming, pendingPayments, refundRequired] =
-      await Promise.all([
-        prisma.stageUpdate.findMany({
-          where: { completedAt: { gte: from, lte: to } },
-          include: { order: { select: { orderRef: true } } },
-          orderBy: { completedAt: "desc" },
-        }),
-        prisma.attendanceLog.findMany({
-          where: { date: from },
-          include: { staff: { include: { user: { select: { name: true } } } } },
-        }),
-        prisma.consultationBooking.findMany({
-          where: { confirmedDate: { gte: from, lte: to }, status: "COMPLETED" },
-          select: { bookingNumber: true, clientName: true },
-        }),
-        prisma.bespokeOrder.findMany({
-          where: {
-            deliveryDate: { gte: new Date(), lte: new Date(Date.now() + 7 * 86400000) },
-            currentStage: { not: "DELIVERY" },
-          },
-          select: { orderRef: true, deliveryDate: true, clientName: true },
-        }),
-        prisma.order.count({
-          where: { paymentStatus: PaymentStatus.PENDING, createdAt: { gte: from, lte: to } },
-        }),
-        listRefundRequiredOrders(),
-      ]);
-
-    // Payments confirmed on the Lagos day just ended (cron fires 23:00 UTC = 00:00 Lagos),
-    // from the ledger. Not the lifetime paid on every commission touched today.
-    const day = financeRange("day", new Date(Date.now() - 60 * 60 * 1000));
-    const taken = await takings(day.from, day.to);
-    const revenue = taken.totalNGN;
-
-    const oversellHtml = oversellReportHtml(refundRequired);
-    // BD7: the day's work on each gown, and who with open work has not filed.
-    // Cron fires 23:00 UTC, which is already 00:00 in Lagos: report the Lagos day just ended.
-    const workroom = await workroomDay(new Date(Date.now() - 60 * 60 * 1000));
-
-    const dateLabel = from.toLocaleDateString("en-GB");
-    const html = reportEmailHtml(
-      `Daily Report — ${dateLabel}`,
-      [
-        {
-          heading: "Revenue Today",
-          html: `<p><strong>₦${Math.round(revenue).toLocaleString("en-NG")}</strong> in payments confirmed today (atelier ₦${Math.round(taken.atelierNGN).toLocaleString("en-NG")}, ready-to-wear ₦${Math.round(taken.rtwNGN).toLocaleString("en-NG")})</p>`,
-        },
-        {
-          heading: "Stages Completed",
-          html:
-            stageUpdates.length === 0
-              ? "<p>No stage advances today.</p>"
-              : `<ul>${stageUpdates
-                  .map(
-                    (s) =>
-                      `<li>${s.order.orderRef} — ${STAGE_SHORT_LABELS[s.stage]}</li>`,
-                  )
-                  .join("")}</ul>`,
-        },
-        {
-          heading: "Staff Attendance",
-          html:
-            staffToday.length === 0
-              ? "<p>No clock-ins recorded.</p>"
-              : `<ul>${staffToday
-                  .map(
-                    (a) =>
-                      `<li>${a.staff.user.name ?? "Staff"} — ${a.clockIn ? "Clocked in" : "Absent"}</li>`,
-                  )
-                  .join("")}</ul>`,
-        },
-        {
-          heading: "Workroom — today's work",
-          html:
-            workroom.entries.length === 0
-              ? "<p>No end-of-day entries filed.</p>"
-              : `<ul>${workroom.entries
-                  .map(
-                    (e) =>
-                      `<li><strong>${escapeHtml(e.orderRef)}</strong> — ${escapeHtml(e.who)} (${escapeHtml(e.role.toLowerCase().replace(/_/g, " "))}): ${escapeHtml(e.done)} · ${e.partDone ? "her part is done" : `${e.progress}%`}${e.blocker ? ` · <em>Blocked: ${escapeHtml(e.blocker)}</em>` : ""}</li>`,
-                  )
-                  .join("")}</ul>`,
-        },
-        {
-          heading: "Not filed today",
-          html:
-            workroom.notFiled.length === 0
-              ? "<p>Everyone with open work has filed.</p>"
-              : `<ul>${workroom.notFiled
-                  .map((n) => `<li>${escapeHtml(n.who)} — ${n.orderRefs.map(escapeHtml).join(", ")}</li>`)
-                  .join("")}</ul>`,
-        },
-        {
-          heading: "Consultations Today",
-          html:
-            consultations.length === 0
-              ? "<p>No completed consultations.</p>"
-              : `<ul>${consultations.map((c) => `<li>${c.bookingNumber} — ${c.clientName}</li>`).join("")}</ul>`,
-        },
-        {
-          heading: "Upcoming Deliveries (7 days)",
-          html:
-            upcoming.length === 0
-              ? "<p>None due within 7 days.</p>"
-              : `<ul>${upcoming
-                  .map(
-                    (o) =>
-                      `<li>${o.orderRef} — ${o.clientName} (${o.deliveryDate?.toLocaleDateString("en-GB")})</li>`,
-                  )
-                  .join("")}</ul>`,
-        },
-        {
-          heading: "Payments Pending",
-          html: `<p><strong>${pendingPayments}</strong> bank transfer receipts awaiting confirmation</p>`,
-        },
-        {
-          heading: "Refund required",
-          html: oversellHtml,
-        },
-      ],
-      appUrl,
-    );
-
+    const data = await dailyReportData();
+    const { subject, html } = renderDailyReport(data, getPublicAppUrl());
+    const day = data.date.toISOString().slice(0, 10);
     const recipients = (await alertEmailTargets("reports")).map((t) => t.to);
 
     for (const to of recipients) {
       await sendEmail({
         to,
-        subject: `Daily Report — ${dateLabel} | Prudential Atelier`,
+        subject,
         html,
         template: "daily-report",
-        idempotencyKey: `daily-report:${dateLabel}:${to}`,
+        idempotencyKey: `daily-report:${day}:${to}`,
       });
     }
 
-    return NextResponse.json({ ok: true, revenue, stageUpdates: stageUpdates.length, emailed: recipients.length });
+    return NextResponse.json({ ok: true, takenNGN: data.takings.totalNGN, attention: data.attention.length, emailed: recipients.length });
   } catch (e) {
     await logError({
       severity: "CRITICAL",
