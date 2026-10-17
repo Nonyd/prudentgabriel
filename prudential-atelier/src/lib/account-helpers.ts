@@ -78,14 +78,7 @@ export async function getMergedAccountProfile(userId: string): Promise<MergedAcc
   return { user, profile };
 }
 
-export function styleProfileComplete(profile: ClientProfile): boolean {
-  return (
-    profile.preferredSilhouettes.length > 0 ||
-    profile.preferredColors.length > 0 ||
-    profile.occasions.length > 0 ||
-    Boolean(profile.budgetRange)
-  );
-}
+export { styleProfileComplete } from "@/lib/style-profile";
 
 export async function getNotificationPrefs(userId: string): Promise<Record<string, boolean>> {
   const key = `notification_prefs_${userId}`;

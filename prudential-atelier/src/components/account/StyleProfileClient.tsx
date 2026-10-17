@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import type { ClientProfile } from "@prisma/client";
 import { ProductCardGrid } from "@/components/common/ProductCardGrid";
 import type { ProductListItem } from "@/types/product";
-import { styleProfileComplete } from "@/lib/account-helpers";
+import { styleProfileComplete } from "@/lib/style-profile";
 import { BirthdayField } from "@/components/common/BirthdayField";
 
 const SILHOUETTES = ["A-line", "Fitted", "Flowy", "Structured", "Wrap", "Oversized"];
