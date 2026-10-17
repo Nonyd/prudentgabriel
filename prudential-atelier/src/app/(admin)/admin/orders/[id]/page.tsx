@@ -15,8 +15,9 @@ import { AdminBankTransferProof } from "@/components/admin/AdminBankTransferProo
 
 function formatAddress(snap: Record<string, string>) {
   const lines = [
+    snap.dispatchPickup ? `Collects at dispatch office: ${snap.dispatchOffice}` : null,
     [snap.firstName, snap.lastName].filter(Boolean).join(" "),
-    snap.line1,
+    snap.dispatchPickup && snap.line1 === snap.dispatchOffice ? null : snap.line1,
     snap.line2,
     [snap.city, snap.state].filter(Boolean).join(", "),
     snap.country,

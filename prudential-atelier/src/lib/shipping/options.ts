@@ -18,6 +18,8 @@ export type CheckoutShippingOption = {
   requiresConsent: boolean;
   requiresAddress: boolean;
   pickupLocationId?: string;
+  /** Pickup only: where she collects, as set on the admin Shipping page. */
+  pickupAddress?: string;
   lagosLocationId?: string;
   methodId?: string;
   quoteReason?: QuoteConsentReason;
@@ -125,6 +127,7 @@ export async function listCheckoutShippingOptions(params: {
           requiresConsent: false,
           requiresAddress: false,
           pickupLocationId: loc.id,
+          pickupAddress: loc.address?.trim() || undefined,
           methodId: pickup.id,
         });
       }

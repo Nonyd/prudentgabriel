@@ -219,6 +219,9 @@ model ConsultationBooking {
   /// Set when the 48h unsent-quote alert has been sent (once per consultation).
   quoteAlertSentAt DateTime?
 
+  /// How she receives the finished piece (lib/garment-receipt.ts): office or dispatch pickup, or delivery.
+  garmentReceipt Json?
+
   /// First-touch campaign tags copied from the visit at booking create. No visitor id.
   attribution Json?
 

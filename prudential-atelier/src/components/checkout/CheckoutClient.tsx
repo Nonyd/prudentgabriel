@@ -24,6 +24,7 @@ import { readJsonBody, jsonErrorMessage } from "@/lib/http/read-json";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { NIGERIA_STATES } from "@/lib/geo/nigeria-states";
+import { resolveDestinationBand } from "@/lib/shipping/destination";
 import { COUNTRIES } from "@/lib/geo/countries";
 import { CUSTOM_RETURNS_COPY } from "@/lib/custom-size";
 import { readHeldAttribution } from "@/lib/analytics/attribution";
@@ -39,6 +40,7 @@ interface ShipOpt {
   requiresConsent?: boolean;
   requiresAddress?: boolean;
   description?: string;
+  pickupAddress?: string;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -140,6 +142,9 @@ export function CheckoutClient() {
   const [quoteConsent, setQuoteConsent] = useState("");
   const [dduDisclosure, setDduDisclosure] = useState("");
   const [shippingConsent, setShippingConsent] = useState(false);
+  /** In Lagos: our office or her address. Outside Lagos: the courier's dispatch office or her house. */
+  const [receive, setReceive] = useState<"DELIVERY" | "PICKUP">("DELIVERY");
+  const [dispatchOffice, setDispatchOffice] = useState("");
   const [customReturnConsent, setCustomReturnConsent] = useState(false);
   const [preferredContact, setPreferredContact] = useState<"WHATSAPP" | "CALL" | "EMAIL">("WHATSAPP");
   const paymentRef = useMemo(
@@ -220,8 +225,7 @@ export function CheckoutClient() {
           if (opts.some((o) => o.zoneId === prev)) return prev;
           const delivery = opts.find((o) => o.kind !== "PICKUP");
           return delivery?.zoneId ?? opts[0]?.zoneId ?? null;
-        });
-      })
+        });      })
       .finally(() => setShipLoading(false));
   }, [step, addr.city, addr.state, addr.country, subtotalNGN, items, couponResult?.valid, couponResult?.isFreeShipping]);
 
@@ -278,11 +282,16 @@ export function CheckoutClient() {
         next.phone = "Enter a phone number";
       }
       if (!isPickup) {
-        if (!addr.line1?.trim() || addr.line1.trim().length < 3) next.line1 = "Street address is required";
+        if (!isDispatch && (!addr.line1?.trim() || addr.line1.trim().length < 3)) {
+          next.line1 = "Street address is required";
+        }
         if (!addr.city?.trim()) next.city = "City is required";
       }
       if (!addr.state?.trim()) next.state = "State is required";
       if (!addr.country || addr.country.length !== 2) next.country = "Choose a country";
+    }
+    if (isDispatch && dispatchOffice.trim().length < 2) {
+      next.dispatchOffice = "Tell us which dispatch office you will collect from";
     }
     if (!zoneId) next.shipping = "Choose a shipping method";
     if (needsConsent && !shippingConsent) next.consent = "Please confirm you understand shipping will be quoted separately";
@@ -301,6 +310,7 @@ export function CheckoutClient() {
       "city",
       "state",
       "country",
+      "dispatchOffice",
       "shipping",
       "consent",
       "customReturn",
@@ -381,6 +391,20 @@ export function CheckoutClient() {
     }
   }
 
+  const band = resolveDestinationBand({ country: addr.country ?? "NG", state: addr.state, city: addr.city });
+  const offerOfficePickup = band === "LAGOS" && shippingOpts.some((o) => o.kind === "PICKUP");
+  const offerDispatchPickup = band === "NIGERIA" && shippingOpts.length > 0;
+  const wantsPickup = receive === "PICKUP" && (offerOfficePickup || offerDispatchPickup);
+  const isDispatch = offerDispatchPickup && wantsPickup;
+  const visibleShipOpts = offerOfficePickup
+    ? shippingOpts.filter((o) => (o.kind === "PICKUP") === wantsPickup)
+    : shippingOpts;
+
+  useEffect(() => {
+    if (visibleShipOpts.length === 0) return;
+    if (!visibleShipOpts.some((o) => o.zoneId === zoneId)) setZoneId(visibleShipOpts[0].zoneId);
+  }, [visibleShipOpts, zoneId]);
+
   const selectedShip = shippingOpts.find((z) => z.zoneId === zoneId);
   const isPickup = selectedShip?.kind === "PICKUP" || zoneId?.startsWith("pickup:");
   const needsConsent = Boolean(selectedShip?.requiresConsent);
@@ -399,20 +423,35 @@ export function CheckoutClient() {
 
   function buildAddressPayload(): AddressInput | undefined {
     if (addressId) return undefined;
-    if (!addr.firstName || !addr.lastName || !addr.phone || !addr.line1 || !addr.city || !addr.state || !addr.country) {
+    // Collecting at the dispatch office: the office stands in for the street.
+    const line1 = isDispatch ? dispatchOffice.trim() : addr.line1;
+    if (!addr.firstName || !addr.lastName || !addr.phone || !line1 || !addr.city || !addr.state || !addr.country) {
       return undefined;
     }
     return {
       firstName: addr.firstName,
       lastName: addr.lastName,
       phone: addr.phone,
-      line1: addr.line1,
-      line2: addr.line2,
+      line1,
+      line2: isDispatch ? undefined : addr.line2,
       city: addr.city,
       state: addr.state,
       postalCode: addr.postalCode,
       country: addr.country,
       saveAddress: Boolean(addr.saveAddress),
+    };
+  }
+
+  /** Collecting still needs a name and phone; a chosen saved address supplies them. */
+  function pickupContactFor(saved?: (typeof savedAddresses)[number]) {
+    const from = saved ?? { firstName: addr.firstName, lastName: addr.lastName, phone: addr.phone, country: addr.country, state: addr.state, city: addr.city };
+    return {
+      firstName: from.firstName,
+      lastName: from.lastName,
+      phone: from.phone,
+      country: from.country ?? "NG",
+      state: from.state ?? "Lagos",
+      city: from.city ?? "Lagos",
     };
   }
 
@@ -465,6 +504,7 @@ export function CheckoutClient() {
         city: "addr-city",
         state: "addr-state",
         country: "addr-country",
+        dispatchOffice: "dispatch-office",
         shipping: "shipping-method",
       };
       focusField(idMap[first] ?? idMap.shipping);
@@ -503,17 +543,9 @@ export function CheckoutClient() {
       const body: Record<string, unknown> = {
         addressId: isPickup ? undefined : addressId ?? undefined,
         address: isPickup ? undefined : addressPayload,
-        pickupContact: isPickup
-          ? {
-              firstName: addr.firstName,
-              lastName: addr.lastName,
-              phone: addr.phone,
-              country: addr.country ?? "NG",
-              state: addr.state ?? "Lagos",
-              city: addr.city ?? "Lagos",
-            }
-          : undefined,
+        pickupContact: isPickup ? pickupContactFor(savedAddresses.find((a) => a.id === addressId)) : undefined,
         shippingOptionId: zoneId,
+        dispatchOffice: isDispatch ? dispatchOffice.trim() : undefined,
         shippingConsent: needsConsent ? shippingConsent : undefined,
         shippingConsentText: needsConsent ? quoteConsent : undefined,
         preferredContactMethod: needsConsent ? preferredContact : undefined,
@@ -1071,6 +1103,7 @@ export function CheckoutClient() {
                 )}
                 {!isPickup ? (
                   <>
+                {isDispatch ? null : (
                 <Input
                   id="addr-line1"
                   label="Address line 1"
@@ -1088,6 +1121,7 @@ export function CheckoutClient() {
                     clearFieldError("line1");
                   }}
                 />
+                )}
                 <Input
                   id="addr-city"
                   label="City"
@@ -1117,6 +1151,62 @@ export function CheckoutClient() {
                 )}
               </div>
             )}
+            {offerOfficePickup || offerDispatchPickup ? (
+              <fieldset id="receive-choice">
+                <legend className="mb-2 font-body text-base font-medium">How would you like to receive your order?</legend>
+                {(
+                  [
+                    offerOfficePickup
+                      ? ["PICKUP", "Pick up at our office", "Collect from the atelier when your order is ready. No delivery fee."]
+                      : [
+                          "PICKUP",
+                          "Pick up at the dispatch office",
+                          "Collect from the courier's office in your city. The fee is the same as home delivery; no house address needed.",
+                        ],
+                    [
+                      "DELIVERY",
+                      offerOfficePickup ? "Deliver to my address" : "Home delivery",
+                      "We bring it to the house address above, so please check it is correct.",
+                    ],
+                  ] as [("PICKUP" | "DELIVERY"), string, string][]
+                ).map(([value, label, hint]) => (
+                  <label
+                    key={value}
+                    className={clsx(
+                      "mb-2 flex cursor-pointer gap-3 border p-4 transition-colors",
+                      receive === value ? "border-choc bg-[rgba(68,41,19,0.04)]" : "border-border hover:border-choc/40",
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="receive"
+                      checked={receive === value}
+                      onChange={() => {
+                        setReceive(value);
+                        clearFieldError("dispatchOffice");
+                      }}
+                    />
+                    <span className="font-body text-base leading-6">
+                      {label}
+                      <span className="mt-1 block text-sm text-charcoal-mid">{hint}</span>
+                    </span>
+                  </label>
+                ))}
+                {isDispatch ? (
+                  <Input
+                    id="dispatch-office"
+                    label="Which dispatch office will you collect from?"
+                    placeholder="e.g. GIG Logistics, Ring Road, Ibadan"
+                    value={dispatchOffice}
+                    error={errors.dispatchOffice}
+                    onChange={(e) => {
+                      setDispatchOffice(e.target.value);
+                      clearFieldError("dispatchOffice");
+                    }}
+                  />
+                ) : null}
+              </fieldset>
+            ) : null}
             <fieldset id="shipping-method">
               <legend className="mb-2 font-body text-base font-medium">Shipping method</legend>
               {shipLoading ? (
@@ -1128,7 +1218,7 @@ export function CheckoutClient() {
               {!shipLoading && shippingOpts.length === 0 && (
                 <p className="font-body text-base text-charcoal-mid">Enter your city and state to see shipping options.</p>
               )}
-              {shippingOpts.map((z) => (
+              {visibleShipOpts.map((z) => (
                 <label key={z.zoneId} className={clsx(
                   "mb-2 flex cursor-pointer gap-3 border p-4 transition-colors",
                   zoneId === z.zoneId ? "border-choc bg-[rgba(68,41,19,0.04)]" : "border-border hover:border-choc/40",
@@ -1143,6 +1233,11 @@ export function CheckoutClient() {
                         {z.zoneName} — {z.isFree ? <span className="text-gold">FREE</span> : `₦${z.costNGN.toLocaleString()}`} · {z.estimatedDays}
                       </>
                     )}
+                    {z.kind === "PICKUP" && (z.pickupAddress || z.description) ? (
+                      <span className="mt-1 block whitespace-pre-line text-sm text-charcoal-mid">
+                        {[z.pickupAddress, z.description].filter(Boolean).join("\n")}
+                      </span>
+                    ) : null}
                     {z.requiresConsent ? <span className="mt-1 block text-sm text-charcoal-mid">{z.description}</span> : null}
                   </span>
                 </label>

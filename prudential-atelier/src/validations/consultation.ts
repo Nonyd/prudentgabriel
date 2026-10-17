@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { garmentReceiptSchema } from "@/lib/garment-receipt";
 import {
   ConsultationSessionType,
   ConsultationDeliveryMode,
@@ -90,6 +91,8 @@ export const consultationBookingSchema = z.object({
   preferredDate1: z.coerce.date(),
   preferredDate2: z.coerce.date(),
   preferredDate3: z.coerce.date(),
+  /** Pickup or delivery of the finished piece. Optional only so a page opened before this shipped still books. */
+  garmentReceipt: garmentReceiptSchema.optional(),
   attribution: z
     .object({
       source: z.string().max(80).optional(),

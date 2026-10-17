@@ -18,6 +18,7 @@ import { getSupportedGateways } from "@/lib/payments/config";
 import { notifyNewOrder } from "@/lib/notifications";
 import { orderCreateBodySchema, type AddressInput } from "@/validations/order";
 import { resolveCheckoutShipping } from "@/lib/shipping/resolve-selection";
+import { resolveDestinationBand } from "@/lib/shipping/destination";
 import { generateCollectionCode } from "@/lib/shipping/collection";
 import { getLockedFx, lockForeignTotals, ratesFromLockedFx } from "@/lib/fx";
 import { effectiveUnitNGN, overrideOrConvertWithOption, resolveCurrencyOverride } from "@/lib/pricing";
@@ -485,6 +486,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "A free-text address cannot be priced — choose country and state" }, { status: 400 });
   }
 
+  // Outside Lagos she may collect from the courier's office; same rate, no house address.
+  const dispatchOffice = data.dispatchOffice?.trim() || null;
+  if (dispatchOffice) {
+    const band = resolveDestinationBand({ country: destCountry, state: destState, city: destCity });
+    if (band !== "NIGERIA") {
+      return NextResponse.json({ error: "Dispatch office pickup is only for orders outside Lagos, within Nigeria." }, { status: 400 });
+    }
+    addressSnapshot = { ...(addressSnapshot ?? {}), dispatchPickup: true, dispatchOffice };
+  }
+
   if (ship.requiresConsent) {
     if (!data.shippingConsent) {
       return NextResponse.json({ error: "Please confirm you understand shipping will be quoted separately" }, { status: 400 });
@@ -666,7 +677,7 @@ export async function POST(req: NextRequest) {
       return orderRow;
     }, INTERACTIVE_TX);
 
-    if (userId && data.address?.saveAddress && data.address && !isPickupOption) {
+    if (userId && data.address?.saveAddress && data.address && !isPickupOption && !dispatchOffice) {
       await prisma.address.create({
         data: {
           userId,

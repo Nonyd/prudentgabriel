@@ -158,11 +158,13 @@ export default function OrderConfirmationEmail({
       ) : null}
       {Object.keys(addr).length > 0 ? (
         <Section style={{ marginTop: 24 }}>
-          <Text style={{ fontSize: 14, fontWeight: 600 }}>Delivery address</Text>
+          <Text style={{ fontSize: 14, fontWeight: 600 }}>
+            {addr.dispatchPickup ? "You collect at the dispatch office" : "Delivery address"}
+          </Text>
           <Text style={{ fontSize: 14, color: "#444", lineHeight: 1.5 }}>
             {[addr.firstName, addr.lastName].filter(Boolean).join(" ")}
             <br />
-            {[addr.line1, addr.line2].filter(Boolean).join(", ")}
+            {addr.dispatchPickup ? addr.dispatchOffice : [addr.line1, addr.line2].filter(Boolean).join(", ")}
             <br />
             {[addr.city, addr.state, addr.country, addr.postalCode].filter(Boolean).join(", ")}
           </Text>

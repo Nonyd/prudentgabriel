@@ -7,6 +7,7 @@ import { measurementFromRecord } from "@/lib/measurements";
 import { auth } from "@/auth";
 import { canSeeClientMeasurements } from "@/lib/bespoke-data-access";
 import { resolveSessionAccess } from "@/lib/admin-auth";
+import { describeGarmentReceipt } from "@/lib/garment-receipt";
 
 function toIso(value: Date | string | null | undefined): string | null {
   if (value == null) return null;
@@ -67,6 +68,7 @@ export default async function AdminConsultationDetailPage({ params }: { params: 
     clientPhone: booking.clientPhone ?? "",
     clientCountry: booking.clientCountry ?? "",
     clientInstagram: booking.clientInstagram,
+    garmentReceipt: describeGarmentReceipt(booking.garmentReceipt),
     occasion: booking.occasion,
     description: booking.description,
     termsText: booking.termsText,

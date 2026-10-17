@@ -41,6 +41,8 @@ type Booking = {
   clientPhone: string;
   clientCountry: string;
   clientInstagram: string | null;
+  /** How she receives the finished piece, from describeGarmentReceipt. */
+  garmentReceipt: { label: string; lines: string[] } | null;
   occasion: string;
   description: string;
   /** BA2: exact non-refundable wording acknowledged at booking, and the enquiry it came from. */
@@ -358,6 +360,21 @@ export function AdminConsultationDetail({
             <p className="font-label text-xs text-gold">Occasion</p>
             <p className="mt-1 text-sm text-ink">{booking.occasion}</p>
             <p className="mt-2 text-sm text-text-mid">{booking.description}</p>
+          </div>
+          <div className="border-t border-sand pt-4">
+            <p className="font-label text-xs text-gold">Finished piece</p>
+            {booking.garmentReceipt ? (
+              <>
+                <p className="mt-1 text-sm text-ink">{booking.garmentReceipt.label}</p>
+                {booking.garmentReceipt.lines.map((l) => (
+                  <p key={l} className="text-sm text-text-mid">
+                    {l}
+                  </p>
+                ))}
+              </>
+            ) : (
+              <p className="mt-1 text-sm text-text-mid">Not given at booking.</p>
+            )}
           </div>
         </div>
 

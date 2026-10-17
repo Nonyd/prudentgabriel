@@ -27,6 +27,8 @@ export const checkoutSchema = z.object({
   addressId: z.string().optional(),
   address: addressSchema.optional(),
   pickupContact: pickupContactSchema.optional(),
+  /** Outside Lagos: she collects from the courier's office in her city instead of home delivery. */
+  dispatchOffice: z.string().trim().min(2).max(160).optional(),
   shippingOptionId: z.string().min(1),
   /** @deprecated Slice K — use shippingOptionId */
   shippingZoneId: z.string().optional(),

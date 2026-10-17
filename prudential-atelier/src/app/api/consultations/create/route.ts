@@ -180,6 +180,7 @@ export async function POST(req: NextRequest) {
         paymentStatus: PaymentStatus.PENDING,
         status: ConsultationStatus.PENDING_PAYMENT,
         attribution: sanitizeAttribution(data.attribution) ?? undefined,
+        garmentReceipt: data.garmentReceipt ?? undefined,
         termsAcknowledgedAt: now,
         termsText,
         legalTermsVersion: legalTerms.version,

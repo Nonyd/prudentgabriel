@@ -26,6 +26,10 @@ import type { PaymentGatewayType } from "@/lib/payments/index";
 import { formatPrice } from "@/lib/currency";
 import { cmsGet } from "@/lib/cms-helpers";
 import { readHeldAttribution } from "@/lib/analytics/attribution";
+import { COUNTRIES } from "@/lib/geo/countries";
+import { NIGERIA_STATES } from "@/lib/geo/nigeria-states";
+import { resolveDestinationBand } from "@/lib/shipping/destination";
+import { garmentReceiptSchema, modesFor, type GarmentReceiptMode } from "@/lib/garment-receipt";
 
 type Gateway = PaymentGatewayType;
 type ShopCur = "NGN" | "USD" | "GBP";
@@ -117,6 +121,12 @@ export function ConsultationInvitationFlow({
   const [clientPhone, setClientPhone] = useState(invitation.clientPhone);
   const [description, setDescription] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [rcCountry, setRcCountry] = useState("NG");
+  const [rcState, setRcState] = useState("");
+  const [rcCity, setRcCity] = useState("");
+  const [rcAddress, setRcAddress] = useState("");
+  const [rcOffice, setRcOffice] = useState("");
+  const [rcMode, setRcMode] = useState<GarmentReceiptMode | null>(null);
 
   const [currency, setCurrency] = useState<ShopCur>("NGN");
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
@@ -149,6 +159,31 @@ export function ConsultationInvitationFlow({
   const termsText = quote ? consultationTermsText(quote.NGN) : "";
   const datesDistinct = new Set([pref1, pref2, pref3]).size === 3;
 
+  const rcBand = resolveDestinationBand({ country: rcCountry, state: rcState, city: rcCity });
+  const rcModes = rcState.trim() ? modesFor(rcBand) : [];
+  const rcEffectiveMode = rcMode && rcModes.includes(rcMode) ? rcMode : rcModes.length === 1 ? rcModes[0] : null;
+  const garmentReceipt = rcEffectiveMode
+    ? garmentReceiptSchema.safeParse({
+        mode: rcEffectiveMode,
+        country: rcCountry,
+        state: rcState,
+        city: rcCity || undefined,
+        address: rcEffectiveMode === "DELIVERY" ? rcAddress : undefined,
+        dispatchOffice: rcEffectiveMode === "DISPATCH_PICKUP" ? rcOffice : undefined,
+      })
+    : null;
+  const rcLabels: Record<GarmentReceiptMode, [string, string]> = {
+    OFFICE_PICKUP: ["Pick up at our office", "Collect your piece from the atelier in Lagos."],
+    DISPATCH_PICKUP: [
+      "Pick up at the dispatch office",
+      "Collect from the courier's office in your city. No house address needed.",
+    ],
+    DELIVERY:
+      rcBand === "LAGOS"
+        ? ["Deliver to my address", "We bring it to your address in Lagos."]
+        : ["Home delivery", "We send it to your house address, so please make sure it is correct."],
+  };
+
   const stripeReturnUrl =
     typeof window !== "undefined" && bookingNumber
       ? `${window.location.origin}/consultation/success?booking=${encodeURIComponent(bookingNumber)}`
@@ -178,6 +213,7 @@ export function ConsultationInvitationFlow({
         preferredDate1: prefYmdToDate(pref1),
         preferredDate2: prefYmdToDate(pref2),
         preferredDate3: prefYmdToDate(pref3),
+        garmentReceipt: garmentReceipt?.success ? garmentReceipt.data : undefined,
         attribution: readHeldAttribution() ?? undefined,
       };
 
@@ -245,6 +281,7 @@ export function ConsultationInvitationFlow({
       : step === 2
         ? Boolean(pref1 && pref2 && pref3 && datesDistinct)
         : clientPhone.length >= 7 &&
+          Boolean(garmentReceipt?.success) &&
           termsAccepted &&
           Boolean(gateway) &&
           (gateway !== "BANK_TRANSFER" || Boolean(receiptUrl));
@@ -486,6 +523,109 @@ export function ConsultationInvitationFlow({
                   maxLength={2000}
                 />
               </label>
+            </div>
+
+            <div className="space-y-4 glass-opaque p-6">
+              <h3 className="font-serif text-xl text-choc">When your piece is ready</h3>
+              <p className="font-body text-sm text-text-mid">
+                Tell us where you are and how you would like to receive it. You can change this with us later.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block text-sm">
+                  <span className="font-sans text-text-mid">Country</span>
+                  <select
+                    className="input-field mt-1 w-full"
+                    value={rcCountry}
+                    onChange={(e) => {
+                      setRcCountry(e.target.value);
+                      setRcState("");
+                    }}
+                  >
+                    {COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-sm">
+                  <span className="font-sans text-text-mid">{rcCountry === "NG" ? "State" : "Region / state"}</span>
+                  {rcCountry === "NG" ? (
+                    <select className="input-field mt-1 w-full" value={rcState} onChange={(e) => setRcState(e.target.value)}>
+                      <option value="">Select state</option>
+                      {NIGERIA_STATES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input className="input-field mt-1 w-full" value={rcState} onChange={(e) => setRcState(e.target.value)} />
+                  )}
+                </label>
+              </div>
+
+              {rcModes.length > 1 ? (
+                <div className="space-y-2" role="radiogroup" aria-label="How would you like to receive your piece?">
+                  {rcModes.map((m) => (
+                    <label
+                      key={m}
+                      className={clsx(
+                        "flex cursor-pointer items-start gap-3 rounded-sm border px-4 py-3 transition-colors",
+                        rcEffectiveMode === m ? "border-choc bg-choc/5" : "border-sand",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="garmentReceipt"
+                        checked={rcEffectiveMode === m}
+                        onChange={() => setRcMode(m)}
+                        className="mt-1 accent-choc"
+                      />
+                      <span className="font-body text-sm text-text-mid">
+                        <span className="text-choc">{rcLabels[m][0]}</span>
+                        <span className="mt-0.5 block text-xs text-text-light">{rcLabels[m][1]}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              ) : null}
+
+              {rcEffectiveMode && rcEffectiveMode !== "OFFICE_PICKUP" ? (
+                <label className="block text-sm">
+                  <span className="font-sans text-text-mid">City</span>
+                  <input
+                    className="input-field mt-1 w-full"
+                    value={rcCity}
+                    onChange={(e) => setRcCity(e.target.value)}
+                    autoComplete="address-level2"
+                  />
+                </label>
+              ) : null}
+              {rcEffectiveMode === "DELIVERY" ? (
+                <label className="block text-sm">
+                  <span className="font-sans text-text-mid">House address</span>
+                  <textarea
+                    className="input-field mt-1 min-h-[80px] w-full"
+                    value={rcAddress}
+                    onChange={(e) => setRcAddress(e.target.value)}
+                    autoComplete="street-address"
+                    maxLength={300}
+                  />
+                </label>
+              ) : null}
+              {rcEffectiveMode === "DISPATCH_PICKUP" ? (
+                <label className="block text-sm">
+                  <span className="font-sans text-text-mid">Which dispatch office will you collect from?</span>
+                  <input
+                    className="input-field mt-1 w-full"
+                    value={rcOffice}
+                    onChange={(e) => setRcOffice(e.target.value)}
+                    placeholder="e.g. GIG Logistics, Ring Road, Ibadan"
+                    maxLength={160}
+                  />
+                </label>
+              ) : null}
             </div>
 
             <div className="glass-opaque p-6">

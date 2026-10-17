@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
     requiresConsent: o.requiresConsent,
     requiresAddress: o.requiresAddress,
     description: o.description,
+    pickupAddress: o.pickupAddress,
   }));
 
   return NextResponse.json({
