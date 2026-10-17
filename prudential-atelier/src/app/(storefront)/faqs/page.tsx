@@ -14,7 +14,8 @@ import {
   resolveHouseAddressLine2,
 } from "@/lib/house-address";
 import { resolveLegalTokens } from "@/lib/legal-tokens";
-import { getLoyaltyRulePoints, getTierThresholds } from "@/lib/loyalty";
+import { getLoyaltyRulePoints } from "@/lib/loyalty";
+import { getTierConfigs } from "@/lib/loyalty-tiers";
 import { LOYALTY_ACTIONS, PROGRAMME_DEFAULTS } from "@/lib/points-value";
 import { routeMetadata } from "@/lib/seo";
 import { PAGE_SEO_FALLBACKS } from "@/lib/seo-copy";
@@ -61,8 +62,9 @@ async function loadFacts(): Promise<FaqFacts> {
     safe(() => getLoyaltyRulePoints(LOYALTY_ACTIONS.STYLE_PROFILE), PROGRAMME_DEFAULTS[LOYALTY_ACTIONS.STYLE_PROFILE] ?? 0),
     safe(() => getLoyaltyRulePoints(LOYALTY_ACTIONS.BIRTHDAY), PROGRAMME_DEFAULTS[LOYALTY_ACTIONS.BIRTHDAY] ?? 0),
     safe<FaqFacts["tiers"]>(async () => {
-      const t = await getTierThresholds();
-      return { silver: t.silver, gold: t.gold, platinum: t.platinum };
+      const t = await getTierConfigs();
+      const min = (tier: string) => t.find((c) => c.tier === tier)?.minSpendNGN ?? 0;
+      return { silver: min("SILVER"), gold: min("GOLD"), platinum: min("PLATINUM") };
     }, null),
   ]);
 

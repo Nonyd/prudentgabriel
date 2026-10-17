@@ -1,16 +1,9 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import {
-  getTierThresholds,
-  tierFromPoints,
-  pointsToNextTier,
-  nextTier,
-  TIER_LABELS,
-  tierProgressPercent,
-} from "@/lib/loyalty";
 import { LoyaltyClient } from "@/components/account/LoyaltyClient";
-import { getPointRateNGN, pointsToNaira } from "@/lib/points";
-import { PRUDENT_POINTS_COPY } from "@/lib/points-value";
+import { getPointRateNGN, getPrudentPointsCopy, pointsToNaira } from "@/lib/points";
+import { getClientTierStatus, getTierConfigs, getTierPerks, perksForTier } from "@/lib/loyalty-tiers";
+import { TIER_LABELS, TIER_ORDER } from "@/lib/loyalty";
 
 type Props = { searchParams: Promise<{ page?: string }> };
 
@@ -24,9 +17,10 @@ export default async function LoyaltyPage({ searchParams }: Props) {
   const now = new Date();
   const in30 = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-  const [user, thresholds, history, total, rateNGN, expiring] = await Promise.all([
+  const [user, configs, perks, history, total, rateNGN, expiring, copy] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId }, select: { pointsBalance: true } }),
-    getTierThresholds(),
+    getTierConfigs(),
+    getTierPerks(),
     prisma.pointsTransaction.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
@@ -40,23 +34,25 @@ export default async function LoyaltyPage({ searchParams }: Props) {
       _sum: { remaining: true },
       _min: { expiresAt: true },
     }),
+    getPrudentPointsCopy(),
   ]);
+  const status = await getClientTierStatus(userId, { configs, perks, now });
 
   const points = user?.pointsBalance ?? 0;
-  const tier = tierFromPoints(points, thresholds);
-  const nt = nextTier(tier);
 
   return (
     <LoyaltyClient
       pointsBalance={points}
       pointsValueNGN={pointsToNaira(points, rateNGN)}
       rateNGN={rateNGN}
-      tier={tier}
-      tierLabel={TIER_LABELS[tier]}
-      nextTier={nt}
-      pointsToNext={pointsToNextTier(points, tier, thresholds)}
-      progressPercent={tierProgressPercent(points, tier, thresholds)}
-      copy={PRUDENT_POINTS_COPY}
+      status={status}
+      tiers={TIER_ORDER.map((t) => ({
+        tier: t,
+        label: TIER_LABELS[t],
+        minSpendNGN: configs.find((c) => c.tier === t)!.minSpendNGN,
+        perks: perksForTier(t, configs, perks),
+      }))}
+      copy={copy}
       expiringPoints={expiring._sum.remaining ?? 0}
       expiringOn={expiring._min.expiresAt?.toISOString() ?? null}
       history={history}

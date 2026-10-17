@@ -236,6 +236,10 @@ export async function fulfillPaidOrder(params: {
       console.warn("[fulfillPaidOrder] points", e);
       return 0;
     });
+    const tierUser = userId;
+    void import("@/lib/loyalty-tiers")
+      .then((m) => m.syncClientTier(tierUser, { announce: true }))
+      .catch((e) => console.warn("[fulfillPaidOrder] tier", e));
   }
 
   const emailTo = clientEmail;

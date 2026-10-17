@@ -1,6 +1,6 @@
 import type { ClientProfile, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
+import { syncClientTier } from "@/lib/loyalty-tiers";
 import { SessionUserMissingError } from "@/lib/session-user";
 
 export { SessionUserMissingError } from "@/lib/session-user";
@@ -17,18 +17,18 @@ export async function getOrCreateClientProfile(userId: string): Promise<ClientPr
     throw new SessionUserMissingError(userId);
   }
 
-  const thresholds = await getTierThresholds();
-  const tier = tierFromPoints(user.pointsBalance, thresholds);
-
   try {
-    return await prisma.clientProfile.create({
+    const created = await prisma.clientProfile.create({
       data: {
         userId,
         loyaltyPoints: user.pointsBalance,
-        loyaltyTier: tier,
+        loyaltyTier: "BRONZE",
         referredBy: user.referredById ?? undefined,
       },
     });
+    // Payments made before the profile existed decide the real tier.
+    void syncClientTier(userId).catch((e) => console.warn("[account] tier", e));
+    return created;
   } catch (error) {
     const raced = await prisma.clientProfile.findUnique({ where: { userId } });
     if (raced) return raced;
@@ -39,12 +39,11 @@ export async function getOrCreateClientProfile(userId: string): Promise<ClientPr
 export async function syncClientLoyaltyTier(userId: string, pointsBalance: number): Promise<void> {
   const profile = await prisma.clientProfile.findUnique({ where: { userId } });
   if (!profile) return;
-  const thresholds = await getTierThresholds();
-  const tier = tierFromPoints(pointsBalance, thresholds);
   await prisma.clientProfile.update({
     where: { id: profile.id },
-    data: { loyaltyPoints: pointsBalance, loyaltyTier: tier },
+    data: { loyaltyPoints: pointsBalance },
   });
+  await syncClientTier(userId);
 }
 
 export type MergedAccountProfile = {

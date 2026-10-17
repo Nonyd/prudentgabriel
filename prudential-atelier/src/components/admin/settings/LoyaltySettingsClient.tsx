@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { LoyaltyTiersAdmin } from "@/components/admin/settings/LoyaltyTiersAdmin";
 
 type RuleRow = {
   action: string;
@@ -103,6 +104,8 @@ export function LoyaltySettingsClient() {
 
   return (
     <div className="space-y-8">
+      <LoyaltyTiersAdmin />
+
       <div className="rounded-sm border border-sand bg-canvas p-6">
         <h2 className="font-body text-11px font-medium uppercase tracking-[0.14em] text-text-mid">
           Prudent Points liability

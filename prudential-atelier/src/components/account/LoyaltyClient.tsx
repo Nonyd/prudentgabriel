@@ -3,18 +3,17 @@
 import { useState } from "react";
 import type { LoyaltyTier, PointsTransaction } from "@prisma/client";
 import Link from "next/link";
-import { TIER_BENEFITS, TIER_LABELS } from "@/lib/loyalty";
+import type { ClientTierStatus } from "@/lib/loyalty-tiers";
 import { formatDate } from "@/lib/utils";
+
+type TierCard = { tier: LoyaltyTier; label: string; minSpendNGN: number; perks: string[] };
 
 type Props = {
   pointsBalance: number;
   pointsValueNGN: number;
   rateNGN: number;
-  tier: LoyaltyTier;
-  tierLabel: string;
-  nextTier: LoyaltyTier | null;
-  pointsToNext: number;
-  progressPercent: number;
+  status: ClientTierStatus;
+  tiers: TierCard[];
   copy: string;
   expiringPoints: number;
   expiringOn: string | null;
@@ -23,25 +22,32 @@ type Props = {
   totalPages: number;
 };
 
+const naira = (n: number) => `₦${Math.round(n).toLocaleString("en-NG")}`;
+
 export function LoyaltyClient(props: Props) {
   const [page, setPage] = useState(props.page);
+  const { status } = props;
 
   return (
     <div className="mx-auto max-w-4xl">
       <section className="rounded-lg bg-choc p-8 text-cream">
-        <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-sand">{props.tierLabel}</p>
+        <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-sand">{status.tierLabel} member</p>
         <p className="mt-4 font-display text-[56px] leading-none">{props.pointsBalance.toLocaleString()}</p>
         <p className="font-sans text-sm text-cream/80">Prudent Points</p>
         <p className="mt-2 font-sans text-sm text-sand">
-          Worth ₦{Math.round(props.pointsValueNGN).toLocaleString("en-NG")} at ₦{props.rateNGN} per point
+          Worth {naira(props.pointsValueNGN)} at ₦{props.rateNGN} per point
         </p>
-        {props.nextTier ? (
+        {status.heldUntil ? (
+          <p className="mt-2 font-sans text-xs text-cream/70">Your {status.tierLabel} status runs to {status.heldUntil}.</p>
+        ) : null}
+        {status.nextTier ? (
           <>
             <div className="mt-6 h-2 overflow-hidden rounded-full bg-cream/20">
-              <div className="h-full bg-lightbr" style={{ width: `${props.progressPercent}%` }} />
+              <div className="h-full bg-lightbr" style={{ width: `${status.progressPercent}%` }} />
             </div>
             <p className="mt-2 font-sans text-xs text-cream/70">
-              {props.pointsToNext} points needed to reach {TIER_LABELS[props.nextTier]}
+              {naira(status.spendThisYear)} spent this year. {naira(status.spendToNext)} more this year to reach{" "}
+              {status.nextTierLabel}.
             </p>
           </>
         ) : null}
@@ -57,40 +63,36 @@ export function LoyaltyClient(props: Props) {
       <section className="mt-10">
         <h2 className="font-display text-xl text-choc">The programme</h2>
         <p className="mt-3 max-w-xl font-sans text-sm leading-relaxed text-text-mid">{props.copy}</p>
+        <p className="mt-3 max-w-xl font-sans text-sm leading-relaxed text-text-mid">
+          Your tier follows what you spend with the house in a calendar year. A tier you reach is yours for the rest
+          of that year and all of the next.
+        </p>
       </section>
 
-      <section className="mt-10 overflow-x-auto">
+      <section className="mt-10">
         <h2 className="font-display text-xl text-choc">Tier benefits</h2>
-        <table className="mt-4 w-full min-w-[480px] border-collapse font-sans text-sm">
-          <thead>
-            <tr className="border-b border-sand text-left text-xs uppercase text-text-light">
-              <th className="py-2 pr-4">Benefit</th>
-              {(["BRONZE", "SILVER", "GOLD", "PLATINUM"] as LoyaltyTier[]).map((t) => (
-                <th
-                  key={t}
-                  className={`px-2 py-2 text-center ${t === props.tier ? "border-x-2 border-nut" : ""}`}
-                >
-                  {TIER_LABELS[t]}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {TIER_BENEFITS.map((b) => (
-              <tr key={b.label} className="border-b border-sand/60">
-                <td className="py-3 pr-4 text-choc">{b.label}</td>
-                {(["BRONZE", "SILVER", "GOLD", "PLATINUM"] as LoyaltyTier[]).map((t) => (
-                  <td
-                    key={t}
-                    className={`px-2 py-3 text-center ${t === props.tier ? "border-x-2 border-nut bg-nut/5" : ""}`}
-                  >
-                    {b.tiers.includes(t) ? "✓" : ""}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {props.tiers.map((t) => {
+            const current = t.tier === status.tier;
+            return (
+              <div
+                key={t.tier}
+                className={`rounded-lg border p-4 ${current ? "border-nut bg-nut/5" : "border-sand"}`}
+              >
+                <p className="font-display text-lg text-choc">{t.label}</p>
+                <p className="mt-1 font-sans text-xs uppercase tracking-wide text-text-light">
+                  {t.minSpendNGN > 0 ? `${naira(t.minSpendNGN)} a year` : "Every client"}
+                  {current ? " · You" : ""}
+                </p>
+                <ul className="mt-3 space-y-1.5 font-sans text-sm text-choc">
+                  {t.perks.map((perk) => (
+                    <li key={perk}>✓ {perk}</li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
       </section>
 
       <section className="mt-10">

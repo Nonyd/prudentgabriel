@@ -148,6 +148,7 @@ export function buildFaq(facts: FaqFacts): FaqSection[] {
   const uncollectedDays = t.shipping_uncollected_days?.trim() ?? "";
   const perTen = t.points_per_ten?.trim() ?? "";
   const spendUnit = t.points_spend_unit?.trim() ?? "";
+  const atelierPer100 = t.points_atelier_per_hundred?.trim() ?? "";
   const pointRate = t.points_rate?.trim() ?? "";
   const referral = t.points_referral?.trim() ?? "";
   const expiry = t.points_expiry_months?.trim() ?? "";
@@ -602,6 +603,7 @@ export function buildFaq(facts: FaqFacts): FaqSection[] {
             perTen && spendUnit
               ? `You earn ${perTen} ${perTen === "1" ? "point" : "points"} for every ₦${spendUnit} you spend in cash on shop orders. `
               : "You earn points on what you spend in cash on shop orders. ",
+            atelierPer100 ? `Atelier commissions earn ${atelierPer100} points for every ₦100 you pay. ` : "",
           ),
           p("There are bonus points too:"),
           ul(
@@ -646,9 +648,9 @@ export function buildFaq(facts: FaqFacts): FaqSection[] {
           "What are the tiers?",
           facts.tiers
             ? p(
-                `Your tier follows your points balance: Bronze from 0, Silver from ${count(facts.tiers.silver)}, Gold from ${count(facts.tiers.gold)} and Platinum from ${count(facts.tiers.platinum)} points. You can see yours in your account.`,
+                `Your tier follows what you pay us in a calendar year: Bronze for every client, Silver from ₦${count(facts.tiers.silver)}, Gold from ₦${count(facts.tiers.gold)} and Platinum from ₦${count(facts.tiers.platinum)}. A tier you reach lasts for the rest of that year and all of the next. You can see yours, and its perks, in your account.`,
               )
-            : p("Your tier (Bronze, Silver, Gold or Platinum) follows your points balance. You can see yours in your account."),
+            : p("Your tier (Bronze, Silver, Gold or Platinum) follows what you pay us in a calendar year. You can see yours in your account."),
         ),
       ],
     },

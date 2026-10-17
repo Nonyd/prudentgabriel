@@ -2,13 +2,7 @@ import type { ComponentProps } from "react";
 import type { ClientProfile } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { styleProfileComplete } from "@/lib/account-helpers";
-import {
-  getTierThresholds,
-  tierFromPoints,
-  pointsToNextTier,
-  nextTier,
-  tierProgressPercent,
-} from "@/lib/loyalty";
+import { getClientTierStatus } from "@/lib/loyalty-tiers";
 import { mapProductToListItem } from "@/lib/map-product-list-item";
 import type { AccountDashboard, DashboardState } from "@/components/account/AccountDashboard";
 import { canSubmitTestimonial } from "@/lib/testimonial-eligibility";
@@ -127,12 +121,13 @@ export async function loadAccountDashboardProps(params: {
   const [rtwOrderCount, bespokeOrderCount] = orderHistory;
   const hasOrderHistory = rtwOrderCount > 0 || bespokeOrderCount > 0;
 
-  const thresholds = await getTierThresholds();
   const points = user?.pointsBalance ?? 0;
-  const tier = tierFromPoints(points, thresholds);
-  const next = nextTier(tier);
-  const toNext = pointsToNextTier(points, tier, thresholds);
-  const progressPct = tierProgressPercent(points, tier, thresholds);
+  const tierStatus = await getClientTierStatus(userId);
+  const tier = tierStatus.tier;
+  const next = tierStatus.nextTier;
+  // Naira still to spend this year, not points: tiers follow spend.
+  const toNext = tierStatus.spendToNext;
+  const progressPct = tierStatus.progressPercent;
   const firstName = (user?.name ?? "there").split(/\s+/)[0] ?? "there";
   const memberSince = user?.createdAt ?? new Date();
 
@@ -263,6 +258,7 @@ export async function loadAccountDashboardProps(params: {
     toNext,
     nextTier: next,
     progressPct,
+    perks: tierStatus.perks,
     rtwActiveCount,
     bespokeActiveCount,
     balanceDue,

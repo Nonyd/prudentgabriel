@@ -58,6 +58,7 @@ const FIXTURE_TOKENS: Record<string, string> = {
   invoice_validity_days: "14",
   points_per_ten: "1",
   points_spend_unit: "10",
+  points_atelier_per_hundred: "2",
   points_rate: "1",
   points_referral: "12,500",
   points_expiry_months: "24",

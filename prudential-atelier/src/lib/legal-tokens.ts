@@ -9,6 +9,7 @@ import { getAlterationWarrantyDays, getPostDeliveryFaultHours } from "@/lib/alte
 import { getFabricPromiseHours } from "@/lib/fabric-promise";
 import { getExpiryMonths, getMinRedemptionPoints, getPointRateNGN } from "@/lib/points";
 import { getLoyaltyRulePoints } from "@/lib/loyalty";
+import { getTierConfigs } from "@/lib/loyalty-tiers";
 import { LOYALTY_ACTIONS, NGN_PER_EARN_UNIT } from "@/lib/points-value";
 import { getShippingCopy } from "@/lib/shipping/copy";
 import { prisma } from "@/lib/prisma";
@@ -98,7 +99,7 @@ export async function resolveLegalTokens(): Promise<LegalTokenMap> {
     pointRate,
     expiryMonths,
     minRedemption,
-    pointsPerTen,
+    tierConfigs,
     referralPoints,
     shippingCopy,
     lagos,
@@ -115,7 +116,7 @@ export async function resolveLegalTokens(): Promise<LegalTokenMap> {
     getPointRateNGN(),
     getExpiryMonths(),
     getMinRedemptionPoints(),
-    getLoyaltyRulePoints(LOYALTY_ACTIONS.PURCHASE_PER_10),
+    getTierConfigs(),
     getLoyaltyRulePoints(LOYALTY_ACTIONS.REFERRAL_FIRST_ORDER),
     getShippingCopy(),
     prisma.lagosLocation.findMany({
@@ -168,8 +169,10 @@ export async function resolveLegalTokens(): Promise<LegalTokenMap> {
     fabric_promise_hours: asToken(await getFabricPromiseHours()),
     post_delivery_fault_hours: asToken(await getPostDeliveryFaultHours()),
     invoice_validity_days: asToken(validityDays),
-    points_per_ten: asToken(pointsPerTen),
+    // Token names predate the ₦100 unit; the Terms read "{points_per_ten} points for every ₦{points_spend_unit}".
+    points_per_ten: asToken(tierConfigs[0]?.pointsPer100 ?? 0),
     points_spend_unit: asToken(NGN_PER_EARN_UNIT),
+    points_atelier_per_hundred: asToken(await getLoyaltyRulePoints(LOYALTY_ACTIONS.ATELIER_PER_100)),
     points_rate: pointRate > 0 ? String(pointRate) : "",
     points_referral: referralPoints > 0 ? formatCountLegal(referralPoints) : "",
     points_expiry_months: asToken(expiryMonths),

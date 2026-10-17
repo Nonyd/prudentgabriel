@@ -5,7 +5,6 @@ import type { BespokeStage, LoyaltyTier, StageUpdate } from "@prisma/client";
 import {
   Calendar,
   Check,
-  Lock,
   Package,
   Ruler,
 } from "lucide-react";
@@ -13,7 +12,7 @@ import { BespokeStageTracker } from "@/components/bespoke/BespokeStageTracker";
 import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPanel";
 import { ProductCard } from "@/components/common/ProductCard";
 import { ShareYourStoryCard } from "@/components/account/ShareYourStoryCard";
-import { TIER_BENEFITS, TIER_LABELS } from "@/lib/loyalty";
+import { TIER_LABELS } from "@/lib/loyalty";
 import { formatDate } from "@/lib/utils";
 import { formatBespokeBook } from "@/lib/atelier-fx";
 import { cn } from "@/lib/utils";
@@ -102,9 +101,11 @@ export type AccountDashboardProps = {
   today: string;
   tier: LoyaltyTier;
   points: number;
+  /** Naira still to spend this year to reach the next tier. */
   toNext: number;
   nextTier: LoyaltyTier | null;
   progressPct: number;
+  perks: string[];
   rtwActiveCount: number;
   bespokeActiveCount: number;
   balanceDue: number;
@@ -271,12 +272,14 @@ function LoyaltyPanel({
   toNext,
   nextTier,
   progressPct,
+  perks,
 }: {
   tier: LoyaltyTier;
   points: number;
   toNext: number;
   nextTier: LoyaltyTier | null;
   progressPct: number;
+  perks: string[];
 }) {
   return (
     <Card className="overflow-hidden">
@@ -295,7 +298,7 @@ function LoyaltyPanel({
               />
             </div>
             <p className="mt-2 font-sans text-xs text-sand">
-              {toNext.toLocaleString()} points to {TIER_LABELS[nextTier]}
+              ₦{Math.round(toNext).toLocaleString("en-NG")} more this year to reach {TIER_LABELS[nextTier]}
             </p>
           </>
         ) : (
@@ -307,21 +310,12 @@ function LoyaltyPanel({
           Your perks
         </p>
         <ul className="space-y-2.5">
-          {TIER_BENEFITS.map((b) => {
-            const unlocked = b.tiers.includes(tier);
-            return (
-              <li key={b.label} className="flex items-center gap-2.5 font-sans text-xs">
-                {unlocked ? (
-                  <Check className="h-3.5 w-3.5 shrink-0 text-text-light" strokeWidth={2} aria-hidden />
-                ) : (
-                  <Lock className="h-3.5 w-3.5 shrink-0 text-text-light" strokeWidth={1.75} aria-hidden />
-                )}
-                <span className={unlocked ? "text-choc dark:text-cream" : "text-text-light"}>
-                  {b.label}
-                </span>
-              </li>
-            );
-          })}
+          {perks.map((perk) => (
+            <li key={perk} className="flex items-center gap-2.5 font-sans text-xs">
+              <Check className="h-3.5 w-3.5 shrink-0 text-text-light" strokeWidth={2} aria-hidden />
+              <span className="text-choc dark:text-cream">{perk}</span>
+            </li>
+          ))}
         </ul>
         <Link
           href="/account/loyalty"
@@ -495,6 +489,7 @@ export function AccountDashboard({
   toNext,
   nextTier,
   progressPct,
+  perks,
   bespokeActiveCount,
   balanceDue,
   balanceDueLabel,
@@ -553,10 +548,10 @@ export function AccountDashboard({
         />
         <StatCard
           label="Next reward"
-          value={nextTier ? `${toNext.toLocaleString()} pts` : "—"}
+          value={nextTier ? `₦${Math.round(toNext).toLocaleString("en-NG")}` : "—"}
           sub={
             nextTier
-              ? `to ${TIER_LABELS[nextTier]}`
+              ? `to spend this year for ${TIER_LABELS[nextTier]}`
               : "Maximum tier achieved ✦"
           }
         />
@@ -718,6 +713,7 @@ export function AccountDashboard({
                 toNext={toNext}
                 nextTier={nextTier}
                 progressPct={progressPct}
+                perks={perks}
               />
               <MeasurementVaultPanel measurements={measurements} />
             </aside>
@@ -874,6 +870,7 @@ export function AccountDashboard({
               toNext={toNext}
               nextTier={nextTier}
               progressPct={progressPct}
+              perks={perks}
             />
             <MeasurementVaultPanel measurements={measurements} />
             <EventsPanel eventDates={eventDates} />

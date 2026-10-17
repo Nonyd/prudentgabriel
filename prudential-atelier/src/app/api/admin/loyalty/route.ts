@@ -3,9 +3,16 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { ensureLoyaltySettingKeys } from "@/lib/loyalty-settings-bootstrap";
-import { getExpiryMonths, getMinRedemptionPoints, getPointRateNGN, outstandingPointsTotal, pointsToNaira } from "@/lib/points";
+import {
+  getExpiryMonths,
+  getMinRedemptionPoints,
+  getPointRateNGN,
+  getPrudentPointsCopy,
+  outstandingPointsTotal,
+  pointsToNaira,
+} from "@/lib/points";
 import { setSetting, clearSettingCacheKey } from "@/lib/settings";
-import { LOYALTY_ACTIONS, NGN_PER_EARN_UNIT, PRUDENT_POINTS_COPY, SETTING_KEYS } from "@/lib/points-value";
+import { LOYALTY_ACTIONS, NGN_PER_EARN_UNIT, SETTING_KEYS } from "@/lib/points-value";
 import { logLegallySignificantChange } from "@/lib/legal-tokens";
 import { revalidateSettings } from "@/lib/revalidate";
 
@@ -26,7 +33,7 @@ const patchSchema = z.object({
 
 const RULE_LABELS: Record<string, string> = {
   [LOYALTY_ACTIONS.SIGNUP]: "Welcome bonus on registration (keep at 0 — referral pays on first order)",
-  [LOYALTY_ACTIONS.PURCHASE_PER_10]: "Points per ₦10 of cash spent on the garment (not shipping, not points)",
+  [LOYALTY_ACTIONS.ATELIER_PER_100]: "Points per ₦100 paid towards an atelier commission (same for every tier)",
   [LOYALTY_ACTIONS.REFERRAL_FIRST_ORDER]: "Referrer reward when the friend completes a first paid order",
   [LOYALTY_ACTIONS.REVIEW]: "Verified product review after delivery",
   [LOYALTY_ACTIONS.NEWSLETTER]: "Newsletter signup",
@@ -35,6 +42,9 @@ const RULE_LABELS: Record<string, string> = {
 };
 
 const SAMPLE_GARMENT_NGN = 250_000;
+
+/** Shop orders earn at the tier rate (Tiers below), not a rule. */
+const RETIRED_RULES = ["SIGNUP_REFERRAL", "PURCHASE_PER_100", LOYALTY_ACTIONS.PURCHASE_PER_10];
 
 export async function GET() {
   const gate = await requireAdminApi("settings");
@@ -58,10 +68,10 @@ export async function GET() {
   const liabilityNGN = pointsToNaira(outstanding, rateNGN);
 
   const earningCost = rules
-    .filter((r) => r.isActive && r.action !== "SIGNUP_REFERRAL" && r.action !== "PURCHASE_PER_100")
+    .filter((r) => r.isActive && !RETIRED_RULES.includes(r.action))
     .map((r) => {
       const nairaEach =
-        r.action === LOYALTY_ACTIONS.PURCHASE_PER_10
+        r.action === LOYALTY_ACTIONS.ATELIER_PER_100
           ? r.points * rateNGN * (SAMPLE_GARMENT_NGN / NGN_PER_EARN_UNIT)
           : pointsToNaira(r.points, rateNGN);
       const referralsForSample =
@@ -73,11 +83,11 @@ export async function GET() {
         label: RULE_LABELS[r.action] ?? r.action.replace(/_/g, " "),
         points: r.points,
         isActive: r.isActive,
-        nairaEach: r.action === LOYALTY_ACTIONS.PURCHASE_PER_10 ? r.points * rateNGN : pointsToNaira(r.points, rateNGN),
+        nairaEach: r.action === LOYALTY_ACTIONS.ATELIER_PER_100 ? r.points * rateNGN : pointsToNaira(r.points, rateNGN),
         referralsForSample,
         spendNote:
-          r.action === LOYALTY_ACTIONS.PURCHASE_PER_10
-            ? `A ₦${SAMPLE_GARMENT_NGN.toLocaleString("en-NG")} dress earns ${Math.floor(SAMPLE_GARMENT_NGN / NGN_PER_EARN_UNIT) * r.points} points (${nairaEach.toLocaleString("en-NG")} naira back)`
+          r.action === LOYALTY_ACTIONS.ATELIER_PER_100
+            ? `A ₦${SAMPLE_GARMENT_NGN.toLocaleString("en-NG")} commission payment earns ${Math.floor(SAMPLE_GARMENT_NGN / NGN_PER_EARN_UNIT) * r.points} points (${nairaEach.toLocaleString("en-NG")} naira back)`
             : null,
       };
     });
@@ -86,7 +96,7 @@ export async function GET() {
     rateNGN,
     minRedemption,
     expiryMonths,
-    copy: PRUDENT_POINTS_COPY,
+    copy: await getPrudentPointsCopy(),
     outstandingPoints: outstanding,
     liabilityNGN,
     sampleGarmentNGN: SAMPLE_GARMENT_NGN,
@@ -179,7 +189,7 @@ export async function PATCH(req: NextRequest) {
 
   if (parsed.data.rules) {
     for (const rule of parsed.data.rules) {
-      if (rule.action === "SIGNUP_REFERRAL" || rule.action === "PURCHASE_PER_100") continue;
+      if (RETIRED_RULES.includes(rule.action)) continue;
       const existing = await prisma.loyaltyRule.findUnique({ where: { action: rule.action } });
       await prisma.loyaltyRule.upsert({
         where: { action: rule.action },

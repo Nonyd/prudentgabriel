@@ -9,6 +9,7 @@ export const LEGAL_TOKEN_NAMES = [
   "invoice_validity_days",
   "points_per_ten",
   "points_spend_unit",
+  "points_atelier_per_hundred",
   "points_rate",
   "points_referral",
   "points_expiry_months",

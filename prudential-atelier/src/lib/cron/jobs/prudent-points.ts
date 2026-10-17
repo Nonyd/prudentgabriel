@@ -2,6 +2,7 @@ import type { CronJobContext, JobResult } from "@/lib/cron/types";
 import { prisma } from "@/lib/prisma";
 import { expireOverduePoints } from "@/lib/points";
 import { sendPointsExpiryEmail } from "@/lib/email";
+import { recomputeAllClientTiers } from "@/lib/loyalty-tiers";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -68,5 +69,15 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
   }
 
   // Birthday points now go out with the birthday wish (jobs/birthday-wishes.ts).
+
+  // Tiers: catches refunds and the 1 January drop for clients who stopped buying. Silent.
+  try {
+    const tiers = await recomputeAllClientTiers();
+    processed += tiers.changed.length;
+  } catch (e) {
+    console.warn("[prudent-points] tiers", e);
+    failed += 1;
+  }
+
   return { processed, failed };
 }

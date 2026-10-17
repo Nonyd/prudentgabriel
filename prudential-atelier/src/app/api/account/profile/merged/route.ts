@@ -10,7 +10,7 @@ import {
   syncClientLoyaltyTier,
 } from "@/lib/account-helpers";
 import { awardStyleProfilePoints } from "@/lib/points";
-import { getTierThresholds, tierFromPoints, pointsToNextTier, nextTier, TIER_LABELS } from "@/lib/loyalty";
+import { getClientTierStatus } from "@/lib/loyalty-tiers";
 import { prisma } from "@/lib/prisma";
 import { logActivity, logError } from "@/lib/logger";
 import { emptyableStoredPublicMediaUrlSchema } from "@/lib/media/stored-url";
@@ -41,8 +41,7 @@ export async function GET() {
     const merged = await getMergedAccountProfile(gate.session.user.id!);
     if (!merged) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const thresholds = await getTierThresholds();
-    const tier = tierFromPoints(merged.user.pointsBalance, thresholds);
+    const status = await getClientTierStatus(gate.session.user.id!);
     const notificationPrefs = await getNotificationPrefs(gate.session.user.id!);
 
     const parts = (merged.user.name ?? "").trim().split(/\s+/);
@@ -57,11 +56,11 @@ export async function GET() {
       referralCode: merged.user.referralCode,
       profile: merged.profile,
       loyalty: {
-        tier,
-        tierLabel: TIER_LABELS[tier],
-        nextTier: nextTier(tier),
-        pointsToNext: pointsToNextTier(merged.user.pointsBalance, tier, thresholds),
-        thresholds,
+        tier: status.tier,
+        tierLabel: status.tierLabel,
+        nextTier: status.nextTier,
+        spendToNext: status.spendToNext,
+        heldUntil: status.heldUntil,
       },
       notificationPrefs,
     });

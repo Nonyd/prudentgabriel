@@ -71,9 +71,9 @@ function runPure() {
   });
   assert(belowMin.points === 0, "below minimum redemption is refused");
 
-  assert(purchasePointsFromSpend(250_000, 1) === 25_000, "1 point per ₦10 of cash spend");
-  assert(purchasePointsFromSpend(0, 1) === 0, "a fully-points order earns nothing");
-  assert(purchasePointsFromSpend(90_000, 1) === 9_000, "earn is on amount spent, not item count");
+  assert(purchasePointsFromSpend(250_000, 3) === 7_500, "3 points per ₦100 of cash spend");
+  assert(purchasePointsFromSpend(0, 3) === 0, "a fully-points order earns nothing");
+  assert(purchasePointsFromSpend(90_050, 3) === 2_700, "earn is per whole ₦100 spent, not item count");
 
   const doubled = clampRedemption({
     requested: 50_000,

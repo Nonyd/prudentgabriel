@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { INTERACTIVE_TX } from "@/lib/prisma-tx";
 import { awardSignupPoints } from "@/lib/points";
-import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
 import { sendWelcomeCredentialsEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { rtwOrderSuccessPath } from "@/lib/atelier-storefront";
@@ -64,7 +63,6 @@ export async function autoOnboardClient(params: {
 
   // A password nobody knows; she chooses her own from the welcome email.
   const hashedPassword = await unusablePasswordHash();
-  const thresholds = await getTierThresholds();
 
   const user = await prisma.$transaction(async (tx) => {
     const created = await tx.user.create({
@@ -77,12 +75,12 @@ export async function autoOnboardClient(params: {
     });
 
     const signupPoints = await awardSignupPoints(created.id, tx);
-    const tier = tierFromPoints(signupPoints, thresholds);
     await tx.clientProfile.create({
       data: {
         userId: created.id,
         loyaltyPoints: signupPoints,
-        loyaltyTier: tier,
+        // Guest payments made before this account existed are counted by the next tier sync.
+        loyaltyTier: "BRONZE",
       },
     });
 
@@ -159,6 +157,10 @@ export async function autoOnboardClient(params: {
 
   // Ten minutes on: a personal note from Mrs Prudent Gabriel-Okopi.
   void scheduleFounderNote({ id: user.id, email, name: params.name });
+
+  void import("@/lib/loyalty-tiers")
+    .then((m) => m.syncClientTier(user.id, { announce: true }))
+    .catch((e) => console.warn("[autoOnboardClient] tier", e));
 
   return { userId: user.id, isNew: true };
 }

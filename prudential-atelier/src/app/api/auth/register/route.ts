@@ -10,7 +10,6 @@ import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { AUTH_ADDRESS_LIMIT, AUTH_WINDOW_MS, FORGOT_ACCOUNT_LIMIT, accountKey, noteAddressCapHit } from "@/lib/auth-limits";
 import { logServerError } from "@/lib/logger";
 import { notifyNewCustomer } from "@/lib/notifications";
-import { tierFromPoints, getTierThresholds } from "@/lib/loyalty";
 import { sendVerifyEmail } from "@/lib/email-verification";
 import { scheduleFounderNote } from "@/lib/founder-note";
 
@@ -75,7 +74,6 @@ export async function POST(request: Request) {
 
   const hashedPassword = await bcrypt.hash(password, 12);
   const name = `${firstName} ${lastName}`.trim();
-  const thresholds = await getTierThresholds();
 
   let pointsBalance = 0;
 
@@ -97,12 +95,11 @@ export async function POST(request: Request) {
 
     pointsBalance = await awardSignupPoints(user.id, tx);
 
-    const tier = tierFromPoints(pointsBalance, thresholds);
     await tx.clientProfile.create({
       data: {
         userId: user.id,
         loyaltyPoints: pointsBalance,
-        loyaltyTier: tier,
+        loyaltyTier: "BRONZE",
         referredBy: referrerId,
       },
     });

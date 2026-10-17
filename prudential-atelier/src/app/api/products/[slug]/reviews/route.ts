@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getLoyaltyRulePoints } from "@/lib/loyalty";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { PaymentStatus, PointsType } from "@prisma/client";
 import { z } from "zod";
-import { getSetting } from "@/lib/settings";
 import { awardReviewPoints } from "@/lib/points";
 import { notifyReviewSubmitted } from "@/lib/notifications";
 
@@ -82,8 +82,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ slug: stri
   }
 
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
-  const pointsRaw = await getSetting("points_review");
-  const pointsAward = Math.max(0, parseInt(pointsRaw ?? "50", 10) || 0);
+  // Same award as a review left from the account (LoyaltyRule REVIEW).
+  const pointsAward = await getLoyaltyRulePoints("REVIEW");
 
   let pointsGranted = 0;
   // Serialize this user's review submissions (advisory lock held until commit)

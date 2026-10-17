@@ -34,7 +34,7 @@ const SETTING_DEFS: {
 
 const RULE_DEFS: { action: string; points: number; isActive: boolean }[] = [
   { action: LOYALTY_ACTIONS.SIGNUP, points: PROGRAMME_DEFAULTS[LOYALTY_ACTIONS.SIGNUP]!, isActive: true },
-  { action: LOYALTY_ACTIONS.PURCHASE_PER_10, points: PROGRAMME_DEFAULTS[LOYALTY_ACTIONS.PURCHASE_PER_10]!, isActive: true },
+  { action: LOYALTY_ACTIONS.ATELIER_PER_100, points: PROGRAMME_DEFAULTS[LOYALTY_ACTIONS.ATELIER_PER_100]!, isActive: true },
   {
     action: LOYALTY_ACTIONS.REFERRAL_FIRST_ORDER,
     points: PROGRAMME_DEFAULTS[LOYALTY_ACTIONS.REFERRAL_FIRST_ORDER]!,
@@ -72,7 +72,7 @@ export async function ensureLoyaltySettingKeys(): Promise<void> {
   }
 
   await prisma.loyaltyRule.updateMany({
-    where: { action: { in: ["SIGNUP_REFERRAL", "PURCHASE_PER_100"] } },
+    where: { action: { in: ["SIGNUP_REFERRAL", "PURCHASE_PER_100", LOYALTY_ACTIONS.PURCHASE_PER_10] } },
     data: { isActive: false },
   });
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSession } from "@/lib/api-auth";
-import { getTierThresholds, tierFromPoints, pointsToNextTier, nextTier, TIER_LABELS } from "@/lib/loyalty";
+import { getClientTierStatus, getTierConfigs } from "@/lib/loyalty-tiers";
 import { getOrCreateClientProfile } from "@/lib/account-helpers";
 import { prisma } from "@/lib/prisma";
 import { logError } from "@/lib/logger";
@@ -16,13 +16,13 @@ export async function GET(req: NextRequest) {
 
   try {
     const userId = gate.session.user.id!;
-    const [user, profile, thresholds, rules, history, total, rateNGN] = await Promise.all([
+    const [user, profile, configs, rules, history, total, rateNGN, status] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: { pointsBalance: true },
       }),
       getOrCreateClientProfile(userId),
-      getTierThresholds(),
+      getTierConfigs(),
       prisma.loyaltyRule.findMany({ where: { isActive: true }, orderBy: { action: "asc" } }),
       prisma.pointsTransaction.findMany({
         where: { userId },
@@ -32,20 +32,23 @@ export async function GET(req: NextRequest) {
       }),
       prisma.pointsTransaction.count({ where: { userId } }),
       getPointRateNGN(),
+      getClientTierStatus(userId),
     ]);
 
     const points = user?.pointsBalance ?? 0;
-    const tier = tierFromPoints(points, thresholds);
 
     return NextResponse.json({
       pointsBalance: points,
       pointsValueNGN: pointsToNaira(points, rateNGN),
       rateNGN,
-      tier,
-      tierLabel: TIER_LABELS[tier],
-      nextTier: nextTier(tier),
-      pointsToNext: pointsToNextTier(points, tier, thresholds),
-      thresholds,
+      tier: status.tier,
+      tierLabel: status.tierLabel,
+      nextTier: status.nextTier,
+      spendThisYear: status.spendThisYear,
+      spendToNext: status.spendToNext,
+      heldUntil: status.heldUntil,
+      perks: status.perks,
+      tiers: configs,
       totalSpend: profile.totalSpend,
       rules,
       history,

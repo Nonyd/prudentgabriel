@@ -401,6 +401,13 @@ export function withoutChargeAuthority(payload: Prisma.InputJsonValue | undefine
  * Append a Payment row. Never mutates amount on an existing row —
  * pass a new reference for corrections / refunds.
  */
+/** Atelier points and the client's tier follow the ledger. Never blocks or fails the payment. */
+function notifyLoyalty(paymentId: string): void {
+  void import("@/lib/loyalty-tiers")
+    .then((m) => m.onLedgerPaymentChanged(paymentId))
+    .catch((e) => console.warn("[ledger] loyalty", e));
+}
+
 export async function appendPayment(input: CreatePaymentInput): Promise<Payment> {
   const amount = dec(input.amount);
   if (amount.isZero()) {
@@ -443,6 +450,8 @@ export async function appendPayment(input: CreatePaymentInput): Promise<Payment>
     await recomputeRtwOrderTotals(payment.orderId);
   }
 
+  if (payment.status === PaymentStatus.CONFIRMED) notifyLoyalty(payment.id);
+
   return payment;
 }
 
@@ -475,6 +484,8 @@ export async function confirmPayment(params: {
     const { recomputeRtwOrderTotals } = await import("@/lib/payments/rtw-totals");
     await recomputeRtwOrderTotals(payment.orderId);
   }
+
+  notifyLoyalty(payment.id);
 
   return payment;
 }
@@ -513,6 +524,8 @@ export async function rejectPayment(params: {
     const { recomputeRtwOrderTotals } = await import("@/lib/payments/rtw-totals");
     await recomputeRtwOrderTotals(payment.orderId);
   }
+
+  if (existing.status === PaymentStatus.CONFIRMED) notifyLoyalty(payment.id);
 
   return payment;
 }

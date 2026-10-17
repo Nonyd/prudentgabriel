@@ -2,11 +2,10 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 import { PaymentMethod, PaymentPurpose, PaymentStatus, PointsType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createClientNotification } from "@/lib/customer-notifications";
-import { sendLoyaltyTierUpgradeEmail, sendReferralRewardEmail } from "@/lib/email";
-import { getLoyaltyRulePoints, getTierPerks, getTierThresholds, tierFromPoints, TIER_LABELS } from "@/lib/loyalty";
+import { sendReferralRewardEmail } from "@/lib/email";
+import { getLoyaltyRulePoints } from "@/lib/loyalty";
+import { shopPointsPer100 } from "@/lib/loyalty-tiers";
 import { getSetting } from "@/lib/settings";
-import { INTERACTIVE_TX } from "@/lib/prisma-tx";
-import type { LoyaltyTier } from "@prisma/client";
 import {
   addCalendarMonths,
   cashSpendNGN,
@@ -17,6 +16,7 @@ import {
   LOYALTY_ACTIONS,
   phonesMatch,
   pointsToNaira,
+  prudentPointsCopy,
   purchasePointsFromSpend,
   SETTING_KEYS,
 } from "@/lib/points-value";
@@ -35,7 +35,7 @@ export {
   nairaToPoints,
   phonesMatch,
   pointsToNaira,
-  PRUDENT_POINTS_COPY,
+  prudentPointsCopy,
   purchasePointsFromSpend,
   SETTING_KEYS,
 } from "@/lib/points-value";
@@ -90,79 +90,12 @@ export async function outstandingPointsTotal(db: PointsDb = prisma): Promise<num
   return agg._sum.pointsBalance ?? 0;
 }
 
+/** Mirrors the balance onto the profile. Tiers follow naira paid, not points (src/lib/loyalty-tiers.ts). */
 async function syncLoyaltyCaches(userId: string, newBalance: number, db: PointsDb): Promise<void> {
   await db.clientProfile.updateMany({
     where: { userId },
     data: { loyaltyPoints: newBalance },
   });
-  await maybeUpgradeLoyaltyTier(userId, newBalance, db);
-}
-
-async function maybeUpgradeLoyaltyTier(userId: string, newPointsBalance: number, db: PointsDb): Promise<void> {
-  const profile = await db.clientProfile.findUnique({
-    where: { userId },
-    select: { loyaltyTier: true },
-  });
-  if (!profile) return;
-
-  const thresholds = await getTierThresholds();
-  const oldTier = profile.loyaltyTier;
-  const newTier = tierFromPoints(newPointsBalance, thresholds);
-  if (newTier === oldTier) return;
-
-  await db.clientProfile.update({
-    where: { userId },
-    data: { loyaltyTier: newTier, loyaltyPoints: newPointsBalance },
-  });
-
-  // Redeeming or expiring points can drop a tier; that is not news to celebrate.
-  if (TIER_RANK[newTier] <= TIER_RANK[oldTier]) return;
-
-  if (db === prisma) {
-    await announceTierUpgrade(userId, newTier);
-    return;
-  }
-  // Inside a transaction: announce only once it has committed, i.e. the new tier is
-  // visible outside it. A rollback leaves the old tier and nothing is sent.
-  const timer = setTimeout(() => {
-    void (async () => {
-      const committed = await prisma.clientProfile.findUnique({
-        where: { userId },
-        select: { loyaltyTier: true },
-      });
-      if (committed?.loyaltyTier === newTier) await announceTierUpgrade(userId, newTier);
-    })().catch((e) => console.warn("[loyalty] tier upgrade notice", e));
-  }, INTERACTIVE_TX.timeout + 1_000);
-  // Never hold a script or test process open for this.
-  timer.unref?.();
-}
-
-const TIER_RANK: Record<LoyaltyTier, number> = { BRONZE: 0, SILVER: 1, GOLD: 2, PLATINUM: 3 };
-
-async function announceTierUpgrade(userId: string, newTier: LoyaltyTier): Promise<void> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { email: true, name: true },
-  });
-  if (!user?.email) return;
-
-  const firstName = user.name?.split(" ")[0] ?? "there";
-  const perks = getTierPerks(newTier);
-
-  void sendLoyaltyTierUpgradeEmail({
-    to: user.email,
-    firstName,
-    newTier,
-    perks,
-  }).catch((e) => console.warn("[loyalty] tier email", e));
-
-  void createClientNotification({
-    userId,
-    type: "LOYALTY_TIER_UPGRADE",
-    title: `You've reached ${TIER_LABELS[newTier]} status!`,
-    message: `Congratulations — you are now a ${TIER_LABELS[newTier]} member.`,
-    link: "/account/loyalty",
-  }).catch((e) => console.warn("[loyalty] tier notification", e));
 }
 
 /** Conditional increment. The only writer of User.pointsBalance besides redeem/adjust/expire. */
@@ -513,9 +446,9 @@ export async function awardPurchasePoints(
     return existing.amount;
   }
 
-  const perTen = await getLoyaltyRulePoints(LOYALTY_ACTIONS.PURCHASE_PER_10);
+  const per100 = await shopPointsPer100(userId);
   const cashNGN = cashSpendNGN(garmentNGN, pointsDiscountNGN);
-  const points = purchasePointsFromSpend(cashNGN, perTen);
+  const points = purchasePointsFromSpend(cashNGN, per100);
 
   if (db) {
     await runAwardPurchase(db, userId, points, orderId, cashNGN);
@@ -779,4 +712,63 @@ export function pointsPaymentData(params: {
     clientId: params.clientId,
     confirmedAt: new Date(),
   };
+}
+
+/** Atelier commissions and their invoices earn a flat rate per ₦100, whatever the tier. Once per payment. */
+export async function awardAtelierPaymentPoints(userId: string, amountNGN: number, paymentId: string): Promise<number> {
+  const key = `(atelier payment ${paymentId})`;
+  const existing = await prisma.pointsTransaction.findFirst({
+    where: { userId, type: PointsType.EARNED_PURCHASE, description: { contains: key } },
+    select: { amount: true },
+  });
+  if (existing) return existing.amount;
+  const per100 = await getLoyaltyRulePoints(LOYALTY_ACTIONS.ATELIER_PER_100);
+  const points = purchasePointsFromSpend(amountNGN, per100);
+  if (points <= 0) return 0;
+  return creditPoints(prisma, {
+    userId,
+    amount: points,
+    type: PointsType.EARNED_PURCHASE,
+    description: `Prudent Points for an atelier payment ${key}`,
+  });
+}
+
+/** A rejected atelier payment takes back what it earned, as far as the balance allows. */
+export async function reverseAtelierPaymentPoints(userId: string, paymentId: string): Promise<number> {
+  const key = `(atelier payment ${paymentId})`;
+  const [earned, reversed] = await Promise.all([
+    prisma.pointsTransaction.findFirst({
+      where: { userId, type: PointsType.EARNED_PURCHASE, description: { contains: key } },
+      select: { amount: true },
+    }),
+    prisma.pointsTransaction.findFirst({
+      where: { userId, type: PointsType.ADJUSTED_ADMIN, description: { contains: `Reversed ${key}` } },
+      select: { id: true },
+    }),
+  ]);
+  if (!earned || reversed) return 0;
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { pointsBalance: true } });
+  const take = Math.min(earned.amount, user?.pointsBalance ?? 0);
+  if (take <= 0) return 0;
+  await adjustPointsAdmin({ userId, delta: -take, reason: `Payment rejected. Reversed ${key}` });
+  return take;
+}
+
+/** The programme in four lines, from the live rates. */
+export async function getPrudentPointsCopy(): Promise<string> {
+  const { getTierConfigs } = await import("@/lib/loyalty-tiers");
+  const [configs, atelierPer100, rateNGN, referralPoints, expiryMonths] = await Promise.all([
+    getTierConfigs(),
+    getLoyaltyRulePoints(LOYALTY_ACTIONS.ATELIER_PER_100),
+    getPointRateNGN(),
+    getLoyaltyRulePoints(LOYALTY_ACTIONS.REFERRAL_FIRST_ORDER),
+    getExpiryMonths(),
+  ]);
+  return prudentPointsCopy({
+    shopPer100: configs[0]!.pointsPer100,
+    atelierPer100,
+    rateNGN,
+    referralPoints,
+    expiryMonths,
+  });
 }

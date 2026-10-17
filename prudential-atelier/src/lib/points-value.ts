@@ -3,7 +3,8 @@
 export const DEFAULT_POINT_RATE_NGN = 1;
 export const DEFAULT_MIN_REDEMPTION = 5_000;
 export const DEFAULT_EXPIRY_MONTHS = 24;
-export const NGN_PER_EARN_UNIT = 10;
+/** Purchases earn per ₦100 paid: shop orders at the client's tier rate, atelier payments at ATELIER_PER_100. */
+export const NGN_PER_EARN_UNIT = 100;
 
 export const SETTING_KEYS = {
   rateNGN: "prudent_points_rate_ngn",
@@ -16,7 +17,9 @@ export const SETTING_KEYS = {
 
 export const LOYALTY_ACTIONS = {
   SIGNUP: "SIGNUP",
+  /** Retired: shop orders now earn at the tier rate (LoyaltyTierConfig.pointsPer100). */
   PURCHASE_PER_10: "PURCHASE_PER_10",
+  ATELIER_PER_100: "ATELIER_PER_100",
   REFERRAL_FIRST_ORDER: "REFERRAL_FIRST_ORDER",
   REVIEW: "REVIEW",
   NEWSLETTER: "NEWSLETTER",
@@ -28,7 +31,8 @@ export type LoyaltyAction = (typeof LOYALTY_ACTIONS)[keyof typeof LOYALTY_ACTION
 
 export const PROGRAMME_DEFAULTS: Record<string, number> = {
   [LOYALTY_ACTIONS.SIGNUP]: 0,
-  [LOYALTY_ACTIONS.PURCHASE_PER_10]: 1,
+  [LOYALTY_ACTIONS.PURCHASE_PER_10]: 0,
+  [LOYALTY_ACTIONS.ATELIER_PER_100]: 2,
   [LOYALTY_ACTIONS.REFERRAL_FIRST_ORDER]: 12_500,
   [LOYALTY_ACTIONS.REVIEW]: 500,
   [LOYALTY_ACTIONS.NEWSLETTER]: 500,
@@ -37,8 +41,25 @@ export const PROGRAMME_DEFAULTS: Record<string, number> = {
 };
 
 /** Four lines. Do not grow this. */
-export const PRUDENT_POINTS_COPY =
-  "Earn 1 point for every ₦10 you spend. Every point is worth ₦1 towards a future piece. Introduce a friend and receive 12,500 points once she makes her first purchase. Points are valid for two years.";
+export function prudentPointsCopy(p: {
+  shopPer100: number;
+  atelierPer100: number;
+  rateNGN: number;
+  referralPoints: number;
+  expiryMonths: number;
+}): string {
+  const lines = [
+    `Earn ${p.shopPer100} points for every ₦100 you spend on ready-to-wear${p.atelierPer100 > 0 ? ` and ${p.atelierPer100} on atelier commissions` : ""}.`,
+    `Every point is worth ₦${p.rateNGN.toLocaleString("en-NG")} towards a future piece.`,
+    p.referralPoints > 0
+      ? `Introduce a friend and receive ${p.referralPoints.toLocaleString("en-NG")} points once they make their first purchase.`
+      : "",
+    p.expiryMonths % 12 === 0
+      ? `Points are valid for ${p.expiryMonths / 12 === 1 ? "one year" : p.expiryMonths / 12 === 2 ? "two years" : `${p.expiryMonths / 12} years`}.`
+      : `Points are valid for ${p.expiryMonths} months.`,
+  ];
+  return lines.filter(Boolean).join(" ");
+}
 
 export function pointsToNaira(points: number, rateNGN: number): number {
   if (points <= 0 || rateNGN <= 0) return 0;
@@ -55,9 +76,9 @@ export function cashSpendNGN(garmentNGN: number, pointsDiscountNGN: number): num
   return Math.max(0, garmentNGN - Math.max(0, pointsDiscountNGN));
 }
 
-export function purchasePointsFromSpend(cashNGN: number, pointsPerTen: number): number {
-  if (cashNGN <= 0 || pointsPerTen <= 0) return 0;
-  return Math.floor(cashNGN / NGN_PER_EARN_UNIT) * pointsPerTen;
+export function purchasePointsFromSpend(cashNGN: number, pointsPer100: number): number {
+  if (cashNGN <= 0 || pointsPer100 <= 0) return 0;
+  return Math.floor(cashNGN / NGN_PER_EARN_UNIT) * pointsPer100;
 }
 
 export function addCalendarMonths(from: Date, months: number): Date {

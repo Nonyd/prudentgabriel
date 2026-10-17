@@ -21,45 +21,45 @@ model User {
   /// the first name; staff surnames never go to visitors.
   displayName   String?
 
-  referralCode  String    @unique @default(cuid())
-  referredById  String?
-  referredBy    User?     @relation("Referrals", fields: [referredById], references: [id])
-  referrals     User[]    @relation("Referrals")
+  referralCode     String             @unique @default(cuid())
+  referredById     String?
+  referredBy       User?              @relation("Referrals", fields: [referredById], references: [id])
+  referrals        User[]             @relation("Referrals")
   /// Denormalised SUM(PointsTransaction.amount). Writer: src/lib/points.ts only.
-  pointsBalance Int       @default(0)
+  pointsBalance    Int                @default(0)
   pointRateChanges PointRateHistory[]
 
-  orders              Order[]
-  addresses           Address[]
-  wishlist            WishlistItem[]
-  reviews             Review[]
-  testimonials        Testimonial[]
-  reviewHelpfulVotes  ReviewHelpfulVote[]
-  pointsHistory       PointsTransaction[]
-  sessions            Session[]
-  accounts            Account[]
-  passwordResetTokens PasswordResetToken[]
-  cartItems           CartItem[]
-  consultationBookings ConsultationBooking[]
-  savedPaymentMethods SavedPaymentMethod[]
-  clientProfile       ClientProfile?
-  staffProfile        StaffProfile?
+  orders                Order[]
+  addresses             Address[]
+  wishlist              WishlistItem[]
+  reviews               Review[]
+  testimonials          Testimonial[]
+  reviewHelpfulVotes    ReviewHelpfulVote[]
+  pointsHistory         PointsTransaction[]
+  sessions              Session[]
+  accounts              Account[]
+  passwordResetTokens   PasswordResetToken[]
+  cartItems             CartItem[]
+  consultationBookings  ConsultationBooking[]
+  savedPaymentMethods   SavedPaymentMethod[]
+  clientProfile         ClientProfile?
+  staffProfile          StaffProfile?
   customerNotifications CustomerNotification[]
   staffNotifications    StaffNotification[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  preferredGateway PaymentGateway?
-  mustResetPassword Boolean @default(false)
-  isActive          Boolean  @default(true)
-  lastLogin         DateTime?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  preferredGateway       PaymentGateway?
+  mustResetPassword      Boolean         @default(false)
+  isActive               Boolean         @default(true)
+  lastLogin              DateTime?
   /// Birthday without the year (1–31, 1–12), set by the user for birthday wishes.
-  birthdayDay       Int?
-  birthdayMonth     Int?
+  birthdayDay            Int?
+  birthdayMonth          Int?
   /// The last year a birthday wish was sent, so a day is only celebrated once.
-  birthdayWishedYear Int?
+  birthdayWishedYear     Int?
   /// Set on password reset / change so JWTs issued earlier (`iat`) are rejected.
-  passwordChangedAt DateTime?
+  passwordChangedAt      DateTime?
   /// Marketing email is opt-in only (NDPA 2023 / GDPR). Null = she has not opted in.
   /// Set when she ticks the box (register, account, newsletter); cleared when she opts out.
   marketingConsentAt     DateTime?
@@ -72,19 +72,19 @@ model User {
   department String?
   isStaff    Boolean  @default(false)
 
-  paymentsConfirmed Payment[] @relation("PaymentConfirmedBy")
-  stageCompletions  OrderStageCompletion[] @relation("StageCompletions")
-  stageReverts      OrderStageCompletion[] @relation("StageReverts")
-  stageMediaUploads OrderStageMedia[] @relation("StageMediaUploads")
-  receiptsConfirmed BespokeOrder[] @relation("ReceiptConfirmedBy")
-  userPermissions   UserPermission[]
-  adminNotificationReads AdminNotificationRead[]
-  acknowledgedAdminNotifications AdminNotification[] @relation("AdminNotificationAck")
-  storeMovementsActor    StoreMovement[] @relation("StoreMovementActor")
-  storeMovementsTaken    StoreMovement[] @relation("StoreMovementTakenBy")
-  storeMovementsApproved StoreMovement[] @relation("StoreMovementApprovedBy")
-  storeMovementsReceived StoreMovement[] @relation("StoreMovementReceivedBy")
-  storeBookLocks         StoreBook[]     @relation("StoreBookLockedBy")
+  paymentsConfirmed              Payment[]               @relation("PaymentConfirmedBy")
+  stageCompletions               OrderStageCompletion[]  @relation("StageCompletions")
+  stageReverts                   OrderStageCompletion[]  @relation("StageReverts")
+  stageMediaUploads              OrderStageMedia[]       @relation("StageMediaUploads")
+  receiptsConfirmed              BespokeOrder[]          @relation("ReceiptConfirmedBy")
+  userPermissions                UserPermission[]
+  adminNotificationReads         AdminNotificationRead[]
+  acknowledgedAdminNotifications AdminNotification[]     @relation("AdminNotificationAck")
+  storeMovementsActor            StoreMovement[]         @relation("StoreMovementActor")
+  storeMovementsTaken            StoreMovement[]         @relation("StoreMovementTakenBy")
+  storeMovementsApproved         StoreMovement[]         @relation("StoreMovementApprovedBy")
+  storeMovementsReceived         StoreMovement[]         @relation("StoreMovementReceivedBy")
+  storeBookLocks                 StoreBook[]             @relation("StoreBookLockedBy")
 
   costsOfProductionApproved CostOfProduction[] @relation("CostOfProductionApprovedBy")
   costsOfProductionDrafted  CostOfProduction[] @relation("CostOfProductionDraftedBy")
@@ -93,14 +93,14 @@ model User {
 }
 
 model Consultant {
-  id           String   @id @default(cuid())
+  id           String  @id @default(cuid())
   name         String
   title        String
-  bio          String   @db.Text
+  bio          String  @db.Text
   image        String?
-  isActive     Boolean  @default(true)
-  isFlagship   Boolean  @default(false)
-  displayOrder Int      @default(0)
+  isActive     Boolean @default(true)
+  isFlagship   Boolean @default(false)
+  displayOrder Int     @default(0)
 
   offerings    ConsultantOffering[]
   availability ConsultantAvailability[]
@@ -129,95 +129,95 @@ model ConsultantOffering {
 }
 
 model ConsultantAvailability {
-  id             String     @id @default(cuid())
-  consultantId   String
-  consultant     Consultant @relation(fields: [consultantId], references: [id], onDelete: Cascade)
-  dayOfWeek      Int
-  startTime      String
-  endTime        String
-  isActive       Boolean    @default(true)
+  id           String     @id @default(cuid())
+  consultantId String
+  consultant   Consultant @relation(fields: [consultantId], references: [id], onDelete: Cascade)
+  dayOfWeek    Int
+  startTime    String
+  endTime      String
+  isActive     Boolean    @default(true)
 
   @@unique([consultantId, dayOfWeek])
 }
 
 model ConsultantBlockedDate {
-  id             String     @id @default(cuid())
-  consultantId   String
-  consultant     Consultant @relation(fields: [consultantId], references: [id], onDelete: Cascade)
-  date           DateTime   @db.Date
-  reason         String?
-  createdAt      DateTime   @default(now())
+  id           String     @id @default(cuid())
+  consultantId String
+  consultant   Consultant @relation(fields: [consultantId], references: [id], onDelete: Cascade)
+  date         DateTime   @db.Date
+  reason       String?
+  createdAt    DateTime   @default(now())
 
   @@unique([consultantId, date])
 }
 
 model ConsultationBooking {
-  id               String                    @id @default(cuid())
-  bookingNumber    String                    @unique
-  offeringId       String
-  offering         ConsultantOffering        @relation(fields: [offeringId], references: [id])
-  consultantId     String
-  consultant       Consultant                @relation(fields: [consultantId], references: [id])
+  id            String             @id @default(cuid())
+  bookingNumber String             @unique
+  offeringId    String
+  offering      ConsultantOffering @relation(fields: [offeringId], references: [id])
+  consultantId  String
+  consultant    Consultant         @relation(fields: [consultantId], references: [id])
 
-  userId           String?
-  user             User?                     @relation(fields: [userId], references: [id])
-  clientName       String
-  clientEmail      String
-  clientPhone      String
-  clientCountry    String
-  clientInstagram  String?
+  userId          String?
+  user            User?   @relation(fields: [userId], references: [id])
+  clientName      String
+  clientEmail     String
+  clientPhone     String
+  clientCountry   String
+  clientInstagram String?
 
-  occasion         String
-  description      String                    @db.Text
-  referenceImages  String[]                  @default([])
+  occasion        String
+  description     String   @db.Text
+  referenceImages String[] @default([])
 
-  preferredDate1   DateTime?
-  preferredDate2   DateTime?
-  preferredDate3   DateTime?
-  confirmedDate    DateTime?
-  confirmedTime    String?
+  preferredDate1 DateTime?
+  preferredDate2 DateTime?
+  preferredDate3 DateTime?
+  confirmedDate  DateTime?
+  confirmedTime  String?
 
-  meetingLink      String?
-  meetingPlatform  String?
+  meetingLink       String?
+  meetingPlatform   String?
   meetingLinkSentAt DateTime?
-  atelierAddress     String?
+  atelierAddress    String?
 
-  offeringType     String?
-  virtualPlatform  String?
+  offeringType    String?
+  virtualPlatform String?
 
-  sessionNotes     String?   @db.Text
-  moodboardImages  String[]  @default([])
-  moodboardNotes   String?   @db.Text
+  sessionNotes    String?  @db.Text
+  moodboardImages String[] @default([])
+  moodboardNotes  String?  @db.Text
 
-  confirmedAt      DateTime?
-  confirmedBy      String?
+  confirmedAt DateTime?
+  confirmedBy String?
 
-  feeNGN           Float
-  currency         Currency                  @default(NGN)
-  paymentGateway   PaymentGateway?
-  paymentRef       String?
-  paymentStatus    PaymentStatus             @default(PENDING)
+  feeNGN            Float
+  currency          Currency        @default(NGN)
+  paymentGateway    PaymentGateway?
+  paymentRef        String?
+  paymentStatus     PaymentStatus   @default(PENDING)
   paymentReceiptUrl String?
-  paidAt           DateTime?
+  paidAt            DateTime?
 
-  status               ConsultationStatus @default(PENDING_PAYMENT)
-  adminNotes           String?
-  cancellationReason   String?
+  status             ConsultationStatus @default(PENDING_PAYMENT)
+  adminNotes         String?
+  cancellationReason String?
 
   completedAt   DateTime?
   adminFeedback String?   @db.Text
 
-  invoices Invoice[]
-  reviews  Review[]
-  quotations  Quotation[]
-  bespokeOrders BespokeOrder[]
+  invoices        Invoice[]
+  reviews         Review[]
+  quotations      Quotation[]
+  bespokeOrders   BespokeOrder[]
   /// BD2: notes added after the session. The fields above are never rewritten by a note.
   commissionNotes CommissionNote[]
-  payments Payment[]
+  payments        Payment[]
 
-  reviewRequestSent Boolean @default(false)
+  reviewRequestSent Boolean   @default(false)
   /// Set when the 48h unsent-quote alert has been sent (once per consultation).
-  quoteAlertSentAt DateTime?
+  quoteAlertSentAt  DateTime?
 
   /// How she receives the finished piece (lib/garment-receipt.ts): office or dispatch pickup, or delivery.
   garmentReceipt Json?
@@ -226,11 +226,11 @@ model ConsultationBooking {
   attribution Json?
 
   /// BA2: the approved enquiry this booking came from (null for bookings made before invitations).
-  enquiry ConsultationEnquiry?
+  enquiry             ConsultationEnquiry?
   /// BA2: when the client ticked the non-refundable terms at booking.
   termsAcknowledgedAt DateTime?
   /// BA2: exact wording she acknowledged, fee included (not a boolean). Same idea as Order.shippingConsentText.
-  termsText           String?   @db.Text
+  termsText           String?              @db.Text
   /// Slice AR: terms version shown at booking (copy revision + resolved-token hash).
   legalTermsVersion   String?
   /// Resolved legal tokens + copy revision at booking.
@@ -239,12 +239,12 @@ model ConsultationBooking {
   /// BA3: a USD/GBP booking locks the rate at booking, like an RTW order, and
   /// charges exactly fxAmountLocked in `currency` — the figure she was shown.
   /// Null on NGN bookings and on bookings made before BA3 (live conversion).
-  fxRateLocked        Float?
-  fxGbpRateLocked     Float?
-  fxRateSource        String?
-  fxRateFetchedAt     DateTime?
-  fxRateStale         Boolean   @default(false)
-  fxAmountLocked      Float?
+  fxRateLocked    Float?
+  fxGbpRateLocked Float?
+  fxRateSource    String?
+  fxRateFetchedAt DateTime?
+  fxRateStale     Boolean   @default(false)
+  fxAmountLocked  Float?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -285,30 +285,30 @@ model ConsultationEnquiry {
   moodboardImages String[] @default([])
 
   /// How many dresses she wants.
-  dressCount      Int?
+  dressCount     Int?
   /// Where the event is.
-  eventLocation   String?
+  eventLocation  String?
   /// Where she lives now, kept as parts so clients can be counted by place (BC4).
-  presentCity     String?
-  presentState    String?
-  presentCountry  String?
+  presentCity    String?
+  presentState   String?
+  presentCountry String?
   /// IN_PERSON, VIRTUAL or BOTH (ENQUIRY_FITTING_MODES), and any dates she gives.
-  fittingMode     String?
-  fittingNote     String?  @db.Text
+  fittingMode    String?
+  fittingNote    String?   @db.Text
   /// When she needs the dress. Pre-fills the quotation's expected delivery date.
-  deliveryDate    DateTime? @db.Date
-  colourPalette   String?  @db.Text
+  deliveryDate   DateTime? @db.Date
+  colourPalette  String?   @db.Text
 
   /// Event inside the short-notice window when submitted: flagged so the house
   /// calls (express fee by phone). Never a reason to refuse.
-  shortNotice     Boolean  @default(false)
+  shortNotice Boolean @default(false)
 
-  status          ConsultationEnquiryStatus @default(PENDING)
+  status         ConsultationEnquiryStatus @default(PENDING)
   /// Required for both approve and decline.
-  decisionReason  String?  @db.Text
-  decidedAt       DateTime?
+  decisionReason String?                   @db.Text
+  decidedAt      DateTime?
   /// Name or email of the staff member who decided (like ConsultationBooking.confirmedBy).
-  decidedBy       String?
+  decidedBy      String?
 
   /// Booking link (AZ3): SHA-256 of the raw token. Random default opens nothing.
   publicToken          String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
@@ -316,8 +316,8 @@ model ConsultationEnquiry {
   /// Set on approval. The link opens only while APPROVED and before this.
   publicTokenExpiresAt DateTime?
 
-  bookingId       String?  @unique
-  booking         ConsultationBooking? @relation(fields: [bookingId], references: [id])
+  bookingId String?              @unique
+  booking   ConsultationBooking? @relation(fields: [bookingId], references: [id])
 
   /// Set when the "waiting over a day" alert has gone out (once per enquiry).
   overdueAlertSentAt DateTime?
@@ -407,9 +407,9 @@ model VerificationToken {
 }
 
 model PointsTransaction {
-  id           String      @id @default(cuid())
+  id           String     @id @default(cuid())
   userId       String
-  user         User        @relation(fields: [userId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
   type         PointsType
   amount       Int
   balanceAfter Int?
@@ -420,8 +420,8 @@ model PointsTransaction {
   /// When this credit lapses. Debits are null. Writer: src/lib/points.ts only.
   expiresAt    DateTime?
   /// Unspent remainder of a credit. Debits are 0. Writer: src/lib/points.ts only.
-  remaining    Int         @default(0)
-  createdAt    DateTime    @default(now())
+  remaining    Int        @default(0)
+  createdAt    DateTime   @default(now())
 
   @@index([userId, createdAt])
   @@index([orderId])
@@ -442,68 +442,68 @@ model ShopCategory {
 }
 
 model Product {
-  id             String          @id @default(cuid())
-  name           String
-  slug           String          @unique
-  description    String          @db.Text
-  details        String?         @db.Text
-  metaTitle      String?
+  id              String       @id @default(cuid())
+  name            String
+  slug            String       @unique
+  description     String       @db.Text
+  details         String?      @db.Text
+  metaTitle       String?
   metaDescription String?
-  category       String
-  shopCategory   ShopCategory    @relation(fields: [category], references: [slug], onUpdate: Cascade, onDelete: Restrict)
-  type           ProductType     @default(RTW)
+  category        String
+  shopCategory    ShopCategory @relation(fields: [category], references: [slug], onUpdate: Cascade, onDelete: Restrict)
+  type            ProductType  @default(RTW)
   /// Denormalised cheapest effective unit (sale ₦ only while isOnSale). Filter, sort, wishlist.
-  priceNGN       Float
+  priceNGN        Float
   /// Same figure as priceNGN after save. Seed for new size rows in admin; not an independent catalog price.
-  basePriceNGN   Float
-  priceUSD       Float?
-  priceGBP       Float?
-  isPublished    Boolean         @default(false)
-  isFeatured     Boolean         @default(false)
-  isNewArrival   Boolean         @default(false)
-  isOnSale       Boolean         @default(false)
-  saleEndsAt     DateTime?
-  isBespokeAvail Boolean         @default(false)
-  tags           String[]        @default([])
-  orderCount     Int             @default(0)
-  isBestSeller   Boolean         @default(false)
+  basePriceNGN    Float
+  priceUSD        Float?
+  priceGBP        Float?
+  isPublished     Boolean      @default(false)
+  isFeatured      Boolean      @default(false)
+  isNewArrival    Boolean      @default(false)
+  isOnSale        Boolean      @default(false)
+  saleEndsAt      DateTime?
+  isBespokeAvail  Boolean      @default(false)
+  tags            String[]     @default([])
+  orderCount      Int          @default(0)
+  isBestSeller    Boolean      @default(false)
   /// Storefront curated order beneath Featured. Independent of CollectionProduct.sortOrder.
-  displayOrder   Int             @default(0)
+  displayOrder    Int          @default(0)
   /// When the piece went live (or a backdate). Newest first sorts on this — not curated order.
-  publishedAt    DateTime?
+  publishedAt     DateTime?
 
   /// Fallback parcel weight/dims when a variant leaves them blank. Carriers bill the greater of actual vs volumetric.
-  defaultWeightKg  Float?
-  defaultLengthCm  Float?
-  defaultWidthCm   Float?
-  defaultHeightCm  Float?
+  defaultWeightKg    Float?
+  defaultLengthCm    Float?
+  defaultWidthCm     Float?
+  defaultHeightCm    Float?
   packagingProfileId String?
   packagingProfile   PackagingProfile? @relation(fields: [packagingProfileId], references: [id], onDelete: SetNull)
 
   /// Offered on the product page as made-to-your-measurements.
-  customOffered          Boolean              @default(false)
+  customOffered        Boolean              @default(false)
   /// Null inherits STORE custom_* settings.
-  customSurchargeKind    CustomSurchargeKind?
-  customSurchargeValue   Float?
-  customLeadTimeDays     Int?
-  customReturnable       Boolean?
+  customSurchargeKind  CustomSurchargeKind?
+  customSurchargeValue Float?
+  customLeadTimeDays   Int?
+  customReturnable     Boolean?
 
-  images              ProductImage[]
-  variants            ProductVariant[]
-  colors              ProductColor[]
-  orderItems          OrderItem[]
-  wishlistItems       WishlistItem[]
-  reviews             Review[]
-  bundleItems         BundleItem[]           @relation("BundleSource")
-  inBundles           BundleItem[]           @relation("BundleTarget")
-  cartItems           CartItem[]
-  collections         CollectionProduct[]
-  collectionReels     CollectionReel[]
-  measurementFields   ProductMeasurement[]
+  images            ProductImage[]
+  variants          ProductVariant[]
+  colors            ProductColor[]
+  orderItems        OrderItem[]
+  wishlistItems     WishlistItem[]
+  reviews           Review[]
+  bundleItems       BundleItem[]         @relation("BundleSource")
+  inBundles         BundleItem[]         @relation("BundleTarget")
+  cartItems         CartItem[]
+  collections       CollectionProduct[]
+  collectionReels   CollectionReel[]
+  measurementFields ProductMeasurement[]
   /// One group per product. A second group is a separate product decision.
-  optionGroup         ProductOptionGroup?
+  optionGroup       ProductOptionGroup?
   /// Optional bill of materials. A piece with no list still sells.
-  materials           ProductMaterial[]
+  materials         ProductMaterial[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -516,23 +516,23 @@ model Product {
 }
 
 model Collection {
-  id              String    @id @default(cuid())
+  id              String              @id @default(cuid())
   name            String
-  slug            String    @unique
-  description     String?   @db.Text
+  slug            String              @unique
+  description     String?             @db.Text
   excerpt         String?
   coverImage      String?
   coverImageAlt   String?
   autoTag         String?
-  isFeatured      Boolean   @default(false)
-  isPublished     Boolean   @default(false)
-  displayOrder    Int       @default(0)
+  isFeatured      Boolean             @default(false)
+  isPublished     Boolean             @default(false)
+  displayOrder    Int                 @default(0)
   season          String?
   year            Int?
   metaTitle       String?
   metaDescription String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
   products        CollectionProduct[]
   reels           CollectionReel[]
 
@@ -639,22 +639,22 @@ model ProductOptionGroup {
 }
 
 model ProductOption {
-  id                 String                      @id @default(cuid())
+  id                 String                     @id @default(cuid())
   groupId            String
-  group              ProductOptionGroup          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group              ProductOptionGroup         @relation(fields: [groupId], references: [id], onDelete: Cascade)
   label              String
   /// Signed. A skirt may be less, a veil more. Same across every size.
-  priceAdjustmentNGN Float                       @default(0)
-  isDefault          Boolean                     @default(false)
-  sortOrder          Int                         @default(0)
+  priceAdjustmentNGN Float                      @default(0)
+  isDefault          Boolean                    @default(false)
+  sortOrder          Int                        @default(0)
   /// Short SKU suffix. Generated from the label when blank.
   skuPart            String?
   measurementFields  ProductOptionMeasurement[]
   cartItems          CartItem[]
   orderItems         OrderItem[]
   materials          ProductMaterial[]
-  createdAt          DateTime                    @default(now())
-  updatedAt          DateTime                    @updatedAt
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
 
   @@index([groupId, sortOrder])
 }
@@ -685,27 +685,27 @@ model BundleItem {
 }
 
 model CartItem {
-  id        String          @id @default(cuid())
-  userId    String
-  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product         @relation(fields: [productId], references: [id])
-  variantId String?
-  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  colorId   String?
-  color     ProductColor?   @relation(fields: [colorId], references: [id], onDelete: SetNull)
-  quantity  Int             @default(1)
-  sizeMode  SizeMode        @default(STANDARD)
+  id           String          @id @default(cuid())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product         @relation(fields: [productId], references: [id])
+  variantId    String?
+  variant      ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  colorId      String?
+  color        ProductColor?   @relation(fields: [colorId], references: [id], onDelete: SetNull)
+  quantity     Int             @default(1)
+  sizeMode     SizeMode        @default(STANDARD)
   /// Snapshot of typed measurements. Canonical centimetres live on each entry.
   measurements Json?
   typedUnit    String?
-  surchargeNGN Float        @default(0)
-  optionId  String?
-  option    ProductOption?  @relation(fields: [optionId], references: [id], onDelete: SetNull)
+  surchargeNGN Float           @default(0)
+  optionId     String?
+  option       ProductOption?  @relation(fields: [optionId], references: [id], onDelete: SetNull)
   /// STANDARD:{variantId}:{colorId}[:{optionId}] or CUSTOM:{productId}:{colorId}[:{optionId}]
-  lineKey   String
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  lineKey      String
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 
   @@unique([userId, lineKey])
 }
@@ -722,126 +722,126 @@ model NewsletterSubscriber {
 
 /// Token + suppression ledger for marketing mail (unsubscribe and hard bounce).
 model EmailPreference {
-  id               String    @id @default(cuid())
-  email            String    @unique
+  id                  String    @id @default(cuid())
+  email               String    @unique
   /// SHA-256 of the raw link token (capability-registry.ts). Never plaintext.
-  unsubscribeToken String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
+  unsubscribeToken    String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
   unsubscribeTokenEnc String?
-  unsubscribedAt   DateTime?
-  bounceAt         DateTime?
-  bounceReason     String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  unsubscribedAt      DateTime?
+  bounceAt            DateTime?
+  bounceReason        String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   @@index([unsubscribedAt])
 }
 
 /// Guest/logged-in checkout after email capture (Slice I). Snapshot, not a live cart FK.
 model CheckoutSession {
-  id             String    @id @default(cuid())
-  email          String
-  userId         String?
-  cartSnapshot   Json
-  currency       String    @default("NGN")
-  furthestStep   Int       @default(1)
-  lastActiveAt   DateTime  @default(now())
-  recoveredAt    DateTime?
-  orderId        String?
-  remindersSent  Int       @default(0)
+  id                    String    @id @default(cuid())
+  email                 String
+  userId                String?
+  cartSnapshot          Json
+  currency              String    @default("NGN")
+  furthestStep          Int       @default(1)
+  lastActiveAt          DateTime  @default(now())
+  recoveredAt           DateTime?
+  orderId               String?
+  remindersSent         Int       @default(0)
   /// SHA-256 of the raw link token (capability-registry.ts). Never plaintext.
-  restoreToken   String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
-  restoreTokenEnc String?
+  restoreToken          String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
+  restoreTokenEnc       String?
   restoreTokenExpiresAt DateTime?
-  lastReminderAt DateTime?
+  lastReminderAt        DateTime?
   /// First-touch campaign tags for this checkout (UTM / referrer host). No visitor id.
-  attribution    Json?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  attribution           Json?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@index([email, recoveredAt])
   @@index([lastActiveAt, recoveredAt, remindersSent])
 }
 
 model Order {
-  id               String           @id @default(cuid())
-  orderNumber      String           @unique
-  userId           String?
-  user             User?            @relation(fields: [userId], references: [id])
-  guestEmail       String?
-  guestName        String?
-  guestPhone       String?
-  items            OrderItem[]
-  subtotal         Float
-  shippingAmount   Float            @default(0)
-  discount         Float            @default(0)
-  pointsDiscountNGN Float         @default(0)
-  pointsUsed       Int              @default(0)
+  id                     String                  @id @default(cuid())
+  orderNumber            String                  @unique
+  userId                 String?
+  user                   User?                   @relation(fields: [userId], references: [id])
+  guestEmail             String?
+  guestName              String?
+  guestPhone             String?
+  items                  OrderItem[]
+  subtotal               Float
+  shippingAmount         Float                   @default(0)
+  discount               Float                   @default(0)
+  pointsDiscountNGN      Float                   @default(0)
+  pointsUsed             Int                     @default(0)
   /// Naira per point at redemption. A later rate change must not alter this order.
-  pointsRateLocked Float?
-  total            Float
-  currency         Currency         @default(NGN)
-  addressId        String?
-  address          Address?         @relation(fields: [addressId], references: [id])
-  addressSnapshot  Json?
-  shippingZoneId   String?
-  shippingZone     ShippingZone?    @relation(fields: [shippingZoneId], references: [id])
-  shippingMethodId   String?
-  shippingMethod     ShippingMethod? @relation(fields: [shippingMethodId], references: [id])
-  shippingMethodKind ShippingMethodKind?
-  lagosLocationId    String?
-  lagosLocation      LagosLocation?  @relation(fields: [lagosLocationId], references: [id])
-  pickupLocationId   String?
-  pickupLocation     PickupLocation? @relation(fields: [pickupLocationId], references: [id])
-  shippingQuoteStatus ShippingQuoteStatus @default(NONE)
+  pointsRateLocked       Float?
+  total                  Float
+  currency               Currency                @default(NGN)
+  addressId              String?
+  address                Address?                @relation(fields: [addressId], references: [id])
+  addressSnapshot        Json?
+  shippingZoneId         String?
+  shippingZone           ShippingZone?           @relation(fields: [shippingZoneId], references: [id])
+  shippingMethodId       String?
+  shippingMethod         ShippingMethod?         @relation(fields: [shippingMethodId], references: [id])
+  shippingMethodKind     ShippingMethodKind?
+  lagosLocationId        String?
+  lagosLocation          LagosLocation?          @relation(fields: [lagosLocationId], references: [id])
+  pickupLocationId       String?
+  pickupLocation         PickupLocation?         @relation(fields: [pickupLocationId], references: [id])
+  shippingQuoteStatus    ShippingQuoteStatus     @default(NONE)
   /// Locked carrier quote at order creation: amount, currency, service, billableKg, quotedAt.
-  shippingQuoteLocked Json?
-  shippingConsentAt   DateTime?
+  shippingQuoteLocked    Json?
+  shippingConsentAt      DateTime?
   /// Exact consent wording shown at checkout (not a boolean).
-  shippingConsentText String?         @db.Text
+  shippingConsentText    String?                 @db.Text
   /// Slice AR: terms version shown at purchase (copy revision + resolved-token hash).
-  legalTermsVersion   String?
+  legalTermsVersion      String?
   /// Resolved legal tokens + copy revision at purchase. Same idea as shippingConsentText.
-  legalTermsSnapshot  Json?
+  legalTermsSnapshot     Json?
   /// How the house should reach the client to agree shipping (Slice O).
   preferredContactMethod PreferredContactMethod?
   /// Note from the agreed quote conversation (carrier lives on `carrier`).
-  shippingQuoteNote   String?         @db.Text
-  collectionCode      String?
-  collectionReadyAt   DateTime?
-  collectedAt         DateTime?
-  collectionRemindedAt DateTime?
+  shippingQuoteNote      String?                 @db.Text
+  collectionCode         String?
+  collectionReadyAt      DateTime?
+  collectedAt            DateTime?
+  collectionRemindedAt   DateTime?
   /// USD per ₦1, locked at checkout. Convert with convertFromNGN.
-  fxRateLocked        Float?
+  fxRateLocked           Float?
   /// GBP per ₦1, locked at checkout with the USD rate.
-  fxGbpRateLocked     Float?
-  fxRateSource        String?
-  fxRateFetchedAt     DateTime?
-  fxRateStale         Boolean         @default(false)
+  fxGbpRateLocked        Float?
+  fxRateSource           String?
+  fxRateFetchedAt        DateTime?
+  fxRateStale            Boolean                 @default(false)
   /// USD payable for order.total at lock time (line overrides + converted extras). Scale by outstanding/total.
-  fxUsdAmountLocked   Float?
+  fxUsdAmountLocked      Float?
   /// GBP payable for order.total at lock time. Scale by outstanding/total.
-  fxGbpAmountLocked   Float?
+  fxGbpAmountLocked      Float?
   /// Ledger denormalised cache. Writer: recomputeRtwOrderTotals.
-  amountPaid          Float           @default(0)
-  balance             Float           @default(0)
-  couponId         String?
-  coupon           Coupon?          @relation(fields: [couponId], references: [id])
-  couponCode       String?
-  couponUsage      CouponUsage?
-  paymentGateway   PaymentGateway?
-  paymentRef       String?
-  paymentReceiptUrl String?
-  paymentStatus    PaymentStatus    @default(PENDING)
-  status           OrderStatus      @default(PENDING)
-  notes            String?
-  isGift           Boolean          @default(false)
-  giftMessage      String?
-  adminNotes       String?
-  paidAt           DateTime?
-  isBespoke        Boolean          @default(false)
-  bespokeDetails   String?          @db.Text
-  trackingNumber   String?
-  carrier            String?
+  amountPaid             Float                   @default(0)
+  balance                Float                   @default(0)
+  couponId               String?
+  coupon                 Coupon?                 @relation(fields: [couponId], references: [id])
+  couponCode             String?
+  couponUsage            CouponUsage?
+  paymentGateway         PaymentGateway?
+  paymentRef             String?
+  paymentReceiptUrl      String?
+  paymentStatus          PaymentStatus           @default(PENDING)
+  status                 OrderStatus             @default(PENDING)
+  notes                  String?
+  isGift                 Boolean                 @default(false)
+  giftMessage            String?
+  adminNotes             String?
+  paidAt                 DateTime?
+  isBespoke              Boolean                 @default(false)
+  bespokeDetails         String?                 @db.Text
+  trackingNumber         String?
+  carrier                String?
 
   reviewRequestSent Boolean @default(false)
 
@@ -852,25 +852,25 @@ model Order {
   customReturnable   Boolean             @default(true)
 
   /// When a refund was recorded in-app, and by whom. PSP refund is still manual.
-  refundRecordedAt         DateTime?
-  refundRecordedById       String?
-  refundRecordedByName     String?
-  refundRecordedAmountNGN  Float?
+  refundRecordedAt        DateTime?
+  refundRecordedById      String?
+  refundRecordedByName    String?
+  refundRecordedAmountNGN Float?
 
   /// 48-hour fabric promise: recorded when the house cannot make the piece as ordered.
-  fabricUnavailableAt      DateTime?
-  fabricUnavailableChoice  FabricUnavailableChoice?
-  fabricUnavailableById    String?
-  fabricUnavailableByName  String?
-  fabricUnavailableNote    String?
+  fabricUnavailableAt     DateTime?
+  fabricUnavailableChoice FabricUnavailableChoice?
+  fabricUnavailableById   String?
+  fabricUnavailableByName String?
+  fabricUnavailableNote   String?
 
   /// First-touch campaign tags copied from the visit at order create. No visitor id.
-  attribution      Json?
+  attribution Json?
 
-  payments Payment[]
-  storeMovements StoreMovement[]
+  payments          Payment[]
+  storeMovements    StoreMovement[]
   costsOfProduction CostOfProduction[]
-  requisitions Requisition[]
+  requisitions      Requisition[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -885,31 +885,31 @@ model Order {
 }
 
 model OrderItem {
-  id         String          @id @default(cuid())
-  orderId    String
-  order      Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId  String
-  product    Product         @relation(fields: [productId], references: [id])
-  variantId  String?
-  variant    ProductVariant? @relation(fields: [variantId], references: [id])
-  quantity   Int
-  size       String?
-  color      String?
-  colorHex   String?
-  price      Float
-  lineTotal  Float
-  sizeMode   SizeMode        @default(STANDARD)
+  id                  String          @id @default(cuid())
+  orderId             String
+  order               Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId           String
+  product             Product         @relation(fields: [productId], references: [id])
+  variantId           String?
+  variant             ProductVariant? @relation(fields: [variantId], references: [id])
+  quantity            Int
+  size                String?
+  color               String?
+  colorHex            String?
+  price               Float
+  lineTotal           Float
+  sizeMode            SizeMode        @default(STANDARD)
   /// Typed + canonical centimetre snapshot for the workroom.
-  measurements Json?
-  typedUnit    String?
-  surchargeNGN Float         @default(0)
-  customLeadTimeDays Int?
-  customReturnable   Boolean?
-  optionId             String?
-  option               ProductOption? @relation(fields: [optionId], references: [id], onDelete: SetNull)
+  measurements        Json?
+  typedUnit           String?
+  surchargeNGN        Float           @default(0)
+  customLeadTimeDays  Int?
+  customReturnable    Boolean?
+  optionId            String?
+  option              ProductOption?  @relation(fields: [optionId], references: [id], onDelete: SetNull)
   /// Frozen at checkout. Later option edits must not rewrite a past order.
-  optionLabel          String?
-  optionAdjustmentNGN  Float          @default(0)
+  optionLabel         String?
+  optionAdjustmentNGN Float           @default(0)
 
   @@index([orderId])
   @@index([sizeMode])
@@ -952,10 +952,10 @@ model BespokeRequest {
 }
 
 model Invoice {
-  id               String          @id @default(cuid())
-  invoiceNumber    String          @unique
+  id               String               @id @default(cuid())
+  invoiceNumber    String               @unique
   bespokeRequestId String?
-  bespokeRequest   BespokeRequest? @relation(fields: [bespokeRequestId], references: [id], onDelete: SetNull)
+  bespokeRequest   BespokeRequest?      @relation(fields: [bespokeRequestId], references: [id], onDelete: SetNull)
   consultationId   String?
   consultation     ConsultationBooking? @relation(fields: [consultationId], references: [id], onDelete: SetNull)
 
@@ -964,11 +964,11 @@ model Invoice {
   clientPhone     String?
   clientAddress   String?
   clientCity      String?
-  clientCountry   String   @default("Nigeria")
+  clientCountry   String  @default("Nigeria")
   clientInstagram String?
 
-  currency     String  @default("NGN")
-  exchangeRate Float   @default(1)
+  currency     String @default("NGN")
+  exchangeRate Float  @default(1)
 
   status InvoiceStatus @default(DRAFT)
 
@@ -989,13 +989,13 @@ model Invoice {
   /// Percent agreed on the quotation and carried onto this invoice. Default is CMS `bespoke_deposit_percent` (70). Production gate reads `depositRequired`, never the CMS default.
   depositPercent  Float @default(70)
 
-  paymentTerms    String?   @db.Text
-  dueDate         DateTime?
+  paymentTerms  String?   @db.Text
+  dueDate       DateTime?
   /// Price validity. Distinct from `dueDate` (when payment is expected). Null on historic invoices — do not invent a date.
-  expiresAt       DateTime?
-  paidAt          DateTime?
-  paymentMethod   String?
-  paymentRef      String?
+  expiresAt     DateTime?
+  paidAt        DateTime?
+  paymentMethod String?
+  paymentRef    String?
 
   notes      String? @db.Text
   clientNote String? @db.Text
@@ -1007,9 +1007,9 @@ model Invoice {
   viewedAt  DateTime?
   viewCount Int       @default(0)
 
-  publicToken String @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
+  publicToken          String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
   /// AES-GCM of the raw URL token (new issuances). Null for grandfathered cuid rows.
-  publicTokenEnc String?
+  publicTokenEnc       String?
   /// Null = never expires (legacy inbox links). New issuances set a date.
   publicTokenExpiresAt DateTime?
 
@@ -1044,20 +1044,20 @@ enum InvoiceStatus {
 }
 
 model Coupon {
-  id             String            @id @default(cuid())
-  code           String            @unique
+  id             String        @id @default(cuid())
+  code           String        @unique
   description    String?
   type           CouponType
   value          Float
   minOrderNGN    Float?
   maxUsesTotal   Int?
-  maxUsesPerUser Int               @default(1)
-  usedCount      Int               @default(0)
-  appliesToAll   Boolean           @default(true)
-  categoryScope  String[]          @default([])
-  productScope   String[]          @default([])
-  isActive       Boolean           @default(true)
-  startsAt       DateTime          @default(now())
+  maxUsesPerUser Int           @default(1)
+  usedCount      Int           @default(0)
+  appliesToAll   Boolean       @default(true)
+  categoryScope  String[]      @default([])
+  productScope   String[]      @default([])
+  isActive       Boolean       @default(true)
+  startsAt       DateTime      @default(now())
   expiresAt      DateTime?
   usages         CouponUsage[]
   orders         Order[]
@@ -1067,15 +1067,15 @@ model Coupon {
 }
 
 model CouponUsage {
-  id          String             @id @default(cuid())
+  id          String            @id @default(cuid())
   couponId    String
-  coupon      Coupon             @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  coupon      Coupon            @relation(fields: [couponId], references: [id], onDelete: Cascade)
   userId      String?
   email       String
-  orderId     String             @unique
-  order       Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  usedAt      DateTime           @default(now())
-  status      CouponUsageStatus  @default(COMMITTED)
+  orderId     String            @unique
+  order       Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  usedAt      DateTime          @default(now())
+  status      CouponUsageStatus @default(COMMITTED)
   committedAt DateTime?
   releasedAt  DateTime?
 
@@ -1102,20 +1102,20 @@ model ShippingZone {
 
 /// One row per delivery mode. Lagos prices live on LagosLocation; GIG/DHL prices are live-rated.
 model ShippingMethod {
-  id            String             @id @default(cuid())
-  kind          ShippingMethodKind @unique
-  name          String
-  description   String?            @db.Text
-  isActive      Boolean            @default(true)
-  sortOrder     Int                @default(0)
-  markupKind    ShippingMarkupKind?
-  markupValue   Float?
-  defaultService String?
+  id              String              @id @default(cuid())
+  kind            ShippingMethodKind  @unique
+  name            String
+  description     String?             @db.Text
+  isActive        Boolean             @default(true)
+  sortOrder       Int                 @default(0)
+  markupKind      ShippingMarkupKind?
+  markupValue     Float?
+  defaultService  String?
   pickupLocations PickupLocation[]
   lagosLocations  LagosLocation[]
   orders          Order[]
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
 }
 
 model PickupLocation {
@@ -1191,21 +1191,21 @@ model ExchangeRateSnapshot {
 }
 
 model Address {
-  id         String  @id @default(cuid())
-  userId     String
-  user       User    @relation(fields: [userId], references: [id])
-  label      String?
-  firstName  String
-  lastName   String
-  phone      String
-  street     String
+  id           String  @id @default(cuid())
+  userId       String
+  user         User    @relation(fields: [userId], references: [id])
+  label        String?
+  firstName    String
+  lastName     String
+  phone        String
+  street       String
   addressLine2 String?
-  postalCode String?
-  city       String
-  state      String
-  country    String
-  isDefault  Boolean @default(false)
-  orders     Order[]
+  postalCode   String?
+  city         String
+  state        String
+  country      String
+  isDefault    Boolean @default(false)
+  orders       Order[]
 }
 
 model WishlistItem {
@@ -1220,24 +1220,24 @@ model WishlistItem {
 }
 
 model Review {
-  id           String   @id @default(cuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id])
-  productId    String?
-  product      Product? @relation(fields: [productId], references: [id])
-  consultationId String?
-  consultation   ConsultationBooking? @relation(fields: [consultationId], references: [id], onDelete: SetNull)
-  rating       Int
-  title        String?
-  body         String?
-  isVerified     Boolean  @default(false)
-  isApproved     Boolean  @default(false)
-  showOnHomepage Boolean  @default(false)
-  showOnConsultationPage Boolean @default(false)
-  testimonialImage String?
-  helpfulCount   Int      @default(0)
-  orderId      String?
-  createdAt    DateTime @default(now())
+  id                     String               @id @default(cuid())
+  userId                 String
+  user                   User                 @relation(fields: [userId], references: [id])
+  productId              String?
+  product                Product?             @relation(fields: [productId], references: [id])
+  consultationId         String?
+  consultation           ConsultationBooking? @relation(fields: [consultationId], references: [id], onDelete: SetNull)
+  rating                 Int
+  title                  String?
+  body                   String?
+  isVerified             Boolean              @default(false)
+  isApproved             Boolean              @default(false)
+  showOnHomepage         Boolean              @default(false)
+  showOnConsultationPage Boolean              @default(false)
+  testimonialImage       String?
+  helpfulCount           Int                  @default(0)
+  orderId                String?
+  createdAt              DateTime             @default(now())
 
   helpfulVotes ReviewHelpfulVote[]
 
@@ -1245,9 +1245,9 @@ model Review {
 }
 
 model Testimonial {
-  id          String   @id @default(cuid())
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
 
   displayName String?
   location    String?
@@ -1273,43 +1273,43 @@ model Testimonial {
 }
 
 model JobPosting {
-  id            String   @id @default(cuid())
+  id            String           @id @default(cuid())
   title         String
   department    String
   type          JobType
   location      String
-  description   String   @db.Text
-  requirements  String   @db.Text
-  benefits      String?  @db.Text
+  description   String           @db.Text
+  requirements  String           @db.Text
+  benefits      String?          @db.Text
   salaryRange   String?
   deadline      DateTime?
-  isPublished   Boolean  @default(false)
-  isPFAPosition Boolean  @default(false)
-  slug          String   @unique
+  isPublished   Boolean          @default(false)
+  isPFAPosition Boolean          @default(false)
+  slug          String           @unique
   customFields  Json?
   applications  JobApplication[]
   createdBy     String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
   @@index([isPublished, type])
 }
 
 model JobApplication {
-  id               String            @id @default(cuid())
+  id               String             @id @default(cuid())
   jobId            String
-  job              JobPosting        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  job              JobPosting         @relation(fields: [jobId], references: [id], onDelete: Cascade)
   fullName         String
   email            String
   phone            String
   yearsOfExp       Int?
-  coverLetter      String?           @db.Text
+  coverLetter      String?            @db.Text
   cvUrl            String?
   portfolioUrl     String?
   heardFrom        String?
-  isPFAApplication Boolean           @default(false)
+  isPFAApplication Boolean            @default(false)
   pfaRegNumber     String?
-  pfaVerified      Boolean           @default(false)
+  pfaVerified      Boolean            @default(false)
   pfaStudentName   String?
   pfaCourse        String?
   pfaYear          Int?
@@ -1322,11 +1322,11 @@ model JobApplication {
   schoolItLetter   String?
   schoolIdCard     String?
   customResponses  Json?
-  status           ApplicationStatus @default(NEW)
-  adminNotes       String?           @db.Text
+  status           ApplicationStatus  @default(NEW)
+  adminNotes       String?            @db.Text
   emailsSent       ApplicationEmail[]
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
   @@index([jobId, status])
   @@index([email])
@@ -1371,35 +1371,35 @@ model ReviewHelpfulVote {
 }
 
 model SiteSetting {
-  id         String        @id @default(cuid())
-  key        String        @unique
-  value      String        @db.Text
-  group      SettingGroup
-  label      String
-  type       SettingType
-  isPublic   Boolean       @default(false)
-  sortOrder  Int           @default(0)
-  updatedAt  DateTime      @updatedAt
-  updatedBy  String?
+  id        String       @id @default(cuid())
+  key       String       @unique
+  value     String       @db.Text
+  group     SettingGroup
+  label     String
+  type      SettingType
+  isPublic  Boolean      @default(false)
+  sortOrder Int          @default(0)
+  updatedAt DateTime     @updatedAt
+  updatedBy String?
 
   @@index([group])
   @@index([isPublic])
 }
 
 model MediaItem {
-  id          String   @id @default(cuid())
-  url         String
-  publicId    String   @unique
-  filename    String
-  mimeType    String
-  width       Int?
-  height      Int?
-  sizeBytes   Int?
-  folder      String   @default("prudent-gabriel")
-  alt         String?
-  caption     String?
-  uploadedBy  String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  url        String
+  publicId   String   @unique
+  filename   String
+  mimeType   String
+  width      Int?
+  height     Int?
+  sizeBytes  Int?
+  folder     String   @default("prudent-gabriel")
+  alt        String?
+  caption    String?
+  uploadedBy String?
+  createdAt  DateTime @default(now())
 
   @@index([createdAt])
   @@index([folder])
@@ -1421,17 +1421,17 @@ enum SettingGroup {
 }
 
 model GalleryImage {
-  id          String          @id @default(cuid())
-  url         String
-  publicId    String          @unique
-  alt         String?
-  caption     String?
-  category    GalleryCategory
-  width       Int?
-  height      Int?
-  sortOrder   Int             @default(0)
-  isPublished Boolean         @default(true)
-  uploadedBy  String?
+  id              String          @id @default(cuid())
+  url             String
+  publicId        String          @unique
+  alt             String?
+  caption         String?
+  category        GalleryCategory
+  width           Int?
+  height          Int?
+  sortOrder       Int             @default(0)
+  isPublished     Boolean         @default(true)
+  uploadedBy      String?
   /// BA4: display-only price guide beside the photograph ("begin around ₦…").
   /// Never a checkout price: nothing chargeable reads GalleryImage. Ceiling is
   /// optional (a range); the floor alone is the recommended form.
@@ -1439,19 +1439,19 @@ model GalleryImage {
   priceCeilingNGN Int?
   /// BB3: what the piece is, what it is made of, what it was for. Shown beside
   /// the photographs on /atelier; set on the piece's main photograph.
-  description String?
+  description     String?
   /// BB3: one piece, one entry. A frame of another piece points at that piece's
   /// main photograph (one level only); the main photograph carries the title
   /// (caption), description and price guide for the whole piece.
-  pieceOfId   String?
-  pieceOf     GalleryImage?   @relation("GalleryPiece", fields: [pieceOfId], references: [id], onDelete: SetNull)
+  pieceOfId       String?
+  pieceOf         GalleryImage?   @relation("GalleryPiece", fields: [pieceOfId], references: [id], onDelete: SetNull)
   /// The title, description and price guide on this row were invented for review
   /// (scripts/seed-atelier-demo.ts), not written by the house. Flagged in the admin;
   /// cleared when real values are saved; never rendered on the production site.
-  placeholder Boolean         @default(false)
-  frames      GalleryImage[]  @relation("GalleryPiece")
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  placeholder     Boolean         @default(false)
+  frames          GalleryImage[]  @relation("GalleryPiece")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   @@index([category, isPublished])
   @@index([sortOrder])
@@ -1465,24 +1465,24 @@ enum GalleryCategory {
 }
 
 model AdminNotification {
-  id        String                @id @default(cuid())
-  type      AdminNotificationType
-  title     String
-  message   String
-  link      String?
+  id                String                  @id @default(cuid())
+  type              AdminNotificationType
+  title             String
+  message           String
+  link              String?
   /// Legacy global flag. Unread is per user via AdminNotificationRead.
-  isRead    Boolean               @default(false)
-  entityId  String?
+  isRead            Boolean                 @default(false)
+  entityId          String?
   /// Permission keys that may see this row. `"*"` = every portal user (explicit broadcast).
-  targetPermissions String[]      @default([])
+  targetPermissions String[]                @default([])
   /// BF9: named recipients. When set, only these users see the row, whatever
   /// their permissions (chat recipients are chosen by name).
-  targetUserIds     String[]      @default([])
+  targetUserIds     String[]                @default([])
   acknowledgedAt    DateTime?
   acknowledgedById  String?
-  acknowledgedBy    User?         @relation("AdminNotificationAck", fields: [acknowledgedById], references: [id], onDelete: SetNull)
-  reads     AdminNotificationRead[]
-  createdAt DateTime              @default(now())
+  acknowledgedBy    User?                   @relation("AdminNotificationAck", fields: [acknowledgedById], references: [id], onDelete: SetNull)
+  reads             AdminNotificationRead[]
+  createdAt         DateTime                @default(now())
 
   @@index([createdAt])
   @@index([acknowledgedAt])
@@ -1500,45 +1500,45 @@ model AdminNotificationRead {
 }
 
 model CustomerNotification {
-  id        String                     @id @default(cuid())
+  id        String                   @id @default(cuid())
   userId    String
-  user      User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      CustomerNotificationType
   title     String
   message   String
   link      String?
-  isRead    Boolean                    @default(false)
+  isRead    Boolean                  @default(false)
   entityId  String?
-  createdAt DateTime                   @default(now())
+  createdAt DateTime                 @default(now())
 
   @@index([userId, isRead, createdAt])
 }
 
 model StaffNotification {
-  id        String                  @id @default(cuid())
+  id        String                @id @default(cuid())
   userId    String
-  user      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      StaffNotificationType
   title     String
   message   String
   link      String?
-  isRead    Boolean                 @default(false)
+  isRead    Boolean               @default(false)
   entityId  String?
-  createdAt DateTime                @default(now())
+  createdAt DateTime              @default(now())
 
   @@index([userId, isRead, createdAt])
 }
 
 model TeamInvitation {
-  id         String   @id @default(cuid())
-  email      String   @unique
-  role       Role     @default(ADMIN)
+  id         String    @id @default(cuid())
+  email      String    @unique
+  role       Role      @default(ADMIN)
   /// SHA-256 of the raw link token (capability-registry.ts). Never plaintext.
-  token      String   @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
+  token      String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
   invitedBy  String
   expiresAt  DateTime
   acceptedAt DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 
   @@index([token])
   @@index([email])
@@ -1982,11 +1982,11 @@ model ClientProfile {
 
   referredBy String?
 
-  measurements  Measurement?
-  bespokeOrders BespokeOrder[]
-  moodboards    Moodboard[]
-  eventDates    EventDate[]
-  adminNotes    ClientNote[]
+  measurements       Measurement?
+  bespokeOrders      BespokeOrder[]
+  moodboards         Moodboard[]
+  eventDates         EventDate[]
+  adminNotes         ClientNote[]
   alterationRequests AlterationRequest[]
 
   createdAt DateTime @default(now())
@@ -2044,28 +2044,28 @@ model SizeChartRow {
 
 /// Reusable measurement questions. Mrs. Prudent ticks which apply per product.
 model MeasurementField {
-  id        String                @id @default(cuid())
-  key       String                @unique
-  label     String
-  unit      String                @default("cm")
-  helpText  String?               @db.Text
-  minCm     Float?
-  maxCm     Float?
-  sortOrder Int                   @default(0)
-  products  ProductMeasurement[]
+  id                 String                     @id @default(cuid())
+  key                String                     @unique
+  label              String
+  unit               String                     @default("cm")
+  helpText           String?                    @db.Text
+  minCm              Float?
+  maxCm              Float?
+  sortOrder          Int                        @default(0)
+  products           ProductMeasurement[]
   optionMeasurements ProductOptionMeasurement[]
-  createdAt DateTime              @default(now())
-  updatedAt DateTime              @updatedAt
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
 }
 
 model ProductMeasurement {
-  id        String            @id @default(cuid())
+  id        String           @id @default(cuid())
   productId String
-  product   Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
   fieldId   String
-  field     MeasurementField  @relation(fields: [fieldId], references: [id], onDelete: Cascade)
-  required  Boolean           @default(true)
-  sortOrder Int               @default(0)
+  field     MeasurementField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  required  Boolean          @default(true)
+  sortOrder Int              @default(0)
 
   @@unique([productId, fieldId])
   @@index([productId, sortOrder])
@@ -2092,11 +2092,11 @@ model EventDate {
   clientId String
   client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  label    String
-  date     DateTime
+  label         String
+  date          DateTime
   /// Legacy single-shot flag. Interval tracking is `remindersSent`.
-  notified Boolean  @default(false)
-  remindersSent Int[] @default([])
+  notified      Boolean  @default(false)
+  remindersSent Int[]    @default([])
 
   createdAt DateTime @default(now())
 }
@@ -2106,9 +2106,9 @@ model ClientNote {
   clientId String
   client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  note          String
-  addedBy       String
-  addedByName   String?
+  note        String
+  addedBy     String
+  addedByName String?
 
   createdAt DateTime @default(now())
 
@@ -2125,71 +2125,71 @@ model BespokeOrder {
   clientEmail     String
   clientPhone     String?
 
-  outfitDescription String?  @db.Text
-  occasionType      String?
-  eventLocation     String?
-  clientLocation    String?
-  deliveryDate      DateTime?
-  notes             String?  @db.Text
+  outfitDescription    String?      @db.Text
+  occasionType         String?
+  eventLocation        String?
+  clientLocation       String?
+  deliveryDate         DateTime?
+  notes                String?      @db.Text
   /// BD1: the house's own title when the composed one reads badly. Null = composed.
-  title             String?
+  title                String?
   /// BD1: what is being made (wedding dress, traditional outfit, dress …).
-  garmentTypeId     String?
-  garmentType       GarmentType? @relation(fields: [garmentTypeId], references: [id], onDelete: SetNull)
+  garmentTypeId        String?
+  garmentType          GarmentType? @relation(fields: [garmentTypeId], references: [id], onDelete: SetNull)
   /// BD1: the day of her event, from the enquiry. Not the delivery date.
-  eventDate         DateTime? @db.Date
+  eventDate            DateTime?    @db.Date
   /// BD6: the measurements this commission is cut to (Measurement's shape).
   /// Starts from the client's latest set at create; edits here update both.
   measurementsSnapshot Json?
   measurementsTakenAt  DateTime?
 
-  currentStage BespokeStage @default(CONSULTATION_BOOKING)
+  currentStage     BespokeStage           @default(CONSULTATION_BOOKING)
   stageHistory     StageUpdate[]
   stageCompletions OrderStageCompletion[]
   stageMedia       OrderStageMedia[]
   stageDrafts      OrderStageDraft[]
   stageApprovals   StageApproval[]
-  assignments  OrderAssignment[]
+  assignments      OrderAssignment[]
   /// BC2: what the gown is — construction features ticked from the house library.
-  features     CommissionFeature[]
-  materials    Material[]
+  features         CommissionFeature[]
+  materials        Material[]
   /// BD2: append-only notes against this commission (the brief anchor).
-  commissionNotes CommissionNote[]
+  commissionNotes  CommissionNote[]
   /// BD7: the workroom's end-of-day entries.
-  workLogs     WorkLog[]
+  workLogs         WorkLog[]
 
-  quotationId String?
-  quotation   Quotation? @relation(fields: [quotationId], references: [id])
+  quotationId       String?
+  quotation         Quotation?      @relation(fields: [quotationId], references: [id])
   /// Document currency copied from the quotation. Ledger totals stay NGN.
-  currency    String     @default("NGN")
+  currency          String          @default("NGN")
   /// USD per ₦1, copied from the quotation lock at convert.
-  fxRateLocked        Float?
-  fxGbpRateLocked     Float?
-  fxRateSource        String?
-  fxRateFetchedAt     DateTime?
-  fxRateStale         Boolean @default(false)
-  fxUsdAmountLocked   Float?
-  fxGbpAmountLocked   Float?
+  fxRateLocked      Float?
+  fxGbpRateLocked   Float?
+  fxRateSource      String?
+  fxRateFetchedAt   DateTime?
+  fxRateStale       Boolean         @default(false)
+  fxUsdAmountLocked Float?
+  fxGbpAmountLocked Float?
   /// Cached denormalised total of CONFIRMED Payment rows — only write via recomputeOrderTotals().
-  amountPaid  Float      @default(0)
-  totalAmount Float      @default(0)
+  amountPaid        Float           @default(0)
+  totalAmount       Float           @default(0)
   /// Cached denormalised (totalAmount - amountPaid) — only write via recomputeOrderTotals().
-  balance     Float      @default(0)
-  paymentGateway PaymentGateway?
-  paymentRef     String?
+  balance           Float           @default(0)
+  paymentGateway    PaymentGateway?
+  paymentRef        String?
   paymentReceiptUrl String?
 
   bespokeRequestId String?
 
   consultationId  String?
   consultation    ConsultationBooking? @relation(fields: [consultationId], references: [id], onDelete: SetNull)
-  sessionNotes    String?  @db.Text
-  moodboardImages String[] @default([])
+  sessionNotes    String?              @db.Text
+  moodboardImages String[]             @default([])
   occasionDetails String?
-  outfitBrief     String?  @db.Text
+  outfitBrief     String?              @db.Text
 
-  trackingToken String @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
-  trackingTokenEnc String?
+  trackingToken          String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
+  trackingTokenEnc       String?
   trackingTokenExpiresAt DateTime?
 
   /// Set when depositSatisfied first becomes true (confirmed payments ≥ deposit). Sprint B gates stage advancement on this.
@@ -2201,13 +2201,13 @@ model BespokeOrder {
   /// When the DELIVERY stage completed (status → DELIVERED). Used for warranty + reminders.
   deliveredAt DateTime?
 
-  receiptConfirmToken   String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
-  receiptConfirmTokenEnc String?
+  receiptConfirmToken          String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
+  receiptConfirmTokenEnc       String?
   receiptConfirmTokenExpiresAt DateTime?
-  receiptConfirmedAt    DateTime?
-  receiptConfirmedById  String?
-  receiptConfirmedBy    User?     @relation("ReceiptConfirmedBy", fields: [receiptConfirmedById], references: [id], onDelete: SetNull)
-  receiptReminderSentAt DateTime?
+  receiptConfirmedAt           DateTime?
+  receiptConfirmedById         String?
+  receiptConfirmedBy           User?     @relation("ReceiptConfirmedBy", fields: [receiptConfirmedById], references: [id], onDelete: SetNull)
+  receiptReminderSentAt        DateTime?
 
   /// Bespoke review-request email sent once (mirrors RTW Order.reviewRequestSent).
   reviewRequestSent Boolean @default(false)
@@ -2215,15 +2215,15 @@ model BespokeOrder {
   status OrderStatus @default(PENDING)
 
   /// Set when status became ARCHIVED. Confirming receipt does not write this.
-  archivedAt DateTime?
+  archivedAt     DateTime?
   /// Why it was archived, e.g. alteration window ended with no open requests.
   archivedReason String?
 
-  payments Payment[]
-  storeMovements StoreMovement[]
+  payments           Payment[]
+  storeMovements     StoreMovement[]
   alterationRequests AlterationRequest[]
-  costsOfProduction CostOfProduction[]
-  requisitions Requisition[]
+  costsOfProduction  CostOfProduction[]
+  requisitions       Requisition[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2275,10 +2275,10 @@ model AlterationRequest {
   status      AlterationStatus @default(REQUESTED)
 
   /// Policy suggestion at triage time (warranty + reason).
-  pricingDefault  AlterationPricing?
+  pricingDefault        AlterationPricing?
   /// Final decision (admin may override).
-  pricingDecision AlterationPricing?
-  pricingOverrideReason String? @db.Text
+  pricingDecision       AlterationPricing?
+  pricingOverrideReason String?            @db.Text
 
   /// Required when accepting FREE — estimated NGN cost of complimentary work.
   complimentaryEstimatedValue Float?
@@ -2303,12 +2303,12 @@ model StageUpdate {
   order   BespokeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   stage           BespokeStage
-  notes           String?  @db.Text
+  notes           String?      @db.Text
   images          String[]
   videos          String[]
   completedBy     String
   completedByName String?
-  emailSent       Boolean  @default(false)
+  emailSent       Boolean      @default(false)
   emailSentAt     DateTime?
 
   completedAt DateTime @default(now())
@@ -2379,18 +2379,18 @@ model OrderStageDraft {
 }
 
 model StageApproval {
-  id            String              @id @default(cuid())
-  orderId       String
-  order         BespokeOrder        @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  stage         BespokeStage
-  status        StageApprovalStatus @default(PENDING)
-  requestedAt   DateTime            @default(now())
-  requestedById String?
-  respondedAt   DateTime?
-  clientComment String?             @db.Text
-  reminderSentAt DateTime?
-  publicToken   String              @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
-  publicTokenEnc String?
+  id                   String              @id @default(cuid())
+  orderId              String
+  order                BespokeOrder        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  stage                BespokeStage
+  status               StageApprovalStatus @default(PENDING)
+  requestedAt          DateTime            @default(now())
+  requestedById        String?
+  respondedAt          DateTime?
+  clientComment        String?             @db.Text
+  reminderSentAt       DateTime?
+  publicToken          String              @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
+  publicTokenEnc       String?
   publicTokenExpiresAt DateTime?
 
   @@index([orderId, stage])
@@ -2407,7 +2407,7 @@ model OrderAssignment {
 
   role        String
   stage       BespokeStage?
-  assignedAt  DateTime  @default(now())
+  assignedAt  DateTime                 @default(now())
   /// BD7: written when the person files that her part is done.
   completedAt DateTime?
   labourLines CostOfProductionLabour[]
@@ -2471,8 +2471,8 @@ model Material {
   addedById String?
 
   /// Optional link to the store catalogue. The gown note stays free text.
-  storeItemId String?
-  storeItem   StoreItem? @relation(fields: [storeItemId], references: [id], onDelete: SetNull)
+  storeItemId     String?
+  storeItem       StoreItem?     @relation(fields: [storeItemId], references: [id], onDelete: SetNull)
   /// ISSUE row that took this material from the store, when recorded.
   storeMovementId String?        @unique
   storeMovement   StoreMovement? @relation(fields: [storeMovementId], references: [id], onDelete: SetNull)
@@ -2591,7 +2591,7 @@ model AttendanceLog {
   clockOut   DateTime?
   taskNote   String?
   totalHours Float?
-  date       DateTime @default(now()) @db.Date
+  date       DateTime  @default(now()) @db.Date
 
   createdAt DateTime @default(now())
 
@@ -2610,9 +2610,9 @@ model QRCode {
 }
 
 model Quotation {
-  id       String @id @default(cuid())
+  id           String @id @default(cuid())
   /// Display reference: `QT-2026-0001` (v1) or `QT-2026-0001-v2` (revisions).
-  quoteRef String @unique
+  quoteRef     String @unique
   /// Stable stem shared across versions (`QT-2026-0001`).
   baseQuoteRef String
   version      Int    @default(1)
@@ -2621,48 +2621,48 @@ model Quotation {
   clientEmail String
   clientPhone String?
 
-  lineItems Json
-  subtotal  Float
-  tax       Float  @default(0)
-  discount  Float  @default(0)
-  total     Float
+  lineItems         Json
+  subtotal          Float
+  tax               Float     @default(0)
+  discount          Float     @default(0)
+  total             Float
   /// Document currency. EUR is valid here (manual atelier quotes); not a storefront switcher.
-  currency  String @default("NGN")
+  currency          String    @default("NGN")
   /// USD per ₦1, locked when the quotation is sent. Same shape as Order / lockedFxFromOrder.
-  fxRateLocked        Float?
+  fxRateLocked      Float?
   /// GBP per ₦1, locked at send with the USD rate.
-  fxGbpRateLocked     Float?
-  fxRateSource        String?
-  fxRateFetchedAt     DateTime?
-  fxRateStale         Boolean @default(false)
+  fxGbpRateLocked   Float?
+  fxRateSource      String?
+  fxRateFetchedAt   DateTime?
+  fxRateStale       Boolean   @default(false)
   /// Document USD total at lock (when currency is USD).
-  fxUsdAmountLocked   Float?
+  fxUsdAmountLocked Float?
   /// Document GBP total at lock (when currency is GBP).
-  fxGbpAmountLocked   Float?
+  fxGbpAmountLocked Float?
 
-  notes  String?     @db.Text
-  status QuoteStatus @default(DRAFT)
+  notes          String?     @db.Text
+  status         QuoteStatus @default(DRAFT)
   /// Deposit % the client agrees on this quotation. Defaults from CMS `bespoke_deposit_percent`. Carries through to the invoice.
-  depositPercent Float @default(70)
+  depositPercent Float       @default(70)
 
-  approvalToken String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
-  approvalTokenEnc String?
+  approvalToken          String    @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
+  approvalTokenEnc       String?
   /// Token TTL. Distinct from quote `expiresAt` (price validity). Null = grandfathered.
   approvalTokenExpiresAt DateTime?
-  approvedAt    DateTime?
-  expiresAt     DateTime?
+  approvedAt             DateTime?
+  expiresAt              DateTime?
   /// BC3: the delivery date agreed with the quotation. Copied to BespokeOrder.deliveryDate
   /// at convert; adjustable on the commission afterwards. Not the enquiry's event date.
-  expectedDeliveryDate DateTime? @db.Date
+  expectedDeliveryDate   DateTime? @db.Date
   /// Public client approval page URL (never a PDF).
-  approvalUrl   String?
+  approvalUrl            String?
   /// URL of the generated quotation PDF (admin/public PDF route), set on send.
-  pdfUrl        String?
-  sentAt        DateTime?
+  pdfUrl                 String?
+  sentAt                 DateTime?
   /// Slice AR: terms version shown when this quotation was sent.
-  legalTermsVersion  String?
+  legalTermsVersion      String?
   /// Resolved legal tokens + copy revision at send. Same idea as Order.shippingConsentText.
-  legalTermsSnapshot Json?
+  legalTermsSnapshot     Json?
 
   parentQuotationId String?
   parentQuotation   Quotation?  @relation("QuotationVersions", fields: [parentQuotationId], references: [id], onDelete: SetNull)
@@ -2671,8 +2671,8 @@ model Quotation {
   consultationId String?
   consultation   ConsultationBooking? @relation(fields: [consultationId], references: [id], onDelete: SetNull)
 
-  bespokeOrders BespokeOrder[]
-  invoices      Invoice[]
+  bespokeOrders      BespokeOrder[]
+  invoices           Invoice[]
   alterationRequests AlterationRequest[]
   changeRequests     QuotationChangeRequest[]
 
@@ -2721,7 +2721,7 @@ model BlogPost {
   slug  String @unique
 
   excerpt       String?
-  content       String    @db.Text
+  content       String   @db.Text
   featuredImage String?
   category      String?
   tags          String[]
@@ -2787,14 +2787,14 @@ model Payment {
   receiptUrl     String?
   gatewayPayload Json?
 
-  invoiceId       String?
-  invoice         Invoice?             @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
-  bespokeOrderId  String?
-  bespokeOrder    BespokeOrder?        @relation(fields: [bespokeOrderId], references: [id], onDelete: Restrict)
-  consultationId  String?
-  consultation    ConsultationBooking? @relation(fields: [consultationId], references: [id], onDelete: Restrict)
-  orderId         String?
-  order           Order?               @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  invoiceId      String?
+  invoice        Invoice?             @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  bespokeOrderId String?
+  bespokeOrder   BespokeOrder?        @relation(fields: [bespokeOrderId], references: [id], onDelete: Restrict)
+  consultationId String?
+  consultation   ConsultationBooking? @relation(fields: [consultationId], references: [id], onDelete: Restrict)
+  orderId        String?
+  order          Order?               @relation(fields: [orderId], references: [id], onDelete: Restrict)
 
   /// Paying party identifier — NOT a FK.
   /// Prefer User.id when a User row exists; otherwise the stable placeholder
@@ -2833,6 +2833,42 @@ model LoyaltyRule {
   action   String  @unique
   points   Int
   isActive Boolean @default(true)
+}
+
+/// One row per tier. A client's tier is the higher of what they paid in this
+/// Lagos calendar year and in the last one, so a tier earned holds until the
+/// end of the following year. Writer: src/lib/loyalty-tiers.ts.
+model LoyaltyTierConfig {
+  tier         LoyaltyTier @id
+  /// Naira paid within one calendar year to reach this tier. Bronze is 0.
+  minSpendNGN  Float
+  /// Points per ₦100 paid on shop orders while in this tier.
+  pointsPer100 Int
+  updatedAt    DateTime    @updatedAt
+  updatedBy    String?
+}
+
+/// A perk shown to clients. Staff deliver these; the website does not enforce them.
+model LoyaltyPerk {
+  id        String        @id @default(cuid())
+  label     String
+  tiers     LoyaltyTier[]
+  sortOrder Int           @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+/// The one-time email telling a client an earlier tier message was sent in error.
+/// One row per client: a second send is refused.
+model LoyaltyCorrectionNotice {
+  id           String      @id @default(cuid())
+  userId       String      @unique
+  email        String
+  previousTier LoyaltyTier
+  correctTier  LoyaltyTier
+  note         String?     @db.Text
+  sentAt       DateTime    @default(now())
+  sentById     String?
 }
 
 /// Append-only history of the naira-per-point rate. Changing the rate revalues every outstanding balance.
@@ -2930,32 +2966,32 @@ enum EmailStatus {
 }
 
 model EmailMessage {
-  id                 String      @id @default(cuid())
-  idempotencyKey     String      @unique
-  to                 String
-  cc                 String?
-  bcc                String?
-  fromAddress        String
-  subject            String
-  template           String
-  html               String      @db.Text
-  text               String?     @db.Text
-  attachments        Json?
-  status             EmailStatus @default(QUEUED)
-  attempts           Int         @default(0)
-  maxAttempts        Int         @default(5)
-  nextAttemptAt      DateTime?
-  lastError          String?     @db.Text
-  provider           String?
-  providerMessageId  String?
-  sentAt             DateTime?
-  relatedType        String?
-  relatedId          String?
+  id                String      @id @default(cuid())
+  idempotencyKey    String      @unique
+  to                String
+  cc                String?
+  bcc               String?
+  fromAddress       String
+  subject           String
+  template          String
+  html              String      @db.Text
+  text              String?     @db.Text
+  attachments       Json?
+  status            EmailStatus @default(QUEUED)
+  attempts          Int         @default(0)
+  maxAttempts       Int         @default(5)
+  nextAttemptAt     DateTime?
+  lastError         String?     @db.Text
+  provider          String?
+  providerMessageId String?
+  sentAt            DateTime?
+  relatedType       String?
+  relatedId         String?
   /// Higher drains first. Transactional = 100; marketing campaigns = 0.
-  priority           Int         @default(100)
-  headers            Json?
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+  priority          Int         @default(100)
+  headers           Json?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
   @@index([status, nextAttemptAt])
   @@index([relatedType, relatedId])
@@ -3104,24 +3140,24 @@ model ItemCategory {
 }
 
 model StoreItem {
-  id         String       @id @default(cuid())
-  name       String
-  categoryId String
-  category   ItemCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  id               String                 @id @default(cuid())
+  name             String
+  categoryId       String
+  category         ItemCategory           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   /// Free text. Suggested list is led by yard. One unit per item, no conversion.
-  unit       String
-  spec       String?
-  supplier   String?
-  unitCost   Decimal?     @db.Decimal(12, 2)
-  storeLine  StoreLine    @default(SHARED)
-  isActive   Boolean      @default(true)
-  movements  StoreMovement[]
-  materials  Material[]
-  costItems  CostOfProductionItem[]
+  unit             String
+  spec             String?
+  supplier         String?
+  unitCost         Decimal?               @db.Decimal(12, 2)
+  storeLine        StoreLine              @default(SHARED)
+  isActive         Boolean                @default(true)
+  movements        StoreMovement[]
+  materials        Material[]
+  costItems        CostOfProductionItem[]
   requisitionLines RequisitionLine[]
   productMaterials ProductMaterial[]
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
 
   @@index([categoryId, isActive])
   @@index([name])
@@ -3130,23 +3166,23 @@ model StoreItem {
 /// Append-only store ledger. Never UPDATE delta, reason, item or createdAt —
 /// corrections are new rows. DB trigger enforces this (payment-ledger shape).
 model StoreMovement {
-  id     String              @id @default(cuid())
-  itemId String
-  item   StoreItem           @relation(fields: [itemId], references: [id], onDelete: Restrict)
-  delta  Decimal             @db.Decimal(12, 4)
-  reason StoreMovementReason
+  id      String              @id @default(cuid())
+  itemId  String
+  item    StoreItem           @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  delta   Decimal             @db.Decimal(12, 4)
+  reason  StoreMovementReason
   actorId String
-  actor   User               @relation("StoreMovementActor", fields: [actorId], references: [id], onDelete: Restrict)
-  note    String?            @db.Text
+  actor   User                @relation("StoreMovementActor", fields: [actorId], references: [id], onDelete: Restrict)
+  note    String?             @db.Text
   /// Shared slip number for an issue booklet page (several lines, one ref).
   ref     String?
 
-  takenById     String?
-  takenBy       User?   @relation("StoreMovementTakenBy", fields: [takenById], references: [id], onDelete: Restrict)
-  approvedById  String?
-  approvedBy    User?   @relation("StoreMovementApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
-  receivedById  String?
-  receivedBy    User?   @relation("StoreMovementReceivedBy", fields: [receivedById], references: [id], onDelete: Restrict)
+  takenById    String?
+  takenBy      User?   @relation("StoreMovementTakenBy", fields: [takenById], references: [id], onDelete: Restrict)
+  approvedById String?
+  approvedBy   User?   @relation("StoreMovementApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
+  receivedById String?
+  receivedBy   User?   @relation("StoreMovementReceivedBy", fields: [receivedById], references: [id], onDelete: Restrict)
 
   bespokeOrderId String?
   bespokeOrder   BespokeOrder? @relation(fields: [bespokeOrderId], references: [id], onDelete: Restrict)
@@ -3186,27 +3222,27 @@ enum CostOfProductionStatus {
 }
 
 model CostOfProduction {
-  id             String                 @id @default(cuid())
+  id             String                   @id @default(cuid())
   orderId        String?
-  order          Order?                 @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  order          Order?                   @relation(fields: [orderId], references: [id], onDelete: Restrict)
   bespokeOrderId String?
-  bespokeOrder   BespokeOrder?          @relation(fields: [bespokeOrderId], references: [id], onDelete: Restrict)
+  bespokeOrder   BespokeOrder?            @relation(fields: [bespokeOrderId], references: [id], onDelete: Restrict)
   /// Tailor compensation as a figure — not payroll.
-  tailorCostNGN  Decimal                @db.Decimal(12, 2)
-  notes          String?                @db.Text
-  status         CostOfProductionStatus @default(DRAFT)
+  tailorCostNGN  Decimal                  @db.Decimal(12, 2)
+  notes          String?                  @db.Text
+  status         CostOfProductionStatus   @default(DRAFT)
   draftedById    String
-  draftedBy      User                   @relation("CostOfProductionDraftedBy", fields: [draftedById], references: [id], onDelete: Restrict)
+  draftedBy      User                     @relation("CostOfProductionDraftedBy", fields: [draftedById], references: [id], onDelete: Restrict)
   approvedById   String?
-  approvedBy     User?                  @relation("CostOfProductionApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
+  approvedBy     User?                    @relation("CostOfProductionApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
   approvedAt     DateTime?
   items          CostOfProductionItem[]
   /// BD4: tailor, beader … one line each, pointing at the assignment it pays.
   /// When lines exist, tailorCostNGN is their sum (written together).
   labour         CostOfProductionLabour[]
   requisitions   Requisition[]
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
 
   @@index([bespokeOrderId])
   @@index([orderId])
@@ -3214,15 +3250,15 @@ model CostOfProduction {
 }
 
 model CostOfProductionItem {
-  id                  String          @id @default(cuid())
-  costOfProductionId  String
-  costOfProduction    CostOfProduction @relation(fields: [costOfProductionId], references: [id], onDelete: Cascade)
-  itemId              String?
-  item                StoreItem?      @relation(fields: [itemId], references: [id], onDelete: Restrict)
-  freeText            String?
-  quantity            Decimal         @db.Decimal(12, 4)
-  unit                String
-  estimatedCostNGN    Decimal         @db.Decimal(12, 2)
+  id                 String           @id @default(cuid())
+  costOfProductionId String
+  costOfProduction   CostOfProduction @relation(fields: [costOfProductionId], references: [id], onDelete: Cascade)
+  itemId             String?
+  item               StoreItem?       @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  freeText           String?
+  quantity           Decimal          @db.Decimal(12, 4)
+  unit               String
+  estimatedCostNGN   Decimal          @db.Decimal(12, 2)
 
   @@index([costOfProductionId])
 }
@@ -3240,25 +3276,25 @@ enum RequisitionStatus {
 }
 
 model Requisition {
-  id                 String            @id @default(cuid())
-  ref                String            @unique
-  costOfProductionId String?
-  costOfProduction   CostOfProduction? @relation(fields: [costOfProductionId], references: [id], onDelete: Restrict)
-  orderId            String?
-  order              Order?            @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  bespokeOrderId     String?
-  bespokeOrder       BespokeOrder?     @relation(fields: [bespokeOrderId], references: [id], onDelete: Restrict)
-  status             RequisitionStatus @default(RAISED)
-  raisedById         String
-  raisedBy           User              @relation("RequisitionRaisedBy", fields: [raisedById], references: [id], onDelete: Restrict)
-  notes              String?           @db.Text
-  declineReason      String?           @db.Text
+  id                    String             @id @default(cuid())
+  ref                   String             @unique
+  costOfProductionId    String?
+  costOfProduction      CostOfProduction?  @relation(fields: [costOfProductionId], references: [id], onDelete: Restrict)
+  orderId               String?
+  order                 Order?             @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  bespokeOrderId        String?
+  bespokeOrder          BespokeOrder?      @relation(fields: [bespokeOrderId], references: [id], onDelete: Restrict)
+  status                RequisitionStatus  @default(RAISED)
+  raisedById            String
+  raisedBy              User               @relation("RequisitionRaisedBy", fields: [raisedById], references: [id], onDelete: Restrict)
+  notes                 String?            @db.Text
+  declineReason         String?            @db.Text
   /// AQ12: true when any consecutive transition was by the same person.
-  sameActorShortCircuit Boolean        @default(false)
-  lines              RequisitionLine[]
-  events             RequisitionEvent[]
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
+  sameActorShortCircuit Boolean            @default(false)
+  lines                 RequisitionLine[]
+  events                RequisitionEvent[]
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
 
   @@index([status, createdAt])
   @@index([orderId])
@@ -3266,38 +3302,38 @@ model Requisition {
 }
 
 model RequisitionLine {
-  id                 String      @id @default(cuid())
-  requisitionId      String
-  requisition        Requisition @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
-  itemId             String?
-  item               StoreItem?  @relation(fields: [itemId], references: [id], onDelete: Restrict)
-  freeText           String?
-  quantity           Decimal     @db.Decimal(12, 4)
-  unit               String
-  estimatedCostNGN   Decimal     @db.Decimal(12, 2)
+  id                String      @id @default(cuid())
+  requisitionId     String
+  requisition       Requisition @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+  itemId            String?
+  item              StoreItem?  @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  freeText          String?
+  quantity          Decimal     @db.Decimal(12, 4)
+  unit              String
+  estimatedCostNGN  Decimal     @db.Decimal(12, 2)
   /// Set when supervisor confirms what arrived (may be less than requested).
-  confirmedQuantity  Decimal?    @db.Decimal(12, 4)
+  confirmedQuantity Decimal?    @db.Decimal(12, 4)
   /// Dropped at stock check because shelf already held enough.
-  coveredByStock     Boolean     @default(false)
+  coveredByStock    Boolean     @default(false)
   /// Visible shortfall after a partial purchase/receipt.
-  shortfallQuantity  Decimal?    @db.Decimal(12, 4)
+  shortfallQuantity Decimal?    @db.Decimal(12, 4)
 
   @@index([requisitionId])
 }
 
 /// Append-only transition log. Each step records who and when.
 model RequisitionEvent {
-  id                   String             @id @default(cuid())
-  requisitionId        String
-  requisition          Requisition        @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
-  fromStatus           RequisitionStatus?
-  toStatus             RequisitionStatus
-  actorId              String
-  actor                User               @relation("RequisitionEventActor", fields: [actorId], references: [id], onDelete: Restrict)
-  note                 String?            @db.Text
+  id                  String             @id @default(cuid())
+  requisitionId       String
+  requisition         Requisition        @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+  fromStatus          RequisitionStatus?
+  toStatus            RequisitionStatus
+  actorId             String
+  actor               User               @relation("RequisitionEventActor", fields: [actorId], references: [id], onDelete: Restrict)
+  note                String?            @db.Text
   /// AQ12: actor also performed the previous transition.
-  sameActorAsPrevious  Boolean            @default(false)
-  createdAt            DateTime           @default(now())
+  sameActorAsPrevious Boolean            @default(false)
+  createdAt           DateTime           @default(now())
 
   @@index([requisitionId, createdAt])
 }
@@ -3370,45 +3406,45 @@ enum ChatStatus {
 }
 
 model ChatConversation {
-  id            String          @id @default(cuid())
+  id                   String          @id @default(cuid())
   /// Capability token (AZ3 shape): SHA-256 of the raw value in the visitor's
   /// httpOnly cookie. Random default opens nothing.
-  publicToken   String          @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
+  publicToken          String          @unique @default(dbgenerated("encode(sha256(convert_to(((gen_random_uuid())::text || (gen_random_uuid())::text), 'UTF8'::name)), 'hex'::text)"))
   publicTokenExpiresAt DateTime?
   /// BF4: a name, plus one of email or phone (the server refuses without them).
-  visitorName   String
-  visitorEmail  String?
-  visitorPhone  String?
-  userId        String?
+  visitorName          String
+  visitorEmail         String?
+  visitorPhone         String?
+  userId               String?
   /// Where it started (path only, no query) and what it concerns.
-  contextKind   ChatContextKind
-  contextPath   String
-  contextLabel  String?
-  productId     String?
-  orderRef      String?
-  status        ChatStatus      @default(OPEN)
-  lastMessageAt DateTime        @default(now())
+  contextKind          ChatContextKind
+  contextPath          String
+  contextLabel         String?
+  productId            String?
+  orderRef             String?
+  status               ChatStatus      @default(OPEN)
+  lastMessageAt        DateTime        @default(now())
   /// Last time the visitor's widget fetched the thread: a reply after this is emailed.
-  visitorSeenAt DateTime        @default(now())
-  staffSeenAt   DateTime?
-  closedAt      DateTime?
+  visitorSeenAt        DateTime        @default(now())
+  staffSeenAt          DateTime?
+  closedAt             DateTime?
   /// BF5: who from the house is answering. Claiming controls who replies, never who reads.
-  handlerId     String?
-  handlerName   String?
-  claimedAt     DateTime?
+  handlerId            String?
+  handlerName          String?
+  claimedAt            DateTime?
   /// The handler's last sign of life in the thread; past the idle period the claim lapses.
-  handlerActiveAt DateTime?
+  handlerActiveAt      DateTime?
   /// BF6/BF9: her oldest message still waiting for the house (null once answered).
-  awaitingSince DateTime?
+  awaitingSince        DateTime?
   /// 0 none, 1 recipients told again, 2 she was told nobody is free (email reply).
-  unansweredStage Int           @default(0)
+  unansweredStage      Int             @default(0)
   /// BF2: it arrived, or was last written to, while the house was closed.
-  offHoursAt    DateTime?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  offHoursAt           DateTime?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
 
-  messages      ChatMessage[]
-  attachments   ChatAttachment[]
+  messages    ChatMessage[]
+  attachments ChatAttachment[]
 
   @@index([status, lastMessageAt])
   @@index([lastMessageAt])
@@ -3431,8 +3467,8 @@ model ChatMessage {
   emailedAt      DateTime?
   createdAt      DateTime         @default(now())
 
-  revisions      ChatMessageRevision[]
-  attachments    ChatAttachment[]
+  revisions   ChatMessageRevision[]
+  attachments ChatAttachment[]
 
   @@index([conversationId, createdAt])
 }
