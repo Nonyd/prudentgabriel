@@ -350,7 +350,7 @@ function CorrectionPanel() {
       {unsent.length > 0 ? (
         <>
           <label htmlFor="correction-note" className="mt-6 block font-body text-xs text-charcoal">
-            Extra paragraph (optional). Clear it to send without one.
+            Extra paragraph (optional). Leave it empty to send the email as previewed.
           </label>
           <textarea
             id="correction-note"

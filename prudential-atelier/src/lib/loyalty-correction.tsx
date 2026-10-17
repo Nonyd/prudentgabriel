@@ -12,8 +12,8 @@ import LoyaltyTierCorrectionEmail from "@/emails/LoyaltyTierCorrectionEmail";
  */
 
 export const CORRECTION_SUBJECT = "A correction about your Prudent Points tier";
-export const DEFAULT_CORRECTION_NOTE =
-  "As a thank-you for your patience, we would like to offer you one complimentary consultation with our team. Simply reply to this email and we will arrange it.";
+/** No extra paragraph unless the house writes one in admin before sending. */
+export const DEFAULT_CORRECTION_NOTE = "";
 
 export type CorrectionRecipient = {
   userId: string;
