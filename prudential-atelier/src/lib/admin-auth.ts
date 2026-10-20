@@ -53,15 +53,39 @@ export function sessionAccessActor(
  */
 export type EffectiveAdminUser = { id: string; name: string; email: string | null };
 
+/** The access a person would have in the admin, as "View as" shows it. */
+export function impersonationActor(target: {
+  email: string;
+  role: string;
+  userPermissions: { permission: string; mode: string }[];
+}): AccessActor {
+  return {
+    email: target.email,
+    grants: target.userPermissions.filter((p) => p.mode === "GRANT").map((p) => p.permission),
+    revokes: [
+      ...target.userPermissions.filter((p) => p.mode === "REVOKE").map((p) => p.permission),
+      "settings.developer",
+    ],
+    ...cachedRoleActorPatch(target.role),
+  };
+}
+
 export async function resolveSessionAccess(session: Session): Promise<{
   role: string;
   actor: AccessActor;
   user: EffectiveAdminUser;
   previewRole: string | null;
   impersonation: ImpersonationPayload | null;
+  /**
+   * A "View as" cookie names someone who cannot open the admin (Staff, a client,
+   * someone since deactivated). It is ignored here, and the admin layout ends it,
+   * so the Super Admin is never sent back to the sign-in page by her own cookie.
+   */
+  staleImpersonation: boolean;
 }> {
   await ensurePermissionCache();
   const impersonation = await getAdminImpersonation(session.user?.role, session.user?.email);
+  let staleImpersonation = false;
   if (impersonation) {
     const target = await prisma.user.findUnique({
       where: { id: impersonation.targetId },
@@ -74,25 +98,18 @@ export async function resolveSessionAccess(session: Session): Promise<{
         userPermissions: { select: { permission: true, mode: true } },
       },
     });
-    if (target?.isActive && target.role !== "SUPER_ADMIN") {
-      const grants = target.userPermissions.filter((p) => p.mode === "GRANT").map((p) => p.permission);
-      const revokes = [
-        ...target.userPermissions.filter((p) => p.mode === "REVOKE").map((p) => p.permission),
-        "settings.developer",
-      ];
+    const actor = target ? impersonationActor(target) : null;
+    if (target && actor && target.isActive && target.role !== "SUPER_ADMIN" && hasAnyAdminPermission(target.role, actor)) {
       return {
         role: target.role,
-        actor: {
-          email: target.email,
-          grants,
-          revokes,
-          ...cachedRoleActorPatch(target.role),
-        },
+        actor,
         user: { id: target.id, name: target.name?.trim() || target.email, email: target.email },
         previewRole: null,
         impersonation,
+        staleImpersonation: false,
       };
     }
+    staleImpersonation = true;
   }
 
   const previewRole = await getAdminPreviewRole(session.user?.role, session.user?.email);
@@ -102,7 +119,7 @@ export async function resolveSessionAccess(session: Session): Promise<{
     name: session.user?.name?.trim() || session.user?.email || "",
     email: session.user?.email ?? null,
   };
-  return { role, actor, user, previewRole, impersonation: null };
+  return { role, actor, user, previewRole, impersonation: null, staleImpersonation };
 }
 
 type Gate = { ok: true; session: Session } | { ok: false; response: NextResponse };

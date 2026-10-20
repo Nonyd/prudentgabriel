@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { z } from "zod";
-import { requireSuperAdminApi } from "@/lib/admin-auth";
+import { impersonationActor, requireSuperAdminApi } from "@/lib/admin-auth";
+import { ensurePermissionCache } from "@/lib/permission-cache";
+import { hasAnyAdminPermission } from "@/lib/roles";
 import {
   ADMIN_IMPERSONATE_COOKIE,
   IMPERSONATE_TTL_MS,
@@ -29,9 +31,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
+  await ensurePermissionCache();
   const target = await prisma.user.findUnique({
     where: { id: parsed.data.userId },
-    select: { id: true, name: true, email: true, role: true, isActive: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      isActive: true,
+      userPermissions: { select: { permission: true, mode: true } },
+    },
   });
   if (!target) return NextResponse.json({ error: "User not found" }, { status: 404 });
   if (!target.isActive) {
@@ -44,6 +54,7 @@ export async function POST(req: NextRequest) {
     actorEmail: gate.session.user.email,
     targetId: target.id,
     targetRole: target.role,
+    targetHasAdminAccess: hasAnyAdminPermission(target.role, impersonationActor(target)),
   });
   if (!allowed.ok) {
     return NextResponse.json({ error: allowed.error }, { status: 400 });

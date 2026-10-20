@@ -4,6 +4,8 @@ import { isSuperAdmin } from "@/lib/roles";
 
 export const ADMIN_IMPERSONATE_COOKIE = "pg_admin_impersonate";
 export const IMPERSONATE_TTL_MS = 30 * 60 * 1000;
+/** GET: ends "View as" and returns to the admin (the layout's way out of a stale cookie). */
+export const IMPERSONATION_END_PATH = "/api/admin/impersonate/end";
 
 export type ImpersonationPayload = {
   actorId: string;
@@ -61,6 +63,8 @@ export function assertCanImpersonateTarget(opts: {
   actorEmail: string | null | undefined;
   targetId: string;
   targetRole: string;
+  /** False: "View as" would show the admin as someone who cannot open it, a sign-in loop. */
+  targetHasAdminAccess?: boolean;
 }): { ok: true } | { ok: false; error: string } {
   if (!isSuperAdmin(opts.actorRole, opts.actorEmail)) {
     return { ok: false, error: "Only a Super Admin can view as another user." };
@@ -70,6 +74,12 @@ export function assertCanImpersonateTarget(opts: {
   }
   if (opts.actorId === opts.targetId) {
     return { ok: false, error: "Already signed in as this user." };
+  }
+  if (opts.targetHasAdminAccess === false) {
+    return {
+      ok: false,
+      error: "This person has no admin access, so there is nothing to view as. Staff work in the staff portal.",
+    };
   }
   return { ok: true };
 }

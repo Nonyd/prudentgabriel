@@ -7,6 +7,7 @@ import { WorkroomTypeScale } from "@/components/common/WorkroomTypeScale";
 import { prisma } from "@/lib/prisma";
 import { deniedAdminRedirect } from "@/lib/admin-route-access";
 import { resolveSessionAccess } from "@/lib/admin-auth";
+import { IMPERSONATION_END_PATH } from "@/lib/admin-impersonate";
 import { hasAnyAdminPermission } from "@/lib/roles";
 import { NOINDEX } from "@/lib/seo";
 import type { Metadata } from "next";
@@ -25,7 +26,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/login?tab=admin");
   }
 
-  const { role, actor, user, previewRole, impersonation } = await resolveSessionAccess(session);
+  const { role, actor, user, previewRole, impersonation, staleImpersonation } = await resolveSessionAccess(session);
+  // A "View as" for someone who cannot open the admin: end it, never send her to sign in.
+  if (staleImpersonation) redirect(IMPERSONATION_END_PATH);
   if (!hasAnyAdminPermission(role, actor) && !previewRole) {
     redirect("/login?tab=admin");
   }
