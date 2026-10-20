@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/api-auth";
 import { canSeeClientMeasurements } from "@/lib/bespoke-data-access";
 import { logActivity, logError } from "@/lib/logger";
 import { cleanMeasurementInput } from "@/lib/measurements";
+import { mergeAtelierExtras } from "@/lib/atelier/measurement-fields";
 
 type Params = { params: Promise<{ clientId: string }> };
 
@@ -29,15 +30,19 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: cleanedInput.error, fieldErrors: cleanedInput.fieldErrors }, { status: 400 });
   }
   const cleaned = cleanedInput.data;
+  const extra = cleanedInput.extra;
 
   try {
     const client = await prisma.clientProfile.findUnique({ where: { id: clientId } });
     if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+    const existing = await prisma.measurement.findUnique({ where: { clientId }, select: { values: true } });
+    // The atelier extras join her other values (the shop's custom-size ones are kept).
+    const values = mergeAtelierExtras(existing?.values, extra);
     const item = await prisma.measurement.upsert({
       where: { clientId },
-      create: { clientId, ...cleaned },
-      update: cleaned,
+      create: { clientId, ...cleaned, values },
+      update: { ...cleaned, values },
     });
 
     await logActivity({

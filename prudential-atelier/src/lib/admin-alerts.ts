@@ -199,6 +199,8 @@ const WHO_IS_TOLD_KEYS = new Set<string>([
   CHAT_NOTIFY_EMAIL_KEY,
   CHAT_NOTIFY_BELL_KEY,
   ...LEGACY_MAILBOX_KEYS,
+  // Not an alert, but likewise kept off the generic screens: Atelier → Measurement fields writes it.
+  "atelier_measurement_fields",
 ]);
 
 export function isWhoIsToldSettingKey(key: string): boolean {

@@ -37,6 +37,7 @@
     "test:slice-bf": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-slice-bf.ts",
     "test:view-as": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-view-as.ts",
     "test:admin-impersonate": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-admin-impersonate.ts",
+    "test:atelier-measurement-fields": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-atelier-measurement-fields.ts",
     "test:bespoke-access": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-bespoke-access.ts",
     "test:shop-categories": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-shop-categories.ts",
     "test:slice-aa": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-slice-aa.ts",

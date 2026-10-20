@@ -267,6 +267,7 @@ export const ADMIN_PAGE_OWNERS: readonly {
   { path: "/admin/chat", owns: "Live chat (BA5)", linksTo: "Nav" },
   { path: "/admin/consultations", owns: "Consultation bookings", linksTo: "Nav" },
   { path: "/admin/bespoke", owns: "Atelier pipeline", linksTo: "Nav" },
+  { path: "/admin/bespoke/measurement-fields", owns: "Extra atelier measurement fields", linksTo: "Nav" },
   { path: "/admin/quotations", owns: "Quotations", linksTo: "Nav" },
   { path: "/admin/invoices", owns: "Invoices", linksTo: "Nav" },
   { path: "/admin/alterations", owns: "Alteration tickets", linksTo: "Nav" },
@@ -435,6 +436,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
       { href: "/admin/quotations", label: "Quotations", icon: "quotations" },
       { href: "/admin/invoices", label: "Invoices", icon: "invoices" },
       { href: "/admin/alterations", label: "Alterations", icon: "alterations" },
+      { href: "/admin/bespoke/measurement-fields", label: "Measurement fields", icon: "atelier" },
     ],
   },
   {

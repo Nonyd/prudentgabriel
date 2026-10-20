@@ -7,6 +7,7 @@ import { formatDate } from "@/lib/utils";
 import { profileMeasurementProblems, type MeasurementData } from "@/lib/measurements";
 import { PROFILE_MEASUREMENT_GUIDE, readableApiError } from "@/lib/measurement-guide";
 import { FieldError, FormErrorSummary } from "@/components/measurements/MeasureGuide";
+import { atelierExtrasFrom, type AtelierMeasurementField } from "@/lib/atelier/measurement-fields-shared";
 
 export type { MeasurementData } from "@/lib/measurements";
 
@@ -39,6 +40,35 @@ const FIELDS: { key: MeasurementFieldKey; label: string }[] = [
   { key: "armhole", label: "Armhole" },
 ];
 
+/** A saved set from any route (a commission's, or her raw Measurement row) with its atelier extras read. */
+function normalize(d: MeasurementData | null | undefined): MeasurementData | null {
+  if (!d) return null;
+  const values = (d as { values?: unknown }).values as Record<string, unknown> | null | undefined;
+  return { ...d, extra: d.extra ?? atelierExtrasFrom(values) };
+}
+
+function hasAnyValue(d: MeasurementData): boolean {
+  return FIELDS.some((f) => d[f.key] != null) || Object.keys(d.extra ?? {}).length > 0;
+}
+
+/** The house's extra fields (Atelier → Measurement fields), loaded once per panel. */
+function useAtelierFields(): AtelierMeasurementField[] {
+  const [fields, setFields] = useState<AtelierMeasurementField[]>([]);
+  useEffect(() => {
+    let live = true;
+    void fetch("/api/atelier/measurement-fields")
+      .then((r) => (r.ok ? r.json() : { fields: [] }))
+      .then((j: { fields?: AtelierMeasurementField[] }) => {
+        if (live) setFields(j.fields ?? []);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
+  return fields;
+}
+
 function emptyForm(unit: "inches" | "cm"): MeasurementData {
   return {
     bust: null,
@@ -53,6 +83,7 @@ function emptyForm(unit: "inches" | "cm"): MeasurementData {
     armhole: null,
     unit,
     notes: "",
+    extra: {},
   };
 }
 
@@ -109,14 +140,14 @@ export function ClientMeasurementsPanel({
   const [unit, setUnit] = useState<"inches" | "cm">(
     initial?.unit === "cm" ? "cm" : "inches",
   );
-  const [form, setForm] = useState<MeasurementData>(initial ?? emptyForm("inches"));
+  const [form, setForm] = useState<MeasurementData>(normalize(initial) ?? emptyForm("inches"));
+  const atelierFields = useAtelierFields();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!onDraftChange || !clientId) return;
-    const hasValues = FIELDS.some((f) => form[f.key] != null);
-    onDraftChange(hasValues ? { ...form, unit } : null);
+    onDraftChange(hasAnyValue(form) ? { ...form, unit } : null);
   }, [clientId, form, onDraftChange, unit]);
 
   if (!clientId) {
@@ -130,8 +161,22 @@ export function ClientMeasurementsPanel({
     );
   }
 
-  const hasData = FIELDS.some((f) => form[f.key] != null);
+  const hasData = hasAnyValue(form);
   const unitLabel = unit === "cm" ? "cm" : '"';
+  const extra = form.extra ?? {};
+  const labelOf = (key: string) =>
+    atelierFields.find((f) => f.key === key)?.label ?? key.replace(/^atelier_/, "").replace(/_/g, " ");
+  // Asked for: every current field, plus a retired one that still holds a value (so it can be cleared).
+  const extraInputs = atelierFields.filter((f) => !f.retired || extra[f.key] != null);
+
+  function setExtra(key: string, value: number | null) {
+    setForm((prev) => {
+      const next = { ...(prev.extra ?? {}) };
+      if (value == null) delete next[key];
+      else next[key] = value;
+      return { ...prev, extra: next };
+    });
+  }
 
   async function save() {
     const problems = profileMeasurementProblems({ ...form, unit });
@@ -146,10 +191,13 @@ export function ClientMeasurementsPanel({
     try {
       let res: Response;
       try {
+        const extraBody: Record<string, number | null> = {};
+        for (const f of atelierFields) extraBody[f.key] = extra[f.key] ?? null;
+        for (const [k, v] of Object.entries(extra)) extraBody[k] = v;
         res = await fetch(saveUrl ?? `/api/clients/${clientId}/measurements`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...form, unit }),
+          body: JSON.stringify({ ...form, unit, extra: extraBody }),
         });
       } catch {
         throw new Error("Could not reach the server — check the connection and try again.");
@@ -164,7 +212,7 @@ export function ClientMeasurementsPanel({
         throw new Error(readableApiError(j, `Measurements could not be saved (error ${res.status}).`));
       }
       const saved = j.item && "data" in j.item ? j.item.data : (j.item as MeasurementData | undefined);
-      if (saved) setForm(saved);
+      if (saved) setForm(normalize(saved) ?? saved);
       toast.success(savedMessage ?? `Measurements saved to ${clientName}'s profile`);
       setEditing(false);
       onSaved?.();
@@ -199,6 +247,15 @@ export function ClientMeasurementsPanel({
                 </dd>
               </div>
             ))}
+            {Object.entries(extra).map(([key, value]) => (
+              <div key={key}>
+                <dt className="font-sans text-11px text-text-light">{labelOf(key)}</dt>
+                <dd className="font-sans text-sm text-choc">
+                  {value}
+                  {unitLabel}
+                </dd>
+              </div>
+            ))}
           </dl>
           {form.notes ? (
             <p className="mt-3 whitespace-pre-wrap font-sans text-sm text-text-mid">{form.notes}</p>
@@ -215,7 +272,7 @@ export function ClientMeasurementsPanel({
             size="sm"
             className="mt-4"
             onClick={() => {
-              setForm(initial ?? emptyForm(unit));
+              setForm(normalize(initial) ?? emptyForm(unit));
               setEditing(true);
             }}
           >
@@ -282,6 +339,35 @@ export function ClientMeasurementsPanel({
                 </div>
               );
             })}
+            {extraInputs.map((f) => {
+              const err = fieldErrors[f.key];
+              const id = `cmp-${clientId}-${f.key}`;
+              return (
+                <div key={f.key}>
+                  <label htmlFor={id} className="block font-sans text-xs text-text-mid">
+                    {f.label}
+                    {f.retired ? <span className="ml-1 text-text-light">(no longer asked)</span> : null}
+                  </label>
+                  <input
+                    id={id}
+                    type="number"
+                    step="0.1"
+                    min={0}
+                    value={extra[f.key] ?? ""}
+                    aria-invalid={err ? true : undefined}
+                    aria-describedby={f.help ? `${id}-hint` : undefined}
+                    onChange={(e) => setExtra(f.key, e.target.value === "" ? null : Number(e.target.value))}
+                    className={`input-field mt-1${err ? " !border-error" : ""}`}
+                  />
+                  <FieldError id={`${id}-error`} message={err} />
+                  {f.help ? (
+                    <span id={`${id}-hint`} className="mt-0.5 block font-sans text-[11px] leading-4 text-text-light">
+                      {f.help}
+                    </span>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
           <label className="block font-sans text-xs text-text-mid">
             Notes
@@ -302,7 +388,7 @@ export function ClientMeasurementsPanel({
               variant="secondary"
               onClick={() => {
                 setEditing(false);
-                setForm(initial ?? emptyForm(unit));
+                setForm(normalize(initial) ?? emptyForm(unit));
               }}
             >
               Cancel

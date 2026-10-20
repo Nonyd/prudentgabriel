@@ -6,6 +6,7 @@ import { canSeeOrderMeasurements } from "@/lib/bespoke-data-access";
 import { cleanMeasurementInput } from "@/lib/measurements";
 import { commissionMeasurements, parseSnapshot, snapshotFrom } from "@/lib/atelier/commission-measurements";
 import { logActivity } from "@/lib/logger";
+import { mergeAtelierExtras } from "@/lib/atelier/measurement-fields";
 
 type Params = { params: Promise<{ orderId: string }> };
 
@@ -62,7 +63,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   }
 
   const start = parseSnapshot(order.measurementsSnapshot) ?? snapshotFrom(order.clientProfile?.measurements ?? null);
-  const next = { ...start, ...cleaned.data };
+  const next = { ...start, ...cleaned.data, values: mergeAtelierExtras(start.values, cleaned.extra) };
+  // Her latest set keeps its other values (the shop's custom-size extras) and takes these atelier ones.
+  const profileValues = mergeAtelierExtras(order.clientProfile?.measurements?.values, cleaned.extra);
   const takenAt = new Date();
 
   await prisma.$transaction([
@@ -74,8 +77,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       ? [
           prisma.measurement.upsert({
             where: { clientId: order.clientProfileId },
-            create: { clientId: order.clientProfileId, ...cleaned.data },
-            update: cleaned.data,
+            create: { clientId: order.clientProfileId, ...cleaned.data, values: profileValues },
+            update: { ...cleaned.data, values: profileValues },
           }),
         ]
       : []),

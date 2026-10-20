@@ -1,4 +1,5 @@
 import { profileMeasurementErrors } from "@/lib/measurement-guide";
+import { atelierExtrasFrom, cleanAtelierExtraInput } from "@/lib/atelier/measurement-fields-shared";
 
 export type MeasurementData = {
   bust?: number | null;
@@ -14,6 +15,8 @@ export type MeasurementData = {
   unit?: string;
   notes?: string | null;
   updatedAt?: string | null;
+  /** The house's extra atelier fields (Atelier → Measurement fields), by key, in this set's unit. */
+  extra?: Record<string, number>;
 };
 
 export function measurementFromRecord(
@@ -31,6 +34,8 @@ export function measurementFromRecord(
     unit?: string;
     notes?: string | null;
     updatedAt?: Date | string | null;
+    /** Measurement.values or a snapshot's values: the atelier extras are read from it. */
+    values?: unknown;
   } | null,
 ): MeasurementData | null {
   if (!record) return null;
@@ -47,6 +52,7 @@ export function measurementFromRecord(
     armhole: record.armhole,
     unit: record.unit ?? "inches",
     notes: record.notes,
+    extra: atelierExtrasFrom(record.values as Record<string, unknown> | null | undefined),
     updatedAt: record.updatedAt
       ? typeof record.updatedAt === "string"
         ? record.updatedAt
@@ -159,8 +165,13 @@ export function profileMeasurementProblems(
 export function cleanMeasurementInput(
   body: unknown,
 ):
-  | { ok: true; data: Partial<Record<MeasurementColumn, number | null>> & { unit?: string; notes?: string | null } }
-  | { ok: false; error: string; fieldErrors?: Partial<Record<MeasurementColumn, string>> } {
+  | {
+      ok: true;
+      data: Partial<Record<MeasurementColumn, number | null>> & { unit?: string; notes?: string | null };
+      /** Atelier extras to merge into `values` (null clears one). Kept apart: they are not columns. */
+      extra: Record<string, number | null>;
+    }
+  | { ok: false; error: string; fieldErrors?: Partial<Record<string, string>> } {
   const b = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
   const data: Partial<Record<MeasurementColumn, number | null>> & { unit?: string; notes?: string | null } = {};
   for (const key of MEASUREMENT_COLUMNS) {
@@ -174,5 +185,10 @@ export function cleanMeasurementInput(
   if (typeof b.unit === "string") data.unit = b.unit;
   if (b.notes !== undefined) data.notes = typeof b.notes === "string" ? b.notes.trim() || null : null;
   const problems = profileMeasurementProblems({ ...data, unit: data.unit ?? "inches" });
-  return problems ? { ok: false, ...problems } : { ok: true, data };
+  if (problems) return { ok: false, ...problems };
+  const extra = cleanAtelierExtraInput(b.extra);
+  if (!extra.ok) {
+    return { ok: false, error: "Please check the measurements", fieldErrors: { [extra.key]: "Please enter a measurement" } };
+  }
+  return { ok: true, data, extra: extra.extra };
 }
