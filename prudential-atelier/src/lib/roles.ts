@@ -22,6 +22,7 @@ export type AdminPermission =
   | "clients.view"
   | "staff"
   | "staff.view"
+  | "staff.invite"
   | "attendance"
   | "finance"
   | "reports"
@@ -215,6 +216,7 @@ export const ALL_PERMISSIONS: readonly AdminPermission[] = [
   "clients.view",
   "staff",
   "staff.view",
+  "staff.invite",
   "attendance",
   "finance",
   "reports",

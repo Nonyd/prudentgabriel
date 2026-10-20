@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import { nanoid } from "nanoid";
 import { EmploymentType, Prisma, Role, StaffDepartment } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireAdminApi } from "@/lib/admin-auth";
+import { requireAdminApi, resolveSessionAccess } from "@/lib/admin-auth";
+import { CAPABILITY_TTL_MS } from "@/lib/capability-token";
+import { sendEmail } from "@/lib/email";
+import { issuePasswordResetToken, passwordLinkUrl } from "@/lib/password-reset";
+import { hasPermission, isProtectedAccount } from "@/lib/roles";
+import { unusablePasswordHash } from "@/lib/temp-password";
 import { logActivity, logError } from "@/lib/logger";
 
 const DEPARTMENTS = new Set<string>(Object.values(StaffDepartment));
 const EMPLOYMENT_TYPES = new Set<string>(Object.values(EmploymentType));
+
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+}
 
 export async function GET(req: NextRequest) {
   const gate = await requireAdminApi("staff");
@@ -61,8 +68,13 @@ export async function GET(req: NextRequest) {
   }
 }
 
+/**
+ * Invite a staff member. Needs "Invite staff" (or Staff, which includes it).
+ * Always a Staff account: whoever holds only this permission can never create
+ * an admin. The new person gets a link to choose their own password.
+ */
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi("staff");
+  const gate = await requireAdminApi("staff.invite");
   if (!gate.ok) return gate.response;
 
   let body: {
@@ -95,14 +107,18 @@ export async function POST(req: NextRequest) {
       ? (body.employmentType as EmploymentType)
       : EmploymentType.EMPLOYEE;
 
+  if (isProtectedAccount(email)) {
+    return NextResponse.json({ error: "That email is reserved" }, { status: 400 });
+  }
+
   try {
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       return NextResponse.json({ error: "Email already in use" }, { status: 409 });
     }
 
-    const tempPassword = nanoid(16);
-    const hashedPassword = await bcrypt.hash(tempPassword, 12);
+    // A password nobody knows. The email carries a set-your-password link, never a password.
+    const hashedPassword = await unusablePasswordHash();
 
     const staff = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -137,13 +153,33 @@ export async function POST(req: NextRequest) {
       userRole: gate.session.user.role ?? undefined,
       action: "CREATE",
       module: "staff",
-      description: `Created staff member ${name} (${email})`,
+      description: `Invited staff member ${name} (${email})`,
       recordId: staff.id,
       recordType: "StaffProfile",
     });
 
+    const { raw } = await issuePasswordResetToken(staff.user.id, CAPABILITY_TTL_MS.welcomePassword);
+    const firstName = name.split(/\s+/)[0] ?? name;
+    await sendEmail({
+      to: email,
+      subject: "You've been added to Prudential Atelier",
+      html: `
+    <p>Hi ${escapeHtml(firstName)},</p>
+    <p>You've been set up on the Prudential Atelier staff system.</p>
+    <p>Your sign-in email is ${escapeHtml(email)}. <a href="${passwordLinkUrl(raw)}">Choose your password</a> to finish setting up.</p>
+    <p>The link works once, for seven days. After that, ask the admin who added you to send a password link again.</p>
+    <p>— Prudential Atelier</p>
+  `,
+      template: "user-invite",
+      idempotencyKey: `user-invite:${staff.user.id}`,
+      relatedType: "User",
+      relatedId: staff.user.id,
+    });
+
+    // Someone who may only invite cannot open staff profiles; the form says where the invite went.
+    const access = await resolveSessionAccess(gate.session);
     return NextResponse.json(
-      { item: staff, tempPassword },
+      { item: staff, invitedEmail: email, canOpenProfile: hasPermission(access.role, "staff", access.actor) },
       { status: 201 },
     );
   } catch (e) {

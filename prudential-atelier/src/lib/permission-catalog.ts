@@ -16,6 +16,7 @@ export const ALL_ADMIN_PERMISSIONS: readonly AdminPermission[] = [
   "clients.view",
   "staff",
   "staff.view",
+  "staff.invite",
   "attendance",
   "finance",
   "reports",
@@ -124,6 +125,13 @@ export const ADMIN_PERMISSION_CATALOG: readonly PermissionCatalogEntry[] = [
     group: "People",
     label: "View staff",
     description: "See staff records without managing them.",
+  },
+  {
+    key: "staff.invite",
+    group: "People",
+    label: "Invite staff",
+    description:
+      "Add staff members and email them a link to set their password. Staff accounts only: never an admin. Included in Staff.",
   },
   {
     key: "attendance",

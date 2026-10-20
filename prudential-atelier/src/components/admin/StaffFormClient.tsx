@@ -5,21 +5,27 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
 
+const EMPTY_FORM = {
+  name: "",
+  email: "",
+  phone: "",
+  department: "TAILOR",
+  employmentType: "EMPLOYEE",
+  skillTags: "",
+  isActive: true,
+};
+
+/**
+ * Invite a staff member. Open to anyone with "Invite staff" (or Staff). It only
+ * ever creates a Staff account, and the person sets their own password from
+ * the emailed link.
+ */
 export function StaffFormClient() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
-  const [tempPassword, setTempPassword] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    department: "TAILOR",
-    employmentType: "EMPLOYEE",
-    skillTags: "",
-    isActive: true,
-  });
+  const [invited, setInvited] = useState<string | null>(null);
+  const [form, setForm] = useState(EMPTY_FORM);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,14 +47,23 @@ export function StaffFormClient() {
           isActive: form.isActive,
         }),
       });
-      const data = (await res.json()) as { item?: { id: string }; tempPassword?: string; error?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        item?: { id: string };
+        invitedEmail?: string;
+        canOpenProfile?: boolean;
+        error?: string;
+      };
       if (!res.ok) {
-        toast.error(data.error ?? "Failed to create staff member");
+        toast.error(data.error ?? "Could not invite this staff member");
         return;
       }
-      toast.success("Staff member created");
-      if (data.tempPassword) setTempPassword(data.tempPassword);
-      else if (data.item?.id) router.push(`/admin/staff/${data.item.id}`);
+      toast.success(`Invitation sent to ${data.invitedEmail ?? form.email}`);
+      if (data.canOpenProfile && data.item?.id) {
+        router.push(`/admin/staff/${data.item.id}`);
+        return;
+      }
+      setInvited(data.invitedEmail ?? form.email);
+      setForm(EMPTY_FORM);
     } finally {
       setSaving(false);
     }
@@ -63,11 +78,18 @@ export function StaffFormClient() {
         >
           ← Staff directory
         </Link>
-        <h1 className="mt-2 font-display text-2xl text-ink">Add Staff Member</h1>
+        <h1 className="mt-2 font-display text-2xl text-ink">Invite a staff member</h1>
         <p className="mt-1 font-sans text-sm text-text-mid">
-          Creates a staff account with a temporary password
+          Creates a staff account and emails them a link to choose their password. Admins are added by the
+          Super Admin in Users &amp; Roles.
         </p>
       </div>
+
+      {invited ? (
+        <p className="card-surface p-4 font-sans text-sm text-choc" role="status">
+          Invitation sent to {invited}. The link works once, for seven days.
+        </p>
+      ) : null}
 
       <form onSubmit={handleSubmit} className="card-surface space-y-4 p-6">
         {(
@@ -147,34 +169,10 @@ export function StaffFormClient() {
             </Button>
           </Link>
           <Button type="submit" loading={saving}>
-            Create Staff
+            Send invitation
           </Button>
         </div>
       </form>
-
-      <Modal
-        open={!!tempPassword}
-        onClose={() => {
-          setTempPassword(null);
-          router.push("/admin/staff");
-        }}
-        title="Staff account created"
-        description="Share this temporary password securely. The staff member should change it on first login."
-      >
-        <p className="mt-4 rounded border border-sand bg-bg px-4 py-3 font-mono text-sm text-choc">
-          {tempPassword}
-        </p>
-        <div className="mt-6 flex justify-end">
-          <Button
-            onClick={() => {
-              setTempPassword(null);
-              router.push("/admin/staff");
-            }}
-          >
-            Done
-          </Button>
-        </div>
-      </Modal>
     </div>
   );
 }
