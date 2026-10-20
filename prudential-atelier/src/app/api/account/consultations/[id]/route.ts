@@ -32,9 +32,18 @@ async function findBooking(id: string) {
   });
 }
 
-function canAccessPublicSuccess(booking: { paymentStatus: PaymentStatus; status: ConsultationStatus }): boolean {
+/**
+ * An unpaid booking stays hidden by its number, except once a transfer receipt
+ * is in: the "we have your receipt" page then needs to know whether her
+ * consultation is virtual or physical to give her the right letter.
+ */
+function canAccessPublicSuccess(booking: {
+  paymentStatus: PaymentStatus;
+  status: ConsultationStatus;
+  paymentReceiptUrl?: string | null;
+}): boolean {
   if (booking.status === ConsultationStatus.PENDING_PAYMENT && booking.paymentStatus === PaymentStatus.PENDING) {
-    return false;
+    return Boolean(booking.paymentReceiptUrl);
   }
   return true;
 }

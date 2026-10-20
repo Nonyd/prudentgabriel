@@ -58,10 +58,11 @@ export function PaymentPendingClient() {
         </div>
       ) : null}
 
-      {type === "consultation" ? (
+      {/* Only once her booking is known: a virtual consultation must never get the physical letter. */}
+      {type === "consultation" && consultation ? (
         <ConsultationPrepNotes
-          isVirtual={consultation?.isVirtual ?? false}
-          durationMinutes={consultation?.durationMinutes ?? 90}
+          isVirtual={consultation.isVirtual}
+          durationMinutes={consultation.durationMinutes}
           receiptOnly
         />
       ) : null}
