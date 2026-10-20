@@ -40,6 +40,10 @@ services:
     environment:
       CRON_SCHEDULER: "1"
       CRON_HOST: "vps-staging"
+      # Staging's database is a copy of production: never email real people from here.
+      # To test, list your own addresses in EMAIL_STAGING_ALLOWLIST in .env.staging
+      # (comma-separated; "@example.com" allows a domain). See src/lib/email-staging-guard.ts.
+      EMAIL_DELIVERY: "off"
       MEDIA_ROOT: /data/media
     volumes:
       # Host bind — files must survive GHCR image replace. Not public/.

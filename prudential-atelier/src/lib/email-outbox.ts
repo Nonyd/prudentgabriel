@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { createNotification } from "@/lib/notifications";
 import { EMAIL_FROM } from "@/lib/email-transport";
 import { isEmailCaptureEnabled, recordCapturedEmail } from "@/lib/email-capture";
+import { isEmailDeliveryBlocked, keepAllowed } from "@/lib/email-staging-guard";
 import {
   isEmailProviderCircuitOpen,
   recordEmailProviderFailure,
@@ -261,8 +262,23 @@ export async function deliverEmail(id: string): Promise<void> {
   const claimed = await claimMessage(id, now);
   if (!claimed) return;
 
-  const row = await prisma.emailMessage.findUnique({ where: { id } });
-  if (!row) return;
+  const found = await prisma.emailMessage.findUnique({ where: { id } });
+  if (!found) return;
+  let row = found;
+
+  // Staging: only allowlisted addresses are sent to (email-staging-guard.ts).
+  if (isEmailDeliveryBlocked()) {
+    const to = keepAllowed(row.to);
+    if (!to) {
+      // No bounce handling or dead-mail alerts: nothing went wrong, it was held on purpose.
+      await prisma.emailMessage.update({
+        where: { id },
+        data: { status: EmailStatus.DEAD, lastError: "Not sent: email is switched off on staging", nextAttemptAt: null },
+      });
+      return;
+    }
+    row = { ...row, to, cc: keepAllowed(row.cc) ?? null, bcc: keepAllowed(row.bcc) ?? null };
+  }
 
   const providers = await listEmailProviders();
   if (providers.length === 0) {
