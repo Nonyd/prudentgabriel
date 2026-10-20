@@ -20,10 +20,9 @@ type KindView = {
   about: string;
   hasEmail: boolean;
   hasBell: boolean;
-  emailDefault: string | null;
-  emailDefaultNote: string | null;
   bellDefault: string | null;
   email: string[] | null;
+  addresses: string[] | null;
   bell: string[] | null;
 };
 type View = {
@@ -33,11 +32,11 @@ type View = {
 };
 type Channel = "email" | "bell";
 
-async function save(kind: string, channel: Channel, userIds: string[] | null): Promise<View> {
+async function save(kind: string, channel: Channel, userIds: string[] | null, addresses?: string[]): Promise<View> {
   const res = await fetch("/api/admin/settings/alert-recipients", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ kind, channel, userIds }),
+    body: JSON.stringify({ kind, channel, userIds, ...(channel === "email" ? { addresses: addresses ?? [] } : {}) }),
   });
   const j = (await res.json().catch(() => ({}))) as View & { error?: string };
   if (!res.ok) throw new Error(j.error ?? "Could not save");
@@ -67,6 +66,7 @@ function ChannelRow({
   kind,
   channel,
   named,
+  addresses,
   defaultLabel,
   candidates,
   onSaved,
@@ -74,17 +74,30 @@ function ChannelRow({
   kind: KindView;
   channel: Channel;
   named: string[] | null;
+  /** Email only: addresses that are not a portal user. */
+  addresses: string[] | null;
+  /** Bell only: who gets it while nobody is named. */
   defaultLabel: string;
   candidates: Candidate[];
   onSaved: (v: View) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [picked, setPicked] = useState<string[]>(named ?? []);
+  const [extra, setExtra] = useState((addresses ?? []).join("\n"));
   const [busy, setBusy] = useState(false);
+  const isEmail = channel === "email";
 
   useEffect(() => {
-    if (!editing) setPicked(named ?? []);
-  }, [named, editing]);
+    if (!editing) {
+      setPicked(named ?? []);
+      setExtra((addresses ?? []).join("\n"));
+    }
+  }, [named, addresses, editing]);
+
+  const extraList = extra
+    .split(/[\s,;]+/)
+    .map((x) => x.trim())
+    .filter(Boolean);
 
   const people = (named ?? [])
     .map((id) => candidates.find((c) => c.id === id))
@@ -93,12 +106,22 @@ function ChannelRow({
   const channelLabel = channel === "email" ? "Email" : "Bell";
 
   async function run(ids: string[] | null) {
+    const total = (ids?.length ?? 0) + (isEmail ? extraList.length : 0);
+    if (isEmail && total === 0 && !window.confirm(`Nobody will be emailed about ${kind.label.toLowerCase()}. Continue?`)) {
+      return;
+    }
     setBusy(true);
     try {
-      onSaved(await save(kind.id, channel, ids));
+      onSaved(await save(kind.id, channel, ids, isEmail ? extraList : undefined));
       setEditing(false);
       toast.success(
-        ids ? `${kind.label}: ${channelLabel.toLowerCase()} goes to ${ids.length} named` : `${kind.label}: back to default`,
+        isEmail
+          ? total
+            ? `${kind.label}: email goes to ${total} named`
+            : `${kind.label}: nobody is emailed`
+          : ids
+            ? `${kind.label}: bell goes to ${ids.length} named`
+            : `${kind.label}: back to default`,
       );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save");
@@ -114,7 +137,7 @@ function ChannelRow({
           <p className="flex items-center gap-1.5 font-sans text-10px uppercase tracking-wider text-text-mid">
             <Icon className="h-3.5 w-3.5" aria-hidden /> {channelLabel}
           </p>
-          {people.length ? (
+          {people.length || (isEmail && addresses?.length) ? (
             <ul className="mt-1.5 flex flex-wrap gap-1.5">
               {people.map((p) => (
                 <li
@@ -125,7 +148,22 @@ function ChannelRow({
                   {p.name}
                 </li>
               ))}
+              {isEmail
+                ? (addresses ?? []).map((a) => (
+                    <li
+                      key={a}
+                      className="rounded-full border border-sand px-2.5 py-0.5 font-sans text-xs text-choc"
+                      title="An address that is not a portal user"
+                    >
+                      {a}
+                    </li>
+                  ))
+                : null}
             </ul>
+          ) : isEmail ? (
+            <p className="mt-1.5 font-sans text-sm text-text-mid">
+              <span className="text-choc">Nobody</span> · not emailed to anyone
+            </p>
           ) : (
             <p className="mt-1.5 font-sans text-sm text-text-mid">
               <span className="text-choc">Default</span> · {defaultLabel}
@@ -178,16 +216,29 @@ function ChannelRow({
               );
             })}
           </fieldset>
+          {isEmail ? (
+            <label className="mt-3 block font-sans text-xs text-text-mid">
+              Other addresses (not a portal user), one per line
+              <textarea
+                rows={2}
+                value={extra}
+                disabled={busy}
+                onChange={(e) => setExtra(e.target.value)}
+                placeholder="orders@example.com"
+                className="mt-1 block w-full rounded-lg border border-sand bg-transparent px-2.5 py-1.5 font-sans text-sm text-choc"
+              />
+            </label>
+          ) : null}
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              disabled={busy || picked.length === 0}
-              onClick={() => void run(picked)}
+              disabled={busy || (!isEmail && picked.length === 0)}
+              onClick={() => void run(picked.length ? picked : null)}
               className="min-h-[36px] rounded-full bg-[var(--choc)] px-4 font-sans text-xs uppercase tracking-wider text-[var(--bg-card)] disabled:opacity-40"
             >
               Save
             </button>
-            {named ? (
+            {!isEmail && named ? (
               <button
                 type="button"
                 disabled={busy}
@@ -206,10 +257,11 @@ function ChannelRow({
               Cancel
             </button>
           </div>
-          {picked.length === 0 ? (
-            <p className="mt-2 font-sans text-11px text-text-mid">
-              Tick at least one person. To go back to the old routing, use the default.
-            </p>
+          {picked.length === 0 && !isEmail ? (
+            <p className="mt-2 font-sans text-11px text-text-mid">Tick at least one person, or use the default.</p>
+          ) : null}
+          {isEmail && picked.length === 0 && extraList.length === 0 ? (
+            <p className="mt-2 font-sans text-11px text-text-mid">Nobody chosen: this will not be emailed to anyone.</p>
           ) : null}
         </div>
       ) : null}
@@ -251,9 +303,9 @@ export function AlertRecipientsClient() {
         </Link>
         <h1 className="admin-heading-pill glass-1 glass-pill font-display text-3xl text-choc">Who is told</h1>
         <p className="mt-2 max-w-2xl font-sans text-sm text-text-mid">
-          Choose who receives each kind of alert, by email and on the bell. Until you choose, an alert follows
-          its default. If everyone you named leaves or is deactivated, the default takes over, so nothing arrives to
-          nobody.
+          Choose who receives each kind of alert, by email and on the bell. This is the only place alert emails
+          are addressed: each one goes to exactly the people and addresses listed here, and to nobody else. On the
+          bell, until you choose, an alert goes to everyone who handles it.
         </p>
       </div>
 
@@ -278,9 +330,8 @@ export function AlertRecipientsClient() {
                       kind={k}
                       channel="email"
                       named={k.email}
-                      defaultLabel={
-                        [k.emailDefaultNote, k.emailDefault ?? "no alert address is set"].filter(Boolean).join(" ")
-                      }
+                      addresses={k.addresses}
+                      defaultLabel=""
                       candidates={view.candidates.filter((c) => c.office || (k.id === "chat" && c.chat))}
                       onSaved={setView}
                     />
@@ -290,6 +341,7 @@ export function AlertRecipientsClient() {
                       kind={k}
                       channel="bell"
                       named={k.bell}
+                      addresses={null}
                       defaultLabel={k.bellDefault ?? "Everyone who handles it"}
                       candidates={view.candidates.filter((c) => c.office || (k.id === "chat" && c.chat))}
                       onSaved={setView}

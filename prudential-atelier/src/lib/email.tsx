@@ -192,7 +192,7 @@ export async function sendBankTransferAdminNotification(params: {
 }): Promise<void> {
   const targets = await alertEmailTargets("payments");
   if (targets.length === 0) {
-    console.log("[EMAIL bank-transfer-admin] no operational mailbox configured");
+    console.log("[EMAIL bank-transfer-admin] nobody is named for payments on Who is told");
     return;
   }
   const receiptHref = emailSafeReceiptUrl(params.receiptUrl);
@@ -213,7 +213,7 @@ export async function sendBankTransferAdminNotification(params: {
       },
       extraHtml: `<p><a href="${escapeHtml(receiptHref)}">View receipt</a>${adminLink}</p>`,
       outboxTemplate: "bank-transfer-admin",
-      idempotencyKey: t.userId ? `${key}:${t.userId}` : key,
+      idempotencyKey: `${key}:${t.userId ?? t.to}`,
       relatedType: "Payment",
       relatedId: params.ref,
     });
@@ -373,9 +373,7 @@ export async function sendRtwFulfilmentRefusedEmails(params: {
         link: `${getPublicAppUrl()}/admin/orders/${params.orderId}`,
       },
       outboxTemplate: "rtw-fulfilment-refused-admin",
-      idempotencyKey: t.userId
-        ? `rtw-fulfil-refused-admin:${params.orderId}:${t.userId}`
-        : `rtw-fulfil-refused-admin:${params.orderId}`,
+      idempotencyKey: `rtw-fulfil-refused-admin:${params.orderId}:${t.userId ?? t.to}`,
       relatedType: "Order",
       relatedId: params.orderId,
     });
@@ -1122,17 +1120,17 @@ export async function sendStageChangesRequestedEmail(params: {
 }
 
 /**
- * A house alert. Goes to the people the Super Admin named for this kind
- * (Settings → Who is told), else to the kind's mailbox, as before.
+ * A house alert. Goes to exactly the people and addresses the Super Admin
+ * named for this kind (Settings → Who is told); nobody named, nobody emailed.
  */
 export async function sendAdminNotificationEmail(
   subject: string,
   htmlInner: string,
   idempotencyKey: string | undefined,
   kind: AlertKind,
-  opts?: { fallbackTo?: string | null; relatedType?: string; relatedId?: string },
+  opts?: { relatedType?: string; relatedId?: string },
 ): Promise<void> {
-  const targets = await alertEmailTargets(kind, opts?.fallbackTo);
+  const targets = await alertEmailTargets(kind);
   if (targets.length === 0) {
     console.log("[EMAIL admin]", subject);
     return;
@@ -1145,7 +1143,7 @@ export async function sendAdminNotificationEmail(
       subject,
       html: wrapHtml("Admin", htmlInner),
       template: "admin-notification",
-      idempotencyKey: t.userId ? `${key}:${t.userId}` : key,
+      idempotencyKey: `${key}:${t.userId ?? t.to}`,
       relatedType: opts?.relatedType,
       relatedId: opts?.relatedId,
     });

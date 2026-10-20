@@ -29,12 +29,11 @@ export async function POST(req: NextRequest) {
 
   let cms: Record<string, string> = {};
   try {
-    cms = await getCMSContent(["contact_notification_email", "contact_auto_reply_message"]);
+    cms = await getCMSContent(["contact_auto_reply_message"]);
   } catch {
     /* fall back to env */
   }
 
-  const cmsInbox = cmsGet(cms, "contact_notification_email", "").trim();
   const autoReplyMessage = cmsGet(
     cms,
     "contact_auto_reply_message",
@@ -65,9 +64,9 @@ export async function POST(req: NextRequest) {
     link: `/admin/content/messages`,
   }).catch(() => {});
 
-  // Named people (Settings → Who is told), else the contact inbox, else the alert mailbox.
+  // Exactly the people and addresses named on Settings → Who is told.
   const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  for (const t of await alertEmailTargets("contact", cmsInbox)) {
+  for (const t of await alertEmailTargets("contact")) {
     await sendEmail({
       to: t.to,
       subject: `New contact: ${subject} — ${name}`,
@@ -82,7 +81,7 @@ export async function POST(req: NextRequest) {
       <p><a href="${appUrl}/admin/content/messages">View in admin messages →</a></p>
     `,
       template: "contact-admin",
-      idempotencyKey: t.userId ? `contact-admin:${saved.id}:${t.userId}` : `contact-admin:${saved.id}`,
+      idempotencyKey: `contact-admin:${saved.id}:${t.userId ?? t.to}`,
       relatedType: "ContactMessage",
       relatedId: saved.id,
     }).catch(() => {});

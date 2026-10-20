@@ -11,9 +11,10 @@ export async function POST() {
   if (!gate.ok) return gate.response;
 
   const emailSettings = await getSettings("EMAIL");
-  const to = emailSettings.admin_notification_email?.trim() || emailSettings.email_from_address?.trim();
+  // To whoever pressed the button. Alert recipients live on Settings → Who is told.
+  const to = gate.session.user.email?.trim();
   if (!to) {
-    return NextResponse.json({ error: "Set admin notification or from email first" }, { status: 400 });
+    return NextResponse.json({ error: "Your account has no email address" }, { status: 400 });
   }
 
   const fromName = resolveCustomerFromName(emailSettings.email_from_name);

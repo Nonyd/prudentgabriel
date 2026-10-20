@@ -14,6 +14,7 @@ import {
   CHAT_NOTIFY_BELL_KEY,
   CHAT_NOTIFY_EMAIL_KEY,
   alertKindForType,
+  cleanAddressList,
   cleanIdList,
   eligibleFor,
   type AlertCandidate,
@@ -85,6 +86,29 @@ for (const file of [
 ]) {
   assert(!/resolve(Admin|Hr)AlertEmail\(/.test(src(file)), `${file} routes through Who is told`);
 }
+
+// The page is the only source of truth for alert email: no mailbox, env or inbox fallback.
+{
+  const lib = src("src/lib/admin-alerts.ts");
+  const targets = lib.slice(lib.indexOf("export async function alertEmailTargets"));
+  assert(!/resolve(Admin|Hr)AlertEmail|process\.env|fallback/i.test(targets), "alertEmailTargets reads only Who is told");
+  assert(/addresses/.test(targets), "extra addresses are emailed");
+  assert(!src("src/lib/logger.ts").includes("SUPER_ADMIN_EMAIL"), "critical errors do not fall back to an env address");
+  assert(!src("src/lib/cms-config.ts").includes("contact_notification_email"), "Page content no longer sets a contact inbox");
+  assert(!src("src/app/api/contact/route.ts").includes("contact_notification_email"), "the contact form ignores the old inbox");
+  assert(!src("src/app/api/admin/chat/settings/route.ts").includes("CHAT_NOTIFY_"), "Chat → Settings no longer writes recipients");
+  assert(!src("src/lib/chat-notify.ts").includes("sendAdminNotificationEmail"), "chat email goes only to those named");
+  for (const key of ["admin_notification_email", "hr_alert_email", "contact_notification_email"]) {
+    assert(isWhoIsToldSettingKey(key), `${key} is hidden from the generic settings screens`);
+  }
+  console.log("test-who-is-told: single source ok");
+}
+
+// Addresses: trimmed, lower-cased, deduplicated; dead house mailboxes dropped.
+assert(
+  cleanAddressList([" Ops@Example.com ", "ops@example.com", "admin@prudentgabriel.com", "nope"])?.join() === "ops@example.com",
+  "address list cleaned",
+);
 
 // Id lists: junk dropped, duplicates folded, empty means default.
 assert(cleanIdList(["clabcdefghij", "clabcdefghij", 3, "x"])?.join() === "clabcdefghij", "id list cleaned");

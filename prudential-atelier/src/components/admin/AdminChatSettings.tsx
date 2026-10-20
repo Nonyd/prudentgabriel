@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import toast from "react-hot-toast";
 import { SUGGESTED_SCHEDULE, WEEKDAYS, WEEKDAY_LABEL, type WeeklySchedule } from "@/lib/chat-hours";
 
 type Retention = { mode: "unset" } | { mode: "keep" } | { mode: "days"; days: number };
-type Candidate = { id: string; name: string; email: string; role: string };
 export type ChatSettingsView = {
   enabled: boolean;
   retention: Retention;
@@ -19,8 +19,7 @@ export type ChatSettingsView = {
   renotifyMin: number;
   giveUpMin: number;
   claimIdleMin: number;
-  recipients: { email: string[] | null; bell: string[] | null };
-  candidates: Candidate[];
+  /** The real Super Admin: she names who is told, on Settings → Who is told. */
   canChooseRecipients: boolean;
   /** Admins and the Super Admin change chat settings; others with Live chat only answer. */
   canEdit: boolean;
@@ -40,46 +39,12 @@ async function patch(body: unknown): Promise<ChatSettingsView> {
 const field = "border border-sand px-2 py-1 text-sm text-ink";
 const sectionTitle = "font-sans text-[11px] uppercase tracking-[0.12em] text-text-mid";
 
-/** BF9: who is told, by name, for one channel. */
-function RecipientList({
-  label,
-  candidates,
-  value,
-  onChange,
-  disabled,
-}: {
-  label: string;
-  candidates: Candidate[];
-  value: string[];
-  onChange: (ids: string[]) => void;
-  disabled: boolean;
-}) {
-  return (
-    <fieldset className="text-xs text-text-mid">
-      <legend className="mb-1">{label}</legend>
-      {candidates.map((c) => (
-        <label key={c.id} className="flex items-center gap-2 py-0.5 text-sm text-ink">
-          <input
-            type="checkbox"
-            disabled={disabled}
-            checked={value.includes(c.id)}
-            onChange={(e) => onChange(e.target.checked ? [...value, c.id] : value.filter((v) => v !== c.id))}
-          />
-          {c.name}
-          <span className="text-xs text-text-mid">
-            {c.role === "SUPER_ADMIN" ? "Super Admin" : c.role === "ADMIN" ? "Admin" : c.role.replace(/_/g, " ").toLowerCase()}
-          </span>
-        </label>
-      ))}
-    </fieldset>
-  );
-}
-
 /**
  * Admin → Chat → Settings. Everything the house can change without a deploy:
  * switching chat on (with BA5's retention decision), the weekly hours and the
  * closed dates (BF2), the greeting (BF3), the edit window (BF8), the two
- * unanswered periods (BF6), when a claim lapses (BF5), and who is told (BF9).
+ * unanswered periods (BF6) and when a claim lapses (BF5). Who is told is
+ * chosen on Settings → Who is told, with every other alert.
  */
 export function AdminChatSettings() {
   const [s, setS] = useState<ChatSettingsView | null>(null);
@@ -95,8 +60,6 @@ export function AdminChatSettings() {
   const [renotify, setRenotify] = useState("3");
   const [giveUp, setGiveUp] = useState("10");
   const [idle, setIdle] = useState("10");
-  const [emailTo, setEmailTo] = useState<string[]>([]);
-  const [bellTo, setBellTo] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
 
   function load(j: ChatSettingsView) {
@@ -112,8 +75,6 @@ export function AdminChatSettings() {
     setRenotify(String(j.renotifyMin));
     setGiveUp(String(j.giveUpMin));
     setIdle(String(j.claimIdleMin));
-    setEmailTo(j.recipients.email ?? []);
-    setBellTo(j.recipients.bell ?? []);
   }
 
   useEffect(() => {
@@ -334,25 +295,16 @@ export function AdminChatSettings() {
       <hr className="my-5 border-sand" />
       <p className={sectionTitle}>Who is told about a new chat</p>
       <p className="mt-1 text-xs text-text-mid">
-        {s.canChooseRecipients
-          ? "Choose by name, for email and for the bell. Each needs at least one person."
-          : "Only the Super Admin chooses this."}{" "}
-        {!s.recipients.email || !s.recipients.bell ? "Until chosen, chats go to the contact desk." : null}
+        Chosen with every other alert, by email and for the bell, on{" "}
+        {s.canChooseRecipients ? (
+          <Link href="/admin/settings/alert-recipients" className="text-ink underline underline-offset-2">
+            Settings → Who is told
+          </Link>
+        ) : (
+          "Settings → Who is told (Super Admin only)"
+        )}
+        .
       </p>
-      <div className="mt-3 grid gap-4 sm:grid-cols-2">
-        <RecipientList label="By email" candidates={s.candidates} value={emailTo} onChange={setEmailTo} disabled={!s.canChooseRecipients} />
-        <RecipientList label="By the bell (in the admin)" candidates={s.candidates} value={bellTo} onChange={setBellTo} disabled={!s.canChooseRecipients} />
-      </div>
-      {s.canChooseRecipients ? (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void run({ recipients: { email: emailTo, bell: bellTo } }, () => "Recipients saved")}
-          className="mt-3 rounded-sm bg-[#37392d] px-4 py-2 text-xs uppercase text-white disabled:opacity-50"
-        >
-          Save recipients
-        </button>
-      ) : null}
     </details>
   );
 }

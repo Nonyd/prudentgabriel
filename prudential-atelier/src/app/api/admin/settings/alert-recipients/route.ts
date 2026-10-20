@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SettingGroup, SettingType } from "@prisma/client";
 import { z } from "zod";
 import { requireSuperAdminApi } from "@/lib/admin-auth";
-import { resolveAdminAlertEmail, resolveHrAlertEmail } from "@/lib/admin-alert-email";
+import { isUndeliverableAlertAddress } from "@/lib/admin-alert-email";
 import {
   ALERT_KINDS,
   ALERT_RECIPIENTS_KEY,
@@ -10,23 +9,19 @@ import {
   CHAT_NOTIFY_EMAIL_KEY,
   STAFF_ROUTED_ALERTS,
   alertRecipientCandidates,
+  cleanAddressList,
   eligibleFor,
   readAlertRouting,
+  readStoredMap,
+  writeSetting,
   type AlertKind,
 } from "@/lib/admin-alerts";
 import { logActivity } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
-import { clearSettingCacheKey, getSetting } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 async function view() {
-  const [routing, candidates, operational, hr] = await Promise.all([
-    readAlertRouting(),
-    alertRecipientCandidates(),
-    resolveAdminAlertEmail(getSetting),
-    resolveHrAlertEmail(getSetting),
-  ]);
+  const [routing, candidates] = await Promise.all([readAlertRouting(), alertRecipientCandidates()]);
   return {
     kinds: ALERT_KINDS.map((k) => ({
       id: k.id,
@@ -34,10 +29,9 @@ async function view() {
       about: k.about,
       hasEmail: k.email,
       hasBell: k.bell.length > 0,
-      emailDefault: (k.fallback === "hr" ? hr : operational) ?? null,
-      emailDefaultNote: k.id === "contact" ? "the contact inbox set in Page content, else" : null,
       bellDefault: k.bellDefault ?? null,
       email: routing[k.id].email,
+      addresses: routing[k.id].addresses,
       bell: routing[k.id].bell,
     })),
     candidates,
@@ -54,28 +48,24 @@ export async function GET() {
 const putSchema = z.object({
   kind: z.enum(ALERT_KINDS.map((k) => k.id) as [AlertKind, ...AlertKind[]]),
   channel: z.enum(["email", "bell"]),
-  /** Null: back to the default routing. */
+  /** Email: empty or null means nobody is emailed. Bell: null means everyone who handles it. */
   userIds: z.array(z.string().min(10).max(40)).max(50).nullable(),
+  /** Email only: addresses that are not a portal user. */
+  addresses: z.array(z.string().trim().toLowerCase().email().max(254)).max(20).optional(),
 });
 
-async function put(key: string, value: string, label: string, updatedBy: string) {
-  await prisma.siteSetting.upsert({
-    where: { key },
-    create: { key, value, label, type: SettingType.TEXT, group: SettingGroup.NOTIFICATIONS, isPublic: false, sortOrder: 60, updatedBy },
-    update: { value, updatedBy },
-  });
-  clearSettingCacheKey(key);
-}
-
 /**
- * One channel of one kind at a time. A named list must hold at least one
- * active admin; choosing nobody is "use the default", never "tell no one".
+ * One channel of one kind at a time. This page is the only place an alert
+ * email's recipients are set: what is saved here is exactly who is emailed.
  */
 export async function PUT(req: NextRequest) {
   const gate = await requireSuperAdminApi();
   if (!gate.ok) return gate.response;
   const parsed = putSchema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  if (!parsed.success) {
+    const bad = parsed.error.issues.some((i) => i.path[0] === "addresses");
+    return NextResponse.json({ error: bad ? "One of the email addresses is not valid." : "Invalid request" }, { status: 400 });
+  }
   const { kind, channel, userIds } = parsed.data;
   const def = ALERT_KINDS.find((k) => k.id === kind)!;
   if (channel === "email" && !def.email) return NextResponse.json({ error: `${def.label} has no email.` }, { status: 400 });
@@ -83,15 +73,9 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: `${def.label} has no bell notification.` }, { status: 400 });
   }
 
-  let ids: string[] | null = null;
-  if (userIds) {
-    ids = Array.from(new Set(userIds));
-    if (ids.length === 0) {
-      return NextResponse.json(
-        { error: "Choose at least one person, or use the default. An alert must never reach nobody." },
-        { status: 400 },
-      );
-    }
+  const unique = userIds ? Array.from(new Set(userIds)) : [];
+  const ids: string[] | null = unique.length ? unique : null;
+  if (ids) {
     const candidates = new Map((await alertRecipientCandidates()).map((c) => [c.id, c]));
     if (ids.some((id) => !candidates.has(id) || !eligibleFor(kind, candidates.get(id)!))) {
       return NextResponse.json(
@@ -113,32 +97,36 @@ export async function PUT(req: NextRequest) {
     }
   }
 
+  let addresses: string[] | null = null;
+  if (channel === "email") {
+    const dead = parsed.data.addresses?.find((a) => isUndeliverableAlertAddress(a));
+    if (dead) return NextResponse.json({ error: `${dead} does not receive mail.` }, { status: 400 });
+    addresses = cleanAddressList(parsed.data.addresses ?? []);
+  }
+
   const by = gate.session.user.email ?? gate.session.user.id ?? "super-admin";
+  const map = await readStoredMap();
   if (kind === "chat") {
-    await put(
+    await writeSetting(
       channel === "email" ? CHAT_NOTIFY_EMAIL_KEY : CHAT_NOTIFY_BELL_KEY,
       ids ? JSON.stringify(ids) : "",
       channel === "email" ? "Chat: who is emailed (user ids)" : "Chat: who gets the bell (user ids)",
       by,
     );
+    if (channel === "email") map.chat = { ...(map.chat ?? {}), addresses };
   } else {
-    const raw = await getSetting(ALERT_RECIPIENTS_KEY);
-    let map: Record<string, { email?: string[] | null; bell?: string[] | null }> = {};
-    try {
-      const parsedMap = raw ? (JSON.parse(raw) as unknown) : {};
-      if (parsedMap && typeof parsedMap === "object" && !Array.isArray(parsedMap)) map = parsedMap as typeof map;
-    } catch {
-      map = {};
-    }
-    map[kind] = { ...(map[kind] ?? {}), [channel]: ids };
-    await put(ALERT_RECIPIENTS_KEY, JSON.stringify(map), "Who is told: named recipients per alert (user ids)", by);
+    map[kind] = { ...(map[kind] ?? {}), [channel]: ids, ...(channel === "email" ? { addresses } : {}) };
+  }
+  if (kind !== "chat" || channel === "email") {
+    await writeSetting(ALERT_RECIPIENTS_KEY, JSON.stringify(map), "Who is told: named recipients per alert", by);
   }
 
+  const count = (ids?.length ?? 0) + (addresses?.length ?? 0);
   await logActivity({
     action: "UPDATE",
     module: "settings",
     description: `Who is told — ${def.label} by ${channel === "email" ? "email" : "the bell"}: ${
-      ids ? `${ids.length} named` : "default"
+      channel === "email" ? (count ? `${count} named` : "nobody") : ids ? `${ids.length} named` : "default"
     }`,
     userEmail: gate.session.user.email ?? undefined,
   }).catch(() => undefined);

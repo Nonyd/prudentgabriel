@@ -16,7 +16,7 @@
  * - BF6 unanswered: recipients told again, then she is told nobody is free;
  * - BF7 files both ways, SVG refused, served so they cannot run, never via /media;
  * - BF8 an edit keeps the original; an edit after a reply is refused (409);
- * - BF9 an empty recipient list is refused (400); per conversation, not per message;
+ * - BF9 recipients are set on Who is told only (Super Admin); per conversation, not per message;
  * - erase removes the file from disk — checked by looking for the file.
  */
 import "./preload-test-env";
@@ -244,6 +244,8 @@ async function live(base: string) {
     "chat_claim_idle_min",
     "chat_notify_email_user_ids",
     "chat_notify_bell_user_ids",
+    "admin_alert_recipients",
+    "admin_alert_recipients_adopted",
   ];
   const before = await prisma.siteSetting.findMany({ where: { key: { in: keys } } });
   const convoIds: string[] = [];
@@ -256,13 +258,17 @@ async function live(base: string) {
 
     console.log("live: BF9 recipients");
     assert((await settings({ enabled: true, retention: "keep", schedule: ALWAYS, editWindowSec: 30, greetingDelaySec: 15 })).status === 200, "chat on, open around the clock for the test");
-    const emptyList = await settings({ recipients: { email: [], bell: [jubilee.id] } });
-    assert(emptyList.status === 400, `an empty recipient list refuses to save (${emptyList.status})`);
-    const notSuper = await settings({ recipients: { email: [jubilee.id], bell: [jubilee.id] } }, jubJar);
+    // Chosen on Settings → Who is told only; Chat → Settings no longer takes recipients.
+    const whoIsTold = (channel: "email" | "bell", userIds: string[] | null, jar = superJar) =>
+      fetch(`${base}/api/admin/settings/alert-recipients`, json("PUT", { kind: "chat", channel, userIds }, jar.header()));
+    const ignored = await (await settings({ recipients: { email: [client.id], bell: [client.id] } })).json() as Record<string, unknown>;
+    assert(!("recipients" in ignored), "Chat → Settings does not show or take recipients");
+    const notSuper = await whoIsTold("email", [jubilee.id], jubJar);
     assert(notSuper.status === 403, `only the Super Admin chooses recipients (${notSuper.status})`);
-    const stranger = await settings({ recipients: { email: [client.id], bell: [jubilee.id] } });
+    const stranger = await whoIsTold("email", [client.id]);
     assert(stranger.status === 400, `a customer cannot be a recipient (${stranger.status})`);
-    assert((await settings({ recipients: { email: [jubilee.id], bell: [jubilee.id, ada.id] } })).status === 200, "named people save");
+    assert((await whoIsTold("email", [jubilee.id])).status === 200, "named people save (email)");
+    assert((await whoIsTold("bell", [jubilee.id, ada.id])).status === 200, "named people save (bell)");
 
     console.log("live: BF4 who she is");
     const noContact = await fetch(`${base}/api/chat`, json("POST", { name: "Ifeoma", message: "hi", path: "/" }));

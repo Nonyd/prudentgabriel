@@ -1,17 +1,15 @@
-import { alertRecipientCandidates, eligibleFor } from "@/lib/admin-alerts";
+import { alertEmailTargets, alertRecipientCandidates, eligibleFor } from "@/lib/admin-alerts";
 import { createNotification } from "@/lib/notifications";
-import { isUndeliverableAlertAddress } from "@/lib/admin-alert-email";
-import { sendAdminNotificationEmail, sendStaffNotificationEmail } from "@/lib/email";
+import { sendStaffNotificationEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { getChatStaffing, type ChatStaffing } from "@/lib/chat";
 
 /**
  * Slice BF9 — who is told about a chat. Prudent Gabriel's SUPER_ADMIN names the
- * people, for email and for the bell separately. Until she does, BA5's routing
- * stands (the contact desk and the admin alert address), so a chat never
- * arrives with nobody told. A named person who is deactivated (or is now Staff
- * without Live chat) is skipped; if that leaves nobody, the
- * BA5 routing is used for that message rather than telling no one.
+ * people on Settings → Who is told, for email and for the bell separately.
+ * Email goes to exactly those named; the bell, until she names anyone, goes to
+ * everyone who answers chat. A named person who is deactivated (or is now Staff
+ * without Live chat) is skipped.
  *
  * Per conversation, not per message: a new conversation tells everyone; after
  * that only BF6's unanswered clock tells them again.
@@ -58,20 +56,17 @@ export async function notifyChat(params: {
   }).catch(() => {});
 
   const html = `<p>${esc(params.message)}</p><p><a href="${url}">Open the chat</a></p>`;
-  const emailTo = (await usable(s.notifyEmailUserIds)).filter((u) => !isUndeliverableAlertAddress(u.email));
-  if (emailTo.length) {
-    for (const u of emailTo) {
-      await sendStaffNotificationEmail({
-        to: u.email,
-        subject: params.title,
-        htmlInner: html,
-        idempotencyKey: `${key}:${u.id}`,
-        relatedType: "ChatConversation",
-        relatedId: params.conversationId,
-      }).catch(() => {});
-    }
-  } else {
-    await sendAdminNotificationEmail(params.title, html, key, "chat").catch(() => {});
+  // Exactly the people and addresses named for Live chat on Settings → Who is told.
+  const emailTo = await alertEmailTargets("chat").catch(() => []);
+  for (const t of emailTo) {
+    await sendStaffNotificationEmail({
+      to: t.to,
+      subject: params.title,
+      htmlInner: html,
+      idempotencyKey: `${key}:${t.userId ?? t.to}`,
+      relatedType: "ChatConversation",
+      relatedId: params.conversationId,
+    }).catch(() => {});
   }
   return { bell: bellTo.length ? "named" : "desk", email: emailTo.length ? "named" : "desk", emailed: emailTo.length };
 }

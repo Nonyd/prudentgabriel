@@ -514,12 +514,7 @@ const CMS_PAGES_BASE: CmsPageDef[] = [
             type: "textarea",
             default: "Thank you for reaching out. We'll be in touch within 24 hours.",
           },
-          {
-            key: "contact_notification_email",
-            label: "Notification email (form submissions)",
-            type: "text",
-            default: "hello@prudentgabriel.com",
-          },
+          // Who is emailed about a form submission is set on Settings → Who is told.
         ],
       },
     ],

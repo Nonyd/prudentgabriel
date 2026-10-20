@@ -13,8 +13,6 @@ import {
   CHAT_GIVEUP_MIN_KEY,
   CHAT_GREETING_DELAY_KEY,
   CHAT_HOURS_KEY,
-  CHAT_NOTIFY_BELL_KEY,
-  CHAT_NOTIFY_EMAIL_KEY,
   CHAT_RENOTIFY_MIN_KEY,
   CHAT_RETENTION_DAYS_KEY,
   CHAT_RETENTION_KEEP,
@@ -25,7 +23,6 @@ import {
   type ChatRetention,
 } from "@/lib/chat";
 import { isRealDate, scheduleError } from "@/lib/chat-hours";
-import { chatRecipientCandidates } from "@/lib/chat-notify";
 
 async function put(key: string, value: string, label: string, type: SettingType, updatedBy: string) {
   await prisma.siteSetting.upsert({
@@ -57,8 +54,6 @@ async function view(isSuperAdmin: boolean, canEdit = true) {
     renotifyMin: s.renotifyMin,
     giveUpMin: s.giveUpMin,
     claimIdleMin: s.claimIdleMin,
-    recipients: { email: s.notifyEmailUserIds, bell: s.notifyBellUserIds },
-    candidates: canEdit ? await chatRecipientCandidates() : [],
     canChooseRecipients: isSuperAdmin,
     canEdit,
   };
@@ -79,7 +74,6 @@ export async function GET() {
 }
 
 const dayHours = z.union([z.null(), z.object({ open: z.string(), close: z.string() })]);
-const userIdList = z.array(z.string().regex(/^[a-z0-9]{10,40}$/i)).max(50);
 
 const patchSchema = z.object({
   enabled: z.boolean().optional(),
@@ -103,8 +97,6 @@ const patchSchema = z.object({
   renotifyMin: z.number().int().min(1).max(240).optional(),
   giveUpMin: z.number().int().min(2).max(480).optional(),
   claimIdleMin: z.number().int().min(1).max(240).optional(),
-  /** BF9: people, by user id — for email and for the bell. */
-  recipients: z.object({ email: userIdList.optional(), bell: userIdList.optional() }).optional(),
 });
 
 /**
@@ -112,9 +104,7 @@ const patchSchema = z.object({
  * decision. "Keep indefinitely" is such a decision and is recorded as one; an
  * untouched field is not (409).
  *
- * BF9: recipients are chosen by SUPER_ADMIN only, from the people who can open
- * chat; an empty list refuses to save (400) — chats arriving with nobody told
- * is the failure the setting exists to prevent.
+ * Who is told about a chat is not set here: Settings → Who is told.
  */
 export async function PATCH(req: NextRequest) {
   const gate = await requireGeneralAdminApi();
@@ -139,26 +129,6 @@ export async function PATCH(req: NextRequest) {
       { status: 400 },
     );
   }
-  if (d.recipients) {
-    if (!superAdmin) {
-      return NextResponse.json({ error: "Only the Super Admin chooses who is told about chats." }, { status: 403 });
-    }
-    const candidates = new Set((await chatRecipientCandidates()).map((c) => c.id));
-    for (const [channel, ids] of Object.entries(d.recipients) as ["email" | "bell", string[] | undefined][]) {
-      if (ids === undefined) continue;
-      if (ids.length === 0) {
-        return NextResponse.json(
-          { error: `Choose at least one person to be told by ${channel === "email" ? "email" : "the bell"}. Chats must never arrive with nobody told.` },
-          { status: 400 },
-        );
-      }
-      const stranger = ids.find((id) => !candidates.has(id));
-      if (stranger) {
-        return NextResponse.json({ error: "Recipients must be people who can open chat (an active admin)." }, { status: 400 });
-      }
-    }
-  }
-
   const currentRetention = await getChatRetention();
   const nextRaw =
     d.retention === undefined
@@ -206,12 +176,6 @@ export async function PATCH(req: NextRequest) {
   }
   if (d.claimIdleMin !== undefined) {
     await put(CHAT_CLAIM_IDLE_MIN_KEY, String(d.claimIdleMin), "Chat: minutes idle before a claimed chat returns to the pool", SettingType.NUMBER, by);
-  }
-  if (d.recipients?.email) {
-    await put(CHAT_NOTIFY_EMAIL_KEY, JSON.stringify(d.recipients.email), "Chat: who is emailed (user ids)", SettingType.TEXT, by);
-  }
-  if (d.recipients?.bell) {
-    await put(CHAT_NOTIFY_BELL_KEY, JSON.stringify(d.recipients.bell), "Chat: who gets the bell (user ids)", SettingType.TEXT, by);
   }
   // Clearing the decision switches chat off with it.
   await put(CHAT_ENABLED_KEY, enabled && decided ? "true" : "false", "Chat enabled", SettingType.BOOLEAN, by);

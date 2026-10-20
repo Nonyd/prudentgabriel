@@ -70,9 +70,8 @@ export async function logError(params: {
     await prisma.errorLog.create({ data: params });
 
     if (params.severity === "CRITICAL") {
-      // The people named for system problems, else the Super Admin's own address (never the shop mailbox).
-      const envTo = process.env.SUPER_ADMIN_EMAIL?.trim() || null;
-      const targets = (await alertEmailTargets("system", envTo).catch(() => [])).filter((t) => t.userId || envTo);
+      // Exactly the people and addresses named for system problems (Settings → Who is told).
+      const targets = await alertEmailTargets("system").catch(() => []);
       const stamp = Date.now();
       for (const t of targets) {
         await queueEmail({
@@ -80,7 +79,7 @@ export async function logError(params: {
           subject: `[Prudential Atelier] Critical error: ${params.errorType}`,
           html: `<p>${params.message}</p><pre>${params.stack ?? ""}</pre>`,
           template: "critical-error",
-          idempotencyKey: `critical-error:${params.errorType}:${stamp}:${t.userId ?? "env"}`,
+          idempotencyKey: `critical-error:${params.errorType}:${stamp}:${t.userId ?? t.to}`,
         }).catch(() => undefined);
       }
     }
