@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { differenceInCalendarDays, startOfWeek } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { resolveStaffPortalUser } from "@/lib/staff-view-as";
 
 function startOfToday() {
   const d = new Date();
@@ -14,9 +15,10 @@ export async function GET() {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const viewer = (await resolveStaffPortalUser(session))!;
 
   const staff = await prisma.staffProfile.findUnique({
-    where: { userId: session.user.id },
+    where: { userId: viewer.id },
     include: { user: { select: { name: true } } },
   });
 

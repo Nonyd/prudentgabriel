@@ -4,6 +4,7 @@ import { z } from "zod";
 import { impersonationActor, requireSuperAdminApi } from "@/lib/admin-auth";
 import { ensurePermissionCache } from "@/lib/permission-cache";
 import { hasAnyAdminPermission } from "@/lib/roles";
+import { isStaffPortalPerson } from "@/lib/staff-view-as";
 import {
   ADMIN_IMPERSONATE_COOKIE,
   IMPERSONATE_TTL_MS,
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
       name: true,
       email: true,
       role: true,
+      isStaff: true,
       isActive: true,
       userPermissions: { select: { permission: true, mode: true } },
     },
@@ -55,6 +57,7 @@ export async function POST(req: NextRequest) {
     targetId: target.id,
     targetRole: target.role,
     targetHasAdminAccess: hasAnyAdminPermission(target.role, impersonationActor(target)),
+    targetIsStaff: isStaffPortalPerson(target),
   });
   if (!allowed.ok) {
     return NextResponse.json({ error: allowed.error }, { status: 400 });
@@ -91,6 +94,8 @@ export async function POST(req: NextRequest) {
     ok: true,
     target: { id: target.id, name: payload.targetName, email: target.email, role: target.role },
     expiresAt: payload.exp,
+    // Someone with admin access is shown the admin as them; a staff member, their staff portal.
+    destination: hasAnyAdminPermission(target.role, impersonationActor(target)) ? "/admin" : "/staff",
   });
 }
 

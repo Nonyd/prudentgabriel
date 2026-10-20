@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { fileWorkLog, parseWorkLogInput, workday } from "@/lib/atelier/work-log";
+import { resolveStaffPortalUser } from "@/lib/staff-view-as";
 
 /**
  * BD7: the staff member's own end-of-day entries. Like the rest of the staff
@@ -11,7 +12,8 @@ import { fileWorkLog, parseWorkLogInput, workday } from "@/lib/atelier/work-log"
 async function staffProfileId() {
   const session = await auth();
   if (!session?.user?.id) return { ok: false as const, response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
-  const staff = await prisma.staffProfile.findUnique({ where: { userId: session.user.id }, select: { id: true } });
+  const viewer = (await resolveStaffPortalUser(session))!;
+  const staff = await prisma.staffProfile.findUnique({ where: { userId: viewer.id }, select: { id: true } });
   if (!staff) return { ok: false as const, response: NextResponse.json({ error: "Staff profile not found" }, { status: 404 }) };
   return { ok: true as const, id: staff.id };
 }

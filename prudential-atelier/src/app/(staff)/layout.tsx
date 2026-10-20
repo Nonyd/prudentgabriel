@@ -4,6 +4,7 @@ import { StaffShell } from "@/components/staff/StaffShell";
 import { WorkroomTypeScale } from "@/components/common/WorkroomTypeScale";
 import { enforcePublicMaintenance } from "@/lib/maintenance";
 import { NOINDEX } from "@/lib/seo";
+import { resolveStaffPortalUser } from "@/lib/staff-view-as";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -20,15 +21,18 @@ export default async function StaffLayout({ children }: { children: React.ReactN
     redirect("/login?tab=staff");
   }
 
-  const { role, isStaff } = session.user;
-  const canAccess = isStaff === true || role === "STAFF";
-
-  if (!canAccess) {
+  // Themselves, or the staff member the Super Admin is viewing as (read-only).
+  const viewer = await resolveStaffPortalUser(session);
+  if (!viewer || !(viewer.isStaff || viewer.role === "STAFF")) {
     redirect("/login?tab=staff");
   }
 
   return (
-    <StaffShell session={session}>
+    <StaffShell
+      session={session}
+      viewer={{ name: viewer.name, email: viewer.email, image: viewer.image }}
+      viewingAs={viewer.viewingAs}
+    >
       <WorkroomTypeScale />
       {children}
     </StaffShell>

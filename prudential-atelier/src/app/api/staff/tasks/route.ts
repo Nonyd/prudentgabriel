@@ -1,14 +1,16 @@
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { resolveStaffPortalUser } from "@/lib/staff-view-as";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const viewer = (await resolveStaffPortalUser(session))!;
 
-  const staff = await prisma.staffProfile.findUnique({ where: { userId: session.user.id } });
+  const staff = await prisma.staffProfile.findUnique({ where: { userId: viewer.id } });
   if (!staff) return NextResponse.json({ error: "Staff profile not found" }, { status: 404 });
 
   const filter = req.nextUrl.searchParams.get("filter") ?? "active";

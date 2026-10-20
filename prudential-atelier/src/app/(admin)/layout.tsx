@@ -26,8 +26,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/login?tab=admin");
   }
 
-  const { role, actor, user, previewRole, impersonation, staleImpersonation } = await resolveSessionAccess(session);
-  // A "View as" for someone who cannot open the admin: end it, never send her to sign in.
+  const { role, actor, user, previewRole, impersonation, staleImpersonation, staffImpersonation } =
+    await resolveSessionAccess(session);
+  // "View as" a staff member: their staff portal, read-only (Exit is on its banner).
+  if (staffImpersonation) redirect("/staff");
+  // A "View as" for someone who cannot open the admin or the staff portal: end it, never send her to sign in.
   if (staleImpersonation) redirect(IMPERSONATION_END_PATH);
   if (!hasAnyAdminPermission(role, actor) && !previewRole) {
     redirect("/login?tab=admin");

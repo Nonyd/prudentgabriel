@@ -481,12 +481,12 @@ export function UserManagementClient({ embedded = false }: { embedded?: boolean 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.id }),
       });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      const data = (await res.json().catch(() => ({}))) as { error?: string; destination?: string };
       if (!res.ok) {
         toast.error(typeof data.error === "string" ? data.error : "Could not view as this user");
         return;
       }
-      window.location.href = "/admin";
+      window.location.href = data.destination === "/staff" ? "/staff" : "/admin";
     } finally {
       setViewingAs(null);
     }

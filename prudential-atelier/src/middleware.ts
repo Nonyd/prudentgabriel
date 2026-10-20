@@ -96,6 +96,20 @@ export default auth(async function middleware(request) {
     }
   }
 
+  // "View as" a staff member is read-only: nothing is clocked, logged, marked or changed for them.
+  if (
+    impersonating &&
+    method !== "GET" &&
+    method !== "HEAD" &&
+    method !== "OPTIONS" &&
+    (pathname.startsWith("/api/staff") ||
+      pathname.startsWith("/api/attendance") ||
+      pathname.startsWith("/api/account") ||
+      pathname.startsWith("/api/bespoke"))
+  ) {
+    return NextResponse.json({ error: "View as user is read-only." }, { status: 403 });
+  }
+
   if (pathname.startsWith("/api/admin")) {
     if (impersonating) {
       if (pathname.startsWith("/api/admin/settings/developer") && !isImpersonationExit) {
@@ -206,11 +220,12 @@ export default auth(async function middleware(request) {
     const role = (session.user?.role as string | undefined) ?? "";
     const isStaff = session.user?.isStaff === true;
 
-    if (userHasAdminAccess(session.user)) {
+    // The Super Admin viewing as a staff member sees their portal (the layout checks the cookie).
+    if (userHasAdminAccess(session.user) && !(impersonating && session.user?.role === "SUPER_ADMIN")) {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
 
-    if (!isStaff && role !== "STAFF") {
+    if (!isStaff && role !== "STAFF" && !(impersonating && role === "SUPER_ADMIN")) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("tab", "staff");
       loginUrl.searchParams.set("error", "no_staff_access");

@@ -12,6 +12,7 @@ import { getAdminPreviewRole } from "@/lib/admin-preview";
 import { getAdminImpersonation, type ImpersonationPayload } from "@/lib/admin-impersonate";
 import { cachedRoleActorPatch, ensurePermissionCache } from "@/lib/permission-cache";
 import { prisma } from "@/lib/prisma";
+import { isStaffPortalPerson } from "@/lib/staff-view-as";
 
 export { CMS_ADMIN_PERMISSIONS };
 
@@ -82,10 +83,13 @@ export async function resolveSessionAccess(session: Session): Promise<{
    * so the Super Admin is never sent back to the sign-in page by her own cookie.
    */
   staleImpersonation: boolean;
+  /** The cookie names an active staff member: the admin layout sends her to their staff portal. */
+  staffImpersonation: boolean;
 }> {
   await ensurePermissionCache();
   const impersonation = await getAdminImpersonation(session.user?.role, session.user?.email);
   let staleImpersonation = false;
+  let staffImpersonation = false;
   if (impersonation) {
     const target = await prisma.user.findUnique({
       where: { id: impersonation.targetId },
@@ -94,6 +98,7 @@ export async function resolveSessionAccess(session: Session): Promise<{
         name: true,
         email: true,
         role: true,
+        isStaff: true,
         isActive: true,
         userPermissions: { select: { permission: true, mode: true } },
       },
@@ -107,9 +112,11 @@ export async function resolveSessionAccess(session: Session): Promise<{
         previewRole: null,
         impersonation,
         staleImpersonation: false,
+        staffImpersonation: false,
       };
     }
-    staleImpersonation = true;
+    if (target?.isActive && target.role !== "SUPER_ADMIN" && isStaffPortalPerson(target)) staffImpersonation = true;
+    else staleImpersonation = true;
   }
 
   const previewRole = await getAdminPreviewRole(session.user?.role, session.user?.email);
@@ -119,7 +126,7 @@ export async function resolveSessionAccess(session: Session): Promise<{
     name: session.user?.name?.trim() || session.user?.email || "",
     email: session.user?.email ?? null,
   };
-  return { role, actor, user, previewRole, impersonation: null, staleImpersonation };
+  return { role, actor, user, previewRole, impersonation: null, staleImpersonation, staffImpersonation };
 }
 
 type Gate = { ok: true; session: Session } | { ok: false; response: NextResponse };

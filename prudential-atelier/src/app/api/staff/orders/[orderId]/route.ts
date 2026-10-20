@@ -3,15 +3,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { MEASUREMENT_ASSIGNMENT_ROLES } from "@/lib/bespoke-data-access";
 import { specificationInclude, specificationRows } from "@/lib/atelier/construction-features";
+import { resolveStaffPortalUser } from "@/lib/staff-view-as";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const viewer = (await resolveStaffPortalUser(session))!;
 
   const { orderId } = await ctx.params;
-  const staff = await prisma.staffProfile.findUnique({ where: { userId: session.user.id } });
+  const staff = await prisma.staffProfile.findUnique({ where: { userId: viewer.id } });
   if (!staff) return NextResponse.json({ error: "Staff profile not found" }, { status: 404 });
 
   const assignment = await prisma.orderAssignment.findFirst({

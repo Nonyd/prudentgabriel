@@ -1,13 +1,14 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { StaffAccountSettingsClient } from "@/components/staff/StaffAccountSettingsClient";
+import { resolveStaffPortalUser } from "@/lib/staff-view-as";
 
 export default async function StaffSettingsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login?tab=staff");
 
-  const user = session.user;
-  const extended = user as { jobTitle?: string; department?: string };
+  // While viewing as a staff member, their settings (read-only: changes are refused).
+  const user = (await resolveStaffPortalUser(session))!;
 
   return (
     <StaffAccountSettingsClient
@@ -15,8 +16,8 @@ export default async function StaffSettingsPage() {
         name: user.name ?? "",
         email: user.email ?? "",
         image: user.image ?? "",
-        jobTitle: extended.jobTitle,
-        department: extended.department,
+        jobTitle: user.jobTitle,
+        department: user.department,
       }}
     />
   );

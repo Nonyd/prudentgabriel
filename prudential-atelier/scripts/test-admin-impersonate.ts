@@ -19,8 +19,12 @@ const src = (p: string) => readFileSync(join(root, p), "utf8");
 
 const base = { actorId: "super1", actorRole: "SUPER_ADMIN", actorEmail: "s@x.test", targetId: "u1" };
 assert(assertCanImpersonateTarget({ ...base, targetRole: "ADMIN", targetHasAdminAccess: true }).ok, "an admin may be viewed as");
-const staff = assertCanImpersonateTarget({ ...base, targetRole: "STAFF", targetHasAdminAccess: false });
-assert(!staff.ok && /no admin access/.test(staff.error), "someone without admin access is refused, with the reason");
+assert(
+  assertCanImpersonateTarget({ ...base, targetRole: "STAFF", targetHasAdminAccess: false, targetIsStaff: true }).ok,
+  "a staff member may be viewed as (their staff portal)",
+);
+const client = assertCanImpersonateTarget({ ...base, targetRole: "CUSTOMER", targetHasAdminAccess: false, targetIsStaff: false });
+assert(!client.ok && /no admin or staff portal access/.test(client.error), "someone with neither portal is refused, with the reason");
 
 const route = src("src/app/api/admin/impersonate/route.ts");
 assert(route.includes("targetHasAdminAccess: hasAnyAdminPermission("), "starting View as checks the person's admin access");
@@ -33,6 +37,19 @@ const layout = src("src/app/(admin)/layout.tsx");
 const stale = layout.indexOf("if (staleImpersonation) redirect(IMPERSONATION_END_PATH)");
 const toLogin = layout.indexOf('redirect("/login?tab=admin")', layout.indexOf("resolveSessionAccess(session)"));
 assert(stale > 0 && stale < toLogin, "the layout ends a stale View as before any sign-in redirect");
+assert(layout.indexOf('if (staffImpersonation) redirect("/staff")') > 0, "View as a staff member opens their staff portal");
+
+// Staff portal: shown as the person viewed, and read-only.
+const mw = src("src/middleware.ts");
+assert(
+  /impersonating &&[\s\S]{0,200}pathname\.startsWith\("\/api\/staff"\)/.test(mw),
+  "staff writes are refused while viewing as",
+);
+assert(src("src/app/(staff)/layout.tsx").includes("resolveStaffPortalUser"), "the staff portal shows the viewed person");
+for (const f of ["attendance-history", "clock-status", "dashboard", "tasks", "work-log", "orders/[orderId]", "notifications", "notifications/count"]) {
+  const text = src(`src/app/api/staff/${f}/route.ts`);
+  assert(text.includes("resolveStaffPortalUser") && !/session\.user\.id/.test(text), `staff API ${f} reads the viewed person`);
+}
 
 assert(IMPERSONATION_END_PATH === "/api/admin/impersonate/end", "the end path is the end route");
 const end = src("src/app/api/admin/impersonate/end/route.ts");

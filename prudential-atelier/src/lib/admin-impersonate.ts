@@ -63,8 +63,10 @@ export function assertCanImpersonateTarget(opts: {
   actorEmail: string | null | undefined;
   targetId: string;
   targetRole: string;
-  /** False: "View as" would show the admin as someone who cannot open it, a sign-in loop. */
+  /** With targetIsStaff: false for both means there is no portal to show them in (a client). */
   targetHasAdminAccess?: boolean;
+  /** Staff are shown their staff portal, read-only. */
+  targetIsStaff?: boolean;
 }): { ok: true } | { ok: false; error: string } {
   if (!isSuperAdmin(opts.actorRole, opts.actorEmail)) {
     return { ok: false, error: "Only a Super Admin can view as another user." };
@@ -75,10 +77,10 @@ export function assertCanImpersonateTarget(opts: {
   if (opts.actorId === opts.targetId) {
     return { ok: false, error: "Already signed in as this user." };
   }
-  if (opts.targetHasAdminAccess === false) {
+  if (opts.targetHasAdminAccess === false && opts.targetIsStaff !== true) {
     return {
       ok: false,
-      error: "This person has no admin access, so there is nothing to view as. Staff work in the staff portal.",
+      error: "This person has no admin or staff portal access, so there is nothing to view as.",
     };
   }
   return { ok: true };

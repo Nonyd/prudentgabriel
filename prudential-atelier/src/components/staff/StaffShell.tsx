@@ -9,6 +9,8 @@ import { ClipboardList, Clock, Home, LogOut, Settings, UserRoundCog } from "luci
 import { Logo } from "@/components/ui/Logo";
 import { StaffTopbar } from "@/components/staff/StaffTopbar";
 import { PortalImageLightbox } from "@/components/ui/ImageLightbox";
+import { AdminImpersonateBanner } from "@/components/admin/AdminImpersonateBanner";
+import type { ImpersonationPayload } from "@/lib/admin-impersonate";
 import { cn, getInitials } from "@/lib/utils";
 
 const NAV = [
@@ -25,14 +27,20 @@ function isNavActive(pathname: string, href: string) {
 
 export function StaffShell({
   session,
+  viewer,
+  viewingAs,
   children,
 }: {
   session: Session;
+  /** Who the portal is showing: themselves, or the staff member being viewed as. */
+  viewer?: { name: string | null; email: string; image: string | null };
+  /** Set while the Super Admin views the portal as this staff member (read-only). */
+  viewingAs?: ImpersonationPayload | null;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const { data: liveSession } = useSession();
-  const user = liveSession?.user ?? session.user;
+  const user = viewingAs && viewer ? viewer : (liveSession?.user ?? session.user);
   const name = user?.name ?? user?.email ?? "Staff";
   const avatarUrl = user?.image ?? "";
   const [mobileNav, setMobileNav] = useState(false);
@@ -126,6 +134,7 @@ export function StaffShell({
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <StaffTopbar onOpenNav={() => setMobileNav(true)} />
+        <AdminImpersonateBanner impersonation={viewingAs ?? null} />
 
         <main
           className="staff-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-6 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:px-8 md:py-8 md:pb-8"
