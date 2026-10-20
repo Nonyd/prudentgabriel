@@ -176,8 +176,8 @@ export function QuotationDetailClient() {
         toast.error(j.error ?? "Revise failed");
         return;
       }
-      toast.success("New version created");
-      if (j.item?.id) router.push(`/admin/quotations/${j.item.id}`);
+      toast.success("New version created. Make the changes, then send it.");
+      if (j.item?.id) router.push(`/admin/quotations/${j.item.id}/edit`);
       else await load();
     } finally {
       setBusy(false);
@@ -194,6 +194,8 @@ export function QuotationDetailClient() {
     item.status !== "DRAFT" &&
     item.invoices.length === 0 &&
     item.bespokeOrders.length === 0;
+  /** Asked on this version and not yet answered by a newer one. */
+  const openChangeRequests = changeRequests.filter((r) => r.quotation.id === item.id).length;
 
   return (
     <div className="space-y-8">
@@ -224,13 +226,26 @@ export function QuotationDetailClient() {
             PDF
           </a>
           {item.status === "DRAFT" ? (
+            <Link
+              href={`/admin/quotations/${item.id}/edit`}
+              className="inline-flex items-center rounded-sm border border-sand px-3 py-2 font-body text-11px uppercase tracking-[0.08em] text-ink hover:border-olive"
+            >
+              Edit
+            </Link>
+          ) : null}
+          {item.status === "DRAFT" ? (
             <Button size="sm" disabled={busy} onClick={() => void send()}>
-              Send
+              {item.version > 1 ? "Send new version" : "Send"}
             </Button>
           ) : null}
           {canRevise ? (
-            <Button size="sm" variant="secondary" disabled={busy} onClick={() => void revise()}>
-              Revise quotation
+            <Button
+              size="sm"
+              variant={openChangeRequests > 0 ? "primary" : "secondary"}
+              disabled={busy}
+              onClick={() => void revise()}
+            >
+              {openChangeRequests > 0 ? "Edit and send a new version" : "Revise quotation"}
             </Button>
           ) : null}
         </div>

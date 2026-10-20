@@ -41,6 +41,15 @@ const SUGGESTED_LINE_ITEMS = [
   "Beading & Embellishment",
 ];
 
+type ChangeRequest = { id: string; message: string; createdAt: string; quotation: { quoteRef: string } };
+
+/** The draft being edited: a revision answering her change request, or an unsent draft. */
+type EditingQuote = { id: string; quoteRef: string; version: number; changeRequests: ChangeRequest[] };
+
+function dateInput(v: string | null | undefined): string {
+  return v ? v.slice(0, 10) : "";
+}
+
 function calcLineTotal(qty: number, price: number) {
   return Math.round(qty * price * 100) / 100;
 }
@@ -76,9 +85,17 @@ function applyConsultationToForm(
   );
 }
 
-export function QuotationFormClient({ consultationId: initialConsultationId }: { consultationId?: string }) {
+export function QuotationFormClient({
+  consultationId: initialConsultationId,
+  editQuotationId,
+}: {
+  consultationId?: string;
+  /** Edit this unsent draft (a revision after her change request) instead of creating one. */
+  editQuotationId?: string;
+}) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState<EditingQuote | null>(null);
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
@@ -160,6 +177,63 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
   }, [initialConsultationId, loadConsultation]);
 
   useEffect(() => {
+    if (!editQuotationId) return;
+    void (async () => {
+      const res = await fetch(`/api/quotations/${editQuotationId}`);
+      if (!res.ok) {
+        toast.error("Could not load quotation");
+        return;
+      }
+      const j = (await res.json()) as {
+        item: {
+          id: string;
+          quoteRef: string;
+          version: number;
+          status: string;
+          sentAt: string | null;
+          clientName: string;
+          clientEmail: string;
+          clientPhone: string | null;
+          notes: string | null;
+          tax: number;
+          discount: number;
+          expiresAt: string | null;
+          expectedDeliveryDate: string | null;
+          depositPercent: number | null;
+          currency: string | null;
+          lineItems: LineItem[];
+        };
+        changeRequests?: ChangeRequest[];
+      };
+      const q = j.item;
+      if (q.status !== "DRAFT" || q.sentAt) {
+        toast.error("A sent quotation cannot be changed. Revise it to make a new version.");
+        router.replace(`/admin/quotations/${q.id}`);
+        return;
+      }
+      setEditing({ id: q.id, quoteRef: q.quoteRef, version: q.version, changeRequests: j.changeRequests ?? [] });
+      setClientName(q.clientName);
+      setClientEmail(q.clientEmail);
+      setClientPhone(q.clientPhone ?? "");
+      setNotes(q.notes ?? "");
+      setTax(q.tax ?? 0);
+      setDiscount(q.discount ?? 0);
+      setExpiresAt(dateInput(q.expiresAt));
+      setExpectedDeliveryDate(dateInput(q.expectedDeliveryDate));
+      if (typeof q.depositPercent === "number") setDepositPercent(clampDepositPercent(q.depositPercent));
+      if (q.currency === "NGN" || q.currency === "USD" || q.currency === "GBP" || q.currency === "EUR") setCurrency(q.currency);
+      setLineItems(
+        (q.lineItems ?? []).map((i) => ({
+          description: i.description,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+          total: calcLineTotal(i.quantity, i.unitPrice),
+        })),
+      );
+    })();
+  }, [editQuotationId, router]);
+
+  useEffect(() => {
     void (async () => {
       const res = await fetch("/api/admin/settings");
       if (!res.ok) return;
@@ -169,13 +243,14 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
       const cmsPct = Number(pick(j.settings.PAYMENTS, "bespoke_deposit_percent"));
       const pct = clampDepositPercent(Number.isFinite(cmsPct) ? cmsPct : 70);
       setDefaultDepositPercent(pct);
+      if (editQuotationId) return;
       setDepositPercent(pct);
       const validityDays = Number(pick(j.settings.INVOICE, "invoice_default_validity_days")) || 14;
       const v = new Date();
       v.setDate(v.getDate() + validityDays);
       setExpiresAt(v.toISOString().slice(0, 10));
     })();
-  }, []);
+  }, [editQuotationId]);
 
   function updateLine(index: number, patch: Partial<LineItem>) {
     setLineItems((rows) =>
@@ -246,33 +321,53 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
       return;
     }
 
+    if (editQuotationId && !editing) return;
+
     setSaving(true);
     try {
-      const res = await fetch("/api/quotations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientName,
-          clientEmail,
-          clientPhone: clientPhone || undefined,
-          lineItems: validItems,
-          tax,
-          discount,
-          notes: notes || undefined,
-          expiresAt: expiresAt || undefined,
-          expectedDeliveryDate: expectedDeliveryDate || undefined,
-          depositPercent,
-          currency,
-          consultationId: consultationId ?? undefined,
-        }),
-      });
+      const res = editing
+        ? await fetch(`/api/quotations/${editing.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              clientName,
+              clientEmail,
+              clientPhone,
+              lineItems: validItems,
+              tax,
+              discount,
+              notes,
+              expiresAt: expiresAt || null,
+              expectedDeliveryDate: expectedDeliveryDate || null,
+              depositPercent,
+              currency,
+            }),
+          })
+        : await fetch("/api/quotations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              clientName,
+              clientEmail,
+              clientPhone: clientPhone || undefined,
+              lineItems: validItems,
+              tax,
+              discount,
+              notes: notes || undefined,
+              expiresAt: expiresAt || undefined,
+              expectedDeliveryDate: expectedDeliveryDate || undefined,
+              depositPercent,
+              currency,
+              consultationId: consultationId ?? undefined,
+            }),
+          });
       const data = (await res.json()) as { item?: { id: string }; error?: string };
       if (!res.ok) {
-        toast.error(data.error ?? "Failed to create quotation");
+        toast.error(data.error ?? (editing ? "Failed to save quotation" : "Failed to create quotation"));
         return;
       }
 
-      toast.success("Quotation saved as draft");
+      toast.success(editing ? "Changes saved" : "Quotation saved as draft");
       if (sendAfter && data.item?.id) {
         const sendRes = await fetch(`/api/quotations/${data.item.id}/send`, { method: "POST" });
         const sendData = (await sendRes.json()) as { error?: string };
@@ -282,7 +377,7 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
           toast.success("Quotation sent to client");
         }
       }
-      router.push("/admin/quotations");
+      router.push(editing ? `/admin/quotations/${editing.id}` : "/admin/quotations");
     } finally {
       setSaving(false);
     }
@@ -302,14 +397,41 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
           ← Back to quotations
         </Link>
         <InvoicesQuotationsNav />
-        <h1 className="mt-2 font-display text-2xl text-ink">New Quotation</h1>
-        {quoteTitle ? (
+        <h1 className="mt-2 font-display text-2xl text-ink">
+          {editing ? `Edit ${editing.quoteRef}` : editQuotationId ? "Edit quotation" : "New Quotation"}
+        </h1>
+        {editing ? (
+          <p className="mt-1 font-sans text-sm text-text-mid">
+            {editing.version > 1
+              ? "A new version. When you send it, it replaces the earlier one and the client approves this one."
+              : "An unsent draft."}
+          </p>
+        ) : quoteTitle ? (
           <p className="mt-1 font-sans text-sm text-text-mid">{quoteTitle}</p>
         ) : null}
       </div>
 
+      {editing && editing.changeRequests.length > 0 ? (
+        <section className="card-surface p-5">
+          <h2 className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light">
+            What the client asked to change
+          </h2>
+          <ul className="mt-3 space-y-3">
+            {[...editing.changeRequests].reverse().map((r) => (
+              <li key={r.id} className="border-l-2 border-sand pl-3">
+                <p className="whitespace-pre-line font-sans text-sm text-ink">{r.message}</p>
+                <p className="mt-1 font-sans text-11px text-text-mid">
+                  On {r.quotation.quoteRef} ·{" "}
+                  {new Date(r.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <div className="card-surface space-y-6 p-6">
-        {!initialConsultationId ? (
+        {!initialConsultationId && !editQuotationId ? (
           <section className="border-b border-sand pb-6">
             <h2 className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light">
               Link consultation (optional)
@@ -583,10 +705,10 @@ export function QuotationFormClient({ consultationId: initialConsultationId }: {
           </div>
           <div className="flex gap-2">
             <Button variant="ghost" loading={saving} onClick={() => void handleSubmit(false)}>
-              Save Draft
+              {editing ? "Save changes" : "Save Draft"}
             </Button>
             <Button loading={saving} onClick={() => void handleSubmit(true)}>
-              Send to Client
+              {editing && editing.version > 1 ? "Send new version to client" : "Send to Client"}
             </Button>
           </div>
         </div>

@@ -3,6 +3,8 @@ import { turnstileSiteKey } from "@/lib/turnstile";
 import { ConsultationEnquiryForm, type EnquiryPrefill } from "@/components/consultation/ConsultationEnquiryForm";
 import { ENQUIRY_OCCASIONS } from "@/lib/consultation-enquiry-shared";
 import { ConsultationReviewsSlider } from "@/components/consultation/ConsultationReviewsSlider";
+import { ConsultationFeeNotice } from "@/components/consultation/ConsultationFeeNotice";
+import { quoteConsultationFees } from "@/lib/consultation-fees";
 import { getConsultationPageReviews } from "@/lib/consultation-reviews";
 import { getPageFieldKeys } from "@/lib/cms-config";
 import { getCMSContent } from "@/lib/cms";
@@ -36,10 +38,11 @@ export default async function ConsultationPage({
   searchParams?: Promise<Record<string, string | undefined>>;
 }) {
   const initial = prefillFrom((await searchParams) ?? {});
-  const [cms, consultationReviews, open] = await Promise.all([
+  const [cms, consultationReviews, open, quote] = await Promise.all([
     getCMSContent(getPageFieldKeys("consultation")),
     getConsultationPageReviews(),
     isAtelierOpenForEnquiries(),
+    quoteConsultationFees(),
   ]);
 
   return (
@@ -58,7 +61,10 @@ export default async function ConsultationPage({
           </p>
         </header>
         {open ? (
-          <ConsultationEnquiryForm cms={cms} initial={initial} turnstileSiteKey={turnstileSiteKey()} />
+          <>
+            <ConsultationFeeNotice fees={quote.fees} cms={cms} />
+            <ConsultationEnquiryForm cms={cms} initial={initial} turnstileSiteKey={turnstileSiteKey()} />
+          </>
         ) : (
           <div className="mx-auto max-w-xl glass-2 glass-panel px-6 py-8 text-center" role="status">
             <p className="font-body text-[15px] leading-relaxed text-text-mid">
