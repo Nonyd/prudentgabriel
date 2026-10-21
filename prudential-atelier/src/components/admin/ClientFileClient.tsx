@@ -239,13 +239,13 @@ function ChangeClientEmail({ userId, currentEmail, onDone }: { userId: string; c
       const j = (await res.json().catch(() => ({}))) as {
         error?: string;
         changed?: boolean;
-        records?: { commissions: number; quotations: number; invoices: number } | null;
+        records?: Record<string, number> | null;
       };
       if (!res.ok) throw new Error(j.error ?? "Could not change the email");
-      const moved = j.records ? j.records.commissions + j.records.quotations + j.records.invoices : 0;
+      const moved = Object.values(j.records ?? {}).reduce((s, n) => s + n, 0);
       toast.success(
         j.changed
-          ? `Email changed. She has been signed out and told at her old address.${moved ? ` Her ${moved} open commission, quotation and invoice record${moved === 1 ? "" : "s"} now use the new email.` : ""}`
+          ? `Email changed. She has been signed out and told at her old address.${moved ? ` ${moved} of her orders, invoices and other records, and any mail still waiting to go, now use the new email.` : ""}`
           : "No change",
       );
       setOpen(false);
