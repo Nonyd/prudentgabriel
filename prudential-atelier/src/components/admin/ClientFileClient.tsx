@@ -236,9 +236,18 @@ function ChangeClientEmail({ userId, currentEmail, onDone }: { userId: string; c
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      const j = (await res.json().catch(() => ({}))) as { error?: string; changed?: boolean };
+      const j = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        changed?: boolean;
+        records?: { commissions: number; quotations: number; invoices: number } | null;
+      };
       if (!res.ok) throw new Error(j.error ?? "Could not change the email");
-      toast.success(j.changed ? "Email changed. She has been signed out and told at her old address." : "No change");
+      const moved = j.records ? j.records.commissions + j.records.quotations + j.records.invoices : 0;
+      toast.success(
+        j.changed
+          ? `Email changed. She has been signed out and told at her old address.${moved ? ` Her ${moved} open commission, quotation and invoice record${moved === 1 ? "" : "s"} now use the new email.` : ""}`
+          : "No change",
+      );
       setOpen(false);
       onDone();
     } catch (e) {
@@ -309,7 +318,7 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
   const orderHref = (id: string) => (portal === "admin" ? `/admin/bespoke/${id}` : `/staff/orders/${id}`);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <header>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h1 className="font-display text-2xl text-ink">{file.client.name ?? file.client.firstName ?? "Client"}</h1>
@@ -342,12 +351,14 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
         </div>
       </header>
 
-      <FileSection title="Consultation" section={s.consultation}>
+      <SectionJumpBar sections={s} />
+
+      <FileSection id="consultation" title="Consultation" section={s.consultation}>
         {(d) => <ConsultationView data={d} />}
       </FileSection>
 
       {/* The brief sits under the consultation: what she asked for, then everything since. */}
-      <FileSection title="Production brief" section={s.brief}>
+      <FileSection id="brief" title="Production brief" section={s.brief}>
         {(d) => (
           <PerCommission rows={d}>
             {(g) => (
@@ -361,7 +372,7 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
         )}
       </FileSection>
 
-      <FileSection title="Measurements" section={s.measurements}>
+      <FileSection id="measurements" title="Measurements" section={s.measurements}>
         {(d) => (
           <>
             <MeasurementsView data={d} />
@@ -378,7 +389,7 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
         )}
       </FileSection>
 
-      <FileSection title="About the dress" section={s.about}>
+      <FileSection id="about" title="About the dress" section={s.about}>
         {(d) => (
           <PerCommission rows={d}>
             {(g) => (
@@ -404,37 +415,37 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
         )}
       </FileSection>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <FileSection title="Quotation — what was agreed" section={s.quotation}>
+      <div className="grid gap-8 lg:grid-cols-2">
+        <FileSection id="quotation" title="Quotation — what was agreed" section={s.quotation}>
           {(d) => <QuotationView data={d} />}
         </FileSection>
-        <FileSection title="Invoice" section={s.invoice}>
+        <FileSection id="invoice" title="Invoice" section={s.invoice}>
           {(d) => <InvoiceView data={d} />}
         </FileSection>
       </div>
 
-      <FileSection title="Balance" section={s.balance}>
+      <FileSection id="balance" title="Balance" section={s.balance}>
         {(d) => <BalanceView data={d} />}
       </FileSection>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <FileSection title="Beads needed" section={s.beads}>
+      <div className="grid gap-8 lg:grid-cols-2">
+        <FileSection id="beads" title="Beads needed" section={s.beads}>
           {(d) => <SpecView data={d} empty="No beads specified yet." />}
         </FileSection>
-        <FileSection title="Fabric type" section={s.fabric}>
+        <FileSection id="fabric" title="Fabric type" section={s.fabric}>
           {(d) => <SpecView data={d} empty="No fabric specified yet." />}
         </FileSection>
       </div>
 
-      <FileSection title="Illustration and mood board" section={s.illustrations}>
+      <FileSection id="illustrations" title="Illustration and mood board" section={s.illustrations}>
         {(d) => <IllustrationsView data={d} clientId={clientId} canAdd={portal === "admin" && file.scope === "house"} onAdded={() => void load()} />}
       </FileSection>
 
-      <FileSection title="Fitting and alteration" section={s.fitting}>
+      <FileSection id="fitting" title="Fitting and alteration" section={s.fitting}>
         {(d) => <FittingView data={d} />}
       </FileSection>
 
-      <FileSection title="Who is making it" section={s.making}>
+      <FileSection id="making" title="Who is making it" section={s.making}>
         {(d) => (
           <PerCommission rows={d} head={(g) => `${g.orderRef} · now at ${g.currentStageLabel}`}>
             {(g) =>
@@ -457,7 +468,7 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
         )}
       </FileSection>
 
-      <FileSection title="Delivery" section={s.delivery}>
+      <FileSection id="delivery" title="Delivery" section={s.delivery}>
         {(d) => (
           <PerCommission rows={d} head={(g) => `${g.orderRef} · ${g.expectedDate ? date(g.expectedDate) : "no date"}`}>
             {(g) => (
@@ -478,7 +489,7 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
         )}
       </FileSection>
 
-      <FileSection title="Cost of production" section={s.cost}>
+      <FileSection id="cost" title="Cost of production" section={s.cost}>
         {(d) => <CostView data={d} />}
       </FileSection>
     </div>
@@ -509,20 +520,37 @@ function PerCommission<T extends { orderRef?: string }>({
 }
 
 /** BD2: notes under the record they belong to. A corrected note stays, struck through. */
+const NOTES_SHOWN = 3;
+
 function Notes({ notes }: { notes: FileNote[] }) {
+  const [showAll, setShowAll] = useState(false);
   if (!notes.length) return null;
+  // Oldest first; a long history opens on the latest few.
+  const hidden = showAll ? 0 : Math.max(0, notes.length - NOTES_SHOWN);
   return (
-    <ol className="mt-3 space-y-2 border-l-2 border-sand pl-3">
-      {notes.map((n, i) => (
-        <li key={`${n.createdAt}-${i}`} className={n.corrected ? "opacity-60" : undefined}>
-          <p className="font-sans text-10px uppercase tracking-wide text-text-light">
-            {n.stage ? `Step · ${n.sectionLabel}` : "Note"} · {n.authorName} · {formatDate(n.createdAt, "d MMM yyyy, HH:mm")}
-            {n.correction ? " · correction" : ""}
-          </p>
-          <p className={`whitespace-pre-wrap font-sans text-sm text-ink ${n.corrected ? "line-through" : ""}`}>{n.body}</p>
-        </li>
-      ))}
-    </ol>
+    <div className="mt-4">
+      {notes.length > NOTES_SHOWN ? (
+        <button
+          type="button"
+          onClick={() => setShowAll((v) => !v)}
+          aria-expanded={showAll}
+          className="mb-3 font-sans text-xs font-medium text-olive underline underline-offset-2"
+        >
+          {showAll ? "Show only the latest notes" : `Show ${hidden} earlier note${hidden === 1 ? "" : "s"}`}
+        </button>
+      ) : null}
+      <ol className="space-y-3 border-l-2 border-sand pl-4">
+        {notes.slice(hidden).map((n, i) => (
+          <li key={`${n.createdAt}-${i}`} className={n.corrected ? "opacity-60" : undefined}>
+            <p className="font-sans text-11px uppercase tracking-wide text-text-light">
+              {n.stage ? `Step · ${n.sectionLabel}` : "Note"} · {n.authorName} · {formatDate(n.createdAt, "d MMM yyyy, HH:mm")}
+              {n.correction ? " · correction" : ""}
+            </p>
+            <p className={`mt-0.5 whitespace-pre-wrap font-sans text-sm text-ink ${n.corrected ? "line-through" : ""}`}>{n.body}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 
@@ -889,11 +917,88 @@ function ViewAsClientButton({ clientId }: { clientId: string }) {
   );
 }
 
+/** Anchor ids for the jump bar; the order is the page's order. */
+const SECTION_LINKS: { key: keyof ClientFile["sections"]; id: string; label: string }[] = [
+  { key: "consultation", id: "consultation", label: "Consultation" },
+  { key: "brief", id: "brief", label: "Brief" },
+  { key: "measurements", id: "measurements", label: "Measurements" },
+  { key: "about", id: "about", label: "The dress" },
+  { key: "quotation", id: "quotation", label: "Quotation" },
+  { key: "invoice", id: "invoice", label: "Invoice" },
+  { key: "balance", id: "balance", label: "Balance" },
+  { key: "beads", id: "beads", label: "Beads" },
+  { key: "fabric", id: "fabric", label: "Fabric" },
+  { key: "illustrations", id: "illustrations", label: "Mood board" },
+  { key: "fitting", id: "fitting", label: "Fitting" },
+  { key: "making", id: "making", label: "Who is making it" },
+  { key: "delivery", id: "delivery", label: "Delivery" },
+  { key: "cost", id: "cost", label: "Cost" },
+];
+
+/** Sticky row of section links; the one in view is marked as she scrolls. */
+function SectionJumpBar({ sections }: { sections: ClientFile["sections"] }) {
+  const links = SECTION_LINKS.filter((l) => sections[l.key]);
+  const [active, setActive] = useState<string | null>(links[0]?.id ?? null);
+
+  useEffect(() => {
+    const els = links.map((l) => document.getElementById(l.id)).filter((el): el is HTMLElement => !!el);
+    if (!els.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const top = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (top) setActive(top.target.id);
+      },
+      { rootMargin: "-80px 0px -60% 0px" },
+    );
+    els.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [links.map((l) => l.id).join(",")]);
+
+  // Keep the active chip visible when the bar overflows sideways.
+  useEffect(() => {
+    if (active) document.getElementById(`jump-${active}`)?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [active]);
+
+  function jump(e: React.MouseEvent, id: string) {
+    e.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(id);
+  }
+
+  return (
+    <nav
+      aria-label="Sections of the client file"
+      className="sticky top-0 z-20 -mx-4 border-b border-sand bg-bg/95 px-4 py-2.5 backdrop-blur md:-mx-8 md:px-8"
+    >
+      <ul className="flex gap-2 overflow-x-auto [scrollbar-width:none]">
+        {links.map((l) => (
+          <li key={l.id} className="shrink-0">
+            <a
+              id={`jump-${l.id}`}
+              href={`#${l.id}`}
+              onClick={(e) => jump(e, l.id)}
+              aria-current={active === l.id ? "true" : undefined}
+              className={`block rounded-full border px-3.5 py-1.5 font-sans text-xs font-medium transition-colors ${
+                active === l.id ? "border-choc bg-choc text-cream" : "border-sand text-text-mid hover:border-ink hover:text-ink"
+              }`}
+            >
+              {l.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
 function FileSection<T>({
+  id,
   title,
   section,
   children,
 }: {
+  id: string;
   title: string;
   section: Section<T> | undefined;
   children: (data: T) => React.ReactNode;
@@ -901,8 +1006,8 @@ function FileSection<T>({
   if (!section) return null;
   if (!section.visible) {
     return (
-      <section className="card-surface border-dashed p-6 opacity-80">
-        <h2 className="font-display text-lg text-ink">{title}</h2>
+      <section id={id} className="card-surface scroll-mt-20 border-dashed p-6 opacity-80 md:p-8">
+        <h2 className="font-display text-2xl font-bold text-ink">{title}</h2>
         <p className="mt-2 font-sans text-sm text-text-mid">
           This section exists on her file but is not open to you. {section.reason}
         </p>
@@ -910,9 +1015,9 @@ function FileSection<T>({
     );
   }
   return (
-    <section className="card-surface p-6">
-      <h2 className="font-display text-lg text-ink">{title}</h2>
-      <div className="mt-4">{children(section.data)}</div>
+    <section id={id} className="card-surface scroll-mt-20 p-6 md:p-8">
+      <h2 className="border-b border-sand pb-3 font-display text-2xl font-bold text-ink">{title}</h2>
+      <div className="mt-5 leading-relaxed">{children(section.data)}</div>
     </section>
   );
 }
