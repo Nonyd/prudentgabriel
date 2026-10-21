@@ -19,6 +19,7 @@ import {
 } from "@/components/admin/CommissionFilePanels";
 import { NotesStream } from "@/components/admin/NotesStream";
 import { CommissionDeleteControl } from "@/components/admin/CommissionDeleteControl";
+import { RecordProgressControl } from "@/components/admin/RecordProgressControl";
 import { NOTE_SECTIONS } from "@/lib/atelier/commission-notes-shared";
 import { formatNgnKobo } from "@/lib/money";
 import type {
@@ -735,6 +736,17 @@ export function BespokeOrderDetailClient({
               >
                 Mark Stage Complete
               </Button>
+              {isAdminActor ? (
+                <RecordProgressControl<OrderWithRelations>
+                  orderId={order.id}
+                  currentStage={order.currentStage}
+                  noEmail={(order.clientEmail ?? "").trim().toLowerCase().endsWith(".invalid")}
+                  onRecorded={(item) => {
+                    setOrder((o) => ({ ...o, ...item }));
+                    seedNotesFromOrder(item);
+                  }}
+                />
+              ) : null}
               {isAdminActor ? (
                 <Button variant="ghost" onClick={() => setRevertOpen(true)}>
                   Revert stage

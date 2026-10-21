@@ -17,5 +17,5 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     ip: getClientIp(req),
   });
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
-  return NextResponse.json({ ok: true, changed: result.changed, email: result.newEmail });
+  return NextResponse.json({ ok: true, changed: result.changed, email: result.newEmail, records: result.records ?? null });
 }

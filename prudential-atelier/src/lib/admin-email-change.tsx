@@ -1,4 +1,5 @@
 import { Heading, Text } from "@react-email/components";
+import { InvoiceStatus, OrderStatus, QuoteStatus } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { isProtectedAccount } from "@/lib/roles";
@@ -18,9 +19,26 @@ import { EMAIL_CHOC, EMAIL_INK, FONT_BODY } from "@/emails/components/email-toke
 
 export type EmailChangeActor = { id: string; email: string | null | undefined; role: string | null | undefined };
 
+/** Open records that copy her email, moved with it; how many of each. */
+export type EmailChangeRecords = { commissions: number; quotations: number; invoices: number };
+
 export type EmailChangeResult =
-  | { ok: true; changed: boolean; oldEmail: string; newEmail: string }
+  | { ok: true; changed: boolean; oldEmail: string; newEmail: string; records?: EmailChangeRecords }
   | { ok: false; status: number; error: string };
+
+/**
+ * Commissions, quotations and invoices keep their own copy of her email, which
+ * stage emails, approval links and reminders are sent to. The open ones follow
+ * her new address (a client onboarded with a placeholder starts receiving mail);
+ * finished paperwork keeps the address it was issued to.
+ */
+export const OPEN_COMMISSION_STATUSES: OrderStatus[] = Object.values(OrderStatus).filter(
+  (s) => !([OrderStatus.DELIVERED, OrderStatus.COLLECTED, OrderStatus.CANCELLED, OrderStatus.REFUNDED, OrderStatus.ABANDONED] as OrderStatus[]).includes(s),
+);
+export const OPEN_QUOTATION_STATUSES: QuoteStatus[] = [QuoteStatus.DRAFT, QuoteStatus.SENT, QuoteStatus.APPROVED];
+export const OPEN_INVOICE_STATUSES: InvoiceStatus[] = Object.values(InvoiceStatus).filter(
+  (s) => !([InvoiceStatus.PAID, InvoiceStatus.CANCELLED] as InvoiceStatus[]).includes(s),
+);
 
 const emailSchema = z.string().trim().toLowerCase().email().max(254);
 
@@ -83,11 +101,28 @@ export async function changeUserEmail(params: {
     return { ok: false, status: 409, error: "Another account already uses that email." };
   }
 
+  let records: EmailChangeRecords;
   try {
-    await prisma.user.update({
-      where: { id: target.id },
-      // A new address is unproven until its owner confirms it.
-      data: { email: newEmail, emailVerified: null },
+    records = await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: target.id },
+        // A new address is unproven until its owner confirms it.
+        data: { email: newEmail, emailVerified: null },
+      });
+      const hers = { clientEmail: { equals: oldEmail, mode: "insensitive" as const } };
+      const commissions = await tx.bespokeOrder.updateMany({
+        where: { ...hers, archivedAt: null, status: { in: OPEN_COMMISSION_STATUSES } },
+        data: { clientEmail: newEmail },
+      });
+      const quotations = await tx.quotation.updateMany({
+        where: { ...hers, status: { in: OPEN_QUOTATION_STATUSES } },
+        data: { clientEmail: newEmail },
+      });
+      const invoices = await tx.invoice.updateMany({
+        where: { ...hers, status: { in: OPEN_INVOICE_STATUSES } },
+        data: { clientEmail: newEmail },
+      });
+      return { commissions: commissions.count, quotations: quotations.count, invoices: invoices.count };
     });
   } catch (e) {
     if ((e as { code?: string }).code === "P2002") {
@@ -106,7 +141,11 @@ export async function changeUserEmail(params: {
     userRole: params.actor.role ?? undefined,
     action: "UPDATE",
     module: "users",
-    description: `${self ? "Changed own sign-in email" : "Changed sign-in email"} ${oldEmail} → ${newEmail}`,
+    description:
+      `${self ? "Changed own sign-in email" : "Changed sign-in email"} ${oldEmail} → ${newEmail}` +
+      (records.commissions + records.quotations + records.invoices
+        ? `; moved onto ${records.commissions} commission(s), ${records.quotations} quotation(s), ${records.invoices} invoice(s)`
+        : ""),
     recordId: target.id,
     recordType: "User",
     ipAddress: params.ip,
@@ -124,5 +163,5 @@ export async function changeUserEmail(params: {
     });
   })().catch((error) => logServerError({ errorType: "EMAIL_CHANGE_NOTICE", error }));
 
-  return { ok: true, changed: true, oldEmail, newEmail };
+  return { ok: true, changed: true, oldEmail, newEmail, records };
 }

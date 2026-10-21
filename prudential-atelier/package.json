@@ -114,6 +114,7 @@
     "test:db-guard": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-db-guard-wiring.ts",
     "test:marketing-consent": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-marketing-consent.ts",
     "test:type-scale": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-type-scale.ts",
+    "test:client-onboarding": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-client-onboarding.ts",
     "test:rtw-launch": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-rtw-launch.ts",
     "test:authz": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-authz.ts",
     "test:sanitize-html": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-sanitize-html.ts",

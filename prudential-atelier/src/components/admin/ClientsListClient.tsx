@@ -182,15 +182,23 @@ export function ClientsListClient() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="eyebrow">CRM</p>
-        <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">Clients</h1>
-        <p className="mt-1 font-sans text-sm text-text-mid">
-          Client profiles, measurements, and order history ·{" "}
-          <Link href="/admin/clients/places" className="underline hover:text-nut">
-            Where clients are
-          </Link>
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="eyebrow">CRM</p>
+          <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">Clients</h1>
+          <p className="mt-1 font-sans text-sm text-text-mid">
+            Client profiles, measurements, and order history ·{" "}
+            <Link href="/admin/clients/places" className="underline hover:text-nut">
+              Where clients are
+            </Link>
+          </p>
+        </div>
+        <Link
+          href="/admin/clients/new"
+          className="rounded-sm bg-choc px-5 py-2.5 font-sans text-xs font-semibold uppercase tracking-[0.12em] text-cream hover:opacity-90"
+        >
+          + New client
+        </Link>
       </div>
 
       <div className="flex flex-wrap gap-2">
