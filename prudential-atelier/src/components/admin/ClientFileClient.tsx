@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { formatDate, formatPrice, formatNGN } from "@/lib/utils";
@@ -935,16 +935,30 @@ const SECTION_LINKS: { key: keyof ClientFile["sections"]; id: string; label: str
   { key: "cost", id: "cost", label: "Cost" },
 ];
 
+/** The nearest ancestor that scrolls vertically; the document if none does. */
+function scrollParent(el: HTMLElement): HTMLElement {
+  for (let node = el.parentElement; node; node = node.parentElement) {
+    const { overflowY } = window.getComputedStyle(node);
+    if ((overflowY === "auto" || overflowY === "scroll") && node.scrollHeight > node.clientHeight) return node;
+  }
+  return (document.scrollingElement as HTMLElement) ?? document.documentElement;
+}
+
 /** Sticky row of section links; the one in view is marked as she scrolls. */
 function SectionJumpBar({ sections }: { sections: ClientFile["sections"] }) {
   const links = SECTION_LINKS.filter((l) => sections[l.key]);
   const [active, setActive] = useState<string | null>(links[0]?.id ?? null);
+  const navRef = useRef<HTMLElement>(null);
+  const stripRef = useRef<HTMLUListElement>(null);
+  // While a click's scroll runs, the sections passing by must not steal the mark.
+  const jumpingUntil = useRef(0);
 
   useEffect(() => {
     const els = links.map((l) => document.getElementById(l.id)).filter((el): el is HTMLElement => !!el);
     if (!els.length) return;
     const observer = new IntersectionObserver(
       (entries) => {
+        if (Date.now() < jumpingUntil.current) return;
         const top = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
         if (top) setActive(top.target.id);
       },
@@ -955,23 +969,43 @@ function SectionJumpBar({ sections }: { sections: ClientFile["sections"] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [links.map((l) => l.id).join(",")]);
 
-  // Keep the active chip visible when the bar overflows sideways.
+  // Keep the active chip in view when the bar overflows sideways. Only the strip
+  // moves: scrollIntoView here would also scroll the page and cancel a jump.
   useEffect(() => {
-    if (active) document.getElementById(`jump-${active}`)?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    const strip = stripRef.current;
+    const chip = active ? document.getElementById(`jump-${active}`) : null;
+    if (!strip || !chip) return;
+    const left = chip.offsetLeft - strip.offsetLeft;
+    if (left < strip.scrollLeft || left + chip.offsetWidth > strip.scrollLeft + strip.clientWidth) {
+      strip.scrollTo({ left: Math.max(0, left - 16), behavior: "smooth" });
+    }
   }, [active]);
 
   function jump(e: React.MouseEvent, id: string) {
     e.preventDefault();
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const target = document.getElementById(id);
+    if (!target) return;
+    // The page scrolls inside the portal's <main>, not the window: scroll that, and stop below the sticky bar.
+    const scroller = scrollParent(target);
+    const isDocument = scroller === document.scrollingElement;
+    // The bar sticks inside the scroller's padding, so it covers padding + its own height.
+    const covered = (isDocument ? 0 : parseFloat(window.getComputedStyle(scroller).paddingTop) || 0) + (navRef.current?.offsetHeight ?? 0);
+    const scrollerTop = isDocument ? 0 : scroller.getBoundingClientRect().top;
+    const top = target.getBoundingClientRect().top - scrollerTop + scroller.scrollTop - covered - 12;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    jumpingUntil.current = Date.now() + 1000;
+    scroller.scrollTo({ top: Math.max(0, top), behavior: reduce ? "auto" : "smooth" });
     setActive(id);
+    window.history.replaceState(null, "", `#${id}`);
   }
 
   return (
     <nav
+      ref={navRef}
       aria-label="Sections of the client file"
       className="sticky top-0 z-20 -mx-4 border-b border-sand bg-bg/95 px-4 py-2.5 backdrop-blur md:-mx-8 md:px-8"
     >
-      <ul className="flex gap-2 overflow-x-auto [scrollbar-width:none]">
+      <ul ref={stripRef} className="flex gap-2 overflow-x-auto [scrollbar-width:none]">
         {links.map((l) => (
           <li key={l.id} className="shrink-0">
             <a
