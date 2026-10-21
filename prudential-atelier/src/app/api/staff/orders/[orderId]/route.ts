@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { MEASUREMENT_ASSIGNMENT_ROLES } from "@/lib/bespoke-data-access";
 import { specificationInclude, specificationRows } from "@/lib/atelier/construction-features";
 import { resolveStaffPortalUser } from "@/lib/staff-view-as";
+import { stepLabel } from "@/lib/atelier/pipeline";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: string }> }) {
   const session = await auth();
@@ -18,6 +19,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: s
 
   const assignment = await prisma.orderAssignment.findFirst({
     where: { orderId, staffProfileId: staff.id },
+    include: { orderStage: { select: { stage: true, label: true } } },
   });
   if (!assignment) {
     return NextResponse.json({ error: "You are not assigned to this order" }, { status: 403 });
@@ -28,7 +30,12 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: s
     include: {
       materials: true,
       ...specificationInclude,
-      stageHistory: { orderBy: { completedAt: "desc" }, take: 5 },
+      stageHistory: {
+        orderBy: { completedAt: "desc" },
+        take: 5,
+        include: { orderStage: { select: { stage: true, label: true } } },
+      },
+      steps: { where: { status: "ACTIVE" }, orderBy: { position: "asc" }, select: { stage: true, label: true } },
       clientProfile: {
         include: {
           measurements: true,
@@ -60,7 +67,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: s
     : null;
   const stageNotes = order.stageHistory
     .filter((s) => s.notes)
-    .map((s) => ({ stage: s.stage, notes: s.notes, completedAt: s.completedAt.toISOString() }));
+    .map((s) => ({ stage: stepLabel(s.orderStage), notes: s.notes, completedAt: s.completedAt.toISOString() }));
   const images = order.stageHistory.flatMap((s) => s.images);
 
   return NextResponse.json({
@@ -74,6 +81,10 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: s
     moodboardImages: order.moodboardImages ?? [],
     deliveryDate: order.deliveryDate?.toISOString() ?? null,
     currentStage: order.currentStage,
+    // The step she is on, by its name on this order; else what is under way.
+    currentStageLabel: assignment.orderStage
+      ? stepLabel(assignment.orderStage)
+      : order.steps.map(stepLabel).join(", ") || order.currentStage.replace(/_/g, " "),
     assignment: {
       role: assignment.role,
       assignedAt: assignment.assignedAt.toISOString(),

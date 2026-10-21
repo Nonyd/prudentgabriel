@@ -120,6 +120,7 @@ async function main() {
 
   const { prisma } = await import("../src/lib/prisma");
   const { STAGE_ORDER } = await import("../src/lib/bespoke-stages");
+  const { builtInStepId, ensureSteps, syncLeadStage } = await import("../src/lib/atelier/pipeline-db");
   const { convertQuotationToOrder } = await import("../src/lib/quotation-convert");
   const { allocateQuotationBaseRef, formatQuotationRef } = await import("../src/lib/document-numbers");
   const { generateCapabilityToken } = await import("../src/lib/capability-token");
@@ -302,16 +303,24 @@ async function main() {
     // 4. The stages done before the app, written as completeOrderStage writes them.
     //    Stage notes are shown to her on her dashboard: plain words only. Where they
     //    came from is in the team's client note (step 5).
+    await ensureSteps(prisma, order.id);
     for (const stage of stagesBefore) {
-      const done = await prisma.orderStageCompletion.findFirst({ where: { orderId: order.id, stage, revertedAt: null }, select: { id: true } });
+      const orderStageId = (await builtInStepId(prisma, order.id, stage))!;
+      const done = await prisma.orderStageCompletion.findFirst({ where: { orderStageId, revertedAt: null }, select: { id: true } });
       if (done) continue;
       const notes = stage === BespokeStage.DESIGN_APPROVAL ? "Design approved in person." : "Completed.";
       await prisma.stageUpdate.create({
-        data: { orderId: order.id, stage, notes, images: [], videos: [], completedBy: actor.id, completedByName: "Import" },
+        data: { orderId: order.id, orderStageId, stage, notes, images: [], videos: [], completedBy: actor.id, completedByName: "Import" },
       });
-      await prisma.orderStageCompletion.create({ data: { orderId: order.id, stage, completedById: actor.id, notes } });
+      await prisma.orderStageCompletion.create({ data: { orderId: order.id, orderStageId, stage, completedById: actor.id, notes } });
+      await prisma.orderStage.update({ where: { id: orderStageId }, data: { status: "DONE" } });
     }
-    await prisma.bespokeOrder.update({ where: { id: order.id }, data: { currentStage: c.stage } });
+    // Where she is now is under way; the lead stage follows the steps.
+    await prisma.orderStage.updateMany({
+      where: { orderId: order.id, stage: c.stage, status: "PENDING" },
+      data: { status: "ACTIVE", startedAt: new Date() },
+    });
+    await prisma.$transaction((tx) => syncLeadStage(tx, order.id));
 
     // 5. The note for the team, last: its marker means "this client is fully imported".
     await prisma.clientNote.create({

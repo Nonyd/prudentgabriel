@@ -1926,6 +1926,15 @@ enum BespokeStage {
   BEADING_FINISHING
   FINAL_FITTING
   DELIVERY
+  /// A step the house added to one commission (OrderStage.label names it).
+  CUSTOM
+}
+
+enum OrderStageStatus {
+  PENDING
+  ACTIVE
+  DONE
+  SKIPPED
 }
 
 enum StaffDepartment {
@@ -2143,7 +2152,11 @@ model BespokeOrder {
   measurementsSnapshot Json?
   measurementsTakenAt  DateTime?
 
+  /// The lead step: the active step with the lowest position (DELIVERY once
+  /// delivered). Kept by syncLeadStage — never written directly. The order's
+  /// real steps, which can run side by side, are in `steps`.
   currentStage     BespokeStage           @default(CONSULTATION_BOOKING)
+  steps            OrderStage[]
   stageHistory     StageUpdate[]
   stageCompletions OrderStageCompletion[]
   stageMedia       OrderStageMedia[]
@@ -2302,6 +2315,8 @@ model StageUpdate {
   orderId String
   order   BespokeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
+  orderStageId    String
+  orderStage      OrderStage   @relation(fields: [orderStageId], references: [id], onDelete: Cascade)
   stage           BespokeStage
   notes           String?      @db.Text
   images          String[]
@@ -2314,6 +2329,7 @@ model StageUpdate {
   completedAt DateTime @default(now())
 
   @@index([orderId])
+  @@index([orderStageId])
 }
 
 enum StageApprovalStatus {
@@ -2328,14 +2344,15 @@ enum StageMediaKind {
   VIDEO
 }
 
-/// Persisted per-stage completion. Sequential integrity counts rows with revertedAt null.
-/// Reverts preserve the row (revertedAt / revertedById / revertReason) — do not delete.
-/// DB enforces at most one live row per (orderId, stage) via partial unique index
-/// OrderStageCompletion_orderId_stage_live_key (see migration 20260809_stage_completion_live_unique).
+/// Persisted per-step completion. Reverts preserve the row (revertedAt / revertedById /
+/// revertReason) — do not delete. DB enforces at most one live row per step via partial
+/// unique index OrderStageCompletion_orderStageId_live_key (migration 20261026b_order_steps).
 model OrderStageCompletion {
   id            String       @id @default(cuid())
   orderId       String
   order         BespokeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderStageId  String
+  orderStage    OrderStage   @relation(fields: [orderStageId], references: [id], onDelete: Cascade)
   stage         BespokeStage
   completedAt   DateTime     @default(now())
   completedById String
@@ -2348,6 +2365,7 @@ model OrderStageCompletion {
 
   @@index([orderId, stage])
   @@index([orderId, revertedAt])
+  @@index([orderStageId])
 }
 
 /// Stage-scoped media. Null stage is not allowed — unscoped uploads cannot satisfy any gate.
@@ -2355,6 +2373,8 @@ model OrderStageMedia {
   id           String         @id @default(cuid())
   orderId      String
   order        BespokeOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderStageId String
+  orderStage   OrderStage     @relation(fields: [orderStageId], references: [id], onDelete: Cascade)
   stage        BespokeStage
   url          String
   kind         StageMediaKind @default(IMAGE)
@@ -2363,25 +2383,30 @@ model OrderStageMedia {
   createdAt    DateTime       @default(now())
 
   @@index([orderId, stage])
+  @@index([orderStageId])
 }
 
-/// In-progress notes for the current stage (before completion / approval request).
+/// In-progress notes for one step (before completion / approval request).
 model OrderStageDraft {
-  id          String       @id @default(cuid())
-  orderId     String
-  order       BespokeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  stage       BespokeStage
-  notes       String       @db.Text
-  updatedById String?
-  updatedAt   DateTime     @updatedAt
+  id           String       @id @default(cuid())
+  orderId      String
+  order        BespokeOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderStageId String       @unique
+  orderStage   OrderStage   @relation(fields: [orderStageId], references: [id], onDelete: Cascade)
+  stage        BespokeStage
+  notes        String       @db.Text
+  updatedById  String?
+  updatedAt    DateTime     @updatedAt
 
-  @@unique([orderId, stage])
+  @@index([orderId, stage])
 }
 
 model StageApproval {
   id                   String              @id @default(cuid())
   orderId              String
   order                BespokeOrder        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderStageId         String
+  orderStage           OrderStage          @relation(fields: [orderStageId], references: [id], onDelete: Cascade)
   stage                BespokeStage
   status               StageApprovalStatus @default(PENDING)
   requestedAt          DateTime            @default(now())
@@ -2394,6 +2419,7 @@ model StageApproval {
   publicTokenExpiresAt DateTime?
 
   @@index([orderId, stage])
+  @@index([orderStageId])
   @@index([status, requestedAt])
 }
 
@@ -2405,17 +2431,62 @@ model OrderAssignment {
   staffProfileId String
   staffProfile   StaffProfile @relation(fields: [staffProfileId], references: [id])
 
-  role        String
-  stage       BespokeStage?
-  assignedAt  DateTime                 @default(now())
+  role         String
+  stage        BespokeStage?
+  /// The step this person is on. Null = the whole commission.
+  orderStageId String?
+  orderStage   OrderStage?              @relation(fields: [orderStageId], references: [id], onDelete: SetNull)
+  assignedAt   DateTime                 @default(now())
   /// BD7: written when the person files that her part is done.
-  completedAt DateTime?
-  labourLines CostOfProductionLabour[]
-  workLogs    WorkLog[]
+  completedAt  DateTime?
+  labourLines  CostOfProductionLabour[]
+  workLogs     WorkLog[]
 
   @@index([orderId])
   @@index([staffProfileId])
   @@index([stage])
+  @@index([orderStageId])
+}
+
+/// One step of one commission. Every order starts with the thirteen built-in
+/// steps in STAGE_ORDER; the house can then move, skip, add (stage = CUSTOM) and
+/// run steps side by side (several ACTIVE at once). The rules that cannot be
+/// switched off live in src/lib/atelier/pipeline.ts.
+/// DB enforces each built-in step at most once per order via partial unique index
+/// OrderStage_orderId_stage_builtin_key (migration 20261026b_order_steps).
+model OrderStage {
+  id                     String           @id @default(cuid())
+  orderId                String
+  order                  BespokeOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  position               Int
+  stage                  BespokeStage
+  /// Required for CUSTOM steps; an optional rename for a built-in one.
+  label                  String?
+  /// What the client reads under the step on her tracking page.
+  clientDescription      String?          @db.Text
+  status                 OrderStageStatus @default(PENDING)
+  startedAt              DateTime?
+  startedById            String?
+  skippedAt              DateTime?
+  skippedById            String?
+  skippedReason          String?          @db.Text
+  /// CUSTOM steps only — built-in steps read STAGE_REQUIREMENTS.
+  requiresNotes          Boolean          @default(true)
+  minMediaCount          Int              @default(0)
+  requiresClientApproval Boolean          @default(false)
+  createdById            String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+
+  completions OrderStageCompletion[]
+  media       OrderStageMedia[]
+  draft       OrderStageDraft?
+  approvals   StageApproval[]
+  updates     StageUpdate[]
+  assignments OrderAssignment[]
+
+  @@unique([orderId, position])
+  @@index([orderId, status])
 }
 
 /// BC2: construction features the house defines once (mermaid, cup corset, train,

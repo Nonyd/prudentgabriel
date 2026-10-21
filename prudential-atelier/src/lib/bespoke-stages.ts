@@ -1,5 +1,6 @@
 import type { BespokeStage } from "@prisma/client";
 
+/** The thirteen built-in steps, in the order a new commission starts with. CUSTOM is not one of them. */
 export const STAGE_ORDER: BespokeStage[] = [
   "CONSULTATION_BOOKING",
   "CONSULTATION_SESSION",
@@ -30,6 +31,7 @@ export const STAGE_LABELS: Record<BespokeStage, string> = {
   BEADING_FINISHING: "11. Beading & Finishing",
   FINAL_FITTING: "12. Final Fitting",
   DELIVERY: "13. Delivery / Collection",
+  CUSTOM: "Custom step",
 };
 
 export const STAGE_DESCRIPTIONS: Record<BespokeStage, string> = {
@@ -46,6 +48,7 @@ export const STAGE_DESCRIPTIONS: Record<BespokeStage, string> = {
   BEADING_FINISHING: "Hand-beading, embroidery, and finishing details are applied.",
   FINAL_FITTING: "A final fitting confirms the perfect fit before delivery.",
   DELIVERY: "Your completed commission is delivered or ready for collection.",
+  CUSTOM: "A step the atelier added for your commission.",
 };
 
 export const STAGE_SHORT_LABELS: Record<BespokeStage, string> = {
@@ -62,6 +65,7 @@ export const STAGE_SHORT_LABELS: Record<BespokeStage, string> = {
   BEADING_FINISHING: "Beading & Finishing",
   FINAL_FITTING: "Final Fitting",
   DELIVERY: "Delivery",
+  CUSTOM: "Custom step",
 };
 
 export function getNextStage(current: BespokeStage): BespokeStage | null {

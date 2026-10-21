@@ -29,6 +29,7 @@ import {
   PointsType,
 } from "@prisma/client";
 import { STAGE_ORDER } from "../src/lib/bespoke-stages";
+import { ensureSteps } from "../src/lib/atelier/pipeline-db";
 import { measurementPlausibilityError } from "../src/lib/measurements";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
@@ -829,8 +830,17 @@ async function upsertBespokeOrder(params: {
         ? currentIdx
         : Math.max(0, currentIdx - 1);
 
+  // The order's own steps; the timeline and completions point at them.
+  await ensureSteps(prisma, order.id);
+  const stepIds = new Map(
+    (await prisma.orderStage.findMany({ where: { orderId: order.id }, select: { id: true, stage: true } })).map(
+      (s) => [s.stage, s.id] as const,
+    ),
+  );
+
   const stageRows: {
     orderId: string;
+    orderStageId: string;
     stage: BespokeStage;
     notes: string;
     completedBy: string;
@@ -848,6 +858,7 @@ async function upsertBespokeOrder(params: {
       `${STAGE_ORDER[i]} completed for ${params.orderRef}.`;
     stageRows.push({
       orderId: order.id,
+      orderStageId: stepIds.get(stage)!,
       stage,
       notes: note,
       completedBy: "demo-seed",
@@ -868,6 +879,7 @@ async function upsertBespokeOrder(params: {
       await prisma.orderStageCompletion.createMany({
         data: stageRows.map((row) => ({
           orderId: row.orderId,
+          orderStageId: row.orderStageId,
           stage: row.stage,
           completedAt: row.completedAt,
           completedById: completedBy,
@@ -875,6 +887,10 @@ async function upsertBespokeOrder(params: {
         })),
       });
     }
+    await prisma.orderStage.updateMany({
+      where: { id: { in: stageRows.map((r) => r.orderStageId) } },
+      data: { status: "DONE" },
+    });
   }
 
   if (params.amountPaid > 0) {

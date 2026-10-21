@@ -16,6 +16,7 @@ type OrderDetail = {
   moodboardImages: string[];
   deliveryDate: string | null;
   currentStage: string;
+  currentStageLabel?: string;
   assignment: { role: string; assignedAt: string };
   clientFirstName: string;
   measurements: Record<string, unknown> | null;
@@ -79,7 +80,7 @@ export default function StaffOrderDetailPage(props: { params: Promise<{ orderId:
           )}
         </p>
         <p className="font-sans text-sm text-text-mid">
-          Your assignment: {order.assignment.role} · Stage {order.currentStage.replace(/_/g, " ")}
+          Your assignment: {order.assignment.role} · Stage {order.currentStageLabel ?? order.currentStage.replace(/_/g, " ")}
         </p>
         {order.deliveryDate ? (
           <p className="mt-2 font-sans text-sm text-choc">
@@ -145,7 +146,7 @@ export default function StaffOrderDetailPage(props: { params: Promise<{ orderId:
           <ul className="space-y-3">
             {order.stageNotes.map((n) => (
               <li key={n.completedAt} className="font-sans text-sm">
-                <p className="text-xs uppercase text-text-light">{n.stage.replace(/_/g, " ")}</p>
+                <p className="text-xs uppercase text-text-light">{n.stage}</p>
                 <p className="text-text-mid">{n.notes}</p>
               </li>
             ))}

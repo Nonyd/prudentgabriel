@@ -36,7 +36,10 @@ export function commissionSearch(params: URLSearchParams): CommissionSearch {
   const fabricPending = params.get("fabric") === "pending";
 
   const where: Prisma.BespokeOrderWhereInput = {};
-  if (stage && stage !== "all" && STAGES.has(stage)) where.currentStage = stage as BespokeStage;
+  // Orders where that step is under way (several can be, side by side).
+  if (stage && stage !== "all" && STAGES.has(stage)) {
+    where.steps = { some: { stage: stage as BespokeStage, status: "ACTIVE" } };
+  }
   if (status && status !== "all" && STATUSES.has(status)) {
     where.status = status as OrderStatus;
   } else if (!showArchived) {

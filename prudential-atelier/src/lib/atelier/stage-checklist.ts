@@ -1,31 +1,32 @@
-import { BespokeStage, StageApprovalStatus } from "@prisma/client";
-import { getPreviousStage, STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
-import { getStageRequirement } from "@/lib/atelier/stage-requirements";
+import { BespokeStage, OrderStageStatus, StageApprovalStatus } from "@prisma/client";
 import { balanceIsCleared, formatNgnKobo } from "@/lib/money";
+import { sortSteps, startBlockers, stepRequirement, type PipelineStep } from "@/lib/atelier/pipeline";
 
 export type StageMediaLike = {
   id: string;
+  orderStageId: string;
   stage: string;
   url: string;
   kind: string;
 };
 
-/** Replace this stage's media with the POST body so the checklist updates without a reload. */
-export function mergeStageMedia<T extends { currentStage: string; stageMedia?: StageMediaLike[] }>(
+/** Replace this step's media with the POST body so the checklist updates without a reload. */
+export function mergeStageMedia<T extends { stageMedia?: StageMediaLike[] }>(
   order: T,
+  orderStageId: string,
   items: StageMediaLike[],
 ): T {
   return {
     ...order,
-    stageMedia: [...(order.stageMedia ?? []).filter((m) => m.stage !== order.currentStage), ...items],
+    stageMedia: [...(order.stageMedia ?? []).filter((m) => m.orderStageId !== orderStageId), ...items],
   };
 }
 
 export function notesDraftForStage(
-  drafts: { stage: string; notes: string }[] | undefined,
-  stage: string,
+  drafts: { orderStageId: string; notes: string }[] | undefined,
+  orderStageId: string,
 ): string {
-  return drafts?.find((d) => d.stage === stage)?.notes ?? "";
+  return drafts?.find((d) => d.orderStageId === orderStageId)?.notes ?? "";
 }
 
 export type ChecklistFact = {
@@ -62,19 +63,24 @@ export function presentStageChecklist(facts: ChecklistFact[]): ChecklistDisplay[
 }
 
 export function buildStageChecklistFacts(params: {
-  currentStage: BespokeStage;
-  completedStages: Iterable<BespokeStage>;
+  /** The step being completed, and all of the order's steps. */
+  step: PipelineStep;
+  steps: readonly PipelineStep[];
   draftNotes: string;
   mediaCount: number;
   latestApprovalStatus: StageApprovalStatus | string | null | undefined;
   productionUnlockedAt: Date | string | null | undefined;
   balance: number;
 }): ChecklistFact[] {
-  const req = getStageRequirement(params.currentStage);
-  const completed = params.completedStages instanceof Set
-    ? params.completedStages
-    : new Set(params.completedStages);
-  const prev = getPreviousStage(params.currentStage);
+  const req = stepRequirement(params.step);
+  // The house rules for this step to run (earlier intake steps, Design Approval, Delivery last).
+  const ordering = startBlockers({
+    step: { ...params.step, status: OrderStageStatus.PENDING },
+    steps: params.steps,
+    productionUnlocked: true,
+    alongside: false,
+  });
+  const isFirst = sortSteps(params.steps)[0]?.id === params.step.id;
   const approval = params.latestApprovalStatus ?? null;
   const approvalMet = approval === StageApprovalStatus.APPROVED || approval === "APPROVED";
   const mediaMet = req.requiresMedia
@@ -86,9 +92,9 @@ export function buildStageChecklistFacts(params: {
   return [
     {
       key: "prev",
-      label: prev ? `${STAGE_SHORT_LABELS[prev]} complete` : "First stage — no predecessor",
-      required: Boolean(prev),
-      met: !prev || completed.has(prev),
+      label: isFirst ? "First stage — no predecessor" : ordering[0]?.message ?? "Earlier steps complete",
+      required: !isFirst,
+      met: ordering.length === 0,
     },
     {
       key: "notes",
@@ -99,7 +105,7 @@ export function buildStageChecklistFacts(params: {
     {
       key: "media",
       label:
-        params.currentStage === BespokeStage.DELIVERY
+        params.step.stage === BespokeStage.DELIVERY
           ? `${params.mediaCount}/${req.minMediaCount || 1} delivery photo(s) uploaded`
           : `${params.mediaCount}/${Math.max(req.minMediaCount, 1)} photo(s) uploaded`,
       required: req.requiresMedia,

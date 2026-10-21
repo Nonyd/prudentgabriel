@@ -7,7 +7,8 @@ import { mapProductToListItem } from "@/lib/map-product-list-item";
 import type { AccountDashboard, DashboardState } from "@/components/account/AccountDashboard";
 import { canSubmitTestimonial } from "@/lib/testimonial-eligibility";
 import { formatBespokeBook } from "@/lib/atelier-fx";
-import { liveCompletionStages, clientStageHistory } from "@/lib/atelier/live-stages";
+import { clientStepHistory } from "@/lib/atelier/live-stages";
+import { clientSteps, CLIENT_STEP_SELECT } from "@/lib/atelier/pipeline";
 import { isBespokeCommissionActive } from "@/lib/bespoke-archive";
 import { getAlterationWarrantyDays } from "@/lib/alterations/policy";
 import { ensureTrackingRaw } from "@/lib/capability-token-lookup";
@@ -102,7 +103,7 @@ export async function loadAccountDashboardProps(params: {
         take: 20,
         include: {
           stageHistory: { orderBy: { completedAt: "desc" }, take: 1 },
-          stageCompletions: { select: { stage: true, revertedAt: true } },
+          steps: { orderBy: { position: "asc" }, select: CLIENT_STEP_SELECT },
           consultation: { select: { bookingNumber: true } },
         },
       }),
@@ -151,9 +152,12 @@ export async function loadAccountDashboardProps(params: {
         ...activeBespokeRaw,
         trackingToken: await ensureTrackingRaw(activeBespokeRaw),
         moodboardImages: clientMediaSrcs(activeBespokeRaw.moodboardImages),
-        stageHistory: clientStageHistory(
+        steps: clientSteps(activeBespokeRaw.steps),
+        stageHistory: clientStepHistory(
           activeBespokeRaw.stageHistory,
-          liveCompletionStages(activeBespokeRaw.stageCompletions),
+          clientSteps(activeBespokeRaw.steps)
+            .filter((s) => s.status === "DONE")
+            .map((s) => s.id),
         ),
       }
     : undefined;

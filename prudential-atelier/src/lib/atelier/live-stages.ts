@@ -31,6 +31,25 @@ export function isLiveStageDone(stage: BespokeStage, live: Set<BespokeStage>): b
 }
 
 /**
+ * The same, by step: the latest timeline row of each step that is done now (a
+ * reopened step's old row is left out), with the intake notes in her words.
+ * Custom steps share the stage CUSTOM, so steps — not stages — are the key.
+ */
+export function clientStepHistory<T extends { stage: BespokeStage; orderStageId: string; notes?: string | null }>(
+  history: T[],
+  doneStepIds: Iterable<string>,
+): T[] {
+  const done = new Set(doneStepIds);
+  const byStep = new Map<string, T>();
+  for (const row of history) {
+    if (done.has(row.orderStageId)) byStep.set(row.orderStageId, row);
+  }
+  return Array.from(byStep.values()).map((row) =>
+    row.notes == null ? row : { ...row, notes: clientStageNote(row.stage, row.notes) },
+  );
+}
+
+/**
  * What her own pages show (dashboard, commission page, /track): the live
  * completions, with the house's system notes on the intake stages in her words.
  */

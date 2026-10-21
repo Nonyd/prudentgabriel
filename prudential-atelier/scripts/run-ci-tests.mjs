@@ -52,6 +52,7 @@ const TESTS = [
   "test-slice-z4",
   "test-who-is-told",
   "test-media-url-schemas",
+  "test-pipeline-flex",
 ];
 
 const failed = [];

@@ -20,11 +20,11 @@ import {
 import { NotesStream } from "@/components/admin/NotesStream";
 import { CommissionDeleteControl } from "@/components/admin/CommissionDeleteControl";
 import { RecordProgressControl } from "@/components/admin/RecordProgressControl";
+import { OrderStepsPanel, type PanelStep } from "@/components/admin/OrderStepsPanel";
 import { NOTE_SECTIONS } from "@/lib/atelier/commission-notes-shared";
 import { formatNgnKobo } from "@/lib/money";
 import type {
   BespokeOrder,
-  BespokeStage,
   ClientProfile,
   CommissionFeature,
   ConstructionFeature,
@@ -48,8 +48,9 @@ import { CommissionSpecPanel } from "@/components/admin/CommissionSpecPanel";
 import { specificationRows } from "@/lib/atelier/spec-rows";
 import { BESPOKE_MANAGER_ROLES, sessionHasRole } from "@/lib/bespoke-roles";
 import { useHasPermission } from "@/hooks/useHasPermission";
-import { STAGE_LABELS, STAGE_ORDER, getStageProgress } from "@/lib/bespoke-stages";
-import { getStageRequirement, stageRoleAllows } from "@/lib/atelier/stage-requirements";
+import { STAGE_LABELS } from "@/lib/bespoke-stages";
+import { stageRoleAllows } from "@/lib/atelier/stage-requirements";
+import { leadStep, sortSteps, stepLabel, stepProgress, stepRequirement } from "@/lib/atelier/pipeline";
 import {
   buildStageChecklistFacts,
   mergeStageMedia,
@@ -66,6 +67,8 @@ type LedgerPayment = Payment & {
 };
 
 type OrderWithRelations = BespokeOrder & {
+  /** The commission's own steps, in their order (several can be under way). */
+  steps?: PanelStep[];
   stageHistory: StageUpdate[];
   stageCompletions?: OrderStageCompletion[];
   stageMedia?: OrderStageMedia[];
@@ -93,6 +96,13 @@ type OrderWithRelations = BespokeOrder & {
   /** BD4: the balance itself is hidden from non-money viewers; this says whether it is cleared. */
   balanceCleared?: boolean;
 };
+
+/** The step the completion panel works on: the one chosen, else the first under way. */
+function workingStep(steps: PanelStep[] | undefined, preferId?: string | null): PanelStep | null {
+  const sorted = sortSteps(steps ?? []);
+  const running = sorted.filter((s) => s.status === "ACTIVE");
+  return running.find((s) => s.id === preferId) ?? running[0] ?? leadStep(sorted);
+}
 
 function ledgerAmount(p: LedgerPayment): number {
   return typeof p.amount === "number" ? p.amount : Number(p.amount.toString());
@@ -122,12 +132,17 @@ export function BespokeOrderDetailClient({
     materialCost?: boolean;
     labourCost?: boolean;
     specEdit?: boolean;
+    /** Holds `bespoke.pipeline`: may move, skip, add and start steps. */
+    pipeline?: boolean;
   };
   /** BD1: composed on the server ("Mrs. Prudent — 60th birthday outfit — 25 November"). */
   title?: { text: string; composed: string };
 }) {
   const [order, setOrder] = useState(initial);
-  const [notes, setNotes] = useState(() => notesDraftForStage(initial.stageDrafts, initial.currentStage));
+  const [selectedStepId, setSelectedStepId] = useState<string | null>(() => workingStep(initial.steps)?.id ?? null);
+  const [notes, setNotes] = useState(() =>
+    notesDraftForStage(initial.stageDrafts, workingStep(initial.steps)?.id ?? ""),
+  );
   const savedNotesRef = useRef(notes);
   const [images, setImages] = useState<string[]>([]);
   const [videos, setVideos] = useState<string[]>([]);
@@ -142,23 +157,27 @@ export function BespokeOrderDetailClient({
   const [measurementsDraft, setMeasurementsDraft] = useState<MeasurementData | null>(null);
   const [requestingApproval, setRequestingApproval] = useState(false);
   const [revertOpen, setRevertOpen] = useState(false);
-  const [revertTarget, setRevertTarget] = useState<BespokeStage | "">("");
+  /** The done step to reopen. */
+  const [revertTarget, setRevertTarget] = useState("");
   const [revertReason, setRevertReason] = useState("");
   const [reverting, setReverting] = useState(false);
 
-  const completedStages = new Set(
-    (order.stageCompletions ?? []).filter((s) => !s.revertedAt).map((s) => s.stage),
-  );
-  const req = getStageRequirement(order.currentStage);
-  const stageMedia = (order.stageMedia ?? []).filter((m) => m.stage === order.currentStage);
-  const draftNotes = notes.trim() || notesDraftForStage(order.stageDrafts, order.currentStage).trim();
+  const steps = sortSteps(order.steps ?? []);
+  const running = steps.filter((s) => s.status === "ACTIVE");
+  const step = workingStep(steps, selectedStepId);
+  const stepId = step?.id ?? "";
+  const stepName = step ? stepLabel(step) : "";
+  const stepsById = new Map(steps.map((s) => [s.id, s]));
+  const req = step ? stepRequirement(step) : null;
+  const stageMedia = (order.stageMedia ?? []).filter((m) => m.orderStageId === stepId);
+  const draftNotes = notes.trim() || notesDraftForStage(order.stageDrafts, stepId).trim();
   const latestApproval = (order.stageApprovals ?? [])
-    .filter((a) => a.stage === order.currentStage && a.status !== "SUPERSEDED")
+    .filter((a) => a.orderStageId === stepId && a.status !== "SUPERSEDED")
     .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime())[0];
-  const checklist = presentStageChecklist(
+  const checklist = !step ? [] : presentStageChecklist(
     buildStageChecklistFacts({
-      currentStage: order.currentStage,
-      completedStages,
+      step,
+      steps,
       draftNotes,
       mediaCount: stageMedia.length,
       latestApprovalStatus: latestApproval?.status,
@@ -168,25 +187,27 @@ export function BespokeOrderDetailClient({
     }),
   );
   const unmet = checklist.filter((c) => c.required && !c.met);
-  const canComplete = unmet.length === 0;
+  const canComplete = Boolean(step) && unmet.length === 0;
   const canRequestApproval =
-    req.requiresClientApproval &&
+    Boolean(req?.requiresClientApproval) &&
     latestApproval?.status !== "PENDING" &&
     latestApproval?.status !== "APPROVED" &&
     Boolean(draftNotes) &&
-    (!req.requiresMedia || stageMedia.length >= req.minMediaCount);
+    (!req?.requiresMedia || stageMedia.length >= (req?.minMediaCount ?? 0));
   // The client file opens on the `clients` key; link to it only for those who can open it.
   const canOpenClients = useHasPermission("clients");
   const isAdminActor = access ? access.admin : actorRole === "SUPER_ADMIN" || actorRole === "ADMIN";
   const canManage = access ? access.manage : sessionHasRole(actorRole, null, BESPOKE_MANAGER_ROLES);
   const canRecordMoney = access ? access.money : sessionHasRole(actorRole, null, BESPOKE_MANAGER_ROLES);
   // The stage gate engine's own role rule; the page does not offer what it will refuse.
-  const roleMayWorkStage = stageRoleAllows(actorRole, order.currentStage);
+  const roleMayWorkStage = step ? stageRoleAllows(actorRole, step.stage) : false;
   const isArchived = order.status === "ARCHIVED";
   const deliveryComplete = Boolean(order.deliveredAt);
 
-  const seedNotesFromOrder = (next: OrderWithRelations) => {
-    const seeded = notesDraftForStage(next.stageDrafts, next.currentStage);
+  const seedNotesFromOrder = (next: OrderWithRelations, preferId: string | null = selectedStepId) => {
+    const nextStep = workingStep(next.steps, preferId);
+    setSelectedStepId(nextStep?.id ?? null);
+    const seeded = notesDraftForStage(next.stageDrafts, nextStep?.id ?? "");
     setNotes(seeded);
     savedNotesRef.current = seeded;
   };
@@ -196,20 +217,21 @@ export function BespokeOrderDetailClient({
     const res = await fetch(`/api/bespoke/${order.id}/stage-draft`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ notes: value }),
+      body: JSON.stringify({ notes: value, orderStageId: stepId }),
     });
     if (!res.ok) return;
     savedNotesRef.current = value;
     setOrder((o) => ({
       ...o,
       stageDrafts: [
-        ...(o.stageDrafts ?? []).filter((d) => d.stage !== o.currentStage),
-        ...(value.trim()
+        ...(o.stageDrafts ?? []).filter((d) => d.orderStageId !== stepId),
+        ...(value.trim() && step
           ? [
               {
-                id: `draft-${o.currentStage}`,
+                id: `draft-${stepId}`,
                 orderId: o.id,
-                stage: o.currentStage,
+                orderStageId: stepId,
+                stage: step.stage,
                 notes: value,
                 updatedById: null,
                 updatedAt: new Date(),
@@ -218,7 +240,19 @@ export function BespokeOrderDetailClient({
           : []),
       ],
     }));
-  }, [order.id]);
+  }, [order.id, stepId, step]);
+
+  /** Work on another step under way: keep the notes typed for this one, open that one's. */
+  const selectStep = async (id: string) => {
+    if (id === stepId) return;
+    await persistNotes(notes);
+    setSelectedStepId(id);
+    const seeded = notesDraftForStage(order.stageDrafts, id);
+    setNotes(seeded);
+    savedNotesRef.current = seeded;
+    setImages([]);
+    setVideos([]);
+  };
 
   useEffect(() => {
     if (notes === savedNotesRef.current) return;
@@ -261,12 +295,12 @@ export function BespokeOrderDetailClient({
       const mediaRes = await fetch(`/api/bespoke/${order.id}/stage-media`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ urls, kind: type === "videos" ? "VIDEO" : "IMAGE" }),
+        body: JSON.stringify({ urls, kind: type === "videos" ? "VIDEO" : "IMAGE", orderStageId: stepId }),
       });
       if (!mediaRes.ok) throw new Error("Stage media save failed");
       const mediaData = (await mediaRes.json()) as { items?: OrderStageMedia[] };
       const persisted = mediaData.items ?? [];
-      setOrder((o) => mergeStageMedia(o, persisted));
+      setOrder((o) => mergeStageMedia(o, stepId, persisted));
       if (type === "images") setImages((prev) => [...prev, ...urls]);
       else setVideos((prev) => [...prev, ...urls]);
     } catch {
@@ -282,13 +316,13 @@ export function BespokeOrderDetailClient({
     setCompleting(true);
     try {
       // BD6: taken at the session, these are this commission's measurements (and her latest).
-      if (order.currentStage === "CONSULTATION_SESSION" && measurementsDraft) {
+      if (step?.stage === "CONSULTATION_SESSION" && measurementsDraft) {
         await patchCommissionMeasurements(order.id, measurementsDraft);
       }
       const res = await fetch(`/api/bespoke/${order.id}/complete-stage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes, images, videos }),
+        body: JSON.stringify({ notes, images, videos, orderStageId: stepId }),
       });
       if (!res.ok) {
         const err = (await res.json()) as { error?: string; failures?: { message: string }[] };
@@ -296,7 +330,7 @@ export function BespokeOrderDetailClient({
       }
       const data = (await res.json()) as { item: OrderWithRelations };
       setOrder((o) => ({ ...o, ...data.item }));
-      seedNotesFromOrder(data.item);
+      seedNotesFromOrder(data.item, null);
       setImages([]);
       setVideos([]);
       setConfirmOpen(false);
@@ -314,7 +348,7 @@ export function BespokeOrderDetailClient({
       const res = await fetch(`/api/bespoke/${order.id}/request-approval`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes, images, videos }),
+        body: JSON.stringify({ notes, images, videos, orderStageId: stepId }),
       });
       if (!res.ok) {
         const err = (await res.json()) as { error?: string; failures?: { message: string }[] };
@@ -342,7 +376,7 @@ export function BespokeOrderDetailClient({
       const res = await fetch(`/api/bespoke/${order.id}/revert-stage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetStage: revertTarget, reason: revertReason }),
+        body: JSON.stringify({ orderStageId: revertTarget, reason: revertReason }),
       });
       if (!res.ok) {
         const err = (await res.json()) as { error?: string; failures?: { message: string }[] };
@@ -351,9 +385,9 @@ export function BespokeOrderDetailClient({
       const data = (await res.json()) as { item?: OrderWithRelations };
       if (data.item) {
         setOrder((o) => ({ ...o, ...data.item! }));
-        seedNotesFromOrder(data.item);
+        seedNotesFromOrder(data.item, revertTarget);
       }
-      toast.success("Stage reverted");
+      toast.success("Stage reopened");
       setRevertOpen(false);
       setRevertReason("");
       setRevertTarget("");
@@ -364,9 +398,9 @@ export function BespokeOrderDetailClient({
     }
   };
 
-  const stageAssignments = order.assignments.filter((a) => a.stage === order.currentStage);
+  const stageAssignments = order.assignments.filter((a) => a.orderStageId === stepId);
 
-  const assignStaff = async (stage = order.currentStage) => {
+  const assignStaff = async () => {
     if (!assignStaffId) return;
     const res = await fetch(`/api/bespoke/${order.id}/assign-staff`, {
       method: "POST",
@@ -374,7 +408,7 @@ export function BespokeOrderDetailClient({
       body: JSON.stringify({
         staffProfileId: assignStaffId,
         role: assignRole,
-        stage,
+        orderStageId: stepId,
       }),
     });
     if (!res.ok) {
@@ -452,7 +486,7 @@ export function BespokeOrderDetailClient({
               Delivered
             </span>
           ) : null}
-          <BadgeStage stage={order.currentStage} />
+          <StepBadge steps={steps} />
           {isAdminActor ? <CommissionDeleteControl orderId={order.id} orderRef={order.orderRef} /> : null}
         </div>
       </div>
@@ -481,49 +515,17 @@ export function BespokeOrderDetailClient({
             intro="Call summaries and changes she asks for. The consultation record and the brief are never rewritten by a note."
           />
 
-          <section className="card-surface p-6">
-            <h2 className="font-sans text-xs font-semibold uppercase tracking-wider text-text-light">
-              Production stages
-            </h2>
-            <ol className="mt-6 space-y-0">
-              {STAGE_ORDER.map((stage, idx) => {
-                const done = completedStages.has(stage);
-                const active = stage === order.currentStage;
-                return (
-                  <li key={stage} className="flex gap-4 pb-6 last:pb-0">
-                    <div className="flex flex-col items-center">
-                      <div
-                        className={cn(
-                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-11px font-semibold",
-                          done && "border-lightbr bg-lightbr text-cream",
-                          active && !done && "border-nut bg-nut text-cream animate-pulse",
-                          !done && !active && "border-sand bg-bg-card text-text-light",
-                        )}
-                      >
-                        {idx + 1}
-                      </div>
-                      {idx < STAGE_ORDER.length - 1 ? (
-                        <div className={cn("w-0.5 flex-1 min-h-[24px] mt-1", done ? "bg-lightbr" : "bg-sand")} />
-                      ) : null}
-                    </div>
-                    <div className="min-w-0 flex-1 pt-1">
-                      <p className={cn("font-sans text-sm", active && "font-semibold text-nut")}>
-                        {STAGE_LABELS[stage]}
-                      </p>
-                      {order.assignments
-                        .filter((a) => a.stage === stage)
-                        .map((a) => (
-                          <p key={a.id} className="mt-1 font-sans text-11px text-text-light">
-                            {a.staffProfile.user.name ?? a.staffProfile.user.email}
-                            {a.role ? ` · ${a.role}` : ""}
-                          </p>
-                        ))}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
+          <OrderStepsPanel<OrderWithRelations>
+            orderId={order.id}
+            steps={steps}
+            assignments={order.assignments}
+            canEdit={Boolean(access?.pipeline) && !isArchived && !deliveryComplete}
+            productionUnlocked={Boolean(order.productionUnlockedAt)}
+            onChanged={(item) => {
+              setOrder((o) => ({ ...o, ...item }));
+              seedNotesFromOrder(item);
+            }}
+          />
 
           {order.stageHistory.length > 0 ? (
             <section className="card-surface p-6">
@@ -533,7 +535,9 @@ export function BespokeOrderDetailClient({
               <ul className="mt-4 space-y-6">
                 {order.stageHistory.map((h) => (
                   <li key={h.id} className="border-b border-sand pb-4 last:border-0">
-                    <p className="font-sans text-sm font-medium text-ink">{STAGE_LABELS[h.stage]}</p>
+                    <p className="font-sans text-sm font-medium text-ink">
+                      {stepsById.get(h.orderStageId) ? stepLabel(stepsById.get(h.orderStageId)!) : STAGE_LABELS[h.stage]}
+                    </p>
                     <p className="mt-1 font-sans text-11px text-text-light">
                       {formatDate(h.completedAt)} · {h.completedByName ?? "Admin"}
                     </p>
@@ -583,10 +587,36 @@ export function BespokeOrderDetailClient({
                   </p>
                 ) : null}
               </>
+            ) : !step ? (
+              <p className="font-sans text-sm text-text-mid">No step is under way.</p>
             ) : (
               <>
+            {running.length > 1 ? (
+              <div className="mb-4">
+                <p className="font-sans text-11px font-semibold uppercase tracking-wider text-text-light">
+                  {running.length} steps under way
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2" role="tablist">
+                  {running.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={s.id === stepId}
+                      onClick={() => void selectStep(s.id)}
+                      className={cn(
+                        "rounded-full border px-3 py-1 font-sans text-xs",
+                        s.id === stepId ? "border-nut bg-nut text-cream" : "border-sand text-ink hover:border-nut",
+                      )}
+                    >
+                      {stepLabel(s)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <h2 className="font-sans text-xs font-semibold uppercase tracking-wider text-text-light">
-              Complete current stage — {STAGE_LABELS[order.currentStage]}
+              Complete {running.length > 1 ? "" : "current "}stage — {stepName}
             </h2>
             <div className="mt-4">
               <p className="font-sans text-11px font-semibold uppercase tracking-wider text-text-light">
@@ -673,7 +703,7 @@ export function BespokeOrderDetailClient({
               rows={4}
               className="mt-4 w-full rounded border border-sand px-3 py-2 font-sans text-sm"
             />
-            {order.currentStage === "CONSULTATION_SESSION" && !order.measurementsHidden ? (
+            {step.stage === "CONSULTATION_SESSION" && !order.measurementsHidden ? (
               <div className="mt-4">
                 <p className="font-sans text-11px text-text-mid">
                   Capture measurements now to save a trip later (optional)
@@ -720,7 +750,7 @@ export function BespokeOrderDetailClient({
               </p>
             )}
             <div className="mt-4 flex flex-wrap gap-2">
-              {req.requiresClientApproval ? (
+              {req?.requiresClientApproval ? (
                 <Button
                   variant="secondary"
                   loading={requestingApproval}
@@ -739,7 +769,7 @@ export function BespokeOrderDetailClient({
               {isAdminActor ? (
                 <RecordProgressControl<OrderWithRelations>
                   orderId={order.id}
-                  currentStage={order.currentStage}
+                  steps={steps}
                   noEmail={(order.clientEmail ?? "").trim().toLowerCase().endsWith(".invalid")}
                   onRecorded={(item) => {
                     setOrder((o) => ({ ...o, ...item }));
@@ -833,7 +863,11 @@ export function BespokeOrderDetailClient({
               ) : (
                 order.assignments.map((a) => (
                   <li key={a.id} className="font-sans text-sm">
-                    {a.stage ? `${STAGE_LABELS[a.stage]} · ` : ""}
+                    {a.orderStageId && stepsById.get(a.orderStageId)
+                      ? `${stepLabel(stepsById.get(a.orderStageId)!)} · `
+                      : a.stage
+                        ? `${STAGE_LABELS[a.stage]} · `
+                        : ""}
                     {a.role}: {a.staffProfile.user.name ?? a.staffProfile.user.email}
                   </li>
                 ))
@@ -948,23 +982,24 @@ export function BespokeOrderDetailClient({
         </div>
       </div>
 
-      <Modal open={revertOpen} onClose={() => setRevertOpen(false)} title="Revert to an earlier stage">
+      <Modal open={revertOpen} onClose={() => setRevertOpen(false)} title="Reopen a finished stage">
         <p className="font-sans text-sm text-text-mid">
-          Staff cannot reverse a stage. This is logged with your reason.
+          Staff cannot reverse a stage. Only the stage you choose reopens; steps under way that need it go back to
+          waiting. This is logged with your reason.
         </p>
         <select
           value={revertTarget}
-          onChange={(e) => setRevertTarget(e.target.value as BespokeStage | "")}
+          onChange={(e) => setRevertTarget(e.target.value)}
           className="mt-4 w-full rounded border border-sand px-3 py-2 font-sans text-sm"
         >
-          <option value="">Select earlier stage…</option>
-          {STAGE_ORDER.filter((s) => STAGE_ORDER.indexOf(s) < STAGE_ORDER.indexOf(order.currentStage)).map(
-            (s) => (
-              <option key={s} value={s}>
-                {STAGE_LABELS[s]}
+          <option value="">Select a finished stage…</option>
+          {steps
+            .filter((s) => s.status === "DONE")
+            .map((s) => (
+              <option key={s.id} value={s.id}>
+                {stepLabel(s)}
               </option>
-            ),
-          )}
+            ))}
         </select>
         <textarea
           value={revertReason}
@@ -982,14 +1017,15 @@ export function BespokeOrderDetailClient({
             disabled={!revertTarget || !revertReason.trim()}
             onClick={() => void revertStage()}
           >
-            Revert
+            Reopen
           </Button>
         </div>
       </Modal>
 
       <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} title="Confirm stage completion">
         <p className="font-sans text-sm text-text-mid">
-          This will send an email to <strong>{order.clientName}</strong> and advance the order to the next stage.
+          This will send an email to <strong>{order.clientName}</strong> that {stepName} is complete, and start the
+          next stage if no other is under way.
           Proceed?
         </p>
         <div className="mt-6 flex justify-end gap-2">
@@ -1005,10 +1041,11 @@ export function BespokeOrderDetailClient({
   );
 }
 
-function BadgeStage({ stage }: { stage: BespokeStage }) {
+function StepBadge({ steps }: { steps: PanelStep[] }) {
+  const { done, total } = stepProgress(steps);
   return (
     <span className="rounded-full bg-nut/10 px-3 py-1 font-sans text-10px font-semibold uppercase tracking-wide text-nut">
-      Stage {getStageProgress(stage)}/13
+      {done}/{total} stages done
     </span>
   );
 }

@@ -1,12 +1,14 @@
-import { BespokeStage, StageApprovalStatus } from "@prisma/client";
+import { BespokeStage, OrderStageStatus, StageApprovalStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { STAGE_ORDER, STAGE_LABELS } from "@/lib/bespoke-stages";
+import { STAGE_ORDER } from "@/lib/bespoke-stages";
 import { logActivity } from "@/lib/logger";
+import { sortSteps, stepLabel } from "@/lib/atelier/pipeline";
+import { ensureSteps, loadSteps, syncLeadStage } from "@/lib/atelier/pipeline-db";
 
 /**
  * Progress the house made outside the app: a client onboarded mid-commission, or one
- * with no email who can never open an approval link. The stages before `targetStage`
- * are written as completeOrderStage writes them (a StageUpdate and a completion), with
+ * with no email who can never open an approval link. The order's own steps before
+ * `targetStage` (by position, skipped ones left out) are written as completeOrderStage writes them (a StageUpdate and a completion), with
  * no media or client-approval gate. Design Approval and Final Fitting are recorded as
  * given in person, by name. Nothing is emailed.
  *
@@ -29,7 +31,7 @@ export type StageRecord = { note?: string | null; doneOn?: string | null };
 export type RecordProgressActor = { id: string; name?: string | null; email?: string | null; role?: string | null };
 
 export type RecordProgressResult =
-  | { ok: true; recorded: BespokeStage[]; currentStage: BespokeStage }
+  | { ok: true; recorded: string[]; currentStage: BespokeStage }
   | { ok: false; status: number; error: string };
 
 function doneAt(value: string | null | undefined): Date | undefined {
@@ -53,38 +55,52 @@ export async function recordProgressOutsideApp(params: {
   }
   const order = await prisma.bespokeOrder.findUnique({
     where: { id: orderId },
-    select: { id: true, orderRef: true, currentStage: true, status: true, archivedAt: true },
+    select: { id: true, orderRef: true, status: true, archivedAt: true },
   });
   if (!order) return { ok: false, status: 404, error: "Order not found." };
   if (order.archivedAt) return { ok: false, status: 409, error: "This order is archived." };
   if (order.status === "DELIVERED") return { ok: false, status: 409, error: "This order is already delivered." };
 
-  const from = STAGE_ORDER.indexOf(order.currentStage);
-  const to = STAGE_ORDER.indexOf(targetStage);
-  if (to === from) return { ok: false, status: 409, error: `The order is already at ${STAGE_LABELS[targetStage]}.` };
-  if (to < from) {
-    return { ok: false, status: 409, error: "That stage is behind where the order is. Use “Revert stage” to move it back." };
+  await ensureSteps(prisma, orderId);
+  const steps = sortSteps(await loadSteps(prisma, orderId));
+  const target = steps.find((s) => s.stage === targetStage);
+  if (!target) return { ok: false, status: 404, error: "That step is not on this order." };
+  if (target.status === OrderStageStatus.SKIPPED) {
+    return { ok: false, status: 409, error: `${stepLabel(target)} is skipped on this order.` };
+  }
+  if (target.status === OrderStageStatus.DONE) {
+    return { ok: false, status: 409, error: `${stepLabel(target)} is already done. Use “Revert stage” to reopen it.` };
   }
 
-  const toComplete = STAGE_ORDER.slice(from, to);
+  const toComplete = steps.filter(
+    (s) =>
+      s.position < target.position &&
+      s.status !== OrderStageStatus.DONE &&
+      s.status !== OrderStageStatus.SKIPPED,
+  );
+  if (!toComplete.length && target.status === OrderStageStatus.ACTIVE) {
+    return { ok: false, status: 409, error: `The order is already at ${stepLabel(target)}.` };
+  }
   const byName = actor.name?.trim() || actor.email || "Admin";
+  const now = new Date();
 
-  await prisma.$transaction(async (tx) => {
-    for (const stage of toComplete) {
-      const done = await tx.orderStageCompletion.findFirst({ where: { orderId, stage, revertedAt: null }, select: { id: true } });
-      if (done) continue;
+  const currentStage = await prisma.$transaction(async (tx) => {
+    for (const step of toComplete) {
+      const { stage } = step;
+      const orderStageId = step.id;
       const given = params.stages?.[stage];
       const at = doneAt(given?.doneOn);
       const notes = given?.note?.trim() || IN_PERSON_APPROVAL[stage] || "Completed.";
       if (IN_PERSON_APPROVAL[stage]) {
         // A pending link (if one was sent) is closed; the approval is the one given in person.
         await tx.stageApproval.updateMany({
-          where: { orderId, stage, status: StageApprovalStatus.PENDING },
+          where: { orderStageId, status: StageApprovalStatus.PENDING },
           data: { status: StageApprovalStatus.SUPERSEDED },
         });
         await tx.stageApproval.create({
           data: {
             orderId,
+            orderStageId,
             stage,
             status: StageApprovalStatus.APPROVED,
             requestedById: actor.id,
@@ -97,6 +113,7 @@ export async function recordProgressOutsideApp(params: {
       await tx.stageUpdate.create({
         data: {
           orderId,
+          orderStageId,
           stage,
           notes,
           images: [],
@@ -107,13 +124,20 @@ export async function recordProgressOutsideApp(params: {
         },
       });
       await tx.orderStageCompletion.create({
-        data: { orderId, stage, completedById: actor.id, notes, ...(at ? { completedAt: at } : {}) },
+        data: { orderId, orderStageId, stage, completedById: actor.id, notes, ...(at ? { completedAt: at } : {}) },
+      });
+      await tx.orderStage.update({ where: { id: orderStageId }, data: { status: OrderStageStatus.DONE } });
+    }
+    if (target.status === OrderStageStatus.PENDING) {
+      await tx.orderStage.update({
+        where: { id: target.id },
+        data: { status: OrderStageStatus.ACTIVE, startedAt: now, startedById: actor.id },
       });
     }
-    await tx.bespokeOrder.update({
-      where: { id: orderId },
-      data: { currentStage: targetStage, ...(order.status === "PENDING" ? { status: "PROCESSING" } : {}) },
-    });
+    if (order.status === "PENDING") {
+      await tx.bespokeOrder.update({ where: { id: orderId }, data: { status: "PROCESSING" } });
+    }
+    return syncLeadStage(tx, orderId);
   });
 
   await logActivity({
@@ -123,11 +147,12 @@ export async function recordProgressOutsideApp(params: {
     action: "STAGE_COMPLETE",
     module: "bespoke",
     description:
-      `${order.orderRef}: progress recorded by hand, ${STAGE_LABELS[order.currentStage]} → ${STAGE_LABELS[targetStage]}` +
+      `${order.orderRef}: progress recorded by hand up to ${stepLabel(target)}` +
+      (toComplete.length ? ` (${toComplete.map(stepLabel).join(", ")} done)` : "") +
       (params.reason?.trim() ? ` (${params.reason.trim()})` : ""),
     recordId: orderId,
     recordType: "BespokeOrder",
   });
 
-  return { ok: true, recorded: toComplete, currentStage: targetStage };
+  return { ok: true, recorded: toComplete.map((s) => s.id), currentStage };
 }

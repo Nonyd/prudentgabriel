@@ -1,13 +1,18 @@
 import Image from "next/image";
 import type { BespokeStage, StageUpdate } from "@prisma/client";
 import { STAGE_DESCRIPTIONS, STAGE_ORDER, STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
+import type { ClientStep } from "@/lib/atelier/pipeline";
 import { cn, formatDate } from "@/lib/utils";
 
+type HistoryRow = Pick<StageUpdate, "stage" | "completedAt"> &
+  Partial<Pick<StageUpdate, "notes" | "images" | "orderStageId">>;
+
 type Props = {
+  /** Her order's real steps (clientSteps): skipped ones left out, several can be in progress. */
+  steps?: ClientStep[];
+  /** Only for callers without steps: the thirteen in their fixed order, this one in progress. */
   currentStage: BespokeStage;
-  stageHistory: Array<
-    Pick<StageUpdate, "stage" | "completedAt"> & Partial<Pick<StageUpdate, "notes" | "images">>
-  >;
+  stageHistory: HistoryRow[];
   compact?: boolean;
 };
 
@@ -16,9 +21,29 @@ function daysAgo(date: Date | string): number {
   return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
 }
 
-export function BespokeStageTracker({ currentStage, stageHistory, compact }: Props) {
-  const completedMap = new Map(stageHistory.map((s) => [s.stage, s]));
+/** The thirteen in their fixed order, for an order read without its steps. */
+function fixedSteps(currentStage: BespokeStage, history: HistoryRow[]): ClientStep[] {
+  const done = new Set(history.map((h) => h.stage));
   const currentIdx = STAGE_ORDER.indexOf(currentStage);
+  return STAGE_ORDER.map((stage, idx) => ({
+    id: stage,
+    stage,
+    number: idx + 1,
+    label: STAGE_SHORT_LABELS[stage],
+    description: STAGE_DESCRIPTIONS[stage],
+    status: done.has(stage) ? "DONE" : idx === currentIdx ? "ACTIVE" : "PENDING",
+  }));
+}
+
+export function BespokeStageTracker({ steps, currentStage, stageHistory, compact }: Props) {
+  const list = steps?.length ? steps : fixedSteps(currentStage, stageHistory);
+  // History by step; rows from before steps (no orderStageId) match by stage.
+  const byStep = new Map<string, HistoryRow>();
+  for (const row of stageHistory) {
+    const key = row.orderStageId ?? row.stage;
+    byStep.set(key, row);
+  }
+  const historyFor = (s: ClientStep) => byStep.get(s.id) ?? (s.stage !== "CUSTOM" ? byStep.get(s.stage) : undefined);
 
   return (
     <ol
@@ -27,16 +52,16 @@ export function BespokeStageTracker({ currentStage, stageHistory, compact }: Pro
         compact ? "mt-2 rounded-sm border border-sand/60 bg-ivory p-4 md:p-5" : "card-surface p-6 md:p-8",
       )}
     >
-        {STAGE_ORDER.map((stage, idx) => {
-          const history = completedMap.get(stage);
-          const isDone = Boolean(history);
-          const isActive = idx === currentIdx && !isDone;
+        {list.map((step, idx) => {
+          const history = step.status === "DONE" ? historyFor(step) : undefined;
+          const isDone = step.status === "DONE";
+          const isActive = step.status === "ACTIVE";
           const isPending = !isDone && !isActive;
-          const stageNum = String(idx + 1).padStart(2, "0");
+          const stageNum = String(step.number).padStart(2, "0");
 
           return (
-            <li key={stage} className={cn("relative flex gap-5", compact ? "pb-6 last:pb-0" : "pb-10 last:pb-0")}>
-              {idx < STAGE_ORDER.length - 1 ? (
+            <li key={step.id} className={cn("relative flex gap-5", compact ? "pb-6 last:pb-0" : "pb-10 last:pb-0")}>
+              {idx < list.length - 1 ? (
                 <span
                   className={cn(
                     "absolute left-[18px] top-9 h-[calc(100%-12px)] w-px -translate-x-1/2",
@@ -71,7 +96,7 @@ export function BespokeStageTracker({ currentStage, stageHistory, compact }: Pro
                       isPending && "text-text-light",
                     )}
                   >
-                    {STAGE_SHORT_LABELS[stage]}
+                    {step.label}
                   </p>
                   {isActive ? (
                     <span className="rounded-full bg-sand px-2.5 py-0.5 font-sans text-[9px] font-semibold uppercase tracking-wide text-nut">
@@ -81,9 +106,7 @@ export function BespokeStageTracker({ currentStage, stageHistory, compact }: Pro
                 </div>
 
                 {(isDone || isActive) && !compact ? (
-                  <p className="mt-2 font-body text-[13px] leading-relaxed text-text-mid">
-                    {STAGE_DESCRIPTIONS[stage]}
-                  </p>
+                  <p className="mt-2 font-body text-[13px] leading-relaxed text-text-mid">{step.description}</p>
                 ) : null}
 
                 {history ? (
@@ -106,7 +129,7 @@ export function BespokeStageTracker({ currentStage, stageHistory, compact }: Pro
                   </>
                 ) : null}
 
-                {isActive && history === undefined ? (
+                {isActive ? (
                   <p className="mt-2 font-sans text-[11px] text-text-light">
                     Updated {daysAgo(stageHistory[stageHistory.length - 1]?.completedAt ?? new Date())} days ago
                   </p>

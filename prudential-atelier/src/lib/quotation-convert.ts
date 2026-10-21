@@ -22,6 +22,7 @@ import {
 import { INTAKE_STAGES, intakeStageNotes } from "@/lib/atelier/intake-stages";
 import { carriedFromEnquiry } from "@/lib/atelier/commission-list";
 import { snapshotFrom } from "@/lib/atelier/commission-measurements";
+import { createDefaultSteps } from "@/lib/atelier/pipeline-db";
 import { quotationCurrencySendable } from "@/lib/atelier-quote-currency";
 import {
   CAPABILITY_TTL_MS,
@@ -291,10 +292,18 @@ export async function convertQuotationToOrder(
       consultationPaymentRef: consultation?.paymentRef ?? null,
     });
 
+    // The intake steps are done at convert; Sketching is under way.
+    const stepIds = await createDefaultSteps(tx, {
+      orderId: order.id,
+      activeStage: BespokeStage.SKETCHING_CONCEPT,
+    });
+
     for (const stage of INTAKE_STAGES) {
+      const orderStageId = stepIds.get(stage)!;
       await tx.stageUpdate.create({
         data: {
           orderId: order.id,
+          orderStageId,
           stage,
           notes: notes[stage],
           images: [],
@@ -306,6 +315,7 @@ export async function convertQuotationToOrder(
       await tx.orderStageCompletion.create({
         data: {
           orderId: order.id,
+          orderStageId,
           stage,
           completedById: actorId,
           notes: notes[stage],

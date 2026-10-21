@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { notifyStaffStageAssigned } from "@/lib/staff-notifications";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
+import { stepLabel } from "@/lib/atelier/pipeline";
 
 type Params = { params: Promise<{ orderId: string }> };
 
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!gate.ok) return gate.response;
 
   const { orderId } = await params;
-  let body: { staffProfileId?: string; role?: string; stage?: BespokeStage };
+  let body: { staffProfileId?: string; role?: string; stage?: BespokeStage; orderStageId?: string };
   try {
     body = await req.json();
   } catch {
@@ -32,19 +33,34 @@ export async function POST(req: NextRequest, { params }: Params) {
   });
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
+  // The step she is on: named by id (custom steps have no stage of their own), or by built-in stage.
+  const step = body.orderStageId
+    ? await prisma.orderStage.findFirst({
+        where: { id: body.orderStageId, orderId },
+        select: { id: true, stage: true, label: true },
+      })
+    : body.stage
+      ? await prisma.orderStage.findFirst({
+          where: { orderId, stage: body.stage },
+          select: { id: true, stage: true, label: true },
+        })
+      : null;
+  if (body.orderStageId && !step) return NextResponse.json({ error: "Step not found" }, { status: 404 });
+
   const assignment = await prisma.orderAssignment.create({
     data: {
       orderId,
       staffProfileId: body.staffProfileId,
       role: body.role,
-      stage: body.stage ?? null,
+      stage: step?.stage ?? body.stage ?? null,
+      orderStageId: step?.id ?? null,
     },
     include: {
       staffProfile: { include: { user: { select: { name: true, email: true } } } },
     },
   });
 
-  const stageName = body.stage ? STAGE_SHORT_LABELS[body.stage] : body.role;
+  const stageName = step ? stepLabel(step) : body.stage ? STAGE_SHORT_LABELS[body.stage] : body.role;
   const staffUser = assignment.staffProfile.user;
   const deliveryDate = order.deliveryDate
     ? order.deliveryDate.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })

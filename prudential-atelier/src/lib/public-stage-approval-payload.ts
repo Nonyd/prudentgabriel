@@ -1,6 +1,6 @@
 import { StageApprovalStatus, type StageMediaKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
+import { stepLabel } from "@/lib/atelier/pipeline";
 import { findStageApprovalByPublicToken } from "@/lib/capability-token-lookup";
 
 /** Public stage-approval DTO — the stage, atelier notes, photographs. No client record. */
@@ -40,6 +40,8 @@ export async function loadPublicStageApproval(
     where: { id: found.approval.id },
     select: {
       stage: true,
+      orderStageId: true,
+      orderStage: { select: { stage: true, label: true } },
       status: true,
       order: { select: { id: true, orderRef: true } },
     },
@@ -48,11 +50,11 @@ export async function loadPublicStageApproval(
 
   const [draft, media] = await Promise.all([
     prisma.orderStageDraft.findUnique({
-      where: { orderId_stage: { orderId: approval.order.id, stage: approval.stage } },
+      where: { orderStageId: approval.orderStageId },
       select: { notes: true },
     }),
     prisma.orderStageMedia.findMany({
-      where: { orderId: approval.order.id, stage: approval.stage },
+      where: { orderStageId: approval.orderStageId },
       orderBy: { createdAt: "asc" },
       select: { id: true, url: true, kind: true },
     }),
@@ -61,7 +63,7 @@ export async function loadPublicStageApproval(
   const payload: PublicStageApprovalPayload = {
     orderRef: approval.order.orderRef,
     stage: approval.stage,
-    stageLabel: STAGE_SHORT_LABELS[approval.stage],
+    stageLabel: stepLabel(approval.orderStage),
     notes: draft?.notes?.trim() || null,
     media,
     status: approval.status,

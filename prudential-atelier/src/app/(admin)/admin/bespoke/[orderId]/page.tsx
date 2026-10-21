@@ -10,6 +10,7 @@ import { canSeeOrderMeasurements, redactBespokeOrder } from "@/lib/bespoke-data-
 import { bespokeFacts, bespokeView } from "@/lib/atelier/bespoke-access";
 import { specificationInclude } from "@/lib/atelier/construction-features";
 import { commissionTitle } from "@/lib/atelier/commission-list";
+import { ensureSteps } from "@/lib/atelier/pipeline-db";
 
 export default async function AdminBespokeOrderPage({
   params,
@@ -18,6 +19,7 @@ export default async function AdminBespokeOrderPage({
 }) {
   const { orderId } = await params;
   await maybeArchiveBespokeOrder(orderId);
+  await ensureSteps(prisma, orderId);
 
   const order = await prisma.bespokeOrder.findUnique({
     where: { id: orderId },
@@ -76,6 +78,7 @@ export default async function AdminBespokeOrderPage({
         labourCost: view?.labourCost ?? false,
         specEdit: view?.specEdit ?? false,
         admin: access?.facts.admin ?? false,
+        pipeline: view?.pipeline ?? false,
       }}
       actorUserId={session?.user?.id ?? null}
       staffList={staffList.map((s) => ({

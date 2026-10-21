@@ -7,6 +7,8 @@
 import { BespokeStage, PaymentMethod, PaymentPurpose, PaymentStatus, Role } from "@prisma/client";
 import { prisma } from "../src/lib/prisma";
 import { STAGE_ORDER } from "../src/lib/bespoke-stages";
+import { newOrderSteps } from "../src/lib/atelier/pipeline-db";
+import { legacySnapshot, stepIdFor } from "./pipeline-fixture";
 import { getStageRequirement } from "../src/lib/atelier/stage-requirements";
 import {
   canCompleteStage,
@@ -63,14 +65,16 @@ async function main() {
       amountPaid: 0,
       balance: 500_000,
       currentStage: BespokeStage.CONSULTATION_BOOKING,
+      steps: { create: newOrderSteps(BespokeStage.CONSULTATION_BOOKING) },
     },
   });
+  const stepId = (stage: BespokeStage) => stepIdFor(prisma, order.id, stage);
 
   try {
     // Fresh order cannot jump to stage 9.
     const jump = await canCompleteStage({
       orderId: order.id,
-      stage: BespokeStage.FIRST_FITTING,
+      orderStageId: await stepId(BespokeStage.FIRST_FITTING),
       actor: staff,
       notes: "skip",
     });
@@ -88,8 +92,10 @@ async function main() {
       assert(live.currentStage === stage, `walk: expected ${stage}, on ${live.currentStage}`);
 
       const req = getStageRequirement(stage);
+      const orderStageId = await stepId(stage);
+      const step = { id: orderStageId, stage };
 
-      const blocked = await canCompleteStage({ orderId: order.id, stage, actor: staff });
+      const blocked = await canCompleteStage({ orderId: order.id, orderStageId, actor: staff });
       assert(!blocked.ok, `walk: ${stage} must refuse before notes/media/approval/deposit`);
 
       if (req.requiresDepositSatisfied && !live.productionUnlockedAt) {
@@ -125,18 +131,18 @@ async function main() {
         });
       }
 
-      await saveStageDraft({ orderId: order.id, stage, notes: `${stage} notes`, actorId: staff.id });
+      await saveStageDraft({ orderId: order.id, step, notes: `${stage} notes`, actorId: staff.id });
       if (req.requiresMedia) {
         await addStageMedia({
           orderId: order.id,
-          stage,
+          step,
           urls: [`https://example.test/${stage.toLowerCase()}.jpg`],
           uploadedById: staff.id,
         });
       }
 
       if (req.requiresClientApproval) {
-        const before = await canCompleteStage({ orderId: order.id, stage, actor: staff, notes: `${stage} notes` });
+        const before = await canCompleteStage({ orderId: order.id, orderStageId, actor: staff, notes: `${stage} notes` });
         assert(!before.ok, `walk: ${stage} must refuse without approval`);
         assert(
           before.failures.some((f) => f.code === "CLIENT_APPROVAL_PENDING"),
@@ -184,7 +190,7 @@ async function main() {
     });
     assert(!relocked.productionUnlockedAt, "walk: productionUnlockedAt cleared after deposit reject");
     const relockGate = evaluateStageGate({
-      snapshot: {
+      snapshot: legacySnapshot({
         orderId: order.id,
         orderRef,
         currentStage: BespokeStage.TAILORING,
@@ -194,9 +200,7 @@ async function main() {
         mediaCount: 1,
         latestApprovalStatus: null,
         balance: 350_000,
-        requirement: getStageRequirement(BespokeStage.TAILORING),
-      },
-      stage: BespokeStage.TAILORING,
+      }),
       actor: staff,
     });
     assert(
@@ -226,7 +230,7 @@ async function main() {
 
     const staffRevert = await revertOrderStage({
       orderId: order.id,
-      targetStage: BespokeStage.DESIGN_APPROVAL,
+      orderStageId: await stepId(BespokeStage.DESIGN_APPROVAL),
       reason: "walk staff revert",
       actor: staff,
     });
@@ -234,7 +238,7 @@ async function main() {
 
     const adminRevert = await revertOrderStage({
       orderId: order.id,
-      targetStage: BespokeStage.DESIGN_APPROVAL,
+      orderStageId: await stepId(BespokeStage.DESIGN_APPROVAL),
       reason: "client requested a new sketch",
       actor: admin,
     });
@@ -255,17 +259,22 @@ async function main() {
       "walk: prior design approvals superseded",
     );
     const completions = await prisma.orderStageCompletion.findMany({
-      where: { orderId: order.id, stage: { in: [BespokeStage.DESIGN_APPROVAL, BespokeStage.TAILORING] } },
+      where: { orderId: order.id, stage: BespokeStage.DESIGN_APPROVAL },
     });
     assert(completions.length > 0, "walk: completions preserved");
     assert(
       completions.every((c) => c.revertedAt != null),
       "walk: reverted completions keep revertedAt",
     );
+    // Only the reopened step reopens: Tailoring keeps its completion.
+    const tailoring = await prisma.orderStageCompletion.findMany({
+      where: { orderId: order.id, stage: BespokeStage.TAILORING, revertedAt: null },
+    });
+    assert(tailoring.length === 1, "walk: other done steps keep their completions");
 
     const afterRevert = await canCompleteStage({
       orderId: order.id,
-      stage: BespokeStage.DESIGN_APPROVAL,
+      orderStageId: await stepId(BespokeStage.DESIGN_APPROVAL),
       actor: staff,
       notes: "revised design",
     });

@@ -1,6 +1,9 @@
-import { BespokeStage, OrderStatus, Prisma } from "@prisma/client";
-import { STAGE_ORDER, getStageProgress } from "@/lib/bespoke-stages";
-import { pipelineBlockFor, type PipelineBlock } from "@/lib/atelier/stage-requirements";
+import { BespokeStage, OrderStageStatus, OrderStatus, Prisma } from "@prisma/client";
+import { STAGE_ORDER } from "@/lib/bespoke-stages";
+import { type PipelineBlock } from "@/lib/atelier/stage-requirements";
+import { activeSteps, stepLabel, stepProgress, stepRequirement } from "@/lib/atelier/pipeline";
+import { PIPELINE_STEP_SELECT } from "@/lib/atelier/pipeline-db";
+import { balanceIsCleared } from "@/lib/money";
 
 /**
  * Slice BD1 — the pipeline reads like a job board, not a mailing list.
@@ -68,25 +71,35 @@ export const STAGES_UP_TO_FABRIC: BespokeStage[] = STAGE_ORDER.slice(0, FABRIC_I
 const CLOSED: OrderStatus[] = [OrderStatus.DELIVERED, OrderStatus.ARCHIVED, OrderStatus.CANCELLED];
 
 /**
- * Open, and fabric sourcing not passed — read from the stage engine: no live
- * completion of FABRIC_SOURCING, and the commission has not moved past it.
- * No "fabric sourced" flag that could disagree with the stages.
+ * Open, and fabric sourcing not done — read from the order's own steps: its
+ * Fabric Sourcing step is waiting or under way (skipped or done is not pending).
+ * No "fabric sourced" flag that could disagree with the steps.
  */
 export function fabricPendingWhere(): Prisma.BespokeOrderWhereInput {
   return {
     status: { notIn: CLOSED },
-    currentStage: { in: STAGES_UP_TO_FABRIC },
-    stageCompletions: { none: { stage: "FABRIC_SOURCING", revertedAt: null } },
+    steps: {
+      some: {
+        stage: "FABRIC_SOURCING",
+        status: { in: [OrderStageStatus.PENDING, OrderStageStatus.ACTIVE] },
+      },
+    },
   };
 }
 
-/** Pure twin of fabricPendingWhere, for a row already loaded. */
+/**
+ * Pure twin of fabricPendingWhere, for a row already loaded. `fabricStep` is the
+ * order's Fabric Sourcing step status; without it (an order with no steps) the
+ * fixed order of the thirteen stages decides.
+ */
 export function isFabricPending(o: {
   status: OrderStatus;
   currentStage: BespokeStage;
   liveStages: Iterable<BespokeStage>;
+  fabricStep?: OrderStageStatus | null;
 }): boolean {
   if (CLOSED.includes(o.status)) return false;
+  if (o.fabricStep) return o.fabricStep === OrderStageStatus.PENDING || o.fabricStep === OrderStageStatus.ACTIVE;
   if (!STAGES_UP_TO_FABRIC.includes(o.currentStage)) return false;
   for (const s of o.liveStages) if (s === "FABRIC_SOURCING") return false;
   return true;
@@ -114,8 +127,9 @@ export const commissionListSelect = {
   createdAt: true,
   garmentType: { select: { key: true, label: true } },
   features: { select: { featureId: true, feature: { select: { key: true, label: true } } } },
-  stageApprovals: { where: { status: "PENDING" as const }, select: { stage: true } },
+  stageApprovals: { where: { status: "PENDING" as const }, select: { stage: true, orderStageId: true } },
   stageCompletions: { where: { revertedAt: null }, select: { stage: true } },
+  steps: { select: PIPELINE_STEP_SELECT, orderBy: { position: "asc" as const } },
 } satisfies Prisma.BespokeOrderSelect;
 
 type ListSource = Prisma.BespokeOrderGetPayload<{ select: typeof commissionListSelect }>;
@@ -134,8 +148,13 @@ export type CommissionRow = {
   eventDate: string | null;
   garment: { key: string; label: string } | null;
   features: { key: string; label: string }[];
+  /** The lead step (the first under way). */
   currentStage: BespokeStage;
+  /** Every step under way, by name: several run side by side. */
+  activeSteps: { id: string; label: string }[];
+  /** Steps done, and steps this order has (skipped ones not counted). */
   progress: number;
+  totalSteps: number;
   status: OrderStatus;
   /** Server-decided, so the balance itself never travels to a non-money viewer. */
   block: PipelineBlock;
@@ -152,7 +171,11 @@ const day = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
  */
 export function commissionRow(o: ListSource): CommissionRow {
   const live = o.stageCompletions.map((c) => c.stage);
-  const pendingApproval = o.stageApprovals.some((a) => a.stage === o.currentStage);
+  const running = activeSteps(o.steps);
+  const { done, total } = stepProgress(o.steps);
+  const pendingIds = new Set(o.stageApprovals.map((a) => a.orderStageId));
+  const blockedOnClient = running.some((s) => stepRequirement(s).requiresClientApproval && pendingIds.has(s.id));
+  const blockedOnBalance = running.some((s) => stepRequirement(s).requiresZeroBalance) && !balanceIsCleared(o.balance);
   const eventDay = day(o.eventDate);
   return {
     id: o.id,
@@ -167,13 +190,24 @@ export function commissionRow(o: ListSource): CommissionRow {
     garment: o.garmentType,
     features: o.features.map((f) => f.feature),
     currentStage: o.currentStage,
-    progress: getStageProgress(o.currentStage),
+    activeSteps: running.map((s) => ({ id: s.id, label: stepLabel(s) })),
+    progress: done,
+    totalSteps: total || STAGE_ORDER.length,
     status: o.status,
     block:
-      o.status === OrderStatus.ARCHIVED || o.currentStage === "DELIVERY"
+      o.status === OrderStatus.ARCHIVED || o.status === OrderStatus.DELIVERED
         ? null
-        : pipelineBlockFor({ currentStage: o.currentStage, pendingApproval, balance: o.balance }),
-    fabricPending: isFabricPending({ status: o.status, currentStage: o.currentStage, liveStages: live }),
+        : blockedOnClient
+          ? "CLIENT_APPROVAL"
+          : blockedOnBalance
+            ? "OUTSTANDING_BALANCE"
+            : null,
+    fabricPending: isFabricPending({
+      status: o.status,
+      currentStage: o.currentStage,
+      liveStages: live,
+      fabricStep: o.steps.find((s) => s.stage === "FABRIC_SOURCING")?.status ?? null,
+    }),
     deliveredAt: iso(o.deliveredAt),
   };
 }

@@ -15,19 +15,20 @@ import { cn, formatDate } from "@/lib/utils";
 
 type LibraryFeature = { id: string; key: string; label: string };
 
-function StageBadge({ stage }: { stage: BespokeStage }) {
+function StageBadge({ label }: { label: string }) {
   return (
     <span className="inline-flex rounded-full bg-lightbr/15 px-2.5 py-1 font-sans text-10px font-semibold uppercase tracking-wide text-nut">
-      {STAGE_LABELS[stage].replace(/^\d+\.\s*/, "")}
+      {label}
     </span>
   );
 }
 
-function Progress({ progress }: { progress: number }) {
-  const pct = Math.round((progress / 13) * 100);
+/** Steps done of the steps this order has: an order with a skipped or added step is not out of 13. */
+function Progress({ progress, total }: { progress: number; total: number }) {
+  const pct = total ? Math.round((progress / total) * 100) : 0;
   return (
-    <div className="w-28" title={`Stage ${progress} of 13`}>
-      <div className="mb-1 font-sans text-10px text-text-light">{progress}/13</div>
+    <div className="w-28" title={`${progress} of ${total} stages done`}>
+      <div className="mb-1 font-sans text-10px text-text-light">{progress}/{total}</div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-sand/40">
         <div className="h-full rounded-full bg-lightbr" style={{ width: `${pct}%` }} />
       </div>
@@ -54,7 +55,7 @@ function DeliveryDate({ date }: { date: string | null }) {
 
 function TrackStatusPill({ row }: { row: CommissionRow }) {
   if (row.status === "ARCHIVED") return <Badge variant="grey">Archived</Badge>;
-  if (row.currentStage === "DELIVERY") return <Badge variant="success">DELIVERED</Badge>;
+  if (row.status === "DELIVERED" || row.deliveredAt) return <Badge variant="success">DELIVERED</Badge>;
   if (row.block === "CLIENT_APPROVAL") return <Badge variant="gold">Awaiting client approval</Badge>;
   if (row.block === "OUTSTANDING_BALANCE") return <Badge variant="wine">Awaiting balance</Badge>;
   const status = getOrderTrackStatus(row.deliveryDate ? new Date(row.deliveryDate) : null, row.currentStage);
@@ -132,8 +133,15 @@ function CommissionCard({ row, canOpenClients }: { row: CommissionRow; canOpenCl
           ) : null}
         </div>
         <div className="flex items-center gap-4">
-          <StageBadge stage={row.currentStage} />
-          <Progress progress={row.progress} />
+          <div className="flex flex-wrap justify-end gap-1.5">
+            {(row.activeSteps.length
+              ? row.activeSteps
+              : [{ id: "lead", label: STAGE_LABELS[row.currentStage].replace(/^\d+\.\s*/, "") }]
+            ).map((s) => (
+              <StageBadge key={s.id} label={s.label} />
+            ))}
+          </div>
+          <Progress progress={row.progress} total={row.totalSteps} />
         </div>
       </div>
     </li>
@@ -235,7 +243,7 @@ export function BespokePipelineClient({
         <div>
           <h1 className="admin-heading-pill glass-1 glass-pill font-display text-2xl text-ink">Atelier Orders Pipeline</h1>
           <p className="mt-1 font-sans text-sm text-text-mid">
-            13-stage production tracking for couture orders
+            Stage-by-stage production tracking for couture orders
           </p>
         </div>
         <Button onClick={() => setModalOpen(true)}>New Atelier Order</Button>

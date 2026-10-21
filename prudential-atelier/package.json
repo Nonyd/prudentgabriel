@@ -48,6 +48,8 @@
     "test:slice-aj": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-slice-aj.ts",
     "test:stage-gate": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-stage-gate.ts",
     "test:stage-walk": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-stage-walk.ts",
+    "test:pipeline-walk": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-pipeline-walk.ts",
+    "test:pipeline-flex": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-pipeline-flex.ts",
     "test:cron": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-cron-registry.ts",
     "test:data-protection": "tsx --tsconfig tsconfig.scripts.json --import ./scripts/test-db-guard.ts scripts/test-data-protection.ts",
     "render:cron": "tsx --tsconfig tsconfig.scripts.json scripts/render-host-cron.ts",

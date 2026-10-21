@@ -323,6 +323,7 @@ async function db(fx: Fixture) {
   const { bespokeFacts } = await import("../src/lib/atelier/bespoke-access");
   const { addNote, listCommissionNotes } = await import("../src/lib/atelier/commission-notes");
   const { fabricPendingWhere } = await import("../src/lib/atelier/commission-list");
+  const { stepIdFor } = await import("./pipeline-fixture");
   const { fileWorkLog, workroomDay } = await import("../src/lib/atelier/work-log");
   const { commissionCost } = await import("../src/lib/atelier/commission-cost");
 
@@ -373,8 +374,12 @@ async function db(fx: Fixture) {
 
   // ── BD5 ──
   const pendingIds = async () => (await prisma.bespokeOrder.findMany({ where: { AND: [fabricPendingWhere(), { id: fx.order.id }] }, select: { id: true } })).length;
+  const fabricStep = await stepIdFor(prisma, fx.order.id, "FABRIC_SOURCING");
   assert((await pendingIds()) === 1, "a commission before fabric sourcing is in the fabric filter");
-  await prisma.orderStageCompletion.create({ data: { orderId: fx.order.id, stage: "FABRIC_SOURCING", completedById: fx.admin.id } });
+  await prisma.orderStageCompletion.create({
+    data: { orderId: fx.order.id, orderStageId: fabricStep, stage: "FABRIC_SOURCING", completedById: fx.admin.id },
+  });
+  await prisma.orderStage.update({ where: { id: fabricStep }, data: { status: "DONE" } });
   assert((await pendingIds()) === 0, "completing fabric sourcing takes it out");
 
   // ── BD4: cost as each audience gets it ──

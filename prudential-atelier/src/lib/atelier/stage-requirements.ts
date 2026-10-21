@@ -84,6 +84,8 @@ export const STAGE_REQUIREMENTS: Record<BespokeStage, StageRequirement> = {
     requiresDepositSatisfied: true,
     requiresZeroBalance: true,
   }),
+  // Custom steps read their own row (pipeline.ts stepRequirement); this is the floor.
+  [BespokeStage.CUSTOM]: base({ requiresDepositSatisfied: true }),
 };
 
 export function getStageRequirement(stage: BespokeStage): StageRequirement {

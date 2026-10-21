@@ -3,6 +3,9 @@ import { toPublicTrackDto } from "@/lib/public-pii-dtos";
 import { rateLimitOr429 } from "@/lib/rate-limit";
 import { findOrderByTrackingToken } from "@/lib/capability-token-lookup";
 import { CAPABILITY_EXPIRED_COPY } from "@/lib/capability-token";
+import { prisma } from "@/lib/prisma";
+import { CLIENT_STEP_SELECT, clientSteps } from "@/lib/atelier/pipeline";
+import { ensureSteps } from "@/lib/atelier/pipeline-db";
 
 type Params = { params: Promise<{ token: string }> };
 
@@ -21,6 +24,12 @@ export async function GET(req: NextRequest, { params }: Params) {
   }
 
   const order = found.order;
+  await ensureSteps(prisma, order.id);
+  const steps = await prisma.orderStage.findMany({
+    where: { orderId: order.id },
+    orderBy: { position: "asc" },
+    select: CLIENT_STEP_SELECT,
+  });
   return NextResponse.json(
     {
       item: toPublicTrackDto({
@@ -29,6 +38,7 @@ export async function GET(req: NextRequest, { params }: Params) {
         currentStage: order.currentStage,
         clientName: order.clientName,
         deliveryDate: order.deliveryDate,
+        steps: clientSteps(steps),
       }),
     },
     { headers: { "Cache-Control": "no-store" } },

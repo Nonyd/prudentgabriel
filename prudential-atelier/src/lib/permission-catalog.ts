@@ -32,6 +32,7 @@ export const ALL_ADMIN_PERMISSIONS: readonly AdminPermission[] = [
   "store",
   "production.cost",
   "bespoke.specification",
+  "bespoke.pipeline",
   "requisition.approve",
   "requisition.fund",
   "requisition.buy",
@@ -223,6 +224,13 @@ export const ADMIN_PERMISSION_CATALOG: readonly PermissionCatalogEntry[] = [
     group: "Daily work",
     label: "Beads and fabric",
     description: "Say what beads, fabric and lining a gown needs, with pictures. Never what they cost or what the gown is priced at.",
+  },
+  {
+    key: "bespoke.pipeline",
+    group: "Daily work",
+    label: "Change a commission's steps",
+    description:
+      "Move, skip and add steps on one commission, and start a step alongside others. The house rules stay: intake first, Delivery last, nothing cut before Design Approval. Not included in Bespoke.",
   },
   {
     key: "requisition.approve",

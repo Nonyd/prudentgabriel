@@ -2,7 +2,7 @@ import { StageApprovalStatus } from "@prisma/client";
 import type { CronJobContext, JobResult } from "@/lib/cron/types";
 import { prisma } from "@/lib/prisma";
 import { getPublicAppUrl } from "@/lib/app-url";
-import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
+import { stepLabel } from "@/lib/atelier/pipeline";
 import { sendStageApprovalReminderEmail } from "@/lib/email";
 import { createClientNotification, resolveUserIdByEmail } from "@/lib/customer-notifications";
 import { logServerError } from "@/lib/logger";
@@ -21,6 +21,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
     orderBy: { requestedAt: "asc" },
     take: ctx.batchLimit,
     include: {
+      orderStage: { select: { stage: true, label: true } },
       order: {
         select: {
           id: true,
@@ -50,7 +51,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
         to: row.order.clientEmail,
         clientName: row.order.clientName,
         orderRef: row.order.orderRef,
-        stageLabel: STAGE_SHORT_LABELS[row.stage],
+        stageLabel: stepLabel(row.orderStage),
         approveUrl,
         approvalId: row.id,
       });
@@ -70,7 +71,7 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
           userId,
           type: "STAGE_APPROVAL_REQUESTED",
           title: "Reminder: commission review",
-          message: `${row.order.orderRef} — ${STAGE_SHORT_LABELS[row.stage]} is still waiting for your approval.`,
+          message: `${row.order.orderRef} — ${stepLabel(row.orderStage)} is still waiting for your approval.`,
           link: `/account/orders/bespoke/${row.order.id}`,
           entityId: row.id,
         });

@@ -24,8 +24,12 @@ export async function sendBespokeStageEmail(
   stage: BespokeStage,
   data: StageEmailData,
   toEmail: string,
+  /** The step completed — the email is sent once per step, so a custom step is not mistaken for another. */
+  orderStageId?: string,
 ): Promise<void> {
-  const key = (BESPOKE_STAGE_EMAIL_KEYS[stage] ?? EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_UPDATE) as EmailTemplateKey;
+  const builtIn = BESPOKE_STAGE_EMAIL_KEYS[stage as keyof typeof BESPOKE_STAGE_EMAIL_KEYS] as EmailTemplateKey | undefined;
+  // Custom steps use the generic stage update, which names the step ({{stageName}}).
+  const key = builtIn ?? EMAIL_TEMPLATE_KEYS.ATELIER_STAGE_UPDATE;
   const copy = await catalogCopy(key, {
     firstName: data.clientName.split(/\s+/)[0] ?? data.clientName,
     orderRef: data.orderRef,
@@ -50,7 +54,8 @@ export async function sendBespokeStageEmail(
     subject: copy.subject,
     html,
     template: "stage-complete",
-    idempotencyKey: `stage-complete:${data.orderRef}:${stage}`,
+    // Built-in steps keep their old key (one per stage per order); custom steps key by the step.
+    idempotencyKey: `stage-complete:${data.orderRef}:${builtIn || !orderStageId ? stage : orderStageId}`,
     relatedType: "BespokeOrder",
     relatedId: data.orderRef,
   });

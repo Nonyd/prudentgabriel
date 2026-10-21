@@ -1,7 +1,7 @@
 import type { BespokeStage } from "@prisma/client";
 import { ATELIER_HOUSE_NAME } from "@/lib/email-branding";
 import { HOUSE_ADDRESS_ONE_LINE } from "@/lib/house-address";
-import { STAGE_LABELS, STAGE_SHORT_LABELS, getStageProgress } from "@/lib/bespoke-stages";
+import { STAGE_SHORT_LABELS, getStageProgress } from "@/lib/bespoke-stages";
 
 export interface StageEmailData {
   clientName: string;
@@ -29,6 +29,7 @@ const STAGE_SUBJECTS: Record<BespokeStage, string> = {
   BEADING_FINISHING: "The finishing touches are complete — {orderRef}",
   FINAL_FITTING: "Final fitting complete — {orderRef}",
   DELIVERY: "Your outfit is ready — {orderRef}",
+  CUSTOM: "An update on your commission — {orderRef}",
 };
 
 const STAGE_INTROS: Record<BespokeStage, string> = {
@@ -58,6 +59,7 @@ const STAGE_INTROS: Record<BespokeStage, string> = {
     "Your final fitting is complete. We are preparing the piece for delivery.",
   DELIVERY:
     "Your atelier outfit is ready! We cannot wait for you to experience the finished piece. Details for collection or delivery are below.",
+  CUSTOM: "Another step of your commission is complete. Here is what the atelier did.",
 };
 
 /** The header here is white, so this is a dark mark with its real proportions. */
@@ -131,7 +133,7 @@ export function getBespokeStageEmail(
   const heading = catalog?.heading || `Dear ${data.clientName},`;
   const ctaLabel = catalog?.ctaLabel || "Track Your Order";
   const ctaLink = catalog?.ctaLink || data.trackingUrl;
-  const stageLabel = STAGE_LABELS[stage];
+  const stageLabel = `${data.stageNumber}. ${data.stageName}`;
   const deliveryLine = data.deliveryDate
     ? `<p style="margin:12px 0 0;font-size:14px;color:#5C3422;"><strong>Expected delivery:</strong> ${data.deliveryDate}</p>`
     : "";
@@ -159,6 +161,9 @@ export function buildStageEmailData(params: {
   clientName: string;
   orderRef: string;
   stage: BespokeStage;
+  /** The step as this order has it: its own name, and its number among the steps it really has. */
+  stageName?: string;
+  stageNumber?: number;
   notes: string;
   images: string[];
   videos: string[];
@@ -169,8 +174,8 @@ export function buildStageEmailData(params: {
   return {
     clientName: params.clientName,
     orderRef: params.orderRef,
-    stageName: STAGE_SHORT_LABELS[params.stage],
-    stageNumber: getStageProgress(params.stage),
+    stageName: params.stageName ?? STAGE_SHORT_LABELS[params.stage],
+    stageNumber: params.stageNumber ?? getStageProgress(params.stage),
     notes: params.notes,
     images: params.images,
     videos: params.videos,

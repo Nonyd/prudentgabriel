@@ -1,4 +1,5 @@
 import type { BespokeStage, ConsultationStatus, OrderStatus, PaymentStatus } from "@prisma/client";
+import type { ClientStep } from "@/lib/atelier/pipeline";
 import { rtwPaidInChargedCurrency, type RtwPaidDisplay } from "@/lib/rtw-tracker";
 
 export function clientFirstName(fullName: string): string {
@@ -9,7 +10,10 @@ export function clientFirstName(fullName: string): string {
 export type PublicTrackDto = {
   orderRef: string;
   status: OrderStatus;
+  /** The lead step, kept for callers that read one stage. */
   currentStage: BespokeStage;
+  /** Her order's real steps: skipped ones left out, several can be in progress. */
+  steps: Pick<ClientStep, "number" | "label" | "description" | "status">[];
   clientFirstName: string;
   expectedDelivery: string | null;
 };
@@ -20,11 +24,19 @@ export function toPublicTrackDto(order: {
   currentStage: BespokeStage;
   clientName: string;
   deliveryDate: Date | null;
+  steps?: ClientStep[];
 }): PublicTrackDto {
   return {
     orderRef: order.orderRef,
     status: order.status,
     currentStage: order.currentStage,
+    // No step ids on a public link: name, words for her, and where it stands.
+    steps: (order.steps ?? []).map((s) => ({
+      number: s.number,
+      label: s.label,
+      description: s.description,
+      status: s.status,
+    })),
     clientFirstName: clientFirstName(order.clientName),
     expectedDelivery: order.deliveryDate ? order.deliveryDate.toISOString() : null,
   };

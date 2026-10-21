@@ -5,11 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { BespokeStageTracker } from "@/components/bespoke/BespokeStageTracker";
 import { TrackOrderActions } from "@/components/track/TrackOrderActions";
-import {
-  countLiveCompletions,
-  liveCompletionStages,
-  clientStageHistory,
-} from "@/lib/atelier/live-stages";
+import { clientStepHistory } from "@/lib/atelier/live-stages";
+import { clientSteps } from "@/lib/atelier/pipeline";
+import { ensureSteps } from "@/lib/atelier/pipeline-db";
 import { findOrderByTrackingToken } from "@/lib/capability-token-lookup";
 import type { Metadata } from "next";
 import { tokenRouteMetadata } from "@/lib/seo";
@@ -30,6 +28,7 @@ export default async function TrackOrderPage({ params }: Props) {
   const found = await findOrderByTrackingToken(trackingToken);
   // Expired and unknown alike: a real 404, rendered by ./not-found.tsx.
   if (!found.ok) notFound();
+  await ensureSteps(prisma, found.order.id);
 
   const order = await prisma.bespokeOrder.findUnique({
     where: { id: found.order.id },
@@ -41,17 +40,22 @@ export default async function TrackOrderPage({ params }: Props) {
       currentStage: true,
       stageHistory: {
         orderBy: { completedAt: "asc" },
-        select: { stage: true, completedAt: true, notes: true, images: true },
+        select: { stage: true, orderStageId: true, completedAt: true, notes: true, images: true },
       },
-      stageCompletions: { select: { stage: true, revertedAt: true } },
+      steps: {
+        orderBy: { position: "asc" },
+        select: { id: true, position: true, stage: true, label: true, clientDescription: true, status: true },
+      },
     },
   });
 
   if (!order) notFound();
 
-  const live = liveCompletionStages(order.stageCompletions);
-  const stagesComplete = countLiveCompletions(live);
-  const stageHistory = clientStageHistory(order.stageHistory, live);
+  // Her order's real steps: skipped ones left out, added ones by their name.
+  const steps = clientSteps(order.steps);
+  const done = steps.filter((s) => s.status === "DONE");
+  const stagesComplete = done.length;
+  const stageHistory = clientStepHistory(order.stageHistory, done.map((s) => s.id));
   const firstName = order.clientName.split(" ")[0] ?? order.clientName;
   const outfitName = order.outfitDescription?.split("\n")[0]?.slice(0, 80) || "Atelier commission";
 
@@ -84,14 +88,14 @@ export default async function TrackOrderPage({ params }: Props) {
             <div className="shrink-0 text-right">
               <p className="font-serif text-[42px] leading-none text-choc">
                 {stagesComplete}
-                <span className="text-[22px] text-text-light">/13</span>
+                <span className="text-[22px] text-text-light">/{steps.length}</span>
               </p>
               <p className="mt-1 font-sans text-[13px] font-normal text-text-mid">Stages complete</p>
             </div>
           </div>
         </div>
 
-        <BespokeStageTracker currentStage={order.currentStage} stageHistory={stageHistory} />
+        <BespokeStageTracker steps={steps} currentStage={order.currentStage} stageHistory={stageHistory} />
 
         <p className="mt-8 text-center font-body text-[12px] text-text-light">
           Photographs from each completed stage appear above as Prudent Gabriel documents your commission.

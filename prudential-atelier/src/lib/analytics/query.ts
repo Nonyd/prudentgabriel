@@ -183,6 +183,7 @@ export async function buildHouseNumbers(
           take: 1,
           select: { completedAt: true },
         },
+        steps: { where: { status: "ACTIVE" }, select: { stage: true, startedAt: true } },
       },
     }),
     prisma.analyticsReferralDaily.findMany({
@@ -338,10 +339,16 @@ export async function buildHouseNumbers(
   const now = Date.now();
   const stageMap = new Map<string, { count: number; days: number }>();
   for (const order of liveCommissions) {
-    const entered = order.stageCompletions[0]?.completedAt ?? order.createdAt;
-    const days = Math.max(0, (now - entered.getTime()) / (24 * 60 * 60 * 1000));
-    const prev = stageMap.get(order.currentStage) ?? { count: 0, days: 0 };
-    stageMap.set(order.currentStage, { count: prev.count + 1, days: prev.days + days });
+    const lastDone = order.stageCompletions[0]?.completedAt ?? order.createdAt;
+    // Each step under way counts (steps run side by side); an order with none counts at its lead stage.
+    const at = order.steps.length
+      ? order.steps.map((s) => ({ stage: s.stage as string, entered: s.startedAt ?? lastDone }))
+      : [{ stage: order.currentStage as string, entered: lastDone }];
+    for (const { stage, entered } of at) {
+      const days = Math.max(0, (now - entered.getTime()) / (24 * 60 * 60 * 1000));
+      const prev = stageMap.get(stage) ?? { count: 0, days: 0 };
+      stageMap.set(stage, { count: prev.count + 1, days: prev.days + days });
+    }
   }
   const atelierStages = Array.from(stageMap.entries())
     .map(([stage, v]) => ({

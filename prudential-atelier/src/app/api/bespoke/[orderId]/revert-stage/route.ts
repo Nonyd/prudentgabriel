@@ -3,6 +3,7 @@ import { BespokeStage } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { actorFromSession, revertOrderStage } from "@/lib/atelier/stage-actions";
+import { builtInStepId } from "@/lib/atelier/pipeline-db";
 import { bespokeAdminDetailInclude } from "@/lib/atelier/can-complete-stage";
 
 type Params = { params: Promise<{ orderId: string }> };
@@ -14,21 +15,28 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { orderId } = await params;
-  let body: { targetStage?: string; reason?: string };
+  let body: { orderStageId?: string; targetStage?: string; reason?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  // The done step to reopen: by id, or (older callers) a built-in stage.
   const targetStage = body.targetStage as BespokeStage | undefined;
-  if (!targetStage || !(Object.values(BespokeStage) as string[]).includes(targetStage)) {
-    return NextResponse.json({ error: "targetStage is required" }, { status: 400 });
+  const orderStageId =
+    typeof body.orderStageId === "string" && body.orderStageId
+      ? body.orderStageId
+      : targetStage && (Object.values(BespokeStage) as string[]).includes(targetStage)
+        ? await builtInStepId(prisma, orderId, targetStage)
+        : null;
+  if (!orderStageId) {
+    return NextResponse.json({ error: "orderStageId is required" }, { status: 400 });
   }
 
   const result = await revertOrderStage({
     orderId,
-    targetStage,
+    orderStageId,
     reason: body.reason ?? "",
     actor,
   });

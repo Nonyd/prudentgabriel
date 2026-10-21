@@ -1,5 +1,6 @@
 /** Dotted keys that a parent permission must never unlock. */
-export const NEVER_INHERIT_FROM_PARENT: ReadonlySet<string> = new Set(["settings.developer"]);
+/** Dotted keys that `parent` alone does not grant: each is given on its own. */
+export const NEVER_INHERIT_FROM_PARENT: ReadonlySet<string> = new Set(["settings.developer", "bespoke.pipeline"]);
 
 export type AccessActor = {
   email?: string | null;

@@ -9,6 +9,7 @@ import {
   Ruler,
 } from "lucide-react";
 import { BespokeStageTracker } from "@/components/bespoke/BespokeStageTracker";
+import type { ClientStep } from "@/lib/atelier/pipeline";
 import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPanel";
 import { ProductCard } from "@/components/common/ProductCard";
 import { ShareYourStoryCard } from "@/components/account/ShareYourStoryCard";
@@ -44,6 +45,8 @@ type BespokeOrder = {
   outfitDescription: string | null;
   deliveryDate: Date | null;
   currentStage: BespokeStage;
+  /** Her order's real steps (clientSteps). */
+  steps?: ClientStep[];
   trackingToken: string;
   balance: number;
   currency?: string | null;
@@ -780,6 +783,7 @@ export function AccountDashboard({
                     </p>
                   ) : null}
                   <BespokeStageTracker
+                    steps={activeBespoke.steps}
                     currentStage={activeBespoke.currentStage}
                     stageHistory={activeBespoke.stageHistory}
                     compact

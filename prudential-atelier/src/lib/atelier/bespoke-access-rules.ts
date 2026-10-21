@@ -9,6 +9,8 @@
  *   manage — create, edit, assign, specify: the key
  *   money  — record payments or change totals: the key and an AZ8 money role
  *   admin  — revert a stage, delete a commission: ADMIN / SUPER_ADMIN
+ *   pipeline — change one commission's steps (move, skip, add, start side by side):
+ *            the key and `bespoke.pipeline` (Admins and atelier managers)
  *
  * STAFF hold no admin keys; before this they passed on role alone and could act
  * on any commission by calling the API. Now only on the gowns they are assigned to.
@@ -27,6 +29,7 @@ export type BespokeLevel =
   | "manage"
   | "money"
   | "admin"
+  | "pipeline"
   | "spec"
   | "specEdit"
   | "storeCost"
@@ -47,6 +50,8 @@ export type BespokeFacts = {
   store?: boolean;
   /** BD4: holds `production.cost`. */
   cost?: boolean;
+  /** Holds `bespoke.pipeline`. */
+  pipeline?: boolean;
 };
 
 /** Pure: may these facts pass this level? */
@@ -61,6 +66,8 @@ export function bespokeAllows(level: BespokeLevel, f: BespokeFacts): boolean {
       return f.house && f.money;
     case "admin":
       return f.admin;
+    case "pipeline":
+      return f.house && Boolean(f.pipeline);
     case "spec":
       return f.house || f.assigned || Boolean(f.spec) || Boolean(f.store);
     case "specEdit":
@@ -81,6 +88,8 @@ export type BespokeView = {
   /** Labour lines and the cost-of-production total. */
   labourCost: boolean;
   specEdit: boolean;
+  /** May change the commission's steps. */
+  pipeline: boolean;
 };
 
 export function bespokeView(f: BespokeFacts): BespokeView {
@@ -89,5 +98,6 @@ export function bespokeView(f: BespokeFacts): BespokeView {
     materialCost: bespokeAllows("storeCost", f),
     labourCost: bespokeAllows("cost", f),
     specEdit: bespokeAllows("specEdit", f),
+    pipeline: bespokeAllows("pipeline", f),
   };
 }

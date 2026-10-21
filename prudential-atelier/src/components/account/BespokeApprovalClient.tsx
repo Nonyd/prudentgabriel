@@ -6,8 +6,6 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import type { BespokeStage, StageApprovalStatus } from "@prisma/client";
 import { Button } from "@/components/ui/Button";
-import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
-
 type Approval = {
   id: string;
   stage: BespokeStage;
@@ -21,20 +19,22 @@ type Media = { id: string; url: string; kind: "IMAGE" | "VIDEO" };
 export function BespokeApprovalClient({
   orderId,
   orderRef,
-  currentStage,
+  stageLabel,
   notes,
   media,
   approvals,
 }: {
   orderId: string;
   orderRef: string;
-  currentStage: BespokeStage;
+  /** The step waiting on her, by its name on this order. */
+  stageLabel: string;
   notes: string | null;
   media: Media[];
+  /** The approvals of the step waiting on her (any step under way, not only the first). */
   approvals: Approval[];
 }) {
   const router = useRouter();
-  const pending = approvals.find((a) => a.status === "PENDING" && a.stage === currentStage);
+  const pending = approvals.find((a) => a.status === "PENDING");
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState<"APPROVED" | "CHANGES_REQUESTED" | null>(null);
 
@@ -75,7 +75,7 @@ export function BespokeApprovalClient({
     <section className="mt-8 rounded-sm border border-sand bg-ivory p-6">
       <p className="font-sans text-[10px] uppercase tracking-wider text-text-light">{orderRef}</p>
       <h2 className="mt-1 font-display text-2xl text-choc">
-        Review {STAGE_SHORT_LABELS[pending.stage]}
+        Review {stageLabel}
       </h2>
       {notes ? (
         <p className="mt-4 whitespace-pre-wrap font-sans text-sm text-text-mid">{notes}</p>

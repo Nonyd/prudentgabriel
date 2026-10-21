@@ -13,6 +13,7 @@ import {
   StageMediaKind,
 } from "@prisma/client";
 import { evaluateStageGate, type StageGateSnapshot } from "../src/lib/atelier/can-complete-stage";
+import { legacyFacts, legacySnapshot, stepIdFor, type LegacySnapshot } from "./pipeline-fixture";
 import { getStageRequirement } from "../src/lib/atelier/stage-requirements";
 import {
   buildStageChecklistFacts,
@@ -33,24 +34,20 @@ function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
 }
 
-function snapshot(partial: Partial<StageGateSnapshot> & { currentStage: BespokeStage }): StageGateSnapshot {
-  const stage = partial.currentStage;
-  return {
+function snapshot(partial: LegacySnapshot): StageGateSnapshot {
+  return legacySnapshot(partial, {
     orderId: "ord_an",
     orderRef: "ORD-AN",
     productionUnlockedAt: new Date(),
-    completedStages: [],
     notes: "notes",
     mediaCount: 1,
     latestApprovalStatus: null,
     balance: 0,
-    requirement: getStageRequirement(stage),
-    ...partial,
-  };
+  });
 }
 
 function runPure() {
-  const beadingFacts = buildStageChecklistFacts({
+  const beadingFacts = legacyFacts({
     currentStage: BespokeStage.BEADING_FINISHING,
     completedStages: [
       BespokeStage.CONSULTATION_BOOKING,
@@ -85,12 +82,13 @@ function runPure() {
   assert(media.required === true && media.met === false && media.mark === "open", "required unmet media stays an open circle");
 
   const afterUpload = mergeStageMedia(
-    { currentStage: BespokeStage.BEADING_FINISHING, stageMedia: [] as { id: string; stage: string; url: string; kind: string }[] },
-    [{ id: "m1", stage: BespokeStage.BEADING_FINISHING, url: "https://cdn.example/beading.jpg", kind: "IMAGE" }],
-  );
-  assert(afterUpload.stageMedia.length === 1, "POST items replace this stage's media in state");
+    { stageMedia: [] as { id: string; orderStageId: string; stage: string; url: string; kind: string }[] },
+    "step_beading",
+    [{ id: "m1", orderStageId: "step_beading", stage: BespokeStage.BEADING_FINISHING, url: "https://cdn.example/beading.jpg", kind: "IMAGE" }],
+  ).stageMedia ?? [];
+  assert(afterUpload.length === 1, "POST items replace this step's media in state");
   const mediaAfter = presentStageChecklist(
-    buildStageChecklistFacts({
+    legacyFacts({
       currentStage: BespokeStage.BEADING_FINISHING,
       completedStages: [
         BespokeStage.CONSULTATION_BOOKING,
@@ -105,7 +103,7 @@ function runPure() {
         BespokeStage.ALTERATIONS,
       ],
       draftNotes: "beads in progress",
-      mediaCount: afterUpload.stageMedia.filter((m) => m.stage === BespokeStage.BEADING_FINISHING).length,
+      mediaCount: afterUpload.filter((m) => m.orderStageId === "step_beading").length,
       latestApprovalStatus: null,
       productionUnlockedAt: new Date(),
       balance: 2_769_231.23,
@@ -152,7 +150,6 @@ function runPure() {
       balance: 2_769_231.23,
       latestApprovalStatus: StageApprovalStatus.APPROVED,
     }),
-    stage: BespokeStage.DELIVERY,
     actor: { id: "staff", role: Role.STAFF },
   });
   assert(!delivery.ok, "delivery with a balance must fail");
@@ -210,6 +207,7 @@ async function runToken() {
       balance: 30_000,
     },
   });
+  const finalFitting = await stepIdFor(prisma, order.id, BespokeStage.FINAL_FITTING);
   // Issue the link as the app does: hash stored, raw token in the URL.
   const approvalToken = generateCapabilityToken();
   const approval = await prisma.stageApproval.create({
@@ -217,16 +215,18 @@ async function runToken() {
       publicToken: approvalToken.hash,
       publicTokenEnc: approvalToken.enc,
       orderId: order.id,
+      orderStageId: finalFitting,
       stage: BespokeStage.FINAL_FITTING,
       status: StageApprovalStatus.PENDING,
     },
   });
   await prisma.orderStageDraft.create({
-    data: { orderId: order.id, stage: BespokeStage.FINAL_FITTING, notes: "Final fitting photograph for review." },
+    data: { orderId: order.id, orderStageId: finalFitting, stage: BespokeStage.FINAL_FITTING, notes: "Final fitting photograph for review." },
   });
   await prisma.orderStageMedia.create({
     data: {
       orderId: order.id,
+      orderStageId: finalFitting,
       stage: BespokeStage.FINAL_FITTING,
       url: "https://cdn.example/fitting.jpg",
       kind: StageMediaKind.IMAGE,

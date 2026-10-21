@@ -66,6 +66,8 @@ export function notifyClientBespokeStageComplete(params: {
   orderId: string;
   orderRef: string;
   stage: BespokeStage;
+  /** The step's own name (a custom step, or a renamed one). */
+  stageLabel?: string;
   trackingToken: string;
   clientProfileId: string | null;
   clientEmail: string;
@@ -75,7 +77,7 @@ export function notifyClientBespokeStageComplete(params: {
     if (!userId) return;
     if (!(await customerAllowsPref(userId, "orderStage"))) return;
 
-    const stageLabel = STAGE_SHORT_LABELS[params.stage];
+    const stageLabel = params.stageLabel ?? STAGE_SHORT_LABELS[params.stage];
     await createClientNotification({
       userId,
       type: "ATELIER_STAGE_ADVANCED",

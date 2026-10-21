@@ -50,6 +50,7 @@ export async function bespokeFacts(
       spec: hasPermission(role, "bespoke.specification", actor),
       store: hasPermission(role, "store", actor),
       cost: hasPermission(role, "production.cost", actor),
+      pipeline: hasPermission(role, "bespoke.pipeline", actor),
     },
   };
 }

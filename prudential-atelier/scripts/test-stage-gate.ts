@@ -9,7 +9,7 @@ import {
   evaluateStageGate,
   type StageGateSnapshot,
 } from "../src/lib/atelier/can-complete-stage";
-import { getStageRequirement } from "../src/lib/atelier/stage-requirements";
+import { legacySnapshot, type LegacySnapshot } from "./pipeline-fixture";
 import {
   BESPOKE_ADMIN_ROLES,
   BESPOKE_MANAGER_ROLES,
@@ -21,20 +21,8 @@ function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
 }
 
-function snapshot(partial: Partial<StageGateSnapshot> & { currentStage: BespokeStage }): StageGateSnapshot {
-  const stage = partial.currentStage;
-  return {
-    orderId: "ord_1",
-    orderRef: "ORD-1001",
-    productionUnlockedAt: null,
-    completedStages: [],
-    notes: null,
-    mediaCount: 0,
-    latestApprovalStatus: null,
-    balance: 0,
-    requirement: getStageRequirement(stage),
-    ...partial,
-  };
+function snapshot(partial: LegacySnapshot): StageGateSnapshot {
+  return legacySnapshot(partial);
 }
 
 const staff = { id: "u1", role: Role.STAFF };
@@ -57,7 +45,6 @@ function main() {
       notes: "trying to skip",
       productionUnlockedAt: new Date(),
     }),
-    stage: BespokeStage.FIRST_FITTING,
     actor: staff,
   });
   assert(!jump.ok, "fresh order must not complete stage 9");
@@ -72,7 +59,6 @@ function main() {
       currentStage: BespokeStage.CONSULTATION_BOOKING,
       notes: "booked",
     }),
-    stage: BespokeStage.CONSULTATION_BOOKING,
     actor: staff,
   });
   assert(stage1.ok, `stage 1 with notes should pass: ${stage1.failures.map((f) => f.message).join("; ")}`);
@@ -91,7 +77,6 @@ function main() {
       mediaCount: 0,
       productionUnlockedAt: new Date(),
     }),
-    stage: BespokeStage.SKETCHING_CONCEPT,
     actor: staff,
   });
   assert(!sketch.ok, "stage 5 without media must fail");
@@ -119,7 +104,6 @@ function main() {
       balance: 450_000,
       latestApprovalStatus: StageApprovalStatus.APPROVED,
     }),
-    stage: BespokeStage.DELIVERY,
     actor: staff,
   });
   assert(!delivery.ok, "delivery with balance must fail");
@@ -141,7 +125,6 @@ function main() {
       mediaCount: 0,
       productionUnlockedAt: null,
     }),
-    stage: BespokeStage.DESIGN_APPROVAL,
     actor: staff,
   });
   const codes = new Set(multi.failures.map((f) => f.code));
@@ -163,7 +146,6 @@ function main() {
 
   const noApproval = evaluateStageGate({
     snapshot: snapshot({ ...designBase, latestApprovalStatus: null }),
-    stage: BespokeStage.DESIGN_APPROVAL,
     actor: staff,
   });
   assert(!noApproval.ok, "stage 7 with no approval must fail");
@@ -171,7 +153,6 @@ function main() {
 
   const changes = evaluateStageGate({
     snapshot: snapshot({ ...designBase, latestApprovalStatus: StageApprovalStatus.CHANGES_REQUESTED }),
-    stage: BespokeStage.DESIGN_APPROVAL,
     actor: staff,
   });
   assert(!changes.ok, "stage 7 with CHANGES_REQUESTED must fail");
@@ -183,14 +164,12 @@ function main() {
 
   const approved = evaluateStageGate({
     snapshot: snapshot({ ...designBase, latestApprovalStatus: StageApprovalStatus.APPROVED }),
-    stage: BespokeStage.DESIGN_APPROVAL,
     actor: staff,
   });
   assert(approved.ok, `stage 7 with APPROVED should pass: ${approved.failures.map((f) => f.message).join("; ")}`);
 
   const superseded = evaluateStageGate({
     snapshot: snapshot({ ...designBase, latestApprovalStatus: null }),
-    stage: BespokeStage.DESIGN_APPROVAL,
     actor: staff,
   });
   assert(!superseded.ok, "after revert, superseded approval must not satisfy the gate");
@@ -205,7 +184,6 @@ function main() {
       mediaCount: 1,
       productionUnlockedAt: null,
     }),
-    stage: BespokeStage.TAILORING,
     actor: staff,
   });
   assert(!relocked.ok, "relocked deposit must block further production");
@@ -213,8 +191,7 @@ function main() {
 
   // Staff cannot revert; admin can with a reason.
   const staffRevert = evaluateRevert({
-    currentStage: BespokeStage.TAILORING,
-    targetStage: BespokeStage.DESIGN_APPROVAL,
+    step: { stage: BespokeStage.DESIGN_APPROVAL, label: null, status: "DONE" },
     actor: staff,
     reason: "client changed mind",
   });
@@ -222,8 +199,7 @@ function main() {
   assert(staffRevert.failures.some((f) => f.code === "REVERT_FORBIDDEN"), "staff revert code");
 
   const adminNoReason = evaluateRevert({
-    currentStage: BespokeStage.TAILORING,
-    targetStage: BespokeStage.DESIGN_APPROVAL,
+    step: { stage: BespokeStage.DESIGN_APPROVAL, label: null, status: "DONE" },
     actor: admin,
     reason: "",
   });
@@ -231,12 +207,19 @@ function main() {
   assert(adminNoReason.failures.some((f) => f.code === "REVERT_REASON_REQUIRED"), "reason code");
 
   const adminOk = evaluateRevert({
-    currentStage: BespokeStage.TAILORING,
-    targetStage: BespokeStage.DESIGN_APPROVAL,
+    step: { stage: BespokeStage.DESIGN_APPROVAL, label: null, status: "DONE" },
     actor: admin,
     reason: "wrong fabric chosen",
   });
   assert(adminOk.ok, `admin revert should pass: ${adminOk.failures.map((f) => f.message).join("; ")}`);
+
+  // Only a done step can be reopened.
+  const notDone = evaluateRevert({
+    step: { stage: BespokeStage.TAILORING, label: null, status: "ACTIVE" },
+    actor: admin,
+    reason: "wrong fabric chosen",
+  });
+  assert(!notDone.ok && notDone.failures.some((f) => f.code === "REVERT_FORBIDDEN"), "a step under way cannot be reopened");
 
   // Role split: STAFF can floor routes, cannot manager/admin routes.
   assert(sessionHasRole("STAFF", null, BESPOKE_STAFF_ROLES), "STAFF on staff roles");

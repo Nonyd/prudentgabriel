@@ -7,9 +7,10 @@ import { getOrCreateClientProfile } from "@/lib/account-helpers";
 import { BespokeApprovalClient } from "@/components/account/BespokeApprovalClient";
 import { BespokePostDeliveryClient } from "@/components/account/BespokePostDeliveryClient";
 import { BespokeStageTracker } from "@/components/bespoke/BespokeStageTracker";
-import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { formatBespokeBook } from "@/lib/atelier-fx";
-import { liveCompletionStages, clientStageHistory } from "@/lib/atelier/live-stages";
+import { clientStepHistory } from "@/lib/atelier/live-stages";
+import { clientSteps } from "@/lib/atelier/pipeline";
+import { ensureSteps } from "@/lib/atelier/pipeline-db";
 import { maybeArchiveBespokeOrder } from "@/lib/bespoke-archive";
 import { provenEmail } from "@/lib/email-verification";
 import {
@@ -43,11 +44,23 @@ export default async function AccountBespokeOrderPage({
       stageDrafts: true,
       stageMedia: { orderBy: { createdAt: "asc" } },
       stageApprovals: { orderBy: { requestedAt: "desc" } },
-      stageCompletions: { select: { stage: true, revertedAt: true } },
+      steps: {
+        orderBy: { position: "asc" },
+        select: { id: true, position: true, stage: true, label: true, clientDescription: true, status: true },
+      },
     },
   });
 
   if (!order) notFound();
+  if (!order.steps.length) {
+    // An order written before steps existed: give it its steps, then read them.
+    await ensureSteps(prisma, order.id);
+    order.steps = await prisma.orderStage.findMany({
+      where: { orderId: order.id },
+      orderBy: { position: "asc" },
+      select: { id: true, position: true, stage: true, label: true, clientDescription: true, status: true },
+    });
+  }
 
   await maybeArchiveBespokeOrder(order.id);
   const fresh = await prisma.bespokeOrder.findUnique({
@@ -56,8 +69,16 @@ export default async function AccountBespokeOrderPage({
   });
   const status = fresh?.status ?? order.status;
 
-  const draft = order.stageDrafts.find((d) => d.stage === order.currentStage);
-  const media = order.stageMedia.filter((m) => m.stage === order.currentStage);
+  // Her order's real steps; an approval waits on whichever step under way asked for it.
+  const steps = clientSteps(order.steps);
+  const running = steps.filter((s) => s.status === "ACTIVE");
+  const pendingApproval = order.stageApprovals.find(
+    (a) => a.status === "PENDING" && running.some((s) => s.id === a.orderStageId),
+  );
+  const approvalStep = pendingApproval ? running.find((s) => s.id === pendingApproval.orderStageId) : undefined;
+  const draft = approvalStep ? order.stageDrafts.find((d) => d.orderStageId === approvalStep.id) : undefined;
+  const media = approvalStep ? order.stageMedia.filter((m) => m.orderStageId === approvalStep.id) : [];
+  const doneIds = steps.filter((s) => s.status === "DONE").map((s) => s.id);
   const delivered =
     status === OrderStatus.DELIVERED ||
     status === OrderStatus.ARCHIVED ||
@@ -79,17 +100,17 @@ export default async function AccountBespokeOrderPage({
       </Link>
       <h1 className="mt-4 font-display text-3xl text-choc">{order.orderRef}</h1>
       <p className="mt-1 font-sans text-sm text-text-mid">
-        {STAGE_SHORT_LABELS[order.currentStage]} · {formatBespokeBook(order.totalAmount, order)}
+        {running.map((s) => s.label).join(" · ") || "Delivered"} · {formatBespokeBook(order.totalAmount, order)}
         {status === OrderStatus.ARCHIVED ? " · Archived" : null}
       </p>
 
       <BespokeApprovalClient
         orderId={order.id}
         orderRef={order.orderRef}
-        currentStage={order.currentStage}
+        stageLabel={approvalStep?.label ?? ""}
         notes={draft?.notes ?? null}
         media={media.map((m) => ({ id: m.id, url: m.url, kind: m.kind }))}
-        approvals={order.stageApprovals}
+        approvals={pendingApproval ? [pendingApproval] : []}
       />
 
       <BespokePostDeliveryClient
@@ -103,11 +124,9 @@ export default async function AccountBespokeOrderPage({
 
       <div className="mt-10">
         <BespokeStageTracker
+          steps={steps}
           currentStage={order.currentStage}
-          stageHistory={clientStageHistory(
-            order.stageHistory,
-            liveCompletionStages(order.stageCompletions),
-          )}
+          stageHistory={clientStepHistory(order.stageHistory, doneIds)}
         />
       </div>
     </div>

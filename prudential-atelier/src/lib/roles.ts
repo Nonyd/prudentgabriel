@@ -38,6 +38,8 @@ export type AdminPermission =
   | "store"
   | "production.cost"
   | "bespoke.specification"
+  /** Change one commission's steps: move, skip, add, start side by side. */
+  | "bespoke.pipeline"
   | "requisition.approve"
   | "requisition.fund"
   | "requisition.buy"
@@ -75,6 +77,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
     "store",
     "production.cost",
     "bespoke.specification",
+    "bespoke.pipeline",
     "requisition.approve",
     "requisition.fund",
     "chat",
@@ -99,7 +102,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly AdminPermission[] | ["*"]
     "requisition.approve",
   ],
 
-  BESPOKE_MANAGER: ["bespoke", "consultations", "clients.view", "production.cost", "bespoke.specification", "requisition.approve"],
+  BESPOKE_MANAGER: ["bespoke", "consultations", "clients.view", "production.cost", "bespoke.specification", "bespoke.pipeline", "requisition.approve"],
   RTW_MANAGER: ["shop.products", "shop.orders"],
   CONTENT_MANAGER: ["content.blog", "content.pages"],
   FINANCE_MANAGER: ["invoices", "quotations", "finance", "payments", "reports", "settings.bank-accounts"],
@@ -231,6 +234,7 @@ export const ALL_PERMISSIONS: readonly AdminPermission[] = [
   "settings.developer",
   "store",
   "production.cost",
+  "bespoke.pipeline",
   "requisition.approve",
   "requisition.fund",
   "requisition.buy",

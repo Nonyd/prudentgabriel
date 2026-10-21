@@ -1,15 +1,22 @@
 import {
   BespokeStage,
+  OrderStageStatus,
   Role,
   StageApprovalStatus,
   type Prisma,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatNgnKobo, balanceIsCleared } from "@/lib/money";
-import { getPreviousStage, STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
 import { getOrderPaymentSummary, toNumber } from "@/lib/payments/ledger";
-import { getStageRequirement, stageIndex, type StageRequirement } from "@/lib/atelier/stage-requirements";
+import { type StageRequirement } from "@/lib/atelier/stage-requirements";
 import { buildStageChecklistFacts, presentStageChecklist } from "@/lib/atelier/stage-checklist";
+import {
+  startBlockers,
+  stepLabel,
+  stepRequirement,
+  type PipelineStep,
+} from "@/lib/atelier/pipeline";
+import { loadSteps, PIPELINE_STEP_SELECT } from "@/lib/atelier/pipeline-db";
 
 export type StageGateFailureCode =
   | "NOTES_REQUIRED"
@@ -43,9 +50,10 @@ export type StageGateMode = "complete" | "request_approval";
 export type StageGateSnapshot = {
   orderId: string;
   orderRef: string;
-  currentStage: BespokeStage;
+  /** The step being completed, and all of the order's steps. */
+  step: PipelineStep;
+  steps: PipelineStep[];
   productionUnlockedAt: Date | null;
-  completedStages: BespokeStage[];
   notes: string | null;
   mediaCount: number;
   latestApprovalStatus: StageApprovalStatus | null;
@@ -69,21 +77,35 @@ function isAdminActor(actor: StageGateActor): boolean {
   return r === Role.SUPER_ADMIN || r === Role.ADMIN;
 }
 
+/**
+ * The house rules that let a step start, read again at completion: a step that
+ * became active before an earlier one was reopened still waits for it.
+ */
+function orderingFailures(snapshot: StageGateSnapshot): StageGateFailure[] {
+  return startBlockers({
+    step: { ...snapshot.step, status: OrderStageStatus.PENDING },
+    steps: snapshot.steps,
+    productionUnlocked: true,
+    alongside: false,
+  }).map((f) => ({ code: "PREVIOUS_STAGE_INCOMPLETE" as const, message: f.message }));
+}
+
 export function evaluateStageGate(params: {
   snapshot: StageGateSnapshot;
-  stage: BespokeStage;
   actor: StageGateActor;
   mode?: StageGateMode;
 }): StageGateResult {
   const mode = params.mode ?? "complete";
-  const { snapshot, stage, actor } = params;
+  const { snapshot, actor } = params;
+  const stage = snapshot.step.stage;
+  const label = stepLabel(snapshot.step);
   const req = snapshot.requirement;
   const failures: StageGateFailure[] = [];
 
-  if (snapshot.currentStage !== stage) {
+  if (snapshot.step.status !== OrderStageStatus.ACTIVE) {
     failures.push({
       code: "WRONG_STAGE",
-      message: `This order is on ${STAGE_SHORT_LABELS[snapshot.currentStage]}, not ${STAGE_SHORT_LABELS[stage]}.`,
+      message: `${label} is not in progress.`,
     });
   }
 
@@ -94,18 +116,12 @@ export function evaluateStageGate(params: {
     });
   }
 
-  const prev = getPreviousStage(stage);
-  if (prev && !snapshot.completedStages.includes(prev)) {
-    failures.push({
-      code: "PREVIOUS_STAGE_INCOMPLETE",
-      message: `${STAGE_SHORT_LABELS[prev]} must be completed before ${STAGE_SHORT_LABELS[stage]}.`,
-    });
-  }
+  failures.push(...orderingFailures(snapshot));
 
   if (req.requiresNotes && !snapshot.notes?.trim()) {
     failures.push({
       code: "NOTES_REQUIRED",
-      message: `Add notes for ${STAGE_SHORT_LABELS[stage]} before completing this stage.`,
+      message: `Add notes for ${label} before completing this stage.`,
     });
   }
 
@@ -116,7 +132,7 @@ export function evaluateStageGate(params: {
       message:
         stage === BespokeStage.DELIVERY
           ? `Upload at least ${req.minMediaCount} delivery photo${req.minMediaCount === 1 ? "" : "s"} for this stage (${needed} more needed).`
-          : `Upload at least ${req.minMediaCount} photo${req.minMediaCount === 1 ? "" : "s"} for ${STAGE_SHORT_LABELS[stage]} (${needed} more needed).`,
+          : `Upload at least ${req.minMediaCount} photo${req.minMediaCount === 1 ? "" : "s"} for ${label} (${needed} more needed).`,
     });
   }
 
@@ -135,10 +151,10 @@ export function evaluateStageGate(params: {
       failures.push({
         code: "CLIENT_APPROVAL_PENDING",
         message: pending
-          ? `Waiting for the client to approve ${STAGE_SHORT_LABELS[stage]}.`
+          ? `Waiting for the client to approve ${label}.`
           : changes
-            ? `The client requested changes on ${STAGE_SHORT_LABELS[stage]}. Revise and request approval again.`
-            : `Request client approval for ${STAGE_SHORT_LABELS[stage]} before completing this stage.`,
+            ? `The client requested changes on ${label}. Revise and request approval again.`
+            : `Request client approval for ${label} before completing this stage.`,
       });
     }
   }
@@ -154,8 +170,7 @@ export function evaluateStageGate(params: {
 }
 
 export function evaluateRevert(params: {
-  currentStage: BespokeStage;
-  targetStage: BespokeStage;
+  step: Pick<PipelineStep, "stage" | "label" | "status">;
   actor: StageGateActor;
   reason?: string | null;
 }): StageGateResult {
@@ -166,10 +181,10 @@ export function evaluateRevert(params: {
       message: "Only an administrator can move an order backwards.",
     });
   }
-  if (stageIndex(params.targetStage) >= stageIndex(params.currentStage)) {
+  if (params.step.status !== OrderStageStatus.DONE) {
     failures.push({
       code: "REVERT_FORBIDDEN",
-      message: "Revert target must be an earlier stage than the current one.",
+      message: `${stepLabel(params.step)} is not done, so there is nothing to reopen.`,
     });
   }
   if (!params.reason?.trim()) {
@@ -183,7 +198,7 @@ export function evaluateRevert(params: {
 
 async function loadSnapshot(
   orderId: string,
-  stage: BespokeStage,
+  orderStageId: string,
   submittedNotes?: string | null,
 ): Promise<StageGateSnapshot | null> {
   const order = await prisma.bespokeOrder.findUnique({
@@ -191,16 +206,11 @@ async function loadSnapshot(
     select: {
       id: true,
       orderRef: true,
-      currentStage: true,
       productionUnlockedAt: true,
-      stageCompletions: {
-        where: { revertedAt: null },
-        select: { stage: true },
-      },
-      stageDrafts: { where: { stage }, select: { notes: true } },
-      stageMedia: { where: { stage }, select: { id: true } },
+      stageDrafts: { where: { orderStageId }, select: { notes: true } },
+      stageMedia: { where: { orderStageId }, select: { id: true } },
       stageApprovals: {
-        where: { stage, status: { not: StageApprovalStatus.SUPERSEDED } },
+        where: { orderStageId, status: { not: StageApprovalStatus.SUPERSEDED } },
         orderBy: { requestedAt: "desc" },
         take: 1,
         select: { status: true },
@@ -208,6 +218,9 @@ async function loadSnapshot(
     },
   });
   if (!order) return null;
+  const steps = await loadSteps(prisma, orderId);
+  const step = steps.find((s) => s.id === orderStageId);
+  if (!step) return null;
 
   const summary = await getOrderPaymentSummary(orderId);
   const draftNotes = order.stageDrafts[0]?.notes?.trim() || null;
@@ -216,49 +229,48 @@ async function loadSnapshot(
   return {
     orderId: order.id,
     orderRef: order.orderRef,
-    currentStage: order.currentStage,
+    step,
+    steps,
     productionUnlockedAt: order.productionUnlockedAt,
-    completedStages: order.stageCompletions.map((c) => c.stage),
     notes,
     mediaCount: order.stageMedia.length,
     latestApprovalStatus: order.stageApprovals[0]?.status ?? null,
     balance: toNumber(summary.balance),
-    requirement: getStageRequirement(stage),
+    requirement: stepRequirement(step),
   };
 }
 
 export async function canCompleteStage(params: {
   orderId: string;
-  stage: BespokeStage;
+  orderStageId: string;
   actor: StageGateActor;
   notes?: string | null;
   mode?: StageGateMode;
 }): Promise<StageGateResult & { snapshot: StageGateSnapshot | null }> {
-  const snapshot = await loadSnapshot(params.orderId, params.stage, params.notes);
+  const snapshot = await loadSnapshot(params.orderId, params.orderStageId, params.notes);
   if (!snapshot) {
     return {
       ok: false,
       snapshot: null,
-      failures: [{ code: "WRONG_STAGE", message: "Order not found." }],
+      failures: [{ code: "WRONG_STAGE", message: "Order or step not found." }],
     };
   }
   return {
     snapshot,
     ...evaluateStageGate({
       snapshot,
-      stage: params.stage,
       actor: params.actor,
       mode: params.mode,
     }),
   };
 }
 
-export async function getStageChecklist(orderId: string, stage: BespokeStage) {
-  const snapshot = await loadSnapshot(orderId, stage);
+export async function getStageChecklist(orderId: string, orderStageId: string) {
+  const snapshot = await loadSnapshot(orderId, orderStageId);
   if (!snapshot) return null;
   const facts = buildStageChecklistFacts({
-    currentStage: stage,
-    completedStages: snapshot.completedStages,
+    step: snapshot.step,
+    steps: snapshot.steps,
     draftNotes: snapshot.notes ?? "",
     mediaCount: snapshot.mediaCount,
     latestApprovalStatus: snapshot.latestApprovalStatus,
@@ -275,6 +287,10 @@ export { pipelineBlockFor, type PipelineBlock } from "@/lib/atelier/stage-requir
 
 export function stageGateInclude() {
   return {
+    steps: {
+      select: { ...PIPELINE_STEP_SELECT, skippedReason: true, startedAt: true },
+      orderBy: { position: "asc" as const },
+    },
     // Live completions only — reverted rows must not satisfy PREVIOUS_STAGE_INCOMPLETE.
     stageCompletions: {
       where: { revertedAt: null },

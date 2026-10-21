@@ -7,6 +7,7 @@ import type { BespokeOrder, BespokeStage, Order, OrderItem, Product, ProductImag
 import { BespokeStageTracker } from "@/components/bespoke/BespokeStageTracker";
 import { ConsultationBriefPanel } from "@/components/admin/ConsultationBriefPanel";
 import { STAGE_SHORT_LABELS } from "@/lib/bespoke-stages";
+import type { ClientStep } from "@/lib/atelier/pipeline";
 import { formatDate, formatPrice } from "@/lib/utils";
 import { formatBespokeBook } from "@/lib/atelier-fx";
 import { Modal } from "@/components/ui/Modal";
@@ -20,6 +21,8 @@ type RtwOrder = Order & {
 };
 
 type Bespoke = BespokeOrder & {
+  /** Her order's real steps (clientSteps). */
+  steps?: ClientStep[];
   stageHistory: StageUpdate[];
   consultation?: { bookingNumber: string } | null;
 };
@@ -87,7 +90,8 @@ export function AccountOrdersClient({
                     <span className="rounded-sm bg-nut/10 px-2 py-1 font-sans text-[10px] uppercase text-nut">
                       {o.status === "ARCHIVED"
                         ? "Archived"
-                        : STAGE_SHORT_LABELS[o.currentStage as BespokeStage]}
+                        : o.steps?.filter((s) => s.status === "ACTIVE").map((s) => s.label).join(" · ") ||
+                          STAGE_SHORT_LABELS[o.currentStage as BespokeStage]}
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-4 font-sans text-xs text-text-mid">
@@ -131,6 +135,7 @@ export function AccountOrdersClient({
                       />
                     ) : null}
                     <BespokeStageTracker
+                      steps={o.steps}
                       currentStage={o.currentStage}
                       stageHistory={o.stageHistory}
                     />

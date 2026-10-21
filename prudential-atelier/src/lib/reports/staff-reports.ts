@@ -370,9 +370,10 @@ export async function weeklyReportData(now = new Date()): Promise<WeeklyReportDa
       prisma.clientProfile.count({ where: { createdAt: { gte: from, lt: to } } }),
       prisma.consultationBooking.count({ where: { createdAt: { gte: from, lt: to } } }),
       prisma.consultationBooking.count({ where: { confirmedDate: { gte: from, lt: to }, status: "COMPLETED" } }),
-      prisma.bespokeOrder.groupBy({
-        by: ["currentStage"],
-        where: { status: { notIn: CLOSED }, currentStage: { not: "DELIVERY" } },
+      // Steps under way, not orders: one order can be at two steps side by side.
+      prisma.orderStage.groupBy({
+        by: ["stage"],
+        where: { status: "ACTIVE", stage: { not: "DELIVERY" }, order: { status: { notIn: CLOSED } } },
         _count: { _all: true },
       }),
       prisma.workLog.count({ where: { createdAt: { gte: from, lt: to } } }),
@@ -404,7 +405,7 @@ export async function weeklyReportData(now = new Date()): Promise<WeeklyReportDa
     consultationsBooked: booked,
     consultationsDone: done,
     pipeline: active
-      .map((a) => ({ stage: STAGE_SHORT_LABELS[a.currentStage], count: a._count._all, i: order.indexOf(a.currentStage) }))
+      .map((a) => ({ stage: STAGE_SHORT_LABELS[a.stage], count: a._count._all, i: order.indexOf(a.stage) }))
       .sort((a, b) => a.i - b.i)
       .map(({ stage, count }) => ({ stage, count })),
     workLogs,

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { BespokeStage } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { commissionSearch } from "@/lib/atelier/commission-search";
 import { commissionListSelect, commissionRow, fabricPendingWhere } from "@/lib/atelier/commission-list";
 import { logActivity } from "@/lib/logger";
 import { bespokeFacts, requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { generateBespokeOrderRef } from "@/lib/bespoke-stages";
+import { newOrderSteps } from "@/lib/atelier/pipeline-db";
 import { bespokeRequestSchema } from "@/validations/bespoke";
 import { auth } from "@/auth";
 import { generateBespokeNumber } from "@/lib/order-number";
@@ -106,6 +108,8 @@ export async function POST(req: NextRequest) {
         trackingTokenExpiresAt: new Date(Date.now() + CAPABILITY_TTL_MS.track),
         receiptConfirmToken: receipt.hash,
         receiptConfirmTokenEnc: receipt.enc,
+        // The thirteen built-in steps, Consultation Booking under way.
+        steps: { create: newOrderSteps(BespokeStage.CONSULTATION_BOOKING) },
       },
     });
 

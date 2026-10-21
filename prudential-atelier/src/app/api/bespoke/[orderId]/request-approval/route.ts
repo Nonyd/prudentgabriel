@@ -11,7 +11,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { orderId } = await params;
-  let body: { notes?: string; images?: string[]; videos?: string[] } = {};
+  let body: { notes?: string; images?: string[]; videos?: string[]; orderStageId?: string } = {};
   try {
     body = await req.json();
   } catch {
@@ -20,6 +20,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const result = await requestStageApproval({
     orderId,
+    orderStageId: typeof body.orderStageId === "string" ? body.orderStageId : null,
     actor,
     notes: body.notes,
     images: Array.isArray(body.images) ? body.images : [],

@@ -13,8 +13,8 @@ import {
   PaymentPurpose,
 } from "@prisma/client";
 import { evaluateStageGate, type StageGateSnapshot } from "../src/lib/atelier/can-complete-stage";
-import { getStageRequirement } from "../src/lib/atelier/stage-requirements";
-import { buildStageChecklistFacts, presentStageChecklist } from "../src/lib/atelier/stage-checklist";
+import { legacyFacts, legacySnapshot, stepIdFor, type LegacySnapshot } from "./pipeline-fixture";
+import { presentStageChecklist } from "../src/lib/atelier/stage-checklist";
 import { confirmBespokeReceipt } from "../src/lib/bespoke-receipt";
 import {
   isBespokeCommissionActive,
@@ -36,12 +36,7 @@ function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${message}`);
 }
 
-function snapshot(partial: Partial<StageGateSnapshot> & { currentStage: BespokeStage }): StageGateSnapshot {
-  return {
-    orderId: "ord_ao",
-    orderRef: "ORD-AO",
-    productionUnlockedAt: new Date(),
-    completedStages: [
+const BEFORE_DELIVERY: BespokeStage[] = [
       BespokeStage.CONSULTATION_BOOKING,
       BespokeStage.CONSULTATION_SESSION,
       BespokeStage.INVOICE_ISSUANCE,
@@ -54,14 +49,13 @@ function snapshot(partial: Partial<StageGateSnapshot> & { currentStage: BespokeS
       BespokeStage.ALTERATIONS,
       BespokeStage.BEADING_FINISHING,
       BespokeStage.FINAL_FITTING,
-    ],
-    notes: "ready",
-    mediaCount: 1,
-    latestApprovalStatus: null,
-    balance: 0,
-    requirement: getStageRequirement(partial.currentStage),
-    ...partial,
-  };
+];
+
+function snapshot(partial: LegacySnapshot): StageGateSnapshot {
+  return legacySnapshot(
+    { completedStages: BEFORE_DELIVERY, ...partial },
+    { orderId: "ord_ao", orderRef: "ORD-AO", productionUnlockedAt: new Date(), notes: "ready", mediaCount: 1 },
+  );
 }
 
 function runPure() {
@@ -70,9 +64,9 @@ function runPure() {
   assert(/0\.23/.test(formatNgnKobo(0.23)), `kobo display, got ${formatNgnKobo(0.23)}`);
   assert(formatNgnKobo(0.23) !== "₦0", "must not print a rounded zero for 23 kobo");
 
-  const closedFacts = buildStageChecklistFacts({
+  const closedFacts = legacyFacts({
     currentStage: BespokeStage.DELIVERY,
-    completedStages: snapshot({ currentStage: BespokeStage.DELIVERY }).completedStages,
+    completedStages: BEFORE_DELIVERY,
     draftNotes: "handover",
     mediaCount: 1,
     latestApprovalStatus: null,
@@ -85,9 +79,9 @@ function runPure() {
   assert(/2\.77/.test(closedBalance.displayLabel), `gate closed must print kobo, got ${closedBalance.displayLabel}`);
   assert(!/outstanding \(₦0\)/i.test(closedBalance.displayLabel), "never print ₦0 while the gate is closed");
 
-  const residueFacts = buildStageChecklistFacts({
+  const residueFacts = legacyFacts({
     currentStage: BespokeStage.DELIVERY,
-    completedStages: snapshot({ currentStage: BespokeStage.DELIVERY }).completedStages,
+    completedStages: BEFORE_DELIVERY,
     draftNotes: "handover",
     mediaCount: 1,
     latestApprovalStatus: null,
@@ -101,14 +95,12 @@ function runPure() {
   const staff = { id: "staff", role: Role.ADMIN };
   const withResidue = evaluateStageGate({
     snapshot: snapshot({ currentStage: BespokeStage.DELIVERY, balance: 0.23, mediaCount: 1, notes: "handover" }),
-    stage: BespokeStage.DELIVERY,
     actor: staff,
   });
   assert(withResidue.ok, "converted commission with kobo residue can reach Delivery");
 
   const stillDue = evaluateStageGate({
     snapshot: snapshot({ currentStage: BespokeStage.DELIVERY, balance: 2_769_231.23, mediaCount: 1, notes: "handover" }),
-    stage: BespokeStage.DELIVERY,
     actor: staff,
   });
   assert(!stillDue.ok, "a real remaining balance still blocks Delivery");
