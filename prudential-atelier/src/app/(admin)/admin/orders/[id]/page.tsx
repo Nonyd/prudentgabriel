@@ -10,7 +10,8 @@ import { ShippingQuotePanel } from "@/components/admin/ShippingQuotePanel";
 import { orderWhatsAppUrl, phoneFromOrder } from "@/lib/shipping/whatsapp";
 import { OrderMeasurementsBlock } from "@/components/admin/OrderMeasurementsBlock";
 import { PrintGuideButton } from "@/components/admin/PrintGuideButton";
-import { formatChoiceShort, buildWorkroomSku } from "@/lib/product-options";
+import { buildWorkroomSku } from "@/lib/product-options";
+import { parseSnapshot } from "@/lib/custom-size";
 import { AdminBankTransferProof } from "@/components/admin/AdminBankTransferProof";
 
 function formatAddress(snap: Record<string, string>) {
@@ -25,6 +26,67 @@ function formatAddress(snap: Record<string, string>) {
     snap.phone,
   ].filter((v) => v && String(v).trim());
   return lines.join("\n");
+}
+
+/** Everything the customer picked for one item, one labelled line each, so nothing is missed. */
+function ItemChoices({
+  item,
+}: {
+  item: {
+    color: string | null;
+    colorHex: string | null;
+    size: string | null;
+    sizeMode: string;
+    optionLabel: string | null;
+    measurements: unknown;
+    variant: { size: string } | null;
+  };
+}) {
+  const custom = item.sizeMode === "CUSTOM";
+  const size = item.size ?? item.variant?.size ?? null;
+  const measured = custom ? parseSnapshot(item.measurements).length : 0;
+  const hex = item.colorHex && /^#[0-9a-f]{3,8}$/i.test(item.colorHex) ? item.colorHex : null;
+  const rows: { label: string; value: React.ReactNode }[] = [
+    {
+      label: "Colour",
+      value: item.color ? (
+        <span className="inline-flex items-center gap-2">
+          {hex ? <span aria-hidden className="h-3.5 w-3.5 rounded-full border border-sand" style={{ backgroundColor: hex }} /> : null}
+          {item.color}
+        </span>
+      ) : (
+        <span className="text-text-light">Not chosen</span>
+      ),
+    },
+    {
+      label: "Size",
+      value: custom ? (
+        <span>
+          Custom size —{" "}
+          {measured ? (
+            <a href="#workroom-measurements" className="underline underline-offset-2">
+              {measured} measurement{measured === 1 ? "" : "s"} below
+            </a>
+          ) : (
+            <span className="text-error">no measurements were saved</span>
+          )}
+        </span>
+      ) : (
+        size ?? <span className="text-text-light">Not chosen</span>
+      ),
+    },
+  ];
+  if (item.optionLabel?.trim()) rows.push({ label: "Option", value: item.optionLabel.trim() });
+  return (
+    <dl className="space-y-1 text-sm">
+      {rows.map((r) => (
+        <div key={r.label} className="flex gap-2">
+          <dt className="w-14 shrink-0 text-11px uppercase tracking-wide text-text-light">{r.label}</dt>
+          <dd className="font-medium text-charcoal">{r.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
 }
 
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -140,7 +202,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           <thead className="text-text-light">
             <tr>
               <th className="pb-2">Item</th>
-              <th className="pb-2">Variant</th>
+              <th className="pb-2">What she chose</th>
               <th className="pb-2">Qty</th>
               <th className="pb-2 text-right">Line</th>
             </tr>
@@ -156,12 +218,8 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                     ) : null}
                     <span className="text-charcoal">{it.product.name}</span>
                   </td>
-                  <td className="py-3 text-xs text-text-light">
-                    {formatChoiceShort({
-                      optionLabel: it.optionLabel,
-                      size: it.sizeMode === "CUSTOM" ? null : it.size ?? it.variant?.size,
-                      custom: it.sizeMode === "CUSTOM",
-                    })}
+                  <td className="py-3 align-top">
+                    <ItemChoices item={it} />
                     {it.variant?.sku ? (
                       <span className="mt-1 block text-10px uppercase tracking-wide">
                         {buildWorkroomSku({
