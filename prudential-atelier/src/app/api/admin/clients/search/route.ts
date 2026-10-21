@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
         { name: { contains: q, mode: "insensitive" } },
       ],
     },
-    select: { id: true, email: true, name: true },
+    select: { id: true, email: true, name: true, phone: true },
     take: 12,
     orderBy: { createdAt: "desc" },
   });
@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
       id: u.id,
       email: u.email,
       name: u.name?.trim() || u.email,
+      phone: u.phone,
     })),
   });
 }

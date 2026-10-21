@@ -33,7 +33,7 @@ export function isPlaceholderEmail(email: string | null | undefined): boolean {
   return !!email && email.toLowerCase().endsWith(`@${PLACEHOLDER_EMAIL_DOMAIN}`);
 }
 
-function placeholderEmail(name: string): string {
+export function placeholderEmail(name: string): string {
   const slug =
     name
       .toLowerCase()

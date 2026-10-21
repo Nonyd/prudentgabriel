@@ -14,6 +14,10 @@ import { useHasPermission } from "@/hooks/useHasPermission";
 import { cn, formatDate } from "@/lib/utils";
 
 type LibraryFeature = { id: string; key: string; label: string };
+type ClientMatch = { id: string; name: string; email: string; phone: string | null };
+
+/** Clients added without an email carry a never-mailed placeholder; don't show it. */
+const isPlaceholder = (email: string) => email.toLowerCase().endsWith(".invalid");
 
 function StageBadge({ label }: { label: string }) {
   return (
@@ -182,6 +186,35 @@ export function BespokePipelineClient({
     deliveryDate: "",
     totalAmount: "",
   });
+  /** The client on file this order is for, picked from the name suggestions. */
+  const [pickedClient, setPickedClient] = useState<ClientMatch | null>(null);
+  const [matches, setMatches] = useState<ClientMatch[]>([]);
+
+  // Suggest clients already on file as the name (or email) is typed.
+  useEffect(() => {
+    const q = form.clientName.trim();
+    if (pickedClient || q.length < 2) {
+      setMatches([]);
+      return;
+    }
+    const t = setTimeout(() => {
+      void fetch(`/api/admin/clients/search?q=${encodeURIComponent(q)}`)
+        .then((r) => (r.ok ? r.json() : { items: [] }))
+        .then((d: { items: ClientMatch[] }) => setMatches(d.items));
+    }, 250);
+    return () => clearTimeout(t);
+  }, [form.clientName, pickedClient]);
+
+  const pickClient = (c: ClientMatch) => {
+    setPickedClient(c);
+    setMatches([]);
+    setForm((f) => ({
+      ...f,
+      clientName: c.name,
+      clientEmail: isPlaceholder(c.email) ? "" : c.email,
+      clientPhone: c.phone ?? f.clientPhone,
+    }));
+  };
 
   const refresh = useCallback(async () => {
     const params = new URLSearchParams();
@@ -222,16 +255,19 @@ export function BespokePipelineClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          clientUserId: pickedClient?.id,
           totalAmount: form.totalAmount ? parseFloat(form.totalAmount) : 0,
         }),
       });
-      if (!res.ok) throw new Error("Failed to create order");
-      const data = (await res.json()) as { item: { id: string } };
-      toast.success("Order created");
+      const data = (await res.json().catch(() => ({}))) as { item?: { id: string }; error?: unknown };
+      if (!res.ok || !data.item) {
+        throw new Error(typeof data.error === "string" ? data.error : "Could not create order");
+      }
+      toast.success(pickedClient ? `Order added to ${pickedClient.name}'s file` : "Order created");
       setModalOpen(false);
       router.push(`/admin/bespoke/${data.item.id}`);
-    } catch {
-      toast.error("Could not create order");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not create order");
     } finally {
       setCreating(false);
     }
@@ -369,10 +405,49 @@ export function BespokePipelineClient({
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New Atelier Order">
         <div className="mt-5 space-y-3">
+          <div className="relative">
+            <label className="block">
+              <span className="mb-1 block font-sans text-xs font-medium text-text-mid">Client name</span>
+              <input
+                type="text"
+                value={form.clientName}
+                autoComplete="off"
+                placeholder="Type a name or email to find a client on file"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setPickedClient(null);
+                  setForm((f) => ({ ...f, clientName: value }));
+                }}
+                className="w-full rounded border border-sand px-3 py-2 font-sans text-sm"
+              />
+            </label>
+            {matches.length > 0 ? (
+              <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded border border-sand bg-bg-card shadow-lg">
+                {matches.map((c) => (
+                  <li key={c.id}>
+                    <button
+                      type="button"
+                      onClick={() => pickClient(c)}
+                      className="block w-full px-3 py-2 text-left font-sans text-sm hover:bg-sand/30"
+                    >
+                      <span className="text-ink">{c.name}</span>
+                      <span className="ml-2 text-xs text-text-light">
+                        {[isPlaceholder(c.email) ? "no email" : c.email, c.phone].filter(Boolean).join(" · ")}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <p className="mt-1 font-sans text-xs text-text-light">
+              {pickedClient
+                ? `Adding to ${pickedClient.name}'s client file.`
+                : "Not on file? A new client is made for this order. Email is optional."}
+            </p>
+          </div>
           {(
             [
-              ["clientName", "Client name", "text"],
-              ["clientEmail", "Email", "email"],
+              ["clientEmail", "Email (optional)", "email"],
               ["clientPhone", "Phone", "tel"],
               ["occasionType", "Occasion", "text"],
               ["outfitDescription", "Outfit description", "text"],
@@ -385,8 +460,9 @@ export function BespokePipelineClient({
               <input
                 type={type}
                 value={form[key]}
+                readOnly={key === "clientEmail" && !!pickedClient}
                 onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                className="w-full rounded border border-sand px-3 py-2 font-sans text-sm"
+                className="w-full rounded border border-sand px-3 py-2 font-sans text-sm read-only:bg-sand/20 read-only:text-text-mid"
               />
             </label>
           ))}

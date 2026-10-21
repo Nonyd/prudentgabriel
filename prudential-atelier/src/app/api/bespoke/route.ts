@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { BespokeStage } from "@prisma/client";
+import { BespokeStage, Role, type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getOrCreateClientProfile } from "@/lib/account-helpers";
+import { snapshotFrom } from "@/lib/atelier/commission-measurements";
+import { placeholderEmail } from "@/lib/atelier/manual-onboarding";
+import { isUndeliverableAddress } from "@/lib/email-outbox";
 import { commissionSearch } from "@/lib/atelier/commission-search";
 import { commissionListSelect, commissionRow, fabricPendingWhere } from "@/lib/atelier/commission-list";
 import { logActivity } from "@/lib/logger";
@@ -68,12 +72,17 @@ export async function POST(req: NextRequest) {
       deliveryDate?: string;
       notes?: string;
       totalAmount?: number;
-      clientProfileId?: string;
+      /** A client picked from the suggestions: her account, not her profile. */
+      clientUserId?: string;
     };
 
-    if (!d.clientName?.trim() || !d.clientEmail?.trim()) {
-      return NextResponse.json({ error: "Client name and email are required" }, { status: 400 });
+    if (!d.clientUserId && !d.clientName?.trim()) {
+      return NextResponse.json({ error: "Enter the client's name, or pick a client already on file." }, { status: 400 });
     }
+
+    const client = await resolveCommissionClient(d);
+    if (!client.ok) return NextResponse.json({ error: client.error }, { status: client.status });
+    const measured = await prisma.measurement.findUnique({ where: { clientId: client.profileId } });
 
     let orderRef = generateBespokeOrderRef();
     for (let i = 0; i < 5; i++) {
@@ -91,10 +100,16 @@ export async function POST(req: NextRequest) {
     const created = await prisma.bespokeOrder.create({
       data: {
         orderRef,
-        clientProfileId: d.clientProfileId || null,
-        clientName: d.clientName.trim(),
-        clientEmail: d.clientEmail.trim().toLowerCase(),
-        clientPhone: d.clientPhone?.trim() || null,
+        clientProfileId: client.profileId,
+        clientName: client.name,
+        clientEmail: client.email,
+        clientPhone: client.phone,
+        ...(measured
+          ? {
+              measurementsSnapshot: snapshotFrom(measured) as Prisma.InputJsonValue,
+              measurementsTakenAt: measured.updatedAt,
+            }
+          : {}),
         outfitDescription: d.outfitDescription || null,
         occasionType: d.occasionType || null,
         eventLocation: d.eventLocation || null,
@@ -172,6 +187,59 @@ export async function POST(req: NextRequest) {
   );
 
   return NextResponse.json({ success: true, requestNumber });
+}
+
+type ResolvedClient =
+  | { ok: true; profileId: string; name: string; email: string; phone: string | null }
+  | { ok: false; status: number; error: string };
+
+/**
+ * Every commission made here lands in a client's file: the one picked from the
+ * suggestions, else the client already on file with this email, else a new client
+ * (no password, nothing mailed; no email → a placeholder that is never mailed).
+ */
+async function resolveCommissionClient(d: {
+  clientUserId?: string;
+  clientName?: string;
+  clientEmail?: string;
+  clientPhone?: string;
+}): Promise<ResolvedClient> {
+  const typedName = d.clientName?.trim() || "";
+  const typedEmail = d.clientEmail?.trim().toLowerCase() || "";
+  const typedPhone = d.clientPhone?.trim() || null;
+  const userSelect = { id: true, role: true, name: true, email: true, phone: true } as const;
+
+  const existing = d.clientUserId
+    ? await prisma.user.findUnique({ where: { id: d.clientUserId }, select: userSelect })
+    : typedEmail
+      ? await prisma.user.findFirst({ where: { email: { equals: typedEmail, mode: "insensitive" } }, select: userSelect })
+      : null;
+
+  if (d.clientUserId && !existing) return { ok: false, status: 404, error: "That client is no longer on file." };
+  if (existing) {
+    if (existing.role !== Role.CUSTOMER) {
+      return { ok: false, status: 409, error: "This email belongs to a staff account, not a client." };
+    }
+    const profile = await getOrCreateClientProfile(existing.id);
+    return {
+      ok: true,
+      profileId: profile.id,
+      name: typedName || existing.name?.trim() || existing.email,
+      email: existing.email.toLowerCase(),
+      phone: typedPhone ?? existing.phone ?? null,
+    };
+  }
+
+  const email = typedEmail || placeholderEmail(typedName);
+  if (!typedEmail && !isUndeliverableAddress(email)) throw new Error("placeholder would be mailed");
+  const profile = await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: { email, name: typedName, phone: typedPhone, role: Role.CUSTOMER },
+      select: { id: true },
+    });
+    return tx.clientProfile.create({ data: { userId: user.id }, select: { id: true } });
+  });
+  return { ok: true, profileId: profile.id, name: typedName, email, phone: typedPhone };
 }
 
 function escapeHtml(s: string): string {
