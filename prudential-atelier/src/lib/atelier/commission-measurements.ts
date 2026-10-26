@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { MEASUREMENT_COLUMNS, measurementFromRecord, type MeasurementData } from "@/lib/measurements";
+import { ATELIER_TEXT_MAX, isAtelierFieldKey } from "@/lib/atelier/measurement-fields-shared";
 
 /**
  * Slice BD6 — measurements are taken per commission.
@@ -16,8 +17,11 @@ import { MEASUREMENT_COLUMNS, measurementFromRecord, type MeasurementData } from
 export type MeasurementSnapshot = Partial<Record<(typeof MEASUREMENT_COLUMNS)[number], number | null>> & {
   unit?: string;
   notes?: string | null;
-  /** Centimetre extras keyed by MeasurementField.key, as on Measurement.values. */
-  values?: Record<string, number>;
+  /**
+   * As on Measurement.values: the shop's centimetre extras (MeasurementField.key)
+   * and the atelier sheet's fields (`atelier_…`), lengths or a text field's words.
+   */
+  values?: Record<string, number | string>;
 };
 
 type ProfileRow = {
@@ -39,10 +43,12 @@ export function snapshotFrom(row: Partial<ProfileRow> | MeasurementSnapshot | nu
   if (row.notes !== undefined) out.notes = row.notes ?? null;
   const values = (row as { values?: unknown }).values;
   if (values && typeof values === "object" && !Array.isArray(values)) {
-    const clean: Record<string, number> = {};
+    const clean: Record<string, number | string> = {};
     for (const [k, v] of Object.entries(values as Record<string, unknown>)) {
       const n = typeof v === "number" ? v : Number(v);
       if (Number.isFinite(n)) clean[k] = n;
+      // An atelier text field (cup size) keeps its words.
+      else if (isAtelierFieldKey(k) && typeof v === "string" && v.trim()) clean[k] = v.trim().slice(0, ATELIER_TEXT_MAX);
     }
     if (Object.keys(clean).length) out.values = clean;
   }

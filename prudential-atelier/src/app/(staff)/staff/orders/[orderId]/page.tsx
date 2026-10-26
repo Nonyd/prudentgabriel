@@ -19,7 +19,12 @@ type OrderDetail = {
   currentStageLabel?: string;
   assignment: { role: string; assignedAt: string };
   clientFirstName: string;
-  measurements: Record<string, unknown> | null;
+  /** The set this commission is cut to, in the house sheet's order. */
+  measurements: {
+    unit: string;
+    notes: string | null;
+    rows: { label: string; value: number | string; text: boolean }[];
+  } | null;
   materials: { name: string; quantity: string | null; notes: string | null }[];
   stageNotes: { stage: string; notes: string | null; completedAt: string }[];
   images: string[];
@@ -123,15 +128,22 @@ export default function StaffOrderDetailPage(props: { params: Promise<{ orderId:
             Measurements
           </h2>
           <dl className="grid grid-cols-2 gap-2 font-sans text-sm">
-            {Object.entries(order.measurements).map(([key, value]) =>
-              typeof value === "string" || typeof value === "number" ? (
-                <div key={key}>
-                  <dt className="text-text-light capitalize">{key.replace(/_/g, " ")}</dt>
-                  <dd className="font-medium text-ink">{String(value)}</dd>
-                </div>
-              ) : null,
-            )}
+            {order.measurements.rows.map((r) => (
+              <div key={r.label}>
+                <dt className="text-text-light">{r.label}</dt>
+                <dd className="font-medium text-ink">
+                  {r.value}
+                  {r.text ? "" : order.measurements!.unit === "cm" ? " cm" : "″"}
+                </dd>
+              </div>
+            ))}
           </dl>
+          {order.measurements.rows.length === 0 ? (
+            <p className="font-sans text-sm text-text-mid">None taken yet.</p>
+          ) : null}
+          {order.measurements.notes ? (
+            <p className="mt-3 whitespace-pre-wrap font-sans text-sm text-text-mid">{order.measurements.notes}</p>
+          ) : null}
         </section>
       ) : null}
 

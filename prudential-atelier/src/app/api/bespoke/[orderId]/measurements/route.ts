@@ -6,7 +6,7 @@ import { canSeeOrderMeasurements } from "@/lib/bespoke-data-access";
 import { cleanMeasurementInput } from "@/lib/measurements";
 import { commissionMeasurements, parseSnapshot, snapshotFrom } from "@/lib/atelier/commission-measurements";
 import { logActivity } from "@/lib/logger";
-import { mergeAtelierExtras } from "@/lib/atelier/measurement-fields";
+import { mergeAtelierExtras, readAtelierMeasurementFields, textFieldKeys } from "@/lib/atelier/measurement-fields";
 
 type Params = { params: Promise<{ orderId: string }> };
 
@@ -43,7 +43,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const g = await gate(orderId);
   if (!g.ok) return g.response;
 
-  const cleaned = cleanMeasurementInput(await req.json().catch(() => null));
+  const cleaned = cleanMeasurementInput(
+    await req.json().catch(() => null),
+    textFieldKeys(await readAtelierMeasurementFields()),
+  );
   if (!cleaned.ok) {
     return NextResponse.json({ error: cleaned.error, fieldErrors: cleaned.fieldErrors }, { status: 400 });
   }

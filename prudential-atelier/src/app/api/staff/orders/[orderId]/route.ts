@@ -5,6 +5,8 @@ import { MEASUREMENT_ASSIGNMENT_ROLES } from "@/lib/bespoke-data-access";
 import { specificationInclude, specificationRows } from "@/lib/atelier/construction-features";
 import { resolveStaffPortalUser } from "@/lib/staff-view-as";
 import { stepLabel } from "@/lib/atelier/pipeline";
+import { commissionMeasurements } from "@/lib/atelier/commission-measurements";
+import { measurementSheetRows, readAtelierMeasurementFields } from "@/lib/atelier/measurement-fields";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: string }> }) {
   const session = await auth();
@@ -48,21 +50,19 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: s
 
   const clientFirstName = order.clientName.split(/\s+/)[0] ?? order.clientName;
   // Slice AZ8: measurements for the tailor / pattern cutter, not every assignee.
-  const m = MEASUREMENT_ASSIGNMENT_ROLES.includes(assignment.role) ? order.clientProfile?.measurements : null;
-  const measurements = m
+  // The set this commission is cut to (her latest if none was taken for it), in the house sheet's order.
+  const cut = MEASUREMENT_ASSIGNMENT_ROLES.includes(assignment.role)
+    ? commissionMeasurements(order, order.clientProfile?.measurements ?? null).data
+    : null;
+  const measurements = cut
     ? {
-        bust: m.bust,
-        waist: m.waist,
-        hips: m.hips,
-        shoulderWidth: m.shoulderWidth,
-        sleeveLength: m.sleeveLength,
-        dressLength: m.dressLength,
-        thigh: m.thigh,
-        inseam: m.inseam,
-        neck: m.neck,
-        armhole: m.armhole,
-        unit: m.unit,
-        notes: m.notes,
+        unit: cut.unit === "cm" ? "cm" : "inches",
+        notes: cut.notes ?? null,
+        rows: measurementSheetRows(await readAtelierMeasurementFields(), cut).map((r) => ({
+          label: r.label,
+          value: r.value,
+          text: r.text,
+        })),
       }
     : null;
   const stageNotes = order.stageHistory

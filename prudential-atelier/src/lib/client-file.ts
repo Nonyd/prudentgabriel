@@ -10,6 +10,12 @@ import type { AdminPermission } from "@/lib/roles";
 import { commissionTitle, occasionPhrase } from "@/lib/atelier/commission-list";
 import { materialView, splitSpecification } from "@/lib/atelier/commission-materials";
 import { commissionMeasurements } from "@/lib/atelier/commission-measurements";
+import {
+  atelierExtrasFrom,
+  isAtelierFieldKey,
+  measurementSheetRows,
+  readAtelierMeasurementFields,
+} from "@/lib/atelier/measurement-fields";
 import { commissionCost } from "@/lib/atelier/commission-cost";
 import { isProtectedAccount } from "@/lib/roles";
 import { NOTE_SECTION_LABELS, isNoteSection, type NoteSection } from "@/lib/atelier/commission-notes-shared";
@@ -895,19 +901,6 @@ async function loadConsultation(
   };
 }
 
-const PROFILE_COLUMNS = [
-  ["bust", "Bust"],
-  ["waist", "Waist"],
-  ["hips", "Hips"],
-  ["shoulderWidth", "Shoulder"],
-  ["sleeveLength", "Sleeve length"],
-  ["dressLength", "Dress length"],
-  ["thigh", "Thigh"],
-  ["inseam", "Inseam"],
-  ["neck", "Neck"],
-  ["armhole", "Armhole"],
-] as const;
-
 async function loadMeasurements(clientProfileId: string, userId: string) {
   const [profile, fields, lines] = await Promise.all([
     prisma.measurement.findUnique({ where: { clientId: clientProfileId } }),
@@ -924,14 +917,17 @@ async function loadMeasurements(clientProfileId: string, userId: string) {
   ]);
   const labelOf = new Map(fields.map((f) => [f.key, f.label]));
 
-  const profileRows: { key: string; label: string; value: number; unit: string }[] = [];
+  const profileRows: { key: string; label: string; value: number | string; unit: string }[] = [];
   if (profile) {
-    for (const [key, label] of PROFILE_COLUMNS) {
-      const value = profile[key];
-      if (typeof value === "number") profileRows.push({ key, label, value, unit: profile.unit });
+    // The atelier sheet, in its order and under its names (lengths in the set's unit, sizes as words)…
+    const sheet = await readAtelierMeasurementFields();
+    for (const r of measurementSheetRows(sheet, { ...profile, extra: atelierExtrasFrom(profile.values) })) {
+      profileRows.push({ key: r.key, label: r.label, value: r.value, unit: r.text ? "" : profile.unit });
     }
+    // …then the shop's custom-size extras, which are kept in centimetres.
     const extra = profile.values && typeof profile.values === "object" ? (profile.values as Record<string, unknown>) : {};
     for (const [key, value] of Object.entries(extra)) {
+      if (isAtelierFieldKey(key)) continue;
       const n = typeof value === "number" ? value : Number(value);
       if (Number.isFinite(n)) profileRows.push({ key, label: labelOf.get(key) ?? key, value: n, unit: "cm" });
     }

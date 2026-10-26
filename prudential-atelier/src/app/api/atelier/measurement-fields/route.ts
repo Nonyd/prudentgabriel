@@ -7,6 +7,7 @@ import {
   ATELIER_MEASUREMENT_FIELDS_KEY,
   atelierFieldKey,
   cleanAtelierFields,
+  isStandardMeasurementColumn,
   readAtelierMeasurementFields,
   type AtelierMeasurementField,
 } from "@/lib/atelier/measurement-fields";
@@ -16,7 +17,7 @@ import { clearSettingCacheKey } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
-/** The extra atelier measurement fields: read by every measurement form (admin and staff portal). */
+/** The atelier measurement sheet: read by every measurement form (admin and staff portal). */
 export async function GET() {
   const gate = await requireStaffPortal();
   if (!gate.ok) return gate.response;
@@ -31,6 +32,8 @@ const putSchema = z.object({
         key: z.string().max(60).optional(),
         label: z.string().trim().min(1, "Every field needs a name").max(60),
         help: z.string().trim().max(200).optional(),
+        /** A word or size (cup size), not a length. */
+        type: z.literal("text").optional(),
         retired: z.boolean().optional(),
       }),
     )
@@ -56,10 +59,17 @@ export async function PUT(req: NextRequest) {
   const keys = new Set(before.map((f) => f.key));
   const next: AtelierMeasurementField[] = [];
   for (const f of parsed.data.fields) {
-    const key = f.key && known.has(f.key) ? f.key : atelierFieldKey(f.label, keys);
+    // A standard column keeps its key; so does a field already on the sheet. A new one gets a key from its name.
+    const key = f.key && (known.has(f.key) || isStandardMeasurementColumn(f.key)) ? f.key : atelierFieldKey(f.label, keys);
     keys.add(key);
     if (next.some((n) => n.key === key)) continue;
-    next.push({ key, label: f.label, ...(f.help ? { help: f.help } : {}), ...(f.retired ? { retired: true } : {}) });
+    next.push({
+      key,
+      label: f.label,
+      ...(f.help ? { help: f.help } : {}),
+      ...(f.type ? { type: f.type } : {}),
+      ...(f.retired ? { retired: true } : {}),
+    });
   }
   for (const old of before) {
     if (!next.some((n) => n.key === old.key)) next.push({ ...old, retired: true });
@@ -77,7 +87,7 @@ export async function PUT(req: NextRequest) {
     create: {
       key: ATELIER_MEASUREMENT_FIELDS_KEY,
       value: JSON.stringify(clean),
-      label: "Atelier: extra measurement fields",
+      label: "Atelier: measurement sheet",
       type: SettingType.TEXT,
       group: SettingGroup.STORE,
       isPublic: false,
@@ -94,7 +104,7 @@ export async function PUT(req: NextRequest) {
     userRole: gate.session.user.role ?? undefined,
     action: "UPDATE",
     module: "bespoke",
-    description: `Atelier measurement fields: ${clean.filter((f) => !f.retired).map((f) => f.label).join(", ") || "none"}`,
+    description: `Atelier measurement sheet: ${clean.filter((f) => !f.retired).map((f) => f.label).join(", ") || "none"}`,
   }).catch(() => undefined);
 
   return NextResponse.json({ fields: clean });

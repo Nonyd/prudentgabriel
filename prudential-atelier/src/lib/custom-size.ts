@@ -238,6 +238,16 @@ function valuesMap(values: unknown): Record<string, number> {
   return out;
 }
 
+/** The atelier sheet's text values (cup size) in a saved set, so a shop save does not drop them. */
+function atelierWordsOf(values: unknown): Record<string, string> {
+  if (!values || typeof values !== "object" || Array.isArray(values)) return {};
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(values as Record<string, unknown>)) {
+    if (k.startsWith("atelier_") && typeof v === "string" && v.trim() && !Number.isFinite(Number(v))) out[k] = v;
+  }
+  return out;
+}
+
 /** Prefill centimetres from the atelier Measurement record. */
 export function profileCmForKey(profile: ProfileMeasurement | null | undefined, key: string): number | null {
   if (!profile) return null;
@@ -261,10 +271,10 @@ export function mergeProfileFromSnapshot(
   existing: ProfileMeasurement | null | undefined,
   snapshot: MeasurementSnapshotEntry[],
 ): {
-  values: Record<string, number>;
+  values: Record<string, number | string>;
   columns: Partial<Record<(typeof PROFILE_COLUMN_BY_KEY)[string], number>>;
 } {
-  const values = { ...valuesMap(existing?.values), ...snapshotToValuesCm(snapshot) };
+  const values = { ...atelierWordsOf(existing?.values), ...valuesMap(existing?.values), ...snapshotToValuesCm(snapshot) };
   const unit = (existing?.unit ?? "inches").toLowerCase();
   const storeInches = unit !== "cm" && unit !== "centimetres" && unit !== "centimeters";
   const columns: Partial<Record<string, number>> = {};

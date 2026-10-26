@@ -5,32 +5,30 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import type { AtelierMeasurementField } from "@/lib/atelier/measurement-fields-shared";
+import {
+  isStandardMeasurementColumn,
+  STANDARD_MEASUREMENT_LABELS,
+  type AtelierMeasurementField,
+} from "@/lib/atelier/measurement-fields-shared";
 
-type Row = { key?: string; label: string; help: string; retired: boolean };
-
-const STANDARD = [
-  "Bust",
-  "Waist",
-  "Hips",
-  "Shoulder",
-  "Sleeve",
-  "Dress length",
-  "Thigh",
-  "Inseam",
-  "Neck",
-  "Armhole",
-];
+type Row = { key?: string; label: string; help: string; text: boolean; retired: boolean };
 
 function toRows(fields: AtelierMeasurementField[]): Row[] {
-  return fields.map((f) => ({ key: f.key, label: f.label, help: f.help ?? "", retired: f.retired === true }));
+  return fields.map((f) => ({
+    key: f.key,
+    label: f.label,
+    help: f.help ?? "",
+    text: f.type === "text",
+    retired: f.retired === true,
+  }));
 }
 
 /**
- * Atelier → Measurement fields. The ten standard measurements are fixed; the
- * house adds its own here, and they appear on every commission's and client's
- * measurement form. A field in use is retired, never deleted, so values already
- * taken keep their name.
+ * Atelier → Measurement fields: the house measurement sheet, in the order it is
+ * taken. Some entries are standard measurements every set has (bust, waist …)
+ * under the house's name for them; the rest the house adds. It appears on every
+ * commission's and client's measurement form. A field in use is retired, never
+ * deleted, so values already taken keep their name.
  */
 export function AtelierMeasurementFieldsClient() {
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -74,6 +72,7 @@ export function AtelierMeasurementFieldsClient() {
             key: r.key,
             label: r.label.trim(),
             help: r.help.trim() || undefined,
+            type: r.text && !(r.key && isStandardMeasurementColumn(r.key)) ? "text" : undefined,
             retired: r.retired || undefined,
           })),
         }),
@@ -101,29 +100,24 @@ export function AtelierMeasurementFieldsClient() {
         </Link>
         <h1 className="mt-2 font-display text-2xl text-ink">Measurement fields</h1>
         <p className="mt-1 font-sans text-sm text-text-mid">
-          Add the measurements the atelier takes beyond the standard ten. They appear on every commission&apos;s
+          The atelier&apos;s measurement sheet, in the order it is taken. It appears on every commission&apos;s
           measurement form and on the client&apos;s saved measurements, in the same unit as the rest of the set.
+          Fields marked <em>standard</em> are measurements every client set already has, so figures taken before keep
+          showing under the name you give them here.
         </p>
       </div>
-
-      <section className="card-surface p-5">
-        <h2 className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light">
-          Always taken
-        </h2>
-        <p className="mt-2 font-sans text-sm text-text-mid">{STANDARD.join(" · ")}</p>
-      </section>
 
       <section className="card-surface space-y-3 p-5">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-sans text-10px font-semibold uppercase tracking-[0.14em] text-text-light">
-            Added by the house
+            The sheet
           </h2>
           <Button
             type="button"
             size="sm"
             variant="secondary"
             disabled={!rows}
-            onClick={() => setRows((rs) => [...(rs ?? []), { label: "", help: "", retired: false }])}
+            onClick={() => setRows((rs) => [...(rs ?? []), { label: "", help: "", text: false, retired: false }])}
           >
             Add field
           </Button>
@@ -183,6 +177,16 @@ export function AtelierMeasurementFieldsClient() {
                   </div>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-3">
+                  {r.key && isStandardMeasurementColumn(r.key) ? (
+                    <span className="rounded-full bg-sand/60 px-2 py-0.5 font-sans text-10px font-semibold uppercase tracking-wide text-text-mid">
+                      Standard · {STANDARD_MEASUREMENT_LABELS[r.key]}
+                    </span>
+                  ) : (
+                    <label className="flex items-center gap-2 font-sans text-xs text-text-mid">
+                      <input type="checkbox" checked={r.text} onChange={(e) => update(i, { text: e.target.checked })} />
+                      A size or word, not a length (e.g. cup size 34C)
+                    </label>
+                  )}
                   {r.key ? (
                     <label className="flex items-center gap-2 font-sans text-xs text-text-mid">
                       <input type="checkbox" checked={r.retired} onChange={(e) => update(i, { retired: e.target.checked })} />

@@ -7,6 +7,12 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { STAGE_LABELS } from "@/lib/bespoke-stages";
+import {
+  atelierExtrasFrom,
+  DEFAULT_ATELIER_SHEET,
+  measurementSheetRows,
+  type AtelierMeasurementField,
+} from "@/lib/atelier/measurement-fields-shared";
 import { formatDate, formatPrice, getInitials } from "@/lib/utils";
 
 type ClientDetail = {
@@ -38,6 +44,12 @@ type ClientDetail = {
     shoulderWidth: number | null;
     sleeveLength: number | null;
     dressLength: number | null;
+    thigh: number | null;
+    inseam: number | null;
+    neck: number | null;
+    armhole: number | null;
+    /** The atelier sheet's own fields (and the shop's custom-size extras). */
+    values?: unknown;
     unit: string;
     notes: string | null;
   } | null;
@@ -77,6 +89,17 @@ export function ClientProfileClient({ clientId }: { clientId: string }) {
   const [communications, setCommunications] = useState<
     { id: string; date: string; subject: string; type: string; status: string }[]
   >([]);
+
+  /** The house measurement sheet, for the names and order of her figures. */
+  const [sheet, setSheet] = useState<AtelierMeasurementField[]>(DEFAULT_ATELIER_SHEET);
+  useEffect(() => {
+    void fetch("/api/atelier/measurement-fields")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: { fields?: AtelierMeasurementField[] } | null) => {
+        if (j?.fields?.length) setSheet(j.fields);
+      })
+      .catch(() => undefined);
+  }, []);
 
   const refresh = useCallback(async () => {
     const [profileRes, commRes] = await Promise.all([
@@ -160,15 +183,11 @@ export function ClientProfileClient({ clientId }: { clientId: string }) {
     );
   }
 
-  const measurementFields = item.measurements
-    ? ([
-        ["Bust", item.measurements.bust],
-        ["Waist", item.measurements.waist],
-        ["Hips", item.measurements.hips],
-        ["Shoulder", item.measurements.shoulderWidth],
-        ["Sleeve", item.measurements.sleeveLength],
-        ["Dress length", item.measurements.dressLength],
-      ] as const)
+  const measurementRows = item.measurements
+    ? measurementSheetRows(sheet, {
+        ...item.measurements,
+        extra: atelierExtrasFrom(item.measurements.values as Record<string, unknown> | null | undefined),
+      })
     : [];
 
   return (
@@ -247,12 +266,13 @@ export function ClientProfileClient({ clientId }: { clientId: string }) {
           <h2 className="font-display text-lg text-ink">Measurements</h2>
           <p className="font-sans text-xs text-text-mid">Unit: {item.measurements.unit}</p>
           <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-            {measurementFields.map(([label, value]) => (
-              <div key={label}>
-                <p className="font-sans text-10px uppercase text-text-light">{label}</p>
-                <p className="font-sans text-sm text-ink">{value ?? "—"}</p>
+            {measurementRows.map((r) => (
+              <div key={r.key}>
+                <p className="font-sans text-10px uppercase text-text-light">{r.label}</p>
+                <p className="font-sans text-sm text-ink">{r.value}</p>
               </div>
             ))}
+            {measurementRows.length === 0 ? <p className="font-sans text-sm text-text-mid">None taken yet.</p> : null}
           </div>
         </section>
       ) : null}

@@ -7,38 +7,25 @@ import { formatDate } from "@/lib/utils";
 import { profileMeasurementProblems, type MeasurementData } from "@/lib/measurements";
 import { PROFILE_MEASUREMENT_GUIDE, readableApiError } from "@/lib/measurement-guide";
 import { FieldError, FormErrorSummary } from "@/components/measurements/MeasureGuide";
-import { atelierExtrasFrom, type AtelierMeasurementField } from "@/lib/atelier/measurement-fields-shared";
+import {
+  ATELIER_TEXT_MAX,
+  atelierExtrasFrom,
+  DEFAULT_ATELIER_SHEET,
+  isStandardMeasurementColumn,
+  measurementSheetRows,
+  STANDARD_MEASUREMENT_COLUMNS,
+  STANDARD_MEASUREMENT_LABELS,
+  type AtelierExtraValue,
+  type AtelierMeasurementField,
+} from "@/lib/atelier/measurement-fields-shared";
 
 export type { MeasurementData } from "@/lib/measurements";
 
-type MeasurementFieldKey =
-  | "bust"
-  | "waist"
-  | "hips"
-  | "shoulderWidth"
-  | "sleeveLength"
-  | "dressLength"
-  | "thigh"
-  | "inseam"
-  | "neck"
-  | "armhole";
+type MeasurementFieldKey = (typeof STANDARD_MEASUREMENT_COLUMNS)[number];
 
 const HOW: Record<MeasurementFieldKey, string> = Object.fromEntries(
   PROFILE_MEASUREMENT_GUIDE.map((g) => [g.key, g.how]),
 ) as Record<MeasurementFieldKey, string>;
-
-const FIELDS: { key: MeasurementFieldKey; label: string }[] = [
-  { key: "bust", label: "Bust" },
-  { key: "waist", label: "Waist" },
-  { key: "hips", label: "Hips" },
-  { key: "shoulderWidth", label: "Shoulder" },
-  { key: "sleeveLength", label: "Sleeve" },
-  { key: "dressLength", label: "Dress Length" },
-  { key: "thigh", label: "Thigh" },
-  { key: "inseam", label: "Inseam" },
-  { key: "neck", label: "Neck" },
-  { key: "armhole", label: "Armhole" },
-];
 
 /** A saved set from any route (a commission's, or her raw Measurement row) with its atelier extras read. */
 function normalize(d: MeasurementData | null | undefined): MeasurementData | null {
@@ -48,18 +35,18 @@ function normalize(d: MeasurementData | null | undefined): MeasurementData | nul
 }
 
 function hasAnyValue(d: MeasurementData): boolean {
-  return FIELDS.some((f) => d[f.key] != null) || Object.keys(d.extra ?? {}).length > 0;
+  return STANDARD_MEASUREMENT_COLUMNS.some((c) => d[c] != null) || Object.keys(d.extra ?? {}).length > 0;
 }
 
-/** The house's extra fields (Atelier → Measurement fields), loaded once per panel. */
+/** The house sheet (Atelier → Measurement fields), loaded once per panel; the default until it arrives. */
 function useAtelierFields(): AtelierMeasurementField[] {
-  const [fields, setFields] = useState<AtelierMeasurementField[]>([]);
+  const [fields, setFields] = useState<AtelierMeasurementField[]>(DEFAULT_ATELIER_SHEET);
   useEffect(() => {
     let live = true;
     void fetch("/api/atelier/measurement-fields")
       .then((r) => (r.ok ? r.json() : { fields: [] }))
       .then((j: { fields?: AtelierMeasurementField[] }) => {
-        if (live) setFields(j.fields ?? []);
+        if (live && j.fields?.length) setFields(j.fields);
       })
       .catch(() => undefined);
     return () => {
@@ -164,12 +151,18 @@ export function ClientMeasurementsPanel({
   const hasData = hasAnyValue(form);
   const unitLabel = unit === "cm" ? "cm" : '"';
   const extra = form.extra ?? {};
-  const labelOf = (key: string) =>
-    atelierFields.find((f) => f.key === key)?.label ?? key.replace(/^atelier_/, "").replace(/_/g, " ");
-  // Asked for: every current field, plus a retired one that still holds a value (so it can be cleared).
-  const extraInputs = atelierFields.filter((f) => !f.retired || extra[f.key] != null);
+  const valueOf = (key: string) => (isStandardMeasurementColumn(key) ? form[key] : extra[key]);
+  // Asked for, in sheet order: every current field, plus one no longer asked that still
+  // holds a value (so it can be cleared), then a standard column off the sheet that holds one.
+  const inputs: AtelierMeasurementField[] = [
+    ...atelierFields.filter((f) => !f.retired || valueOf(f.key) != null),
+    ...STANDARD_MEASUREMENT_COLUMNS.filter((c) => form[c] != null && !atelierFields.some((f) => f.key === c)).map(
+      (c) => ({ key: c, label: STANDARD_MEASUREMENT_LABELS[c], retired: true }),
+    ),
+  ];
+  const shown = measurementSheetRows(atelierFields, form);
 
-  function setExtra(key: string, value: number | null) {
+  function setExtra(key: string, value: AtelierExtraValue | null) {
     setForm((prev) => {
       const next = { ...(prev.extra ?? {}) };
       if (value == null) delete next[key];
@@ -191,8 +184,8 @@ export function ClientMeasurementsPanel({
     try {
       let res: Response;
       try {
-        const extraBody: Record<string, number | null> = {};
-        for (const f of atelierFields) extraBody[f.key] = extra[f.key] ?? null;
+        const extraBody: Record<string, AtelierExtraValue | null> = {};
+        for (const f of atelierFields) if (!isStandardMeasurementColumn(f.key)) extraBody[f.key] = extra[f.key] ?? null;
         for (const [k, v] of Object.entries(extra)) extraBody[k] = v;
         res = await fetch(saveUrl ?? `/api/clients/${clientId}/measurements`, {
           method: "PATCH",
@@ -238,21 +231,15 @@ export function ClientMeasurementsPanel({
             </p>
           ) : null}
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
-            {FIELDS.filter((f) => form[f.key] != null).map((f) => (
-              <div key={f.key}>
-                <dt className="font-sans text-11px text-text-light">{f.label}</dt>
+            {shown.map((r) => (
+              <div key={r.key}>
+                <dt className="font-sans text-11px text-text-light">
+                  {r.label}
+                  {r.notAsked ? <span className="ml-1">(no longer asked)</span> : null}
+                </dt>
                 <dd className="font-sans text-sm text-choc">
-                  {form[f.key]}
-                  {unitLabel}
-                </dd>
-              </div>
-            ))}
-            {Object.entries(extra).map(([key, value]) => (
-              <div key={key}>
-                <dt className="font-sans text-11px text-text-light">{labelOf(key)}</dt>
-                <dd className="font-sans text-sm text-choc">
-                  {value}
-                  {unitLabel}
+                  {r.value}
+                  {r.text ? "" : unitLabel}
                 </dd>
               </div>
             ))}
@@ -302,67 +289,73 @@ export function ClientMeasurementsPanel({
             </label>
           </fieldset>
           <div className="grid gap-3 sm:grid-cols-2">
-            {FIELDS.map((f) => {
+            {inputs.map((f) => {
               const err = fieldErrors[f.key];
               const id = `cmp-${clientId}-${f.key}`;
-              return (
-                <div key={f.key}>
-                  <label htmlFor={id} className="block font-sans text-xs text-text-mid">
-                    {f.label}
-                  </label>
-                  <input
-                    id={id}
-                    type="number"
-                    step="0.1"
-                    value={form[f.key] ?? ""}
-                    aria-invalid={err ? true : undefined}
-                    aria-describedby={err ? `${id}-error ${id}-hint` : `${id}-hint`}
-                    onChange={(e) => {
-                      setForm((prev) => ({
-                        ...prev,
-                        [f.key]: e.target.value === "" ? null : Number(e.target.value),
-                      }));
-                      if (err) {
-                        setFieldErrors((prev) => {
-                          const next = { ...prev };
-                          delete next[f.key];
-                          return next;
-                        });
-                      }
-                    }}
-                    className={`input-field mt-1${err ? " !border-error" : ""}`}
-                  />
-                  <FieldError id={`${id}-error`} message={err} />
-                  <span id={`${id}-hint`} className="mt-0.5 block font-sans text-[11px] leading-4 text-text-light">
-                    {HOW[f.key]}
-                  </span>
-                </div>
-              );
-            })}
-            {extraInputs.map((f) => {
-              const err = fieldErrors[f.key];
-              const id = `cmp-${clientId}-${f.key}`;
+              const column = isStandardMeasurementColumn(f.key) ? f.key : null;
+              const hint = f.help ?? (column ? HOW[column] : undefined);
+              const clearError = () => {
+                if (!err) return;
+                setFieldErrors((prev) => {
+                  const next = { ...prev };
+                  delete next[f.key];
+                  return next;
+                });
+              };
               return (
                 <div key={f.key}>
                   <label htmlFor={id} className="block font-sans text-xs text-text-mid">
                     {f.label}
                     {f.retired ? <span className="ml-1 text-text-light">(no longer asked)</span> : null}
                   </label>
-                  <input
-                    id={id}
-                    type="number"
-                    step="0.1"
-                    min={0}
-                    value={extra[f.key] ?? ""}
-                    aria-invalid={err ? true : undefined}
-                    aria-describedby={f.help ? `${id}-hint` : undefined}
-                    onChange={(e) => setExtra(f.key, e.target.value === "" ? null : Number(e.target.value))}
-                    className={`input-field mt-1${err ? " !border-error" : ""}`}
-                  />
+                  {column ? (
+                    <input
+                      id={id}
+                      type="number"
+                      step="0.1"
+                      value={form[column] ?? ""}
+                      aria-invalid={err ? true : undefined}
+                      aria-describedby={hint ? `${id}-hint` : undefined}
+                      onChange={(e) => {
+                        setForm((prev) => ({ ...prev, [column]: e.target.value === "" ? null : Number(e.target.value) }));
+                        clearError();
+                      }}
+                      className={`input-field mt-1${err ? " !border-error" : ""}`}
+                    />
+                  ) : f.type === "text" ? (
+                    <input
+                      id={id}
+                      type="text"
+                      maxLength={ATELIER_TEXT_MAX}
+                      value={extra[f.key] != null ? String(extra[f.key]) : ""}
+                      aria-invalid={err ? true : undefined}
+                      aria-describedby={hint ? `${id}-hint` : undefined}
+                      onChange={(e) => {
+                        setExtra(f.key, e.target.value.trim() ? e.target.value : null);
+                        clearError();
+                      }}
+                      className={`input-field mt-1${err ? " !border-error" : ""}`}
+                    />
+                  ) : (
+                    <input
+                      id={id}
+                      type="number"
+                      step="0.1"
+                      min={0}
+                      value={extra[f.key] ?? ""}
+                      aria-invalid={err ? true : undefined}
+                      aria-describedby={hint ? `${id}-hint` : undefined}
+                      onChange={(e) => {
+                        setExtra(f.key, e.target.value === "" ? null : Number(e.target.value));
+                        clearError();
+                      }}
+                      className={`input-field mt-1${err ? " !border-error" : ""}`}
+                    />
+                  )}
                   <FieldError id={`${id}-error`} message={err} />
-                  {f.help ? (
+                  {hint ? (
                     <span id={`${id}-hint`} className="mt-0.5 block font-sans text-[11px] leading-4 text-text-light">
-                      {f.help}
+                      {hint}
                     </span>
                   ) : null}
                 </div>

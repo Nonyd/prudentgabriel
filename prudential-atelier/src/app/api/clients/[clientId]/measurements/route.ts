@@ -4,7 +4,7 @@ import { requireSession } from "@/lib/api-auth";
 import { canSeeClientMeasurements } from "@/lib/bespoke-data-access";
 import { logActivity, logError } from "@/lib/logger";
 import { cleanMeasurementInput } from "@/lib/measurements";
-import { mergeAtelierExtras } from "@/lib/atelier/measurement-fields";
+import { mergeAtelierExtras, readAtelierMeasurementFields, textFieldKeys } from "@/lib/atelier/measurement-fields";
 
 type Params = { params: Promise<{ clientId: string }> };
 
@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
-  const cleanedInput = cleanMeasurementInput(body);
+  const cleanedInput = cleanMeasurementInput(body, textFieldKeys(await readAtelierMeasurementFields()));
   if (!cleanedInput.ok) {
     return NextResponse.json({ error: cleanedInput.error, fieldErrors: cleanedInput.fieldErrors }, { status: 400 });
   }

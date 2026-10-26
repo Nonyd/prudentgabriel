@@ -1,5 +1,5 @@
 import { profileMeasurementErrors } from "@/lib/measurement-guide";
-import { atelierExtrasFrom, cleanAtelierExtraInput } from "@/lib/atelier/measurement-fields-shared";
+import { atelierExtrasFrom, cleanAtelierExtraInput, type AtelierExtraValue } from "@/lib/atelier/measurement-fields-shared";
 
 export type MeasurementData = {
   bust?: number | null;
@@ -15,8 +15,8 @@ export type MeasurementData = {
   unit?: string;
   notes?: string | null;
   updatedAt?: string | null;
-  /** The house's extra atelier fields (Atelier → Measurement fields), by key, in this set's unit. */
-  extra?: Record<string, number>;
+  /** The house's atelier fields (Atelier → Measurement fields), by key: lengths in this set's unit, or a text field's words. */
+  extra?: Record<string, AtelierExtraValue>;
 };
 
 export function measurementFromRecord(
@@ -164,12 +164,14 @@ export function profileMeasurementProblems(
  */
 export function cleanMeasurementInput(
   body: unknown,
+  /** The sheet's text fields (cup size): words are accepted only for these. */
+  textKeys?: ReadonlySet<string>,
 ):
   | {
       ok: true;
       data: Partial<Record<MeasurementColumn, number | null>> & { unit?: string; notes?: string | null };
       /** Atelier extras to merge into `values` (null clears one). Kept apart: they are not columns. */
-      extra: Record<string, number | null>;
+      extra: Record<string, AtelierExtraValue | null>;
     }
   | { ok: false; error: string; fieldErrors?: Partial<Record<string, string>> } {
   const b = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
@@ -186,9 +188,13 @@ export function cleanMeasurementInput(
   if (b.notes !== undefined) data.notes = typeof b.notes === "string" ? b.notes.trim() || null : null;
   const problems = profileMeasurementProblems({ ...data, unit: data.unit ?? "inches" });
   if (problems) return { ok: false, ...problems };
-  const extra = cleanAtelierExtraInput(b.extra);
+  const extra = cleanAtelierExtraInput(b.extra, textKeys);
   if (!extra.ok) {
-    return { ok: false, error: "Please check the measurements", fieldErrors: { [extra.key]: "Please enter a measurement" } };
+    return {
+      ok: false,
+      error: "Please check the measurements",
+      fieldErrors: { [extra.key]: "Enter a length, or a short size such as 34C" },
+    };
   }
   return { ok: true, data, extra: extra.extra };
 }
