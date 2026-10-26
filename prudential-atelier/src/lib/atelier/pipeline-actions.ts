@@ -1,6 +1,6 @@
 /**
  * Changing one commission's steps: move, skip, bring back, add, rename, remove,
- * start alongside. Callers check `bespoke.pipeline` (requireBespokeAccess
+ * start alongside, and mark done (work finished before it was recorded here). Callers check `bespoke.pipeline` (requireBespokeAccess
  * "pipeline"); the house rules are checked here, through pipeline.ts, so no
  * caller can step around them.
  */
@@ -13,14 +13,17 @@ import {
   CUSTOM_LABEL_MAX,
   insertCustomStep,
   isCustomStep,
+  markDoneBlockers,
   moveStep,
   skipBlockers,
   stepLabel,
   stepsToActivate,
+  stepsToMarkDone,
   type PipelineFailure,
   type PipelineStep,
 } from "@/lib/atelier/pipeline";
 import { ensureSteps, loadSteps, syncLeadStage, writePositions } from "@/lib/atelier/pipeline-db";
+import { doneAt, writeStepDone } from "@/lib/atelier/record-progress";
 
 export type PipelineEdit =
   | { action: "move"; stepId: string; direction: "up" | "down" }
@@ -45,9 +48,19 @@ export type PipelineEdit =
       requiresClientApproval?: boolean;
     }
   | { action: "remove"; stepId: string }
-  | { action: "start"; stepId: string };
+  | { action: "start"; stepId: string }
+  | {
+      action: "done";
+      stepId: string;
+      /** Also mark the open steps before this one done. */
+      withEarlier?: boolean;
+      /** What she reads for it; default "Completed." (or "approved in person"). */
+      note?: string | null;
+      /** YYYY-MM-DD it was done, if not today. */
+      doneOn?: string | null;
+    };
 
-export type PipelineActor = { id: string; email?: string | null; role?: string | null };
+export type PipelineActor = { id: string; email?: string | null; role?: string | null; name?: string | null };
 
 export type PipelineEditResult =
   | { ok: true; currentStage: BespokeStage }
@@ -86,6 +99,8 @@ function describe(edit: PipelineEdit, step: PipelineStep | undefined, label?: st
       return `removed ${name}`;
     case "start":
       return `started ${name} alongside the steps under way`;
+    case "done":
+      return `marked ${name} done${edit.withEarlier ? " (and the open steps before it)" : ""}`;
   }
 }
 
@@ -267,6 +282,30 @@ export async function editOrderSteps(params: {
           where: { id: step.id },
           data: { status: OrderStageStatus.ACTIVE, startedAt: now, startedById: actor.id },
         });
+      });
+      break;
+    }
+    case "done": {
+      const blockers = markDoneBlockers(step);
+      if (blockers.length) return { ok: false, status: 422, failures: blockers };
+      const toMark = stepsToMarkDone(steps, step.id, Boolean(edit.withEarlier));
+      const at = doneAt(edit.doneOn);
+      const byName = actor.name?.trim() || actor.email || "Admin";
+      currentStage = await run(async (tx) => {
+        for (const s of toMark) {
+          // Her words go on the step asked about; earlier ones read "Completed.".
+          await writeStepDone(tx, {
+            orderId,
+            step: s,
+            actorId: actor.id,
+            byName,
+            note: s.id === step.id ? edit.note : null,
+            at,
+          });
+        }
+        if (order.status === OrderStatus.PENDING) {
+          await tx.bespokeOrder.update({ where: { id: orderId }, data: { status: OrderStatus.PROCESSING } });
+        }
       });
       break;
     }

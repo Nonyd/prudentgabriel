@@ -744,11 +744,40 @@ export function BespokeOrderDetailClient({
               </label>
             </div>
             <UploadProgressBar value={uploadProgress} label={uploadLabel} className="mt-2 max-w-xs" />
-            {(images.length > 0 || videos.length > 0) && (
-              <p className="mt-2 font-sans text-xs text-text-light">
-                {images.length} image(s), {videos.length} video(s) attached
-              </p>
-            )}
+            {stageMedia.length > 0 ? (
+              <div className="mt-3">
+                <div className="flex flex-wrap gap-2">
+                  {stageMedia.map((m) =>
+                    m.kind === "VIDEO" ? (
+                      <a
+                        key={m.id}
+                        href={m.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex h-20 w-20 items-center justify-center border border-sand bg-ivory font-sans text-11px text-nut underline"
+                      >
+                        Video
+                      </a>
+                    ) : (
+                      <a
+                        key={m.id}
+                        href={m.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="relative block h-20 w-20 overflow-hidden border border-sand"
+                        title="Open full size"
+                      >
+                        <Image src={m.url} alt={`${stepName} photo`} fill className="object-cover" unoptimized />
+                      </a>
+                    ),
+                  )}
+                </div>
+                <p className="mt-2 font-sans text-11px text-text-light">
+                  {stageMedia.length} uploaded for {stepName}. When you mark it complete they go to her with the stage
+                  update (email and tracking page) and stay in the stage history below.
+                </p>
+              </div>
+            ) : null}
             <div className="mt-4 flex flex-wrap gap-2">
               {req?.requiresClientApproval ? (
                 <Button

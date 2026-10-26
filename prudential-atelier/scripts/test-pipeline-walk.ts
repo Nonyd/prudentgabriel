@@ -188,6 +188,39 @@ async function main() {
     assert(end.find((s) => s.stage === BespokeStage.BEADING_FINISHING)!.status === OrderStageStatus.SKIPPED, "beading stayed skipped");
     assert(!(await edit({ action: "move", stepId: second, direction: "up" })).ok, "a delivered order's steps are closed");
 
+    // Mark done on a second order: work finished before it was recorded here.
+    const older = await prisma.bespokeOrder.create({
+      data: {
+        orderRef: `FLEX-OLD-${Date.now().toString(36).toUpperCase()}`,
+        clientName: "Older Commission",
+        clientEmail: `older+${Date.now()}@example.test`,
+        currentStage: BespokeStage.CONSULTATION_BOOKING,
+        steps: { create: newOrderSteps(BespokeStage.CONSULTATION_BOOKING) },
+      },
+    });
+    try {
+      const oldSteps = await loadSteps(prisma, older.id);
+      const oldTailoring = oldSteps.find((s) => s.stage === BespokeStage.TAILORING)!;
+      const marked = await editOrderSteps({
+        orderId: older.id,
+        edit: { action: "done", stepId: oldTailoring.id, withEarlier: true, doneOn: "2026-09-01", note: "Cut and sewn in September." },
+        actor: { ...manager, name: "Ada Manager" },
+      });
+      assert(marked.ok, "mark tailoring done with the steps before it");
+      const after = await loadSteps(prisma, older.id);
+      const doneNow = after.filter((s) => s.status === OrderStageStatus.DONE).map((s) => s.stage);
+      assert(doneNow.length === 8 && doneNow.includes(BespokeStage.DESIGN_APPROVAL), "booking through tailoring are done");
+      assert((await prisma.bespokeOrder.findUniqueOrThrow({ where: { id: older.id } })).currentStage === BespokeStage.FIRST_FITTING, "first fitting starts next");
+      const inPerson = await prisma.stageApproval.findFirst({ where: { orderId: older.id, stage: BespokeStage.DESIGN_APPROVAL } });
+      assert(inPerson?.status === "APPROVED", "design approval recorded as given in person");
+      const note = await prisma.stageUpdate.findFirst({ where: { orderStageId: oldTailoring.id } });
+      assert(note?.notes === "Cut and sewn in September." && note.completedAt.toISOString().startsWith("2026-09-01"), "her note and the date are kept");
+      const delivery = after.find((s) => s.stage === BespokeStage.DELIVERY)!;
+      assert(!(await editOrderSteps({ orderId: older.id, edit: { action: "done", stepId: delivery.id }, actor: manager })).ok, "delivery is not marked done");
+    } finally {
+      await prisma.bespokeOrder.delete({ where: { id: older.id } }).catch(() => {});
+    }
+
     console.log("test-pipeline-walk: all assertions passed");
   } finally {
     await prisma

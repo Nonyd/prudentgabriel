@@ -10,6 +10,7 @@ import {
   defaultSteps,
   insertCustomStep,
   leadStage,
+  markDoneBlockers,
   moveStep,
   orderBlockers,
   skipBlockers,
@@ -17,6 +18,7 @@ import {
   stepProgress,
   stepRequirement,
   stepsToActivate,
+  stepsToMarkDone,
   visibleSteps,
   type PipelineStep,
 } from "../src/lib/atelier/pipeline";
@@ -202,6 +204,33 @@ function main() {
   );
   const fabricDone = reopened.find((s) => s.id === BespokeStage.FABRIC_SOURCING)!;
   assert(fabricDone.status === OrderStageStatus.DONE, "only the reopened step changes: fabric stays done");
+
+  // Mark done: work finished before it was recorded here.
+  const atBookingNow = order(BespokeStage.CONSULTATION_BOOKING);
+  const tailoringAt = atBookingNow.find((s) => s.id === BespokeStage.TAILORING)!;
+  assert(markDoneBlockers(tailoringAt).length === 0, "an open step can be marked done");
+  assert(
+    ids(stepsToMarkDone(atBookingNow, BespokeStage.TAILORING, false)).join() === BespokeStage.TAILORING,
+    "just the one step",
+  );
+  assert(
+    ids(stepsToMarkDone(atBookingNow, BespokeStage.TAILORING, true)).join() ===
+      STAGE_ORDER.slice(0, STAGE_ORDER.indexOf(BespokeStage.TAILORING) + 1).join(),
+    "with the earlier open steps: booking through tailoring",
+  );
+  const withSkip = set(atBookingNow, BespokeStage.FABRIC_SOURCING, OrderStageStatus.SKIPPED);
+  assert(
+    !ids(stepsToMarkDone(withSkip, BespokeStage.TAILORING, true)).includes(BespokeStage.FABRIC_SOURCING),
+    "a skipped step stays skipped",
+  );
+  assert(
+    codes(markDoneBlockers(atBookingNow.find((s) => s.id === BespokeStage.DELIVERY)!)).includes("STEP_LOCKED"),
+    "delivery goes through the stage panel",
+  );
+  assert(
+    codes(markDoneBlockers(set(atBookingNow, BespokeStage.TAILORING, OrderStageStatus.DONE).find((s) => s.id === BespokeStage.TAILORING)!)).includes("STEP_DONE"),
+    "a done step is not marked again",
+  );
 
   // Everything done: the lead is Delivery.
   const allDone = order(BespokeStage.DELIVERY).map((s) => ({ ...s, status: OrderStageStatus.DONE }));

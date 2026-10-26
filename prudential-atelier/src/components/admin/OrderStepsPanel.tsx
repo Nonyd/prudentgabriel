@@ -7,11 +7,13 @@ import { Modal } from "@/components/ui/Modal";
 import {
   canStartNow,
   isCustomStep,
+  markDoneBlockers,
   moveStep,
   skipBlockers,
   sortSteps,
   stepLabel,
   stepRequirement,
+  stepsToMarkDone,
   UNSKIPPABLE_STAGES,
   visibleSteps,
   type PipelineStep,
@@ -21,8 +23,9 @@ import { cn } from "@/lib/utils";
 /**
  * The commission's own steps, in their order. Holders of `bespoke.pipeline`
  * (Admins and atelier managers) can switch to "Edit steps": move a step, skip
- * it, bring it back, add a custom step, rename, remove a custom one, or start a
- * step alongside the ones under way. The buttons use the same rules as the API
+ * it, bring it back, add a custom step, rename, remove a custom one, start a
+ * step alongside the ones under way, or mark it done (work finished before it
+ * was recorded here). The buttons use the same rules as the API
  * (pipeline.ts), so a button that would be refused is disabled with the reason.
  */
 
@@ -36,6 +39,7 @@ type Assignment = {
 };
 
 type Dialog =
+  | { kind: "done"; step: PanelStep }
   | { kind: "skip"; step: PanelStep }
   | { kind: "rename"; step: PanelStep }
   | { kind: "add" }
@@ -70,10 +74,15 @@ export function OrderStepsPanel<T>({
   const [needsNotes, setNeedsNotes] = useState(true);
   const [photos, setPhotos] = useState(0);
   const [needsApproval, setNeedsApproval] = useState(false);
+  const [doneOn, setDoneOn] = useState("");
+  const [withEarlier, setWithEarlier] = useState(true);
 
   const sorted = sortSteps(steps);
   const numbers = new Map(visibleSteps(sorted).map((s) => [s.id, s.number]));
   const running = sorted.filter((s) => s.status === "ACTIVE").length;
+  const today = new Date().toISOString().slice(0, 10);
+  /** The open steps before this one that "Mark done" can take with it. */
+  const earlierOpen = (step: PanelStep) => stepsToMarkDone(sorted, step.id, true).length - 1;
 
   async function send(body: Record<string, unknown>, key: string, done?: string): Promise<boolean> {
     setBusy(key);
@@ -110,7 +119,14 @@ export function OrderStepsPanel<T>({
   async function submitDialog() {
     if (!dialog) return;
     let ok = false;
-    if (dialog.kind === "skip") {
+    if (dialog.kind === "done") {
+      const more = withEarlier ? earlierOpen(dialog.step) : 0;
+      ok = await send(
+        { action: "done", stepId: dialog.step.id, withEarlier, note: reason, doneOn: doneOn || null },
+        "dialog",
+        more ? `${stepLabel(dialog.step)} and ${more} earlier step${more === 1 ? "" : "s"} marked done` : `${stepLabel(dialog.step)} marked done`,
+      );
+    } else if (dialog.kind === "skip") {
       ok = await send({ action: "skip", stepId: dialog.step.id, reason }, "dialog", `${stepLabel(dialog.step)} skipped`);
     } else if (dialog.kind === "rename") {
       const custom = isCustomStep(dialog.step);
@@ -180,6 +196,7 @@ export function OrderStepsPanel<T>({
           const down = moveStep(sorted, step.id, "down");
           const start = step.status === "PENDING" ? canStartNow({ step, steps: sorted, productionUnlocked }) : null;
           const skipWhy = skipBlockers(step, "reason").map((f) => f.message).join(" ");
+          const doneWhy = markDoneBlockers(step).map((f) => f.message).join(" ");
           const people = assignments.filter((a) => a.orderStageId === step.id);
           const req = stepRequirement(step);
           return (
@@ -252,6 +269,18 @@ export function OrderStepsPanel<T>({
                       busy={busy === `${step.id}:down`}
                       onClick={() => void send({ action: "move", stepId: step.id, direction: "down" }, `${step.id}:down`)}
                     />
+                    {!done && !skipped ? (
+                      <StepButton
+                        label="Mark done"
+                        why={doneWhy || null}
+                        onClick={() => {
+                          setReason("");
+                          setDoneOn("");
+                          setWithEarlier(true);
+                          setDialog({ kind: "done", step });
+                        }}
+                      />
+                    ) : null}
                     {start ? (
                       <StepButton
                         label="Start now"
@@ -313,14 +342,52 @@ export function OrderStepsPanel<T>({
         open={dialog !== null}
         onClose={() => setDialog(null)}
         title={
-          dialog?.kind === "skip"
+          dialog?.kind === "done"
+            ? `Mark ${stepLabel(dialog.step)} done`
+            : dialog?.kind === "skip"
             ? `Skip ${stepLabel(dialog.step)}`
             : dialog?.kind === "rename"
               ? `${isCustomStep(dialog.step) ? "Edit" : "Rename"} ${stepLabel(dialog.step)}`
               : "Add a step to this commission"
         }
       >
-        {dialog?.kind === "skip" ? (
+        {dialog?.kind === "done" ? (
+          <>
+            <p className="font-sans text-sm text-text-mid">
+              For work finished before it was recorded here. It is recorded under your name, with no photos needed,
+              and nothing is emailed to her.
+              {stepRequirement(dialog.step).requiresClientApproval ? " Her approval is recorded as given in person." : ""}
+            </p>
+            {earlierOpen(dialog.step) > 0 ? (
+              <label className="mt-4 flex items-start gap-2 font-sans text-sm text-ink">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={withEarlier}
+                  onChange={(e) => setWithEarlier(e.target.checked)}
+                />
+                <span>
+                  Also mark the {earlierOpen(dialog.step)} open step{earlierOpen(dialog.step) === 1 ? "" : "s"} before it
+                  done ({stepsToMarkDone(sorted, dialog.step.id, true).slice(0, -1).map(stepLabel).join(", ")})
+                </span>
+              </label>
+            ) : null}
+            <label className={labelCls}>
+              Done on (leave empty for today)
+              <input type="date" max={today} value={doneOn} onChange={(e) => setDoneOn(e.target.value)} className={inputCls} />
+            </label>
+            <label className={labelCls}>
+              Note she reads (optional)
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Completed."
+                rows={2}
+                className={inputCls}
+              />
+            </label>
+          </>
+        ) : dialog?.kind === "skip" ? (
           <>
             <p className="font-sans text-sm text-text-mid">
               The step is left off her tracking page. It can be brought back later. Kept in the activity log with your
@@ -415,7 +482,13 @@ export function OrderStepsPanel<T>({
             }
             onClick={() => void submitDialog()}
           >
-            {dialog?.kind === "skip" ? "Skip step" : dialog?.kind === "add" ? "Add step" : "Save"}
+            {dialog?.kind === "done"
+              ? "Mark done"
+              : dialog?.kind === "skip"
+                ? "Skip step"
+                : dialog?.kind === "add"
+                  ? "Add step"
+                  : "Save"}
           </Button>
         </div>
       </Modal>

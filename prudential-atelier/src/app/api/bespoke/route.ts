@@ -11,6 +11,7 @@ import { logActivity } from "@/lib/logger";
 import { bespokeFacts, requireBespokeAccess } from "@/lib/atelier/bespoke-access";
 import { generateBespokeOrderRef } from "@/lib/bespoke-stages";
 import { newOrderSteps } from "@/lib/atelier/pipeline-db";
+import { recordProgressOutsideApp } from "@/lib/atelier/record-progress";
 import { bespokeRequestSchema } from "@/validations/bespoke";
 import { auth } from "@/auth";
 import { generateBespokeNumber } from "@/lib/order-number";
@@ -74,7 +75,24 @@ export async function POST(req: NextRequest) {
       totalAmount?: number;
       /** A client picked from the suggestions: her account, not her profile. */
       clientUserId?: string;
+      /** Where the work is now: the stages before it are recorded as already done. */
+      startStage?: string;
     };
+
+    // Starting part-way records earlier stages as done, which is changing the steps.
+    const startStage =
+      d.startStage && d.startStage !== BespokeStage.CONSULTATION_BOOKING ? (d.startStage as BespokeStage) : null;
+    if (startStage) {
+      if (startStage === BespokeStage.CUSTOM || !(Object.values(BespokeStage) as string[]).includes(startStage)) {
+        return NextResponse.json({ error: "Choose one of the stages for where the work is now." }, { status: 400 });
+      }
+      if (!gate.facts.pipeline) {
+        return NextResponse.json(
+          { error: "Starting an order part-way is kept for Admins and atelier managers. Leave it at Consultation Booking." },
+          { status: 403 },
+        );
+      }
+    }
 
     if (!d.clientUserId && !d.clientName?.trim()) {
       return NextResponse.json({ error: "Enter the client's name, or pick a client already on file." }, { status: 400 });
@@ -138,6 +156,25 @@ export async function POST(req: NextRequest) {
       recordId: created.id,
       recordType: "BespokeOrder",
     });
+
+    if (startStage) {
+      const progress = await recordProgressOutsideApp({
+        orderId: created.id,
+        targetStage: startStage,
+        actor: {
+          // requireBespokeAccess has already refused a session without an id.
+          id: gate.session.user.id!,
+          name: gate.session.user.name,
+          email: gate.session.user.email,
+          role: gate.session.user.role ?? null,
+        },
+        reason: "Added part-way: the stages before it were done before it was recorded here.",
+      });
+      if (!progress.ok) {
+        // The order exists; say why its stage did not move so it can be set from the order.
+        return NextResponse.json({ item: created, warning: progress.error }, { status: 201 });
+      }
+    }
 
     return NextResponse.json({ item: created }, { status: 201 });
   }

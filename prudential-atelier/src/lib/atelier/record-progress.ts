@@ -1,8 +1,8 @@
-import { BespokeStage, OrderStageStatus, StageApprovalStatus } from "@prisma/client";
+import { BespokeStage, OrderStageStatus, StageApprovalStatus, type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { STAGE_ORDER } from "@/lib/bespoke-stages";
 import { logActivity } from "@/lib/logger";
-import { sortSteps, stepLabel } from "@/lib/atelier/pipeline";
+import { isCustomStep as isCustom, sortSteps, stepLabel } from "@/lib/atelier/pipeline";
 import { ensureSteps, loadSteps, syncLeadStage } from "@/lib/atelier/pipeline-db";
 
 /**
@@ -34,10 +34,72 @@ export type RecordProgressResult =
   | { ok: true; recorded: string[]; currentStage: BespokeStage }
   | { ok: false; status: number; error: string };
 
-function doneAt(value: string | null | undefined): Date | undefined {
+export function doneAt(value: string | null | undefined): Date | undefined {
   if (!value) return undefined;
   const d = new Date(/^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T12:00:00.000Z` : value);
   return Number.isNaN(d.getTime()) || d.getTime() > Date.now() + 86_400_000 ? undefined : d;
+}
+
+/**
+ * One step written as done outside the usual completion: a timeline row and a
+ * completion under the person recording it, no photos, no email. Design Approval
+ * and Final Fitting (and any step that needs her approval) are recorded as approved
+ * in person. Callers set what runs next and the lead stage.
+ */
+export async function writeStepDone(
+  tx: Prisma.TransactionClient,
+  params: {
+    orderId: string;
+    step: { id: string; stage: BespokeStage; requiresClientApproval?: boolean };
+    actorId: string;
+    byName: string;
+    note?: string | null;
+    at?: Date;
+  },
+): Promise<void> {
+  const { orderId, step, actorId, byName, at } = params;
+  const orderStageId = step.id;
+  const stage = step.stage;
+  const inPerson = IN_PERSON_APPROVAL[stage] ?? (step.requiresClientApproval ? "Approved in person." : undefined);
+  const notes = params.note?.trim() || inPerson || "Completed.";
+  if (inPerson) {
+    // A pending link (if one was sent) is closed; the approval is the one given in person.
+    await tx.stageApproval.updateMany({
+      where: { orderStageId, status: StageApprovalStatus.PENDING },
+      data: { status: StageApprovalStatus.SUPERSEDED },
+    });
+    await tx.stageApproval.create({
+      data: {
+        orderId,
+        orderStageId,
+        stage,
+        status: StageApprovalStatus.APPROVED,
+        requestedById: actorId,
+        requestedAt: at ?? new Date(),
+        respondedAt: at ?? new Date(),
+        clientComment: `Given in person; recorded by ${byName}.`,
+      },
+    });
+  }
+  await tx.stageUpdate.create({
+    data: {
+      orderId,
+      orderStageId,
+      stage,
+      notes,
+      images: [],
+      videos: [],
+      completedBy: actorId,
+      completedByName: byName,
+      ...(at ? { completedAt: at } : {}),
+    },
+  });
+  // A reopened step keeps its old completion as reverted; this is the live one.
+  await tx.orderStageCompletion.create({
+    data: { orderId, orderStageId, stage, completedById: actorId, notes, ...(at ? { completedAt: at } : {}) },
+  });
+  await tx.orderStageDraft.deleteMany({ where: { orderStageId } });
+  await tx.orderStage.update({ where: { id: orderStageId }, data: { status: OrderStageStatus.DONE } });
 }
 
 export async function recordProgressOutsideApp(params: {
@@ -50,8 +112,10 @@ export async function recordProgressOutsideApp(params: {
   reason?: string | null;
 }): Promise<RecordProgressResult> {
   const { orderId, targetStage, actor } = params;
-  if (!RECORDABLE_TARGETS.includes(targetStage)) {
-    return { ok: false, status: 400, error: "Choose a stage from Sketching to Delivery." };
+  // Any built-in step can be "where she is now" (the wizard offers Sketching onward,
+  // a new order from the pipeline any of the thirteen).
+  if (targetStage === BespokeStage.CUSTOM) {
+    return { ok: false, status: 400, error: "Choose one of the built-in stages." };
   }
   const order = await prisma.bespokeOrder.findUnique({
     where: { id: orderId },
@@ -86,47 +150,15 @@ export async function recordProgressOutsideApp(params: {
 
   const currentStage = await prisma.$transaction(async (tx) => {
     for (const step of toComplete) {
-      const { stage } = step;
-      const orderStageId = step.id;
-      const given = params.stages?.[stage];
-      const at = doneAt(given?.doneOn);
-      const notes = given?.note?.trim() || IN_PERSON_APPROVAL[stage] || "Completed.";
-      if (IN_PERSON_APPROVAL[stage]) {
-        // A pending link (if one was sent) is closed; the approval is the one given in person.
-        await tx.stageApproval.updateMany({
-          where: { orderStageId, status: StageApprovalStatus.PENDING },
-          data: { status: StageApprovalStatus.SUPERSEDED },
-        });
-        await tx.stageApproval.create({
-          data: {
-            orderId,
-            orderStageId,
-            stage,
-            status: StageApprovalStatus.APPROVED,
-            requestedById: actor.id,
-            requestedAt: at ?? new Date(),
-            respondedAt: at ?? new Date(),
-            clientComment: `Given in person; recorded by ${byName}.`,
-          },
-        });
-      }
-      await tx.stageUpdate.create({
-        data: {
-          orderId,
-          orderStageId,
-          stage,
-          notes,
-          images: [],
-          videos: [],
-          completedBy: actor.id,
-          completedByName: byName,
-          ...(at ? { completedAt: at } : {}),
-        },
+      const given = isCustom(step) ? undefined : params.stages?.[step.stage];
+      await writeStepDone(tx, {
+        orderId,
+        step,
+        actorId: actor.id,
+        byName,
+        note: given?.note,
+        at: doneAt(given?.doneOn),
       });
-      await tx.orderStageCompletion.create({
-        data: { orderId, orderStageId, stage, completedById: actor.id, notes, ...(at ? { completedAt: at } : {}) },
-      });
-      await tx.orderStage.update({ where: { id: orderStageId }, data: { status: OrderStageStatus.DONE } });
     }
     if (target.status === OrderStageStatus.PENDING) {
       await tx.orderStage.update({

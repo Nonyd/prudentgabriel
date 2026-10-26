@@ -8,7 +8,7 @@ import type { BespokeStage, OrderStatus } from "@prisma/client";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
-import { STAGE_LABELS, getDeliveryUrgency, getOrderTrackStatus } from "@/lib/bespoke-stages";
+import { STAGE_LABELS, STAGE_ORDER, getDeliveryUrgency, getOrderTrackStatus } from "@/lib/bespoke-stages";
 import type { CommissionRow } from "@/lib/atelier/commission-list";
 import { useHasPermission } from "@/hooks/useHasPermission";
 import { cn, formatDate } from "@/lib/utils";
@@ -185,7 +185,11 @@ export function BespokePipelineClient({
     occasionType: "",
     deliveryDate: "",
     totalAmount: "",
+    /** Where the work is now; the stages before it are recorded as done. */
+    startStage: "CONSULTATION_BOOKING" as BespokeStage,
   });
+  /** Starting part-way records earlier stages as done: Admins and atelier managers. */
+  const canStartPartWay = useHasPermission("bespoke.pipeline");
   /** The client on file this order is for, picked from the name suggestions. */
   const [pickedClient, setPickedClient] = useState<ClientMatch | null>(null);
   const [matches, setMatches] = useState<ClientMatch[]>([]);
@@ -257,13 +261,15 @@ export function BespokePipelineClient({
           ...form,
           clientUserId: pickedClient?.id,
           totalAmount: form.totalAmount ? parseFloat(form.totalAmount) : 0,
+          startStage: canStartPartWay ? form.startStage : undefined,
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { item?: { id: string }; error?: unknown };
+      const data = (await res.json().catch(() => ({}))) as { item?: { id: string }; error?: unknown; warning?: string };
       if (!res.ok || !data.item) {
         throw new Error(typeof data.error === "string" ? data.error : "Could not create order");
       }
       toast.success(pickedClient ? `Order added to ${pickedClient.name}'s file` : "Order created");
+      if (data.warning) toast.error(data.warning);
       setModalOpen(false);
       router.push(`/admin/bespoke/${data.item.id}`);
     } catch (e) {
@@ -466,6 +472,27 @@ export function BespokePipelineClient({
               />
             </label>
           ))}
+          {canStartPartWay ? (
+            <label className="block">
+              <span className="mb-1 block font-sans text-xs font-medium text-text-mid">Where is the work now?</span>
+              <select
+                value={form.startStage}
+                onChange={(e) => setForm((f) => ({ ...f, startStage: e.target.value as BespokeStage }))}
+                className="w-full rounded border border-sand px-3 py-2 font-sans text-sm"
+              >
+                {STAGE_ORDER.map((s) => (
+                  <option key={s} value={s}>
+                    {STAGE_LABELS[s]}
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1 block font-sans text-xs text-text-light">
+                {form.startStage === "CONSULTATION_BOOKING"
+                  ? "A new commission starts here."
+                  : "Every stage before it is recorded as done under your name, with no photos and no email. Fix any later from Edit steps."}
+              </span>
+            </label>
+          ) : null}
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="ghost" onClick={() => setModalOpen(false)}>
               Cancel

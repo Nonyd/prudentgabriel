@@ -37,6 +37,13 @@ const bodySchema = z.discriminatedUnion("action", [
   }),
   z.object({ action: z.literal("remove"), stepId: id }),
   z.object({ action: z.literal("start"), stepId: id }),
+  z.object({
+    action: z.literal("done"),
+    stepId: id,
+    withEarlier: z.boolean().optional(),
+    note: z.string().trim().max(1000).optional().nullable(),
+    doneOn: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal(""), z.null()]).optional(),
+  }),
 ]);
 
 /**
@@ -58,7 +65,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const result = await editOrderSteps({
     orderId,
     edit: parsed.data,
-    actor: { id: actor.id, email: actor.email, role: actor.role ? String(actor.role) : null },
+    actor: { id: actor.id, email: actor.email, name: actor.name, role: actor.role ? String(actor.role) : null },
   });
   if (!result.ok) {
     return NextResponse.json(

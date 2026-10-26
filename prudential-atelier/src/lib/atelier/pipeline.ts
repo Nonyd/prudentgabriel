@@ -393,6 +393,39 @@ export function skipBlockers(step: PipelineStep, reason: string | null | undefin
   return failures;
 }
 
+/**
+ * "Mark done": work finished before it was recorded here. Delivery is not marked
+ * done this way: completing it hands the gown over and tells her, so it goes
+ * through the stage panel.
+ */
+export function markDoneBlockers(step: PipelineStep): PipelineFailure[] {
+  if (step.status === OrderStageStatus.DONE) {
+    return [{ code: "STEP_DONE", message: `${stepLabel(step)} is already done.` }];
+  }
+  if (step.status === OrderStageStatus.SKIPPED) {
+    return [{ code: "STEP_NOT_PENDING", message: `${stepLabel(step)} is skipped: bring it back first.` }];
+  }
+  if (step.stage === BespokeStage.DELIVERY) {
+    return [
+      {
+        code: "STEP_LOCKED",
+        message: "Complete Delivery from the stage panel: it records the handover and tells her.",
+      },
+    ];
+  }
+  return [];
+}
+
+/** The steps "Mark done" writes: this one, and with `withEarlier` every open step before it (skipped ones left out). */
+export function stepsToMarkDone<T extends PipelineStep>(steps: readonly T[], stepId: string, withEarlier: boolean): T[] {
+  const sorted = sortSteps(steps);
+  const step = sorted.find((s) => s.id === stepId);
+  if (!step) return [];
+  const open = (s: T) => s.status === OrderStageStatus.PENDING || s.status === OrderStageStatus.ACTIVE;
+  const earlier = withEarlier ? sorted.filter((s) => s.position < step.position && open(s)) : [];
+  return [...earlier, step];
+}
+
 /** Where a new custom step may go: after `afterStepId`, never before the intake run ends or after Delivery. */
 export function insertCustomStep<T extends Pick<PipelineStep, "id" | "stage" | "position" | "label">>(
   steps: readonly T[],

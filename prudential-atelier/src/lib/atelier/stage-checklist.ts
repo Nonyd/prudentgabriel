@@ -107,7 +107,9 @@ export function buildStageChecklistFacts(params: {
       label:
         params.step.stage === BespokeStage.DELIVERY
           ? `${params.mediaCount}/${req.minMediaCount || 1} delivery photo(s) uploaded`
-          : `${params.mediaCount}/${Math.max(req.minMediaCount, 1)} photo(s) uploaded`,
+          : req.requiresMedia
+            ? `${params.mediaCount}/${req.minMediaCount} photo(s) uploaded`
+            : `${params.mediaCount} photo(s) uploaded`,
       required: req.requiresMedia,
       met: mediaMet,
     },
