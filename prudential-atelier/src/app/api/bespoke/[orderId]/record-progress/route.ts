@@ -13,7 +13,7 @@ const bodySchema = z.object({
   targetStage: z.nativeEnum(BespokeStage),
   reason: z.string().trim().min(3, "Say why this is recorded by hand").max(500),
   stages: z
-    .record(
+    .partialRecord(
       z.nativeEnum(BespokeStage),
       z.object({
         note: z.string().trim().max(1000).optional().nullable(),

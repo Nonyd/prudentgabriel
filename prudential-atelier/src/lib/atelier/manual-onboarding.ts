@@ -98,7 +98,7 @@ export const onboardSchema = z
     progress: z.object({
       currentStage: z.nativeEnum(BespokeStage).refine((s) => RECORDABLE_TARGETS.includes(s), "Choose a stage from Sketching to Delivery"),
       stages: z
-        .record(z.nativeEnum(BespokeStage), z.object({ note: optionalText(1000), doneOn: optionalDay }))
+        .partialRecord(z.nativeEnum(BespokeStage), z.object({ note: optionalText(1000), doneOn: optionalDay }))
         .optional(),
     }),
   })
