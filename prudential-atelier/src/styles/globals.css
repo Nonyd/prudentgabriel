@@ -1253,3 +1253,74 @@ a.admin-cta {
     --chat-extra-offset: 0px;
   }
 }
+
+/* Admin on phones and tablets: an app-style shell with a bottom tab bar
+   (components/admin/AdminMobileNav.tsx). */
+@media (max-width: 1023px) {
+  /* Keep the last content clear of the tab bar and the home indicator. */
+  .admin-main {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+
+  /* 16px form fields: easier to tap, and iOS no longer zooms in on focus. */
+  .admin-area input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+  .admin-area select,
+  .admin-area textarea {
+    font-size: 16px;
+  }
+}
+
+.admin-tabbar .tab-link {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.admin-sheet {
+  animation: admin-sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.admin-sheet-backdrop {
+  animation: admin-sheet-fade 0.2s ease both;
+}
+
+@keyframes admin-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes admin-sheet-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-sheet,
+  .admin-sheet-backdrop {
+    animation: none;
+  }
+}
+
+/* Dashboard figures two across on a phone: smaller numbers so naira amounts fit. */
+@media (max-width: 639px) {
+  .admin-kpis > .glass-panel {
+    min-height: 0;
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .admin-kpis .kpi-value {
+    font-size: clamp(22px, 6.4vw, 30px);
+  }
+
+  .admin-kpis .kpi-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+}

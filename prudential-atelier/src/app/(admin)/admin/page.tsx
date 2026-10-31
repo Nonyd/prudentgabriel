@@ -1,8 +1,21 @@
 import Link from "next/link";
 import { BespokeStage, ConsultationStatus, EmploymentType, PaymentStatus } from "@prisma/client";
-import { CalendarDays, Coins, CreditCard, Scissors, TrendingUp } from "lucide-react";
+import {
+  CalendarDays,
+  Coins,
+  CreditCard,
+  FilePlus2,
+  Landmark,
+  PackagePlus,
+  Receipt,
+  Scissors,
+  ShoppingBag,
+  TrendingUp,
+  UserPlus,
+} from "lucide-react";
 import { auth } from "@/auth";
 import { resolveSessionAccess } from "@/lib/admin-auth";
+import { deniedAdminRedirect } from "@/lib/admin-route-access";
 import { prisma } from "@/lib/prisma";
 import { ExecutiveKPICard } from "@/components/admin/ExecutiveKPICard";
 import { ExecutiveRevenueChart, type RevenueChartPoint } from "@/components/admin/ExecutiveRevenueChart";
@@ -214,14 +227,29 @@ export default async function AdminDashboardPage() {
   const consultDelta = consultationsThisWeek - consultationsLastWeek;
   const chartTotal = revenueChart.reduce((a, d) => a + d.bespoke + d.rtw + d.consultations, 0);
   const greeting = greetingForHour(now.getHours());
+  const access = session?.user ? await resolveSessionAccess(session) : null;
   // While the Super Admin views as someone, greet that person.
-  const viewer = session?.user ? (await resolveSessionAccess(session)).user : null;
+  const viewer = access?.user ?? null;
   const displayName = greetingDisplayName(viewer?.name ?? session?.user?.name, viewer?.email ?? session?.user?.email);
+  // The things done most often, as one-tap shortcuts on a phone. Only what this account may open.
+  const quickActions = [
+    { href: "/admin/clients/new", label: "New client", Icon: UserPlus },
+    { href: "/admin/bespoke", label: "Pipeline", Icon: Scissors },
+    { href: "/admin/quotations/new", label: "Quotation", Icon: FilePlus2 },
+    { href: "/admin/invoices/new", label: "Invoice", Icon: Receipt },
+    { href: "/admin/orders", label: "Orders", Icon: ShoppingBag },
+    { href: "/admin/payments#transfers", label: "Transfers", Icon: Landmark },
+    { href: "/admin/consultations", label: "Bookings", Icon: CalendarDays },
+    { href: "/admin/products/new", label: "Add product", Icon: PackagePlus },
+  ].filter(
+    (a) =>
+      access && !deniedAdminRedirect(access.role, a.href.split("#")[0]!, access.actor.email ?? null, access.actor),
+  );
   const dateLabel = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
 
   return (
-    <div className="space-y-8">
-      <section className="overflow-hidden rounded-lg bg-wine px-8 py-8 md:px-10">
+    <div className="space-y-6 lg:space-y-8">
+      <section className="overflow-hidden rounded-[18px] bg-wine px-5 py-6 sm:rounded-lg sm:px-8 sm:py-8 md:px-10">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
             <p
@@ -231,12 +259,12 @@ export default async function AdminDashboardPage() {
               Daily report · {dateLabel}
             </p>
             <h2
-              className="mt-2 font-serif text-40px font-normal leading-tight"
+              className="mt-2 font-serif text-28px font-normal leading-tight sm:text-40px"
               style={{ color: "#F7F2EC" }}
             >
               {greeting}, {displayName}.
             </h2>
-            <p className="mt-3 font-sans" style={{ color: "rgba(226, 209, 194, 0.8)", fontSize: 14 }}>
+            <p className="mt-3 font-sans text-13px sm:text-14px" style={{ color: "rgba(226, 209, 194, 0.8)" }}>
               {ordersAdvancedToday} orders advanced · {deliveriesToday} delivery scheduled today ·{" "}
               <span style={{ color: "rgba(226, 209, 194, 0.8)" }}>{"\u20A6"}</span>
               {Math.round(paymentsToday).toLocaleString("en-NG")} received · {confirmationsPending}{" "}
@@ -253,7 +281,32 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      {quickActions.length > 0 ? (
+        <nav aria-label="Quick actions" className="lg:hidden">
+          <p className="mb-3 font-sans text-13px font-medium text-text-mid">Quick actions</p>
+          <ul className="grid grid-cols-4 gap-2 sm:gap-3">
+            {quickActions.map((a, i) => (
+              <li key={a.href}>
+                <Link
+                  href={a.href}
+                  className="glass-1 flex h-full flex-col items-center gap-2 rounded-[16px] px-1 py-3 text-center transition-transform active:scale-[0.97]"
+                >
+                  <span
+                    className={`flex h-11 w-11 items-center justify-center rounded-[12px] ${
+                      i === 0 ? "bg-wine text-[#f7f2ec]" : "bg-sand/45 text-choc"
+                    }`}
+                  >
+                    <a.Icon className="h-5 w-5" strokeWidth={1.6} aria-hidden />
+                  </span>
+                  <span className="font-sans text-11px font-medium leading-tight text-choc">{a.label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
+
+      <div className="admin-kpis grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
         <ExecutiveKPICard
           label="Revenue · This week"
           value={formatNGN(revenueThisWeek)}
@@ -293,6 +346,7 @@ export default async function AdminDashboardPage() {
           trendUp={null}
           icon={Coins}
           iconBg="bg-gold/20"
+          className="col-span-2 sm:col-span-1"
         />
       </div>
 

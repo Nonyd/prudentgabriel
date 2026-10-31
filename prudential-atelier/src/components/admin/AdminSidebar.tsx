@@ -1,43 +1,6 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
-import {
-  Activity,
-  AreaChart,
-  AlertTriangle,
-  BarChart3,
-  Briefcase,
-  CalendarDays,
-  ChevronDown,
-  ClipboardCheck,
-  FileText,
-  Images,
-  Inbox,
-  Image as ImageIcon,
-  Layout,
-  LayoutDashboard,
-  MessageSquare,
-  Mail,
-  Newspaper,
-  Lock,
-  LogOut,
-  Package,
-  Palette,
-  Receipt,
-  Scissors,
-  Search,
-  Settings,
-  Share2,
-  ShoppingBag,
-  TrendingUp,
-  Truck,
-  Ticket,
-  UserCircle,
-  UserRoundCog,
-  Users,
-  Wallet,
-  Warehouse,
-} from "lucide-react";
+import { ChevronDown, LogOut, Search, UserRoundCog } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -55,70 +18,7 @@ import {
   visibleAdminNavSections,
   type AdminNavItemDef,
 } from "@/lib/admin-route-access";
-
-const NAV_ICONS: Record<string, LucideIcon> = {
-  dashboard: LayoutDashboard,
-  orders: ShoppingBag,
-  quote: Truck,
-  refund: AlertTriangle,
-  consultations: CalendarDays,
-  enquiries: Inbox,
-  consultants: UserCircle,
-  atelier: Scissors,
-  alterations: Scissors,
-  quotations: FileText,
-  invoices: Receipt,
-  payments: Wallet,
-  transfers: Wallet,
-  bank: Wallet,
-  reports: BarChart3,
-  traffic: AreaChart,
-  clients: UserCircle,
-  referrals: Users,
-  staff: Users,
-  attendance: ClipboardCheck,
-  performance: TrendingUp,
-  products: Package,
-  collections: Layout,
-  media: ImageIcon,
-  guide: FileText,
-  coupons: Ticket,
-  shipping: Truck,
-  sizing: Package,
-  content: Layout,
-  journal: Newspaper,
-  reviews: MessageSquare,
-  gallery: Images,
-  careers: Briefcase,
-  applications: FileText,
-  messages: MessageSquare,
-  templates: Mail,
-  "send-email": Mail,
-  unsubscribes: Mail,
-  appearance: Palette,
-  seo: Search,
-  pages: FileText,
-  social: Share2,
-  jobs: Activity,
-  "sys-emails": Mail,
-  checkouts: ShoppingBag,
-  logs: Activity,
-  errors: AlertTriangle,
-  settings: Settings,
-  email: Mail,
-  notifications: Mail,
-  developer: Lock,
-  users: UserRoundCog,
-  roles: UserRoundCog,
-  store: Warehouse,
-  "store-items": Package,
-  "store-book": FileText,
-  "store-opening": ClipboardCheck,
-};
-
-function iconFor(item: AdminNavItemDef): LucideIcon {
-  return NAV_ICONS[item.icon] ?? Layout;
-}
+import { iconFor } from "./admin-nav-icons";
 
 function readStoredOpen(): Record<string, boolean> | null {
   if (typeof window === "undefined") return null;

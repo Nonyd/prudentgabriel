@@ -10,7 +10,7 @@ import { resolveSessionAccess } from "@/lib/admin-auth";
 import { IMPERSONATION_END_PATH } from "@/lib/admin-impersonate";
 import { hasAnyAdminPermission } from "@/lib/roles";
 import { NOINDEX } from "@/lib/seo";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   robots: NOINDEX,
   title: "Admin",
 };
+
+// Full-bleed on phones so the tab bar can sit in the safe area above the home indicator.
+export const viewport: Viewport = { viewportFit: "cover" };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await authOrNull();
