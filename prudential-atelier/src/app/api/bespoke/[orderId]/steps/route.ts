@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { bespokeView, requireBespokeAccess } from "@/lib/atelier/bespoke-access";
-import { actorFromSession } from "@/lib/atelier/stage-actions";
+import { actorFromSession, revertOrderStage } from "@/lib/atelier/stage-actions";
 import { bespokeAdminDetailInclude } from "@/lib/atelier/can-complete-stage";
 import { editOrderSteps } from "@/lib/atelier/pipeline-actions";
 import { CUSTOM_LABEL_MAX } from "@/lib/atelier/pipeline";
@@ -21,6 +21,8 @@ const bodySchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("move"), stepId: id, direction: z.enum(["up", "down"]) }),
   z.object({ action: z.literal("skip"), stepId: id, reason: z.string().trim().min(3, "Say why this step is skipped").max(500) }),
   z.object({ action: z.literal("unskip"), stepId: id }),
+  // Undo a done step: the same as "Revert stage" (admins only, with a reason).
+  z.object({ action: z.literal("reopen"), stepId: id, reason: z.string().trim().min(3, "Say why this step is reopened").max(500) }),
   z.object({
     action: z.literal("add"),
     afterStepId: id,
@@ -62,11 +64,15 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid body" }, { status: 400 });
   }
 
-  const result = await editOrderSteps({
-    orderId,
-    edit: parsed.data,
-    actor: { id: actor.id, email: actor.email, name: actor.name, role: actor.role ? String(actor.role) : null },
-  });
+  const edit = parsed.data;
+  const result =
+    edit.action === "reopen"
+      ? await revertOrderStage({ orderId, orderStageId: edit.stepId, reason: edit.reason, actor })
+      : await editOrderSteps({
+          orderId,
+          edit,
+          actor: { id: actor.id, email: actor.email, name: actor.name, role: actor.role ? String(actor.role) : null },
+        });
   if (!result.ok) {
     return NextResponse.json(
       { error: result.failures[0]?.message ?? "Cannot change the steps", failures: result.failures },

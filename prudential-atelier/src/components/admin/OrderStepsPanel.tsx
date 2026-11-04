@@ -24,8 +24,8 @@ import { cn } from "@/lib/utils";
  * The commission's own steps, in their order. Holders of `bespoke.pipeline`
  * (Admins and atelier managers) can switch to "Edit steps": move a step, skip
  * it, bring it back, add a custom step, rename, remove a custom one, start a
- * step alongside the ones under way, or mark it done (work finished before it
- * was recorded here). The buttons use the same rules as the API
+ * step alongside the ones under way, mark it done (work finished before it
+ * was recorded here), or undo a done step (admins: it reopens, with a reason). The buttons use the same rules as the API
  * (pipeline.ts), so a button that would be refused is disabled with the reason.
  */
 
@@ -40,6 +40,7 @@ type Assignment = {
 
 type Dialog =
   | { kind: "done"; step: PanelStep }
+  | { kind: "reopen"; step: PanelStep }
   | { kind: "skip"; step: PanelStep }
   | { kind: "rename"; step: PanelStep }
   | { kind: "add" }
@@ -53,6 +54,7 @@ export function OrderStepsPanel<T>({
   steps,
   assignments,
   canEdit,
+  canReopen,
   productionUnlocked,
   onChanged,
 }: {
@@ -61,6 +63,8 @@ export function OrderStepsPanel<T>({
   assignments: Assignment[];
   /** Holds `bespoke.pipeline`, and the order is open (not archived or delivered). */
   canEdit: boolean;
+  /** May undo a done step (admins; the server checks again). */
+  canReopen?: boolean;
   productionUnlocked: boolean;
   onChanged: (item: T) => void;
 }) {
@@ -125,6 +129,12 @@ export function OrderStepsPanel<T>({
         { action: "done", stepId: dialog.step.id, withEarlier, note: reason, doneOn: doneOn || null },
         "dialog",
         more ? `${stepLabel(dialog.step)} and ${more} earlier step${more === 1 ? "" : "s"} marked done` : `${stepLabel(dialog.step)} marked done`,
+      );
+    } else if (dialog.kind === "reopen") {
+      ok = await send(
+        { action: "reopen", stepId: dialog.step.id, reason },
+        "dialog",
+        `${stepLabel(dialog.step)} reopened`,
       );
     } else if (dialog.kind === "skip") {
       ok = await send({ action: "skip", stepId: dialog.step.id, reason }, "dialog", `${stepLabel(dialog.step)} skipped`);
@@ -281,6 +291,17 @@ export function OrderStepsPanel<T>({
                         }}
                       />
                     ) : null}
+                    {done ? (
+                      <StepButton
+                        label="Undo"
+                        aria={`Undo ${stepLabel(step)}: reopen it`}
+                        why={canReopen ? null : "Only an administrator can undo a done step."}
+                        onClick={() => {
+                          setReason("");
+                          setDialog({ kind: "reopen", step });
+                        }}
+                      />
+                    ) : null}
                     {start ? (
                       <StepButton
                         label="Start now"
@@ -344,6 +365,8 @@ export function OrderStepsPanel<T>({
         title={
           dialog?.kind === "done"
             ? `Mark ${stepLabel(dialog.step)} done`
+            : dialog?.kind === "reopen"
+            ? `Undo ${stepLabel(dialog.step)}`
             : dialog?.kind === "skip"
             ? `Skip ${stepLabel(dialog.step)}`
             : dialog?.kind === "rename"
@@ -386,6 +409,21 @@ export function OrderStepsPanel<T>({
                 className={inputCls}
               />
             </label>
+          </>
+        ) : dialog?.kind === "reopen" ? (
+          <>
+            <p className="font-sans text-sm text-text-mid">
+              {stepLabel(dialog.step)} goes back to in progress, so you can update it and mark it complete again. Only
+              this step reopens: the steps after it keep their progress, unless one under way needs it done first.
+              What was recorded on it stays in the stage history. Nothing is emailed to her.
+            </p>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Why it is reopened, e.g. marked done by mistake (required)"
+              rows={3}
+              className={`${inputCls} mt-4`}
+            />
           </>
         ) : dialog?.kind === "skip" ? (
           <>
@@ -472,7 +510,7 @@ export function OrderStepsPanel<T>({
           <Button
             loading={busy === "dialog"}
             disabled={
-              dialog?.kind === "skip"
+              dialog?.kind === "skip" || dialog?.kind === "reopen"
                 ? reason.trim().length < 3
                 : dialog?.kind === "add"
                   ? !name.trim() || !afterId
@@ -484,7 +522,9 @@ export function OrderStepsPanel<T>({
           >
             {dialog?.kind === "done"
               ? "Mark done"
-              : dialog?.kind === "skip"
+              : dialog?.kind === "reopen"
+                ? "Undo step"
+                : dialog?.kind === "skip"
                 ? "Skip step"
                 : dialog?.kind === "add"
                   ? "Add step"

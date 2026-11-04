@@ -520,6 +520,7 @@ export function BespokeOrderDetailClient({
             steps={steps}
             assignments={order.assignments}
             canEdit={Boolean(access?.pipeline) && !isArchived && !deliveryComplete}
+            canReopen={isAdminActor}
             productionUnlocked={Boolean(order.productionUnlockedAt)}
             onChanged={(item) => {
               setOrder((o) => ({ ...o, ...item }));
