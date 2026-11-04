@@ -128,6 +128,8 @@ type Illustrations = {
     herUploads: string[];
     sessionMoodboard: string[];
     sketches: { id: string; url: string; kind: string; uploadedAt: string | null }[];
+    /** Photos uploaded on the other steps (consultation, fabric, fittings…), by step. */
+    stepPhotos?: { step: string; items: { id: string; url: string; kind: string; uploadedAt: string | null }[] }[];
     designApproval: { status: string; requestedAt?: string | null; respondedAt?: string | null; clientComment?: string | null };
   }[];
 };
@@ -353,6 +355,11 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
 
       <SectionJumpBar sections={s} />
 
+      {/* Her pictures first: sketches, mood boards and every step's photos are what the house opens a file for. */}
+      <FileSection id="illustrations" title="Illustration, mood board and photos" section={s.illustrations}>
+        {(d) => <IllustrationsView data={d} clientId={clientId} canAdd={portal === "admin" && file.scope === "house"} onAdded={() => void load()} />}
+      </FileSection>
+
       <FileSection id="consultation" title="Consultation" section={s.consultation}>
         {(d) => <ConsultationView data={d} />}
       </FileSection>
@@ -436,10 +443,6 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
           {(d) => <SpecView data={d} empty="No fabric specified yet." />}
         </FileSection>
       </div>
-
-      <FileSection id="illustrations" title="Illustration and mood board" section={s.illustrations}>
-        {(d) => <IllustrationsView data={d} clientId={clientId} canAdd={portal === "admin" && file.scope === "house"} onAdded={() => void load()} />}
-      </FileSection>
 
       <FileSection id="fitting" title="Fitting and alteration" section={s.fitting}>
         {(d) => <FittingView data={d} />}
@@ -685,6 +688,23 @@ function IllustrationsView({
               <p className="font-sans text-xs uppercase tracking-wide text-text-light">Illustrations</p>
               <Gallery urls={g.sketches.map((m) => m.url)} empty="No sketches uploaded at Sketching yet." />
             </div>
+            {(g.stepPhotos ?? []).map((p) => (
+              <div key={p.step}>
+                <p className="font-sans text-xs uppercase tracking-wide text-text-light">Photos · {p.step}</p>
+                <Gallery urls={p.items.filter((m) => m.kind !== "VIDEO").map((m) => m.url)} />
+                {p.items.some((m) => m.kind === "VIDEO") ? (
+                  <div className="mt-1 flex flex-wrap gap-3">
+                    {p.items
+                      .filter((m) => m.kind === "VIDEO")
+                      .map((m, i) => (
+                        <a key={m.id} href={m.url} target="_blank" rel="noreferrer" className="font-sans text-xs text-nut underline">
+                          Video {i + 1}
+                        </a>
+                      ))}
+                  </div>
+                ) : null}
+              </div>
+            ))}
             {g.herUploads.length ? (
               <div>
                 <p className="font-sans text-xs uppercase tracking-wide text-text-light">Her mood board (from her forms)</p>
@@ -919,6 +939,7 @@ function ViewAsClientButton({ clientId }: { clientId: string }) {
 
 /** Anchor ids for the jump bar; the order is the page's order. */
 const SECTION_LINKS: { key: keyof ClientFile["sections"]; id: string; label: string }[] = [
+  { key: "illustrations", id: "illustrations", label: "Photos & mood board" },
   { key: "consultation", id: "consultation", label: "Consultation" },
   { key: "brief", id: "brief", label: "Brief" },
   { key: "measurements", id: "measurements", label: "Measurements" },
@@ -928,7 +949,6 @@ const SECTION_LINKS: { key: keyof ClientFile["sections"]; id: string; label: str
   { key: "balance", id: "balance", label: "Balance" },
   { key: "beads", id: "beads", label: "Beads" },
   { key: "fabric", id: "fabric", label: "Fabric" },
-  { key: "illustrations", id: "illustrations", label: "Mood board" },
   { key: "fitting", id: "fitting", label: "Fitting" },
   { key: "making", id: "making", label: "Who is making it" },
   { key: "delivery", id: "delivery", label: "Delivery" },

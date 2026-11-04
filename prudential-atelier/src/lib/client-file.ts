@@ -487,10 +487,17 @@ export async function composeClientFile(
         id: true,
         moodboardImages: true,
         consultation: { select: { referenceImages: true, enquiry: { select: { moodboardImages: true } } } },
+        // Every step's photos: Sketching's are the illustrations, the rest are shown by step.
         stageMedia: {
-          where: { stage: "SKETCHING_CONCEPT" },
           orderBy: { createdAt: "asc" },
-          select: { id: true, url: true, kind: true, createdAt: true },
+          select: {
+            id: true,
+            url: true,
+            kind: true,
+            stage: true,
+            createdAt: true,
+            orderStage: { select: { id: true, position: true, stage: true, label: true } },
+          },
         },
         stageApprovals: {
           where: { stage: "DESIGN_APPROVAL", status: { not: "SUPERSEDED" } },
@@ -520,7 +527,10 @@ export async function composeClientFile(
           orderRef: refOf.get(r.id),
           herUploads: hers,
           sessionMoodboard: r.moodboardImages,
-          sketches: r.stageMedia.map((m) => ({ id: m.id, url: m.url, kind: m.kind, uploadedAt: iso(m.createdAt) })),
+          sketches: r.stageMedia
+            .filter((m) => m.stage === "SKETCHING_CONCEPT")
+            .map((m) => ({ id: m.id, url: m.url, kind: m.kind, uploadedAt: iso(m.createdAt) })),
+          stepPhotos: photosByStep(r.stageMedia.filter((m) => m.stage !== "SKETCHING_CONCEPT")),
           designApproval: approval
             ? {
                 status: approval.status,
@@ -957,4 +967,28 @@ async function loadMeasurements(clientProfileId: string, userId: string) {
       }))
       .filter((l) => l.rows.length > 0),
   };
+}
+
+/** Photos uploaded on a commission's other steps, grouped by step in the order's own order. */
+function photosByStep(
+  media: {
+    id: string;
+    url: string;
+    kind: string;
+    createdAt: Date;
+    orderStage: { id: string; position: number; stage: BespokeStage; label: string | null };
+  }[],
+): { step: string; items: { id: string; url: string; kind: string; uploadedAt: string | null }[] }[] {
+  const groups = new Map<string, { position: number; step: string; items: { id: string; url: string; kind: string; uploadedAt: string | null }[] }>();
+  for (const m of media) {
+    const s = m.orderStage;
+    const group = groups.get(s.id) ?? {
+      position: s.position,
+      step: s.label?.trim() || STAGE_SHORT_LABELS[s.stage],
+      items: [],
+    };
+    group.items.push({ id: m.id, url: m.url, kind: m.kind, uploadedAt: m.createdAt.toISOString() });
+    groups.set(s.id, group);
+  }
+  return [...groups.values()].sort((a, b) => a.position - b.position).map(({ step, items }) => ({ step, items }));
 }
