@@ -1087,11 +1087,19 @@ function Empty({ children }: { children: React.ReactNode }) {
 function Gallery({ urls, empty }: { urls: string[]; empty?: string }) {
   if (urls.length === 0) return empty ? <Empty>{empty}</Empty> : null;
   return (
-    <div className="mt-2 flex flex-wrap gap-2">
+    // Big enough to read a sketch: two across on a phone, up to four on a wide screen.
+    // The whole picture shows (no cropping); tap to open it full size.
+    <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {urls.map((url) => (
-        <a key={url} href={url} target="_blank" rel="noreferrer" className="block h-24 w-24 overflow-hidden bg-sand/40">
+        <a
+          key={url}
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="block aspect-[3/4] overflow-hidden rounded bg-sand/40"
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
+          <img src={url} alt="" className="h-full w-full object-contain" loading="lazy" />
         </a>
       ))}
     </div>
