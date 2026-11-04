@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { STAFF_DEPARTMENTS } from "@/lib/staff-departments";
 import toast from "react-hot-toast";
 import { BulkSelectTable, type BulkColumn } from "@/components/ui/BulkSelectTable";
 import { Button } from "@/components/ui/Button";
@@ -143,7 +144,7 @@ export function StaffListClient() {
           className="rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         >
           <option value="all">All departments</option>
-          {["TAILOR", "BEADER", "DESIGNER", "PATTERN_CUTTER", "GENERAL"].map((d) => (
+          {STAFF_DEPARTMENTS.map((d) => (
             <option key={d} value={d}>
               {d.replace(/_/g, " ")}
             </option>
