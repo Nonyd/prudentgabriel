@@ -710,6 +710,8 @@ export async function composeClientFile(
       canViewAs: canViewAsClient(access, viewer.role),
       // Mrs. Prudent reads the pictures section as pictures: the order number, then the images.
       picturesOnly: isGeneralAdminAccount(viewer.email),
+      // The same gate as DELETE /api/clients/[id]/pictures.
+      canRemovePictures: viewer.role === "ADMIN" || viewer.role === "SUPER_ADMIN",
       // Super Admin only (decided 16 October 2026); the owner accounts change in server config.
       canChangeEmail: viewer.role === "SUPER_ADMIN" && access.contact && !isProtectedAccount(client.user.email),
       accountUserId: viewer.role === "SUPER_ADMIN" && access.contact ? client.userId : null,
@@ -728,6 +730,10 @@ export async function composeClientFile(
 }
 
 type FileNote = {
+  /** The note row (absent on a step's completion note): a correction names it. */
+  id?: string;
+  /** The commission it is read under: a correction is posted there. */
+  orderId?: string;
   section: NoteSection;
   sectionLabel: string;
   body: string;
@@ -756,6 +762,7 @@ async function loadNotes(commissions: { id: string; consultationId: string | nul
         },
         orderBy: { createdAt: "asc" },
         select: {
+          id: true,
           orderId: true,
           consultationId: true,
           section: true,
@@ -772,6 +779,8 @@ async function loadNotes(commissions: { id: string; consultationId: string | nul
     return rows
       .filter((n) => (n.orderId === orderId || (n.orderId === null && consultationId && n.consultationId === consultationId)) && n.section === section)
       .map((n) => ({
+        id: n.id,
+        orderId,
         section: isNoteSection(n.section) ? n.section : section,
         sectionLabel: NOTE_SECTION_LABELS[section],
         body: n.body,

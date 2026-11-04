@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { formatDate, formatPrice, formatNGN } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { ClientMeasurementsPanel, type MeasurementData } from "@/components/admi
 import { CommissionMeasurementsCard } from "@/components/admin/CommissionFilePanels";
 import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 import { xhrPostFormData } from "@/lib/admin-upload-xhr";
+import { NOTE_SECTION_LABELS, type NoteSection } from "@/lib/atelier/commission-notes-shared";
 
 /**
  * Slice BC1 — the client file. Everything about her gown on one page, in the
@@ -23,6 +24,11 @@ type Shown<T> = { visible: true; data: T };
 type Section<T> = Hidden | Shown<T>;
 
 type FileNote = {
+  /** The note row; a step's completion note has none and cannot be corrected here. */
+  id?: string;
+  /** The commission it is read under: a correction is posted there. */
+  orderId?: string;
+  section?: string;
   sectionLabel: string;
   body: string;
   authorName: string;
@@ -172,6 +178,8 @@ type ClientFile = {
   canViewAs: boolean;
   /** Mrs. Prudent: the pictures section shows only each order number and its pictures. */
   picturesOnly?: boolean;
+  /** Admins may take pictures and house mood boards off the file. */
+  canRemovePictures?: boolean;
   canChangeEmail?: boolean;
   accountUserId?: string | null;
   commissions: { id: string; orderRef: string; title: string; currentStageLabel: string | null; status: string; createdAt: string }[];
@@ -321,7 +329,15 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
   const { sections: s } = file;
   const orderHref = (id: string) => (portal === "admin" ? `/admin/bespoke/${id}` : `/staff/orders/${id}`);
 
+  // Admins edit from the file (the notes routes and the order page check again).
+  const edit: FileEdit = {
+    canEdit: portal === "admin" && file.scope === "house",
+    commissions: file.commissions.map((c) => ({ id: c.id, orderRef: c.orderRef })),
+    reload: () => void load(),
+  };
+
   return (
+    <FileEditContext.Provider value={edit}>
     <div className="space-y-8">
       <header>
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -364,6 +380,7 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
             data={d}
             clientId={clientId}
             canAdd={portal === "admin" && file.scope === "house"}
+            canRemove={portal === "admin" && Boolean(file.canRemovePictures)}
             picturesOnly={Boolean(file.picturesOnly)}
             onAdded={() => void load()}
           />
@@ -371,7 +388,12 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
       </FileSection>
 
       <FileSection id="consultation" title="Consultation" section={s.consultation}>
-        {(d) => <ConsultationView data={d} />}
+        {(d) => (
+          <>
+            <ConsultationView data={d} />
+            <CardTools section="consultation" placeholder="Add to the consultation — what she said, a call, a decision…" />
+          </>
+        )}
       </FileSection>
 
       {/* The brief sits under the consultation: what she asked for, then everything since. */}
@@ -382,7 +404,14 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
               <>
                 {g.brief ? <p className="whitespace-pre-line font-sans text-sm text-ink">{g.brief}</p> : <Empty>No brief written yet.</Empty>}
                 <Notes notes={g.notes} />
-                {portal === "admin" ? <AddBriefNote orderId={g.orderId} onAdded={() => void load()} /> : null}
+                {portal === "admin" ? (
+                  <AddNote
+                    section="brief"
+                    commissions={[{ id: g.orderId, orderRef: g.orderRef }]}
+                    placeholder="Add a note to the brief — a change she asked for, a call, a decision…"
+                    onAdded={() => void load()}
+                  />
+                ) : null}
               </>
             )}
           </PerCommission>
@@ -408,6 +437,7 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
 
       <FileSection id="about" title="About the dress" section={s.about}>
         {(d) => (
+          <>
           <PerCommission rows={d}>
             {(g) => (
               <>
@@ -429,37 +459,70 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
               </>
             )}
           </PerCommission>
+          <CardTools section="about_dress" editWhat="the dress, its features and description" placeholder="Add about the dress…" />
+          </>
         )}
       </FileSection>
 
       <div className="grid gap-8 lg:grid-cols-2">
         <FileSection id="quotation" title="Quotation — what was agreed" section={s.quotation}>
-          {(d) => <QuotationView data={d} />}
+          {(d) => (
+            <>
+              <QuotationView data={d} />
+              <CardTools editWhat="the quotation" />
+            </>
+          )}
         </FileSection>
         <FileSection id="invoice" title="Invoice" section={s.invoice}>
-          {(d) => <InvoiceView data={d} />}
+          {(d) => (
+            <>
+              <InvoiceView data={d} />
+              <CardTools editWhat="the invoice" />
+            </>
+          )}
         </FileSection>
       </div>
 
       <FileSection id="balance" title="Balance" section={s.balance}>
-        {(d) => <BalanceView data={d} />}
+        {(d) => (
+          <>
+            <BalanceView data={d} />
+            <CardTools editWhat="the price and payments" />
+          </>
+        )}
       </FileSection>
 
       <div className="grid gap-8 lg:grid-cols-2">
         <FileSection id="beads" title="Beads needed" section={s.beads}>
-          {(d) => <SpecView data={d} empty="No beads specified yet." />}
+          {(d) => (
+            <>
+              <SpecView data={d} empty="No beads specified yet." />
+              <CardTools section="beads" editWhat="the beads" placeholder="Add about the beads…" />
+            </>
+          )}
         </FileSection>
         <FileSection id="fabric" title="Fabric type" section={s.fabric}>
-          {(d) => <SpecView data={d} empty="No fabric specified yet." />}
+          {(d) => (
+            <>
+              <SpecView data={d} empty="No fabric specified yet." />
+              <CardTools section="fabric" editWhat="the fabric" placeholder="Add about the fabric…" />
+            </>
+          )}
         </FileSection>
       </div>
 
       <FileSection id="fitting" title="Fitting and alteration" section={s.fitting}>
-        {(d) => <FittingView data={d} />}
+        {(d) => (
+          <>
+            <FittingView data={d} />
+            <CardTools section="fitting" editWhat="the fittings" placeholder="Add about a fitting or an alteration…" />
+          </>
+        )}
       </FileSection>
 
       <FileSection id="making" title="Who is making it" section={s.making}>
         {(d) => (
+          <>
           <PerCommission rows={d} head={(g) => `${g.orderRef} · now at ${g.currentStageLabel}`}>
             {(g) =>
               g.people.length === 0 ? (
@@ -478,11 +541,14 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
               )
             }
           </PerCommission>
+          <CardTools editWhat="who is making it" />
+          </>
         )}
       </FileSection>
 
       <FileSection id="delivery" title="Delivery" section={s.delivery}>
         {(d) => (
+          <>
           <PerCommission rows={d} head={(g) => `${g.orderRef} · ${g.expectedDate ? date(g.expectedDate) : "no date"}`}>
             {(g) => (
               <div className="font-sans text-sm">
@@ -499,13 +565,21 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
               </div>
             )}
           </PerCommission>
+          <CardTools section="delivery" editWhat="the delivery date and address" placeholder="Add about the delivery…" />
+          </>
         )}
       </FileSection>
 
       <FileSection id="cost" title="Cost of production" section={s.cost}>
-        {(d) => <CostView data={d} />}
+        {(d) => (
+          <>
+            <CostView data={d} />
+            <CardTools editWhat="the costs" />
+          </>
+        )}
       </FileSection>
     </div>
+    </FileEditContext.Provider>
   );
 }
 
@@ -537,6 +611,8 @@ const NOTES_SHOWN = 3;
 
 function Notes({ notes }: { notes: FileNote[] }) {
   const [showAll, setShowAll] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
+  const { canEdit } = useContext(FileEditContext);
   if (!notes.length) return null;
   // Oldest first; a long history opens on the latest few.
   const hidden = showAll ? 0 : Math.max(0, notes.length - NOTES_SHOWN);
@@ -560,6 +636,17 @@ function Notes({ notes }: { notes: FileNote[] }) {
               {n.correction ? " · correction" : ""}
             </p>
             <p className={`mt-0.5 whitespace-pre-wrap font-sans text-sm text-ink ${n.corrected ? "line-through" : ""}`}>{n.body}</p>
+            {editing === n.id ? (
+              <CorrectNote note={n} onDone={() => setEditing(null)} />
+            ) : canEdit && n.id && n.orderId && n.section && !n.corrected && !n.stage ? (
+              <button
+                type="button"
+                onClick={() => setEditing(n.id ?? null)}
+                className="mt-1 font-sans text-xs text-text-mid underline underline-offset-2 hover:text-nut"
+              >
+                Correct
+              </button>
+            ) : null}
           </li>
         ))}
       </ol>
@@ -567,19 +654,67 @@ function Notes({ notes }: { notes: FileNote[] }) {
   );
 }
 
-/** "Add note" under the brief: appended with its author and time, never an edit (BD2). */
-function AddBriefNote({ orderId, onAdded }: { orderId: string; onAdded: () => void }) {
+/**
+ * Admins edit the file from it: notes are added on every card and corrected in
+ * place (BD2: a correction is a new note, the old one stays struck through), and
+ * the records kept on the order (quotation, invoice, payments, beads, fabric,
+ * fittings, people, costs) are a link away.
+ */
+type FileEdit = { canEdit: boolean; commissions: { id: string; orderRef: string }[]; reload: () => void };
+const FileEditContext = createContext<FileEdit>({ canEdit: false, commissions: [], reload: () => undefined });
+
+/** Under a card: add a note to it, and where its records are changed. */
+function CardTools({ section, editWhat, placeholder }: { section?: NoteSection; editWhat?: string; placeholder?: string }) {
+  const { canEdit, commissions, reload } = useContext(FileEditContext);
+  if (!canEdit) return null;
+  if (!commissions.length) {
+    return section ? <p className="mt-4 font-sans text-xs text-text-light">Notes can be added once she has a commission.</p> : null;
+  }
+  return (
+    <div className="mt-5 space-y-3 border-t border-sand pt-4">
+      {section ? <AddNote section={section} commissions={commissions} placeholder={placeholder} onAdded={reload} /> : null}
+      {editWhat ? (
+        <p className="font-sans text-xs text-text-mid">
+          Change {editWhat} on the order:{" "}
+          {commissions.map((c, i) => (
+            <span key={c.id}>
+              {i ? ", " : ""}
+              <Link href={`/admin/bespoke/${c.id}`} className="font-medium text-nut underline underline-offset-2">
+                {c.orderRef}
+              </Link>
+            </span>
+          ))}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** "Add note": appended with its author and time (BD2). With several commissions, she picks which. */
+function AddNote({
+  section,
+  commissions,
+  placeholder,
+  onAdded,
+}: {
+  section: NoteSection;
+  commissions: { id: string; orderRef: string }[];
+  placeholder?: string;
+  onAdded: () => void;
+}) {
   const [body, setBody] = useState("");
+  const [orderId, setOrderId] = useState(commissions[commissions.length - 1]?.id ?? "");
   const [saving, setSaving] = useState(false);
+  const label = NOTE_SECTION_LABELS[section];
 
   async function save() {
-    if (!body.trim() || saving) return;
+    if (!body.trim() || saving || !orderId) return;
     setSaving(true);
     try {
       const res = await fetch(`/api/bespoke/${orderId}/notes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ section: "brief", body }),
+        body: JSON.stringify({ section, body }),
       });
       const j = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) throw new Error(res.status === 403 ? "You cannot add notes to this commission." : (j.error ?? "Could not add the note"));
@@ -600,18 +735,88 @@ function AddBriefNote({ orderId, onAdded }: { orderId: string; onAdded: () => vo
         onChange={(e) => setBody(e.target.value)}
         rows={2}
         maxLength={4000}
-        placeholder="Add a note to the brief — a change she asked for, a call, a decision…"
-        aria-label="Add a note to the production brief"
+        placeholder={placeholder ?? `Add to ${label.toLowerCase()}…`}
+        aria-label={`Add a note to ${label}`}
         className="input-field min-h-[4rem] rounded-xl text-sm"
       />
-      <button
-        type="button"
-        disabled={!body.trim() || saving}
-        onClick={() => void save()}
-        className="admin-chip glass-1 glass-pill font-sans text-xs uppercase tracking-[0.12em] text-ink disabled:opacity-50"
-      >
-        {saving ? "Adding…" : "Add note"}
-      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        {commissions.length > 1 ? (
+          <select
+            value={orderId}
+            onChange={(e) => setOrderId(e.target.value)}
+            aria-label="Which commission"
+            className="rounded border border-sand bg-transparent px-2 py-1.5 font-sans text-xs text-ink"
+          >
+            {commissions.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.orderRef}
+              </option>
+            ))}
+          </select>
+        ) : null}
+        <button
+          type="button"
+          disabled={!body.trim() || saving}
+          onClick={() => void save()}
+          className="admin-chip glass-1 glass-pill font-sans text-xs uppercase tracking-[0.12em] text-ink disabled:opacity-50"
+        >
+          {saving ? "Adding…" : "Add note"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Correct a note: the new words are saved as a correction, the old ones stay struck through. */
+function CorrectNote({ note, onDone }: { note: FileNote; onDone: () => void }) {
+  const { reload } = useContext(FileEditContext);
+  const [body, setBody] = useState(note.body);
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    if (!body.trim() || body.trim() === note.body.trim() || saving || !note.orderId) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/bespoke/${note.orderId}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ section: note.section, body, supersedesId: note.id }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(j.error ?? "Could not save the correction");
+      toast.success("Note corrected");
+      onDone();
+      reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save the correction");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="mt-2 space-y-2">
+      <textarea
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+        rows={3}
+        maxLength={4000}
+        aria-label="Corrected note"
+        className="input-field min-h-[4rem] rounded-xl text-sm"
+      />
+      <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={!body.trim() || body.trim() === note.body.trim() || saving}
+          onClick={() => void save()}
+          className="admin-chip glass-1 glass-pill font-sans text-xs uppercase tracking-[0.12em] text-ink disabled:opacity-50"
+        >
+          {saving ? "Saving…" : "Save correction"}
+        </button>
+        <button type="button" onClick={onDone} className="font-sans text-xs text-text-mid underline">
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }
@@ -672,17 +877,24 @@ function IllustrationsView({
   data,
   clientId,
   canAdd,
+  canRemove,
   picturesOnly,
   onAdded,
 }: {
   data: Illustrations;
   clientId: string;
   canAdd: boolean;
+  /** Admins: remove a picture or a house mood board. */
+  canRemove: boolean;
   /** Only the order number and the pictures: no approval line, labels or empty notes. */
   picturesOnly: boolean;
   onAdded: () => void;
 }) {
-  if (picturesOnly) return <PicturesOnly data={data} clientId={clientId} canAdd={canAdd} onAdded={onAdded} />;
+  const { removePicture, removeBoard } = useRemovePicture(clientId, onAdded);
+  const onRemove = canRemove ? (url: string) => void removePicture(url) : undefined;
+  if (picturesOnly) {
+    return <PicturesOnly data={data} clientId={clientId} canAdd={canAdd} canRemove={canRemove} onAdded={onAdded} />;
+  }
   return (
     <div className="space-y-6">
       <PerCommission
@@ -700,12 +912,12 @@ function IllustrationsView({
             ) : null}
             <div>
               <p className="font-sans text-xs uppercase tracking-wide text-text-light">Illustrations</p>
-              <Gallery urls={g.sketches.map((m) => m.url)} empty="No sketches uploaded at Sketching yet." />
+              <Gallery urls={g.sketches.map((m) => m.url)} empty="No sketches uploaded at Sketching yet." onRemove={onRemove} />
             </div>
             {(g.stepPhotos ?? []).map((p) => (
               <div key={p.step}>
                 <p className="font-sans text-xs uppercase tracking-wide text-text-light">Photos · {p.step}</p>
-                <Gallery urls={p.items.filter((m) => m.kind !== "VIDEO").map((m) => m.url)} />
+                <Gallery urls={p.items.filter((m) => m.kind !== "VIDEO").map((m) => m.url)} onRemove={onRemove} />
                 {p.items.some((m) => m.kind === "VIDEO") ? (
                   <div className="mt-1 flex flex-wrap gap-3">
                     {p.items
@@ -722,13 +934,13 @@ function IllustrationsView({
             {g.herUploads.length ? (
               <div>
                 <p className="font-sans text-xs uppercase tracking-wide text-text-light">Her mood board (from her forms)</p>
-                <Gallery urls={g.herUploads} />
+                <Gallery urls={g.herUploads} onRemove={onRemove} />
               </div>
             ) : null}
             {g.sessionMoodboard.length ? (
               <div>
                 <p className="font-sans text-xs uppercase tracking-wide text-text-light">Mood board from the session</p>
-                <Gallery urls={g.sessionMoodboard} />
+                <Gallery urls={g.sessionMoodboard} onRemove={onRemove} />
               </div>
             ) : null}
           </div>
@@ -739,8 +951,19 @@ function IllustrationsView({
         {data.houseMoodboards.length === 0 ? <Empty>None yet.</Empty> : null}
         {data.houseMoodboards.map((m) => (
           <div key={m.id} className="mt-2">
-            <p className="font-sans text-sm text-ink">{m.title}</p>
-            <Gallery urls={m.images} />
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="font-sans text-sm text-ink">{m.title}</p>
+              {canRemove ? (
+                <button
+                  type="button"
+                  onClick={() => void removeBoard(m.id, m.title)}
+                  className="font-sans text-xs text-text-mid underline hover:text-nut"
+                >
+                  Remove mood board
+                </button>
+              ) : null}
+            </div>
+            <Gallery urls={m.images} onRemove={onRemove} />
             {m.notes ? <p className="mt-1 font-sans text-sm text-text-mid">{m.notes}</p> : null}
           </div>
         ))}
@@ -750,18 +973,58 @@ function IllustrationsView({
   );
 }
 
+/** Admins take a picture off the file (asked first); the file reloads after. */
+function useRemovePicture(clientId: string, onChanged: () => void) {
+  const removePicture = useCallback(
+    async (url: string) => {
+      if (!window.confirm("Remove this picture from the client's file?")) return;
+      const res = await fetch(`/api/clients/${clientId}/pictures`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        toast.error(j.error ?? "Could not remove the picture");
+        return;
+      }
+      toast.success("Picture removed");
+      onChanged();
+    },
+    [clientId, onChanged],
+  );
+  const removeBoard = useCallback(
+    async (id: string, title: string) => {
+      if (!window.confirm(`Remove the mood board "${title}" and its pictures?`)) return;
+      const res = await fetch(`/api/moodboards/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        toast.error("Could not remove the mood board");
+        return;
+      }
+      toast.success("Mood board removed");
+      onChanged();
+    },
+    [onChanged],
+  );
+  return { removePicture, removeBoard };
+}
+
 /** Every picture on her commissions under its order number, then the house's boards; no other words. */
 function PicturesOnly({
   data,
   clientId,
   canAdd,
+  canRemove,
   onAdded,
 }: {
   data: Illustrations;
   clientId: string;
   canAdd: boolean;
+  canRemove: boolean;
   onAdded: () => void;
 }) {
+  const { removePicture } = useRemovePicture(clientId, onAdded);
+  const onRemove = canRemove ? (url: string) => void removePicture(url) : undefined;
   const orders = data.commissions
     .map((g) => {
       const all = [
@@ -787,7 +1050,7 @@ function PicturesOnly({
       {orders.map((o) => (
         <div key={o.orderRef}>
           <SubHead>{o.orderRef}</SubHead>
-          <Gallery urls={o.images} />
+          <Gallery urls={o.images} onRemove={onRemove} />
           {o.videos.length ? (
             <div className="mt-1 flex flex-wrap gap-3">
               {o.videos.map((m, i) => (
@@ -799,7 +1062,7 @@ function PicturesOnly({
           ) : null}
         </div>
       ))}
-      {boards.length ? <Gallery urls={[...new Set(boards)]} /> : null}
+      {boards.length ? <Gallery urls={[...new Set(boards)]} onRemove={onRemove} /> : null}
       {canAdd ? <AddHouseMoodboard clientId={clientId} onAdded={onAdded} /> : null}
     </div>
   );
@@ -1153,23 +1416,39 @@ function Empty({ children }: { children: React.ReactNode }) {
   return <p className="mt-1 font-sans text-sm text-text-mid">{children}</p>;
 }
 
-function Gallery({ urls, empty }: { urls: string[]; empty?: string }) {
+function Gallery({
+  urls,
+  empty,
+  onRemove,
+}: {
+  urls: string[];
+  empty?: string;
+  /** Admins: a remove button on each picture. */
+  onRemove?: (url: string) => void;
+}) {
   if (urls.length === 0) return empty ? <Empty>{empty}</Empty> : null;
   return (
     // Big enough to read a sketch: two across on a phone, up to four on a wide screen.
     // The whole picture shows (no cropping); tap to open it full size.
     <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {urls.map((url) => (
-        <a
-          key={url}
-          href={url}
-          target="_blank"
-          rel="noreferrer"
-          className="block aspect-[3/4] overflow-hidden rounded bg-sand/40"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={url} alt="" className="h-full w-full object-contain" loading="lazy" />
-        </a>
+        <div key={url} className="relative">
+          <a href={url} target="_blank" rel="noreferrer" className="block aspect-[3/4] overflow-hidden rounded bg-sand/40">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={url} alt="" className="h-full w-full object-contain" loading="lazy" />
+          </a>
+          {onRemove ? (
+            <button
+              type="button"
+              aria-label="Remove this picture"
+              title="Remove this picture"
+              onClick={() => onRemove(url)}
+              className="absolute right-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-ink/75 font-sans text-base leading-none text-cream shadow hover:bg-ink"
+            >
+              ×
+            </button>
+          ) : null}
+        </div>
       ))}
     </div>
   );
