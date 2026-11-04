@@ -15,7 +15,10 @@ import {
   DEFAULT_ATELIER_SHEET,
   measurementSheetRows,
   mergeAtelierExtras,
+  firstFigure,
+  standardValue,
   textFieldKeys,
+  writtenKey,
 } from "../src/lib/atelier/measurement-fields-shared";
 import { cleanMeasurementInput, measurementFromRecord } from "../src/lib/measurements";
 
@@ -46,15 +49,15 @@ const sheetish = cleanAtelierFields([
 assert(sheetish[0]!.key === "bust" && sheetish[0]!.label === "Bust circumference", "a standard column on the sheet keeps its key");
 assert(!sheetish[0]!.type && sheetish[1]!.type === "text", "a standard column is never text; cup size is");
 
-// The house sheet: 24 measurements in the order the atelier takes them.
-assert(DEFAULT_ATELIER_SHEET.length === 24, "24 measurements");
+// The house sheet: 25 measurements in the order the atelier takes them.
+assert(DEFAULT_ATELIER_SHEET.length === 25, "25 measurements");
 assert(
   DEFAULT_ATELIER_SHEET.map((f) => f.label).join("|") ===
     [
       "Shoulder", "Bust circumference", "Under-bust circumference", "Bust point", "Under-bust point",
       "Front half length", "Bust span", "Back half length", "Waist", "Armhole circumference",
       "Biceps circumference", "Elbow circumference", "Wrist circumference", "Arm's eye", "Shoulder to elbow",
-      "Shoulder to wrist", "Hips", "Waist to knee", "Waist to ankle", "Knee circumference", "Across chest",
+      "Shoulder to wrist", "Hips", "Waist to knee", "Waist to ankle", "Waist to floor", "Knee circumference", "Across chest",
       "Across back", "Round neck", "Cup size",
     ].join("|"),
   "in the house's order",
@@ -63,7 +66,7 @@ assert(
   ["shoulderWidth", "bust", "waist", "armhole", "hips", "neck"].every((k) => DEFAULT_ATELIER_SHEET.some((f) => f.key === k)),
   "the six it shares with the standard columns keep figures already taken",
 );
-assert(cleanAtelierFields(DEFAULT_ATELIER_SHEET).length === 24, "the default sheet survives its own cleaning");
+assert(cleanAtelierFields(DEFAULT_ATELIER_SHEET).length === 25, "the default sheet survives its own cleaning");
 
 // Shown in sheet order; a standard column off the sheet still shows if the set holds it.
 const rows = measurementSheetRows(DEFAULT_ATELIER_SHEET, {
@@ -92,13 +95,41 @@ assert(!("atelier_bicep" in merged) && merged.atelier_wrist === 6.5, "null clear
 assert(!("bust" in merged), "a non-atelier key is never written as an extra");
 
 assert(!cleanAtelierExtraInput({ atelier_bicep: -3 }).ok, "a negative measurement is refused");
-assert(!cleanAtelierExtraInput({ atelier_bicep: "abc" }, new Set()).ok, "text is refused where no field is text");
+assert(!cleanAtelierExtraInput({ atelier_bicep: "abc" }, new Set()).ok, "words are refused where no field is text");
 const ok = cleanAtelierExtraInput({ atelier_bicep: "12.345", atelier_wrist: "", other: 5 });
 assert(ok.ok && ok.extra.atelier_bicep === 12.35 && ok.extra.atelier_wrist === null && !("other" in ok.extra), "input cleaned");
 
 const input = cleanMeasurementInput({ bust: 36, unit: "inches", extra: { atelier_bicep: 11 } });
 assert(input.ok && input.extra.atelier_bicep === 11 && !("extra" in input.data), "extras travel apart from the columns");
 assert(measurementFromRecord({ bust: 36, values })?.extra?.atelier_bicep === 12, "a saved set carries its extras");
+
+// Every box takes what the house writes on the paper sheet: several figures, like cup size takes a size.
+const several = cleanAtelierExtraInput(
+  { atelier_under_bust_circumference: "32.5-34", atelier_wrist_circumference: "7.5/10", atelier_biceps_circumference: "12" },
+  textKeys,
+);
+assert(
+  several.ok &&
+    several.extra.atelier_under_bust_circumference === "32.5-34" &&
+    several.extra.atelier_wrist_circumference === "7.5/10" &&
+    several.extra.atelier_biceps_circumference === 12,
+  "several figures are kept as written; one plain figure stays a number",
+);
+assert(firstFigure("34/32-35") === 34 && firstFigure("16-19") === 16 && firstFigure("abc") === null, "the first figure");
+const waist = cleanMeasurementInput({ waist: "34/32-35", unit: "inches" });
+assert(
+  waist.ok && waist.data.waist === 34 && waist.extra[writtenKey("waist")] === "34/32-35",
+  "a standard column takes several figures: the first is the number, the rest kept as written",
+);
+assert(!cleanMeasurementInput({ waist: "abc", unit: "inches" }).ok, "a column with no figure is refused");
+const writtenSet = { waist: 34, extra: { [writtenKey("waist")]: "34/32-35" } };
+assert(standardValue("waist", 34, writtenSet.extra) === "34/32-35", "the sheet shows what was written");
+assert(standardValue("waist", 30, writtenSet.extra) === 30, "a number changed elsewhere wins over stale figures");
+const writtenRows = measurementSheetRows(DEFAULT_ATELIER_SHEET, writtenSet);
+assert(
+  writtenRows.length === 1 && writtenRows[0]!.value === "34/32-35" && !writtenRows[0]!.text,
+  "shown once, under Waist, with the unit",
+);
 
 const route = src("src/app/api/atelier/measurement-fields/route.ts");
 assert(route.includes('requireAdminApi("bespoke")'), "atelier managers and admins change the list");

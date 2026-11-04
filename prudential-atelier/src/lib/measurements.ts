@@ -1,5 +1,13 @@
 import { profileMeasurementErrors } from "@/lib/measurement-guide";
-import { atelierExtrasFrom, cleanAtelierExtraInput, type AtelierExtraValue } from "@/lib/atelier/measurement-fields-shared";
+import {
+  ATELIER_TEXT_MAX,
+  atelierExtrasFrom,
+  cleanAtelierExtraInput,
+  firstFigure,
+  isPlainFigure,
+  writtenKey,
+  type AtelierExtraValue,
+} from "@/lib/atelier/measurement-fields-shared";
 
 export type MeasurementData = {
   bust?: number | null;
@@ -176,10 +184,23 @@ export function cleanMeasurementInput(
   | { ok: false; error: string; fieldErrors?: Partial<Record<string, string>> } {
   const b = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
   const data: Partial<Record<MeasurementColumn, number | null>> & { unit?: string; notes?: string | null } = {};
+  /** Columns written as several figures ("34/32-35"): kept as written beside the first figure. */
+  const written: Record<string, string> = {};
   for (const key of MEASUREMENT_COLUMNS) {
     const raw = b[key];
-    if (typeof raw === "string" && raw.trim() && !Number.isFinite(Number(raw))) {
-      return { ok: false, error: "Please enter numbers only", fieldErrors: { [key]: "Please enter a number" } };
+    if (typeof raw === "string" && raw.trim() && !isPlainFigure(raw)) {
+      const text = raw.trim();
+      const first = firstFigure(text);
+      if (first == null || text.length > ATELIER_TEXT_MAX) {
+        return {
+          ok: false,
+          error: "Please check the measurements",
+          fieldErrors: { [key]: "Enter a figure, or several such as 32.5-34" },
+        };
+      }
+      data[key] = first;
+      written[writtenKey(key)] = text;
+      continue;
     }
     const v = optionalFloat(raw);
     if (v !== undefined) data[key] = v;
@@ -193,8 +214,8 @@ export function cleanMeasurementInput(
     return {
       ok: false,
       error: "Please check the measurements",
-      fieldErrors: { [extra.key]: "Enter a length, or a short size such as 34C" },
+      fieldErrors: { [extra.key]: "Enter a figure, or several such as 32.5-34 (a size such as 34C for cup size)" },
     };
   }
-  return { ok: true, data, extra: extra.extra };
+  return { ok: true, data, extra: { ...extra.extra, ...written } };
 }

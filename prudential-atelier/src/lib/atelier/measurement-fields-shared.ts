@@ -100,6 +100,7 @@ export const DEFAULT_ATELIER_SHEET: AtelierMeasurementField[] = [
   { key: "hips", label: "Hips" },
   { key: "atelier_waist_to_knee", label: "Waist to knee" },
   { key: "atelier_waist_to_ankle", label: "Waist to ankle" },
+  { key: "atelier_waist_to_floor", label: "Waist to floor" },
   { key: "atelier_knee_circumference", label: "Knee circumference" },
   { key: "atelier_across_chest", label: "Across chest" },
   { key: "atelier_across_back", label: "Across back" },
@@ -109,6 +110,56 @@ export const DEFAULT_ATELIER_SHEET: AtelierMeasurementField[] = [
 
 /** A measurement: a length in the set's unit, or a word/size for a text field. */
 export type AtelierExtraValue = number | string;
+
+/**
+ * Every box takes what the house writes on the paper sheet: one figure (34), or
+ * several (32.5-34, 34/32-35, 7.5/10). A length field needs a figure in it; only
+ * a text field (cup size) takes words alone.
+ */
+export const FIGURE_HINT = "A figure, or several: 34, 32.5-34, 7.5/10";
+
+/** The first figure in what was written: "34/32-35" → 34. */
+export function firstFigure(text: string): number | null {
+  const m = text.match(/\d+(?:\.\d+)?|\.\d+/);
+  if (!m) return null;
+  const n = Number(m[0]);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** "34", "34.5" (or "34." mid-typing): one plain figure, kept as a number. */
+export function isPlainFigure(text: string): boolean {
+  return /^\s*(\d+\.?\d*|\.\d+)\s*$/.test(text);
+}
+
+/**
+ * Where a standard column (a number on Measurement) keeps what was written when
+ * it is more than one figure. The column holds the first figure, so sizing and
+ * the plausibility checks keep working; the sheet shows what was written.
+ */
+export function writtenKey(col: StandardMeasurementColumn): string {
+  return `${ATELIER_FIELD_PREFIX}written_${col.toLowerCase()}`;
+}
+
+const WRITTEN_KEYS: ReadonlySet<string> = new Set(STANDARD_MEASUREMENT_COLUMNS.map(writtenKey));
+
+export function isWrittenKey(key: string): boolean {
+  return WRITTEN_KEYS.has(key);
+}
+
+/**
+ * A standard column as the house wrote it: the written figures while they still
+ * start with the column's number (set elsewhere, e.g. her own account, the
+ * number wins), else the number.
+ */
+export function standardValue(
+  col: StandardMeasurementColumn,
+  value: number | null | undefined,
+  extra: Record<string, AtelierExtraValue> | undefined,
+): AtelierExtraValue | null {
+  const written = extra?.[writtenKey(col)];
+  if (typeof written === "string" && value != null && firstFigure(written) === value) return written;
+  return value ?? null;
+}
 
 export type SheetRow = {
   key: string;
@@ -138,7 +189,7 @@ export function measurementSheetRows(
 ): SheetRow[] {
   const extra = data.extra ?? {};
   const valueOf = (key: string): AtelierExtraValue | null =>
-    isStandardMeasurementColumn(key) ? (data[key] ?? null) : (extra[key] ?? null);
+    isStandardMeasurementColumn(key) ? standardValue(key, data[key], extra) : (extra[key] ?? null);
   const rows: SheetRow[] = [];
   const listed = new Set<string>();
   for (const f of fields) {
@@ -150,10 +201,16 @@ export function measurementSheetRows(
   for (const col of STANDARD_MEASUREMENT_COLUMNS) {
     const value = data[col];
     if (listed.has(col) || value == null) continue;
-    rows.push({ key: col, label: STANDARD_MEASUREMENT_LABELS[col], value, text: false, notAsked: true });
+    rows.push({
+      key: col,
+      label: STANDARD_MEASUREMENT_LABELS[col],
+      value: standardValue(col, value, extra) ?? value,
+      text: false,
+      notAsked: true,
+    });
   }
   for (const [key, value] of Object.entries(extra)) {
-    if (listed.has(key) || value === "") continue;
+    if (listed.has(key) || isWrittenKey(key) || value === "") continue;
     rows.push({
       key,
       label: key.replace(/^atelier_/, "").replace(/_/g, " "),
@@ -255,9 +312,9 @@ export function mergeAtelierExtras(
 }
 
 /**
- * Validates `extra` from a request: atelier keys only. A length is a positive
- * number; anything else that is not a number is a text field's words (cup
- * size), kept short. Empty or null clears it.
+ * Validates `extra` from a request: atelier keys only. One plain figure is kept
+ * as a number; several ("32.5-34") are kept as written, short. A text field
+ * (cup size) takes words. Empty or null clears it.
  */
 export function cleanAtelierExtraInput(
   raw: unknown,
@@ -272,13 +329,16 @@ export function cleanAtelierExtraInput(
       extra[k] = null;
       continue;
     }
-    const n = typeof v === "number" ? v : Number(v);
-    if (typeof v === "string" && !Number.isFinite(n)) {
-      if (textKeys && !textKeys.has(k)) return { ok: false, key: k };
-      if (v.trim().length > ATELIER_TEXT_MAX) return { ok: false, key: k };
-      extra[k] = v.trim();
+    if (typeof v === "string" && !isPlainFigure(v)) {
+      const text = v.trim();
+      if (text.length > ATELIER_TEXT_MAX) return { ok: false, key: k };
+      // A length field needs a figure in it; words alone only in a text field.
+      if (firstFigure(text) == null && !(textKeys ? textKeys.has(k) : true)) return { ok: false, key: k };
+      if (isWrittenKey(k) && firstFigure(text) == null) return { ok: false, key: k };
+      extra[k] = text;
       continue;
     }
+    const n = typeof v === "number" ? v : Number(v);
     if (!Number.isFinite(n) || n <= 0 || n > 400) return { ok: false, key: k };
     extra[k] = Math.round(n * 100) / 100;
   }

@@ -11,10 +11,15 @@ import {
   ATELIER_TEXT_MAX,
   atelierExtrasFrom,
   DEFAULT_ATELIER_SHEET,
+  FIGURE_HINT,
+  firstFigure,
+  isPlainFigure,
   isStandardMeasurementColumn,
   measurementSheetRows,
   STANDARD_MEASUREMENT_COLUMNS,
   STANDARD_MEASUREMENT_LABELS,
+  standardValue,
+  writtenKey,
   type AtelierExtraValue,
   type AtelierMeasurementField,
 } from "@/lib/atelier/measurement-fields-shared";
@@ -31,7 +36,13 @@ const HOW: Record<MeasurementFieldKey, string> = Object.fromEntries(
 function normalize(d: MeasurementData | null | undefined): MeasurementData | null {
   if (!d) return null;
   const values = (d as { values?: unknown }).values as Record<string, unknown> | null | undefined;
-  return { ...d, extra: d.extra ?? atelierExtrasFrom(values) };
+  const extra = { ...(d.extra ?? atelierExtrasFrom(values)) };
+  // Figures written for a column that has since been changed elsewhere: the number wins.
+  for (const col of STANDARD_MEASUREMENT_COLUMNS) {
+    const key = writtenKey(col);
+    if (key in extra && standardValue(col, d[col], extra) !== extra[key]) delete extra[key];
+  }
+  return { ...d, extra };
 }
 
 function hasAnyValue(d: MeasurementData): boolean {
@@ -152,6 +163,12 @@ export function ClientMeasurementsPanel({
   const unitLabel = unit === "cm" ? "cm" : '"';
   const extra = form.extra ?? {};
   const valueOf = (key: string) => (isStandardMeasurementColumn(key) ? form[key] : extra[key]);
+  /** What a box shows: the figures as written (34/32-35), or the one figure. */
+  const boxText = (key: string): string => {
+    const written = isStandardMeasurementColumn(key) ? extra[writtenKey(key)] : undefined;
+    const v = isStandardMeasurementColumn(key) ? (typeof written === "string" ? written : form[key]) : extra[key];
+    return v == null ? "" : String(v);
+  };
   // Asked for, in sheet order: every current field, plus one no longer asked that still
   // holds a value (so it can be cleared), then a standard column off the sheet that holds one.
   const inputs: AtelierMeasurementField[] = [
@@ -171,7 +188,39 @@ export function ClientMeasurementsPanel({
     });
   }
 
+  /** One box typed into: a plain figure is kept as a number, several figures as written. */
+  function setBox(f: AtelierMeasurementField, raw: string) {
+    const text = raw.trim() ? raw : "";
+    if (isStandardMeasurementColumn(f.key)) {
+      const col = f.key;
+      const first = text ? firstFigure(text) : null;
+      setForm((prev) => ({ ...prev, [col]: first }));
+      setExtra(writtenKey(col), text && !isPlainFigure(text) ? raw : null);
+      return;
+    }
+    if (!text) setExtra(f.key, null);
+    else if (f.type !== "text" && isPlainFigure(text)) setExtra(f.key, Number(text));
+    else setExtra(f.key, raw);
+  }
+
+  /** A length box with no figure in it ("abc"); only cup size takes words. */
+  function figureProblems(): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const f of inputs) {
+      if (f.type === "text") continue;
+      const raw = boxText(f.key).trim();
+      if (raw && firstFigure(raw) == null) out[f.key] = `${f.label}: enter a figure, e.g. 34 or 32.5-34`;
+    }
+    return out;
+  }
+
   async function save() {
+    const figures = figureProblems();
+    if (Object.keys(figures).length) {
+      setFieldErrors(figures);
+      setFormError(Object.values(figures)[0] ?? null);
+      return;
+    }
     const problems = profileMeasurementProblems({ ...form, unit });
     if (problems) {
       setFieldErrors(problems.fieldErrors as Record<string, string>);
@@ -185,8 +234,11 @@ export function ClientMeasurementsPanel({
       let res: Response;
       try {
         const extraBody: Record<string, AtelierExtraValue | null> = {};
-        for (const f of atelierFields) if (!isStandardMeasurementColumn(f.key)) extraBody[f.key] = extra[f.key] ?? null;
-        for (const [k, v] of Object.entries(extra)) extraBody[k] = v;
+        for (const f of atelierFields) {
+          const key = isStandardMeasurementColumn(f.key) ? writtenKey(f.key) : f.key;
+          extraBody[key] = extra[key] ?? null;
+        }
+        for (const [k, v] of Object.entries(extra)) extraBody[k] = typeof v === "string" ? v.trim() : v;
         res = await fetch(saveUrl ?? `/api/clients/${clientId}/measurements`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -293,7 +345,7 @@ export function ClientMeasurementsPanel({
               const err = fieldErrors[f.key];
               const id = `cmp-${clientId}-${f.key}`;
               const column = isStandardMeasurementColumn(f.key) ? f.key : null;
-              const hint = f.help ?? (column ? HOW[column] : undefined);
+              const hint = f.help ?? (column ? HOW[column] : undefined) ?? (f.type === "text" ? undefined : FIGURE_HINT);
               const clearError = () => {
                 if (!err) return;
                 setFieldErrors((prev) => {
@@ -308,50 +360,23 @@ export function ClientMeasurementsPanel({
                     {f.label}
                     {f.retired ? <span className="ml-1 text-text-light">(no longer asked)</span> : null}
                   </label>
-                  {column ? (
-                    <input
-                      id={id}
-                      type="number"
-                      step="0.1"
-                      value={form[column] ?? ""}
-                      aria-invalid={err ? true : undefined}
-                      aria-describedby={hint ? `${id}-hint` : undefined}
-                      onChange={(e) => {
-                        setForm((prev) => ({ ...prev, [column]: e.target.value === "" ? null : Number(e.target.value) }));
-                        clearError();
-                      }}
-                      className={`input-field mt-1${err ? " !border-error" : ""}`}
-                    />
-                  ) : f.type === "text" ? (
-                    <input
-                      id={id}
-                      type="text"
-                      maxLength={ATELIER_TEXT_MAX}
-                      value={extra[f.key] != null ? String(extra[f.key]) : ""}
-                      aria-invalid={err ? true : undefined}
-                      aria-describedby={hint ? `${id}-hint` : undefined}
-                      onChange={(e) => {
-                        setExtra(f.key, e.target.value.trim() ? e.target.value : null);
-                        clearError();
-                      }}
-                      className={`input-field mt-1${err ? " !border-error" : ""}`}
-                    />
-                  ) : (
-                    <input
-                      id={id}
-                      type="number"
-                      step="0.1"
-                      min={0}
-                      value={extra[f.key] ?? ""}
-                      aria-invalid={err ? true : undefined}
-                      aria-describedby={hint ? `${id}-hint` : undefined}
-                      onChange={(e) => {
-                        setExtra(f.key, e.target.value === "" ? null : Number(e.target.value));
-                        clearError();
-                      }}
-                      className={`input-field mt-1${err ? " !border-error" : ""}`}
-                    />
-                  )}
+                  {/* Every box takes what the house writes: 34, 32.5-34, 7.5/10 (cup size: 34C). */}
+                  <input
+                    id={id}
+                    type="text"
+                    inputMode="text"
+                    autoComplete="off"
+                    maxLength={ATELIER_TEXT_MAX}
+                    placeholder={f.type === "text" ? "34C" : "34 or 32.5-34"}
+                    value={boxText(f.key)}
+                    aria-invalid={err ? true : undefined}
+                    aria-describedby={hint ? `${id}-hint` : undefined}
+                    onChange={(e) => {
+                      setBox(f, e.target.value);
+                      clearError();
+                    }}
+                    className={`input-field mt-1${err ? " !border-error" : ""}`}
+                  />
                   <FieldError id={`${id}-error`} message={err} />
                   {hint ? (
                     <span id={`${id}-hint`} className="mt-0.5 block font-sans text-[11px] leading-4 text-text-light">
