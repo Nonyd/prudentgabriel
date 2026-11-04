@@ -170,6 +170,8 @@ type ClientFile = {
   contactHidden: boolean;
   /** Decided on the server by canPreviewClientDashboard, the same check as the preview page. */
   canViewAs: boolean;
+  /** Mrs. Prudent: the pictures section shows only each order number and its pictures. */
+  picturesOnly?: boolean;
   canChangeEmail?: boolean;
   accountUserId?: string | null;
   commissions: { id: string; orderRef: string; title: string; currentStageLabel: string | null; status: string; createdAt: string }[];
@@ -357,7 +359,15 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
 
       {/* Her pictures first: sketches, mood boards and every step's photos are what the house opens a file for. */}
       <FileSection id="illustrations" title="Illustration, mood board and photos" section={s.illustrations}>
-        {(d) => <IllustrationsView data={d} clientId={clientId} canAdd={portal === "admin" && file.scope === "house"} onAdded={() => void load()} />}
+        {(d) => (
+          <IllustrationsView
+            data={d}
+            clientId={clientId}
+            canAdd={portal === "admin" && file.scope === "house"}
+            picturesOnly={Boolean(file.picturesOnly)}
+            onAdded={() => void load()}
+          />
+        )}
       </FileSection>
 
       <FileSection id="consultation" title="Consultation" section={s.consultation}>
@@ -662,13 +672,17 @@ function IllustrationsView({
   data,
   clientId,
   canAdd,
+  picturesOnly,
   onAdded,
 }: {
   data: Illustrations;
   clientId: string;
   canAdd: boolean;
+  /** Only the order number and the pictures: no approval line, labels or empty notes. */
+  picturesOnly: boolean;
   onAdded: () => void;
 }) {
+  if (picturesOnly) return <PicturesOnly data={data} clientId={clientId} canAdd={canAdd} onAdded={onAdded} />;
   return (
     <div className="space-y-6">
       <PerCommission
@@ -732,6 +746,61 @@ function IllustrationsView({
         ))}
         {canAdd ? <AddHouseMoodboard clientId={clientId} onAdded={onAdded} /> : null}
       </div>
+    </div>
+  );
+}
+
+/** Every picture on her commissions under its order number, then the house's boards; no other words. */
+function PicturesOnly({
+  data,
+  clientId,
+  canAdd,
+  onAdded,
+}: {
+  data: Illustrations;
+  clientId: string;
+  canAdd: boolean;
+  onAdded: () => void;
+}) {
+  const orders = data.commissions
+    .map((g) => {
+      const all = [
+        ...g.sketches,
+        ...(g.stepPhotos ?? []).flatMap((p) => p.items),
+      ];
+      return {
+        orderRef: g.orderRef,
+        images: [
+          ...new Set([
+            ...all.filter((m) => m.kind !== "VIDEO").map((m) => m.url),
+            ...g.herUploads,
+            ...g.sessionMoodboard,
+          ]),
+        ],
+        videos: all.filter((m) => m.kind === "VIDEO"),
+      };
+    })
+    .filter((o) => o.images.length || o.videos.length);
+  const boards = data.houseMoodboards.flatMap((m) => m.images);
+  return (
+    <div className="space-y-6">
+      {orders.map((o) => (
+        <div key={o.orderRef}>
+          <SubHead>{o.orderRef}</SubHead>
+          <Gallery urls={o.images} />
+          {o.videos.length ? (
+            <div className="mt-1 flex flex-wrap gap-3">
+              {o.videos.map((m, i) => (
+                <a key={m.id} href={m.url} target="_blank" rel="noreferrer" className="font-sans text-xs text-nut underline">
+                  Video {i + 1}
+                </a>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ))}
+      {boards.length ? <Gallery urls={[...new Set(boards)]} /> : null}
+      {canAdd ? <AddHouseMoodboard clientId={clientId} onAdded={onAdded} /> : null}
     </div>
   );
 }

@@ -17,7 +17,7 @@ import {
   readAtelierMeasurementFields,
 } from "@/lib/atelier/measurement-fields";
 import { commissionCost } from "@/lib/atelier/commission-cost";
-import { isProtectedAccount } from "@/lib/roles";
+import { isGeneralAdminAccount, isProtectedAccount } from "@/lib/roles";
 import { NOTE_SECTION_LABELS, isNoteSection, type NoteSection } from "@/lib/atelier/commission-notes-shared";
 
 /**
@@ -708,6 +708,8 @@ export async function composeClientFile(
       scope: access.scope,
       contactHidden: !access.contact,
       canViewAs: canViewAsClient(access, viewer.role),
+      // Mrs. Prudent reads the pictures section as pictures: the order number, then the images.
+      picturesOnly: isGeneralAdminAccount(viewer.email),
       // Super Admin only (decided 16 October 2026); the owner accounts change in server config.
       canChangeEmail: viewer.role === "SUPER_ADMIN" && access.contact && !isProtectedAccount(client.user.email),
       accountUserId: viewer.role === "SUPER_ADMIN" && access.contact ? client.userId : null,
