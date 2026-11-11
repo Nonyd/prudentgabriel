@@ -17,16 +17,22 @@ export async function GET(req: NextRequest) {
   const reference = searchParams.get("reference");
   const orderId = searchParams.get("orderId");
   const appUrl = getPublicAppUrl();
+  // A shipping payment from the quote email goes back to its own pay page.
+  const shippingCode = searchParams.get("return") === "shipping" ? searchParams.get("c") : null;
+  const failedUrl =
+    shippingCode && orderId
+      ? `${appUrl}/payment/shipping/${encodeURIComponent(orderId)}?c=${encodeURIComponent(shippingCode)}&failed=1`
+      : `${appUrl}/checkout?error=payment-failed`;
 
   if (!reference || !orderId) {
-    return NextResponse.redirect(`${appUrl}/checkout?error=payment-failed`);
+    return NextResponse.redirect(failedUrl);
   }
 
   try {
     const result = await verifyTransaction(reference);
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) {
-      return NextResponse.redirect(`${appUrl}/checkout?error=payment-failed`);
+      return NextResponse.redirect(failedUrl);
     }
 
     if (result.status === "success") {
@@ -51,6 +57,11 @@ export async function GET(req: NextRequest) {
         paymentRef: result.reference,
         gateway: PaymentGateway.PAYSTACK,
       });
+      if (shippingCode) {
+        return NextResponse.redirect(
+          `${appUrl}/payment/shipping/${encodeURIComponent(order.id)}?c=${encodeURIComponent(shippingCode)}&paid=1`,
+        );
+      }
       const emailQ = order.guestEmail ? `&email=${encodeURIComponent(order.guestEmail)}` : "";
       return NextResponse.redirect(
         `${appUrl}/checkout/success?order=${encodeURIComponent(order.orderNumber)}${emailQ}`,
@@ -67,10 +78,10 @@ export async function GET(req: NextRequest) {
     }
   } catch (e) {
     if (e instanceof PaymentBindError) {
-      return NextResponse.redirect(`${appUrl}/checkout?error=payment-failed`);
+      return NextResponse.redirect(failedUrl);
     }
-    return NextResponse.redirect(`${appUrl}/checkout?error=payment-failed`);
+    return NextResponse.redirect(failedUrl);
   }
 
-  return NextResponse.redirect(`${appUrl}/checkout?error=payment-failed`);
+  return NextResponse.redirect(failedUrl);
 }

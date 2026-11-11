@@ -649,9 +649,10 @@ export async function sendShippingQuoteEmail(params: {
   to: string;
   firstName: string;
   orderNumber: string;
-  amountNGN: number;
-  currency: string;
-  paymentRef: string;
+  /** Ready to show: "₦151,000", or with the dollar or pound amount beside it. */
+  amountLabel: string;
+  carrier?: string | null;
+  note?: string | null;
   bank: {
     bankName: string;
     accountNumber: string;
@@ -663,38 +664,44 @@ export async function sendShippingQuoteEmail(params: {
     intermediaryBank?: string;
     instructions?: string;
   };
+  /** The lasting pay page (never expires). */
   payUrl: string;
+  /** Changes with every quote, so a corrected quote is emailed again. */
+  quoteKey: string;
+  /** A reminder for a quote still unpaid. */
+  reminder?: { count: number };
 }): Promise<void> {
-  const amountLabel =
-    params.currency === "USD"
-      ? `$${params.amountNGN.toLocaleString("en-US")}`
-      : params.currency === "GBP"
-        ? `£${params.amountNGN.toLocaleString("en-GB")}`
-        : params.currency === "EUR"
-          ? `€${params.amountNGN.toLocaleString("en-IE")}`
-          : `₦${Math.round(params.amountNGN).toLocaleString("en-NG")}`;
   const copy = await catalogCopy(EMAIL_TEMPLATE_KEYS.SHIPPING_QUOTE, {
     firstName: params.firstName,
     orderRef: params.orderNumber,
-    amount: amountLabel,
+    amount: params.amountLabel,
     link: params.payUrl,
   });
   const html = await renderBrandedEmail(
     <ShippingQuoteEmail
       firstName={params.firstName}
       orderNumber={params.orderNumber}
-      amountLabel={amountLabel}
-      paymentRef={params.paymentRef}
+      amountLabel={params.amountLabel}
+      carrier={params.carrier}
+      note={params.note}
       bank={params.bank}
-      payUrl={copy.ctaLink || params.payUrl}
+      payUrl={params.payUrl}
+      reminder={Boolean(params.reminder)}
+      catalogHeading={copy.heading}
+      catalogBody={copy.body1}
+      catalogCtaLabel={copy.ctaLabel}
     />,
   );
   await sendEmail({
     to: params.to,
-    subject: copy.subject,
+    subject: params.reminder
+      ? `Reminder: shipping for order #${params.orderNumber} is unpaid`
+      : copy.subject,
     html,
-    template: "shipping-quote",
-    idempotencyKey: `shipping-quote:${params.orderNumber}:${params.paymentRef}`,
+    template: params.reminder ? "shipping-quote-reminder" : "shipping-quote",
+    idempotencyKey: params.reminder
+      ? `shipping-quote-reminder:${params.orderNumber}:${params.quoteKey}:${params.reminder.count}`
+      : `shipping-quote:${params.orderNumber}:${params.quoteKey}`,
     relatedType: "Order",
     relatedId: params.orderNumber,
   });

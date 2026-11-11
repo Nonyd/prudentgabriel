@@ -7,6 +7,9 @@ import { prisma } from "@/lib/prisma";
 import { OrderTimeline } from "@/components/account/OrderTimeline";
 import { CustomerOrderDeleteButton } from "@/components/account/CustomerOrderDeleteButton";
 import { formatSnapshotForDisplay, parseSnapshot } from "@/lib/custom-size";
+import { ShippingDueBanner } from "@/components/account/ShippingDueBanner";
+import { shippingAmountDueNGN, shippingDueLabel } from "@/lib/shipping/due";
+import { shippingPayPath } from "@/lib/shipping/pay-link";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -26,6 +29,22 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     select: { amount: true },
   });
 
+  const shippingDueNGN = shippingAmountDueNGN(order);
+  const shippingDue =
+    shippingDueNGN > 0
+      ? [
+          {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            amountNGN: shippingDueNGN,
+            amountLabel: shippingDueLabel(order, shippingDueNGN),
+            includesPiece: order.paymentStatus !== PaymentStatus.PAID,
+            carrier: order.carrier,
+            payPath: shippingPayPath(order.id),
+          },
+        ]
+      : [];
+
   const canDeleteOrder =
     order.paymentStatus === PaymentStatus.PENDING || order.paymentStatus === PaymentStatus.FAILED;
 
@@ -36,6 +55,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       </Link>
       <h1 className="mt-4 font-display text-3xl text-wine">{order.orderNumber}</h1>
       <p className="text-sm text-charcoal-light">{new Date(order.createdAt).toLocaleString()}</p>
+
+      <ShippingDueBanner items={shippingDue} className="mt-6" />
 
       <div className="mt-8 rounded-sm border border-border bg-cream p-6">
         <OrderTimeline

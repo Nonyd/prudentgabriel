@@ -14,6 +14,8 @@ export function ShippingQuotePanel({
   orderStatus,
   preferredContact,
   whatsappUrl,
+  payUrl,
+  reminderCount = 0,
 }: {
   orderId: string;
   currentShipping: number;
@@ -22,6 +24,9 @@ export function ShippingQuotePanel({
   orderStatus: OrderStatus;
   preferredContact?: string | null;
   whatsappUrl?: string | null;
+  /** The client's lasting Paystack pay link, once a quote is saved. */
+  payUrl?: string | null;
+  reminderCount?: number;
 }) {
   const router = useRouter();
   const [amount, setAmount] = useState(String(currentShipping || ""));
@@ -48,14 +53,25 @@ export function ShippingQuotePanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amountNGN: n, carrier: agreed, note: note.trim() || undefined, notify: true }),
       });
-      const data = (await res.json()) as { error?: string };
+      const data = (await res.json()) as { error?: string; notified?: boolean };
       if (!res.ok) throw new Error(data.error ?? "Could not save quote");
-      toast.success("Quote saved and customer notified");
+      if (data.notified) toast.success("Quote saved. The client was emailed a Paystack pay link.");
+      else toast.success("Quote saved. No email was sent (nothing to pay, or no email on the order).");
       router.refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Error");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function copyPayLink() {
+    if (!payUrl) return;
+    try {
+      await navigator.clipboard.writeText(payUrl);
+      toast.success("Pay link copied. Paste it into WhatsApp.");
+    } catch {
+      toast.error("Could not copy. Select the link and copy it.");
     }
   }
 
@@ -133,6 +149,32 @@ export function ShippingQuotePanel({
           Save quote and notify
         </button>
       </div>
+      <p className="mt-3 font-body text-xs text-text-mid">
+        The client gets an email with a Pay shipping button (Paystack), sees it as a pending payment in their
+        account, and gets a reminder every few days until it is paid.
+      </p>
+      {payUrl ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-sand pt-3">
+          <span className="font-body text-xs text-text-mid">
+            Awaiting payment
+            {reminderCount > 0 ? ` · ${reminderCount} reminder${reminderCount === 1 ? "" : "s"} sent` : ""}
+          </span>
+          <input
+            readOnly
+            value={payUrl}
+            onFocus={(e) => e.currentTarget.select()}
+            className="min-w-[200px] flex-1 border border-sand bg-canvas px-2 py-1 text-xs text-charcoal"
+            aria-label="Client pay link"
+          />
+          <button
+            type="button"
+            onClick={() => void copyPayLink()}
+            className="border border-olive px-3 py-1 text-xs text-olive hover:bg-olive hover:text-white"
+          >
+            Copy pay link
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

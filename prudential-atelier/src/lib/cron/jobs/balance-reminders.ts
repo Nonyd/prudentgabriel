@@ -7,6 +7,9 @@ import { notifyBalanceReminder } from "@/lib/customer-notifications";
 import { logServerError } from "@/lib/logger";
 import { formatBespokeBook } from "@/lib/atelier-fx";
 import { ensureInvoicePublicRaw } from "@/lib/capability-token-lookup";
+import { OrderStatus, Prisma, ShippingQuoteStatus } from "@prisma/client";
+import { shippingAmountDueNGN } from "@/lib/shipping/due";
+import { sendShippingPaymentRequest } from "@/lib/shipping/notify";
 
 const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 const REMINDER_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
@@ -131,12 +134,84 @@ export async function run(ctx: CronJobContext): Promise<JobResult> {
     }
   }
 
-  const hasMore = stoppedForBudget || orders.length >= ctx.batchLimit;
+  const shipping = stoppedForBudget
+    ? { processed: 0, failed: 0, scanned: 0, stoppedForBudget: true }
+    : await remindUnpaidShipping(ctx);
+  processed += shipping.processed;
+  failed += shipping.failed;
+
+  const hasMore = stoppedForBudget || shipping.stoppedForBudget || orders.length >= ctx.batchLimit;
 
   return {
     processed,
     failed,
     hasMore,
-    detail: { scanned: orders.length },
+    detail: { scanned: orders.length, shippingScanned: shipping.scanned, shippingReminded: shipping.processed },
   };
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** First reminder this long after the quote, then this long between reminders. */
+export const SHIPPING_FIRST_REMINDER_MS = 2 * DAY_MS;
+export const SHIPPING_REMINDER_GAP_MS = 3 * DAY_MS;
+export const SHIPPING_MAX_REMINDERS = 5;
+
+type QuoteLocked = { quotedAt?: string | null; remindedAt?: string | null; reminderCount?: number | null };
+
+/** Whether a quoted, unpaid shipping fee is due a reminder now. */
+export function shippingReminderDue(locked: unknown, nowMs: number): { due: boolean; count: number } {
+  const l = (locked ?? {}) as QuoteLocked;
+  const count = typeof l.reminderCount === "number" ? l.reminderCount : 0;
+  if (count >= SHIPPING_MAX_REMINDERS) return { due: false, count };
+  const quotedAt = l.quotedAt ? Date.parse(l.quotedAt) : NaN;
+  if (!Number.isFinite(quotedAt) || nowMs - quotedAt < SHIPPING_FIRST_REMINDER_MS) return { due: false, count };
+  const remindedAt = l.remindedAt ? Date.parse(l.remindedAt) : NaN;
+  if (Number.isFinite(remindedAt) && nowMs - remindedAt < SHIPPING_REMINDER_GAP_MS) return { due: false, count };
+  return { due: true, count };
+}
+
+/** RTW orders whose shipping was quoted and is still unpaid: email + bell, with the lasting pay link. */
+async function remindUnpaidShipping(ctx: CronJobContext) {
+  const nowMs = ctx.now.getTime();
+  const orders = await prisma.order.findMany({
+    where: {
+      shippingQuoteStatus: ShippingQuoteStatus.QUOTED,
+      status: { notIn: [OrderStatus.CANCELLED, OrderStatus.REFUNDED, OrderStatus.ABANDONED] },
+    },
+    orderBy: { updatedAt: "asc" },
+    take: ctx.batchLimit,
+  });
+
+  let processed = 0;
+  let failed = 0;
+  let stoppedForBudget = false;
+  for (const order of orders) {
+    if (ctx.isBudgetExhausted()) {
+      stoppedForBudget = true;
+      break;
+    }
+    if (shippingAmountDueNGN(order) <= 0) continue;
+    const { due, count } = shippingReminderDue(order.shippingQuoteLocked, nowMs);
+    if (!due) continue;
+    try {
+      const sent = await sendShippingPaymentRequest(order.id, { reminder: { count: count + 1 } });
+      if (!sent) continue;
+      const prev = (order.shippingQuoteLocked as Record<string, unknown> | null) ?? {};
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          shippingQuoteLocked: {
+            ...prev,
+            reminderCount: count + 1,
+            remindedAt: ctx.now.toISOString(),
+          } as Prisma.InputJsonValue,
+        },
+      });
+      processed += 1;
+    } catch (e) {
+      failed += 1;
+      await logServerError({ errorType: "CRON_SHIPPING_REMINDER", error: e, orderId: order.id });
+    }
+  }
+  return { processed, failed, scanned: orders.length, stoppedForBudget };
 }

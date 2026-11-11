@@ -82,7 +82,7 @@ export const CRON_CATALOG: CronCatalogEntry[] = [
   {
     name: "balance-reminders",
     schedule: "0 9 * * *",
-    description: "Bespoke outstanding-balance reminders (14-day delivery window)",
+    description: "Bespoke outstanding-balance reminders (14-day delivery window) and unpaid RTW shipping reminders",
     migrated: true,
   },
   {

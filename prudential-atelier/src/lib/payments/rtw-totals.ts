@@ -1,4 +1,4 @@
-import { PaymentStatus, Prisma } from "@prisma/client";
+import { PaymentStatus, Prisma, ShippingQuoteStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { dec, toNumber, type PaymentSummary } from "@/lib/payments/ledger";
 import { convertAtLockedRate, roundMoney, type LockedFx } from "@/lib/fx";
@@ -60,6 +60,13 @@ export async function recomputeRtwOrderTotals(orderId: string): Promise<PaymentS
           : {}),
     },
   });
+  // A quoted shipping fee is settled once nothing is left to pay: card, webhook or a confirmed transfer.
+  if (summary.isFullyPaid) {
+    await prisma.order.updateMany({
+      where: { id: orderId, shippingQuoteStatus: ShippingQuoteStatus.QUOTED },
+      data: { shippingQuoteStatus: ShippingQuoteStatus.PAID },
+    });
+  }
   return summary;
 }
 

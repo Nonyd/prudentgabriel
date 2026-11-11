@@ -8,6 +8,7 @@ import { OrderTimeline } from "@/components/account/OrderTimeline";
 import { AdminOrderToolbar } from "@/components/admin/AdminOrderToolbar";
 import { ShippingQuotePanel } from "@/components/admin/ShippingQuotePanel";
 import { orderWhatsAppUrl, phoneFromOrder } from "@/lib/shipping/whatsapp";
+import { shippingPayUrl } from "@/lib/shipping/pay-link";
 import { OrderMeasurementsBlock } from "@/components/admin/OrderMeasurementsBlock";
 import { PrintGuideButton } from "@/components/admin/PrintGuideButton";
 import { buildWorkroomSku } from "@/lib/product-options";
@@ -192,7 +193,19 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           orderStatus={order.status}
           preferredContact={order.preferredContactMethod}
           whatsappUrl={wa}
+          payUrl={order.shippingQuoteStatus === ShippingQuoteStatus.QUOTED ? shippingPayUrl(order.id) : null}
+          reminderCount={
+            Number((order.shippingQuoteLocked as { reminderCount?: number } | null)?.reminderCount ?? 0) || 0
+          }
         />
+      ) : order.shippingQuoteStatus === ShippingQuoteStatus.PAID ? (
+        <div className="glass-opaque p-6">
+          <p className="font-label text-xs uppercase text-text-light">Shipping</p>
+          <p className="mt-1 font-body text-sm text-ink">
+            Paid · ₦{Math.round(order.shippingAmount).toLocaleString("en-NG")}
+            {order.carrier ? ` · ${order.carrier}` : ""}
+          </p>
+        </div>
       ) : null}
 
       <OrderMeasurementsBlock items={order.items} />

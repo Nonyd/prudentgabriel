@@ -4,10 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { recomputeRtwOrderTotals } from "@/lib/payments/rtw-totals";
-import { sendShippingQuoteEmail } from "@/lib/email";
-import { generatePaymentReference } from "@/lib/payments/index";
-import { getBankTransferDetails } from "@/lib/payments/config";
-import { getPublicAppUrl } from "@/lib/app-url";
+import { sendShippingPaymentRequest } from "@/lib/shipping/notify";
 import { applyShippingQuoteToLocked, lockedFxFromOrder } from "@/lib/fx";
 
 const bodySchema = z.object({
@@ -63,6 +60,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         quotedAt: new Date().toISOString(),
         quotedBy: gate.session.user?.id ?? null,
         purpose: PaymentPurpose.BALANCE,
+        // A new or corrected quote starts the unpaid reminders again.
+        reminderCount: 0,
+        remindedAt: null,
       } as Prisma.InputJsonValue,
       ...(usdLocked != null ? { fxUsdAmountLocked: usdLocked } : {}),
       ...(gbpLocked != null ? { fxGbpAmountLocked: gbpLocked } : {}),
@@ -70,31 +70,12 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   });
 
   const summary = await recomputeRtwOrderTotals(id);
-  const email = order.guestEmail ?? (order.userId
-    ? (await prisma.user.findUnique({ where: { id: order.userId }, select: { email: true } }))?.email
-    : null);
-
-  if (parsed.data.notify && email) {
-    const bank = await getBankTransferDetails(String(order.currency), "RTW");
-    const ref = order.paymentRef ?? generatePaymentReference("SHIP");
-    if (!order.paymentRef) {
-      await prisma.order.update({ where: { id }, data: { paymentRef: ref } });
-    }
-    const firstName = (order.guestName ?? "there").split(" ")[0] ?? "there";
-    await sendShippingQuoteEmail({
-      to: email,
-      firstName,
-      orderNumber: order.orderNumber,
-      amountNGN: nextShipping,
-      currency: String(order.currency),
-      paymentRef: ref,
-      bank: bank ?? { bankName: "", accountNumber: "", accountName: "" },
-      payUrl: `${getPublicAppUrl()}/account/orders/${order.id}`,
-    });
-  }
+  // Email with the lasting Paystack pay link, and a notice in her account.
+  const notified = parsed.data.notify ? await sendShippingPaymentRequest(id) : false;
 
   return NextResponse.json({
     order: updated,
     balance: Number(summary.balance),
+    notified,
   });
 }
