@@ -74,6 +74,10 @@ export type FileViewer = {
   allows: (permission: AdminPermission) => boolean;
   /** This viewer's workroom assignments on this client's commissions. */
   assignments: { orderId: string; role: string }[];
+  /** Creative Team: every commission and every section, to read only (lib/creative-team.ts). */
+  creative?: boolean;
+  /** The Illustrator also adds sketches. */
+  illustrator?: boolean;
 };
 
 export type FileAccess = {
@@ -104,12 +108,14 @@ export const HIDDEN_REASONS: Record<FileSection, string> = {
 
 /** Pure: who sees which section. Mirrors AZ8 and Slice T; adds nothing. */
 export function clientFileAccess(v: FileViewer): FileAccess {
-  const house = v.allows("clients");
+  // The Creative Team reads the whole file of every client (11 November 2026); writing stays closed to them.
+  const creative = Boolean(v.creative);
+  const house = v.allows("clients") || creative;
   const workroom = !house && v.assignments.length > 0;
   const admitted = house || workroom;
-  const manager = sessionHasRole(v.role, v.email, BESPOKE_MANAGER_ROLES);
+  const manager = sessionHasRole(v.role, v.email, BESPOKE_MANAGER_ROLES) || creative;
   const cutter = v.assignments.some((a) => MEASUREMENT_ASSIGNMENT_ROLES.includes(a.role));
-  const money = canSeePaymentDetails({ role: v.role, email: v.email });
+  const money = canSeePaymentDetails({ role: v.role, email: v.email }) || creative;
 
   return {
     admitted,
@@ -117,7 +123,7 @@ export function clientFileAccess(v: FileViewer): FileAccess {
     contact: house,
     sections: {
       // Workroom: the brief and moodboard copied onto her commission, as the staff portal shows today.
-      consultation: admitted && (house ? v.allows("consultations") : true),
+      consultation: admitted && (house ? v.allows("consultations") || creative : true),
       measurements: admitted && (manager || cutter),
       about: admitted,
       brief: admitted,
@@ -524,6 +530,7 @@ export async function composeClientFile(
           new Set([...(r.consultation?.enquiry?.moodboardImages ?? []), ...(r.consultation?.referenceImages ?? [])]),
         );
         return {
+          orderId: r.id,
           orderRef: refOf.get(r.id),
           herUploads: hers,
           sessionMoodboard: r.moodboardImages,
@@ -710,6 +717,9 @@ export async function composeClientFile(
       canViewAs: canViewAsClient(access, viewer.role),
       // Mrs. Prudent reads the pictures section as pictures: the order number, then the images.
       picturesOnly: isGeneralAdminAccount(viewer.email),
+      // Creative Team: reads everything, changes nothing; the Illustrator adds sketches.
+      readOnly: Boolean(viewer.creative) && viewer.role !== "ADMIN" && viewer.role !== "SUPER_ADMIN",
+      canUploadSketches: Boolean(viewer.illustrator),
       // The same gate as DELETE /api/clients/[id]/pictures.
       canRemovePictures: viewer.role === "ADMIN" || viewer.role === "SUPER_ADMIN",
       // Super Admin only (decided 16 October 2026); the owner accounts change in server config.

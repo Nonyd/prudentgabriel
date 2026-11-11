@@ -8,6 +8,7 @@ import { issuePasswordResetToken, passwordLinkUrl } from "@/lib/password-reset";
 import { hasPermission, isProtectedAccount } from "@/lib/roles";
 import { unusablePasswordHash } from "@/lib/temp-password";
 import { logActivity, logError } from "@/lib/logger";
+import { CREATIVE_TEAM_DEPARTMENTS } from "@/lib/staff-departments";
 
 const DEPARTMENTS = new Set<string>(Object.values(StaffDepartment));
 const EMPLOYMENT_TYPES = new Set<string>(Object.values(EmploymentType));
@@ -28,7 +29,9 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get("search")?.trim();
 
     const where: Prisma.StaffProfileWhereInput = {};
-    if (department && department !== "all" && DEPARTMENTS.has(department)) {
+    if (department === "creative_team") {
+      where.department = { in: [...CREATIVE_TEAM_DEPARTMENTS] as StaffDepartment[] };
+    } else if (department && department !== "all" && DEPARTMENTS.has(department)) {
       where.department = department as StaffDepartment;
     }
     if (employmentType && employmentType !== "all" && EMPLOYMENT_TYPES.has(employmentType)) {

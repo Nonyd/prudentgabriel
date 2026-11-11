@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { STAFF_DEPARTMENTS } from "@/lib/staff-departments";
+import { DEPARTMENT_GROUPS, departmentLabel } from "@/lib/staff-departments";
 import toast from "react-hot-toast";
 import { BulkSelectTable, type BulkColumn } from "@/components/ui/BulkSelectTable";
 import { Button } from "@/components/ui/Button";
@@ -82,7 +82,7 @@ export function StaffListClient() {
         header: "Department",
         cell: (row) => (
           <span className="font-sans text-xs uppercase text-text-mid">
-            {row.department.replace(/_/g, " ")}
+            {departmentLabel(row.department)}
           </span>
         ),
       },
@@ -144,10 +144,15 @@ export function StaffListClient() {
           className="rounded border border-sand bg-bg-card px-3 py-2 font-sans text-sm"
         >
           <option value="all">All departments</option>
-          {STAFF_DEPARTMENTS.map((d) => (
-            <option key={d} value={d}>
-              {d.replace(/_/g, " ")}
-            </option>
+          <option value="creative_team">Whole Creative Team</option>
+          {DEPARTMENT_GROUPS.map((g) => (
+            <optgroup key={g.label} label={g.label}>
+              {g.items.map((d) => (
+                <option key={d} value={d}>
+                  {departmentLabel(d)}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
         <select

@@ -286,6 +286,8 @@ export const ADMIN_NAV_JOB_PERMISSIONS: Partial<Record<string, Permission[]>> = 
 export function mapDepartmentToEnum(department?: string | null) {
   const d = (department ?? "").trim().toUpperCase();
   if (d.includes("ASSISTANT") && d.includes("DESIGN")) return "ASSISTANT_CREATIVE_DESIGNER" as const;
+  if (d.includes("ILLUSTRAT")) return "ILLUSTRATOR" as const;
+  if (d.includes("CREATIVE") && d.includes("ADMIN")) return "CREATIVE_ADMIN" as const;
   if (d.includes("CREATIVE")) return "CREATIVE_TEAM" as const;
   if (d.includes("SUPERVISOR")) return "SUPERVISOR" as const;
   if (d.includes("PRODUCTION")) return "PRODUCTION_MANAGER" as const;

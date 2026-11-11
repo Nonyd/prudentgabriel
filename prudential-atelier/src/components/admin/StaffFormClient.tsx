@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { STAFF_DEPARTMENTS } from "@/lib/staff-departments";
+import { DEPARTMENT_GROUPS, departmentLabel } from "@/lib/staff-departments";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 
@@ -119,10 +119,14 @@ export function StaffFormClient() {
             onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
             className="w-full rounded border border-sand px-3 py-2 font-sans text-sm"
           >
-            {STAFF_DEPARTMENTS.map((d) => (
-              <option key={d} value={d}>
-                {d.replace(/_/g, " ")}
-              </option>
+            {DEPARTMENT_GROUPS.map((g) => (
+              <optgroup key={g.label} label={g.label}>
+                {g.items.map((d) => (
+                  <option key={d} value={d}>
+                    {departmentLabel(d)}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </label>

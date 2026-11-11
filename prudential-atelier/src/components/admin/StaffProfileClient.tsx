@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { STAGE_LABELS } from "@/lib/bespoke-stages";
 import { formatDate, getInitials } from "@/lib/utils";
+import { departmentLabel } from "@/lib/staff-departments";
 
 type StaffDetail = {
   id: string;
@@ -106,7 +107,7 @@ export function StaffProfileClient({ staffId }: { staffId: string }) {
               <p className="font-sans text-sm text-text-mid">{item.user.phone}</p>
             ) : null}
             <div className="mt-3 flex flex-wrap gap-2">
-              <Badge variant="accent">{item.department.replace(/_/g, " ")}</Badge>
+              <Badge variant="accent">{departmentLabel(item.department)}</Badge>
               <Badge variant={item.isActive ? "success" : "wine"}>
                 {item.isActive ? "Active" : "Inactive"}
               </Badge>

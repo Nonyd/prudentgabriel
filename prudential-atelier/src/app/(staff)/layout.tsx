@@ -5,6 +5,7 @@ import { WorkroomTypeScale } from "@/components/common/WorkroomTypeScale";
 import { enforcePublicMaintenance } from "@/lib/maintenance";
 import { NOINDEX } from "@/lib/seo";
 import { resolveStaffPortalUser } from "@/lib/staff-view-as";
+import { creativeAccessFor } from "@/lib/creative-team";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -27,8 +28,11 @@ export default async function StaffLayout({ children }: { children: React.ReactN
     redirect("/login?tab=staff");
   }
 
+  const { creative } = await creativeAccessFor(viewer.id);
+
   return (
     <StaffShell
+      creative={creative}
       session={session}
       viewer={{ name: viewer.name, email: viewer.email, image: viewer.image }}
       viewingAs={viewer.viewingAs}

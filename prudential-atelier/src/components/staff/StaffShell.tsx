@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import type { Session } from "next-auth";
 import { useState } from "react";
-import { ClipboardList, Clock, Home, LogOut, Settings, UserRoundCog } from "lucide-react";
+import { ClipboardList, Clock, FolderOpen, Home, LogOut, Settings, UserRoundCog } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { StaffTopbar } from "@/components/staff/StaffTopbar";
 import { PortalImageLightbox } from "@/components/ui/ImageLightbox";
@@ -20,8 +20,12 @@ const NAV = [
   { href: "/staff/settings", label: "Settings", icon: Settings },
 ];
 
+/** The Creative Team also reads every order. */
+const CREATIVE_NAV = { href: "/staff/orders", label: "All orders", icon: FolderOpen };
+
 function isNavActive(pathname: string, href: string) {
   if (href === "/staff") return pathname === "/staff";
+  if (href === "/staff/orders") return pathname === "/staff/orders";
   return pathname.startsWith(href);
 }
 
@@ -29,6 +33,7 @@ export function StaffShell({
   session,
   viewer,
   viewingAs,
+  creative = false,
   children,
 }: {
   session: Session;
@@ -36,6 +41,8 @@ export function StaffShell({
   viewer?: { name: string | null; email: string; image: string | null };
   /** Set while the Super Admin views the portal as this staff member (read-only). */
   viewingAs?: ImpersonationPayload | null;
+  /** On the Creative Team: show "All orders". */
+  creative?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -44,6 +51,7 @@ export function StaffShell({
   const name = user?.name ?? user?.email ?? "Staff";
   const avatarUrl = user?.image ?? "";
   const [mobileNav, setMobileNav] = useState(false);
+  const nav = creative ? [NAV[0], CREATIVE_NAV, ...NAV.slice(1)] : NAV;
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg-page">
@@ -70,7 +78,7 @@ export function StaffShell({
         </div>
 
         <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-4">
-          {NAV.map((item) => {
+          {nav.map((item) => {
             const active = isNavActive(pathname, item.href);
             return (
               <Link
@@ -146,7 +154,7 @@ export function StaffShell({
 
         <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-sand bg-ivory px-2 pb-[env(safe-area-inset-bottom,0px)] pt-2 md:hidden">
           <ul className="flex items-center justify-around">
-            {NAV.map((item) => {
+            {nav.map((item) => {
               const active = isNavActive(pathname, item.href);
               return (
                 <li key={item.href}>

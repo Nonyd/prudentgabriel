@@ -6,6 +6,7 @@ import QRCode from "qrcode";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { formatDate } from "@/lib/utils";
+import { departmentLabel } from "@/lib/staff-departments";
 
 type TodaySummary = {
   date: string;
@@ -209,7 +210,7 @@ export function AttendanceDashboardClient() {
                   <div>
                     <p className="font-sans text-sm font-medium text-ink">{member.name}</p>
                     <p className="font-sans text-10px uppercase text-text-light">
-                      {member.department.replace(/_/g, " ")}
+                      {departmentLabel(member.department)}
                     </p>
                   </div>
                   {statusBadge(member.status)}

@@ -24,7 +24,8 @@ export const NOTE_SECTION_LABELS: Record<NoteSection, string> = {
   delivery: "Delivery",
 };
 
-export const NOTE_MAX = 4000;
+/** Long enough for a whole consultation written out (about 8,000 words); the column is text. */
+export const NOTE_MAX = 50000;
 
 export function isNoteSection(v: unknown): v is NoteSection {
   return typeof v === "string" && (NOTE_SECTIONS as readonly string[]).includes(v);

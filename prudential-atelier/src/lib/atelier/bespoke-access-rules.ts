@@ -46,6 +46,8 @@ export type BespokeFacts = {
   assigned: boolean;
   /** BD4: holds `bespoke.specification`. */
   spec?: boolean;
+  /** Creative Team: reads what every gown needs, never changes it. */
+  creative?: boolean;
   /** BD4: holds `store`. */
   store?: boolean;
   /** BD4: holds `production.cost`. */
@@ -69,7 +71,7 @@ export function bespokeAllows(level: BespokeLevel, f: BespokeFacts): boolean {
     case "pipeline":
       return f.house && Boolean(f.pipeline);
     case "spec":
-      return f.house || f.assigned || Boolean(f.spec) || Boolean(f.store);
+      return f.house || f.assigned || Boolean(f.spec) || Boolean(f.store) || Boolean(f.creative);
     case "specEdit":
       return f.house || Boolean(f.spec);
     case "storeCost":

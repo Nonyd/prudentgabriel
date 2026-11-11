@@ -7,6 +7,8 @@ import { resolveStaffPortalUser } from "@/lib/staff-view-as";
 import { stepLabel } from "@/lib/atelier/pipeline";
 import { commissionMeasurements } from "@/lib/atelier/commission-measurements";
 import { measurementSheetRows, readAtelierMeasurementFields } from "@/lib/atelier/measurement-fields";
+import { creativeAccessFor } from "@/lib/creative-team";
+import { departmentLabel } from "@/lib/staff-departments";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: string }> }) {
   const session = await auth();
@@ -23,7 +25,9 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: s
     where: { orderId, staffProfileId: staff.id },
     include: { orderStage: { select: { stage: true, label: true } } },
   });
-  if (!assignment) {
+  // The Creative Team reads every order, assigned or not (read-only).
+  const creative = assignment ? null : await creativeAccessFor(viewer.id);
+  if (!assignment && !creative?.creative) {
     return NextResponse.json({ error: "You are not assigned to this order" }, { status: 403 });
   }
 
@@ -51,7 +55,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: s
   const clientFirstName = order.clientName.split(/\s+/)[0] ?? order.clientName;
   // Slice AZ8: measurements for the tailor / pattern cutter, not every assignee.
   // The set this commission is cut to (her latest if none was taken for it), in the house sheet's order.
-  const cut = MEASUREMENT_ASSIGNMENT_ROLES.includes(assignment.role)
+  const cut = !assignment || MEASUREMENT_ASSIGNMENT_ROLES.includes(assignment.role)
     ? commissionMeasurements(order, order.clientProfile?.measurements ?? null).data
     : null;
   const measurements = cut
@@ -82,13 +86,12 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ orderId: s
     deliveryDate: order.deliveryDate?.toISOString() ?? null,
     currentStage: order.currentStage,
     // The step she is on, by its name on this order; else what is under way.
-    currentStageLabel: assignment.orderStage
+    currentStageLabel: assignment?.orderStage
       ? stepLabel(assignment.orderStage)
       : order.steps.map(stepLabel).join(", ") || order.currentStage.replace(/_/g, " "),
-    assignment: {
-      role: assignment.role,
-      assignedAt: assignment.assignedAt.toISOString(),
-    },
+    assignment: assignment
+      ? { role: assignment.role, assignedAt: assignment.assignedAt.toISOString() }
+      : { role: `${departmentLabel(staff.department)} (view only)`, assignedAt: order.createdAt.toISOString() },
     clientFirstName,
     measurements,
     materials: order.materials.map((m) => ({

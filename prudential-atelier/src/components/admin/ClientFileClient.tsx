@@ -8,7 +8,7 @@ import { ClientMeasurementsPanel, type MeasurementData } from "@/components/admi
 import { CommissionMeasurementsCard } from "@/components/admin/CommissionFilePanels";
 import { UploadProgressBar } from "@/components/admin/UploadProgressBar";
 import { xhrPostFormData } from "@/lib/admin-upload-xhr";
-import { NOTE_SECTION_LABELS, type NoteSection } from "@/lib/atelier/commission-notes-shared";
+import { NOTE_MAX, NOTE_SECTION_LABELS, type NoteSection } from "@/lib/atelier/commission-notes-shared";
 
 /**
  * Slice BC1 — the client file. Everything about her gown on one page, in the
@@ -130,6 +130,7 @@ type Spec = { orderRef: string; items: SpecItem[]; notes: FileNote[] }[];
 type Illustrations = {
   houseMoodboards: { id: string; title: string; images: string[]; notes: string | null; createdAt: string | null }[];
   commissions: {
+    orderId?: string;
     orderRef: string;
     herUploads: string[];
     sessionMoodboard: string[];
@@ -180,6 +181,10 @@ type ClientFile = {
   picturesOnly?: boolean;
   /** Admins may take pictures and house mood boards off the file. */
   canRemovePictures?: boolean;
+  /** Creative Team: the whole file, view only. */
+  readOnly?: boolean;
+  /** The Illustrator adds sketches and design pictures to each order. */
+  canUploadSketches?: boolean;
   canChangeEmail?: boolean;
   accountUserId?: string | null;
   commissions: { id: string; orderRef: string; title: string; currentStageLabel: string | null; status: string; createdAt: string }[];
@@ -344,6 +349,11 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
           <h1 className="font-display text-2xl text-ink">{file.client.name ?? file.client.firstName ?? "Client"}</h1>
           {portal === "admin" && file.canViewAs ? <ViewAsClientButton clientId={clientId} /> : null}
         </div>
+        {file.readOnly ? (
+          <p className="mb-1 font-sans text-xs text-text-mid">
+            View only{file.canUploadSketches ? " — you can add sketches under Illustrations." : "."}
+          </p>
+        ) : null}
         {file.contactHidden ? (
           <p className="font-sans text-xs text-text-mid">Contact details are kept for the client desk.</p>
         ) : (
@@ -382,6 +392,7 @@ export function ClientFileClient({ clientId, portal = "admin" }: { clientId: str
             canAdd={portal === "admin" && file.scope === "house"}
             canRemove={portal === "admin" && Boolean(file.canRemovePictures)}
             picturesOnly={Boolean(file.picturesOnly)}
+            canUploadSketches={Boolean(file.canUploadSketches)}
             onAdded={() => void load()}
           />
         )}
@@ -734,7 +745,7 @@ function AddNote({
         value={body}
         onChange={(e) => setBody(e.target.value)}
         rows={2}
-        maxLength={4000}
+        maxLength={NOTE_MAX}
         placeholder={placeholder ?? `Add to ${label.toLowerCase()}…`}
         aria-label={`Add a note to ${label}`}
         className="input-field min-h-[4rem] rounded-xl text-sm"
@@ -800,7 +811,7 @@ function CorrectNote({ note, onDone }: { note: FileNote; onDone: () => void }) {
         value={body}
         onChange={(e) => setBody(e.target.value)}
         rows={3}
-        maxLength={4000}
+        maxLength={NOTE_MAX}
         aria-label="Corrected note"
         className="input-field min-h-[4rem] rounded-xl text-sm"
       />
@@ -879,6 +890,7 @@ function IllustrationsView({
   canAdd,
   canRemove,
   picturesOnly,
+  canUploadSketches = false,
   onAdded,
 }: {
   data: Illustrations;
@@ -888,6 +900,8 @@ function IllustrationsView({
   canRemove: boolean;
   /** Only the order number and the pictures: no approval line, labels or empty notes. */
   picturesOnly: boolean;
+  /** The Illustrator: add sketches to each order. */
+  canUploadSketches?: boolean;
   onAdded: () => void;
 }) {
   const { removePicture, removeBoard } = useRemovePicture(clientId, onAdded);
@@ -913,6 +927,7 @@ function IllustrationsView({
             <div>
               <p className="font-sans text-xs uppercase tracking-wide text-text-light">Illustrations</p>
               <Gallery urls={g.sketches.map((m) => m.url)} empty="No sketches uploaded at Sketching yet." onRemove={onRemove} />
+              {canUploadSketches && g.orderId ? <AddSketch orderId={g.orderId} onAdded={onAdded} /> : null}
             </div>
             {(g.stepPhotos ?? []).map((p) => (
               <div key={p.step}>
@@ -1064,6 +1079,60 @@ function PicturesOnly({
       ))}
       {boards.length ? <Gallery urls={[...new Set(boards)]} onRemove={onRemove} /> : null}
       {canAdd ? <AddHouseMoodboard clientId={clientId} onAdded={onAdded} /> : null}
+    </div>
+  );
+}
+
+/** The Illustrator's upload: each picture is filed on the order's Sketching step. */
+function AddSketch({ orderId, onAdded }: { orderId: string; onAdded: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+
+  async function upload(files: File[]) {
+    setBusy(true);
+    let added = 0;
+    try {
+      for (const file of files) {
+        setUploadProgress(0);
+        const fd = new FormData();
+        fd.set("file", file);
+        const j = (await xhrPostFormData(`/api/staff/orders/${orderId}/sketches`, fd, {
+          onProgress: setUploadProgress,
+          credentials: true,
+        })) as { url?: string; error?: string };
+        if (!j.url) throw new Error(j.error ?? "Upload failed");
+        added += 1;
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setBusy(false);
+      setUploadProgress(null);
+      if (added) {
+        toast.success(added === 1 ? "Sketch added" : `${added} sketches added`);
+        onAdded();
+      }
+    }
+  }
+
+  return (
+    <div className="mt-2 space-y-2">
+      <label className="inline-flex cursor-pointer font-sans text-xs">
+        <span className="inline-flex rounded border border-sand px-3 py-2">{busy ? "Uploading…" : "Add sketch or design picture"}</span>
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          multiple
+          disabled={busy}
+          className="hidden"
+          onChange={(e) => {
+            const fs = Array.from(e.target.files ?? []);
+            e.target.value = "";
+            if (fs.length) void upload(fs);
+          }}
+        />
+      </label>
+      <UploadProgressBar value={uploadProgress} tone="admin" />
     </div>
   );
 }

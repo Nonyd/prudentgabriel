@@ -6,6 +6,7 @@ import { resolveSessionAccess } from "@/lib/admin-auth";
 import { hasPermission, type AdminPermission } from "@/lib/roles";
 import { BESPOKE_ADMIN_ROLES, sessionHasRole } from "@/lib/bespoke-roles";
 import { canSeePaymentDetails } from "@/lib/bespoke-data-access";
+import { creativeAccessFor } from "@/lib/creative-team";
 import {
   bespokeAllows,
   bespokeView,
@@ -51,6 +52,7 @@ export async function bespokeFacts(
       store: hasPermission(role, "store", actor),
       cost: hasPermission(role, "production.cost", actor),
       pipeline: hasPermission(role, "bespoke.pipeline", actor),
+      creative: opts.orderId ? (await creativeAccessFor(user.id)).creative : false,
     },
   };
 }

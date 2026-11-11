@@ -4,6 +4,8 @@ import { resolveSessionAccess } from "@/lib/admin-auth";
 import { hasPermission } from "@/lib/roles";
 import { composeClientFile, isFileSection } from "@/lib/client-file";
 import { logError } from "@/lib/logger";
+import { creativeAccessFor } from "@/lib/creative-team";
+import { resolveStaffPortalUser } from "@/lib/staff-view-as";
 
 type Params = { params: Promise<{ clientId: string }> };
 
@@ -30,12 +32,18 @@ export async function GET(req: NextRequest, { params }: Params) {
   try {
     // Preview and "view as" apply here too, so what the page shows is honest.
     const { role, actor } = await resolveSessionAccess(session);
+    // The Creative Team reads every file (the person shown, when the Super Admin views as staff).
+    const portal = await resolveStaffPortalUser(session);
+    const creative = await creativeAccessFor(portal?.id ?? session.user.id);
     const result = await composeClientFile(
       {
         userId: session.user.id,
         role,
         email: actor.email ?? null,
         allows: (p) => hasPermission(role, p, actor),
+        creative: creative.creative,
+        // Adding sketches is a change: never while viewing as someone.
+        illustrator: creative.illustrator && !portal?.viewingAs,
       },
       clientId,
       raw ?? undefined,
