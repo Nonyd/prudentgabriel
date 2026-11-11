@@ -8,7 +8,7 @@ import { logServerError } from "@/lib/logger";
 import { formatBespokeBook } from "@/lib/atelier-fx";
 import { ensureInvoicePublicRaw } from "@/lib/capability-token-lookup";
 import { OrderStatus, Prisma, ShippingQuoteStatus } from "@prisma/client";
-import { shippingAmountDueNGN } from "@/lib/shipping/due";
+import { findPendingShippingReceipt, shippingAmountDueNGN } from "@/lib/shipping/due";
 import { sendShippingPaymentRequest } from "@/lib/shipping/notify";
 
 const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
@@ -193,6 +193,8 @@ async function remindUnpaidShipping(ctx: CronJobContext) {
     if (shippingAmountDueNGN(order) <= 0) continue;
     const { due, count } = shippingReminderDue(order.shippingQuoteLocked, nowMs);
     if (!due) continue;
+    // She sent a transfer receipt: no reminder while the house is checking it.
+    if (await findPendingShippingReceipt(order.id)) continue;
     try {
       const sent = await sendShippingPaymentRequest(order.id, { reminder: { count: count + 1 } });
       if (!sent) continue;

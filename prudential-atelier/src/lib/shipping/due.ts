@@ -1,4 +1,4 @@
-import { OrderStatus, PaymentStatus, ShippingQuoteStatus, type Order } from "@prisma/client";
+import { OrderStatus, PaymentMethod, PaymentStatus, ShippingQuoteStatus, type Order } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { convertAtLockedRate, lockedFxFromOrder } from "@/lib/fx";
 import { rtwChargeAmountNGN } from "@/lib/payments/rtw-totals";
@@ -60,7 +60,28 @@ export type ShippingDueItem = {
   includesPiece: boolean;
   carrier: string | null;
   payPath: string;
+  /** She uploaded a transfer receipt and it is waiting for the house to confirm. */
+  underReview: boolean;
 };
+
+/** A bank-transfer receipt she sent for this order that the house has not approved or rejected yet. */
+export async function findPendingShippingReceipt(orderId: string) {
+  return prisma.payment.findFirst({
+    where: { orderId, status: PaymentStatus.PENDING, method: PaymentMethod.BANK_TRANSFER },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, amount: true, receiptUrl: true, createdAt: true, reference: true },
+  });
+}
+
+/** Her latest transfer receipt for this order, when the house rejected it (to show her why). */
+export async function findRejectedShippingReceipt(orderId: string) {
+  const last = await prisma.payment.findFirst({
+    where: { orderId, method: PaymentMethod.BANK_TRANSFER },
+    orderBy: { createdAt: "desc" },
+    select: { status: true, rejectedReason: true },
+  });
+  return last && last.status === PaymentStatus.REJECTED ? last : null;
+}
 
 /** Every order of hers with shipping quoted and not yet paid. */
 export async function loadShippingDue(userId: string): Promise<ShippingDueItem[]> {
@@ -73,6 +94,15 @@ export async function loadShippingDue(userId: string): Promise<ShippingDueItem[]
     orderBy: { updatedAt: "desc" },
     take: 10,
   });
+  const pending = await prisma.payment.findMany({
+    where: {
+      orderId: { in: orders.map((o) => o.id) },
+      status: PaymentStatus.PENDING,
+      method: PaymentMethod.BANK_TRANSFER,
+    },
+    select: { orderId: true },
+  });
+  const reviewing = new Set(pending.map((p) => p.orderId));
   const out: ShippingDueItem[] = [];
   for (const o of orders) {
     const amountNGN = shippingAmountDueNGN(o);
@@ -85,6 +115,7 @@ export async function loadShippingDue(userId: string): Promise<ShippingDueItem[]
       includesPiece: o.paymentStatus !== PaymentStatus.PAID,
       carrier: o.carrier,
       payPath: shippingPayPath(o.id),
+      underReview: reviewing.has(o.id),
     });
   }
   return out;

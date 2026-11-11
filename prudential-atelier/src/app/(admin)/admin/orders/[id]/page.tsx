@@ -9,6 +9,9 @@ import { AdminOrderToolbar } from "@/components/admin/AdminOrderToolbar";
 import { ShippingQuotePanel } from "@/components/admin/ShippingQuotePanel";
 import { orderWhatsAppUrl, phoneFromOrder } from "@/lib/shipping/whatsapp";
 import { shippingPayUrl } from "@/lib/shipping/pay-link";
+import { findPendingShippingReceipt } from "@/lib/shipping/due";
+import { AdminShippingReceipt } from "@/components/admin/AdminShippingReceipt";
+import { adminReceiptSrc } from "@/lib/media/admin-receipt-src";
 import { OrderMeasurementsBlock } from "@/components/admin/OrderMeasurementsBlock";
 import { PrintGuideButton } from "@/components/admin/PrintGuideButton";
 import { buildWorkroomSku } from "@/lib/product-options";
@@ -111,6 +114,8 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   const snap = order.addressSnapshot as Record<string, string> | null;
   const phone = phoneFromOrder(order);
   const wa = orderWhatsAppUrl(phone, order.orderNumber);
+  const shippingReceipt =
+    order.shippingQuoteStatus === ShippingQuoteStatus.QUOTED ? await findPendingShippingReceipt(order.id) : null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
@@ -182,6 +187,16 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           madeToOrder={order.fulfilmentKind === "MADE_TO_ORDER" || order.fulfilmentKind === "MIXED"}
         />
       </div>
+
+      {shippingReceipt?.receiptUrl ? (
+        <AdminShippingReceipt
+          paymentId={shippingReceipt.id}
+          orderNumber={order.orderNumber}
+          amountNGN={Number(shippingReceipt.amount)}
+          receiptSrc={adminReceiptSrc(shippingReceipt.receiptUrl)}
+          submittedAt={shippingReceipt.createdAt.toISOString()}
+        />
+      ) : null}
 
       {order.shippingQuoteStatus === ShippingQuoteStatus.QUOTE_PENDING ||
       order.shippingQuoteStatus === ShippingQuoteStatus.QUOTED ? (

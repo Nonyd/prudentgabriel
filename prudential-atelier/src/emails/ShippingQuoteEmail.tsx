@@ -133,8 +133,8 @@ export default function ShippingQuoteEmail({
           </Text>
           {bank.instructions ? <Text style={{ fontSize: 13, color: "#666" }}>{bank.instructions}</Text> : null}
           <Text style={{ fontSize: 13, color: "#666" }}>
-            Use your order number <strong>{orderNumber}</strong> as the transfer narration, then send us the receipt
-            on WhatsApp so we can confirm it.
+            Use your order number <strong>{orderNumber}</strong> as the transfer narration, then upload the receipt on
+            the same pay page (the button above) so we can confirm it.
           </Text>
         </>
       ) : null}

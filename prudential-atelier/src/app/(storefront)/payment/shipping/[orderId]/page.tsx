@@ -6,7 +6,13 @@ import { prisma } from "@/lib/prisma";
 import { getBankTransferDetails } from "@/lib/payments/config";
 import { BankTransferDetails } from "@/components/payment/BankTransferDetails";
 import { ShippingPayButton } from "@/components/payment/ShippingPayButton";
-import { shippingAmountDueNGN, shippingDueLabel } from "@/lib/shipping/due";
+import { ShippingReceiptUpload } from "@/components/payment/ShippingReceiptUpload";
+import {
+  findPendingShippingReceipt,
+  findRejectedShippingReceipt,
+  shippingAmountDueNGN,
+  shippingDueLabel,
+} from "@/lib/shipping/due";
 import { verifyShippingPayCode } from "@/lib/shipping/pay-link";
 
 export const dynamic = "force-dynamic";
@@ -64,7 +70,27 @@ export default async function ShippingPayPage({
   }
 
   const amountLabel = shippingDueLabel(order, dueNGN);
-  const bank = await getBankTransferDetails("NGN", "RTW");
+  const [bank, pendingReceipt, rejected] = await Promise.all([
+    getBankTransferDetails("NGN", "RTW"),
+    findPendingShippingReceipt(order.id),
+    findRejectedShippingReceipt(order.id),
+  ]);
+
+  if (pendingReceipt) {
+    return (
+      <Shell>
+        <CheckCircle2 className="mx-auto h-14 w-14 text-[var(--gold)]" strokeWidth={1.25} />
+        <h1 className="mt-6 font-display text-3xl text-[var(--chocolate)]">We have your receipt</h1>
+        <p className="mt-3 font-body text-base leading-7 text-[var(--text-mid)]">
+          Thank you. We are checking your transfer of {amountLabel} for order #{order.orderNumber} against our account.
+          We will email you as soon as it is confirmed, usually within a few hours on business days.
+        </p>
+        <Link href="/account/orders" className="btn-primary mt-8 inline-flex">
+          View my orders
+        </Link>
+      </Shell>
+    );
+  }
   const includesPiece = order.paymentStatus !== "PAID";
 
   return (
@@ -72,6 +98,14 @@ export default async function ShippingPayPage({
       <Truck className="mx-auto h-12 w-12 text-[var(--gold)]" strokeWidth={1.25} />
       <h1 className="mt-6 font-display text-3xl text-[var(--chocolate)]">Pay for shipping</h1>
       <p className="mt-2 font-body text-sm text-[var(--text-mid)]">Order #{order.orderNumber}</p>
+
+      {rejected ? (
+        <p className="mt-6 border border-red-200 bg-red-50 px-4 py-3 text-left font-body text-sm text-red-800">
+          We could not confirm the last receipt you sent
+          {rejected.rejectedReason ? `: ${rejected.rejectedReason}` : "."} Please pay below or upload the right
+          receipt.
+        </p>
+      ) : null}
 
       {sp.failed ? (
         <p className="mt-6 border border-red-200 bg-red-50 px-4 py-3 text-left font-body text-sm text-red-800">
@@ -105,9 +139,10 @@ export default async function ShippingPayPage({
             <BankTransferDetails bank={bank} paymentReference={order.orderNumber} />
           </div>
           <p className="mt-3 font-body text-xs text-[var(--text-mid)]">
-            Use your order number <strong>{order.orderNumber}</strong> as the transfer narration, then send us the
-            receipt on WhatsApp so we can confirm it.
+            Use your order number <strong>{order.orderNumber}</strong> as the transfer narration, then upload the
+            receipt below so we can confirm it.
           </p>
+          <ShippingReceiptUpload orderId={order.id} code={code} />
         </div>
       ) : null}
     </Shell>

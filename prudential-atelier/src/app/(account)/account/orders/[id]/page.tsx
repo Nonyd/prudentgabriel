@@ -8,7 +8,7 @@ import { OrderTimeline } from "@/components/account/OrderTimeline";
 import { CustomerOrderDeleteButton } from "@/components/account/CustomerOrderDeleteButton";
 import { formatSnapshotForDisplay, parseSnapshot } from "@/lib/custom-size";
 import { ShippingDueBanner } from "@/components/account/ShippingDueBanner";
-import { shippingAmountDueNGN, shippingDueLabel } from "@/lib/shipping/due";
+import { findPendingShippingReceipt, shippingAmountDueNGN, shippingDueLabel } from "@/lib/shipping/due";
 import { shippingPayPath } from "@/lib/shipping/pay-link";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,6 +30,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   });
 
   const shippingDueNGN = shippingAmountDueNGN(order);
+  const shippingUnderReview = shippingDueNGN > 0 && Boolean(await findPendingShippingReceipt(order.id));
   const shippingDue =
     shippingDueNGN > 0
       ? [
@@ -41,6 +42,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             includesPiece: order.paymentStatus !== PaymentStatus.PAID,
             carrier: order.carrier,
             payPath: shippingPayPath(order.id),
+            underReview: shippingUnderReview,
           },
         ]
       : [];

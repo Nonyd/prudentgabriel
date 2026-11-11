@@ -24,9 +24,15 @@ export function ShippingDueBanner({ items, className }: { items: ShippingDueItem
                 {it.carrier ? ` · ${it.carrier}` : ""}
               </p>
             </div>
-            <Link href={it.payPath} className="btn-primary shrink-0 self-start px-6 py-3 text-[10px] tracking-[0.2em] sm:self-auto">
-              Pay shipping
-            </Link>
+            {it.underReview ? (
+              <p className="shrink-0 font-sans text-xs text-text-mid sm:max-w-[220px] sm:text-right">
+                Receipt received. We are checking it and will email you once it is confirmed.
+              </p>
+            ) : (
+              <Link href={it.payPath} className="btn-primary shrink-0 self-start px-6 py-3 text-[10px] tracking-[0.2em] sm:self-auto">
+                Pay shipping
+              </Link>
+            )}
           </li>
         ))}
       </ul>

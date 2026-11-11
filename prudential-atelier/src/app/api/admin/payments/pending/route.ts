@@ -162,6 +162,23 @@ export async function GET() {
         submittedAt: p.createdAt.toISOString(),
         paymentId: p.id,
       })),
+    // A shipping receipt (or any other transfer recorded against a shop order on the ledger).
+    ...pendingLedger
+      .filter((p) => p.order && !p.bespokeOrder)
+      .map((p) => ({
+        id: `payment-${p.id}`,
+        kind: "ORDER" as const,
+        ref: `${p.order!.orderNumber} (shipping)`,
+        clientName: p.order!.user?.name ?? p.order!.guestName ?? "—",
+        clientEmail: p.order!.user?.email ?? p.order!.guestEmail ?? "",
+        amountNGN: toNumber(p.amount),
+        currency: p.currency || "NGN",
+        businessLine: "RTW" as const,
+        href: `/admin/orders/${p.order!.id}`,
+        receiptUrl: p.receiptUrl ?? "",
+        submittedAt: p.createdAt.toISOString(),
+        paymentId: p.id,
+      })),
     ...bespokes
       .filter((b) => !bespokeIdsWithLedger.has(b.id))
       .map((b) => {
