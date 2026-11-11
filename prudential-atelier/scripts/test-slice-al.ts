@@ -20,7 +20,12 @@ import {
 } from "../src/lib/invoice-pay-options";
 import { measurementPlausibilityError } from "../src/lib/measurements";
 import { DEPOSIT_SATISFACTION_TOLERANCE_NGN, depositIsSatisfied, roundToKobo } from "../src/lib/money";
-import { paystackCheckoutTotalNGN, paystackLocalFeeNGN } from "../src/lib/payments/paystack-fee";
+import {
+  paystackCheckoutTotalNGN,
+  paystackFeeCopy,
+  paystackIntlCheckoutTotalNGN,
+  paystackLocalFeeNGN,
+} from "../src/lib/payments/paystack-fee";
 import { getSupportedGateways } from "../src/lib/payments/index";
 import { asPaystackCurrency, expectedPaystackRtwBind, paystackSubunits } from "../src/lib/payments/paystack-amount";
 import { paymentInitHttpStatus, paystackPublicInitError } from "../src/lib/payments/init-error";
@@ -114,6 +119,14 @@ function run() {
   assert(fee === 2_000, "Paystack local fee caps at ₦2,000");
   assert(paystackCheckoutTotalNGN(6_461_538.46) === 6_463_538.46, "checkout total is invoice plus the disclosed fee");
   const selectorSrc = readFileSync(resolve("src/components/checkout/PaymentMethodSelector.tsx"), "utf8");
+  assert(
+    paystackIntlCheckoutTotalNGN(480_000) === 499_583.77,
+    "foreign card checkout matches Paystack's gross-up (PA-26-65822)",
+  );
+  assert(
+    paystackFeeCopy(480_000).sentence.includes("₦499,583.77"),
+    "fee note shows what a foreign card will pay",
+  );
   assert(selectorSrc.includes("paystackFeeCopy"), "Paystack fee is shown before handover on RTW and atelier");
   assert(getSupportedGateways("USD").includes("PAYSTACK"), "USD checkout lists Paystack");
   assert(getSupportedGateways("GBP").includes("PAYSTACK"), "GBP checkout lists Paystack");
